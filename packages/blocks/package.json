@@ -1,0 +1,25 @@
+{
+  "name": "@linkyo/blocks",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Block schemas (Zod) and smart link detection shared by editor, renderer and API.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@linkyo/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
