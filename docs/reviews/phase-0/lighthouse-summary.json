@@ -80,5 +80,59 @@
       "requests": 24,
       "thirdParty": 0
     }
-  ]
+  ],
+  "templates": {
+    "measured": "2026-11-17, same setup, after the template update",
+    "pages": [
+      {
+        "page": "poster · Nocturne (de, default for a dark portrait)",
+        "performance": 86,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 63,
+        "lcp": "3.5 s",
+        "cls": "0",
+        "tbt": "270 ms",
+        "jsKB": 227.8,
+        "thirdParty": 0
+      },
+      {
+        "page": "poster · Daylight (ar, default for a light portrait)",
+        "performance": 79,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 63,
+        "lcp": "4.1 s",
+        "cls": "0.001",
+        "tbt": "330 ms",
+        "jsKB": 227.8,
+        "thirdParty": 0
+      },
+      {
+        "page": "poster · Pulse (de)",
+        "performance": 78,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 63,
+        "lcp": "4.5 s",
+        "cls": "0.005",
+        "tbt": "290 ms",
+        "jsKB": 333.5,
+        "thirdParty": 0
+      },
+      {
+        "page": "poster · Marquee (de)",
+        "performance": 89,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 63,
+        "lcp": "3.0 s",
+        "cls": "0.005",
+        "tbt": "260 ms",
+        "jsKB": 333.5,
+        "thirdParty": 0
+      }
+    ],
+    "note": "Template runs on ?template= URLs counted extra prefetched dashboard chunks (333 KB); a normal browser loads the same 11 scripts on every template."
+  }
 }

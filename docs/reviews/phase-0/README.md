@@ -25,13 +25,36 @@ Routes: `/de/directions/poster` (dark, Mila's dark portrait) · `/ar/directions/
 `?mode=light|dark` · `/directions/poster/dashboard`. Captures: `creator/poster-*`, `dashboard/poster-*`,
 `overview-*`.
 
+## 0b. Update — five Poster templates (from your five recordings)
+
+Same content, five looks ([ADR 0012](../../DECISIONS/0012-poster-templates.md)): **Nocturne** (black), **Daylight**
+(white), **Marquee** (your logo over a blurred photo), **Pulse** (the whole page in your color, photo toned to match —
+new "vivid" palette mode, AA-tested on 2,000 random colors) and **Atelier** (warm paper, serif name, caps titles).
+The page starts in the template that fits the portrait (dark photo → Nocturne, light → Daylight); the dashboard picks
+templates with live mini previews; the prototype toolbar switches them (`?template=`).
+
+New on every template: month tabs for shows ("All" first, ARIA tabs), two-row swipe rails for long runs (mixes,
+episodes), partner tiles, "Anzeige/Ad" labels on affiliate links, video titles on the frame, Shorts badges, a hero that
+softens and fades on scroll and a compact bar with share (CSS scroll-driven animations, no JavaScript, reduced-motion
+safe). Captures: `creator/poster-<template>-<locale>-<width>.jpg`.
+
+| Template page (mobile Lighthouse) | Perf | A11y | Best practices | LCP | CLS | 3rd-party |
+|---|---|---|---|---|---|---|
+| Nocturne (de, default) | 86 | 100 | 100 | 3.5 s | 0 | 0 |
+| Daylight (ar, default) | 79 | 100 | 100 | 4.1 s | 0.001 | 0 |
+| Pulse (de) | 78 | 100 | 100 | 4.5 s | 0.005 | 0 |
+| Marquee (de) | 89 | 100 | 100 | 3.0 s | 0.005 | 0 |
+
+Performance stays the one score below target: the App Router bundle (≈ 230 KB JS) dominates. ADR 0008 (static HTML +
+~3 KB islands) is the fix and is scheduled first in Phase 1.
+
 ## 1. What was built
 
 | Deliverable | Where | State |
 |---|---|---|
 | Brand identity (verbatim) | `docs/BRAND_IDENTITY.md` | ✅ |
 | Monorepo (pnpm 10, Turborepo 2, TS 6 strict, ESLint 9, Stylelint, Prettier, commitlint + lefthook, CI) | root, `packages/config`, `.github/workflows` | ✅ |
-| Tokens → CSS, Tailwind v4 theme, TS, Swift, Asset Catalog (light/dark/Increase Contrast) | `packages/tokens` | ✅ 29 tests |
+| Tokens → CSS, Tailwind v4 theme, TS, Swift, Asset Catalog (light/dark/Increase Contrast) | `packages/tokens` | ✅ 31 tests |
 | Token guard (ESLint rule, Stylelint, SwiftLint rules + Linux CLI, lint-coverage check) | `packages/config` | ✅ 62 tests |
 | Logo: "the Loop" symbol, wordmark, lockups, app icons (light/dark/tinted), favicon, native SwiftUI symbol | `packages/tokens/brand` | ✅ generated from geometry |
 | Creator theme engine (OKLCH, WCAG AA guard, 12 presets, 8 pairings, 6 styles × 3 shapes, card radius cap, photo seed extraction) | `packages/tokens/src/creator` | ✅ 4,000-seed property test |
@@ -42,16 +65,17 @@ Routes: `/de/directions/poster` (dark, Mila's dark portrait) · `/ar/directions/
 | 3 earlier directions (Gallery, Stage, Mosaic), shared editor core: paste-to-add, drag/keyboard reorder, undo/redo, ⌘K, file drop, live preview | `/directions` | ✅ kept for comparison |
 | Competitive research | `docs/REFERENCE_ANALYSIS.md` | ✅ (Playwright/Lighthouse/axe — REA blocked, see §5) |
 | Accounts + env vars, cost model | `docs/SETUP_ACCOUNTS.md`, `.env.example`, `docs/COSTS.md` | ✅ |
-| Architecture + 11 ADRs | `docs/ARCHITECTURE.md`, `docs/DECISIONS/` | ✅ |
+| Architecture + 12 ADRs | `docs/ARCHITECTURE.md`, `docs/DECISIONS/` | ✅ |
 | iOS scaffold (XcodeGen, app + Share Extension + Widgets, design-system package, debug Design Gallery, privacy manifest) | `apps/ios` | ⚠ parse-checked only (no Xcode here) |
 
 ## 2. Evidence
 
-- **Screenshots** (98): `creator/` (4 directions × de/ar × 375/768/1440; Poster in light and dark; one extra preset
+- **Screenshots** (103): `creator/` (4 directions × de/ar × 375/768/1440; Poster in light and dark; one extra preset
   each), `dashboard/` (× light/dark), `design/`, `overview-*` — this folder. Full-page captures now scroll first so
   lazy images are loaded.
-- **Tests:** 133 unit (Vitest) + 167 E2E (Playwright) — all passing.
-  - axe (WCAG 2.0/2.1/2.2 A+AA): **0 violations** on 12 routes × de/en/ar × light/dark × desktop + mobile.
+- **Tests:** 138 unit (Vitest) + 206 E2E (Playwright) — all passing.
+  - axe (WCAG 2.0/2.1/2.2 A+AA): **0 violations** on 15 routes (incl. all 5 templates) × de/en/ar × light/dark ×
+    desktop + mobile.
   - Editor (all 4 dashboards): one paste → correct block + preview update; delete → Undo from toast; ⌘K palette;
     visibility toggle + ⌘Z; ⌥↓ keyboard reorder.
   - Poster: releases open in place with JavaScript disabled; titled sections and two-up shop; links show their
