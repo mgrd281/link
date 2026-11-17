@@ -1,0 +1,1 @@
+{ "extends": "@linkyo/config/tsconfig/base.json", "include": ["src"] }

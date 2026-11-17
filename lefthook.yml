@@ -1,0 +1,10 @@
+# Git hooks (installed by `pnpm install` via the root "prepare" script).
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}
+pre-commit:
+  commands:
+    token-guard:
+      glob: "*.{ts,tsx,js,mjs,cjs,css,swift}"
+      run: node packages/config/token-guard/cli.mjs {staged_files}

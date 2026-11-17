@@ -1,0 +1,42 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+.turbo/
+packages/tokens/src/generated/
+
+# tests & reports
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.lighthouseci/
+apps/web/e2e/.artifacts/
+
+# env
+.env
+.env.*
+!.env.example
+
+# os / editors
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# iOS
+apps/ios/*.xcodeproj/
+apps/ios/*.xcworkspace/
+apps/ios/DerivedData/
+apps/ios/.build/
+apps/ios/**/xcuserdata/
+apps/ios/Packages/**/.build/
+apps/ios/Packages/**/.swiftpm/

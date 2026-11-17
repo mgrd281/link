@@ -1,0 +1,46 @@
+{
+  "name": "@linkyo/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared ESLint, TypeScript, Prettier and Stylelint configuration plus the token guard.",
+  "type": "module",
+  "exports": {
+    "./eslint": "./eslint/index.js",
+    "./eslint/plugin": "./eslint/plugin.js",
+    "./prettier": "./prettier/index.js",
+    "./stylelint": "./stylelint/index.js",
+    "./token-guard": "./token-guard/core.mjs",
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/library.json": "./tsconfig/library.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@eslint/js": "catalog:",
+    "@next/eslint-plugin-next": "catalog:",
+    "eslint-plugin-better-tailwindcss": "4.11.0",
+    "eslint-plugin-jsx-a11y": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "globals": "catalog:",
+    "prettier-plugin-tailwindcss": "0.8.1",
+    "stylelint-config-standard": "41.0.0",
+    "typescript-eslint": "catalog:",
+    "yaml": "2.9.1"
+  },
+  "peerDependencies": {
+    "eslint": "^9.39.0",
+    "prettier": "^3.10.0",
+    "stylelint": "^18.0.0",
+    "typescript": "^6.0.0"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "stylelint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
