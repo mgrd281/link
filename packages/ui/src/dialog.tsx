@@ -15,6 +15,8 @@ export interface ConfirmDialogProps {
   onConfirm: () => void;
   destructive?: boolean;
   loading?: boolean;
+  /** Keeps the confirm button disabled, e.g. until a name is typed to confirm a deletion. */
+  confirmDisabled?: boolean;
 }
 
 /** Confirmation dialog. The only place where destructive buttons are filled (brand §7). */
@@ -28,6 +30,7 @@ export function ConfirmDialog({
   onConfirm,
   destructive = true,
   loading = false,
+  confirmDisabled = false,
 }: ConfirmDialogProps) {
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
@@ -41,7 +44,7 @@ export function ConfirmDialog({
               <Button variant="ghost">{cancelLabel}</Button>
             </AlertDialog.Cancel>
             <AlertDialog.Action asChild>
-              <Button variant={destructive ? "destructive-solid" : "primary"} loading={loading} onClick={onConfirm}>
+              <Button variant={destructive ? "destructive-solid" : "primary"} loading={loading} disabled={confirmDisabled} onClick={onConfirm}>
                 {confirmLabel}
               </Button>
             </AlertDialog.Action>

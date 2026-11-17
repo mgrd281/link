@@ -90,7 +90,7 @@ export function Toaster({ closeLabel }: { closeLabel: string }) {
           </T.Close>
         </T.Root>
       ))}
-      <T.Viewport className="layer-toast fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-prose flex-col gap-2 p-4 outline-none" />
+      <T.Viewport className="layer-toast fixed inset-x-0 bottom-(--toast-offset) mx-auto flex w-full max-w-prose flex-col gap-2 p-4 outline-none" />
     </T.Provider>
   );
 }

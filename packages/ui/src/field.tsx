@@ -14,12 +14,16 @@ export interface TextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   /** Error message. Says what happened and how to fix it (brand §2). */
   error?: string | undefined;
   icon?: LucideIcon | undefined;
+  /** Text before the value inside the box, e.g. "linkyo.app/". */
+  leading?: ReactNode;
   trailing?: ReactNode;
+  /** Lay the box out left-to-right in every language (addresses, emails, URLs). */
+  ltr?: boolean | undefined;
   size?: "md" | "lg" | "xl";
 }
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { label, hideLabel = false, hint, error, icon, trailing, size = "md", className, id, disabled, ...props },
+  { label, hideLabel = false, hint, error, icon, leading, trailing, ltr = false, size = "md", className, id, disabled, ...props },
   ref,
 ) {
   const autoId = useId();
@@ -34,6 +38,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
         {label}
       </label>
       <div
+        dir={ltr ? "ltr" : undefined}
         className={cn(
           "group/field flex items-center gap-2 rounded-md border border-line-input bg-surface-elevated text-fg",
           "transition-[border-color,box-shadow] duration-micro ease-standard",
@@ -46,6 +51,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
         )}
       >
         {icon ? <Icon icon={icon} size={size === "md" ? "sm" : "md"} className="text-fg-tertiary" /> : null}
+        {leading ? <span className="-me-2 shrink-0 text-fg-tertiary select-none">{leading}</span> : null}
         <input
           ref={ref}
           id={inputId}
