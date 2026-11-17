@@ -1359,5 +1359,13 @@
       "back": "Dashboard",
       "edit": "Bearbeiten"
     }
+  },
+  "preview": {
+    "title": "Vorschau für {name} · Linkyo",
+    "label": "Hinweis zur Vorschau",
+    "badge": "Persönliche Vorschau für {name}",
+    "note": "– nicht seine offizielle Seite. Von Linkyo aus seinen öffentlichen Kanälen erstellt.",
+    "ctaLabel": "Seite übernehmen",
+    "cta": "{url} sichern"
   }
 }

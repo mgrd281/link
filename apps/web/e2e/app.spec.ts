@@ -251,3 +251,23 @@ test.describe("accessibility", () => {
     }
   }
 });
+
+test.describe("private previews", () => {
+  for (const [locale, label, cta] of [
+    ["de", "Persönliche Vorschau für Nizar", "linkyo.app/nizarals9 sichern"],
+    ["ar", "معاينة خاصة لـ نزار", "احجز linkyo.app/nizarals9"],
+  ] as const) {
+    test(`are labelled, not indexed and lead to sign-up (${locale})`, async ({ page }) => {
+      await page.goto(`/${locale}/p/nizar-m3e8dw`);
+      await expect(page.getByText(label)).toBeVisible();
+      await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+      await expect(page.getByRole("link", { name: cta })).toHaveAttribute("href", `/${locale}/signup?name=nizarals9`);
+      expect(await axe(page)).toEqual([]);
+    });
+  }
+
+  test("unknown previews and other languages are not found", async ({ page }) => {
+    expect((await page.goto("/de/p/nizar-guess1"))?.status()).toBe(404);
+    expect((await page.goto("/en/p/nizar-m3e8dw"))?.status()).toBe(404);
+  });
+});

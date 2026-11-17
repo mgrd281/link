@@ -1359,5 +1359,13 @@
       "back": "Dashboard",
       "edit": "Edit"
     }
+  },
+  "preview": {
+    "title": "Preview for {name} · Linkyo",
+    "label": "About this preview",
+    "badge": "Personal preview for {name}",
+    "note": "– not his official page. Made by Linkyo from his public channels.",
+    "ctaLabel": "Claim this page",
+    "cta": "Claim {url}"
   }
 }
