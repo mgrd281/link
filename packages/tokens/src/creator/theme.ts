@@ -86,6 +86,7 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     "--creator-display-tracking": display.tracking,
     "--creator-display-transform": display.uppercase ? "uppercase" : "none",
     "--creator-radius-button": `${creatorTokens.buttonShapes[buttonShape]}px`,
+    "--creator-radius-card": `${creatorTokens.cardShapes[buttonShape]}px`,
   };
 
   return { preset: presetId, palette, pairing, buttonStyle, buttonShape, background, cssVars };

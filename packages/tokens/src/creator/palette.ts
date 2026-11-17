@@ -46,6 +46,11 @@ export const AA_TEXT = 4.5;
 export const AA_UI = 3;
 
 /** Engine constants (designer-tunable). Lightness in OKLab L. */
+/** Below this OKLCH chroma an accent reads as black/white/grey. */
+const MONOCHROME_CHROMA = 0.02;
+/** Where a monochrome accent lands when it has to flip: near-white on dark pages, near-black on light. */
+const MONOCHROME_L = { light: 0.22, dark: 0.93 } as const;
+
 const SURFACES = {
   light: { bg: 0.972, surface: 0.992, surface2: 0.935, line: 0.885, fg: 0.2, fgMuted: 0.47 },
   dark: { bg: 0.175, surface: 0.215, surface2: 0.26, line: 0.31, fg: 0.965, fgMuted: 0.76 },
@@ -105,7 +110,12 @@ export function generatePalette(input: PaletteInput): CreatorPalette {
   const lineStrong = adjustLightness({ l: L.line, c: nc * 0.9, h }, away, passesAll([bg, surface], AA_UI));
 
   // Accent: keep the seed when possible, otherwise move away from the background.
-  let accent = adjustLightness(accentSeed, away, passesAll([bg], AA_UI));
+  // Monochrome seeds (black/white/grey) that sit too close to the background flip to the opposite
+  // extreme instead of settling on a dull mid-grey: black buttons on a light page become white
+  // buttons on a dark page.
+  const monochrome = accentSeed.c < MONOCHROME_CHROMA && contrastRatio(oklchToHex(accentSeed), bg) < AA_UI;
+  const seed = monochrome ? { ...accentSeed, l: mode === "dark" ? MONOCHROME_L.dark : MONOCHROME_L.light } : accentSeed;
+  let accent = adjustLightness(seed, away, passesAll([bg], AA_UI));
   const white = "#FFFFFF";
   const nearBlack = oklchToHex({ l: 0.17, c: Math.min(nc, 0.02), h });
   const pickText = (fill: string): string =>

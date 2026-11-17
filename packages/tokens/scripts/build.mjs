@@ -146,6 +146,7 @@ function webModel(dictionary) {
     ["--font-creator-display", "var(--creator-font-display)"],
     ["--font-creator-body", "var(--creator-font-body)"],
     ["--radius-creator-button", "var(--creator-radius-button)"],
+    ["--radius-creator-card", "var(--creator-radius-card)"],
     ["--spacing-creator-button", rem(resolve(dictionary.tokens.creator.button.height.$value, dictionary))],
   ];
 
@@ -385,6 +386,8 @@ StyleDictionary.registerFormat({
     }
     const shapes = {};
     for (const t of byPath(dictionary, ["creator", "button", "shape"])) shapes[t.path[3]] = px(t.$value);
+    const cardShapes = {};
+    for (const t of byPath(dictionary, ["creator", "card", "shape"])) cardShapes[t.path[3]] = px(t.$value);
     const buttonStyles = byPath(dictionary, ["creator", "button", "style"]).map((t) => t.$value);
 
     const json = (v) => JSON.stringify(v, null, 2);
@@ -396,6 +399,7 @@ export const tokens = ${json(out)} as const;
 export const creatorTokens = {
   buttonHeight: ${px(resolve(dictionary.tokens.creator.button.height.$value, dictionary))},
   buttonShapes: ${json(shapes)},
+  cardShapes: ${json(cardShapes)},
   buttonStyles: ${json(buttonStyles)},
   pairings: ${json(pairings)},
   presets: ${json(presets)},

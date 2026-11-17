@@ -104,13 +104,29 @@ describe("presets", () => {
     for (const preset of PRESET_IDS) {
       const theme = resolveCreatorTheme({ preset });
       expect(auditPalette(theme.palette).every((c) => c.pass), preset).toBe(true);
-      expect(Object.keys(theme.cssVars)).toHaveLength(18);
+      expect(Object.keys(theme.cssVars)).toHaveLength(19);
     }
     const random = rng(42);
     for (let i = 0; i < 200; i++) {
       const theme = resolveCreatorTheme(shuffleCreatorTheme(random));
       expect(auditPalette(theme.palette).every((c) => c.pass)).toBe(true);
     }
+  });
+
+  it("caps card radius below the button radius for pill shapes (large cards never become stadiums)", () => {
+    const pill = resolveCreatorTheme({ preset: "mono", buttonShape: "pill" }).cssVars;
+    expect(pill["--creator-radius-button"]).toBe("9999px");
+    expect(Number.parseInt(pill["--creator-radius-card"] ?? "", 10)).toBeLessThanOrEqual(28);
+    const rounded = resolveCreatorTheme({ preset: "mono", buttonShape: "rounded" }).cssVars;
+    expect(rounded["--creator-radius-card"]).toBe(rounded["--creator-radius-button"]);
+  });
+
+  it("flips monochrome accents between modes instead of settling on mid-grey", () => {
+    const light = resolveCreatorTheme({ preset: "mono" }).palette;
+    const dark = resolveCreatorTheme({ preset: "mono", mode: "dark" }).palette;
+    expect(hexToOklch(light.accent).l).toBeLessThan(0.3);
+    expect(hexToOklch(dark.accent).l).toBeGreaterThan(0.85);
+    expect(auditPalette(dark).every((c) => c.pass)).toBe(true);
   });
 
   it("switches to the Arabic pairing for RTL scripts", () => {
