@@ -1,0 +1,44 @@
+[
+  {
+    "page": "gallery",
+    "performance": 99,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 63,
+    "lcp": "0.9\u00a0s",
+    "cls": "0.001",
+    "tbt": "140\u00a0ms",
+    "jsKB": 205.3,
+    "requests": 33,
+    "thirdParty": 0,
+    "note": "8 data: URI blur placeholders, 0 third-party hosts"
+  },
+  {
+    "page": "stage",
+    "performance": 93,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 63,
+    "lcp": "2.7\u00a0s",
+    "cls": "0.028",
+    "tbt": "190\u00a0ms",
+    "jsKB": 205.3,
+    "requests": 33,
+    "thirdParty": 0,
+    "note": "8 data: URI blur placeholders, 0 third-party hosts"
+  },
+  {
+    "page": "mosaic",
+    "performance": 90,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 63,
+    "lcp": "3.2\u00a0s",
+    "cls": "0",
+    "tbt": "200\u00a0ms",
+    "jsKB": 205.3,
+    "requests": 32,
+    "thirdParty": 0,
+    "note": "8 data: URI blur placeholders, 0 third-party hosts"
+  }
+]
