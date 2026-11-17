@@ -116,7 +116,7 @@ export function useCreatorFormat(locale: string) {
   };
 }
 
-/** Sticky-free footer: subtle "Made with Linkyo" (removable in Pro) + legal links (DSA "Report"). */
+/** Sticky-free footer: subtle "Made with Linkyo" (removable in Pro) + legal links (DSA "Report"). No cookie settings: there are no cookies. */
 export function CreatorFooter({ className }: { className?: string }) {
   const t = useTranslations("creator");
   return (
@@ -129,7 +129,7 @@ export function CreatorFooter({ className }: { className?: string }) {
         {t("madeWith")}
       </a>
       <nav aria-label={t("menu")} className="flex flex-wrap justify-center gap-x-1">
-        {(["imprint", "privacy", "cookies", "report"] as const).map((key) => (
+        {(["imprint", "privacy", "report"] as const).map((key) => (
           <a
             key={key}
             href={`#${key}`}

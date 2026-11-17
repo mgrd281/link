@@ -268,7 +268,20 @@
     "storyTitle": "The story behind Nachtstrom",
     "storyBody": "Three winters, one synth, a lot of night trains.",
     "newsletterTitle": "Get new music first",
-    "newsletterBody": "One email per release. No spam, ever."
+    "newsletterBody": "One email per release. No spam, ever.",
+    "sectionMusic": "Music",
+    "sectionVideos": "Videos",
+    "sectionShop": "Shop",
+    "sectionMore": "More from me",
+    "single2": "Lichtfeld",
+    "cover2Alt": "Cover art: a grid of teal light dots",
+    "playlist": "Late Night Selects",
+    "cover3Alt": "Cover art: golden light dots on black",
+    "video2Title": "Tour diary: Berlin",
+    "video3Title": "Hamburg, after the show",
+    "posterPrint": "Nachtstrom — A2 poster",
+    "posterPrintAlt": "Framed Nachtstrom poster on a grey wall",
+    "website": "Official website"
   },
   "creator": {
     "verified": "Verified creator",
@@ -299,19 +312,23 @@
     "madeWith": "Made with Linkyo",
     "imprint": "Imprint",
     "privacy": "Privacy",
-    "cookies": "Cookie settings",
     "report": "Report",
     "share": "Share page",
     "shareCopied": "Link copied.",
     "socialLabel": "{platform}",
     "menu": "More",
     "upcoming": "Upcoming",
-    "follow": "Follow"
+    "follow": "Follow",
+    "offline": "Offline",
+    "chooseService": "Where do you want to listen?",
+    "videos": "Videos",
+    "gallery": "Gallery",
+    "scroller": "{title}, scrollable row"
   },
   "directions": {
-    "title": "Three directions",
-    "lead": "Same creator, same content, three ways to feel premium. Each direction is a complete system: creator page, dashboard and interaction model. Themes stay independent — switch presets in the toolbar.",
-    "pick": "Pick one. Mix is possible.",
+    "title": "Directions",
+    "lead": "New: Poster, built from the pages you sent and set in Linkyo's own design. The three earlier directions stay here for comparison until you confirm.",
+    "pick": "Confirm Poster, or tell me what to change.",
     "viewPage": "Creator page",
     "viewDashboard": "Dashboard",
     "gallery": {
@@ -353,7 +370,22 @@
       "dashboard": "Dashboard",
       "default": "Direction default",
       "hide": "Hide controls",
-      "show": "Show controls"
+      "show": "Show controls",
+      "mode": "Mode",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "yourPick": "Your pick",
+    "earlier": "Earlier directions",
+    "poster": {
+      "name": "Poster",
+      "tagline": "Bold portrait. Clear sections. Light or dark.",
+      "description": "A full-width portrait with the name set like a gig poster, then everything in titled sections: cards with the artwork beside the title, a two-up shop, a swipeable video row and plain links that show where they lead. The dashboard edits the page section by section.",
+      "traits": [
+        "Best for artists, creators and streamers",
+        "Same layout in light and dark",
+        "Section-based editor with live preview"
+      ]
     }
   },
   "dashboard": {
@@ -449,6 +481,17 @@
     "grid": "Page layout",
     "gridHint": "Drag tiles to rearrange. Pick a tile to resize it.",
     "today": "Today",
-    "reorderAnnounce": "{title} moved to position {position}."
+    "reorderAnnounce": "{title} moved to position {position}.",
+    "addSection": "Add section",
+    "newSection": "New section",
+    "sections": "Sections",
+    "sectionItems": "{count, plural, =0 {Empty} one {# block} other {# blocks}}",
+    "pageTop": "Top of page",
+    "pageTopHint": "Shown right under your name",
+    "sectionTitle": "Section title: {title}",
+    "appearance": "Page mode",
+    "modeLight": "Light",
+    "modeDark": "Dark",
+    "featured": "Featured"
   }
 }

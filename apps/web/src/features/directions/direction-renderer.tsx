@@ -3,6 +3,7 @@ import type { ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 
 import { GalleryRenderer } from "./gallery/renderer";
 import { MosaicRenderer, type TileSize } from "./mosaic/renderer";
+import { PosterRenderer } from "./poster/renderer";
 import type { DirectionId } from "./registry";
 import { StageRenderer } from "./stage/renderer";
 
@@ -21,6 +22,8 @@ export function DirectionRenderer({
   preview?: boolean;
 }) {
   switch (direction) {
+    case "poster":
+      return <PosterRenderer page={page} theme={theme} preview={preview} />;
     case "gallery":
       return <GalleryRenderer page={page} theme={theme} preview={preview} />;
     case "stage":

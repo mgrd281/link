@@ -268,7 +268,20 @@
     "storyTitle": "Die Geschichte hinter Nachtstrom",
     "storyBody": "Drei Winter, ein Synth, viele Nachtzüge.",
     "newsletterTitle": "Neue Musik zuerst hören",
-    "newsletterBody": "Eine Mail pro Release. Nie Spam."
+    "newsletterBody": "Eine Mail pro Release. Nie Spam.",
+    "sectionMusic": "Musik",
+    "sectionVideos": "Videos",
+    "sectionShop": "Shop",
+    "sectionMore": "Mehr von mir",
+    "single2": "Lichtfeld",
+    "cover2Alt": "Cover: ein Raster aus türkisen Lichtpunkten",
+    "playlist": "Late Night Selects",
+    "cover3Alt": "Cover: goldene Lichtpunkte auf Schwarz",
+    "video2Title": "Tourtagebuch: Berlin",
+    "video3Title": "Hamburg, nach der Show",
+    "posterPrint": "Nachtstrom — Poster A2",
+    "posterPrintAlt": "Gerahmtes Nachtstrom-Poster an einer grauen Wand",
+    "website": "Offizielle Website"
   },
   "creator": {
     "verified": "Verifizierter Creator",
@@ -299,19 +312,23 @@
     "madeWith": "Mit Linkyo gemacht",
     "imprint": "Impressum",
     "privacy": "Datenschutz",
-    "cookies": "Cookie-Einstellungen",
     "report": "Melden",
     "share": "Seite teilen",
     "shareCopied": "Link kopiert.",
     "socialLabel": "{platform}",
     "menu": "Mehr",
     "upcoming": "Demnächst",
-    "follow": "Folgen"
+    "follow": "Folgen",
+    "offline": "Offline",
+    "chooseService": "Wo möchtest du hören?",
+    "videos": "Videos",
+    "gallery": "Galerie",
+    "scroller": "{title}, scrollbare Reihe"
   },
   "directions": {
-    "title": "Drei Richtungen",
-    "lead": "Gleicher Creator, gleicher Inhalt, drei Wege zu Premium. Jede Richtung ist ein komplettes System: Creator-Seite, Dashboard und Interaktionsmodell. Themes bleiben unabhängig – wechsle Vorlagen in der Leiste.",
-    "pick": "Wähl eine. Kombinieren geht auch.",
+    "title": "Richtungen",
+    "lead": "Neu: Poster – gebaut nach den Seiten, die du geschickt hast, im eigenen Linkyo-Design. Die drei früheren Richtungen bleiben zum Vergleich hier, bis du bestätigst.",
+    "pick": "Bestätige Poster oder sag mir, was ich ändern soll.",
     "viewPage": "Creator-Seite",
     "viewDashboard": "Dashboard",
     "gallery": {
@@ -353,7 +370,22 @@
       "dashboard": "Dashboard",
       "default": "Standard der Richtung",
       "hide": "Steuerung ausblenden",
-      "show": "Steuerung einblenden"
+      "show": "Steuerung einblenden",
+      "mode": "Modus",
+      "light": "Hell",
+      "dark": "Dunkel"
+    },
+    "yourPick": "Deine Wahl",
+    "earlier": "Frühere Richtungen",
+    "poster": {
+      "name": "Poster",
+      "tagline": "Starkes Porträt. Klare Abschnitte. Hell oder dunkel.",
+      "description": "Ein Porträt über die volle Breite, der Name wie auf einem Konzertplakat, danach alles in Abschnitten mit Titel: Karten mit dem Artwork neben dem Titel, ein Shop im Zweier-Raster, eine wischbare Videoreihe und Links, die zeigen, wohin sie führen. Das Dashboard bearbeitet die Seite Abschnitt für Abschnitt.",
+      "traits": [
+        "Ideal für Artists, Creator und Streamer:innen",
+        "Gleiches Layout in hell und dunkel",
+        "Editor nach Abschnitten mit Live-Vorschau"
+      ]
     }
   },
   "dashboard": {
@@ -449,6 +481,17 @@
     "grid": "Seitenlayout",
     "gridHint": "Ziehe Kacheln zum Anordnen. Wähl eine Kachel, um die Größe zu ändern.",
     "today": "Heute",
-    "reorderAnnounce": "{title} an Position {position} verschoben."
+    "reorderAnnounce": "{title} an Position {position} verschoben.",
+    "addSection": "Abschnitt hinzufügen",
+    "newSection": "Neuer Abschnitt",
+    "sections": "Abschnitte",
+    "sectionItems": "{count, plural, =0 {Leer} one {# Block} other {# Blöcke}}",
+    "pageTop": "Seitenanfang",
+    "pageTopHint": "Direkt unter deinem Namen",
+    "sectionTitle": "Abschnittstitel: {title}",
+    "appearance": "Seitenmodus",
+    "modeLight": "Hell",
+    "modeDark": "Dunkel",
+    "featured": "Hervorgehoben"
   }
 }

@@ -4,9 +4,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Suspense } from "react";
 
 import { GalleryDashboard } from "@/features/directions/gallery/dashboard";
-import { loadSamplePage } from "@/features/directions/load";
+import { defaultTheme, loadSamplePage } from "@/features/directions/load";
 import { MosaicDashboard } from "@/features/directions/mosaic/dashboard";
-import { directionTheme, DIRECTIONS, isDirection } from "@/features/directions/registry";
+import { PosterDashboard } from "@/features/directions/poster/dashboard";
+import { DIRECTIONS, isDirection } from "@/features/directions/registry";
 import { StageDashboard } from "@/features/directions/stage/dashboard";
 import { DirectionToolbar } from "@/features/directions/toolbar";
 import { routing } from "@/i18n/routing";
@@ -25,10 +26,11 @@ export default async function DashboardRoute({ params }: { params: Promise<{ loc
   const { locale, direction } = await params;
   if (!isDirection(direction)) notFound();
   setRequestLocale(locale);
-  const page = await loadSamplePage(locale);
-  const initial = { blocks: page.blocks, sizes: {}, theme: directionTheme[direction] };
+  const page = await loadSamplePage(locale, direction);
+  const initial = { blocks: page.blocks, sizes: {}, theme: defaultTheme(direction, page) };
   const pageHref = `/${locale}/directions/${direction}?chrome=0`;
-  const Dashboard = direction === "gallery" ? GalleryDashboard : direction === "stage" ? StageDashboard : MosaicDashboard;
+  const dashboards = { poster: PosterDashboard, gallery: GalleryDashboard, stage: StageDashboard, mosaic: MosaicDashboard } as const;
+  const Dashboard = dashboards[direction];
   return (
     <>
       <Dashboard initial={initial} profile={page.profile} pageHref={pageHref} />

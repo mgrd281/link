@@ -9,19 +9,29 @@ import { useState } from "react";
 
 import { Link, useRouter } from "@/i18n/navigation";
 
-import { DIRECTIONS, type DirectionId } from "./registry";
+import { DIRECTIONS, isThemeMode, THEME_MODES, type DirectionId, type ThemeModeParam } from "./registry";
 
 /** Prototype-only controls to compare directions, views and themes. Not part of the product UI. */
-export function DirectionToolbar({ direction, view }: { direction: DirectionId; view: "page" | "dashboard" }) {
+export function DirectionToolbar({ direction, view, activeMode }: { direction: DirectionId; view: "page" | "dashboard"; activeMode?: ThemeModeParam }) {
   const t = useTranslations("directions");
   const params = useSearchParams();
   const router = useRouter();
   const [open, setOpen] = useState(true);
   const preset = params.get("preset") ?? "";
+  const modeParam = params.get("mode") ?? undefined;
+  const mode = isThemeMode(modeParam) ? modeParam : null;
   if (params.get("chrome") === "0") return null;
 
-  const href = (d: DirectionId, v: "page" | "dashboard") =>
-    `/directions/${d}${v === "dashboard" ? "/dashboard" : ""}${preset ? `?preset=${preset}` : ""}` as const;
+  const query = (next: { preset?: string; mode?: ThemeModeParam | null }) => {
+    const search = new URLSearchParams();
+    const p = next.preset ?? preset;
+    const m = next.mode === undefined ? mode : next.mode;
+    if (p) search.set("preset", p);
+    if (m) search.set("mode", m);
+    const text = search.toString();
+    return text ? `?${text}` : "";
+  };
+  const href = (d: DirectionId, v: "page" | "dashboard") => `/directions/${d}${v === "dashboard" ? "/dashboard" : ""}${v === "page" ? query({}) : ""}` as const;
 
   if (!open) {
     return (
@@ -52,13 +62,22 @@ export function DirectionToolbar({ direction, view }: { direction: DirectionId; 
           ))}
         </div>
         {view === "page" ? (
+          <div className="flex gap-0.5 rounded-md bg-canvas-muted p-0.5" role="group" aria-label={t("toolbar.mode")}>
+            {THEME_MODES.map((m) => (
+              <Link key={m} href={`/directions/${direction}${query({ mode: m })}`} aria-current={m === (mode ?? activeMode) ? "true" : undefined} className={cn(seg, m === (mode ?? activeMode) && "bg-surface text-fg shadow-e1")}>
+                {t(`toolbar.${m}`)}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+        {view === "page" ? (
           <label className="flex items-center gap-2 px-2 text-small text-fg-secondary">
             <span>{t("toolbar.theme")}</span>
             <select
               value={preset}
               onChange={(event) => {
                 const next = event.target.value;
-                router.replace(next ? `/directions/${direction}?preset=${next}` : `/directions/${direction}`);
+                router.replace(`/directions/${direction}${query({ preset: next })}`);
               }}
               className="h-control-sm rounded-sm border border-line-strong bg-surface px-2 text-small text-fg focus-visible:focus-ring"
             >

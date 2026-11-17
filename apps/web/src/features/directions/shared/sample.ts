@@ -151,6 +151,9 @@ const nourBlocks = (t: (key: string) => string): Block[] => {
     }
     if (block.type === "socials") return { ...block, items: block.items.map((item) => ({ ...item, url: item.url.replace("milaaurel", "nourhaddad") })) };
     if (block.type === "live") return { ...block, channel: "nourhaddad", url: "https://twitch.tv/nourhaddad" };
+    if (block.type === "shorts") return { ...block, items: block.items.map((item) => (item.poster.src === "sample:short-3" ? { ...item, poster: { ...item.poster, src: "sample:short-4" } } : item)) };
+    if (block.type === "card") return { ...block, url: block.url.replace("milaaurel", "nourhaddad"), image: { ...block.image, src: "sample:nour-wide" } };
+    if (block.type === "link" || block.type === "product") return { ...block, url: block.url.replace("milaaurel", "nourhaddad") };
     return block;
   });
 };
