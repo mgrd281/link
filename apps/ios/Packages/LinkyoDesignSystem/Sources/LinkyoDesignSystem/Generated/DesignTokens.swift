@@ -104,6 +104,7 @@ public enum LinkyoTokens {
     }
 
     public enum Typography {
+        public static let display2xl = TextStyle(size: 104, lineHeight: 0.95, weight: 800, tracking: -0.045)
         public static let displayXl = TextStyle(size: 72, lineHeight: 1, weight: 800, tracking: -0.03)
         public static let display = TextStyle(size: 56, lineHeight: 1.05, weight: 800, tracking: -0.03)
         public static let h1 = TextStyle(size: 36, lineHeight: 1.15, weight: 700, tracking: -0.02)
@@ -119,6 +120,10 @@ public enum LinkyoTokens {
         public static let micro: Double = 0.12
         public static let standard: Double = 0.2
         public static let slow: Double = 0.32
+        public static let reveal: Double = 0.7
+        public static let ambient: Double = 9
+        public static let showcase: Double = 15
+        public static let marquee: Double = 60
         public static let springResponse: Double = 0.35
         public static let springDamping: Double = 0.85
         public static let pressedScale: CGFloat = 0.98

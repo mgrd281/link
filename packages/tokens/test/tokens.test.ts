@@ -79,7 +79,7 @@ describe("product UI semantic colors (brand §4, WCAG 2.2 AA)", () => {
     );
     expect(tokens.radius).toMatchObject({ xs: 6, sm: 10, md: 14, lg: 20, xl: 28, full: 9999 });
     expect(tokens.text.h1).toMatchObject({ fontSize: 36, lineHeight: 1.15, fontWeight: 700 });
-    expect(tokens.motion.duration).toEqual({ micro: 120, standard: 200, slow: 320 });
+    expect(tokens.motion.duration).toMatchObject({ micro: 120, standard: 200, slow: 320 });
     expect(tokens.motion.easing.standard).toEqual([0.2, 0.8, 0.2, 1]);
     expect(tokens.size.touchTarget).toBe(44);
   });
