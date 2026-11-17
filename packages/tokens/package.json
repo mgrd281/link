@@ -1,0 +1,34 @@
+{
+  "name": "@linkyo/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Linkyo design tokens (single source of truth) and the creator theme engine.",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./creator": "./src/creator/index.ts",
+    "./tokens.css": "./dist/css/tokens.css",
+    "./tailwind.css": "./dist/tailwind/theme.css",
+    "./tokens.json": "./tokens.json"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "brand": "node brand/logo.mjs"
+  },
+  "devDependencies": {
+    "@linkyo/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "geist": "1.9.2",
+    "opentype.js": "1.3.4",
+    "style-dictionary": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
