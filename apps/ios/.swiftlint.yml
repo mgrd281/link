@@ -1,0 +1,44 @@
+# SwiftLint configuration. The custom rules below are the single source of truth for the
+# "no raw design values" contract on iOS; `pnpm check:tokens` applies the same regexes on Linux CI.
+included:
+  - Linkyo
+  - LinkyoShareExtension
+  - LinkyoWidgets
+  - Packages/LinkyoDesignSystem/Sources
+excluded:
+  - Packages/LinkyoDesignSystem/Sources/LinkyoDesignSystem/Generated
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - first_where
+  - modifier_order
+  - sorted_imports
+  - toggle_bool
+  - unused_import
+
+custom_rules:
+  no_raw_color:
+    name: "No raw colors"
+    regex: '(Color|UIColor|NSColor)\(\s*(red|white|hue|displayP3Red|\.sRGB|\.displayP3)\b|Color\(\s*hex\s*:|#colorLiteral'
+    message: "Use Color.Linkyo.* (generated from @linkyo/tokens)."
+    severity: error
+    excluded: '.*/Generated/.*'
+  no_raw_font:
+    name: "No raw fonts"
+    regex: '\.font\(\s*\.system\(\s*size\s*:|Font\.custom\(|\.custom\(\s*"|UIFont\(\s*name\s*:|UIFont\.systemFont\(\s*ofSize\s*:\s*\d'
+    message: "Use Dynamic Type text styles or LinkyoFont (brand moments)."
+    severity: error
+    excluded: '.*/(Generated|Typography)/.*'
+  no_raw_spacing:
+    name: "No raw spacing or sizes"
+    regex: '\.padding\(\s*(\.[a-zA-Z]+\s*,\s*)?[1-9][0-9.]*\s*\)|spacing\s*:\s*[1-9][0-9.]*|\.frame\([^)]*\b(width|height|minWidth|maxWidth|minHeight|maxHeight|idealWidth|idealHeight)\s*:\s*[1-9]'
+    message: "Use LinkyoTokens.Spacing / LinkyoTokens.Size."
+    severity: error
+    excluded: '.*/Generated/.*'
+  no_raw_radius:
+    name: "No raw corner radius"
+    regex: 'cornerRadius\s*:\s*[1-9]|\.cornerRadius\(\s*[1-9]'
+    message: "Use LinkyoTokens.Radius."
+    severity: error
+    excluded: '.*/Generated/.*'

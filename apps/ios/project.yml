@@ -1,0 +1,112 @@
+# XcodeGen spec — the Xcode project is generated, never committed (see docs/DECISIONS/0004-ios-project.md).
+#   brew install xcodegen && cd apps/ios && xcodegen generate && open Linkyo.xcodeproj
+name: Linkyo
+options:
+  bundleIdPrefix: app.linkyo
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  groupSortPosition: top
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: "" # set your Apple Team ID (see docs/SETUP_ACCOUNTS.md)
+packages:
+  LinkyoDesignSystem:
+    path: Packages/LinkyoDesignSystem
+targets:
+  Linkyo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Linkyo
+    dependencies:
+      - package: LinkyoDesignSystem
+      - target: LinkyoShareExtension
+      - target: LinkyoWidgets
+    info:
+      path: Linkyo/Info.plist
+      properties:
+        CFBundleDisplayName: Linkyo
+        CFBundleDevelopmentRegion: de
+        CFBundleLocalizations: [de, en, ar]
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        "UISupportedInterfaceOrientations~ipad":
+          [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        CFBundleURLTypes:
+          - CFBundleURLName: app.linkyo
+            CFBundleURLSchemes: [linkyo]
+        ITSAppUsesNonExemptEncryption: false
+    entitlements:
+      path: Linkyo/Linkyo.entitlements
+      properties:
+        com.apple.security.application-groups: [group.app.linkyo]
+        com.apple.developer.applesignin: [Default]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.linkyo.ios
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "1,2"
+    preBuildScripts:
+      - name: SwiftLint (token rules)
+        basedOnDependencyAnalysis: false
+        script: |
+          if command -v swiftlint >/dev/null; then swiftlint --config "${SRCROOT}/.swiftlint.yml"; else echo "warning: SwiftLint not installed"; fi
+
+  LinkyoShareExtension:
+    type: app-extension
+    platform: iOS
+    sources: [LinkyoShareExtension]
+    dependencies:
+      - package: LinkyoDesignSystem
+    info:
+      path: LinkyoShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Linkyo
+    entitlements:
+      path: LinkyoShareExtension/LinkyoShareExtension.entitlements
+      properties:
+        com.apple.security.application-groups: [group.app.linkyo]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.linkyo.ios.share
+
+  LinkyoWidgets:
+    type: app-extension
+    platform: iOS
+    sources: [LinkyoWidgets]
+    dependencies:
+      - package: LinkyoDesignSystem
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    info:
+      path: LinkyoWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Linkyo
+    entitlements:
+      path: LinkyoWidgets/LinkyoWidgets.entitlements
+      properties:
+        com.apple.security.application-groups: [group.app.linkyo]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.linkyo.ios.widgets
+
+schemes:
+  Linkyo:
+    build:
+      targets:
+        Linkyo: all
+    test:
+      gatherCoverageData: true
+      targets:
+        - package: LinkyoDesignSystem/LinkyoDesignSystemTests
