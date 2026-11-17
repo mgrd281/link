@@ -1,44 +1,84 @@
-[
-  {
-    "page": "gallery",
-    "performance": 99,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 63,
-    "lcp": "0.9\u00a0s",
-    "cls": "0.001",
-    "tbt": "140\u00a0ms",
-    "jsKB": 205.3,
-    "requests": 33,
-    "thirdParty": 0,
-    "note": "8 data: URI blur placeholders, 0 third-party hosts"
-  },
-  {
-    "page": "stage",
-    "performance": 93,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 63,
-    "lcp": "2.7\u00a0s",
-    "cls": "0.028",
-    "tbt": "190\u00a0ms",
-    "jsKB": 205.3,
-    "requests": 33,
-    "thirdParty": 0,
-    "note": "8 data: URI blur placeholders, 0 third-party hosts"
-  },
-  {
-    "page": "mosaic",
-    "performance": 90,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 63,
-    "lcp": "3.2\u00a0s",
-    "cls": "0",
-    "tbt": "200\u00a0ms",
-    "jsKB": 205.3,
-    "requests": 32,
-    "thirdParty": 0,
-    "note": "8 data: URI blur placeholders, 0 third-party hosts"
-  }
-]
+{
+  "measured": "2026-11-17, Lighthouse 13.6, mobile defaults (simulated slow 4G, 4× CPU), production build on localhost",
+  "note": "Scores move by up to ±10 between runs on this machine (Stage: 93 in the first run, 82 here, no layout change). LCP is the hero image (17 KB WebP); the delay is main-thread time from the 205 KB App Router bundle, which ADR 0008 removes. SEO 63 only because prototype pages are noindex.",
+  "pages": [
+    {
+      "page": "poster (de, dark — default for Mila's dark portrait)",
+      "performance": 88,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 63,
+      "lcp": "2.4 s",
+      "cls": "0.005",
+      "tbt": "390 ms",
+      "jsKB": 205.4,
+      "requests": 30,
+      "thirdParty": 0
+    },
+    {
+      "page": "poster (de, light)",
+      "performance": 94,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 63,
+      "lcp": "2.8 s",
+      "cls": "0.005",
+      "tbt": "150 ms",
+      "jsKB": 205.4,
+      "requests": 30,
+      "thirdParty": 0
+    },
+    {
+      "page": "poster (ar, light — default for Nour's light portrait)",
+      "performance": 84,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 63,
+      "lcp": "4.1 s",
+      "cls": "0.002",
+      "tbt": "190 ms",
+      "jsKB": 205.4,
+      "requests": 30,
+      "thirdParty": 0
+    },
+    {
+      "page": "gallery",
+      "performance": 99,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 63,
+      "lcp": "0.9 s",
+      "cls": "0.001",
+      "tbt": "130 ms",
+      "jsKB": 205.4,
+      "requests": 25,
+      "thirdParty": 0
+    },
+    {
+      "page": "stage",
+      "performance": 82,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 63,
+      "lcp": "4.3 s",
+      "cls": "0.028",
+      "tbt": "200 ms",
+      "jsKB": 205.4,
+      "requests": 25,
+      "thirdParty": 0
+    },
+    {
+      "page": "mosaic",
+      "performance": 88,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 63,
+      "lcp": "3.9 s",
+      "cls": "0",
+      "tbt": "80 ms",
+      "jsKB": 205.4,
+      "requests": 24,
+      "thirdParty": 0
+    }
+  ]
+}

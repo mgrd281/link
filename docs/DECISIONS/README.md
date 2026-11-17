@@ -12,3 +12,4 @@
 | [0008](0008-public-page-rendering.md) | Zero-runtime renderer for public pages (70 KB budget) | Proposed (Phase 1 spike) |
 | [0009](0009-music-smart-links.md) | Own music-link resolver instead of Odesli | Proposed |
 | [0010](0010-hosting-and-data-residency.md) | Vercel (fra1) + Supabase Frankfurt; EU processors first | Proposed |
+| [0011](0011-poster-direction.md) | Direction D "Poster", built from the founder's references | **Proposed — confirm** |
