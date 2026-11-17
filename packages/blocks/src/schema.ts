@@ -181,6 +181,20 @@ export const profileSchema = z.object({
 export type Profile = z.infer<typeof profileSchema>;
 
 export const pageSchema = z.object({ profile: profileSchema, blocks: z.array(blockSchema).max(200) });
+
+/**
+ * Image source of a creator who has not added a photo yet. Renderers show a monogram instead of an
+ * image, so a brand-new page never shows a broken or borrowed picture.
+ */
+export const NO_IMAGE = "none:";
+export const hasImage = (image: { src: string } | undefined | null): image is { src: string } => !!image && image.src !== NO_IMAGE && image.src.length > 0;
+
+/** Names we never hand out as page addresses: product routes and words people could be misled by. */
+export const RESERVED_USERNAMES = new Set([
+  "about", "admin", "api", "app", "ar", "auth", "billing", "blog", "de", "design", "directions", "en", "forgot",
+  "help", "imprint", "impressum", "legal", "linkyo", "login", "logout", "official", "preview", "pricing", "privacy",
+  "report", "security", "settings", "signup", "status", "support", "terms", "welcome", "www",
+]);
 export type Page = z.infer<typeof pageSchema>;
 
 /** Blocks that should render now (visible + inside schedule). */
