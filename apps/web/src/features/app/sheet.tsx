@@ -44,11 +44,12 @@ export function Sheet({
           {...(description ? {} : { "aria-describedby": undefined })}
           onOpenAutoFocus={(event) => {
             // With a mouse, start in the first field. On touch screens, don't pop the keyboard up uninvited.
-            const field = (event.currentTarget as HTMLElement).querySelector<HTMLElement>("[data-sheet-body] :is(input:not([type=hidden]), textarea, select)");
-            if (field && window.matchMedia("(pointer: fine)").matches) {
-              event.preventDefault();
-              field.focus();
-            }
+            const content = event.currentTarget as HTMLElement;
+            const field = content.querySelector<HTMLElement>("[data-sheet-body] :is(input:not([type=hidden]), textarea, select)");
+            event.preventDefault();
+            // Touch: focus the sheet itself (no keyboard popping up, no tooltip on the close button).
+            if (field && window.matchMedia("(pointer: fine)").matches) field.focus();
+            else content.focus();
           }}
           className={cn(
             "layer-modal fixed inset-x-0 bottom-0 flex max-h-[92dvh] flex-col rounded-t-xl border border-line bg-surface-elevated text-fg shadow-e3 outline-none motion-safe:animate-rise-in",
