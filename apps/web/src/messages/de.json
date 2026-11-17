@@ -1299,7 +1299,15 @@
       "deleteConfirm": "Endgültig löschen",
       "cancel": "Abbrechen",
       "deleted": "Konto gelöscht",
-      "logout": "Abmelden"
+      "logout": "Abmelden",
+      "importHint": "Stell eine Seite aus einer Export-Datei (JSON) wieder her. Adresse und Login bleiben gleich; du kannst es rückgängig machen.",
+      "import": "Seite importieren",
+      "importTitle": "Deine Seite ersetzen?",
+      "importBody": "„{name}“ mit {count, plural, one {# Block} other {# Blöcken}} ersetzt dein aktuelles Profil, deine Blöcke und dein Design. Das lässt sich rückgängig machen.",
+      "importConfirm": "Seite ersetzen",
+      "imported": "Seite importiert",
+      "importInvalid": "Diese Datei ist keine Linkyo-Seite. Nutze eine Datei aus „Meine Daten exportieren“.",
+      "undo": "Rückgängig"
     },
     "welcome": {
       "skip": "Später",

@@ -17,11 +17,15 @@ export interface SiteDoc extends EditorDoc {
   profile: Profile;
 }
 
-export type SiteAction = EditorAction | { type: "profile"; patch: Partial<Profile> };
+export type SiteAction = EditorAction | { type: "profile"; patch: Partial<Profile> } | { type: "replace"; doc: SiteDoc };
 
 const HISTORY_LIMIT = 50;
 
 export function siteReducer(state: EditorState<SiteDoc>, action: SiteAction): EditorState<SiteDoc> {
+  if (action.type === "replace") {
+    // Importing a page is one step in the history, so it can be undone like any edit.
+    return { ...state, past: [...state.past, state.present].slice(-HISTORY_LIMIT), present: action.doc, future: [], selectedId: null };
+  }
   if (action.type === "profile") {
     const present = { ...state.present, profile: { ...state.present.profile, ...action.patch } };
     return { ...state, past: [...state.past, state.present].slice(-HISTORY_LIMIT), present, future: [] };

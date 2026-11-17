@@ -64,3 +64,26 @@ describe("sample analytics", () => {
     expect(stats.sources.map((source) => source.share)).toEqual([...stats.sources.map((source) => source.share)].sort((a, b) => b - a));
   });
 });
+
+describe("import", () => {
+  const page = {
+    profile: { username: "someone", displayName: "Nizar", bio: "", avatar: { src: NO_IMAGE, alt: "" }, verified: false, locale: "ar" },
+    blocks: [{ id: "a", type: "link", visible: true, highlight: false, title: "Booking", url: "mailto:hello@example.com" }],
+  };
+
+  it("reads an export file and a bare page, keeping only known theme settings", async () => {
+    const { parseImport } = await import("./import");
+    const fromExport = parseImport(JSON.stringify({ exportedAt: "x", site: { page, theme: { template: "nocturne", evil: "<script>", tint: 3 }, legal: { name: "N" } } }));
+    expect(fromExport?.page.profile.displayName).toBe("Nizar");
+    expect(fromExport?.theme).toEqual({ template: "nocturne" });
+    expect(fromExport?.legal).toEqual({ name: "N", address: "", email: "", phone: "" });
+    expect(parseImport(JSON.stringify({ page, theme: {} }))?.page.blocks).toHaveLength(1);
+  });
+
+  it("refuses anything that isn't a valid page", async () => {
+    const { parseImport } = await import("./import");
+    expect(parseImport("not json")).toBeNull();
+    expect(parseImport(JSON.stringify({ page: { profile: {}, blocks: [] } }))).toBeNull();
+    expect(parseImport(JSON.stringify([1, 2]))).toBeNull();
+  });
+});

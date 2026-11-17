@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, ConfirmDialog, Icon, TextField, toast } from "@linkyo/ui";
-import { AtSign, CircleCheck, Download, LogOut, Trash2 } from "lucide-react";
+import { AtSign, CircleCheck, Download, LogOut, Trash2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, type SubmitEvent } from "react";
 
@@ -13,6 +13,8 @@ import { accountStore } from "@/features/account/store";
 import type { AuthError, Legal } from "@/features/account/types";
 
 import { TextArea, TextInput } from "./form";
+import { pickFiles } from "./images";
+import { parseImport, type ImportedSite } from "./import";
 import { ProfileFields, useProfileDraft } from "./profile-form";
 import { Panel, Screen } from "./screen";
 import { useSite } from "./site-context";
@@ -201,9 +203,28 @@ function LegalPanel() {
 
 function DataPanel() {
   const t = useTranslations("app.settings");
-  const { account } = useSite();
+  const { account, doc, dispatch } = useSite();
   const [confirm, setConfirm] = useState(false);
   const [typed, setTyped] = useState("");
+  const [incoming, setIncoming] = useState<ImportedSite | null>(null);
+  const chooseImport = async () => {
+    const [file] = await pickFiles({ accept: "application/json,.json" });
+    if (!file) return;
+    const parsed = parseImport(await file.text());
+    if (parsed) setIncoming(parsed);
+    else toast({ title: t("importInvalid"), tone: "danger" });
+  };
+  const applyImport = () => {
+    if (!incoming) return;
+    dispatch({
+      type: "replace",
+      doc: { ...doc, profile: { ...incoming.page.profile, username: account.username }, blocks: incoming.page.blocks, theme: incoming.theme },
+    });
+    const { legal } = incoming;
+    if (legal) accountStore.updateSite((current) => ({ ...current, legal }));
+    setIncoming(null);
+    toast({ title: t("imported"), tone: "success", action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) } });
+  };
   const exportData = () => {
     const blob = new Blob([accountStore.exportData()], { type: "application/json" });
     const link = document.createElement("a");
@@ -220,6 +241,24 @@ function DataPanel() {
           {t("export")}
         </Button>
       </div>
+      <div className="grid grid-cols-1 gap-2 border-t border-line pt-4">
+        <p className="text-small text-fg-secondary">{t("importHint")}</p>
+        <Button icon={Upload} className="justify-self-start" onClick={() => void chooseImport()}>
+          {t("import")}
+        </Button>
+      </div>
+      <ConfirmDialog
+        open={incoming !== null}
+        onOpenChange={(open) => {
+          if (!open) setIncoming(null);
+        }}
+        title={t("importTitle")}
+        description={t("importBody", { name: incoming?.page.profile.displayName ?? "", count: incoming?.page.blocks.length ?? 0 })}
+        confirmLabel={t("importConfirm")}
+        cancelLabel={t("cancel")}
+        destructive={false}
+        onConfirm={applyImport}
+      />
       <div className="grid grid-cols-1 gap-2 border-t border-line pt-4">
         <p className="text-small text-fg-secondary">{t("deleteHint")}</p>
         <Button variant="destructive" icon={Trash2} className="justify-self-start" onClick={() => setConfirm(true)}>

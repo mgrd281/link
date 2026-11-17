@@ -1299,7 +1299,15 @@
       "deleteConfirm": "Delete for good",
       "cancel": "Cancel",
       "deleted": "Account deleted",
-      "logout": "Log out"
+      "logout": "Log out",
+      "importHint": "Restore a page from an export file (JSON). Your address and login stay the same; you can undo it.",
+      "import": "Import a page",
+      "importTitle": "Replace your page?",
+      "importBody": "“{name}” with {count, plural, one {# block} other {# blocks}} replaces your current profile, blocks and design. You can undo this.",
+      "importConfirm": "Replace my page",
+      "imported": "Page imported",
+      "importInvalid": "This file isn't a Linkyo page. Use a file from “Export my data”.",
+      "undo": "Undo"
     },
     "welcome": {
       "skip": "Skip for now",
