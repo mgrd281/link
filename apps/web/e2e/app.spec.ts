@@ -260,6 +260,9 @@ test.describe("private previews", () => {
     test(`are labelled, not indexed and lead to sign-up (${locale})`, async ({ page }) => {
       await page.goto(`/${locale}/p/nizar-m3e8dw`);
       await expect(page.getByText(label)).toBeVisible();
+      // The badge is explained in the label: it shows the look after verification.
+      await expect(page.getByRole("heading", { level: 1 }).getByRole("img")).toBeVisible();
+      await expect(page.getByRole("complementary").first()).toContainText(locale === "de" ? "Verifizierung" : "توثيق");
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
       await expect(page.getByRole("link", { name: cta })).toHaveAttribute("href", `/${locale}/signup?name=nizarals9`);
       expect(await axe(page)).toEqual([]);

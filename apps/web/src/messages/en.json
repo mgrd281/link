@@ -1366,6 +1366,7 @@
     "badge": "Personal preview for {name}",
     "note": "– not his official page. Made by Linkyo from his public channels.",
     "ctaLabel": "Claim this page",
-    "cta": "Claim {url}"
+    "cta": "Claim {url}",
+    "verifiedNote": "The check mark shows how the page looks once he verifies his account."
   }
 }

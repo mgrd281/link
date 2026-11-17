@@ -53,6 +53,7 @@ export default async function PreviewRoute({ params }: Props) {
         <Icon icon={Eye} size="sm" className="mt-0.5 shrink-0 text-link" />
         <p>
           <strong className="font-semibold text-fg">{t("badge", { name: found.preview.name[locale as "de" | "ar"] ?? found.page.profile.displayName })}</strong> {t("note")}
+          {found.page.profile.verified ? ` ${t("verifiedNote")}` : null}
         </p>
       </aside>
       <PosterRenderer page={found.page} theme={theme} />

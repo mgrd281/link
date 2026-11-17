@@ -1366,6 +1366,7 @@
     "badge": "Persönliche Vorschau für {name}",
     "note": "– nicht seine offizielle Seite. Von Linkyo aus seinen öffentlichen Kanälen erstellt.",
     "ctaLabel": "Seite übernehmen",
-    "cta": "{url} sichern"
+    "cta": "{url} sichern",
+    "verifiedNote": "Das Häkchen zeigt, wie die Seite nach der Verifizierung seines Kontos aussieht."
   }
 }

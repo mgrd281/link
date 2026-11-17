@@ -17,7 +17,7 @@ export const nizarDe: Page = {
       tone: "dark",
     },
     tagline: "Syrischer Künstler & Content Creator",
-    verified: false,
+    verified: true,
     locale: "de",
   },
   blocks: [
@@ -209,7 +209,7 @@ export const nizarAr: Page = {
       tone: "dark",
     },
     tagline: "فنان وصانع محتوى سوري",
-    verified: false,
+    verified: true,
     locale: "ar",
   },
   blocks: [
