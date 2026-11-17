@@ -6,18 +6,19 @@ import { ArrowRight, CircleAlert, CircleCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { Link } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 
 type State = { kind: "idle" } | { kind: "ok"; name: string } | { kind: "invalid" };
 
 /**
- * Claim your address. Validates exactly like sign-up will (profile username rules). Until accounts
- * exist it says so honestly and offers the editor instead of pretending to reserve the name.
+ * Claim your address. Validates exactly like sign-up (profile username rules), then continues to
+ * sign-up with the address already filled in, where availability is checked.
  */
 export function ClaimForm({ id, className }: { id: string; className?: string }) {
   const t = useTranslations("marketing.claim");
   const [value, setValue] = useState("");
   const [state, setState] = useState<State>({ kind: "idle" });
+  const router = useRouter();
   const messageId = `${id}-message`;
 
   return (
@@ -26,7 +27,10 @@ export function ClaimForm({ id, className }: { id: string; className?: string })
       onSubmit={(event) => {
         event.preventDefault();
         const name = value.trim().toLowerCase();
-        setState(profileSchema.shape.username.safeParse(name).success ? { kind: "ok", name } : { kind: "invalid" });
+        if (profileSchema.shape.username.safeParse(name).success) {
+          setState({ kind: "ok", name });
+          router.push(`/signup?name=${encodeURIComponent(name)}`);
+        } else setState({ kind: "invalid" });
       }}
       className={cn("grid min-w-0 grid-cols-1 gap-3", className)}
     >
@@ -61,12 +65,7 @@ export function ClaimForm({ id, className }: { id: string; className?: string })
         {state.kind === "ok" ? (
           <>
             <Icon icon={CircleCheck} size="sm" className="mt-0.5 shrink-0 text-success-strong" />
-            <span>
-              {t("ok", { name: state.name })}{" "}
-              <Link href="/directions/poster/dashboard" className="font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring">
-                {t("tryEditor")}
-              </Link>
-            </span>
+            <span>{t("ok", { name: state.name })}</span>
           </>
         ) : state.kind === "invalid" ? (
           <>

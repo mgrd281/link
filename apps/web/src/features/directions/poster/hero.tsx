@@ -1,10 +1,10 @@
-import type { BlockOf, Page } from "@linkyo/blocks";
+import { hasImage, type BlockOf, type Page } from "@linkyo/blocks";
 import type { ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
 import { BadgeCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { MediaImage, mediaSizes, PlatformGlyph, platformName } from "../shared/creator-kit";
+import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from "../shared/creator-kit";
 import { ShareButton } from "./share";
 import { displayStyle } from "./styles";
 
@@ -62,11 +62,18 @@ export function PosterHero({
 }) {
   const isRtl = profile.locale === "ar";
   const photo = profile.hero ?? profile.avatar;
-  const treatment = theme.layout.hero === "logo" && !profile.logo ? "portrait" : theme.layout.hero;
+  const treatment = !hasImage(photo) && !profile.logo ? "monogram" : theme.layout.hero === "logo" && !profile.logo ? "portrait" : theme.layout.hero;
 
   return (
     <header className="poster-hero-timeline grid justify-items-center text-center">
-      {treatment === "logo" && profile.logo ? (
+      {treatment === "monogram" ? (
+        // No photo yet: a large monogram on the accent color, so a new page still feels finished.
+        <div className="poster-hero-fade grid w-full justify-items-center pt-20 pb-24">
+          <span className="relative size-avatar-2xl overflow-hidden rounded-full text-display shadow-e2">
+            <Monogram name={profile.displayName} />
+          </span>
+        </div>
+      ) : treatment === "logo" && profile.logo ? (
         <div className="poster-hero-fade relative grid aspect-square w-full place-items-center overflow-hidden mask-b-from-55% mask-b-to-100% @prose:rounded-t-xl">
           <MediaImage src={photo.src} alt="" sizes={mediaSizes.column} priority={!preview} className="scale-lift blur-glass" />
           <div aria-hidden className="absolute inset-0 bg-creator-bg opacity-secondary" />
@@ -92,7 +99,7 @@ export function PosterHero({
           />
         </div>
       )}
-      <div className={cn("relative grid justify-items-center gap-3 px-creator-gutter", treatment === "logo" && profile.logo ? "-mt-6" : "-mt-16")}>
+      <div className={cn("relative grid justify-items-center gap-3 px-creator-gutter", treatment === "logo" && profile.logo ? "-mt-6" : treatment === "monogram" ? "-mt-12" : "-mt-16")}>
         {treatment === "logo" && profile.logo ? null : <Name profile={profile} isRtl={isRtl} />}
         {profile.tagline ? <p className="text-small font-semibold tracking-wide text-balance uppercase">{profile.tagline}</p> : null}
         {profile.bio ? <p className="max-w-prose text-body-lg text-balance text-creator-fg-muted">{profile.bio}</p> : null}
@@ -114,8 +121,8 @@ export function PosterBar({ profile }: { profile: Profile }) {
   return (
     <div className="pointer-events-none sticky top-0 layer-sticky h-0">
       <div className="poster-bar pointer-events-auto flex h-control-xl items-center gap-3 border-b border-creator-line bg-creator-glass ps-creator-gutter pe-2 backdrop-blur-glass">
-        <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2">
-          <MediaImage src={profile.avatar.src} alt="" sizes={mediaSizes.thumb} />
+        <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-small">
+          {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
         </span>
         <p className="min-w-0 flex-1 truncate text-body font-semibold">{profile.displayName}</p>
         <ShareButton title={profile.displayName} />

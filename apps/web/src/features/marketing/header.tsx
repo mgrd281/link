@@ -1,5 +1,5 @@
 import { Button, Logo } from "@linkyo/ui";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { LocaleSwitch } from "@/components/locale-switch";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -16,7 +16,9 @@ export function MarketingHeader() {
     { href: "#pricing", label: t("nav.pricing") },
     { href: "#faq", label: t("nav.faq") },
   ];
-  const cta = { href: "#start", label: t("nav.start") };
+  const locale = useLocale();
+  const cta = { href: `/${locale}/signup`, label: t("nav.start") };
+  const login = { href: `/${locale}/login`, label: t("nav.login") };
   return (
     <header className="layer-sticky sticky top-0 px-3 pt-3 md:px-5">
       <a
@@ -45,10 +47,16 @@ export function MarketingHeader() {
             <ThemeSwitch />
             <LocaleSwitch />
           </div>
+          <Link
+            href="/login"
+            className="hidden h-control-md items-center rounded-full px-4 text-small font-semibold text-fg hover:bg-hover focus-visible:focus-ring md:inline-flex"
+          >
+            {login.label}
+          </Link>
           <Button asChild variant="primary" size="md" className="hidden rounded-full md:inline-flex">
-            <a href={cta.href}>{cta.label}</a>
+            <Link href="/signup">{cta.label}</Link>
           </Button>
-          <MobileMenu items={items} cta={cta} labels={{ menu: t("nav.menu"), close: t("nav.close") }} />
+          <MobileMenu items={items} cta={cta} secondary={login} labels={{ menu: t("nav.menu"), close: t("nav.close") }} />
         </div>
       </div>
     </header>

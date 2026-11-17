@@ -1,4 +1,4 @@
-import { isBlockActive, type Block, type BlockOf, type Page } from "@linkyo/blocks";
+import { hasImage, isBlockActive, type Block, type BlockOf, type Page } from "@linkyo/blocks";
 import type { HeadingStyle, ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
@@ -40,6 +40,7 @@ export function PosterRenderer({ page, theme, preview = false }: { page: Page; t
   const isRtl = profile.locale === "ar";
   const photo = profile.hero ?? profile.avatar;
   const surface = cardSurface[theme.buttonStyle];
+  const Main = preview ? "div" : "main";
 
   return (
     <div
@@ -49,16 +50,19 @@ export function PosterRenderer({ page, theme, preview = false }: { page: Page; t
       className={cn("poster-scope @container relative isolate overflow-clip bg-creator-bg font-creator-body text-creator-fg", preview ? "min-h-full" : "min-h-dvh")}
     >
       {/* Wide screens: the portrait becomes a soft ambient glow behind the column. Decorative. */}
-      <div aria-hidden className="absolute inset-x-0 top-0 hidden h-dvh overflow-hidden opacity-secondary @prose:block">
-        <MediaImage src={photo.src} alt="" sizes={mediaSizes.wide} className="scale-lift blur-ambient" />
-        <div className="absolute inset-0 bg-linear-to-b from-transparent to-creator-bg" />
-      </div>
+      {hasImage(photo) ? (
+        <div aria-hidden className="absolute inset-x-0 top-0 hidden h-dvh overflow-hidden opacity-secondary @prose:block">
+          <MediaImage src={photo.src} alt="" sizes={mediaSizes.wide} className="scale-lift blur-ambient" />
+          <div className="absolute inset-0 bg-linear-to-b from-transparent to-creator-bg" />
+        </div>
+      ) : null}
 
       <div className="relative mx-auto max-w-creator @prose:pt-10">
         <PosterBar profile={profile} />
         <PosterHero profile={profile} socials={socials} theme={theme} preview={preview} />
 
-        <main className="grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:px-0">
+        {/* A preview sits inside the dashboard, which already has the page's one <main>. */}
+        <Main className="grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:px-0">
           {sections.map((section) => (
             <PosterSection key={section.id} title={section.title} headings={theme.layout.headings}>
               {section.items.map((item) => (
@@ -66,7 +70,7 @@ export function PosterRenderer({ page, theme, preview = false }: { page: Page; t
               ))}
             </PosterSection>
           ))}
-        </main>
+        </Main>
         <CreatorFooter className="px-creator-gutter" />
       </div>
     </div>

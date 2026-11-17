@@ -1,6 +1,6 @@
 "use client";
 
-import type { Page } from "@linkyo/blocks";
+import { hasImage, type Page } from "@linkyo/blocks";
 import { creatorTokens, type CreatorTemplateId } from "@linkyo/tokens";
 import { resolveCreatorTheme, TEMPLATE_IDS } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
@@ -12,6 +12,7 @@ import { useMemo } from "react";
 import { themeStyle } from "@/features/creator/theme";
 
 import { thumbSizes } from "../editor/use-dashboard";
+import { initials } from "../shared/creator-kit";
 import { resolveMedia } from "../shared/media";
 import { displayStyle } from "./styles";
 
@@ -33,10 +34,11 @@ export function TemplatePicker({
   const tTemplates = useTranslations("templates");
   const rtlScript = profile.locale === "ar";
   const themes = useMemo(() => TEMPLATE_IDS.map((id) => ({ id, theme: resolveCreatorTheme({ template: id }, { rtlScript }) })), [rtlScript]);
-  const avatar = resolveMedia(profile.avatar.src);
+  const photo = hasImage(profile.avatar) ? profile.avatar : hasImage(profile.hero) ? profile.hero : null;
+  const avatar = photo ? resolveMedia(photo.src) : null;
 
   return (
-    <fieldset className="grid gap-3">
+    <fieldset className="grid min-w-0 gap-3">
       <legend className="sr-only">{t("template")}</legend>
       <div className="-mx-5 overflow-x-auto px-5 pb-1 lg:mx-0 lg:overflow-visible lg:px-0">
         <div className="grid auto-cols-[42%] grid-flow-col gap-3 sm:auto-cols-[28%] lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-5">
@@ -46,7 +48,7 @@ export function TemplatePicker({
               <label
                 key={id}
                 className={cn(
-                  "group grid cursor-pointer content-start gap-2 rounded-lg p-2 transition-colors duration-micro",
+                  "group relative grid cursor-pointer content-start gap-2 rounded-lg p-2 transition-colors duration-micro",
                   "has-[:focus-visible]:focus-ring hover:bg-hover",
                   selected && "bg-selected",
                 )}
@@ -61,14 +63,18 @@ export function TemplatePicker({
                   )}
                 >
                   <span className="absolute inset-x-0 top-0 h-3/5 overflow-hidden mask-b-from-30% mask-b-to-100%">
-                    <Image
-                      src={avatar}
-                      alt=""
-                      fill
-                      sizes={thumbSizes}
-                      className={cn("object-cover", theme.layout.hero === "duotone" && "grayscale mix-blend-screen", theme.layout.hero === "logo" && "blur-glass")}
-                      unoptimized={typeof avatar === "string"}
-                    />
+                    {avatar ? (
+                      <Image
+                        src={avatar}
+                        alt=""
+                        fill
+                        sizes={thumbSizes}
+                        className={cn("object-cover", theme.layout.hero === "duotone" && "grayscale mix-blend-screen", theme.layout.hero === "logo" && "blur-glass")}
+                        unoptimized={typeof avatar === "string"}
+                      />
+                    ) : (
+                      <span className="absolute inset-0 grid place-items-center bg-creator-surface-2 font-creator-display text-h2 text-creator-fg">{initials(profile.displayName)}</span>
+                    )}
                   </span>
                   <span className="relative truncate font-creator-display text-body leading-none" style={displayStyle}>
                     {profile.displayName}

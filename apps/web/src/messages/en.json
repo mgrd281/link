@@ -564,8 +564,7 @@
       "cta": "Start for free",
       "hint": "Lowercase letters, numbers and dashes, 3–30 characters.",
       "invalid": "Use 3–30 lowercase letters, numbers or dashes — no dash at the start or end.",
-      "ok": "linkyo.app/{name} looks good. Sign-up opens soon — try the editor in the meantime.",
-      "tryEditor": "Try the editor"
+      "ok": "linkyo.app/{name} looks good. Taking you to sign-up…"
     },
     "proof": {
       "title": "Built on three promises",
@@ -748,5 +747,609 @@
       "rights": "© 2026 Linkyo"
     },
     "skip": "Skip to content"
+  },
+  "auth": {
+    "meta": {
+      "signup": "Create account",
+      "login": "Log in",
+      "forgot": "Reset password"
+    },
+    "skip": "Skip to content",
+    "home": "Linkyo home",
+    "demo": {
+      "title": "Demo:",
+      "body": "Your account and page are saved only in this browser and sent nowhere. Real accounts arrive at launch."
+    },
+    "side": {
+      "label": "What you get",
+      "title": "Your page is ready in two minutes.",
+      "points": [
+        "Free, no credit card",
+        "No cookies, no tracking on your page",
+        "Data in the EU, GDPR-ready"
+      ]
+    },
+    "social": {
+      "google": "Continue with Google",
+      "apple": "Continue with Apple",
+      "soon": "At launch",
+      "or": "or with email"
+    },
+    "fields": {
+      "username": "Your address",
+      "usernameHint": "Lowercase letters, numbers and dashes, 3–30 characters.",
+      "usernameOk": "linkyo.app/{name} is available",
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "New password",
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "checks": {
+      "length": "At least 8 characters",
+      "mixed": "Letters and a number or symbol",
+      "personal": "Not your name or email",
+      "met": "(done)",
+      "open": "(not yet)"
+    },
+    "errors": {
+      "required": "Please enter your email and password.",
+      "invalidEmail": "This email address looks incomplete, e.g. name@example.com.",
+      "weakPassword": "Choose a password that meets all three points.",
+      "invalidUsername": "Only lowercase letters, numbers and dashes, 3–30 characters.",
+      "reservedUsername": "This address is reserved for Linkyo. Try another one.",
+      "usernameTaken": "This address is taken. Try a variation, e.g. with a dash.",
+      "emailTaken": "There is already an account with this email.",
+      "invalidCredentials": "Email or password doesn't match. Check the spelling or reset your password.",
+      "wrongPassword": "Your current password doesn't match.",
+      "notFound": "There is no account with this email in this browser.",
+      "storageFull": "This browser's demo storage is full. Remove large images and try again.",
+      "unavailable": "This browser doesn't allow storage (private window?). Open Linkyo in a normal window."
+    },
+    "signup": {
+      "title": "Get your page",
+      "lead": "Free. Online in two minutes.",
+      "submit": "Create my page",
+      "terms": "By creating an account you accept the terms of use and confirm the privacy policy.",
+      "haveAccount": "Already have an account?",
+      "login": "Log in",
+      "loginInstead": "Log in instead"
+    },
+    "login": {
+      "title": "Welcome back",
+      "lead": "Log in to edit your page.",
+      "submit": "Log in",
+      "forgot": "Forgot password?",
+      "noAccount": "New to Linkyo?",
+      "signup": "Create a page"
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "lead": "Enter your email and choose a new password.",
+      "demoNote": "The demo can't send emails, so you set your new password right here. Later you'll get a link by email.",
+      "submit": "Save new password",
+      "doneTitle": "Password changed",
+      "done": "You can now log in with your new password.",
+      "toLogin": "Go to log in",
+      "back": "Back to log in"
+    }
+  },
+  "app": {
+    "meta": {
+      "home": "Home",
+      "editor": "Your page",
+      "design": "Design",
+      "analytics": "Analytics",
+      "settings": "Settings",
+      "welcome": "Welcome",
+      "preview": "Your page"
+    },
+    "loading": "Loading your dashboard…",
+    "skip": "Skip to content",
+    "errors": {
+      "required": "Please fill this in.",
+      "url": "Enter a full web address, e.g. https://example.com.",
+      "tooLong": "This is a bit long. Please shorten it.",
+      "atLeastOne": "Add at least one.",
+      "invalid": "Please check this field.",
+      "invalidEmail": "This email address looks incomplete.",
+      "weakPassword": "Choose a stronger password.",
+      "invalidUsername": "Only lowercase letters, numbers and dashes.",
+      "reservedUsername": "This address is reserved.",
+      "usernameTaken": "This address is taken.",
+      "emailTaken": "This email is already used.",
+      "invalidCredentials": "Email or password doesn't match.",
+      "wrongPassword": "Your current password doesn't match.",
+      "notFound": "Your session has ended. Please log in again.",
+      "storageFull": "Not saved: this browser's demo storage is full. Remove a large image and try again.",
+      "unavailable": "Not saved: this browser doesn't allow storage.",
+      "imageRequired": "Please add a picture."
+    },
+    "added": {
+      "one": "{type} added",
+      "many": "{count} blocks added",
+      "edit": "Edit"
+    },
+    "removed": "“{title}” deleted",
+    "undo": "Undo",
+    "redo": "Redo",
+    "nav": {
+      "label": "Dashboard",
+      "home": "Home",
+      "page": "Page",
+      "design": "Design",
+      "analytics": "Stats",
+      "settings": "Settings",
+      "add": "Add"
+    },
+    "viewPage": "View my page",
+    "logout": "Log out",
+    "account": "Account",
+    "accountMenu": "Account menu",
+    "demo": "Demo",
+    "save": {
+      "saved": "Saved",
+      "saving": "Saving…",
+      "error": "Not saved"
+    },
+    "form": {
+      "upload": "Upload",
+      "replace": "Replace",
+      "removeImage": "Remove",
+      "alt": "Image description",
+      "altHint": "For people who can't see the image. What is in it?",
+      "moveUp": "Move {name} up",
+      "moveDown": "Move {name} down",
+      "removeItem": "Remove {name}",
+      "imageErrors": {
+        "type": "That file isn't an image. Choose a JPG, PNG or WebP.",
+        "size": "That image is over 25 MB. Choose a smaller one.",
+        "decode": "This image couldn't be read. Try another file."
+      }
+    },
+    "fields": {
+      "title": "Title",
+      "titleOptional": "Title (optional)",
+      "url": "Link",
+      "urlOptional": "Link (optional)",
+      "highlight": "Feature it",
+      "highlightHint": "Shown larger, so it's the first thing people tap.",
+      "affiliate": "Paid or affiliate link",
+      "affiliateHint": "Adds an “Ad” label, as the law requires for paid links.",
+      "thumbnail": "Small image (optional)",
+      "badge": "Badge (optional)",
+      "badgeHint": "A short word like “New” or “-20%”.",
+      "image": "Image",
+      "description": "Description (optional)",
+      "sectionTitle": "Section title",
+      "sectionHint": "Everything below it, up to the next title, belongs to this section.",
+      "text": "Text",
+      "dividerHint": "A divider adds a quiet line between parts of your page. Nothing to fill in.",
+      "profiles": "Your profiles",
+      "profilesHint": "Shown as icons under your name. Paste a link, we recognise the platform.",
+      "platform": "Platform",
+      "addProfile": "Add profile",
+      "photos": "Photos",
+      "photosHint": "Up to 24 photos, shown as a swipeable row.",
+      "photoN": "Photo {n}",
+      "addPhoto": "Add photo",
+      "videoUrl": "Video link",
+      "videoUrlHint": "YouTube, Vimeo, TikTok or Instagram. Plays only after a tap (no tracking before).",
+      "poster": "Cover image",
+      "clipN": "Clip {n}",
+      "addClip": "Add clip",
+      "cover": "Cover",
+      "releaseTitle": "Release title",
+      "artist": "Artist",
+      "kind": "Type",
+      "kinds": {
+        "single": "Single",
+        "ep": "EP",
+        "album": "Album",
+        "playlist": "Playlist"
+      },
+      "releaseDate": "Release date",
+      "listenOn": "Listen on",
+      "listenOnHint": "Add each platform's link. Fans pick their favourite.",
+      "addPlatform": "Add platform",
+      "eventsTitleHint": "Empty shows “Shows & tickets”.",
+      "showN": "Show {n}",
+      "addShow": "Add show",
+      "date": "Date",
+      "time": "Time",
+      "showName": "Show name (optional)",
+      "showNameHint": "e.g. “Release night”. Otherwise the city is shown.",
+      "city": "City",
+      "venue": "Venue",
+      "tickets": "Ticket link",
+      "status": "Tickets",
+      "statuses": {
+        "onsale": "On sale",
+        "few": "Few left",
+        "soldout": "Sold out"
+      },
+      "productName": "Product name",
+      "price": "Price",
+      "currency": "Currency",
+      "shopUrl": "Shop link",
+      "newsletterHint": "Sign-ups are collected with double opt-in once accounts go live. In the demo the form is shown but sends nothing.",
+      "newsletterDefault": "Get my newsletter",
+      "columns": "Layout",
+      "columns3": "3 per row (logos only)",
+      "columns2": "2 per row (with role)",
+      "partnerN": "Partner {n}",
+      "addPartner": "Add partner",
+      "logo": "Logo",
+      "name": "Name",
+      "role": "Role (optional)",
+      "channelUrl": "Channel link",
+      "channel": "Channel name",
+      "streamTitle": "Stream title (optional)",
+      "isLive": "Live now",
+      "isLiveHint": "Later this switches on by itself when you go live.",
+      "schedule": "Schedule",
+      "scheduleHint": "Show this only in a time window, e.g. for a presale. Empty means always.",
+      "showFrom": "Show from",
+      "showUntil": "Show until"
+    },
+    "edit": {
+      "addTitle": "Add {type}",
+      "editTitle": "Edit {type}",
+      "close": "Close",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "add": "Add to page",
+      "save": "Save",
+      "fixErrors": "{count, plural, one {One field needs your attention.} other {# fields need your attention.}}",
+      "discardTitle": "Discard your changes?",
+      "discardBody": "What you changed here won't be saved.",
+      "discard": "Discard",
+      "keepEditing": "Keep editing",
+      "hints": {
+        "link": "A button that opens any website.",
+        "card": "A big tappable card with an image.",
+        "header": "Starts a new section on your page.",
+        "text": "A paragraph in your own words.",
+        "divider": "A quiet line between parts of your page.",
+        "socials": "Your profiles as icons under your name.",
+        "image": "One photo, optionally linked.",
+        "gallery": "Several photos in a swipeable row.",
+        "video": "A video that plays right on your page.",
+        "shorts": "Vertical clips in a row.",
+        "music": "A release with all streaming platforms.",
+        "events": "Your dates, sorted by month, with tickets.",
+        "product": "Something you sell, with price.",
+        "newsletter": "Let fans sign up for your emails.",
+        "brands": "Partners, sponsors or your team as logo tiles.",
+        "live": "Shows when you're live on Twitch, YouTube or Kick."
+      }
+    },
+    "preview": {
+      "label": "Live preview",
+      "open": "Open",
+      "show": "Preview",
+      "close": "Close preview"
+    },
+    "add": {
+      "title": "Add to your page",
+      "lead": "Paste a link or choose what you want to add.",
+      "close": "Close",
+      "pasteLabel": "Paste a link",
+      "pastePlaceholder": "Spotify, YouTube, TikTok, shop, tickets…",
+      "addButton": "Add",
+      "invalid": "That doesn't look like a link. Try copying it again from the address bar.",
+      "detected": "{type} detected",
+      "pasteHint": "We recognise 30+ platforms and make the right block. Several links at once work too.",
+      "orChoose": "Or choose",
+      "desc": {
+        "link": "Any website",
+        "card": "Big card with image",
+        "header": "New section",
+        "text": "A paragraph",
+        "divider": "A quiet line",
+        "socials": "Profile icons",
+        "image": "One photo",
+        "gallery": "Photo row",
+        "video": "Plays on your page",
+        "shorts": "Vertical clips",
+        "music": "All platforms",
+        "events": "Dates & tickets",
+        "product": "With price",
+        "newsletter": "Email sign-up",
+        "brands": "Logo tiles",
+        "live": "Twitch, YouTube, Kick"
+      },
+      "photosHint": "Have photos on this device? One becomes an image, several a gallery.",
+      "photos": "Upload photos",
+      "imageErrors": {
+        "type": "That file isn't an image. Choose a JPG, PNG or WebP.",
+        "size": "That image is over 25 MB. Choose a smaller one.",
+        "decode": "This image couldn't be read. Try another file."
+      }
+    },
+    "editor": {
+      "title": "Your page",
+      "lead": "Top to bottom, as visitors see it. Tap a row to edit it.",
+      "profileEmpty": "Add a photo and a short bio",
+      "editProfile": "Edit profile",
+      "blocks": "Sections & blocks",
+      "count": "{count, plural, one {# block} other {# blocks}}",
+      "emptyTitle": "Your page is waiting",
+      "emptyBody": "Paste your first link — a song, a video, your shop — and it appears on your page right away.",
+      "addFirst": "Add your first link",
+      "add": "Add",
+      "addSection": "Add section",
+      "tips": "Tip: drag rows to reorder, or focus the handle and press ⌥↑ / ⌥↓. ⌘Z undoes everything.",
+      "drag": "Move {title}",
+      "editItem": "Edit {title} ({type})",
+      "hidden": "Hidden",
+      "featured": "Featured",
+      "scheduled": "Scheduled",
+      "visible": "Show {title} on your page",
+      "more": "More for {title}",
+      "edit": "Edit",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "duplicate": "Duplicate",
+      "delete": "Delete"
+    },
+    "profile": {
+      "title": "Profile",
+      "lead": "The top of your page: who you are in one glance.",
+      "avatar": "Profile photo",
+      "name": "Name",
+      "tagline": "One line about you (optional)",
+      "taglineHint": "e.g. “DJ & producer · Berlin”.",
+      "bio": "Short bio",
+      "bioHint": "Two sentences is plenty.",
+      "location": "Location (optional)",
+      "hero": "Large photo (optional)",
+      "logo": "Logo (optional)",
+      "language": "Language of your page",
+      "close": "Close",
+      "cancel": "Cancel",
+      "save": "Save profile",
+      "saved": "Profile saved",
+      "nameRequired": "Please enter the name visitors should see."
+    },
+    "home": {
+      "title": "Hi {name}",
+      "lead": "Here's your page at a glance.",
+      "yourLink": "Your link",
+      "linkDemo": "Demo: this address goes live at launch. Until then your page is only in this browser.",
+      "view": "View page",
+      "checklist": {
+        "title": "Finish your page",
+        "doneTitle": "Your page is complete",
+        "progress": "{done} of {total}",
+        "doneBody": "Everything's in place. Now share your link in your bio.",
+        "isDone": "(done)",
+        "isOpen": "(to do)",
+        "items": {
+          "photo": {
+            "title": "Add a photo",
+            "hint": "Pages with a photo get tapped more."
+          },
+          "bio": {
+            "title": "Write a short bio",
+            "hint": "Two sentences about what you do."
+          },
+          "links": {
+            "title": "Add 3 things",
+            "hint": "Your latest song, a video, your shop."
+          },
+          "socials": {
+            "title": "Add your social profiles",
+            "hint": "Instagram, TikTok, YouTube…"
+          },
+          "look": {
+            "title": "Choose your look",
+            "hint": "Pick a template or your own color."
+          },
+          "legal": {
+            "title": "Add your legal notice",
+            "hint": "Required in Germany for business pages (Impressum)."
+          }
+        }
+      },
+      "stats": {
+        "title": "Last 7 days",
+        "sample": "Sample data",
+        "views": "Views",
+        "clicks": "Clicks",
+        "ctr": "Click rate",
+        "chartLabel": "Views per day, last 7 days",
+        "dayLabel": "{day}: {views} views",
+        "more": "All stats"
+      },
+      "quick": {
+        "label": "Shortcuts",
+        "add": "Add something",
+        "page": "Edit page",
+        "design": "Change look",
+        "settings": "Settings"
+      }
+    },
+    "share": {
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "copyFailed": "Couldn't copy. Select the address and copy it by hand.",
+      "share": "Share",
+      "qr": "QR code",
+      "qrTitle": "Your QR code",
+      "qrLead": "For flyers, posters, merch and the stage screen.",
+      "qrLabel": "QR code for {url}",
+      "download": "Download PNG",
+      "close": "Close"
+    },
+    "design": {
+      "title": "Design",
+      "lead": "Start from a template, then make it yours. Text always stays readable.",
+      "template": "Template",
+      "applied": "{name} applied",
+      "undo": "Undo",
+      "color": "Your color",
+      "reset": "Use template color",
+      "swatch": "Color {hex}",
+      "custom": "Custom",
+      "customLabel": "Pick any color",
+      "colorHint": "Buttons, highlights and (in Colorful) the whole page use it. We adjust shades so text stays readable.",
+      "background": "Background",
+      "modes": {
+        "light": "Light",
+        "dark": "Dark",
+        "vivid": "Colorful"
+      },
+      "modeHints": {
+        "light": "Bright and calm.",
+        "dark": "Dark stage, your photo stands out.",
+        "vivid": "The whole page in your color."
+      },
+      "fonts": "Fonts",
+      "arabicFonts": "Your page is in Arabic, so it uses a typeface made for Arabic script.",
+      "buttons": "Buttons",
+      "buttonStyle": "Style",
+      "styles": {
+        "filled": "Filled",
+        "outline": "Outline",
+        "soft": "Soft",
+        "glass": "Glass",
+        "shadow": "Shadow",
+        "minimal": "Minimal"
+      },
+      "sampleButton": "My new song",
+      "buttonShape": "Corners",
+      "shapes": {
+        "square": "Square",
+        "rounded": "Rounded",
+        "pill": "Round"
+      },
+      "resetDone": "Back to the template's look",
+      "resetAll": "Reset to template"
+    },
+    "analytics": {
+      "title": "Stats",
+      "sample": "Sample data",
+      "lead": "Real numbers start when your page goes live. Cookie-free, no consent banner needed.",
+      "range": "Time range",
+      "days": "{days} days",
+      "views": "Views",
+      "clicks": "Clicks",
+      "ctr": "Click rate",
+      "vsPrevious": "vs previous {days} days",
+      "viewsPerDay": "Views per day",
+      "chartKeys": "{label}. Use the arrow keys to read each day.",
+      "table": "Show as table",
+      "date": "Date",
+      "topLinks": "Top links",
+      "noLinks": "Add links to your page to see which ones people tap.",
+      "sources": "Where visitors come from",
+      "sourceNames": {
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "direct": "Direct & messengers",
+        "youtube": "YouTube",
+        "qr": "QR code",
+        "other": "Other"
+      },
+      "countries": "Countries",
+      "devices": "Devices",
+      "deviceNames": {
+        "mobile": "Phone",
+        "desktop": "Computer",
+        "tablet": "Tablet"
+      },
+      "privacy": "Linkyo counts visits without cookies and without storing IP addresses. Your visitors stay anonymous, and you see everything you need."
+    },
+    "settings": {
+      "title": "Settings",
+      "lead": "Your profile, login, legal notice and data.",
+      "address": "Page address",
+      "addressLabel": "Address",
+      "addressHint": "If you change it, the old address stops working.",
+      "addressSave": "Change address",
+      "addressChanged": "Your page is now at {url}",
+      "account": "Login",
+      "emailSave": "Change email",
+      "emailChanged": "Email changed",
+      "password": "Password",
+      "currentPassword": "Current password",
+      "passwordSave": "Change password",
+      "passwordChanged": "Password changed",
+      "legal": "Legal notice (Impressum)",
+      "legalHint": "In Germany, pages with a business purpose need a legal notice (§ 5 DDG). It's linked at the bottom of your page as “Imprint”.",
+      "legalName": "Full name or company",
+      "legalAddress": "Address for service",
+      "legalEmail": "Contact email",
+      "legalPhone": "Phone (optional)",
+      "legalSave": "Save legal notice",
+      "legalSaved": "Legal notice saved",
+      "saveFailed": "Couldn't save. Please try again.",
+      "dashboard": "Dashboard",
+      "theme": "Appearance",
+      "language": "Language",
+      "data": "Your data",
+      "exportHint": "Download everything as a file (JSON): profile, blocks, design, legal notice.",
+      "export": "Export my data",
+      "deleteHint": "Deletes your account and page in this browser. This can't be undone.",
+      "delete": "Delete account",
+      "deleteTitle": "Delete your account?",
+      "deleteBody": "Your page, profile and settings will be deleted. This can't be undone.",
+      "deleteType": "Type {name} to confirm",
+      "deleteConfirm": "Delete for good",
+      "cancel": "Cancel",
+      "deleted": "Account deleted",
+      "logout": "Log out"
+    },
+    "welcome": {
+      "skip": "Skip for now",
+      "progress": "Setup steps",
+      "stepOf": "Step {n} of {total}",
+      "nameRequired": "Please enter the name visitors should see.",
+      "steps": {
+        "you": {
+          "short": "You",
+          "title": "Who's behind the page?",
+          "lead": "Your name and a photo. You can change everything later."
+        },
+        "look": {
+          "short": "Look",
+          "title": "Pick a look",
+          "lead": "Five templates, all with your photo and name. Try them — the preview changes instantly."
+        },
+        "links": {
+          "short": "Links",
+          "title": "Add your links",
+          "lead": "Your profiles and the links that matter most right now."
+        },
+        "done": {
+          "short": "Done",
+          "title": "Your page is ready, {name}",
+          "lead": "Put the link in your Instagram and TikTok bio. You can keep adding anytime."
+        }
+      },
+      "lookLater": "You can fine-tune colors, fonts and buttons later in Design.",
+      "socials": "Your profiles",
+      "platforms": {
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "spotify": "Spotify (artist ID)"
+      },
+      "links": "Important links (optional)",
+      "linksHint": "Paste one or more links — a song, a video, your shop. We make the right blocks.",
+      "found": "Recognised links",
+      "toEditor": "Keep editing my page",
+      "toDashboard": "Go to dashboard",
+      "back": "Back",
+      "continue": "Continue",
+      "finish": "Create my page",
+      "previewLabel": "Live preview"
+    },
+    "ownPage": {
+      "label": "Page actions",
+      "back": "Dashboard",
+      "edit": "Edit"
+    }
   }
 }

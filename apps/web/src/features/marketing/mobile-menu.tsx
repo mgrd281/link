@@ -10,7 +10,7 @@ export interface NavItem {
 }
 
 /** Phone navigation on the native Popover API: light-dismiss, Esc and focus return come for free. */
-export function MobileMenu({ items, labels, cta }: { items: NavItem[]; labels: { menu: string; close: string }; cta: NavItem }) {
+export function MobileMenu({ items, labels, cta, secondary }: { items: NavItem[]; labels: { menu: string; close: string }; cta: NavItem; secondary?: NavItem }) {
   const close = (event: MouseEvent<HTMLElement>) => {
     event.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover();
   };
@@ -47,11 +47,20 @@ export function MobileMenu({ items, labels, cta }: { items: NavItem[]; labels: {
             </a>
           ))}
         </nav>
-        <Button asChild variant="primary" size="xl" block>
-          <a href={cta.href} onClick={close}>
-            {cta.label}
-          </a>
-        </Button>
+        <div className="grid gap-2">
+          {secondary ? (
+            <Button asChild size="xl" block>
+              <a href={secondary.href} onClick={close}>
+                {secondary.label}
+              </a>
+            </Button>
+          ) : null}
+          <Button asChild variant="primary" size="xl" block>
+            <a href={cta.href} onClick={close}>
+              {cta.label}
+            </a>
+          </Button>
+        </div>
       </div>
     </>
   );

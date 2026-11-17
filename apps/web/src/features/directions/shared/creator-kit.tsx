@@ -1,7 +1,7 @@
-import type { Platform } from "@linkyo/blocks";
+import { hasImage, type Platform } from "@linkyo/blocks";
 import { tokens } from "@linkyo/tokens";
 import { cn, Icon, LogoSymbol, PlatformIcon } from "@linkyo/ui";
-import { Globe, Mail } from "lucide-react";
+import { Globe, Image as ImageIcon, Mail } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import type { SimpleIcon } from "simple-icons";
@@ -88,6 +88,14 @@ export function MediaImage({
   className?: string | undefined;
   priority?: boolean;
 }) {
+  if (!hasImage({ src })) {
+    // No picture yet (new creators, links pasted before metadata arrives): a calm tile, never a broken image.
+    return (
+      <span role={alt ? "img" : undefined} aria-label={alt || undefined} className={cn("absolute inset-0 grid place-items-center bg-creator-surface-2 text-creator-fg-muted", className)}>
+        <Icon icon={ImageIcon} size="lg" />
+      </span>
+    );
+  }
   const resolved = resolveMedia(src);
   return (
     <Image
@@ -101,6 +109,22 @@ export function MediaImage({
       placeholder={typeof resolved === "string" ? "empty" : "blur"}
       className={cn("object-cover", className)}
     />
+  );
+}
+
+/** Up to two initials, for creators without a photo. */
+export function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const letters = words.length > 1 ? [words[0], words.at(-1)] : [words[0]];
+  return letters.map((word) => Array.from(word ?? "")[0] ?? "").join("").toLocaleUpperCase();
+}
+
+/** A creator's initials on their accent color. Fills its (relative, sized) box. */
+export function Monogram({ name, className }: { name: string; className?: string | undefined }) {
+  return (
+    <span aria-hidden className={cn("absolute inset-0 grid place-items-center bg-creator-accent font-creator-display text-creator-accent-fg", className)}>
+      {initials(name)}
+    </span>
   );
 }
 

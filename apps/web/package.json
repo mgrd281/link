@@ -40,7 +40,9 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "simple-icons": "catalog:",
-    "tailwind-merge": "catalog:"
+    "tailwind-merge": "catalog:",
+    "uqr": "0.1.3",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@axe-core/playwright": "catalog:",

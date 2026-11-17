@@ -6,6 +6,8 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
+import { Link } from "@/i18n/navigation";
+
 import { fullPage, PHONE_SCREEN_RATIO, phoneShots, phoneSizes } from "./assets";
 import { ClaimForm } from "./claim-form";
 import { order } from "./hero";
@@ -250,12 +252,12 @@ export function Pricing() {
               </li>
             ))}
           </ul>
-          <a
-            href="#start"
+          <Link
+            href="/signup"
             className="inline-flex h-control-xl items-center justify-center rounded-lg bg-primary px-6 text-body font-semibold text-primary-fg transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
           >
             {t("free.cta")}
-          </a>
+          </Link>
         </article>
         <article className="mk-reveal grid content-start gap-6 rounded-xl border border-line bg-canvas-muted p-6 md:p-10">
           <div className="grid gap-2">

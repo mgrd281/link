@@ -14,8 +14,7 @@ test.describe("marketing home", () => {
     await expect(field).toHaveAttribute("aria-invalid", "true");
     await field.fill("mila-aurel");
     await field.press("Enter");
-    await expect(page.getByText("linkyo.app/mila-aurel looks good.").first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "Try the editor" }).first()).toBeVisible();
+    await page.waitForURL("**/en/signup?name=mila-aurel");
   });
 
   test("pasting a link builds the right block, and examples work with one click", async ({ page }) => {

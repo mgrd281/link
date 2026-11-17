@@ -1,0 +1,82 @@
+import type { Page } from "@linkyo/blocks";
+import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
+
+/**
+ * The account contract the whole app talks to. Today it is backed by the browser (demo mode,
+ * `local-store.ts`); in Phase 1 a Supabase implementation (Auth + Postgres, EU region) replaces it
+ * without touching a single screen: same methods, same snapshot shape.
+ */
+
+export interface Account {
+  id: string;
+  email: string;
+  username: string;
+  createdAt: string;
+}
+
+/** Legal notice (DE: § 5 DDG "Impressum"), linked from the page footer. */
+export interface Legal {
+  name: string;
+  address: string;
+  email: string;
+  phone: string;
+}
+
+/** Everything a creator owns besides the login: the page, its look and settings. */
+export interface Site {
+  page: Page;
+  theme: CreatorThemeConfig;
+  legal: Legal;
+  /** Finished (or skipped) the welcome flow. */
+  onboarded: boolean;
+  updatedAt: string;
+}
+
+export type AccountSnapshot =
+  | { status: "loading" }
+  | { status: "signedOut" }
+  | { status: "signedIn"; account: Account; site: Site };
+
+export type AuthError =
+  | "invalidEmail"
+  | "weakPassword"
+  | "invalidUsername"
+  | "reservedUsername"
+  | "usernameTaken"
+  | "emailTaken"
+  | "invalidCredentials"
+  | "wrongPassword"
+  | "notFound"
+  | "storageFull"
+  | "unavailable";
+
+export type Result = { ok: true } | { ok: false; error: AuthError };
+
+export interface SignUpInput {
+  email: string;
+  password: string;
+  username: string;
+  locale: Page["profile"]["locale"];
+}
+
+export interface AccountStore {
+  /** `true` when data lives only in this browser (shown to the user everywhere it matters). */
+  readonly demo: boolean;
+  subscribe(listener: () => void): () => void;
+  getSnapshot(): AccountSnapshot;
+  getServerSnapshot(): AccountSnapshot;
+
+  signUp(input: SignUpInput): Promise<Result>;
+  logIn(input: { email: string; password: string }): Promise<Result>;
+  logOut(): void;
+  /** Demo: sets the new password directly (no email can be sent). Real: sends a reset link. */
+  resetPassword(input: { email: string; password: string }): Promise<Result>;
+  changePassword(input: { current: string; next: string }): Promise<Result>;
+  changeEmail(email: string): Result;
+  changeUsername(username: string): Result;
+  usernameStatus(username: string): "ok" | Extract<AuthError, "invalidUsername" | "reservedUsername" | "usernameTaken">;
+
+  updateSite(update: (site: Site) => Site): Result;
+  exportData(): string;
+  deleteAccount(): void;
+}

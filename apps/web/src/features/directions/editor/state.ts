@@ -9,10 +9,10 @@ export interface EditorDoc {
   theme: CreatorThemeConfig;
 }
 
-export interface EditorState {
-  past: EditorDoc[];
-  present: EditorDoc;
-  future: EditorDoc[];
+export interface EditorState<D extends EditorDoc = EditorDoc> {
+  past: D[];
+  present: D;
+  future: D[];
   selectedId: string | null;
 }
 
@@ -31,7 +31,7 @@ export type EditorAction =
 
 const HISTORY_LIMIT = 50;
 
-function apply(doc: EditorDoc, action: EditorAction): EditorDoc {
+function apply<D extends EditorDoc>(doc: D, action: EditorAction): D {
   const index = "id" in action ? doc.blocks.findIndex((block) => block.id === action.id) : -1;
   switch (action.type) {
     case "add": {
@@ -71,8 +71,11 @@ function apply(doc: EditorDoc, action: EditorAction): EditorDoc {
   }
 }
 
-/** Editor reducer with undo/redo history (every content change is undoable — brand §5.1). */
-export function editorReducer(state: EditorState, action: EditorAction): EditorState {
+/**
+ * Editor reducer with undo/redo history (every content change is undoable — brand §5.1).
+ * Generic over the document so the app can keep more than blocks and theme in the same history.
+ */
+export function editorReducer<D extends EditorDoc>(state: EditorState<D>, action: EditorAction): EditorState<D> {
   switch (action.type) {
     case "select":
       return { ...state, selectedId: action.id };
@@ -99,7 +102,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
   }
 }
 
-export const initialEditorState = (doc: EditorDoc): EditorState => ({ past: [], present: doc, future: [], selectedId: null });
+export const initialEditorState = <D extends EditorDoc>(doc: D): EditorState<D> => ({ past: [], present: doc, future: [], selectedId: null });
 
 const asPlatform = (value: Detection["platform"]): Platform =>
   (PLATFORMS as readonly string[]).includes(value ?? "") ? (value as Platform) : "website";

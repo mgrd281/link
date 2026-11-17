@@ -25,6 +25,17 @@
     background-color: var(--color-selected);
   }
 
+  /* Toasts sit above the dashboard's bottom tab bar on phones. */
+  :root {
+    --toast-offset: 0;
+  }
+
+  :root:has([data-tabbar]) {
+    @variant max-lg {
+      --toast-offset: calc(var(--spacing-16) + env(safe-area-inset-bottom));
+    }
+  }
+
   :focus-visible {
     outline: var(--border-width-focus) solid var(--color-focus);
     outline-offset: var(--border-width-focus-offset);
