@@ -1,0 +1,5 @@
+{
+  "extends": "@linkyo/config/tsconfig/library.json",
+  "compilerOptions": { "types": ["node"] },
+  "include": ["src", "test", "vitest.config.ts"]
+}

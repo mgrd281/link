@@ -1,0 +1,3 @@
+/* Tailwind entry used by ESLint (better-tailwindcss) to validate classes in this package. */
+@import "tailwindcss";
+@import "@linkyo/tokens/tailwind.css";
