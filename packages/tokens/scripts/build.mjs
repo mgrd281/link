@@ -384,6 +384,10 @@ StyleDictionary.registerFormat({
     for (const t of byPath(dictionary, ["creator", "preset"])) {
       presets[t.path[2]] = { id: t.path[2], ...ext(t) };
     }
+    const templates = {};
+    for (const t of byPath(dictionary, ["creator", "template"])) {
+      templates[t.path[2]] = { id: t.path[2], ...ext(t) };
+    }
     const shapes = {};
     for (const t of byPath(dictionary, ["creator", "button", "shape"])) shapes[t.path[3]] = px(t.$value);
     const cardShapes = {};
@@ -403,6 +407,7 @@ export const creatorTokens = {
   buttonStyles: ${json(buttonStyles)},
   pairings: ${json(pairings)},
   presets: ${json(presets)},
+  templates: ${json(templates)},
 } as const;
 
 export type Tokens = typeof tokens;
@@ -411,6 +416,7 @@ export type CreatorButtonShape = keyof typeof creatorTokens.buttonShapes;
 export type CreatorButtonStyle = (typeof creatorTokens.buttonStyles)[number];
 export type CreatorPairingId = keyof typeof creatorTokens.pairings;
 export type CreatorPresetId = keyof typeof creatorTokens.presets;
+export type CreatorTemplateId = keyof typeof creatorTokens.templates;
 `;
   },
 });

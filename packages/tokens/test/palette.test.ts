@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { contrastRatio, hexToOklch, oklchToHex, parseHex, toHex } from "../src/creator/color";
 import { auditPalette, generatePalette, type ThemeMode } from "../src/creator/palette";
-import { PRESET_IDS, resolveCreatorTheme, shuffleCreatorTheme } from "../src/creator/theme";
+import { PRESET_IDS, resolveCreatorTheme, shuffleCreatorTheme, TEMPLATE_IDS } from "../src/creator/theme";
 
 /** Deterministic PRNG (mulberry32) so failures are reproducible. */
 function rng(seed: number) {
@@ -43,14 +43,14 @@ describe("color math", () => {
 });
 
 describe("creator palette contrast guard (brand §4.3)", () => {
-  it("passes WCAG AA for 4,000 random seeds in both modes", () => {
+  it("passes WCAG AA for 6,000 random seeds in all three modes", () => {
     const random = rng(20261117);
     const failures: string[] = [];
     for (let i = 0; i < 2000; i++) {
       const accent = randomHex(random);
       const neutral = random() > 0.5 ? randomHex(random) : undefined;
       const tint = random();
-      for (const mode of ["light", "dark"] as ThemeMode[]) {
+      for (const mode of ["light", "dark", "vivid"] as ThemeMode[]) {
         const palette = generatePalette({ accent, neutral, tint, mode });
         for (const check of auditPalette(palette)) {
           if (!check.pass) failures.push(`${mode} accent=${accent} neutral=${neutral ?? "-"} tint=${tint.toFixed(2)} ${check.pair}=${check.ratio}`);
@@ -62,7 +62,7 @@ describe("creator palette contrast guard (brand §4.3)", () => {
 
   it("handles extreme seeds", () => {
     for (const accent of ["#FFFFFF", "#000000", "#D4FF3A", "#FFFF00", "#0000FF", "#808080", "#FF00FF", "#00FFFF"]) {
-      for (const mode of ["light", "dark"] as ThemeMode[]) {
+      for (const mode of ["light", "dark", "vivid"] as ThemeMode[]) {
         expect(auditPalette(generatePalette({ accent, mode })).every((c) => c.pass), `${accent} ${mode}`).toBe(true);
       }
     }
@@ -127,6 +127,28 @@ describe("presets", () => {
     expect(hexToOklch(light.accent).l).toBeLessThan(0.3);
     expect(hexToOklch(dark.accent).l).toBeGreaterThan(0.85);
     expect(auditPalette(dark).every((c) => c.pass)).toBe(true);
+  });
+
+  it("vivid mode makes the page the creator's color with white text at 7:1", () => {
+    const red = generatePalette({ accent: "#D7192B", mode: "vivid" });
+    const bg = hexToOklch(red.bg);
+    expect(bg.c).toBeGreaterThan(0.1);
+    expect(Math.abs(bg.h - hexToOklch("#D7192B").h)).toBeLessThan(8);
+    expect(contrastRatio(red.fg, red.surface2)).toBeGreaterThanOrEqual(7);
+    expect(auditPalette(red).every((c) => c.pass)).toBe(true);
+  });
+
+  it("resolves every template with its layout, and explicit choices beat the template", () => {
+    for (const template of TEMPLATE_IDS) {
+      const theme = resolveCreatorTheme({ template });
+      expect(theme.template).toBe(template);
+      expect(auditPalette(theme.palette).every((c) => c.pass), template).toBe(true);
+    }
+    expect(resolveCreatorTheme({ template: "pulse" }).palette.mode).toBe("vivid");
+    expect(resolveCreatorTheme({ template: "marquee" }).layout.hero).toBe("logo");
+    expect(resolveCreatorTheme({ template: "atelier" }).layout.headings).toBe("sans-upper");
+    expect(resolveCreatorTheme({ template: "nocturne", mode: "light" }).palette.mode).toBe("light");
+    expect(resolveCreatorTheme({ preset: "midnight" }).layout).toEqual({ headings: "display", hero: "portrait" });
   });
 
   it("switches to the Arabic pairing for RTL scripts", () => {

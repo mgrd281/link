@@ -4,6 +4,7 @@ export type {
   CreatorButtonStyle,
   CreatorPairingId,
   CreatorPresetId,
+  CreatorTemplateId,
   SemanticColor,
   Tokens,
 } from "./generated/tokens";

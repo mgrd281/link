@@ -12,7 +12,14 @@ import { contrastRatio, hexToOklch, oklchToHex, type Oklch } from "./color";
  * broken combination.
  */
 
-export type ThemeMode = "light" | "dark";
+/**
+ * light / dark: neutral (optionally tinted) surfaces.
+ * vivid: the page itself is the creator's color (a saturated background with white text), still AA.
+ */
+export type ThemeMode = "light" | "dark" | "vivid";
+
+/** The color scheme browsers should use for a mode (form controls, scrollbars, status bar). */
+export const colorSchemeOf = (mode: ThemeMode): "light" | "dark" => (mode === "light" ? "light" : "dark");
 
 export interface PaletteInput {
   /** Seed color (hex). Chosen by the creator or extracted from a photo. */
@@ -89,6 +96,7 @@ const passesAll =
     backgrounds.every((bg) => contrastRatio(hex, bg) >= ratio);
 
 export function generatePalette(input: PaletteInput): CreatorPalette {
+  if (input.mode === "vivid") return generateVividPalette(input);
   const mode = input.mode;
   const tint = clamp(input.tint ?? 0.35, 0, 1);
   const accentSeed = hexToOklch(input.accent);
@@ -141,6 +149,52 @@ export function generatePalette(input: PaletteInput): CreatorPalette {
   const gradient = [bg, stop(28), stop(-32)] as const;
 
   return { mode, bg, surface, surface2, fg, fgMuted, accent, accentFg, accentText, line, lineStrong, gradient };
+}
+
+/** Vivid mode constants: surfaces step up in lightness from the background; fg must reach 7:1 on all of them. */
+const VIVID = { surfaceStep: 0.04, surface2Step: 0.08, lineStep: 0.13, minChroma: 0.12, maxChroma: 0.2, fgMutedL: 0.9 } as const;
+
+/**
+ * The page is the creator's color. Finds the lightest background in the seed's hue where white text
+ * still reaches 7:1 on every surface, then derives light buttons with a dark label in the same hue.
+ */
+function generateVividPalette(input: PaletteInput): CreatorPalette {
+  const seed = hexToOklch(input.accent);
+  const h = seed.h;
+  const c = seed.c < MONOCHROME_CHROMA ? seed.c : clamp(seed.c, VIVID.minChroma, VIVID.maxChroma);
+  const white = "#FFFFFF";
+  const at = (l: number, chroma = c): string => oklchToHex({ l: clamp(l, 0, 1), c: chroma, h });
+  const passes = (l: number): boolean => contrastRatio(white, at(l + VIVID.surface2Step, c * 0.95)) >= 7;
+  let lo = 0.1;
+  let hi = 0.8;
+  for (let i = 0; i < 28; i++) {
+    const mid = (lo + hi) / 2;
+    if (passes(mid)) lo = mid;
+    else hi = mid;
+  }
+  const L = lo;
+  const bg = at(L);
+  const surface = at(L + VIVID.surfaceStep);
+  const surface2 = at(L + VIVID.surface2Step, c * 0.95);
+  const textSurfaces = [bg, surface, surface2] as const;
+
+  const fg = white;
+  const fgMuted = adjustLightness({ l: VIVID.fgMutedL, c: Math.min(c * 0.35, 0.05), h }, "lighter", passesAll(textSurfaces, AA_TEXT));
+  const accent = adjustLightness({ l: 0.97, c: Math.min(c * 0.15, 0.025), h }, "lighter", passesAll([bg], AA_UI));
+  const accentFg = adjustLightness({ l: Math.max(L - 0.05, 0.05), c, h }, "darker", (hex) => contrastRatio(hex, accent) >= AA_TEXT);
+  const accentText = adjustLightness(hexToOklch(accent), "lighter", passesAll(textSurfaces, AA_TEXT));
+  const line = at(L + VIVID.lineStep, c * 0.9);
+  const lineStrong = adjustLightness({ l: L + VIVID.lineStep, c: c * 0.6, h }, "lighter", passesAll([bg, surface], AA_UI));
+
+  const textSafe = (hex: string): boolean =>
+    contrastRatio(fg, hex) >= 7 && contrastRatio(fgMuted, hex) >= AA_TEXT && contrastRatio(accentText, hex) >= AA_TEXT;
+  const stop = (dl: number, dh: number): string => {
+    const candidate = oklchToHex({ l: L + dl, c, h: (h + dh + 360) % 360 });
+    return textSafe(candidate) ? candidate : bg;
+  };
+  const gradient = [bg, stop(-0.03, 18), stop(-0.06, -22)] as const;
+
+  return { mode: "vivid", bg, surface, surface2, fg, fgMuted, accent, accentFg, accentText, line, lineStrong, gradient };
 }
 
 export interface ContrastCheck {
