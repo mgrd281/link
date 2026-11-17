@@ -14,3 +14,4 @@
 | [0010](0010-hosting-and-data-residency.md) | Vercel (fra1) + Supabase Frankfurt; EU processors first | Proposed |
 | [0011](0011-poster-direction.md) | Direction D "Poster", built from the founder's references | **Proposed — confirm** |
 | [0012](0012-poster-templates.md) | Poster templates (5), vivid palette mode, rails, month tabs, partner tiles, ad labels | **Proposed — confirm** |
+| [0013](0013-marketing-home.md) | Marketing home at `/`, dark studio hero, CSS scroll-driven motion system | **Proposed — review** |

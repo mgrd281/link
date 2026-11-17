@@ -48,6 +48,25 @@ safe). Captures: `creator/poster-<template>-<locale>-<width>.jpg`.
 Performance stays the one score below target: the App Router bundle (≈ 230 KB JS) dominates. ADR 0008 (static HTML +
 ~3 KB islands) is the fix and is scheduled first in Phase 1.
 
+## 0c. Update — marketing home (linkyo.app)
+
+A new homepage at `/de`, `/en`, `/ar` ([ADR 0013](../../DECISIONS/0013-marketing-home.md)), structured like the
+reference you sent and built in Linkyo's own design: dark studio hero with a soft blue glow, username claim, three real
+creator pages on phones (the centre one cycles through all five templates, the stage leans toward the mouse), three
+promises as big numbers, a pausable template strip, a scroll story where the phone scrolls through a creator page, a
+live paste-a-link demo, cookie-free analytics (sample data, labelled), pricing, FAQ and a final claim. All motion is CSS
+(scroll-driven where possible), uses motion tokens and stops for reduced motion.
+
+| Homepage (Lighthouse 13) | Perf | A11y | Best practices | LCP | CLS |
+|---|---|---|---|---|---|
+| Desktop (de) | 100 | 100 | 100 | 0.3 s | 0 |
+| Mobile (de) | 89 | 100 | 100 | 3.7 s | 0 |
+| Mobile (ar) | 76 | 100 | 100 | 4.4 s | 0 |
+
+E2E: 7 homepage tests (claim validation, paste demo, marquee pause, FAQ, sections, 0 third-party requests/cookies,
+phone popover menu) + axe on the homepage in 3 languages × light/dark × desktop/mobile. Total suite: 213 passing.
+Captures: `home/home-<locale>-<width>-<scheme>.jpg`.
+
 ## 1. What was built
 
 | Deliverable | Where | State |
@@ -65,7 +84,7 @@ Performance stays the one score below target: the App Router bundle (≈ 230 KB 
 | 3 earlier directions (Gallery, Stage, Mosaic), shared editor core: paste-to-add, drag/keyboard reorder, undo/redo, ⌘K, file drop, live preview | `/directions` | ✅ kept for comparison |
 | Competitive research | `docs/REFERENCE_ANALYSIS.md` | ✅ (Playwright/Lighthouse/axe — REA blocked, see §5) |
 | Accounts + env vars, cost model | `docs/SETUP_ACCOUNTS.md`, `.env.example`, `docs/COSTS.md` | ✅ |
-| Architecture + 12 ADRs | `docs/ARCHITECTURE.md`, `docs/DECISIONS/` | ✅ |
+| Architecture + 13 ADRs | `docs/ARCHITECTURE.md`, `docs/DECISIONS/` | ✅ |
 | iOS scaffold (XcodeGen, app + Share Extension + Widgets, design-system package, debug Design Gallery, privacy manifest) | `apps/ios` | ⚠ parse-checked only (no Xcode here) |
 
 ## 2. Evidence
@@ -73,7 +92,7 @@ Performance stays the one score below target: the App Router bundle (≈ 230 KB 
 - **Screenshots** (103): `creator/` (4 directions × de/ar × 375/768/1440; Poster in light and dark; one extra preset
   each), `dashboard/` (× light/dark), `design/`, `overview-*` — this folder. Full-page captures now scroll first so
   lazy images are loaded.
-- **Tests:** 138 unit (Vitest) + 206 E2E (Playwright) — all passing.
+- **Tests:** 138 unit (Vitest) + 213 E2E (Playwright) — all passing.
   - axe (WCAG 2.0/2.1/2.2 A+AA): **0 violations** on 15 routes (incl. all 5 templates) × de/en/ar × light/dark ×
     desktop + mobile.
   - Editor (all 4 dashboards): one paste → correct block + preview update; delete → Undo from toast; ⌘K palette;
