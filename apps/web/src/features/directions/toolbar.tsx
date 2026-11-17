@@ -1,6 +1,7 @@
 "use client";
 
-import { creatorTokens, type CreatorPresetId } from "@linkyo/tokens";
+import { creatorTokens, type CreatorPresetId, type CreatorTemplateId } from "@linkyo/tokens";
+import { isTemplate, TEMPLATE_IDS } from "@linkyo/tokens/creator";
 import { cn, Icon, IconButton } from "@linkyo/ui";
 import { SlidersHorizontal, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -9,10 +10,18 @@ import { useState } from "react";
 
 import { Link, useRouter } from "@/i18n/navigation";
 
-import { DIRECTIONS, isThemeMode, THEME_MODES, type DirectionId, type ThemeModeParam } from "./registry";
+import { DIRECTIONS, isThemeMode, type DirectionId, type ThemeModeParam } from "./registry";
 
 /** Prototype-only controls to compare directions, views and themes. Not part of the product UI. */
-export function DirectionToolbar({ direction, view, activeMode }: { direction: DirectionId; view: "page" | "dashboard"; activeMode?: ThemeModeParam }) {
+export function DirectionToolbar({
+  direction,
+  view,
+  activeTemplate,
+}: {
+  direction: DirectionId;
+  view: "page" | "dashboard";
+  activeTemplate?: CreatorTemplateId | null | undefined;
+}) {
   const t = useTranslations("directions");
   const params = useSearchParams();
   const router = useRouter();
@@ -20,12 +29,16 @@ export function DirectionToolbar({ direction, view, activeMode }: { direction: D
   const preset = params.get("preset") ?? "";
   const modeParam = params.get("mode") ?? undefined;
   const mode = isThemeMode(modeParam) ? modeParam : null;
+  const templateParam = params.get("template") ?? undefined;
+  const template = isTemplate(templateParam) ? templateParam : null;
   if (params.get("chrome") === "0") return null;
 
-  const query = (next: { preset?: string; mode?: ThemeModeParam | null }) => {
+  const query = (next: { preset?: string; mode?: ThemeModeParam | null; template?: CreatorTemplateId | null }) => {
     const search = new URLSearchParams();
     const p = next.preset ?? preset;
     const m = next.mode === undefined ? mode : next.mode;
+    const tpl = next.template === undefined ? template : next.template;
+    if (tpl) search.set("template", tpl);
     if (p) search.set("preset", p);
     if (m) search.set("mode", m);
     const text = search.toString();
@@ -61,13 +74,16 @@ export function DirectionToolbar({ direction, view, activeMode }: { direction: D
             </Link>
           ))}
         </div>
-        {view === "page" ? (
-          <div className="flex gap-0.5 rounded-md bg-canvas-muted p-0.5" role="group" aria-label={t("toolbar.mode")}>
-            {THEME_MODES.map((m) => (
-              <Link key={m} href={`/directions/${direction}${query({ mode: m })}`} aria-current={m === (mode ?? activeMode) ? "true" : undefined} className={cn(seg, m === (mode ?? activeMode) && "bg-surface text-fg shadow-e1")}>
-                {t(`toolbar.${m}`)}
-              </Link>
-            ))}
+        {view === "page" && direction === "poster" ? (
+          <div className="flex gap-0.5 rounded-md bg-canvas-muted p-0.5" role="group" aria-label={t("toolbar.template")}>
+            {TEMPLATE_IDS.map((id) => {
+              const active = id === (template ?? activeTemplate);
+              return (
+                <Link key={id} href={`/directions/${direction}${query({ template: id, preset: "", mode: null })}`} aria-current={active ? "true" : undefined} className={cn(seg, active && "bg-surface text-fg shadow-e1")}>
+                  {creatorTokens.templates[id].label}
+                </Link>
+              );
+            })}
           </div>
         ) : null}
         {view === "page" ? (

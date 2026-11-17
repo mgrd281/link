@@ -52,9 +52,10 @@ for (const direction of DIRECTIONS) {
     for (const width of WIDTHS) {
       test(`creator ${direction} ${locale} ${width}`, async ({ page }) => {
         if (direction === "poster") {
-          // Poster has no fixed mode: capture both (the default follows the portrait).
-          for (const mode of ["light", "dark"] as const) {
-            await capture(page, `/${locale}/directions/poster?chrome=0&mode=${mode}`, `creator/poster-${locale}-${width}-${mode}.jpg`, width, "light", true);
+          // Every template on phones; the two neutral templates also on tablet and desktop.
+          const templates = width === 375 ? (["nocturne", "daylight", "marquee", "pulse", "atelier"] as const) : (["nocturne", "daylight"] as const);
+          for (const template of templates) {
+            await capture(page, `/${locale}/directions/poster?chrome=0&template=${template}`, `creator/poster-${template}-${locale}-${width}.jpg`, width, "light", true);
           }
           return;
         }
@@ -67,8 +68,8 @@ for (const direction of DIRECTIONS) {
       });
     }
   }
-  test(`creator ${direction} other preset`, async ({ page }) => {
-    const preset = direction === "stage" ? "gold" : direction === "gallery" ? "forest" : direction === "poster" ? "bold-red" : "ocean";
+  if (direction !== "poster") test(`creator ${direction} other preset`, async ({ page }) => {
+    const preset = direction === "stage" ? "gold" : direction === "gallery" ? "forest" : "ocean";
     await capture(page, `/de/directions/${direction}?chrome=0&preset=${preset}`, `creator/${direction}-de-375-${preset}.jpg`, 375, "light", true);
   });
 }

@@ -15,7 +15,7 @@ test.describe("poster creator page", () => {
 
   test("content is grouped in titled sections, products in a two-up grid", async ({ page }) => {
     await page.goto("/en/directions/poster?chrome=0");
-    for (const title of ["Music", "Videos", "Tour 2026/27", "Latest shorts", "Shop", "More from me"]) {
+    for (const title of ["Shows & tickets", "Music", "Mixes", "Videos", "Latest shorts", "Shop", "Partners", "Booking & more"]) {
       await expect(page.getByRole("heading", { level: 2, name: title, exact: true })).toBeVisible();
     }
     const shop = page.getByRole("region", { name: "Shop", exact: true });
@@ -27,12 +27,46 @@ test.describe("poster creator page", () => {
     await expect(page.getByRole("link", { name: /Book me for your club.*booking@milaaurel\.com/ })).toBeVisible();
   });
 
-  test("light and dark use the same layout", async ({ page }) => {
-    const headings = async (mode: "light" | "dark") => {
-      await page.goto(`/en/directions/poster?chrome=0&mode=${mode}`);
-      return page.getByRole("heading").allInnerTexts();
+  test("every template renders the same content structure", async ({ page }) => {
+    const headings = async (template: string) => {
+      await page.goto(`/en/directions/poster?chrome=0&template=${template}`);
+      return page.getByRole("heading", { level: 2 }).allInnerTexts();
     };
-    expect(await headings("light")).toEqual(await headings("dark"));
+    const reference = await headings("nocturne");
+    for (const template of ["daylight", "marquee", "pulse", "atelier"]) {
+      expect((await headings(template)).map((text) => text.toLowerCase())).toEqual(reference.map((text) => text.toLowerCase()));
+    }
+  });
+
+  test("Marquee shows the logo as the page heading", async ({ page }) => {
+    await page.goto("/en/directions/poster?chrome=0&template=marquee");
+    await expect(page.getByRole("heading", { level: 1, name: "Mila Aurel" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 }).getByRole("img")).toBeVisible();
+  });
+
+  test("month tabs filter the dates and follow the keyboard", async ({ page }) => {
+    await page.goto("/en/directions/poster?chrome=0");
+    const shows = page.getByRole("region", { name: "Shows & tickets", exact: true });
+    const tabs = shows.getByRole("tab");
+    const rows = shows.getByRole("tabpanel").getByRole("listitem");
+    await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+    await expect(rows).toHaveCount(6);
+    await tabs.first().focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(tabs.nth(1)).toBeFocused();
+    await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+    await expect(rows).toHaveCount(1);
+    await page.keyboard.press("End");
+    await expect(rows).toHaveCount(1);
+    await page.keyboard.press("Home");
+    await expect(rows).toHaveCount(6);
+  });
+
+  test("a long run of mixes becomes a two-row rail; ads are labelled", async ({ page }) => {
+    await page.goto("/en/directions/poster?chrome=0");
+    const rail = page.getByRole("region", { name: "Mixes, scrollable row" });
+    await expect(rail.getByRole("listitem")).toHaveCount(4);
+    await expect(page.getByRole("link", { name: /The headphones I mix on.*Ad/ })).toBeVisible();
   });
 });
 
@@ -53,12 +87,16 @@ test.describe("poster dashboard", () => {
     await expect(preview.getByRole("heading", { level: 2, name: "Merch drops" })).toBeVisible();
   });
 
-  test("the page mode switch flips the preview between light and dark", async ({ page }) => {
+  test("picking a template restyles the live preview in one click", async ({ page }) => {
     const preview = page.getByRole("complementary", { name: "Live preview" });
     const background = () => preview.locator("[lang]").first().evaluate((node) => getComputedStyle(node).backgroundColor);
     const before = await background();
-    const target = (await page.getByRole("radio", { name: "Light" }).getAttribute("data-state")) === "on" ? "Dark" : "Light";
-    await page.getByRole("radio", { name: target }).click();
+    const pulse = page.getByRole("radio", { name: /^Pulse/ });
+    await page.getByText("Pulse", { exact: true }).click();
+    await expect(pulse).toBeChecked();
+    await expect(pulse).toBeFocused();
     await expect.poll(background).not.toBe(before);
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByRole("radio", { name: /^Atelier/ })).toBeChecked();
   });
 });

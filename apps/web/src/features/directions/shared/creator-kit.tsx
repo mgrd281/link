@@ -85,7 +85,7 @@ export function MediaImage({
   src: string;
   alt: string;
   sizes: string;
-  className?: string;
+  className?: string | undefined;
   priority?: boolean;
 }) {
   const resolved = resolveMedia(src);

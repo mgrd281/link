@@ -281,7 +281,25 @@
     "video3Title": "Hamburg, nach der Show",
     "posterPrint": "Nachtstrom — Poster A2",
     "posterPrintAlt": "Gerahmtes Nachtstrom-Poster an einer grauen Wand",
-    "website": "Offizielle Website"
+    "website": "Offizielle Website",
+    "tagline": "DJ & Produzentin · Berlin",
+    "bioShort": "Late-Night-Techno, warme Synths, ehrliche Geschichten.",
+    "logoAlt": "Logo von Mila Aurel",
+    "sectionShows": "Shows & Tickets",
+    "showRadio": "Live-Radio-Session",
+    "showRelease": "Release-Nacht",
+    "showClub": "Clubnacht",
+    "showFestival": "Lumen Festival",
+    "showOpenAir": "Winter-Open-Air",
+    "showFinale": "Tourfinale",
+    "sectionMixes": "Mixe",
+    "mixTitle": "Late Night Selects",
+    "mixDesc": "Live aufgenommen · 2 Stunden",
+    "mixAlt": "Mix-Cover mit leuchtender Wellenform",
+    "sectionPartners": "Partner",
+    "gear": "Meine Kopfhörer zum Mixen",
+    "gearAlt": "Rote Over-Ear-Kopfhörer",
+    "sectionContact": "Booking & mehr"
   },
   "creator": {
     "verified": "Verifizierter Creator",
@@ -323,7 +341,10 @@
     "chooseService": "Wo möchtest du hören?",
     "videos": "Videos",
     "gallery": "Galerie",
-    "scroller": "{title}, scrollbare Reihe"
+    "scroller": "{title}, scrollbare Reihe",
+    "ad": "Anzeige",
+    "allDates": "Alle",
+    "filterMonths": "Termine nach Monat filtern"
   },
   "directions": {
     "title": "Richtungen",
@@ -373,19 +394,21 @@
       "show": "Steuerung einblenden",
       "mode": "Modus",
       "light": "Hell",
-      "dark": "Dunkel"
+      "dark": "Dunkel",
+      "template": "Vorlage"
     },
     "yourPick": "Deine Wahl",
     "earlier": "Frühere Richtungen",
     "poster": {
       "name": "Poster",
-      "tagline": "Starkes Porträt. Klare Abschnitte. Hell oder dunkel.",
-      "description": "Ein Porträt über die volle Breite, der Name wie auf einem Konzertplakat, danach alles in Abschnitten mit Titel: Karten mit dem Artwork neben dem Titel, ein Shop im Zweier-Raster, eine wischbare Videoreihe und Links, die zeigen, wohin sie führen. Das Dashboard bearbeitet die Seite Abschnitt für Abschnitt.",
+      "tagline": "Fünf Vorlagen. Klare Abschnitte. Dein Foto zuerst.",
+      "description": "Gebaut nach den Seiten, die du geschickt hast: Porträt über die volle Breite oder dein Logo, der Name wie auf einem Konzertplakat, danach Abschnitte mit Titel – Releases, Shows mit Monats-Tabs, Mixe in einer zweizeiligen Leiste, ein Shop im Zweier-Raster, Partner-Kacheln und Videos. Vorlage wählen, der Inhalt bleibt. Das Dashboard bearbeitet die Seite Abschnitt für Abschnitt.",
       "traits": [
-        "Ideal für Artists, Creator und Streamer:innen",
-        "Gleiches Layout in hell und dunkel",
-        "Editor nach Abschnitten mit Live-Vorschau"
-      ]
+        "Fünf Vorlagen: Nocturne, Daylight, Marquee, Pulse, Atelier",
+        "Jedes Farbpaar besteht WCAG AA – in jeder Vorlage",
+        "Keine Cookies, Videos laden erst nach Tippen, Werbung ist gekennzeichnet"
+      ],
+      "templatesLabel": "Poster-Vorlagen"
     }
   },
   "dashboard": {
@@ -426,7 +449,8 @@
       "events": "Events",
       "product": "Produkt",
       "newsletter": "Newsletter",
-      "live": "Live-Status"
+      "live": "Live-Status",
+      "brands": "Partner"
     },
     "blocks": "Blöcke",
     "blockCount": "{count, plural, one {# Block} other {# Blöcke}}",
@@ -492,6 +516,26 @@
     "appearance": "Seitenmodus",
     "modeLight": "Hell",
     "modeDark": "Dunkel",
-    "featured": "Hervorgehoben"
+    "featured": "Hervorgehoben",
+    "template": "Vorlage",
+    "templateHint": "Gleicher Inhalt, neuer Look. Farben und Schriften kannst du danach weiter anpassen.",
+    "templateApplied": "Vorlage „{name}“ angewendet"
+  },
+  "templates": {
+    "nocturne": {
+      "description": "Schwarze Bühne, weißer Name als Headline, das Porträt zuerst."
+    },
+    "daylight": {
+      "description": "Hell und ruhig, das Porträt verschmilzt mit Weiß."
+    },
+    "marquee": {
+      "description": "Dein Logo im Rampenlicht über einem weichgezeichneten Bühnenfoto."
+    },
+    "pulse": {
+      "description": "Die ganze Seite in deiner Farbe, das Foto passend eingefärbt."
+    },
+    "atelier": {
+      "description": "Warmes Galeriepapier, ein Serifen-Name, klare Ecken und Titel in Großbuchstaben."
+    }
   }
 }

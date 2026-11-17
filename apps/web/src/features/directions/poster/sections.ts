@@ -5,10 +5,23 @@ import type { Block, BlockOf } from "@linkyo/blocks";
  * starts a section, a titled list block (events, shorts, gallery) starts one with its own title,
  * consecutive videos become a swipeable row and consecutive products a two-up grid.
  */
+export type RowBlock = BlockOf<"music"> | BlockOf<"card"> | BlockOf<"link">;
+
 export type PosterItem =
   | { kind: "block"; block: Block }
   | { kind: "videos"; blocks: BlockOf<"video">[] }
-  | { kind: "products"; blocks: BlockOf<"product">[] };
+  | { kind: "products"; blocks: BlockOf<"product">[] }
+  /** Artwork-beside-title cards. Up to RAIL_THRESHOLD - 1 stack; more become a two-row swipe rail. */
+  | { kind: "rows"; blocks: RowBlock[] };
+
+/** From this many consecutive media rows on, a section becomes a two-row horizontal rail. */
+export const RAIL_THRESHOLD = 4;
+
+/** Blocks shown as a media row: non-featured releases and cards, and links that carry an image. */
+export function isRowBlock(block: Block): block is RowBlock {
+  if (block.type === "music" || block.type === "card") return !block.highlight;
+  return block.type === "link" && block.thumbnail !== undefined;
+}
 
 export interface PosterSection {
   /** Stable key: the id of the block that opened the section ("top" before the first title). */
@@ -17,7 +30,7 @@ export interface PosterSection {
   items: PosterItem[];
 }
 
-const SELF_TITLED = new Set<Block["type"]>(["events", "shorts", "gallery"]);
+const SELF_TITLED = new Set<Block["type"]>(["events", "shorts", "gallery", "brands"]);
 
 /** The title a block brings for its own section, if any. */
 export function selfTitle(block: Block): string | null {
@@ -47,6 +60,9 @@ export function groupSections(blocks: readonly Block[]): PosterSection[] {
     } else if (block.type === "product") {
       if (last?.kind === "products") last.blocks.push(block);
       else current.items.push({ kind: "products", blocks: [block] });
+    } else if (isRowBlock(block)) {
+      if (last?.kind === "rows") last.blocks.push(block);
+      else current.items.push({ kind: "rows", blocks: [block] });
     } else {
       current.items.push({ kind: "block", block });
     }

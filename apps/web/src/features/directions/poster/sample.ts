@@ -6,13 +6,19 @@ const base = { visible: true, highlight: false } as const;
 const header = (id: string, title: string): BlockOf<"header"> => ({ ...base, id, type: "header", title });
 
 /**
- * The Poster sample: the same creator and content as the other directions, arranged in titled
- * sections, plus a second release, a playlist, two more videos, a second product and the website,
- * so every section shows its real rhythm. Fictional creators; real block schemas.
+ * The Poster sample: the same creator as the other directions, arranged in titled sections and
+ * extended so every Poster feature shows: named shows across months (month tabs), a run of mixes
+ * (two-row rail), partner tiles, a labelled affiliate product and a logo for the Marquee template.
+ * Fictional creators; original artwork; real block schemas (validated in sample.test.ts).
  */
 export function posterSamplePage(page: Page, t: Translate): Page {
-  const { profile } = page;
-  const ar = profile.locale === "ar";
+  const ar = page.profile.locale === "ar";
+  const profile: Page["profile"] = {
+    ...page.profile,
+    tagline: t("tagline"),
+    bio: t("bioShort"),
+    logo: { src: ar ? "sample:nour-logo" : "sample:mila-logo", alt: t("logoAlt") },
+  };
   const site = `https://${profile.username}.com`;
   const take = <T extends BlockType>(id: string, type: T): BlockOf<T> | null => {
     const block = page.blocks.find((candidate) => candidate.id === id);
@@ -27,11 +33,56 @@ export function posterSamplePage(page: Page, t: Translate): Page {
 
   const release = take("release", "music");
   const story = take("story", "card");
+  const tour = take("tour", "events");
+  const booking = take("booking", "link");
+
+  // Six named dates over five months: enough for the month tabs to earn their place.
+  const named = ["showRelease", "showClub", "showFestival", "showOpenAir"] as const;
+  const times = ["21:00", "23:00", "19:30", "18:00"] as const;
+  const shows: BlockOf<"events"> | null = tour
+    ? {
+        ...tour,
+        title: t("sectionShows"),
+        items: [
+          {
+            date: "2026-11-28",
+            city: ar ? "بيروت" : "Berlin",
+            venue: "Kiezfunk 98.4",
+            url: `${site}/radio`,
+            status: "onsale",
+            name: t("showRadio"),
+            time: "20:00",
+          },
+          ...tour.items.map((item, i) => ({ ...item, name: t(named[i] ?? "showFinale"), time: times[i] ?? "20:00" })),
+          {
+            date: "2027-03-13",
+            city: ar ? "بيروت" : "Berlin",
+            venue: ar ? "مسرح المدينة" : "Halle am Fluss",
+            url: `${site}/finale`,
+            status: "onsale",
+            name: t("showFinale"),
+            time: "20:30",
+          },
+        ],
+      }
+    : null;
+
+  const mixes: BlockOf<"card">[] = [1, 2, 3, 4].map((n) => ({
+    ...base,
+    id: `mix-${n}`,
+    type: "card",
+    title: `${t("mixTitle")} ${String(n).padStart(2, "0")}`,
+    description: t("mixDesc"),
+    url: `https://soundcloud.com/${profile.username}/late-night-selects-${n}`,
+    image: { src: `sample:mix-0${n}`, alt: t("mixAlt") },
+  }));
 
   const blocks: (Block | null)[] = [
     take("socials", "socials"),
     take("live", "live"),
     release ? { ...release, highlight: true } : null,
+
+    shows,
 
     header("section-music", t("sectionMusic")),
     {
@@ -56,6 +107,9 @@ export function posterSamplePage(page: Page, t: Translate): Page {
       links: links("late-night-selects").slice(0, 3),
     },
 
+    header("section-mixes", t("sectionMixes")),
+    ...mixes,
+
     header("section-videos", t("sectionVideos")),
     take("video", "video"),
     {
@@ -79,7 +133,6 @@ export function posterSamplePage(page: Page, t: Translate): Page {
       duration: 305,
     },
 
-    take("tour", "events"),
     take("shorts", "shorts"),
 
     header("section-shop", t("sectionShop")),
@@ -95,8 +148,31 @@ export function posterSamplePage(page: Page, t: Translate): Page {
       image: { src: ar ? "sample:merch-print" : "sample:merch-poster", alt: t("posterPrintAlt") },
     },
 
-    header("section-more", t("sectionMore")),
-    take("booking", "link"),
+    {
+      ...base,
+      id: "partners",
+      type: "brands",
+      title: t("sectionPartners"),
+      columns: 3,
+      items: [
+        { name: "Nordlicht Audio", logo: { src: "sample:partner-nordlicht", alt: "" }, url: "https://nordlicht-audio.example.com" },
+        { name: "Kiezfunk 98.4", logo: { src: "sample:partner-kiezfunk", alt: "" }, url: "https://kiezfunk.example.com" },
+        { name: "Werk Neun", logo: { src: "sample:partner-werk9", alt: "" }, url: "https://werk9.example.com" },
+      ],
+    },
+
+    header("section-contact", t("sectionContact")),
+    booking ? { ...booking, thumbnail: { src: ar ? "sample:nour-avatar" : "sample:mila-avatar", alt: "" } } : null,
+    {
+      ...base,
+      id: "gear",
+      type: "card",
+      title: t("gear"),
+      description: "nordlicht-audio.example.com",
+      url: "https://nordlicht-audio.example.com/headphones?ref=milaaurel",
+      image: { src: "sample:gear-headphones", alt: t("gearAlt") },
+      affiliate: true,
+    },
     take("pack", "link"),
     story ? { ...story, highlight: false } : null,
     { ...base, id: "website", type: "link", title: t("website"), url: site },

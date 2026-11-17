@@ -1,5 +1,15 @@
 import type { StaticImageData } from "next/image";
 
+import gearHeadphones from "@/assets/samples/gear-headphones.jpg";
+import milaLogo from "@/assets/samples/mila-logo.png";
+import nourLogo from "@/assets/samples/nour-logo.png";
+import mix01 from "@/assets/samples/mix-01.jpg";
+import mix02 from "@/assets/samples/mix-02.jpg";
+import mix03 from "@/assets/samples/mix-03.jpg";
+import mix04 from "@/assets/samples/mix-04.jpg";
+import partnerKiezfunk from "@/assets/samples/partner-kiezfunk.jpg";
+import partnerNordlicht from "@/assets/samples/partner-nordlicht.jpg";
+import partnerWerk9 from "@/assets/samples/partner-werk9.jpg";
 import coverDaw from "@/assets/samples/cover-daw.jpg";
 import coverDune from "@/assets/samples/cover-dune.jpg";
 import coverLichtfeld from "@/assets/samples/cover-lichtfeld.jpg";
@@ -25,6 +35,16 @@ import videoLive from "@/assets/samples/video-live.jpg";
 
 /** Sample media registry. In production `image.src` is a Supabase Storage key resolved by the image CDN. */
 export const sampleMedia = {
+  "sample:gear-headphones": gearHeadphones,
+  "sample:mila-logo": milaLogo,
+  "sample:nour-logo": nourLogo,
+  "sample:mix-01": mix01,
+  "sample:mix-02": mix02,
+  "sample:mix-03": mix03,
+  "sample:mix-04": mix04,
+  "sample:partner-kiezfunk": partnerKiezfunk,
+  "sample:partner-nordlicht": partnerNordlicht,
+  "sample:partner-werk9": partnerWerk9,
   "sample:cover-daw": coverDaw,
   "sample:cover-dune": coverDune,
   "sample:cover-lichtfeld": coverLichtfeld,
@@ -54,14 +74,3 @@ export type SampleKey = keyof typeof sampleMedia;
 export function resolveMedia(src: string): StaticImageData | string {
   return src in sampleMedia ? sampleMedia[src as SampleKey] : src;
 }
-
-/**
- * Prototype stand-in for the upload-time photo analysis (`extractSeed` → light/dark): Poster pages
- * open in the mode that matches the creator's portrait, so the photo fades into the page seamlessly.
- */
-const sampleTone: Partial<Record<SampleKey, "light" | "dark">> = {
-  "sample:mila-hero": "dark",
-  "sample:nour-hero": "light",
-};
-
-export const photoTone = (src: string): "light" | "dark" | undefined => sampleTone[src as SampleKey];

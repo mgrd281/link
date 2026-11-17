@@ -281,7 +281,25 @@
     "video3Title": "Hamburg, after the show",
     "posterPrint": "Nachtstrom — A2 poster",
     "posterPrintAlt": "Framed Nachtstrom poster on a grey wall",
-    "website": "Official website"
+    "website": "Official website",
+    "tagline": "DJ & producer · Berlin",
+    "bioShort": "Late-night techno, warm synths, honest stories.",
+    "logoAlt": "Mila Aurel logo",
+    "sectionShows": "Shows & tickets",
+    "showRadio": "Live radio session",
+    "showRelease": "Release night",
+    "showClub": "Club night",
+    "showFestival": "Lumen festival",
+    "showOpenAir": "Winter open air",
+    "showFinale": "Tour finale",
+    "sectionMixes": "Mixes",
+    "mixTitle": "Late Night Selects",
+    "mixDesc": "Recorded live · 2 hours",
+    "mixAlt": "Mix cover with a glowing waveform",
+    "sectionPartners": "Partners",
+    "gear": "The headphones I mix on",
+    "gearAlt": "Red over-ear headphones",
+    "sectionContact": "Booking & more"
   },
   "creator": {
     "verified": "Verified creator",
@@ -323,7 +341,10 @@
     "chooseService": "Where do you want to listen?",
     "videos": "Videos",
     "gallery": "Gallery",
-    "scroller": "{title}, scrollable row"
+    "scroller": "{title}, scrollable row",
+    "ad": "Ad",
+    "allDates": "All",
+    "filterMonths": "Filter dates by month"
   },
   "directions": {
     "title": "Directions",
@@ -373,19 +394,21 @@
       "show": "Show controls",
       "mode": "Mode",
       "light": "Light",
-      "dark": "Dark"
+      "dark": "Dark",
+      "template": "Template"
     },
     "yourPick": "Your pick",
     "earlier": "Earlier directions",
     "poster": {
       "name": "Poster",
-      "tagline": "Bold portrait. Clear sections. Light or dark.",
-      "description": "A full-width portrait with the name set like a gig poster, then everything in titled sections: cards with the artwork beside the title, a two-up shop, a swipeable video row and plain links that show where they lead. The dashboard edits the page section by section.",
+      "tagline": "Five templates. Clear sections. Your photo first.",
+      "description": "Built from the pages you sent: a full-width portrait or your logo, the name set like a gig poster, then titled sections — releases, shows with month tabs, mixes in a two-row rail, a two-up shop, partner tiles and videos. Pick a template, the content stays. The dashboard edits the page section by section.",
       "traits": [
-        "Best for artists, creators and streamers",
-        "Same layout in light and dark",
-        "Section-based editor with live preview"
-      ]
+        "Five templates: Nocturne, Daylight, Marquee, Pulse, Atelier",
+        "Every color pair passes WCAG AA in every template",
+        "Zero cookies, videos load only after a tap, ads are labelled"
+      ],
+      "templatesLabel": "Poster templates"
     }
   },
   "dashboard": {
@@ -426,7 +449,8 @@
       "events": "Events",
       "product": "Product",
       "newsletter": "Newsletter",
-      "live": "Live status"
+      "live": "Live status",
+      "brands": "Partners"
     },
     "blocks": "Blocks",
     "blockCount": "{count, plural, one {# block} other {# blocks}}",
@@ -492,6 +516,26 @@
     "appearance": "Page mode",
     "modeLight": "Light",
     "modeDark": "Dark",
-    "featured": "Featured"
+    "featured": "Featured",
+    "template": "Template",
+    "templateHint": "Same content, a new look. Your colors and fonts can still be changed afterwards.",
+    "templateApplied": "Template “{name}” applied"
+  },
+  "templates": {
+    "nocturne": {
+      "description": "Black stage, white headline name, portrait first."
+    },
+    "daylight": {
+      "description": "Bright and calm, the portrait melts into white."
+    },
+    "marquee": {
+      "description": "Your logo in lights over a soft, blurred stage photo."
+    },
+    "pulse": {
+      "description": "The whole page in your color, the photo toned to match."
+    },
+    "atelier": {
+      "description": "Warm gallery paper, a serif name, crisp corners and titles in capitals."
+    }
   }
 }

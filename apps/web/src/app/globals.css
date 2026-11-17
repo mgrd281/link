@@ -40,3 +40,85 @@
     }
   }
 }
+
+/*
+ * Poster: scroll-driven hero and compact bar (progressive enhancement, zero JavaScript).
+ * The hero names a view timeline; its photo softens and fades as it leaves the screen, and the
+ * compact bar slides in once it is gone. Browsers without scroll-driven animations keep the
+ * static layout and never show the bar. Reduced motion: opacity only, no movement or blur.
+ */
+@keyframes poster-hero-leave {
+  to {
+    opacity: 0;
+    filter: blur(var(--blur-glass));
+    translate: 0 15%;
+  }
+}
+
+@keyframes poster-hero-leave-still {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes poster-bar-enter {
+  from {
+    opacity: 0;
+    translate: 0 -100%;
+    visibility: hidden;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+    visibility: visible;
+  }
+}
+
+@keyframes poster-bar-enter-still {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+@utility poster-scope {
+  timeline-scope: --poster-hero;
+}
+
+@utility poster-hero-timeline {
+  view-timeline: --poster-hero block;
+}
+
+/* stylelint-disable no-invalid-position-declaration -- Tailwind @utility bodies are the scoping root. */
+@utility poster-hero-fade {
+  @supports (animation-timeline: view()) {
+    animation: poster-hero-leave linear both;
+    animation-timeline: --poster-hero;
+    animation-range: exit 0% exit 70%;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation-name: poster-hero-leave-still;
+    }
+  }
+}
+
+@utility poster-bar {
+  visibility: hidden;
+
+  @supports (animation-timeline: view()) {
+    animation: poster-bar-enter linear both;
+    animation-timeline: --poster-hero;
+    animation-range: exit 80% exit 100%;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation-name: poster-bar-enter-still;
+    }
+  }
+}
+/* stylelint-enable no-invalid-position-declaration */

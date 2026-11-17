@@ -27,6 +27,7 @@ import {
   CalendarDays,
   ExternalLink,
   FileText,
+  Handshake,
   Heading,
   Image as ImageIcon,
   Images,
@@ -69,6 +70,7 @@ export const blockIcon: Record<BlockType, LucideIcon> = {
   product: ShoppingBag,
   newsletter: Mail,
   live: Radio,
+  brands: Handshake,
 };
 
 export const ADD_TYPES: BlockType[] = ["link", "video", "music", "events", "image", "product", "newsletter", "header"];

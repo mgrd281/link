@@ -2,8 +2,8 @@
 
 import type { Block, Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
-import { Badge, Button, cn, Icon, IconButton, Kbd, Logo, Menu, Segmented, Switch, toast } from "@linkyo/ui";
-import { ArrowDown, ArrowUp, Copy, Eye, GripVertical, Heading, Moon, MoreHorizontal, Plus, Share2, Sparkles, Sun, Trash2 } from "lucide-react";
+import { Badge, Button, cn, Icon, IconButton, Kbd, Logo, Menu, Switch, toast } from "@linkyo/ui";
+import { ArrowDown, ArrowUp, Copy, Eye, GripVertical, Heading, MoreHorizontal, Plus, Share2, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
@@ -18,22 +18,19 @@ import { blockSummary } from "../editor/use-editor";
 import { platformName } from "../shared/creator-kit";
 import { resolveMedia } from "../shared/media";
 import { selfTitle } from "./sections";
-
-type Mode = "light" | "dark";
+import { TemplatePicker } from "./template-picker";
 
 /**
  * Direction D — "Poster" dashboard: the page as an outline of sections.
  * Section titles are rows of their own; the blocks under them are indented exactly as they will
- * group on the page. Light/dark is one switch. The live phone preview uses the real renderer.
+ * group on the page. Templates switch the whole look in one click. The live phone preview uses the
+ * real renderer.
  */
 export function PosterDashboard({ initial, profile, pageHref }: { initial: EditorDoc; profile: Page["profile"]; pageHref: string }) {
   const t = useTranslations("dashboard");
   const tTypes = useTranslations("dashboard.types");
   const { editor, doc, dispatch, add, addRef, focusAdd, dragging, previewOpen, setPreviewOpen, label, page, url } = useDashboard(initial, profile);
   const [focusSection, setFocusSection] = useState<string | null>(null);
-
-  const presetMode: Mode = creatorTokens.presets[doc.theme.preset ?? "mono"].mode;
-  const mode: Mode = doc.theme.mode ?? presetMode;
 
   // Which rows sit inside a section (same rule as the page: a header or a titled list opens one).
   const rows = doc.blocks.map((block, index) => {
@@ -84,15 +81,6 @@ export function PosterDashboard({ initial, profile, pageHref }: { initial: Edito
                 <span className="truncate font-mono">{url}</span>
               </p>
             </div>
-            <Segmented<Mode>
-              label={t("appearance")}
-              value={mode}
-              onValueChange={(next) => dispatch({ type: "theme", theme: { ...doc.theme, mode: next } })}
-              options={[
-                { value: "light", label: t("modeLight"), icon: Sun },
-                { value: "dark", label: t("modeDark"), icon: Moon },
-              ]}
-            />
             <Button variant="ghost" icon={Eye} onClick={() => setPreviewOpen(true)} className="xl:hidden">
               {t("openPreview")}
             </Button>
@@ -131,6 +119,20 @@ export function PosterDashboard({ initial, profile, pageHref }: { initial: Edito
               )}
             </div>
             <AddTypeChips onPick={(type) => (type === "header" ? addSection() : focusAdd())} />
+          </section>
+
+          <section aria-labelledby="template-title" className="grid gap-3">
+            <h2 id="template-title" className="text-h3">
+              {t("template")}
+            </h2>
+            <TemplatePicker
+              value={doc.theme.template}
+              profile={profile}
+              onChange={(template) => {
+                dispatch({ type: "theme", theme: { template } });
+                toast({ title: t("templateApplied", { name: creatorTokens.templates[template].label }), tone: "success" });
+              }}
+            />
           </section>
 
           <section aria-labelledby="sections-title" className="grid gap-3">

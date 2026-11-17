@@ -7,5 +7,5 @@ export const ROUTES = [
   "/directions",
   ...DIRECTIONS.map((d) => `/directions/${d}?chrome=0`),
   ...DIRECTIONS.map((d) => `/directions/${d}/dashboard?chrome=0`),
-  "/directions/poster?chrome=0&mode=dark",
+  ...["daylight", "marquee", "pulse", "atelier"].map((template) => `/directions/poster?chrome=0&template=${template}`),
 ];

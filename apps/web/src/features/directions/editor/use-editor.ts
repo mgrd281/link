@@ -78,6 +78,7 @@ export function blockTitle(block: Block, typeLabel: (type: BlockType) => string)
     case "gallery":
     case "events":
     case "shorts":
+    case "brands":
       return block.title ?? typeLabel(block.type);
     default:
       return block.title;
@@ -214,6 +215,8 @@ export function blockSummary(block: Block, platformLabel: (platform: string) => 
       return list(block.items.map((item) => item.title), 1);
     case "gallery":
       return String(block.images.length);
+    case "brands":
+      return list(block.items.map((item) => item.name));
     case "newsletter":
       return block.description ?? "";
     case "text":

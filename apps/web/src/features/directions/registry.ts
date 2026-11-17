@@ -8,8 +8,8 @@ export const isDirection = (value: string): value is DirectionId => (DIRECTIONS 
 
 /** Each direction's default creator theme. Any preset works with any direction. */
 export const directionTheme: Record<DirectionId, CreatorThemeConfig> = {
-  // Mono preset with the condensed "Stage" pairing and flat, soft cards: a neutral frame for the portrait.
-  poster: { preset: "mono", pairing: "stage", buttonStyle: "soft", buttonShape: "rounded" },
+  // Poster looks come from templates (see @linkyo/tokens creator.template); Nocturne is the default.
+  poster: { template: "nocturne" },
   gallery: { preset: "paper" },
   stage: { preset: "midnight", pairing: "stage", buttonStyle: "glass", buttonShape: "pill" },
   mosaic: { preset: "sunset" },

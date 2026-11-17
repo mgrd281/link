@@ -66,6 +66,30 @@ describe("groupSections", () => {
   });
 });
 
+describe("media rows", () => {
+  const release = (id: string, highlight = false): Block => ({
+    ...base,
+    highlight,
+    id,
+    type: "music",
+    title: id,
+    artist: "A",
+    kind: "single",
+    cover: { src: "sample:cover-daw", alt: "" },
+    links: [{ platform: "spotify", url: `https://open.spotify.com/track/${id}` }],
+  });
+
+  it("groups consecutive releases, cards and image links; a featured release stands alone", () => {
+    const [top] = groupSections([release("hero", true), release("a"), release("b"), link("plain"), release("c")]);
+    expect(top?.items.map((item) => (item.kind === "block" ? item.block.id : `${item.kind}:${item.blocks.map((b) => b.id).join(",")}`))).toEqual([
+      "hero",
+      "rows:a,b",
+      "plain",
+      "rows:c",
+    ]);
+  });
+});
+
 describe("linkDestination", () => {
   it("shows host, email or phone", () => {
     expect(linkDestination("https://www.milaaurel.com/samples")).toBe("milaaurel.com");
