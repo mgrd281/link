@@ -67,6 +67,42 @@ E2E: 7 homepage tests (claim validation, paste demo, marquee pause, FAQ, section
 phone popover menu) + axe on the homepage in 3 languages × light/dark × desktop/mobile. Total suite: 213 passing.
 Captures: `home/home-<locale>-<width>-<scheme>.jpg`.
 
+## 0d. Update — sign-up, log-in and the creator dashboard
+
+Accounts and a complete dashboard ([ADR 0014](../../DECISIONS/0014-accounts-and-dashboard.md)), in **demo mode**: data is
+saved only in the browser (clearly labelled), behind an `AccountStore` contract that the Supabase backend replaces in
+Phase 1 without changing a screen.
+
+- **Sign-up** (address from the homepage claim already filled in, live availability, password rules that turn green),
+  **log-in** (returns where you were going), **reset**. Google/Apple shown as "At launch".
+- **Welcome** in four steps — you, look, links, done — with the page building itself in a phone next to the form.
+- **Home**: your link (copy, share, QR code as PNG), a six-step checklist that opens the right place, a 7-day overview.
+- **Page**: the page top to bottom; tap to edit, drag or ⌥↑/⌥↓ to move, switch to hide, duplicate, delete with undo.
+  One **Add** sheet everywhere (paste links, 16 block types, photo upload) and an **edit sheet for every block type**
+  that sits beside the live page. One undo history for everything; autosave with a visible "Saved".
+- **Design**: templates, your color (presets or any color; text stays readable), light/dark/colorful, 7 font pairings,
+  6 button styles, 3 corner shapes. **Stats**: 7/30/90 days, change vs previous period, keyboard-readable daily chart
+  with a table, top links, sources, countries, devices (sample data, labelled). **Settings**: profile, address, email,
+  password, Impressum, appearance, language, export, delete.
+- **Phone**: bottom tab bar with Add in the middle, sheets that slide up, previews full height; Arabic fully RTL.
+
+| Desktop (de) | |
+|---|---|
+| ![Sign-up](app/desktop-de-signup.jpg) | ![Welcome · look](app/desktop-de-welcome-look.jpg) |
+| ![Home](app/desktop-de-home.jpg) | ![Page editor](app/desktop-de-editor.jpg) |
+| ![Edit sheet beside the live page](app/desktop-de-edit-sheet.jpg) | ![Design](app/desktop-de-design.jpg) |
+| ![Stats](app/desktop-de-analytics.jpg) | |
+
+| Phone (ar) | | |
+|---|---|---|
+| ![Sign-up](app/phone-ar-signup.jpg) | ![Home](app/phone-ar-home.jpg) | ![Page](app/phone-ar-editor.jpg) |
+| ![Add sheet](app/phone-ar-add-sheet.jpg) | ![Edit sheet](app/phone-ar-edit-sheet.jpg) | ![My page](app/phone-ar-own-page.jpg) |
+
+Tests: account store and validation unit tests (152 unit in total); E2E journeys on desktop and phone (sign-up →
+welcome → dashboard → log-out → log-in with return; reset; paste, create with validation, edit, delete + undo, hide,
+reload persistence; design; settings persistence; chart keyboard + table); axe clean on all new routes, screens and
+sheets. Full suite: 273 passing.
+
 ## 1. What was built
 
 | Deliverable | Where | State |

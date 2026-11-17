@@ -1,7 +1,6 @@
 "use client";
 
 import { detectMany, type Block, type BlockOf } from "@linkyo/blocks";
-import { creatorTokens } from "@linkyo/tokens";
 import { Button, cn, Icon, Logo } from "@linkyo/ui";
 import { ArrowLeft, ArrowRight, Check, PartyPopper } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -35,6 +34,7 @@ const SOCIALS = [
 export function WelcomeScreen() {
   const t = useTranslations("app.welcome");
   const tTypes = useTranslations("dashboard.types");
+  const tTemplates = useTranslations("templates");
   const router = useRouter();
   const { doc, dispatch, account } = useSite();
   const [step, setStep] = useState<Step>("you");
@@ -117,7 +117,7 @@ export function WelcomeScreen() {
           {step === "look" ? (
             <div className="grid grid-cols-1 gap-3">
               <TemplatePicker value={doc.theme.template} profile={doc.profile} onChange={(template) => dispatch({ type: "theme", theme: { template } })} />
-              {doc.theme.template ? <p className="text-small text-fg-secondary">{creatorTokens.templates[doc.theme.template].label}</p> : null}
+              {doc.theme.template ? <p className="text-small text-fg-secondary">{tTemplates(`${doc.theme.template}.description`)}</p> : null}
               <p className="text-small text-fg-tertiary">{t("lookLater")}</p>
             </div>
           ) : null}
