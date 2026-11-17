@@ -56,6 +56,22 @@ describe("block schema", () => {
     expect(block.highlight).toBe(false);
   });
 
+  it("treats a missing affiliate flag as not an ad and keeps it when set (ad label)", () => {
+    const plain = blockSchema.parse({ id: "1", type: "link", title: "Shop", url: "https://example.com" });
+    const ad = blockSchema.parse({ id: "2", type: "link", title: "Gear", url: "https://example.com", affiliate: true });
+    expect(plain.type === "link" && plain.affiliate === true).toBe(false);
+    expect(ad.type === "link" && ad.affiliate).toBe(true);
+  });
+
+  it("validates brand tiles (2 or 3 columns) and event show names with a 24 h time", () => {
+    const brands = blockSchema.parse({ id: "b", type: "brands", items: [{ name: "Werk 9", logo: { src: "logo.png", alt: "Werk 9" } }] });
+    expect(brands.type === "brands" && brands.columns).toBe(3);
+    expect(() => blockSchema.parse({ id: "b", type: "brands", columns: 4, items: [{ name: "x", logo: { src: "l", alt: "" } }] })).toThrow();
+    const event = { date: "2026-12-05", city: "Berlin", venue: "Club", url: "https://t.example.com", status: "onsale" };
+    expect(() => blockSchema.parse({ id: "e", type: "events", items: [{ ...event, name: "Release night", time: "20:30" }] })).not.toThrow();
+    expect(() => blockSchema.parse({ id: "e", type: "events", items: [{ ...event, time: "8pm" }] })).toThrow();
+  });
+
   it("rejects unsafe URLs", () => {
     expect(() => blockSchema.parse({ id: "1", type: "link", title: "x", url: "javascript:alert(1)" })).toThrow();
   });

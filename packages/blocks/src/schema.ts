@@ -38,7 +38,12 @@ const image = z.object({
   alt: z.string().max(300),
   /** Focal point 0–1 for auto-cropping. */
   focal: z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)]).optional(),
+  /** Dominant luminance, measured at upload. Lets a page match its mode and tone the photo. */
+  tone: z.enum(["light", "dark"]).optional(),
 });
+
+/** Paid or commission links must be labelled as advertising (DE: UWG § 5a, MStV § 22). */
+const affiliate = z.boolean().optional();
 
 const base = z.object({
   id: z.string().min(1),
@@ -56,6 +61,7 @@ export const blockSchema = z.discriminatedUnion("type", [
     url,
     thumbnail: image.optional(),
     badge: z.string().max(16).optional(),
+    affiliate,
   }),
   base.extend({
     type: z.literal("card"),
@@ -63,6 +69,7 @@ export const blockSchema = z.discriminatedUnion("type", [
     description: z.string().max(240).optional(),
     url,
     image,
+    affiliate,
   }),
   base.extend({ type: z.literal("header"), title: z.string().min(1).max(80) }),
   base.extend({ type: z.literal("text"), text: z.string().min(1).max(2000) }),
@@ -108,6 +115,10 @@ export const blockSchema = z.discriminatedUnion("type", [
           url,
           status: z.enum(["onsale", "few", "soldout"]),
           image: image.optional(),
+          /** Show title ("Open Mic", "Release night"); the city is used when absent. */
+          name: z.string().max(120).optional(),
+          /** Doors/start, local time "HH:MM". */
+          time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
         }),
       )
       .min(1)
@@ -120,11 +131,19 @@ export const blockSchema = z.discriminatedUnion("type", [
     currency: z.enum(["EUR", "USD", "GBP", "CHF"]),
     url,
     image,
+    affiliate,
   }),
   base.extend({
     type: z.literal("newsletter"),
     title: z.string().min(1).max(80),
     description: z.string().max(200).optional(),
+  }),
+  base.extend({
+    type: z.literal("brands"),
+    title: z.string().max(80).optional(),
+    /** Partners, sponsors, teams: logo tiles. Two columns show the role, three show logos only. */
+    columns: z.union([z.literal(2), z.literal(3)]).default(3),
+    items: z.array(z.object({ name: z.string().min(1).max(80), role: z.string().max(80).optional(), logo: image, url: url.optional() })).min(1).max(24),
   }),
   base.extend({
     type: z.literal("live"),
@@ -152,6 +171,10 @@ export const profileSchema = z.object({
   location: z.string().max(60).optional(),
   avatar: image,
   hero: image.optional(),
+  /** Logo or wordmark (transparent PNG/SVG); templates with a logo hero show it instead of the name. */
+  logo: image.optional(),
+  /** One line under the name ("DJ & producer · Berlin"). */
+  tagline: z.string().max(80).optional(),
   verified: z.boolean().default(false),
   locale: z.enum(["de", "en", "ar"]),
 });
