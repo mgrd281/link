@@ -30,15 +30,6 @@
     "link2": "Tour dates 2027",
     "link3": "Book me for your club"
   },
-  "home": {
-    "title": "Phase 0 — Foundations",
-    "lead": "Brand, tokens, components and three directions for the creator page and dashboard. Pick one, then we build.",
-    "designTitle": "Design system",
-    "designBody": "Every token, component and state — generated from one tokens file.",
-    "directionsTitle": "Three directions",
-    "directionsBody": "Gallery, Stage and Mosaic. Same content, three ways to feel premium.",
-    "open": "Open"
-  },
   "design": {
     "title": "Design system",
     "lead": "Every token, component and state in one place. Generated from packages/tokens/tokens.json — never hard-coded.",
@@ -537,5 +528,225 @@
     "atelier": {
       "description": "Warm gallery paper, a serif name, crisp corners and titles in capitals."
     }
+  },
+  "marketing": {
+    "meta": {
+      "title": "Linkyo — One link. Everything you create.",
+      "description": "The creator page that looks premium in five minutes: five templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
+    },
+    "nav": {
+      "features": "Features",
+      "templates": "Templates",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "login": "Log in",
+      "start": "Start for free",
+      "menu": "Menu",
+      "close": "Close menu",
+      "label": "Main"
+    },
+    "hero": {
+      "kicker": "For creators, artists and the teams behind them",
+      "title1": "One link.",
+      "title2": "Everything you create.",
+      "lead": "A page that looks as good as your best work — music, shows, videos, merch and partners in one place. Ready in five minutes, up to date on its own.",
+      "pills": [
+        "Free to start",
+        "No cookies",
+        "Data in Frankfurt"
+      ],
+      "phones": "Creator pages in the Nocturne, Pulse and Daylight templates"
+    },
+    "claim": {
+      "label": "Choose your page address",
+      "prefix": "linkyo.app/",
+      "placeholder": "yourname",
+      "cta": "Start for free",
+      "hint": "Lowercase letters, numbers and dashes, 3–30 characters.",
+      "invalid": "Use 3–30 lowercase letters, numbers or dashes — no dash at the start or end.",
+      "ok": "linkyo.app/{name} looks good. Sign-up opens soon — try the editor in the meantime.",
+      "tryEditor": "Try the editor"
+    },
+    "proof": {
+      "title": "Built on three promises",
+      "cookies": {
+        "value": "0",
+        "label": "cookies on your page. No banner needed."
+      },
+      "eu": {
+        "value": "100 %",
+        "label": "of your data stored in Frankfurt, Germany."
+      },
+      "free": {
+        "value": "0 €",
+        "label": "for everything you need to start. No card."
+      }
+    },
+    "templates": {
+      "title": "Five templates. Your photos.",
+      "lead": "Pick a look, keep your content. Every color in every template is checked for contrast, so your page stays readable for everyone.",
+      "pause": "Pause the template strip",
+      "play": "Play the template strip",
+      "label": "Templates"
+    },
+    "story": {
+      "title": "Everything you make. One page.",
+      "lead": "Your page groups itself into clear sections. You add things — Linkyo arranges them.",
+      "steps": [
+        {
+          "title": "Your portrait, front and center",
+          "body": "A full-width photo fades into your page, your name set like a poster. On scroll, a compact bar with your name and a share button takes over."
+        },
+        {
+          "title": "Shows that sort themselves",
+          "body": "Add dates once. Visitors filter by month, sold-out shows grey out, the rest link straight to tickets."
+        },
+        {
+          "title": "One tap to every service",
+          "body": "Paste a release once and fans pick Spotify, Apple Music, YouTube Music or wherever they listen."
+        },
+        {
+          "title": "Merch, partners, the right label",
+          "body": "A two-up shop, partner logos, and paid links labelled as ads — the way German law expects."
+        }
+      ],
+      "phone": "A creator page scrolling from the portrait to the shop"
+    },
+    "paste": {
+      "title": "Paste a link. Done.",
+      "lead": "Linkyo recognises what you paste and builds the right block. Try it.",
+      "label": "Paste or type a link",
+      "placeholder": "Paste a Spotify, YouTube or ticket link",
+      "examples": "Examples",
+      "add": "Add",
+      "detected": "Recognised: {type}",
+      "empty": "Nothing here yet. Paste any link to start.",
+      "invalid": "That doesn't look like a link. Check it and try again.",
+      "added": "{type} added to your page",
+      "types": {
+        "music": "Music",
+        "video": "Video",
+        "shorts": "Shorts",
+        "events": "Tickets",
+        "product": "Product",
+        "live": "Live stream",
+        "image": "Image",
+        "card": "Link",
+        "link": "Link"
+      },
+      "list": "Blocks on your page",
+      "remove": "Remove {title}"
+    },
+    "analytics": {
+      "title": "Analytics without cookies",
+      "lead": "See which links work and where your visitors come from — counted anonymously, so there is nothing to consent to.",
+      "visitors": "Visitors",
+      "clicks": "Clicks",
+      "ctr": "Click rate",
+      "top": "Top links",
+      "week": "Last 7 days",
+      "sample": "Sample data",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "links": [
+        "New single",
+        "Tour tickets",
+        "Vinyl"
+      ],
+      "points": [
+        "No cookies, no fingerprinting",
+        "No ad pixels on your page",
+        "Hosted in Frankfurt"
+      ]
+    },
+    "pricing": {
+      "title": "Start free. Stay free.",
+      "lead": "Everything below is free for good. Pro adds selling and power features later — no card, no notice period.",
+      "free": {
+        "name": "Free",
+        "price": "0 €",
+        "per": "forever",
+        "features": [
+          "All five templates",
+          "Unlimited links and sections",
+          "Music, shows, videos, shop links",
+          "Cookie-free analytics",
+          "Imprint and privacy page helper",
+          "iOS app (coming)"
+        ],
+        "cta": "Start for free"
+      },
+      "pro": {
+        "name": "Pro",
+        "badge": "Coming soon",
+        "features": [
+          "Your own domain",
+          "Sell products and downloads",
+          "Email list and automations",
+          "Advanced analytics",
+          "Remove the Linkyo credit"
+        ],
+        "cta": "Notify me later"
+      }
+    },
+    "faq": {
+      "title": "Questions, answered",
+      "items": [
+        {
+          "q": "Is Linkyo really free?",
+          "a": "Yes. Templates, unlimited links, sections and analytics stay free. Pro will add selling and power features, and nothing that is free today becomes paid."
+        },
+        {
+          "q": "Do I need a cookie banner?",
+          "a": "No. Creator pages set no cookies and load no trackers. Videos from YouTube or TikTok load only after a visitor taps, so there is nothing to consent to."
+        },
+        {
+          "q": "Where is my data stored?",
+          "a": "In Frankfurt, Germany. We pick EU providers first and list every processor in our privacy policy."
+        },
+        {
+          "q": "Can I use my own photos, colors and fonts?",
+          "a": "Yes. Start from a template, then change colors, fonts and buttons. Linkyo checks every color pair, so text always stays readable."
+        },
+        {
+          "q": "Does it work in Arabic and other right-to-left languages?",
+          "a": "Yes. Every template supports Arabic with a proper Arabic typeface and a mirrored layout."
+        },
+        {
+          "q": "Is there an app?",
+          "a": "A native iOS app is in the works: edit your page, add links from the share sheet and see your stats in a widget."
+        }
+      ]
+    },
+    "final": {
+      "title": "Your page. In five minutes.",
+      "lead": "Choose your address and start with a template that fits your photo."
+    },
+    "footer": {
+      "tagline": "One link. Everything you create.",
+      "product": "Product",
+      "resources": "Resources",
+      "legal": "Legal",
+      "templates": "Templates",
+      "analytics": "Analytics",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "designSystem": "Design system",
+      "directions": "Design directions (prototype)",
+      "editor": "Try the editor",
+      "imprint": "Imprint",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "made": "Made in Germany · Hosted in Frankfurt",
+      "rights": "© 2026 Linkyo"
+    },
+    "skip": "Skip to content"
   }
 }

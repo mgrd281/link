@@ -75,6 +75,13 @@ for (const direction of DIRECTIONS) {
 }
 
 for (const locale of ["de", "ar"] as const) {
+  for (const width of WIDTHS) {
+    test(`marketing home ${locale} ${width}`, async ({ page }) => {
+      for (const scheme of ["light", "dark"] as const) {
+        await capture(page, `/${locale}`, `home/home-${locale}-${width}-${scheme}.jpg`, width, scheme, true);
+      }
+    });
+  }
   for (const scheme of ["light", "dark"] as const) {
     test(`design system ${locale} ${scheme}`, async ({ page }) => {
       await capture(page, `/${locale}/design`, `design/design-${locale}-1440-${scheme}.jpg`, 1440, scheme, false);

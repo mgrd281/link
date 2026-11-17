@@ -30,15 +30,6 @@
     "link2": "Tourdaten 2027",
     "link3": "Buch mich für deinen Club"
   },
-  "home": {
-    "title": "Phase 0 — Fundament",
-    "lead": "Marke, Tokens, Komponenten und drei Richtungen für Creator-Seite und Dashboard. Wähl eine – dann bauen wir.",
-    "designTitle": "Designsystem",
-    "designBody": "Jeder Token, jede Komponente, jeder Zustand – aus einer einzigen Token-Datei generiert.",
-    "directionsTitle": "Drei Richtungen",
-    "directionsBody": "Gallery, Stage und Mosaic. Gleicher Inhalt, drei Wege zu Premium.",
-    "open": "Öffnen"
-  },
   "design": {
     "title": "Designsystem",
     "lead": "Jeder Token, jede Komponente und jeder Zustand an einem Ort. Generiert aus packages/tokens/tokens.json – nie hart codiert.",
@@ -537,5 +528,225 @@
     "atelier": {
       "description": "Warmes Galeriepapier, ein Serifen-Name, klare Ecken und Titel in Großbuchstaben."
     }
+  },
+  "marketing": {
+    "meta": {
+      "title": "Linkyo — Ein Link. Alles, was du erschaffst.",
+      "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: fünf Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
+    },
+    "nav": {
+      "features": "Funktionen",
+      "templates": "Vorlagen",
+      "pricing": "Preise",
+      "faq": "FAQ",
+      "login": "Anmelden",
+      "start": "Kostenlos starten",
+      "menu": "Menü",
+      "close": "Menü schließen",
+      "label": "Hauptmenü"
+    },
+    "hero": {
+      "kicker": "Für Creator, Artists und die Teams dahinter",
+      "title1": "Ein Link.",
+      "title2": "Alles, was du erschaffst.",
+      "lead": "Eine Seite, die so gut aussieht wie deine beste Arbeit – Musik, Shows, Videos, Merch und Partner an einem Ort. In fünf Minuten fertig, danach von selbst aktuell.",
+      "pills": [
+        "Kostenlos starten",
+        "Ohne Cookies",
+        "Daten in Frankfurt"
+      ],
+      "phones": "Creator-Seiten in den Vorlagen Nocturne, Pulse und Daylight"
+    },
+    "claim": {
+      "label": "Wähl deine Seitenadresse",
+      "prefix": "linkyo.app/",
+      "placeholder": "deinname",
+      "cta": "Kostenlos starten",
+      "hint": "Kleinbuchstaben, Zahlen und Bindestriche, 3–30 Zeichen.",
+      "invalid": "Nutze 3–30 Kleinbuchstaben, Zahlen oder Bindestriche – kein Bindestrich am Anfang oder Ende.",
+      "ok": "linkyo.app/{name} sieht gut aus. Die Anmeldung öffnet bald – probier solange den Editor aus.",
+      "tryEditor": "Editor ausprobieren"
+    },
+    "proof": {
+      "title": "Gebaut auf drei Versprechen",
+      "cookies": {
+        "value": "0",
+        "label": "Cookies auf deiner Seite. Kein Banner nötig."
+      },
+      "eu": {
+        "value": "100 %",
+        "label": "deiner Daten liegen in Frankfurt."
+      },
+      "free": {
+        "value": "0 €",
+        "label": "für alles, was du zum Start brauchst. Ohne Karte."
+      }
+    },
+    "templates": {
+      "title": "Fünf Vorlagen. Deine Fotos.",
+      "lead": "Look wählen, Inhalt behalten. Jede Farbe in jeder Vorlage ist auf Kontrast geprüft – deine Seite bleibt für alle lesbar.",
+      "pause": "Vorlagen-Leiste anhalten",
+      "play": "Vorlagen-Leiste abspielen",
+      "label": "Vorlagen"
+    },
+    "story": {
+      "title": "Alles, was du machst. Eine Seite.",
+      "lead": "Deine Seite ordnet sich selbst in klare Abschnitte. Du fügst hinzu – Linkyo sortiert.",
+      "steps": [
+        {
+          "title": "Dein Porträt, ganz vorne",
+          "body": "Ein Foto über die volle Breite geht in deine Seite über, dein Name wie auf einem Plakat. Beim Scrollen übernimmt eine kompakte Leiste mit Name und Teilen-Knopf."
+        },
+        {
+          "title": "Termine, die sich selbst sortieren",
+          "body": "Einmal eintragen. Besucher filtern nach Monat, ausverkaufte Shows werden grau, alles andere führt direkt zu den Tickets."
+        },
+        {
+          "title": "Ein Tipp zu jedem Dienst",
+          "body": "Release einmal einfügen – Fans wählen Spotify, Apple Music, YouTube Music oder wo sie eben hören."
+        },
+        {
+          "title": "Merch, Partner, richtig gekennzeichnet",
+          "body": "Ein Shop im Zweier-Raster, Partner-Logos und bezahlte Links als Anzeige markiert – so, wie es das deutsche Recht erwartet."
+        }
+      ],
+      "phone": "Eine Creator-Seite, die vom Porträt bis zum Shop scrollt"
+    },
+    "paste": {
+      "title": "Link einfügen. Fertig.",
+      "lead": "Linkyo erkennt, was du einfügst, und baut den passenden Block. Probier es aus.",
+      "label": "Link einfügen oder tippen",
+      "placeholder": "Spotify-, YouTube- oder Ticket-Link einfügen",
+      "examples": "Beispiele",
+      "add": "Hinzufügen",
+      "detected": "Erkannt: {type}",
+      "empty": "Noch nichts hier. Füg einfach einen Link ein.",
+      "invalid": "Das sieht nicht nach einem Link aus. Prüf ihn und versuch es nochmal.",
+      "added": "{type} zu deiner Seite hinzugefügt",
+      "types": {
+        "music": "Musik",
+        "video": "Video",
+        "shorts": "Shorts",
+        "events": "Tickets",
+        "product": "Produkt",
+        "live": "Livestream",
+        "image": "Bild",
+        "card": "Link",
+        "link": "Link"
+      },
+      "list": "Blöcke auf deiner Seite",
+      "remove": "{title} entfernen"
+    },
+    "analytics": {
+      "title": "Analytics ohne Cookies",
+      "lead": "Sieh, welche Links funktionieren und woher deine Besucher kommen – anonym gezählt, also gibt es nichts zuzustimmen.",
+      "visitors": "Besucher",
+      "clicks": "Klicks",
+      "ctr": "Klickrate",
+      "top": "Top-Links",
+      "week": "Letzte 7 Tage",
+      "sample": "Beispieldaten",
+      "days": [
+        "Mo",
+        "Di",
+        "Mi",
+        "Do",
+        "Fr",
+        "Sa",
+        "So"
+      ],
+      "links": [
+        "Neue Single",
+        "Tour-Tickets",
+        "Vinyl"
+      ],
+      "points": [
+        "Keine Cookies, kein Fingerprinting",
+        "Keine Werbe-Pixel auf deiner Seite",
+        "Gehostet in Frankfurt"
+      ]
+    },
+    "pricing": {
+      "title": "Kostenlos starten. Kostenlos bleiben.",
+      "lead": "Alles hier bleibt dauerhaft kostenlos. Pro bringt später Verkauf und Power-Funktionen – ohne Karte, ohne Kündigungsfrist.",
+      "free": {
+        "name": "Free",
+        "price": "0 €",
+        "per": "für immer",
+        "features": [
+          "Alle fünf Vorlagen",
+          "Unbegrenzt Links und Abschnitte",
+          "Musik, Shows, Videos, Shop-Links",
+          "Analytics ohne Cookies",
+          "Assistent für Impressum und Datenschutz",
+          "iOS-App (in Arbeit)"
+        ],
+        "cta": "Kostenlos starten"
+      },
+      "pro": {
+        "name": "Pro",
+        "badge": "Bald",
+        "features": [
+          "Eigene Domain",
+          "Produkte und Downloads verkaufen",
+          "E-Mail-Liste und Automationen",
+          "Erweiterte Analytics",
+          "Linkyo-Hinweis entfernen"
+        ],
+        "cta": "Später benachrichtigen"
+      }
+    },
+    "faq": {
+      "title": "Fragen und Antworten",
+      "items": [
+        {
+          "q": "Ist Linkyo wirklich kostenlos?",
+          "a": "Ja. Vorlagen, unbegrenzte Links, Abschnitte und Analytics bleiben kostenlos. Pro bringt Verkauf und Power-Funktionen – nichts, was heute gratis ist, wird kostenpflichtig."
+        },
+        {
+          "q": "Brauche ich ein Cookie-Banner?",
+          "a": "Nein. Creator-Seiten setzen keine Cookies und laden keine Tracker. Videos von YouTube oder TikTok laden erst nach einem Tippen – es gibt also nichts zuzustimmen."
+        },
+        {
+          "q": "Wo liegen meine Daten?",
+          "a": "In Frankfurt am Main. Wir wählen zuerst Anbieter aus der EU und nennen jeden Auftragsverarbeiter in unserer Datenschutzerklärung."
+        },
+        {
+          "q": "Kann ich eigene Fotos, Farben und Schriften nutzen?",
+          "a": "Ja. Starte mit einer Vorlage und ändere danach Farben, Schriften und Buttons. Linkyo prüft jedes Farbpaar – Text bleibt immer lesbar."
+        },
+        {
+          "q": "Funktioniert es auf Arabisch und in anderen Sprachen von rechts nach links?",
+          "a": "Ja. Jede Vorlage unterstützt Arabisch mit passender arabischer Schrift und gespiegeltem Layout."
+        },
+        {
+          "q": "Gibt es eine App?",
+          "a": "Eine native iOS-App ist in Arbeit: Seite bearbeiten, Links über das Teilen-Menü hinzufügen und Zahlen im Widget sehen."
+        }
+      ]
+    },
+    "final": {
+      "title": "Deine Seite. In fünf Minuten.",
+      "lead": "Wähl deine Adresse und starte mit einer Vorlage, die zu deinem Foto passt."
+    },
+    "footer": {
+      "tagline": "Ein Link. Alles, was du erschaffst.",
+      "product": "Produkt",
+      "resources": "Ressourcen",
+      "legal": "Rechtliches",
+      "templates": "Vorlagen",
+      "analytics": "Analytics",
+      "pricing": "Preise",
+      "faq": "FAQ",
+      "designSystem": "Designsystem",
+      "directions": "Design-Richtungen (Prototyp)",
+      "editor": "Editor ausprobieren",
+      "imprint": "Impressum",
+      "privacy": "Datenschutz",
+      "terms": "AGB",
+      "made": "Gemacht in Deutschland · Gehostet in Frankfurt",
+      "rights": "© 2026 Linkyo"
+    },
+    "skip": "Zum Inhalt springen"
   }
 }
