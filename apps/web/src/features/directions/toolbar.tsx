@@ -1,0 +1,80 @@
+"use client";
+
+import { creatorTokens, type CreatorPresetId } from "@linkyo/tokens";
+import { cn, Icon, IconButton } from "@linkyo/ui";
+import { SlidersHorizontal, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+
+import { Link, useRouter } from "@/i18n/navigation";
+
+import { DIRECTIONS, type DirectionId } from "./registry";
+
+/** Prototype-only controls to compare directions, views and themes. Not part of the product UI. */
+export function DirectionToolbar({ direction, view }: { direction: DirectionId; view: "page" | "dashboard" }) {
+  const t = useTranslations("directions");
+  const params = useSearchParams();
+  const router = useRouter();
+  const [open, setOpen] = useState(true);
+  const preset = params.get("preset") ?? "";
+  if (params.get("chrome") === "0") return null;
+
+  const href = (d: DirectionId, v: "page" | "dashboard") =>
+    `/directions/${d}${v === "dashboard" ? "/dashboard" : ""}${preset ? `?preset=${preset}` : ""}` as const;
+
+  if (!open) {
+    return (
+      <div className="layer-overlay fixed end-4 bottom-4" data-theme="dark">
+        <IconButton icon={SlidersHorizontal} label={t("toolbar.show")} variant="secondary" onClick={() => setOpen(true)} />
+      </div>
+    );
+  }
+  const seg = "inline-flex h-control-sm items-center rounded-sm px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring";
+  return (
+    <div data-theme="dark" className="layer-overlay fixed inset-x-0 bottom-4 flex justify-center px-4">
+      <nav
+        aria-label={t("toolbar.label")}
+        className="flex max-w-full flex-wrap items-center gap-2 overflow-x-auto rounded-xl border border-line-strong bg-surface-elevated p-1 text-fg shadow-e3"
+      >
+        <div className="flex gap-0.5 rounded-md bg-canvas-muted p-0.5" role="group" aria-label={t("toolbar.direction")}>
+          {DIRECTIONS.map((d) => (
+            <Link key={d} href={href(d, view)} aria-current={d === direction ? "page" : undefined} className={cn(seg, d === direction && "bg-surface text-fg shadow-e1")}>
+              {t(`${d}.name`)}
+            </Link>
+          ))}
+        </div>
+        <div className="flex gap-0.5 rounded-md bg-canvas-muted p-0.5" role="group" aria-label={t("toolbar.view")}>
+          {(["page", "dashboard"] as const).map((v) => (
+            <Link key={v} href={href(direction, v)} aria-current={v === view ? "page" : undefined} className={cn(seg, v === view && "bg-surface text-fg shadow-e1")}>
+              {t(`toolbar.${v}`)}
+            </Link>
+          ))}
+        </div>
+        {view === "page" ? (
+          <label className="flex items-center gap-2 px-2 text-small text-fg-secondary">
+            <span>{t("toolbar.theme")}</span>
+            <select
+              value={preset}
+              onChange={(event) => {
+                const next = event.target.value;
+                router.replace(next ? `/directions/${direction}?preset=${next}` : `/directions/${direction}`);
+              }}
+              className="h-control-sm rounded-sm border border-line-strong bg-surface px-2 text-small text-fg focus-visible:focus-ring"
+            >
+              <option value="">{t("toolbar.default")}</option>
+              {(Object.keys(creatorTokens.presets) as CreatorPresetId[]).map((id) => (
+                <option key={id} value={id}>
+                  {creatorTokens.presets[id].label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <button type="button" onClick={() => setOpen(false)} aria-label={t("toolbar.hide")} className="grid size-control-sm place-items-center rounded-sm text-fg-secondary hover:bg-hover hover:text-fg focus-visible:focus-ring">
+          <Icon icon={X} size="sm" />
+        </button>
+      </nav>
+    </div>
+  );
+}

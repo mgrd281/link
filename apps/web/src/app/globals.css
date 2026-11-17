@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@import "@linkyo/tokens/tailwind.css";
+
+/* Scan shared packages for classes. */
+@source "../../../../packages/ui/src";
+
+@layer base {
+  html {
+    /* iOS Safari still needs the prefix to stop text inflation in landscape. */
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    text-rendering: optimizelegibility;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: var(--color-selected);
+  }
+
+  :focus-visible {
+    outline: var(--border-width-focus) solid var(--color-focus);
+    outline-offset: var(--border-width-focus-offset);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: var(--duration-micro) !important;
+      transition-duration: var(--duration-micro) !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
