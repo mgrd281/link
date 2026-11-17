@@ -1,8 +1,10 @@
 import { hasImage, type BlockOf, type Page } from "@linkyo/blocks";
-import type { ResolvedCreatorTheme } from "@linkyo/tokens/creator";
+import { creatorTokens } from "@linkyo/tokens";
+import { PAIRING_IDS, type ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
 import { BadgeCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { CSSProperties } from "react";
 
 import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from "../shared/creator-kit";
 import { ShareButton } from "./share";
@@ -10,10 +12,30 @@ import { displayStyle } from "./styles";
 
 type Profile = Page["profile"];
 
-function Name({ profile, isRtl }: { profile: Profile; isRtl: boolean }) {
+/**
+ * Average advance per character of each display face, measured on real names (em per character).
+ * Used to size the name so that it stays on one line whenever that still reads large.
+ */
+const GLYPH_WIDTH: Record<string, number> = { classic: 0.53, stage: 0.47, editorial: 0.46, modern: 0.49, bold: 0.48, elegant: 0.5, tech: 0.52, arabic: 0.47 };
+
+function Name({ profile, isRtl, theme }: { profile: Profile; isRtl: boolean; theme: ResolvedCreatorTheme }) {
   const t = useTranslations("creator");
+  const pairing = PAIRING_IDS.find((id) => creatorTokens.pairings[id] === theme.pairing) ?? "classic";
+  const ems = Array.from(profile.displayName).length * (GLYPH_WIDTH[pairing] ?? 0.53);
+  // Room for the name: the column minus the gutters (and the verified badge), shared by its characters.
+  const room = profile.verified
+    ? "min(100cqi, var(--container-creator)) - 2 * var(--spacing-creator-gutter) - var(--spacing-icon-lg) - var(--spacing-2)"
+    : "min(100cqi, var(--container-creator)) - 2 * var(--spacing-creator-gutter)";
   return (
-    <h1 className={cn("font-creator-display text-display text-balance break-words @prose:text-display-xl", isRtl ? "leading-tight" : "leading-none")} style={displayStyle}>
+    <h1
+      className={cn(
+        "font-creator-display text-balance break-words",
+        // Never larger than the display size, never smaller than a headline; long names still wrap.
+        "text-[length:clamp(var(--text-h1),var(--name-fit),var(--text-display))] @prose:text-[length:clamp(var(--text-h1),var(--name-fit),var(--text-display-xl))]",
+        isRtl ? "leading-tight" : "leading-none",
+      )}
+      style={{ ...displayStyle, "--name-fit": `calc((${room}) / ${ems.toFixed(2)})` } as CSSProperties}
+    >
       {profile.displayName}
       {profile.verified ? (
         <span className="ms-2 inline-block align-middle text-creator-accent-text">
@@ -100,7 +122,7 @@ export function PosterHero({
         </div>
       )}
       <div className={cn("relative grid justify-items-center gap-3 px-creator-gutter", treatment === "logo" && profile.logo ? "-mt-6" : treatment === "monogram" ? "-mt-12" : "-mt-16")}>
-        {treatment === "logo" && profile.logo ? null : <Name profile={profile} isRtl={isRtl} />}
+        {treatment === "logo" && profile.logo ? null : <Name profile={profile} isRtl={isRtl} theme={theme} />}
         {profile.tagline ? <p className="text-small font-semibold tracking-wide text-balance uppercase">{profile.tagline}</p> : null}
         {profile.bio ? <p className="max-w-prose text-body-lg text-balance text-creator-fg-muted">{profile.bio}</p> : null}
         {socials ? (
