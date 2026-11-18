@@ -37,7 +37,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const sample = found.preview.sample;
   const label = sample ? await sampleLabel(locale, sample) : "";
   return {
-    title: { absolute: sample ? t("sampleTitle", { kind: label }) : t("title", { name: found.page.profile.displayName }) },
+    title: {
+      absolute: sample ? t("sampleTitle", { kind: label }) : found.preview.concept ? t("conceptTitle", { name: found.page.profile.displayName }) : t("title", { name: found.page.profile.displayName }),
+    },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }
@@ -64,15 +66,18 @@ export default async function PreviewRoute({ params }: Props) {
   const name = found.preview.name[locale as "de" | "en" | "ar"] ?? found.page.profile.displayName;
   const sample = found.preview.sample;
   const kind = sample ? await sampleLabel(locale, sample) : "";
-  const badge = sample ? t("sampleBadge", { kind }) : t("badge", { name });
+  const concept = found.preview.concept;
+  const badge = sample ? t("sampleBadge", { kind }) : concept ? t("conceptBadge", { name }) : t("badge", { name });
   const notes = sample
     ? [t("sampleNote", { name, kind })]
-    : [
+    : concept
+      ? [t("conceptNote", { name }), concept.credit ? t("photoCredit", { credit: concept.credit }) : null].filter(Boolean)
+      : [
         t("note"),
         found.page.profile.verified ? t("verifiedNote") : null,
         found.page.blocks.some((block) => block.type === "live") ? t("liveNote") : null,
       ].filter(Boolean);
-  const claim = sample ? `/signup?kind=${sample.kind}${sample.look ? `&look=${sample.look}` : ""}` : `/signup?name=${found.preview.username}${found.preview.invite ? `&invite=${slug}` : ""}`;
+  const claim = concept ? "/signup" : sample ? `/signup?kind=${sample.kind}${sample.look ? `&look=${sample.look}` : ""}` : `/signup?name=${found.preview.username}${found.preview.invite ? `&invite=${slug}` : ""}`;
   return (
     <>
       <style>{`html,body{background-color:${theme.palette.bg}}`}</style>
@@ -113,8 +118,8 @@ export default async function PreviewRoute({ params }: Props) {
         }
         dock={
           <LinkyoDock
-            title={sample ? t("sampleDockTitle") : t("dockTitle")}
-            cta={sample ? t("sampleDockCta") : t("dockCta")}
+            title={sample || concept ? t("sampleDockTitle") : t("dockTitle")}
+            cta={sample || concept ? t("sampleDockCta") : t("dockCta")}
             href={claim}
             closeLabel={t("dockClose")}
           />

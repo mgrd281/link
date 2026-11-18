@@ -56,6 +56,16 @@ export function makeHelpers(slug: string, persona: Persona) {
       ...(options.badge ? { badge: options.badge } : {}),
       ...(options.affiliate ? { affiliate: true } : {}),
     }),
+    /** A card with a picture: articles, offers, featured work. */
+    card: (title: string, description: string, path: string, key: string, options: { affiliate?: boolean } = {}): BlockOf<"card"> => ({
+      ...base("card"),
+      type: "card",
+      title,
+      description,
+      url: url(path),
+      image: image(key),
+      ...(options.affiliate ? { affiliate: true } : {}),
+    }),
     mail: (title: string, box: string, options: LinkOptions = {}): BlockOf<"link"> => ({
       ...base("link"),
       type: "link",
@@ -93,11 +103,14 @@ export function makeHelpers(slug: string, persona: Persona) {
       url: url(path),
       image: key ? image(key, focal) : cover,
     }),
-    events: (title: string, items: { date: string; time?: string; name: string; city: string; venue: string; status?: "onsale" | "few" | "soldout" }[]): BlockOf<"events"> => ({
+    events: (
+      title: string,
+      items: { date: string; time?: string; name: string; city: string; venue: string; status?: "onsale" | "few" | "soldout"; image?: string }[],
+    ): BlockOf<"events"> => ({
       ...base("events"),
       type: "events",
       title,
-      items: items.map((item, i) => ({ ...item, url: url(`event-${i + 1}`), status: item.status ?? "onsale" })),
+      items: items.map(({ image: key, ...item }, i) => ({ ...item, url: url(`event-${i + 1}`), status: item.status ?? "onsale", ...(key ? { image: image(key) } : {}) })),
     }),
     newsletter: (title: string, description?: string): BlockOf<"newsletter"> => ({ ...base("newsletter"), type: "newsletter", title, ...(description ? { description } : {}) }),
     live: (platform: "twitch" | "youtube" | "tiktok" | "kick" | "instagram", channel: string, title?: string): BlockOf<"live"> => ({

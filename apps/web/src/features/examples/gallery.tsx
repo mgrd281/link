@@ -4,7 +4,7 @@ import { cn, Icon, IconButton } from "@linkyo/ui";
 import { ArrowRight, ExternalLink, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Dialog } from "radix-ui";
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 
 import { MediaImage, Monogram } from "@/features/directions/shared/creator-kit";
 import { displayStyle } from "@/features/directions/poster/styles";
@@ -30,7 +30,7 @@ export interface GalleryItem {
 const thumbSizes = "(max-width: 40rem) 50vw, (max-width: 64rem) 33vw, 25vw";
 
 /** A miniature of the page in its own colors and fonts: picture, name, line, first two buttons. */
-function Miniature({ item }: { item: GalleryItem }) {
+function Miniature({ item, chip }: { item: GalleryItem; chip?: string | undefined }) {
   const logo = item.hero === "logo" && item.logo;
   return (
     <div
@@ -45,7 +45,11 @@ function Miniature({ item }: { item: GalleryItem }) {
             src={item.photo}
             alt=""
             sizes={thumbSizes}
-            className={cn(logo && "scale-lift blur-glass", item.hero === "duotone" && "grayscale contrast-125 mix-blend-screen")}
+            className={cn(
+              "transition-transform duration-slow ease-standard group-hover:scale-lift motion-reduce:transition-none",
+              logo && "scale-lift blur-glass",
+              item.hero === "duotone" && "grayscale contrast-125 mix-blend-screen",
+            )}
           />
         ) : (
           <Monogram name={item.name} className="text-display" />
@@ -59,6 +63,9 @@ function Miniature({ item }: { item: GalleryItem }) {
           </>
         ) : null}
       </div>
+      {chip ? (
+        <span className="absolute start-3 top-3 rounded-full bg-creator-glass px-2 py-0.5 text-caption font-semibold text-creator-fg backdrop-blur-glass">{chip}</span>
+      ) : null}
       <div className="absolute inset-x-0 bottom-0 grid gap-2 p-3">
         {logo ? null : (
           <p className="truncate font-creator-display text-h3 leading-tight" style={displayStyle}>
@@ -80,16 +87,46 @@ function Miniature({ item }: { item: GalleryItem }) {
  * The gallery: filter by category, tap a page to try it in a phone-sized preview, then use it as a
  * template (sign-up starts with exactly that look) or open the full page.
  */
-export function ExampleGallery({ items }: { items: GalleryItem[] }) {
+export function ExampleGallery({ items, featured, intro }: { items: GalleryItem[]; featured: string[]; intro: ReactNode }) {
   const t = useTranslations("examples");
   const [category, setCategory] = useState<Category | "all">("all");
   const [open, setOpen] = useState<GalleryItem | null>(null);
   const shown = category === "all" ? items : items.filter((item) => item.category === category);
   const count = (key: Category) => items.filter((item) => item.category === key).length;
+  const stack = featured.flatMap((slug) => items.filter((item) => item.slug === slug));
 
   return (
     <>
-      <div role="group" aria-label={t("filter")} className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:px-0">
+      <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        {intro}
+        {/* Three examples fanned out like cards in a hand: the variety at a glance. */}
+        <ul aria-label={t("featured")} className="relative mx-auto grid w-full max-w-prose grid-cols-3 items-end gap-0 pt-8 lg:mx-0">
+          {stack.map((item, index) => (
+            <li
+              key={item.slug}
+              className={cn(
+                "relative transition-transform duration-standard ease-standard hover:layer-raised hover:-translate-y-2 motion-reduce:transition-none",
+                index === 0 && "-rotate-6 translate-x-4",
+                index === 1 && "layer-raised -translate-y-6 scale-lift",
+                index === 2 && "rotate-6 -translate-x-4",
+              )}
+            >
+              <button type="button" onClick={() => setOpen(item)} className="group block w-full rounded-xl text-start focus-visible:focus-ring">
+                <span className="sr-only">{t("preview", { name: item.name })}</span>
+                <span aria-hidden className="block shadow-e3">
+                  <Miniature item={item} />
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div
+        role="group"
+        aria-label={t("filter")}
+        className="layer-raised sticky top-20 -mx-5 flex gap-2 overflow-x-auto border-b border-line bg-canvas px-5 py-3 md:mx-0 md:flex-wrap md:rounded-full md:border md:px-3 md:shadow-e1"
+      >
         {(["all", ...CATEGORIES] as const).map((key) => (
           <button
             key={key}
@@ -111,7 +148,7 @@ export function ExampleGallery({ items }: { items: GalleryItem[] }) {
               <span className="sr-only">{t("preview", { name: item.name })}</span>
               {/* The miniature is a picture of the page; the button's name says what it does. */}
               <span aria-hidden className="block">
-                <Miniature item={item} />
+                <Miniature item={item} chip={t(`categories.${item.category}`)} />
               </span>
             </button>
             <div className="grid gap-0.5 px-1">

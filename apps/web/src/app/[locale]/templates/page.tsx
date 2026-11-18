@@ -50,12 +50,18 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
     <>
       <MarketingHeader />
       <main id="main" className="mx-auto grid max-w-content grid-cols-1 gap-10 px-5 pt-12 pb-16 md:px-10 md:pt-20">
-        <header className="grid max-w-prose gap-4">
-          <p className="text-small font-semibold text-link">{t("eyebrow")}</p>
-          <h1 className="text-h1 tracking-tight text-balance md:text-display">{t("title")}</h1>
-          <p className="text-body-lg text-pretty text-fg-secondary">{t("lead")}</p>
-        </header>
-        <ExampleGallery items={items} />
+        <ExampleGallery
+          items={items}
+          featured={["rafael-duarte", "adam-nour", "baeckerei-sonnenkorn"]}
+          intro={
+            <header className="grid max-w-prose gap-5">
+              <p className="inline-flex items-center gap-2 justify-self-start rounded-full bg-selected px-3 py-1 text-small font-semibold text-selected-fg">{t("eyebrow")}</p>
+              <h1 className="text-h1 tracking-tight text-balance md:text-display">{t("title")}</h1>
+              <p className="text-body-lg text-pretty text-fg-secondary">{t("lead")}</p>
+              <p className="text-small text-fg-tertiary">{t("count", { count: items.length })}</p>
+            </header>
+          }
+        />
         <p className="max-w-prose text-caption text-fg-tertiary">{t("fictional")}</p>
         <section className="grid justify-items-start gap-4 rounded-xl border border-line bg-surface p-6 shadow-e1 md:flex md:items-center md:justify-between">
           <p className="text-body-lg font-semibold text-balance">{t("cta")}</p>

@@ -9,7 +9,8 @@ const PROVIDERS: [RegExp, string][] = [
 ];
 const NAMES: Record<string, string> = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", vimeo: "Vimeo" };
 
-const providerOf = (url: string): string | null => {
+/** The company behind a player link ("YouTube", "TikTok" …), or null. */
+export const providerOf = (url: string): string | null => {
   try {
     const host = new URL(url).hostname.replace(/^www\./, "");
     return PROVIDERS.find(([pattern]) => pattern.test(host))?.[1] ?? null;
@@ -26,4 +27,21 @@ export function externalProviders(blocks: readonly Block[]): string[] {
     return [];
   });
   return [...new Set(names)];
+}
+
+/** The video ID of a YouTube link (watch, youtu.be, shorts or embed), or null. */
+export function youtubeId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^(www|m)\./, "");
+    const id =
+      host === "youtu.be"
+        ? parsed.pathname.slice(1)
+        : host === "youtube.com" || host === "youtube-nocookie.com"
+          ? (parsed.searchParams.get("v") ?? /^\/(?:shorts|embed|live)\/([^/?#]+)/.exec(parsed.pathname)?.[1] ?? "")
+          : "";
+    return /^[\w-]{11}$/.test(id) ? id : null;
+  } catch {
+    return null;
+  }
 }

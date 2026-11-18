@@ -10,6 +10,7 @@ import { linkStyleClasses } from "@/features/creator/link-button";
 
 import { MediaImage, mediaSizes, PlatformGlyph, platformName, useCreatorFormat } from "../shared/creator-kit";
 import { ClickToLoad, NewsletterForm } from "../shared/islands";
+import { providerOf } from "../shared/providers";
 import { LiveNextRow } from "./live";
 import { linkDestination, RAIL_THRESHOLD, type RowBlock } from "./sections";
 import { displayStyle, pressable, railFrame, railTrack, type HeadingTag } from "./styles";
@@ -189,12 +190,16 @@ function Duration({ seconds, className }: { seconds: number; className?: string 
   );
 }
 
+const PROVIDER_NAMES = { youtube: "YouTube", vimeo: "Vimeo", tiktok: "TikTok", instagram: "Instagram", upload: "Linkyo" } as const;
+const providerName = (video: BlockOf<"video">) => PROVIDER_NAMES[video.provider];
+
 export function VideoFeature({ video }: { video: BlockOf<"video"> | undefined }) {
   if (!video) return null;
   return (
     <figure className="grid min-w-0 grid-cols-1 gap-3">
       <ClickToLoad
-        provider="YouTube"
+        provider={providerName(video)}
+        url={video.url}
         title={video.title}
         className="aspect-video rounded-creator-card"
         poster={<MediaImage src={video.poster.src} alt="" sizes={mediaSizes.column} />}
@@ -219,7 +224,8 @@ export function VideoRail({ videos }: { videos: BlockOf<"video">[] }) {
           <li key={video.id} className="grid w-4/5 shrink-0 snap-start content-start gap-3 @prose:w-3/4">
             <ClickToLoad
               compact
-              provider="YouTube"
+              provider={providerName(video)}
+              url={video.url}
               title={video.title}
               className="aspect-video rounded-creator-card"
               poster={<MediaImage src={video.poster.src} alt="" sizes={mediaSizes.column} />}
@@ -250,7 +256,8 @@ export function ShortsRail({ block }: { block: BlockOf<"shorts"> }) {
           <li key={item.url} className="grid w-2/5 shrink-0 snap-start content-start gap-2 @preview:w-1/3">
             <ClickToLoad
               compact
-              provider="YouTube"
+              provider={providerOf(item.url) ?? "YouTube"}
+              url={item.url}
               title={item.title}
               className="aspect-short rounded-creator-card"
               poster={<MediaImage src={item.poster.src} alt="" sizes={mediaSizes.third} />}

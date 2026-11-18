@@ -1619,7 +1619,11 @@
     "sampleNote": "{name} ist erfunden, Links und Termine sind Beispiele. So kann deine Seite als {kind} aussehen – fertig in wenigen Minuten.",
     "sampleDockTitle": "Deine eigene Seite?",
     "sampleDockCta": "Kostenlos starten",
-    "dockClose": "Leiste schließen"
+    "dockClose": "Leiste schließen",
+    "conceptTitle": "Konzept: {name} auf Linkyo",
+    "conceptBadge": "Konzept · {name}",
+    "conceptNote": "So könnte die Seite von {name} auf Linkyo aussehen. Das ist nicht die offizielle Seite und nicht mit {name} verbunden; alle Links führen zu den offiziellen Kanälen.",
+    "photoCredit": "Foto: {credit}"
   },
   "admin": {
     "meta": {
@@ -1974,6 +1978,7 @@
     "useHint": "Du startest mit diesem Design und deinen eigenen Inhalten.",
     "cta": "Keine passende Vorlage? Starte leer – das Design passt du in Minuten an.",
     "ctaButton": "Kostenlos starten",
-    "seeAll": "Alle {count} Beispiele ansehen"
+    "seeAll": "Alle {count} Beispiele ansehen",
+    "featured": "Ausgewählte Beispiele"
   }
 }

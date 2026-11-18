@@ -1619,7 +1619,11 @@
     "sampleNote": "{name} is fictional; links and dates are examples. This is what your page as a {kind} can look like, ready in minutes.",
     "sampleDockTitle": "Your own page?",
     "sampleDockCta": "Start for free",
-    "dockClose": "Close bar"
+    "dockClose": "Close bar",
+    "conceptTitle": "Concept: {name} on Linkyo",
+    "conceptBadge": "Concept · {name}",
+    "conceptNote": "This is how {name}'s page could look on Linkyo. It is not the official page and not affiliated with {name}; every link goes to the official channels.",
+    "photoCredit": "Photo: {credit}"
   },
   "admin": {
     "meta": {
@@ -1974,6 +1978,7 @@
     "useHint": "You start with this design and your own content.",
     "cta": "Nothing quite right? Start blank and shape the design in minutes.",
     "ctaButton": "Start for free",
-    "seeAll": "See all {count} examples"
+    "seeAll": "See all {count} examples",
+    "featured": "Featured examples"
   }
 }

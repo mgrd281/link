@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useId, useState, type ReactNode } from "react";
 
 import { usePrivacyChoice } from "./privacy";
+import { youtubeId } from "./providers";
 
 /**
  * Click-to-load embed (brand privacy promise): nothing from YouTube/TikTok/Instagram loads until the
@@ -18,8 +19,11 @@ export function ClickToLoad({
   className,
   children,
   compact = false,
+  url,
 }: {
   provider: string;
+  /** The video's link: YouTube links play right here (privacy mode, after the tap). */
+  url?: string | undefined;
   title: string;
   poster: ReactNode;
   className?: string;
@@ -31,6 +35,19 @@ export function ClickToLoad({
   const [loaded, setLoaded] = useState(false);
   // Once a visitor has allowed external content, the per-player notice is no longer needed.
   const allowed = usePrivacyChoice() === "media";
+  const video = url ? youtubeId(url) : null;
+  if (loaded && video) {
+    return (
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${video}?autoplay=1&rel=0&playsinline=1`}
+        title={title}
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
+        className={cn("block w-full border-0 bg-creator-surface-2", className)}
+      />
+    );
+  }
   if (loaded) {
     return (
       <div

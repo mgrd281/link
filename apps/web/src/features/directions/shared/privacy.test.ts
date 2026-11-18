@@ -29,3 +29,16 @@ describe("privacy notice", () => {
     expect(externalProviders([{ ...base, id: "l", type: "link", title: "Shop", url: "https://example.com" }])).toEqual([]);
   });
 });
+
+describe("YouTube links", () => {
+  it("finds the video in every kind of YouTube link and nothing elsewhere", async () => {
+    const { youtubeId } = await import("./providers");
+    expect(youtubeId("https://www.youtube.com/watch?v=aqz-KE-bpKQ&t=12")).toBe("aqz-KE-bpKQ");
+    expect(youtubeId("https://youtu.be/aqz-KE-bpKQ")).toBe("aqz-KE-bpKQ");
+    expect(youtubeId("https://youtube.com/shorts/aqz-KE-bpKQ?feature=share")).toBe("aqz-KE-bpKQ");
+    expect(youtubeId("https://m.youtube.com/embed/aqz-KE-bpKQ")).toBe("aqz-KE-bpKQ");
+    expect(youtubeId("https://example.com/watch?v=aqz-KE-bpKQ")).toBeNull();
+    expect(youtubeId("https://www.youtube.com/@channel")).toBeNull();
+    expect(youtubeId("not a url")).toBeNull();
+  });
+});

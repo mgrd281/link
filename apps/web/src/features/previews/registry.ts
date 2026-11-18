@@ -38,6 +38,12 @@ export interface Preview {
    * labelled as an example, and its call to action starts a new account with that kind's template.
    */
   sample?: { kind: string; category?: string; look?: string };
+  /**
+   * A concept for a well-known person: how their page could look, built from public facts with links
+   * to their official channels. Labelled as a concept, never listed or indexed; `credit` names the
+   * photo's author and licence (Wikimedia Commons).
+   */
+  concept?: { credit?: string };
 }
 
 /** The next hh:00 in Berlin (today, or tomorrow once it has passed), as an ISO timestamp. */
