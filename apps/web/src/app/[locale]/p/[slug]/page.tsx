@@ -2,11 +2,11 @@ import { colorSchemeOf, resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Icon, Logo, LogoSymbol } from "@linkyo/ui";
 import { ArrowRight, Eye, Info } from "lucide-react";
 import type { Metadata, Viewport } from "next";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PosterRenderer } from "@/features/directions/poster/renderer";
-import { PREVIEW_ALIASES, previewPage, PREVIEWS } from "@/features/previews/registry";
+import { previewPage, PREVIEWS } from "@/features/previews/registry";
 import { Link } from "@/i18n/navigation";
 
 interface Props {
@@ -45,8 +45,6 @@ export async function generateViewport({ params }: Props): Promise<Viewport> {
 /** A creator page prepared for one person, clearly labelled as a private preview. */
 export default async function PreviewRoute({ params }: Props) {
   const { locale, slug } = await params;
-  const alias = PREVIEW_ALIASES[slug];
-  if (alias) permanentRedirect(`/${locale}/p/${alias}`);
   const found = previewPage(slug, locale);
   if (!found) notFound();
   setRequestLocale(locale);

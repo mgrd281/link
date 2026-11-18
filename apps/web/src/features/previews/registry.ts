@@ -126,8 +126,7 @@ export const PREVIEWS: Record<string, Preview> = {
   ),
 };
 
-/** Earlier links keep working: they redirect to the short one. */
-export const PREVIEW_ALIASES: Record<string, string> = { "nizar-m3e8dw": "nizar" };
+export { PREVIEW_ALIASES } from "./aliases";
 
 export const previewPage = (slug: string, locale: string, now = new Date()) => {
   const preview = PREVIEWS[slug];
