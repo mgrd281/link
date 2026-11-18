@@ -132,10 +132,11 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
     >
       <div className="mx-auto grid max-w-creator gap-4 px-5 pt-5 pb-[max(var(--spacing-5),env(safe-area-inset-bottom))]">
         <div className="grid gap-2">
-          <h2 className="flex items-center gap-2 text-h3 font-semibold text-creator-accent-text">
+          {/* Not a heading: the notice is no part of the creator's page outline (the region is labelled). */}
+          <p className="flex items-center gap-2 text-h3 font-semibold text-creator-accent-text">
             <Icon icon={ShieldCheck} size="md" />
             {details ? t("privacySettings") : t("privacyTitle")}
-          </h2>
+          </p>
           {details ? null : <p className="text-body text-creator-fg-muted">{t("privacyBody", { providers: list })}</p>}
         </div>
 
