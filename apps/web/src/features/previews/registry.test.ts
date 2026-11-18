@@ -31,7 +31,7 @@ describe("describeStart", () => {
     const today = describeStart(start, new Date("2026-11-18T17:00:00Z").getTime(), "en");
     expect(today.state).toBe("upcoming");
     expect(today.label).toMatch(/^Today, /);
-    expect(today.relative).toBe("in 3 hours");
+    expect(today.relative).toBe("in 3 hr.");
     expect(describeStart(start, new Date("2026-11-17T17:00:00Z").getTime(), "de").label).toMatch(/^Morgen, /);
     expect(describeStart(start, new Date("2026-11-18T20:30:00Z").getTime(), "en").state).toBe("started");
     expect(describeStart(start, new Date("2026-11-19T01:00:00Z").getTime(), "en").state).toBe("past");

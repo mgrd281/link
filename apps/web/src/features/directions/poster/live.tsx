@@ -57,11 +57,12 @@ export function describeStart(startsAt: string, now: number | null, locale: stri
   const dayStart = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
   const days = Math.round((dayStart(start) - dayStart(new Date(now))) / (24 * 60 * MINUTE));
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  const short = new Intl.RelativeTimeFormat(locale, { numeric: "auto", style: "short" });
   const near = days === 0 || days === 1;
   const day = near ? capitalize(rtf.format(days, "day"), locale) : weekday;
   const dayLabel = near ? day : new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" }).format(start);
   const diff = start.getTime() - now;
-  const relative = diff > 0 && diff < 12 * 60 * MINUTE ? (diff < 60 * MINUTE ? rtf.format(Math.max(1, Math.round(diff / MINUTE)), "minute") : rtf.format(Math.round(diff / (60 * MINUTE)), "hour")) : null;
+  const relative = diff > 0 && diff < 12 * 60 * MINUTE ? (diff < 60 * MINUTE ? short.format(Math.max(1, Math.round(diff / MINUTE)), "minute") : short.format(Math.round(diff / (60 * MINUTE)), "hour")) : null;
   const state = diff > 0 ? ("upcoming" as const) : -diff < STALE_AFTER ? ("started" as const) : ("past" as const);
   return { day, time, label: `${dayLabel}${comma(locale)}${time}`, relative, state };
 }
