@@ -1,7 +1,7 @@
 import type { BlockOf } from "@linkyo/blocks";
 import type { CreatorButtonStyle } from "@linkyo/tokens";
 import { cn, Icon, PlatformIcon } from "@linkyo/ui";
-import { ArrowUpRight, ChevronDown, Eye } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Eye, Mail } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { siYoutubeshorts } from "simple-icons";
@@ -438,12 +438,17 @@ export function FeaturedCard({ block, surface }: { block: BlockOf<"card">; surfa
 
 export function NewsletterCard({ block, surface, heading: Heading }: { block: BlockOf<"newsletter">; surface: string; heading: HeadingTag }) {
   return (
-    <section aria-label={block.title} className={cn("grid gap-4 rounded-creator-card p-5", surface)}>
-      <div className="grid gap-1">
-        <Heading className="font-creator-display text-h3 leading-tight" style={displayStyle}>
-          {block.title}
-        </Heading>
-        {block.description ? <p className="text-small text-creator-fg-muted">{block.description}</p> : null}
+    <section aria-label={block.title} className={cn("grid gap-5 rounded-creator-card p-5 @prose:p-6", surface)}>
+      <div className="flex items-start gap-4">
+        <span aria-hidden className="grid size-control-lg shrink-0 place-items-center rounded-full bg-creator-accent text-creator-accent-fg shadow-e1">
+          <Icon icon={Mail} size="md" />
+        </span>
+        <div className="grid min-w-0 gap-1">
+          <Heading className="font-creator-display text-h3 leading-tight" style={displayStyle}>
+            {block.title}
+          </Heading>
+          {block.description ? <p className="text-small text-creator-fg-muted">{block.description}</p> : null}
+        </div>
       </div>
       <NewsletterForm />
     </section>

@@ -1,13 +1,13 @@
 import { colorSchemeOf, resolveCreatorTheme } from "@linkyo/tokens/creator";
-import { Icon, Logo, LogoSymbol } from "@linkyo/ui";
-import { ArrowRight, Eye, Info } from "lucide-react";
+import { Icon, LogoSymbol } from "@linkyo/ui";
+import { Eye, Info } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PosterRenderer } from "@/features/directions/poster/renderer";
+import { LinkyoDock } from "@/features/directions/shared/dock";
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
-import { Link } from "@/i18n/navigation";
 
 interface Props {
   params: Promise<{ locale: string; slug: string }>;
@@ -107,20 +107,12 @@ export default async function PreviewRoute({ params }: Props) {
           </aside>
         }
         dock={
-          <div
-            data-theme="dark"
-            className="max-w-creator border-line bg-surface text-fg shadow-e3 mx-auto flex items-center gap-3 rounded-full border p-2 ps-5 font-sans"
-          >
-            <Logo className="h-5 shrink-0" title="Linkyo" />
-            <span className="text-small text-fg-secondary min-w-0 flex-1 truncate">{sample ? t("sampleDockTitle") : t("dockTitle")}</span>
-            <Link
-              href={claim}
-              className="h-control-md bg-primary text-small text-primary-fg duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed inline-flex shrink-0 items-center gap-2 rounded-full px-4 font-semibold transition-colors"
-            >
-              {sample ? t("sampleDockCta") : t("dockCta")}
-              <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
-            </Link>
-          </div>
+          <LinkyoDock
+            title={sample ? t("sampleDockTitle") : t("dockTitle")}
+            cta={sample ? t("sampleDockCta") : t("dockCta")}
+            href={claim}
+            closeLabel={t("dockClose")}
+          />
         }
       />
     </>

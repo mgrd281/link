@@ -365,6 +365,29 @@ test.describe("private previews", () => {
     expect(await page.evaluate(() => window.localStorage.getItem("linkyo.privacy.v1"))).toBe("essential");
   });
 
+  test("the Linkyo bar slides in once the hero has scrolled away, and can be closed", async ({ page }) => {
+    await page.goto("/en/p/journalist");
+    const cta = page.getByRole("link", { name: "Start for free" });
+    await expect(cta).toBeHidden();
+    await page.mouse.wheel(0, 900);
+    await expect(cta).toBeVisible();
+    await page.getByRole("button", { name: "Close bar" }).click();
+    await expect(cta).toBeHidden();
+    // Closed for the rest of the visit.
+    await page.reload();
+    await page.mouse.wheel(0, 900);
+    await expect(page.getByRole("heading", { name: "Latest investigations" })).toBeVisible();
+    await expect(cta).toBeHidden();
+  });
+
+  test("newsletter sign-up confirms with a double opt-in note", async ({ page }) => {
+    await page.goto("/en/p/journalist");
+    const form = page.getByRole("region", { name: "Investigations newsletter, every Friday" });
+    await form.getByLabel("Your email").fill("reader@example.com");
+    await form.getByRole("button", { name: "Subscribe" }).click();
+    await expect(form.getByRole("status")).toContainText("Almost there!");
+  });
+
   test("the earlier long link still leads to the short one", async ({ page }) => {
     await page.goto("/de/p/nizar-m3e8dw");
     await page.waitForURL("**/de/p/nizar");

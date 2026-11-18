@@ -356,7 +356,10 @@
     "privacyMedia": "Externe Medien",
     "privacyMediaBody": "Videos von {providers}. Laden erst, wenn du es hier erlaubst.",
     "privacySave": "Auswahl speichern",
-    "privacyBack": "Zurück"
+    "privacyBack": "Zurück",
+    "subscribedTitle": "Fast geschafft!",
+    "subscribedBody": "Wir haben dir eine E-Mail geschickt. Bestätige sie, dann bist du dabei.",
+    "newsletterPromise": "Kein Spam. Abmelden mit einem Klick."
   },
   "directions": {
     "title": "Richtungen",
@@ -1615,7 +1618,8 @@
     "sampleBadge": "Beispiel · {kind}",
     "sampleNote": "{name} ist erfunden, Links und Termine sind Beispiele. So kann deine Seite als {kind} aussehen – fertig in wenigen Minuten.",
     "sampleDockTitle": "Deine eigene Seite?",
-    "sampleDockCta": "Kostenlos starten"
+    "sampleDockCta": "Kostenlos starten",
+    "dockClose": "Leiste schließen"
   },
   "admin": {
     "meta": {

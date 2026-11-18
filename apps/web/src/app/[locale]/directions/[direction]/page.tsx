@@ -1,13 +1,14 @@
 import { colorSchemeOf, isTemplate, resolveCreatorTheme } from "@linkyo/tokens/creator";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Suspense } from "react";
 
 import { DirectionRenderer } from "@/features/directions/direction-renderer";
 import { defaultTheme, loadSamplePage } from "@/features/directions/load";
 import { isCreatorPreset } from "@/features/directions/preset";
 import { DIRECTIONS, isDirection, isThemeMode } from "@/features/directions/registry";
+import { LinkyoDock } from "@/features/directions/shared/dock";
 import { DirectionToolbar } from "@/features/directions/toolbar";
 import { routing } from "@/i18n/routing";
 
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 interface RouteProps {
   params: Promise<{ locale: string; direction: string }>;
-  searchParams: Promise<{ preset?: string; mode?: string; template?: string }>;
+  searchParams: Promise<{ preset?: string; mode?: string; template?: string; chrome?: string }>;
 }
 
 /** Page + resolved theme for a request. Any preset works with any direction and either mode. */
@@ -46,12 +47,20 @@ export async function generateViewport(props: RouteProps): Promise<Viewport> {
 export default async function CreatorPageRoute(props: RouteProps) {
   const { locale, direction, page, theme } = await resolveRoute(props);
   setRequestLocale(locale);
+  // Without the review toolbar (?chrome=0) the sample shows exactly what visitors get, Linkyo bar included.
+  const bare = (await props.searchParams).chrome === "0";
+  const t = await getTranslations("preview");
 
   return (
     <>
       {/* Safari 26 tints its toolbars from the page background, so the root must match the creator page. */}
       <style>{`html,body{background-color:${theme.palette.bg}}`}</style>
-      <DirectionRenderer direction={direction} page={page} theme={theme} />
+      <DirectionRenderer
+        direction={direction}
+        page={page}
+        theme={theme}
+        dock={bare ? <LinkyoDock title={t("sampleDockTitle")} cta={t("sampleDockCta")} href="/signup" closeLabel={t("dockClose")} /> : undefined}
+      />
       <Suspense>
         <DirectionToolbar direction={direction} view="page" activeTemplate={theme.template} />
       </Suspense>

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn, Icon } from "@linkyo/ui";
-import { Check, Play, ShieldCheck } from "lucide-react";
+import { ArrowRight, AtSign, Check, Play, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, useState, type ReactNode } from "react";
 
@@ -73,43 +73,69 @@ export function ClickToLoad({
   );
 }
 
+/**
+ * Newsletter sign-up: one field, one button in the creator's accent, a promise underneath. Stacks on
+ * phones (a thumb-wide button), sits side by side on wide screens. Double opt-in: the confirmation
+ * says to check the inbox, as the law (and good manners) require.
+ */
 export function NewsletterForm() {
   const t = useTranslations("creator");
   const id = useId();
-  const [done, setDone] = useState(false);
-  if (done) {
+  const [state, setState] = useState<"idle" | "sending" | "done">("idle");
+  if (state === "done") {
     return (
-      <p role="status" className="flex items-center gap-2 text-small font-medium text-creator-accent-text">
-        <Icon icon={Check} size="sm" />
-        {t("subscribed")}
-      </p>
+      <div role="status" className="flex items-start gap-3 rounded-creator-button bg-creator-bg p-4">
+        <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-creator-accent text-creator-accent-fg">
+          <Icon icon={Check} size="md" />
+        </span>
+        <span className="grid min-w-0 gap-0.5">
+          <span className="text-body font-semibold">{t("subscribedTitle")}</span>
+          <span className="text-small text-creator-fg-muted">{t("subscribedBody")}</span>
+        </span>
+      </div>
     );
   }
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        setDone(true);
+        setState("sending");
+        // Demo: the real request goes to the newsletter service in Phase 1.
+        window.setTimeout(() => setState("done"), 500);
       }}
-      className="flex gap-2"
+      className="grid grid-cols-1 gap-3"
     >
-      <label htmlFor={id} className="sr-only">
-        {t("emailLabel")}
-      </label>
-      <input
-        id={id}
-        type="email"
-        required
-        autoComplete="email"
-        placeholder={t("emailPlaceholder")}
-        className="h-control-lg w-full min-w-0 flex-1 rounded-creator-button border border-creator-line-strong bg-creator-surface px-4 text-body text-creator-fg placeholder:text-creator-fg-muted focus-visible:focus-ring"
-      />
-      <button
-        type="submit"
-        className="h-control-lg shrink-0 rounded-creator-button bg-creator-accent px-5 text-body font-medium text-creator-accent-fg transition-[scale] duration-micro active:scale-pressed focus-visible:focus-ring"
-      >
-        {t("subscribe")}
-      </button>
+      <div className="grid grid-cols-1 gap-2 @prose:grid-cols-[minmax(0,1fr)_auto]">
+        <label
+          htmlFor={id}
+          className="flex h-control-lg min-w-0 items-center gap-3 rounded-creator-button border border-creator-line-strong bg-creator-bg px-4 transition-colors duration-micro focus-within:border-creator-accent-text focus-within:focus-ring"
+        >
+          <Icon icon={AtSign} size="md" className="shrink-0 text-creator-fg-muted" />
+          <span className="sr-only">{t("emailLabel")}</span>
+          <input
+            id={id}
+            type="email"
+            required
+            autoComplete="email"
+            inputMode="email"
+            dir="ltr"
+            placeholder={t("emailPlaceholder")}
+            className="h-full w-full min-w-0 bg-transparent text-start text-body text-creator-fg outline-none placeholder:text-creator-fg-muted rtl:text-end"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={state === "sending"}
+          className="inline-flex h-control-lg w-full items-center justify-center gap-2 rounded-creator-button bg-creator-accent px-6 text-body font-semibold text-creator-accent-fg shadow-e1 transition-[scale,opacity] duration-micro focus-visible:focus-ring active:scale-pressed disabled:opacity-secondary @prose:w-auto"
+        >
+          {t("subscribe")}
+          <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+        </button>
+      </div>
+      <p className="flex items-center gap-2 text-caption text-creator-fg-muted">
+        <Icon icon={ShieldCheck} size="sm" className="shrink-0" />
+        {t("newsletterPromise")}
+      </p>
     </form>
   );
 }

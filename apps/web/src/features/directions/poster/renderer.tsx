@@ -82,6 +82,8 @@ export function PosterRenderer({
         {overlay ? <div className="absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12">{overlay}</div> : null}
         <PosterBar profile={profile} />
         <PosterHero profile={profile} socials={socials} live={live} theme={theme} preview={preview} />
+        {/* Marks the end of the hero: the Linkyo bar slides in once this has scrolled up. */}
+        <div data-poster-sentinel aria-hidden />
 
         {/* A preview sits inside the dashboard, which already has the page's one <main>. */}
         <Main className="grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:px-0">
@@ -95,11 +97,7 @@ export function PosterRenderer({
         </Main>
         {/* With a Linkyo bar at the bottom, the footer drops its own Linkyo credit (one is enough). */}
         <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} credit={!dock} privacy={providers.length > 0} />
-        {dock ? (
-          <div className="pointer-events-none sticky bottom-0 layer-sticky h-0">
-            <div className="poster-dock pointer-events-auto absolute inset-x-0 bottom-0 px-3 pb-[max(var(--spacing-3),env(safe-area-inset-bottom))]">{dock}</div>
-          </div>
-        ) : null}
+        {dock}
         {/* Over everything, including the claim bar, until the visitor has decided. */}
         {providers.length > 0 ? <PrivacyNotice providers={providers} /> : null}
       </div>

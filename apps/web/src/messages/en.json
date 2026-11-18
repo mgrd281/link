@@ -356,7 +356,10 @@
     "privacyMedia": "External media",
     "privacyMediaBody": "Videos from {providers}. They only load once you allow them here.",
     "privacySave": "Save my choice",
-    "privacyBack": "Back"
+    "privacyBack": "Back",
+    "subscribedTitle": "Almost there!",
+    "subscribedBody": "We've sent you an email. Confirm it and you're in.",
+    "newsletterPromise": "No spam. Unsubscribe in one click."
   },
   "directions": {
     "title": "Directions",
@@ -1615,7 +1618,8 @@
     "sampleBadge": "Example · {kind}",
     "sampleNote": "{name} is fictional; links and dates are examples. This is what your page as a {kind} can look like, ready in minutes.",
     "sampleDockTitle": "Your own page?",
-    "sampleDockCta": "Start for free"
+    "sampleDockCta": "Start for free",
+    "dockClose": "Close bar"
   },
   "admin": {
     "meta": {

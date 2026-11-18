@@ -86,19 +86,6 @@
   }
 }
 
-@keyframes poster-dock-enter {
-  from {
-    opacity: 0;
-    translate: 0 100%;
-    visibility: hidden;
-  }
-
-  to {
-    opacity: 1;
-    translate: 0 0;
-    visibility: visible;
-  }
-}
 
 @keyframes poster-bar-enter-still {
   from {
@@ -147,17 +134,6 @@
   }
 }
 
-@utility poster-dock {
-  @supports (animation-timeline: view()) {
-    animation: poster-dock-enter linear both;
-    animation-timeline: --poster-hero;
-    animation-range: exit 30% exit 80%;
-
-    @media (prefers-reduced-motion: reduce) {
-      animation-name: poster-bar-enter-still;
-    }
-  }
-}
 /* stylelint-enable no-invalid-position-declaration */
 
 /*

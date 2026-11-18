@@ -356,7 +356,10 @@
     "privacyMedia": "الوسائط الخارجية",
     "privacyMediaBody": "فيديوهات {providers}. لا تُحمَّل إلا بعد سماحك هنا.",
     "privacySave": "حفظ اختياري",
-    "privacyBack": "رجوع"
+    "privacyBack": "رجوع",
+    "subscribedTitle": "خطوة أخيرة!",
+    "subscribedBody": "أرسلنا لك رسالة بريدية. أكّدها وسيكتمل اشتراكك.",
+    "newsletterPromise": "بلا رسائل مزعجة. إلغاء الاشتراك بنقرة واحدة."
   },
   "directions": {
     "title": "الاتجاهات",
@@ -1615,7 +1618,8 @@
     "sampleBadge": "مثال · {kind}",
     "sampleNote": "{name} شخصية خيالية، والروابط والمواعيد أمثلة. هكذا يمكن أن تبدو صفحتك كـ{kind}، جاهزة خلال دقائق.",
     "sampleDockTitle": "صفحتك الخاصة؟",
-    "sampleDockCta": "ابدأ مجاناً"
+    "sampleDockCta": "ابدأ مجاناً",
+    "dockClose": "إغلاق الشريط"
   },
   "admin": {
     "meta": {
