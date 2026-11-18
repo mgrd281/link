@@ -13,6 +13,8 @@ interface Copy {
   stats: [string, string][];
   latest: string;
   stories: [string, string][];
+  /** One line under each story (the dek). */
+  deks: [string, string, string];
   contact: string;
   tips: string;
   press: string;
@@ -25,6 +27,8 @@ interface Copy {
 
 const avatar = { src: "sample:journalist-avatar", alt: "", focal: [0.5, 0.35] as [number, number] };
 const hero = { src: "sample:journalist-hero", alt: "", focal: [0.62, 0.3] as [number, number] };
+/** Story pictures: stock photos (assets/examples/CREDITS.md). */
+const STORY_IMAGES = ["sample:ex2-housing", "sample:ex2-documents", "sample:ex2-nurse"];
 const link = (id: string, title: string, url: string, extra: Partial<Extract<Block, { type: "link" }>> = {}): Block => ({ id, type: "link", visible: true, highlight: false, title, url, ...extra });
 
 function page(locale: Page["profile"]["locale"], copy: Copy): Page {
@@ -55,7 +59,16 @@ function page(locale: Page["profile"]["locale"], copy: Copy): Page {
         ],
       },
       { id: "latest", type: "header", visible: true, highlight: false, title: copy.latest },
-      ...copy.stories.map(([title, badge], i) => link(`story-${i + 1}`, title, `https://example.com/lea-hartmann/recherche-${i + 1}`, i === 0 ? { badge } : {})),
+      ...copy.stories.map(([title], i): Block => ({
+        id: `story-${i + 1}`,
+        type: "card",
+        visible: true,
+        highlight: false,
+        title,
+        description: copy.deks[i] ?? "",
+        url: `https://example.com/lea-hartmann/recherche-${i + 1}`,
+        image: { src: STORY_IMAGES[i] ?? "none:", alt: "" },
+      })),
       { id: "contact", type: "header", visible: true, highlight: false, title: copy.contact },
       link("tips", copy.tips, `mailto:${copy.mail.tips}@example.com`, { highlight: true }),
       link("press", copy.press, `mailto:${copy.mail.press}@example.com`),
@@ -96,6 +109,7 @@ export const journalistDe = page("de", {
     ["300 Seiten Lobby-Mails", ""],
     ["Was Pflege wirklich verdient", ""],
   ],
+  deks: ["Eine Datenrecherche zu 120.000 Wohnungen.", "Interne Mails zeigen, wer an Gesetzen mitschreibt.", "Gehälter aus 40 Kliniken im Vergleich."],
   contact: "Hinweise & Kontakt",
   tips: "Vertraulich einen Hinweis geben",
   press: "Interview- & Presseanfragen",
@@ -124,6 +138,7 @@ export const journalistEn = page("en", {
     ["300 pages of lobby emails", ""],
     ["What care work really pays", ""],
   ],
+  deks: ["A data investigation into 120,000 flats.", "Internal emails show who helps write the bills.", "Pay at 40 hospitals, compared."],
   contact: "Tips & contact",
   tips: "Send a tip in confidence",
   press: "Interview & press requests",
@@ -152,6 +167,7 @@ export const journalistAr = page("ar", {
     ["300 صفحة من رسائل اللوبي", ""],
     ["كم يكسب التمريض فعلاً؟", ""],
   ],
+  deks: ["تحقيق بالبيانات في 120 ألف شقة.", "رسائل داخلية تكشف من يشارك في كتابة القوانين.", "مقارنة الرواتب في 40 مستشفى."],
   contact: "معلومات وتواصل",
   tips: "أرسل معلومة بسرّية",
   press: "طلبات المقابلات والصحافة",

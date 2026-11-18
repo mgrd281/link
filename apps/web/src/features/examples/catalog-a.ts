@@ -336,9 +336,9 @@ export const CATALOG_A: Record<string, Page> = {
     (h) => [
       h.music("Glasshouse", "Mara Vale", "album", ["spotify", "applemusic", "tidal", "youtubemusic"], "2026-10-17"),
       h.events("Glasshouse World Tour", [
-        { date: "2027-04-02", time: "19:30", name: "Glasshouse Tour", city: "London", venue: "Arena", status: "soldout" },
-        { date: "2027-04-09", time: "19:30", name: "Glasshouse Tour", city: "Berlin", venue: "Arena", status: "few" },
-        { date: "2027-04-16", time: "19:30", name: "Glasshouse Tour", city: "Amsterdam", venue: "Arena" },
+        { date: "2027-04-02", time: "19:30", name: "Glasshouse Tour", city: "London", venue: "Arena", status: "soldout", image: "ex2-concert-crowd" },
+        { date: "2027-04-09", time: "19:30", name: "Glasshouse Tour", city: "Berlin", venue: "Arena", status: "few", image: "ex2-concert-crowd" },
+        { date: "2027-04-16", time: "19:30", name: "Glasshouse Tour", city: "Amsterdam", venue: "Arena", image: "ex2-concert-crowd" },
       ]),
       h.video("Glasshouse (Official Video)", "youtube", "video", undefined, 247),
       h.product("Glasshouse vinyl, signed", 39, "store/vinyl"),

@@ -46,6 +46,22 @@ are models or anonymous; they have no connection to the fictional names and are 
 | ex-wedding.jpg | Bruno Ngarukiye | https://unsplash.com/photos/a-beautifully-set-outdoor-dining-table-with-floral-arrangements-olOdSVw5THI | Unsplash License |
 | ex-yoga.jpg | Jaspinder Singh | https://unsplash.com/photos/a-group-of-people-doing-yoga-in-a-room-vpVE1Xk1eR4 | Unsplash License |
 | ex-youtuber.jpg | Vitaly Gariev | https://unsplash.com/photos/man-sitting-on-floor-talking-to-camera-on-tripod-B8FYNyMRpX0 | Unsplash License |
+| ex2-beach.jpg | Bernd Dittrich | https://unsplash.com/photos/a-beautiful-beach-with-turquoise-water-and-waves-V1hb2SLP-80 | Unsplash License |
+| ex2-cake.jpg | Jonathan Borba | https://unsplash.com/photos/a-white-wedding-cake-with-purple-flowers-on-top-d4b5aqgFW7A | Unsplash License |
+| ex2-concert-crowd.jpg | Marcel Strauß | https://unsplash.com/photos/crowd-enjoying-a-concert-with-blue-stage-lights-ubwn8GI9-2o | Unsplash License |
+| ex2-documents.jpg | Wesley Tingey | https://unsplash.com/photos/stacks-of-paper-documents-and-file-folders-snNHKZ-mGfE | Unsplash License |
+| ex2-gaming-pc.jpg | Jack B | https://unsplash.com/photos/B10AxHKLvnQ | Unsplash License |
+| ex2-georgia.jpg | Tomáš Malík | https://unsplash.com/photos/aerial-photography-of-houses-beside-rocky-mountains-during-daytime-DOhXyRS3_n0 | Unsplash License |
+| ex2-housing.jpg | Pavel Abramiankou | https://unsplash.com/photos/haussmannian-apartment-building-facade-with-many-windows-yyb5HOnHfus | Unsplash License |
+| ex2-kibbeh.jpg | Sara Dubler | https://unsplash.com/photos/grilled-meats-on-plate-lOaXEG1tVUM | Unsplash License |
+| ex2-maqluba.jpg | Mario Raj | https://unsplash.com/photos/a-table-topped-with-bowls-of-food-and-sauces-vsnAIYA9bms | Unsplash License |
+| ex2-necklace.jpg | Zayed Ahmed Zadu | https://unsplash.com/photos/gold-necklace-and-matching-earrings-on-display-x5LH4df5cCk | Unsplash License |
+| ex2-nurse.jpg | Hush Naidoo Jade Photography | https://unsplash.com/photos/ZCO_5Y29s8k | Unsplash License |
+| ex2-pizza.jpg | Emily Powers | https://unsplash.com/photos/9xWl_zhIcS4 | Unsplash License |
+| ex2-pretzels.jpg | Markus Spiske | https://unsplash.com/photos/bread-knot-on-pink-surface-39cEDqW5_SY | Unsplash License |
+| ex2-ring.jpg | Alyssa Hurley | https://unsplash.com/photos/silver-diamond-studded-ring-on-white-surface-IdU1Si3wJ-I | Unsplash License |
+| ex2-smartphones.jpg | freestocks | https://unsplash.com/photos/Ve-0V0SZ3SU | Unsplash License |
+| ex2-wine.jpg | Ronan | https://unsplash.com/photos/clear-wine-glasses-on-top-of-dining-table-PCE0T5i4pDI | Unsplash License |
 | ex-logo-*.png | Linkyo (original artwork) | — | © Linkyo |
 
 Unsplash License: https://unsplash.com/license
