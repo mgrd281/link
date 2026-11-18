@@ -382,6 +382,8 @@ test.describe("private previews", () => {
 
   test("newsletter sign-up confirms with a double opt-in note", async ({ page }) => {
     await page.goto("/en/p/journalist");
+    // The form submits through React: wait until the page is hydrated (flaky under full-suite load).
+    await page.waitForLoadState("networkidle");
     const form = page.getByRole("region", { name: "Investigations newsletter, every Friday" });
     await form.getByLabel("Your email").fill("reader@example.com");
     await form.getByRole("button", { name: "Subscribe" }).click();
