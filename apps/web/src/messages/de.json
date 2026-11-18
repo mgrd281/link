@@ -348,7 +348,15 @@
     "privacyBody": "Diese Seite speichert nichts über dich. Videos von {providers} laden erst, wenn du es erlaubst.",
     "privacyAllow": "Externe Inhalte erlauben",
     "privacyEssential": "Nur notwendige",
-    "privacySettings": "Cookie-Einstellungen"
+    "privacySettings": "Cookie-Einstellungen",
+    "privacyManage": "Einstellungen",
+    "privacyNecessary": "Notwendig",
+    "privacyNecessaryBody": "Merkt sich nur deine Auswahl auf diesem Gerät. Kein Tracking.",
+    "privacyAlwaysOn": "Immer aktiv",
+    "privacyMedia": "Externe Medien",
+    "privacyMediaBody": "Videos von {providers}. Laden erst, wenn du es hier erlaubst.",
+    "privacySave": "Auswahl speichern",
+    "privacyBack": "Zurück"
   },
   "directions": {
     "title": "Richtungen",

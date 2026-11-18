@@ -100,7 +100,8 @@ export function PosterRenderer({
             <div className="poster-dock pointer-events-auto absolute inset-x-0 bottom-0 px-3 pb-[max(var(--spacing-3),env(safe-area-inset-bottom))]">{dock}</div>
           </div>
         ) : null}
-        {providers.length > 0 ? <PrivacyNotice providers={providers} raised={Boolean(dock)} /> : null}
+        {/* Over everything, including the claim bar, until the visitor has decided. */}
+        {providers.length > 0 ? <PrivacyNotice providers={providers} /> : null}
       </div>
     </div>
   );

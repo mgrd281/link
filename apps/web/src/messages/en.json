@@ -348,7 +348,15 @@
     "privacyBody": "This page stores nothing about you. Videos from {providers} only load once you allow them.",
     "privacyAllow": "Allow external content",
     "privacyEssential": "Essential only",
-    "privacySettings": "Cookie settings"
+    "privacySettings": "Cookie settings",
+    "privacyManage": "Settings",
+    "privacyNecessary": "Necessary",
+    "privacyNecessaryBody": "Only remembers your choice on this device. No tracking.",
+    "privacyAlwaysOn": "Always on",
+    "privacyMedia": "External media",
+    "privacyMediaBody": "Videos from {providers}. They only load once you allow them here.",
+    "privacySave": "Save my choice",
+    "privacyBack": "Back"
   },
   "directions": {
     "title": "Directions",

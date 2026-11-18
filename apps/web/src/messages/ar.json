@@ -348,7 +348,15 @@
     "privacyBody": "هذه الصفحة لا تحفظ أي شيء عنك. فيديوهات {providers} لا تُحمَّل إلا بعد موافقتك.",
     "privacyAllow": "السماح بالمحتوى الخارجي",
     "privacyEssential": "الضروري فقط",
-    "privacySettings": "إعدادات ملفات تعريف الارتباط"
+    "privacySettings": "إعدادات ملفات تعريف الارتباط",
+    "privacyManage": "الإعدادات",
+    "privacyNecessary": "ضروري",
+    "privacyNecessaryBody": "يحفظ اختيارك فقط على هذا الجهاز. بلا تتبّع.",
+    "privacyAlwaysOn": "مفعّل دائماً",
+    "privacyMedia": "الوسائط الخارجية",
+    "privacyMediaBody": "فيديوهات {providers}. لا تُحمَّل إلا بعد سماحك هنا.",
+    "privacySave": "حفظ اختياري",
+    "privacyBack": "رجوع"
   },
   "directions": {
     "title": "الاتجاهات",

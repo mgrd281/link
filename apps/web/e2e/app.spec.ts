@@ -351,9 +351,18 @@ test.describe("private previews", () => {
     await expect(notice).toBeHidden();
     await page.reload();
     await expect(page.getByText("Keine Tracking-Cookies")).toBeHidden();
-    // It can always be changed from the footer.
+    // It can always be changed from the footer, also per category in the settings.
     await page.getByRole("button", { name: "Cookie-Einstellungen" }).click();
-    await expect(page.getByRole("region", { name: "Datenschutz" })).toBeVisible();
+    const again = page.getByRole("region", { name: "Datenschutz" });
+    await expect(again).toBeVisible();
+    await again.getByRole("button", { name: "Einstellungen", exact: true }).click();
+    const media = again.getByRole("switch", { name: "Externe Medien" });
+    await expect(media).toHaveAttribute("aria-checked", "true");
+    await media.click();
+    expect(await axe(page)).toEqual([]);
+    await again.getByRole("button", { name: "Auswahl speichern" }).click();
+    await expect(again).toBeHidden();
+    expect(await page.evaluate(() => window.localStorage.getItem("linkyo.privacy.v1"))).toBe("essential");
   });
 
   test("the earlier long link still leads to the short one", async ({ page }) => {
