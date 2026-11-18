@@ -2,7 +2,24 @@
 
 import { detectMany } from "@linkyo/blocks";
 import { Button, cn, Icon, Logo } from "@linkyo/ui";
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Feather, Music, Newspaper, PartyPopper, ShoppingBag, Sparkles, Store, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BriefcaseBusiness,
+  Check,
+  DraftingCompass,
+  Feather,
+  GraduationCap,
+  Music,
+  Newspaper,
+  PartyPopper,
+  Scale,
+  ShoppingBag,
+  Sparkles,
+  Store,
+  Warehouse,
+  type LucideIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
@@ -27,6 +44,10 @@ const KIND_ICONS: Partial<Record<CreatorKind, LucideIcon>> = {
   business: BriefcaseBusiness,
   shop: Store,
   store: ShoppingBag,
+  engineer: DraftingCompass,
+  lawyer: Scale,
+  student: GraduationCap,
+  warehouse: Warehouse,
   music: Music,
   other: Sparkles,
 };
@@ -47,6 +68,7 @@ const TEXT_FIELDS: Partial<Record<StarterField, { multiline?: boolean; type?: "u
   booking: { type: "url" },
   email: { type: "email" },
   book: { type: "url" },
+  cv: { type: "url" },
 };
 
 /**
@@ -106,6 +128,7 @@ export function WelcomeScreen() {
           booking: tBlocks("booking"),
           contact: tBlocks("contact"),
           book: tBlocks("book"),
+          cv: tBlocks("cv"),
           newsletter: tBlocks("newsletter"),
           liveTitle: tBlocks("liveTitle"),
           detection: labels,

@@ -5,6 +5,8 @@ import { Check, Play, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, useState, type ReactNode } from "react";
 
+import { usePrivacyChoice } from "./privacy";
+
 /**
  * Click-to-load embed (brand privacy promise): nothing from YouTube/TikTok/Instagram loads until the
  * visitor taps. Phase 0 shows the post-tap state as a placeholder; Phase 1 swaps in the nocookie player.
@@ -27,6 +29,8 @@ export function ClickToLoad({
 }) {
   const t = useTranslations("creator");
   const [loaded, setLoaded] = useState(false);
+  // Once a visitor has allowed external content, the per-player notice is no longer needed.
+  const allowed = usePrivacyChoice() === "media";
   if (loaded) {
     return (
       <div
@@ -59,7 +63,7 @@ export function ClickToLoad({
       </span>
       {!compact ? (
         <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 text-caption">
-          <span className="rounded-full bg-creator-glass px-2 py-1 text-creator-fg backdrop-blur-glass">{t("loadsFrom", { provider })}</span>
+          {allowed ? <span /> : <span className="rounded-full bg-creator-glass px-2 py-1 text-creator-fg backdrop-blur-glass">{t("loadsFrom", { provider })}</span>}
           {children}
         </span>
       ) : (

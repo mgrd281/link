@@ -342,7 +342,13 @@
     "openChannel": "Zu {platform}",
     "calendarTitle": "Live auf {platform}: {title}",
     "joinLive": "Auf {platform} beitreten",
-    "remindAbout": "Erinnern: {title}"
+    "remindAbout": "Erinnern: {title}",
+    "privacyLabel": "Datenschutz",
+    "privacyTitle": "Keine Tracking-Cookies",
+    "privacyBody": "Diese Seite speichert nichts über dich. Videos von {providers} laden erst, wenn du es erlaubst.",
+    "privacyAllow": "Externe Inhalte erlauben",
+    "privacyEssential": "Nur notwendige",
+    "privacySettings": "Cookie-Einstellungen"
   },
   "directions": {
     "title": "Richtungen",
@@ -1463,6 +1469,42 @@
           "linksHint": "Links zu Produkten – ein Link pro Zeile.",
           "extras": "Dein Shop"
         },
+        "engineer": {
+          "label": "Ingenieur:in",
+          "description": "Projekte, Portfolio, Lebenslauf",
+          "name": "Dein Name",
+          "taglineHint": "z. B. „Bauingenieurin · Statik & Brücken“.",
+          "links": "Projekte oder Veröffentlichungen (optional)",
+          "linksHint": "GitHub, Portfolio, Fachartikel – ein Link pro Zeile.",
+          "extras": "Für Arbeitgeber & Kund:innen"
+        },
+        "lawyer": {
+          "label": "Anwält:in",
+          "description": "Kanzlei, Beratung, Termine",
+          "name": "Dein Name oder deine Kanzlei",
+          "taglineHint": "z. B. „Fachanwältin für Arbeitsrecht · Köln“.",
+          "links": "Fachbeiträge oder Bewertungen (optional)",
+          "linksHint": "Artikel, Ratgeber, Bewertungsprofile – ein Link pro Zeile.",
+          "extras": "Für Mandant:innen"
+        },
+        "student": {
+          "label": "Student:in",
+          "description": "Studium, Projekte, Praktika",
+          "name": "Dein Name",
+          "taglineHint": "z. B. „Informatik · 5. Semester · TU Berlin“.",
+          "links": "Projekte oder Arbeiten (optional)",
+          "linksHint": "Hausarbeiten, Projekte, Portfolio – ein Link pro Zeile.",
+          "extras": "Für Praktika & Jobs"
+        },
+        "warehouse": {
+          "label": "Lager & Logistik",
+          "description": "Erfahrung, Lebenslauf, Kontakt",
+          "name": "Dein Name",
+          "taglineHint": "z. B. „Fachkraft für Lagerlogistik · Staplerschein“.",
+          "links": "Weitere Links (optional)",
+          "linksHint": "Zeugnisse, Zertifikate, Empfehlungen – ein Link pro Zeile.",
+          "extras": "Für Arbeitgeber"
+        },
         "music": {
           "label": "Musik",
           "description": "Songs, Shows, Releases",
@@ -1522,6 +1564,10 @@
         "tiktokLive": {
           "label": "Ich gehe auf TikTok live",
           "hint": "Zeigt eine Live-Karte; die nächste Uhrzeit trägst du später ein."
+        },
+        "cv": {
+          "label": "Link zu deinem Lebenslauf",
+          "hint": "z. B. ein PDF in Google Drive oder Dropbox – wird hervorgehoben."
         }
       },
       "blocks": {
@@ -1534,7 +1580,8 @@
         "contact": "Kontakt",
         "book": "Mein Buch",
         "newsletter": "Newsletter abonnieren",
-        "liveTitle": "Live auf TikTok"
+        "liveTitle": "Live auf TikTok",
+        "cv": "Mein Lebenslauf"
       }
     },
     "ownPage": {

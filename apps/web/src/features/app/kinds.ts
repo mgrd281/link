@@ -8,7 +8,22 @@ import { blockFromLink, newBlockId } from "./blocks";
  * and decides which few questions come next (a shop is asked for its address and opening hours, a
  * TikToker for their handle and whether they go live). Everything stays editable afterwards.
  */
-export const KINDS = ["tiktok", "instagram", "youtube", "writer", "journalist", "business", "shop", "store", "music", "other"] as const;
+export const KINDS = [
+  "tiktok",
+  "instagram",
+  "youtube",
+  "writer",
+  "journalist",
+  "business",
+  "shop",
+  "store",
+  "engineer",
+  "lawyer",
+  "student",
+  "warehouse",
+  "music",
+  "other",
+] as const;
 export type CreatorKind = (typeof KINDS)[number];
 
 export const isKind = (value: unknown): value is CreatorKind => typeof value === "string" && (KINDS as readonly string[]).includes(value);
@@ -28,7 +43,7 @@ export const SOCIAL_PREFIX = {
 export type SocialPlatform = keyof typeof SOCIAL_PREFIX;
 
 /** Questions beyond profiles; each one that is answered becomes a block on the page. */
-export type StarterField = "address" | "phone" | "hours" | "shopUrl" | "website" | "booking" | "email" | "book" | "newsletter" | "tiktokLive";
+export type StarterField = "address" | "phone" | "hours" | "shopUrl" | "website" | "booking" | "email" | "book" | "cv" | "newsletter" | "tiktokLive";
 
 export interface Starter {
   theme: CreatorThemeConfig;
@@ -47,6 +62,10 @@ export const STARTERS: Record<CreatorKind, Starter> = {
   business: { theme: { template: "daylight", pairing: "modern" }, socials: ["linkedin", "instagram", "whatsapp"], fields: ["website", "booking", "email"], logoFirst: true },
   shop: { theme: { template: "marquee" }, socials: ["instagram", "facebook", "whatsapp"], fields: ["address", "phone", "hours"], logoFirst: true },
   store: { theme: { template: "marquee", pairing: "bold" }, socials: ["instagram", "tiktok", "facebook"], fields: ["shopUrl"], logoFirst: true },
+  engineer: { theme: { template: "daylight", pairing: "tech" }, socials: ["linkedin", "x", "instagram"], fields: ["website", "cv", "email"], logoFirst: false },
+  lawyer: { theme: { template: "atelier", pairing: "classic" }, socials: ["linkedin", "facebook", "whatsapp"], fields: ["booking", "phone", "email", "address"], logoFirst: false },
+  student: { theme: { template: "pulse", pairing: "modern" }, socials: ["instagram", "linkedin", "tiktok"], fields: ["cv", "email"], logoFirst: false },
+  warehouse: { theme: { template: "daylight", pairing: "modern" }, socials: ["linkedin", "whatsapp", "facebook"], fields: ["cv", "phone", "email"], logoFirst: false },
   music: { theme: { template: "nocturne" }, socials: ["spotify", "instagram", "tiktok", "youtube"], fields: [], logoFirst: false },
   other: { theme: { template: "nocturne" }, socials: ["instagram", "tiktok", "youtube"], fields: [], logoFirst: false },
 };
@@ -83,6 +102,7 @@ export interface StarterLabels {
   booking: string;
   contact: string;
   book: string;
+  cv: string;
   newsletter: string;
   liveTitle: string;
   detection: { video: string; music: string; event: string };
@@ -135,6 +155,9 @@ export function starterBlocks(input: StarterInput, labels: StarterLabels): Block
         break;
       case "book":
         if (text) blocks.push(link(labels.book, withScheme(text), true));
+        break;
+      case "cv":
+        if (text) blocks.push(link(labels.cv, withScheme(text), true));
         break;
       case "newsletter":
         if (input.switches.newsletter) blocks.push({ ...base("newsletter"), type: "newsletter", title: labels.newsletter });

@@ -12,6 +12,7 @@ const labels = {
   booking: "Book an appointment",
   contact: "Contact",
   book: "My book",
+  cv: "My CV",
   newsletter: "Subscribe",
   liveTitle: "Live on TikTok",
   detection: { video: "Video", music: "Music", event: "Event" },
@@ -29,6 +30,8 @@ describe("page kinds in the welcome flow", () => {
     expect(STARTERS.tiktok.socials[0]).toBe("tiktok");
     expect(STARTERS.youtube.socials[0]).toBe("youtube");
     expect(STARTERS.journalist.socials).toContain("linkedin");
+    expect(STARTERS.lawyer.fields).toEqual(["booking", "phone", "email", "address"]);
+    expect(STARTERS.student.fields).toContain("cv");
   });
 
   it("a shop gets directions, a call button and opening hours — all valid blocks", () => {

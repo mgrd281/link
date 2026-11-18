@@ -28,6 +28,7 @@ import {
 } from "simple-icons";
 
 import { resolveMedia } from "./media";
+import { PrivacySettingsLink } from "./privacy";
 
 const SIMPLE: Partial<Record<Platform, SimpleIcon>> = {
   youtube: siYoutube,
@@ -172,8 +173,11 @@ export function useCreatorFormat(locale: string) {
   };
 }
 
-/** Sticky-free footer: subtle "Made with Linkyo" (removable in Pro) + legal links (DSA "Report"). No cookie settings: there are no cookies. */
-export function CreatorFooter({ className, credit = true }: { className?: string; credit?: boolean }) {
+/**
+ * Sticky-free footer: subtle "Made with Linkyo" (removable in Pro) + legal links (DSA "Report"). Pages
+ * with embedded players also link to the privacy settings (there are no tracking cookies to manage).
+ */
+export function CreatorFooter({ className, credit = true, privacy = false }: { className?: string; credit?: boolean; privacy?: boolean }) {
   const t = useTranslations("creator");
   return (
     <footer
@@ -201,6 +205,9 @@ export function CreatorFooter({ className, credit = true }: { className?: string
             {t(key)}
           </a>
         ))}
+        {privacy ? (
+          <PrivacySettingsLink className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2 underline-offset-4 hover:underline" />
+        ) : null}
       </nav>
     </footer>
   );

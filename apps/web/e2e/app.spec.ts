@@ -328,6 +328,34 @@ test.describe("private previews", () => {
     await expect(page.getByLabel("LinkedIn")).toBeVisible();
   });
 
+  test("pages with players show a privacy notice in the page's own colors; the choice is kept", async ({ page }) => {
+    await page.goto("/de/p/nizar");
+    const notice = page.getByRole("region", { name: "Datenschutz" });
+    await expect(notice).toContainText("Keine Tracking-Cookies");
+    await expect(notice).toContainText("YouTube");
+    expect(await axe(page)).toEqual([]);
+    // The button wears the creator's accent, not Linkyo's violet.
+    const allow = notice.getByRole("button", { name: "Externe Inhalte erlauben" });
+    const accent = await page.locator(".poster-scope").evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-accent").trim());
+    const fill = await allow.evaluate((element) => getComputedStyle(element).backgroundColor);
+    const probe = await page.evaluate((color) => {
+      const element = document.createElement("i");
+      element.style.color = color;
+      document.body.append(element);
+      const value = getComputedStyle(element).color;
+      element.remove();
+      return value;
+    }, accent);
+    expect(fill).toBe(probe);
+    await allow.click();
+    await expect(notice).toBeHidden();
+    await page.reload();
+    await expect(page.getByText("Keine Tracking-Cookies")).toBeHidden();
+    // It can always be changed from the footer.
+    await page.getByRole("button", { name: "Cookie-Einstellungen" }).click();
+    await expect(page.getByRole("region", { name: "Datenschutz" })).toBeVisible();
+  });
+
   test("the earlier long link still leads to the short one", async ({ page }) => {
     await page.goto("/de/p/nizar-m3e8dw");
     await page.waitForURL("**/de/p/nizar");

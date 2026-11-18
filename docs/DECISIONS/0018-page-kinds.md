@@ -6,8 +6,9 @@ template that fits.
 
 **Decision.**
 
-- The welcome flow starts with **"What describes you best?"**: ten cards. The eight above, plus Music (the original
-  core audience) and "Something else". Each card has an icon and a three-word description. The choice is saved on
+- The welcome flow starts with **"What describes you best?"**: fourteen cards. The eight above; engineer, lawyer,
+  university student and warehouse & logistics (added on request); Music (the original core audience); and
+  "Something else". Each card has an icon and a three-word description. The choice is saved on
   the site (`site.kind`) and can be changed by going back.
 - A kind is a **starter** (`features/app/kinds.ts`), not a separate product:
 
@@ -21,7 +22,11 @@ template that fits.
   | Work & business | Daylight + modern fonts | LinkedIn, Instagram, WhatsApp | website, booking (highlighted), email |
   | Local shop | Marquee | Instagram, Facebook, WhatsApp | address → "Directions" (Google Maps, highlighted), phone → "Call", opening hours |
   | Online store | Marquee + bold fonts | Instagram, TikTok, Facebook | store link (highlighted main button) |
-  | Music | Nocturne | Spotify, Instagram, TikTok, YouTube | latest release |
+  | Engineer | Daylight + tech fonts | LinkedIn, X, Instagram | website/portfolio, CV (highlighted), email |
+| Lawyer | Atelier + classic fonts | LinkedIn, Facebook, WhatsApp | consultation booking (highlighted), phone, email, office address |
+| University student | Pulse + modern fonts | Instagram, LinkedIn, TikTok | CV (highlighted), email |
+| Warehouse & logistics | Daylight + modern fonts | LinkedIn, WhatsApp, Facebook | CV (highlighted), phone, email |
+| Music | Nocturne | Spotify, Instagram, TikTok, YouTube | latest release |
   | Something else | Nocturne | Instagram, TikTok, YouTube | — |
 
 - The wording follows the kind: "Name of your shop", "Your channel name", examples in the tagline hint, and the label

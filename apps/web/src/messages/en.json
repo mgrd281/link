@@ -342,7 +342,13 @@
     "openChannel": "Open {platform}",
     "calendarTitle": "Live on {platform}: {title}",
     "joinLive": "Join on {platform}",
-    "remindAbout": "Remind me: {title}"
+    "remindAbout": "Remind me: {title}",
+    "privacyLabel": "Privacy",
+    "privacyTitle": "No tracking cookies",
+    "privacyBody": "This page stores nothing about you. Videos from {providers} only load once you allow them.",
+    "privacyAllow": "Allow external content",
+    "privacyEssential": "Essential only",
+    "privacySettings": "Cookie settings"
   },
   "directions": {
     "title": "Directions",
@@ -1463,6 +1469,42 @@
           "linksHint": "Links to products — one link per line.",
           "extras": "Your store"
         },
+        "engineer": {
+          "label": "Engineer",
+          "description": "Projects, portfolio, CV",
+          "name": "Your name",
+          "taglineHint": "e.g. \"Civil engineer · structures & bridges\".",
+          "links": "Projects or publications (optional)",
+          "linksHint": "GitHub, portfolio, papers — one link per line.",
+          "extras": "For employers & clients"
+        },
+        "lawyer": {
+          "label": "Lawyer",
+          "description": "Practice, consultations, bookings",
+          "name": "Your name or your firm",
+          "taglineHint": "e.g. \"Employment lawyer · Cologne\".",
+          "links": "Articles or reviews (optional)",
+          "linksHint": "Articles, guides, review profiles — one link per line.",
+          "extras": "For clients"
+        },
+        "student": {
+          "label": "University student",
+          "description": "Studies, projects, internships",
+          "name": "Your name",
+          "taglineHint": "e.g. \"Computer science · 3rd year · TU Berlin\".",
+          "links": "Projects or papers (optional)",
+          "linksHint": "Papers, projects, portfolio — one link per line.",
+          "extras": "For internships & jobs"
+        },
+        "warehouse": {
+          "label": "Warehouse & logistics",
+          "description": "Experience, CV, contact",
+          "name": "Your name",
+          "taglineHint": "e.g. \"Warehouse specialist · forklift licence\".",
+          "links": "More links (optional)",
+          "linksHint": "References, certificates — one link per line.",
+          "extras": "For employers"
+        },
         "music": {
           "label": "Music",
           "description": "Songs, shows, releases",
@@ -1522,6 +1564,10 @@
         "tiktokLive": {
           "label": "I go live on TikTok",
           "hint": "Shows a live card; add the next time later."
+        },
+        "cv": {
+          "label": "Link to your CV",
+          "hint": "e.g. a PDF in Google Drive or Dropbox — highlighted on your page."
         }
       },
       "blocks": {
@@ -1534,7 +1580,8 @@
         "contact": "Contact",
         "book": "My book",
         "newsletter": "Subscribe to the newsletter",
-        "liveTitle": "Live on TikTok"
+        "liveTitle": "Live on TikTok",
+        "cv": "My CV"
       }
     },
     "ownPage": {

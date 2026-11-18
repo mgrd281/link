@@ -7,6 +7,8 @@ import { useId, type ReactNode } from "react";
 import { themeStyle } from "@/features/creator/theme";
 
 import { CreatorFooter, MediaImage, mediaSizes } from "../shared/creator-kit";
+import { PrivacyNotice } from "../shared/privacy";
+import { externalProviders } from "../shared/providers";
 import {
   BrandGrid,
   FeaturedCard,
@@ -58,6 +60,8 @@ export function PosterRenderer({
   const photo = profile.hero ?? profile.avatar;
   const surface = cardSurface[theme.buttonStyle];
   const Main = preview ? "div" : "main";
+  // Pages with embedded players get a privacy notice in the creator's colors (not inside the dashboard preview).
+  const providers = preview ? [] : externalProviders(blocks);
 
   return (
     <div
@@ -90,12 +94,13 @@ export function PosterRenderer({
           ))}
         </Main>
         {/* With a Linkyo bar at the bottom, the footer drops its own Linkyo credit (one is enough). */}
-        <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} credit={!dock} />
+        <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} credit={!dock} privacy={providers.length > 0} />
         {dock ? (
           <div className="pointer-events-none sticky bottom-0 layer-sticky h-0">
             <div className="poster-dock pointer-events-auto absolute inset-x-0 bottom-0 px-3 pb-[max(var(--spacing-3),env(safe-area-inset-bottom))]">{dock}</div>
           </div>
         ) : null}
+        {providers.length > 0 ? <PrivacyNotice providers={providers} raised={Boolean(dock)} /> : null}
       </div>
     </div>
   );
