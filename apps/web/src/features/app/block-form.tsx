@@ -1,6 +1,6 @@
 "use client";
 
-import { detectLink, NO_IMAGE, PLATFORMS, type Block, type BlockOf, type Platform } from "@linkyo/blocks";
+import { detectLink, LINK_ICONS, NO_IMAGE, PLATFORMS, type Block, type BlockOf, type LinkIcon, type Platform } from "@linkyo/blocks";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
@@ -61,6 +61,13 @@ export function BlockForm({ block, onChange, errors }: { block: Block; onChange:
         <>
           <TextInput label={t("title")} value={block.title} onValue={(title) => set(block, { title })} maxLength={120} error={err("title")} />
           <UrlInput label={t("url")} value={block.url} onValue={(url) => set(block, { url })} error={err("url")} />
+          <TextInput label={t("subtitle")} hint={t("subtitleHint")} value={block.subtitle ?? ""} onValue={(subtitle) => set(block, { subtitle: subtitle || undefined })} maxLength={80} />
+          <SelectField<LinkIcon | "auto">
+            label={t("icon")}
+            value={block.icon ?? "auto"}
+            onValue={(icon) => onChange(icon === "auto" ? { ...block, icon: undefined } : { ...block, icon })}
+            options={[{ value: "auto", label: t("iconAuto") }, ...LINK_ICONS.map((icon) => ({ value: icon, label: t(`icons.${icon}`) }))]}
+          />
           <ImageInput label={t("thumbnail")} kind="thumb" image={block.thumbnail} onImage={(thumbnail) => onChange(thumbnail ? { ...block, thumbnail } : { ...block, thumbnail: undefined })} withAlt={false} />
           <TextInput label={t("badge")} hint={t("badgeHint")} value={block.badge ?? ""} onValue={(badge) => set(block, { badge: badge || undefined })} maxLength={16} />
           {featured(block)}

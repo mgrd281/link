@@ -1,4 +1,5 @@
 import { hasImage, isBlockActive, type Block, type BlockOf, type Page } from "@linkyo/blocks";
+import type { CreatorButtonStyle } from "@linkyo/tokens";
 import type { HeadingStyle, ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
@@ -59,6 +60,9 @@ export function PosterRenderer({
   const isRtl = profile.locale === "ar";
   const photo = profile.hero ?? profile.avatar;
   const surface = cardSurface[theme.buttonStyle];
+  // One button leads: on pages whose buttons are filled with the accent, the other links turn soft
+  // as soon as one is highlighted, so the primary action keeps the color to itself.
+  const linkStyle: CreatorButtonStyle = theme.buttonStyle === "filled" && blocks.some((block) => block.type === "link" && block.highlight) ? "soft" : theme.buttonStyle;
   const Main = preview ? "div" : "main";
   // Pages with embedded players get a privacy notice in the creator's colors (not inside the dashboard preview).
   const providers = preview ? [] : externalProviders(blocks);
@@ -90,7 +94,7 @@ export function PosterRenderer({
           {sections.map((section) => (
             <PosterSection key={section.id} title={section.title} headings={theme.layout.headings}>
               {section.items.map((item) => (
-                <PosterItemView key={itemKey(item)} item={item} theme={theme} surface={surface} label={section.title ?? profile.displayName} nested={section.title !== null} />
+                <PosterItemView key={itemKey(item)} item={item} linkStyle={linkStyle} surface={surface} label={section.title ?? profile.displayName} nested={section.title !== null} />
               ))}
             </PosterSection>
           ))}
@@ -123,13 +127,13 @@ function PosterSection({ title, headings, children }: { title: string | null; he
 
 function PosterItemView({
   item,
-  theme,
+  linkStyle,
   surface,
   label,
   nested,
 }: {
   item: PosterItem;
-  theme: ResolvedCreatorTheme;
+  linkStyle: CreatorButtonStyle;
   surface: string;
   label: string;
   nested: boolean;
@@ -142,11 +146,21 @@ function PosterItemView({
     case "rows":
       return <RowGroup blocks={item.blocks} surface={surface} label={label} />;
     case "block":
-      return <PosterBlock block={item.block} theme={theme} surface={surface} heading={nested ? "h3" : "h2"} />;
+      return <PosterBlock block={item.block} linkStyle={linkStyle} surface={surface} heading={nested ? "h3" : "h2"} />;
   }
 }
 
-function PosterBlock({ block, theme, surface, heading }: { block: Block; theme: ResolvedCreatorTheme; surface: string; heading: HeadingTag }) {
+function PosterBlock({
+  block,
+  linkStyle,
+  surface,
+  heading,
+}: {
+  block: Block;
+  linkStyle: CreatorButtonStyle;
+  surface: string;
+  heading: HeadingTag;
+}) {
   const t = useTranslations("creator");
   switch (block.type) {
     case "music":
@@ -154,7 +168,7 @@ function PosterBlock({ block, theme, surface, heading }: { block: Block; theme: 
     case "card":
       return <FeaturedCard block={block} surface={surface} />;
     case "link":
-      return <TextLink block={block} style={theme.buttonStyle} />;
+      return <TextLink block={block} style={linkStyle} />;
     case "live":
       return <LiveRow block={block} surface={surface} />;
     case "events":

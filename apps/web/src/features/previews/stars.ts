@@ -91,7 +91,7 @@ export function starPage(star: Star, locale: StarLocale): Page {
   const blocks: Block[] = [];
   if (star.socials.length) blocks.push({ ...base("socials"), type: "socials", items: star.socials.slice(0, 12) });
   for (const button of star.highlights ?? []) blocks.push(link(button.title[locale], button.url, { highlight: true }));
-  if (star.website) blocks.push(link(HEADINGS.official[locale], star.website, { highlight: true }));
+  if (star.website) blocks.push(link(HEADINGS.official[locale], star.website, { highlight: !star.highlights?.length, icon: "globe" }));
 
   for (const release of star.music ?? []) {
     blocks.push({
@@ -138,7 +138,7 @@ export function starPage(star: Star, locale: StarLocale): Page {
 
   if (star.works?.length) {
     blocks.push(header(HEADINGS.works[locale]));
-    for (const work of star.works.slice(0, 4)) blocks.push(link(`${work.title[locale]} (${work.year})`, work.url));
+    for (const work of star.works.slice(0, 4)) blocks.push(link(`${work.title[locale]} (${work.year})`, work.url, { icon: "play" }));
   }
 
   // Only articles in the page's language: the address under each title already names the source.
@@ -147,7 +147,7 @@ export function starPage(star: Star, locale: StarLocale): Page {
   const articles = star.articles.filter((article) => article.language === locale && !same(article.url, star.website)).slice(0, MAX_ARTICLES);
   if (articles.length) {
     blocks.push(header(HEADINGS.press[locale]));
-    for (const article of articles) blocks.push(link(article.title, article.url));
+    for (const article of articles) blocks.push(link(article.title, article.url, { icon: "newspaper" }));
   }
 
   return {

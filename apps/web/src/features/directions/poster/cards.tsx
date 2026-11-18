@@ -10,6 +10,7 @@ import { linkStyleClasses } from "@/features/creator/link-button";
 
 import { MediaImage, mediaSizes, PlatformGlyph, platformName, useCreatorFormat } from "../shared/creator-kit";
 import { ClickToLoad, NewsletterForm } from "../shared/islands";
+import { linkGlyph, LinkIconGlyph } from "../shared/link-icons";
 import { providerOf } from "../shared/providers";
 import { LiveNextRow } from "./live";
 import { linkDestination, RAIL_THRESHOLD, type RowBlock } from "./sections";
@@ -295,7 +296,8 @@ export function ProductGrid({ products, surface }: { products: BlockOf<"product"
             <span className="grid gap-1 p-3 @preview:p-4">
               <span className="line-clamp-2 text-body leading-snug font-semibold">{product.title}</span>
               <span className="flex flex-wrap items-center gap-2 text-small text-creator-fg-muted">
-                {f.price(product.price, product.currency)}
+                {/* Prices read left to right in every language ("39 US$", not "$US 39" on Arabic pages). */}
+                <bdi dir="ltr">{f.price(product.price, product.currency)}</bdi>
                 {product.affiliate ? <AdLabel /> : null}
               </span>
             </span>
@@ -316,7 +318,7 @@ export function ProductRow({ product, surface }: { product: BlockOf<"product"> |
       href={product.url}
       image={product.image}
       title={product.title}
-      subtitle={f.price(product.price, product.currency)}
+      subtitle={<bdi dir="ltr">{f.price(product.price, product.currency)}</bdi>}
       surface={surface}
       ad={product.affiliate}
       trailing={
@@ -360,32 +362,46 @@ export function BrandGrid({ block }: { block: BlockOf<"brands"> }) {
 }
 
 /** A plain link: the label leads, its destination sits underneath so visitors know where they go. */
+/**
+ * A link button: an icon that says where it goes (chosen, or read from the address), the title, and a
+ * second line (the creator's subtitle, else the address so visitors know before they tap). The
+ * highlighted link is the page's primary action, filled with the accent (on filled pages the other
+ * links turn soft, see PosterRenderer), so one button always leads.
+ */
 export function TextLink({ block, style }: { block: BlockOf<"link">; style: CreatorButtonStyle }) {
-  const filled = style === "filled";
+  const primary = block.highlight;
+  const onColor = primary || style === "filled";
+  const glyph = linkGlyph(block.url, block.icon);
+  const tone = primary ? "bg-creator-accent text-creator-accent-fg shadow-e2" : linkStyleClasses[style];
   return (
     <a
       href={block.url}
       className={cn(
-        "flex min-h-creator-button items-center gap-3 rounded-creator-button px-5 py-3",
-        linkStyleClasses[style],
-        style === "minimal" && "px-1",
+        "flex min-h-creator-button items-center gap-3 rounded-creator-button py-3 ps-3 pe-4",
+        tone,
+        !primary && style === "minimal" && "ps-0 pe-1",
         pressable,
-        style === "minimal" && "after:hidden",
+        !primary && style === "minimal" && "after:hidden",
       )}
     >
-      <span className="grid min-w-0 flex-1 text-start">
+      {/* Icon tile, tinted from the button's own color so it works on every theme. */}
+      <span className={cn("relative grid size-10 shrink-0 place-items-center rounded-creator-button", !onColor && "text-creator-accent-text")}>
+        <span aria-hidden className="absolute inset-0 rounded-[inherit] bg-current opacity-pressed" />
+        {glyph.kind === "platform" ? <PlatformGlyph platform={glyph.platform} size="md" /> : <LinkIconGlyph icon={glyph.icon} size="md" />}
+      </span>
+      <span className="grid min-w-0 flex-1 gap-0.5 text-start">
         {/* Two lines before an ellipsis: headlines and long titles stay readable. */}
         <span className="line-clamp-2 text-body-lg leading-snug font-semibold">{block.title}</span>
-        <span className={cn("flex min-w-0 items-center gap-2 text-small", !filled && "text-creator-fg-muted")}>
+        <span className={cn("flex min-w-0 items-center gap-2 text-small", !onColor && "text-creator-fg-muted")}>
           <span className="truncate">
             {/* Hosts, emails and phone numbers read left to right, also on Arabic pages (+49 …). */}
-            <bdi dir="ltr">{linkDestination(block.url)}</bdi>
+            {block.subtitle ?? <bdi dir="ltr">{linkDestination(block.url)}</bdi>}
           </span>
           {block.affiliate ? <AdLabel /> : null}
         </span>
       </span>
       {block.badge ? (
-        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold", filled ? "bg-creator-bg text-creator-fg" : "bg-creator-accent text-creator-accent-fg")}>
+        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold", onColor ? "bg-creator-bg text-creator-fg" : "bg-creator-accent text-creator-accent-fg")}>
           {block.badge}
         </span>
       ) : null}

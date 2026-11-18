@@ -1,4 +1,4 @@
-import { NO_IMAGE, type Block, type BlockOf, type Page, type Platform } from "@linkyo/blocks";
+import { NO_IMAGE, type Block, type BlockOf, type LinkIcon, type Page, type Platform } from "@linkyo/blocks";
 
 /**
  * Small helpers to write example pages compactly. Every link goes to example.com (a reserved
@@ -26,7 +26,47 @@ interface LinkOptions {
   highlight?: boolean;
   badge?: string;
   affiliate?: boolean;
+  icon?: LinkIcon;
+  /** Second line under the title ("20 min · free"); the address is shown otherwise. */
+  subtitle?: string;
 }
+
+/**
+ * Example links all point to example.com, so the page cannot read an icon from the address. The
+ * path names what a link is for (shop, booking, route …); this picks the icon a creator would choose.
+ */
+const PATH_ICONS: [RegExp, LinkIcon][] = [
+  [/shop|store|storefront|marktplatz|kollektion|collection/, "shop"],
+  [/termin|booking|book-|buchen|erstgespraech|erstberatung|reserv|call|sprechstunde|appointment/, "calendar"],
+  [/route|directions|anfahrt|standort|map/, "map"],
+  [/menu|speisekarte|karte/, "book"],
+  [/ticket|event|tour|konzert/, "ticket"],
+  [/podcast|episode|folge/, "mic"],
+  [/video|youtube|reel|clip/, "play"],
+  [/blog|artikel|article|ratgeber|news|case|guide/, "newspaper"],
+  [/cv|lebenslauf|resume/, "file"],
+  [/code|deal|rabatt|sale|angebot|offer/, "percent"],
+  [/jobs|karriere|career|team/, "users"],
+  [/whatsapp|chat|kontakt|contact/, "chat"],
+  [/kurs|course|lesson|academy/, "graduation"],
+  [/spende|donate|mitglied|member/, "heart"],
+  [/portfolio|work|arbeiten|projekte|projects/, "briefcase"],
+  [/music|musik|spotify|album|single/, "music"],
+  [/versand|shipping|delivery/, "truck"],
+  [/gutschein|gift|geschenk/, "gift"],
+];
+const iconForPath = (path: string): LinkIcon | undefined => PATH_ICONS.find(([pattern]) => pattern.test(path))?.[1];
+
+/** Optional link fields, only when set (the schema keeps unset fields absent). */
+const linkExtras = (options: LinkOptions, path?: string) => {
+  const icon = options.icon ?? (path ? iconForPath(path) : undefined);
+  return {
+    ...(options.badge ? { badge: options.badge } : {}),
+    ...(options.affiliate ? { affiliate: true } : {}),
+    ...(icon ? { icon } : {}),
+    ...(options.subtitle ? { subtitle: options.subtitle } : {}),
+  };
+};
 
 export function makeHelpers(slug: string, persona: Persona) {
   let count = 0;
@@ -53,8 +93,7 @@ export function makeHelpers(slug: string, persona: Persona) {
       title,
       url: url(path),
       highlight: options.highlight ?? false,
-      ...(options.badge ? { badge: options.badge } : {}),
-      ...(options.affiliate ? { affiliate: true } : {}),
+      ...linkExtras(options, path),
     }),
     /** A card with a picture: articles, offers, featured work. */
     card: (title: string, description: string, path: string, key: string, options: { affiliate?: boolean } = {}): BlockOf<"card"> => ({
@@ -72,9 +111,17 @@ export function makeHelpers(slug: string, persona: Persona) {
       title,
       url: `mailto:${box}@example.com`,
       highlight: options.highlight ?? false,
+      ...linkExtras(options),
     }),
     /** A phone number that cannot be dialled (German numbers never start with 0 after the area code). */
-    call: (title: string, options: LinkOptions = {}): BlockOf<"link"> => ({ ...base("link"), type: "link", title, url: "tel:+49300000000", highlight: options.highlight ?? false }),
+    call: (title: string, options: LinkOptions = {}): BlockOf<"link"> => ({
+      ...base("link"),
+      type: "link",
+      title,
+      url: "tel:+49300000000",
+      highlight: options.highlight ?? false,
+      ...linkExtras(options),
+    }),
     video: (title: string, provider: "youtube" | "tiktok" | "instagram" | "vimeo", path: string, key?: string, duration?: number): BlockOf<"video"> => ({
       ...base("video"),
       type: "video",

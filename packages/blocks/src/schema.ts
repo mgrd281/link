@@ -31,6 +31,46 @@ export const PLATFORMS = [
   "website",
 ] as const;
 export const platformSchema = z.enum(PLATFORMS);
+
+/**
+ * Icons a creator can put in front of a link (a curated set, so every page stays consistent). Without
+ * one, the page picks an icon from the address (a phone number, WhatsApp, a PDF, a map, a platform).
+ */
+export const LINK_ICONS = [
+  "link",
+  "globe",
+  "shop",
+  "cart",
+  "tag",
+  "percent",
+  "gift",
+  "truck",
+  "calendar",
+  "clock",
+  "phone",
+  "mail",
+  "chat",
+  "map",
+  "file",
+  "download",
+  "play",
+  "mic",
+  "music",
+  "book",
+  "newspaper",
+  "briefcase",
+  "code",
+  "palette",
+  "chart",
+  "users",
+  "star",
+  "heart",
+  "sparkles",
+  "graduation",
+  "ticket",
+  "rocket",
+] as const;
+export type LinkIcon = (typeof LINK_ICONS)[number];
 export type Platform = z.infer<typeof platformSchema>;
 
 const url = z.url({ protocol: /^(https?|mailto|tel)$/ });
@@ -60,6 +100,9 @@ export const blockSchema = z.discriminatedUnion("type", [
     type: z.literal("link"),
     title: z.string().min(1).max(120),
     url,
+    /** A short second line ("20 min · free", "Reply within 2 hours"); the address is shown otherwise. */
+    subtitle: z.string().max(80).optional(),
+    icon: z.enum(LINK_ICONS).optional(),
     thumbnail: image.optional(),
     badge: z.string().max(16).optional(),
     affiliate,

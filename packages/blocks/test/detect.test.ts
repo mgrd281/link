@@ -74,6 +74,13 @@ describe("block schema", () => {
     expect(() => blockSchema.parse({ id: "e", type: "events", items: [{ ...event, time: "8pm" }] })).toThrow();
   });
 
+  it("links take an optional icon from the curated set and a short second line", () => {
+    const link = { id: "l1", type: "link", title: "Book a call", url: "https://cal.com/hanna" };
+    expect(blockSchema.safeParse({ ...link, icon: "calendar", subtitle: "20 min · free" }).success).toBe(true);
+    expect(blockSchema.safeParse({ ...link, icon: "skull" }).success).toBe(false);
+    expect(blockSchema.safeParse({ ...link, subtitle: "x".repeat(81) }).success).toBe(false);
+  });
+
   it("rejects unsafe URLs", () => {
     expect(() => blockSchema.parse({ id: "1", type: "link", title: "x", url: "javascript:alert(1)" })).toThrow();
   });

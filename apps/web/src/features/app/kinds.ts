@@ -1,4 +1,4 @@
-import { detectMany, type Block, type BlockOf, type Platform } from "@linkyo/blocks";
+import { detectMany, type Block, type BlockOf, type LinkIcon, type Platform } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import { blockFromLink, newBlockId } from "./blocks";
@@ -135,7 +135,14 @@ export interface StarterLabels {
 export function starterBlocks(input: StarterInput, labels: StarterLabels): Block[] {
   const starter = STARTERS[input.kind];
   const base = (type: string) => ({ id: newBlockId(type), visible: true, highlight: false });
-  const link = (title: string, url: string, highlight = false): BlockOf<"link"> => ({ ...base("link"), type: "link", title: title.slice(0, 120), url, highlight });
+  const link = (title: string, url: string, highlight = false, icon?: LinkIcon): BlockOf<"link"> => ({
+    ...base("link"),
+    type: "link",
+    title: title.slice(0, 120),
+    url,
+    highlight,
+    ...(icon ? { icon } : {}),
+  });
   const value = (field: StarterField) => input.values[field]?.trim() ?? "";
   const blocks: Block[] = [];
 
@@ -149,7 +156,7 @@ export function starterBlocks(input: StarterInput, labels: StarterLabels): Block
     const text = value(field);
     switch (field) {
       case "address":
-        if (text) blocks.push(link(labels.directions(text), `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}`, true));
+        if (text) blocks.push(link(labels.directions(text), `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}`, true, "map"));
         break;
       case "phone": {
         const phone = text.replace(/[^\d+]/g, "");
@@ -160,22 +167,22 @@ export function starterBlocks(input: StarterInput, labels: StarterLabels): Block
         if (text) blocks.push({ ...base("header"), type: "header", title: labels.hours }, { ...base("text"), type: "text", text: text.slice(0, 2000) });
         break;
       case "shopUrl":
-        if (text) blocks.push(link(labels.shop, withScheme(text), true));
+        if (text) blocks.push(link(labels.shop, withScheme(text), true, "shop"));
         break;
       case "website":
-        if (text) blocks.push(link(labels.website, withScheme(text)));
+        if (text) blocks.push(link(labels.website, withScheme(text), false, "globe"));
         break;
       case "booking":
-        if (text) blocks.push(link(labels.booking, withScheme(text), true));
+        if (text) blocks.push(link(labels.booking, withScheme(text), true, "calendar"));
         break;
       case "email":
         if (isEmail(text)) blocks.push(link(labels.contact, `mailto:${text}`));
         break;
       case "book":
-        if (text) blocks.push(link(labels.book, withScheme(text), true));
+        if (text) blocks.push(link(labels.book, withScheme(text), true, "book"));
         break;
       case "cv":
-        if (text) blocks.push(link(labels.cv, withScheme(text), true));
+        if (text) blocks.push(link(labels.cv, withScheme(text), true, "file"));
         break;
       case "newsletter":
         if (input.switches.newsletter) blocks.push({ ...base("newsletter"), type: "newsletter", title: labels.newsletter });

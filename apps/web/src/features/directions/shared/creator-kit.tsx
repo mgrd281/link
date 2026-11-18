@@ -28,6 +28,7 @@ import {
   siYoutubemusic,
 } from "simple-icons";
 
+import { LINKEDIN_GLYPH } from "./link-icons";
 import { resolveMedia } from "./media";
 import { PrivacySettingsLink } from "./privacy";
 
@@ -52,6 +53,7 @@ const SIMPLE: Partial<Record<Platform, SimpleIcon>> = {
   telegram: siTelegram,
   facebook: siFacebook,
   github: siGithub,
+  linkedin: LINKEDIN_GLYPH,
 };
 
 const px = (n: number): string => `${n}px`;
