@@ -13,13 +13,17 @@ scroll. He asked for the same feature: "a moving picture with a background".
 - **Player** (`HeroMotion`, a small client component):
   - a `<video>` that is muted, loops and plays inline, laid over the photo;
   - it fades in on its first frame and plays only while on screen (IntersectionObserver);
-  - it never plays for `prefers-reduced-motion` or the browser's data saver;
+  - it does not start on its own for `prefers-reduced-motion` or the browser's data saver;
+  - when the browser refuses to start it (iPhone in Low Power Mode), it starts on the visitor's first
+    tap anywhere on the page;
+  - a small play/pause button sits on the picture (WCAG 2.2.2: moving content can be stopped). It
+    also lets visitors with reduced motion start the clip themselves;
   - it is hidden from assistive technology, since the photo carries the description;
   - a moving picture always shows in its own colors: the duotone template falls back to the portrait
     treatment when there is a clip, because a toned face on video reads as a filter.
-- **Background.** On wide screens the same clip, blurred, is the ambient backdrop behind the
-  column. On every screen the hero softens and fades on scroll as before (the scroll-driven CSS
-  animation), so the moving picture turns into a soft background as the visitor reads on.
+- **Background.** On every screen the hero softens and fades on scroll as before (the scroll-driven
+  CSS animation), so the moving picture turns into a soft background as the visitor reads on. On wide
+  screens the ambient backdrop stays the still photo, which saves battery.
 - **Privacy.** The clips are self-hosted (`/media/motion`). They make no third-party request and need
   no consent.
 - **Examples.** Four example pages have a moving picture:

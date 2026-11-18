@@ -8,7 +8,6 @@ import { useId, type ReactNode } from "react";
 import { themeStyle } from "@/features/creator/theme";
 
 import { CreatorFooter, MediaImage, mediaSizes } from "../shared/creator-kit";
-import { HeroMotion } from "../shared/motion";
 import { PrivacyNotice } from "../shared/privacy";
 import { externalProviders } from "../shared/providers";
 import {
@@ -79,13 +78,12 @@ export function PosterRenderer({
       {hasImage(photo) ? (
         <div aria-hidden className="absolute inset-x-0 top-0 hidden h-dvh overflow-hidden opacity-secondary @prose:block">
           <MediaImage src={photo.src} alt="" sizes={mediaSizes.wide} className="scale-lift blur-ambient" />
-          {profile.motion ? <HeroMotion src={profile.motion.src} className="scale-lift blur-ambient" /> : null}
           <div className="absolute inset-0 bg-linear-to-b from-transparent to-creator-bg" />
         </div>
       ) : null}
 
       <div className="relative mx-auto max-w-creator @prose:pt-10">
-        {overlay ? <div className="absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12">{overlay}</div> : null}
+        {overlay ? <div className="pointer-events-none absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12 *:pointer-events-auto">{overlay}</div> : null}
         <PosterBar profile={profile} />
         <PosterHero profile={profile} socials={socials} live={live} theme={theme} preview={preview} />
         {/* Marks the end of the hero: the Linkyo bar slides in once this has scrolled up. */}

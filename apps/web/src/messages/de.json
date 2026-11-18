@@ -365,7 +365,9 @@
     "previewEnded": "Das war die Vorschau",
     "continueOn": "Weiter auf {provider} ansehen",
     "opensOn": "Öffnet {provider}",
-    "watchOn": "„{title}“ auf {provider} ansehen"
+    "watchOn": "„{title}“ auf {provider} ansehen",
+    "motionPause": "Bewegtes Bild anhalten",
+    "motionPlay": "Bewegtes Bild abspielen"
   },
   "directions": {
     "title": "Richtungen",

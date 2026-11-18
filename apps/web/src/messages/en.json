@@ -365,7 +365,9 @@
     "previewEnded": "That was the preview",
     "continueOn": "Keep watching on {provider}",
     "opensOn": "Opens {provider}",
-    "watchOn": "Watch \"{title}\" on {provider}"
+    "watchOn": "Watch \"{title}\" on {provider}",
+    "motionPause": "Pause the moving picture",
+    "motionPlay": "Play the moving picture"
   },
   "directions": {
     "title": "Directions",

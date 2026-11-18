@@ -81,8 +81,20 @@ test.describe("moving pictures", () => {
     expect(response.status()).toBe(200);
     expect(response.headers()["content-type"]).toContain("video/mp4");
 
+    // It plays on its own, and the visitor can stop it (WCAG 2.2.2).
+    const pause = page.getByRole("button", { name: "Bewegtes Bild anhalten" });
+    await expect(pause).toBeVisible();
+    await pause.click();
+    await expect(page.getByRole("button", { name: "Bewegtes Bild abspielen" })).toBeVisible();
+    expect(await clip.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
+
+    // Reduced motion: the still photo first; the clip plays only when asked to.
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.reload();
-    await expect(page.locator("header video").first()).toBeHidden();
+    const still = page.locator("header video").first();
+    await expect(still).toHaveCSS("opacity", "0");
+    expect(await still.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
+    await page.getByRole("button", { name: "Bewegtes Bild abspielen" }).click();
+    await expect(page.getByRole("button", { name: "Bewegtes Bild anhalten" })).toBeVisible();
   });
 });

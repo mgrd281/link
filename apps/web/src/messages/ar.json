@@ -365,7 +365,9 @@
     "previewEnded": "انتهت المعاينة",
     "continueOn": "أكمل المشاهدة على {provider}",
     "opensOn": "يفتح {provider}",
-    "watchOn": "مشاهدة «{title}» على {provider}"
+    "watchOn": "مشاهدة «{title}» على {provider}",
+    "motionPause": "إيقاف الصورة المتحركة",
+    "motionPlay": "تشغيل الصورة المتحركة"
   },
   "directions": {
     "title": "الاتجاهات",
