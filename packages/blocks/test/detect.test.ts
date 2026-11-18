@@ -81,6 +81,12 @@ describe("block schema", () => {
     expect(blockSchema.safeParse({ ...link, subtitle: "x".repeat(81) }).success).toBe(false);
   });
 
+  it("videos play on the page, as a short preview, or on the platform", () => {
+    const video = { id: "v1", type: "video", title: "Clip", provider: "youtube", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", poster: { src: "x.jpg", alt: "" } };
+    for (const playback of ["inline", "preview", "external"]) expect(blockSchema.safeParse({ ...video, playback }).success, playback).toBe(true);
+    expect(blockSchema.safeParse({ ...video, playback: "loop" }).success).toBe(false);
+  });
+
   it("rejects unsafe URLs", () => {
     expect(() => blockSchema.parse({ id: "1", type: "link", title: "x", url: "javascript:alert(1)" })).toThrow();
   });

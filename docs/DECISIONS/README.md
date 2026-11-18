@@ -24,3 +24,4 @@
 | [0020](0020-concept-pages.md) | Concept pages for 12 well-known people: noindex, labelled "Concept", official links and free-licensed photos only; listed in the gallery under "Well-known people" at the founder's request | **Applied** |
 | [0021](0021-more-page-kinds.md) | Seven more page kinds (affiliate, marketing, developer, designer, coach, streamer, podcast), GitHub platform, two gallery categories, 11 examples | **Applied** |
 | [0022](0022-link-buttons.md) | Link buttons: icon tile (chosen or from the address), optional second line, one primary action in the accent; LinkedIn glyph | **Applied** |
+| [0023](0023-video-playback.md) | Video playback after the tap: whole video here (default), 30-second preview then "Keep watching on YouTube", or open the platform | **Applied** |

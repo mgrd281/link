@@ -1,4 +1,4 @@
-import type { Block, BlockOf, Page, Platform } from "@linkyo/blocks";
+import type { Block, BlockOf, Page, Platform, VideoPlayback } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 /**
@@ -26,6 +26,8 @@ export interface Star {
   socials: { platform: Platform; url: string }[];
   website?: string | undefined;
   videos: { id: string; title: Localized }[];
+  /** How the videos play after the tap (default: the whole video on the page). */
+  videoPlayback?: VideoPlayback | undefined;
   music?: { title: Localized; kind: "single" | "album" | "ep"; links: { platform: Platform; url: string }[] }[] | undefined;
   /** Prominent buttons above the official website (e.g. "Follow @… on Instagram"). */
   highlights?: { title: Text; url: string }[] | undefined;
@@ -113,6 +115,7 @@ export function starPage(star: Star, locale: StarLocale): Page {
     provider: "youtube",
     url: `https://www.youtube.com/watch?v=${id}`,
     poster: thumb(id),
+    ...(star.videoPlayback ? { playback: star.videoPlayback } : {}),
   });
 
   if (star.spotlight) {

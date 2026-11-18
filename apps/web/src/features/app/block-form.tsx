@@ -1,6 +1,6 @@
 "use client";
 
-import { detectLink, LINK_ICONS, NO_IMAGE, PLATFORMS, type Block, type BlockOf, type LinkIcon, type Platform } from "@linkyo/blocks";
+import { detectLink, LINK_ICONS, NO_IMAGE, PLATFORMS, VIDEO_PLAYBACK, type Block, type BlockOf, type LinkIcon, type Platform, type VideoPlayback } from "@linkyo/blocks";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
@@ -162,6 +162,12 @@ export function BlockForm({ block, onChange, errors }: { block: Block; onChange:
             error={err("url")}
           />
           <TextInput label={t("title")} value={block.title} onValue={(title) => set(block, { title })} maxLength={120} error={err("title")} />
+          <SelectField<VideoPlayback>
+            label={t("playback")}
+            value={block.playback ?? "inline"}
+            onValue={(playback) => onChange(playback === "inline" ? { ...block, playback: undefined } : { ...block, playback })}
+            options={VIDEO_PLAYBACK.map((value) => ({ value, label: t(`playbackOptions.${value}`) }))}
+          />
           <ImageInput label={t("poster")} kind="photo" shape="wide" image={block.poster} onImage={(poster) => set(block, { poster: poster ?? noImage })} withAlt={false} />
           {featured(block)}
         </>

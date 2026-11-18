@@ -37,3 +37,23 @@ for (const [locale, slug] of PAGES) {
     expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
   });
 }
+
+test("a preview video plays 30 seconds here, then offers to keep watching on YouTube", async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
+  // Stand-in for YouTube's player: it reports "ended" the way the real one does at the preview's end.
+  await page.route("https://www.youtube-nocookie.com/embed/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: `<script>setTimeout(() => parent.postMessage(JSON.stringify({ event: "onStateChange", info: 0 }), "*"), 300);</script>`,
+    }),
+  );
+  await page.goto("/en/p/mrbeast");
+  const play = page.getByRole("button", { name: /^Play 30 seconds of / }).first();
+  await play.scrollIntoViewIfNeeded();
+  await play.click();
+  const frame = page.locator('iframe[src*="youtube-nocookie.com/embed/"]').first();
+  await expect(frame).toHaveAttribute("src", /end=30&enablejsapi=1/);
+  const keepWatching = page.getByRole("link", { name: "Keep watching on YouTube" });
+  await expect(keepWatching).toBeVisible();
+  await expect(keepWatching).toHaveAttribute("href", /youtube\.com\/watch\?v=[\w-]{11}&t=30s$/);
+});

@@ -359,7 +359,13 @@
     "privacyBack": "Zurück",
     "subscribedTitle": "Fast geschafft!",
     "subscribedBody": "Wir haben dir eine E-Mail geschickt. Bestätige sie, dann bist du dabei.",
-    "newsletterPromise": "Kein Spam. Abmelden mit einem Klick."
+    "newsletterPromise": "Kein Spam. Abmelden mit einem Klick.",
+    "previewChip": "{seconds}-Sek.-Vorschau",
+    "playPreview": "{seconds} Sekunden von „{title}“ abspielen",
+    "previewEnded": "Das war die Vorschau",
+    "continueOn": "Weiter auf {provider} ansehen",
+    "opensOn": "Öffnet {provider}",
+    "watchOn": "„{title}“ auf {provider} ansehen"
   },
   "directions": {
     "title": "Richtungen",
@@ -1065,6 +1071,12 @@
         "graduation": "Kurs",
         "ticket": "Tickets",
         "rocket": "Launch"
+      },
+      "playback": "Wiedergabe nach dem Antippen",
+      "playbackOptions": {
+        "inline": "Ganz hier abspielen",
+        "preview": "30 Sek. hier, dann weiter auf YouTube",
+        "external": "Direkt auf YouTube öffnen"
       }
     },
     "edit": {

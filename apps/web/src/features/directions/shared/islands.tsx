@@ -1,12 +1,47 @@
 "use client";
 
 import { cn, Icon } from "@linkyo/ui";
-import { ArrowRight, AtSign, Check, Play, ShieldCheck } from "lucide-react";
+import type { VideoPlayback } from "@linkyo/blocks";
+import { ArrowRight, ArrowUpRight, AtSign, Check, Play, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import { usePrivacyChoice } from "./privacy";
-import { youtubeId } from "./providers";
+import { PREVIEW_SECONDS, youtubeEnded, youtubeId, youtubeWatchUrl } from "./providers";
+
+const YOUTUBE_EMBED_ORIGIN = "https://www.youtube-nocookie.com";
+
+/**
+ * The YouTube player in privacy mode. In preview mode it stops after PREVIEW_SECONDS and tells us
+ * (postMessage), so the page can offer to keep watching on YouTube.
+ */
+function YouTubePlayer({ video, title, preview, className, onEnded }: { video: string; title: string; preview: boolean; className?: string | undefined; onEnded: () => void }) {
+  const frame = useRef<HTMLIFrameElement>(null);
+  useEffect(() => {
+    if (!preview) return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== YOUTUBE_EMBED_ORIGIN || event.source !== frame.current?.contentWindow) return;
+      if (youtubeEnded(event.data)) onEnded();
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [preview, onEnded]);
+  // Ask the player to report its state (it answers only after a "listening" message).
+  const listen = () => frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), YOUTUBE_EMBED_ORIGIN);
+  const params = preview ? `&end=${PREVIEW_SECONDS}&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}` : "";
+  return (
+    <iframe
+      ref={frame}
+      src={`${YOUTUBE_EMBED_ORIGIN}/embed/${video}?autoplay=1&rel=0&playsinline=1${params}`}
+      title={title}
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+      allowFullScreen
+      referrerPolicy="strict-origin-when-cross-origin"
+      onLoad={preview ? listen : undefined}
+      className={cn("block w-full border-0 bg-creator-surface-2", className)}
+    />
+  );
+}
 
 /**
  * Click-to-load embed (brand privacy promise): nothing from YouTube/TikTok/Instagram loads until the
@@ -20,10 +55,13 @@ export function ClickToLoad({
   children,
   compact = false,
   url,
+  playback = "inline",
 }: {
   provider: string;
   /** The video's link: YouTube links play right here (privacy mode, after the tap). */
   url?: string | undefined;
+  /** Whole video here, a short preview then the platform, or the platform right away. */
+  playback?: VideoPlayback | undefined;
   title: string;
   poster: ReactNode;
   className?: string;
@@ -33,21 +71,69 @@ export function ClickToLoad({
 }) {
   const t = useTranslations("creator");
   const [loaded, setLoaded] = useState(false);
+  const [ended, setEnded] = useState(false);
   // Once a visitor has allowed external content, the per-player notice is no longer needed.
   const allowed = usePrivacyChoice() === "media";
   const video = url ? youtubeId(url) : null;
-  if (loaded && video) {
+  const preview = playback === "preview" && video !== null;
+  const playButton = (
+    <span className="absolute inset-0 grid place-items-center" aria-hidden>
+      <span
+        className={cn(
+          "grid place-items-center rounded-full bg-creator-accent text-creator-accent-fg shadow-e3",
+          "transition-[scale] duration-standard ease-standard group-hover/video:scale-lift motion-reduce:transition-none",
+          compact ? "size-control-md" : "size-control-xl",
+        )}
+      >
+        <Icon icon={Play} size={compact ? "sm" : "md"} className="translate-x-0.5 fill-current" />
+      </span>
+    </span>
+  );
+
+  // Opens on the platform: a plain link, nothing loads on the page.
+  if (playback === "external" && url) {
     return (
-      <iframe
-        src={`https://www.youtube-nocookie.com/embed/${video}?autoplay=1&rel=0&playsinline=1`}
-        title={title}
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-        allowFullScreen
-        referrerPolicy="strict-origin-when-cross-origin"
-        className={cn("block w-full border-0 bg-creator-surface-2", className)}
-      />
+      <a href={video ? youtubeWatchUrl(video) : url} target="_blank" rel="noopener" className={cn("group/video relative isolate block w-full overflow-hidden focus-visible:focus-ring", className)}>
+        <span className="sr-only">{t("watchOn", { title, provider })}</span>
+        {poster}
+        {playButton}
+        <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 text-caption" aria-hidden>
+          <span className="inline-flex items-center gap-1 rounded-full bg-creator-glass px-2 py-1 text-creator-fg backdrop-blur-glass">
+            {t("opensOn", { provider })}
+            <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
+          </span>
+          {compact ? null : children}
+        </span>
+        {compact ? children : null}
+      </a>
     );
   }
+
+  // The preview has played: keep watching on the platform, from where it stopped.
+  if (ended && video) {
+    return (
+      <div className={cn("relative isolate grid w-full overflow-hidden", className)}>
+        <span aria-hidden className="absolute inset-0 opacity-secondary">
+          {poster}
+        </span>
+        <span aria-hidden className="absolute inset-0 bg-creator-bg opacity-secondary" />
+        <div className="relative grid place-content-center justify-items-center gap-3 p-4 text-center" role="status">
+          <p className="text-small font-semibold text-creator-fg">{t("previewEnded")}</p>
+          <a
+            href={youtubeWatchUrl(video, PREVIEW_SECONDS)}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex h-control-md items-center gap-2 rounded-full bg-creator-accent px-4 text-small font-semibold text-creator-accent-fg shadow-e2 focus-visible:focus-ring"
+          >
+            {t("continueOn", { provider })}
+            <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (loaded && video) return <YouTubePlayer video={video} title={title} preview={preview} className={className} onEnded={() => setEnded(true)} />;
   if (loaded) {
     return (
       <div
@@ -65,19 +151,14 @@ export function ClickToLoad({
       onClick={() => setLoaded(true)}
       className={cn("group/video relative isolate block w-full overflow-hidden text-start focus-visible:focus-ring", className)}
     >
-      <span className="sr-only">{t("playVideo", { title })}</span>
+      <span className="sr-only">{t(preview ? "playPreview" : "playVideo", { title, seconds: PREVIEW_SECONDS })}</span>
       {poster}
-      <span className="absolute inset-0 grid place-items-center" aria-hidden>
-        <span
-          className={cn(
-            "grid place-items-center rounded-full bg-creator-accent text-creator-accent-fg shadow-e3",
-            "transition-[scale] duration-standard ease-standard group-hover/video:scale-lift motion-reduce:transition-none",
-            compact ? "size-control-md" : "size-control-xl",
-          )}
-        >
-          <Icon icon={Play} size={compact ? "sm" : "md"} className="translate-x-0.5 fill-current" />
+      {playButton}
+      {preview ? (
+        <span aria-hidden className="absolute start-3 top-3 rounded-full bg-creator-glass px-2 py-1 text-caption font-semibold text-creator-fg backdrop-blur-glass">
+          {t("previewChip", { seconds: PREVIEW_SECONDS })}
         </span>
-      </span>
+      ) : null}
       {!compact ? (
         <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 text-caption">
           {allowed ? <span /> : <span className="rounded-full bg-creator-glass px-2 py-1 text-creator-fg backdrop-blur-glass">{t("loadsFrom", { provider })}</span>}

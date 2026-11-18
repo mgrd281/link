@@ -201,6 +201,7 @@ export function VideoFeature({ video }: { video: BlockOf<"video"> | undefined })
       <ClickToLoad
         provider={providerName(video)}
         url={video.url}
+        playback={video.playback}
         title={video.title}
         className="aspect-video rounded-creator-card"
         poster={<MediaImage src={video.poster.src} alt="" sizes={mediaSizes.column} />}
@@ -227,6 +228,7 @@ export function VideoRail({ videos }: { videos: BlockOf<"video">[] }) {
               compact
               provider={providerName(video)}
               url={video.url}
+              playback={video.playback}
               title={video.title}
               className="aspect-video rounded-creator-card"
               poster={<MediaImage src={video.poster.src} alt="" sizes={mediaSizes.column} />}

@@ -359,7 +359,13 @@
     "privacyBack": "رجوع",
     "subscribedTitle": "خطوة أخيرة!",
     "subscribedBody": "أرسلنا لك رسالة بريدية. أكّدها وسيكتمل اشتراكك.",
-    "newsletterPromise": "بلا رسائل مزعجة. إلغاء الاشتراك بنقرة واحدة."
+    "newsletterPromise": "بلا رسائل مزعجة. إلغاء الاشتراك بنقرة واحدة.",
+    "previewChip": "معاينة {seconds} ثانية",
+    "playPreview": "تشغيل {seconds} ثانية من «{title}»",
+    "previewEnded": "انتهت المعاينة",
+    "continueOn": "أكمل المشاهدة على {provider}",
+    "opensOn": "يفتح {provider}",
+    "watchOn": "مشاهدة «{title}» على {provider}"
   },
   "directions": {
     "title": "الاتجاهات",
@@ -1065,6 +1071,12 @@
         "graduation": "دورة",
         "ticket": "تذاكر",
         "rocket": "إطلاق"
+      },
+      "playback": "عند الضغط على الفيديو",
+      "playbackOptions": {
+        "inline": "تشغيل الفيديو كاملاً هنا",
+        "preview": "30 ثانية هنا ثم المتابعة على يوتيوب",
+        "external": "فتح يوتيوب مباشرة"
       }
     },
     "edit": {

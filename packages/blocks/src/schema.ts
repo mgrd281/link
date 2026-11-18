@@ -71,6 +71,10 @@ export const LINK_ICONS = [
   "rocket",
 ] as const;
 export type LinkIcon = (typeof LINK_ICONS)[number];
+
+/** How a video plays after the tap (see the video block). */
+export const VIDEO_PLAYBACK = ["inline", "preview", "external"] as const;
+export type VideoPlayback = (typeof VIDEO_PLAYBACK)[number];
 export type Platform = z.infer<typeof platformSchema>;
 
 const url = z.url({ protocol: /^(https?|mailto|tel)$/ });
@@ -132,6 +136,11 @@ export const blockSchema = z.discriminatedUnion("type", [
     poster: image,
     /** Seconds. */
     duration: z.number().int().positive().optional(),
+    /**
+     * After the tap: play the whole video on the page (default), play a short preview and then send
+     * visitors to the creator's channel, or open the platform right away.
+     */
+    playback: z.enum(VIDEO_PLAYBACK).optional(),
   }),
   base.extend({
     type: z.literal("shorts"),
