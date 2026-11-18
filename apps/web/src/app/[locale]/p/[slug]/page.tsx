@@ -1,5 +1,5 @@
 import { colorSchemeOf, resolveCreatorTheme } from "@linkyo/tokens/creator";
-import { Icon, LogoSymbol } from "@linkyo/ui";
+import { Icon, Logo, LogoSymbol } from "@linkyo/ui";
 import { ArrowRight, Eye, Info } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
@@ -14,7 +14,9 @@ interface Props {
 }
 
 export function generateStaticParams() {
-  return Object.entries(PREVIEWS).flatMap(([slug, preview]) => Object.keys(preview.pages).map((locale) => ({ locale, slug })));
+  return Object.entries(PREVIEWS).flatMap(([slug, preview]) =>
+    Object.keys(preview.pages).map((locale) => ({ locale, slug })),
+  );
 }
 
 export const dynamicParams = false;
@@ -61,39 +63,47 @@ export default async function PreviewRoute({ params }: Props) {
         page={found.page}
         theme={theme}
         overlay={
-          <aside aria-label={t("label")} className="flex items-center gap-1 rounded-full border border-creator-line bg-creator-glass py-1 ps-3 pe-1 text-caption text-creator-fg shadow-e2 backdrop-blur-glass">
-            <Icon icon={Eye} size="sm" className="shrink-0" />
+          // Linkyo's own chrome (not the creator's theme): dark, Geist, Linkyo Blue.
+          <aside
+            data-theme="dark"
+            aria-label={t("label")}
+            className="border-line bg-surface text-caption text-fg shadow-e2 flex items-center gap-2 rounded-full border py-1 ps-2 pe-1 font-sans"
+          >
+            <span className="size-control-sm bg-primary text-primary-fg grid place-items-center rounded-full">
+              <LogoSymbol className="size-icon-sm" />
+            </span>
             <span className="font-semibold">{t("badge", { name })}</span>
             <button
               type="button"
               popoverTarget="preview-info"
               aria-label={t("more")}
-              className="grid size-control-sm place-items-center rounded-full hover:bg-creator-surface-2 focus-visible:focus-ring"
+              className="size-control-sm text-fg-secondary hover:bg-hover hover:text-fg focus-visible:focus-ring grid place-items-center rounded-full"
             >
               <Icon icon={Info} size="sm" />
             </button>
             <div
               id="preview-info"
               popover="auto"
-              className="inset-x-4 top-16 bottom-auto m-0 mx-auto w-auto max-w-preview rounded-xl border border-creator-line bg-creator-surface p-4 text-start text-small text-creator-fg shadow-e3 backdrop:bg-scrim"
+              className="max-w-preview border-line bg-surface-elevated text-small text-fg shadow-e3 backdrop:bg-scrim inset-x-4 top-16 bottom-auto m-0 mx-auto w-auto rounded-xl border p-4 text-start font-sans"
             >
-              <p className="font-semibold">{t("badge", { name })}</p>
-              <p className="mt-1 text-creator-fg-muted">{notes.join(" ")}</p>
+              <p className="flex items-center gap-2 font-semibold">
+                <Icon icon={Eye} size="sm" className="text-link" />
+                {t("badge", { name })}
+              </p>
+              <p className="text-fg-secondary mt-2">{notes.join(" ")}</p>
             </div>
           </aside>
         }
         dock={
-          <div className="mx-auto flex max-w-creator items-center gap-3 rounded-full border border-creator-line-strong bg-creator-surface p-2 ps-4 text-creator-fg shadow-e3">
-            <LogoSymbol className="size-icon-md shrink-0" />
-            <p className="grid min-w-0 flex-1 leading-tight">
-              <span className="truncate text-small font-semibold">{t("dockTitle")}</span>
-              <span dir="ltr" className="truncate text-start text-caption text-creator-fg-muted">
-                linkyo.app/{found.preview.username}
-              </span>
-            </p>
+          <div
+            data-theme="dark"
+            className="max-w-creator border-line bg-surface text-fg shadow-e3 mx-auto flex items-center gap-3 rounded-full border p-2 ps-5 font-sans"
+          >
+            <Logo className="h-5 shrink-0" title="Linkyo" />
+            <span className="text-small text-fg-secondary min-w-0 flex-1 truncate">{t("dockTitle")}</span>
             <Link
               href={`/signup?name=${found.preview.username}`}
-              className="inline-flex h-control-md shrink-0 items-center gap-2 rounded-full bg-creator-accent px-4 text-small font-semibold text-creator-accent-fg transition-transform duration-micro focus-visible:focus-ring active:scale-pressed"
+              className="h-control-md bg-primary text-small text-primary-fg duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed inline-flex shrink-0 items-center gap-2 rounded-full px-4 font-semibold transition-colors"
             >
               {t("dockCta")}
               <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />

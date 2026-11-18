@@ -89,7 +89,8 @@ export function PosterRenderer({
             </PosterSection>
           ))}
         </Main>
-        <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} />
+        {/* With a Linkyo bar at the bottom, the footer drops its own Linkyo credit (one is enough). */}
+        <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} credit={!dock} />
         {dock ? (
           <div className="pointer-events-none sticky bottom-0 layer-sticky h-0">
             <div className="poster-dock pointer-events-auto absolute inset-x-0 bottom-0 px-3 pb-[max(var(--spacing-3),env(safe-area-inset-bottom))]">{dock}</div>

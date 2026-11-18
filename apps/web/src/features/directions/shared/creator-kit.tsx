@@ -66,9 +66,18 @@ export const mediaSizes = {
 } as const;
 
 export const platformName = (platform: Platform): string =>
-  SIMPLE[platform]?.title ?? (platform === "email" ? "Email" : platform === "linkedin" ? "LinkedIn" : "Website");
+  SIMPLE[platform]?.title ??
+  (platform === "email" ? "Email" : platform === "linkedin" ? "LinkedIn" : "Website");
 
-export function PlatformGlyph({ platform, size = "md", className }: { platform: Platform; size?: "sm" | "md" | "lg"; className?: string | undefined }) {
+export function PlatformGlyph({
+  platform,
+  size = "md",
+  className,
+}: {
+  platform: Platform;
+  size?: "sm" | "md" | "lg";
+  className?: string | undefined;
+}) {
   const simple = SIMPLE[platform];
   if (simple) return <PlatformIcon icon={simple} size={size} className={className} />;
   return <Icon icon={platform === "email" ? Mail : Globe} size={size} className={className} />;
@@ -91,7 +100,14 @@ export function MediaImage({
   if (!hasImage({ src })) {
     // No picture yet (new creators, links pasted before metadata arrives): a calm tile, never a broken image.
     return (
-      <span role={alt ? "img" : undefined} aria-label={alt || undefined} className={cn("absolute inset-0 grid place-items-center bg-creator-surface-2 text-creator-fg-muted", className)}>
+      <span
+        role={alt ? "img" : undefined}
+        aria-label={alt || undefined}
+        className={cn(
+          "bg-creator-surface-2 text-creator-fg-muted absolute inset-0 grid place-items-center",
+          className,
+        )}
+      >
         <Icon icon={ImageIcon} size="lg" />
       </span>
     );
@@ -120,13 +136,22 @@ export function MediaImage({
 export function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
   const letters = words.length > 1 ? [words[0], words.at(-1)] : [words[0]];
-  return letters.map((word) => Array.from(word ?? "")[0] ?? "").join("").toLocaleUpperCase();
+  return letters
+    .map((word) => Array.from(word ?? "")[0] ?? "")
+    .join("")
+    .toLocaleUpperCase();
 }
 
 /** A creator's initials on their accent color. Fills its (relative, sized) box. */
 export function Monogram({ name, className }: { name: string; className?: string | undefined }) {
   return (
-    <span aria-hidden className={cn("absolute inset-0 grid place-items-center bg-creator-accent font-creator-display text-creator-accent-fg", className)}>
+    <span
+      aria-hidden
+      className={cn(
+        "bg-creator-accent font-creator-display text-creator-accent-fg absolute inset-0 grid place-items-center",
+        className,
+      )}
+    >
       {initials(name)}
     </span>
   );
@@ -135,8 +160,11 @@ export function Monogram({ name, className }: { name: string; className?: string
 export function useCreatorFormat(locale: string) {
   return {
     date: (iso: string, options: Intl.DateTimeFormatOptions) =>
-      new Intl.DateTimeFormat(locale, { timeZone: "Europe/Berlin", ...options }).format(new Date(`${iso}T20:00:00Z`)),
-    compact: (n: number) => new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(n),
+      new Intl.DateTimeFormat(locale, { timeZone: "Europe/Berlin", ...options }).format(
+        new Date(`${iso}T20:00:00Z`),
+      ),
+    compact: (n: number) =>
+      new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(n),
     number: (n: number) => new Intl.NumberFormat(locale).format(n),
     price: (n: number, currency: string) =>
       new Intl.NumberFormat(locale, { style: "currency", currency, minimumFractionDigits: 0 }).format(n),
@@ -145,23 +173,30 @@ export function useCreatorFormat(locale: string) {
 }
 
 /** Sticky-free footer: subtle "Made with Linkyo" (removable in Pro) + legal links (DSA "Report"). No cookie settings: there are no cookies. */
-export function CreatorFooter({ className }: { className?: string }) {
+export function CreatorFooter({ className, credit = true }: { className?: string; credit?: boolean }) {
   const t = useTranslations("creator");
   return (
-    <footer className={cn("grid justify-items-center gap-4 pt-12 pb-10 text-caption text-creator-fg-muted", className)}>
-      <a
-        href="https://linkyo.app"
-        className="inline-flex h-control-sm items-center gap-2 rounded-full border border-creator-line px-3 font-medium text-creator-fg transition-colors duration-micro hover:border-creator-line-strong focus-visible:focus-ring"
-      >
-        <LogoSymbol className="size-icon-sm" />
-        {t("madeWith")}
-      </a>
+    <footer
+      className={cn(
+        "text-caption text-creator-fg-muted grid justify-items-center gap-4 pt-12 pb-10",
+        className,
+      )}
+    >
+      {credit ? (
+        <a
+          href="https://linkyo.app"
+          className="h-control-sm border-creator-line text-creator-fg duration-micro hover:border-creator-line-strong focus-visible:focus-ring inline-flex items-center gap-2 rounded-full border px-3 font-medium transition-colors"
+        >
+          <LogoSymbol className="size-icon-sm" />
+          {t("madeWith")}
+        </a>
+      ) : null}
       <nav aria-label={t("menu")} className="flex flex-wrap justify-center gap-x-1">
         {(["imprint", "privacy", "report"] as const).map((key) => (
           <a
             key={key}
             href={`#${key}`}
-            className="inline-flex min-h-touch-target items-center rounded-xs px-2 underline-offset-4 hover:text-creator-fg hover:underline focus-visible:focus-ring"
+            className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2 underline-offset-4 hover:underline"
           >
             {t(key)}
           </a>
