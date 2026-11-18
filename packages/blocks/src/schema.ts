@@ -26,6 +26,7 @@ export const PLATFORMS = [
   "telegram",
   "facebook",
   "linkedin",
+  "github",
   "email",
   "website",
 ] as const;

@@ -23,6 +23,8 @@ describe("detectLink", () => {
     ["https://cdn.example.com/press/photo.jpg", "image", "image", undefined],
     ["https://example.com/presskit.pdf", "link", "pdf", undefined],
     ["https://wa.me/4915112345678", "link", "whatsapp", undefined],
+    ["https://www.linkedin.com/in/lukas-weber", "link", "linkedin", undefined],
+    ["https://github.com/leonpark", "link", "github", undefined],
     ["hello@milaaurel.com", "link", "email", undefined],
     ["+49 151 1234 5678", "link", "phone", undefined],
     ["https://milaaurel.com/about", "card", "website", undefined],

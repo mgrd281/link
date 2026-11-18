@@ -1394,7 +1394,10 @@
         "threads": "Threads",
         "linkedin": "LinkedIn",
         "facebook": "Facebook",
-        "whatsapp": "WhatsApp (number with country code)"
+        "whatsapp": "WhatsApp (number with country code)",
+        "github": "GitHub",
+        "twitch": "Twitch",
+        "discord": "Discord (invite link)"
       },
       "links": "Important links (optional)",
       "linksHint": "Paste one or more links — a song, a video, your shop. We make the right blocks.",
@@ -1472,8 +1475,8 @@
           "extras": "For your customers"
         },
         "store": {
-          "label": "Online store",
-          "description": "Products, shop, offers",
+          "label": "Online store & seller",
+          "description": "Products, marketplaces, offers",
           "name": "Name of your store",
           "taglineHint": "e.g. \"Handmade jewellery from Hamburg\".",
           "links": "Bestsellers or collections (optional)",
@@ -1533,6 +1536,69 @@
           "links": "Important links (optional)",
           "linksHint": "Paste one or more links — a song, a video, your shop. We make the right blocks.",
           "extras": "More"
+        },
+        "affiliate": {
+          "label": "Affiliate & recommendations",
+          "description": "Product picks, discount codes, deals",
+          "name": "Your name or channel",
+          "taglineHint": "e.g. \"Honest tech picks and the best deals\".",
+          "links": "Your recommendations (optional)",
+          "linksHint": "Product or partner links — one link per line.",
+          "extras": "Your recommendations"
+        },
+        "marketing": {
+          "label": "Online marketing",
+          "description": "Services, case studies, intro call",
+          "name": "Your name or agency",
+          "taglineHint": "e.g. \"Performance marketing for online stores\".",
+          "links": "Case studies or services (optional)",
+          "linksHint": "Links to projects or offers — one link per line.",
+          "extras": "For your clients"
+        },
+        "developer": {
+          "label": "Developer",
+          "description": "GitHub, projects, CV",
+          "name": "Your name",
+          "taglineHint": "e.g. \"Full-stack developer · TypeScript & Go\".",
+          "links": "Projects or apps (optional)",
+          "linksHint": "Links to repos, apps or blog posts — one link per line.",
+          "extras": "For recruiters & clients"
+        },
+        "designer": {
+          "label": "Designer",
+          "description": "Portfolio, enquiries, projects",
+          "name": "Your name or studio",
+          "taglineHint": "e.g. \"UX/UI design for apps and websites\".",
+          "links": "Work or case studies (optional)",
+          "linksHint": "Links to projects — one link per line.",
+          "extras": "For your clients"
+        },
+        "coach": {
+          "label": "Coach & consultant",
+          "description": "Sessions, courses, newsletter",
+          "name": "Your name",
+          "taglineHint": "e.g. \"Business coaching for founders\".",
+          "links": "Courses or offers (optional)",
+          "linksHint": "Links to courses, podcasts or articles — one link per line.",
+          "extras": "For your clients"
+        },
+        "streamer": {
+          "label": "Streamer",
+          "description": "Twitch, Discord, clips",
+          "name": "Your streamer name",
+          "taglineHint": "e.g. \"Live every evening: strategy & chill\".",
+          "links": "Clips or highlights (optional)",
+          "linksHint": "Links to clips or videos — one link per line.",
+          "extras": "Your stream"
+        },
+        "podcast": {
+          "label": "Podcast",
+          "description": "Episodes, platforms, newsletter",
+          "name": "Name of your podcast",
+          "taglineHint": "e.g. \"A new episode about start-ups every Tuesday\".",
+          "links": "Episodes (optional)",
+          "linksHint": "Links to episodes on Spotify, Apple or YouTube — one link per line.",
+          "extras": "For your listeners"
         }
       },
       "fields": {
@@ -1579,6 +1645,10 @@
         "cv": {
           "label": "Link to your CV",
           "hint": "e.g. a PDF in Google Drive or Dropbox — highlighted on your page."
+        },
+        "affiliate": {
+          "label": "These are affiliate links",
+          "hint": "They are labelled as ads on your page — the law requires it."
         }
       },
       "blocks": {
@@ -1948,16 +2018,18 @@
   "examples": {
     "meta": {
       "title": "Templates & examples · Linkyo",
-      "description": "40 example pages for creators, music, sport, shops, practices and careers. Look, try and use them as a template."
+      "description": "50+ example pages for creators, online stores, affiliate, marketing, developers, music, sport, shops and careers. Look, try and use them as a template."
     },
     "eyebrow": "Templates & examples",
-    "title": "Find your look in 40 examples",
-    "lead": "For creators, shops, practices, clubs and careers. Every page has its own design: open it, scroll through, make it yours in one click.",
+    "title": "Find your look in 50+ examples",
+    "lead": "For creators, online stores, developers, shops, practices and careers. Every page has its own design: open it, scroll through, make it yours in one click.",
     "count": "{count} examples",
     "filter": "Filter by category",
     "all": "All",
     "categories": {
       "creators": "Creators",
+      "online": "Online business",
+      "tech": "Tech & design",
       "music": "Music & podcasts",
       "sport": "Sport",
       "film": "Film & TV",

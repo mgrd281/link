@@ -94,14 +94,22 @@ export function makeHelpers(slug: string, persona: Persona) {
       ...(releaseDate ? { releaseDate } : {}),
       links: platforms.map((platform) => ({ platform, url: url(`music/${platform}`) })),
     }),
-    product: (title: string, price: number, path: string, key?: string, focal?: [number, number]): BlockOf<"product"> => ({
+    /** A product tile; affiliate products carry the ad label, prices default to euros. */
+    product: (
+      title: string,
+      price: number,
+      path: string,
+      key?: string,
+      options: { focal?: [number, number]; affiliate?: boolean; currency?: BlockOf<"product">["currency"] } = {},
+    ): BlockOf<"product"> => ({
       ...base("product"),
       type: "product",
       title,
       price,
-      currency: "EUR",
+      currency: options.currency ?? "EUR",
       url: url(path),
-      image: key ? image(key, focal) : cover,
+      image: key ? image(key, options.focal) : cover,
+      ...(options.affiliate ? { affiliate: true } : {}),
     }),
     events: (
       title: string,

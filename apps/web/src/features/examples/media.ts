@@ -76,6 +76,34 @@ import ex2Stadium from "@/assets/examples/ex2-stadium.jpg";
 import ex2Training from "@/assets/examples/ex2-training.jpg";
 import ex2WeddingCouple from "@/assets/examples/ex2-wedding-couple.jpg";
 import ex2Wine from "@/assets/examples/ex2-wine.jpg";
+import ex3AffiliateMan from "@/assets/examples/ex3-affiliate-man.jpg";
+import ex3AffiliateWoman from "@/assets/examples/ex3-affiliate-woman.jpg";
+import ex3AgencyTeam from "@/assets/examples/ex3-agency-team.jpg";
+import ex3Analytics from "@/assets/examples/ex3-analytics.jpg";
+import ex3Candle from "@/assets/examples/ex3-candle.jpg";
+import ex3Coach from "@/assets/examples/ex3-coach.jpg";
+import ex3Coaching from "@/assets/examples/ex3-coaching.jpg";
+import ex3Code from "@/assets/examples/ex3-code.jpg";
+import ex3Designer from "@/assets/examples/ex3-designer.jpg";
+import ex3DeskSetup from "@/assets/examples/ex3-desk-setup.jpg";
+import ex3Developer2 from "@/assets/examples/ex3-developer-2.jpg";
+import ex3Developer from "@/assets/examples/ex3-developer.jpg";
+import ex3GiftBox from "@/assets/examples/ex3-gift-box.jpg";
+import ex3Headphones from "@/assets/examples/ex3-headphones.jpg";
+import ex3Marketer from "@/assets/examples/ex3-marketer.jpg";
+import ex3MobileApp from "@/assets/examples/ex3-mobile-app.jpg";
+import ex3Moodboard from "@/assets/examples/ex3-moodboard.jpg";
+import ex3Parcel from "@/assets/examples/ex3-parcel.jpg";
+import ex3Perfume2 from "@/assets/examples/ex3-perfume-2.jpg";
+import ex3Perfume from "@/assets/examples/ex3-perfume.jpg";
+import ex3Skincare from "@/assets/examples/ex3-skincare.jpg";
+import ex3Sneakers2 from "@/assets/examples/ex3-sneakers-2.jpg";
+import ex3Sneakers from "@/assets/examples/ex3-sneakers.jpg";
+import ex3SocialMedia from "@/assets/examples/ex3-social-media.jpg";
+import ex3Spreadsheet from "@/assets/examples/ex3-spreadsheet.jpg";
+import ex3TeacherOnline from "@/assets/examples/ex3-teacher-online.jpg";
+import ex3UiSketch from "@/assets/examples/ex3-ui-sketch.jpg";
+import ex3Workshop from "@/assets/examples/ex3-workshop.jpg";
 
 /** Pictures of the example gallery (stock photos, see assets/examples/CREDITS.md; logos are original). */
 export const exampleMedia = {
@@ -155,4 +183,32 @@ export const exampleMedia = {
   "sample:ex2-training": ex2Training,
   "sample:ex2-wedding-couple": ex2WeddingCouple,
   "sample:ex2-wine": ex2Wine,
+  "sample:ex3-affiliate-man": ex3AffiliateMan,
+  "sample:ex3-affiliate-woman": ex3AffiliateWoman,
+  "sample:ex3-agency-team": ex3AgencyTeam,
+  "sample:ex3-analytics": ex3Analytics,
+  "sample:ex3-candle": ex3Candle,
+  "sample:ex3-coach": ex3Coach,
+  "sample:ex3-coaching": ex3Coaching,
+  "sample:ex3-code": ex3Code,
+  "sample:ex3-designer": ex3Designer,
+  "sample:ex3-desk-setup": ex3DeskSetup,
+  "sample:ex3-developer-2": ex3Developer2,
+  "sample:ex3-developer": ex3Developer,
+  "sample:ex3-gift-box": ex3GiftBox,
+  "sample:ex3-headphones": ex3Headphones,
+  "sample:ex3-marketer": ex3Marketer,
+  "sample:ex3-mobile-app": ex3MobileApp,
+  "sample:ex3-moodboard": ex3Moodboard,
+  "sample:ex3-parcel": ex3Parcel,
+  "sample:ex3-perfume-2": ex3Perfume2,
+  "sample:ex3-perfume": ex3Perfume,
+  "sample:ex3-skincare": ex3Skincare,
+  "sample:ex3-sneakers-2": ex3Sneakers2,
+  "sample:ex3-sneakers": ex3Sneakers,
+  "sample:ex3-social-media": ex3SocialMedia,
+  "sample:ex3-spreadsheet": ex3Spreadsheet,
+  "sample:ex3-teacher-online": ex3TeacherOnline,
+  "sample:ex3-ui-sketch": ex3UiSketch,
+  "sample:ex3-workshop": ex3Workshop,
 } satisfies Record<string, StaticImageData>;

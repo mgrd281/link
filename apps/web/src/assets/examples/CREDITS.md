@@ -78,6 +78,34 @@ are models or anonymous; they have no connection to the fictional names and are 
 | ex2-training.jpg | Bohdan Hyrovych | https://unsplash.com/photos/three-soccer-players-dribbling-balls-on-a-green-field-3-B6-BfSCqs | Unsplash License |
 | ex2-wedding-couple.jpg | Jaakko Perälä | https://unsplash.com/photos/a-bride-and-groom-holding-hands-at-sunset-l_ecNnA4xp0 | Unsplash License |
 | ex2-wine.jpg | Ronan | https://unsplash.com/photos/clear-wine-glasses-on-top-of-dining-table-PCE0T5i4pDI | Unsplash License |
+| ex3-affiliate-man.jpg | wakky Paul | https://unsplash.com/photos/a-man-holding-a-smart-phone-and-pointing-at-it-IPKdZ2lPMo8 | Unsplash License |
+| ex3-affiliate-woman.jpg | Gaëlle Lewyllie | https://unsplash.com/photos/woman-smiling-and-sitting-while-looking-at-the-camera-poTXDfQdIKg | Unsplash License |
+| ex3-agency-team.jpg | Paymo | https://unsplash.com/photos/a-group-of-people-sitting-around-a-table-with-laptops-nMDjEyge8KA | Unsplash License |
+| ex3-analytics.jpg | Luke Chesser | https://unsplash.com/photos/graphs-of-performance-analytics-on-a-laptop-screen-JKUTrJ4vK00 | Unsplash License |
+| ex3-candle.jpg | Katsia Jazwinska | https://unsplash.com/photos/a-table-with-a-vase-and-candle-on-it-jJi31q3OKog | Unsplash License |
+| ex3-coach.jpg | Christina @ wocintechchat.com M | https://unsplash.com/photos/smiling-woman-sitting-on-black-chair-kXmKqYOGA4Y | Unsplash License |
+| ex3-coaching.jpg | Christina @ wocintechchat.com M | https://unsplash.com/photos/two-women-sitting-on-chair-eF7HN40WbAQ | Unsplash License |
+| ex3-code.jpg | Jakub Żerdzicki | https://unsplash.com/photos/computer-screen-displaying-colorful-code-snippets-2DkNX2wVVY4 | Unsplash License |
+| ex3-designer.jpg | TourBox | https://unsplash.com/photos/artist-works-on-a-digital-tablet-in-her-studio-GTYPaQyspYA | Unsplash License |
+| ex3-desk-setup.jpg | Omar Prestwich | https://unsplash.com/photos/black-flat-screen-computer-monitor-on-brown-wooden-desk-0HAPFlyy9o4 | Unsplash License |
+| ex3-developer-2.jpg | Af Hfmn | https://unsplash.com/photos/a-man-sitting-at-a-desk-in-front-of-a-computer-InWUkRKyNbI | Unsplash License |
+| ex3-developer.jpg | Felipe Souza | https://unsplash.com/photos/man-in-hoodie-at-workspace-desk-kB3iUKqK-ts | Unsplash License |
+| ex3-gift-box.jpg | Annie Spratt | https://unsplash.com/photos/white-box-with-red-ribbon-rR59irzeUl0 | Unsplash License |
+| ex3-headphones.jpg | Kiran CK | https://unsplash.com/photos/black-and-silver-headphones-on-white-surface-LSNJ-pltdu8 | Unsplash License |
+| ex3-marketer.jpg | Phạm Duy Quang | https://unsplash.com/photos/woman-in-grey-blazer-business-portrait-QGr6H7pri-Q | Unsplash License |
+| ex3-mobile-app.jpg | Balázs Kétyi | https://unsplash.com/photos/smartphone-displaying-environmental-data-dashboard-sScmok4Iq1o | Unsplash License |
+| ex3-moodboard.jpg | Fiona Murray-deGraaff | https://unsplash.com/photos/a-bunch-of-pictures-and-a-pair-of-scissors-on-a-table-HszbGgaGjOg | Unsplash License |
+| ex3-parcel.jpg | Bench Accounting | https://unsplash.com/photos/person-holding-cardboard-box-on-table-MGaFENpDCsw | Unsplash License |
+| ex3-perfume-2.jpg | Fulvio Ciccolo | https://unsplash.com/photos/a-bottle-of-perfume-sitting-on-top-of-a-table-eX-FeKAgPe0 | Unsplash License |
+| ex3-perfume.jpg | Fulvio Ciccolo | https://unsplash.com/photos/a-bottle-of-perfume-sitting-on-top-of-a-table-AdfA5C0c12M | Unsplash License |
+| ex3-skincare.jpg | Birgith Roosipuu | https://unsplash.com/photos/black-and-orange-bottle-beside-white-round-container-W71jxsXrwyQ | Unsplash License |
+| ex3-sneakers-2.jpg | Irene Kredenets | https://unsplash.com/photos/pair-of-white-and-orange-athletic-shoes-on-white-box-dwKiHoqqxk8 | Unsplash License |
+| ex3-sneakers.jpg | Mojtaba Fahiminia | https://unsplash.com/photos/a-pair-of-white-and-brown-shoes-on-a-table-t4g1gctAaKk | Unsplash License |
+| ex3-social-media.jpg | Swello | https://unsplash.com/photos/hands-holding-a-smartphone-displaying-a-social-media-feed-GPJwAHd8maE | Unsplash License |
+| ex3-spreadsheet.jpg | Ngital | https://unsplash.com/photos/laptop-with-charts-on-a-desk-by-a-sunny-window-8OYcY9CRP_0 | Unsplash License |
+| ex3-teacher-online.jpg | Keith Pitts for Kit (formerly ConvertKit) | https://unsplash.com/photos/man-in-black-crew-neck-t-shirt-wearing-black-headphones-GLdeWoLcJFQ | Unsplash License |
+| ex3-ui-sketch.jpg | Kelly Sikkema | https://unsplash.com/photos/a-person-writing-on-a-piece-of-paper-next-to-a-keyboard-ml1IgjV8OvY | Unsplash License |
+| ex3-workshop.jpg | Vitaly Gariev | https://unsplash.com/photos/woman-presents-to-colleagues-at-a-whiteboard-meeting-piULICqeV5Y | Unsplash License |
 | ex-logo-*.png | Linkyo (original artwork) | — | © Linkyo |
 
 Unsplash License: https://unsplash.com/license

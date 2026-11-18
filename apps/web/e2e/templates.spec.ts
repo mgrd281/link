@@ -8,7 +8,7 @@ const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 test.describe("template gallery", () => {
   test("shows about forty examples, filters by category and is accessible", async ({ page }) => {
     await page.goto("/en/templates");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("40 examples");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("50+ examples");
     const cards = page.getByRole("button", { name: /^Preview: / });
     expect(await cards.count()).toBeGreaterThanOrEqual(40);
     await page.getByRole("button", { name: /^Local businesses/ }).click();

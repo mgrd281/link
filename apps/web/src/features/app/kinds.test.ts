@@ -52,6 +52,29 @@ describe("page kinds in the welcome flow", () => {
     expect(call?.type === "link" && call.url).toBe("tel:+4930123456");
   });
 
+  it("affiliate links are labelled as ads when the creator says so, and only then", () => {
+    const links = "https://shop.example.com/products/headphones\nhttps://partner.example.com/deal";
+    const labelled = build({ kind: "affiliate", links, switches: { affiliate: true } });
+    const ads = labelled.filter((block) => block.type === "product" || block.type === "card" || block.type === "link");
+    expect(ads.length).toBe(2);
+    for (const block of ads) {
+      expect("affiliate" in block && block.affiliate, block.type).toBe(true);
+      expect(blockSchema.safeParse(block).success, block.type).toBe(true);
+    }
+    expect(build({ kind: "affiliate", links }).some((block) => "affiliate" in block && block.affiliate === true)).toBe(false);
+    // Other kinds have no affiliate switch, so it cannot label their links by accident.
+    expect(build({ kind: "store", links, switches: { affiliate: true } }).some((block) => "affiliate" in block && block.affiliate === true)).toBe(false);
+  });
+
+  it("developers start with GitHub, streamers with Twitch and Discord", () => {
+    expect(STARTERS.developer.socials[0]).toBe("github");
+    expect(socialUrl("github", "@leonpark")).toBe("https://github.com/leonpark");
+    expect(STARTERS.streamer.socials.slice(0, 2)).toEqual(["twitch", "discord"]);
+    expect(socialUrl("twitch", "novaplays")).toBe("https://twitch.tv/novaplays");
+    const blocks = build({ kind: "developer", handles: { github: "leonpark" }, values: { cv: "example.com/cv.pdf" } });
+    for (const block of blocks) expect(blockSchema.safeParse(block).success, block.type).toBe(true);
+  });
+
   it("a TikToker who goes live gets a live card for their channel", () => {
     const blocks = build({ kind: "tiktok", handles: { tiktok: "https://www.tiktok.com/@nizarals9?_r=1" }, switches: { tiktokLive: true } });
     const live = blocks.find((block) => block.type === "live");

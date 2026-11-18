@@ -1394,7 +1394,10 @@
         "threads": "Threads",
         "linkedin": "LinkedIn",
         "facebook": "Facebook",
-        "whatsapp": "WhatsApp (Nummer mit Ländervorwahl)"
+        "whatsapp": "WhatsApp (Nummer mit Ländervorwahl)",
+        "github": "GitHub",
+        "twitch": "Twitch",
+        "discord": "Discord (Einladungslink)"
       },
       "links": "Wichtige Links (optional)",
       "linksHint": "Füg einen oder mehrere Links ein – einen Song, ein Video, deinen Shop. Wir machen die passenden Blöcke.",
@@ -1472,8 +1475,8 @@
           "extras": "Für deine Kundschaft"
         },
         "store": {
-          "label": "Online-Shop",
-          "description": "Produkte, Shop, Aktionen",
+          "label": "Online-Händler & Shop",
+          "description": "Produkte, Marktplätze, Aktionen",
           "name": "Name deines Shops",
           "taglineHint": "z. B. „Handgemachter Schmuck aus Hamburg“.",
           "links": "Bestseller oder Kollektionen (optional)",
@@ -1533,6 +1536,69 @@
           "links": "Wichtige Links (optional)",
           "linksHint": "Füg einen oder mehrere Links ein – einen Song, ein Video, deinen Shop. Wir machen die passenden Blöcke.",
           "extras": "Mehr"
+        },
+        "affiliate": {
+          "label": "Affiliate & Empfehlungen",
+          "description": "Produkt-Tipps, Rabattcodes, Deals",
+          "name": "Dein Name oder Kanal",
+          "taglineHint": "z. B. „Ehrliche Tech-Tipps und die besten Deals“.",
+          "links": "Deine Empfehlungen (optional)",
+          "linksHint": "Produkt- oder Partnerlinks – ein Link pro Zeile.",
+          "extras": "Deine Empfehlungen"
+        },
+        "marketing": {
+          "label": "Online-Marketing",
+          "description": "Leistungen, Fallstudien, Erstgespräch",
+          "name": "Dein Name oder deine Agentur",
+          "taglineHint": "z. B. „Performance-Marketing für Online-Shops“.",
+          "links": "Fallstudien oder Leistungen (optional)",
+          "linksHint": "Links zu Projekten oder Angeboten – ein Link pro Zeile.",
+          "extras": "Für deine Kund:innen"
+        },
+        "developer": {
+          "label": "Entwickler:in",
+          "description": "GitHub, Projekte, Lebenslauf",
+          "name": "Dein Name",
+          "taglineHint": "z. B. „Full-Stack-Entwickler · TypeScript & Go“.",
+          "links": "Projekte oder Apps (optional)",
+          "linksHint": "Links zu Repos, Apps oder Blogposts – ein Link pro Zeile.",
+          "extras": "Für Recruiter & Kund:innen"
+        },
+        "designer": {
+          "label": "Designer:in",
+          "description": "Portfolio, Anfragen, Projekte",
+          "name": "Dein Name oder Studio",
+          "taglineHint": "z. B. „UX/UI-Design für Apps und Websites“.",
+          "links": "Arbeiten oder Fallstudien (optional)",
+          "linksHint": "Links zu Projekten – ein Link pro Zeile.",
+          "extras": "Für deine Kund:innen"
+        },
+        "coach": {
+          "label": "Coach & Beratung",
+          "description": "Termine, Kurse, Newsletter",
+          "name": "Dein Name",
+          "taglineHint": "z. B. „Business-Coaching für Gründerinnen“.",
+          "links": "Kurse oder Angebote (optional)",
+          "linksHint": "Links zu Kursen, Podcasts oder Artikeln – ein Link pro Zeile.",
+          "extras": "Für deine Klient:innen"
+        },
+        "streamer": {
+          "label": "Streamer:in",
+          "description": "Twitch, Discord, Clips",
+          "name": "Dein Streamer-Name",
+          "taglineHint": "z. B. „Jeden Abend live: Strategie & Chill“.",
+          "links": "Clips oder Highlights (optional)",
+          "linksHint": "Links zu Clips oder Videos – ein Link pro Zeile.",
+          "extras": "Dein Stream"
+        },
+        "podcast": {
+          "label": "Podcast",
+          "description": "Folgen, Plattformen, Newsletter",
+          "name": "Name deines Podcasts",
+          "taglineHint": "z. B. „Jeden Dienstag eine neue Folge über Start-ups“.",
+          "links": "Folgen (optional)",
+          "linksHint": "Links zu Folgen auf Spotify, Apple oder YouTube – ein Link pro Zeile.",
+          "extras": "Für deine Hörer:innen"
         }
       },
       "fields": {
@@ -1579,6 +1645,10 @@
         "cv": {
           "label": "Link zu deinem Lebenslauf",
           "hint": "z. B. ein PDF in Google Drive oder Dropbox – wird hervorgehoben."
+        },
+        "affiliate": {
+          "label": "Das sind Affiliate-Links",
+          "hint": "Sie werden auf deiner Seite als Werbung gekennzeichnet – so verlangt es das Gesetz."
         }
       },
       "blocks": {
@@ -1948,16 +2018,18 @@
   "examples": {
     "meta": {
       "title": "Vorlagen & Beispiele · Linkyo",
-      "description": "40 Beispielseiten für Creator, Musik, Sport, Läden, Praxen und Berufe. Ansehen, ausprobieren und als Vorlage nutzen."
+      "description": "Über 50 Beispielseiten für Creator, Online-Händler, Affiliate, Marketing, Entwickler:innen, Musik, Sport, Läden und Berufe. Ansehen, ausprobieren und als Vorlage nutzen."
     },
     "eyebrow": "Vorlagen & Beispiele",
-    "title": "Finde deinen Look in 40 Beispielen",
-    "lead": "Für Creator, Läden, Praxen, Vereine und Berufe – jede Seite in eigenem Design. Öffnen, durchscrollen, mit einem Klick übernehmen.",
+    "title": "Finde deinen Look in über 50 Beispielen",
+    "lead": "Für Creator, Online-Händler, Entwickler:innen, Läden, Praxen und Berufe – jede Seite in eigenem Design. Öffnen, durchscrollen, mit einem Klick übernehmen.",
     "count": "{count} Beispiele",
     "filter": "Nach Kategorie filtern",
     "all": "Alle",
     "categories": {
       "creators": "Creator",
+      "online": "Online-Business",
+      "tech": "Tech & Design",
       "music": "Musik & Podcast",
       "sport": "Sport",
       "film": "Film & TV",

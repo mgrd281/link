@@ -12,6 +12,7 @@ import {
   siDeezer,
   siDiscord,
   siFacebook,
+  siGithub,
   siInstagram,
   siKick,
   siSoundcloud,
@@ -50,6 +51,7 @@ const SIMPLE: Partial<Record<Platform, SimpleIcon>> = {
   whatsapp: siWhatsapp,
   telegram: siTelegram,
   facebook: siFacebook,
+  github: siGithub,
 };
 
 const px = (n: number): string => `${n}px`;

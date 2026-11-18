@@ -5,14 +5,20 @@ import { Button, cn, Icon, Logo } from "@linkyo/ui";
 import {
   ArrowLeft,
   ArrowRight,
+  BadgePercent,
   BriefcaseBusiness,
   Check,
+  CodeXml,
   DraftingCompass,
   Feather,
   GraduationCap,
+  Megaphone,
+  Mic,
   Music,
   Newspaper,
+  Palette,
   PartyPopper,
+  Presentation,
   Scale,
   ShoppingBag,
   Sparkles,
@@ -39,6 +45,12 @@ const STEPS = ["kind", "you", "look", "links", "done"] as const;
 type Step = (typeof STEPS)[number];
 
 const KIND_ICONS: Partial<Record<CreatorKind, LucideIcon>> = {
+  podcast: Mic,
+  affiliate: BadgePercent,
+  marketing: Megaphone,
+  coach: Presentation,
+  developer: CodeXml,
+  designer: Palette,
   writer: Feather,
   journalist: Newspaper,
   business: BriefcaseBusiness,
@@ -54,6 +66,7 @@ const KIND_ICONS: Partial<Record<CreatorKind, LucideIcon>> = {
 
 function KindIcon({ kind }: { kind: CreatorKind }): ReactNode {
   if (kind === "tiktok" || kind === "instagram" || kind === "youtube") return <PlatformGlyph platform={kind} size="lg" />;
+  if (kind === "streamer") return <PlatformGlyph platform="twitch" size="lg" />;
   const icon = KIND_ICONS[kind];
   return icon ? <Icon icon={icon} size="lg" /> : null;
 }

@@ -12,16 +12,23 @@ export const KINDS = [
   "tiktok",
   "instagram",
   "youtube",
+  "streamer",
+  "podcast",
+  "music",
+  "affiliate",
+  "store",
+  "marketing",
+  "shop",
+  "business",
+  "coach",
+  "developer",
+  "designer",
   "writer",
   "journalist",
-  "business",
-  "shop",
-  "store",
   "engineer",
   "lawyer",
   "student",
   "warehouse",
-  "music",
   "other",
 ] as const;
 export type CreatorKind = (typeof KINDS)[number];
@@ -39,11 +46,14 @@ export const SOCIAL_PREFIX = {
   linkedin: "linkedin.com/in/",
   facebook: "facebook.com/",
   whatsapp: "wa.me/",
+  github: "github.com/",
+  twitch: "twitch.tv/",
+  discord: "discord.gg/",
 } as const satisfies Partial<Record<Platform, string>>;
 export type SocialPlatform = keyof typeof SOCIAL_PREFIX;
 
 /** Questions beyond profiles; each one that is answered becomes a block on the page. */
-export type StarterField = "address" | "phone" | "hours" | "shopUrl" | "website" | "booking" | "email" | "book" | "cv" | "newsletter" | "tiktokLive";
+export type StarterField = "address" | "phone" | "hours" | "shopUrl" | "website" | "booking" | "email" | "book" | "cv" | "newsletter" | "tiktokLive" | "affiliate";
 
 export interface Starter {
   theme: CreatorThemeConfig;
@@ -67,6 +77,14 @@ export const STARTERS: Record<CreatorKind, Starter> = {
   student: { theme: { template: "pulse", pairing: "modern" }, socials: ["instagram", "linkedin", "tiktok"], fields: ["cv", "email"], logoFirst: false },
   warehouse: { theme: { template: "daylight", pairing: "modern" }, socials: ["linkedin", "whatsapp", "facebook"], fields: ["cv", "phone", "email"], logoFirst: false },
   music: { theme: { template: "nocturne" }, socials: ["spotify", "instagram", "tiktok", "youtube"], fields: [], logoFirst: false },
+  streamer: { theme: { template: "nocturne", pairing: "tech" }, socials: ["twitch", "discord", "youtube", "tiktok"], fields: [], logoFirst: false },
+  podcast: { theme: { template: "atelier", pairing: "editorial" }, socials: ["instagram", "youtube", "tiktok"], fields: ["newsletter"], logoFirst: false },
+  // Affiliate links must be recognisable as advertising (UWG § 5a, MStV § 22): the switch labels them.
+  affiliate: { theme: { template: "daylight", pairing: "modern", buttonStyle: "shadow" }, socials: ["instagram", "tiktok", "youtube"], fields: ["affiliate", "newsletter"], logoFirst: false },
+  marketing: { theme: { template: "daylight", pairing: "modern", buttonShape: "pill" }, socials: ["linkedin", "instagram", "x"], fields: ["booking", "website", "newsletter", "email"], logoFirst: false },
+  coach: { theme: { template: "daylight", pairing: "elegant" }, socials: ["instagram", "linkedin", "youtube"], fields: ["booking", "newsletter", "email"], logoFirst: false },
+  developer: { theme: { template: "nocturne", pairing: "tech", buttonStyle: "outline" }, socials: ["github", "linkedin", "x"], fields: ["website", "cv", "email"], logoFirst: false },
+  designer: { theme: { template: "atelier", pairing: "editorial" }, socials: ["instagram", "linkedin", "threads"], fields: ["website", "booking", "email"], logoFirst: false },
   other: { theme: { template: "nocturne" }, socials: ["instagram", "tiktok", "youtube"], fields: [], logoFirst: false },
 };
 
@@ -162,6 +180,9 @@ export function starterBlocks(input: StarterInput, labels: StarterLabels): Block
       case "newsletter":
         if (input.switches.newsletter) blocks.push({ ...base("newsletter"), type: "newsletter", title: labels.newsletter });
         break;
+      case "affiliate":
+        // Handled below: it labels the pasted links, it adds no block of its own.
+        break;
       case "tiktokLive": {
         const handle = (input.handles.tiktok ?? "").trim().replace(/^@/, "").replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/i, "").split(/[/?#]/)[0] ?? "";
         if (input.switches.tiktokLive && handle) {
@@ -172,6 +193,11 @@ export function starterBlocks(input: StarterInput, labels: StarterLabels): Block
     }
   }
 
-  for (const detection of detectMany(input.links)) blocks.push(blockFromLink(detection, labels.detection, labels.artist));
+  // Affiliate links are labelled as advertising ("Ad"/"Anzeige") wherever a block can carry the label.
+  const ads = starter.fields.includes("affiliate") && input.switches.affiliate === true;
+  for (const detection of detectMany(input.links)) {
+    const block = blockFromLink(detection, labels.detection, labels.artist);
+    blocks.push(ads && (block.type === "link" || block.type === "card" || block.type === "product") ? { ...block, affiliate: true } : block);
+  }
   return blocks;
 }

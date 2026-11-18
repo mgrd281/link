@@ -102,6 +102,8 @@ export function detectLink(input: string): Detection | null {
   if (h === "threads.net" || h === "threads.com") return { type: "link", platform: "threads", url: href, label: "Threads" };
   if (h === "bsky.app") return { type: "link", platform: "bluesky", url: href, label: "Bluesky" };
   if (h === "discord.gg" || h === "discord.com") return { type: "link", platform: "discord", url: href, label: "Discord" };
+  if (h === "linkedin.com") return { type: "link", platform: "linkedin", url: href, label: "LinkedIn" };
+  if (h === "github.com" && segments[0]) return { type: "link", platform: "github", url: href, label: "GitHub" };
 
   if (/\.(png|jpe?g|webp|avif|gif)$/i.test(path)) return { type: "image", platform: "image", url: href, label: segments.at(-1) ?? h };
   if (/\.pdf$/i.test(path)) return { type: "link", platform: "pdf", url: href, label: segments.at(-1) ?? "PDF" };
