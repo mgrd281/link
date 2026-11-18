@@ -147,12 +147,14 @@ export const blockSchema = z.discriminatedUnion("type", [
   }),
   base.extend({
     type: z.literal("live"),
-    platform: z.enum(["twitch", "youtube", "kick"]),
+    platform: z.enum(["twitch", "youtube", "kick", "tiktok", "instagram"]),
     channel: z.string().min(1).max(80),
     url,
     isLive: z.boolean(),
     title: z.string().max(140).optional(),
     viewers: z.number().int().nonnegative().optional(),
+    /** Next scheduled live, with its UTC offset; visitors see it in their own time zone. */
+    startsAt: z.iso.datetime({ offset: true }).optional(),
   }),
 ]);
 
