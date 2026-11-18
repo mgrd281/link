@@ -104,14 +104,14 @@ export function PrivacyNotice({ providers, raised = false }: { providers: string
           <button
             type="button"
             onClick={() => decide("essential")}
-            className="h-control-md rounded-creator-button border border-creator-line-strong px-3 text-small font-semibold text-creator-fg transition-colors duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring active:scale-pressed"
+            className="min-h-control-md rounded-creator-button py-2 leading-tight text-balance border border-creator-line-strong px-3 text-small font-semibold text-creator-fg transition-colors duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring active:scale-pressed"
           >
             {t("privacyEssential")}
           </button>
           <button
             type="button"
             onClick={() => decide("media")}
-            className="h-control-md rounded-creator-button bg-creator-accent px-3 text-small font-semibold text-creator-accent-fg transition-[scale] duration-micro focus-visible:focus-ring active:scale-pressed"
+            className="min-h-control-md rounded-creator-button py-2 leading-tight text-balance bg-creator-accent px-3 text-small font-semibold text-creator-accent-fg transition-[scale] duration-micro focus-visible:focus-ring active:scale-pressed"
           >
             {t("privacyAllow")}
           </button>
