@@ -1555,7 +1555,12 @@
     "liveNote": "Live status and times are examples.",
     "more": "About this preview",
     "dockTitle": "Your page?",
-    "dockCta": "Claim it"
+    "dockCta": "Claim it",
+    "sampleTitle": "Example page for {kind} · Linkyo",
+    "sampleBadge": "Example · {kind}",
+    "sampleNote": "{name} is fictional; links and dates are examples. This is what your page as a {kind} can look like, ready in minutes.",
+    "sampleDockTitle": "Your own page?",
+    "sampleDockCta": "Start for free"
   },
   "admin": {
     "meta": {

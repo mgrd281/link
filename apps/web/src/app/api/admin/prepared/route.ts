@@ -7,7 +7,10 @@ import { PREVIEWS } from "@/features/previews/registry";
  */
 export function GET(request: Request) {
   if (!checkToken(request.headers.get("authorization"))) return Response.json({ pages: [] }, { status: 401, headers: { "Cache-Control": "no-store" } });
-  const pages = Object.entries(PREVIEWS).map(([slug, preview]) => ({
+  // Example pages (a fictional person per kind) are marketing, not a creator's page: not listed.
+  const pages = Object.entries(PREVIEWS)
+    .filter(([, preview]) => !preview.sample)
+    .map(([slug, preview]) => ({
     slug,
     username: preview.username,
     name: preview.name,

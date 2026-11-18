@@ -28,8 +28,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const found = previewPage(slug, locale);
   if (!found) return {};
   const t = await getTranslations({ locale, namespace: "preview" });
+  const kinds = await getTranslations({ locale, namespace: "app.welcome.kinds" });
+  const sample = found.preview.sample;
   return {
-    title: { absolute: t("title", { name: found.page.profile.displayName }) },
+    title: { absolute: sample ? t("sampleTitle", { kind: kinds(`${sample.kind}.label`) }) : t("title", { name: found.page.profile.displayName }) },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }
@@ -42,20 +44,30 @@ export async function generateViewport({ params }: Props): Promise<Viewport> {
   return { themeColor: theme.palette.bg, colorScheme: colorSchemeOf(theme.palette.mode) };
 }
 
-/** A creator page prepared for one person, clearly labelled as a private preview. */
+/**
+ * A creator page prepared for one person, clearly labelled as a private preview, or an example page
+ * for a kind of creator (a fictional person), labelled as an example.
+ */
 export default async function PreviewRoute({ params }: Props) {
   const { locale, slug } = await params;
   const found = previewPage(slug, locale);
   if (!found) notFound();
   setRequestLocale(locale);
   const t = await getTranslations("preview");
+  const kinds = await getTranslations("app.welcome.kinds");
   const theme = resolveCreatorTheme(found.preview.theme, { rtlScript: locale === "ar" });
-  const name = found.preview.name[locale as "de" | "ar"] ?? found.page.profile.displayName;
-  const notes = [
-    t("note"),
-    found.page.profile.verified ? t("verifiedNote") : null,
-    found.page.blocks.some((block) => block.type === "live") ? t("liveNote") : null,
-  ].filter(Boolean);
+  const name = found.preview.name[locale as "de" | "en" | "ar"] ?? found.page.profile.displayName;
+  const sample = found.preview.sample;
+  const kind = sample ? kinds(`${sample.kind}.label`) : "";
+  const badge = sample ? t("sampleBadge", { kind }) : t("badge", { name });
+  const notes = sample
+    ? [t("sampleNote", { name, kind })]
+    : [
+        t("note"),
+        found.page.profile.verified ? t("verifiedNote") : null,
+        found.page.blocks.some((block) => block.type === "live") ? t("liveNote") : null,
+      ].filter(Boolean);
+  const claim = sample ? `/signup?kind=${sample.kind}` : `/signup?name=${found.preview.username}${found.preview.invite ? `&invite=${slug}` : ""}`;
   return (
     <>
       <style>{`html,body{background-color:${theme.palette.bg}}`}</style>
@@ -72,7 +84,7 @@ export default async function PreviewRoute({ params }: Props) {
             <span className="size-control-sm bg-primary text-primary-fg grid place-items-center rounded-full">
               <LogoSymbol className="size-icon-sm" />
             </span>
-            <span className="font-semibold">{t("badge", { name })}</span>
+            <span className="font-semibold">{badge}</span>
             <button
               type="button"
               popoverTarget="preview-info"
@@ -88,7 +100,7 @@ export default async function PreviewRoute({ params }: Props) {
             >
               <p className="flex items-center gap-2 font-semibold">
                 <Icon icon={Eye} size="sm" className="text-link" />
-                {t("badge", { name })}
+                {badge}
               </p>
               <p className="text-fg-secondary mt-2">{notes.join(" ")}</p>
             </div>
@@ -100,12 +112,12 @@ export default async function PreviewRoute({ params }: Props) {
             className="max-w-creator border-line bg-surface text-fg shadow-e3 mx-auto flex items-center gap-3 rounded-full border p-2 ps-5 font-sans"
           >
             <Logo className="h-5 shrink-0" title="Linkyo" />
-            <span className="text-small text-fg-secondary min-w-0 flex-1 truncate">{t("dockTitle")}</span>
+            <span className="text-small text-fg-secondary min-w-0 flex-1 truncate">{sample ? t("sampleDockTitle") : t("dockTitle")}</span>
             <Link
-              href={`/signup?name=${found.preview.username}${found.preview.invite ? `&invite=${slug}` : ""}`}
+              href={claim}
               className="h-control-md bg-primary text-small text-primary-fg duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed inline-flex shrink-0 items-center gap-2 rounded-full px-4 font-semibold transition-colors"
             >
-              {t("dockCta")}
+              {sample ? t("sampleDockCta") : t("dockCta")}
               <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
             </Link>
           </div>

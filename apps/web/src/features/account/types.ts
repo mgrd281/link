@@ -65,6 +65,8 @@ export interface SignUpInput {
   locale: Page["profile"]["locale"];
   /** A page the Linkyo team prepared for this email: the account starts with it, ready. */
   prepared?: { page: Page; theme: CreatorThemeConfig } | undefined;
+  /** Came from an example page (e.g. for journalists): start with that kind and its template. */
+  start?: { kind: string; theme: CreatorThemeConfig } | undefined;
 }
 
 export interface AccountStore {

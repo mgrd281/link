@@ -141,7 +141,12 @@ export class LocalAccountStore implements AccountStore {
     return this.write({
       ...db,
       accounts: [...db.accounts, account],
-      sites: { ...db.sites, [account.id]: input.prepared ? preparedSite(username, email, input.prepared) : starterSite(username, email, input.locale) },
+      sites: {
+        ...db.sites,
+        [account.id]: input.prepared
+          ? preparedSite(username, email, input.prepared)
+          : { ...starterSite(username, email, input.locale), ...(input.start ? { kind: input.start.kind, theme: input.start.theme } : {}) },
+      },
       session: { accountId: account.id, since: now() },
     });
   }

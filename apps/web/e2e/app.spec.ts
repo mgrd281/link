@@ -299,6 +299,35 @@ test.describe("private previews", () => {
     });
   }
 
+  test("the example page for journalists is labelled and starts sign-up with the journalist template", async ({ page }) => {
+    await page.goto("/en/p/journalist");
+    await expect(page.getByText("Example · Journalist", { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Lea Hartmann");
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+    expect(await axe(page)).toEqual([]);
+    await page.mouse.wheel(0, 2000);
+    const cta = page.getByRole("link", { name: "Start for free" });
+    await expect(cta).toHaveAttribute("href", "/en/signup?kind=journalist");
+    await cta.click();
+    await page.waitForURL("**/en/signup?kind=journalist");
+    await page.waitForLoadState("networkidle");
+    const name = `press-${unique()}`;
+    await page.locator("#signup-username").fill(name);
+    await page.locator("#signup-email").fill(`${name}@example.com`);
+    await page.locator("#signup-password").fill(PASSWORD);
+    await page.locator("form button[type=submit]").click();
+    await page.waitForURL("**/en/app/welcome");
+    // The kind is already chosen; the next steps ask what a journalist needs.
+    await expect(page.getByRole("radio", { name: /^Journalist/ })).toBeChecked();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByLabel("Your name").fill("Sam Reporter");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByText("Picked for Journalist")).toBeVisible();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByLabel("Email for requests")).toBeVisible();
+    await expect(page.getByLabel("LinkedIn")).toBeVisible();
+  });
+
   test("the earlier long link still leads to the short one", async ({ page }) => {
     await page.goto("/de/p/nizar-m3e8dw");
     await page.waitForURL("**/de/p/nizar");

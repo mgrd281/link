@@ -4,6 +4,7 @@ import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { pageSchema } from "@linkyo/blocks";
 import { z } from "zod";
 
+import { journalistAr, journalistDe, journalistEn } from "./journalist";
 import { nizarAr, nizarDe } from "./nizar";
 import { PREPARED } from "./prepared";
 
@@ -29,6 +30,11 @@ export interface Preview {
   verified?: boolean;
   /** The preview shows example states (live now, the verified look) that are not carried over. */
   examples?: boolean;
+  /**
+   * An example page for a kind of creator (a fictional person), sent to anyone of that kind. It is
+   * labelled as an example, and its call to action starts a new account with that kind's template.
+   */
+  sample?: { kind: string };
 }
 
 /** The next hh:00 in Berlin (today, or tomorrow once it has passed), as an ISO timestamp. */
@@ -86,6 +92,13 @@ const HAND_MADE: Record<string, Preview> = {
     // The business email from his public TikTok profile; add the one he gives you with prepare-page.
     invite: { emailSha256: ["f162f82de536c27fc25ee9575813959d7f7ddbbd4603cdbc383112a487af2647"] },
     examples: true,
+  },
+  journalist: {
+    name: { de: "Lea Hartmann", en: "Lea Hartmann", ar: "ليا هارتمان" },
+    username: "lea-hartmann",
+    theme: { template: "atelier", pairing: "editorial" },
+    pages: { de: journalistDe, en: journalistEn, ar: journalistAr },
+    sample: { kind: "journalist" },
   },
 };
 

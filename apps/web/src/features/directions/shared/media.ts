@@ -32,6 +32,8 @@ import short2 from "@/assets/samples/short-2.jpg";
 import short3 from "@/assets/samples/short-3.jpg";
 import short4 from "@/assets/samples/short-4.jpg";
 import videoLive from "@/assets/samples/video-live.jpg";
+import journalistAvatar from "@/assets/samples/journalist-avatar.jpg";
+import journalistHero from "@/assets/samples/journalist-hero.jpg";
 
 /** Sample media registry. In production `image.src` is a Supabase Storage key resolved by the image CDN. */
 export const sampleMedia = {
@@ -67,6 +69,8 @@ export const sampleMedia = {
   "sample:short-3": short3,
   "sample:short-4": short4,
   "sample:video-live": videoLive,
+  "sample:journalist-avatar": journalistAvatar,
+  "sample:journalist-hero": journalistHero,
 } satisfies Record<string, StaticImageData>;
 
 export type SampleKey = keyof typeof sampleMedia;

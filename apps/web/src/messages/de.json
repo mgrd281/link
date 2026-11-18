@@ -1555,7 +1555,12 @@
     "liveNote": "Live-Status und Zeiten sind Beispiele.",
     "more": "Mehr zur Vorschau",
     "dockTitle": "Deine Seite?",
-    "dockCta": "Sichern"
+    "dockCta": "Sichern",
+    "sampleTitle": "Beispielseite für {kind} · Linkyo",
+    "sampleBadge": "Beispiel · {kind}",
+    "sampleNote": "{name} ist erfunden, Links und Termine sind Beispiele. So kann deine Seite als {kind} aussehen – fertig in wenigen Minuten.",
+    "sampleDockTitle": "Deine eigene Seite?",
+    "sampleDockCta": "Kostenlos starten"
   },
   "admin": {
     "meta": {

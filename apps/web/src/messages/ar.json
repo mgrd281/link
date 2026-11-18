@@ -1555,7 +1555,12 @@
     "liveNote": "حالة البث والمواعيد أمثلة.",
     "more": "عن هذه المعاينة",
     "dockTitle": "صفحتك؟",
-    "dockCta": "احجزها"
+    "dockCta": "احجزها",
+    "sampleTitle": "صفحة مثال لـ{kind} · Linkyo",
+    "sampleBadge": "مثال · {kind}",
+    "sampleNote": "{name} شخصية خيالية، والروابط والمواعيد أمثلة. هكذا يمكن أن تبدو صفحتك كـ{kind}، جاهزة خلال دقائق.",
+    "sampleDockTitle": "صفحتك الخاصة؟",
+    "sampleDockCta": "ابدأ مجاناً"
   },
   "admin": {
     "meta": {

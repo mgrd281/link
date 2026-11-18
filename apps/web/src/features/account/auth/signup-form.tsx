@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState, type SubmitEvent } from "react";
 import { z } from "zod";
 
+import { isKind, STARTERS } from "@/features/app/kinds";
 import { Link } from "@/i18n/navigation";
 
 import { isStrongEnough } from "../password";
@@ -59,6 +60,9 @@ export function SignupForm() {
   const prefill = useSearchParam("name").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
   // From a prepared page's invite link: the address is theirs, only the email decides.
   const invite = useSearchParam("invite").replace(/[^a-z0-9-]/g, "").slice(0, 64);
+  // From an example page ("?kind=journalist"): the new page starts with that kind's template.
+  const kindParam = useSearchParam("kind");
+  const kind = isKind(kindParam) ? kindParam : null;
   const [typed, setTyped] = useState<string | null>(null);
   const username = typed ?? prefill;
   const [email, setEmail] = useState("");
@@ -101,6 +105,7 @@ export function SignupForm() {
       username: prepared.kind === "match" ? prepared.username : username,
       locale: signupLocale,
       prepared: prepared.kind === "match" ? { page: prepared.page, theme: prepared.theme } : undefined,
+      start: kind ? { kind, theme: STARTERS[kind].theme } : undefined,
     });
     setBusy(false);
     if (result.ok) return; // useLeaveWhenSignedIn takes it from here.
