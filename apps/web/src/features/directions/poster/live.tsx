@@ -135,7 +135,7 @@ export function LiveNextRow({ block, surface }: { block: Live; surface: string }
           type="button"
           onClick={() => remind(block, summary)}
           aria-label={t("remindAbout", { title: block.title ?? platform })}
-          className="grid size-control-xl shrink-0 place-items-center rounded-full border border-creator-line-strong text-creator-fg transition-colors duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring active:scale-pressed"
+          className="grid size-touch-target shrink-0 place-items-center rounded-md text-creator-fg transition-colors duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring active:scale-pressed"
         >
           <Icon icon={BellRing} size="md" />
         </button>

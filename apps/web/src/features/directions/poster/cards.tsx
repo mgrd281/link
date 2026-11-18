@@ -384,8 +384,8 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
 }
 
 /**
- * Live now: the loudest card on the page — inverted colors, a pulsing LIVE badge, what the live is
- * about and one button. A planned or past live is a calm row instead (see LiveNextRow).
+ * Live now: one compact, inverted row — who, where and a pulsing LIVE badge. The whole row opens the
+ * live; a planned or past live is a calm row instead (see LiveNextRow).
  */
 export function LiveRow({ block, surface }: { block: BlockOf<"live">; surface: string }) {
   const t = useTranslations("creator");
@@ -394,25 +394,23 @@ export function LiveRow({ block, surface }: { block: BlockOf<"live">; surface: s
   if (!block.isLive) return <LiveNextRow block={block} surface={surface} />;
   const platform = platformName(block.platform);
   return (
-    <a id={block.id} href={block.url} className={cn("relative grid scroll-mt-20 gap-5 overflow-hidden rounded-creator-card bg-creator-accent p-5 text-creator-accent-fg", pressable)}>
-      <span className="flex items-center justify-between gap-3">
-        <span className="inline-flex min-w-0 items-center gap-2 text-small font-semibold">
-          <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-creator-accent-fg text-creator-accent">
-            <PlatformGlyph platform={block.platform} size="sm" />
-          </span>
-          <span className="truncate">{block.viewers ? t("watching", { count: f.compact(block.viewers) }) : <bdi dir="ltr">@{block.channel}</bdi>}</span>
-        </span>
-        <span className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-danger-fill px-3 text-caption font-bold tracking-wide text-danger-fill-fg uppercase">
-          <span aria-hidden className="size-dot rounded-full bg-current motion-safe:animate-pulse" />
-          {t("liveNow")}
-        </span>
+    <a
+      id={block.id}
+      href={block.url}
+      className={cn("relative flex scroll-mt-20 items-center gap-4 overflow-hidden rounded-creator-card bg-creator-accent p-3 pe-4 text-creator-accent-fg", pressable)}
+    >
+      <span className="grid size-16 shrink-0 place-items-center rounded-md bg-creator-accent-fg text-creator-accent">
+        <PlatformGlyph platform={block.platform} size="lg" />
       </span>
-      <span className="font-creator-display text-h2 leading-tight text-balance" style={displayStyle}>
-        {block.title ?? t("liveOn", { platform })}
+      <span className="grid min-w-0 flex-1 gap-1">
+        <span className="truncate text-body font-semibold">
+          <bdi dir="ltr">@{block.channel}</bdi>
+        </span>
+        <span className="truncate text-small">{block.viewers ? `${platform} · ${t("watching", { count: f.compact(block.viewers) })}` : platform}</span>
       </span>
-      <span className="inline-flex h-control-lg items-center justify-center gap-2 rounded-creator-button bg-creator-accent-fg px-5 text-body font-semibold text-creator-accent">
-        {t("joinLive", { platform })}
-        <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
+      <span className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-danger-fill px-3 text-caption font-bold tracking-wide text-danger-fill-fg uppercase">
+        <span aria-hidden className="size-dot rounded-full bg-current motion-safe:animate-pulse" />
+        {t("liveNow")}
       </span>
     </a>
   );
