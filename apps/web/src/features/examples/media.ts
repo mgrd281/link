@@ -44,21 +44,37 @@ import exTutor from "@/assets/examples/ex-tutor.jpg";
 import exWedding from "@/assets/examples/ex-wedding.jpg";
 import exYoga from "@/assets/examples/ex-yoga.jpg";
 import exYoutuber from "@/assets/examples/ex-youtuber.jpg";
+import ex2AbstractPainting from "@/assets/examples/ex2-abstract-painting.jpg";
+import ex2Apartment from "@/assets/examples/ex2-apartment.jpg";
 import ex2Beach from "@/assets/examples/ex2-beach.jpg";
+import ex2Books from "@/assets/examples/ex2-books.jpg";
 import ex2Cake from "@/assets/examples/ex2-cake.jpg";
+import ex2CityHall from "@/assets/examples/ex2-city-hall.jpg";
 import ex2ConcertCrowd from "@/assets/examples/ex2-concert-crowd.jpg";
+import ex2Conference from "@/assets/examples/ex2-conference.jpg";
 import ex2Documents from "@/assets/examples/ex2-documents.jpg";
+import ex2FilmSet from "@/assets/examples/ex2-film-set.jpg";
 import ex2GamingPc from "@/assets/examples/ex2-gaming-pc.jpg";
 import ex2Georgia from "@/assets/examples/ex2-georgia.jpg";
 import ex2Housing from "@/assets/examples/ex2-housing.jpg";
 import ex2Kibbeh from "@/assets/examples/ex2-kibbeh.jpg";
 import ex2Maqluba from "@/assets/examples/ex2-maqluba.jpg";
+import ex2Meditation from "@/assets/examples/ex2-meditation.jpg";
 import ex2Necklace from "@/assets/examples/ex2-necklace.jpg";
 import ex2Nurse from "@/assets/examples/ex2-nurse.jpg";
+import ex2Park from "@/assets/examples/ex2-park.jpg";
+import ex2Penthouse from "@/assets/examples/ex2-penthouse.jpg";
 import ex2Pizza from "@/assets/examples/ex2-pizza.jpg";
+import ex2PodcastGuest from "@/assets/examples/ex2-podcast-guest.jpg";
+import ex2PortraitLight from "@/assets/examples/ex2-portrait-light.jpg";
 import ex2Pretzels from "@/assets/examples/ex2-pretzels.jpg";
+import ex2RedCarpet from "@/assets/examples/ex2-red-carpet.jpg";
 import ex2Ring from "@/assets/examples/ex2-ring.jpg";
+import ex2RobotArm from "@/assets/examples/ex2-robot-arm.jpg";
 import ex2Smartphones from "@/assets/examples/ex2-smartphones.jpg";
+import ex2Stadium from "@/assets/examples/ex2-stadium.jpg";
+import ex2Training from "@/assets/examples/ex2-training.jpg";
+import ex2WeddingCouple from "@/assets/examples/ex2-wedding-couple.jpg";
 import ex2Wine from "@/assets/examples/ex2-wine.jpg";
 
 /** Pictures of the example gallery (stock photos, see assets/examples/CREDITS.md; logos are original). */
@@ -107,20 +123,36 @@ export const exampleMedia = {
   "sample:ex-wedding": exWedding,
   "sample:ex-yoga": exYoga,
   "sample:ex-youtuber": exYoutuber,
+  "sample:ex2-abstract-painting": ex2AbstractPainting,
+  "sample:ex2-apartment": ex2Apartment,
   "sample:ex2-beach": ex2Beach,
+  "sample:ex2-books": ex2Books,
   "sample:ex2-cake": ex2Cake,
+  "sample:ex2-city-hall": ex2CityHall,
   "sample:ex2-concert-crowd": ex2ConcertCrowd,
+  "sample:ex2-conference": ex2Conference,
   "sample:ex2-documents": ex2Documents,
+  "sample:ex2-film-set": ex2FilmSet,
   "sample:ex2-gaming-pc": ex2GamingPc,
   "sample:ex2-georgia": ex2Georgia,
   "sample:ex2-housing": ex2Housing,
   "sample:ex2-kibbeh": ex2Kibbeh,
   "sample:ex2-maqluba": ex2Maqluba,
+  "sample:ex2-meditation": ex2Meditation,
   "sample:ex2-necklace": ex2Necklace,
   "sample:ex2-nurse": ex2Nurse,
+  "sample:ex2-park": ex2Park,
+  "sample:ex2-penthouse": ex2Penthouse,
   "sample:ex2-pizza": ex2Pizza,
+  "sample:ex2-podcast-guest": ex2PodcastGuest,
+  "sample:ex2-portrait-light": ex2PortraitLight,
   "sample:ex2-pretzels": ex2Pretzels,
+  "sample:ex2-red-carpet": ex2RedCarpet,
   "sample:ex2-ring": ex2Ring,
+  "sample:ex2-robot-arm": ex2RobotArm,
   "sample:ex2-smartphones": ex2Smartphones,
+  "sample:ex2-stadium": ex2Stadium,
+  "sample:ex2-training": ex2Training,
+  "sample:ex2-wedding-couple": ex2WeddingCouple,
   "sample:ex2-wine": ex2Wine,
 } satisfies Record<string, StaticImageData>;

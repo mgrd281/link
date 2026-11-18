@@ -46,21 +46,37 @@ are models or anonymous; they have no connection to the fictional names and are 
 | ex-wedding.jpg | Bruno Ngarukiye | https://unsplash.com/photos/a-beautifully-set-outdoor-dining-table-with-floral-arrangements-olOdSVw5THI | Unsplash License |
 | ex-yoga.jpg | Jaspinder Singh | https://unsplash.com/photos/a-group-of-people-doing-yoga-in-a-room-vpVE1Xk1eR4 | Unsplash License |
 | ex-youtuber.jpg | Vitaly Gariev | https://unsplash.com/photos/man-sitting-on-floor-talking-to-camera-on-tripod-B8FYNyMRpX0 | Unsplash License |
+| ex2-abstract-painting.jpg | engin akyurt | https://unsplash.com/photos/a-close-up-of-a-painting-with-many-colors-XoDQN-fjoTQ | Unsplash License |
+| ex2-apartment.jpg | Caroline Badran | https://unsplash.com/photos/modern-living-room-with-large-windows-and-scenic-view-12WFO8yWrsw | Unsplash License |
 | ex2-beach.jpg | Bernd Dittrich | https://unsplash.com/photos/a-beautiful-beach-with-turquoise-water-and-waves-V1hb2SLP-80 | Unsplash License |
+| ex2-books.jpg | Fiona Murray-deGraaff | https://unsplash.com/photos/a-stack-of-books-sitting-on-top-of-a-wooden-table-T6-4feH5hs4 | Unsplash License |
 | ex2-cake.jpg | Jonathan Borba | https://unsplash.com/photos/a-white-wedding-cake-with-purple-flowers-on-top-d4b5aqgFW7A | Unsplash License |
+| ex2-city-hall.jpg | Vinicius | https://unsplash.com/photos/the-munich-new-town-hall-stands-at-dusk-5RDljV1fXJE | Unsplash License |
 | ex2-concert-crowd.jpg | Marcel Strauß | https://unsplash.com/photos/crowd-enjoying-a-concert-with-blue-stage-lights-ubwn8GI9-2o | Unsplash License |
+| ex2-conference.jpg | Teemu Paananen | https://unsplash.com/photos/bzdhc5b3Bxs | Unsplash License |
 | ex2-documents.jpg | Wesley Tingey | https://unsplash.com/photos/stacks-of-paper-documents-and-file-folders-snNHKZ-mGfE | Unsplash License |
+| ex2-film-set.jpg | Brands&People | https://unsplash.com/photos/film-crew-on-soundstage-workspace-br2HgQuvq6I | Unsplash License |
 | ex2-gaming-pc.jpg | Jack B | https://unsplash.com/photos/B10AxHKLvnQ | Unsplash License |
 | ex2-georgia.jpg | Tomáš Malík | https://unsplash.com/photos/aerial-photography-of-houses-beside-rocky-mountains-during-daytime-DOhXyRS3_n0 | Unsplash License |
 | ex2-housing.jpg | Pavel Abramiankou | https://unsplash.com/photos/haussmannian-apartment-building-facade-with-many-windows-yyb5HOnHfus | Unsplash License |
 | ex2-kibbeh.jpg | Sara Dubler | https://unsplash.com/photos/grilled-meats-on-plate-lOaXEG1tVUM | Unsplash License |
 | ex2-maqluba.jpg | Mario Raj | https://unsplash.com/photos/a-table-topped-with-bowls-of-food-and-sauces-vsnAIYA9bms | Unsplash License |
+| ex2-meditation.jpg | Rajat Verma | https://unsplash.com/photos/sitting-buddha-beside-pillar-candles-lYHp4RcJNcY | Unsplash License |
 | ex2-necklace.jpg | Zayed Ahmed Zadu | https://unsplash.com/photos/gold-necklace-and-matching-earrings-on-display-x5LH4df5cCk | Unsplash License |
 | ex2-nurse.jpg | Hush Naidoo Jade Photography | https://unsplash.com/photos/ZCO_5Y29s8k | Unsplash License |
+| ex2-park.jpg | Dariia Lemesheva | https://unsplash.com/photos/park-benches-line-a-sunny-path-between-trees-Fx6TA-kDP48 | Unsplash License |
+| ex2-penthouse.jpg | Aalo Lens | https://unsplash.com/photos/modern-living-room-with-sectional-sofa-and-large-window-yxO8YG082v8 | Unsplash License |
 | ex2-pizza.jpg | Emily Powers | https://unsplash.com/photos/9xWl_zhIcS4 | Unsplash License |
+| ex2-podcast-guest.jpg | Cody Board | https://unsplash.com/photos/two-men-sitting-by-the-table-using-microphone-and-headphones-inside-studio-during-daytime-PdKvBaN44UM | Unsplash License |
+| ex2-portrait-light.jpg | Vladislav Nahorny | https://unsplash.com/photos/woman-illuminated-by-light-through-blinds-XwYyIU6WLFU | Unsplash License |
 | ex2-pretzels.jpg | Markus Spiske | https://unsplash.com/photos/bread-knot-on-pink-surface-39cEDqW5_SY | Unsplash License |
+| ex2-red-carpet.jpg | Darren Nunis | https://unsplash.com/photos/8e57gxBpqLk | Unsplash License |
 | ex2-ring.jpg | Alyssa Hurley | https://unsplash.com/photos/silver-diamond-studded-ring-on-white-surface-IdU1Si3wJ-I | Unsplash License |
+| ex2-robot-arm.jpg | Simon Kadula | https://unsplash.com/photos/a-factory-filled-with-lots-of-orange-machines-8gr6bObQLOI | Unsplash License |
 | ex2-smartphones.jpg | freestocks | https://unsplash.com/photos/Ve-0V0SZ3SU | Unsplash License |
+| ex2-stadium.jpg | Mark mc neill | https://unsplash.com/photos/an-aerial-view-of-a-soccer-stadium-at-night-Q1nOuKleRoc | Unsplash License |
+| ex2-training.jpg | Bohdan Hyrovych | https://unsplash.com/photos/three-soccer-players-dribbling-balls-on-a-green-field-3-B6-BfSCqs | Unsplash License |
+| ex2-wedding-couple.jpg | Jaakko Perälä | https://unsplash.com/photos/a-bride-and-groom-holding-hands-at-sunset-l_ecNnA4xp0 | Unsplash License |
 | ex2-wine.jpg | Ronan | https://unsplash.com/photos/clear-wine-glasses-on-top-of-dining-table-PCE0T5i4pDI | Unsplash License |
 | ex-logo-*.png | Linkyo (original artwork) | — | © Linkyo |
 

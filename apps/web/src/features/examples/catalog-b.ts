@@ -201,7 +201,7 @@ export const CATALOG_B: Record<string, Page> = {
       focal: [0.5, 0.35],
     },
     (h) => [
-      h.gallery("Ausgewählte Arbeiten", ["ex-wedding", "ex-travel", "ex-yoga"]),
+      h.gallery("Ausgewählte Arbeiten", ["ex2-wedding-couple", "ex2-portrait-light", "ex-travel", "ex-wedding"]),
       h.link("Hochzeitspakete & Preise", "pakete", { highlight: true }),
       h.link("Verfügbarkeit 2027 anfragen", "anfrage"),
       h.link("Workshop: Fotografieren mit dem Handy", "workshop", { badge: "Neu" }),
@@ -222,7 +222,7 @@ export const CATALOG_B: Record<string, Page> = {
     },
     (h) => [
       h.events("معارض", [{ date: "2027-03-05", time: "19:00", name: "معرض «ذاكرة المدن»", city: "برلين", venue: "صالة عرض في كرويتسبرغ" }]),
-      h.product("مطبوعة محدودة «حلب ليلاً» (50 نسخة)", 120, "print"),
+      h.product("مطبوعة محدودة «حلب ليلاً» (50 نسخة)", 120, "print", "ex2-abstract-painting"),
       h.link("أعمال أصلية متاحة", "originals", { highlight: true }),
       h.link("ورشة رسم للمبتدئين", "workshop"),
       h.socials("instagram", "email"),
@@ -239,7 +239,7 @@ export const CATALOG_B: Record<string, Page> = {
       location: "Kiel",
     },
     (h) => [
-      h.link("„Ebbe“ vorbestellen", "ebbe", { highlight: true, badge: "März" }),
+      h.card("„Ebbe“ vorbestellen", "Mein neuer Roman erscheint am 12. März.", "ebbe", "ex2-books"),
       h.events("Lesungen", [
         { date: "2027-03-14", time: "19:30", name: "Lesung: Ebbe", city: "Kiel", venue: "Literaturhaus" },
         { date: "2027-03-21", time: "19:30", name: "Lesung: Ebbe", city: "Hamburg", venue: "Buchhandlung am Hafen" },
@@ -396,7 +396,7 @@ export const CATALOG_B: Record<string, Page> = {
     (h) => [
       h.link("Kursplan & Buchung", "kursplan", { highlight: true }),
       h.link("Probestunde für 10 €", "probe", { badge: "Neu" }),
-      h.events("Workshops", [{ date: "2027-02-27", time: "10:00", name: "Atem & Bewegung", city: "Berlin", venue: "Studio Atem" }]),
+      h.events("Workshops", [{ date: "2027-02-27", time: "10:00", name: "Atem & Bewegung", city: "Berlin", venue: "Studio Atem", image: "ex2-meditation" }]),
       h.link("Zehnerkarte kaufen", "zehnerkarte"),
       h.socials("instagram", "email"),
     ],
