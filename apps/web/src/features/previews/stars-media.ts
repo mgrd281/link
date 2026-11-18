@@ -14,6 +14,8 @@ import starMessiG1 from "@/assets/stars/messi-g1.jpg";
 import starMessiG2 from "@/assets/stars/messi-g2.jpg";
 import starMessiG3 from "@/assets/stars/messi-g3.jpg";
 import starMessiG4 from "@/assets/stars/messi-g4.jpg";
+import starMessiWc2022 from "@/assets/stars/messi-wc2022.jpg";
+import starMessiWc2026 from "@/assets/stars/messi-wc2026.jpg";
 import starMoSalah from "@/assets/stars/mo-salah.jpg";
 import starMrbeast from "@/assets/stars/mrbeast.jpg";
 import starNadineNjeim from "@/assets/stars/nadine-njeim.jpg";
@@ -35,6 +37,8 @@ export const starMedia = {
   "sample:star-messi-g2": starMessiG2,
   "sample:star-messi-g3": starMessiG3,
   "sample:star-messi-g4": starMessiG4,
+  "sample:star-messi-wc2022": starMessiWc2022,
+  "sample:star-messi-wc2026": starMessiWc2026,
   "sample:star-mo-salah": starMoSalah,
   "sample:star-mrbeast": starMrbeast,
   "sample:star-nadine-njeim": starNadineNjeim,

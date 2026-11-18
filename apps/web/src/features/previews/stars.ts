@@ -27,10 +27,15 @@ export interface Star {
   website?: string | undefined;
   videos: { id: string; title: Localized }[];
   music?: { title: Localized; kind: "single" | "album" | "ep"; links: { platform: Platform; url: string }[] }[] | undefined;
-  /** One big story card (e.g. a farewell), its link may differ per language. */
-  featured?: { title: Text; description: Text; url: Localized; image: string; alt: Text } | undefined;
+  /** Prominent buttons above the official website (e.g. "Follow @… on Instagram"). */
+  highlights?: { title: Text; url: string }[] | undefined;
+  /**
+   * The story the person is known for (e.g. Argentina and the World Cup): a big card, an optional
+   * video and smaller story cards. Links may differ per language (an article in that language).
+   */
+  spotlight?: { heading: Text; featured: Story; video?: { id: string; title: Text } | undefined; stories: Story[] } | undefined;
   /** Clubs, teams or companies: picture, name, years and what happened there. */
-  career?: { title: Text; description: Text; url: string; image: string; alt: Text }[] | undefined;
+  career?: Story[] | undefined;
   gallery?: { image: string; alt: Text }[] | undefined;
   works?: { title: Text; year: number; url: string }[] | undefined;
   /** Shown only on the page in the article's own language. */
@@ -39,6 +44,15 @@ export interface Star {
   photo: string;
   credit?: string | undefined;
   theme: CreatorThemeConfig;
+}
+
+/** A picture card: title, one or two lines of description, a link (per language if needed). */
+interface Story {
+  title: Text;
+  description: Text;
+  url: Localized;
+  image: string;
+  alt: Text;
 }
 
 const HEADINGS: Record<"videos" | "music" | "career" | "moments" | "works" | "press" | "official", Text> = {
@@ -76,6 +90,7 @@ export function starPage(star: Star, locale: StarLocale): Page {
 
   const blocks: Block[] = [];
   if (star.socials.length) blocks.push({ ...base("socials"), type: "socials", items: star.socials.slice(0, 12) });
+  for (const button of star.highlights ?? []) blocks.push(link(button.title[locale], button.url, { highlight: true }));
   if (star.website) blocks.push(link(HEADINGS.official[locale], star.website, { highlight: true }));
 
   for (const release of star.music ?? []) {
@@ -90,18 +105,31 @@ export function starPage(star: Star, locale: StarLocale): Page {
     });
   }
 
-  if (star.videos.length) {
-    blocks.push(header(HEADINGS.videos[locale]));
-    for (const video of star.videos.slice(0, MAX_VIDEOS)) {
-      blocks.push({ ...base("video"), type: "video", title: clip(pick(video.title, locale), 120), provider: "youtube", url: `https://www.youtube.com/watch?v=${video.id}`, poster: thumb(video.id) });
-    }
+  const story = (item: Story, highlight = false) => card(item.title[locale], item.description[locale], pick(item.url, locale), { src: item.image, alt: item.alt[locale] }, highlight);
+  const video = (id: string, title: Localized): BlockOf<"video"> => ({
+    ...base("video"),
+    type: "video",
+    title: clip(pick(title, locale), 120),
+    provider: "youtube",
+    url: `https://www.youtube.com/watch?v=${id}`,
+    poster: thumb(id),
+  });
+
+  if (star.spotlight) {
+    const { heading, featured, video: film, stories } = star.spotlight;
+    blocks.push(header(heading[locale]), story(featured, true));
+    if (film) blocks.push(video(film.id, film.title));
+    for (const item of stories) blocks.push(story(item));
   }
 
-  if (star.featured || star.career?.length) {
+  if (star.videos.length) {
+    blocks.push(header(HEADINGS.videos[locale]));
+    for (const item of star.videos.slice(0, MAX_VIDEOS)) blocks.push(video(item.id, item.title));
+  }
+
+  if (star.career?.length) {
     blocks.push(header(HEADINGS.career[locale]));
-    const story = star.featured;
-    if (story) blocks.push(card(story.title[locale], story.description[locale], pick(story.url, locale), { src: story.image, alt: story.alt[locale] }, true));
-    for (const step of star.career ?? []) blocks.push(card(step.title[locale], step.description[locale], step.url, { src: step.image, alt: step.alt[locale] }));
+    for (const step of star.career) blocks.push(story(step));
   }
 
   if (star.gallery?.length) {
