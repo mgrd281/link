@@ -15,14 +15,15 @@ test.describe("template gallery", () => {
     await expect(page.getByRole("button", { name: /^Local businesses/ })).toHaveAttribute("aria-pressed", "true");
     await expect(cards.first()).toBeVisible();
     expect(await cards.count()).toBeLessThan(20);
-    await expect(page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" })).toBeVisible();
+    // The bakery is also one of the three featured cards above the grid; .last() is the grid card.
+    await expect(page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).last()).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
   });
 
   test("preview a page, then start with exactly that template", async ({ page }) => {
     await page.goto("/en/templates");
-    await page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).click();
+    await page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).last().click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator('iframe[title="Example page Bäckerei Sonnenkorn"]')).toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
     const use = dialog.getByRole("link", { name: "Use this template" });
