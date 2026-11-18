@@ -167,8 +167,9 @@ function PosterBlock({ block, theme, surface, heading }: { block: Block; theme: 
       return <NewsletterCard block={block} surface={surface} heading={heading} />;
     case "gallery":
       return (
-        <div role="region" aria-label={t("scroller", { title: block.title ?? t("gallery") })} tabIndex={0} className={railFrame}>
-          <ul className="flex snap-x gap-2 overflow-x-auto px-creator-gutter @prose:px-0">
+        // Photos hold nothing to tab to, so the region itself scrolls and takes focus (arrow keys scroll it).
+        <div role="region" aria-label={t("scroller", { title: block.title ?? t("gallery") })} tabIndex={0} className={cn(railFrame, "snap-x overflow-x-auto")}>
+          <ul className="flex gap-2 px-creator-gutter @prose:px-0">
             {block.images.map((image) => (
               <li key={image.src} className="relative aspect-portrait w-3/5 shrink-0 snap-start overflow-hidden rounded-creator-card">
                 <MediaImage src={image.src} alt={image.alt} sizes={mediaSizes.half} />

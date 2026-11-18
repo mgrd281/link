@@ -1623,7 +1623,9 @@
     "conceptTitle": "تصوّر: {name} على Linkyo",
     "conceptBadge": "تصوّر · {name}",
     "conceptNote": "هكذا يمكن أن تبدو صفحة {name} على Linkyo. هذه ليست الصفحة الرسمية ولا علاقة لها بـ{name}، وكل الروابط تؤدي إلى القنوات الرسمية.",
-    "photoCredit": "الصورة: {credit}"
+    "photoCredit": "مصادر الصور: {credit}",
+    "language": "اللغة",
+    "languageMenu": "اختر اللغة"
   },
   "admin": {
     "meta": {

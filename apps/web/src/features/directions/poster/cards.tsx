@@ -54,7 +54,7 @@ export function MediaRow({
         <span className="line-clamp-2 text-body-lg leading-snug font-semibold">{title}</span>
         {subtitle || ad ? (
           <span className="flex min-w-0 items-center gap-2 text-body text-creator-fg-muted">
-            {subtitle ? <span className="truncate">{subtitle}</span> : null}
+            {subtitle ? <span className="line-clamp-2">{subtitle}</span> : null}
             {ad ? <AdLabel /> : null}
           </span>
         ) : null}
@@ -374,7 +374,8 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
       )}
     >
       <span className="grid min-w-0 flex-1 text-start">
-        <span className="truncate text-body-lg font-semibold">{block.title}</span>
+        {/* Two lines before an ellipsis: headlines and long titles stay readable. */}
+        <span className="line-clamp-2 text-body-lg leading-snug font-semibold">{block.title}</span>
         <span className={cn("flex min-w-0 items-center gap-2 text-small", !filled && "text-creator-fg-muted")}>
           <span className="truncate">
             {/* Hosts, emails and phone numbers read left to right, also on Arabic pages (+49 …). */}

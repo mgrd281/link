@@ -1623,7 +1623,9 @@
     "conceptTitle": "Konzept: {name} auf Linkyo",
     "conceptBadge": "Konzept · {name}",
     "conceptNote": "So könnte die Seite von {name} auf Linkyo aussehen. Das ist nicht die offizielle Seite und nicht mit {name} verbunden; alle Links führen zu den offiziellen Kanälen.",
-    "photoCredit": "Foto: {credit}"
+    "photoCredit": "Bildnachweis: {credit}",
+    "language": "Sprache",
+    "languageMenu": "Sprache wählen"
   },
   "admin": {
     "meta": {

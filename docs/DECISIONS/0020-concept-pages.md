@@ -29,6 +29,25 @@ personality).
     resized and kept in `assets/stars`, credited on the page and listed in `assets/stars/CREDITS.md`.
   - **No free photo:** the person's own official video thumbnail is used instead (Al Shami).
   - **Neither:** a typographic monogram (Taim Hassan).
+- **One language per page.** Each concept page exists in German, English and Arabic, and each one
+  speaks only its own language:
+  - taglines, bios, stats, video captions and section titles are written per language;
+  - articles appear only on the page in their own language, and every page links to Wikipedia in
+    that language where an article exists;
+  - a language menu in the label bar switches between the versions;
+  - a unit test fails if a German or English page shows any Arabic text, or if any page lists an
+    article in another language.
+- **Messi as the reference page.** Its sections are:
+  - **Hero:** an Inter Miami portrait in the Nocturne template with a pink accent.
+  - **Stats:** 8 Ballon d'Or awards, 2022 World Cup, 2× MLS MVP.
+  - **Official accounts:** Instagram, Facebook and messi.com.
+  - **Videos:** four official uploads or rights-holder highlights (TyC Sports, FOX Soccer, MLS).
+  - **Career:** a feature card on his farewell to Argentina, then Barcelona, PSG and Inter Miami with
+    photos from each era.
+  - **"Moments":** a gallery of four free-licensed photos.
+  - **Press:** in each language.
+
+  The new block kinds (featured card, career, gallery) are available to every concept page.
 - **Generated data.** `features/previews/stars-data.ts` and `stars-media.ts` are generated from the
   research notes. `stars.test.ts` checks every page in de/en/ar:
   - the page is valid and never verified;

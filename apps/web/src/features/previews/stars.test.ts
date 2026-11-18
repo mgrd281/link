@@ -21,6 +21,23 @@ describe("concept pages for well-known people", () => {
     }
   });
 
+  it("speak only the page's language: no article from another language, no Arabic script on German or English pages", () => {
+    const arabic = /[؀-ۿ]/;
+    for (const star of STARS) {
+      for (const locale of ["de", "en", "ar"] as const) {
+        const page = starPage(star, locale);
+        const linked = new Set(page.blocks.flatMap((block) => (block.type === "link" ? [block.url] : [])));
+        const official = (url: string) => url.replace(/\/$/, "") === star.website?.replace(/\/$/, "");
+        for (const article of star.articles) if (article.language !== locale && !official(article.url)) expect(linked.has(article.url), `${star.slug}/${locale}: ${article.url}`).toBe(false);
+        if (locale !== "ar") {
+          // Text a visitor reads (URLs may carry Arabic article slugs; they are not shown as text).
+          const text = JSON.stringify(page, (key, value: unknown) => (key === "url" || key === "src" ? undefined : value));
+          expect(text, `${star.slug}/${locale}`).not.toMatch(arabic);
+        }
+      }
+    }
+  });
+
   it("are labelled as concepts, with a photo credit when the photo is free-licensed", () => {
     for (const star of STARS) {
       const preview = PREVIEWS[star.slug];

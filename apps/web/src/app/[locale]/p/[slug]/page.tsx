@@ -1,6 +1,6 @@
 import { colorSchemeOf, resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Icon, LogoSymbol } from "@linkyo/ui";
-import { Eye, Info } from "lucide-react";
+import { Check, Eye, Info, Languages } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -8,6 +8,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { LinkyoDock } from "@/features/directions/shared/dock";
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
+import { Link } from "@/i18n/navigation";
+
+/** Each language in its own name, so people find theirs whatever the page is in. */
+const LANGUAGE_NAMES: Record<string, string> = { de: "Deutsch", en: "English", ar: "العربية" };
 
 /** What an example page is an example of: its gallery category, or else its kind of page. */
 async function sampleLabel(locale: string, sample: { kind: string; category?: string | undefined }) {
@@ -77,6 +81,8 @@ export default async function PreviewRoute({ params }: Props) {
         found.page.profile.verified ? t("verifiedNote") : null,
         found.page.blocks.some((block) => block.type === "live") ? t("liveNote") : null,
       ].filter(Boolean);
+  // Pages that exist in several languages get a language menu next to the label.
+  const languages = Object.keys(found.preview.pages);
   const claim = concept ? "/signup" : sample ? `/signup?kind=${sample.kind}${sample.look ? `&look=${sample.look}` : ""}` : `/signup?name=${found.preview.username}${found.preview.invite ? `&invite=${slug}` : ""}`;
   return (
     <>
@@ -95,6 +101,42 @@ export default async function PreviewRoute({ params }: Props) {
               <LogoSymbol className="size-icon-sm" />
             </span>
             <span className="font-semibold">{badge}</span>
+            {languages.length > 1 ? (
+              <>
+                <button
+                  type="button"
+                  popoverTarget="preview-language"
+                  aria-label={t("languageMenu")}
+                  className="size-control-sm text-fg-secondary hover:bg-hover hover:text-fg focus-visible:focus-ring grid place-items-center rounded-full"
+                >
+                  <Icon icon={Languages} size="sm" />
+                </button>
+                <div
+                  id="preview-language"
+                  popover="auto"
+                  className="border-line bg-surface-elevated text-small text-fg shadow-e3 backdrop:bg-scrim inset-x-4 top-16 bottom-auto m-0 mx-auto w-auto max-w-preview rounded-xl border p-2 text-start font-sans"
+                >
+                  <p className="text-caption text-fg-secondary px-3 py-2 font-semibold">{t("language")}</p>
+                  <ul className="grid gap-1">
+                    {languages.map((language) => (
+                      <li key={language}>
+                        <Link
+                          href={`/p/${slug}`}
+                          locale={language}
+                          hrefLang={language}
+                          lang={language}
+                          aria-current={language === locale ? "page" : undefined}
+                          className="h-control-md hover:bg-hover focus-visible:focus-ring aria-[current=page]:text-link flex items-center justify-between gap-3 rounded-md px-3 font-medium"
+                        >
+                          {LANGUAGE_NAMES[language] ?? language}
+                          {language === locale ? <Icon icon={Check} size="sm" /> : null}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            ) : null}
             <button
               type="button"
               popoverTarget="preview-info"
