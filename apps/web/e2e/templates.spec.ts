@@ -67,3 +67,22 @@ test.describe("template gallery", () => {
     await page.waitForURL("**/en/templates");
   });
 });
+
+test.describe("moving pictures", () => {
+  test("a hero clip loops silently over the photo and stays still for reduced motion", async ({ page }) => {
+    await page.goto("/de/p/timo-lacht");
+    const clip = page.locator("header video").first();
+    await expect(clip).toHaveAttribute("src", "/media/motion/timo.mp4");
+    await expect(clip).toHaveAttribute("aria-hidden", "true");
+    expect(await clip.evaluate((video: HTMLVideoElement) => [video.muted, video.loop, video.playsInline])).toEqual([true, true, true]);
+    // The photo stays underneath as poster and still version.
+    await expect(page.locator("header img").first()).toBeVisible();
+    const response = await page.request.get("/media/motion/timo.mp4");
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("video/mp4");
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.reload();
+    await expect(page.locator("header video").first()).toBeHidden();
+  });
+});

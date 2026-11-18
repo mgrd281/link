@@ -5,7 +5,7 @@ import { Button } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { ImageInput, SelectField, TextArea, TextInput } from "./form";
+import { ImageInput, SelectField, TextArea, TextInput, UrlInput } from "./form";
 import { PreviewButton } from "./preview";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
@@ -49,6 +49,12 @@ export function ProfileFields({
         withAlt={false}
         image={profile.hero}
         onImage={(image) => onChange(image ? { ...profile, hero: { ...image, alt: profile.displayName } } : { ...profile, hero: undefined })}
+      />
+      <UrlInput
+        label={t("motion")}
+        hint={t("motionHint")}
+        value={profile.motion?.src ?? ""}
+        onValue={(src) => onChange(src.trim() ? { ...profile, motion: { src: src.trim() } } : { ...profile, motion: undefined })}
       />
       <ImageInput label={t("logo")} kind="logo" withAlt={false} image={profile.logo} onImage={(image) => onChange(image ? { ...profile, logo: { ...image, alt: profile.displayName } } : { ...profile, logo: undefined })} />
       <SelectField

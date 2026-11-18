@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { detectLink, detectMany, normalizeUrl } from "../src/detect";
-import { blockSchema, isBlockActive } from "../src/schema";
+import { blockSchema, isBlockActive, profileSchema } from "../src/schema";
 
 describe("detectLink", () => {
   it.each([
@@ -85,6 +85,12 @@ describe("block schema", () => {
     const video = { id: "v1", type: "video", title: "Clip", provider: "youtube", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", poster: { src: "x.jpg", alt: "" } };
     for (const playback of ["inline", "preview", "external"]) expect(blockSchema.safeParse({ ...video, playback }).success, playback).toBe(true);
     expect(blockSchema.safeParse({ ...video, playback: "loop" }).success).toBe(false);
+  });
+
+  it("a profile can carry a moving picture next to its photo", () => {
+    const profile = { username: "mila", displayName: "Mila", bio: "", avatar: { src: "a.jpg", alt: "" }, locale: "de" };
+    expect(profileSchema.safeParse({ ...profile, motion: { src: "https://cdn.example.com/mila.mp4" } }).success).toBe(true);
+    expect(profileSchema.safeParse({ ...profile, motion: { src: "" } }).success).toBe(false);
   });
 
   it("rejects unsafe URLs", () => {

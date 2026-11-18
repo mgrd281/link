@@ -104,6 +104,11 @@ import ex3Spreadsheet from "@/assets/examples/ex3-spreadsheet.jpg";
 import ex3TeacherOnline from "@/assets/examples/ex3-teacher-online.jpg";
 import ex3UiSketch from "@/assets/examples/ex3-ui-sketch.jpg";
 import ex3Workshop from "@/assets/examples/ex3-workshop.jpg";
+import ex4MotionClara from "@/assets/examples/ex4-motion-clara.jpg";
+import ex4MotionLina from "@/assets/examples/ex4-motion-lina.jpg";
+import ex4MotionMara from "@/assets/examples/ex4-motion-mara.jpg";
+import ex4MotionReem from "@/assets/examples/ex4-motion-reem.jpg";
+import ex4MotionTimo from "@/assets/examples/ex4-motion-timo.jpg";
 
 /** Pictures of the example gallery (stock photos, see assets/examples/CREDITS.md; logos are original). */
 export const exampleMedia = {
@@ -211,4 +216,9 @@ export const exampleMedia = {
   "sample:ex3-teacher-online": ex3TeacherOnline,
   "sample:ex3-ui-sketch": ex3UiSketch,
   "sample:ex3-workshop": ex3Workshop,
+  "sample:ex4-motion-clara": ex4MotionClara,
+  "sample:ex4-motion-lina": ex4MotionLina,
+  "sample:ex4-motion-mara": ex4MotionMara,
+  "sample:ex4-motion-reem": ex4MotionReem,
+  "sample:ex4-motion-timo": ex4MotionTimo,
 } satisfies Record<string, StaticImageData>;

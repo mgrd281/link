@@ -325,8 +325,8 @@ export const CATALOG_A: Record<string, Page> = {
       tagline: "Singer · Songwriter",
       bio: "New album “Glasshouse” out now. World tour 2027, see you there.",
       location: "London",
-      photo: "ex-pop-star",
-      focal: [0.5, 0.3],
+      photo: "ex4-motion-mara",
+      motion: "mara",
       stats: [
         ["12M", "monthly listeners"],
         ["3", "albums"],

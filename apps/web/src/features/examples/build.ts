@@ -15,6 +15,8 @@ export interface Persona {
   focal?: [number, number];
   logo?: string;
   stats?: [string, string][];
+  /** A moving picture (a looping clip in /media/motion); the photo should be its first frame. */
+  motion?: string;
 }
 
 interface Image {
@@ -195,6 +197,7 @@ export function examplePage(slug: string, locale: Page["profile"]["locale"], per
       avatar: { ...h.image(persona.photo, persona.focal), alt: persona.name },
       ...(persona.photo ? { hero: { ...h.image(persona.photo, persona.focal), alt: persona.name } } : {}),
       ...(persona.logo ? { logo: { ...h.image(persona.logo), alt: persona.name } } : {}),
+      ...(persona.motion ? { motion: { src: `sample:motion-${persona.motion}` } } : {}),
       ...(persona.stats ? { stats: persona.stats.map(([value, label]) => ({ value, label })) } : {}),
       verified: false,
       locale,

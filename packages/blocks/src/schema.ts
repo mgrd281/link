@@ -226,6 +226,11 @@ export const profileSchema = z.object({
   location: z.string().max(60).optional(),
   avatar: image,
   hero: image.optional(),
+  /**
+   * A moving picture: a short silent clip (a few seconds, MP4) that loops in place of the hero photo.
+   * The photo stays the poster, and the still picture for visitors who prefer reduced motion.
+   */
+  motion: z.object({ src: z.string().min(1).max(2048) }).optional(),
   /** Logo or wordmark (transparent PNG/SVG); templates with a logo hero show it instead of the name. */
   logo: image.optional(),
   /** One line under the name ("DJ & producer · Berlin"). */

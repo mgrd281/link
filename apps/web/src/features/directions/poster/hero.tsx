@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 
 import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from "../shared/creator-kit";
+import { HeroMotion } from "../shared/motion";
 import { HeroLive } from "./live";
 import { ShareButton } from "./share";
 import { displayStyle } from "./styles";
@@ -84,7 +85,8 @@ function Stats({ stats }: { stats: NonNullable<Profile["stats"]> }) {
  * - portrait: the photo fades into the page, the name overlaps the fade;
  * - duotone: the photo is toned into the page color (screen for dark photos, multiply for light);
  * - logo: the creator's logo over a softly blurred photo (falls back to portrait without a logo).
- * On scroll the photo softens and fades away (CSS scroll-driven animation, no JavaScript).
+ * On scroll the photo softens and fades away (CSS scroll-driven animation, no JavaScript). A moving
+ * picture (profile.motion) loops silently over the photo in the portrait and duotone treatments.
  */
 export function PosterHero({
   profile,
@@ -136,6 +138,13 @@ export function PosterHero({
             priority={!preview}
             className={treatment === "duotone" ? cn("grayscale contrast-125", photo.tone === "light" ? "mix-blend-multiply" : "mix-blend-screen") : undefined}
           />
+          {/* A moving picture plays over the photo (the photo is its poster and its still version). */}
+          {profile.motion ? (
+            <HeroMotion
+              src={profile.motion.src}
+              className={treatment === "duotone" ? cn("grayscale contrast-125", photo.tone === "light" ? "mix-blend-multiply" : "mix-blend-screen") : undefined}
+            />
+          ) : null}
         </div>
       )}
       <div className={cn("relative grid justify-items-center gap-3 px-creator-gutter", treatment === "logo" && profile.logo ? "-mt-6" : treatment === "monogram" ? "-mt-12" : "-mt-16")}>

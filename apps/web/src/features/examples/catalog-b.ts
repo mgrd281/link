@@ -39,8 +39,8 @@ export const CATALOG_B: Record<string, Page> = {
       tagline: "وصفات بيتية سهلة",
       bio: "أكل البيت بطريقة بسيطة. وصفة جديدة كل أحد على يوتيوب.",
       location: "عمّان · برلين",
-      photo: "ex-food-creator",
-      focal: [0.5, 0.35],
+      photo: "ex4-motion-reem",
+      motion: "reem",
       stats: [
         ["870 ألف", "مشترك"],
         ["310", "وصفة"],
@@ -91,8 +91,8 @@ export const CATALOG_B: Record<string, Page> = {
       tagline: "خبيرة مكياج",
       bio: "مكياج العرائس والمناسبات في برلين. أشارك أسراري على إنستغرام كل يوم.",
       location: "برلين",
-      photo: "ex-makeup",
-      focal: [0.5, 0.35],
+      photo: "ex4-motion-lina",
+      motion: "lina",
       stats: [
         ["640 ألف", "متابعة"],
         ["1,100", "عروس"],
@@ -116,8 +116,8 @@ export const CATALOG_B: Record<string, Page> = {
       name: "Timo Lacht",
       tagline: "Comedy auf TikTok",
       bio: "Alltag, aber lustig. Jetzt auch live auf Tour!",
-      photo: "ex-comedian",
-      focal: [0.5, 0.35],
+      photo: "ex4-motion-timo",
+      motion: "timo",
       stats: [
         ["2,4 Mio.", "Follower"],
         ["96 Mio.", "Likes"],
@@ -237,6 +237,8 @@ export const CATALOG_B: Record<string, Page> = {
       tagline: "Schriftstellerin",
       bio: "Romane über Familien, Geheimnisse und das Meer. Mein neues Buch „Ebbe“ erscheint im März.",
       location: "Kiel",
+      photo: "ex4-motion-clara",
+      motion: "clara",
     },
     (h) => [
       h.card("„Ebbe“ vorbestellen", "Mein neuer Roman erscheint am 12. März.", "ebbe", "ex2-books"),

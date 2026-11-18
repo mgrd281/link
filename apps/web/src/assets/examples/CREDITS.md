@@ -2,10 +2,13 @@
 
 Every person, business and link on the example pages (/templates) is fictional. Photos are stock photos
 used under the Unsplash License (free to use, attribution appreciated); each license was checked on the
-photo's own page. The logos (ex-logo-*.png) are original artwork made for Linkyo. People in the photos
-are models or anonymous; they have no connection to the fictional names and are not endorsing Linkyo.
+photo's own page. Moving pictures (ex4-motion-*: the poster here, the looping clip in public/media/motion)
+are Mixkit clips under the Mixkit Stock Video Free License (checked on each clip page; cut, cropped and
+re-encoded for Linkyo). The logos (ex-logo-*.png) are original artwork made for Linkyo. People in the
+photos and clips are models or anonymous; they have no connection to the fictional names and are not
+endorsing Linkyo.
 
-| File | Photographer | Photo page | License |
+| File | Photographer / source | Photo page | License |
 |---|---|---|---|
 | ex-actor.jpg | mehdi pezhvak | https://unsplash.com/photos/man-with-a-beard-looking-off-to-the-side-JyBxZzwaZ9s | Unsplash License |
 | ex-actress.jpg | FOTOGRAFÍA EDITORIAL | https://unsplash.com/photos/woman-in-shimmering-purple-evening-gown-LrYNu1zKR1I | Unsplash License |
@@ -106,6 +109,11 @@ are models or anonymous; they have no connection to the fictional names and are 
 | ex3-teacher-online.jpg | Keith Pitts for Kit (formerly ConvertKit) | https://unsplash.com/photos/man-in-black-crew-neck-t-shirt-wearing-black-headphones-GLdeWoLcJFQ | Unsplash License |
 | ex3-ui-sketch.jpg | Kelly Sikkema | https://unsplash.com/photos/a-person-writing-on-a-piece-of-paper-next-to-a-keyboard-ml1IgjV8OvY | Unsplash License |
 | ex3-workshop.jpg | Vitaly Gariev | https://unsplash.com/photos/woman-presents-to-colleagues-at-a-whiteboard-meeting-piULICqeV5Y | Unsplash License |
+| ex4-motion-clara.jpg | Mixkit (clip 4756; loop in public/media/motion/clara.mp4) | https://mixkit.co/free-stock-video/girl-smiling-portrait-in-the-library-4756/ | Mixkit Stock Video Free License |
+| ex4-motion-lina.jpg | Mixkit (clip 4883; loop in public/media/motion/lina.mp4) | https://mixkit.co/free-stock-video/a-girls-face-in-detail-while-smiling-4883/ | Mixkit Stock Video Free License |
+| ex4-motion-mara.jpg | Mixkit (clip 50326; loop in public/media/motion/mara.mp4) | https://mixkit.co/free-stock-video/talented-female-singer-in-a-fancy-old-place-50326/ | Mixkit Stock Video Free License |
+| ex4-motion-reem.jpg | Mixkit (clip 42909; loop in public/media/motion/reem.mp4) | https://mixkit.co/free-stock-video/woman-serving-eggs-in-a-pan-for-breakfast-42909/ | Mixkit Stock Video Free License |
+| ex4-motion-timo.jpg | Mixkit (clip 4535; loop in public/media/motion/timo.mp4) | https://mixkit.co/free-stock-video/portrait-of-a-smiling-man-4535/ | Mixkit Stock Video Free License |
 | ex-logo-*.png | Linkyo (original artwork) | — | © Linkyo |
 
 Unsplash License: https://unsplash.com/license

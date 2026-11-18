@@ -1197,7 +1197,9 @@
       "cancel": "Cancel",
       "save": "Save profile",
       "saved": "Profile saved",
-      "nameRequired": "Please enter the name visitors should see."
+      "nameRequired": "Please enter the name visitors should see.",
+      "motion": "Moving picture (optional)",
+      "motionHint": "Link to a short clip (3–10 s, MP4, no sound). It loops silently in place of the photo; the photo stays as its poster."
     },
     "home": {
       "title": "Hi {name}",

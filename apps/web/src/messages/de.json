@@ -1197,7 +1197,9 @@
       "cancel": "Abbrechen",
       "save": "Profil speichern",
       "saved": "Profil gespeichert",
-      "nameRequired": "Bitte gib den Namen ein, den Besucher sehen sollen."
+      "nameRequired": "Bitte gib den Namen ein, den Besucher sehen sollen.",
+      "motion": "Bewegtes Bild (optional)",
+      "motionHint": "Link zu einem kurzen Clip (3–10 Sek., MP4, ohne Ton). Er läuft stumm in Schleife statt des Fotos; das Foto bleibt die Vorschau."
     },
     "home": {
       "title": "Hallo {name}",
