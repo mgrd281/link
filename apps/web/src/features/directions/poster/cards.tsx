@@ -38,7 +38,7 @@ export function MediaRow({
   href: string;
   image: { src: string; alt: string };
   title: string;
-  subtitle?: string | undefined;
+  subtitle?: ReactNode;
   trailing?: ReactNode;
   surface: string;
   ad?: boolean | undefined;
@@ -150,7 +150,7 @@ function RowCard({ block, surface, inRail }: { block: RowBlock; surface: string;
     return <MediaRow href={block.url} image={block.image} title={block.title} subtitle={block.description} surface={surface} ad={block.affiliate} className={className} />;
   }
   if (!block.thumbnail) return null;
-  return <MediaRow href={block.url} image={block.thumbnail} title={block.title} subtitle={linkDestination(block.url)} surface={surface} ad={block.affiliate} className={className} />;
+  return <MediaRow href={block.url} image={block.thumbnail} title={block.title} subtitle={<bdi dir="ltr">{linkDestination(block.url)}</bdi>} surface={surface} ad={block.affiliate} className={className} />;
 }
 
 /**
@@ -369,7 +369,10 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
       <span className="grid min-w-0 flex-1 text-start">
         <span className="truncate text-body-lg font-semibold">{block.title}</span>
         <span className={cn("flex min-w-0 items-center gap-2 text-small", !filled && "text-creator-fg-muted")}>
-          <span className="truncate">{linkDestination(block.url)}</span>
+          <span className="truncate">
+            {/* Hosts, emails and phone numbers read left to right, also on Arabic pages (+49 …). */}
+            <bdi dir="ltr">{linkDestination(block.url)}</bdi>
+          </span>
           {block.affiliate ? <AdLabel /> : null}
         </span>
       </span>

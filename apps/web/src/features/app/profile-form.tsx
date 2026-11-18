@@ -13,7 +13,20 @@ import { useSite } from "./site-context";
 type Profile = Page["profile"];
 
 /** Name, line, bio, photos: the top of the page. Changes show in the preview while typing. */
-export function ProfileFields({ profile, onChange, errors }: { profile: Profile; onChange: (profile: Profile) => void; errors: Partial<Record<"displayName", string>> }) {
+export function ProfileFields({
+  profile,
+  onChange,
+  errors,
+  nameLabel,
+  taglineHint,
+}: {
+  profile: Profile;
+  onChange: (profile: Profile) => void;
+  errors: Partial<Record<"displayName", string>>;
+  /** The welcome flow words these for the kind of page ("Name of your shop"). */
+  nameLabel?: string | undefined;
+  taglineHint?: string | undefined;
+}) {
   const t = useTranslations("app.profile");
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -25,8 +38,8 @@ export function ProfileFields({ profile, onChange, errors }: { profile: Profile;
         image={profile.avatar}
         onImage={(image) => onChange({ ...profile, avatar: image ? { ...image, alt: profile.displayName } : { src: NO_IMAGE, alt: "" } })}
       />
-      <TextInput label={t("name")} value={profile.displayName} onValue={(displayName) => onChange({ ...profile, displayName })} maxLength={60} error={errors.displayName} autoComplete="name" />
-      <TextInput label={t("tagline")} hint={t("taglineHint")} value={profile.tagline ?? ""} onValue={(tagline) => onChange({ ...profile, tagline: tagline || undefined })} maxLength={80} />
+      <TextInput label={nameLabel ?? t("name")} value={profile.displayName} onValue={(displayName) => onChange({ ...profile, displayName })} maxLength={60} error={errors.displayName} autoComplete="name" />
+      <TextInput label={t("tagline")} hint={taglineHint ?? t("taglineHint")} value={profile.tagline ?? ""} onValue={(tagline) => onChange({ ...profile, tagline: tagline || undefined })} maxLength={80} />
       <TextArea label={t("bio")} hint={t("bioHint")} value={profile.bio} onValue={(bio) => onChange({ ...profile, bio })} max={160} />
       <TextInput label={t("location")} value={profile.location ?? ""} onValue={(location) => onChange({ ...profile, location: location || undefined })} maxLength={60} />
       <ImageInput

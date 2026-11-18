@@ -1,45 +1,75 @@
 "use client";
 
-import { detectMany, type Block, type BlockOf } from "@linkyo/blocks";
+import { detectMany } from "@linkyo/blocks";
 import { Button, cn, Icon, Logo } from "@linkyo/ui";
-import { ArrowLeft, ArrowRight, Check, PartyPopper } from "lucide-react";
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Feather, Music, Newspaper, PartyPopper, ShoppingBag, Sparkles, Store, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
+import { PlatformGlyph } from "@/features/directions/shared/creator-kit";
 import { useRouter } from "@/i18n/navigation";
 
-import { blockFromLink, newBlockId } from "./blocks";
-import { TextArea } from "./form";
+import { SwitchRow, TextArea, TextInput } from "./form";
+import { isKind, KINDS, SOCIAL_PREFIX, STARTERS, starterBlocks, type CreatorKind, type SocialPlatform, type StarterField } from "./kinds";
 import { PhonePreview, PreviewButton } from "./preview";
 import { ProfileFields, useProfileDraft } from "./profile-form";
 import { QrButton, ShareButtons } from "./share-tools";
 import { useSite } from "./site-context";
 
-const STEPS = ["you", "look", "links", "done"] as const;
+const STEPS = ["kind", "you", "look", "links", "done"] as const;
 type Step = (typeof STEPS)[number];
 
-const SOCIALS = [
-  { platform: "instagram", prefix: "instagram.com/" },
-  { platform: "tiktok", prefix: "tiktok.com/@" },
-  { platform: "youtube", prefix: "youtube.com/@" },
-  { platform: "spotify", prefix: "open.spotify.com/artist/" },
-] as const;
+const KIND_ICONS: Partial<Record<CreatorKind, LucideIcon>> = {
+  writer: Feather,
+  journalist: Newspaper,
+  business: BriefcaseBusiness,
+  shop: Store,
+  store: ShoppingBag,
+  music: Music,
+  other: Sparkles,
+};
+
+function KindIcon({ kind }: { kind: CreatorKind }): ReactNode {
+  if (kind === "tiktok" || kind === "instagram" || kind === "youtube") return <PlatformGlyph platform={kind} size="lg" />;
+  const icon = KIND_ICONS[kind];
+  return icon ? <Icon icon={icon} size="lg" /> : null;
+}
+
+/** Text fields per question (switches are rendered as switch rows). */
+const TEXT_FIELDS: Partial<Record<StarterField, { multiline?: boolean; type?: "url" | "tel" | "email" }>> = {
+  address: {},
+  phone: { type: "tel" },
+  hours: { multiline: true },
+  shopUrl: { type: "url" },
+  website: { type: "url" },
+  booking: { type: "url" },
+  email: { type: "email" },
+  book: { type: "url" },
+};
 
 /**
- * Welcome: four short steps from an empty account to a page worth sharing, with the page building
- * itself in the phone next to the form. Every step can be skipped; nothing here is final.
+ * Welcome: five short steps from an empty account to a page worth sharing, with the page building
+ * itself in the phone next to the form. It starts with what the page is for (TikTok, shop, writer …):
+ * that picks a fitting template and the few questions that matter. Every step can be skipped.
  */
 export function WelcomeScreen() {
   const t = useTranslations("app.welcome");
   const tTypes = useTranslations("dashboard.types");
   const tTemplates = useTranslations("templates");
   const router = useRouter();
-  const { doc, dispatch, account } = useSite();
-  const [step, setStep] = useState<Step>("you");
+  const tKinds = useTranslations("app.welcome.kinds");
+  const tFields = useTranslations("app.welcome.fields");
+  const tBlocks = useTranslations("app.welcome.blocks");
+  const { doc, dispatch, account, site } = useSite();
+  const [step, setStep] = useState<Step>("kind");
   const profile = useProfileDraft();
-  const [handles, setHandles] = useState<Record<string, string>>({});
+  const [kind, setKind] = useState<CreatorKind | null>(isKind(site.kind) ? site.kind : null);
+  const starter = STARTERS[kind ?? "other"];
+  const [handles, setHandles] = useState<Partial<Record<SocialPlatform, string>>>({});
+  const [values, setValues] = useState<Partial<Record<StarterField, string>>>({});
+  const [switches, setSwitches] = useState<Partial<Record<StarterField, boolean>>>({});
   const [links, setLinks] = useState("");
   const index = STEPS.indexOf(step);
   // Moving between steps puts focus on the new step's title (after it is on screen).
@@ -55,20 +85,34 @@ export function WelcomeScreen() {
     router.replace(to);
   };
 
+  /** Picking a kind applies its template right away (the phone shows it) and remembers the choice. */
+  const choose = (next: CreatorKind) => {
+    setKind(next);
+    dispatch({ type: "theme", theme: STARTERS[next].theme });
+    accountStore.updateSite((current) => ({ ...current, kind: next }));
+  };
+
   const next = () => {
     if (step === "you" && !profile.save(t("nameRequired"))) return;
     if (step === "links") {
-      const items: BlockOf<"socials">["items"] = SOCIALS.flatMap(({ platform, prefix }) => {
-        const handle = (handles[platform] ?? "").trim().replace(/^@/, "");
-        if (!handle) return [];
-        return [{ platform, url: /^https?:\/\//.test(handle) ? handle : `https://${prefix}${handle}` }];
-      });
-      const blocks: Block[] = detected.map((detection) => blockFromLink(detection, labels, doc.profile.displayName));
-      if (items.length && !doc.blocks.some((block) => block.type === "socials")) {
-        dispatch({ type: "add", block: { id: newBlockId("socials"), type: "socials", visible: true, highlight: false, items }, index: 0 });
-      }
-      const at = items.length ? 1 : 0;
-      blocks.forEach((block, i) => dispatch({ type: "add", block, index: at + i }));
+      const blocks = starterBlocks(
+        { kind: kind ?? "other", handles, values, switches, links },
+        {
+          directions: (address) => tBlocks("directions", { address }),
+          call: tBlocks("call"),
+          hours: tBlocks("hours"),
+          shop: tBlocks("shop"),
+          website: tBlocks("website"),
+          booking: tBlocks("booking"),
+          contact: tBlocks("contact"),
+          book: tBlocks("book"),
+          newsletter: tBlocks("newsletter"),
+          liveTitle: tBlocks("liveTitle"),
+          detection: labels,
+          artist: doc.profile.displayName,
+        },
+      ).filter((block) => block.type !== "socials" || !doc.blocks.some((existing) => existing.type === "socials"));
+      blocks.forEach((block, i) => dispatch({ type: "add", block, index: i }));
     }
     const following = STEPS[index + 1];
     if (following) {
@@ -100,7 +144,7 @@ export function WelcomeScreen() {
         </header>
 
         <main id="main" className="mx-auto grid w-full max-w-prose flex-1 grid-cols-1 content-start gap-8 px-5 pt-8 pb-32 md:px-10">
-          <ol aria-label={t("progress")} className="grid grid-cols-4 gap-2">
+          <ol aria-label={t("progress")} className="grid grid-cols-5 gap-2">
             {STEPS.map((key, i) => (
               <li key={key} className="grid grid-cols-1 gap-2">
                 <span aria-hidden className={cn("h-1 rounded-full transition-colors duration-standard", i <= index ? "bg-primary" : "bg-line-strong")} />
@@ -120,12 +164,56 @@ export function WelcomeScreen() {
             <p className="text-body text-fg-secondary">{t(`steps.${step}.lead`)}</p>
           </div>
 
-          {step === "you" ? <ProfileFields profile={profile.profile} onChange={profile.change} errors={profile.errors} /> : null}
+          {step === "kind" ? (
+            <fieldset className="grid min-w-0 grid-cols-1 gap-3">
+              <legend className="sr-only">{t("steps.kind.title")}</legend>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                {KINDS.map((option) => (
+                  <label
+                    key={option}
+                    className={cn(
+                      "relative flex min-w-0 cursor-pointer flex-col gap-2 rounded-lg border p-3 transition-colors duration-micro has-[:focus-visible]:focus-ring hover:bg-hover sm:p-4",
+                      kind === option ? "border-focus bg-selected" : "border-line bg-surface",
+                    )}
+                  >
+                    <input type="radio" name="kind" value={option} checked={kind === option} onChange={() => choose(option)} className="sr-only" />
+                    <span className="flex items-center justify-between gap-2">
+                      <span className={cn("grid size-control-lg place-items-center rounded-md", kind === option ? "bg-surface-elevated text-selected-fg" : "bg-canvas-muted text-fg")}>
+                        <KindIcon kind={option} />
+                      </span>
+                      {kind === option ? <Icon icon={Check} size="md" className="text-link" /> : null}
+                    </span>
+                    <span className="grid min-w-0 gap-0.5">
+                      <span className="text-body font-semibold">{tKinds(`${option}.label`)}</span>
+                      <span className="text-caption text-fg-secondary">{tKinds(`${option}.description`)}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-small text-fg-tertiary">{t("kindLater")}</p>
+            </fieldset>
+          ) : null}
+
+          {step === "you" ? (
+            <ProfileFields
+              profile={profile.profile}
+              onChange={profile.change}
+              errors={profile.errors}
+              nameLabel={tKinds(`${kind ?? "other"}.name`)}
+              taglineHint={tKinds(`${kind ?? "other"}.taglineHint`)}
+            />
+          ) : null}
 
           {step === "look" ? (
             <div className="grid grid-cols-1 gap-3">
               <TemplatePicker value={doc.theme.template} profile={doc.profile} onChange={(template) => dispatch({ type: "theme", theme: { template } })} />
               {doc.theme.template ? <p className="text-small text-fg-secondary">{tTemplates(`${doc.theme.template}.description`)}</p> : null}
+              {kind && doc.theme.template === STARTERS[kind].theme.template ? (
+                <p className="flex items-center gap-2 text-small font-medium text-link">
+                  <Icon icon={Sparkles} size="sm" />
+                  {t("lookSuggested", { kind: tKinds(`${kind}.label`) })}
+                </p>
+              ) : null}
               <p className="text-small text-fg-tertiary">{t("lookLater")}</p>
             </div>
           ) : null}
@@ -134,24 +222,81 @@ export function WelcomeScreen() {
             <div className="grid grid-cols-1 gap-6">
               <fieldset className="grid min-w-0 grid-cols-1 gap-3">
                 <legend className="mb-3 text-body font-semibold">{t("socials")}</legend>
-                {SOCIALS.map(({ platform, prefix }) => (
+                {starter.socials.map((platform) => (
                   <label key={platform} className="grid grid-cols-1 gap-2">
                     <span className="text-small">{t(`platforms.${platform}`)}</span>
                     <span dir="ltr" className="flex h-control-lg items-center rounded-md border border-line-input bg-surface-elevated px-3 focus-within:border-focus focus-within:focus-ring">
-                      <span className="shrink-0 text-fg-tertiary select-none">{prefix}</span>
+                      <span className="shrink-0 text-fg-tertiary select-none">{SOCIAL_PREFIX[platform]}</span>
                       <input
                         value={handles[platform] ?? ""}
                         onChange={(event) => setHandles((current) => ({ ...current, [platform]: event.target.value }))}
                         autoCapitalize="none"
                         spellCheck={false}
+                        inputMode={platform === "whatsapp" ? "tel" : undefined}
                         className="h-full min-w-0 flex-1 bg-transparent text-body outline-none"
                       />
                     </span>
                   </label>
                 ))}
               </fieldset>
+              {starter.fields.length ? (
+                <fieldset className="grid min-w-0 grid-cols-1 gap-4">
+                  <legend className="mb-3 text-body font-semibold">{tKinds(`${kind ?? "other"}.extras`)}</legend>
+                  {starter.fields.map((field) => {
+                    const spec = TEXT_FIELDS[field];
+                    if (!spec) {
+                      return (
+                        <SwitchRow
+                          key={field}
+                          label={tFields(`${field}.label`)}
+                          description={tFields(`${field}.hint`)}
+                          checked={switches[field] ?? false}
+                          onChecked={(checked) => setSwitches((current) => ({ ...current, [field]: checked }))}
+                        />
+                      );
+                    }
+                    if (spec.multiline) {
+                      return (
+                        <TextArea
+                          key={field}
+                          label={tFields(`${field}.label`)}
+                          hint={tFields(`${field}.hint`)}
+                          value={values[field] ?? ""}
+                          onValue={(value) => setValues((current) => ({ ...current, [field]: value }))}
+                          max={600}
+                          rows={3}
+                        />
+                      );
+                    }
+                    return (
+                      <TextInput
+                        key={field}
+                        label={tFields(`${field}.label`)}
+                        hint={tFields(`${field}.hint`)}
+                        value={values[field] ?? ""}
+                        onValue={(value) => setValues((current) => ({ ...current, [field]: value }))}
+                        type={spec.type}
+                        ltr={spec.type !== undefined}
+                        inputMode={spec.type}
+                        autoCapitalize={spec.type ? "none" : undefined}
+                        spellCheck={spec.type ? false : undefined}
+                        maxLength={field === "address" ? 100 : 200}
+                      />
+                    );
+                  })}
+                </fieldset>
+              ) : null}
               <div className="grid grid-cols-1 gap-2">
-                <TextArea label={t("links")} hint={t("linksHint")} value={links} onValue={setLinks} max={2000} rows={4} dir="ltr" placeholder="https://" />
+                <TextArea
+                  label={tKinds(`${kind ?? "other"}.links`)}
+                  hint={tKinds(`${kind ?? "other"}.linksHint`)}
+                  value={links}
+                  onValue={setLinks}
+                  max={2000}
+                  rows={4}
+                  dir="ltr"
+                  placeholder="https://"
+                />
                 {detected.length ? (
                   <ul className="flex flex-wrap gap-2" aria-label={t("found")}>
                     {detected.map((detection) => (

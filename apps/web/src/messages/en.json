@@ -1340,6 +1340,11 @@
       "stepOf": "Step {n} of {total}",
       "nameRequired": "Please enter the name visitors should see.",
       "steps": {
+        "kind": {
+          "short": "Type",
+          "title": "What describes you best?",
+          "lead": "We'll pick a fitting template and only ask what you actually need."
+        },
         "you": {
           "short": "You",
           "title": "Who's behind the page?",
@@ -1367,7 +1372,12 @@
         "instagram": "Instagram",
         "tiktok": "TikTok",
         "youtube": "YouTube",
-        "spotify": "Spotify (artist ID)"
+        "spotify": "Spotify (artist ID)",
+        "x": "X",
+        "threads": "Threads",
+        "linkedin": "LinkedIn",
+        "facebook": "Facebook",
+        "whatsapp": "WhatsApp (number with country code)"
       },
       "links": "Important links (optional)",
       "linksHint": "Paste one or more links — a song, a video, your shop. We make the right blocks.",
@@ -1377,7 +1387,155 @@
       "back": "Back",
       "continue": "Continue",
       "finish": "Create my page",
-      "previewLabel": "Live preview"
+      "previewLabel": "Live preview",
+      "kindLater": "Nothing is final: you can change the template and content any time.",
+      "lookSuggested": "Picked for {kind}",
+      "kinds": {
+        "tiktok": {
+          "label": "TikToker",
+          "description": "Videos, lives, reach",
+          "name": "Your name on TikTok",
+          "taglineHint": "e.g. \"Comedy & everyday life · Berlin\".",
+          "links": "Videos or links that matter right now (optional)",
+          "linksHint": "A TikTok, a YouTube video, your merch — we make the right blocks.",
+          "extras": "Live"
+        },
+        "instagram": {
+          "label": "Instagram",
+          "description": "Reels, collabs, looks",
+          "name": "Your name on Instagram",
+          "taglineHint": "e.g. \"Fashion & travel · Munich\".",
+          "links": "Your most important links (optional)",
+          "linksHint": "Collabs, discount codes, your shop, a reel.",
+          "extras": "More"
+        },
+        "youtube": {
+          "label": "YouTuber",
+          "description": "Videos, channel, subscribers",
+          "name": "Your channel name",
+          "taglineHint": "e.g. \"Tech reviews every Friday\".",
+          "links": "Your latest video (optional)",
+          "linksHint": "Paste the YouTube link — it shows as a video on your page.",
+          "extras": "More"
+        },
+        "writer": {
+          "label": "Writer",
+          "description": "Books, writing, newsletter",
+          "name": "Your author name",
+          "taglineHint": "e.g. \"Novels & short stories\".",
+          "links": "Writing, readings or interviews (optional)",
+          "linksHint": "One link per line is enough.",
+          "extras": "Your writing"
+        },
+        "journalist": {
+          "label": "Journalist",
+          "description": "Articles, reporting, contact",
+          "name": "Your name",
+          "taglineHint": "e.g. \"Reporter for politics & society\".",
+          "links": "Your latest articles (optional)",
+          "linksHint": "Paste the links to your latest pieces.",
+          "extras": "For tips & requests"
+        },
+        "business": {
+          "label": "Work & business",
+          "description": "Services, bookings, contact",
+          "name": "Name (you or your company)",
+          "taglineHint": "e.g. \"Wedding & event photography\".",
+          "links": "Work or references (optional)",
+          "linksHint": "Projects, portfolio, press — one link per line.",
+          "extras": "For clients"
+        },
+        "shop": {
+          "label": "Local shop",
+          "description": "Address, opening hours, call",
+          "name": "Name of your shop",
+          "taglineHint": "e.g. \"Café & bakery · since 1998\".",
+          "links": "More links (optional)",
+          "linksHint": "Menu, reviews, reservations.",
+          "extras": "For your customers"
+        },
+        "store": {
+          "label": "Online store",
+          "description": "Products, shop, offers",
+          "name": "Name of your store",
+          "taglineHint": "e.g. \"Handmade jewellery from Hamburg\".",
+          "links": "Bestsellers or collections (optional)",
+          "linksHint": "Links to products — one link per line.",
+          "extras": "Your store"
+        },
+        "music": {
+          "label": "Music",
+          "description": "Songs, shows, releases",
+          "name": "Your artist name",
+          "taglineHint": "e.g. \"DJ & producer · Berlin\".",
+          "links": "Your latest song or video (optional)",
+          "linksHint": "Spotify, Apple Music, YouTube — we recognise the link.",
+          "extras": "More"
+        },
+        "other": {
+          "label": "Something else",
+          "description": "Everything in one place",
+          "name": "Name",
+          "taglineHint": "e.g. \"Coach · podcast · Berlin\".",
+          "links": "Important links (optional)",
+          "linksHint": "Paste one or more links — a song, a video, your shop. We make the right blocks.",
+          "extras": "More"
+        }
+      },
+      "fields": {
+        "address": {
+          "label": "Address",
+          "hint": "Visitors get a \"Directions\" button to Google Maps."
+        },
+        "phone": {
+          "label": "Phone",
+          "hint": "One tap and your phone rings."
+        },
+        "hours": {
+          "label": "Opening hours",
+          "hint": "e.g. \"Mon–Fri 8am–6pm, Sat 9am–2pm\"."
+        },
+        "shopUrl": {
+          "label": "Link to your store",
+          "hint": "Becomes the highlighted main button."
+        },
+        "website": {
+          "label": "Website",
+          "hint": ""
+        },
+        "booking": {
+          "label": "Booking link",
+          "hint": "e.g. Calendly — highlighted on your page."
+        },
+        "email": {
+          "label": "Email for requests",
+          "hint": "Shown as a \"Contact\" button."
+        },
+        "book": {
+          "label": "Link to your book",
+          "hint": "Publisher, shop or bookstore."
+        },
+        "newsletter": {
+          "label": "Show a newsletter sign-up",
+          "hint": "Readers sign up right on your page."
+        },
+        "tiktokLive": {
+          "label": "I go live on TikTok",
+          "hint": "Shows a live card; add the next time later."
+        }
+      },
+      "blocks": {
+        "directions": "Directions: {address}",
+        "call": "Call",
+        "hours": "Opening hours",
+        "shop": "Visit the store",
+        "website": "Website",
+        "booking": "Book an appointment",
+        "contact": "Contact",
+        "book": "My book",
+        "newsletter": "Subscribe to the newsletter",
+        "liveTitle": "Live on TikTok"
+      }
     },
     "ownPage": {
       "label": "Page actions",

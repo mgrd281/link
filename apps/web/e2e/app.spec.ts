@@ -65,17 +65,24 @@ test.describe("accounts", () => {
 
   test("sign up → welcome → dashboard, then log out and back in", async ({ page }) => {
     const { name, email } = await signUp(page);
-    // Step 1: who you are.
-    await page.getByLabel("Name", { exact: true }).fill("Mila Aurel");
+    // Step 1: what the page is for; it picks the template and the questions.
+    await expect(page.getByRole("heading", { name: "What describes you best?" })).toBeVisible();
+    await page.getByText("Music", { exact: true }).click();
+    await expect(page.getByRole("radio", { name: /^Music/ })).toBeChecked();
+    await page.getByRole("button", { name: "Continue" }).click();
+    // Step 2: who you are, worded for the kind.
+    await expect(page.getByRole("heading", { name: "Who's behind the page?" })).toBeFocused();
+    await page.getByLabel("Your artist name").fill("Mila Aurel");
     await page.getByLabel("Short bio").fill("DJ and producer from Berlin.");
     await page.getByRole("button", { name: "Continue" }).click();
-    // Step 2: look. The live preview follows the choice.
+    // Step 3: look, pre-selected for the kind. The live preview follows the choice.
     await expect(page.getByRole("heading", { name: "Pick a look" })).toBeFocused();
+    await expect(page.getByText("Picked for Music")).toBeVisible();
     await page.getByText("Pulse", { exact: true }).click();
     await page.getByRole("button", { name: "Continue" }).click();
-    // Step 3: links.
+    // Step 4: links.
     await page.getByLabel("Instagram").fill("milaaurel");
-    await page.getByLabel("Important links (optional)").fill("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC https://www.youtube.com/watch?v=aqz-KE-bpKQ");
+    await page.getByLabel("Your latest song or video (optional)").fill("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC https://www.youtube.com/watch?v=aqz-KE-bpKQ");
     await expect(page.getByRole("list", { name: "Recognised links" }).getByRole("listitem")).toHaveCount(2);
     await page.getByRole("button", { name: "Create my page" }).click();
     await expect(page.getByRole("heading", { name: "Your page is ready, Mila Aurel" })).toBeVisible();
@@ -105,6 +112,27 @@ test.describe("accounts", () => {
     // Back where they wanted to go.
     await page.waitForURL("**/en/app/design");
     await expect(page.getByRole("heading", { name: "Design", level: 1 })).toBeVisible();
+  });
+
+  test("a shop owner gets the shop template and is asked for address, phone and opening hours", async ({ page }) => {
+    await signUp(page);
+    await page.getByText("Local shop", { exact: true }).click();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByLabel("Name of your shop").fill("Café Rosa");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByText("Picked for Local shop")).toBeVisible();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByLabel("Instagram").fill("cafe.rosa");
+    await page.getByLabel("Address").fill("Hauptstraße 5, Berlin");
+    await page.getByLabel("Phone").fill("+49 30 123456");
+    await page.getByLabel("Opening hours").fill("Mon–Fri 8am–6pm");
+    await page.getByRole("button", { name: "Create my page" }).click();
+    await expect(page.getByRole("heading", { name: "Your page is ready, Café Rosa" })).toBeVisible();
+    await page.getByRole("button", { name: "Keep editing my page" }).click();
+    await page.waitForURL("**/en/app/editor");
+    await expect(page.getByText("5 blocks")).toBeVisible();
+    await expect(page.getByText("Directions: Hauptstraße 5, Berlin").first()).toBeVisible();
+    await expect(page.getByText("Call", { exact: true }).first()).toBeVisible();
   });
 
   test("forgot password sets a new one (demo) and it works", async ({ page }) => {

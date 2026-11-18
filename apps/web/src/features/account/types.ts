@@ -29,6 +29,8 @@ export interface Site {
   legal: Legal;
   /** Finished (or skipped) the welcome flow. */
   onboarded: boolean;
+  /** What the page is for (TikTok, shop, writer …), chosen in the welcome flow; picks templates and tips. */
+  kind?: string | undefined;
   /** Set when the Linkyo team prepared this page before sign-up; `seen` once the welcome is dismissed. */
   prepared?: { at: string; seen?: boolean } | undefined;
   updatedAt: string;
