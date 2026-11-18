@@ -4,6 +4,9 @@ import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { pageSchema } from "@linkyo/blocks";
 import { z } from "zod";
 
+import { EXAMPLES } from "@/features/examples/catalog";
+import { isLook, LOOKS } from "@/features/examples/looks";
+
 import { journalistAr, journalistDe, journalistEn } from "./journalist";
 import { nizarAr, nizarDe } from "./nizar";
 import { PREPARED } from "./prepared";
@@ -34,7 +37,7 @@ export interface Preview {
    * An example page for a kind of creator (a fictional person), sent to anyone of that kind. It is
    * labelled as an example, and its call to action starts a new account with that kind's template.
    */
-  sample?: { kind: string };
+  sample?: { kind: string; category?: string; look?: string };
 }
 
 /** The next hh:00 in Berlin (today, or tomorrow once it has passed), as an ISO timestamp. */
@@ -98,8 +101,16 @@ const HAND_MADE: Record<string, Preview> = {
     username: "lea-hartmann",
     theme: { template: "atelier", pairing: "editorial" },
     pages: { de: journalistDe, en: journalistEn, ar: journalistAr },
-    sample: { kind: "journalist" },
+    sample: { kind: "journalist", category: "careers", look: "journalist" },
   },
+  // The example gallery (/templates): one fictional person or business per kind of page.
+  ...Object.fromEntries(
+    Object.entries(EXAMPLES).flatMap(([slug, page]): [string, Preview][] => {
+      if (!isLook(slug)) return [];
+      const look = LOOKS[slug];
+      return [[slug, { name: { [look.locale]: page.profile.displayName }, username: slug, theme: look.theme, pages: { [look.locale]: page }, sample: { kind: look.kind, category: look.category, look: slug } }]];
+    }),
+  ),
 };
 
 /** Pages the team prepared with scripts/prepare-page.mjs (checked with the page schema at start). */

@@ -10,13 +10,14 @@ import { MobileMenu } from "./mobile-menu";
 /** A floating pill navigation: in-page anchors, theme + language, one primary action. */
 export function MarketingHeader() {
   const t = useTranslations("marketing");
-  const items = [
-    { href: "#features", label: t("nav.features") },
-    { href: "#templates", label: t("nav.templates") },
-    { href: "#pricing", label: t("nav.pricing") },
-    { href: "#faq", label: t("nav.faq") },
-  ];
   const locale = useLocale();
+  // Absolute links, so the menu also works from other pages (the template gallery).
+  const items = [
+    { href: `/${locale}#features`, label: t("nav.features") },
+    { href: `/${locale}/templates`, label: t("nav.templates") },
+    { href: `/${locale}#pricing`, label: t("nav.pricing") },
+    { href: `/${locale}#faq`, label: t("nav.faq") },
+  ];
   const cta = { href: `/${locale}/signup`, label: t("nav.start") };
   const login = { href: `/${locale}/login`, label: t("nav.login") };
   return (

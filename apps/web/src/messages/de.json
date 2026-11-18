@@ -1938,5 +1938,42 @@
       "loading": "Lädt …",
       "missing": "Diese Seite gibt es nicht."
     }
+  },
+  "examples": {
+    "meta": {
+      "title": "Vorlagen & Beispiele · Linkyo",
+      "description": "40 Beispielseiten für Creator, Musik, Sport, Läden, Praxen und Berufe. Ansehen, ausprobieren und als Vorlage nutzen."
+    },
+    "eyebrow": "Vorlagen & Beispiele",
+    "title": "Finde deinen Look in 40 Beispielen",
+    "lead": "Für Creator, Läden, Praxen, Vereine und Berufe – jede Seite in eigenem Design. Öffnen, durchscrollen, mit einem Klick übernehmen.",
+    "count": "{count} Beispiele",
+    "filter": "Nach Kategorie filtern",
+    "all": "Alle",
+    "categories": {
+      "creators": "Creator",
+      "music": "Musik & Podcast",
+      "sport": "Sport",
+      "film": "Film & TV",
+      "business": "Business",
+      "public": "Öffentliches Leben",
+      "local": "Läden & Praxen",
+      "careers": "Beruf & Karriere"
+    },
+    "languages": {
+      "de": "Deutsch",
+      "en": "Englisch",
+      "ar": "Arabisch"
+    },
+    "preview": "Vorschau: {name}",
+    "open": "Seite öffnen",
+    "use": "Diese Vorlage nutzen",
+    "close": "Vorschau schließen",
+    "frame": "Beispielseite {name}",
+    "fictional": "Alle Personen, Unternehmen und Links sind erfunden; Fotos von Unsplash. Ähnlichkeiten mit echten Personen sind zufällig.",
+    "useHint": "Du startest mit diesem Design und deinen eigenen Inhalten.",
+    "cta": "Keine passende Vorlage? Starte leer – das Design passt du in Minuten an.",
+    "ctaButton": "Kostenlos starten",
+    "seeAll": "Alle {count} Beispiele ansehen"
   }
 }

@@ -9,6 +9,12 @@ import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { LinkyoDock } from "@/features/directions/shared/dock";
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
 
+/** What an example page is an example of: its gallery category, or else its kind of page. */
+async function sampleLabel(locale: string, sample: { kind: string; category?: string | undefined }) {
+  if (sample.category && sample.kind !== "journalist") return (await getTranslations({ locale, namespace: "examples.categories" }))(sample.category);
+  return (await getTranslations({ locale, namespace: "app.welcome.kinds" }))(`${sample.kind}.label`);
+}
+
 interface Props {
   params: Promise<{ locale: string; slug: string }>;
 }
@@ -28,10 +34,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const found = previewPage(slug, locale);
   if (!found) return {};
   const t = await getTranslations({ locale, namespace: "preview" });
-  const kinds = await getTranslations({ locale, namespace: "app.welcome.kinds" });
   const sample = found.preview.sample;
+  const label = sample ? await sampleLabel(locale, sample) : "";
   return {
-    title: { absolute: sample ? t("sampleTitle", { kind: kinds(`${sample.kind}.label`) }) : t("title", { name: found.page.profile.displayName }) },
+    title: { absolute: sample ? t("sampleTitle", { kind: label }) : t("title", { name: found.page.profile.displayName }) },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }
@@ -54,11 +60,10 @@ export default async function PreviewRoute({ params }: Props) {
   if (!found) notFound();
   setRequestLocale(locale);
   const t = await getTranslations("preview");
-  const kinds = await getTranslations("app.welcome.kinds");
   const theme = resolveCreatorTheme(found.preview.theme, { rtlScript: locale === "ar" });
   const name = found.preview.name[locale as "de" | "en" | "ar"] ?? found.page.profile.displayName;
   const sample = found.preview.sample;
-  const kind = sample ? kinds(`${sample.kind}.label`) : "";
+  const kind = sample ? await sampleLabel(locale, sample) : "";
   const badge = sample ? t("sampleBadge", { kind }) : t("badge", { name });
   const notes = sample
     ? [t("sampleNote", { name, kind })]
@@ -67,7 +72,7 @@ export default async function PreviewRoute({ params }: Props) {
         found.page.profile.verified ? t("verifiedNote") : null,
         found.page.blocks.some((block) => block.type === "live") ? t("liveNote") : null,
       ].filter(Boolean);
-  const claim = sample ? `/signup?kind=${sample.kind}` : `/signup?name=${found.preview.username}${found.preview.invite ? `&invite=${slug}` : ""}`;
+  const claim = sample ? `/signup?kind=${sample.kind}${sample.look ? `&look=${sample.look}` : ""}` : `/signup?name=${found.preview.username}${found.preview.invite ? `&invite=${slug}` : ""}`;
   return (
     <>
       <style>{`html,body{background-color:${theme.palette.bg}}`}</style>

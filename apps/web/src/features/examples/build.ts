@@ -1,0 +1,136 @@
+import { NO_IMAGE, type Block, type BlockOf, type Page, type Platform } from "@linkyo/blocks";
+
+/**
+ * Small helpers to write example pages compactly. Every link goes to example.com (a reserved
+ * address): the people are fictional, so nothing may point to a real account, shop or article.
+ */
+export interface Persona {
+  name: string;
+  tagline?: string;
+  bio: string;
+  location?: string;
+  /** Key of a picture in the sample media (e.g. "ex-bakery"); none = monogram. */
+  photo?: string;
+  /** Where the photo should stay in view when it is cropped (0–1, 0–1). */
+  focal?: [number, number];
+  logo?: string;
+  stats?: [string, string][];
+}
+
+interface Image {
+  src: string;
+  alt: string;
+  focal?: [number, number];
+}
+interface LinkOptions {
+  highlight?: boolean;
+  badge?: string;
+  affiliate?: boolean;
+}
+
+export function makeHelpers(slug: string, persona: Persona) {
+  let count = 0;
+  const id = (type: string) => `${type}-${++count}`;
+  const base = (type: string) => ({ id: id(type), visible: true, highlight: false });
+  const url = (path: string) => `https://example.com/${slug}/${path}`;
+  const image = (key?: string, focal?: [number, number]): Image =>
+    key ? { src: `sample:${key}`, alt: "", ...(focal ? { focal } : {}) } : { src: NO_IMAGE, alt: "" };
+  const cover = image(persona.photo, persona.focal);
+
+  return {
+    url,
+    image,
+    socials: (...platforms: Platform[]): BlockOf<"socials"> => ({
+      ...base("socials"),
+      type: "socials",
+      items: platforms.map((platform) => ({ platform, url: platform === "email" ? `mailto:hello@example.com` : url(platform) })),
+    }),
+    header: (title: string): BlockOf<"header"> => ({ ...base("header"), type: "header", title }),
+    text: (text: string): BlockOf<"text"> => ({ ...base("text"), type: "text", text }),
+    link: (title: string, path: string, options: LinkOptions = {}): BlockOf<"link"> => ({
+      ...base("link"),
+      type: "link",
+      title,
+      url: url(path),
+      highlight: options.highlight ?? false,
+      ...(options.badge ? { badge: options.badge } : {}),
+      ...(options.affiliate ? { affiliate: true } : {}),
+    }),
+    mail: (title: string, box: string, options: LinkOptions = {}): BlockOf<"link"> => ({
+      ...base("link"),
+      type: "link",
+      title,
+      url: `mailto:${box}@example.com`,
+      highlight: options.highlight ?? false,
+    }),
+    /** A phone number that cannot be dialled (German numbers never start with 0 after the area code). */
+    call: (title: string, options: LinkOptions = {}): BlockOf<"link"> => ({ ...base("link"), type: "link", title, url: "tel:+49300000000", highlight: options.highlight ?? false }),
+    video: (title: string, provider: "youtube" | "tiktok" | "instagram" | "vimeo", path: string, key?: string, duration?: number): BlockOf<"video"> => ({
+      ...base("video"),
+      type: "video",
+      title,
+      provider,
+      url: url(path),
+      poster: key ? image(key) : cover,
+      ...(duration ? { duration } : {}),
+    }),
+    music: (title: string, artist: string, kind: "single" | "ep" | "album", platforms: Platform[], releaseDate?: string): BlockOf<"music"> => ({
+      ...base("music"),
+      type: "music",
+      title,
+      artist,
+      kind,
+      cover,
+      ...(releaseDate ? { releaseDate } : {}),
+      links: platforms.map((platform) => ({ platform, url: url(`music/${platform}`) })),
+    }),
+    product: (title: string, price: number, path: string, key?: string, focal?: [number, number]): BlockOf<"product"> => ({
+      ...base("product"),
+      type: "product",
+      title,
+      price,
+      currency: "EUR",
+      url: url(path),
+      image: key ? image(key, focal) : cover,
+    }),
+    events: (title: string, items: { date: string; time?: string; name: string; city: string; venue: string; status?: "onsale" | "few" | "soldout" }[]): BlockOf<"events"> => ({
+      ...base("events"),
+      type: "events",
+      title,
+      items: items.map((item, i) => ({ ...item, url: url(`event-${i + 1}`), status: item.status ?? "onsale" })),
+    }),
+    newsletter: (title: string, description?: string): BlockOf<"newsletter"> => ({ ...base("newsletter"), type: "newsletter", title, ...(description ? { description } : {}) }),
+    live: (platform: "twitch" | "youtube" | "tiktok" | "kick" | "instagram", channel: string, title?: string): BlockOf<"live"> => ({
+      ...base("live"),
+      type: "live",
+      platform,
+      channel,
+      url: url(`live-${platform}`),
+      isLive: false,
+      ...(title ? { title } : {}),
+    }),
+    gallery: (title: string, keys: string[]): BlockOf<"gallery"> => ({ ...base("gallery"), type: "gallery", title, images: keys.map((key) => image(key)) }),
+  };
+}
+
+export type Helpers = ReturnType<typeof makeHelpers>;
+
+export function examplePage(slug: string, locale: Page["profile"]["locale"], persona: Persona, blocks: (h: Helpers) => Block[]): Page {
+  const h = makeHelpers(slug, persona);
+  return {
+    profile: {
+      username: slug,
+      displayName: persona.name,
+      bio: persona.bio,
+      ...(persona.tagline ? { tagline: persona.tagline } : {}),
+      ...(persona.location ? { location: persona.location } : {}),
+      avatar: { ...h.image(persona.photo, persona.focal), alt: persona.name },
+      ...(persona.photo ? { hero: { ...h.image(persona.photo, persona.focal), alt: persona.name } } : {}),
+      ...(persona.logo ? { logo: { ...h.image(persona.logo), alt: persona.name } } : {}),
+      ...(persona.stats ? { stats: persona.stats.map(([value, label]) => ({ value, label })) } : {}),
+      verified: false,
+      locale,
+    },
+    blocks: blocks(h),
+  };
+}

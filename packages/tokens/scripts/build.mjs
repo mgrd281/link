@@ -393,6 +393,8 @@ StyleDictionary.registerFormat({
     const cardShapes = {};
     for (const t of byPath(dictionary, ["creator", "card", "shape"])) cardShapes[t.path[3]] = px(t.$value);
     const buttonStyles = byPath(dictionary, ["creator", "button", "style"]).map((t) => t.$value);
+    const swatches = {};
+    for (const t of byPath(dictionary, ["creator", "swatch"])) swatches[t.path[2]] = t.original.$value;
 
     const json = (v) => JSON.stringify(v, null, 2);
     return `// ${HEADER}
@@ -408,6 +410,7 @@ export const creatorTokens = {
   pairings: ${json(pairings)},
   presets: ${json(presets)},
   templates: ${json(templates)},
+  swatches: ${json(swatches)},
 } as const;
 
 export type Tokens = typeof tokens;

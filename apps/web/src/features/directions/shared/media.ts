@@ -1,5 +1,7 @@
 import type { StaticImageData } from "next/image";
 
+import { exampleMedia } from "@/features/examples/media";
+
 import gearHeadphones from "@/assets/samples/gear-headphones.jpg";
 import milaLogo from "@/assets/samples/mila-logo.png";
 import nourLogo from "@/assets/samples/nour-logo.png";
@@ -71,6 +73,7 @@ export const sampleMedia = {
   "sample:video-live": videoLive,
   "sample:journalist-avatar": journalistAvatar,
   "sample:journalist-hero": journalistHero,
+  ...exampleMedia,
 } satisfies Record<string, StaticImageData>;
 
 export type SampleKey = keyof typeof sampleMedia;

@@ -1938,5 +1938,42 @@
       "loading": "Loading…",
       "missing": "This page doesn't exist."
     }
+  },
+  "examples": {
+    "meta": {
+      "title": "Templates & examples · Linkyo",
+      "description": "40 example pages for creators, music, sport, shops, practices and careers. Look, try and use them as a template."
+    },
+    "eyebrow": "Templates & examples",
+    "title": "Find your look in 40 examples",
+    "lead": "For creators, shops, practices, clubs and careers. Every page has its own design: open it, scroll through, make it yours in one click.",
+    "count": "{count} examples",
+    "filter": "Filter by category",
+    "all": "All",
+    "categories": {
+      "creators": "Creators",
+      "music": "Music & podcasts",
+      "sport": "Sport",
+      "film": "Film & TV",
+      "business": "Business",
+      "public": "Public life",
+      "local": "Local businesses",
+      "careers": "Careers"
+    },
+    "languages": {
+      "de": "German",
+      "en": "English",
+      "ar": "Arabic"
+    },
+    "preview": "Preview: {name}",
+    "open": "Open page",
+    "use": "Use this template",
+    "close": "Close preview",
+    "frame": "Example page {name}",
+    "fictional": "All people, businesses and links are fictional; photos from Unsplash. Any resemblance to real people is coincidental.",
+    "useHint": "You start with this design and your own content.",
+    "cta": "Nothing quite right? Start blank and shape the design in minutes.",
+    "ctaButton": "Start for free",
+    "seeAll": "See all {count} examples"
   }
 }

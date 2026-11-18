@@ -1,11 +1,12 @@
 import { creatorTokens } from "@linkyo/tokens";
 import { TEMPLATE_IDS } from "@linkyo/tokens/creator";
 import { Badge, cn, Icon } from "@linkyo/ui";
-import { Check, Plus, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, Plus, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
+import { LOOKS } from "@/features/examples/looks";
 import { Link } from "@/i18n/navigation";
 
 import { fullPage, PHONE_SCREEN_RATIO, phoneShots, phoneSizes } from "./assets";
@@ -68,6 +69,7 @@ export function Proof() {
 export function Templates() {
   const t = useTranslations("marketing.templates");
   const tTemplates = useTranslations("templates");
+  const tExamples = useTranslations("examples");
   const locale = useLocale();
   const shots = phoneShots(locale);
   const loop = [...TEMPLATE_IDS, ...TEMPLATE_IDS];
@@ -96,6 +98,15 @@ export function Templates() {
           </ul>
         </div>
       </MarqueeControl>
+      <div className="mt-10 flex justify-center px-5">
+        <Link
+          href="/templates"
+          className="inline-flex h-control-lg items-center gap-2 rounded-full border border-line-strong bg-surface px-6 text-body font-semibold text-fg shadow-e1 transition-colors duration-micro hover:bg-surface-elevated focus-visible:focus-ring"
+        >
+          {tExamples("seeAll", { count: Object.keys(LOOKS).length })}
+          <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+        </Link>
+      </div>
     </section>
   );
 }

@@ -58,7 +58,8 @@ describe("creator palette contrast guard (brand §4.3)", () => {
       }
     }
     expect(failures.slice(0, 10)).toEqual([]);
-  });
+    // ~2 s alone; generous limit so it stays green when every package tests in parallel.
+  }, 30_000);
 
   it("handles extreme seeds", () => {
     for (const accent of ["#FFFFFF", "#000000", "#D4FF3A", "#FFFF00", "#0000FF", "#808080", "#FF00FF", "#00FFFF"]) {

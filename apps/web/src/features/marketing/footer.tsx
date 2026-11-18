@@ -17,18 +17,18 @@ export function MarketingFooter() {
         </div>
         <nav aria-label={t("product")} className="grid content-start gap-3">
           <p className="text-small font-semibold">{t("product")}</p>
-          <a href="#templates" className={linkClass}>
+          <Link href="/templates" className={linkClass}>
             {t("templates")}
-          </a>
-          <a href="#analytics" className={linkClass}>
+          </Link>
+          <Link href="/#analytics" className={linkClass}>
             {t("analytics")}
-          </a>
-          <a href="#pricing" className={linkClass}>
+          </Link>
+          <Link href="/#pricing" className={linkClass}>
             {t("pricing")}
-          </a>
-          <a href="#faq" className={linkClass}>
+          </Link>
+          <Link href="/#faq" className={linkClass}>
             {t("faq")}
-          </a>
+          </Link>
         </nav>
         <nav aria-label={t("resources")} className="grid content-start gap-3">
           <p className="text-small font-semibold">{t("resources")}</p>
