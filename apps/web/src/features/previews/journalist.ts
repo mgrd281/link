@@ -19,6 +19,8 @@ interface Copy {
   appearances: string;
   events: { name: string; city: string; venue: string }[];
   newsletter: [string, string];
+  /** Mailbox names in the reader's language (tips@ / hinweise@). */
+  mail: { tips: string; press: string; desk: string };
 }
 
 const avatar = { src: "sample:journalist-avatar", alt: "", focal: [0.5, 0.35] as [number, number] };
@@ -49,14 +51,14 @@ function page(locale: Page["profile"]["locale"], copy: Copy): Page {
           { platform: "x", url: "https://example.com/lea-hartmann/x" },
           { platform: "bluesky", url: "https://example.com/lea-hartmann/bluesky" },
           { platform: "instagram", url: "https://example.com/lea-hartmann/instagram" },
-          { platform: "email", url: "mailto:redaktion@example.com" },
+          { platform: "email", url: `mailto:${copy.mail.desk}@example.com` },
         ],
       },
       { id: "latest", type: "header", visible: true, highlight: false, title: copy.latest },
       ...copy.stories.map(([title, badge], i) => link(`story-${i + 1}`, title, `https://example.com/lea-hartmann/recherche-${i + 1}`, i === 0 ? { badge } : {})),
       { id: "contact", type: "header", visible: true, highlight: false, title: copy.contact },
-      link("tips", copy.tips, "mailto:hinweise@example.com", { highlight: true }),
-      link("press", copy.press, "mailto:presse@example.com"),
+      link("tips", copy.tips, `mailto:${copy.mail.tips}@example.com`, { highlight: true }),
+      link("press", copy.press, `mailto:${copy.mail.press}@example.com`),
       {
         id: "appearances",
         type: "events",
@@ -103,6 +105,7 @@ export const journalistDe = page("de", {
     { name: "Lesung: Mieten-Kartell", city: "Hamburg", venue: "Kulturforum" },
   ],
   newsletter: ["Recherche-Newsletter, jeden Freitag", "Was ich diese Woche herausgefunden habe – kurz und belegt."],
+  mail: { tips: "hinweise", press: "presse", desk: "redaktion" },
 });
 
 export const journalistEn = page("en", {
@@ -127,9 +130,10 @@ export const journalistEn = page("en", {
   appearances: "Appearances",
   events: [
     { name: "Panel: press freedom", city: "Berlin", venue: "Literaturhaus" },
-    { name: "Reading: The Rent Cartel", city: "Hamburg", venue: "Kulturforum" },
+    { name: "Reading: Rent Cartel", city: "Hamburg", venue: "Kulturforum" },
   ],
   newsletter: ["Investigations newsletter, every Friday", "What I found out this week, short and sourced."],
+  mail: { tips: "tips", press: "press", desk: "newsroom" },
 });
 
 export const journalistAr = page("ar", {
@@ -157,4 +161,5 @@ export const journalistAr = page("ar", {
     { name: "قراءة: كارتل الإيجارات", city: "هامبورغ", venue: "Kulturforum" },
   ],
   newsletter: ["نشرة التحقيقات، كل جمعة", "ما اكتشفته هذا الأسبوع، باختصار ومع المصادر."],
+  mail: { tips: "tips", press: "press", desk: "newsroom" },
 });
