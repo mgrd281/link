@@ -2,6 +2,7 @@ import { creatorTokens } from "@linkyo/tokens";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import type { CreatorKind } from "@/features/app/kinds";
+import { STAR_LOOKS } from "@/features/previews/stars-looks";
 
 /**
  * The example gallery: one fictional person or business per kind of page, each in its own look.
@@ -11,7 +12,7 @@ import type { CreatorKind } from "@/features/app/kinds";
 /** Accent colors come from the tokens (no raw colors in app code). */
 const SW = creatorTokens.swatches;
 
-export const CATEGORIES = ["creators", "online", "tech", "music", "sport", "film", "business", "public", "local", "careers"] as const;
+export const CATEGORIES = ["creators", "online", "tech", "music", "sport", "film", "business", "public", "local", "careers", "people"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export interface Look {
@@ -89,3 +90,19 @@ export const LOOKS = {
 export type LookId = keyof typeof LOOKS;
 
 export const isLook = (value: unknown): value is LookId => typeof value === "string" && value in LOOKS;
+
+/**
+ * Pages of real people in the gallery ("Well-known people"): unofficial concept pages (ADR 0020) and
+ * prepared previews. Only their look and kind, so "Use this template" starts with that design.
+ */
+export const PEOPLE_LOOKS: Record<string, { kind: CreatorKind; theme: CreatorThemeConfig }> = {
+  ...STAR_LOOKS,
+  nizar: { kind: "tiktok", theme: { template: "nocturne" } },
+};
+
+/** The look behind a gallery card: an example's, or a well-known person's page. */
+export function findLook(value: string | null): { kind: CreatorKind; theme: CreatorThemeConfig } | null {
+  if (!value) return null;
+  if (isLook(value)) return LOOKS[value];
+  return Object.hasOwn(PEOPLE_LOOKS, value) ? (PEOPLE_LOOKS[value] ?? null) : null;
+}

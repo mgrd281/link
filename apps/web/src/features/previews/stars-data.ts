@@ -1,9 +1,7 @@
 import { NO_IMAGE } from "@linkyo/blocks";
-import { creatorTokens } from "@linkyo/tokens";
 
 import type { Star } from "./stars";
-
-const SW = creatorTokens.swatches;
+import { STAR_LOOKS } from "./stars-looks";
 
 /** Generated from verified research (official links, oEmbed-checked videos, free-licensed photos). */
 export const STARS: Star[] = [
@@ -19,7 +17,7 @@ export const STARS: Star[] = [
     music: [{ title: { de: "Doctor", en: "Doctor", ar: "دكتور" }, kind: "single", links: [{ platform: "spotify", url: "https://open.spotify.com/track/0qIsAN3bvWiwp8e7Rf0LQF" }, { platform: "applemusic", url: "https://music.apple.com/us/album/doctor-single/1790094282" }, { platform: "deezer", url: "https://www.deezer.com/en/album/696534981" }] }, { title: { de: "Wein", en: "Wein", ar: "وين" }, kind: "single", links: [{ platform: "spotify", url: "https://open.spotify.com/track/1QSMPPfQD7uMBbT0KN1ey2" }, { platform: "applemusic", url: "https://music.apple.com/us/album/wein-single/1756739174" }, { platform: "deezer", url: "https://www.deezer.com/en/album/614113672" }] }],
     articles: [{ title: "Al Shami (singer)", url: "https://en.wikipedia.org/wiki/Al_Shami_(singer)", source: "Wikipedia", language: "en" }, { title: "Al Shami Is on a Charm Offensive", url: "https://www.gqmiddleeast.com/article/al-shami-is-on-a-charm-offensive", source: "GQ Middle East", language: "en" }, { title: "Youngest artist to reach No.1 on the Billboard Arabia Hot 100 chart (male)", url: "https://www.guinnessworldrecords.com/world-records/771463-youngest-artist-to-reach-no-1-on-a-billboard-arabic-chart", source: "Guinness World Records", language: "en" }, { title: "مشوار قصير ونجوميّة سريعة.. لماذا يبتعد الشّامي الآن في عزّ نجاحه؟", url: "https://www.annahar.com/lifestyle/arts/366692/مشوار-قصير-ونجومية-سريعة-لماذا-يبتعد-الشامي-الن-في-عز-نجاحه", source: "Annahar", language: "ar" }],
     photo: "https://i.ytimg.com/vi/rhOAyPKHWEo/maxresdefault.jpg",
-    theme: { template: "nocturne", accent: SW.saffron, buttonStyle: "glass" },
+    theme: STAR_LOOKS.alshami.theme,
   },
   {
     slug: "cristiano",
@@ -34,7 +32,7 @@ export const STARS: Star[] = [
     articles: [{ title: "Cristiano Ronaldo", url: "https://en.wikipedia.org/wiki/Cristiano_Ronaldo", source: "Wikipedia", language: "en" }, { title: "كريستيانو رونالدو", url: "https://ar.wikipedia.org/wiki/كريستيانو_رونالدو", source: "Wikipedia", language: "ar" }, { title: "Cristiano Ronaldo – Official website", url: "https://www.cristianoronaldo.com/", source: "Official site", language: "en" }, { title: "Cristiano Ronaldo announces retirement from international football", url: "https://www.aljazeera.com/sports/2026/11/5/cristiano-ronaldo-announces-retirement-from-international-football", source: "Al Jazeera", language: "en" }, { title: "Cristiano Ronaldo", url: "https://de.wikipedia.org/wiki/Cristiano_Ronaldo", source: "Wikipedia", language: "de" }],
     photo: "sample:star-cristiano",
     credit: "Bryan Berlin / WikiPortraits, CC BY-SA 4.0, Wikimedia Commons",
-    theme: { template: "nocturne", accent: SW.ruby, pairing: "stage" },
+    theme: STAR_LOOKS.cristiano.theme,
   },
   {
     slug: "donald-trump",
@@ -49,7 +47,7 @@ export const STARS: Star[] = [
     articles: [{ title: "Donald Trump", url: "https://en.wikipedia.org/wiki/Donald_Trump", source: "Wikipedia", language: "en" }, { title: "Donald Trump", url: "https://de.wikipedia.org/wiki/Donald_Trump", source: "Wikipedia", language: "de" }, { title: "Donald J. Trump – 45th & 47th President of the United States", url: "https://www.whitehouse.gov/administration/donald-j-trump/", source: "The White House", language: "en" }, { title: "Donald Trump sworn in as 47th president of the United States", url: "https://www.pbs.org/newshour/politics/donald-trump-sworn-in-as-47th-president-of-the-united-states", source: "PBS NewsHour / Associated Press", language: "en" }, { title: "دونالد ترامب", url: "https://ar.wikipedia.org/wiki/دونالد_ترامب", source: "Wikipedia", language: "ar" }],
     photo: "sample:star-donald-trump",
     credit: "Daniel Torok, The White House, Public domain (work of the U.S. federal government, PD-USGov-POTUS), Wikimedia Commons",
-    theme: { template: "daylight", accent: SW.navy, pairing: "classic" },
+    theme: STAR_LOOKS["donald-trump"].theme,
   },
   {
     slug: "elon-musk",
@@ -63,7 +61,7 @@ export const STARS: Star[] = [
     articles: [{ title: "Elon Musk", url: "https://en.wikipedia.org/wiki/Elon_Musk", source: "Wikipedia", language: "en" }, { title: "إيلون ماسك", url: "https://ar.wikipedia.org/wiki/إيلون_ماسك", source: "Wikipedia", language: "ar" }, { title: "SpaceX", url: "https://www.spacex.com/", source: "Official site (SpaceX)", language: "en" }, { title: "Musk says Tesla and SpaceX formed special committees to discuss merger: Live updates", url: "https://www.cnbc.com/2026/10/20/spacex-spcx-earnings-live-updates-q3-2026html.html", source: "CNBC", language: "en" }, { title: "Elon Musk", url: "https://de.wikipedia.org/wiki/Elon_Musk", source: "Wikipedia", language: "de" }],
     photo: "sample:star-elon-musk",
     credit: "Gage Skidmore, CC BY-SA 4.0, Wikimedia Commons",
-    theme: { template: "nocturne", accent: SW.aqua, pairing: "tech", buttonStyle: "outline" },
+    theme: STAR_LOOKS["elon-musk"].theme,
   },
   {
     slug: "friedrich-merz",
@@ -78,7 +76,7 @@ export const STARS: Star[] = [
     articles: [{ title: "Friedrich Merz", url: "https://de.wikipedia.org/wiki/Friedrich_Merz", source: "Wikipedia", language: "de" }, { title: "Friedrich Merz", url: "https://en.wikipedia.org/wiki/Friedrich_Merz", source: "Wikipedia", language: "en" }, { title: "Friedrich Merz", url: "https://www.bundeskanzler.de/bk-en/friedrich-merz", source: "Der Bundeskanzler (bundeskanzler.de)", language: "en" }, { title: "Friedrich Merz als Bundeskanzler vereidigt", url: "https://www.bundestag.de/dokumente/textarchiv/2025/kw19-de-kanzlerwahl-vereidigung-1063890", source: "Deutscher Bundestag", language: "de" }, { title: "فريدرش ميرتس", url: "https://ar.wikipedia.org/wiki/فريدرش_ميرتس", source: "Wikipedia", language: "ar" }],
     photo: "sample:star-friedrich-merz",
     credit: "Steffen Prößdorf, CC BY-SA 4.0, Wikimedia Commons",
-    theme: { template: "daylight", accent: SW["ink-blue"], pairing: "modern", buttonStyle: "soft" },
+    theme: STAR_LOOKS["friedrich-merz"].theme,
   },
   {
     slug: "jeff-bezos",
@@ -93,7 +91,7 @@ export const STARS: Star[] = [
     articles: [{ title: "Jeff Bezos", url: "https://en.wikipedia.org/wiki/Jeff_Bezos", source: "Wikipedia", language: "en" }, { title: "جيف بيزوس", url: "https://ar.wikipedia.org/wiki/جيف_بيزوس", source: "Wikipedia", language: "ar" }, { title: "Bezos Expeditions", url: "https://www.bezosexpeditions.com/", source: "Official site (Bezos Expeditions)", language: "en" }, { title: "Why Jeff Bezos says he's embraced being a CEO again: It's a 'Type 2 fun' kind of job", url: "https://www.cnbc.com/make-it/2026/06/12/why-jeff-bezos-says-he-embraced-being-ceo-again-prometheus-ai.html", source: "CNBC", language: "en" }, { title: "Jeff Bezos", url: "https://de.wikipedia.org/wiki/Jeff_Bezos", source: "Wikipedia", language: "de" }],
     photo: "sample:star-jeff-bezos",
     credit: "MC1 Alexander Kubitza, U.S. Navy (Office of the Secretary of War), Public domain, Wikimedia Commons",
-    theme: { template: "daylight", accent: SW.tangerine, pairing: "modern" },
+    theme: STAR_LOOKS["jeff-bezos"].theme,
   },
   {
     slug: "messi",
@@ -112,7 +110,7 @@ export const STARS: Star[] = [
     articles: [{ title: "Lionel Messi", url: "https://de.wikipedia.org/wiki/Lionel_Messi", source: "Wikipedia", language: "de" }, { title: "MLS-Finale: Messi schnappt Thomas Müller den Titel weg", url: "https://www.sportschau.de/fussball/mehr-internationale-ligen/assist-gala-des-goat-messi-schnappt-mueller-mls-titel-weg,mls-finale-inter-miami-vancouver-whitecaps-spielbericht-100.html", source: "Sportschau", language: "de" }, { title: "208. Spiel: ein 3:0 bei Messis «letztem Tango»", url: "https://www.srf.ch/sport/fussball/fussball-allgemein/208-spiel-fuer-argentinien-ein-3-0-bei-messis-letztem-tango-mit-argentinien", source: "SRF", language: "de" }, { title: "Lionel Messi", url: "https://en.wikipedia.org/wiki/Lionel_Messi", source: "Wikipedia", language: "en" }, { title: "Inter Miami defeat Vancouver to win their first MLS Cup", url: "https://www.aljazeera.com/sports/2025/12/7/lionel-messi-inter-miami-defeat-vancouver-to-win-first-mls-cup-title", source: "Al Jazeera", language: "en" }, { title: "Named 2025 Landon Donovan MLS Most Valuable Player", url: "https://www.intermiamicf.com/news/inter-miami-cf-captain-leo-messi-named-2025-landon-donovan-mls-most-valuable-player", source: "Inter Miami CF", language: "en" }, { title: "ليونيل ميسي", url: "https://ar.wikipedia.org/wiki/ليونيل_ميسي", source: "ويكيبيديا", language: "ar" }, { title: "ميسي يسجل هدفه رقم 100 مع إنتر ميامي ويتوج بكأس الأبطال", url: "https://www.aljazeera.net/sport/2026/9/17/ميسي-إنتر-ميامي-كأس-الأبطال", source: "الجزيرة", language: "ar" }, { title: "رقم قياسي ولقب جديد في الطريق إلى نهائي الدوري الأمريكي", url: "https://www.aljazeera.net/sport/2025/11/30/ميسي-يحطم-رقما-قياسيا-ويتوج-بلقب-جديد", source: "الجزيرة", language: "ar" }],
     photo: "sample:star-messi",
     credit: "Bryan Berlin (CC BY-SA 4.0), Justine Magny (CC BY-SA 2.0), Liondartois (CC BY-SA 4.0), Hossein Zohrevand (CC BY 4.0), Francisco Javier Gutierrez Zuñiga (CC BY-SA 2.0), Wikimedia Commons",
-    theme: { template: "daylight", accent: SW.celeste, neutral: SW.celeste, tint: 0.6, pairing: "bold" },
+    theme: STAR_LOOKS.messi.theme,
   },
   {
     slug: "mo-salah",
@@ -126,7 +124,7 @@ export const STARS: Star[] = [
     articles: [{ title: "Mohamed Salah", url: "https://en.wikipedia.org/wiki/Mohamed_Salah", source: "Wikipedia", language: "en" }, { title: "محمد صلاح", url: "https://ar.wikipedia.org/wiki/محمد_صلاح", source: "Wikipedia", language: "ar" }, { title: "Mohamed Salah – Past players", url: "https://www.liverpoolfc.com/info/mohamed-salah", source: "Liverpool FC", language: "en" }, { title: "Egyptian forward Salah signs two-year contract with Turkish club Trabzonspor", url: "https://www.france24.com/en/sport/20260806-egyptian-forward-salah-signs-two-year-contract-with-turkish-club-trabzonspor", source: "France 24", language: "en" }, { title: "Mohamed Salah", url: "https://de.wikipedia.org/wiki/Mohamed_Salah", source: "Wikipedia", language: "de" }],
     photo: "sample:star-mo-salah",
     credit: "Bryan Berlin / WikiPortraits, CC BY-SA 4.0, Wikimedia Commons",
-    theme: { template: "pulse", accent: SW.wine, pairing: "bold", buttonShape: "pill" },
+    theme: STAR_LOOKS["mo-salah"].theme,
   },
   {
     slug: "mrbeast",
@@ -140,7 +138,7 @@ export const STARS: Star[] = [
     articles: [{ title: "MrBeast", url: "https://en.wikipedia.org/wiki/MrBeast", source: "Wikipedia", language: "en" }, { title: "MrBeast", url: "https://de.wikipedia.org/wiki/MrBeast", source: "Wikipedia", language: "de" }, { title: "مستر بيست", url: "https://ar.wikipedia.org/wiki/مستر_بيست", source: "Wikipedia", language: "ar" }, { title: "MrBeast sets new YouTube record with 500m subscribers", url: "https://www.the-star.co.ke/news/2026-06-17-mrbeast-sets-youtube-record-with-500m-subscribers", source: "The Star (Kenya)", language: "en" }],
     photo: "sample:star-mrbeast",
     credit: "Tyren Redd, CC BY 4.0, Wikimedia Commons",
-    theme: { template: "pulse", accent: SW.lemon, pairing: "bold", buttonStyle: "shadow" },
+    theme: STAR_LOOKS.mrbeast.theme,
   },
   {
     slug: "nadine-njeim",
@@ -155,7 +153,7 @@ export const STARS: Star[] = [
     articles: [{ title: "Nadine Nassib Njeim", url: "https://en.wikipedia.org/wiki/Nadine_Nassib_Njeim", source: "Wikipedia", language: "en" }, { title: "نادين نسيب نجيم", url: "https://ar.wikipedia.org/wiki/نادين_نسيب_نجيم", source: "ويكيبيديا", language: "ar" }, { title: "ثنائيات ترسم ملامح دراما رمضان 2026", url: "https://www.aljazeera.net/arts/2025/11/18/ثنائيات-ترسم-ملامح-دراما-رمضان-2026", source: "Al Jazeera", language: "ar" }],
     photo: "sample:star-nadine-njeim",
     credit: "MTV Lebanon, CC BY 3.0, Wikimedia Commons",
-    theme: { template: "daylight", accent: SW.rose, pairing: "elegant", buttonShape: "pill" },
+    theme: STAR_LOOKS["nadine-njeim"].theme,
   },
   {
     slug: "taim-hassan",
@@ -169,7 +167,7 @@ export const STARS: Star[] = [
     works: [{ title: { de: "Al Hayba", en: "Al Hayba", ar: "الهيبة" }, year: 2017, url: "https://en.wikipedia.org/wiki/Al_Hayba" }, { title: { de: "Al Zind: Thi'b Al Assi", en: "Al Zind: Thi'b Al Assi", ar: "الزند: ذئب العاصي" }, year: 2023, url: "https://ar.wikipedia.org/wiki/الزند:_ذئب_العاصي_(مسلسل)" }, { title: { de: "Taht Sabe' Ard", en: "Taht Sabe' Ard", ar: "تحت سابع أرض" }, year: 2025, url: "https://ar.wikipedia.org/wiki/تحت_سابع_أرض_(مسلسل)" }, { title: { de: "Mawlana", en: "Mawlana", ar: "مولانا" }, year: 2026, url: "https://ar.wikipedia.org/wiki/مولانا_(مسلسل)" }],
     articles: [{ title: "Taim Hasan", url: "https://en.wikipedia.org/wiki/Taim_Hasan", source: "Wikipedia", language: "en" }, { title: "تيم حسن", url: "https://ar.wikipedia.org/wiki/تيم_حسن", source: "ويكيبيديا", language: "ar" }, { title: "نجاح عالمي لـ\"مولانا\"... تيم حسن يواصل تحطيم الأرقام القياسية", url: "https://www.annahar.com/lifestyle/arts/287680/نجاح-عالمي-لـ-مولانا-تيم-حسن-يواصل-تحطيم-الأرقام-القياسية", source: "Annahar", language: "ar" }, { title: "ثنائيات ترسم ملامح دراما رمضان 2026", url: "https://www.aljazeera.net/arts/2025/11/18/ثنائيات-ترسم-ملامح-دراما-رمضان-2026", source: "Al Jazeera", language: "ar" }],
     photo: NO_IMAGE,
-    theme: { template: "nocturne", accent: SW.oxblood, buttonStyle: "minimal" },
+    theme: STAR_LOOKS["taim-hassan"].theme,
   },
   {
     slug: "taylor-swift",
@@ -185,6 +183,6 @@ export const STARS: Star[] = [
     articles: [{ title: "Taylor Swift", url: "https://en.wikipedia.org/wiki/Taylor_Swift", source: "Wikipedia", language: "en" }, { title: "تايلور سويفت", url: "https://ar.wikipedia.org/wiki/تايلور_سويفت", source: "ويكيبيديا", language: "ar" }, { title: "Taylor Swift – Official Website", url: "https://www.taylorswift.com/", source: "taylorswift.com", language: "en" }, { title: "Taylor Swift Releases The Life Of A Showgirl: The Encore With Four New Songs", url: "https://stereogum.com/2512476/taylor-swift-releases-the-life-of-a-showgirl-the-encore-with-four-new-songs/music", source: "Stereogum", language: "en" }, { title: "Taylor Swift", url: "https://de.wikipedia.org/wiki/Taylor_Swift", source: "Wikipedia", language: "de" }],
     photo: "sample:star-taylor-swift",
     credit: "iHeartRadioCA, CC BY 3.0, Wikimedia Commons",
-    theme: { template: "atelier", accent: SW.mauve, pairing: "elegant", mode: "dark" },
+    theme: STAR_LOOKS["taylor-swift"].theme,
   },
 ];

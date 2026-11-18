@@ -21,6 +21,6 @@
 | [0017](0017-brand-violet.md) | Brand color: Linkyo Violet #9500E9 replaces Linkyo Blue (contrast-checked, status colors stay distinct) | **Applied** |
 | [0018](0018-page-kinds.md) | Welcome flow asks what the page is for (TikTok, shop, writer …) → fitting template and questions | **Applied** |
 | [0019](0019-example-gallery.md) | Template gallery with 41 fictional example pages (no real celebrities), each in its own look; "Use this template" starts with that look | **Applied** |
-| [0020](0020-concept-pages.md) | Concept pages for 12 well-known people: unlisted, noindex, labelled "Concept", official links and free-licensed photos only; not in the gallery | **Applied** |
+| [0020](0020-concept-pages.md) | Concept pages for 12 well-known people: noindex, labelled "Concept", official links and free-licensed photos only; listed in the gallery under "Well-known people" at the founder's request | **Applied** |
 | [0021](0021-more-page-kinds.md) | Seven more page kinds (affiliate, marketing, developer, designer, coach, streamer, podcast), GitHub platform, two gallery categories, 11 examples | **Applied** |
 | [0022](0022-link-buttons.md) | Link buttons: icon tile (chosen or from the address), optional second line, one primary action in the accent; LinkedIn glyph | **Applied** |

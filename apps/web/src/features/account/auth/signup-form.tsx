@@ -7,7 +7,7 @@ import { useState, type SubmitEvent } from "react";
 import { z } from "zod";
 
 import { isKind, STARTERS } from "@/features/app/kinds";
-import { isLook, LOOKS } from "@/features/examples/looks";
+import { findLook } from "@/features/examples/looks";
 import { Link } from "@/i18n/navigation";
 
 import { isStrongEnough } from "../password";
@@ -65,7 +65,7 @@ export function SignupForm() {
   // From the template gallery ("?look=…"): exactly that example's look.
   const kindParam = useSearchParam("kind");
   const lookParam = useSearchParam("look");
-  const look = isLook(lookParam) ? LOOKS[lookParam] : null;
+  const look = findLook(lookParam);
   const kind = look ? look.kind : isKind(kindParam) ? kindParam : null;
   const [typed, setTyped] = useState<string | null>(null);
   const username = typed ?? prefill;

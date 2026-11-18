@@ -4,7 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { EXAMPLES } from "@/features/examples/catalog";
 import { ExampleGallery, type GalleryItem } from "@/features/examples/gallery";
-import { LOOKS, type LookId } from "@/features/examples/looks";
+import { LOOKS, PEOPLE_LOOKS, type LookId } from "@/features/examples/looks";
 import { MarketingFooter } from "@/features/marketing/footer";
 import { MarketingHeader } from "@/features/marketing/header";
 import { PREVIEWS } from "@/features/previews/registry";
@@ -39,12 +39,46 @@ function item(slug: LookId): GalleryItem | null {
   };
 }
 
-/** /templates: the example gallery. Fictional people and businesses, each page in its own look. */
+/**
+ * A card for a real person's page (concept page or prepared preview), in the visitor's language
+ * when the page exists in it.
+ */
+function personItem(slug: string, locale: string): GalleryItem | null {
+  const preview = PREVIEWS[slug];
+  const look = PEOPLE_LOOKS[slug];
+  if (!preview || !look) return null;
+  const pageLocale = (locale in preview.pages ? locale : Object.keys(preview.pages)[0]) as "de" | "en" | "ar" | undefined;
+  const page = pageLocale ? preview.pages[pageLocale] : undefined;
+  if (!page || !pageLocale) return null;
+  const theme = resolveCreatorTheme(preview.theme, { rtlScript: pageLocale === "ar" });
+  const photo = page.profile.hero ?? page.profile.avatar;
+  return {
+    slug,
+    name: page.profile.displayName,
+    tagline: page.profile.tagline ?? page.profile.bio,
+    category: "people",
+    locale: pageLocale,
+    style: theme.cssVars,
+    photo: photo.src.startsWith("none:") ? null : photo.src,
+    logo: page.profile.logo?.src ?? null,
+    hero: theme.layout.hero,
+    links: page.blocks.flatMap((block) => (block.type === "link" ? [block.title] : [])),
+    signup: `/signup?kind=${look.kind}&look=${slug}`,
+    badge: preview.concept ? "concept" : "preview",
+  };
+}
+
+/**
+ * /templates: the example gallery. Fictional people and businesses, each page in its own look, then
+ * pages of well-known people (labelled concepts and previews, at the founder's request).
+ */
 export default async function TemplatesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("examples");
-  const items = (Object.keys(LOOKS) as LookId[]).map(item).filter((entry): entry is GalleryItem => entry !== null);
+  const examples = (Object.keys(LOOKS) as LookId[]).map(item);
+  const people = Object.keys(PEOPLE_LOOKS).map((slug) => personItem(slug, locale));
+  const items = [...examples, ...people].filter((entry): entry is GalleryItem => entry !== null);
 
   return (
     <>

@@ -2056,10 +2056,10 @@
   "examples": {
     "meta": {
       "title": "Vorlagen & Beispiele · Linkyo",
-      "description": "Über 50 Beispielseiten für Creator, Online-Händler, Affiliate, Marketing, Entwickler:innen, Musik, Sport, Läden und Berufe. Ansehen, ausprobieren und als Vorlage nutzen."
+      "description": "Über 60 Beispielseiten für Creator, Online-Händler, Affiliate, Marketing, Entwickler:innen, Musik, Sport, Läden, Berufe und bekannte Persönlichkeiten. Ansehen, ausprobieren und als Vorlage nutzen."
     },
     "eyebrow": "Vorlagen & Beispiele",
-    "title": "Finde deinen Look in über 50 Beispielen",
+    "title": "Finde deinen Look in über 60 Beispielen",
     "lead": "Für Creator, Online-Händler, Entwickler:innen, Läden, Praxen und Berufe – jede Seite in eigenem Design. Öffnen, durchscrollen, mit einem Klick übernehmen.",
     "count": "{count} Beispiele",
     "filter": "Nach Kategorie filtern",
@@ -2074,7 +2074,8 @@
       "business": "Business",
       "public": "Öffentliches Leben",
       "local": "Läden & Praxen",
-      "careers": "Beruf & Karriere"
+      "careers": "Beruf & Karriere",
+      "people": "Bekannte Persönlichkeiten"
     },
     "languages": {
       "de": "Deutsch",
@@ -2086,11 +2087,19 @@
     "use": "Diese Vorlage nutzen",
     "close": "Vorschau schließen",
     "frame": "Beispielseite {name}",
-    "fictional": "Alle Personen, Unternehmen und Links sind erfunden; Fotos von Unsplash. Ähnlichkeiten mit echten Personen sind zufällig.",
+    "fictional": "Die Beispiele sind erfunden (Fotos von Unsplash); Ähnlichkeiten mit echten Personen sind zufällig. Seiten bekannter Persönlichkeiten sind inoffizielle Konzepte aus öffentlichen Quellen, ohne Verbindung zu den Personen; Fotos von Wikimedia Commons.",
     "useHint": "Du startest mit diesem Design und deinen eigenen Inhalten.",
     "cta": "Keine passende Vorlage? Starte leer – das Design passt du in Minuten an.",
     "ctaButton": "Kostenlos starten",
     "seeAll": "Alle {count} Beispiele ansehen",
-    "featured": "Ausgewählte Beispiele"
+    "featured": "Ausgewählte Beispiele",
+    "badges": {
+      "concept": "Konzept",
+      "preview": "Vorschau"
+    },
+    "badgeNotes": {
+      "concept": "Inoffizielles Konzept aus öffentlichen Quellen: nicht die offizielle Seite, keine Verbindung zur Person.",
+      "preview": "Vorschau einer Seite, die wir für diese Person vorbereitet haben."
+    }
   }
 }

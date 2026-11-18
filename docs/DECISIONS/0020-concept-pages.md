@@ -8,9 +8,16 @@ personality).
 
 **Decision.**
 
-- **Concept previews, not templates.** Each person gets a page at `/p/{slug}` built from the same
-  `PREVIEWS` registry as prepared creator previews (ADR 0015). The pages are unlisted, `noindex`, not in
-  the gallery, the sitemap or any menu, and only reached by a direct link.
+- **Concept previews.** Each person gets a page at `/p/{slug}` built from the same `PREVIEWS` registry
+  as prepared creator previews (ADR 0015). The pages are `noindex` and not in the sitemap.
+- **Listed in the gallery (founder's decision, 18 Nov 2026).** The founder asked for every page to
+  appear in /templates "without exception", despite the advice below:
+  - the concept pages and Nizar's prepared preview sit in their own category, "Well-known people", at
+    the end of the list;
+  - each card is labelled "Concept" or "Preview", and the preview dialog says the page is unofficial;
+  - "Use this template" starts with the page's look and kind only (`PEOPLE_LOOKS`), never with the
+    person's content;
+  - removing them again is one line in `templates/page.tsx`.
 - **Labelled on the page.** Every page shows a "Concept · {name}" badge. Its info sheet says the page is
   not the person's official page and that Linkyo is not affiliated with them. The page is never
   marked verified. The call to action is a plain "Create your own page".

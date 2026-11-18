@@ -2056,10 +2056,10 @@
   "examples": {
     "meta": {
       "title": "Templates & examples · Linkyo",
-      "description": "50+ example pages for creators, online stores, affiliate, marketing, developers, music, sport, shops and careers. Look, try and use them as a template."
+      "description": "60+ example pages for creators, online stores, affiliate, marketing, developers, music, sport, shops, careers and well-known people. Look, try and use them as a template."
     },
     "eyebrow": "Templates & examples",
-    "title": "Find your look in 50+ examples",
+    "title": "Find your look in 60+ examples",
     "lead": "For creators, online stores, developers, shops, practices and careers. Every page has its own design: open it, scroll through, make it yours in one click.",
     "count": "{count} examples",
     "filter": "Filter by category",
@@ -2074,7 +2074,8 @@
       "business": "Business",
       "public": "Public life",
       "local": "Local businesses",
-      "careers": "Careers"
+      "careers": "Careers",
+      "people": "Well-known people"
     },
     "languages": {
       "de": "German",
@@ -2086,11 +2087,19 @@
     "use": "Use this template",
     "close": "Close preview",
     "frame": "Example page {name}",
-    "fictional": "All people, businesses and links are fictional; photos from Unsplash. Any resemblance to real people is coincidental.",
+    "fictional": "Examples are fictional (photos from Unsplash); any resemblance to real people is coincidental. Pages of well-known people are unofficial concepts from public sources, not affiliated with them; photos from Wikimedia Commons.",
     "useHint": "You start with this design and your own content.",
     "cta": "Nothing quite right? Start blank and shape the design in minutes.",
     "ctaButton": "Start for free",
     "seeAll": "See all {count} examples",
-    "featured": "Featured examples"
+    "featured": "Featured examples",
+    "badges": {
+      "concept": "Concept",
+      "preview": "Preview"
+    },
+    "badgeNotes": {
+      "concept": "Unofficial concept from public sources: not the official page, not affiliated with the person.",
+      "preview": "A preview of a page we prepared for this person."
+    }
   }
 }

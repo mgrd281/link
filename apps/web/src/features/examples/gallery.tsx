@@ -25,6 +25,8 @@ export interface GalleryItem {
   hero: "portrait" | "logo" | "duotone";
   links: string[];
   signup: string;
+  /** Real people: an unofficial concept page or a prepared preview, labelled as such. */
+  badge?: "concept" | "preview" | undefined;
 }
 
 const thumbSizes = "(max-width: 40rem) 50vw, (max-width: 64rem) 33vw, 25vw";
@@ -148,7 +150,7 @@ export function ExampleGallery({ items, featured, intro }: { items: GalleryItem[
               <span className="sr-only">{t("preview", { name: item.name })}</span>
               {/* The miniature is a picture of the page; the button's name says what it does. */}
               <span aria-hidden className="block">
-                <Miniature item={item} chip={t(`categories.${item.category}`)} />
+                <Miniature item={item} chip={item.badge ? t(`badges.${item.badge}`) : t(`categories.${item.category}`)} />
               </span>
             </button>
             <div className="grid gap-0.5 px-1">
@@ -156,7 +158,7 @@ export function ExampleGallery({ items, featured, intro }: { items: GalleryItem[
                 {item.name}
               </p>
               <p className="truncate text-caption text-fg-secondary">
-                {t(`categories.${item.category}`)} · {t(`languages.${item.locale}`)}
+                {item.badge ? t(`badges.${item.badge}`) : t(`categories.${item.category}`)} · {t(`languages.${item.locale}`)}
               </p>
             </div>
           </li>
@@ -189,8 +191,9 @@ export function ExampleGallery({ items, featured, intro }: { items: GalleryItem[
                     </Dialog.Close>
                   </div>
                   <p className="hidden text-small text-fg-secondary lg:block">
-                    {t(`categories.${open.category}`)} · {t(`languages.${open.locale}`)}
+                    {open.badge ? t(`badges.${open.badge}`) : t(`categories.${open.category}`)} · {t(`languages.${open.locale}`)}
                   </p>
+                  {open.badge ? <p className="text-caption text-fg-secondary">{t(`badgeNotes.${open.badge}`)}</p> : null}
                   <Link
                     href={open.signup}
                     className="inline-flex h-control-lg items-center justify-center gap-2 rounded-md bg-primary px-5 text-body font-semibold text-primary-fg shadow-e1 transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"

@@ -8,7 +8,7 @@ const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 test.describe("template gallery", () => {
   test("shows about forty examples, filters by category and is accessible", async ({ page }) => {
     await page.goto("/en/templates");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("50+ examples");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("60+ examples");
     const cards = page.getByRole("button", { name: /^Preview: / });
     expect(await cards.count()).toBeGreaterThanOrEqual(40);
     await page.getByRole("button", { name: /^Local businesses/ }).click();
@@ -19,6 +19,18 @@ test.describe("template gallery", () => {
     await expect(page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).last()).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+  });
+
+  test("well-known people are listed too, labelled as concepts, and start with their look", async ({ page }) => {
+    await page.goto("/en/templates");
+    await page.getByRole("button", { name: /^Well-known people/ }).click();
+    const cards = page.getByRole("button", { name: /^Preview: / });
+    expect(await cards.count()).toBeGreaterThanOrEqual(13);
+    await page.getByRole("button", { name: "Preview: Lionel Messi" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.locator('iframe[title="Example page Lionel Messi"]')).toHaveAttribute("src", "/en/p/messi");
+    await expect(dialog.getByText("Unofficial concept from public sources")).toBeVisible();
+    await expect(dialog.getByRole("link", { name: /Use this template/ })).toHaveAttribute("href", "/en/signup?kind=other&look=messi");
   });
 
   test("preview a page, then start with exactly that template", async ({ page }) => {
