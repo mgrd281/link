@@ -49,19 +49,33 @@ function Name({ profile, isRtl, theme }: { profile: Profile; isRtl: boolean; the
 
 function Socials({ block }: { block: BlockOf<"socials"> }) {
   return (
-    <ul className="flex flex-wrap justify-center gap-2">
+    <ul className="flex flex-wrap justify-center gap-3">
       {block.items.map((item) => (
         <li key={item.url}>
           <a
             href={item.url}
             aria-label={platformName(item.platform)}
-            className="grid size-touch-target place-items-center rounded-full text-creator-fg transition-colors duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring"
+            className="grid size-control-xl place-items-center rounded-full bg-creator-surface-2 text-creator-fg transition-[background-color,scale] duration-micro hover:bg-creator-line-strong focus-visible:focus-ring active:scale-pressed"
           >
-            <PlatformGlyph platform={item.platform} size="lg" />
+            <PlatformGlyph platform={item.platform} size="md" />
           </a>
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Headline numbers: social proof right under the name, read as "value · label". */
+function Stats({ stats }: { stats: NonNullable<Profile["stats"]> }) {
+  return (
+    <dl className="mt-1 grid w-full max-w-prose auto-cols-fr grid-flow-col divide-x divide-creator-line">
+      {stats.map((stat) => (
+        <div key={stat.label} className="flex min-w-0 flex-col-reverse items-center gap-1 px-2">
+          <dt className="text-caption text-balance text-creator-fg-muted">{stat.label}</dt>
+          <dd className="text-h3 leading-none font-bold whitespace-nowrap">{stat.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -128,9 +142,10 @@ export function PosterHero({
         {live ? <HeroLive block={live} /> : null}
         {treatment === "logo" && profile.logo ? null : <Name profile={profile} isRtl={isRtl} theme={theme} />}
         {profile.tagline ? <p className="text-small font-semibold tracking-wide text-balance uppercase">{profile.tagline}</p> : null}
+        {profile.stats?.length ? <Stats stats={profile.stats} /> : null}
         {profile.bio ? <p className="max-w-prose text-body-lg text-balance text-creator-fg-muted">{profile.bio}</p> : null}
         {socials ? (
-          <div className="pt-1">
+          <div className="pt-2">
             <Socials block={socials} />
           </div>
         ) : null}

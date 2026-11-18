@@ -254,16 +254,18 @@ test.describe("accessibility", () => {
 
 test.describe("private previews", () => {
   for (const [locale, label, cta] of [
-    ["de", "Persönliche Vorschau für Nizar", "linkyo.app/nizarals9 sichern"],
-    ["ar", "معاينة خاصة لـ نزار", "احجز linkyo.app/nizarals9"],
+    ["de", "Vorschau für Nizar", "Sichern"],
+    ["ar", "معاينة لـ نزار", "احجزها"],
   ] as const) {
     test(`are labelled, not indexed and lead to sign-up (${locale})`, async ({ page }) => {
       await page.goto(`/${locale}/p/nizar-m3e8dw`);
-      await expect(page.getByText(label)).toBeVisible();
+      await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
       // The badge is explained in the label: it shows the look after verification.
       await expect(page.getByRole("heading", { level: 1 }).getByRole("img")).toBeVisible();
       await expect(page.getByRole("complementary").first()).toContainText(locale === "de" ? "Verifizierung" : "توثيق");
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+      // The claim bar slides in once the portrait has scrolled away.
+      await page.mouse.wheel(0, 2000);
       await expect(page.getByRole("link", { name: cta })).toHaveAttribute("href", `/${locale}/signup?name=nizarals9`);
       expect(await axe(page)).toEqual([]);
     });
@@ -281,7 +283,7 @@ test("live now and the next live: hero pill, visitor's time, calendar reminder",
   await page.goto("/de/p/nizar-m3e8dw");
   await expect(page.getByRole("link", { name: "Live auf TikTok" })).toHaveAttribute("href", "https://www.tiktok.com/@nizarals9/live");
   const tonight = page.locator("#live-youtube");
-  await expect(tonight).toContainText(/(Heute|Morgen), 21:00/);
+  await expect(tonight).toContainText(/(Heute|Morgen)\s*21:00/);
   const download = page.waitForEvent("download");
   await tonight.getByRole("button", { name: "Erinnern" }).click();
   expect((await download).suggestedFilename()).toBe("live.ics");

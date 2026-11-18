@@ -340,7 +340,9 @@
     "liveAt": "{when} · live auf {platform}",
     "remindMe": "Erinnern",
     "openChannel": "Zu {platform}",
-    "calendarTitle": "Live auf {platform}: {title}"
+    "calendarTitle": "Live auf {platform}: {title}",
+    "joinLive": "Auf {platform} beitreten",
+    "remindAbout": "Erinnern: {title}"
   },
   "directions": {
     "title": "Richtungen",
@@ -1373,11 +1375,14 @@
   "preview": {
     "title": "Vorschau für {name} · Linkyo",
     "label": "Hinweis zur Vorschau",
-    "badge": "Persönliche Vorschau für {name}",
-    "note": "– nicht seine offizielle Seite. Von Linkyo aus seinen öffentlichen Kanälen erstellt.",
+    "badge": "Vorschau für {name}",
+    "note": "Nicht seine offizielle Seite – von Linkyo aus seinen öffentlichen Kanälen erstellt.",
     "ctaLabel": "Seite übernehmen",
     "cta": "{url} sichern",
     "verifiedNote": "Das Häkchen zeigt, wie die Seite nach der Verifizierung seines Kontos aussieht.",
-    "liveNote": "Live-Status und Zeiten sind Beispiele."
+    "liveNote": "Live-Status und Zeiten sind Beispiele.",
+    "more": "Mehr zur Vorschau",
+    "dockTitle": "Gefällt dir deine Seite?",
+    "dockCta": "Sichern"
   }
 }

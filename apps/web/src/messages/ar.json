@@ -340,7 +340,9 @@
     "liveAt": "{when} · مباشر على {platform}",
     "remindMe": "ذكّرني",
     "openChannel": "افتح {platform}",
-    "calendarTitle": "بث مباشر على {platform}: {title}"
+    "calendarTitle": "بث مباشر على {platform}: {title}",
+    "joinLive": "انضم على {platform}",
+    "remindAbout": "ذكّرني: {title}"
   },
   "directions": {
     "title": "الاتجاهات",
@@ -1373,11 +1375,14 @@
   "preview": {
     "title": "معاينة لـ {name} · Linkyo",
     "label": "عن هذه المعاينة",
-    "badge": "معاينة خاصة لـ {name}",
-    "note": "– ليست صفحته الرسمية. أعدّها Linkyo من قنواته العامة.",
+    "badge": "معاينة لـ {name}",
+    "note": "ليست صفحته الرسمية – أعدّها Linkyo من قنواته العامة.",
     "ctaLabel": "احصل على هذه الصفحة",
     "cta": "احجز {url}",
     "verifiedNote": "علامة التوثيق تُظهر شكل الصفحة بعد توثيق حسابه.",
-    "liveNote": "حالة البث والمواعيد أمثلة."
+    "liveNote": "حالة البث والمواعيد أمثلة.",
+    "more": "عن هذه المعاينة",
+    "dockTitle": "أعجبتك صفحتك؟",
+    "dockCta": "احجزها"
   }
 }

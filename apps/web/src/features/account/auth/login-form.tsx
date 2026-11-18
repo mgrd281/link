@@ -3,7 +3,7 @@
 import { Button, TextField } from "@linkyo/ui";
 import { AtSign } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRef, useState, type SubmitEvent } from "react";
+import { useEffect, useRef, useState, type SubmitEvent } from "react";
 
 import { Link } from "@/i18n/navigation";
 
@@ -19,7 +19,12 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<AuthError | "required" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const errorRef = useRef<HTMLDivElement>(null);
+  // After a failed attempt the message is focused once it is on screen, so it is read out.
+  useEffect(() => {
+    if (attempt > 0) errorRef.current?.querySelector<HTMLElement>("[role=alert]")?.focus();
+  }, [attempt]);
   const leaving = useLeaveWhenSignedIn();
 
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
@@ -35,8 +40,7 @@ export function LoginForm() {
     if (result.ok) return;
     setError(result.error);
     setPassword("");
-    // Move focus to the message so it is read out, then back to the password is one Tab away.
-    requestAnimationFrame(() => errorRef.current?.querySelector<HTMLElement>("[role=alert]")?.focus());
+    setAttempt((count) => count + 1);
   };
 
   return (

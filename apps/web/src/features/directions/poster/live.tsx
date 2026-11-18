@@ -6,7 +6,7 @@ import { BellRing, CalendarClock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSyncExternalStore } from "react";
 
-import { platformName } from "../shared/creator-kit";
+import { PlatformGlyph, platformName } from "../shared/creator-kit";
 
 type Live = BlockOf<"live">;
 
@@ -47,19 +47,23 @@ const capitalize = (text: string, locale: string) => text.charAt(0).toLocaleUppe
  */
 export function describeStart(startsAt: string, now: number | null, locale: string) {
   const start = new Date(startsAt);
-  const time = new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit", ...(now === null ? { timeZone: "Europe/Berlin" } : {}) }).format(start);
+  const zone = now === null ? { timeZone: "Europe/Berlin" } : {};
+  const time = new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit", ...zone }).format(start);
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "short", ...zone }).format(start);
   if (now === null) {
-    const date = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Berlin" }).format(start);
-    return { label: `${date}${comma(locale)}${time}`, relative: null, state: "upcoming" as const };
+    const date = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", ...zone }).format(start);
+    return { day: weekday, time, label: `${date}${comma(locale)}${time}`, relative: null, state: "upcoming" as const };
   }
-  const day = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
-  const days = Math.round((day(start) - day(new Date(now))) / (24 * 60 * MINUTE));
+  const dayStart = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+  const days = Math.round((dayStart(start) - dayStart(new Date(now))) / (24 * 60 * MINUTE));
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-  const dayLabel = days === 0 || days === 1 ? capitalize(rtf.format(days, "day"), locale) : new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" }).format(start);
+  const near = days === 0 || days === 1;
+  const day = near ? capitalize(rtf.format(days, "day"), locale) : weekday;
+  const dayLabel = near ? day : new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" }).format(start);
   const diff = start.getTime() - now;
   const relative = diff > 0 && diff < 12 * 60 * MINUTE ? (diff < 60 * MINUTE ? rtf.format(Math.max(1, Math.round(diff / MINUTE)), "minute") : rtf.format(Math.round(diff / (60 * MINUTE)), "hour")) : null;
   const state = diff > 0 ? ("upcoming" as const) : -diff < STALE_AFTER ? ("started" as const) : ("past" as const);
-  return { label: `${dayLabel}${comma(locale)}${time}`, relative, state };
+  return { day, time, label: `${dayLabel}${comma(locale)}${time}`, relative, state };
 }
 
 /** Adds the live to the visitor's calendar (.ics, made in the browser; nothing is sent anywhere). */
@@ -94,53 +98,47 @@ function remind(block: Live, summary: string) {
   URL.revokeObjectURL(link.href);
 }
 
-/** Status pill for a live block: LIVE now, the next start ("Today, 21:00"), or offline. */
-export function LiveStatus({ block, className }: { block: Live; className?: string }) {
+/**
+ * The next planned live as one calm row: a calendar tile (TODAY · 21:00 in the visitor's own time),
+ * what it is about, and a bell that adds it to the calendar. After it has passed, just the channel.
+ */
+export function LiveNextRow({ block, surface }: { block: Live; surface: string }) {
   const t = useTranslations("creator");
   const locale = useLocale();
   const now = useNow();
-  if (block.isLive) {
-    return (
-      <span className={cn("inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-danger-fill px-3 text-caption font-bold tracking-wide text-danger-fill-fg uppercase", className)}>
-        <span aria-hidden className="size-dot rounded-full bg-current motion-safe:animate-pulse" />
-        {t("liveNow")}
-      </span>
-    );
-  }
+  const platform = platformName(block.platform);
   const start = block.startsAt ? describeStart(block.startsAt, now, locale) : null;
-  if (start && start.state !== "past") {
-    return (
-      <span className={cn("inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full border border-creator-line-strong px-3 text-caption font-semibold text-creator-fg", className)}>
-        <Icon icon={CalendarClock} size="sm" />
-        {start.label}
-      </span>
-    );
-  }
-  return <span className={cn("shrink-0 text-small text-creator-fg-muted", className)}>{t("offline")}</span>;
-}
-
-/** "In 3 hours" and a reminder button under a scheduled live. */
-export function LiveSchedule({ block }: { block: Live }) {
-  const t = useTranslations("creator");
-  const locale = useLocale();
-  const now = useNow();
-  if (block.isLive || !block.startsAt) return null;
-  const start = describeStart(block.startsAt, now, locale);
-  if (start.state === "past") return null;
-  const summary = t("calendarTitle", { platform: platformName(block.platform), title: block.title ?? block.channel });
+  const planned = start && start.state !== "past" ? start : null;
+  const summary = t("calendarTitle", { platform, title: block.title ?? block.channel });
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      {start.state === "upcoming" ? (
+    <div id={block.id} className={cn("flex scroll-mt-20 items-center gap-4 rounded-creator-card p-3", surface)}>
+      {planned ? (
+        <span className="grid w-16 shrink-0 justify-items-center gap-1 rounded-md bg-creator-accent px-1 py-2 text-creator-accent-fg">
+          <span className="max-w-full truncate text-caption font-bold tracking-wide uppercase">{planned.day}</span>
+          <span className="text-body-lg leading-none font-bold tabular-nums">{planned.time}</span>
+        </span>
+      ) : (
+        <span className="grid size-16 shrink-0 place-items-center rounded-md bg-creator-surface-2">
+          <PlatformGlyph platform={block.platform} size="lg" />
+        </span>
+      )}
+      <a href={block.url} className="grid min-w-0 flex-1 gap-1 rounded-xs focus-visible:focus-ring">
+        <span className="line-clamp-2 text-body font-semibold leading-snug">{block.title ?? platform}</span>
+        <span className="flex min-w-0 items-center gap-2 text-small text-creator-fg-muted">
+          <PlatformGlyph platform={block.platform} size="sm" className="shrink-0" />
+          <span className="truncate">{planned?.relative ? `${platform} · ${capitalize(planned.relative, locale)}` : planned ? t("liveOn", { platform }) : `${platform} · ${t("offline")}`}</span>
+        </span>
+      </a>
+      {planned?.state === "upcoming" ? (
         <button
           type="button"
           onClick={() => remind(block, summary)}
-          className="inline-flex h-control-md items-center gap-2 rounded-creator-button border border-creator-line-strong px-4 text-small font-semibold text-creator-fg transition-colors duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring"
+          aria-label={t("remindAbout", { title: block.title ?? platform })}
+          className="grid size-control-xl shrink-0 place-items-center rounded-full border border-creator-line-strong text-creator-fg transition-colors duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring active:scale-pressed"
         >
-          <Icon icon={BellRing} size="sm" />
-          {t("remindMe")}
+          <Icon icon={BellRing} size="md" />
         </button>
       ) : null}
-      {start.relative ? <span className="text-small text-creator-fg-muted">{capitalize(start.relative, locale)}</span> : null}
     </div>
   );
 }

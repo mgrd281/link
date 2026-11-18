@@ -10,7 +10,7 @@ import { linkStyleClasses } from "@/features/creator/link-button";
 
 import { MediaImage, mediaSizes, PlatformGlyph, platformName, useCreatorFormat } from "../shared/creator-kit";
 import { ClickToLoad, NewsletterForm } from "../shared/islands";
-import { LiveSchedule, LiveStatus } from "./live";
+import { LiveNextRow } from "./live";
 import { linkDestination, RAIL_THRESHOLD, type RowBlock } from "./sections";
 import { displayStyle, pressable, railFrame, railTrack, type HeadingTag } from "./styles";
 
@@ -206,14 +206,17 @@ export function VideoFeature({ video }: { video: BlockOf<"video"> | undefined })
   );
 }
 
-/** Two or more videos: a swipeable strip, titles set on the frame like a channel shelf. */
+/**
+ * Two or more videos: a swipeable shelf. Titles sit under the frames (thumbnails often carry their
+ * own lettering), with the duration on the frame — like a streaming app's row.
+ */
 export function VideoRail({ videos }: { videos: BlockOf<"video">[] }) {
   const t = useTranslations("creator");
   return (
     <div role="region" aria-label={t("scroller", { title: t("videos") })} tabIndex={0} className={railFrame}>
       <ul className={cn("flex gap-3", railTrack)}>
         {videos.map((video) => (
-          <li key={video.id} className="w-4/5 shrink-0 snap-start @prose:w-3/4">
+          <li key={video.id} className="grid w-4/5 shrink-0 snap-start content-start gap-3 @prose:w-3/4">
             <ClickToLoad
               compact
               provider="YouTube"
@@ -221,11 +224,13 @@ export function VideoRail({ videos }: { videos: BlockOf<"video">[] }) {
               className="aspect-video rounded-creator-card"
               poster={<MediaImage src={video.poster.src} alt="" sizes={mediaSizes.column} />}
             >
-              <span aria-hidden className="absolute inset-x-0 bottom-0 flex items-end gap-2 bg-linear-to-t from-ink to-transparent p-3 pt-10 text-white">
-                <span className="line-clamp-2 min-w-0 flex-1 text-small leading-snug font-semibold">{video.title}</span>
-                {video.duration ? <Duration seconds={video.duration} className="shrink-0" /> : null}
-              </span>
+              {video.duration ? (
+                <span aria-hidden className="absolute end-2 bottom-2">
+                  <Duration seconds={video.duration} />
+                </span>
+              ) : null}
             </ClickToLoad>
+            <p className="line-clamp-2 text-body leading-snug font-semibold">{video.title}</p>
           </li>
         ))}
       </ul>
@@ -379,43 +384,37 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
 }
 
 /**
- * A live channel: LIVE now (watch), the next planned live in the visitor's own time (remind me),
- * or simply the channel. The time and reminder are a tiny client island; the rest is static.
+ * Live now: the loudest card on the page — inverted colors, a pulsing LIVE badge, what the live is
+ * about and one button. A planned or past live is a calm row instead (see LiveNextRow).
  */
 export function LiveRow({ block, surface }: { block: BlockOf<"live">; surface: string }) {
   const t = useTranslations("creator");
   const locale = useLocale();
   const f = useCreatorFormat(locale);
+  if (!block.isLive) return <LiveNextRow block={block} surface={surface} />;
   const platform = platformName(block.platform);
   return (
-    <div id={block.id} className={cn("grid scroll-mt-20 gap-4 rounded-creator-card p-4", surface)}>
-      <div className="flex items-start gap-3">
-        <span className="grid h-control-sm shrink-0 place-items-center">
-          <PlatformGlyph platform={block.platform} size="lg" />
-        </span>
-        <span className="grid min-w-0 flex-1 gap-1">
-          <span className="flex min-h-control-sm flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            <span className="truncate text-body-lg font-semibold">{platform}</span>
-            <LiveStatus block={block} />
+    <a id={block.id} href={block.url} className={cn("relative grid scroll-mt-20 gap-5 overflow-hidden rounded-creator-card bg-creator-accent p-5 text-creator-accent-fg", pressable)}>
+      <span className="flex items-center justify-between gap-3">
+        <span className="inline-flex min-w-0 items-center gap-2 text-small font-semibold">
+          <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-creator-accent-fg text-creator-accent">
+            <PlatformGlyph platform={block.platform} size="sm" />
           </span>
-          {block.title ? <span className="line-clamp-2 text-small text-creator-fg-muted">{block.title}</span> : null}
-          {block.isLive && block.viewers ? <span className="text-small text-creator-fg-muted">{t("watching", { count: f.compact(block.viewers) })}</span> : null}
+          <span className="truncate">{block.viewers ? t("watching", { count: f.compact(block.viewers) }) : <bdi dir="ltr">@{block.channel}</bdi>}</span>
         </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <a
-          href={block.url}
-          className={cn(
-            "inline-flex h-control-md items-center gap-2 rounded-creator-button px-4 text-small font-semibold transition-colors duration-micro focus-visible:focus-ring",
-            block.isLive ? "bg-creator-accent text-creator-accent-fg" : "border border-creator-line-strong text-creator-fg hover:bg-creator-surface-2",
-          )}
-        >
-          {block.isLive ? t("watchLive") : t("openChannel", { platform })}
-          <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
-        </a>
-        <LiveSchedule block={block} />
-      </div>
-    </div>
+        <span className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-danger-fill px-3 text-caption font-bold tracking-wide text-danger-fill-fg uppercase">
+          <span aria-hidden className="size-dot rounded-full bg-current motion-safe:animate-pulse" />
+          {t("liveNow")}
+        </span>
+      </span>
+      <span className="font-creator-display text-h2 leading-tight text-balance" style={displayStyle}>
+        {block.title ?? t("liveOn", { platform })}
+      </span>
+      <span className="inline-flex h-control-lg items-center justify-center gap-2 rounded-creator-button bg-creator-accent-fg px-5 text-body font-semibold text-creator-accent">
+        {t("joinLive", { platform })}
+        <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
+      </span>
+    </a>
   );
 }
 

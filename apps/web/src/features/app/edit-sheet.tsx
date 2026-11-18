@@ -4,7 +4,7 @@ import type { Block } from "@linkyo/blocks";
 import { Button, ConfirmDialog, Icon } from "@linkyo/ui";
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { blockIcon } from "@/features/directions/editor/ui";
 
@@ -30,6 +30,11 @@ function EditForm({ source, creating, onDone }: { source: Block; creating: boole
   const [draft, setLocalDraft] = useState(source);
   const [errors, setErrors] = useState<FieldErrors | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [failedSaves, setFailedSaves] = useState(0);
+  // After a save that needs fixes, focus the first field to fix once it shows its error.
+  useEffect(() => {
+    if (failedSaves > 0) document.querySelector<HTMLElement>("[role=dialog] [aria-invalid=true]")?.focus();
+  }, [failedSaves]);
   const dirty = creating || draft !== source;
   const type = tTypes(source.type);
 
@@ -44,7 +49,7 @@ function EditForm({ source, creating, onDone }: { source: Block; creating: boole
     const problems = validateBlock(draft);
     if (problems) {
       setErrors(problems);
-      requestAnimationFrame(() => document.querySelector<HTMLElement>("[role=dialog] [aria-invalid=true]")?.focus());
+      setFailedSaves((count) => count + 1);
       return;
     }
     if (creating) dispatch({ type: "add", block: draft, ...(editing?.mode === "create" && editing.index !== undefined ? { index: editing.index } : {}) });

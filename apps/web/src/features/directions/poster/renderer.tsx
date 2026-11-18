@@ -32,7 +32,21 @@ import { cardSurface, pressable, railFrame, sectionTitle, type HeadingTag } from
  * same: a hero that fades away on scroll, then titled sections of flat cards — media rows that turn
  * into two-row rails when long, month tabs for dates, a two-up shop, partner tiles, video rails.
  */
-export function PosterRenderer({ page, theme, preview = false }: { page: Page; theme: ResolvedCreatorTheme; preview?: boolean }) {
+export function PosterRenderer({
+  page,
+  theme,
+  preview = false,
+  overlay,
+  dock,
+}: {
+  page: Page;
+  theme: ResolvedCreatorTheme;
+  preview?: boolean;
+  /** Shown over the top of the hero (e.g. a "preview" label); scrolls away with it. */
+  overlay?: ReactNode;
+  /** A bar pinned to the bottom that slides in once the hero has scrolled away. */
+  dock?: ReactNode;
+}) {
   const { profile } = page;
   const blocks = page.blocks.filter((block) => isBlockActive(block));
   const socials = blocks.find((block): block is BlockOf<"socials"> => block.type === "socials");
@@ -61,6 +75,7 @@ export function PosterRenderer({ page, theme, preview = false }: { page: Page; t
       ) : null}
 
       <div className="relative mx-auto max-w-creator @prose:pt-10">
+        {overlay ? <div className="absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12">{overlay}</div> : null}
         <PosterBar profile={profile} />
         <PosterHero profile={profile} socials={socials} live={live} theme={theme} preview={preview} />
 
@@ -74,7 +89,12 @@ export function PosterRenderer({ page, theme, preview = false }: { page: Page; t
             </PosterSection>
           ))}
         </Main>
-        <CreatorFooter className="px-creator-gutter" />
+        <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} />
+        {dock ? (
+          <div className="pointer-events-none sticky bottom-0 layer-sticky h-0">
+            <div className="poster-dock pointer-events-auto absolute inset-x-0 bottom-0 px-3 pb-[max(var(--spacing-3),env(safe-area-inset-bottom))]">{dock}</div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

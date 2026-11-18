@@ -4,7 +4,7 @@ import { detectMany, type Block, type BlockOf } from "@linkyo/blocks";
 import { Button, cn, Icon, Logo } from "@linkyo/ui";
 import { ArrowLeft, ArrowRight, Check, PartyPopper } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
@@ -42,6 +42,11 @@ export function WelcomeScreen() {
   const [handles, setHandles] = useState<Record<string, string>>({});
   const [links, setLinks] = useState("");
   const index = STEPS.indexOf(step);
+  // Moving between steps puts focus on the new step's title (after it is on screen).
+  const [moved, setMoved] = useState(false);
+  useEffect(() => {
+    if (moved) document.getElementById("welcome-step")?.focus();
+  }, [moved, step]);
   const detected = useMemo(() => detectMany(links), [links]);
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
 
@@ -68,12 +73,15 @@ export function WelcomeScreen() {
     const following = STEPS[index + 1];
     if (following) {
       setStep(following);
-      requestAnimationFrame(() => document.getElementById("welcome-step")?.focus());
+      setMoved(true);
     }
   };
   const back = () => {
     const previous = STEPS[index - 1];
-    if (previous) setStep(previous);
+    if (previous) {
+      setStep(previous);
+      setMoved(true);
+    }
   };
 
   return (
