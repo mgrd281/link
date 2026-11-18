@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 
 import { accountStore, useSignedIn } from "@/features/account/store";
-import type { Account, AuthError, Site } from "@/features/account/types";
+import type { Account, AuthError, Result, Site } from "@/features/account/types";
 import { editorReducer, initialEditorState, type EditorAction, type EditorDoc, type EditorState } from "@/features/directions/editor/state";
 import { blockTitle } from "@/features/directions/editor/use-editor";
 
@@ -59,6 +59,10 @@ interface SiteContextValue {
   addBlocks: (blocks: Block[], options?: { open?: boolean }) => void;
   removeBlock: (block: Block) => void;
   label: (block: Block) => string;
+  /** Where "open the page" goes: the creator's own page, or a prepared page in the team area. */
+  previewHref: string;
+  /** Saves a change still waiting for autosave right away (before exporting, for example). */
+  flush: () => void;
 }
 
 const SiteContext = createContext<SiteContextValue | null>(null);
@@ -81,14 +85,40 @@ const writeDoc = (doc: SiteDoc) =>
     theme: doc.theme,
   }));
 
+/** The signed-in creator's own page, saved to their account. */
+export function SiteProvider({ children }: { children: ReactNode }) {
+  const { account, site } = useSignedIn();
+  return (
+    <EditorProvider account={account} site={site} write={writeDoc}>
+      {children}
+    </EditorProvider>
+  );
+}
+
 /**
  * One editor for the whole dashboard. Every screen (home checklist, page, design, profile) edits the
  * same document, so one undo history covers everything, and changes autosave a moment later.
+ * `write` decides where it is saved: the creator's account, or (in the team area) a prepared page.
  */
-export function SiteProvider({ children }: { children: ReactNode }) {
+export function EditorProvider({
+  account,
+  site,
+  write,
+  previewHref = "/app/preview",
+  children,
+}: {
+  account: Account;
+  site: Site;
+  write: (doc: SiteDoc) => Result;
+  previewHref?: string;
+  children: ReactNode;
+}) {
   const t = useTranslations("app");
   const tTypes = useTranslations("dashboard.types");
-  const { account, site } = useSignedIn();
+  const writeRef = useRef(write);
+  useEffect(() => {
+    writeRef.current = write;
+  }, [write]);
   const [state, dispatch] = useReducer(siteReducer, site, (initial) => initialEditorState(toDoc(initial)));
   const doc = state.present;
   const [saved, setSaved] = useState<{ doc: SiteDoc; error: AuthError | null }>({ doc, error: null });
@@ -107,17 +137,25 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     pending.current = doc;
     const timer = window.setTimeout(() => {
       pending.current = null;
-      const result = writeDoc(doc);
+      const result = writeRef.current(doc);
       setSaved({ doc, error: result.ok ? null : result.error });
       if (!result.ok) toast({ title: t(`errors.${result.error}`), tone: "danger" });
     }, AUTOSAVE_DELAY);
     return () => window.clearTimeout(timer);
   }, [doc, saved.doc, t]);
 
+  const flush = useCallback(() => {
+    const waiting = pending.current;
+    if (!waiting) return;
+    pending.current = null;
+    const result = writeRef.current(waiting);
+    setSaved({ doc: waiting, error: result.ok ? null : result.error });
+  }, []);
+
   // Leaving, switching apps or closing the tab never loses the last change: write it right away.
   useEffect(() => {
     const flush = () => {
-      if (pending.current) writeDoc(pending.current);
+      if (pending.current) writeRef.current(pending.current);
       pending.current = null;
     };
     const onVisibility = () => {
@@ -210,6 +248,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     addBlocks,
     removeBlock,
     label,
+    previewHref,
+    flush,
   };
   return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;
 }

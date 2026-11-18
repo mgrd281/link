@@ -258,7 +258,7 @@ test.describe("private previews", () => {
     ["ar", "معاينة لـ نزار", "احجزها"],
   ] as const) {
     test(`are labelled, not indexed and lead to sign-up (${locale})`, async ({ page }) => {
-      await page.goto(`/${locale}/p/nizar-m3e8dw`);
+      await page.goto(`/${locale}/p/nizar`);
       await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
       // The badge is explained in the label: it shows the look after verification.
       await expect(page.getByRole("heading", { level: 1 }).getByRole("img")).toBeVisible();
@@ -266,21 +266,26 @@ test.describe("private previews", () => {
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
       // The claim bar slides in once the portrait has scrolled away.
       await page.mouse.wheel(0, 2000);
-      await expect(page.getByRole("link", { name: cta })).toHaveAttribute("href", `/${locale}/signup?name=nizarals9&invite=nizar-m3e8dw`);
+      await expect(page.getByRole("link", { name: cta })).toHaveAttribute("href", `/${locale}/signup?name=nizarals9&invite=nizar`);
       expect(await axe(page)).toEqual([]);
     });
   }
 
+  test("the earlier long link still leads to the short one", async ({ page }) => {
+    await page.goto("/de/p/nizar-m3e8dw");
+    await page.waitForURL("**/de/p/nizar");
+  });
+
   test("unknown previews and other languages are not found", async ({ page }) => {
     expect((await page.goto("/de/p/nizar-guess1"))?.status()).toBe(404);
-    expect((await page.goto("/en/p/nizar-m3e8dw"))?.status()).toBe(404);
+    expect((await page.goto("/en/p/nizar"))?.status()).toBe(404);
   });
 });
 
 test.use({ timezoneId: "Europe/Berlin" });
 
 test("live now and the next live: hero pill, visitor's time, calendar reminder", async ({ page }) => {
-  await page.goto("/de/p/nizar-m3e8dw");
+  await page.goto("/de/p/nizar");
   await expect(page.getByRole("link", { name: "Live auf TikTok" })).toHaveAttribute("href", "https://www.tiktok.com/@nizarals9/live");
   const tonight = page.locator("#live-youtube");
   await expect(tonight).toContainText(/(Heute|Morgen)\s*21:00/);
@@ -291,7 +296,7 @@ test("live now and the next live: hero pill, visitor's time, calendar reminder",
 
 test.describe("prepared pages for creators", () => {
   test("the invited email signs up into a ready page", async ({ page }) => {
-    await page.goto("/de/signup?name=nizarals9&invite=nizar-m3e8dw");
+    await page.goto("/de/signup?name=nizarals9&invite=nizar");
     await page.waitForLoadState("networkidle");
     await expect(page.getByRole("heading", { name: "Deine Seite ist fertig" })).toBeVisible();
     await expect(page.locator("#signup-username")).toHaveValue("nizarals9");
@@ -311,7 +316,7 @@ test.describe("prepared pages for creators", () => {
   });
 
   test("an invite link with another email, or the reserved address, is explained", async ({ page }) => {
-    await page.goto("/de/signup?name=nizarals9&invite=nizar-m3e8dw");
+    await page.goto("/de/signup?name=nizarals9&invite=nizar");
     await page.waitForLoadState("networkidle");
     await page.locator("#signup-email").fill("someone.else@example.com");
     await page.locator("#signup-password").fill(PASSWORD);

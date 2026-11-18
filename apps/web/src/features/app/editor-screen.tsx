@@ -33,7 +33,7 @@ const reorderKey = (onMove: (delta: number) => void) => (event: KeyboardEvent<HT
  * The page, top to bottom, exactly as visitors see it: the profile, then sections and their blocks.
  * Tap a row to edit it, drag (or ⌥↑/⌥↓) to move it, switch it off to hide it.
  */
-export function EditorScreen() {
+export function EditorScreen({ title, lead }: { title?: string; lead?: string } = {}) {
   const t = useTranslations("app.editor");
   const { doc, dispatch, edit, setAddOpen, label } = useSite();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -51,8 +51,8 @@ export function EditorScreen() {
 
   return (
     <Screen
-      title={t("title")}
-      lead={t("lead")}
+      title={title ?? t("title")}
+      lead={lead ?? t("lead")}
       preview
       actions={
         <>

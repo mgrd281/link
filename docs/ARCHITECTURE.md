@@ -101,6 +101,7 @@ All tables: `id uuid pk`, `created_at`, `updated_at`; **RLS enabled in the same 
 - **Music smart links:** own resolver (Apple MusicKit search by ISRC/UPC + Deezer public API + Spotify oEmbed/embeds) instead of Odesli, which is owned by Linktree ([ADR 0009](DECISIONS/0009-music-smart-links.md)).
 - **Media:** direct upload to Storage (signed URL) → variants (AVIF/WebP, 3 widths, focal-point crop, thumbhash) → CDN. Video: Mux direct upload, HLS, poster frame, captions prompt.
 - **Feeds:** `pg_cron` enqueues due connections into Supabase Queues; Edge workers batch ~50 per invocation; YouTube via channel RSS (no quota), Twitch via EventSub webhooks.
+- **Team area (`/admin`):** the Linkyo team prepares pages for top creators in the same editor creators use, with roles → permissions (owner, admin, editor, viewer), invites stored only as SHA-256, a verified badge, Draft → Ready → publish, and an activity log ([ADR 0016](DECISIONS/0016-team-area.md)). Phase 0 keeps team data in the browser and publishes via `scripts/prepare-page.mjs --add`; Phase 1 moves it to Supabase with RLS mirroring the permission table.
 - **Realtime:** dashboard ↔ iOS edits sync through Supabase Realtime (postgres changes on `blocks`), last-writer-wins per field with `updated_at` guards; iOS queues offline edits (SwiftData) and replays them.
 
 ## 6. Design system pipeline

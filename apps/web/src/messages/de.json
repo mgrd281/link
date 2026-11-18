@@ -1383,7 +1383,8 @@
       "label": "Seitenaktionen",
       "back": "Dashboard",
       "edit": "Bearbeiten"
-    }
+    },
+    "teamArea": "Teambereich"
   },
   "preview": {
     "title": "Vorschau für {name} · Linkyo",
@@ -1397,5 +1398,323 @@
     "more": "Mehr zur Vorschau",
     "dockTitle": "Deine Seite?",
     "dockCta": "Sichern"
+  },
+  "admin": {
+    "meta": {
+      "overview": "Team · Übersicht",
+      "creators": "Team · Creator-Seiten",
+      "creator": "Team · Creator-Seite",
+      "team": "Team · Mitglieder & Rechte",
+      "activity": "Team · Verlauf",
+      "preview": "Team · Vorschau"
+    },
+    "gate": {
+      "setupTitle": "Teambereich einrichten",
+      "setupLead": "Gib den Teamcode ein. Dein Konto {email} wird Inhaber:in und kann danach das Team einladen.",
+      "name": "Dein Name im Team",
+      "nameMissing": "Bitte gib deinen Namen ein.",
+      "code": "Teamcode",
+      "codeHint": "Den Code bekommst du von der Linkyo-Leitung.",
+      "codeWrong": "Dieser Code stimmt nicht.",
+      "network": "Keine Verbindung. Versuch es gleich noch einmal.",
+      "setupSubmit": "Teambereich öffnen",
+      "backToApp": "Zurück zum Dashboard",
+      "noAccessTitle": "Kein Zugang zum Teambereich",
+      "noAccessLead": "Dein Konto {email} gehört noch nicht zum Team. Bitte eine Inhaberin oder einen Inhaber, dich mit dieser E-Mail hinzuzufügen.",
+      "switchAccount": "Mit anderem Konto anmelden"
+    },
+    "shell": {
+      "skip": "Zum Inhalt springen",
+      "team": "Team",
+      "viewAs": "Ansehen als",
+      "viewingAs": "Du siehst den Teambereich als {role}.",
+      "viewAsEnd": "Zurück zu Inhaber:in",
+      "toApp": "Zum Creator-Dashboard",
+      "logout": "Abmelden",
+      "account": "Konto",
+      "accountMenu": "Kontomenü"
+    },
+    "nav": {
+      "label": "Teambereich",
+      "overview": "Übersicht",
+      "creators": "Creator",
+      "team": "Team",
+      "activity": "Verlauf"
+    },
+    "roles": {
+      "owner": {
+        "name": "Inhaber:in",
+        "description": "Alles, auch das Team verwalten und Rollen vergeben."
+      },
+      "admin": {
+        "name": "Admin",
+        "description": "Seiten anlegen, bearbeiten, freigeben und löschen, verifizieren, Einladungen verwalten."
+      },
+      "editor": {
+        "name": "Redaktion",
+        "description": "Seiten anlegen und gestalten. Freigabe und Verifizierung macht ein Admin."
+      },
+      "viewer": {
+        "name": "Lesen",
+        "description": "Alles ansehen, nichts ändern."
+      }
+    },
+    "permissions": {
+      "pages_create": "Seiten anlegen",
+      "pages_edit": "Seiten bearbeiten & gestalten",
+      "pages_publish": "Freigeben & veröffentlichen",
+      "pages_delete": "Seiten löschen",
+      "creators_verify": "Creator verifizieren (blaues Häkchen)",
+      "invites_manage": "Einladungen (E-Mails) verwalten",
+      "team_manage": "Team & Rollen verwalten",
+      "activity_view": "Verlauf ansehen"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "ready": "Bereit",
+      "published": "Veröffentlicht"
+    },
+    "locales": {
+      "de": "Deutsch",
+      "en": "Englisch",
+      "ar": "Arabisch"
+    },
+    "overview": {
+      "title": "Hallo {name}",
+      "lead": "Vorbereitete Seiten für Top-Creator: Stand, Team und die letzten Änderungen.",
+      "newPage": "Neue Seite",
+      "published": "Veröffentlicht",
+      "ready": "Bereit zur Freigabe",
+      "drafts": "Entwürfe",
+      "team": "Im Team",
+      "recent": "Zuletzt",
+      "allActivity": "Ganzer Verlauf",
+      "noActivity": "Noch nichts passiert.",
+      "howTitle": "So läuft es",
+      "how": {
+        "step1": "Seite anlegen: Name, Adresse, Sprache und die E-Mail des Creators.",
+        "step2": "Seite und Design im gewohnten Editor bauen – Fotos, Links, Videos, Live-Termine.",
+        "step3": "Ein Admin prüft, verifiziert und setzt die Seite auf „Bereit“.",
+        "step4": "Veröffentlichen und den Einladungslink schicken. Meldet sich der Creator mit seiner E-Mail an, ist alles fertig."
+      },
+      "demo": "Demo: Teamdaten (Mitglieder, Entwürfe, Verlauf) liegen in diesem Browser. Mit der Datenbank in Phase 1 teilt das ganze Team dieselben Daten."
+    },
+    "creators": {
+      "title": "Creator-Seiten",
+      "lead": "Seiten, die wir für Creator vorbereiten: bauen, Einladung hinzufügen, freigeben, veröffentlichen.",
+      "new": "Neue Seite",
+      "search": "Suchen (Name, Adresse)",
+      "filter": "Nach Status filtern",
+      "all": "Alle",
+      "listLabel": "Creator-Seiten",
+      "verified": "Verifiziert",
+      "invites": "{count, plural, =0 {keine Einladung} one {# Einladung} other {# Einladungen}}",
+      "live": "Live-Version",
+      "publishedError": "Veröffentlichte Seiten konnten nicht geladen werden. Entwürfe sind trotzdem da.",
+      "emptyTitle": "Noch keine vorbereiteten Seiten",
+      "emptyBody": "Leg die erste Seite für einen Creator an. Er bekommt sie fertig, sobald er sich mit seiner E-Mail anmeldet.",
+      "noMatch": "Nichts gefunden.",
+      "create": {
+        "title": "Neue Creator-Seite",
+        "lead": "Das Wichtigste reicht – den Rest baust du danach im Editor.",
+        "close": "Schließen",
+        "cancel": "Abbrechen",
+        "submit": "Anlegen & bearbeiten",
+        "name": "Name des Creators",
+        "nameMissing": "Bitte gib einen Namen ein.",
+        "username": "Adresse",
+        "usernameHint": "Wird für den Creator reserviert.",
+        "usernameErrors": {
+          "invalid": "3–30 Zeichen: Kleinbuchstaben, Zahlen, Bindestriche.",
+          "reserved": "Diese Adresse ist reserviert.",
+          "taken": "Für diese Adresse gibt es schon eine Seite."
+        },
+        "slug": "Vorschau-Link",
+        "slugHint": "Kurz und eindeutig, z. B. der Name. Wird Teil des Links, den du schickst.",
+        "slugErrors": {
+          "invalid": "3–64 Zeichen: Kleinbuchstaben, Zahlen, Bindestriche.",
+          "taken": "Dieser Link ist schon vergeben."
+        },
+        "locale": "Sprache der Seite",
+        "email": "E-Mail des Creators (optional)",
+        "emailHint": "Mit dieser E-Mail (Google oder normal) übernimmt der Creator die Seite.",
+        "emailInvalid": "Diese E-Mail sieht nicht richtig aus."
+      }
+    },
+    "creator": {
+      "back": "Zurück zu den Creator-Seiten",
+      "notFoundTitle": "Seite nicht gefunden",
+      "notFoundLead": "Diese Seite gibt es nicht (mehr) – oder sie liegt in einem anderen Browser.",
+      "copy": "{label} kopieren",
+      "copied": "Kopiert",
+      "copyFailed": "Kopieren ging nicht – bitte markieren und kopieren.",
+      "copiedToDraft": "Entwurf angelegt. Die Live-Version bleibt, bis du neu veröffentlichst.",
+      "publishedLead": "Veröffentlicht – der Creator kann sie mit seiner E-Mail übernehmen.",
+      "publishedBody": "Um etwas zu ändern, bearbeite eine Kopie als Entwurf und veröffentliche sie neu. Bereits verschickte Einladungen bleiben gültig.",
+      "editCopy": "Bearbeiten",
+      "verified": "Verifiziert",
+      "invitesCount": "{count, plural, =0 {Keine Einladung} one {# Einladung} other {# Einladungen}}",
+      "examples": "Mit Beispiel-Zuständen",
+      "language": "Sprache",
+      "tabsLabel": "Bereich",
+      "tabs": {
+        "page": "Seite",
+        "design": "Design",
+        "preview": "Vorschau",
+        "settings": "Einladung & Freigabe"
+      },
+      "liveVersion": "Live-Version vorhanden",
+      "pageTitle": "Seite",
+      "pageLead": "So sieht {name} die Seite nach der Anmeldung. Tipp auf eine Zeile, um sie zu bearbeiten.",
+      "readOnly": "Mit deiner Rolle kannst du die Seite ansehen, aber nicht ändern.",
+      "settingsTitle": "Einladung & Freigabe",
+      "settingsLead": "Wer die Seite übernehmen darf, Verifizierung, Sprachen – und der Weg zur Veröffentlichung.",
+      "links": {
+        "title": "Links zum Verschicken",
+        "preview": "Vorschau",
+        "invite": "Einladung (Konto mit fertiger Seite)",
+        "live": "Diese Links funktionieren jetzt.",
+        "notLive": "Die Links funktionieren nach dem Veröffentlichen."
+      },
+      "verify": {
+        "title": "Verifizierung",
+        "label": "Verifiziert (blaues Häkchen)",
+        "description": "Nur nach Prüfung der Identität, z. B. über die offiziellen Kanäle. Das Häkchen bleibt nach der Übernahme.",
+        "locked": "Verifizieren dürfen Admins und Inhaber:innen."
+      },
+      "publish": {
+        "title": "Freigabe & Veröffentlichen",
+        "status": "Status",
+        "draftBody": "Entwurf: wird noch bearbeitet. Ist alles fertig, setzt ein Admin die Seite auf „Bereit“.",
+        "readyBody": "Bereit: geprüft und freigegeben. Jetzt veröffentlichen.",
+        "step1": "1. Seite als Datei herunterladen",
+        "download": "Datei herunterladen",
+        "readyFirst": "Erst auf „Bereit“ setzen.",
+        "step2": "2. Im Projekt ausführen",
+        "copyCommand": "Befehl kopieren",
+        "copied": "Befehl kopiert",
+        "copyFailed": "Kopieren ging nicht – bitte markieren und kopieren.",
+        "step3": "3. Committen & deployen – danach sind Vorschau- und Einladungslink aktiv.",
+        "locked": "Freigeben und veröffentlichen dürfen Admins und Inhaber:innen.",
+        "phase1": "Mit der Datenbank (Phase 1) wird daraus ein Klick auf „Veröffentlichen“."
+      },
+      "invites": {
+        "title": "Einladungen",
+        "body": "Wer sich mit einer dieser E-Mails anmeldet (Google oder normal), bekommt die Seite fertig in sein Konto.",
+        "none": "Noch keine E-Mail – ohne sie kann niemand die Seite übernehmen.",
+        "noneNew": "Keine neuen E-Mails.",
+        "published": "{count, plural, one {# bereits veröffentlichte Einladung bleibt gültig.} other {# bereits veröffentlichte Einladungen bleiben gültig.}}",
+        "add": "E-Mail hinzufügen",
+        "addButton": "Einladen",
+        "remove": "{email} entfernen",
+        "errors": {
+          "invalid": "Diese E-Mail sieht nicht richtig aus.",
+          "duplicate": "Diese E-Mail ist schon eingetragen."
+        },
+        "locked": "Einladungen verwalten dürfen Admins und Inhaber:innen.",
+        "privacy": "Veröffentlicht werden nur Prüfsummen (SHA-256), nie die E-Mail selbst."
+      },
+      "identity": {
+        "title": "Creator",
+        "name": "Name ({language})",
+        "nameHint": "Steht im Vorschau-Hinweis „Vorschau für …“.",
+        "usernameHint": "Die Adresse, die der Creator bekommt.",
+        "save": "Speichern",
+        "saved": "Gespeichert"
+      },
+      "languages": {
+        "title": "Sprachen",
+        "body": "Eine Seite pro Sprache. Der Creator bekommt die Sprache, in der er sich anmeldet.",
+        "add": "Sprache hinzufügen",
+        "addButton": "Hinzufügen",
+        "added": "{language} hinzugefügt – jetzt die Texte übersetzen.",
+        "remove": "{language} entfernen",
+        "copyHint": "Die neue Sprache startet als Kopie von {language}."
+      },
+      "delete": {
+        "title": "Löschen",
+        "body": "Löscht den Entwurf mit allen Inhalten.",
+        "bodyLive": "Verwirft nur diesen Entwurf; die Live-Version bleibt. Zum Entfernen der Live-Version die Datei aus dem Projekt löschen und deployen.",
+        "button": "Seite löschen",
+        "buttonLive": "Entwurf verwerfen",
+        "confirmTitle": "Wirklich löschen?",
+        "confirmBody": "Der Entwurf für linkyo.app/{name} wird gelöscht. Das lässt sich nicht rückgängig machen.",
+        "cancel": "Abbrechen"
+      }
+    },
+    "team": {
+      "title": "Team & Rechte",
+      "lead": "Wer mitarbeitet und was jede Rolle darf. Mitglieder melden sich mit ihrem eigenen Linkyo-Konto an (gleiche E-Mail).",
+      "add": "Mitglied hinzufügen",
+      "members": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
+      "onlyOwners": "Team und Rollen verwalten nur Inhaber:innen.",
+      "you": "du",
+      "roleOf": "Rolle von {name}",
+      "roleChanged": "{name} ist jetzt {role}.",
+      "remove": "{name} entfernen",
+      "removeTitle": "{name} entfernen?",
+      "removeBody": "Die Person verliert sofort den Zugang zum Teambereich. Ihre Änderungen bleiben im Verlauf.",
+      "removeConfirm": "Entfernen",
+      "cancel": "Abbrechen",
+      "matrixTitle": "Rollen & Rechte",
+      "matrixLead": "Jede Aktion im Teambereich prüft genau diese Tabelle.",
+      "permission": "Recht",
+      "allowed": "Erlaubt",
+      "notAllowed": "Nicht erlaubt",
+      "addSheet": {
+        "title": "Mitglied hinzufügen",
+        "lead": "Die Person meldet sich danach mit ihrem Linkyo-Konto und genau dieser E-Mail an.",
+        "close": "Schließen",
+        "cancel": "Abbrechen",
+        "submit": "Hinzufügen",
+        "name": "Name",
+        "nameMissing": "Bitte gib einen Namen ein.",
+        "email": "E-Mail",
+        "emailHint": "Die E-Mail ihres Linkyo-Kontos.",
+        "emailErrors": {
+          "invalid": "Diese E-Mail sieht nicht richtig aus.",
+          "taken": "Diese Person ist schon im Team."
+        },
+        "role": "Rolle",
+        "added": "{name} ist jetzt im Team."
+      }
+    },
+    "activity": {
+      "title": "Verlauf",
+      "lead": "Wer wann was geändert hat – neueste zuerst.",
+      "filter": "Verlauf filtern",
+      "filters": {
+        "all": "Alles",
+        "pages": "Seiten",
+        "team": "Team"
+      },
+      "empty": "Noch keine Einträge.",
+      "note": "Die letzten 500 Einträge. E-Mails von Creators erscheinen hier nie.",
+      "actions": {
+        "team_setup": "{actor} hat den Teambereich eingerichtet",
+        "member_add": "{actor} hat {target} ins Team geholt",
+        "member_role": "{actor} hat die Rolle von {target} geändert",
+        "member_remove": "{actor} hat {target} aus dem Team entfernt",
+        "page_create": "{actor} hat die Seite {target} angelegt",
+        "page_copy": "{actor} bearbeitet die veröffentlichte Seite {target} als Entwurf",
+        "page_edit": "{actor} hat {target} bearbeitet",
+        "page_verify": "{actor} hat {target} verifiziert",
+        "page_unverify": "{actor} hat die Verifizierung von {target} entfernt",
+        "page_ready": "{actor} hat {target} freigegeben",
+        "page_draft": "{actor} hat {target} zurück auf Entwurf gesetzt",
+        "page_export": "{actor} hat {target} zum Veröffentlichen heruntergeladen",
+        "page_delete": "{actor} hat {target} gelöscht",
+        "page_language": "{actor} hat die Sprachen von {target} geändert",
+        "invite_add": "{actor} hat eine Einladung zu {target} hinzugefügt",
+        "invite_remove": "{actor} hat eine Einladung von {target} entfernt"
+      }
+    },
+    "preview": {
+      "label": "Vorschau",
+      "badge": "Teamvorschau",
+      "back": "Zurück",
+      "loading": "Lädt …",
+      "missing": "Diese Seite gibt es nicht."
+    }
   }
 }

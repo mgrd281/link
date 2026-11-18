@@ -15,11 +15,15 @@ export type ClaimResult =
   | { kind: "mismatch" }
   | { kind: "none" };
 
-/** A creator takes over the real page: example states from the preview (live now, a planned live, the verified look) are removed. */
-export function forClaim(page: Page): Page {
+/**
+ * A creator takes over the real page. "Live now" never carries over (it is a moment, not content);
+ * a preview's example states (planned live, the verified look) are removed; the badge stays only
+ * when the team verified the creator.
+ */
+export function forClaim(page: Page, options: { examples?: boolean | undefined; verified?: boolean | undefined } = {}): Page {
   return {
-    profile: { ...page.profile, verified: false },
-    blocks: page.blocks.map((block) => (block.type === "live" ? { ...block, isLive: false, startsAt: undefined } : block)),
+    profile: { ...page.profile, verified: options.verified === true },
+    blocks: page.blocks.map((block) => (block.type === "live" ? { ...block, isLive: false, ...(options.examples ? { startsAt: undefined } : {}) } : block)),
   };
 }
 
@@ -39,7 +43,7 @@ export function findPrepared(input: { email: string; username: string; invite?: 
   if (found) {
     const [slug, preview] = found;
     const page = preview.pages[input.locale as "de" | "en" | "ar"] ?? Object.values(preview.pages)[0];
-    if (page) return { kind: "match", slug, username: preview.username, theme: preview.theme, page: forClaim({ ...page, profile: { ...page.profile, username: preview.username } }) };
+    if (page) return { kind: "match", slug, username: preview.username, theme: preview.theme, page: forClaim({ ...page, profile: { ...page.profile, username: preview.username } }, { examples: preview.examples, verified: preview.verified }) };
   }
   const username = input.username.trim().toLowerCase();
   if (entries.some(([, preview]) => preview.invite && preview.username === username)) return { kind: "reserved" };

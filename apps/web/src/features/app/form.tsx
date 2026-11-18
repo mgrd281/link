@@ -136,7 +136,19 @@ export function SelectField<T extends string>({
   );
 }
 
-export function SwitchRow({ label, description, checked, onChecked }: { label: string; description?: string; checked: boolean; onChecked: (checked: boolean) => void }) {
+export function SwitchRow({
+  label,
+  description,
+  checked,
+  onChecked,
+  disabled = false,
+}: {
+  label: string;
+  description?: string | undefined;
+  checked: boolean;
+  onChecked: (checked: boolean) => void;
+  disabled?: boolean;
+}) {
   const id = useId();
   return (
     <div className="flex items-start justify-between gap-4 rounded-md border border-line bg-surface p-3">
@@ -144,7 +156,7 @@ export function SwitchRow({ label, description, checked, onChecked }: { label: s
         <span className="text-small font-medium">{label}</span>
         {description ? <span className="text-caption text-fg-secondary">{description}</span> : null}
       </label>
-      <Switch id={id} checked={checked} onCheckedChange={onChecked} />
+      <Switch id={id} checked={checked} onCheckedChange={onChecked} disabled={disabled} />
     </div>
   );
 }

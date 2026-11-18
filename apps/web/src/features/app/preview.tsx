@@ -30,11 +30,12 @@ export function PhonePreview({ className }: { className?: string }) {
 /** Extra-wide screens: the page stays visible next to whatever you edit. */
 export function PreviewAside() {
   const t = useTranslations("app.preview");
+  const { previewHref } = useSite();
   return (
     <aside aria-label={t("label")} className="sticky top-0 hidden h-dvh w-preview shrink-0 box-content flex-col gap-3 border-s border-line bg-canvas-muted p-4 xl:flex">
       <div className="flex items-center justify-between gap-2">
         <p className="text-small font-medium">{t("label")}</p>
-        <Link href="/app/preview" className="inline-flex h-control-sm items-center gap-2 rounded-sm px-2 text-small font-medium text-link hover:bg-hover focus-visible:focus-ring">
+        <Link href={previewHref} className="inline-flex h-control-sm items-center gap-2 rounded-sm px-2 text-small font-medium text-link hover:bg-hover focus-visible:focus-ring">
           {t("open")}
           <Icon icon={ExternalLink} size="sm" />
         </Link>

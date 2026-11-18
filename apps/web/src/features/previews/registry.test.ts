@@ -15,13 +15,13 @@ describe("nextBerlinTime", () => {
   });
 
   it("gives Nizar's YouTube live tonight's time; the TikTok live stays live", () => {
-    const found = previewPage("nizar-m3e8dw", "de", new Date("2026-11-18T09:00:00Z"));
+    const found = previewPage("nizar", "de", new Date("2026-11-18T09:00:00Z"));
     const lives = found?.page.blocks.filter((block): block is BlockOf<"live"> => block.type === "live") ?? [];
     expect(lives.map((block) => [block.platform, block.isLive, block.startsAt])).toEqual([
       ["tiktok", true, undefined],
       ["youtube", false, "2026-11-18T20:00:00.000Z"],
     ]);
-    expect(previewPage("nizar-m3e8dw", "en")).toBeNull();
+    expect(previewPage("nizar", "en")).toBeNull();
   });
 });
 

@@ -21,7 +21,7 @@ export function useSearchParam(name: string): string {
 }
 
 /** Only in-app destinations are allowed after log-in (no open redirects). */
-export const safeNext = (value: string): string | null => (/^\/app(?:\/[\w/-]*)?$/.test(value) ? value : null);
+export const safeNext = (value: string): string | null => (/^\/(?:app|admin)(?:\/[\w/-]*)?$/.test(value) ? value : null);
 
 /**
  * Auth pages are for signed-out people. As soon as there is a session (after sign-up, log-in, or

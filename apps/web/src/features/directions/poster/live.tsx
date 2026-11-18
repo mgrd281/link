@@ -34,7 +34,7 @@ const minuteNow = () => Math.floor(Date.now() / MINUTE) * MINUTE;
 const serverNow = () => null;
 
 /** The visitor's clock (per minute); null while rendering on the server. */
-function useNow(): number | null {
+export function useNow(): number | null {
   return useSyncExternalStore(subscribe, minuteNow, serverNow);
 }
 

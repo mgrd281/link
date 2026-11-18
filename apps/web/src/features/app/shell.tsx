@@ -3,12 +3,13 @@
 import { hasImage } from "@linkyo/blocks";
 import { tokens } from "@linkyo/tokens";
 import { Avatar, Badge, cn, Icon, Logo, Spinner } from "@linkyo/ui";
-import { ChartNoAxesColumn, Check, CircleAlert, ExternalLink, FlaskConical, House, LayoutList, LogOut, Palette, Plus, Settings, type LucideIcon } from "lucide-react";
+import { ChartNoAxesColumn, Check, CircleAlert, ExternalLink, FlaskConical, House, LayoutList, LogOut, Palette, Plus, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DropdownMenu } from "radix-ui";
 import type { ReactNode } from "react";
 
 import { accountStore } from "@/features/account/store";
+import { useAdminDb } from "@/features/admin/store";
 import { Link, usePathname } from "@/i18n/navigation";
 
 import { AddSheet } from "./add-sheet";
@@ -53,6 +54,8 @@ export function SaveStatus({ compact = false }: { compact?: boolean }) {
 function AccountMenu({ trigger }: { trigger: ReactNode }) {
   const t = useTranslations("app");
   const { account } = useSite();
+  // Linkyo team members also see the way into the team area.
+  const onTeam = useAdminDb()?.members.some((member) => member.email === account.email) ?? false;
   const item = "flex h-control-md cursor-default items-center gap-3 rounded-sm px-3 text-small outline-none data-highlighted:bg-hover";
   return (
     <DropdownMenu.Root>
@@ -83,6 +86,14 @@ function AccountMenu({ trigger }: { trigger: ReactNode }) {
               {t("viewPage")}
             </Link>
           </DropdownMenu.Item>
+          {onTeam ? (
+            <DropdownMenu.Item asChild className={item}>
+              <Link href="/admin">
+                <Icon icon={ShieldCheck} size="sm" />
+                {t("teamArea")}
+              </Link>
+            </DropdownMenu.Item>
+          ) : null}
           <DropdownMenu.Separator className="my-1 border-t border-line" />
           <DropdownMenu.Item className={item} onSelect={() => accountStore.logOut()}>
             <Icon icon={LogOut} size="sm" />

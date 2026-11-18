@@ -26,7 +26,7 @@ describe("prepared pages", () => {
   });
 
   it("refuses an invite link with another email and keeps the address for its creator", () => {
-    expect(findPrepared({ email: "someone@example.com", username: "x", invite: "nizar-m3e8dw", locale: "de" }).kind).toBe("mismatch");
+    expect(findPrepared({ email: "someone@example.com", username: "x", invite: "nizar", locale: "de" }).kind).toBe("mismatch");
     expect(findPrepared({ email: "someone@example.com", username: "NizarAls9", locale: "de" }).kind).toBe("reserved");
     expect(findPrepared({ email: "someone@example.com", username: "someone", locale: "de" }).kind).toBe("none");
   });

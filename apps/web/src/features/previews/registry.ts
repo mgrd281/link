@@ -25,6 +25,10 @@ export interface Preview {
    * up with one of them opens an account with this page ready. Plain emails never enter the code.
    */
   invite?: { emailSha256: string[] };
+  /** Verified by the team: the badge stays when the creator takes the page over. */
+  verified?: boolean;
+  /** The preview shows example states (live now, the verified look) that are not carried over. */
+  examples?: boolean;
 }
 
 /** The next hh:00 in Berlin (today, or tomorrow once it has passed), as an ISO timestamp. */
@@ -73,7 +77,7 @@ const tonightAt =
   });
 
 const HAND_MADE: Record<string, Preview> = {
-  "nizar-m3e8dw": {
+  nizar: {
     name: { de: "Nizar", ar: "نزار" },
     username: "nizarals9",
     theme: { template: "nocturne" },
@@ -81,28 +85,49 @@ const HAND_MADE: Record<string, Preview> = {
     prepare: tonightAt(21),
     // The business email from his public TikTok profile; add the one he gives you with prepare-page.
     invite: { emailSha256: ["f162f82de536c27fc25ee9575813959d7f7ddbbd4603cdbc383112a487af2647"] },
+    examples: true,
   },
 };
 
 /** Pages the team prepared with scripts/prepare-page.mjs (checked with the page schema at start). */
 const preparedFile = z.object({
   slug: z.string().regex(/^[a-z0-9-]{3,64}$/),
-  name: z.record(z.enum(["de", "en", "ar"]), z.string()),
+  name: z.partialRecord(z.enum(["de", "en", "ar"]), z.string()),
   username: z.string(),
   theme: z.record(z.string(), z.union([z.string(), z.number()])),
-  pages: z.record(z.enum(["de", "en", "ar"]), pageSchema),
+  pages: z.partialRecord(z.enum(["de", "en", "ar"]), pageSchema),
   invite: z.object({ emailSha256: z.array(z.string().regex(/^[0-9a-f]{64}$/)) }),
+  verified: z.boolean().optional(),
 });
 
+/**
+ * A page the team edited in the team area and published replaces the built-in one with the same
+ * address; invites already given stay valid (the team area never sees them, only their count).
+ */
 export const PREVIEWS: Record<string, Preview> = {
   ...HAND_MADE,
   ...Object.fromEntries(
-    PREPARED.map((raw) => preparedFile.parse(raw)).map((file) => [
-      file.slug,
-      { name: file.name, username: file.username, theme: file.theme, pages: file.pages, invite: file.invite },
-    ]),
+    PREPARED.map((raw) => preparedFile.parse(raw)).map((file) => {
+      const before = HAND_MADE[file.slug];
+      const invites = new Set([...(before?.invite?.emailSha256 ?? []), ...file.invite.emailSha256]);
+      return [
+        file.slug,
+        {
+          name: file.name,
+          username: file.username,
+          theme: file.theme,
+          pages: file.pages,
+          invite: { emailSha256: [...invites] },
+          verified: file.verified ?? false,
+          ...(before?.examples ? { examples: true } : {}),
+        },
+      ];
+    }),
   ),
 };
+
+/** Earlier links keep working: they redirect to the short one. */
+export const PREVIEW_ALIASES: Record<string, string> = { "nizar-m3e8dw": "nizar" };
 
 export const previewPage = (slug: string, locale: string, now = new Date()) => {
   const preview = PREVIEWS[slug];

@@ -1383,7 +1383,8 @@
       "label": "Page actions",
       "back": "Dashboard",
       "edit": "Edit"
-    }
+    },
+    "teamArea": "Team area"
   },
   "preview": {
     "title": "Preview for {name} · Linkyo",
@@ -1397,5 +1398,323 @@
     "more": "About this preview",
     "dockTitle": "Your page?",
     "dockCta": "Claim it"
+  },
+  "admin": {
+    "meta": {
+      "overview": "Team · Overview",
+      "creators": "Team · Creator pages",
+      "creator": "Team · Creator page",
+      "team": "Team · Members & roles",
+      "activity": "Team · Activity",
+      "preview": "Team · Preview"
+    },
+    "gate": {
+      "setupTitle": "Set up the team area",
+      "setupLead": "Enter the team code. Your account {email} becomes the owner and can invite the team afterwards.",
+      "name": "Your name on the team",
+      "nameMissing": "Please enter your name.",
+      "code": "Team code",
+      "codeHint": "You get the code from Linkyo's leadership.",
+      "codeWrong": "That code isn't right.",
+      "network": "No connection. Try again in a moment.",
+      "setupSubmit": "Open the team area",
+      "backToApp": "Back to the dashboard",
+      "noAccessTitle": "No access to the team area",
+      "noAccessLead": "Your account {email} isn't on the team yet. Ask an owner to add you with this email.",
+      "switchAccount": "Sign in with another account"
+    },
+    "shell": {
+      "skip": "Skip to content",
+      "team": "Team",
+      "viewAs": "View as",
+      "viewingAs": "You're viewing the team area as {role}.",
+      "viewAsEnd": "Back to owner",
+      "toApp": "Creator dashboard",
+      "logout": "Log out",
+      "account": "Account",
+      "accountMenu": "Account menu"
+    },
+    "nav": {
+      "label": "Team area",
+      "overview": "Overview",
+      "creators": "Creators",
+      "team": "Team",
+      "activity": "Activity"
+    },
+    "roles": {
+      "owner": {
+        "name": "Owner",
+        "description": "Everything, including managing the team and roles."
+      },
+      "admin": {
+        "name": "Admin",
+        "description": "Create, edit, approve and delete pages, verify creators, manage invites."
+      },
+      "editor": {
+        "name": "Editor",
+        "description": "Create and design pages. An admin approves and verifies."
+      },
+      "viewer": {
+        "name": "Viewer",
+        "description": "See everything, change nothing."
+      }
+    },
+    "permissions": {
+      "pages_create": "Create pages",
+      "pages_edit": "Edit & design pages",
+      "pages_publish": "Approve & publish",
+      "pages_delete": "Delete pages",
+      "creators_verify": "Verify creators (blue check)",
+      "invites_manage": "Manage invites (emails)",
+      "team_manage": "Manage team & roles",
+      "activity_view": "See activity"
+    },
+    "status": {
+      "draft": "Draft",
+      "ready": "Ready",
+      "published": "Published"
+    },
+    "locales": {
+      "de": "German",
+      "en": "English",
+      "ar": "Arabic"
+    },
+    "overview": {
+      "title": "Hi {name}",
+      "lead": "Pages prepared for top creators: where they stand, the team, and what changed last.",
+      "newPage": "New page",
+      "published": "Published",
+      "ready": "Ready to approve",
+      "drafts": "Drafts",
+      "team": "On the team",
+      "recent": "Recently",
+      "allActivity": "All activity",
+      "noActivity": "Nothing has happened yet.",
+      "howTitle": "How it works",
+      "how": {
+        "step1": "Create a page: name, address, language and the creator's email.",
+        "step2": "Build the page and design in the familiar editor: photos, links, videos, live dates.",
+        "step3": "An admin reviews, verifies and sets the page to \"Ready\".",
+        "step4": "Publish and send the invite link. When the creator signs up with their email, everything is ready."
+      },
+      "demo": "Demo: team data (members, drafts, activity) lives in this browser. With the database in Phase 1 the whole team shares the same data."
+    },
+    "creators": {
+      "title": "Creator pages",
+      "lead": "Pages we prepare for creators: build, add the invite, approve, publish.",
+      "new": "New page",
+      "search": "Search (name, address)",
+      "filter": "Filter by status",
+      "all": "All",
+      "listLabel": "Creator pages",
+      "verified": "Verified",
+      "invites": "{count, plural, =0 {no invite} one {# invite} other {# invites}}",
+      "live": "Live version",
+      "publishedError": "Published pages couldn't be loaded. Drafts are still here.",
+      "emptyTitle": "No prepared pages yet",
+      "emptyBody": "Create the first page for a creator. They get it ready the moment they sign up with their email.",
+      "noMatch": "Nothing found.",
+      "create": {
+        "title": "New creator page",
+        "lead": "The essentials are enough; build the rest in the editor.",
+        "close": "Close",
+        "cancel": "Cancel",
+        "submit": "Create & edit",
+        "name": "Creator's name",
+        "nameMissing": "Please enter a name.",
+        "username": "Address",
+        "usernameHint": "Reserved for the creator.",
+        "usernameErrors": {
+          "invalid": "3–30 characters: lowercase letters, numbers, dashes.",
+          "reserved": "This address is reserved.",
+          "taken": "There's already a page for this address."
+        },
+        "slug": "Preview link",
+        "slugHint": "Short and unique, e.g. the name. It becomes part of the link you send.",
+        "slugErrors": {
+          "invalid": "3–64 characters: lowercase letters, numbers, dashes.",
+          "taken": "This link is already taken."
+        },
+        "locale": "Page language",
+        "email": "Creator's email (optional)",
+        "emailHint": "With this email (Google or regular) the creator takes the page over.",
+        "emailInvalid": "This email doesn't look right."
+      }
+    },
+    "creator": {
+      "back": "Back to creator pages",
+      "notFoundTitle": "Page not found",
+      "notFoundLead": "This page doesn't exist (anymore), or it lives in another browser.",
+      "copy": "Copy {label}",
+      "copied": "Copied",
+      "copyFailed": "Couldn't copy. Please select and copy.",
+      "copiedToDraft": "Draft created. The live version stays until you publish again.",
+      "publishedLead": "Published: the creator can take it over with their email.",
+      "publishedBody": "To change something, edit a copy as a draft and publish it again. Invites already sent stay valid.",
+      "editCopy": "Edit",
+      "verified": "Verified",
+      "invitesCount": "{count, plural, =0 {No invite} one {# invite} other {# invites}}",
+      "examples": "With example states",
+      "language": "Language",
+      "tabsLabel": "Section",
+      "tabs": {
+        "page": "Page",
+        "design": "Design",
+        "preview": "Preview",
+        "settings": "Invite & approval"
+      },
+      "liveVersion": "Live version exists",
+      "pageTitle": "Page",
+      "pageLead": "What {name} sees after signing up. Tap a row to edit it.",
+      "readOnly": "With your role you can view the page but not change it.",
+      "settingsTitle": "Invite & approval",
+      "settingsLead": "Who may take the page over, verification, languages, and the way to publishing.",
+      "links": {
+        "title": "Links to send",
+        "preview": "Preview",
+        "invite": "Invite (account with the page ready)",
+        "live": "These links work now.",
+        "notLive": "The links work after publishing."
+      },
+      "verify": {
+        "title": "Verification",
+        "label": "Verified (blue check)",
+        "description": "Only after checking identity, e.g. through the official channels. The check stays after the takeover.",
+        "locked": "Admins and owners can verify."
+      },
+      "publish": {
+        "title": "Approval & publishing",
+        "status": "Status",
+        "draftBody": "Draft: still being worked on. When it's done, an admin sets the page to \"Ready\".",
+        "readyBody": "Ready: reviewed and approved. Publish it now.",
+        "step1": "1. Download the page as a file",
+        "download": "Download file",
+        "readyFirst": "Set it to \"Ready\" first.",
+        "step2": "2. Run in the project",
+        "copyCommand": "Copy command",
+        "copied": "Command copied",
+        "copyFailed": "Couldn't copy. Please select and copy.",
+        "step3": "3. Commit & deploy; then the preview and invite links are live.",
+        "locked": "Admins and owners can approve and publish.",
+        "phase1": "With the database (Phase 1) this becomes one click on \"Publish\"."
+      },
+      "invites": {
+        "title": "Invites",
+        "body": "Whoever signs up with one of these emails (Google or regular) gets the page ready in their account.",
+        "none": "No email yet; without one nobody can take the page over.",
+        "noneNew": "No new emails.",
+        "published": "{count, plural, one {# invite already published stays valid.} other {# invites already published stay valid.}}",
+        "add": "Add email",
+        "addButton": "Invite",
+        "remove": "Remove {email}",
+        "errors": {
+          "invalid": "This email doesn't look right.",
+          "duplicate": "This email is already on the list."
+        },
+        "locked": "Admins and owners can manage invites.",
+        "privacy": "Only checksums (SHA-256) are published, never the email itself."
+      },
+      "identity": {
+        "title": "Creator",
+        "name": "Name ({language})",
+        "nameHint": "Shown in the \"Preview for …\" label.",
+        "usernameHint": "The address the creator gets.",
+        "save": "Save",
+        "saved": "Saved"
+      },
+      "languages": {
+        "title": "Languages",
+        "body": "One page per language. The creator gets the language they sign up in.",
+        "add": "Add language",
+        "addButton": "Add",
+        "added": "{language} added; now translate the texts.",
+        "remove": "Remove {language}",
+        "copyHint": "The new language starts as a copy of {language}."
+      },
+      "delete": {
+        "title": "Delete",
+        "body": "Deletes the draft with all its content.",
+        "bodyLive": "Discards only this draft; the live version stays. To remove the live version, delete its file from the project and deploy.",
+        "button": "Delete page",
+        "buttonLive": "Discard draft",
+        "confirmTitle": "Really delete?",
+        "confirmBody": "The draft for linkyo.app/{name} will be deleted. This can't be undone.",
+        "cancel": "Cancel"
+      }
+    },
+    "team": {
+      "title": "Team & roles",
+      "lead": "Who works on Linkyo and what each role may do. Members sign in with their own Linkyo account (same email).",
+      "add": "Add member",
+      "members": "{count, plural, one {# member} other {# members}}",
+      "onlyOwners": "Only owners manage the team and roles.",
+      "you": "you",
+      "roleOf": "Role of {name}",
+      "roleChanged": "{name} is now {role}.",
+      "remove": "Remove {name}",
+      "removeTitle": "Remove {name}?",
+      "removeBody": "They lose access to the team area right away. Their changes stay in the activity log.",
+      "removeConfirm": "Remove",
+      "cancel": "Cancel",
+      "matrixTitle": "Roles & permissions",
+      "matrixLead": "Every action in the team area checks exactly this table.",
+      "permission": "Permission",
+      "allowed": "Allowed",
+      "notAllowed": "Not allowed",
+      "addSheet": {
+        "title": "Add member",
+        "lead": "They then sign in with their Linkyo account and exactly this email.",
+        "close": "Close",
+        "cancel": "Cancel",
+        "submit": "Add",
+        "name": "Name",
+        "nameMissing": "Please enter a name.",
+        "email": "Email",
+        "emailHint": "The email of their Linkyo account.",
+        "emailErrors": {
+          "invalid": "This email doesn't look right.",
+          "taken": "This person is already on the team."
+        },
+        "role": "Role",
+        "added": "{name} is now on the team."
+      }
+    },
+    "activity": {
+      "title": "Activity",
+      "lead": "Who changed what, and when. Newest first.",
+      "filter": "Filter activity",
+      "filters": {
+        "all": "All",
+        "pages": "Pages",
+        "team": "Team"
+      },
+      "empty": "No entries yet.",
+      "note": "The last 500 entries. Creators' emails never appear here.",
+      "actions": {
+        "team_setup": "{actor} set up the team area",
+        "member_add": "{actor} added {target} to the team",
+        "member_role": "{actor} changed the role of {target}",
+        "member_remove": "{actor} removed {target} from the team",
+        "page_create": "{actor} created the page {target}",
+        "page_copy": "{actor} is editing the published page {target} as a draft",
+        "page_edit": "{actor} edited {target}",
+        "page_verify": "{actor} verified {target}",
+        "page_unverify": "{actor} removed the verification of {target}",
+        "page_ready": "{actor} approved {target}",
+        "page_draft": "{actor} set {target} back to draft",
+        "page_export": "{actor} downloaded {target} for publishing",
+        "page_delete": "{actor} deleted {target}",
+        "page_language": "{actor} changed the languages of {target}",
+        "invite_add": "{actor} added an invite to {target}",
+        "invite_remove": "{actor} removed an invite from {target}"
+      }
+    },
+    "preview": {
+      "label": "Preview",
+      "badge": "Team preview",
+      "back": "Back",
+      "loading": "Loading…",
+      "missing": "This page doesn't exist."
+    }
   }
 }
