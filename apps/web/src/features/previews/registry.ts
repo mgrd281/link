@@ -8,6 +8,8 @@ import { EXAMPLES } from "@/features/examples/catalog";
 import { isLook, LOOKS } from "@/features/examples/looks";
 
 import { journalistAr, journalistDe, journalistEn } from "./journalist";
+import { starPage } from "./stars";
+import { STARS } from "./stars-data";
 import { nizarAr, nizarDe } from "./nizar";
 import { PREPARED } from "./prepared";
 
@@ -109,6 +111,19 @@ const HAND_MADE: Record<string, Preview> = {
     pages: { de: journalistDe, en: journalistEn, ar: journalistAr },
     sample: { kind: "journalist", category: "careers", look: "journalist" },
   },
+  // Concepts for well-known people: unlisted, labelled, official links only (see stars.ts).
+  ...Object.fromEntries(
+    STARS.map((star): [string, Preview] => [
+      star.slug,
+      {
+        name: star.name,
+        username: star.slug,
+        theme: star.theme,
+        pages: { de: starPage(star, "de"), en: starPage(star, "en"), ar: starPage(star, "ar") },
+        concept: star.credit ? { credit: star.credit } : {},
+      },
+    ]),
+  ),
   // The example gallery (/templates): one fictional person or business per kind of page.
   ...Object.fromEntries(
     Object.entries(EXAMPLES).flatMap(([slug, page]): [string, Preview][] => {
