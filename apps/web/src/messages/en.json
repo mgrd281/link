@@ -43,11 +43,11 @@
       "title": "Brand",
       "description": "The Loop: two links that interlock into a lowercase y. Calm, confident, never loud.",
       "lockups": "Lockups",
-      "lockupsNote": "Horizontal, symbol + wordmark, on Ink and on Linkyo Blue. Clear space equals the height of the “o”.",
+      "lockupsNote": "Horizontal, symbol + wordmark, on Ink and on Linkyo Violet. Clear space equals the height of the “o”.",
       "horizontal": "Horizontal lockup",
       "symbolWordmark": "Symbol · wordmark",
       "appIcon": "App icon",
-      "appIconNote": "Paper symbol on Linkyo Blue with a subtle 500 → 600 gradient. Light, dark and tinted appearances for iOS 18+.",
+      "appIconNote": "Paper symbol on Linkyo Violet with a subtle 500 → 600 gradient. Light, dark and tinted appearances for iOS 18+.",
       "icon": {
         "light": "Light",
         "dark": "Dark",
@@ -57,11 +57,10 @@
     },
     "color": {
       "title": "Color",
-      "description": "Warm paper, deep ink, one confident blue. Spark is rare: live moments and celebration only.",
+      "description": "Warm paper, deep ink, one vivid violet. Spark is rare: live moments and celebration only.",
       "anchors": "Brand anchors",
       "inkHint": "Text, dark backgrounds",
       "paperHint": "Light background",
-      "blueHint": "Primary actions, focus, links",
       "sparkHint": "Live · max 5 % of a screen",
       "scales": "Scales",
       "scalesNote": "Generated in OKLCH around the brand anchors, which stay exact.",
@@ -70,7 +69,8 @@
       "role": "Role",
       "light": "Light",
       "dark": "Dark",
-      "contrast": "Contrast"
+      "contrast": "Contrast",
+      "violetHint": "Primary actions, focus, links"
     },
     "type": {
       "title": "Typography",

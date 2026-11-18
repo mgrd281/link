@@ -60,7 +60,7 @@ Not a template marketplace. Not cluttered. Not "techy". Not neon-gradient AI aes
 - **Never**: stretch, rotate, add shadows/gradients/outlines, place on busy photos without a scrim, recolor outside the palette.
 
 ### App icon (iOS)
-Symbol in Paper (#F7F6F2) on Linkyo Blue (#3355FF) background, with a subtle inner gradient (Blue 500 → Blue 600, top-left to bottom-right). Provide light, dark and tinted variants (iOS 18+ icon appearances).
+Symbol in Paper (#F7F6F2) on Linkyo Violet (#9500E9) background, with a subtle inner gradient (Violet 500 → Violet 600, top-left to bottom-right). Provide light, dark and tinted variants (iOS 18+ icon appearances).
 
 ---
 
@@ -74,9 +74,9 @@ All colors are defined as design tokens (CSS variables + Swift `Color` assets). 
 |---|---|---|
 | `ink` | #0A0A0B | Primary text (light mode), dark backgrounds |
 | `paper` | #F7F6F2 | Light background (warm off-white, never pure #FFF for large areas) |
-| `blue-500` (**Linkyo Blue**) | #3355FF | Primary actions, focus rings, links, logo |
-| `blue-600` | #2440E0 | Pressed state |
-| `blue-100` | #E6EBFF | Selected backgrounds, subtle highlights |
+| `violet-500` (**Linkyo Violet**) | #9500E9 | Primary actions, focus rings, links, logo (white on it 6.1:1, on Paper 5.6:1) |
+| `violet-600` | #7E00C7 | Pressed state |
+| `violet-100` | #F2E8FF | Selected backgrounds, subtle highlights |
 | `lime-400` (**Spark**) | #D4FF3A | Rare accent: "Live", badges, celebration moments. Max 5 % of any screen. |
 | `gray-50…950` | neutral scale, slight warm tint | Surfaces, borders, secondary text |
 | `success` | #12B76A | Success |
@@ -84,7 +84,7 @@ All colors are defined as design tokens (CSS variables + Swift `Color` assets). 
 | `danger` | #F04438 | Destructive, errors |
 
 ### 4.2 Dark mode (product UI)
-Background `#0A0A0B`, surface `#141416`, elevated `#1C1C1F`, border `rgba(255,255,255,0.08)`, text `#F7F6F2`, secondary text 64 % opacity. Linkyo Blue shifts to `#4D6BFF` for contrast.
+Background `#0A0A0B`, surface `#141416`, elevated `#1C1C1F`, border `rgba(255,255,255,0.08)`, text `#F7F6F2`, secondary text 64 % opacity. Linkyo Violet stays `#9500E9` for filled buttons; links use `violet-350` #C082FF and focus rings `violet-400` #B35EFF. Changed from blue in [ADR 0017](DECISIONS/0017-brand-violet.md).
 
 ### 4.3 Creator page theming (every user has their own look)
 The creator's page does **not** use Linkyo colors. It uses a generated theme:
@@ -152,14 +152,14 @@ The creator's page does **not** use Linkyo colors. It uses a generated theme:
 
 | Variant | Use | Style |
 |---|---|---|
-| **Primary** | One main action per screen | Linkyo Blue fill, white text, `md` radius |
+| **Primary** | One main action per screen | Linkyo Violet fill, white text, `md` radius |
 | **Secondary** | Alternative actions | Surface fill, 1px border, ink text |
 | **Ghost** | Low-emphasis, toolbars | Transparent, hover surface |
 | **Destructive** | Delete, disconnect | Danger text; fill only in confirmation dialog |
 | **Icon button** | Toolbars | 40 px square (web), 44 pt (iOS), tooltip required |
 
 - **Sizes**: sm 32 px · md 40 px · lg 48 px · xl 56 px (creator page links).
-- **States (all required)**: default, hover, pressed (scale 0.98 + darker), focus-visible (2 px ring Linkyo Blue, 2 px offset), disabled (40 % opacity, no pointer), loading (spinner replaces icon, width locked, label stays).
+- **States (all required)**: default, hover, pressed (scale 0.98 + darker), focus-visible (2 px ring Linkyo Violet, 2 px offset), disabled (40 % opacity, no pointer), loading (spinner replaces icon, width locked, label stays).
 - Label: verb first, max 3 words. Icon left (16/20 px) only when it adds meaning.
 
 ### Creator page link buttons (themeable)
@@ -191,7 +191,7 @@ Styles: Filled, Outline, Soft, Glass (backdrop blur), Shadow, Minimal (text + ar
 
 - Creator content always comes first; Linkyo UI frames it, never competes.
 - Images: auto-cropped with focal point, WebP/AVIF, blur-up placeholders.
-- Marketing: real creator pages on phones (with permission), dark studio backgrounds, soft Linkyo Blue glow. No stock-photo clichés, no 3D blobs.
+- Marketing: real creator pages on phones (with permission), dark studio backgrounds, soft Linkyo Violet glow. No stock-photo clichés, no 3D blobs.
 
 ---
 

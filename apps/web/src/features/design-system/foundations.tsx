@@ -50,8 +50,8 @@ export function BrandSection() {
       <SubSection title={t("appIcon")} note={t("appIconNote")}>
         <div className="flex flex-wrap items-end gap-6">
           {[
-            { key: "light", bg: "bg-linear-to-br from-blue-500 to-blue-600", fg: "text-paper" },
-            { key: "dark", bg: "bg-ink", fg: "text-blue-400" },
+            { key: "light", bg: "bg-linear-to-br from-violet-500 to-violet-600", fg: "text-paper" },
+            { key: "dark", bg: "bg-ink", fg: "text-violet-400" },
             { key: "tinted", bg: "bg-night-50", fg: "text-paper" },
           ].map((icon) => (
             <figure key={icon.key} className="grid justify-items-center gap-2">
@@ -76,7 +76,7 @@ export function BrandSection() {
   );
 }
 
-const SCALES = ["blue", "gray", "night", "success", "warning", "danger", "lime"] as const;
+const SCALES = ["violet", "gray", "night", "success", "warning", "danger", "lime"] as const;
 const ROLES = [
   "canvas",
   "canvasMuted",
@@ -105,7 +105,7 @@ export function ColorSection() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Swatch name="Ink" value={tokens.color.ink} hint={t("inkHint")} />
           <Swatch name="Paper" value={tokens.color.paper} hint={t("paperHint")} />
-          <Swatch name="Linkyo Blue" value={tokens.color.blue["500"]} hint={t("blueHint")} />
+          <Swatch name="Linkyo Violet" value={tokens.color.violet["500"]} hint={t("violetHint")} />
           <Swatch name="Spark" value={tokens.color.lime["400"]} hint={t("sparkHint")} />
         </div>
       </SubSection>

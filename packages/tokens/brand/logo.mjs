@@ -138,9 +138,9 @@ mkdirSync(OUT_SVG, { recursive: true });
 const write = (name, content) => writeFileSync(path.join(OUT_SVG, name), content);
 const ink = C("ink");
 const paper = C("paper");
-const blue500 = C("blue.500");
-const blue600 = C("blue.600");
-const blue400 = C("blue.400");
+const violet500 = C("violet.500");
+const violet600 = C("violet.600");
+const violet400 = C("violet.400");
 
 write("symbol.svg", svg(symbol.viewBox, symbolMarkup("ly", ink)));
 write("wordmark.svg", svg(wordmark.viewBox, `<path d="${wordmark.d}" fill="${ink}"/>`));
@@ -175,17 +175,17 @@ write(
   "app-icon-light.svg",
   icon(
     "il",
-    `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${blue500}"/><stop offset="1" stop-color="${blue600}"/></linearGradient></defs><path d="M0 0h1024v1024H0z" fill="url(#g)"/>`,
+    `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${violet500}"/><stop offset="1" stop-color="${violet600}"/></linearGradient></defs><path d="M0 0h1024v1024H0z" fill="url(#g)"/>`,
     paper,
   ),
 );
-write("app-icon-dark.svg", icon("id", `<path d="M0 0h1024v1024H0z" fill="${ink}"/>`, blue400));
+write("app-icon-dark.svg", icon("id", `<path d="M0 0h1024v1024H0z" fill="${ink}"/>`, violet400));
 write("app-icon-tinted.svg", icon("it", `<path d="M0 0h1024v1024H0z" fill="#000"/>`, "#fff"));
 write(
   "favicon.svg",
   svg(
     "0 0 32 32",
-    `<style>.m{fill:${blue500}}@media (prefers-color-scheme:dark){.m{fill:${blue400}}}</style>${symbolMarkup("fv", "currentColor").replaceAll('fill="currentColor"', 'class="m"')}`,
+    `<style>.m{fill:${violet500}}@media (prefers-color-scheme:dark){.m{fill:${violet400}}}</style>${symbolMarkup("fv", "currentColor").replaceAll('fill="currentColor"', 'class="m"')}`,
   ),
 );
 

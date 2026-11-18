@@ -63,7 +63,7 @@ export default async function PreviewRoute({ params }: Props) {
         page={found.page}
         theme={theme}
         overlay={
-          // Linkyo's own chrome (not the creator's theme): dark, Geist, Linkyo Blue.
+          // Linkyo's own chrome (not the creator's theme): dark, Geist, Linkyo Violet.
           <aside
             data-theme="dark"
             aria-label={t("label")}

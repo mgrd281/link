@@ -594,7 +594,7 @@ StyleDictionary.registerAction({
   undo: () => rmSync(path.join(IOS_GENERATED, "Colors.xcassets"), { recursive: true, force: true }),
 });
 
-/** The app target's AccentColor (tint) comes from the focus role: Linkyo Blue, #4D6BFF in dark mode. */
+/** The app target's AccentColor (tint) comes from the focus role: Linkyo Violet, #B35EFF in dark mode. */
 StyleDictionary.registerAction({
   name: "linkyo/ios-accent",
   do: (dictionary) => {

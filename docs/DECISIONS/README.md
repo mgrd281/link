@@ -18,3 +18,4 @@
 | [0014](0014-accounts-and-dashboard.md) | Sign-up/log-in and the full creator dashboard, demo store behind an `AccountStore` contract | **Proposed — review** |
 | [0015](0015-prepared-pages.md) | Prepared pages for top creators: the team builds the page, the creator's email unlocks it | **Proposed — review** |
 | [0016](0016-team-area.md) | Team area `/admin`: team code, roles → permissions, prepared pages edited in the real editor, activity log | **Proposed — review** |
+| [0017](0017-brand-violet.md) | Brand color: Linkyo Violet #9500E9 replaces Linkyo Blue (contrast-checked, status colors stay distinct) | **Applied** |
