@@ -177,6 +177,11 @@ export const profileSchema = z.object({
   logo: image.optional(),
   /** One line under the name ("DJ & producer · Berlin"). */
   tagline: z.string().max(80).optional(),
+  /** Up to three headline numbers under the name ("2.3M followers"), each optionally linked. */
+  stats: z
+    .array(z.object({ value: z.string().min(1).max(12), label: z.string().min(1).max(24), url: url.optional() }))
+    .max(3)
+    .optional(),
   verified: z.boolean().default(false),
   locale: z.enum(["de", "en", "ar"]),
 });
