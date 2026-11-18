@@ -48,7 +48,7 @@ export const LOOKS = {
   "matbakh-reem": { kind: "youtube", category: "creators", locale: "ar", theme: { template: "daylight", accent: SW.terracotta } },
   "coach-yara": { kind: "instagram", category: "creators", locale: "en", theme: { template: "pulse", accent: SW.mint, pairing: "bold", buttonShape: "pill" } },
   "lina-beauty": { kind: "instagram", category: "creators", locale: "ar", theme: { template: "daylight", accent: SW.rose, buttonStyle: "soft", buttonShape: "pill" } },
-  "timo-lacht": { kind: "tiktok", category: "creators", locale: "de", theme: { template: "pulse", accent: SW.lemon, pairing: "bold", buttonStyle: "shadow" } },
+  "timo-lacht": { kind: "tiktok", category: "creators", locale: "de", theme: { template: "pulse", accent: SW.poppy, pairing: "bold", buttonStyle: "shadow" } },
   "novaplays": { kind: "streamer", category: "creators", locale: "en", theme: { template: "nocturne", accent: SW.aqua, pairing: "tech", buttonStyle: "outline", buttonShape: "square" } },
   "sami-travels": { kind: "instagram", category: "creators", locale: "ar", theme: { template: "pulse", accent: SW.apricot } },
   "nina-falk": { kind: "business", category: "creators", locale: "de", theme: { template: "nocturne", accent: SW.ink, pairing: "editorial", mode: "light", buttonStyle: "minimal" } },

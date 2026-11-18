@@ -15,22 +15,26 @@ scroll. He asked for the same feature: "a moving picture with a background".
   - it fades in on its first frame and plays only while on screen (IntersectionObserver);
   - it never plays for `prefers-reduced-motion` or the browser's data saver;
   - it is hidden from assistive technology, since the photo carries the description;
-  - the duotone treatment applies to the clip too.
+  - a moving picture always shows in its own colors: the duotone template falls back to the portrait
+    treatment when there is a clip, because a toned face on video reads as a filter.
 - **Background.** On wide screens the same clip, blurred, is the ambient backdrop behind the
   column. On every screen the hero softens and fades on scroll as before (the scroll-driven CSS
   animation), so the moving picture turns into a soft background as the visitor reads on.
 - **Privacy.** The clips are self-hosted (`/media/motion`). They make no third-party request and need
   no consent.
-- **Examples.** Five example pages have a moving picture:
+- **Examples.** Four example pages have a moving picture:
   - Timo Lacht (comedian);
   - Clara Wendt (writer);
   - Lina (beauty);
-  - Mara Vale (singer);
-  - مطبخ ريم (cooking).
+  - Mara Vale (singer).
+
+  Each shows a face that looks into the camera, like the founder's reference. The cooking page keeps
+  its photo, because no free clip shows a face there.
 
   The clips are Mixkit stock clips under the Mixkit Stock Video Free License, checked on each clip
-  page. Clips under the restricted license were excluded. Each clip is cut with ffmpeg to 4:5, a
-  seamless 5–7 s loop (the end crossfades into the start), no audio, H.264 with faststart, 150–510 KB.
+  page. Clips under the restricted license were excluded. Each clip comes from its 1080p source, is
+  cut with ffmpeg to 4:5 around the face and scaled to 720 × 900, loops seamlessly in 5–7 s (the end
+  crossfades into the start), has no audio, and is H.264 with faststart, 0.4–0.8 MB.
   Credits are in `assets/examples/CREDITS.md`.
 
 **Status.** Applied.

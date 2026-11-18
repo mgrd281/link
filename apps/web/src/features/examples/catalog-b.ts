@@ -39,8 +39,8 @@ export const CATALOG_B: Record<string, Page> = {
       tagline: "وصفات بيتية سهلة",
       bio: "أكل البيت بطريقة بسيطة. وصفة جديدة كل أحد على يوتيوب.",
       location: "عمّان · برلين",
-      photo: "ex4-motion-reem",
-      motion: "reem",
+      photo: "ex-food-creator",
+      focal: [0.5, 0.35],
       stats: [
         ["870 ألف", "مشترك"],
         ["310", "وصفة"],

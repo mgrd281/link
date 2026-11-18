@@ -110,9 +110,8 @@ endorsing Linkyo.
 | ex3-ui-sketch.jpg | Kelly Sikkema | https://unsplash.com/photos/a-person-writing-on-a-piece-of-paper-next-to-a-keyboard-ml1IgjV8OvY | Unsplash License |
 | ex3-workshop.jpg | Vitaly Gariev | https://unsplash.com/photos/woman-presents-to-colleagues-at-a-whiteboard-meeting-piULICqeV5Y | Unsplash License |
 | ex4-motion-clara.jpg | Mixkit (clip 4756; loop in public/media/motion/clara.mp4) | https://mixkit.co/free-stock-video/girl-smiling-portrait-in-the-library-4756/ | Mixkit Stock Video Free License |
-| ex4-motion-lina.jpg | Mixkit (clip 4883; loop in public/media/motion/lina.mp4) | https://mixkit.co/free-stock-video/a-girls-face-in-detail-while-smiling-4883/ | Mixkit Stock Video Free License |
+| ex4-motion-lina.jpg | Mixkit (clip 4859; loop in public/media/motion/lina.mp4) | https://mixkit.co/free-stock-video/portrait-of-a-happy-smiling-woman-4859/ | Mixkit Stock Video Free License |
 | ex4-motion-mara.jpg | Mixkit (clip 50326; loop in public/media/motion/mara.mp4) | https://mixkit.co/free-stock-video/talented-female-singer-in-a-fancy-old-place-50326/ | Mixkit Stock Video Free License |
-| ex4-motion-reem.jpg | Mixkit (clip 42909; loop in public/media/motion/reem.mp4) | https://mixkit.co/free-stock-video/woman-serving-eggs-in-a-pan-for-breakfast-42909/ | Mixkit Stock Video Free License |
 | ex4-motion-timo.jpg | Mixkit (clip 4535; loop in public/media/motion/timo.mp4) | https://mixkit.co/free-stock-video/portrait-of-a-smiling-man-4535/ | Mixkit Stock Video Free License |
 | ex-logo-*.png | Linkyo (original artwork) | — | © Linkyo |
 

@@ -86,7 +86,7 @@ function Stats({ stats }: { stats: NonNullable<Profile["stats"]> }) {
  * - duotone: the photo is toned into the page color (screen for dark photos, multiply for light);
  * - logo: the creator's logo over a softly blurred photo (falls back to portrait without a logo).
  * On scroll the photo softens and fades away (CSS scroll-driven animation, no JavaScript). A moving
- * picture (profile.motion) loops silently over the photo in the portrait and duotone treatments.
+ * picture (profile.motion) loops silently over the photo, always in its own colors (portrait).
  */
 export function PosterHero({
   profile,
@@ -103,7 +103,10 @@ export function PosterHero({
 }) {
   const isRtl = profile.locale === "ar";
   const photo = profile.hero ?? profile.avatar;
-  const treatment = !hasImage(photo) && !profile.logo ? "monogram" : theme.layout.hero === "logo" && !profile.logo ? "portrait" : theme.layout.hero;
+  const layout = theme.layout.hero;
+  // A moving picture always shows in its own colors: toning a face on video into the page color
+  // reads as a filter, not as a portrait.
+  const treatment = !hasImage(photo) && !profile.logo ? "monogram" : layout === "logo" && !profile.logo ? "portrait" : layout === "duotone" && profile.motion ? "portrait" : layout;
 
   return (
     <header className="poster-hero-timeline grid justify-items-center text-center">
@@ -139,12 +142,7 @@ export function PosterHero({
             className={treatment === "duotone" ? cn("grayscale contrast-125", photo.tone === "light" ? "mix-blend-multiply" : "mix-blend-screen") : undefined}
           />
           {/* A moving picture plays over the photo (the photo is its poster and its still version). */}
-          {profile.motion ? (
-            <HeroMotion
-              src={profile.motion.src}
-              className={treatment === "duotone" ? cn("grayscale contrast-125", photo.tone === "light" ? "mix-blend-multiply" : "mix-blend-screen") : undefined}
-            />
-          ) : null}
+          {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}
         </div>
       )}
       <div className={cn("relative grid justify-items-center gap-3 px-creator-gutter", treatment === "logo" && profile.logo ? "-mt-6" : treatment === "monogram" ? "-mt-12" : "-mt-16")}>
