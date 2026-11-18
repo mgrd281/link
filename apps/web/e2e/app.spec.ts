@@ -307,9 +307,9 @@ test.describe("private previews", () => {
     expect(await axe(page)).toEqual([]);
     await page.mouse.wheel(0, 2000);
     const cta = page.getByRole("link", { name: "Start for free" });
-    await expect(cta).toHaveAttribute("href", "/en/signup?kind=journalist");
+    await expect(cta).toHaveAttribute("href", "/en/signup?kind=journalist&look=journalist");
     await cta.click();
-    await page.waitForURL("**/en/signup?kind=journalist");
+    await page.waitForURL("**/en/signup?kind=journalist&look=journalist");
     await page.waitForLoadState("networkidle");
     const name = `press-${unique()}`;
     await page.locator("#signup-username").fill(name);
