@@ -12,6 +12,17 @@ import { PREVIEW_SECONDS, youtubeEnded, youtubeId, youtubeWatchUrl } from "./pro
 const YOUTUBE_EMBED_ORIGIN = "https://www.youtube-nocookie.com";
 
 /**
+ * iPhone, iPad and Safari only let an embedded video start with sound from a tap inside the player.
+ * Started muted, it plays on the visitor's first tap on our poster (YouTube shows "unmute").
+ */
+function startsMuted(): boolean {
+  const { userAgent, maxTouchPoints } = window.navigator;
+  const ios = /iP(hone|ad|od)/.test(userAgent) || (userAgent.includes("Macintosh") && maxTouchPoints > 1);
+  const safari = userAgent.includes("Safari/") && !/(Chrome|Chromium|CriOS|FxiOS|EdgiOS|Edg|OPR|Android)\//.test(userAgent);
+  return ios || safari;
+}
+
+/**
  * The YouTube player in privacy mode. In preview mode it stops after PREVIEW_SECONDS and tells us
  * (postMessage), so the page can offer to keep watching on YouTube.
  */
@@ -28,7 +39,7 @@ function YouTubePlayer({ video, title, preview, className, onEnded }: { video: s
   }, [preview, onEnded]);
   // Ask the player to report its state (it answers only after a "listening" message).
   const listen = () => frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), YOUTUBE_EMBED_ORIGIN);
-  const params = preview ? `&end=${PREVIEW_SECONDS}&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}` : "";
+  const params = `${startsMuted() ? "&mute=1" : ""}${preview ? `&end=${PREVIEW_SECONDS}&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}` : ""}`;
   return (
     <iframe
       ref={frame}

@@ -17,6 +17,11 @@ in YouTube's privacy mode, after the tap (ADR on click-to-load).
 - **`external`**: the poster is a plain link to the video on the platform ("Opens YouTube"). Nothing
   loads on the page, so such a video does not count towards the privacy notice.
 
+**One tap plays.** iPhone, iPad and Safari only start an embedded video with sound from a tap
+inside the player. There the embed starts muted (`mute=1`), so the visitor's first tap on our poster
+plays the video, and YouTube shows its own "unmute" button. Other browsers pass the tap through and
+play with sound.
+
 Views on the creator's channel matter to YouTubers, so preview and external send visitors there.
 Inline keeps them on the page. Concept pages use the default; MrBeast's page shows the preview mode.
 Tests:

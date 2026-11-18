@@ -1,4 +1,4 @@
-import type { Block, BlockOf, Page, Platform, VideoPlayback } from "@linkyo/blocks";
+import type { Block, BlockOf, LinkIcon, Page, Platform, VideoPlayback } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 /**
@@ -30,7 +30,7 @@ export interface Star {
   videoPlayback?: VideoPlayback | undefined;
   music?: { title: Localized; kind: "single" | "album" | "ep"; links: { platform: Platform; url: string }[] }[] | undefined;
   /** Prominent buttons above the official website (e.g. "Follow @… on Instagram"). */
-  highlights?: { title: Text; url: string }[] | undefined;
+  highlights?: { title: Text; url: string; subtitle?: Text | undefined }[] | undefined;
   /**
    * The story the person is known for (e.g. Argentina and the World Cup): a big card, an optional
    * video and smaller story cards. Links may differ per language (an article in that language).
@@ -38,6 +38,8 @@ export interface Star {
   spotlight?: { heading: Text; featured: Story; video?: { id: string; title: Text } | undefined; stories: Story[] } | undefined;
   /** Clubs, teams or companies: picture, name, years and what happened there. */
   career?: Story[] | undefined;
+  /** Titled groups of links with an icon and a second line (companies, projects …). */
+  linkGroups?: { heading: Text; items: { title: Text; subtitle: Text; url: string; icon?: LinkIcon | undefined }[] }[] | undefined;
   gallery?: { image: string; alt: Text }[] | undefined;
   works?: { title: Text; year: number; url: string }[] | undefined;
   /** Shown only on the page in the article's own language. */
@@ -92,7 +94,7 @@ export function starPage(star: Star, locale: StarLocale): Page {
 
   const blocks: Block[] = [];
   if (star.socials.length) blocks.push({ ...base("socials"), type: "socials", items: star.socials.slice(0, 12) });
-  for (const button of star.highlights ?? []) blocks.push(link(button.title[locale], button.url, { highlight: true }));
+  for (const button of star.highlights ?? []) blocks.push(link(button.title[locale], button.url, { highlight: true, ...(button.subtitle ? { subtitle: button.subtitle[locale] } : {}) }));
   if (star.website) blocks.push(link(HEADINGS.official[locale], star.website, { highlight: !star.highlights?.length, icon: "globe" }));
 
   for (const release of star.music ?? []) {
@@ -133,6 +135,11 @@ export function starPage(star: Star, locale: StarLocale): Page {
   if (star.career?.length) {
     blocks.push(header(HEADINGS.career[locale]));
     for (const step of star.career) blocks.push(story(step));
+  }
+
+  for (const group of star.linkGroups ?? []) {
+    blocks.push(header(group.heading[locale]));
+    for (const item of group.items) blocks.push(link(item.title[locale], item.url, { subtitle: item.subtitle[locale], ...(item.icon ? { icon: item.icon } : {}) }));
   }
 
   if (star.gallery?.length) {

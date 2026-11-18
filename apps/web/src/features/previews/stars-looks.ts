@@ -15,7 +15,7 @@ export const STAR_LOOKS = {
   "jeff-bezos": { kind: "business", theme: { template: "daylight", accent: SW.tangerine, pairing: "modern" } },
   messi: { kind: "other", theme: { template: "daylight", accent: SW.celeste, neutral: SW.celeste, tint: 0.6, pairing: "bold" } },
   "mo-salah": { kind: "other", theme: { template: "pulse", accent: SW.wine, pairing: "bold", buttonShape: "pill" } },
-  mrbeast: { kind: "youtube", theme: { template: "pulse", accent: SW.lemon, pairing: "bold", buttonStyle: "shadow" } },
+  mrbeast: { kind: "youtube", theme: { template: "nocturne", accent: SW.cyan, pairing: "bold", buttonShape: "pill" } },
   "nadine-njeim": { kind: "other", theme: { template: "daylight", accent: SW.rose, pairing: "elegant", buttonShape: "pill" } },
   "taim-hassan": { kind: "other", theme: { template: "nocturne", accent: SW.oxblood, buttonStyle: "minimal" } },
   "taylor-swift": { kind: "music", theme: { template: "atelier", accent: SW.mauve, pairing: "elegant", mode: "dark" } },
