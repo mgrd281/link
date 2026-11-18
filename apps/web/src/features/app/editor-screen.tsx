@@ -12,7 +12,7 @@ import { thumbSizes } from "@/features/directions/editor/use-dashboard";
 import { blockSummary } from "@/features/directions/editor/use-editor";
 import { selfTitle } from "@/features/directions/poster/sections";
 import { platformName } from "@/features/directions/shared/creator-kit";
-import { resolveMedia } from "@/features/directions/shared/media";
+import { remoteImageProps, resolveMedia } from "@/features/directions/shared/media";
 
 import { blankBlock } from "./blocks";
 import { PreviewButton } from "./preview";
@@ -151,7 +151,7 @@ function Thumb({ block }: { block: Block }) {
     const resolved = resolveMedia(image.src);
     return (
       <span className="relative size-control-lg shrink-0 overflow-hidden rounded-md bg-canvas-muted">
-        <Image src={resolved} alt="" fill sizes={thumbSizes} className="object-cover" />
+        <Image src={resolved} alt="" fill sizes={thumbSizes} className="object-cover" {...remoteImageProps(resolved)} />
       </span>
     );
   }

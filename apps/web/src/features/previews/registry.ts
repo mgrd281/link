@@ -1,7 +1,11 @@
 import type { Page } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
+import { pageSchema } from "@linkyo/blocks";
+import { z } from "zod";
+
 import { nizarAr, nizarDe } from "./nizar";
+import { PREPARED } from "./prepared";
 
 /**
  * Private previews: a page prepared for one creator to see before they sign up. Reached only by an
@@ -16,6 +20,11 @@ export interface Preview {
   pages: Partial<Record<"de" | "en" | "ar", Page>>;
   /** Fills in what depends on the day (e.g. tonight's live), run per request. */
   prepare?: (page: Page, now: Date) => Page;
+  /**
+   * Who may take this page over: SHA-256 of the email(s) the creator gave the Linkyo team. Signing
+   * up with one of them opens an account with this page ready. Plain emails never enter the code.
+   */
+  invite?: { emailSha256: string[] };
 }
 
 /** The next hh:00 in Berlin (today, or tomorrow once it has passed), as an ISO timestamp. */
@@ -63,14 +72,36 @@ const tonightAt =
     ),
   });
 
-export const PREVIEWS: Record<string, Preview> = {
+const HAND_MADE: Record<string, Preview> = {
   "nizar-m3e8dw": {
     name: { de: "Nizar", ar: "نزار" },
     username: "nizarals9",
     theme: { template: "nocturne" },
     pages: { de: nizarDe, ar: nizarAr },
     prepare: tonightAt(21),
+    // The business email from his public TikTok profile; add the one he gives you with prepare-page.
+    invite: { emailSha256: ["f162f82de536c27fc25ee9575813959d7f7ddbbd4603cdbc383112a487af2647"] },
   },
+};
+
+/** Pages the team prepared with scripts/prepare-page.mjs (checked with the page schema at start). */
+const preparedFile = z.object({
+  slug: z.string().regex(/^[a-z0-9-]{3,64}$/),
+  name: z.record(z.enum(["de", "en", "ar"]), z.string()),
+  username: z.string(),
+  theme: z.record(z.string(), z.union([z.string(), z.number()])),
+  pages: z.record(z.enum(["de", "en", "ar"]), pageSchema),
+  invite: z.object({ emailSha256: z.array(z.string().regex(/^[0-9a-f]{64}$/)) }),
+});
+
+export const PREVIEWS: Record<string, Preview> = {
+  ...HAND_MADE,
+  ...Object.fromEntries(
+    PREPARED.map((raw) => preparedFile.parse(raw)).map((file) => [
+      file.slug,
+      { name: file.name, username: file.username, theme: file.theme, pages: file.pages, invite: file.invite },
+    ]),
+  ),
 };
 
 export const previewPage = (slug: string, locale: string, now = new Date()) => {

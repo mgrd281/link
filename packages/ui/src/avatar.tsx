@@ -29,7 +29,7 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
         className,
       )}
     >
-      {src ? <img src={src} alt="" className="size-full object-cover" /> : <span aria-hidden>{initials}</span>}
+      {src ? <img src={src} alt="" referrerPolicy="no-referrer" className="size-full object-cover" /> : <span aria-hidden>{initials}</span>}
     </span>
   );
 }

@@ -2,10 +2,11 @@
 
 import { hasImage } from "@linkyo/blocks";
 import { Badge, Button, cn, Icon } from "@linkyo/ui";
-import { ArrowRight, AtSign, Check, ExternalLink, FileText, ImagePlus, LayoutList, Palette, PartyPopper, Plus, Scale, TextQuote } from "lucide-react";
+import { ArrowRight, AtSign, Check, ExternalLink, FileText, ImagePlus, LayoutList, Palette, PartyPopper, Plus, Scale, Sparkles, TextQuote, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type CSSProperties } from "react";
 
+import { accountStore } from "@/features/account/store";
 import { Link, useRouter } from "@/i18n/navigation";
 
 import { blankBlock } from "./blocks";
@@ -54,6 +55,37 @@ export function HomeScreen() {
 
   return (
     <Screen title={t("title", { name })} lead={t("lead")} preview>
+      {site.prepared && !site.prepared.seen ? (
+        <section aria-labelledby="prepared-title" className="relative grid gap-3 overflow-hidden rounded-xl bg-primary p-5 text-primary-fg shadow-e2">
+          <div className="flex items-start gap-3">
+            <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-primary-fg text-primary">
+              <Icon icon={Sparkles} size="md" />
+            </span>
+            <div className="grid min-w-0 flex-1 gap-1">
+              <h2 id="prepared-title" className="text-body-lg font-semibold">
+                {t("preparedTitle", { name })}
+              </h2>
+              <p className="text-small">{t("preparedBody")}</p>
+            </div>
+            <button
+              type="button"
+              aria-label={t("preparedDismiss")}
+              onClick={() => accountStore.updateSite((current) => ({ ...current, prepared: { at: current.prepared?.at ?? new Date().toISOString(), seen: true } }))}
+              className="grid size-control-sm shrink-0 place-items-center rounded-full hover:bg-hover-inverse focus-visible:focus-ring"
+            >
+              <Icon icon={X} size="sm" />
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2 ps-12">
+            <Link href="/app/preview" className="inline-flex h-control-md items-center gap-2 rounded-md bg-primary-fg px-4 text-small font-semibold text-primary focus-visible:focus-ring">
+              {t("preparedView")}
+            </Link>
+            <Link href="/app/editor" className="inline-flex h-control-md items-center gap-2 rounded-md border border-primary-fg px-4 text-small font-semibold focus-visible:focus-ring">
+              {t("preparedEdit")}
+            </Link>
+          </div>
+        </section>
+      ) : null}
       <Panel className="bg-surface">
         <div className="grid grid-cols-1 gap-1">
           <p className="text-small font-medium text-fg-secondary">{t("yourLink")}</p>

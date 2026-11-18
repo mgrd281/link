@@ -10,7 +10,7 @@ import { Link } from "@/i18n/navigation";
 
 import { isStrongEnough } from "../password";
 import { accountStore } from "../store";
-import type { AuthError } from "../types";
+import type { AuthError, SignUpInput } from "../types";
 import { AuthHeading } from "./auth-shell";
 import { FormError, OrDivider, PasswordField } from "./fields";
 import { SocialButtons, useLeaveWhenSignedIn, useSearchParam } from "./shared";
@@ -24,7 +24,27 @@ const FIELD_OF: Partial<Record<AuthError, Field>> = {
   invalidEmail: "email",
   emailTaken: "email",
   weakPassword: "password",
+  inviteMismatch: "email",
+  reservedForCreator: "username",
 };
+
+type Prepared =
+  | { kind: "match"; username: string; theme: NonNullable<SignUpInput["prepared"]>["theme"]; page: NonNullable<SignUpInput["prepared"]>["page"] }
+  | { kind: "reserved" | "mismatch" | "none" };
+
+/** Asks the server whether the Linkyo team prepared a page for this email (the invite list stays there). */
+async function lookUpPrepared(input: { email: string; username: string; invite: string; locale: string }): Promise<Prepared> {
+  try {
+    const response = await fetch("/api/prepared", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...input, invite: input.invite || undefined }),
+    });
+    return response.ok ? ((await response.json()) as Prepared) : { kind: "none" };
+  } catch {
+    return { kind: "none" };
+  }
+}
 
 const emailOk = (email: string) => z.email().safeParse(email.trim()).success;
 const locales = ["de", "en", "ar"] as const;
@@ -37,6 +57,8 @@ export function SignupForm() {
   const t = useTranslations("auth");
   const locale = useLocale();
   const prefill = useSearchParam("name").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
+  // From a prepared page's invite link: the address is theirs, only the email decides.
+  const invite = useSearchParam("invite").replace(/[^a-z0-9-]/g, "").slice(0, 64);
   const [typed, setTyped] = useState<string | null>(null);
   const username = typed ?? prefill;
   const [email, setEmail] = useState("");
@@ -64,7 +86,22 @@ export function SignupForm() {
       return;
     }
     setBusy(true);
-    const result = await accountStore.signUp({ email, password, username, locale: locales.find((code) => code === locale) ?? "de" });
+    const signupLocale = locales.find((code) => code === locale) ?? "de";
+    const prepared = await lookUpPrepared({ email, username, invite, locale: signupLocale });
+    if (prepared.kind === "mismatch" || prepared.kind === "reserved") {
+      setBusy(false);
+      const field = prepared.kind === "mismatch" ? "email" : "username";
+      setErrors({ [field]: prepared.kind === "mismatch" ? "inviteMismatch" : "reservedForCreator" } satisfies Errors);
+      document.getElementById(`signup-${field}`)?.focus();
+      return;
+    }
+    const result = await accountStore.signUp({
+      email,
+      password,
+      username: prepared.kind === "match" ? prepared.username : username,
+      locale: signupLocale,
+      prepared: prepared.kind === "match" ? { page: prepared.page, theme: prepared.theme } : undefined,
+    });
     setBusy(false);
     if (result.ok) return; // useLeaveWhenSignedIn takes it from here.
     const field = FIELD_OF[result.error];
@@ -78,8 +115,9 @@ export function SignupForm() {
 
   return (
     <>
-      <AuthHeading title={t("signup.title")} lead={t("signup.lead")} />
+      {invite ? <AuthHeading title={t("signup.preparedTitle")} lead={t("signup.preparedLead")} /> : <AuthHeading title={t("signup.title")} lead={t("signup.lead")} />}
       <SocialButtons />
+      {invite ? <p className="-mt-4 text-caption text-fg-secondary">{t("signup.preparedGoogle")}</p> : null}
       <OrDivider label={t("social.or")} />
       <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-5">
         <FormError message={banner ? t(`errors.${banner}`) : null} />
@@ -90,6 +128,7 @@ export function SignupForm() {
           ltr
           leading="linkyo.app/"
           value={username}
+          readOnly={Boolean(invite && prefill)}
           onChange={(event) => {
             setTyped(event.target.value.toLowerCase());
             setErrors((current) => ({ ...current, username: undefined }));
@@ -104,7 +143,7 @@ export function SignupForm() {
             status === "ok" ? (
               <span className="flex items-center gap-2 text-success-strong">
                 <Icon icon={CircleCheck} size="sm" />
-                {t("fields.usernameOk", { name: username })}
+                {invite && prefill ? t("fields.usernameReserved", { name: username }) : t("fields.usernameOk", { name: username })}
               </span>
             ) : (
               t("fields.usernameHint")

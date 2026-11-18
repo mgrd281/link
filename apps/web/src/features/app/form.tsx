@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useId, useState, type ReactNode, type TextareaHTMLAttributes } from "react";
 
-import { resolveMedia } from "@/features/directions/shared/media";
+import { remoteImageProps, resolveMedia } from "@/features/directions/shared/media";
 
 import { ImageError, pickFiles, prepareImage, type ImageKind } from "./images";
 
@@ -195,7 +195,7 @@ export function ImageInput({
             error && "border-danger-strong",
           )}
         >
-          {resolved ? <Image src={resolved} alt="" fill sizes="10vw" className={kind === "logo" ? "object-contain p-2" : "object-cover"} /> : <Icon icon={ImagePlus} size="lg" />}
+          {resolved ? <Image src={resolved} alt="" fill sizes="10vw" className={kind === "logo" ? "object-contain p-2" : "object-cover"} {...remoteImageProps(resolved)} /> : <Icon icon={ImagePlus} size="lg" />}
         </span>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" icon={ImagePlus} loading={busy} onClick={() => void choose()}>

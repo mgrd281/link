@@ -67,6 +67,18 @@ export function starterSite(username: string, email: string, locale: Page["profi
   };
 }
 
+/** A page the Linkyo team prepared: ready to share, no welcome flow, a one-time welcome on Home. */
+export function preparedSite(username: string, email: string, prepared: NonNullable<SignUpInput["prepared"]>): Site {
+  const page = prepared.page;
+  return {
+    ...starterSite(username, email, page.profile.locale),
+    page: { profile: { ...page.profile, username }, blocks: page.blocks },
+    theme: prepared.theme,
+    onboarded: true,
+    prepared: { at: now() },
+  };
+}
+
 export class LocalAccountStore implements AccountStore {
   readonly demo = true;
   private readonly listeners = new Set<() => void>();
@@ -129,7 +141,7 @@ export class LocalAccountStore implements AccountStore {
     return this.write({
       ...db,
       accounts: [...db.accounts, account],
-      sites: { ...db.sites, [account.id]: starterSite(username, email, input.locale) },
+      sites: { ...db.sites, [account.id]: input.prepared ? preparedSite(username, email, input.prepared) : starterSite(username, email, input.locale) },
       session: { accountId: account.id, since: now() },
     });
   }

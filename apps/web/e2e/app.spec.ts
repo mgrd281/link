@@ -266,7 +266,7 @@ test.describe("private previews", () => {
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
       // The claim bar slides in once the portrait has scrolled away.
       await page.mouse.wheel(0, 2000);
-      await expect(page.getByRole("link", { name: cta })).toHaveAttribute("href", `/${locale}/signup?name=nizarals9`);
+      await expect(page.getByRole("link", { name: cta })).toHaveAttribute("href", `/${locale}/signup?name=nizarals9&invite=nizar-m3e8dw`);
       expect(await axe(page)).toEqual([]);
     });
   }
@@ -287,4 +287,41 @@ test("live now and the next live: hero pill, visitor's time, calendar reminder",
   const download = page.waitForEvent("download");
   await tonight.getByRole("button", { name: "Erinnern" }).click();
   expect((await download).suggestedFilename()).toBe("live.ics");
+});
+
+test.describe("prepared pages for creators", () => {
+  test("the invited email signs up into a ready page", async ({ page }) => {
+    await page.goto("/de/signup?name=nizarals9&invite=nizar-m3e8dw");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("heading", { name: "Deine Seite ist fertig" })).toBeVisible();
+    await expect(page.locator("#signup-username")).toHaveValue("nizarals9");
+    await expect(page.locator("#signup-username")).toHaveAttribute("readonly", "");
+    await page.locator("#signup-email").fill("nezaralsweid4@gmail.com");
+    await page.locator("#signup-password").fill(PASSWORD);
+    await page.locator("form button[type=submit]").click();
+    // No welcome steps: straight to Home, with the page already there.
+    await page.waitForURL("**/de/app");
+    await expect(page.getByRole("heading", { name: "Willkommen, Nizar Alkrizma! Deine Seite ist fertig." })).toBeVisible();
+    await expect(page.getByText("linkyo.app/nizarals9").filter({ visible: true }).first()).toBeVisible();
+    await page.goto("/de/app/editor");
+    await expect(page.getByRole("button", { name: /^Wyli Karizma bearbeiten/ })).toBeVisible();
+    // The preview's example states are not part of the real page.
+    await page.goto("/de/app/preview");
+    await expect(page.getByText("Jetzt live")).toHaveCount(0);
+  });
+
+  test("an invite link with another email, or the reserved address, is explained", async ({ page }) => {
+    await page.goto("/de/signup?name=nizarals9&invite=nizar-m3e8dw");
+    await page.waitForLoadState("networkidle");
+    await page.locator("#signup-email").fill("someone.else@example.com");
+    await page.locator("#signup-password").fill(PASSWORD);
+    await page.locator("form button[type=submit]").click();
+    await expect(page.getByText("Diese Seite wurde für eine andere E-Mail vorbereitet.")).toBeVisible();
+    await page.goto("/de/signup?name=nizarals9");
+    await page.waitForLoadState("networkidle");
+    await page.locator("#signup-email").fill("someone.else@example.com");
+    await page.locator("#signup-password").fill(PASSWORD);
+    await page.locator("form button[type=submit]").click();
+    await expect(page.getByText("Diese Adresse ist für einen Creator reserviert.")).toBeVisible();
+  });
 });

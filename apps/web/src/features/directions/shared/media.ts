@@ -71,6 +71,11 @@ export const sampleMedia = {
 
 export type SampleKey = keyof typeof sampleMedia;
 
+/** next/image props for pictures that stay on the creator's own platform: shown as they are, no referrer. */
+export function remoteImageProps(resolved: StaticImageData | string) {
+  return typeof resolved === "string" && /^https?:/.test(resolved) ? { unoptimized: true, referrerPolicy: "no-referrer" as const } : {};
+}
+
 export function resolveMedia(src: string): StaticImageData | string {
   return src in sampleMedia ? sampleMedia[src as SampleKey] : src;
 }

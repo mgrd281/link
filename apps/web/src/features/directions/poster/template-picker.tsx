@@ -71,6 +71,7 @@ export function TemplatePicker({
                         sizes={thumbSizes}
                         className={cn("object-cover", theme.layout.hero === "duotone" && "grayscale mix-blend-screen", theme.layout.hero === "logo" && "blur-glass")}
                         unoptimized={typeof avatar === "string"}
+                        referrerPolicy="no-referrer"
                       />
                     ) : (
                       <span className="absolute inset-0 grid place-items-center bg-creator-surface-2 font-creator-display text-h2 text-creator-fg">{initials(profile.displayName)}</span>

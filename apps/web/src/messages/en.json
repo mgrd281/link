@@ -790,7 +790,8 @@
       "password": "Password",
       "newPassword": "New password",
       "show": "Show password",
-      "hide": "Hide password"
+      "hide": "Hide password",
+      "usernameReserved": "linkyo.app/{name} is reserved for you"
     },
     "checks": {
       "length": "At least 8 characters",
@@ -811,7 +812,9 @@
       "wrongPassword": "Your current password doesn't match.",
       "notFound": "There is no account with this email in this browser.",
       "storageFull": "This browser's demo storage is full. Remove large images and try again.",
-      "unavailable": "This browser doesn't allow storage (private window?). Open Linkyo in a normal window."
+      "unavailable": "This browser doesn't allow storage (private window?). Open Linkyo in a normal window.",
+      "inviteMismatch": "This page was prepared for a different email. Use the email you gave the Linkyo team.",
+      "reservedForCreator": "This address is reserved for a creator. Is it yours? Sign up with the email you gave us."
     },
     "signup": {
       "title": "Get your page",
@@ -820,7 +823,10 @@
       "terms": "By creating an account you accept the terms of use and confirm the privacy policy.",
       "haveAccount": "Already have an account?",
       "login": "Log in",
-      "loginInstead": "Log in instead"
+      "loginInstead": "Log in instead",
+      "preparedTitle": "Your page is ready",
+      "preparedLead": "The Linkyo team prepared it for you. Sign up with the email you gave us and everything is there right away.",
+      "preparedGoogle": "At launch this works with Google too: same email, same page."
     },
     "login": {
       "title": "Welcome back",
@@ -870,7 +876,9 @@
       "notFound": "Your session has ended. Please log in again.",
       "storageFull": "Not saved: this browser's demo storage is full. Remove a large image and try again.",
       "unavailable": "Not saved: this browser doesn't allow storage.",
-      "imageRequired": "Please add a picture."
+      "imageRequired": "Please add a picture.",
+      "inviteMismatch": "This page was prepared for a different email. Use the email you gave the Linkyo team.",
+      "reservedForCreator": "This address is reserved for a creator. Is it yours? Sign up with the email you gave us."
     },
     "added": {
       "one": "{type} added",
@@ -1180,7 +1188,12 @@
         "page": "Edit page",
         "design": "Change look",
         "settings": "Settings"
-      }
+      },
+      "preparedTitle": "Welcome, {name}! Your page is ready.",
+      "preparedBody": "The Linkyo team prepared it for you. Have a look and change anything you like – it's all yours.",
+      "preparedView": "View my page",
+      "preparedEdit": "Edit",
+      "preparedDismiss": "Dismiss"
     },
     "share": {
       "copy": "Copy link",

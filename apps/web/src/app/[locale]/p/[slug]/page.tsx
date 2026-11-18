@@ -102,7 +102,7 @@ export default async function PreviewRoute({ params }: Props) {
             <Logo className="h-5 shrink-0" title="Linkyo" />
             <span className="text-small text-fg-secondary min-w-0 flex-1 truncate">{t("dockTitle")}</span>
             <Link
-              href={`/signup?name=${found.preview.username}`}
+              href={`/signup?name=${found.preview.username}${found.preview.invite ? `&invite=${slug}` : ""}`}
               className="h-control-md bg-primary text-small text-primary-fg duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed inline-flex shrink-0 items-center gap-2 rounded-full px-4 font-semibold transition-colors"
             >
               {t("dockCta")}

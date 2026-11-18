@@ -29,6 +29,8 @@ export interface Site {
   legal: Legal;
   /** Finished (or skipped) the welcome flow. */
   onboarded: boolean;
+  /** Set when the Linkyo team prepared this page before sign-up; `seen` once the welcome is dismissed. */
+  prepared?: { at: string; seen?: boolean } | undefined;
   updatedAt: string;
 }
 
@@ -48,7 +50,9 @@ export type AuthError =
   | "wrongPassword"
   | "notFound"
   | "storageFull"
-  | "unavailable";
+  | "unavailable"
+  | "inviteMismatch"
+  | "reservedForCreator";
 
 export type Result = { ok: true } | { ok: false; error: AuthError };
 
@@ -57,6 +61,8 @@ export interface SignUpInput {
   password: string;
   username: string;
   locale: Page["profile"]["locale"];
+  /** A page the Linkyo team prepared for this email: the account starts with it, ready. */
+  prepared?: { page: Page; theme: CreatorThemeConfig } | undefined;
 }
 
 export interface AccountStore {

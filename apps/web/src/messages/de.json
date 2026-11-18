@@ -790,7 +790,8 @@
       "password": "Passwort",
       "newPassword": "Neues Passwort",
       "show": "Passwort anzeigen",
-      "hide": "Passwort verbergen"
+      "hide": "Passwort verbergen",
+      "usernameReserved": "linkyo.app/{name} ist für dich reserviert"
     },
     "checks": {
       "length": "Mindestens 8 Zeichen",
@@ -811,7 +812,9 @@
       "wrongPassword": "Das aktuelle Passwort stimmt nicht.",
       "notFound": "In diesem Browser gibt es kein Konto mit dieser E-Mail.",
       "storageFull": "Der Demo-Speicher dieses Browsers ist voll. Entferne große Bilder und versuch es noch einmal.",
-      "unavailable": "Dieser Browser erlaubt keinen Speicher (privates Fenster?). Öffne Linkyo in einem normalen Fenster."
+      "unavailable": "Dieser Browser erlaubt keinen Speicher (privates Fenster?). Öffne Linkyo in einem normalen Fenster.",
+      "inviteMismatch": "Diese Seite wurde für eine andere E-Mail vorbereitet. Nutze die E-Mail, die du dem Linkyo-Team gegeben hast.",
+      "reservedForCreator": "Diese Adresse ist für einen Creator reserviert. Ist es deine? Registriere dich mit der E-Mail, die du uns gegeben hast."
     },
     "signup": {
       "title": "Hol dir deine Seite",
@@ -820,7 +823,10 @@
       "terms": "Mit dem Erstellen akzeptierst du die Nutzungsbedingungen und bestätigst die Datenschutzerklärung.",
       "haveAccount": "Schon ein Konto?",
       "login": "Anmelden",
-      "loginInstead": "Stattdessen anmelden"
+      "loginInstead": "Stattdessen anmelden",
+      "preparedTitle": "Deine Seite ist fertig",
+      "preparedLead": "Das Linkyo-Team hat sie für dich vorbereitet. Registriere dich mit der E-Mail, die du uns gegeben hast – dann ist alles sofort da.",
+      "preparedGoogle": "Zum Start geht das auch mit Google: gleiche E-Mail, gleiche Seite."
     },
     "login": {
       "title": "Willkommen zurück",
@@ -870,7 +876,9 @@
       "notFound": "Deine Sitzung ist abgelaufen. Bitte melde dich neu an.",
       "storageFull": "Nicht gespeichert: Der Demo-Speicher dieses Browsers ist voll. Entferne ein großes Bild und versuch es noch einmal.",
       "unavailable": "Nicht gespeichert: Dieser Browser erlaubt keinen Speicher.",
-      "imageRequired": "Bitte füge ein Bild hinzu."
+      "imageRequired": "Bitte füge ein Bild hinzu.",
+      "inviteMismatch": "Diese Seite wurde für eine andere E-Mail vorbereitet. Nutze die E-Mail, die du dem Linkyo-Team gegeben hast.",
+      "reservedForCreator": "Diese Adresse ist für einen Creator reserviert. Ist es deine? Registriere dich mit der E-Mail, die du uns gegeben hast."
     },
     "added": {
       "one": "{type} hinzugefügt",
@@ -1180,7 +1188,12 @@
         "page": "Seite bearbeiten",
         "design": "Look ändern",
         "settings": "Einstellungen"
-      }
+      },
+      "preparedTitle": "Willkommen, {name}! Deine Seite ist fertig.",
+      "preparedBody": "Das Linkyo-Team hat sie für dich vorbereitet. Schau sie dir an und ändere, was du möchtest – alles gehört dir.",
+      "preparedView": "Meine Seite ansehen",
+      "preparedEdit": "Bearbeiten",
+      "preparedDismiss": "Schließen"
     },
     "share": {
       "copy": "Link kopieren",
