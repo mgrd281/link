@@ -36,6 +36,9 @@ export function PosterRenderer({ page, theme, preview = false }: { page: Page; t
   const { profile } = page;
   const blocks = page.blocks.filter((block) => isBlockActive(block));
   const socials = blocks.find((block): block is BlockOf<"socials"> => block.type === "socials");
+  // Live now beats a planned live; either one gets a pill in the hero.
+  const lives = blocks.filter((block): block is BlockOf<"live"> => block.type === "live");
+  const live = lives.find((block) => block.isLive) ?? lives.find((block) => block.startsAt !== undefined);
   const sections = groupSections(blocks);
   const isRtl = profile.locale === "ar";
   const photo = profile.hero ?? profile.avatar;
@@ -59,7 +62,7 @@ export function PosterRenderer({ page, theme, preview = false }: { page: Page; t
 
       <div className="relative mx-auto max-w-creator @prose:pt-10">
         <PosterBar profile={profile} />
-        <PosterHero profile={profile} socials={socials} theme={theme} preview={preview} />
+        <PosterHero profile={profile} socials={socials} live={live} theme={theme} preview={preview} />
 
         {/* A preview sits inside the dashboard, which already has the page's one <main>. */}
         <Main className="grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:px-0">

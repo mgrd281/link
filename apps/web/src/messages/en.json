@@ -335,7 +335,12 @@
     "scroller": "{title}, scrollable row",
     "ad": "Ad",
     "allDates": "All",
-    "filterMonths": "Filter dates by month"
+    "filterMonths": "Filter dates by month",
+    "liveOn": "Live on {platform}",
+    "liveAt": "{when} · live on {platform}",
+    "remindMe": "Remind me",
+    "openChannel": "Open {platform}",
+    "calendarTitle": "Live on {platform}: {title}"
   },
   "directions": {
     "title": "Directions",
@@ -990,7 +995,12 @@
       "schedule": "Schedule",
       "scheduleHint": "Show this only in a time window, e.g. for a presale. Empty means always.",
       "showFrom": "Show from",
-      "showUntil": "Show until"
+      "showUntil": "Show until",
+      "nextLive": "Next live (optional)",
+      "nextLiveHint": "Visitors see it in their own time and can add a reminder to their calendar.",
+      "quickToday": "Today {time}",
+      "quickTomorrow": "Tomorrow {time}",
+      "clearTime": "No time"
     },
     "edit": {
       "addTitle": "Add {type}",
@@ -1367,6 +1377,7 @@
     "note": "– not his official page. Made by Linkyo from his public channels.",
     "ctaLabel": "Claim this page",
     "cta": "Claim {url}",
-    "verifiedNote": "The check mark shows how the page looks once he verifies his account."
+    "verifiedNote": "The check mark shows how the page looks once he verifies his account.",
+    "liveNote": "Live status and times are examples."
   }
 }

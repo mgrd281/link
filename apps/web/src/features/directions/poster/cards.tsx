@@ -10,6 +10,7 @@ import { linkStyleClasses } from "@/features/creator/link-button";
 
 import { MediaImage, mediaSizes, PlatformGlyph, platformName, useCreatorFormat } from "../shared/creator-kit";
 import { ClickToLoad, NewsletterForm } from "../shared/islands";
+import { LiveSchedule, LiveStatus } from "./live";
 import { linkDestination, RAIL_THRESHOLD, type RowBlock } from "./sections";
 import { displayStyle, pressable, railFrame, railTrack, type HeadingTag } from "./styles";
 
@@ -377,31 +378,44 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
   );
 }
 
+/**
+ * A live channel: LIVE now (watch), the next planned live in the visitor's own time (remind me),
+ * or simply the channel. The time and reminder are a tiny client island; the rest is static.
+ */
 export function LiveRow({ block, surface }: { block: BlockOf<"live">; surface: string }) {
   const t = useTranslations("creator");
   const locale = useLocale();
   const f = useCreatorFormat(locale);
+  const platform = platformName(block.platform);
   return (
-    <a href={block.url} className={cn("flex items-start gap-3 rounded-creator-card p-4", surface, pressable)}>
-      <span className="grid h-control-sm shrink-0 place-items-center">
-        <PlatformGlyph platform={block.platform} size="lg" />
-      </span>
-      <span className="grid min-w-0 flex-1 gap-1">
-        <span className="flex min-h-control-sm items-center justify-between gap-3">
-          <span className="truncate text-body-lg font-semibold">{platformName(block.platform)}</span>
-          {block.isLive ? (
-            <span className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-creator-accent px-3 text-caption font-bold tracking-wide text-creator-accent-fg uppercase">
-              <span aria-hidden className="size-dot rounded-full bg-current motion-safe:animate-pulse" />
-              {t("liveNow")}
-              {block.viewers ? <span className="font-medium">· {f.compact(block.viewers)}</span> : null}
-            </span>
-          ) : (
-            <span className="shrink-0 text-small text-creator-fg-muted">{t("offline")}</span>
-          )}
+    <div id={block.id} className={cn("grid scroll-mt-20 gap-4 rounded-creator-card p-4", surface)}>
+      <div className="flex items-start gap-3">
+        <span className="grid h-control-sm shrink-0 place-items-center">
+          <PlatformGlyph platform={block.platform} size="lg" />
         </span>
-        {block.title ? <span className="line-clamp-2 text-small text-creator-fg-muted">{block.title}</span> : null}
-      </span>
-    </a>
+        <span className="grid min-w-0 flex-1 gap-1">
+          <span className="flex min-h-control-sm flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <span className="truncate text-body-lg font-semibold">{platform}</span>
+            <LiveStatus block={block} />
+          </span>
+          {block.title ? <span className="line-clamp-2 text-small text-creator-fg-muted">{block.title}</span> : null}
+          {block.isLive && block.viewers ? <span className="text-small text-creator-fg-muted">{t("watching", { count: f.compact(block.viewers) })}</span> : null}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={block.url}
+          className={cn(
+            "inline-flex h-control-md items-center gap-2 rounded-creator-button px-4 text-small font-semibold transition-colors duration-micro focus-visible:focus-ring",
+            block.isLive ? "bg-creator-accent text-creator-accent-fg" : "border border-creator-line-strong text-creator-fg hover:bg-creator-surface-2",
+          )}
+        >
+          {block.isLive ? t("watchLive") : t("openChannel", { platform })}
+          <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
+        </a>
+        <LiveSchedule block={block} />
+      </div>
+    </div>
   );
 }
 

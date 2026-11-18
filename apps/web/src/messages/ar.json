@@ -335,7 +335,12 @@
     "scroller": "{title}، صف قابل للتمرير",
     "ad": "إعلان",
     "allDates": "الكل",
-    "filterMonths": "تصفية المواعيد حسب الشهر"
+    "filterMonths": "تصفية المواعيد حسب الشهر",
+    "liveOn": "مباشر على {platform}",
+    "liveAt": "{when} · مباشر على {platform}",
+    "remindMe": "ذكّرني",
+    "openChannel": "افتح {platform}",
+    "calendarTitle": "بث مباشر على {platform}: {title}"
   },
   "directions": {
     "title": "الاتجاهات",
@@ -990,7 +995,12 @@
       "schedule": "الجدولة",
       "scheduleHint": "اعرضه في فترة محددة فقط، مثل البيع المسبق. الفراغ يعني دائمًا.",
       "showFrom": "العرض من",
-      "showUntil": "العرض حتى"
+      "showUntil": "العرض حتى",
+      "nextLive": "البث القادم (اختياري)",
+      "nextLiveHint": "يراه الزوار بتوقيتهم المحلي ويمكنهم إضافة تذكير إلى تقويمهم.",
+      "quickToday": "اليوم {time}",
+      "quickTomorrow": "غدًا {time}",
+      "clearTime": "بلا موعد"
     },
     "edit": {
       "addTitle": "إضافة {type}",
@@ -1367,6 +1377,7 @@
     "note": "– ليست صفحته الرسمية. أعدّها Linkyo من قنواته العامة.",
     "ctaLabel": "احصل على هذه الصفحة",
     "cta": "احجز {url}",
-    "verifiedNote": "علامة التوثيق تُظهر شكل الصفحة بعد توثيق حسابه."
+    "verifiedNote": "علامة التوثيق تُظهر شكل الصفحة بعد توثيق حسابه.",
+    "liveNote": "حالة البث والمواعيد أمثلة."
   }
 }

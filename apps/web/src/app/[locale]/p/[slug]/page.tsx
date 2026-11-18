@@ -18,6 +18,8 @@ export function generateStaticParams() {
 }
 
 export const dynamicParams = false;
+// Re-rendered every few minutes so day-relative details (tonight's live) stay current.
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
@@ -54,6 +56,7 @@ export default async function PreviewRoute({ params }: Props) {
         <p>
           <strong className="font-semibold text-fg">{t("badge", { name: found.preview.name[locale as "de" | "ar"] ?? found.page.profile.displayName })}</strong> {t("note")}
           {found.page.profile.verified ? ` ${t("verifiedNote")}` : null}
+          {found.page.blocks.some((block) => block.type === "live") ? ` ${t("liveNote")}` : null}
         </p>
       </aside>
       <PosterRenderer page={found.page} theme={theme} />

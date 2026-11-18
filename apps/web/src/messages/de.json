@@ -335,7 +335,12 @@
     "scroller": "{title}, scrollbare Reihe",
     "ad": "Anzeige",
     "allDates": "Alle",
-    "filterMonths": "Termine nach Monat filtern"
+    "filterMonths": "Termine nach Monat filtern",
+    "liveOn": "Live auf {platform}",
+    "liveAt": "{when} · live auf {platform}",
+    "remindMe": "Erinnern",
+    "openChannel": "Zu {platform}",
+    "calendarTitle": "Live auf {platform}: {title}"
   },
   "directions": {
     "title": "Richtungen",
@@ -990,7 +995,12 @@
       "schedule": "Zeitplan",
       "scheduleHint": "Nur in einem Zeitraum zeigen, z. B. für einen Vorverkauf. Leer heißt immer.",
       "showFrom": "Zeigen ab",
-      "showUntil": "Zeigen bis"
+      "showUntil": "Zeigen bis",
+      "nextLive": "Nächster Live (optional)",
+      "nextLiveHint": "Besucher sehen ihn in ihrer eigenen Uhrzeit und können sich eine Erinnerung in den Kalender legen.",
+      "quickToday": "Heute {time}",
+      "quickTomorrow": "Morgen {time}",
+      "clearTime": "Keine Zeit"
     },
     "edit": {
       "addTitle": "{type} hinzufügen",
@@ -1367,6 +1377,7 @@
     "note": "– nicht seine offizielle Seite. Von Linkyo aus seinen öffentlichen Kanälen erstellt.",
     "ctaLabel": "Seite übernehmen",
     "cta": "{url} sichern",
-    "verifiedNote": "Das Häkchen zeigt, wie die Seite nach der Verifizierung seines Kontos aussieht."
+    "verifiedNote": "Das Häkchen zeigt, wie die Seite nach der Verifizierung seines Kontos aussieht.",
+    "liveNote": "Live-Status und Zeiten sind Beispiele."
   }
 }

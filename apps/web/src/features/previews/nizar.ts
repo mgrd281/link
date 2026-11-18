@@ -3,7 +3,8 @@ import type { Page } from "@linkyo/blocks";
 /**
  * Private preview prepared for Nizar Alkrizma to look at before he decides on a Linkyo page.
  * Text and links come from his public YouTube and TikTok profiles; pictures are loaded from his own
- * YouTube channel (not copied). Not listed anywhere, not indexed, removed on request.
+ * YouTube channel (not copied). The verified look and the live status/time are examples, said so on
+ * the page. Not listed anywhere, not indexed, removed on request.
  */
 export const nizarDe: Page = {
   profile: {
@@ -40,6 +41,35 @@ export const nizarDe: Page = {
           url: "mailto:nezaralsweid4@gmail.com",
         },
       ],
+    },
+    {
+      id: "live",
+      type: "header",
+      visible: true,
+      highlight: false,
+      title: "Live",
+    },
+    {
+      id: "live-tiktok",
+      type: "live",
+      visible: true,
+      highlight: false,
+      platform: "tiktok",
+      channel: "nizarals9",
+      url: "https://www.tiktok.com/@nizarals9/live",
+      isLive: true,
+      title: "Live mit euch – kommt rein 🔥",
+    },
+    {
+      id: "live-youtube",
+      type: "live",
+      visible: true,
+      highlight: false,
+      platform: "youtube",
+      channel: "Nizarals9",
+      url: "https://www.youtube.com/@nizarals9/live",
+      isLive: false,
+      title: "Neue Songs & eure Fragen",
     },
     {
       id: "songs",
@@ -232,6 +262,35 @@ export const nizarAr: Page = {
           url: "mailto:nezaralsweid4@gmail.com",
         },
       ],
+    },
+    {
+      id: "live",
+      type: "header",
+      visible: true,
+      highlight: false,
+      title: "البث المباشر",
+    },
+    {
+      id: "live-tiktok",
+      type: "live",
+      visible: true,
+      highlight: false,
+      platform: "tiktok",
+      channel: "nizarals9",
+      url: "https://www.tiktok.com/@nizarals9/live",
+      isLive: true,
+      title: "لايف معكم – تعالوا 🔥",
+    },
+    {
+      id: "live-youtube",
+      type: "live",
+      visible: true,
+      highlight: false,
+      platform: "youtube",
+      channel: "Nizarals9",
+      url: "https://www.youtube.com/@nizarals9/live",
+      isLive: false,
+      title: "أغاني جديدة وأسئلتكم",
     },
     {
       id: "songs",

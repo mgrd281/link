@@ -274,3 +274,15 @@ test.describe("private previews", () => {
     expect((await page.goto("/en/p/nizar-m3e8dw"))?.status()).toBe(404);
   });
 });
+
+test.use({ timezoneId: "Europe/Berlin" });
+
+test("live now and the next live: hero pill, visitor's time, calendar reminder", async ({ page }) => {
+  await page.goto("/de/p/nizar-m3e8dw");
+  await expect(page.getByRole("link", { name: "Live auf TikTok" })).toHaveAttribute("href", "https://www.tiktok.com/@nizarals9/live");
+  const tonight = page.locator("#live-youtube");
+  await expect(tonight).toContainText(/(Heute|Morgen), 21:00/);
+  const download = page.waitForEvent("download");
+  await tonight.getByRole("button", { name: "Erinnern" }).click();
+  expect((await download).suggestedFilename()).toBe("live.ics");
+});

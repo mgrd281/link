@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 
 import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from "../shared/creator-kit";
+import { HeroLive } from "./live";
 import { ShareButton } from "./share";
 import { displayStyle } from "./styles";
 
@@ -74,11 +75,13 @@ function Socials({ block }: { block: BlockOf<"socials"> }) {
 export function PosterHero({
   profile,
   socials,
+  live,
   theme,
   preview,
 }: {
   profile: Profile;
   socials: BlockOf<"socials"> | undefined;
+  live?: BlockOf<"live"> | undefined;
   theme: ResolvedCreatorTheme;
   preview: boolean;
 }) {
@@ -122,6 +125,7 @@ export function PosterHero({
         </div>
       )}
       <div className={cn("relative grid justify-items-center gap-3 px-creator-gutter", treatment === "logo" && profile.logo ? "-mt-6" : treatment === "monogram" ? "-mt-12" : "-mt-16")}>
+        {live ? <HeroLive block={live} /> : null}
         {treatment === "logo" && profile.logo ? null : <Name profile={profile} isRtl={isRtl} theme={theme} />}
         {profile.tagline ? <p className="text-small font-semibold tracking-wide text-balance uppercase">{profile.tagline}</p> : null}
         {profile.bio ? <p className="max-w-prose text-body-lg text-balance text-creator-fg-muted">{profile.bio}</p> : null}

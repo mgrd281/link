@@ -26,6 +26,16 @@ const toLocalInput = (iso: string | undefined) => {
 };
 const fromLocalInput = (value: string) => (value ? new Date(value).toISOString() : undefined);
 
+const LIVE_PLATFORMS = ["tiktok", "instagram", "youtube", "twitch", "kick"] as const;
+
+/** Today (+days) at hh:00 in the creator's own time, as an ISO timestamp. */
+const atHour = (days: number, hour: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  date.setHours(hour, 0, 0, 0);
+  return date.toISOString();
+};
+
 /**
  * The edit form for a block. One column, labels above fields, errors under the field that needs
  * attention. Every change is a draft that the live preview shows immediately.
@@ -320,7 +330,8 @@ export function BlockForm({ block, onChange, errors }: { block: Block; onChange:
             onValue={(url) => {
               const platform = platformOf(url);
               const channel = url.replace(/^https?:\/\/(?:www\.)?[^/]+\/(?:@|c\/|channel\/)?/, "").split(/[/?#]/)[0] ?? "";
-              set(block, { url, channel: block.channel.length > 0 ? block.channel : channel, platform: platform === "youtube" || platform === "kick" ? platform : platform === "twitch" ? "twitch" : block.platform });
+              const livePlatform = LIVE_PLATFORMS.find((value) => value === platform);
+              set(block, { url, channel: block.channel.length > 0 ? block.channel : channel, platform: livePlatform ?? block.platform });
             }}
             error={err("url")}
           />
@@ -329,10 +340,45 @@ export function BlockForm({ block, onChange, errors }: { block: Block; onChange:
             label={t("platform")}
             value={block.platform}
             onValue={(platform) => set(block, { platform })}
-            options={(["twitch", "youtube", "kick"] as const).map((value) => ({ value, label: value === "kick" ? "Kick" : platformName(value) }))}
+            options={LIVE_PLATFORMS.map((value) => ({ value, label: platformName(value) }))}
           />
           <TextInput label={t("streamTitle")} value={block.title ?? ""} onValue={(title) => set(block, { title: title || undefined })} maxLength={140} />
           <SwitchRow label={t("isLive")} description={t("isLiveHint")} checked={block.isLive} onChecked={(isLive) => set(block, { isLive })} />
+          <div className="grid grid-cols-1 gap-3">
+            <TextInput
+              label={t("nextLive")}
+              hint={t("nextLiveHint")}
+              type="datetime-local"
+              value={toLocalInput(block.startsAt)}
+              onValue={(value) => set(block, { startsAt: fromLocalInput(value) })}
+              error={err("startsAt")}
+            />
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: "today20", label: t("quickToday", { time: "20:00" }), at: atHour(0, 20) },
+                { key: "today21", label: t("quickToday", { time: "21:00" }), at: atHour(0, 21) },
+                { key: "tomorrow21", label: t("quickTomorrow", { time: "21:00" }), at: atHour(1, 21) },
+              ].map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => set(block, { startsAt: option.at })}
+                  className="inline-flex h-control-sm items-center rounded-full border border-line-strong px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:border-line-input hover:text-fg focus-visible:focus-ring"
+                >
+                  {option.label}
+                </button>
+              ))}
+              {block.startsAt ? (
+                <button
+                  type="button"
+                  onClick={() => set(block, { startsAt: undefined })}
+                  className="inline-flex h-control-sm items-center rounded-full px-3 text-small font-medium text-fg-secondary hover:bg-hover focus-visible:focus-ring"
+                >
+                  {t("clearTime")}
+                </button>
+              ) : null}
+            </div>
+          </div>
         </>
       );
       break;
