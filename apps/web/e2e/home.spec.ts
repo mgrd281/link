@@ -164,15 +164,61 @@ test("no page sets a cookie, also for a visitor whose browser speaks another lan
   await context.close();
 });
 
-test("phone menu opens as a popover and closes after choosing a section", async ({ browser }) => {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+test("phone menu: a full screen with the places, the language, sign-up, and logging in as a quiet line", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await context.newPage();
   await page.goto("/en");
   await page.getByRole("button", { name: "Menu" }).click();
   const menu = page.locator("#mk-menu");
   await expect(menu).toBeVisible();
-  await menu.getByRole("link", { name: "Pricing" }).click();
+  // It covers the screen, like a screen in an app.
+  const box = await menu.boundingBox();
+  expect(box && [Math.round(box.width), Math.round(box.height)]).toEqual([390, 844]);
+  // Every place says what is there.
+  await expect(menu.getByRole("link", { name: /Templates/ })).toContainText("Browse them and start with one");
+  // The language, written out; the current one is marked.
+  await expect(menu.getByRole("link", { name: "English" })).toHaveAttribute("aria-current", "true");
+  await expect(menu.getByRole("link", { name: "العربية" })).toHaveAttribute("href", "/ar");
+  // One action; logging in is there for people who already have an account.
+  await expect(menu.getByRole("link", { name: "Sign up for free" })).toHaveAttribute("href", "/en/signup");
+  await expect(menu.getByText("Already have an account?")).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/en/login");
+  // Choosing a place closes the menu.
+  await menu.getByRole("link", { name: /Pricing/ }).click();
   await expect(menu).toBeHidden();
+  // So does the close button, which gives the focus back to the menu button.
+  await page.getByRole("button", { name: "Menu" }).click();
+  await menu.getByRole("button", { name: "Close menu" }).click();
+  await expect(menu).toBeHidden();
+  await context.close();
+});
+
+test("on phones a visitor first learns what Linkyo is and sees pages, then meets sign-up", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 750 }, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  await page.goto("/de");
+  // What it is, in words: the thing, the promise, one sentence.
+  await expect(page.getByText("Deine Seite für den Link in der Bio")).toBeVisible();
+  const top = (selector: string) => page.locator(selector).evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
+  // Then real pages, then the action.
+  const [words, pages, action] = [await top("#hero-title"), await top("[data-deck]"), await top("#hero-cta")];
+  expect(words).toBeLessThan(pages);
+  expect(pages).toBeLessThan(action);
+  // The first screen shows the words and the pages, without asking for anything yet.
+  const header = page.locator("[data-header-signup]");
+  await expect(header).toBeHidden();
+  expect(pages).toBeLessThan(750);
+  // Sign-up in the hero; the header's own sign-up stays away while it is in view...
+  await page.locator("#hero-cta").scrollIntoViewIfNeeded();
+  await expect(page.locator("#hero-cta").getByRole("button", { name: "Kostenlos registrieren" })).toBeVisible();
+  await expect(header).toBeHidden();
+  // ...and slides into the header once it has been passed.
+  await page.evaluate(() => window.scrollBy(0, 900));
+  await expect(header).toBeVisible();
+  await expect(header).toHaveAttribute("href", "/de/signup");
+  // Back at the top, it leaves again.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(header).toBeHidden();
   await context.close();
 });
 

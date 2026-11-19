@@ -885,6 +885,48 @@
   }
 }
 
+/*
+ * The phone menu (a native popover), a full screen like an app's. It arrives with a short fade and
+ * settles from slightly above, and leaves quicker than it came; its rows follow one after the other
+ * (mk-menu-row, --i is the row's position). Nothing moves for reduced motion.
+ */
+@utility mk-menu-sheet {
+  opacity: 0;
+  translate: 0 calc(var(--spacing-2) * -1);
+  transition:
+    opacity var(--duration-standard) var(--ease-standard),
+    translate var(--duration-slow) var(--ease-emphasized),
+    display var(--duration-standard) allow-discrete,
+    overlay var(--duration-standard) allow-discrete;
+
+  &:popover-open {
+    opacity: 1;
+    translate: 0 0;
+
+    @starting-style {
+      opacity: 0;
+      translate: 0 calc(var(--spacing-2) * -1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+@utility mk-menu-row {
+  &:is(:popover-open *) {
+    animation: mk-search-row var(--duration-slow) var(--ease-standard) both;
+    animation-delay: calc(min(var(--i, 0), 8) * var(--duration-micro) / 3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:is(:popover-open *) {
+      animation: none;
+    }
+  }
+}
+
 /* Suggestions arrive one after the other (--i is the row's position). */
 @utility mk-search-row {
   animation: mk-search-row var(--duration-slow) var(--ease-standard) both;

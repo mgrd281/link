@@ -1,5 +1,6 @@
-import { Icon } from "@linkyo/ui";
+import { Icon, PlatformIcon } from "@linkyo/ui";
 import { Gift, MapPin, ShieldCheck, type LucideIcon } from "lucide-react";
+import { siInstagram, siTiktok, siYoutube } from "simple-icons";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 
@@ -23,10 +24,19 @@ const LOCALES = ["de", "en", "ar"] as const;
 /** The three promises under the address field, each with its own icon. */
 const PROMISE_ICONS: LucideIcon[] = [Gift, ShieldCheck, MapPin];
 
+/** Where a Linkyo link lives: the bios people know. Shown small, in the text color. */
+const BIO_PLATFORMS = [siInstagram, siTiktok, siYoutube];
+
 /**
- * Light and calm: the promise and the address field on one side, real (example) pages on the other
- * (HeroDeck). On wide screens the hero fills the first screen and the phones fit inside it; on
- * phones the first phone comes into view right under the address field.
+ * The first screen, in the order a visitor needs it (ADR 0049):
+ *
+ * 1. What it is: a line that names the thing ("your page for the link in your bio", with the bios
+ *    it lives in), the promise, one sentence.
+ * 2. The proof: real pages (HeroDeck).
+ * 3. Then the action: claim an address and sign up, with what you get.
+ *
+ * Phones and tablets read it top to bottom in exactly that order. Wide screens put the pages beside
+ * the words and the action, and the hero fills the first screen.
  */
 export function Hero() {
   const t = useTranslations("marketing");
@@ -44,33 +54,51 @@ export function Hero() {
   }));
   return (
     <section aria-labelledby="hero-title" className="overflow-x-clip lg:overflow-x-visible">
-      <div className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-10 px-5 pt-6 pb-12 md:px-10 md:pt-12 lg:mk-hero-fit lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-10 lg:py-8">
-        <div className="grid min-w-0 grid-cols-1 justify-items-start gap-5 md:gap-6">
+      <div className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-10 px-5 pt-6 pb-12 md:px-10 md:pt-12 lg:mk-hero-fit lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:grid-rows-2 lg:gap-x-10 lg:gap-y-8 lg:py-8">
+        {/* 1. What it is. */}
+        <div className="grid min-w-0 grid-cols-1 justify-items-start gap-5 md:gap-6 lg:self-end">
+          <p className="mk-rise inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary" style={order(0)}>
+            <span aria-hidden className="flex shrink-0 -space-x-2 rtl:space-x-reverse">
+              {BIO_PLATFORMS.map((platform) => (
+                <span key={platform.slug} className="grid size-6 place-items-center rounded-full border border-line bg-canvas-muted text-fg">
+                  <PlatformIcon icon={platform} size="sm" className="size-3" />
+                </span>
+              ))}
+            </span>
+            <span className="truncate">{t("hero.eyebrow")}</span>
+          </p>
           <h1 id="hero-title" className="max-w-full text-h2 tracking-display text-balance md:text-display lg:text-display-sm">
-            <span className="mk-rise block" style={order(0)}>
+            <span className="mk-rise block" style={order(1)}>
               {t("hero.title1")}
             </span>
-            <span className="mk-rise block text-link" style={order(1)}>
+            <span className="mk-rise block text-link" style={order(2)}>
               {t("hero.title2")}
             </span>
           </h1>
-          <p className="mk-rise max-w-prose text-body text-balance text-fg-secondary md:text-body-lg" style={order(2)}>
+          <p className="mk-rise max-w-prose text-body text-balance text-fg-secondary md:text-body-lg" style={order(3)}>
             {t("hero.lead")}
           </p>
-          <div className="mk-rise grid w-full max-w-prose gap-4" style={order(3)}>
-            <ClaimForm id="hero-claim" />
-            <ul aria-label={t("hero.promises")} className="flex flex-wrap gap-x-5 gap-y-2 ps-1">
-              {promises.map((promise, index) => (
-                <li key={promise} className="inline-flex items-center gap-2 text-small font-medium text-fg-secondary">
-                  <Icon icon={PROMISE_ICONS[index] ?? ShieldCheck} size="sm" className="text-primary" />
-                  {promise}
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
-        <HeroDeck pages={pages} />
+        {/* 2. The proof: real pages. Beside the words on wide screens; between the words and the action on phones. */}
+        <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <HeroDeck pages={pages} />
+        </div>
+
+        {/* 3. The action, once it is clear what Linkyo is. On phones the header's sign-up appears after this. */}
+        <div id="hero-cta" className="mk-rise grid w-full min-w-0 max-w-prose gap-5 lg:col-start-1 lg:row-start-2 lg:self-start" style={order(4)}>
+          <ClaimForm id="hero-claim" />
+          {/* Wide screens only: on phones and tablets the same three points follow right after the
+              hero as cards (Trust), and the button already says "free". Saying it twice in a row is noise. */}
+          <ul aria-label={t("hero.promises")} className="hidden flex-wrap gap-x-5 gap-y-2 ps-1 lg:flex">
+            {promises.map((promise, index) => (
+              <li key={promise} className="inline-flex items-center gap-2 text-small font-medium text-fg-secondary">
+                <Icon icon={PROMISE_ICONS[index] ?? ShieldCheck} size="sm" className="text-link" />
+                {promise}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );

@@ -5,18 +5,24 @@ import { LocaleSwitch } from "@/components/locale-switch";
 import { PeopleSearch } from "@/features/search/people-search";
 import { Link } from "@/i18n/navigation";
 
-import { MobileMenu } from "./mobile-menu";
+import { HeaderSignup } from "./header-signup";
+import { MobileMenu, type MenuItem } from "./mobile-menu";
 
-/** A flat bar: logo, in-page links, the people search, language, a quiet "log in" and one action in Linkyo Teal. */
-export function MarketingHeader() {
+/**
+ * A flat bar: logo, in-page links, the people search, language, a quiet "log in" and one action in
+ * Linkyo Teal. On phones: logo, search and menu; sign-up joins them once the hero's own sign-up has
+ * been passed (`signupAfter`, the id of that block).
+ */
+export function MarketingHeader({ signupAfter }: { signupAfter?: string } = {}) {
   const t = useTranslations("marketing");
+  const common = useTranslations("common");
   const locale = useLocale();
   // Absolute links, so the menu also works from other pages (the template gallery).
-  const items = [
-    { href: `/${locale}#features`, label: t("nav.features") },
-    { href: `/${locale}/templates`, label: t("nav.templates") },
-    { href: `/${locale}#pricing`, label: t("nav.pricing") },
-    { href: `/${locale}#faq`, label: t("nav.faq") },
+  const items: MenuItem[] = [
+    { key: "features", href: `/${locale}#features`, label: t("nav.features"), hint: t("nav.hints.features") },
+    { key: "templates", href: `/${locale}/templates`, label: t("nav.templates"), hint: t("nav.hints.templates") },
+    { key: "pricing", href: `/${locale}#pricing`, label: t("nav.pricing"), hint: t("nav.hints.pricing") },
+    { key: "faq", href: `/${locale}#faq`, label: t("nav.faq"), hint: t("nav.hints.faq") },
   ];
   const cta = { href: `/${locale}/signup`, label: t("nav.start") };
   const login = { href: `/${locale}/login`, label: t("nav.login") };
@@ -44,6 +50,8 @@ export function MarketingHeader() {
           ))}
         </nav>
         <div className="ms-auto flex items-center gap-1">
+          {/* Phones: sign-up, once the hero's own has been passed. */}
+          <HeaderSignup label={t("nav.startShort")} after={signupAfter} />
           {/* Find a person: a name, a profession, a place (Ctrl/⌘ K). */}
           <PeopleSearch />
           <div className="hidden items-center gap-1 sm:flex">
@@ -60,14 +68,13 @@ export function MarketingHeader() {
               </Link>
             </div>
           </div>
-          {/* Phones: the one action stays in reach next to the menu, with a short label. */}
-          <Link
-            href="/signup"
-            className="inline-flex h-control-sm items-center rounded-full bg-primary px-3 text-small font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed md:hidden"
-          >
-            {t("nav.startShort")}
-          </Link>
-          <MobileMenu items={items} cta={cta} secondary={login} labels={{ menu: t("nav.menu"), close: t("nav.close") }} />
+          <MobileMenu
+            items={items}
+            home={`/${locale}`}
+            cta={cta}
+            login={login}
+            labels={{ menu: t("nav.menu"), close: t("nav.close"), language: common("language"), haveAccount: t("nav.haveAccount") }}
+          />
         </div>
       </div>
     </header>

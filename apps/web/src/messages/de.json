@@ -578,10 +578,18 @@
       "menu": "Menü",
       "close": "Menü schließen",
       "label": "Hauptmenü",
-      "startShort": "Registrieren"
+      "startShort": "Registrieren",
+      "haveAccount": "Schon ein Konto?",
+      "hints": {
+        "features": "Was deine Seite alles kann",
+        "templates": "Ansehen und mit einer loslegen",
+        "pricing": "Kostenlos, Pro kommt später",
+        "faq": "Kurze Antworten auf deine Fragen"
+      }
     },
     "hero": {
       "kicker": "Für Creator, Artists und die Teams dahinter",
+      "eyebrow": "Deine Seite für den Link in der Bio",
       "title1": "Ein Link.",
       "title2": "Alles, was du erschaffst.",
       "lead": "Musik, Videos, Termine und Shop auf einer Seite. In fünf Minuten fertig.",

@@ -7,7 +7,8 @@ import { Faq, Features, FinalCta, Pricing, Templates, Trust } from "./sections";
 export function MarketingHome() {
   return (
     <>
-      <MarketingHeader />
+      {/* On phones, sign-up joins the header once the hero's own sign-up has been passed. */}
+      <MarketingHeader signupAfter="hero-cta" />
       <main id="main" className="grid grid-cols-1">
         <Hero />
         <Trust />

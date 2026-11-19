@@ -59,8 +59,10 @@ export function PeopleSearch() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "k" || !(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
-      // Another dialog is in front (a page preview, a confirmation): the shortcut is not for us.
-      if (document.querySelector("[role=dialog], [role=alertdialog]") && !isSearchOpen()) return;
+      // Another dialog is open in front (a page preview, a confirmation, the phone menu): the
+      // shortcut is not for us. Closed ones may stay in the page (the menu is a hidden popover).
+      const others = document.querySelectorAll<HTMLElement>("[role=dialog]:not([data-people-search]), [role=alertdialog]");
+      if (!isSearchOpen() && [...others].some((element) => element.checkVisibility())) return;
       event.preventDefault();
       if (isSearchOpen()) closeSearch();
       else openSearch();

@@ -578,10 +578,18 @@
       "menu": "Menu",
       "close": "Close menu",
       "label": "Main",
-      "startShort": "Sign up"
+      "startShort": "Sign up",
+      "haveAccount": "Already have an account?",
+      "hints": {
+        "features": "Everything your page can do",
+        "templates": "Browse them and start with one",
+        "pricing": "Free, Pro comes later",
+        "faq": "Short answers to your questions"
+      }
     },
     "hero": {
       "kicker": "For creators, artists and the teams behind them",
+      "eyebrow": "Your page for the link in your bio",
       "title1": "One link.",
       "title2": "Everything you create.",
       "lead": "Music, videos, dates and a shop on one page. Ready in five minutes.",

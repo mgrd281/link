@@ -9,12 +9,23 @@ import { routing } from "@/i18n/routing";
 const names: Record<string, string> = { de: "DE", en: "EN", ar: "AR" };
 const fullNames: Record<string, string> = { de: "Deutsch", en: "English", ar: "العربية" };
 
-export function LocaleSwitch() {
+/**
+ * The language, as a segmented control. "compact" (the header): DE · EN · AR. "full" (the phone
+ * menu): as wide as its place, each language in its own name.
+ */
+export function LocaleSwitch({ variant = "compact" }: { variant?: "compact" | "full" }) {
   const locale = useLocale();
   const pathname = usePathname();
   const t = useTranslations("common");
+  const full = variant === "full";
   return (
-    <nav aria-label={t("language")} className="inline-flex h-control-sm items-stretch gap-0.5 rounded-md bg-canvas-muted p-0.5">
+    <nav
+      aria-label={t("language")}
+      className={cn(
+        "items-stretch bg-canvas-muted",
+        full ? "grid h-control-lg grid-cols-3 gap-1 rounded-full p-1" : "inline-flex h-control-sm gap-0.5 rounded-md p-0.5",
+      )}
+    >
       {routing.locales.map((code) => (
         <Link
           key={code}
@@ -24,13 +35,20 @@ export function LocaleSwitch() {
           hrefLang={code}
           aria-current={code === locale ? "true" : undefined}
           className={cn(
-            "inline-flex min-w-8 items-center justify-center rounded-sm border border-transparent px-2 text-caption font-medium text-fg-secondary",
+            "inline-flex items-center justify-center border border-transparent font-medium text-fg-secondary",
             "transition-colors duration-micro hover:text-fg focus-visible:focus-ring",
+            full ? "rounded-full px-3 text-small" : "min-w-8 rounded-sm px-2 text-caption",
             code === locale && "border-line bg-surface-elevated text-fg",
           )}
         >
-          {names[code]}
-          <span className="sr-only"> – {fullNames[code]}</span>
+          {full ? (
+            fullNames[code]
+          ) : (
+            <>
+              {names[code]}
+              <span className="sr-only"> – {fullNames[code]}</span>
+            </>
+          )}
         </Link>
       ))}
     </nav>
