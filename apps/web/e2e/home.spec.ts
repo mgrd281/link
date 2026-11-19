@@ -44,39 +44,45 @@ test.describe("marketing home", () => {
     await expect(page.getByRole("button", { name: /^(Pause|Play) the template strip$/ })).toHaveCount(0);
   });
 
-  test("the hero pages take turns, stop as soon as one is chosen, and open the real example page", async ({ page }) => {
-    const deck = page.getByRole("region", { name: "Example pages" });
-    const tabs = deck.getByRole("tab");
-    await expect(tabs).toHaveCount(3);
-    await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
-    // No pause button: choosing a page stops the deck, it ends by itself after two rounds, and it
-    // holds under the mouse or keyboard focus (WCAG 2.2.2).
-    await expect(deck.getByRole("button", { name: /Pause|Play/ })).toHaveCount(0);
+  test("real example pages frame a two-line headline, whole on the first screen; each opens its page", async ({ page }) => {
+    const title = page.getByRole("heading", { level: 1 });
+    const pages = page.getByRole("list", { name: "Example pages" });
+    // Four pages beside the headline; the fifth belongs to the phone fan and is hidden here.
+    const links = pages.getByRole("link");
+    await expect(links).toHaveCount(4);
+    // Let the pages finish rising in once; after that nothing moves on its own (no carousel, no tabs).
+    await pages.evaluate((list) => Promise.all(list.getAnimations({ subtree: true }).map((animation) => animation.finished)));
+    await expect(page.getByRole("tab")).toHaveCount(0);
 
-    // The address above the phone in front is the link to the real example page.
-    const front = deck.getByRole("link", { name: /View page, Lou Ferreira/ });
-    await expect(front).toHaveAttribute("href", "/de/p/lou-ferreira");
-    await expect(front).toContainText("linkyo.app/lou-ferreira");
+    // The promise on two lines, the sentence under it on one.
+    const lines = (selector: string) =>
+      page.locator(selector).evaluate((element) => Math.round(element.getBoundingClientRect().height / parseFloat(getComputedStyle(element).lineHeight)));
+    expect(await lines("#hero-title")).toBe(2);
+    expect(await lines("#hero-title + p")).toBe(1);
 
-    // When the timer line under the tab is full, the next page comes to the front.
-    await page.mouse.move(0, 0);
-    await deck.locator(".mk-progress").evaluate((line) => {
-      for (const animation of line.getAnimations()) animation.finish();
-    });
-    await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-    await expect(deck.getByRole("link", { name: /View page, Juno Kade/ })).toBeVisible();
+    // Wide screens: four pages beside the headline (the fifth is for the phone fan), each whole inside
+    // the first screen and never over the text.
+    const heading = await title.boundingBox();
+    const viewport = page.viewportSize();
+    let shown = 0;
+    for (const link of await links.all()) {
+      if (!(await link.isVisible())) continue;
+      shown += 1;
+      const box = await link.boundingBox();
+      if (!box || !heading || !viewport) throw new Error("no layout");
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+      expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+      expect(box.x + box.width <= heading.x || box.x >= heading.x + heading.width).toBe(true);
+      await expect(link).toHaveAttribute("href", /^\/(de|en|ar)\/p\/[a-z0-9-]+$/);
+    }
+    expect(shown).toBe(4);
 
-    // Choosing a page stops the deck for good: no timer any more.
-    await tabs.nth(2).click();
-    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/ar/p/layal-mansour");
-    await expect(deck.locator(".mk-progress")).toHaveCount(0);
-    await tabs.nth(2).press("ArrowRight");
-    await expect(tabs.nth(0)).toBeFocused();
-    await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
-
-    // A click on a page beside the front brings it forward.
-    await deck.locator('[data-slot="next"] button').click();
-    await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+    // Hovering a page straightens it and shows its address.
+    const lou = pages.getByRole("link", { name: /Lou Ferreira/ });
+    await expect(lou).toHaveAttribute("href", "/de/p/lou-ferreira");
+    await lou.hover();
+    await expect(lou.getByText("linkyo.app/lou-ferreira")).toHaveCSS("opacity", "1");
 
     const example = page.getByRole("link", { name: /^See .+'s example page$/ }).first();
     await expect(example).toHaveAttribute("href", /^\/(de|en|ar)\/p\/[a-z0-9-]+$/);
@@ -123,17 +129,33 @@ test("phone menu opens as a popover and closes after choosing a section", async 
   await context.close();
 });
 
-test("the hero pages follow the reading direction in Arabic", async ({ page }) => {
+test("on phones the example pages fan out under the address field, the middle one in front", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto("/en");
+  const pages = page.getByRole("list", { name: "Example pages" });
+  await pages.evaluate((list) => Promise.all(list.getAnimations({ subtree: true }).map((animation) => animation.finished)));
+  expect(await page.locator("#hero-title").evaluate((h) => Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight)))).toBe(2);
+  const form = await page.getByRole("textbox", { name: "Choose your page address" }).first().boundingBox();
+  const shown = [];
+  for (const link of await pages.getByRole("link").all()) if (await link.isVisible()) shown.push(link);
+  expect(shown).toHaveLength(3);
+  const middle = await shown[1]?.boundingBox();
+  expect(middle && form && middle.y > form.y).toBe(true);
+  // The middle page is in front: its centre belongs to it, not to a page beside it.
+  const hit = await page.evaluate(
+    ([x, y]) => document.elementFromPoint(x ?? 0, y ?? 0)?.closest("a")?.getAttribute("href"),
+    [(middle?.x ?? 0) + (middle?.width ?? 0) / 2, (middle?.y ?? 0) + (middle?.height ?? 0) / 4],
+  );
+  expect(hit).toBe("/de/p/lou-ferreira");
+  await context.close();
+});
+
+test("in Arabic the pages mirror: the page in front on the start side stands on the right", async ({ page }) => {
   await page.goto("/ar");
-  const deck = page.getByRole("region", { name: "صفحات أمثلة" });
-  const tabs = deck.getByRole("tab");
-  // Choosing a page stops the deck, so nothing below depends on timing.
-  await tabs.nth(0).click();
-  // The next page waits on the left (the reading side), and ArrowLeft moves forward.
-  const front = await deck.locator('[data-slot="front"]').boundingBox();
-  const next = await deck.locator('[data-slot="next"]').boundingBox();
-  expect(next && front && next.x < front.x).toBe(true);
-  await tabs.nth(0).focus();
-  await page.keyboard.press("ArrowLeft");
-  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+  const pages = page.getByRole("list", { name: "صفحات أمثلة" });
+  await pages.evaluate((list) => Promise.all(list.getAnimations({ subtree: true }).map((animation) => animation.finished)));
+  const box = await pages.getByRole("link", { name: /Lou Ferreira/ }).boundingBox();
+  const width = page.viewportSize()?.width ?? 0;
+  expect(box && box.x > width / 2).toBe(true);
 });

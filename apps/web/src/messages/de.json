@@ -582,29 +582,23 @@
     },
     "hero": {
       "kicker": "Für Creator, Artists und die Teams dahinter",
+      "news": {
+        "badge": "Neu",
+        "text": "Link-Seite in einer Minute umziehen"
+      },
       "title1": "Ein Link.",
       "title2": "Alles, was du erschaffst.",
-      "lead": "Eine Seite, die so gut aussieht wie deine beste Arbeit – Musik, Shows, Videos, Merch und Partner an einem Ort. In fünf Minuten fertig, danach von selbst aktuell.",
+      "lead": "Musik, Videos, Termine und Shop auf einer Seite. In fünf Minuten fertig.",
       "pills": [
         "Dauerhaft kostenlos",
         "Ohne Cookies",
         "Daten in Frankfurt"
       ],
-      "kinds": {
-        "fashion": "Mode",
-        "dj": "DJ",
-        "music": "Musik"
-      },
-      "deck": {
-        "carousel": "Karussell",
-        "slide": "Seite",
+      "promises": "Was du bekommst",
+      "pages": {
         "label": "Beispielseiten",
-        "choose": "Beispielseite wählen",
-        "view": "Seite ansehen",
-        "viewNamed": "Seite ansehen, {name}",
-        "auto": "Wechselt alle 6 Sekunden, zweimal reihum, bis du selbst eine Seite wählst."
-      },
-      "promises": "Was du bekommst"
+        "view": "Beispielseite von {name}"
+      }
     },
     "claim": {
       "label": "Wähl deine Seitenadresse",
