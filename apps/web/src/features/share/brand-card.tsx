@@ -59,20 +59,22 @@ export async function brandCard({ kicker, title1, title2, rtl }: { kicker: strin
             <img src={logo} alt="" width={46} height={46} />
             linkyo
           </div>
+          {/* One wrapper per direction: Satori lays out React fragments unreliably. */}
           {rtl ? (
-            // Arabic: the promise alone (Satori sets one run per line, so the card keeps to short lines).
+            // Arabic: the promise alone. Satori over-measures long Arabic runs, so a wrapped kicker would
+            // not line up on the right; two short lines do.
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontWeight: 700, lineHeight: 1.3 }}>
               <RtlText text={title1} size={62} width={560} />
               <RtlText text={title2} size={62} width={560} style={{ color: v["300"] }} />
             </div>
           ) : (
-            <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 22, maxWidth: 560 }}>
               <div style={{ display: "flex", fontSize: 24, fontWeight: 600, color: v["200"] }}>{kicker}</div>
               <div style={{ display: "flex", flexDirection: "column", fontSize: 72, fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.035em" }}>
                 <span>{title1}</span>
                 <span style={{ color: v["300"] }}>{title2}</span>
               </div>
-            </>
+            </div>
           )}
         </div>
         <div style={{ display: "flex", position: "relative", width: 520, height: 470 }}>
