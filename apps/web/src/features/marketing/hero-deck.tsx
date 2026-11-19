@@ -1,24 +1,27 @@
 "use client";
 
 import { cn, Icon, LogoSymbol } from "@linkyo/ui";
-import { ArrowUpRight, Feather, Shirt, ShoppingBag, type LucideIcon } from "lucide-react";
-import Image from "next/image";
+import { ArrowUpRight, Gem, Mic, Trophy, type LucideIcon } from "lucide-react";
+import Image, { type StaticImageData } from "next/image";
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
 
 import { phoneSizes } from "./assets";
-import { EXAMPLE_SHOTS, type ExampleShot } from "./examples";
 
-export type DeckKind = "fashion" | "author" | "shop";
+export type DeckKind = "music" | "football" | "jewellery";
 
 export interface DeckPage {
-  slug: ExampleShot;
+  slug: string;
   name: string;
   href: string;
   kind: DeckKind;
+  /** The phone picture of the page, in the visitor's language where the page has one. */
+  shot: StaticImageData;
+  /** An unofficial concept page of a well-known person: labelled as such instead of an address. */
+  concept?: boolean;
 }
 
-const KIND_ICONS: Record<DeckKind, LucideIcon> = { fashion: Shirt, author: Feather, shop: ShoppingBag };
+const KIND_ICONS: Record<DeckKind, LucideIcon> = { music: Mic, football: Trophy, jewellery: Gem };
 const SLOTS = ["front", "next", "prev"] as const;
 /** The deck goes round twice on its own, then rests on the first page. */
 const ROUNDS = 2;
@@ -33,10 +36,11 @@ const subscribeReduced = (onChange: () => void) => {
 };
 
 /**
- * The hero's example pages as a carousel (WAI-ARIA tabbed carousel). Three pages as different as the
- * people who use Linkyo (a woman in red, a man in black, a shop in orange), the one in front shown
- * whole; its address above it is the link to the real example page. A click on a page beside it, or
- * on a tab, brings that page forward, and the teal highlight glides to its tab.
+ * The hero's pages as a carousel (WAI-ARIA tabbed carousel): a singer in black, a footballer in red
+ * and a jewellery house, the one in front shown whole. The chip above it is the link to the page:
+ * its address, or "Concept · name" for the unofficial concept pages of well-known people (a note
+ * under the tabs says so too, ADR 0020). A click on a page beside it, or on a tab, brings that page
+ * forward, and the teal highlight glides to its tab.
  *
  * Motion without a pause button (WCAG 2.2.2): the deck changes on its own only for two rounds (an
  * unseen clock, no moving line), holds while the mouse is over it or keyboard focus is inside,
@@ -112,7 +116,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                 <div className="rounded-xl border border-line bg-surface p-1">
                   <div className="relative aspect-phone overflow-hidden rounded-lg bg-canvas-muted">
                     <Image
-                      src={EXAMPLE_SHOTS[page.slug]}
+                      src={page.shot}
                       alt=""
                       fill
                       sizes={phoneSizes.hero}
@@ -127,10 +131,10 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
 
                 {front ? (
                   <a href={page.href} className="absolute inset-0 rounded-xl focus-visible:focus-ring">
-                    {/* The address above the phone is the visible link: "linkyo.app/name ↗". */}
+                    {/* The chip above the phone is the visible link: "linkyo.app/name ↗" or "Concept · name ↗". */}
                     <span className="mk-deck-chip absolute inset-x-0 bottom-full mx-auto mb-3 inline-flex h-control-md w-max items-center gap-2 rounded-full border border-line bg-surface-elevated ps-3 pe-1 text-small font-semibold whitespace-nowrap text-fg transition-[translate] duration-standard ease-standard group-hover:-translate-y-0.5 motion-reduce:group-hover:translate-y-0">
                       <LogoSymbol className="size-4 text-primary" />
-                      <span dir="ltr">linkyo.app/{page.slug}</span>
+                      {page.concept ? <span>{t("deck.conceptNamed", { name: page.name })}</span> : <span dir="ltr">linkyo.app/{page.slug}</span>}
                       <span className="grid size-control-sm place-items-center rounded-full bg-primary text-primary-fg">
                         <Icon
                           icon={ArrowUpRight}
@@ -198,6 +202,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
           );
         })}
       </div>
+      {pages.some((page) => page.concept) ? <p className="max-w-prose text-center text-caption text-pretty text-fg-secondary">{t("deck.conceptNote")}</p> : null}
     </section>
   );
 }

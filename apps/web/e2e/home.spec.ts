@@ -53,13 +53,15 @@ test.describe("marketing home", () => {
     // holds under the mouse or keyboard focus (WCAG 2.2.2).
     await expect(deck.getByRole("button", { name: /Pause|Play/ })).toHaveCount(0);
 
-    // The address above the phone in front is the link to the real example page.
-    const front = deck.getByRole("link", { name: /View page, Lou Ferreira/ });
-    await expect(front).toHaveAttribute("href", "/de/p/lou-ferreira");
-    await expect(front).toContainText("linkyo.app/lou-ferreira");
+    // The chip above the page in front is the link to it. Pages of well-known people are unofficial
+    // concept pages: the chip says so instead of showing an address, and so does a note below.
+    const front = deck.getByRole("link", { name: /View page, Taylor Swift/ });
+    await expect(front).toHaveAttribute("href", "/en/p/taylor-swift");
+    await expect(front).toContainText("Concept · Taylor Swift");
+    await expect(deck.getByText("Concept pages are unofficial")).toBeVisible();
 
-    // Three different pages: a woman, a man and a shop.
-    await expect(tabs).toHaveText(["Fashion", "Author", "Shop"]);
+    // Three different pages: a singer, a footballer and a jewellery house.
+    await expect(tabs).toHaveText(["Music", "Football", "Jewellery"]);
     // No moving line anywhere: the deck's clock is unseen. When it ends, the next page comes to the
     // front and the highlight glides to its tab.
     await page.mouse.move(0, 0);
@@ -69,12 +71,14 @@ test.describe("marketing home", () => {
       for (const animation of timer.getAnimations()) animation.finish();
     });
     await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-    await expect(deck.getByRole("link", { name: /View page, Noah Sarkis/ })).toBeVisible();
+    await expect(deck.getByRole("link", { name: /View page, Cristiano Ronaldo/ })).toBeVisible();
     expect(await deck.getByRole("tablist").evaluate((list) => getComputedStyle(list).getPropertyValue("--tab").trim())).toBe("1");
 
     // Choosing a page stops the deck for good: no clock any more.
     await tabs.nth(2).click();
-    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/de/p/nordlicht-sneaker");
+    // Our own (fictional) example shows its address.
+    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/en/p/lumen-atelier");
+    await expect(deck.getByRole("link", { name: /View page, / })).toContainText("linkyo.app/lumen-atelier");
     await expect(clock).toHaveCount(0);
     await tabs.nth(2).press("ArrowRight");
     await expect(tabs.nth(0)).toBeFocused();

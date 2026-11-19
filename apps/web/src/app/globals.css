@@ -471,10 +471,11 @@
 
 /*
  * On wide screens the deck never grows taller than the screen: the front phone (390 × 844) gets at
- * most the screen height minus the header, its address, the tabs and some air (16rem).
+ * most the screen height minus the header, its address, the tabs, the note under them and some air
+ * (21rem).
  */
 @utility mk-deck-fit {
-  max-width: calc((100svh - var(--spacing-32) * 2) * 390 / 844);
+  max-width: calc((100svh - var(--spacing-32) * 2 - var(--spacing-20)) * 390 / 844);
 }
 
 /* The soft disc and the thin ring behind the deck, centred on the front phone. */

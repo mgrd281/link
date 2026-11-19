@@ -28,7 +28,13 @@ import studioMira from "@/assets/marketing/examples/studio-mira.jpg";
 import lenaVogt from "@/assets/marketing/examples/lena-vogt.jpg";
 import karimAlmansour from "@/assets/marketing/examples/karim-almansour.jpg";
 import trattoriaLucia from "@/assets/marketing/examples/trattoria-lucia.jpg";
-import nordlichtSneaker from "@/assets/marketing/examples/nordlicht-sneaker.jpg";
+import lumenAtelier from "@/assets/marketing/examples/lumen-atelier.jpg";
+import cristianoAr from "@/assets/marketing/concepts/cristiano.ar.jpg";
+import cristianoDe from "@/assets/marketing/concepts/cristiano.de.jpg";
+import cristianoEn from "@/assets/marketing/concepts/cristiano.en.jpg";
+import taylorSwiftAr from "@/assets/marketing/concepts/taylor-swift.ar.jpg";
+import taylorSwiftDe from "@/assets/marketing/concepts/taylor-swift.de.jpg";
+import taylorSwiftEn from "@/assets/marketing/concepts/taylor-swift.en.jpg";
 
 /**
  * Phone captures of our own fictional example pages (390 × 844, the top of each page), taken from
@@ -65,10 +71,21 @@ export const EXAMPLE_SHOTS = {
   "lena-vogt": lenaVogt,
   "karim-almansour": karimAlmansour,
   "trattoria-lucia": trattoriaLucia,
-  "nordlicht-sneaker": nordlichtSneaker,
+  "lumen-atelier": lumenAtelier,
 } satisfies Record<string, StaticImageData>;
 
 export type ExampleShot = keyof typeof EXAMPLE_SHOTS;
+
+/**
+ * Phone captures of the unofficial concept pages of well-known people shown in the hero (ADR 0043),
+ * one per language: these pages exist in German, English and Arabic. Taken by the same script.
+ */
+export const CONCEPT_SHOTS = {
+  "taylor-swift": { de: taylorSwiftDe, en: taylorSwiftEn, ar: taylorSwiftAr },
+  cristiano: { de: cristianoDe, en: cristianoEn, ar: cristianoAr },
+} satisfies Record<string, Record<"de" | "en" | "ar", StaticImageData>>;
+
+export type ConceptShot = keyof typeof CONCEPT_SHOTS;
 
 /**
  * The strip, in an order that keeps neighbours different (colors, kinds, languages). The

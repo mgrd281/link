@@ -8,7 +8,7 @@ const SW = creatorTokens.swatches;
 /** Look and page kind of each concept page: what "Use this template" starts with. No page content (safe for the browser). */
 export const STAR_LOOKS = {
   alshami: { kind: "music", theme: { template: "nocturne", accent: SW.saffron, buttonStyle: "glass" } },
-  cristiano: { kind: "other", theme: { template: "nocturne", accent: SW.ruby, pairing: "stage" } },
+  cristiano: { kind: "other", theme: { template: "nocturne", accent: SW.ruby, mode: "vivid", pairing: "stage" } },
   "donald-trump": { kind: "other", theme: { template: "daylight", accent: SW.navy, pairing: "classic" } },
   "elon-musk": { kind: "business", theme: { template: "nocturne", accent: SW.aqua, pairing: "tech", buttonStyle: "outline" } },
   "friedrich-merz": { kind: "other", theme: { template: "daylight", accent: SW["ink-blue"], pairing: "modern", buttonStyle: "soft" } },

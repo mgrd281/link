@@ -591,9 +591,9 @@
         "Data in Frankfurt"
       ],
       "kinds": {
-        "fashion": "Fashion",
-        "author": "Author",
-        "shop": "Shop"
+        "music": "Music",
+        "football": "Football",
+        "jewellery": "Jewellery"
       },
       "deck": {
         "carousel": "carousel",
@@ -602,7 +602,9 @@
         "choose": "Choose an example page",
         "view": "View page",
         "viewNamed": "View page, {name}",
-        "auto": "Changes every 6 seconds, twice round, until you choose a page."
+        "auto": "Changes every 6 seconds, twice round, until you choose a page.",
+        "conceptNamed": "Concept · {name}",
+        "conceptNote": "Concept pages are unofficial: this is how a Linkyo page could look. We are not affiliated with the people shown."
       },
       "promises": "What you get"
     },
