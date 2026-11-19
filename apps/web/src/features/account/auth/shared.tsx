@@ -1,9 +1,10 @@
 "use client";
 
-import { Badge, PlatformIcon } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { siGoogle } from "simple-icons";
+
+import { tokens } from "@linkyo/tokens";
 
 import { useRouter } from "@/i18n/navigation";
 
@@ -12,6 +13,7 @@ import type { UsernameStatus } from "../types";
 import { localUsernameStatus, normalizeUsername } from "../username";
 
 const noop = () => () => undefined;
+const MARK = tokens.size.iconMd;
 
 /** A query parameter, read without an effect (empty during server render). */
 export function useSearchParam(name: string): string {
@@ -42,25 +44,32 @@ export function useLeaveWhenSignedIn() {
 }
 
 /**
- * Google sign-in arrives with real accounts (Supabase Auth). Until then the button is shown,
- * clearly marked, so the final layout can be judged; it does nothing. (Apple follows with the app.)
+ * "Continue with Google", in the calm filled style of the other fields, with Google's own mark (as
+ * their guidelines ask). Google sign-in is switched on at launch; until then a tap says so and
+ * points to the email field, instead of a disabled button that explains nothing.
  */
-export function SocialButtons() {
+export function SocialButtons({ emailField }: { emailField: string }) {
   const t = useTranslations("auth");
+  const [asked, setAsked] = useState(false);
   return (
     <div className="grid grid-cols-1 gap-2">
-      {[{ key: "google", icon: siGoogle }].map((provider) => (
-        <button
-          key={provider.key}
-          type="button"
-          disabled
-          className="flex h-control-lg items-center gap-3 rounded-md border border-line-strong bg-surface px-4 text-body font-medium text-fg disabled:cursor-not-allowed"
-        >
-          <PlatformIcon icon={provider.icon} size="md" />
-          <span className="flex-1 text-start">{t(`social.${provider.key}`)}</span>
-          <Badge size="sm">{t("social.soon")}</Badge>
-        </button>
-      ))}
+      <button
+        type="button"
+        aria-describedby={asked ? "google-soon" : undefined}
+        onClick={() => {
+          setAsked(true);
+          document.getElementById(emailField)?.focus();
+        }}
+        className="flex h-control-lg items-center justify-center gap-3 rounded-lg bg-canvas-muted px-4 text-body font-medium text-fg transition-colors duration-micro hover:bg-hover focus-visible:focus-ring active:scale-pressed"
+      >
+        <Image src="/brands/google.svg" alt="" width={MARK} height={MARK} unoptimized className="size-5" />
+        {t("social.google")}
+      </button>
+      {asked ? (
+        <p id="google-soon" role="status" className="text-center text-small text-fg-secondary">
+          {t("social.soonNote")}
+        </p>
+      ) : null}
     </div>
   );
 }

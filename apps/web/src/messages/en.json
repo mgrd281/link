@@ -16,8 +16,7 @@
     "theme": {
       "label": "Theme",
       "light": "Light",
-      "dark": "Dark",
-      "system": "System"
+      "dark": "Dark"
     }
   },
   "brand": {
@@ -850,9 +849,8 @@
     },
     "social": {
       "google": "Continue with Google",
-      "apple": "Continue with Apple",
-      "soon": "At launch",
-      "or": "or"
+      "or": "or",
+      "soonNote": "Google sign-in arrives at launch. Until then, use your email: it takes a minute."
     },
     "fields": {
       "username": "Your address",
@@ -895,15 +893,15 @@
     },
     "login": {
       "title": "Welcome back",
-      "lead": "Enter your email and we'll send you a 6-digit code. No password needed.",
+      "lead": "Enter your email and we'll send you a 6‑digit code. No password needed.",
       "submit": "Send code",
       "noAccount": "New to Linkyo?",
       "signup": "Create a page"
     },
     "code": {
       "title": "Enter your code",
-      "lead": "We sent a 6-digit code to {email}. Enter it below or tap the link in the email.",
-      "leadLogin": "If there's a Linkyo account for {email}, a 6-digit code is on its way. Enter it below or tap the link in the email.",
+      "lead": "We sent a 6‑digit code to {email}. Enter it below or tap the link in the email.",
+      "leadLogin": "If there's a Linkyo account for {email}, a 6‑digit code is on its way. Enter it below or tap the link in the email.",
       "submit": "Continue",
       "submitLogin": "Sign in",
       "change": "Use a different email",

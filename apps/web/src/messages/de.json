@@ -16,8 +16,7 @@
     "theme": {
       "label": "Darstellung",
       "light": "Hell",
-      "dark": "Dunkel",
-      "system": "System"
+      "dark": "Dunkel"
     }
   },
   "brand": {
@@ -850,9 +849,8 @@
     },
     "social": {
       "google": "Weiter mit Google",
-      "apple": "Weiter mit Apple",
-      "soon": "Zum Start",
-      "or": "oder"
+      "or": "oder",
+      "soonNote": "Die Anmeldung mit Google kommt zum Start. Bis dahin geht es mit deiner E-Mail, in einer Minute."
     },
     "fields": {
       "username": "Deine Adresse",
@@ -895,15 +893,15 @@
     },
     "login": {
       "title": "Willkommen zurück",
-      "lead": "Gib deine E-Mail ein, wir schicken dir einen 6-stelligen Code. Ganz ohne Passwort.",
+      "lead": "Gib deine E-Mail ein, wir schicken dir einen 6‑stelligen Code. Ganz ohne Passwort.",
       "submit": "Code senden",
       "noAccount": "Neu bei Linkyo?",
       "signup": "Seite erstellen"
     },
     "code": {
       "title": "Gib deinen Code ein",
-      "lead": "Wir haben einen 6-stelligen Code an {email} geschickt. Gib ihn unten ein oder tippe auf den Link in der E-Mail.",
-      "leadLogin": "Wenn es für {email} ein Linkyo-Konto gibt, ist ein 6-stelliger Code unterwegs. Gib ihn unten ein oder tippe auf den Link in der E-Mail.",
+      "lead": "Wir haben einen 6‑stelligen Code an {email} geschickt. Gib ihn unten ein oder tippe auf den Link in der E-Mail.",
+      "leadLogin": "Wenn es für {email} ein Linkyo-Konto gibt, ist ein 6‑stelliger Code unterwegs. Gib ihn unten ein oder tippe auf den Link in der E-Mail.",
       "submit": "Weiter",
       "submitLogin": "Anmelden",
       "change": "Andere E-Mail verwenden",

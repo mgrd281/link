@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 
-const names: Record<string, string> = { de: "DE", en: "EN", ar: "ع" };
+const names: Record<string, string> = { de: "DE", en: "EN", ar: "AR" };
 const fullNames: Record<string, string> = { de: "Deutsch", en: "English", ar: "العربية" };
 
 export function LocaleSwitch() {

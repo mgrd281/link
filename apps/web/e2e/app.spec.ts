@@ -71,7 +71,7 @@ test.describe("accounts", () => {
     await page.locator("#signup-email").fill(`${name}@example.com`);
     await page.locator("form button[type=submit]").click();
     await expect(page.getByRole("heading", { name: "Enter your code" })).toBeVisible();
-    await expect(page.getByText(`We sent a 6-digit code to ${name}@example.com.`)).toBeVisible();
+    await expect(page.getByText(`We sent a 6\u2011digit code to ${name}@example.com.`)).toBeVisible();
     const field = page.getByLabel("Sign-in code");
     await expect(field).toBeFocused();
     expect(await axe(page)).toEqual([]);

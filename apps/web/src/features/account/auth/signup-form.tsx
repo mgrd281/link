@@ -212,7 +212,7 @@ export function SignupForm() {
         <p className="text-caption text-pretty text-fg-secondary">{t("signup.terms")}</p>
       </form>
       <OrDivider label={t("social.or")} />
-      <SocialButtons />
+      <SocialButtons emailField="signup-email" />
       {invite ? <p className="-mt-4 text-caption text-fg-secondary">{t("signup.preparedGoogle")}</p> : null}
       <p className="text-small text-fg-secondary">
         {t("signup.haveAccount")}{" "}
