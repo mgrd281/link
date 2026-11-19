@@ -2654,9 +2654,7 @@
     },
     "keys": {
       "move": "Select",
-      "open": "Open",
-      "close": "Close"
-    },
-    "note": "What you type stays on your device. Example pages are fictional, concept pages unofficial."
+      "open": "Open"
+    }
   }
 }

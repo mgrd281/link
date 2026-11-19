@@ -10,14 +10,16 @@ async function openSearch(page: Page, name = "Search people") {
 }
 
 test.describe("people search", () => {
-  test("opens from the header, finds a person while typing, and Enter opens their page", async ({ page }) => {
+  test("opens from the header, finds a person while typing, opens their page, and back returns to the search", async ({ page }) => {
     await page.goto("/en");
+    // A panel with a mouse and keyboard at hand; a full screen to tap on phones.
+    const wide = (page.viewportSize()?.width ?? 0) >= 768;
     const dialog = await openSearch(page);
     const field = dialog.getByRole("combobox");
     await expect(field).toBeFocused();
-    // Nothing typed yet: a handful of suggestions, the people from the homepage first.
+    // Nothing typed yet: suggestions that fill the first screen, the people from the homepage first.
     await expect(dialog.getByRole("status")).toHaveText("Suggested");
-    await expect(dialog.getByRole("option")).toHaveCount(6);
+    await expect(dialog.getByRole("option")).toHaveCount(wide ? 6 : 8);
     await expect(dialog.getByRole("option").first()).toContainText("Taylor Swift");
     // Every result says what it is: here an unofficial concept page.
     await expect(dialog.getByRole("option").first()).toContainText("Concept");
@@ -25,13 +27,32 @@ test.describe("people search", () => {
     await field.pressSequentially("mes");
     const first = dialog.getByRole("option").first();
     await expect(first).toContainText("Lionel Messi");
-    await expect(first).toHaveAttribute("aria-selected", "true");
     // What was typed is marked in the name.
     await expect(first.locator("mark")).toHaveText("Mes");
     await expect(dialog.getByRole("status")).toHaveText(/^\d+ results?$/);
 
-    await field.press("Enter");
+    if (wide) {
+      // With a keyboard, the best fit is chosen and Enter opens it.
+      await expect(first).toHaveAttribute("aria-selected", "true");
+      await field.press("Enter");
+    } else {
+      // On a touch screen no row is marked; "Search" on the keyboard only puts the keyboard away.
+      await expect(first).toHaveAttribute("aria-selected", "false");
+      await field.press("Enter");
+      await expect(field).not.toBeFocused();
+      await first.click();
+    }
     await expect(page).toHaveURL(/\/en\/p\/messi$/);
+
+    // Back from the page: the search is there again, as it was left.
+    await page.goBack();
+    await expect(page).toHaveURL(/\/en$/);
+    await expect(dialog.getByRole("combobox")).toHaveValue("mes");
+    await expect(dialog.getByRole("option").first()).toContainText("Lionel Messi");
+    // Back once more closes the search, as it would close a screen in an app.
+    await page.goBack();
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/en$/);
   });
 
   test("Ctrl+K opens it from anywhere; Escape closes it and gives the focus back", async ({ page }) => {
@@ -44,14 +65,27 @@ test.describe("people search", () => {
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(trigger).toBeFocused();
+    await expect(page).toHaveURL(/\/en\/templates$/);
+    // The shortcut closes it too.
+    await page.keyboard.press("Control+k");
+    await expect(dialog.getByRole("combobox")).toBeFocused();
+    await page.keyboard.press("Control+k");
+    await expect(dialog).toBeHidden();
   });
 
   test("arrow keys move the choice; a field narrows; typing mistakes and other scripts still find", async ({ page }) => {
     await page.goto("/en");
+    const wide = (page.viewportSize()?.width ?? 0) >= 768;
     const dialog = await openSearch(page);
     const field = dialog.getByRole("combobox");
     const options = dialog.getByRole("option");
 
+    // On a touch screen nothing is chosen at first; the first arrow key shows the choice.
+    if (!wide) {
+      await expect(dialog.getByRole("listbox")).not.toHaveAttribute("data-choosing");
+      await field.press("ArrowDown");
+    }
+    await expect(options.first()).toHaveAttribute("aria-selected", "true");
     // The arrow keys move the choice, and wrap around at the ends.
     await field.press("ArrowDown");
     await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
@@ -66,7 +100,9 @@ test.describe("people search", () => {
     const sport = await options.count();
     expect(sport).toBeGreaterThan(1);
     await expect(dialog.getByRole("status")).toHaveText(`${sport} results`);
-    await expect(field).toBeFocused();
+    // With a keyboard at hand the field keeps the focus; on a touch screen the keyboard stays away.
+    if (wide) await expect(field).toBeFocused();
+    else await expect(field).not.toBeFocused();
     await dialog.getByRole("button", { name: "All", exact: true }).click();
 
     // A typing mistake still finds the person.
@@ -125,8 +161,11 @@ test.describe("people search", () => {
     // Right to left: the face sits on the right of the name.
     const row = dialog.getByRole("option").first();
     const face = await row.locator("img").boundingBox();
-    const name = await row.locator("bdi").first().boundingBox();
+    const name = await row.locator("[dir=auto]").first().boundingBox();
     expect(face && name && face.x > name.x).toBe(true);
+    // A touch screen: no row is marked until a finger taps it, and no line of small print below.
+    await expect(row).toHaveAttribute("aria-selected", "false");
+    await expect(dialog.getByRole("listbox")).not.toHaveAttribute("data-choosing");
     await dialog.getByRole("combobox").fill("صلاح");
     await expect(row).toContainText("محمد صلاح");
     await dialog.getByRole("button", { name: "إلغاء" }).click();

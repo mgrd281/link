@@ -9,8 +9,8 @@
   and Ctrl/⌘ K from anywhere. It opens a dialog: full screen on phones, a panel under the header from tablets up.
 - **What it finds.** Exactly the pages the gallery lists (`LOOKS` and `PEOPLE_LOOKS`): fictional example pages,
   unofficial concept pages of well-known people, prepared previews. Nothing else.
-  - Every result says what it is ("Example", "Concept", "Preview"), and a note in the dialog repeats that example
-    pages are fictional and concept pages unofficial. The advice of 0043 applies here as well.
+  - Every result says what it is ("Example", "Concept", "Preview"). The advice of 0043 applies here as well. (A note
+    in the dialog repeated it at first; 0048 removed that line at the founder's request.)
   - **Real accounts are not in it.** Public pages of real people do not exist yet. When they do, a person appears in
     the search only after switching it on themselves (privacy by default, GDPR Art. 25). That needs a setting, a
     database column and a search function on the server, and its own decision record.

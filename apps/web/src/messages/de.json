@@ -2654,9 +2654,7 @@
     },
     "keys": {
       "move": "Auswählen",
-      "open": "Öffnen",
-      "close": "Schließen"
-    },
-    "note": "Was du tippst, bleibt auf deinem Gerät. Beispielseiten sind erfunden, Konzeptseiten inoffiziell."
+      "open": "Öffnen"
+    }
   }
 }
