@@ -34,3 +34,4 @@
 | [0030](0030-supabase-accounts.md) | Real accounts on Supabase (Frankfurt), on by configuration: server-side sign-in with security log, email confirmation, background saves, team console through permission-checked database functions | **Applied** |
 | [0031](0031-light-home.md) | Light marketing home in the reference's design language with our own content: rotating page stack, growing example strip, four tinted feature panels, black actions, Linkyo Violet accent (actions and accent now Linkyo Teal, 0032) | **Applied** |
 | [0032](0032-brand-teal.md) | Brand color Linkyo Teal (#00454C, lighter band #00565F, white text and icons) replaces Linkyo Violet in every brand role: actions, links, focus, logo, app icons; final home section as a teal card with its band | **Applied** |
+| [0033](0033-white-and-teal.md) | White backgrounds with Linkyo Teal: white page and cards, teal 50 soft fills, teal 100 panels on the home instead of rose/lavender/mint/lime | **Applied** |

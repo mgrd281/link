@@ -60,7 +60,7 @@
       "description": "Warmes Papier, tiefes Ink, ein tiefes Petrol. Spark bleibt selten: nur für Live und Feiermomente.",
       "anchors": "Markenfarben",
       "inkHint": "Text, dunkle Flächen",
-      "paperHint": "Heller Hintergrund",
+      "paperHint": "Text auf dunklen Flächen",
       "sparkHint": "Live · max. 5 % einer Ansicht",
       "scales": "Skalen",
       "scalesNote": "In OKLCH um die Markenfarben generiert – die Anker bleiben exakt.",

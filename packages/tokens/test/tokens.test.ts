@@ -50,7 +50,7 @@ describe("product UI semantic colors (brand §4, WCAG 2.2 AA)", () => {
     });
 
     it(`${mode}: text on the tinted panels reaches 4.5:1`, () => {
-      for (const tint of [s.tintRose[mode], s.tintLavender[mode], s.tintMint[mode], s.tintLime[mode]]) {
+      for (const tint of [s.tintRose[mode], s.tintLavender[mode], s.tintMint[mode], s.tintLime[mode], s.tintTeal[mode]]) {
         for (const role of ["fg", "fgSecondary"] as const) {
           expect(ratio(s[role][mode], tint), `${role} on ${tint}`).toBeGreaterThanOrEqual(4.5);
         }
@@ -71,6 +71,8 @@ describe("product UI semantic colors (brand §4, WCAG 2.2 AA)", () => {
     expect(s.primary.light).toBe("#00454C");
     expect(s.primaryHover.light).toBe("#00565F");
     expect(s.primaryFg.light).toBe("#FFFFFF");
+    expect(s.canvas.light).toBe("#FFFFFF");
+    expect(s.canvasMuted.light).toBe("#EFF8F8");
     expect(tokens.color.ink).toBe("#0A0A0B");
     expect(tokens.color.paper).toBe("#F7F6F2");
     expect(tokens.color.violet["500"]).toBe("#9500E9");
@@ -105,7 +107,7 @@ describe("generated outputs", () => {
   it("Tailwind theme resets the default theme and defines dark + high-contrast overrides", () => {
     const css = read("dist/tailwind/theme.css");
     expect(css).toContain("--*: initial;");
-    expect(css).toContain("--color-canvas: #f7f6f2;");
+    expect(css).toContain("--color-canvas: #ffffff;");
     expect(css).toMatch(/\[data-theme="dark"\] \{[^}]*--color-canvas: #0a0a0b;/);
     expect(css).toContain("@media (prefers-contrast: more)");
     expect(css).toContain("--spacing-0_5: 0.125rem;");

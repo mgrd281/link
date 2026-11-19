@@ -73,11 +73,13 @@ All colors are defined as design tokens (CSS variables + Swift `Color` assets). 
 | Token | Hex | Use |
 |---|---|---|
 | `ink` | #0A0A0B | Primary text (light mode), dark backgrounds |
-| `paper` | #F7F6F2 | Light background (warm off-white, never pure #FFF for large areas) |
-| `teal-700` (**Linkyo Teal**) | #00454C | Primary actions, links, logo, brand surfaces (white on it 10.7:1, on Paper 9.9:1) |
+| `white` | #FFFFFF | Light background (page and cards), with Linkyo Teal; see [ADR 0033](DECISIONS/0033-white-and-teal.md) |
+| `teal-50` | #EFF8F8 | Soft fills on white: fields, chips, quiet cards, sidebar |
+| `paper` | #F7F6F2 | Text and marks on dark surfaces (dark mode, app icon symbol) |
+| `teal-700` (**Linkyo Teal**) | #00454C | Primary actions, links, logo, brand surfaces (white on it 10.7:1, on white 10.7:1) |
 | `teal-600` | #00565F | Hover, the lighter band under a brand surface, focus rings (white on it 8.4:1) |
 | `teal-800` | #003A40 | Pressed state |
-| `teal-100` | #D9EFF0 | Selected backgrounds, subtle highlights |
+| `teal-100` | #D9EFF0 | Selected backgrounds, light teal panels (marketing illustrations, Pro card) |
 | `lime-400` (**Spark**) | #D4FF3A | Rare accent: "Live", badges, celebration moments. Max 5 % of any screen. |
 | `gray-50…950` | neutral scale, slight warm tint | Surfaces, borders, secondary text |
 | `success` | #12B76A | Success |

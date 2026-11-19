@@ -275,6 +275,7 @@ public extension Color {
         public static let tintLavender = Color("Semantic/TintLavender", bundle: .module)
         public static let tintMint = Color("Semantic/TintMint", bundle: .module)
         public static let tintLime = Color("Semantic/TintLime", bundle: .module)
+        public static let tintTeal = Color("Semantic/TintTeal", bundle: .module)
     }
 }
 #endif

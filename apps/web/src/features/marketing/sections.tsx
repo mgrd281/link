@@ -229,7 +229,7 @@ function ShareCard() {
   );
 }
 
-/** Everything a page can do, as four tinted rows; what is inside each panel moves in as it scrolls in. */
+/** Everything a page can do, as four rows on light Linkyo Teal panels; what is inside each panel moves in as it scrolls in. */
 export function Features() {
   const t = useTranslations("marketing");
   return (
@@ -241,7 +241,7 @@ export function Features() {
         </h2>
       </header>
 
-      <FeatureRow title={t("features.look.title")} body={t("features.look.body")} tint="bg-tint-rose">
+      <FeatureRow title={t("features.look.title")} body={t("features.look.body")} tint="bg-tint-teal">
         <div className="relative grid aspect-square w-full max-w-prose place-items-center sm:aspect-4/3">
           <Shot slug="nela-voss" className="mk-fan absolute w-1/3 -translate-x-3/4 -rotate-6 rtl:translate-x-3/4" />
           <Shot slug="coach-yara" className="mk-fan absolute w-1/3 translate-x-3/4 rotate-6 rtl:-translate-x-3/4" />
@@ -249,17 +249,17 @@ export function Features() {
         </div>
       </FeatureRow>
 
-      <FeatureRow title={t("paste.title")} body={t("paste.lead")} tint="bg-tint-lavender" reverse>
+      <FeatureRow title={t("paste.title")} body={t("paste.lead")} tint="bg-canvas-muted" reverse>
         <div className="mk-pop w-full max-w-prose">
           <PasteDemo />
         </div>
       </FeatureRow>
 
-      <FeatureRow title={t("analytics.title")} body={t("analytics.lead")} tint="bg-tint-mint">
+      <FeatureRow title={t("analytics.title")} body={t("analytics.lead")} tint="bg-tint-teal">
         <AnalyticsCard />
       </FeatureRow>
 
-      <FeatureRow title={t("features.share.title")} body={t("features.share.body")} tint="bg-tint-lime" reverse>
+      <FeatureRow title={t("features.share.title")} body={t("features.share.body")} tint="bg-canvas-muted" reverse>
         <ShareCard />
       </FeatureRow>
     </Shell>
@@ -297,7 +297,7 @@ export function Pricing() {
             {t("free.cta")}
           </Link>
         </article>
-        <article className="mk-reveal grid content-start gap-6 rounded-xl bg-tint-lavender p-6 md:p-10">
+        <article className="mk-reveal grid content-start gap-6 rounded-xl bg-tint-teal p-6 md:p-10">
           <div className="grid gap-2">
             <h3 className="flex items-center gap-3 text-h3">
               {t("pro.name")}

@@ -60,7 +60,7 @@
       "description": "Warm paper, deep ink, one deep teal. Spark is rare: live moments and celebration only.",
       "anchors": "Brand anchors",
       "inkHint": "Text, dark backgrounds",
-      "paperHint": "Light background",
+      "paperHint": "Text on dark surfaces",
       "sparkHint": "Live · max 5 % of a screen",
       "scales": "Scales",
       "scalesNote": "Generated in OKLCH around the brand anchors, which stay exact.",
