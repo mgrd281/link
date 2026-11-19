@@ -1,5 +1,11 @@
 import type { StaticImageData } from "next/image";
 
+import yazanKhoury from "@/assets/marketing/examples/yazan-khoury.jpg";
+import kaiMoreno from "@/assets/marketing/examples/kai-moreno.jpg";
+import moritzAlbrecht from "@/assets/marketing/examples/moritz-albrecht.jpg";
+import noahSarkis from "@/assets/marketing/examples/noah-sarkis.jpg";
+import theoBaptiste from "@/assets/marketing/examples/theo-baptiste.jpg";
+import noelAmadi from "@/assets/marketing/examples/noel-amadi.jpg";
 import louFerreira from "@/assets/marketing/examples/lou-ferreira.jpg";
 import junoKade from "@/assets/marketing/examples/juno-kade.jpg";
 import fenjaRoth from "@/assets/marketing/examples/fenja-roth.jpg";
@@ -37,6 +43,12 @@ export const EXAMPLE_SHOTS = {
   "salma-rahhal": salmaRahhal,
   "elias-navarro": eliasNavarro,
   "tomas-reyes": tomasReyes,
+  "yazan-khoury": yazanKhoury,
+  "kai-moreno": kaiMoreno,
+  "moritz-albrecht": moritzAlbrecht,
+  "noah-sarkis": noahSarkis,
+  "theo-baptiste": theoBaptiste,
+  "noel-amadi": noelAmadi,
   "timo-lacht": timoLacht,
   "rafael-duarte": rafaelDuarte,
   "mara-vale": maraVale,
@@ -60,12 +72,13 @@ export type ExampleShot = keyof typeof EXAMPLE_SHOTS;
  * magazine-style portraits lead; older examples with calmer photos follow.
  */
 export const STRIP: readonly ExampleShot[] = [
-  "lou-ferreira", "juno-kade", "salma-rahhal", "fenja-roth", "nico-hale", "layal-mansour", "tomas-reyes", "elias-navarro",
-  "sofia-laurent", "novaplays", "mara-vale", "studio-mira", "timo-lacht", "matbakh-reem",
+  "lou-ferreira", "yazan-khoury", "juno-kade", "noel-amadi", "layal-mansour", "theo-baptiste", "salma-rahhal", "kai-moreno",
+  "fenja-roth", "moritz-albrecht", "nico-hale", "noah-sarkis", "tomas-reyes", "elias-navarro", "sofia-laurent", "mara-vale",
 ];
 
 /** The tilted wall beside sign-up and sign-in: people pages only, the most striking first. */
 export const WALL: readonly ExampleShot[] = [
-  "lou-ferreira", "juno-kade", "layal-mansour", "nico-hale", "salma-rahhal", "fenja-roth",
-  "tomas-reyes", "elias-navarro", "sofia-laurent", "mara-vale", "adam-nour", "novaplays",
+  "lou-ferreira", "noel-amadi", "juno-kade", "yazan-khoury", "layal-mansour", "theo-baptiste",
+  "nico-hale", "salma-rahhal", "kai-moreno", "fenja-roth", "moritz-albrecht", "tomas-reyes",
+  "noah-sarkis", "elias-navarro", "sofia-laurent", "mara-vale", "adam-nour", "novaplays",
 ];

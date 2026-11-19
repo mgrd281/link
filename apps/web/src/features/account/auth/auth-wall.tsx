@@ -21,8 +21,8 @@ const PER_COLUMN = 4;
 export function AuthWall() {
   const t = useTranslations("auth.side");
   const [paused, setPaused] = useState(false);
-  // Column c steps through the pages five at a time from c on (12 pages, so no page repeats
-  // within a column and neighbours differ).
+  // Column c steps through the pages five at a time from c on (18 pages: five and 18 share no
+  // factor, so no page repeats within a column and neighbours differ).
   const columns = Array.from({ length: COLUMNS }, (_, column) =>
     Array.from({ length: PER_COLUMN }, (_, row) => SHOTS[(column + row * 5) % SHOTS.length]).filter((shot) => shot !== undefined),
   );
