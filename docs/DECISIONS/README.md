@@ -18,7 +18,7 @@
 | [0014](0014-accounts-and-dashboard.md) | Sign-up/log-in and the full creator dashboard, demo store behind an `AccountStore` contract | **Proposed — review** |
 | [0015](0015-prepared-pages.md) | Prepared pages for top creators: the team builds the page, the creator's email unlocks it | **Proposed — review** |
 | [0016](0016-team-area.md) | Team area `/admin`: team code, roles → permissions, prepared pages edited in the real editor, activity log | **Proposed — review** |
-| [0017](0017-brand-violet.md) | Brand color: Linkyo Violet #9500E9 replaces Linkyo Blue (contrast-checked, status colors stay distinct) | **Applied** |
+| [0017](0017-brand-violet.md) | Brand color: Linkyo Violet #9500E9 replaces Linkyo Blue (contrast-checked, status colors stay distinct) | Superseded by [0032](0032-brand-teal.md) |
 | [0018](0018-page-kinds.md) | Welcome flow asks what the page is for (TikTok, shop, writer …) → fitting template and questions | **Applied** |
 | [0019](0019-example-gallery.md) | Template gallery with 41 fictional example pages (no real celebrities), each in its own look; "Use this template" starts with that look | **Applied** |
 | [0020](0020-concept-pages.md) | Concept pages for 12 well-known people: noindex, labelled "Concept", official links and free-licensed photos only; listed in the gallery under "Well-known people" at the founder's request | **Applied** |
@@ -32,4 +32,5 @@
 | [0028](0028-admin-console.md) | Team console: customers, subscriptions, security (IP, device, sign-in log for account holders only, 30 days) and analytics; eight new permissions, owners can do everything | **Applied** |
 | [0029](0029-gallery-redesign.md) | Template gallery redesign: moving wall of pages (pausable, still for reduced motion), sticky search + one row of icon category chips, language filter, photo-led cards that lean and rise in, preview with previous/next | **Applied** |
 | [0030](0030-supabase-accounts.md) | Real accounts on Supabase (Frankfurt), on by configuration: server-side sign-in with security log, email confirmation, background saves, team console through permission-checked database functions | **Applied** |
-| [0031](0031-light-home.md) | Light marketing home in the reference's design language with our own content: rotating page stack, growing example strip, four tinted feature panels, black actions, Linkyo Violet accent | **Applied** |
+| [0031](0031-light-home.md) | Light marketing home in the reference's design language with our own content: rotating page stack, growing example strip, four tinted feature panels, black actions, Linkyo Violet accent (actions and accent now Linkyo Teal, 0032) | **Applied** |
+| [0032](0032-brand-teal.md) | Brand color Linkyo Teal (#00454C, lighter band #00565F, white text and icons) replaces Linkyo Violet in every brand role: actions, links, focus, logo, app icons; final home section as a teal card with its band | **Applied** |

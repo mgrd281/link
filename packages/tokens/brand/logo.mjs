@@ -138,9 +138,10 @@ mkdirSync(OUT_SVG, { recursive: true });
 const write = (name, content) => writeFileSync(path.join(OUT_SVG, name), content);
 const ink = C("ink");
 const paper = C("paper");
-const violet500 = C("violet.500");
-const violet600 = C("violet.600");
-const violet400 = C("violet.400");
+// Linkyo Teal: the deep background, its lighter band, and the light step for dark surfaces.
+const teal700 = C("teal.700");
+const teal600 = C("teal.600");
+const teal350 = C("teal.350");
 
 write("symbol.svg", svg(symbol.viewBox, symbolMarkup("ly", ink)));
 write("wordmark.svg", svg(wordmark.viewBox, `<path d="${wordmark.d}" fill="${ink}"/>`));
@@ -175,17 +176,17 @@ write(
   "app-icon-light.svg",
   icon(
     "il",
-    `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${violet500}"/><stop offset="1" stop-color="${violet600}"/></linearGradient></defs><path d="M0 0h1024v1024H0z" fill="url(#g)"/>`,
+    `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${teal700}"/><stop offset="1" stop-color="${teal600}"/></linearGradient></defs><path d="M0 0h1024v1024H0z" fill="url(#g)"/>`,
     paper,
   ),
 );
-write("app-icon-dark.svg", icon("id", `<path d="M0 0h1024v1024H0z" fill="${ink}"/>`, violet400));
+write("app-icon-dark.svg", icon("id", `<path d="M0 0h1024v1024H0z" fill="${ink}"/>`, teal350));
 write("app-icon-tinted.svg", icon("it", `<path d="M0 0h1024v1024H0z" fill="#000"/>`, "#fff"));
 write(
   "favicon.svg",
   svg(
     "0 0 32 32",
-    `<style>.m{fill:${violet500}}@media (prefers-color-scheme:dark){.m{fill:${violet400}}}</style>${symbolMarkup("fv", "currentColor").replaceAll('fill="currentColor"', 'class="m"')}`,
+    `<style>.m{fill:${teal700}}@media (prefers-color-scheme:dark){.m{fill:${teal350}}}</style>${symbolMarkup("fv", "currentColor").replaceAll('fill="currentColor"', 'class="m"')}`,
   ),
 );
 

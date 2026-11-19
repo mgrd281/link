@@ -45,7 +45,7 @@ const wasClosed = () => {
 /**
  * The Linkyo bar on creator pages: slides up once visitors scroll past the hero, so it never covers
  * the creator's name or photo, and can be closed (for the rest of the visit). Linkyo's own look
- * (dark, violet), clearly apart from the creator's design. Works in every browser: no scroll-driven
+ * (dark, teal), clearly apart from the creator's design. Works in every browser: no scroll-driven
  * CSS needed.
  */
 export function LinkyoDock({ title, cta, href, closeLabel }: { title: string; cta: string; href: string; closeLabel: string }) {

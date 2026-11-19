@@ -8,17 +8,17 @@
       {{ if eq .Data.locale "ar" }}
       <h1 style="margin:0 0 12px;font-size:22px;">اختر كلمة مرور جديدة</h1>
       <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#55555c;">استخدم الزر لاختيار كلمة مرور جديدة لحسابك في Linkyo. الرابط صالح مرة واحدة لمدة ساعة.</p>
-      <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#9500e9;color:#ffffff;font-weight:600;text-decoration:none;">اختيار كلمة مرور جديدة</a>
+      <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#00454c;color:#ffffff;font-weight:600;text-decoration:none;">اختيار كلمة مرور جديدة</a>
       <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#77777e;">لم تطلب ذلك؟ لن يتغيّر شيء وتبقى كلمة مرورك كما هي.</p>
       {{ else if eq .Data.locale "en" }}
       <h1 style="margin:0 0 12px;font-size:22px;">Choose a new password</h1>
       <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#55555c;">Use the button to choose a new password for your Linkyo account. The link works once, for one hour.</p>
-      <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#9500e9;color:#ffffff;font-weight:600;text-decoration:none;">Choose new password</a>
+      <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#00454c;color:#ffffff;font-weight:600;text-decoration:none;">Choose new password</a>
       <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#77777e;">Didn't ask for this? Then nothing changes and your password stays the same.</p>
       {{ else }}
       <h1 style="margin:0 0 12px;font-size:22px;">Neues Passwort wählen</h1>
       <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#55555c;">Über den Button wählst du ein neues Passwort für dein Linkyo-Konto. Der Link gilt eine Stunde und funktioniert einmal.</p>
-      <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#9500e9;color:#ffffff;font-weight:600;text-decoration:none;">Neues Passwort wählen</a>
+      <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#00454c;color:#ffffff;font-weight:600;text-decoration:none;">Neues Passwort wählen</a>
       <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#77777e;">Du hast das nicht angefordert? Dann bleibt alles, wie es ist. Dein Passwort ändert sich nicht.</p>
       {{ end }}
     </td></tr>

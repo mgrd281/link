@@ -43,11 +43,11 @@
       "title": "Brand",
       "description": "The Loop: two links that interlock into a lowercase y. Calm, confident, never loud.",
       "lockups": "Lockups",
-      "lockupsNote": "Horizontal, symbol + wordmark, on Ink and on Linkyo Violet. Clear space equals the height of the “o”.",
+      "lockupsNote": "Horizontal, symbol + wordmark, on Ink and on Linkyo Teal. Clear space equals the height of the “o”.",
       "horizontal": "Horizontal lockup",
       "symbolWordmark": "Symbol · wordmark",
       "appIcon": "App icon",
-      "appIconNote": "Paper symbol on Linkyo Violet with a subtle 500 → 600 gradient. Light, dark and tinted appearances for iOS 18+.",
+      "appIconNote": "Paper symbol on Linkyo Teal with a subtle 700 → 600 gradient. Light, dark and tinted appearances for iOS 18+.",
       "icon": {
         "light": "Light",
         "dark": "Dark",
@@ -57,7 +57,7 @@
     },
     "color": {
       "title": "Color",
-      "description": "Warm paper, deep ink, one vivid violet. Spark is rare: live moments and celebration only.",
+      "description": "Warm paper, deep ink, one deep teal. Spark is rare: live moments and celebration only.",
       "anchors": "Brand anchors",
       "inkHint": "Text, dark backgrounds",
       "paperHint": "Light background",

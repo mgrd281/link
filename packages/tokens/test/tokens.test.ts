@@ -66,6 +66,11 @@ describe("product UI semantic colors (brand §4, WCAG 2.2 AA)", () => {
   }
 
   it("keeps the brand anchors exact", () => {
+    expect(tokens.color.teal["700"]).toBe("#00454C");
+    expect(tokens.color.teal["600"]).toBe("#00565F");
+    expect(s.primary.light).toBe("#00454C");
+    expect(s.primaryHover.light).toBe("#00565F");
+    expect(s.primaryFg.light).toBe("#FFFFFF");
     expect(tokens.color.ink).toBe("#0A0A0B");
     expect(tokens.color.paper).toBe("#F7F6F2");
     expect(tokens.color.violet["500"]).toBe("#9500E9");
@@ -109,7 +114,7 @@ describe("generated outputs", () => {
 
   it("CSS variables mirror the Tailwind theme", () => {
     const css = read("dist/css/tokens.css");
-    expect(css).toContain("--color-primary: #9500e9;");
+    expect(css).toContain("--color-primary: #00454c;");
     expect(css).toContain("--font-sans: var(--font-face-geist, Geist), var(--font-face-plex-arabic, \"IBM Plex Sans Arabic\")");
   });
 

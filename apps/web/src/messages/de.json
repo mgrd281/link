@@ -43,11 +43,11 @@
       "title": "Marke",
       "description": "Der Loop: zwei Glieder, die sich zu einem kleinen y verschränken. Ruhig, selbstbewusst, nie laut.",
       "lockups": "Logo-Varianten",
-      "lockupsNote": "Horizontal, Symbol + Wortmarke, auf Ink und auf Linkyo Violet. Schutzraum = Höhe des „o“.",
+      "lockupsNote": "Horizontal, Symbol + Wortmarke, auf Ink und auf Linkyo Teal. Schutzraum = Höhe des „o“.",
       "horizontal": "Horizontale Variante",
       "symbolWordmark": "Symbol · Wortmarke",
       "appIcon": "App-Icon",
-      "appIconNote": "Paper-Symbol auf Linkyo Violet mit dezentem Verlauf 500 → 600. Hell, dunkel und getönt für iOS 18+.",
+      "appIconNote": "Paper-Symbol auf Linkyo Teal mit dezentem Verlauf 700 → 600. Hell, dunkel und getönt für iOS 18+.",
       "icon": {
         "light": "Hell",
         "dark": "Dunkel",
@@ -57,7 +57,7 @@
     },
     "color": {
       "title": "Farbe",
-      "description": "Warmes Papier, tiefes Ink, ein lebendiges Violett. Spark bleibt selten: nur für Live und Feiermomente.",
+      "description": "Warmes Papier, tiefes Ink, ein tiefes Petrol. Spark bleibt selten: nur für Live und Feiermomente.",
       "anchors": "Markenfarben",
       "inkHint": "Text, dunkle Flächen",
       "paperHint": "Heller Hintergrund",

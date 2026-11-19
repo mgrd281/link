@@ -28,10 +28,10 @@ const PAGES = Promise.all(
 );
 
 const LOGO = readFile(join(process.cwd(), "public/favicon.svg"), "utf8").then((svg) =>
-  dataUrl(Buffer.from(svg.replace(/@media[^}]*\}\}/, "").replace(/#9500E9/g, tokens.color.white)), "image/svg+xml"),
+  dataUrl(Buffer.from(svg.replace(/@media[^}]*\}\}/, "").replace(/#00454C/g, tokens.color.white)), "image/svg+xml"),
 );
 
-const v = tokens.color.violet;
+const v = tokens.color.teal;
 
 export async function brandCard({ kicker, title1, title2, rtl }: { kicker: string; title1: string; title2: string; rtl: boolean }) {
   const [fonts, pages, logo] = await Promise.all([FONTS, PAGES, LOGO]);
@@ -47,7 +47,7 @@ export async function brandCard({ kicker, title1, title2, rtl }: { kicker: strin
           display: "flex",
           flexDirection: rtl ? "row-reverse" : "row",
           alignItems: "center",
-          backgroundImage: `linear-gradient(135deg, ${v["950"]} 0%, ${v["800"]} 55%, ${v["500"]} 100%)`,
+          backgroundImage: `linear-gradient(135deg, ${v["950"]} 0%, ${v["700"]} 55%, ${v["600"]} 100%)`,
           color: tokens.color.white,
           fontFamily: font,
           padding: "0 72px",

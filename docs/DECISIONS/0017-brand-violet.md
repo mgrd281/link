@@ -27,5 +27,5 @@ color of most SaaS tools, so it does little to make Linkyo recognizable to creat
 Hover is #8900D8 (light) and #A000FB (dark). The logo, favicon, app icons (light/dark), the iOS asset catalog and
 AccentColor are regenerated from the tokens. Creator pages are unaffected: they use their own themes (§4.3).
 
-**Status.** Applied. Reversible by changing the scale in `packages/tokens/tokens.json` and running
+**Status.** Superseded by [0032](0032-brand-teal.md) (Linkyo Teal). Was reversible by changing the scale in `packages/tokens/tokens.json` and running
 `pnpm --filter @linkyo/tokens build && pnpm --filter @linkyo/tokens brand`.

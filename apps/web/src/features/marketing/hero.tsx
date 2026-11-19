@@ -42,7 +42,7 @@ export function Hero() {
           <span className="mk-rise block" style={order(0)}>
             {t("hero.title1")}
           </span>
-          <span className="mk-rise block text-primary" style={order(1)}>
+          <span className="mk-rise block text-link" style={order(1)}>
             {t("hero.title2")}
           </span>
         </h1>
@@ -94,7 +94,7 @@ export function Hero() {
               </div>
               <p className="mk-stack-front absolute inset-x-0 top-full mt-4 flex items-center justify-center gap-2 text-small font-semibold whitespace-nowrap text-fg">
                 {t(`hero.kinds.${page.kind}`)}
-                <span className="rounded-full bg-fg px-2 py-0.5 text-caption text-canvas tabular-nums">
+                <span className="rounded-full bg-primary px-2 py-0.5 text-caption text-primary-fg tabular-nums">
                   {t(`hero.${page.fact}`, { count: compact.format(page.count) })}
                 </span>
               </p>

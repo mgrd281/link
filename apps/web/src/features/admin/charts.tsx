@@ -245,15 +245,15 @@ export function RankedBars({
   );
 }
 
-/** Sequential steps of the brand violet for 0–100 %, light to dark; text turns white from violet-500 (AA on every step). */
+/** Sequential steps of the brand teal for 0–100 %, light to dark; text turns white from teal-500 (AA on every step). */
 const STEPS = [
-  "bg-violet-50",
-  "bg-violet-100",
-  "bg-violet-200",
-  "bg-violet-300",
-  "bg-violet-400",
-  "bg-violet-500",
-  "bg-violet-700",
+  "bg-teal-50",
+  "bg-teal-100",
+  "bg-teal-200",
+  "bg-teal-300",
+  "bg-teal-400",
+  "bg-teal-500",
+  "bg-teal-700",
 ] as const;
 const step = (share: number) => Math.min(STEPS.length - 1, Math.round(share * (STEPS.length - 1)));
 

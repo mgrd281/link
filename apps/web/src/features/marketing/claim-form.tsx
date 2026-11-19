@@ -13,8 +13,9 @@ type State = { kind: "idle" } | { kind: "ok"; name: string } | { kind: "invalid"
 /**
  * Claim your address. Validates exactly like sign-up (profile username rules), then continues to
  * sign-up with the address already filled in, where availability is checked.
+ * `tone="brand"` is for a Linkyo Teal surface: white button with teal text, white messages.
  */
-export function ClaimForm({ id, className }: { id: string; className?: string }) {
+export function ClaimForm({ id, className, tone = "default" }: { id: string; className?: string; tone?: "default" | "brand" }) {
   const t = useTranslations("marketing.claim");
   const [value, setValue] = useState("");
   const [state, setState] = useState<State>({ kind: "idle" });
@@ -57,14 +58,14 @@ export function ClaimForm({ id, className }: { id: string; className?: string })
             className="h-control-lg min-w-0 flex-1 bg-transparent text-body-lg font-medium text-fg outline-none placeholder:text-fg-tertiary"
           />
         </div>
-        <Button type="submit" variant="primary" size="lg" className="rounded-lg bg-fg text-canvas shadow-e1 hover:bg-fg active:bg-fg" trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+        <Button type="submit" variant="primary" size="lg" className={cn("rounded-lg shadow-e1", tone === "brand" && "bg-primary-fg text-primary hover:bg-primary-fg active:bg-primary-fg")} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
           {t("cta")}
         </Button>
       </div>
-      <p id={messageId} role="status" className={cn("flex items-start gap-2 ps-1 text-small", state.kind === "invalid" ? "text-danger-strong" : "text-fg-secondary")}>
+      <p id={messageId} role="status" className={cn("flex items-start gap-2 ps-1 text-small", tone === "brand" ? "text-primary-fg" : state.kind === "invalid" ? "text-danger-strong" : "text-fg-secondary")}>
         {state.kind === "ok" ? (
           <>
-            <Icon icon={CircleCheck} size="sm" className="mt-0.5 shrink-0 text-success-strong" />
+            <Icon icon={CircleCheck} size="sm" className={cn("mt-0.5 shrink-0", tone === "default" && "text-success-strong")} />
             <span>{t("ok", { name: state.name })}</span>
           </>
         ) : state.kind === "invalid" ? (

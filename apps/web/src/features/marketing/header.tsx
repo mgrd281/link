@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation";
 
 import { MobileMenu } from "./mobile-menu";
 
-/** A flat bar: logo, in-page links, language, a quiet "log in" and one black action. */
+/** A flat bar: logo, in-page links, language, a quiet "log in" and one action in Linkyo Teal. */
 export function MarketingHeader() {
   const t = useTranslations("marketing");
   const locale = useLocale();
@@ -54,7 +54,7 @@ export function MarketingHeader() {
           </Link>
           <Link
             href="/signup"
-            className="hidden h-control-md items-center rounded-full bg-fg px-4 text-small font-semibold text-canvas shadow-e1 transition-[box-shadow,scale] duration-micro hover:shadow-e3 focus-visible:focus-ring active:scale-pressed md:inline-flex"
+            className="hidden h-control-md items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg shadow-e1 transition-[background-color,box-shadow,scale] duration-micro hover:bg-primary-hover hover:shadow-e3 focus-visible:focus-ring active:scale-pressed md:inline-flex"
           >
             {cta.label}
           </Link>

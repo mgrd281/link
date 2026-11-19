@@ -106,7 +106,7 @@ export function Templates() {
       <div className="mt-10 flex justify-center px-5">
         <Link
           href="/templates"
-          className="inline-flex h-control-lg items-center gap-2 rounded-full bg-fg px-6 text-body font-semibold text-canvas shadow-e1 transition-[box-shadow,scale] duration-micro hover:shadow-e3 focus-visible:focus-ring active:scale-pressed"
+          className="inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-e1 transition-[background-color,box-shadow,scale] duration-micro hover:bg-primary-hover hover:shadow-e3 focus-visible:focus-ring active:scale-pressed"
         >
           {tExamples("seeAll", { count: Object.keys(LOOKS).length })}
           <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
@@ -292,7 +292,7 @@ export function Pricing() {
           </ul>
           <Link
             href="/signup"
-            className="inline-flex h-control-xl items-center justify-center rounded-full bg-fg px-6 text-body font-semibold text-canvas shadow-e1 transition-[box-shadow,scale] duration-micro hover:shadow-e3 focus-visible:focus-ring active:scale-pressed"
+            className="inline-flex h-control-xl items-center justify-center rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-e1 transition-[background-color,box-shadow,scale] duration-micro hover:bg-primary-hover hover:shadow-e3 focus-visible:focus-ring active:scale-pressed"
           >
             {t("free.cta")}
           </Link>
@@ -342,28 +342,34 @@ export function Faq() {
 }
 
 
-/** The last word: a soft card with the address field and what Pro will add. */
+/**
+ * The last word, in the brand color: a Linkyo Teal card with its lighter band along the bottom,
+ * white text, the address field and what Pro will add.
+ */
 export function FinalCta() {
   const t = useTranslations("marketing");
   const pro = t.raw("pricing.pro.features") as string[];
   return (
     <section id="start" aria-labelledby="final-title" className="mx-auto w-full max-w-content scroll-mt-24 px-5 md:px-10">
-      <div className="mk-reveal grid justify-items-center gap-6 rounded-xl bg-canvas-muted px-5 py-16 text-center md:px-10 md:py-24">
-        <h2 id="final-title" className="text-display tracking-display text-balance md:text-display-xl">
-          {t("final.title")}
-        </h2>
-        <p className="max-w-prose text-body-lg text-pretty text-fg-secondary">{t("final.lead")}</p>
-        <ClaimForm id="final-claim" className="w-full max-w-prose text-start" />
-        <div className="grid justify-items-center gap-3 pt-6">
-          <p className="text-small font-semibold">{t("final.soon")}</p>
-          <ul className="flex max-w-prose flex-wrap justify-center gap-2">
-            {pro.map((feature) => (
-              <li key={feature} className="inline-flex h-control-sm items-center rounded-full bg-surface-elevated px-3 text-small font-medium text-fg shadow-e1">
-                {feature}
-              </li>
-            ))}
-          </ul>
+      <div className="mk-reveal grid overflow-hidden rounded-xl bg-primary text-primary-fg shadow-e2">
+        <div className="grid justify-items-center gap-6 px-5 py-16 text-center md:px-10 md:py-24">
+          <h2 id="final-title" className="text-display tracking-display text-balance md:text-display-xl">
+            {t("final.title")}
+          </h2>
+          <p className="max-w-prose text-body-lg text-pretty">{t("final.lead")}</p>
+          <ClaimForm id="final-claim" tone="brand" className="w-full max-w-prose text-start" />
+          <div className="grid justify-items-center gap-3 pt-6">
+            <p className="text-small font-semibold">{t("final.soon")}</p>
+            <ul className="flex max-w-prose flex-wrap justify-center gap-2">
+              {pro.map((feature) => (
+                <li key={feature} className="inline-flex h-control-sm items-center rounded-full bg-primary-hover px-3 text-small font-medium text-primary-fg">
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
+        <div aria-hidden className="h-6 bg-primary-hover md:h-8" />
       </div>
     </section>
   );
