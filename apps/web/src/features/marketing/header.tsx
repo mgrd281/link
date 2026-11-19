@@ -48,13 +48,13 @@ export function MarketingHeader() {
           </div>
           <Link
             href="/login"
-            className="hidden h-control-md items-center rounded-full border border-link px-4 text-small font-semibold text-link transition-colors duration-micro hover:border-primary hover:bg-primary hover:text-primary-fg focus-visible:focus-ring active:scale-pressed md:inline-flex"
+            className="hidden h-control-md items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro ease-standard hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0 md:inline-flex"
           >
             {login.label}
           </Link>
           <Link
             href="/signup"
-            className="hidden h-control-md items-center rounded-full border border-primary bg-primary px-4 text-small font-semibold text-primary-fg transition-colors duration-micro hover:border-primary-hover hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed md:inline-flex"
+            className="hidden h-control-md items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro ease-standard hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0 md:inline-flex"
           >
             {cta.label}
           </Link>
