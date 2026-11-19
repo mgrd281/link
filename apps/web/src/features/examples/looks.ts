@@ -23,6 +23,16 @@ export interface Look {
 }
 
 export const LOOKS = {
+  // Spotlight: magazine-style pages of people, first in the gallery. Full-colour portraits on templates
+  // that keep the photo's own colors (no duotone); vivid mode puts the page in the photo's color.
+  "lou-ferreira": { kind: "instagram", category: "creators", locale: "de", theme: { template: "nocturne", accent: SW.ruby, mode: "vivid", pairing: "elegant", buttonShape: "pill" } },
+  "juno-kade": { kind: "music", category: "music", locale: "en", theme: { template: "nocturne", accent: SW.flamingo, neutral: SW.navy, tint: 1, pairing: "stage", buttonStyle: "filled", buttonShape: "pill" } },
+  "fenja-roth": { kind: "other", category: "sport", locale: "de", theme: { template: "daylight", accent: SW.sky, mode: "vivid", pairing: "bold", buttonShape: "pill" } },
+  "nico-hale": { kind: "other", category: "film", locale: "en", theme: { template: "atelier", accent: SW.tangerine, mode: "dark", pairing: "editorial", buttonStyle: "filled" } },
+  "salma-rahhal": { kind: "instagram", category: "creators", locale: "ar", theme: { template: "daylight", accent: SW.rose, neutral: SW.flamingo, tint: 1, buttonStyle: "filled", buttonShape: "pill" } },
+  "elias-navarro": { kind: "coach", category: "sport", locale: "en", theme: { template: "daylight", accent: SW.tangerine, neutral: SW.apricot, tint: 0.8, pairing: "bold", buttonStyle: "filled", buttonShape: "pill" } },
+  "layal-mansour": { kind: "music", category: "music", locale: "ar", theme: { template: "daylight", accent: SW.cyan, mode: "vivid", buttonShape: "pill" } },
+  "tomas-reyes": { kind: "youtube", category: "creators", locale: "de", theme: { template: "nocturne", accent: SW.apricot, neutral: SW.tangerine, tint: 0.6, pairing: "modern", buttonShape: "pill" } },
   // Sport
   "rafael-duarte": { kind: "other", category: "sport", locale: "en", theme: { template: "pulse", accent: SW.pitch, pairing: "bold", buttonShape: "square" } },
   "lena-vogt": { kind: "other", category: "sport", locale: "de", theme: { template: "daylight", accent: SW.flame, pairing: "modern", buttonStyle: "filled", buttonShape: "pill" } },

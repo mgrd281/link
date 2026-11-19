@@ -116,6 +116,19 @@ import ex5CoverPlaylist from "@/assets/examples/ex5-cover-playlist.jpg";
 import ex5HoodieBlack from "@/assets/examples/ex5-hoodie-black.jpg";
 import ex5HoodieWhite from "@/assets/examples/ex5-hoodie-white.jpg";
 import ex5NelaVoss from "@/assets/examples/ex5-nela-voss.jpg";
+import ex6ClubLasers from "@/assets/examples/ex6-club-lasers.jpg";
+import ex6CoverAfterglow from "@/assets/examples/ex6-cover-afterglow.jpg";
+import ex6CoverLayal from "@/assets/examples/ex6-cover-layal.jpg";
+import ex6Dumbbells from "@/assets/examples/ex6-dumbbells.jpg";
+import ex6EliasNavarro from "@/assets/examples/ex6-elias-navarro.jpg";
+import ex6FenjaRoth from "@/assets/examples/ex6-fenja-roth.jpg";
+import ex6JunoKade from "@/assets/examples/ex6-juno-kade.jpg";
+import ex6LayalMansour from "@/assets/examples/ex6-layal-mansour.jpg";
+import ex6LouFerreira from "@/assets/examples/ex6-lou-ferreira.jpg";
+import ex6NicoHale from "@/assets/examples/ex6-nico-hale.jpg";
+import ex6SalmaRahhal from "@/assets/examples/ex6-salma-rahhal.jpg";
+import ex6TennisBalls from "@/assets/examples/ex6-tennis-balls.jpg";
+import ex6TomasReyes from "@/assets/examples/ex6-tomas-reyes.jpg";
 
 /** Pictures of the example gallery (stock photos, see assets/examples/CREDITS.md; logos are original). */
 export const exampleMedia = {
@@ -235,4 +248,17 @@ export const exampleMedia = {
   "sample:ex5-hoodie-black": ex5HoodieBlack,
   "sample:ex5-hoodie-white": ex5HoodieWhite,
   "sample:ex5-nela-voss": ex5NelaVoss,
+  "sample:ex6-club-lasers": ex6ClubLasers,
+  "sample:ex6-cover-afterglow": ex6CoverAfterglow,
+  "sample:ex6-cover-layal": ex6CoverLayal,
+  "sample:ex6-dumbbells": ex6Dumbbells,
+  "sample:ex6-elias-navarro": ex6EliasNavarro,
+  "sample:ex6-fenja-roth": ex6FenjaRoth,
+  "sample:ex6-juno-kade": ex6JunoKade,
+  "sample:ex6-layal-mansour": ex6LayalMansour,
+  "sample:ex6-lou-ferreira": ex6LouFerreira,
+  "sample:ex6-nico-hale": ex6NicoHale,
+  "sample:ex6-salma-rahhal": ex6SalmaRahhal,
+  "sample:ex6-tennis-balls": ex6TennisBalls,
+  "sample:ex6-tomas-reyes": ex6TomasReyes,
 } satisfies Record<string, StaticImageData>;

@@ -5,7 +5,7 @@ used under the Unsplash License (free to use, attribution appreciated); each lic
 photo's own page. Moving pictures (ex4-motion-*: the poster here, the looping clip in public/media/motion)
 are Mixkit clips under the Mixkit Stock Video Free License (checked on each clip page; cut, cropped and
 re-encoded for Linkyo). The logos (ex-logo-*.png) are original artwork made for Linkyo. The release
-covers (ex5-cover-*, ex5-album-banner) are original Linkyo designs set on Unsplash photos, with typefaces
+covers (ex5-cover-*, ex5-album-banner, ex6-cover-*) are original Linkyo designs set on Unsplash photos, with typefaces
 under the SIL Open Font License. People in the photos and clips are models or anonymous; they have no
 connection to the fictional names and are not endorsing Linkyo.
 
@@ -122,6 +122,19 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex5-hoodie-black.jpg | Soheil Kmp (black and white, cropped) | https://unsplash.com/photos/a-woman-in-a-black-hoodie-leaning-against-a-wall-R3jQerZ0YmM | Unsplash License |
 | ex5-hoodie-white.jpg | Amir Abbaspoor (black and white, cropped) | https://unsplash.com/photos/a-woman-in-a-white-hoodie-sitting-on-a-chair-AQK4pg-PTjs | Unsplash License |
 | ex5-nela-voss.jpg | Mery Amiri (backdrop brightened, cropped) | https://unsplash.com/photos/a-black-and-white-photo-of-a-woman-sitting-on-a-chair-UoSBugW7H5A | Unsplash License |
+| ex6-club-lasers.jpg | A J. (cropped) | https://unsplash.com/photos/people-gathering-in-event-during-night-time-FNieWqIDsJA | Unsplash License |
+| ex6-cover-afterglow.jpg | Linkyo cover design on a photo by A J. | https://unsplash.com/photos/people-gathering-in-event-during-night-time-FNieWqIDsJA | Unsplash License; type: Anton, DM Mono (OFL) |
+| ex6-cover-layal.jpg | Linkyo cover design on a photo by Simi Iluyomade | https://unsplash.com/photos/woman-in-black-hijab-and-gold-floral-head-dress-hWUYHO7Wbhc | Unsplash License; type: Gloock, IBM Plex Sans Arabic (OFL) |
+| ex6-dumbbells.jpg | Jakub Żerdzicki (cropped) | https://unsplash.com/photos/weights-and-equipment-are-ready-for-a-workout-Il9YbhIBiOA | Unsplash License |
+| ex6-elias-navarro.jpg | Omid Armin (cropped) | https://unsplash.com/photos/man-in-gray-tank-top-smiling-9Tg8ccItbgI | Unsplash License |
+| ex6-fenja-roth.jpg | Shutter Speed (cropped) | https://unsplash.com/photos/smiling-woman-holding-a-tennis-racket-qno2Agy1sww | Unsplash License |
+| ex6-juno-kade.jpg | Igor Rand (cropped) | https://unsplash.com/photos/a-womans-face-is-lit-by-a-neon-light-kQxE3QzIlmw | Unsplash License |
+| ex6-layal-mansour.jpg | Simi Iluyomade (cropped) | https://unsplash.com/photos/woman-in-black-hijab-and-gold-floral-head-dress-hWUYHO7Wbhc | Unsplash License |
+| ex6-lou-ferreira.jpg | JJ Jordan (cropped) | https://unsplash.com/photos/woman-in-red-dress-holding-her-hair-c4aoTNK1_NE | Unsplash License |
+| ex6-nico-hale.jpg | Reece van der Merwe (cropped) | https://unsplash.com/photos/a-man-in-an-orange-jacket-poses-for-a-picture-H5T6rfKbdtk | Unsplash License |
+| ex6-salma-rahhal.jpg | Jimmy Fermin (cropped) | https://unsplash.com/photos/woman-staring-directly-at-camera-near-pink-wall-bqe0J0b26RQ | Unsplash License |
+| ex6-tennis-balls.jpg | Ahmed (@mutecevvil) (cropped) | https://unsplash.com/photos/several-tennis-balls-on-a-blue-tennis-court-8iZbdNevfhY | Unsplash License |
+| ex6-tomas-reyes.jpg | Warren (cropped) | https://unsplash.com/photos/smiling-man-standing-near-green-trees-VVEwJJRRHgk | Unsplash License |
 | ex-logo-*.png | Linkyo (original artwork) | — | © Linkyo |
 
 Unsplash License: https://unsplash.com/license
