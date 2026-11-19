@@ -1,10 +1,8 @@
-import { Icon, Logo } from "@linkyo/ui";
-import { FlaskConical } from "lucide-react";
+import { Logo } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { Link } from "@/i18n/navigation";
-import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { AuthWall } from "./auth-wall";
 
@@ -32,14 +30,6 @@ export function AuthShell({ children }: { children: ReactNode }) {
         <main id="main" className="grid flex-1 place-items-center py-12">
           <div className="grid w-full max-w-creator grid-cols-1 gap-6">{children}</div>
         </main>
-        {supabaseEnabled ? null : (
-          <p className="mx-auto flex max-w-creator items-start gap-2 rounded-lg bg-canvas-muted p-3 text-caption text-fg-secondary">
-            <Icon icon={FlaskConical} size="sm" className="mt-0.5 shrink-0 text-link" />
-            <span>
-              <strong className="font-semibold text-fg">{t("demo.title")}</strong> {t("demo.body")}
-            </span>
-          </p>
-        )}
       </div>
       <AuthWall />
     </div>
