@@ -590,11 +590,6 @@
         "Ohne Cookies",
         "Daten in Frankfurt"
       ],
-      "kinds": {
-        "music": "Musik",
-        "football": "Fußball",
-        "jewellery": "Schmuck"
-      },
       "deck": {
         "carousel": "Karussell",
         "slide": "Seite",
@@ -602,11 +597,16 @@
         "choose": "Beispielseite wählen",
         "view": "Seite ansehen",
         "viewNamed": "Seite ansehen, {name}",
-        "auto": "Wechselt alle 6 Sekunden, zweimal reihum, bis du selbst eine Seite wählst.",
+        "auto": "Die Seite vorn scrollt von selbst nach unten, dann kommt die nächste: alle 9 Sekunden, zweimal reihum, bis du selbst eine Seite wählst.",
         "conceptNamed": "Konzept · {name}",
         "conceptNote": "Konzeptseiten sind inoffiziell: So könnte eine Linkyo-Seite aussehen. Wir sind nicht mit den gezeigten Personen verbunden."
       },
-      "promises": "Was du bekommst"
+      "promises": "Was du bekommst",
+      "tabs": {
+        "taylor-swift": "Taylor Swift",
+        "cristiano": "Ronaldo",
+        "messi": "Messi"
+      }
     },
     "claim": {
       "label": "Wähl deine Seitenadresse",

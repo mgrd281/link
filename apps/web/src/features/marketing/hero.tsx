@@ -3,26 +3,20 @@ import { Gift, MapPin, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 
-import { EXAMPLES } from "@/features/examples/catalog";
-import { LOOKS } from "@/features/examples/looks";
 import { STARS } from "@/features/previews/stars-data";
 
 import { ClaimForm } from "./claim-form";
-import { CONCEPT_SHOTS, EXAMPLE_SHOTS, type ConceptShot, type ExampleShot } from "./examples";
-import { HeroDeck, type DeckKind, type DeckPage } from "./hero-deck";
+import { CONCEPT_SHOTS, type ConceptShot } from "./examples";
+import { HeroDeck, type DeckPage } from "./hero-deck";
 
 export const order = (n: number) => ({ "--i": n }) as CSSProperties;
 
 /**
- * The three pages that take turns in front: a singer in black, a footballer in red and a jewellery
- * house. The two people are well known: theirs are unofficial concept pages, labelled as such
- * (founder's decision, ADR 0043); the jewellery house is one of our fictional examples.
+ * The three pages that take turns in front: a singer in black, a footballer in red and one in sky
+ * blue. All three are well known: theirs are unofficial concept pages, labelled as such (founder's
+ * decision, ADR 0043).
  */
-const STACK: ({ kind: DeckKind } & ({ concept: ConceptShot } | { example: ExampleShot }))[] = [
-  { concept: "taylor-swift", kind: "music" },
-  { concept: "cristiano", kind: "football" },
-  { example: "lumen-atelier", kind: "jewellery" },
-];
+const STACK: ConceptShot[] = ["taylor-swift", "cristiano", "messi"];
 
 const LOCALES = ["de", "en", "ar"] as const;
 
@@ -39,16 +33,15 @@ export function Hero() {
   const promises = t.raw("hero.pills") as string[];
   const current = useLocale();
   const locale = LOCALES.find((code) => code === current) ?? "de";
-  const pages: DeckPage[] = STACK.map((entry) => {
-    if ("concept" in entry) {
-      // Concept pages exist in every language: link to, and show, the visitor's own.
-      const slug = entry.concept;
-      const star = STARS.find((candidate) => candidate.slug === slug);
-      return { slug, kind: entry.kind, concept: true, name: star?.name[locale] ?? slug, href: `/${locale}/p/${slug}`, shot: CONCEPT_SHOTS[slug][locale] };
-    }
-    const slug = entry.example;
-    return { slug, kind: entry.kind, name: EXAMPLES[slug]?.profile.displayName ?? slug, href: `/${LOOKS[slug].locale}/p/${slug}`, shot: EXAMPLE_SHOTS[slug] };
-  });
+  // Concept pages exist in every language: link to, and show, the visitor's own.
+  const pages: DeckPage[] = STACK.map((slug) => ({
+    slug,
+    concept: true,
+    tab: t(`hero.tabs.${slug}`),
+    name: STARS.find((star) => star.slug === slug)?.name[locale] ?? slug,
+    href: `/${locale}/p/${slug}`,
+    shot: CONCEPT_SHOTS[slug][locale],
+  }));
   return (
     <section aria-labelledby="hero-title" className="overflow-x-clip lg:overflow-x-visible">
       <div className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-10 px-5 pt-6 pb-12 md:px-10 md:pt-12 lg:mk-hero-fit lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-10 lg:py-8">

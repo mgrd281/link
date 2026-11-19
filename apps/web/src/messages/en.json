@@ -590,11 +590,6 @@
         "No cookies",
         "Data in Frankfurt"
       ],
-      "kinds": {
-        "music": "Music",
-        "football": "Football",
-        "jewellery": "Jewellery"
-      },
       "deck": {
         "carousel": "carousel",
         "slide": "slide",
@@ -602,11 +597,16 @@
         "choose": "Choose an example page",
         "view": "View page",
         "viewNamed": "View page, {name}",
-        "auto": "Changes every 6 seconds, twice round, until you choose a page.",
+        "auto": "The page in front scrolls down by itself, then the next one comes: every 9 seconds, twice round, until you choose a page.",
         "conceptNamed": "Concept · {name}",
         "conceptNote": "Concept pages are unofficial: this is how a Linkyo page could look. We are not affiliated with the people shown."
       },
-      "promises": "What you get"
+      "promises": "What you get",
+      "tabs": {
+        "taylor-swift": "Taylor Swift",
+        "cristiano": "Ronaldo",
+        "messi": "Messi"
+      }
     },
     "claim": {
       "label": "Choose your page address",

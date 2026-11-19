@@ -1,27 +1,28 @@
 "use client";
 
 import { cn, Icon, LogoSymbol } from "@linkyo/ui";
-import { ArrowUpRight, Gem, Mic, Trophy, type LucideIcon } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import Image, { type StaticImageData } from "next/image";
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
 
 import { phoneSizes } from "./assets";
 
-export type DeckKind = "music" | "football" | "jewellery";
-
 export interface DeckPage {
   slug: string;
   name: string;
   href: string;
-  kind: DeckKind;
-  /** The phone picture of the page, in the visitor's language where the page has one. */
+  /** The short name on the page's tab. */
+  tab: string;
+  /**
+   * The picture of the page, in the visitor's language where the page has one. A picture taller
+   * than the screen scrolls by itself while the page is in front.
+   */
   shot: StaticImageData;
   /** An unofficial concept page of a well-known person: labelled as such instead of an address. */
   concept?: boolean;
 }
 
-const KIND_ICONS: Record<DeckKind, LucideIcon> = { music: Mic, football: Trophy, jewellery: Gem };
 const SLOTS = ["front", "next", "prev"] as const;
 /** The deck goes round twice on its own, then rests on the first page. */
 const ROUNDS = 2;
@@ -36,15 +37,18 @@ const subscribeReduced = (onChange: () => void) => {
 };
 
 /**
- * The hero's pages as a carousel (WAI-ARIA tabbed carousel): a singer in black, a footballer in red
- * and a jewellery house, the one in front shown whole. The chip above it is the link to the page:
- * its address, or "Concept · name" for the unofficial concept pages of well-known people (a note
- * under the tabs says so too, ADR 0020). A click on a page beside it, or on a tab, brings that page
- * forward, and the teal highlight glides to its tab.
+ * The hero's pages as a carousel (WAI-ARIA tabbed carousel): three pages, the one in front shown
+ * whole. The chip above it is the link to the page: its address, or "Concept · name" for the
+ * unofficial concept pages of well-known people (a note under the tabs says so too, ADR 0043).
+ * A click on a page beside it, or on a tab, brings that page forward, and the teal highlight glides
+ * to its tab.
  *
- * Motion without a pause button (WCAG 2.2.2): the deck changes on its own only for two rounds (an
- * unseen clock, no moving line), holds while the mouse is over it or keyboard focus is inside,
- * stops for good as soon as someone chooses a page, and never moves on its own with reduced motion.
+ * The page in front is alive: its picture scrolls down by itself, as someone reading it would, and
+ * returns to the top; then the next page comes forward. That scroll is the deck's clock.
+ *
+ * Motion without a pause button (WCAG 2.2.2): the deck moves on its own only for two rounds, holds
+ * while the mouse is over it or keyboard focus is inside, stops for good as soon as someone chooses
+ * a page, and never moves on its own with reduced motion.
  */
 export function HeroDeck({ pages }: { pages: DeckPage[] }) {
   const t = useTranslations("marketing.hero");
@@ -94,9 +98,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
           <div aria-hidden className="mk-deck-halo w-[260%] border border-line" />
           <div aria-hidden className="mk-deck-halo w-[215%] bg-tint-teal" />
           {/* Invisible twin of a phone: it gives the box its height. */}
-          <div aria-hidden className="invisible rounded-xl border border-transparent p-1">
-            <div className="aspect-phone" />
-          </div>
+          <div aria-hidden className="invisible aspect-phone" />
 
           {pages.map((page, index) => {
             const slot = SLOTS[(index - active + count) % count] ?? "next";
@@ -112,21 +114,20 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                 data-slot={slot}
                 className="mk-deck-card group absolute inset-x-0 top-0"
               >
-                {/* A white frame with a hairline: where pages overlap, the frame keeps them apart. */}
-                <div className="rounded-xl border border-line bg-surface p-1">
-                  <div className="relative aspect-phone overflow-hidden rounded-lg bg-canvas-muted">
-                    <Image
-                      src={page.shot}
-                      alt=""
-                      fill
-                      sizes={phoneSizes.hero}
-                      placeholder="blur"
-                      preload={index === 0}
-                      fetchPriority={index === 0 ? "high" : "auto"}
-                      loading={index === 0 ? "eager" : "lazy"}
-                      className="object-cover object-top"
-                    />
-                  </div>
+                {/* The page itself, edge to edge: no bezel, no frame. In front, it scrolls by itself. */}
+                <div className="mk-deck-screen aspect-phone overflow-hidden rounded-xl bg-canvas-muted">
+                  <Image
+                    src={page.shot}
+                    alt=""
+                    sizes={phoneSizes.hero}
+                    placeholder="blur"
+                    preload={index === 0}
+                    fetchPriority={index === 0 ? "high" : "auto"}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    data-tour={front && rotating ? "" : undefined}
+                    onAnimationEnd={front && rotating ? advance : undefined}
+                    className={cn("h-auto w-full", front && rotating && "mk-deck-scroll")}
+                  />
                 </div>
 
                 {front ? (
@@ -162,7 +163,6 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
         </div>
       </div>
 
-      {rotating ? <span key={active} aria-hidden data-timer onAnimationEnd={advance} className="mk-deck-timer" /> : null}
       <p id={`${id}-auto`} className="sr-only">
         {t("deck.auto")}
       </p>
@@ -192,12 +192,11 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
               }}
               onKeyDown={onTabKey}
               className={cn(
-                "inline-flex h-control-md items-center justify-center gap-2 rounded-full px-4 text-small font-semibold whitespace-nowrap transition-colors duration-slow ease-emphasized focus-visible:focus-ring motion-reduce:transition-none",
+                "inline-flex h-control-md items-center justify-center rounded-full px-3 text-small font-semibold whitespace-nowrap transition-colors duration-slow ease-emphasized focus-visible:focus-ring motion-reduce:transition-none sm:px-5",
                 selected ? "text-primary-fg" : "text-fg-secondary hover:text-fg",
               )}
             >
-              <Icon icon={KIND_ICONS[page.kind]} size="sm" />
-              {t(`kinds.${page.kind}`)}
+              {page.tab}
             </button>
           );
         })}

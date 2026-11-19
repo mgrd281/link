@@ -94,7 +94,7 @@ export const LOOKS = {
   "studio-atem": { kind: "shop", category: "local", locale: "de", theme: { template: "daylight", accent: SW.sage, pairing: "elegant", buttonStyle: "soft", buttonShape: "pill" } },
   "pflege-sonnenschein": { kind: "business", category: "local", locale: "de", theme: { template: "daylight", accent: SW.marigold, pairing: "modern", buttonShape: "rounded" } },
   "golden-day": { kind: "business", category: "local", locale: "de", theme: { template: "atelier", accent: SW["gold-leaf"], pairing: "elegant", mode: "light" } },
-  "lumen-atelier": { kind: "store", category: "local", locale: "en", theme: { template: "nocturne", accent: SW.pine, mode: "vivid", pairing: "elegant", buttonShape: "pill" } },
+  "lumen-atelier": { kind: "store", category: "local", locale: "en", theme: { template: "marquee", accent: SW.sand, pairing: "elegant", buttonStyle: "outline" } },
   // Careers
   "miriam-hoffmann": { kind: "lawyer", category: "careers", locale: "de", theme: { template: "atelier", accent: SW["ink-blue"], pairing: "classic" } },
   "lukas-weber": { kind: "engineer", category: "careers", locale: "de", theme: { template: "daylight", accent: SW.apricot, pairing: "tech", buttonShape: "square" } },

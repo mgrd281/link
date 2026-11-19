@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /* eslint-disable no-console -- a command-line tool prints its result. */
 /**
- * Takes the phone pictures of pages for the marketing site: the top of each page at 390 × 844
- * (saved 640 × 1385).
- *   - Example pages, each in its own language: src/assets/marketing/examples/<slug>.jpg
- *   - Concept pages of well-known people, in German, English and Arabic:
+ * Takes the phone pictures of pages for the marketing site, 390 px wide (saved 640 px wide).
+ *   - Example pages, each in its own language, the top screen (390 × 844):
+ *     src/assets/marketing/examples/<slug>.jpg
+ *   - Concept pages of well-known people, in German, English and Arabic, as a tall picture of up to
+ *     two and a half screens (the hero scrolls through it):
  *     src/assets/marketing/concepts/<slug>.<locale>.jpg
  *
  * Run it against a running production build whenever the pages' look or Linkyo's own chip on them
@@ -30,6 +31,8 @@ const LOCALES = ["de", "en", "ar"];
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
 const PHONE = { width: 390, height: 844 };
 const PICTURE_WIDTH = 640;
+/** Tall pictures stop after this many screens, so every page scrolls at a calm speed. */
+const TALL_SCREENS = 2.5;
 
 /** Each example page lives in its own language: read it from the catalog of looks. */
 const looks = readFileSync(path.resolve(HERE, "../src/features/examples/looks.ts"), "utf8");
@@ -43,10 +46,10 @@ const essential = Object.fromEntries(
   }),
 );
 
-/** What to take: [locale, slug, file]. Examples in their own language, concepts in all three. */
+/** What to take: [locale, slug, file, tall]. Examples in their own language, concepts in all three. */
 const jobs = [];
-const example = (slug) => jobs.push([localeOf(slug), slug, path.join(OUT, `${slug}.jpg`)]);
-const concept = (slug) => LOCALES.forEach((locale) => jobs.push([locale, slug, path.join(OUT_CONCEPTS, `${slug}.${locale}.jpg`)]));
+const example = (slug) => jobs.push([localeOf(slug), slug, path.join(OUT, `${slug}.jpg`), false]);
+const concept = (slug) => LOCALES.forEach((locale) => jobs.push([locale, slug, path.join(OUT_CONCEPTS, `${slug}.${locale}.jpg`), true]));
 const asked = process.argv.slice(2);
 if (asked.length > 0) {
   for (const name of asked) {
@@ -60,7 +63,7 @@ if (asked.length > 0) {
 
 const browser = await chromium.launch(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {});
 let failed = 0;
-for (const [locale, slug, file] of jobs) {
+for (const [locale, slug, file, tall] of jobs) {
   if (!locale) {
     console.error(`✖ ${slug}: not in features/examples/looks.ts`);
     failed += 1;
@@ -78,9 +81,25 @@ for (const [locale, slug, file] of jobs) {
   const note = page.getByRole("button", { name: essential[locale], exact: true });
   if ((await note.count()) > 0) await note.first().click();
   await page.evaluate(() => document.fonts.ready);
+  let height = PHONE.height;
+  if (tall) {
+    // The picture ends where the page's own content ends (before the footer), or after
+    // TALL_SCREENS screens. Walk down the page once so pictures below the first screen load.
+    const content = await page.evaluate(() => {
+      const footer = document.querySelector("footer");
+      return Math.round(footer ? footer.getBoundingClientRect().top + window.scrollY : document.documentElement.scrollHeight);
+    });
+    height = Math.max(PHONE.height, Math.min(content, Math.round(PHONE.height * TALL_SCREENS)));
+    for (let top = 0; top < height; top += PHONE.height / 2) {
+      await page.evaluate((y) => window.scrollTo(0, y), top);
+      await page.waitForTimeout(200);
+    }
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForLoadState("networkidle");
+  }
   // Let pictures finish decoding and the note leave before the picture is taken.
   await page.waitForTimeout(600);
-  await page.screenshot({ path: file, type: "jpeg", quality: 84 });
+  await page.screenshot({ path: file, type: "jpeg", quality: tall ? 80 : 84, fullPage: tall, clip: { x: 0, y: 0, width: PHONE.width, height } });
   await context.close();
   console.log(`✔ ${slug} (${locale})`);
 }

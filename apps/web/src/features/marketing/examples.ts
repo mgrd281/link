@@ -28,10 +28,12 @@ import studioMira from "@/assets/marketing/examples/studio-mira.jpg";
 import lenaVogt from "@/assets/marketing/examples/lena-vogt.jpg";
 import karimAlmansour from "@/assets/marketing/examples/karim-almansour.jpg";
 import trattoriaLucia from "@/assets/marketing/examples/trattoria-lucia.jpg";
-import lumenAtelier from "@/assets/marketing/examples/lumen-atelier.jpg";
 import cristianoAr from "@/assets/marketing/concepts/cristiano.ar.jpg";
 import cristianoDe from "@/assets/marketing/concepts/cristiano.de.jpg";
 import cristianoEn from "@/assets/marketing/concepts/cristiano.en.jpg";
+import messiAr from "@/assets/marketing/concepts/messi.ar.jpg";
+import messiDe from "@/assets/marketing/concepts/messi.de.jpg";
+import messiEn from "@/assets/marketing/concepts/messi.en.jpg";
 import taylorSwiftAr from "@/assets/marketing/concepts/taylor-swift.ar.jpg";
 import taylorSwiftDe from "@/assets/marketing/concepts/taylor-swift.de.jpg";
 import taylorSwiftEn from "@/assets/marketing/concepts/taylor-swift.en.jpg";
@@ -71,18 +73,19 @@ export const EXAMPLE_SHOTS = {
   "lena-vogt": lenaVogt,
   "karim-almansour": karimAlmansour,
   "trattoria-lucia": trattoriaLucia,
-  "lumen-atelier": lumenAtelier,
 } satisfies Record<string, StaticImageData>;
 
 export type ExampleShot = keyof typeof EXAMPLE_SHOTS;
 
 /**
- * Phone captures of the unofficial concept pages of well-known people shown in the hero (ADR 0043),
- * one per language: these pages exist in German, English and Arabic. Taken by the same script.
+ * Tall captures (up to two and a half screens) of the unofficial concept pages of well-known people
+ * shown in the hero (ADR 0043 and 0044), one per language: these pages exist in German, English
+ * and Arabic. The hero scrolls through them. Taken by the same script.
  */
 export const CONCEPT_SHOTS = {
   "taylor-swift": { de: taylorSwiftDe, en: taylorSwiftEn, ar: taylorSwiftAr },
   cristiano: { de: cristianoDe, en: cristianoEn, ar: cristianoAr },
+  messi: { de: messiDe, en: messiEn, ar: messiAr },
 } satisfies Record<string, Record<"de" | "en" | "ar", StaticImageData>>;
 
 export type ConceptShot = keyof typeof CONCEPT_SHOTS;

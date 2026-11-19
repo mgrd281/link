@@ -60,26 +60,28 @@ test.describe("marketing home", () => {
     await expect(front).toContainText("Concept · Taylor Swift");
     await expect(deck.getByText("Concept pages are unofficial")).toBeVisible();
 
-    // Three different pages: a singer, a footballer and a jewellery house.
-    await expect(tabs).toHaveText(["Music", "Football", "Jewellery"]);
-    // No moving line anywhere: the deck's clock is unseen. When it ends, the next page comes to the
+    // The tabs carry the names.
+    await expect(tabs).toHaveText(["Taylor Swift", "Ronaldo", "Messi"]);
+    // No moving line anywhere. The page in front is alive instead: its picture is taller than its
+    // screen and scrolls down by itself. When it is back at the top, the next page comes to the
     // front and the highlight glides to its tab.
     await page.mouse.move(0, 0);
-    const clock = deck.locator("[data-timer]");
-    await expect(clock).toHaveCSS("opacity", "0");
-    await clock.evaluate((timer) => {
-      for (const animation of timer.getAnimations()) animation.finish();
+    const tour = deck.locator("[data-tour]");
+    await expect(tour).toHaveCSS("animation-name", "mk-deck-scroll");
+    const taller = await tour.evaluate((picture) => picture.getBoundingClientRect().height / (picture.parentElement?.getBoundingClientRect().height ?? 1));
+    expect(taller).toBeGreaterThan(1.5);
+    await tour.evaluate((picture) => {
+      for (const animation of picture.getAnimations()) animation.finish();
     });
     await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
     await expect(deck.getByRole("link", { name: /View page, Cristiano Ronaldo/ })).toBeVisible();
     expect(await deck.getByRole("tablist").evaluate((list) => getComputedStyle(list).getPropertyValue("--tab").trim())).toBe("1");
 
-    // Choosing a page stops the deck for good: no clock any more.
+    // Choosing a page stops the deck for good: nothing scrolls or changes on its own any more.
     await tabs.nth(2).click();
-    // Our own (fictional) example shows its address.
-    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/en/p/lumen-atelier");
-    await expect(deck.getByRole("link", { name: /View page, / })).toContainText("linkyo.app/lumen-atelier");
-    await expect(clock).toHaveCount(0);
+    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/en/p/messi");
+    await expect(deck.getByRole("link", { name: /View page, / })).toContainText("Concept · Lionel Messi");
+    await expect(tour).toHaveCount(0);
     await tabs.nth(2).press("ArrowRight");
     await expect(tabs.nth(0)).toBeFocused();
     await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");

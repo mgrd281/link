@@ -221,13 +221,24 @@
 }
 
 /* Hero deck: the line under the chosen tab fills while its page is in front. */
-@keyframes mk-deck-timer {
-  from {
-    scale: 0 1;
+
+/*
+ * The page in front shows its top for two seconds, scrolls down to its end (100cqh is the screen's
+ * height), rests, and returns.
+ */
+@keyframes mk-deck-scroll {
+  0%,
+  22% {
+    translate: 0 0;
   }
 
-  to {
-    scale: 1 1;
+  76%,
+  84% {
+    translate: 0 calc(100cqh - 100%);
+  }
+
+  100% {
+    translate: 0 0;
   }
 }
 
@@ -627,15 +638,18 @@
 }
 
 /*
- * The deck's clock: unseen, it brings the next page forward when it ends (no moving line). It holds
- * while the mouse is over the deck or keyboard focus is inside it, and it does not run for reduced
- * motion.
+ * The deck's screen and its page. The picture of the page in front is taller than the screen: it
+ * scrolls down by itself, rests at the end and returns to the top; when it is back, the next page
+ * comes forward (the scroll is the deck's clock, there is no timer line). It holds while the mouse is
+ * over the deck or keyboard focus is inside it, and it does not run for reduced motion.
  */
-@utility mk-deck-timer {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  animation: mk-deck-timer var(--duration-carousel) linear both;
+@utility mk-deck-screen {
+  container-type: size;
+}
+
+@utility mk-deck-scroll {
+  animation: mk-deck-scroll var(--duration-carousel) var(--ease-glide) both;
+  will-change: translate;
 
   &:is([data-paused="true"] *),
   &:is([data-deck]:has(:focus-visible) *) {
@@ -649,7 +663,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    display: none;
     animation: none;
   }
 }
