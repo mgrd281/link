@@ -58,18 +58,24 @@ test.describe("marketing home", () => {
     await expect(front).toHaveAttribute("href", "/de/p/lou-ferreira");
     await expect(front).toContainText("linkyo.app/lou-ferreira");
 
-    // When the timer line under the tab is full, the next page comes to the front.
+    // Three different pages: a woman, a man and a shop.
+    await expect(tabs).toHaveText(["Fashion", "Author", "Shop"]);
+    // No moving line anywhere: the deck's clock is unseen. When it ends, the next page comes to the
+    // front and the highlight glides to its tab.
     await page.mouse.move(0, 0);
-    await deck.locator(".mk-progress").evaluate((line) => {
-      for (const animation of line.getAnimations()) animation.finish();
+    const clock = deck.locator("[data-timer]");
+    await expect(clock).toHaveCSS("opacity", "0");
+    await clock.evaluate((timer) => {
+      for (const animation of timer.getAnimations()) animation.finish();
     });
     await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-    await expect(deck.getByRole("link", { name: /View page, Juno Kade/ })).toBeVisible();
+    await expect(deck.getByRole("link", { name: /View page, Noah Sarkis/ })).toBeVisible();
+    expect(await deck.getByRole("tablist").evaluate((list) => getComputedStyle(list).getPropertyValue("--tab").trim())).toBe("1");
 
-    // Choosing a page stops the deck for good: no timer any more.
+    // Choosing a page stops the deck for good: no clock any more.
     await tabs.nth(2).click();
-    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/ar/p/layal-mansour");
-    await expect(deck.locator(".mk-progress")).toHaveCount(0);
+    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/de/p/nordlicht-sneaker");
+    await expect(clock).toHaveCount(0);
     await tabs.nth(2).press("ArrowRight");
     await expect(tabs.nth(0)).toBeFocused();
     await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");

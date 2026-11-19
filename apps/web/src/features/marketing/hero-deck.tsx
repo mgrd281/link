@@ -1,15 +1,15 @@
 "use client";
 
 import { cn, Icon, LogoSymbol } from "@linkyo/ui";
-import { ArrowUpRight, Disc3, Mic, Shirt, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Feather, Shirt, ShoppingBag, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
 
 import { phoneSizes } from "./assets";
 import { EXAMPLE_SHOTS, type ExampleShot } from "./examples";
 
-export type DeckKind = "fashion" | "dj" | "music";
+export type DeckKind = "fashion" | "author" | "shop";
 
 export interface DeckPage {
   slug: ExampleShot;
@@ -18,7 +18,7 @@ export interface DeckPage {
   kind: DeckKind;
 }
 
-const KIND_ICONS: Record<DeckKind, LucideIcon> = { fashion: Shirt, dj: Disc3, music: Mic };
+const KIND_ICONS: Record<DeckKind, LucideIcon> = { fashion: Shirt, author: Feather, shop: ShoppingBag };
 const SLOTS = ["front", "next", "prev"] as const;
 /** The deck goes round twice on its own, then rests on the first page. */
 const ROUNDS = 2;
@@ -33,14 +33,14 @@ const subscribeReduced = (onChange: () => void) => {
 };
 
 /**
- * The hero's example pages as a carousel (WAI-ARIA tabbed carousel). Three phones, the one in front
- * shown whole; its address above it is the link to the real example page. A click on a phone
- * beside it, or on a tab, brings that page forward.
+ * The hero's example pages as a carousel (WAI-ARIA tabbed carousel). Three pages as different as the
+ * people who use Linkyo (a woman in red, a man in black, a shop in orange), the one in front shown
+ * whole; its address above it is the link to the real example page. A click on a page beside it, or
+ * on a tab, brings that page forward, and the teal highlight glides to its tab.
  *
- * Motion without a pause button (WCAG 2.2.2): the deck changes on its own only for two rounds
- * (the line under the chosen tab is the timer), holds while the mouse is over it or keyboard focus
- * is inside, stops for good as soon as someone chooses a page, and never moves on its own with
- * reduced motion.
+ * Motion without a pause button (WCAG 2.2.2): the deck changes on its own only for two rounds (an
+ * unseen clock, no moving line), holds while the mouse is over it or keyboard focus is inside,
+ * stops for good as soon as someone chooses a page, and never moves on its own with reduced motion.
  */
 export function HeroDeck({ pages }: { pages: DeckPage[] }) {
   const t = useTranslations("marketing.hero");
@@ -90,7 +90,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
           <div aria-hidden className="mk-deck-halo w-[260%] border border-line" />
           <div aria-hidden className="mk-deck-halo w-[215%] bg-tint-teal" />
           {/* Invisible twin of a phone: it gives the box its height. */}
-          <div aria-hidden className="invisible rounded-xl p-1">
+          <div aria-hidden className="invisible rounded-xl border border-transparent p-1">
             <div className="aspect-phone" />
           </div>
 
@@ -108,8 +108,9 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                 data-slot={slot}
                 className="mk-deck-card group absolute inset-x-0 top-0"
               >
-                <div className="rounded-xl bg-ink p-1">
-                  <div className="relative aspect-phone overflow-hidden rounded-lg bg-surface">
+                {/* A white frame with a hairline: where pages overlap, the frame keeps them apart. */}
+                <div className="rounded-xl border border-line bg-surface p-1">
+                  <div className="relative aspect-phone overflow-hidden rounded-lg bg-canvas-muted">
                     <Image
                       src={EXAMPLE_SHOTS[page.slug]}
                       alt=""
@@ -157,6 +158,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
         </div>
       </div>
 
+      {rotating ? <span key={active} aria-hidden data-timer onAnimationEnd={advance} className="mk-deck-timer" /> : null}
       <p id={`${id}-auto`} className="sr-only">
         {t("deck.auto")}
       </p>
@@ -164,7 +166,8 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
         role="tablist"
         aria-label={t("deck.choose")}
         aria-describedby={`${id}-auto`}
-        className="relative flex items-center gap-1 rounded-full bg-canvas-muted p-1"
+        style={{ "--tab": active, "--tabs": count } as CSSProperties}
+        className="mk-deck-tabs"
       >
         {pages.map((page, index) => {
           const selected = index === active;
@@ -185,15 +188,12 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
               }}
               onKeyDown={onTabKey}
               className={cn(
-                "relative inline-flex h-control-md items-center gap-2 overflow-hidden rounded-full border border-transparent px-4 text-small font-semibold transition-[background-color,border-color,color] duration-standard ease-standard focus-visible:focus-ring",
-                selected ? "border-line bg-surface-elevated text-fg" : "text-fg-secondary hover:text-fg",
+                "inline-flex h-control-md items-center justify-center gap-2 rounded-full px-4 text-small font-semibold whitespace-nowrap transition-colors duration-slow ease-emphasized focus-visible:focus-ring motion-reduce:transition-none",
+                selected ? "text-primary-fg" : "text-fg-secondary hover:text-fg",
               )}
             >
-              <Icon icon={KIND_ICONS[page.kind]} size="sm" className={cn(selected ? "text-primary" : "text-fg-tertiary")} />
+              <Icon icon={KIND_ICONS[page.kind]} size="sm" />
               {t(`kinds.${page.kind}`)}
-              {selected && rotating ? (
-                <span key={active} aria-hidden onAnimationEnd={advance} className="mk-progress absolute inset-x-4 bottom-1 h-0.5 rounded-full bg-primary" />
-              ) : null}
             </button>
           );
         })}

@@ -221,7 +221,7 @@
 }
 
 /* Hero deck: the line under the chosen tab fills while its page is in front. */
-@keyframes mk-progress {
+@keyframes mk-deck-timer {
   from {
     scale: 0 1;
   }
@@ -425,7 +425,7 @@
   scale: var(--deck-scale);
   rotate: calc(var(--deck-rotate) * var(--deck-dir));
   z-index: var(--z-raised);
-  transition-property: translate, scale, rotate, filter;
+  transition-property: translate, scale, rotate;
   transition-duration: var(--duration-move);
   transition-timing-function: var(--ease-emphasized);
 
@@ -440,31 +440,28 @@
   &[data-slot="next"],
   &[data-slot="prev"] {
     --deck-y: var(--spacing-6);
-    --deck-scale: 0.8;
+    --deck-scale: 0.82;
 
-    filter: saturate(0.75) brightness(0.92);
     cursor: pointer;
   }
 
   &[data-slot="next"] {
-    --deck-x: 66%;
-    --deck-rotate: 5deg;
+    --deck-x: 64%;
+    --deck-rotate: 6deg;
 
     z-index: calc(var(--z-raised) - 1);
   }
 
   &[data-slot="prev"] {
-    --deck-x: -66%;
-    --deck-rotate: -5deg;
+    --deck-x: -64%;
+    --deck-rotate: -6deg;
 
     z-index: var(--z-base);
   }
 
   &[data-slot="next"]:hover,
   &[data-slot="prev"]:hover {
-    --deck-scale: 0.83;
-
-    filter: none;
+    --deck-scale: 0.85;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -629,16 +626,15 @@
 }
 
 /*
- * The timer: when this line is full, the next page comes to the front. It holds while the mouse is
- * over the deck or keyboard focus is inside it, and stops with the pause button.
+ * The deck's clock: unseen, it brings the next page forward when it ends (no moving line). It holds
+ * while the mouse is over the deck or keyboard focus is inside it, and it does not run for reduced
+ * motion.
  */
-@utility mk-progress {
-  transform-origin: left;
-  animation: mk-progress var(--duration-carousel) linear both;
-
-  &:is([dir="rtl"] *) {
-    transform-origin: right;
-  }
+@utility mk-deck-timer {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  animation: mk-deck-timer var(--duration-carousel) linear both;
 
   &:is([data-paused="true"] *),
   &:is([data-deck]:has(:focus-visible) *) {
@@ -654,6 +650,49 @@
   @media (prefers-reduced-motion: reduce) {
     display: none;
     animation: none;
+  }
+}
+
+/*
+ * The deck's tabs: one track, equally wide tabs, and a teal highlight that glides to the chosen tab
+ * (--tab is its index), the same language as the header's log in / sign up switch. Mirrored in
+ * Arabic; still for reduced motion.
+ */
+@utility mk-deck-tabs {
+  --tab: 0;
+  --dir: 1;
+
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: var(--spacing-1);
+  border-radius: var(--radius-full);
+  background: var(--color-canvas-muted);
+
+  &:is([dir="rtl"] *) {
+    --dir: -1;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset-block: var(--spacing-1);
+    inset-inline-start: var(--spacing-1);
+    width: calc((100% - var(--spacing-1) * 2) / var(--tabs, 3));
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    translate: calc(var(--tab) * 100% * var(--dir)) 0;
+    transition: translate var(--duration-move) var(--ease-emphasized);
+    will-change: translate;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      transition: none;
+    }
   }
 }
 

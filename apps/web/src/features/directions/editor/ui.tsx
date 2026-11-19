@@ -19,7 +19,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { Block, BlockType } from "@linkyo/blocks";
 import { creatorTokens, type CreatorPresetId } from "@linkyo/tokens";
-import { cn, Icon, Kbd, LogoSymbol } from "@linkyo/ui";
+import { cn, Icon, Kbd, LogoGlyph } from "@linkyo/ui";
 import { Command } from "cmdk";
 import {
   AtSign,
@@ -122,7 +122,7 @@ export function WorkspaceBadge({ name, url }: { name: string; url: string }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
       <span className="grid size-control-sm shrink-0 place-items-center rounded-sm bg-primary text-primary-fg">
-        <LogoSymbol className="size-icon-sm" />
+        <LogoGlyph className="size-icon-sm" />
       </span>
       <span className="grid min-w-0">
         <span className="truncate text-small font-semibold">{name}</span>

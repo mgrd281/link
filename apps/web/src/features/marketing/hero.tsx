@@ -12,11 +12,11 @@ import { HeroDeck, type DeckKind, type DeckPage } from "./hero-deck";
 
 export const order = (n: number) => ({ "--i": n }) as CSSProperties;
 
-/** The three pages that take turns in front. */
+/** The three pages that take turns in front: a woman in red, a man in black, a shop in orange. */
 const STACK: { slug: ExampleShot; kind: DeckKind }[] = [
   { slug: "lou-ferreira", kind: "fashion" },
-  { slug: "juno-kade", kind: "dj" },
-  { slug: "layal-mansour", kind: "music" },
+  { slug: "noah-sarkis", kind: "author" },
+  { slug: "nordlicht-sneaker", kind: "shop" },
 ];
 
 /** The three promises under the address field, each with its own icon. */

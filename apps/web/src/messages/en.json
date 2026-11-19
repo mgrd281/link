@@ -592,8 +592,8 @@
       ],
       "kinds": {
         "fashion": "Fashion",
-        "dj": "DJ",
-        "music": "Music"
+        "author": "Author",
+        "shop": "Shop"
       },
       "deck": {
         "carousel": "carousel",

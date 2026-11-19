@@ -2,7 +2,7 @@
 
 import type { Block, Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
-import { Badge, Button, cn, Icon, IconButton, Kbd, LogoSymbol, Menu, Switch, toast } from "@linkyo/ui";
+import { Badge, Button, cn, Icon, IconButton, Kbd, LogoGlyph, Menu, Switch, toast } from "@linkyo/ui";
 import { ArrowDown, ArrowUp, Command as CommandIcon, Copy, Eye, GripVertical, MoreHorizontal, Plus, Share2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -45,7 +45,7 @@ export function StageDashboard({ initial, profile, pageHref }: { initial: Editor
       <aside className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col gap-5 border-e border-line p-3 lg:flex">
         <div className="flex items-center gap-2 px-2 pt-2">
           <span className="grid size-control-sm place-items-center rounded-sm bg-primary text-primary-fg">
-            <LogoSymbol className="size-icon-sm" />
+            <LogoGlyph className="size-icon-sm" />
           </span>
           <span className="truncate text-small font-semibold">{profile.displayName}</span>
           <Badge size="sm" tone="outline" className="ms-auto">

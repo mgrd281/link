@@ -1,5 +1,5 @@
 import { colorSchemeOf, resolveCreatorTheme } from "@linkyo/tokens/creator";
-import { Icon, LogoSymbol } from "@linkyo/ui";
+import { Icon, LogoGlyph } from "@linkyo/ui";
 import { Check, Eye, Info, Languages } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
@@ -98,7 +98,7 @@ export default async function PreviewRoute({ params }: Props) {
             className="border-line bg-surface text-caption text-fg flex items-center gap-2 rounded-full border py-1 ps-2 pe-1 font-sans"
           >
             <span className="size-control-sm bg-primary text-primary-fg grid place-items-center rounded-full">
-              <LogoSymbol className="size-icon-sm" />
+              <LogoGlyph className="size-icon-sm" />
             </span>
             <span className="font-semibold">{badge}</span>
             {languages.length > 1 ? (

@@ -28,10 +28,12 @@ import studioMira from "@/assets/marketing/examples/studio-mira.jpg";
 import lenaVogt from "@/assets/marketing/examples/lena-vogt.jpg";
 import karimAlmansour from "@/assets/marketing/examples/karim-almansour.jpg";
 import trattoriaLucia from "@/assets/marketing/examples/trattoria-lucia.jpg";
+import nordlichtSneaker from "@/assets/marketing/examples/nordlicht-sneaker.jpg";
 
 /**
  * Phone captures of our own fictional example pages (390 × 844, the top of each page), taken from
- * the running product with Playwright. The photos are the examples' own (Unsplash, see CREDITS.md).
+ * the running product: `node scripts/capture-example-shots.mjs` retakes them all (after a change to
+ * the pages or to Linkyo's chip on them). The photos are the examples' own (Unsplash, see CREDITS.md).
  * Used on the marketing home: the hero's page stack and the strip of example pages.
  */
 export const EXAMPLE_SHOTS = {
@@ -63,6 +65,7 @@ export const EXAMPLE_SHOTS = {
   "lena-vogt": lenaVogt,
   "karim-almansour": karimAlmansour,
   "trattoria-lucia": trattoriaLucia,
+  "nordlicht-sneaker": nordlichtSneaker,
 } satisfies Record<string, StaticImageData>;
 
 export type ExampleShot = keyof typeof EXAMPLE_SHOTS;
