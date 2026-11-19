@@ -276,10 +276,16 @@ ${decls(m.creator)}
 @utility stroke-icon {
   stroke-width: var(--icon-stroke);
 }
-/* Brand focus ring: 2 px Linkyo Blue, 2 px offset (brand §7). */
+/* Brand focus ring: 2 px Linkyo Teal, 2 px offset (brand §7). */
 @utility focus-ring {
   outline: var(--border-width-focus) solid var(--color-focus);
   outline-offset: var(--border-width-focus-offset);
+}
+/* Primary actions: a soft light edge on top and a glow in the brand color below (ADR 0036). */
+@utility shadow-cta {
+  box-shadow:
+    inset 0 var(--border-width-hairline) 0 0 color-mix(in oklab, var(--color-primary-fg) 22%, transparent),
+    0 var(--spacing-2) var(--spacing-5) calc(var(--spacing-2) * -1) color-mix(in oklab, var(--color-primary) 60%, transparent);
 }
 /* 2 px emphasized border (drop targets, selected tiles). Width only; pair with a border color. */
 @utility border-emphasis {

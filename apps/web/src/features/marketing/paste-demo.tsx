@@ -105,7 +105,7 @@ export function PasteDemo() {
           />
           <button
             type="submit"
-            className="inline-flex h-control-md shrink-0 items-center rounded-md bg-primary px-4 text-small font-semibold text-primary-fg transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+            className="inline-flex h-control-md shrink-0 items-center rounded-md bg-primary px-4 text-small font-semibold text-primary-fg shadow-cta transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
           >
             {t("add")}
           </button>

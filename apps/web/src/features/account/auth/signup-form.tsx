@@ -205,7 +205,7 @@ export function SignupForm() {
           size="xl"
           block
           loading={busy || leaving}
-          trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}
+          trailing={<Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover/button:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/button:-translate-x-0.5" />}
         >
           {t("signup.submit")}
         </Button>

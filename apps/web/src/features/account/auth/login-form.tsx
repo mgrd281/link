@@ -94,7 +94,7 @@ export function LoginForm() {
           required
           error={error === "invalidEmail" ? t("errors.invalidEmail") : undefined}
         />
-        <Button type="submit" variant="primary" size="xl" block loading={busy || leaving} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+        <Button type="submit" variant="primary" size="xl" block loading={busy || leaving} trailing={<Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover/button:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/button:-translate-x-0.5" />}>
           {t("login.submit")}
         </Button>
       </form>

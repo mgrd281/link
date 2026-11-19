@@ -113,10 +113,10 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                   <a href={page.href} aria-label={t("deck.viewNamed", { name: page.name })} className="absolute inset-0 rounded-xl focus-visible:focus-ring">
                     <span
                       style={{ "--i": 2 } as CSSProperties}
-                      className="mk-deck-chip absolute inset-x-0 -bottom-5 mx-auto inline-flex h-control-md w-max items-center gap-2 rounded-full bg-primary ps-4 pe-3 text-small font-semibold whitespace-nowrap text-primary-fg shadow-e3 transition-colors duration-standard ease-standard group-hover:bg-primary-hover"
+                      className="mk-deck-chip absolute inset-x-0 -bottom-5 mx-auto inline-flex h-control-md w-max items-center gap-2 rounded-full bg-primary ps-4 pe-3 text-small font-semibold whitespace-nowrap text-primary-fg shadow-cta transition-colors duration-standard ease-standard group-hover:bg-primary-hover"
                     >
                       {t("deck.view")}
-                      <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
+                      <Icon icon={ArrowUpRight} size="sm" className="transition-transform duration-standard ease-standard group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
                     </span>
                   </a>
                   <span

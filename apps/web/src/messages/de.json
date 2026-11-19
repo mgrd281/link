@@ -574,7 +574,7 @@
       "pricing": "Preise",
       "faq": "FAQ",
       "login": "Anmelden",
-      "start": "Kostenlos starten",
+      "start": "Kostenlos registrieren",
       "menu": "Menü",
       "close": "Menü schließen",
       "label": "Hauptmenü"
@@ -585,7 +585,7 @@
       "title2": "Alles, was du erschaffst.",
       "lead": "Eine Seite, die so gut aussieht wie deine beste Arbeit – Musik, Shows, Videos, Merch und Partner an einem Ort. In fünf Minuten fertig, danach von selbst aktuell.",
       "pills": [
-        "Kostenlos starten",
+        "Dauerhaft kostenlos",
         "Ohne Cookies",
         "Daten in Frankfurt"
       ],
@@ -611,7 +611,7 @@
       "label": "Wähl deine Seitenadresse",
       "prefix": "linkyo.app/",
       "placeholder": "deinname",
-      "cta": "Kostenlos starten",
+      "cta": "Kostenlos registrieren",
       "hint": "Kleinbuchstaben, Zahlen und Bindestriche, 3–30 Zeichen.",
       "invalid": "Nutze 3–30 Kleinbuchstaben, Zahlen oder Bindestriche – kein Bindestrich am Anfang oder Ende.",
       "ok": "linkyo.app/{name} sieht gut aus. Weiter zur Anmeldung …"
@@ -731,7 +731,7 @@
           "Assistent für Impressum und Datenschutz",
           "iOS-App (in Arbeit)"
         ],
-        "cta": "Kostenlos starten"
+        "cta": "Kostenlos registrieren"
       },
       "pro": {
         "name": "Pro",
@@ -1821,7 +1821,7 @@
     "sampleBadge": "Beispiel · {kind}",
     "sampleNote": "{name} ist erfunden, Links und Termine sind Beispiele. So kann deine Seite als {kind} aussehen – fertig in wenigen Minuten.",
     "sampleDockTitle": "Deine eigene Seite?",
-    "sampleDockCta": "Kostenlos starten",
+    "sampleDockCta": "Kostenlos registrieren",
     "dockClose": "Leiste schließen",
     "conceptTitle": "Konzept: {name} auf Linkyo",
     "conceptBadge": "Konzept · {name}",
@@ -2585,7 +2585,7 @@
     "fictional": "Die Beispiele sind erfunden (Fotos von Unsplash); Ähnlichkeiten mit echten Personen sind zufällig. Seiten bekannter Persönlichkeiten sind inoffizielle Konzepte aus öffentlichen Quellen, ohne Verbindung zu den Personen; Fotos von Wikimedia Commons.",
     "useHint": "Du startest mit diesem Design und deinen eigenen Inhalten.",
     "cta": "Keine passende Vorlage? Starte leer – das Design passt du in Minuten an.",
-    "ctaButton": "Kostenlos starten",
+    "ctaButton": "Kostenlos registrieren",
     "seeAll": "Alle {count} Beispiele ansehen",
     "featured": "Ausgewählte Beispiele",
     "badges": {

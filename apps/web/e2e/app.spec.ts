@@ -370,7 +370,7 @@ test.describe("private previews", () => {
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
     expect(await axe(page)).toEqual([]);
     await page.mouse.wheel(0, 2000);
-    const cta = page.getByRole("link", { name: "Start for free" });
+    const cta = page.getByRole("link", { name: "Sign up for free" });
     await expect(cta).toHaveAttribute("href", "/en/signup?kind=journalist&look=journalist");
     await cta.click();
     await page.waitForURL("**/en/signup?kind=journalist&look=journalist");
@@ -431,7 +431,7 @@ test.describe("private previews", () => {
 
   test("the Linkyo bar slides in once the hero has scrolled away, and can be closed", async ({ page }) => {
     await page.goto("/en/p/journalist");
-    const cta = page.getByRole("link", { name: "Start for free" });
+    const cta = page.getByRole("link", { name: "Sign up for free" });
     await expect(cta).toBeHidden();
     await page.mouse.wheel(0, 900);
     await expect(cta).toBeVisible();

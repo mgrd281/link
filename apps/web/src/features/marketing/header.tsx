@@ -54,7 +54,7 @@ export function MarketingHeader() {
           </Link>
           <Link
             href="/signup"
-            className="hidden h-control-md items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg shadow-e1 transition-[background-color,box-shadow,scale] duration-micro hover:bg-primary-hover hover:shadow-e3 focus-visible:focus-ring active:scale-pressed md:inline-flex"
+            className="hidden h-control-md items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg shadow-cta transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0 md:inline-flex"
           >
             {cta.label}
           </Link>

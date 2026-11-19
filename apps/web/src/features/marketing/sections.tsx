@@ -18,7 +18,7 @@ import { PasteDemo } from "./paste-demo";
 function SectionHeader({ id, title, lead, center = false }: { id: string; title: string; lead?: string; center?: boolean }) {
   return (
     <header className={cn("mk-reveal grid gap-4", center ? "mx-auto max-w-prose justify-items-center text-center" : "max-w-prose")}>
-      <h2 id={id} className="text-h1 tracking-tight text-balance md:text-display">
+      <h2 id={id} className="text-h2 tracking-tight text-balance md:text-h1">
         {title}
       </h2>
       {lead ? <p className="text-body-lg text-pretty text-fg-secondary">{lead}</p> : null}
@@ -106,7 +106,7 @@ export function Templates() {
       <div className="mt-10 flex justify-center px-5">
         <Link
           href="/templates"
-          className="inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-e1 transition-[background-color,box-shadow,scale] duration-micro hover:bg-primary-hover hover:shadow-e3 focus-visible:focus-ring active:scale-pressed"
+          className="inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-cta transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
         >
           {tExamples("seeAll", { count: Object.keys(LOOKS).length })}
           <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
@@ -235,7 +235,7 @@ export function Features() {
   return (
     <Shell id="features" labelledBy="features-title" className="grid w-full gap-16 py-16 md:gap-24 md:py-24">
       <header className="mk-reveal mx-auto grid max-w-prose justify-items-center text-center">
-        <h2 id="features-title" className="text-h1 tracking-tight text-balance md:text-display">
+        <h2 id="features-title" className="text-h2 tracking-tight text-balance md:text-h1">
           <span className="block text-fg-tertiary">{t("features.title1")}</span>
           <span className="block">{t("features.title2")}</span>
         </h2>
@@ -292,7 +292,7 @@ export function Pricing() {
           </ul>
           <Link
             href="/signup"
-            className="inline-flex h-control-xl items-center justify-center rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-e1 transition-[background-color,box-shadow,scale] duration-micro hover:bg-primary-hover hover:shadow-e3 focus-visible:focus-ring active:scale-pressed"
+            className="inline-flex h-control-xl items-center justify-center rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-cta transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
           >
             {t("free.cta")}
           </Link>
@@ -353,7 +353,7 @@ export function FinalCta() {
     <section id="start" aria-labelledby="final-title" className="mx-auto w-full max-w-content scroll-mt-24 px-5 md:px-10">
       <div className="mk-reveal grid overflow-hidden rounded-xl bg-primary text-primary-fg shadow-e2">
         <div className="grid justify-items-center gap-6 px-5 py-16 text-center md:px-10 md:py-24">
-          <h2 id="final-title" className="text-display tracking-display text-balance md:text-display-xl">
+          <h2 id="final-title" className="text-h1 tracking-tight text-balance md:text-display">
             {t("final.title")}
           </h2>
           <p className="max-w-prose text-body-lg text-pretty">{t("final.lead")}</p>

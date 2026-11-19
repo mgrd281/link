@@ -10,6 +10,9 @@ import { useRouter } from "@/i18n/navigation";
 
 type State = { kind: "idle" } | { kind: "ok"; name: string } | { kind: "invalid" };
 
+/** The arrow leans forward when the button is hovered (mirrored in Arabic). */
+const ARROW = "transition-transform duration-micro group-hover/button:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/button:-translate-x-0.5";
+
 /**
  * Claim your address. Validates exactly like sign-up (profile username rules), then continues to
  * sign-up with the address already filled in, where availability is checked.
@@ -58,7 +61,7 @@ export function ClaimForm({ id, className, tone = "default" }: { id: string; cla
             className="h-control-lg min-w-0 flex-1 bg-transparent text-body-lg font-medium text-fg outline-none placeholder:text-fg-tertiary"
           />
         </div>
-        <Button type="submit" variant="primary" size="lg" className={cn("rounded-lg shadow-e1", tone === "brand" && "bg-primary-fg text-primary hover:bg-primary-fg active:bg-primary-fg")} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+        <Button type="submit" variant="primary" size="lg" className={cn("rounded-lg", tone === "brand" && "bg-primary-fg text-primary shadow-e2 hover:bg-primary-fg active:bg-primary-fg")} trailing={<Icon icon={ArrowRight} size="md" className={ARROW} />}>
           {t("cta")}
         </Button>
       </div>

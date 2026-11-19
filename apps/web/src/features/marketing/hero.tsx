@@ -39,7 +39,7 @@ export function Hero() {
       className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-16 px-5 pt-10 pb-12 md:px-10 md:pt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10 lg:pt-20 lg:pb-20"
     >
       <div className="grid min-w-0 grid-cols-1 justify-items-start gap-6">
-        <h1 id="hero-title" className="max-w-full text-display tracking-display text-balance md:text-display-xl">
+        <h1 id="hero-title" className="max-w-full text-h1 tracking-tight text-balance md:text-display md:tracking-display">
           <span className="mk-rise block" style={order(0)}>
             {t("hero.title1")}
           </span>

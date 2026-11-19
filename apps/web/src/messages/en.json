@@ -574,7 +574,7 @@
       "pricing": "Pricing",
       "faq": "FAQ",
       "login": "Log in",
-      "start": "Start for free",
+      "start": "Sign up for free",
       "menu": "Menu",
       "close": "Close menu",
       "label": "Main"
@@ -585,7 +585,7 @@
       "title2": "Everything you create.",
       "lead": "A page that looks as good as your best work — music, shows, videos, merch and partners in one place. Ready in five minutes, up to date on its own.",
       "pills": [
-        "Free to start",
+        "Free forever",
         "No cookies",
         "Data in Frankfurt"
       ],
@@ -611,7 +611,7 @@
       "label": "Choose your page address",
       "prefix": "linkyo.app/",
       "placeholder": "yourname",
-      "cta": "Start for free",
+      "cta": "Sign up for free",
       "hint": "Lowercase letters, numbers and dashes, 3–30 characters.",
       "invalid": "Use 3–30 lowercase letters, numbers or dashes — no dash at the start or end.",
       "ok": "linkyo.app/{name} looks good. Taking you to sign-up…"
@@ -731,7 +731,7 @@
           "Imprint and privacy page helper",
           "iOS app (coming)"
         ],
-        "cta": "Start for free"
+        "cta": "Sign up for free"
       },
       "pro": {
         "name": "Pro",
@@ -1821,7 +1821,7 @@
     "sampleBadge": "Example · {kind}",
     "sampleNote": "{name} is fictional; links and dates are examples. This is what your page as a {kind} can look like, ready in minutes.",
     "sampleDockTitle": "Your own page?",
-    "sampleDockCta": "Start for free",
+    "sampleDockCta": "Sign up for free",
     "dockClose": "Close bar",
     "conceptTitle": "Concept: {name} on Linkyo",
     "conceptBadge": "Concept · {name}",
@@ -2585,7 +2585,7 @@
     "fictional": "Examples are fictional (photos from Unsplash); any resemblance to real people is coincidental. Pages of well-known people are unofficial concepts from public sources, not affiliated with them; photos from Wikimedia Commons.",
     "useHint": "You start with this design and your own content.",
     "cta": "Nothing quite right? Start blank and shape the design in minutes.",
-    "ctaButton": "Start for free",
+    "ctaButton": "Sign up for free",
     "seeAll": "See all {count} examples",
     "featured": "Featured examples",
     "badges": {
