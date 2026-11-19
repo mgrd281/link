@@ -187,7 +187,7 @@ export function SignupForm() {
                   setEditing(true);
                   focusLater("signup-username");
                 }}
-                className="shrink-0 rounded-xs font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring"
+                className="shrink-0 rounded-xs font-semibold text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro"
               >
                 {t("fields.changeAddress")}
               </button>
@@ -253,7 +253,7 @@ export function SignupForm() {
       {invite ? <p className="-mt-3 text-caption text-fg-secondary">{t("signup.preparedGoogle")}</p> : null}
       <p className="text-center text-small text-fg-secondary">
         {t("signup.haveAccount")}{" "}
-        <Link href="/login" className="font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring">
+        <Link href="/login" className="font-semibold text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
           {t("signup.login")}
         </Link>
       </p>

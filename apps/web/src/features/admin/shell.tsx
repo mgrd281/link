@@ -150,7 +150,7 @@ function ViewAsBanner() {
         <Icon icon={Eye} size="sm" />
         {t("viewingAs", { role: tRoles(`${viewAs}.name`) })}
       </span>
-      <button type="button" onClick={() => setViewAs(null)} className="rounded-xs font-semibold underline underline-offset-4 focus-visible:focus-ring">
+      <button type="button" onClick={() => setViewAs(null)} className="rounded-xs font-semibold transition-opacity duration-micro hover:opacity-secondary focus-visible:focus-ring">
         {t("viewAsEnd")}
       </button>
     </div>

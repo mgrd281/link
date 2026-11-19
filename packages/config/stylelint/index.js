@@ -14,6 +14,8 @@ const config = {
     "declaration-property-value-allowed-list": {
       "font-family": ["/^var\\(--/", "inherit"],
       "/^(box-shadow|text-shadow)$/": ["none"],
+      // No underlined links (ADR 0041); a struck-through old price is fine.
+      "/^text-decoration(-line)?$/": ["none", "line-through"],
     },
     "declaration-property-value-disallowed-list": {
       "/^(margin|padding|gap|row-gap|column-gap|width|height|min-|max-|inset|top|right|bottom|left|font-size|letter-spacing|line-height|border-radius|border-width|outline-width|outline-offset|box-shadow|transition-duration|animation-duration|z-index)/":

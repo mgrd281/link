@@ -24,6 +24,10 @@ reports unknown classes.
   - Drag and drop: the lifted item scales (`scale-lift`) and gets `border-primary`.
   - Creator pages: `border-creator-line(-strong)`. The button style saved as `shadow` is the "Card"
     style: `bg-creator-surface` + `border-creator-line`.
+- **No underlines. Ever.** No `underline`, `hover:underline`, `underline-offset-*` or `decoration-*`
+  anywhere (ADR 0041); the lint rule rejects them and Stylelint allows only `text-decoration: none`
+  or `line-through` (old prices). Links: `text-link font-semibold` with `hover:text-fg` and a
+  `transition-colors`; on creator pages `hover:text-creator-fg`; keyboard focus shows `focus-ring`.
 - **Sticky bars sit flush under the header** (`sticky top-16`: the header is `h-16`) on a solid
   `bg-canvas` band, so no content shows between them.
 - **No raw colors, lengths or fonts** in `apps/web` or `packages/ui`. That rules out `#hex`, `rgb()`,

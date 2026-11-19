@@ -39,6 +39,13 @@ export const COLOR_OPACITY_MODIFIER =
  */
 export const SHADOW_UTILITY = /(?:^|[\s:!"'`])((?:inset-|drop-|text-)?shadow-(?!none(?![\w-]))[\w[\]().,#%/-]+)/;
 
+/**
+ * Underlined links: `underline`, `hover:underline`, `underline-offset-4`, `decoration-wavy`. Linkyo
+ * marks links by color and weight, never by a line under them (ADR 0041). `no-underline` and
+ * `line-through` (an old price) stay allowed.
+ */
+export const UNDERLINE_UTILITY = /(?:^|[\s:!"'`])((?:underline(?:-offset-[\w[\]().-]+)?|decoration-[\w[\]().-]+))(?![\w-])/;
+
 /** Style properties that draw a shadow. */
 export const SHADOW_PROPERTIES = new Set(["boxShadow", "textShadow"]);
 
@@ -145,13 +152,16 @@ export const SVG_GEOMETRY_ELEMENTS = new Set([
  * Inspect a single text value.
  * @param {string} text
  * @param {{ fragmentContext?: boolean }} [options]
- * @returns {{ kind: "hex" | "colorFn" | "length" | "arbitrary" | "font" | "shadow", value: string } | null}
+ * @returns {{ kind: "hex" | "colorFn" | "length" | "arbitrary" | "font" | "shadow" | "underline", value: string } | null}
  */
 export function findRawValue(text, options = {}) {
   if (!text) return null;
 
   const shadow = text.match(SHADOW_UTILITY);
   if (shadow) return { kind: "shadow", value: shadow[1] ?? shadow[0] };
+
+  const underline = text.match(UNDERLINE_UTILITY);
+  if (underline) return { kind: "underline", value: underline[1] ?? underline[0] };
 
   // Tailwind arbitrary values first: they produce the most precise message.
   for (const match of text.matchAll(TAILWIND_ARBITRARY)) {

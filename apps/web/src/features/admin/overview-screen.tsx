@@ -316,7 +316,7 @@ export function OverviewScreen() {
               action={
                 <Link
                   href="/admin/customers"
-                  className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:underline"
+                  className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
                 >
                   {t("allCustomers")}
                   <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
@@ -351,7 +351,7 @@ export function OverviewScreen() {
               action={
                 <Link
                   href="/admin/activity"
-                  className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:underline"
+                  className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
                 >
                   {t("allActivity")}
                   <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />

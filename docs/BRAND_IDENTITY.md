@@ -151,6 +151,7 @@ The creator's page does **not** use Linkyo colors. It uses a generated theme:
   - **Stronger border** (`border-line-strong`, `border-line-input`): fields and secondary buttons.
   - **Step in the fill**: a white `surface` tile on a teal 50 `canvas-muted` panel; a chosen tab or segment is white with a hairline border.
   - Modal overlays also sit on the scrim. Lint (`linkyo/no-raw-design-values`, Stylelint) rejects any shadow.
+- **Links have no underline** ([ADR 0041](DECISIONS/0041-no-underlines.md)): not by default, not on hover. They are marked by Linkyo Teal (`link`) and semibold weight, and turn ink on hover; keyboard focus shows the focus ring.
 - **Sticky bars** sit flush under the header on a solid background: nothing scrolls between the header and a sticky filter row.
 - **Touch targets**: minimum 44 × 44 pt everywhere.
 

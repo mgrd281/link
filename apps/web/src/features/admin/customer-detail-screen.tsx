@@ -273,7 +273,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
     >
       <Link
         href="/admin/customers"
-        className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 justify-self-start rounded-sm font-medium hover:underline"
+        className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 justify-self-start rounded-sm font-medium hover:text-fg transition-colors duration-micro"
       >
         <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
         {t("back")}
@@ -359,7 +359,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
             action={
               <Link
                 href={`/p/${customer.username}`}
-                className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:underline"
+                className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
               >
                 {t("openPage")}
                 <Icon icon={ExternalLink} size="sm" />

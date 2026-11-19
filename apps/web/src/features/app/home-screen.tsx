@@ -195,7 +195,7 @@ export function HomeScreen() {
             ))}
           </ol>
         </figure>
-        <Link href="/app/analytics" className="inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring">
+        <Link href="/app/analytics" className="inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
           {t("stats.more")}
           <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
         </Link>

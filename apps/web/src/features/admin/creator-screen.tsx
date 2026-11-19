@@ -79,7 +79,7 @@ export function CreatorScreen({ slug }: { slug: string }) {
 function BackLink() {
   const t = useTranslations("admin.creator");
   return (
-    <Link href="/admin/creators" className="inline-flex h-control-sm items-center gap-2 justify-self-start rounded-sm text-small font-medium text-link hover:underline focus-visible:focus-ring">
+    <Link href="/admin/creators" className="inline-flex h-control-sm items-center gap-2 justify-self-start rounded-sm text-small font-medium text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
       <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
       {t("back")}
     </Link>

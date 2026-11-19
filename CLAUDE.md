@@ -22,6 +22,11 @@ The project skills in `.claude/skills/linkyo-*` hold the detailed how-tos.
 - **Tokens only.** No raw colors, sizes, fonts, z-index or durations in app code. Every value comes from
   `packages/tokens/tokens.json` (skill `linkyo-design-tokens`).
 - **Brand:** Linkyo Teal (`primary`, #00454C) on white pages and cards; teal 50 for soft fills.
+- **No underlines. Ever.** Links never get a line under them: not by default, not on hover, not on focus
+  ([ADR 0041](docs/DECISIONS/0041-no-underlines.md)). A link is marked by color (`text-link`) and weight
+  (`font-semibold`), and changes color on hover (`hover:text-fg`; creator pages `hover:text-creator-fg`).
+  Keyboard focus shows the focus ring. Lint fails on `underline`, `underline-offset-*` and `decoration-*`.
+  A struck-through old price (`line-through`) is fine.
 - **Sticky bars sit flush under the header** (`top-16`; the header is `h-16`) on a solid background. No gap for content
   to show through.
 - **Every screen:**

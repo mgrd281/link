@@ -179,14 +179,14 @@ export function CodeStep({
           {t(intent === "signUp" ? "code.submit" : "code.submitLogin")}
         </Button>
         <div className="flex flex-wrap items-center justify-between gap-3 text-small">
-          <button type="button" onClick={onChangeEmail} className="rounded-xs font-medium text-fg-secondary underline-offset-4 hover:text-fg hover:underline focus-visible:focus-ring">
+          <button type="button" onClick={onChangeEmail} className="rounded-xs font-medium text-fg-secondary hover:text-fg focus-visible:focus-ring">
             {t("code.change")}
           </button>
           <button
             type="button"
             disabled={wait > 0}
             onClick={() => void resend()}
-            className="rounded-xs font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring disabled:font-medium disabled:text-fg-tertiary disabled:no-underline"
+            className="rounded-xs font-semibold text-link transition-colors duration-micro focus-visible:focus-ring enabled:hover:text-fg disabled:font-medium disabled:text-fg-tertiary"
           >
             {wait > 0 ? t("code.resendIn", { seconds: wait }) : t("code.resend")}
           </button>

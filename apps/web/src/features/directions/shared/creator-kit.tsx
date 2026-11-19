@@ -205,13 +205,13 @@ export function CreatorFooter({ className, credit = true, privacy = false }: { c
           <a
             key={key}
             href={`#${key}`}
-            className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2 underline-offset-4 hover:underline"
+            className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2"
           >
             {t(key)}
           </a>
         ))}
         {privacy ? (
-          <PrivacySettingsLink className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2 underline-offset-4 hover:underline" />
+          <PrivacySettingsLink className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2" />
         ) : null}
       </nav>
     </footer>

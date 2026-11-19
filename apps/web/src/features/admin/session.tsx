@@ -202,7 +202,7 @@ function TeamSetup({ account }: { account: Account }) {
           {t("setupSubmit")}
         </Button>
       </form>
-      <Link href="/app" className="justify-self-start text-small font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring">
+      <Link href="/app" className="justify-self-start text-small font-semibold text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
         {t("backToApp")}
       </Link>
     </GateCard>

@@ -22,6 +22,7 @@ const MESSAGES = {
   easing: "Raw easing curve. Use a motion token from @linkyo/tokens.",
   attrNumber: "Raw size '{{value}}' for '{{attr}}'. Use a size token (e.g. <Icon size=\"md\" />).",
   shadow: "Shadow utility '{{value}}'. Linkyo is flat (ADR 0037): separate surfaces with a border (border-line) or a surface step, never a shadow.",
+  underline: "Underline '{{value}}'. Linkyo links have no line under them (ADR 0041): mark them by color and weight, and change the color on hover.",
   shadowStyle: "'{{prop}}' draws a shadow. Linkyo is flat (ADR 0037): use a border or a surface step instead.",
 };
 

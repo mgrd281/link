@@ -177,7 +177,7 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
           <button
             type="button"
             onClick={details ? () => setDetails(false) : openDetails}
-            className="justify-self-center rounded-xs px-2 py-2 text-small text-creator-fg-muted underline underline-offset-4 hover:text-creator-fg focus-visible:focus-ring"
+            className="justify-self-center rounded-xs px-2 py-2 text-small text-creator-fg-muted hover:text-creator-fg focus-visible:focus-ring"
           >
             {details ? t("privacyBack") : t("privacyManage")}
           </button>

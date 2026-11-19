@@ -165,7 +165,7 @@ export function SecurityScreen() {
                       <td className="py-2">
                         <Link
                           href={`/admin/customers/${customer.id}`}
-                          className="focus-visible:focus-ring flex min-w-0 items-center gap-2 rounded-sm hover:underline"
+                          className="focus-visible:focus-ring flex min-w-0 items-center gap-2 rounded-sm transition-opacity duration-micro hover:opacity-secondary"
                         >
                           <Avatar name={customer.name} size="sm" />
                           <span className="truncate">{customer.name}</span>

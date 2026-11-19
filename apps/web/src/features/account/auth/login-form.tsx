@@ -103,7 +103,7 @@ export function LoginForm() {
       <SocialButtons emailField="login-email" />
       <p className="text-center text-small text-fg-secondary">
         {t("login.noAccount")}{" "}
-        <Link href="/signup" className="font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring">
+        <Link href="/signup" className="font-semibold text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
           {t("login.signup")}
         </Link>
       </p>
