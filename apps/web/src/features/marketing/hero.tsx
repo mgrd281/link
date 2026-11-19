@@ -1,37 +1,38 @@
-import { LogoSymbol } from "@linkyo/ui";
-import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 
-import { phoneSizes } from "./assets";
+import { EXAMPLES } from "@/features/examples/catalog";
+import { LOOKS } from "@/features/examples/looks";
+
 import { ClaimForm } from "./claim-form";
-import { EXAMPLE_SHOTS, type ExampleShot } from "./examples";
-import { MotionToggle } from "./motion-toggle";
+import type { ExampleShot } from "./examples";
+import { HeroDeck, type DeckKind, type DeckPage } from "./hero-deck";
 
 export const order = (n: number) => ({ "--i": n }) as CSSProperties;
 
 /** The three pages that take turns in front, with one number from each page. */
-const STACK: { slug: ExampleShot; kind: "comedy" | "music" | "sport"; fact: "followers" | "listeners"; count: number }[] = [
+const STACK: { slug: ExampleShot; kind: DeckKind; fact: "followers" | "listeners"; count: number }[] = [
   { slug: "timo-lacht", kind: "comedy", fact: "followers", count: 2_400_000 },
   { slug: "rafael-duarte", kind: "sport", fact: "followers", count: 4_100_000 },
   { slug: "mara-vale", kind: "music", fact: "listeners", count: 12_000_000 },
 ];
-/** Resting slots (front, right, left): where the turns start, and the still layout for reduced motion. */
-const SLOTS = [
-  { slot: 0, side: 0 },
-  { slot: 1, side: 1 },
-  { slot: -1, side: 1 },
-] as const;
 
 /**
  * Light and calm: the promise on the left, real (example) pages on the right that take turns in
- * front, each with its address above and one number below. Pausable; still for reduced motion.
+ * front (HeroDeck), each with its address above and one number beside it.
  */
 export function Hero() {
   const t = useTranslations("marketing");
   const locale = useLocale();
   const pills = t.raw("hero.pills") as string[];
   const compact = new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 });
+  const pages: DeckPage[] = STACK.map(({ slug, kind, fact, count }) => ({
+    slug,
+    kind,
+    name: EXAMPLES[slug]?.profile.displayName ?? slug,
+    href: `/${LOOKS[slug].locale}/p/${slug}`,
+    stat: t(`hero.${fact}`, { count: compact.format(count) }),
+  }));
   return (
     <section
       aria-labelledby="hero-title"
@@ -61,47 +62,7 @@ export function Hero() {
         </div>
       </div>
 
-      <MotionToggle
-        pauseLabel={t("hero.stackPause")}
-        playLabel={t("hero.stackPlay")}
-        className="mx-auto w-full max-w-creator"
-        buttonClassName="end-0 bottom-0"
-      >
-        <p className="sr-only">{t("hero.phones")}</p>
-        <div aria-hidden className="mk-stack mk-phone-in relative aspect-square w-full">
-          {STACK.map((page, index) => (
-            <div
-              key={page.slug}
-              className="mk-stack-card absolute inset-x-0 top-12 mx-auto w-5/12"
-              style={{ "--i": index, "--slot": SLOTS[index]?.slot ?? 0, "--side": SLOTS[index]?.side ?? 0 } as CSSProperties}
-            >
-              <span className="mk-stack-front absolute start-1/2 bottom-full mb-3 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-surface-elevated px-3 py-1 text-small font-semibold whitespace-nowrap text-fg shadow-e2 rtl:translate-x-1/2">
-                <LogoSymbol className="size-4" />
-                <span dir="ltr">linkyo.app/{page.slug}</span>
-              </span>
-              <div className="relative aspect-short overflow-hidden rounded-xl border border-line bg-surface shadow-e3">
-                <Image
-                  src={EXAMPLE_SHOTS[page.slug]}
-                  alt=""
-                  fill
-                  sizes={phoneSizes.hero}
-                  placeholder="blur"
-                  preload={index === 0}
-                  fetchPriority={index === 0 ? "high" : "auto"}
-                  loading={index === 0 ? "eager" : "lazy"}
-                  className="object-cover object-top"
-                />
-              </div>
-              <p className="mk-stack-front absolute inset-x-0 top-full mt-4 flex items-center justify-center gap-2 text-small font-semibold whitespace-nowrap text-fg">
-                {t(`hero.kinds.${page.kind}`)}
-                <span className="rounded-full bg-primary px-2 py-0.5 text-caption text-primary-fg tabular-nums">
-                  {t(`hero.${page.fact}`, { count: compact.format(page.count) })}
-                </span>
-              </p>
-            </div>
-          ))}
-        </div>
-      </MotionToggle>
+      <HeroDeck pages={pages} />
     </section>
   );
 }

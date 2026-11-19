@@ -590,7 +590,6 @@
         "No cookies",
         "Data in Frankfurt"
       ],
-      "phones": "Creator pages in the Nocturne, Pulse and Daylight templates",
       "stackPause": "Pause the page carousel",
       "stackPlay": "Play the page carousel",
       "followers": "{count} followers",
@@ -599,6 +598,14 @@
         "comedy": "Comedy",
         "music": "Music",
         "sport": "Sport"
+      },
+      "deck": {
+        "carousel": "carousel",
+        "slide": "slide",
+        "label": "Example pages",
+        "choose": "Choose an example page",
+        "view": "View page",
+        "viewNamed": "View page, {name}"
       }
     },
     "claim": {

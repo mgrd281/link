@@ -41,11 +41,38 @@ test.describe("marketing home", () => {
     await expect(page.getByRole("button", { name: "Play the template strip" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  test("the pages in the hero take turns and can be paused; the example strip opens real example pages", async ({ page }) => {
-    const pause = page.getByRole("button", { name: "Pause the page carousel" });
-    await pause.click();
-    await expect(page.getByRole("button", { name: "Play the page carousel" })).toBeVisible();
-    await expect(page.locator(".mk-stack-card").first()).toHaveCSS("animation-play-state", "paused");
+  test("the pages in the hero take turns, can be chosen and paused; the example strip opens real example pages", async ({ page }) => {
+    const deck = page.getByRole("region", { name: "Example pages" });
+    const tabs = deck.getByRole("tab");
+    await expect(tabs).toHaveCount(3);
+    await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
+
+    // The pause button stops the timer (WCAG 2.2.2), so nothing below depends on timing.
+    await deck.getByRole("button", { name: "Pause the page carousel" }).click();
+    await expect(deck.getByRole("button", { name: "Play the page carousel" })).toBeVisible();
+    await expect(deck.locator(".mk-progress")).toHaveCSS("animation-play-state", "paused");
+
+    // The page in front opens the real example page.
+    await expect(deck.getByRole("link", { name: "View page, Timo Lacht" })).toHaveAttribute("href", "/de/p/timo-lacht");
+
+    // When the timer line under the tab is full, the next page comes to the front.
+    await deck.locator(".mk-progress").evaluate((line) => {
+      for (const animation of line.getAnimations()) animation.finish();
+    });
+    await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+    await expect(deck.getByRole("link", { name: "View page, Rafael Duarte" })).toBeVisible();
+
+    // Tabs choose directly; arrow keys move between them.
+    await tabs.nth(2).click();
+    await expect(deck.getByRole("link", { name: "View page, Mara Vale" })).toBeVisible();
+    await tabs.nth(2).press("ArrowRight");
+    await expect(tabs.nth(0)).toBeFocused();
+    await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
+
+    // A click on a page beside the front brings it forward.
+    await deck.locator('[data-slot="next"] button').click();
+    await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+
     const example = page.getByRole("link", { name: /^See .+'s example page$/ }).first();
     await expect(example).toHaveAttribute("href", /^\/(de|en|ar)\/p\/[a-z0-9-]+$/);
     // The four feature panels are there, with the paste demo inside one of them.
@@ -89,4 +116,18 @@ test("phone menu opens as a popover and closes after choosing a section", async 
   await menu.getByRole("link", { name: "Pricing" }).click();
   await expect(menu).toBeHidden();
   await context.close();
+});
+
+test("the hero pages follow the reading direction in Arabic", async ({ page }) => {
+  await page.goto("/ar");
+  const deck = page.getByRole("region", { name: "صفحات أمثلة" });
+  await deck.getByRole("button", { name: "إيقاف تبديل الصفحات" }).click();
+  const tabs = deck.getByRole("tab");
+  // The next page waits on the left (the reading side), and ArrowLeft moves forward.
+  const front = await deck.locator('[data-slot="front"]').boundingBox();
+  const next = await deck.locator('[data-slot="next"]').boundingBox();
+  expect(next && front && next.x < front.x).toBe(true);
+  await tabs.nth(0).focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
 });

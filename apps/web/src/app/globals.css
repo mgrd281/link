@@ -232,41 +232,14 @@
   }
 }
 
-/* Hero: three pages take turns in front (centre → right → left → centre). */
-@keyframes mk-stack {
-  0%,
-  27%,
-  100% {
-    translate: 0 0;
-    scale: 1;
-    z-index: var(--z-raised);
+/* Hero deck: the line under the chosen tab fills while its page is in front. */
+@keyframes mk-progress {
+  from {
+    scale: 0 1;
   }
 
-  33.34%,
-  60% {
-    translate: var(--stack-x) var(--spacing-10);
-    scale: var(--stack-scale);
-    z-index: var(--z-base);
-  }
-
-  66.67%,
-  94% {
-    translate: calc(var(--stack-x) * -1) var(--spacing-10);
-    scale: var(--stack-scale);
-    z-index: var(--z-base);
-  }
-}
-
-@keyframes mk-stack-show {
-  0%,
-  27%,
-  100% {
-    opacity: 1;
-  }
-
-  33.34%,
-  94% {
-    opacity: 0;
+  to {
+    scale: 1 1;
   }
 }
 
@@ -452,43 +425,103 @@
 }
 
 /*
- * The hero's page stack. Each card sits in its resting slot (--slot: 0 centre, 1 right, -1 left),
- * which is also the still layout for reduced motion; the animation takes them round in turn.
+ * The hero deck: three example pages. The one in front (data-slot="front") is the page you can
+ * open; the next one waits on the reading side, the previous one on the other. Cards glide between
+ * slots; mirrored for right-to-left. Reduced motion: they change places without moving.
  */
-@utility mk-stack {
-  --stack-x: 58%;
-  --stack-scale: 0.8;
+@utility mk-deck-card {
+  --deck-dir: 1;
+  --deck-x: 0%;
+  --deck-y: 0%;
+  --deck-scale: 1;
+  --deck-rotate: 0deg;
+
+  translate: calc(var(--deck-x) * var(--deck-dir)) calc(-50% + var(--deck-y));
+  scale: var(--deck-scale);
+  rotate: calc(var(--deck-rotate) * var(--deck-dir));
+  z-index: var(--z-raised);
+  transition-property: translate, scale, rotate, filter;
+  transition-duration: var(--duration-move);
+  transition-timing-function: var(--ease-emphasized);
+
+  &:is([dir="rtl"] *) {
+    --deck-dir: -1;
+  }
+
+  &[data-slot="front"]:is(:hover, :focus-within) {
+    --deck-y: calc(var(--spacing-2) * -1);
+  }
+
+  &[data-slot="next"],
+  &[data-slot="prev"] {
+    --deck-y: var(--spacing-6);
+    --deck-scale: 0.8;
+
+    filter: saturate(0.75) brightness(0.92);
+    cursor: pointer;
+  }
+
+  &[data-slot="next"] {
+    --deck-x: 66%;
+    --deck-rotate: 5deg;
+
+    z-index: calc(var(--z-raised) - 1);
+  }
+
+  &[data-slot="prev"] {
+    --deck-x: -66%;
+    --deck-rotate: -5deg;
+
+    z-index: var(--z-base);
+  }
+
+  &[data-slot="next"]:hover,
+  &[data-slot="prev"]:hover {
+    --deck-scale: 0.83;
+
+    filter: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
-@utility mk-stack-card {
-  translate: calc(var(--stack-x) * var(--slot, 0)) calc(var(--spacing-10) * var(--side, 0));
-  scale: calc(1 - (1 - var(--stack-scale)) * var(--side, 0));
-  z-index: calc(var(--z-raised) * (1 - var(--side, 0)));
-  animation: mk-stack var(--duration-showcase) var(--ease-standard) infinite;
-  animation-delay: calc(var(--i, 0) * var(--duration-showcase) / -3);
-
-  &:is([data-marquee]:hover *),
-  &:is([data-paused="true"] *) {
-    animation-play-state: paused;
-  }
+/* What belongs to the page in front (its address, one number): it arrives just after the card. */
+@utility mk-deck-chip {
+  animation: mk-card-in var(--duration-slow) var(--ease-emphasized) both;
+  animation-delay: calc(var(--duration-move) * 0.55 + var(--i, 0) * var(--duration-micro));
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
 }
 
-/* What belongs to the card in front (its address, its caption): shown only while it is in front. */
-@utility mk-stack-front {
-  opacity: calc(1 - var(--side, 0));
-  animation: mk-stack-show var(--duration-showcase) var(--ease-standard) infinite;
-  animation-delay: calc(var(--i, 0) * var(--duration-showcase) / -3);
+/*
+ * The timer: when this line is full, the next page comes to the front. It holds while the mouse is
+ * over the deck or keyboard focus is inside it, and stops with the pause button.
+ */
+@utility mk-progress {
+  transform-origin: left;
+  animation: mk-progress var(--duration-carousel) linear both;
 
-  &:is([data-marquee]:hover *),
-  &:is([data-paused="true"] *) {
+  &:is([dir="rtl"] *) {
+    transform-origin: right;
+  }
+
+  &:is([data-paused="true"] *),
+  &:is([data-deck]:has(:focus-visible) *) {
     animation-play-state: paused;
   }
 
+  @media (hover: hover) {
+    &:is([data-deck]:hover *) {
+      animation-play-state: paused;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    display: none;
     animation: none;
   }
 }

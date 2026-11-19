@@ -121,7 +121,9 @@ public enum LinkyoTokens {
         public static let standard: Double = 0.2
         public static let slow: Double = 0.32
         public static let reveal: Double = 0.7
+        public static let move: Double = 0.56
         public static let ambient: Double = 9
+        public static let carousel: Double = 6
         public static let showcase: Double = 15
         public static let marquee: Double = 60
         public static let springResponse: Double = 0.35

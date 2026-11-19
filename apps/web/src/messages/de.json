@@ -590,7 +590,6 @@
         "Ohne Cookies",
         "Daten in Frankfurt"
       ],
-      "phones": "Creator-Seiten in den Vorlagen Nocturne, Pulse und Daylight",
       "stackPause": "Seitenwechsel anhalten",
       "stackPlay": "Seitenwechsel abspielen",
       "followers": "{count} Follower",
@@ -599,6 +598,14 @@
         "comedy": "Comedy",
         "music": "Musik",
         "sport": "Sport"
+      },
+      "deck": {
+        "carousel": "Karussell",
+        "slide": "Seite",
+        "label": "Beispielseiten",
+        "choose": "Beispielseite wählen",
+        "view": "Seite ansehen",
+        "viewNamed": "Seite ansehen, {name}"
       }
     },
     "claim": {
