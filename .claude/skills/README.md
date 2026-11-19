@@ -11,6 +11,11 @@ Claude Code loads these skills automatically in this repository. They come in tw
 | `linkyo-concept-page` | Pages for well-known people: sources, licenses, one language per page |
 | `linkyo-page-kind` | New page kinds in the welcome flow ("What describes you best?") |
 | `linkyo-qa-release` | Verify, commit, push and check a change live |
+| `linkyo-ux-audit` | Screenshot the whole journey on phone and desktop, review against known pitfalls, fix, re-check |
+| `linkyo-share-images` | Link preview cards (Satori) and story/post pictures (canvas): fonts, Arabic, build rules |
+| `linkyo-link-metadata` | Real titles and pictures for pasted links: oEmbed route, image proxy, adding a platform |
+| `linkyo-poster-template` | New Poster templates and layout options (hero, headings, social icons), from a reference |
+| `linkyo-media-assets` | Licensed photos and clips, original cover art with bundled OFL fonts, CREDITS.md and media.ts |
 
 ## Vendored skills (open source, copied unchanged with their licenses)
 
@@ -27,6 +32,9 @@ Claude Code loads these skills automatically in this repository. They come in tw
 | `requesting-code-review` | obra/superpowers `22f0b46` | MIT (LICENSE) |
 | `receiving-code-review` | obra/superpowers `22f0b46` | MIT (LICENSE) |
 
+Several Linkyo skills bundle scripts (`scripts/`) and, for `linkyo-media-assets`, four OFL fonts
+with their license files (`fonts/`).
+
 ## How these were chosen
 
 Every SKILL.md and bundled script was read before adding. Skills were left out when they:
@@ -37,7 +45,10 @@ Every SKILL.md and bundled script was read before adding. Skills were left out w
 - push workflows that clash with this repo's branch rules (git worktrees, finishing branches,
   subagent-driven plans);
 - duplicate skills Claude Code already has built in (`skill-creator`, docx, pdf, pptx, xlsx);
-- don't fit this product (Slack GIFs, internal comms, other companies' brand guidelines).
+- don't fit this product (Slack GIFs, internal comms, other companies' brand guidelines);
+- need accounts or plans we don't use (`vercel-optimize` needs a logged-in Vercel CLI and
+  Observability Plus; `deploy-to-vercel` and `vercel-cli-with-tokens` duplicate our git-push
+  deploys).
 
 To update a vendored skill, copy it again from its source at a newer commit, re-read the diff, and
 update the commit column above.
