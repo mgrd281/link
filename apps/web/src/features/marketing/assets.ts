@@ -36,8 +36,6 @@ const px = (n: number): string => `${n}px`;
 /** `sizes` hints derived from layout tokens (no raw lengths in components). */
 export const phoneSizes = {
   hero: `(max-width: ${px(tokens.breakpoint.lg)}) 45vw, ${px(Math.round(tokens.layout.creator / 2))}`,
-  /** The hero's example pages: beside the headline on wide screens, fanned out below it on phones. */
-  heroPage: `(min-width: ${px(tokens.breakpoint.xl)}) 16vw, (min-width: ${px(tokens.breakpoint.md)}) 24vw, 44vw`,
   side: `(max-width: ${px(tokens.breakpoint.lg)}) 36vw, ${px(Math.round(tokens.layout.creator / 2.6))}`,
   rail: `(max-width: ${px(tokens.breakpoint.sm)}) 44vw, ${px(tokens.layout.menu)}`,
   story: px(tokens.layout.preview),

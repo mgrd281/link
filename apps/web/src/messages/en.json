@@ -582,10 +582,6 @@
     },
     "hero": {
       "kicker": "For creators, artists and the teams behind them",
-      "news": {
-        "badge": "New",
-        "text": "Move your link page in a minute"
-      },
       "title1": "One link.",
       "title2": "Everything you create.",
       "lead": "Music, videos, dates and a shop on one page. Ready in five minutes.",
@@ -594,11 +590,21 @@
         "No cookies",
         "Data in Frankfurt"
       ],
-      "promises": "What you get",
-      "pages": {
+      "kinds": {
+        "fashion": "Fashion",
+        "dj": "DJ",
+        "music": "Music"
+      },
+      "deck": {
+        "carousel": "carousel",
+        "slide": "slide",
         "label": "Example pages",
-        "view": "Example page of {name}"
-      }
+        "choose": "Choose an example page",
+        "view": "View page",
+        "viewNamed": "View page, {name}",
+        "auto": "Changes every 6 seconds, twice round, until you choose a page."
+      },
+      "promises": "What you get"
     },
     "claim": {
       "label": "Choose your page address",

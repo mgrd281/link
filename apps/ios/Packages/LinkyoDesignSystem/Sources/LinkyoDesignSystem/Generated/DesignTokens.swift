@@ -107,6 +107,7 @@ public enum LinkyoTokens {
         public static let display2xl = TextStyle(size: 104, lineHeight: 0.95, weight: 800, tracking: -0.045)
         public static let displayXl = TextStyle(size: 72, lineHeight: 1, weight: 800, tracking: -0.03)
         public static let display = TextStyle(size: 56, lineHeight: 1.05, weight: 800, tracking: -0.03)
+        public static let displaySm = TextStyle(size: 40, lineHeight: 1.08, weight: 800, tracking: -0.03)
         public static let h1 = TextStyle(size: 36, lineHeight: 1.15, weight: 700, tracking: -0.02)
         public static let h2 = TextStyle(size: 28, lineHeight: 1.2, weight: 700, tracking: -0.02)
         public static let h3 = TextStyle(size: 22, lineHeight: 1.3, weight: 600, tracking: -0.01)
