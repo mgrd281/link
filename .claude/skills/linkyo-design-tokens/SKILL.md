@@ -30,6 +30,23 @@ reports unknown classes.
   with these).
 - **Radii and shadows:** `rounded-creator-button`, `rounded-creator-card`, `rounded-xl`; `shadow-e1…e3`.
 
+
+## When a general design or motion skill says otherwise
+
+The vendored skills (`ui-ux-pro-max`, `web-design-guidelines`, `motion`, `motion-design`,
+`gsap-*`, `accessibility`, `performance`, …) give general advice. In this repository these rules win:
+
+- **Values come from tokens.** Palettes, font pairings and spacing scales that a search suggests are
+  ideas to discuss, not values to paste. Add new values to `tokens.json` first, then use the
+  generated utility.
+- **Motion is CSS first.** Use `transition`/`@keyframes`, scroll-driven animations and the
+  `mk-*` utilities in `globals.css`, all timed with `--duration-*` and `--ease-*`. Add the `motion`
+  or `gsap` package only when CSS cannot do the job (e.g. physics or a gesture). Even then, take
+  durations from the tokens and honour `prefers-reduced-motion`, and record the new dependency
+  in an ADR.
+- **No third-party requests from pages.** No Google Fonts or CDN links, and no analytics or embed
+  scripts by default. Fonts are self-hosted, as they are today.
+- **Three languages, both directions.** German, English and Arabic: check every layout in RTL.
 ## Creator colors
 
 - Creator pages are themed by `resolveCreatorTheme(config)` from `@linkyo/tokens/creator`. The config
