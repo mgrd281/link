@@ -49,7 +49,7 @@ export function MobileMenu({ items, labels, cta, secondary }: { items: NavItem[]
         </nav>
         <div className="grid gap-2">
           {secondary ? (
-            <Button asChild size="xl" block className="border-primary text-primary hover:border-primary hover:bg-primary hover:text-primary-fg">
+            <Button asChild size="xl" block className="border-link text-link hover:border-primary hover:bg-primary hover:text-primary-fg">
               <a href={secondary.href} onClick={close}>
                 {secondary.label}
               </a>

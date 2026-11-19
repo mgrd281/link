@@ -48,7 +48,7 @@ export function MarketingHeader() {
           </div>
           <Link
             href="/login"
-            className="hidden h-control-md items-center rounded-full border border-primary px-4 text-small font-semibold text-primary transition-colors duration-micro hover:bg-primary hover:text-primary-fg focus-visible:focus-ring active:scale-pressed md:inline-flex"
+            className="hidden h-control-md items-center rounded-full border border-link px-4 text-small font-semibold text-link transition-colors duration-micro hover:border-primary hover:bg-primary hover:text-primary-fg focus-visible:focus-ring active:scale-pressed md:inline-flex"
           >
             {login.label}
           </Link>
