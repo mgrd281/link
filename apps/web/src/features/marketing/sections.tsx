@@ -65,7 +65,7 @@ export function Proof() {
   );
 }
 
-/** All five templates on phones, drifting by. Pausable, and still on reduced motion. */
+/** All six templates on phones, drifting by. Pausable, and still on reduced motion. */
 export function Templates() {
   const t = useTranslations("marketing.templates");
   const tTemplates = useTranslations("templates");

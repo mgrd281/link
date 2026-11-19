@@ -108,6 +108,14 @@ import ex4MotionClara from "@/assets/examples/ex4-motion-clara.jpg";
 import ex4MotionLina from "@/assets/examples/ex4-motion-lina.jpg";
 import ex4MotionMara from "@/assets/examples/ex4-motion-mara.jpg";
 import ex4MotionTimo from "@/assets/examples/ex4-motion-timo.jpg";
+import ex5AlbumBanner from "@/assets/examples/ex5-album-banner.jpg";
+import ex5CoverGlasGold from "@/assets/examples/ex5-cover-glas-gold.jpg";
+import ex5CoverLeiseStadt from "@/assets/examples/ex5-cover-leise-stadt.jpg";
+import ex5CoverMitternachtsblau from "@/assets/examples/ex5-cover-mitternachtsblau.jpg";
+import ex5CoverPlaylist from "@/assets/examples/ex5-cover-playlist.jpg";
+import ex5HoodieBlack from "@/assets/examples/ex5-hoodie-black.jpg";
+import ex5HoodieWhite from "@/assets/examples/ex5-hoodie-white.jpg";
+import ex5NelaVoss from "@/assets/examples/ex5-nela-voss.jpg";
 
 /** Pictures of the example gallery (stock photos, see assets/examples/CREDITS.md; logos are original). */
 export const exampleMedia = {
@@ -219,4 +227,12 @@ export const exampleMedia = {
   "sample:ex4-motion-lina": ex4MotionLina,
   "sample:ex4-motion-mara": ex4MotionMara,
   "sample:ex4-motion-timo": ex4MotionTimo,
+  "sample:ex5-album-banner": ex5AlbumBanner,
+  "sample:ex5-cover-glas-gold": ex5CoverGlasGold,
+  "sample:ex5-cover-leise-stadt": ex5CoverLeiseStadt,
+  "sample:ex5-cover-mitternachtsblau": ex5CoverMitternachtsblau,
+  "sample:ex5-cover-playlist": ex5CoverPlaylist,
+  "sample:ex5-hoodie-black": ex5HoodieBlack,
+  "sample:ex5-hoodie-white": ex5HoodieWhite,
+  "sample:ex5-nela-voss": ex5NelaVoss,
 } satisfies Record<string, StaticImageData>;

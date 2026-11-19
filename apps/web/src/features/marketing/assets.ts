@@ -10,6 +10,8 @@ import daylightAr from "@/assets/marketing/phone-daylight-ar.jpg";
 import daylightDe from "@/assets/marketing/phone-daylight-de.jpg";
 import marqueeAr from "@/assets/marketing/phone-marquee-ar.jpg";
 import marqueeDe from "@/assets/marketing/phone-marquee-de.jpg";
+import monoAr from "@/assets/marketing/phone-mono-ar.jpg";
+import monoDe from "@/assets/marketing/phone-mono-de.jpg";
 import nocturneAr from "@/assets/marketing/phone-nocturne-ar.jpg";
 import nocturneDe from "@/assets/marketing/phone-nocturne-de.jpg";
 import pulseAr from "@/assets/marketing/phone-pulse-ar.jpg";
@@ -20,8 +22,8 @@ import pulseDe from "@/assets/marketing/phone-pulse-de.jpg";
  * shown on phones — brand §10: "real creator pages on phones, dark studio backgrounds".
  */
 const phones: Record<"de" | "ar", Record<CreatorTemplateId, StaticImageData>> = {
-  de: { nocturne: nocturneDe, daylight: daylightDe, marquee: marqueeDe, pulse: pulseDe, atelier: atelierDe },
-  ar: { nocturne: nocturneAr, daylight: daylightAr, marquee: marqueeAr, pulse: pulseAr, atelier: atelierAr },
+  de: { nocturne: nocturneDe, daylight: daylightDe, marquee: marqueeDe, pulse: pulseDe, atelier: atelierDe, mono: monoDe },
+  ar: { nocturne: nocturneAr, daylight: daylightAr, marquee: marqueeAr, pulse: pulseAr, atelier: atelierAr, mono: monoAr },
 };
 
 export const phoneShots = (locale: string) => phones[locale === "ar" ? "ar" : "de"];

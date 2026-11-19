@@ -28,12 +28,18 @@ export interface CreatorThemeConfig {
 
 /** Section titles: the display face, the body face in title case, or the body face set in caps. */
 export type HeadingStyle = "display" | "sans" | "sans-upper";
-/** Hero treatment: the portrait, a logo over a blurred photo, or the portrait toned into the page color. */
-export type HeroStyle = "portrait" | "logo" | "duotone";
+/**
+ * Hero treatment: the portrait, a logo over a blurred photo, the portrait toned into the page color,
+ * or the portrait in black and white.
+ */
+export type HeroStyle = "portrait" | "logo" | "duotone" | "mono";
+/** Social profiles under the name: round tiles, or bare glyphs for quiet, editorial looks. */
+export type SocialStyle = "tiles" | "plain";
 
 export interface CreatorLayout {
   headings: HeadingStyle;
   hero: HeroStyle;
+  socials: SocialStyle;
 }
 
 export interface ResolvedCreatorTheme {
@@ -51,7 +57,7 @@ export interface ResolvedCreatorTheme {
 
 export const PRESET_IDS = Object.keys(creatorTokens.presets) as CreatorPresetId[];
 export const TEMPLATE_IDS = Object.keys(creatorTokens.templates) as CreatorTemplateId[];
-export const DEFAULT_LAYOUT: CreatorLayout = { headings: "display", hero: "portrait" };
+export const DEFAULT_LAYOUT: CreatorLayout = { headings: "display", hero: "portrait", socials: "tiles" };
 export const PAIRING_IDS = Object.keys(creatorTokens.pairings) as CreatorPairingId[];
 export const BUTTON_STYLES = creatorTokens.buttonStyles;
 export const BUTTON_SHAPES = Object.keys(creatorTokens.buttonShapes) as CreatorButtonShape[];
@@ -70,6 +76,7 @@ interface TemplateDefaults {
   buttonShape?: CreatorButtonShape | undefined;
   headings?: HeadingStyle | undefined;
   hero?: HeroStyle | undefined;
+  socials?: SocialStyle | undefined;
 }
 
 /** What a preset or template contributes before the creator's own choices. */
@@ -117,7 +124,11 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
   const pairing = creatorTokens.pairings[pairingId];
   const buttonStyle: CreatorButtonStyle = config.buttonStyle ?? preset.buttonStyle;
   const buttonShape: CreatorButtonShape = config.buttonShape ?? preset.buttonShape;
-  const layout: CreatorLayout = { headings: t.headings ?? DEFAULT_LAYOUT.headings, hero: t.hero ?? DEFAULT_LAYOUT.hero };
+  const layout: CreatorLayout = {
+    headings: t.headings ?? DEFAULT_LAYOUT.headings,
+    hero: t.hero ?? DEFAULT_LAYOUT.hero,
+    socials: t.socials ?? DEFAULT_LAYOUT.socials,
+  };
   const background = config.background ?? preset.background;
 
   const display = pairing.display as {

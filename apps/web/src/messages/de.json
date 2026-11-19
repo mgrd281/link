@@ -424,10 +424,10 @@
     "earlier": "Frühere Richtungen",
     "poster": {
       "name": "Poster",
-      "tagline": "Fünf Vorlagen. Klare Abschnitte. Dein Foto zuerst.",
+      "tagline": "Sechs Vorlagen. Klare Abschnitte. Dein Foto zuerst.",
       "description": "Gebaut nach den Seiten, die du geschickt hast: Porträt über die volle Breite oder dein Logo, der Name wie auf einem Konzertplakat, danach Abschnitte mit Titel – Releases, Shows mit Monats-Tabs, Mixe in einer zweizeiligen Leiste, ein Shop im Zweier-Raster, Partner-Kacheln und Videos. Vorlage wählen, der Inhalt bleibt. Das Dashboard bearbeitet die Seite Abschnitt für Abschnitt.",
       "traits": [
-        "Fünf Vorlagen: Nocturne, Daylight, Marquee, Pulse, Atelier",
+        "Sechs Vorlagen: Nocturne, Daylight, Marquee, Pulse, Atelier, Mono",
         "Jedes Farbpaar besteht WCAG AA – in jeder Vorlage",
         "Keine Cookies, Videos laden erst nach Tippen, Werbung ist gekennzeichnet"
       ],
@@ -559,12 +559,15 @@
     },
     "atelier": {
       "description": "Warmes Galeriepapier, ein Serifen-Name, klare Ecken und Titel in Großbuchstaben."
+    },
+    "mono": {
+      "description": "Schwarzweiß: Das Porträt verschmilzt mit Weiß, ein hoher Name, Titel in Großbuchstaben."
     }
   },
   "marketing": {
     "meta": {
       "title": "Linkyo — Ein Link. Alles, was du erschaffst.",
-      "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: fünf Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
+      "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: sechs Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
     },
     "nav": {
       "features": "Funktionen",
@@ -614,7 +617,7 @@
       }
     },
     "templates": {
-      "title": "Fünf Vorlagen. Deine Fotos.",
+      "title": "Sechs Vorlagen. Deine Fotos.",
       "lead": "Look wählen, Inhalt behalten. Jede Farbe in jeder Vorlage ist auf Kontrast geprüft – deine Seite bleibt für alle lesbar.",
       "pause": "Vorlagen-Leiste anhalten",
       "play": "Vorlagen-Leiste abspielen",
@@ -705,7 +708,7 @@
         "price": "0 €",
         "per": "für immer",
         "features": [
-          "Alle fünf Vorlagen",
+          "Alle sechs Vorlagen",
           "Unbegrenzt Links und Abschnitte",
           "Musik, Shows, Videos, Shop-Links",
           "Analytics ohne Cookies",
@@ -1424,7 +1427,7 @@
         "look": {
           "short": "Look",
           "title": "Wähl deinen Look",
-          "lead": "Fünf Vorlagen, alle mit deinem Foto und Namen. Probier sie aus – die Vorschau ändert sich sofort."
+          "lead": "Sechs Vorlagen, alle mit deinem Foto und Namen. Probier sie aus – die Vorschau ändert sich sofort."
         },
         "links": {
           "short": "Links",

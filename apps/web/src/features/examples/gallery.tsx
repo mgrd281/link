@@ -1,5 +1,6 @@
 "use client";
 
+import type { HeroStyle } from "@linkyo/tokens/creator";
 import { cn, Icon, IconButton } from "@linkyo/ui";
 import { ArrowRight, ExternalLink, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -22,7 +23,7 @@ export interface GalleryItem {
   style: CSSProperties;
   photo: string | null;
   logo: string | null;
-  hero: "portrait" | "logo" | "duotone";
+  hero: HeroStyle;
   links: string[];
   signup: string;
   /** Real people: an unofficial concept page or a prepared preview, labelled as such. */
@@ -51,6 +52,7 @@ function Miniature({ item, chip }: { item: GalleryItem; chip?: string | undefine
               "transition-transform duration-slow ease-standard group-hover:scale-lift motion-reduce:transition-none",
               logo && "scale-lift blur-glass",
               item.hero === "duotone" && "grayscale contrast-125 mix-blend-screen",
+              item.hero === "mono" && "grayscale",
             )}
           />
         ) : (

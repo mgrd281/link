@@ -77,7 +77,7 @@ export function PosterRenderer({
       {/* Wide screens: the portrait becomes a soft ambient glow behind the column. Decorative. */}
       {hasImage(photo) ? (
         <div aria-hidden className="absolute inset-x-0 top-0 hidden h-dvh overflow-hidden opacity-secondary @prose:block">
-          <MediaImage src={photo.src} alt="" sizes={mediaSizes.wide} className="scale-lift blur-ambient" />
+          <MediaImage src={photo.src} alt="" sizes={mediaSizes.wide} className={cn("scale-lift blur-ambient", theme.layout.hero === "mono" && "grayscale")} />
           <div className="absolute inset-0 bg-linear-to-b from-transparent to-creator-bg" />
         </div>
       ) : null}

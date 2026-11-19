@@ -48,17 +48,23 @@ function Name({ profile, isRtl, theme }: { profile: Profile; isRtl: boolean; the
   );
 }
 
-function Socials({ block }: { block: BlockOf<"socials"> }) {
+/** Social profiles under the name: round tiles, or (plain) bare glyphs at a larger size for quiet looks. */
+function Socials({ block, plain }: { block: BlockOf<"socials">; plain: boolean }) {
   return (
-    <ul className="flex flex-wrap justify-center gap-3">
+    <ul className={cn("flex flex-wrap justify-center", plain ? "gap-2" : "gap-3")}>
       {block.items.map((item) => (
         <li key={item.url}>
           <a
             href={item.url}
             aria-label={platformName(item.platform)}
-            className="grid size-control-xl place-items-center rounded-full bg-creator-surface-2 text-creator-fg transition-[background-color,scale] duration-micro hover:bg-creator-line-strong focus-visible:focus-ring active:scale-pressed"
+            className={cn(
+              "grid place-items-center rounded-full text-creator-fg duration-micro focus-visible:focus-ring active:scale-pressed",
+              plain
+                ? "size-touch-target transition-[opacity,scale] hover:opacity-secondary"
+                : "size-control-xl bg-creator-surface-2 transition-[background-color,scale] hover:bg-creator-line-strong",
+            )}
           >
-            <PlatformGlyph platform={item.platform} size="md" />
+            <PlatformGlyph platform={item.platform} size={plain ? "lg" : "md"} />
           </a>
         </li>
       ))}
@@ -81,8 +87,9 @@ function Stats({ stats }: { stats: NonNullable<Profile["stats"]> }) {
 }
 
 /**
- * The hero. Three treatments chosen by the template:
+ * The hero. Four treatments chosen by the template:
  * - portrait: the photo fades into the page, the name overlaps the fade;
+ * - mono: the same in black and white (photo and moving picture), for editorial looks;
  * - duotone: the photo is toned into the page color (screen for dark photos, multiply for light);
  * - logo: the creator's logo over a softly blurred photo (falls back to portrait without a logo).
  * On scroll the photo softens and fades away (CSS scroll-driven animation, no JavaScript). A moving
@@ -139,10 +146,16 @@ export function PosterHero({
             alt={photo.alt}
             sizes={mediaSizes.column}
             priority={!preview}
-            className={treatment === "duotone" ? cn("grayscale contrast-125", photo.tone === "light" ? "mix-blend-multiply" : "mix-blend-screen") : undefined}
+            className={
+              treatment === "duotone"
+                ? cn("grayscale contrast-125", photo.tone === "light" ? "mix-blend-multiply" : "mix-blend-screen")
+                : treatment === "mono"
+                  ? "grayscale"
+                  : undefined
+            }
           />
           {/* A moving picture plays over the photo (the photo is its poster and its still version). */}
-          {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}
+          {profile.motion ? <HeroMotion src={profile.motion.src} className={treatment === "mono" ? "grayscale" : undefined} /> : null}
         </div>
       )}
       <div className={cn("relative grid justify-items-center gap-3 px-creator-gutter", treatment === "logo" && profile.logo ? "-mt-6" : treatment === "monogram" ? "-mt-12" : "-mt-16")}>
@@ -153,7 +166,7 @@ export function PosterHero({
         {profile.bio ? <p className="max-w-prose text-body-lg text-balance text-creator-fg-muted">{profile.bio}</p> : null}
         {socials ? (
           <div className="pt-2">
-            <Socials block={socials} />
+            <Socials block={socials} plain={theme.layout.socials === "plain"} />
           </div>
         ) : null}
       </div>

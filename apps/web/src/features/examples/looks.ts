@@ -40,6 +40,7 @@ export const LOOKS = {
   "adam-nour": { kind: "music", category: "music", locale: "ar", theme: { template: "nocturne", accent: SW.saffron, buttonStyle: "glass" } },
   "mara-vale": { kind: "music", category: "music", locale: "en", theme: { template: "pulse", accent: SW.flamingo, pairing: "stage", buttonShape: "pill" } },
   "zwei-kaffee": { kind: "podcast", category: "music", locale: "de", theme: { template: "pulse", accent: SW.grape, pairing: "modern", buttonStyle: "shadow" } },
+  "nela-voss": { kind: "music", category: "music", locale: "de", theme: { template: "mono" } },
   // Film
   "karam-haddad": { kind: "other", category: "film", locale: "ar", theme: { template: "nocturne", accent: SW.ruby, buttonStyle: "minimal" } },
   "sofia-laurent": { kind: "other", category: "film", locale: "en", theme: { template: "atelier", accent: SW.mauve, pairing: "elegant", mode: "dark" } },

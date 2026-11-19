@@ -19,6 +19,7 @@ our own expression; no code, text, images or marks are copied.
    | Marquee | dark, soft blur | creator logo over a blurred photo |
    | Pulse | the whole page in the creator's color | photo toned into the color (duotone) |
    | Atelier | warm paper, serif name, square corners, titles in caps | portrait |
+   | Mono (added later, ADR 0025) | white, black-and-white portrait, condensed name, titles in caps, bare social icons | portrait in greyscale |
 
 2. **Vivid mode** in the palette engine: the background is the seed hue at the lightest lightness where white text
    still reaches 7:1 on every surface; buttons become near-white with a dark label in the same hue. Property-tested

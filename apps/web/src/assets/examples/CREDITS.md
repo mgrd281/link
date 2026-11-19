@@ -4,9 +4,10 @@ Every person, business and link on the example pages (/templates) is fictional. 
 used under the Unsplash License (free to use, attribution appreciated); each license was checked on the
 photo's own page. Moving pictures (ex4-motion-*: the poster here, the looping clip in public/media/motion)
 are Mixkit clips under the Mixkit Stock Video Free License (checked on each clip page; cut, cropped and
-re-encoded for Linkyo). The logos (ex-logo-*.png) are original artwork made for Linkyo. People in the
-photos and clips are models or anonymous; they have no connection to the fictional names and are not
-endorsing Linkyo.
+re-encoded for Linkyo). The logos (ex-logo-*.png) are original artwork made for Linkyo. The release
+covers (ex5-cover-*, ex5-album-banner) are original Linkyo designs set on Unsplash photos, with typefaces
+under the SIL Open Font License. People in the photos and clips are models or anonymous; they have no
+connection to the fictional names and are not endorsing Linkyo.
 
 | File | Photographer / source | Photo page | License |
 |---|---|---|---|
@@ -113,6 +114,14 @@ endorsing Linkyo.
 | ex4-motion-lina.jpg | Mixkit (clip 4859; loop in public/media/motion/lina.mp4) | https://mixkit.co/free-stock-video/portrait-of-a-happy-smiling-woman-4859/ | Mixkit Stock Video Free License |
 | ex4-motion-mara.jpg | Mixkit (clip 50326; loop in public/media/motion/mara.mp4) | https://mixkit.co/free-stock-video/talented-female-singer-in-a-fancy-old-place-50326/ | Mixkit Stock Video Free License |
 | ex4-motion-timo.jpg | Mixkit (clip 4535; loop in public/media/motion/timo.mp4) | https://mixkit.co/free-stock-video/portrait-of-a-smiling-man-4535/ | Mixkit Stock Video Free License |
+| ex5-album-banner.jpg | Linkyo cover design on a photo by Rowan Heuvel | https://unsplash.com/photos/motion-blur-of-dark-blue-water-46XhEw9wFjk | Unsplash License; type: Instrument Serif, Work Sans, DM Mono (OFL) |
+| ex5-cover-glas-gold.jpg | Linkyo cover design on a photo by Pawel Czerwinski | https://unsplash.com/photos/white-smoke-on-black-background-6CgugIFqpPw | Unsplash License; type: Gloock, DM Mono (OFL) |
+| ex5-cover-leise-stadt.jpg | Linkyo cover design on a photo by Barbie Singer | https://unsplash.com/photos/blurred-city-street-at-night-with-bokeh-lights-ipu2qB0jyhs | Unsplash License; type: Big Shoulders (OFL) |
+| ex5-cover-mitternachtsblau.jpg | Linkyo cover design on a photo by Rowan Heuvel | https://unsplash.com/photos/motion-blur-of-dark-blue-water-46XhEw9wFjk | Unsplash License; type: Instrument Serif, Work Sans (OFL) |
+| ex5-cover-playlist.jpg | Linkyo cover design on a photo by Mery Amiri | https://unsplash.com/photos/a-black-and-white-photo-of-a-woman-sitting-on-a-chair-UoSBugW7H5A | Unsplash License; type: Big Shoulders, Work Sans (OFL) |
+| ex5-hoodie-black.jpg | Soheil Kmp (black and white, cropped) | https://unsplash.com/photos/a-woman-in-a-black-hoodie-leaning-against-a-wall-R3jQerZ0YmM | Unsplash License |
+| ex5-hoodie-white.jpg | Amir Abbaspoor (black and white, cropped) | https://unsplash.com/photos/a-woman-in-a-white-hoodie-sitting-on-a-chair-AQK4pg-PTjs | Unsplash License |
+| ex5-nela-voss.jpg | Mery Amiri (backdrop brightened, cropped) | https://unsplash.com/photos/a-black-and-white-photo-of-a-woman-sitting-on-a-chair-UoSBugW7H5A | Unsplash License |
 | ex-logo-*.png | Linkyo (original artwork) | — | © Linkyo |
 
 Unsplash License: https://unsplash.com/license

@@ -97,14 +97,15 @@ export function makeHelpers(slug: string, persona: Persona) {
       highlight: options.highlight ?? false,
       ...linkExtras(options, path),
     }),
-    /** A card with a picture: articles, offers, featured work. */
-    card: (title: string, description: string, path: string, key: string, options: { affiliate?: boolean } = {}): BlockOf<"card"> => ({
+    /** A card with a picture: articles, offers, featured work. Highlighted cards lead with a wide picture. */
+    card: (title: string, description: string, path: string, key: string, options: { affiliate?: boolean; highlight?: boolean } = {}): BlockOf<"card"> => ({
       ...base("card"),
       type: "card",
       title,
       description,
       url: url(path),
       image: image(key),
+      highlight: options.highlight ?? false,
       ...(options.affiliate ? { affiliate: true } : {}),
     }),
     mail: (title: string, box: string, options: LinkOptions = {}): BlockOf<"link"> => ({
@@ -133,13 +134,22 @@ export function makeHelpers(slug: string, persona: Persona) {
       poster: key ? image(key) : cover,
       ...(duration ? { duration } : {}),
     }),
-    music: (title: string, artist: string, kind: "single" | "ep" | "album", platforms: Platform[], releaseDate?: string): BlockOf<"music"> => ({
+    /** A release; its own artwork when `cover` names a picture, the persona's photo otherwise. */
+    music: (
+      title: string,
+      artist: string,
+      kind: "single" | "ep" | "album",
+      platforms: Platform[],
+      releaseDate?: string,
+      options: { cover?: string; highlight?: boolean } = {},
+    ): BlockOf<"music"> => ({
       ...base("music"),
       type: "music",
       title,
       artist,
       kind,
-      cover,
+      cover: options.cover ? image(options.cover) : cover,
+      highlight: options.highlight ?? false,
       ...(releaseDate ? { releaseDate } : {}),
       links: platforms.map((platform) => ({ platform, url: url(`music/${platform}`) })),
     }),

@@ -98,3 +98,24 @@ test.describe("moving pictures", () => {
     await expect(page.getByRole("button", { name: "Bewegtes Bild anhalten" })).toBeVisible();
   });
 });
+
+test.describe("mono template", () => {
+  test("Nela Voss: black-and-white portrait, bare social icons, titles in capitals", async ({ page }) => {
+    await page.goto("/de/p/nela-voss");
+    await expect(page.getByRole("heading", { level: 1, name: "Nela Voss" })).toBeVisible();
+    // The portrait is shown in black and white, whatever the photo's colors.
+    await expect(page.locator("header img").first()).toHaveCSS("filter", /grayscale/);
+    // Social profiles are bare glyphs (no tile behind them) with a full touch target.
+    const instagram = page.locator("header").getByRole("link", { name: "Instagram" });
+    await expect(instagram).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    const box = await instagram.boundingBox();
+    expect(box?.width).toBeGreaterThanOrEqual(44);
+    // Sections titled in capitals; releases with their own covers; the two-up merch line.
+    await expect(page.getByRole("heading", { level: 2, name: "Letzter Release" })).toHaveCSS("text-transform", "uppercase");
+    await expect(page.getByText("Glas & Gold (Radio Edit)")).toBeVisible();
+    await expect(page.getByRole("link", { name: /White Line Hoodie/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Black Line Hoodie/ })).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+  });
+});

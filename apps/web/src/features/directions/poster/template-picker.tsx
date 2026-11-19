@@ -17,7 +17,7 @@ import { resolveMedia } from "../shared/media";
 import { displayStyle } from "./styles";
 
 /**
- * Template picker: five looks, each previewed with the creator's own photo and name in that
+ * Template picker: six looks, each previewed with the creator's own photo and name in that
  * template's real colors and fonts (resolved by the theme engine, so every swatch is AA).
  * Native radio inputs: arrow keys move between templates, screen readers announce the choice.
  */
@@ -41,7 +41,7 @@ export function TemplatePicker({
     <fieldset className="grid min-w-0 gap-3">
       <legend className="sr-only">{t("template")}</legend>
       <div className="-mx-5 overflow-x-auto px-5 pb-1 lg:mx-0 lg:overflow-visible lg:px-0">
-        <div className="grid auto-cols-[42%] grid-flow-col gap-3 sm:auto-cols-[28%] lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-5">
+        <div className="grid auto-cols-[42%] grid-flow-col gap-3 sm:auto-cols-[28%] lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3">
           {themes.map(({ id, theme }) => {
             const selected = id === value;
             return (
@@ -69,7 +69,7 @@ export function TemplatePicker({
                         alt=""
                         fill
                         sizes={thumbSizes}
-                        className={cn("object-cover", theme.layout.hero === "duotone" && "grayscale mix-blend-screen", theme.layout.hero === "logo" && "blur-glass")}
+                        className={cn("object-cover", theme.layout.hero === "duotone" && "grayscale mix-blend-screen", theme.layout.hero === "mono" && "grayscale", theme.layout.hero === "logo" && "blur-glass")}
                         unoptimized={typeof avatar === "string"}
                         referrerPolicy="no-referrer"
                       />

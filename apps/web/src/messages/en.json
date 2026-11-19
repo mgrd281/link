@@ -424,10 +424,10 @@
     "earlier": "Earlier directions",
     "poster": {
       "name": "Poster",
-      "tagline": "Five templates. Clear sections. Your photo first.",
+      "tagline": "Six templates. Clear sections. Your photo first.",
       "description": "Built from the pages you sent: a full-width portrait or your logo, the name set like a gig poster, then titled sections — releases, shows with month tabs, mixes in a two-row rail, a two-up shop, partner tiles and videos. Pick a template, the content stays. The dashboard edits the page section by section.",
       "traits": [
-        "Five templates: Nocturne, Daylight, Marquee, Pulse, Atelier",
+        "Six templates: Nocturne, Daylight, Marquee, Pulse, Atelier, Mono",
         "Every color pair passes WCAG AA in every template",
         "Zero cookies, videos load only after a tap, ads are labelled"
       ],
@@ -559,12 +559,15 @@
     },
     "atelier": {
       "description": "Warm gallery paper, a serif name, crisp corners and titles in capitals."
+    },
+    "mono": {
+      "description": "Black and white: the portrait melts into white, a tall name, titles in capitals."
     }
   },
   "marketing": {
     "meta": {
       "title": "Linkyo — One link. Everything you create.",
-      "description": "The creator page that looks premium in five minutes: five templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
+      "description": "The creator page that looks premium in five minutes: six templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
     },
     "nav": {
       "features": "Features",
@@ -614,7 +617,7 @@
       }
     },
     "templates": {
-      "title": "Five templates. Your photos.",
+      "title": "Six templates. Your photos.",
       "lead": "Pick a look, keep your content. Every color in every template is checked for contrast, so your page stays readable for everyone.",
       "pause": "Pause the template strip",
       "play": "Play the template strip",
@@ -705,7 +708,7 @@
         "price": "0 €",
         "per": "forever",
         "features": [
-          "All five templates",
+          "All six templates",
           "Unlimited links and sections",
           "Music, shows, videos, shop links",
           "Cookie-free analytics",
@@ -1424,7 +1427,7 @@
         "look": {
           "short": "Look",
           "title": "Pick a look",
-          "lead": "Five templates, all with your photo and name. Try them — the preview changes instantly."
+          "lead": "Six templates, all with your photo and name. Try them — the preview changes instantly."
         },
         "links": {
           "short": "Links",

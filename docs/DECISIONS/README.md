@@ -26,3 +26,4 @@
 | [0022](0022-link-buttons.md) | Link buttons: icon tile (chosen or from the address), optional second line, one primary action in the accent; LinkedIn glyph | **Applied** |
 | [0023](0023-video-playback.md) | Video playback after the tap: whole video here (default), 30-second preview then "Keep watching on YouTube", or open the platform | **Applied** |
 | [0024](0024-moving-picture.md) | Moving picture: a short silent loop over the hero photo (poster = photo), plays only on screen, never for reduced motion or data saver; self-hosted | **Applied** |
+| [0025](0025-mono-template.md) | Mono, a sixth template: black-and-white portrait melting into white, tall condensed name, titles in capitals, bare social icons; example page Nela Voss | **Applied** |

@@ -149,7 +149,9 @@ describe("presets", () => {
     expect(resolveCreatorTheme({ template: "marquee" }).layout.hero).toBe("logo");
     expect(resolveCreatorTheme({ template: "atelier" }).layout.headings).toBe("sans-upper");
     expect(resolveCreatorTheme({ template: "nocturne", mode: "light" }).palette.mode).toBe("light");
-    expect(resolveCreatorTheme({ preset: "midnight" }).layout).toEqual({ headings: "display", hero: "portrait" });
+    expect(resolveCreatorTheme({ preset: "midnight" }).layout).toEqual({ headings: "display", hero: "portrait", socials: "tiles" });
+    expect(resolveCreatorTheme({ template: "mono" }).layout).toEqual({ headings: "sans-upper", hero: "mono", socials: "plain" });
+    expect(resolveCreatorTheme({ template: "mono" }).palette.mode).toBe("light");
   });
 
   it("switches to the Arabic pairing for RTL scripts", () => {
