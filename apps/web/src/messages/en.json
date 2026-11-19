@@ -2541,6 +2541,41 @@
     "badgeNotes": {
       "concept": "Unofficial concept from public sources: not the official page, not affiliated with the person.",
       "preview": "A preview of a page we prepared for this person."
-    }
+    },
+    "browse": "Browse examples",
+    "stats": {
+      "label": "At a glance",
+      "examples": "examples",
+      "designs": "designs",
+      "languages": "languages"
+    },
+    "galleryTitle": "All examples",
+    "search": {
+      "label": "Search examples",
+      "placeholder": "Name or field",
+      "clear": "Clear search",
+      "shortcut": "Press / to search"
+    },
+    "results": "{count, plural, =0 {No results} one {# result} other {# results}}",
+    "empty": {
+      "title": "Nothing found",
+      "text": "Try another word, category or language.",
+      "reset": "Reset filters"
+    },
+    "scroll": {
+      "back": "Previous categories",
+      "next": "More categories"
+    },
+    "motion": {
+      "pause": "Pause motion",
+      "play": "Play motion"
+    },
+    "language": {
+      "label": "Page language",
+      "all": "All"
+    },
+    "prev": "Previous example",
+    "next": "Next example",
+    "position": "{index} of {total}"
   }
 }

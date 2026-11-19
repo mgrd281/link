@@ -2541,6 +2541,41 @@
     "badgeNotes": {
       "concept": "Inoffizielles Konzept aus öffentlichen Quellen: nicht die offizielle Seite, keine Verbindung zur Person.",
       "preview": "Vorschau einer Seite, die wir für diese Person vorbereitet haben."
-    }
+    },
+    "browse": "Beispiele durchsuchen",
+    "stats": {
+      "label": "Auf einen Blick",
+      "examples": "Beispiele",
+      "designs": "Designs",
+      "languages": "Sprachen"
+    },
+    "galleryTitle": "Alle Beispiele",
+    "search": {
+      "label": "Beispiele durchsuchen",
+      "placeholder": "Name oder Branche",
+      "clear": "Suche leeren",
+      "shortcut": "Taste / springt zur Suche"
+    },
+    "results": "{count, plural, =0 {Keine Treffer} one {# Treffer} other {# Treffer}}",
+    "empty": {
+      "title": "Nichts gefunden",
+      "text": "Probier einen anderen Begriff, eine andere Kategorie oder Sprache.",
+      "reset": "Filter zurücksetzen"
+    },
+    "scroll": {
+      "back": "Vorherige Kategorien",
+      "next": "Weitere Kategorien"
+    },
+    "motion": {
+      "pause": "Bewegung anhalten",
+      "play": "Bewegung abspielen"
+    },
+    "language": {
+      "label": "Sprache der Seite",
+      "all": "Alle"
+    },
+    "prev": "Vorheriges Beispiel",
+    "next": "Nächstes Beispiel",
+    "position": "{index} von {total}"
   }
 }

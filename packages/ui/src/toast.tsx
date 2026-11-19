@@ -44,7 +44,9 @@ const subscribe = (listener: () => void) => {
   return () => listeners.delete(listener);
 };
 const snapshot = () => items;
-const serverSnapshot = (): ToastItem[] => [];
+// One shared empty list: a new array per call makes React re-render forever during hydration.
+const NONE: ToastItem[] = [];
+const serverSnapshot = () => NONE;
 
 export function Toaster({ closeLabel }: { closeLabel: string }) {
   const list = useSyncExternalStore(subscribe, snapshot, serverSnapshot);

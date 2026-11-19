@@ -226,6 +226,20 @@
   }
 }
 
+@keyframes mk-marquee-y {
+  to {
+    translate: 0 -50%;
+  }
+}
+
+@keyframes mk-card-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--spacing-4);
+    scale: var(--scale-pressed);
+  }
+}
+
 @keyframes mk-grow {
   from {
     scale: 1 0;
@@ -339,6 +353,36 @@
   &:is([data-paused="true"] *) {
     animation-play-state: paused;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* A column of cards drifting upwards (the template wall). Hovering the wall or its pause button stops it. */
+@utility mk-marquee-y {
+  animation: mk-marquee-y var(--duration-marquee) linear infinite;
+
+  &:is([data-marquee]:hover *),
+  &:is([data-paused="true"] *) {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* The middle column drifts the other way, a little slower: the wall never moves as one block. */
+@utility mk-marquee-reverse {
+  animation-direction: reverse;
+  animation-duration: calc(var(--duration-marquee) * 1.25);
+}
+
+/* Cards arriving after a filter or search: a short rise, one after another (capped, so it stays quick). */
+@utility mk-card-in {
+  animation: mk-card-in var(--duration-slow) var(--ease-standard) both;
+  animation-delay: calc(min(var(--i, 0), 11) * var(--duration-micro) / 3);
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;

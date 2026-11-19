@@ -19,6 +19,8 @@ labelled "Example · {category}" and is `noindex`. See ADR 0019, 0021, 0022 and 
 | Moving pictures | `public/media/motion/<name>.mp4`; persona `motion: "<name>"`, photo = the clip's first frame |
 | Credits | `src/assets/examples/CREDITS.md` (one row per photo or clip) |
 | Categories | `CATEGORIES` in `looks.ts` plus `examples.categories.*` in `src/messages/{de,en,ar}.json` |
+| Category icon | `CATEGORY_ICONS` in `features/examples/gallery-card.tsx` (one lucide icon per category; TypeScript fails without it) |
+| Gallery UI | `gallery.tsx` (search, chips, grid, preview), `gallery-card.tsx` (card face, tilt), `gallery-showcase.tsx` (moving wall: `pickShowcase` takes one page per category in turn, never real people). See ADR 0029 |
 
 ## Rules
 

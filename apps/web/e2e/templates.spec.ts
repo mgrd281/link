@@ -15,10 +15,65 @@ test.describe("template gallery", () => {
     await expect(page.getByRole("button", { name: /^Local businesses/ })).toHaveAttribute("aria-pressed", "true");
     await expect(cards.first()).toBeVisible();
     expect(await cards.count()).toBeLessThan(20);
-    // The bakery is also one of the three featured cards above the grid; .last() is the grid card.
     await expect(page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).last()).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+  });
+
+  test("search, language and category narrow the grid; nothing found offers a reset", async ({ page }) => {
+    await page.goto("/en/templates");
+    const cards = page.getByRole("button", { name: /^Preview: / });
+    const all = await cards.count();
+    const search = page.getByRole("searchbox", { name: "Search examples" });
+    await search.fill("backerei");
+    await expect(page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" })).toBeVisible();
+    expect(await cards.count()).toBeLessThan(5);
+    await search.fill("");
+    await expect(cards).toHaveCount(all);
+
+    await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: "Arabic" }).click();
+    await expect(page.getByRole("button", { name: "Preview: آدم نور" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" })).toHaveCount(0);
+    // The category chips count what the other filters leave.
+    await expect(page.getByRole("button", { name: /^Local businesses/ })).toContainText(/\d/);
+
+    await search.fill("zzzz nothing");
+    await expect(page.getByText("Nothing found")).toBeVisible();
+    await page.getByRole("button", { name: "Reset filters" }).click();
+    await expect(cards).toHaveCount(all);
+    await expect(search).toHaveValue("");
+  });
+
+  test("the preview flips through the examples and closes with Escape", async ({ page }) => {
+    await page.goto("/en/templates");
+    await page.getByRole("button", { name: /^Local businesses/ }).click();
+    await page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).click();
+    const dialog = page.getByRole("dialog");
+    const frame = dialog.locator("iframe");
+    await expect(frame).toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
+    // Focus is on the dialog (not inside the page frame), so the keys work right away.
+    await page.keyboard.press("ArrowRight");
+    await expect(frame).not.toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
+    await page.keyboard.press("ArrowLeft");
+    await expect(frame).toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
+    await dialog.getByRole("button", { name: "Next example" }).first().click();
+    await expect(frame).not.toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  });
+
+  test("the moving wall can be paused and stays still for reduced motion; nothing overflows", async ({ page }) => {
+    await page.goto("/en/templates");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    const pause = page.getByRole("button", { name: "Pause motion" });
+    await pause.click();
+    await expect(page.getByRole("button", { name: "Play motion" })).toBeVisible();
+    const lane = page.locator(".mk-marquee-y, .mk-marquee").filter({ visible: true }).first();
+    await expect(lane).toHaveCSS("animation-play-state", "paused");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.reload();
+    await expect(page.locator(".mk-marquee-y, .mk-marquee").filter({ visible: true }).first()).toHaveCSS("animation-name", "none");
+    await expect(page.getByRole("button", { name: "Pause motion" })).toBeHidden();
   });
 
   test("well-known people are listed too, labelled as concepts, and start with their look", async ({ page }) => {

@@ -24,7 +24,7 @@ example).
 | Template entry | `packages/tokens/tokens.json` → `creator.template.<id>` (`label`, `description`, `accent`, `neutral`, `tint`, `mode`, `pairing`, `buttonStyle`, `buttonShape`, `headings`, `hero`, `socials`) |
 | Layout option types | `packages/tokens/src/creator/theme.ts` (`HeadingStyle`, `HeroStyle`, `SocialStyle`, `CreatorLayout`, `DEFAULT_LAYOUT`) + `test/palette.test.ts` |
 | Hero treatment and socials | `apps/web/src/features/directions/poster/hero.tsx` (treatments, `Socials plain`) and the ambient backdrop in `renderer.tsx` |
-| Picker previews | `poster/template-picker.tsx` (two rows of three on wide screens), `examples/gallery.tsx` (`hero` type) |
+| Picker previews | `poster/template-picker.tsx` (two rows of three on wide screens), `examples/gallery-card.tsx` (`hero` type, card face) |
 | Texts | `templates.<id>.description` in de/en/ar, plus every "N templates" sentence (`grep -n "templates" src/messages/*.json`) |
 | Marketing phones | `src/assets/marketing/phone-<id>-{de,ar}.jpg` (780 × 1688), registered in `features/marketing/assets.ts` |
 | Example page | a `LOOKS` entry with `template: "<id>"` plus a page in `catalog-*.ts` (see `linkyo-example-page`) |

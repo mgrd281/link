@@ -1,4 +1,6 @@
-import { resolveCreatorTheme } from "@linkyo/tokens/creator";
+import { resolveCreatorTheme, TEMPLATE_IDS } from "@linkyo/tokens/creator";
+import { Icon } from "@linkyo/ui";
+import { ArrowDown, ArrowRight, Info, Languages, LayoutGrid, Palette, Sparkles, WandSparkles, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -80,32 +82,79 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
   const people = Object.keys(PEOPLE_LOOKS).map((slug) => personItem(slug, locale));
   const items = [...examples, ...people].filter((entry): entry is GalleryItem => entry !== null);
 
+  const stats: { icon: LucideIcon; value: number; label: string }[] = [
+    { icon: LayoutGrid, value: items.length, label: t("stats.examples") },
+    { icon: Palette, value: TEMPLATE_IDS.length, label: t("stats.designs") },
+    { icon: Languages, value: 3, label: t("stats.languages") },
+  ];
+
   return (
     <>
       <MarketingHeader />
-      <main id="main" className="mx-auto grid max-w-content grid-cols-1 gap-10 px-5 pt-12 pb-16 md:px-10 md:pt-20">
+      <main id="main" className="mx-auto grid max-w-content grid-cols-1 gap-16 px-5 pt-12 pb-16 md:px-10 md:pt-20 md:pb-24">
         <ExampleGallery
           items={items}
-          featured={["rafael-duarte", "adam-nour", "baeckerei-sonnenkorn"]}
           intro={
-            <header className="grid max-w-prose gap-5">
-              <p className="inline-flex items-center gap-2 justify-self-start rounded-full bg-selected px-3 py-1 text-small font-semibold text-selected-fg">{t("eyebrow")}</p>
+            <header className="mk-rise grid content-center gap-6">
+              <p className="inline-flex items-center gap-2 justify-self-start rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary shadow-e1">
+                <span className="grid size-6 place-items-center rounded-full bg-selected text-selected-fg">
+                  <Icon icon={Sparkles} size="sm" />
+                </span>
+                {t("eyebrow")}
+              </p>
               <h1 className="text-h1 tracking-tight text-balance md:text-display">{t("title")}</h1>
-              <p className="text-body-lg text-pretty text-fg-secondary">{t("lead")}</p>
-              <p className="text-small text-fg-tertiary">{t("count", { count: items.length })}</p>
+              <p className="max-w-prose text-body-lg text-pretty text-fg-secondary">{t("lead")}</p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/signup"
+                  className="inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-e2 transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+                >
+                  {t("ctaButton")}
+                  <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+                </Link>
+                <a
+                  href="#gallery"
+                  className="inline-flex h-control-lg items-center gap-2 rounded-full border border-line-strong bg-surface px-6 text-body font-semibold text-fg shadow-e1 transition-colors duration-micro hover:bg-surface-elevated focus-visible:focus-ring active:scale-pressed"
+                >
+                  {t("browse")}
+                  <Icon icon={ArrowDown} size="md" />
+                </a>
+              </div>
+              <ul aria-label={t("stats.label")} className="grid grid-cols-3 gap-4 border-t border-line pt-6 sm:flex sm:gap-x-8">
+                {stats.map((stat) => (
+                  <li key={stat.label} className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
+                    <span aria-hidden className="grid size-control-md place-items-center rounded-lg bg-selected text-selected-fg">
+                      <Icon icon={stat.icon} size="md" />
+                    </span>
+                    <span className="grid">
+                      <span className="text-h3 leading-none tabular-nums">{stat.value}</span>
+                      <span className="text-small text-fg-secondary">{stat.label}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </header>
           }
         />
-        <p className="max-w-prose text-caption text-fg-tertiary">{t("fictional")}</p>
-        <section className="grid justify-items-start gap-4 rounded-xl border border-line bg-surface p-6 shadow-e1 md:flex md:items-center md:justify-between">
-          <p className="text-body-lg font-semibold text-balance">{t("cta")}</p>
+
+        <section className="relative isolate grid gap-6 overflow-hidden rounded-xl bg-primary p-6 text-primary-fg shadow-e2 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:p-10">
+          <div aria-hidden className="mk-glow absolute -end-16 -top-16 size-32 rounded-full bg-primary-hover blur-ambient" />
+          <span aria-hidden className="relative grid size-control-xl place-items-center rounded-full bg-primary-fg text-primary">
+            <Icon icon={WandSparkles} size="lg" />
+          </span>
+          <p className="relative text-h3 text-balance">{t("cta")}</p>
           <Link
             href="/signup"
-            className="inline-flex h-control-lg shrink-0 items-center rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-e1 hover:bg-primary-hover focus-visible:focus-ring"
+            className="relative inline-flex h-control-lg items-center justify-center gap-2 justify-self-start rounded-full bg-primary-fg px-6 text-body font-semibold text-primary shadow-e1 transition-transform duration-micro hover:-translate-y-0.5 focus-visible:focus-ring active:scale-pressed md:justify-self-end"
           >
             {t("ctaButton")}
+            <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
           </Link>
         </section>
+        <p className="-mt-10 flex max-w-prose items-start gap-2 text-caption text-fg-tertiary">
+          <Icon icon={Info} size="sm" className="mt-0.5 shrink-0" />
+          {t("fictional")}
+        </p>
       </main>
       <MarketingFooter />
     </>
