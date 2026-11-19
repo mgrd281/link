@@ -43,6 +43,17 @@ async function axe(page: Page) {
 /** The bottom tab bar on phones, the sidebar on wide screens: both are labelled "Team area". */
 const nav = (page: Page) => page.getByRole("navigation", { name: "Team area" }).locator("visible=true");
 
+/** Opens a section from the navigation; on phones the less used ones sit under "More". */
+async function go(page: Page, name: string) {
+  const link = nav(page).getByRole("link", { name, exact: true });
+  if (await link.count()) {
+    await link.first().click();
+    return;
+  }
+  await nav(page).getByRole("button", { name: "More" }).click();
+  await page.getByRole("menuitem", { name }).click();
+}
+
 async function createPage(page: Page, name: string, username: string, email?: string) {
   await nav(page).getByRole("link", { name: "Creators" }).click();
   await page.getByRole("button", { name: "New page" }).first().click();
@@ -121,7 +132,7 @@ test.describe("team area", () => {
     expect(published.invite.emailSha256).toHaveLength(2);
     expect(text).not.toContain("example.com");
 
-    await nav(page).getByRole("link", { name: "Activity" }).click();
+    await go(page, "Activity");
     for (const line of ["created the page", "verified", "added an invite", "approved", "downloaded"]) {
       await expect(page.getByText(line).first()).toBeVisible();
     }
@@ -129,7 +140,7 @@ test.describe("team area", () => {
 
   test("roles decide what each person can do; owners can check by viewing as another role", async ({ page, isMobile }) => {
     await owner(page);
-    await nav(page).getByRole("link", { name: "Team" }).click();
+    await go(page, "Team");
     await page.getByRole("button", { name: "Add member" }).click();
     await page.getByLabel("Name", { exact: true }).fill("Sara");
     await page.getByLabel("Email", { exact: true }).fill(`sara-${unique()}@example.com`);
@@ -170,10 +181,86 @@ test.describe("team area", () => {
     expect(await axe(page)).toEqual([]);
     await page.getByRole("radio", { name: "Invite & approval" }).click();
     expect(await axe(page)).toEqual([]);
-    for (const path of ["/en/admin/creators", "/en/admin/team", "/en/admin/activity", "/ar/admin/team"]) {
+    for (const path of [
+      "/en/admin/creators",
+      "/en/admin/team",
+      "/en/admin/activity",
+      "/ar/admin/team",
+      "/en/admin/customers",
+      "/en/admin/subscriptions",
+      "/en/admin/security",
+      "/en/admin/analytics",
+      "/ar/admin/customers",
+      "/ar/admin/security",
+    ]) {
       await page.goto(path);
       await page.locator("main h1").first().waitFor();
       expect(await axe(page), path).toEqual([]);
     }
+  });
+
+});
+
+test.describe("customer console", () => {
+  test("find a customer, change the plan, suspend, add a note; every action is in the activity log", async ({ page }) => {
+    await owner(page);
+    await go(page, "Customers");
+    await expect(page.getByRole("heading", { level: 1, name: "Customers" })).toBeVisible();
+    await page.getByLabel("Status").selectOption("past_due");
+    await expect(page.getByRole("status")).toContainText(/\d+ customers?/);
+    await page.getByLabel("Status").selectOption("all");
+    await page.getByLabel("Search").fill("haddad");
+    const first = page.locator("main a[href*='/admin/customers/cus_']").locator("visible=true").first();
+    const name = (await first.locator("span.truncate").first().textContent()) ?? "";
+    await first.click();
+    await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
+
+    await page.getByRole("button", { name: "Change plan" }).click();
+    await page.getByRole("menuitem", { name: /^Pro/ }).click();
+    await expect(page.getByText("Plan changed to Pro").first()).toBeVisible();
+    await page.getByRole("button", { name: "Actions" }).click();
+    await page.getByRole("menuitem", { name: "Suspend account" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Suspend account" }).click();
+    await expect(page.getByText("Suspended", { exact: true }).first()).toBeVisible();
+
+    await page.getByRole("radio", { name: "Notes" }).click();
+    await page.getByLabel("Add a note").fill("Called about the custom domain.");
+    await page.getByRole("button", { name: "Save note" }).click();
+    await expect(page.getByText("Called about the custom domain.")).toBeVisible();
+    await expect(page.getByText(/changed the plan/)).toBeVisible();
+
+    await go(page, "Activity");
+    await page.getByRole("radio", { name: "Customers" }).click();
+    await expect(page.getByText(/suspended/).first()).toBeVisible();
+  });
+
+  test("security shows this browser's sign-in with IP and device, and an address can be blocked", async ({ page }) => {
+    const account = await owner(page);
+    await go(page, "Security");
+    await expect(page.getByRole("heading", { level: 1, name: "Security" })).toBeVisible();
+    const row = page.getByRole("row").filter({ hasText: account.name }).first();
+    await expect(row).toContainText(/127\.0\.0\.1|::1/);
+    await expect(row).toContainText("Signed in");
+    const ip = (await row.locator("td span.font-mono").first().textContent())?.trim() ?? "";
+    await row.getByRole("button", { name: `Block ${ip}` }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Block", exact: true }).click();
+    await expect(page.getByRole("region", { name: "Blocked addresses" }).getByText(ip, { exact: true })).toBeVisible();
+    // The customer sees the same sign-in in their own settings (after skipping the welcome flow).
+    await page.goto("/en/app/welcome");
+    await page.getByRole("button", { name: "Skip for now" }).click();
+    await page.waitForURL("**/en/app");
+    await page.goto("/en/app/settings");
+    await expect(page.getByRole("heading", { name: "Recent sign-ins" })).toBeVisible();
+    await expect(page.getByText("This device").first()).toBeVisible();
+  });
+
+  test("viewers see revenue and customers but can't change anything", async ({ page }) => {
+    await owner(page);
+    await page.getByLabel("View as").locator("visible=true").selectOption("viewer");
+    await go(page, "Customers");
+    await page.locator("main a[href*='/admin/customers/cus_']").locator("visible=true").first().click();
+    await expect(page.getByRole("radio", { name: "Subscription" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Change plan" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Actions" })).toHaveCount(0);
   });
 });

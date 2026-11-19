@@ -3,7 +3,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { TeamScreen } from "@/features/admin/team-screen";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "admin.meta" });
   return { title: t("team") };

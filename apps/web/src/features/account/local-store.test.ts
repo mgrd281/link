@@ -118,4 +118,23 @@ describe("password rules", () => {
     expect(isStrongEnough("night-shift-42")).toBe(true);
     expect(isStrongEnough("mila-2026!", { username: "mila" })).toBe(false);
   });
+
+  it("logs sign-ins and failed attempts with their context, exports and deletes them with the account", async () => {
+    const storage = memory();
+    const context = () => Promise.resolve({ ip: "192.0.2.4", country: "DE", city: "Berlin", device: { type: "desktop" as const, os: "macOS", browser: "Safari" }, deviceId: "dev_test" });
+    const store = new LocalAccountStore(() => storage, context);
+    await store.signUp(input);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    store.logOut();
+    expect((await store.logIn({ email: input.email, password: "wrong-pass-1" })).ok).toBe(false);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await store.logIn({ email: input.email, password: input.password });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const log = store.signIns();
+    expect(log.map((entry) => entry.result)).toEqual(["success", "failed", "success"]);
+    expect(log[0]).toMatchObject({ ip: "192.0.2.4", city: "Berlin", deviceId: "dev_test" });
+    expect((JSON.parse(store.exportData()) as { signIns: unknown[] }).signIns).toHaveLength(3);
+    store.deleteAccount();
+    expect((JSON.parse(storage.data.get(STORAGE_KEY) ?? "{}") as { logins: unknown }).logins).toEqual({});
+  });
 });

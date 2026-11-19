@@ -29,3 +29,4 @@
 | [0025](0025-mono-template.md) | Mono, a sixth template: black-and-white portrait melting into white, tall condensed name, titles in capitals, bare social icons; example page Nela Voss | **Applied** |
 | [0026](0026-link-metadata.md) | Pasted songs and videos get their real title and picture (oEmbed via our server, pictures re-served by our optimizer); link buttons keep icons; mobile editor and look-step clean-up | **Applied** |
 | [0027](0027-share-kit.md) | Share kit: link preview cards for every page and the site (template colors, labelled examples/concepts, Arabic-safe), plus story and post pictures in the dashboard | **Applied** |
+| [0028](0028-admin-console.md) | Team console: customers, subscriptions, security (IP, device, sign-in log for account holders only, 30 days) and analytics; eight new permissions, owners can do everything | **Applied** |

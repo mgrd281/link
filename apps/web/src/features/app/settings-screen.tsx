@@ -1,14 +1,15 @@
 "use client";
 
-import { Button, ConfirmDialog, Icon, TextField, toast } from "@linkyo/ui";
-import { AtSign, CircleCheck, Download, LogOut, Trash2, Upload } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useState, type SubmitEvent } from "react";
+import { Badge, Button, ConfirmDialog, Icon, TextField, toast } from "@linkyo/ui";
+import { AtSign, CircleCheck, Download, Laptop, LogOut, Smartphone, Tablet, Trash2, Upload } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useMemo, useState, useSyncExternalStore, type SubmitEvent } from "react";
 
 import { LocaleSwitch } from "@/components/locale-switch";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { PasswordField } from "@/features/account/auth/fields";
 import { isStrongEnough } from "@/features/account/password";
+import { STORAGE_KEY } from "@/features/account/local-store";
 import { accountStore } from "@/features/account/store";
 import type { AuthError, Legal } from "@/features/account/types";
 
@@ -290,6 +291,63 @@ function DataPanel() {
   );
 }
 
+const readAccounts = () => {
+  try {
+    return `${window.localStorage.getItem(STORAGE_KEY) ?? ""}|${window.localStorage.getItem("linkyo.device") ?? ""}`;
+  } catch {
+    return "";
+  }
+};
+const DEVICE_ICONS = { mobile: Smartphone, tablet: Tablet, desktop: Laptop } as const;
+
+/** The account's own sign-ins (30 days): where and with what. Transparency, and a way to spot strangers. */
+function SignInsPanel() {
+  const t = useTranslations("app.settings");
+  const locale = useLocale();
+  const raw = useSyncExternalStore((listener) => accountStore.subscribe(listener), readAccounts, () => "");
+  const signIns = useMemo(() => (raw ? accountStore.signIns().slice(0, 8) : []), [raw]);
+  const thisDevice = raw.split("|")[1];
+  const place = (code: string | undefined, city: string | undefined) => {
+    const country = code ? (new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code) : "";
+    return [city, country].filter(Boolean).join(", ") || t("unknownPlace");
+  };
+  const when = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return (
+    <Panel title={t("signIns")} id="signins-title">
+      <p className="text-small text-fg-secondary">{t("signInsHint")}</p>
+      {signIns.length === 0 ? (
+        <p className="text-small text-fg-tertiary">{t("signInsEmpty")}</p>
+      ) : (
+        <ul className="grid grid-cols-1 gap-2">
+          {signIns.map((entry) => (
+            <li key={entry.id} className="flex items-start gap-3 rounded-md border border-line p-3">
+              <Icon icon={DEVICE_ICONS[entry.device.type]} size="md" className="mt-0.5 shrink-0 text-fg-tertiary" />
+              <span className="grid min-w-0 flex-1 gap-0.5">
+                <span className="flex flex-wrap items-center gap-2 text-small font-medium">
+                  {entry.device.os} · {entry.device.browser}
+                  {entry.deviceId === thisDevice ? (
+                    <Badge size="sm" tone="primary">
+                      {t("thisDevice")}
+                    </Badge>
+                  ) : null}
+                  {entry.result === "failed" ? (
+                    <Badge size="sm" tone="danger">
+                      {t("failedSignIn")}
+                    </Badge>
+                  ) : null}
+                </span>
+                <span className="text-caption text-fg-secondary">
+                  {place(entry.country, entry.city)} · <span dir="ltr">{entry.ip || "–"}</span> · {when.format(new Date(entry.at))}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
 /** Settings: profile, address, login, legal notice, the dashboard's own look, and your data. */
 export function SettingsScreen() {
   const t = useTranslations("app.settings");
@@ -298,6 +356,7 @@ export function SettingsScreen() {
       <ProfilePanel />
       <AddressPanel />
       <AccountPanel />
+      <SignInsPanel />
       <LegalPanel />
       <Panel title={t("dashboard")} id="dashboard-title">
         <div className="flex flex-wrap items-center justify-between gap-3">

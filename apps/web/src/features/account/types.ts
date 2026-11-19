@@ -36,6 +36,34 @@ export interface Site {
   updatedAt: string;
 }
 
+export interface DeviceInfo {
+  type: "mobile" | "tablet" | "desktop";
+  os: string;
+  browser: string;
+}
+
+/**
+ * One sign-in (or failed attempt) to an account, kept 30 days for account security only: the
+ * owner sees it under Settings, the team uses it against account takeover and abuse.
+ */
+export interface LoginEvent {
+  id: string;
+  at: string;
+  /** The full address, dropped after 30 days. */
+  ip: string;
+  country?: string | undefined;
+  city?: string | undefined;
+  device: DeviceInfo;
+  /** A random id this browser keeps for the site (not a fingerprint): "known device" checks. */
+  deviceId: string;
+  /** Hash of browser, system, language, time zone and screen: tells devices apart when the id is gone. */
+  signature?: string | undefined;
+  result: "success" | "failed";
+}
+
+/** Where a sign-in comes from, filled in by the browser and the server (IP, rough location). */
+export type LoginContext = Omit<LoginEvent, "id" | "at" | "result">;
+
 export type AccountSnapshot =
   | { status: "loading" }
   | { status: "signedOut" }
@@ -87,6 +115,8 @@ export interface AccountStore {
   usernameStatus(username: string): "ok" | Extract<AuthError, "invalidUsername" | "reservedUsername" | "usernameTaken">;
 
   updateSite(update: (site: Site) => Site): Result;
+  /** The account's sign-ins and failed attempts of the last 30 days, newest first. */
+  signIns(): LoginEvent[];
   exportData(): string;
   deleteAccount(): void;
 }

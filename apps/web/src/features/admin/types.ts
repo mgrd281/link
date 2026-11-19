@@ -17,14 +17,23 @@ export const PERMISSIONS = [
   "invites.manage",
   "team.manage",
   "activity.view",
+  "customers.view",
+  "customers.manage",
+  "customers.delete",
+  "billing.view",
+  "billing.manage",
+  "security.view",
+  "security.manage",
+  "analytics.view",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
+/** Owners can do everything; admins everything but the team itself and deleting customers. */
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   owner: PERMISSIONS,
-  admin: ["pages.create", "pages.edit", "pages.publish", "pages.delete", "creators.verify", "invites.manage", "activity.view"],
-  editor: ["pages.create", "pages.edit", "activity.view"],
-  viewer: ["activity.view"],
+  admin: PERMISSIONS.filter((permission) => permission !== "team.manage" && permission !== "customers.delete"),
+  editor: ["pages.create", "pages.edit", "activity.view", "customers.view", "analytics.view"],
+  viewer: ["activity.view", "customers.view", "billing.view", "security.view", "analytics.view"],
 };
 
 export const can = (role: Role | null, permission: Permission) => role !== null && ROLE_PERMISSIONS[role].includes(permission);
@@ -67,7 +76,37 @@ export interface ActivityEvent {
   id: string;
   at: string;
   actor: string;
-  action: "team.setup" | "member.add" | "member.role" | "member.remove" | "page.create" | "page.copy" | "page.edit" | "page.verify" | "page.unverify" | "page.ready" | "page.draft" | "page.export" | "page.delete" | "page.language" | "invite.add" | "invite.remove";
+  action:
+    | "team.setup"
+    | "member.add"
+    | "member.role"
+    | "member.remove"
+    | "page.create"
+    | "page.copy"
+    | "page.edit"
+    | "page.verify"
+    | "page.unverify"
+    | "page.ready"
+    | "page.draft"
+    | "page.export"
+    | "page.delete"
+    | "page.language"
+    | "invite.add"
+    | "invite.remove"
+    | "customer.plan"
+    | "customer.trial"
+    | "customer.cancel"
+    | "customer.resume"
+    | "customer.refund"
+    | "customer.suspend"
+    | "customer.unsuspend"
+    | "customer.verify"
+    | "customer.unverify"
+    | "customer.signout"
+    | "customer.note"
+    | "customer.delete"
+    | "ip.block"
+    | "ip.unblock";
   target: string;
 }
 

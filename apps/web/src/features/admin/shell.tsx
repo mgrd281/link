@@ -2,7 +2,22 @@
 
 import { tokens } from "@linkyo/tokens";
 import { Avatar, Badge, cn, Icon, Logo } from "@linkyo/ui";
-import { ArrowLeftRight, Eye, History, LayoutDashboard, LayoutList, LogOut, ShieldCheck, Sparkles, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ChartColumn,
+  CreditCard,
+  Ellipsis,
+  Eye,
+  History,
+  LayoutDashboard,
+  LayoutList,
+  LogOut,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DropdownMenu } from "radix-ui";
 import { useId, type ReactNode } from "react";
@@ -11,20 +26,39 @@ import { accountStore } from "@/features/account/store";
 import { Link, usePathname } from "@/i18n/navigation";
 
 import { useAdmin } from "./session";
-import { ROLES, type Role } from "./types";
+import { ROLES, type Permission, type Role } from "./types";
 
 interface NavItem {
-  key: "overview" | "creators" | "team" | "activity";
+  key: "overview" | "customers" | "subscriptions" | "security" | "analytics" | "creators" | "team" | "activity";
   href: string;
   icon: LucideIcon;
+  /** Shown only to roles with this permission. */
+  permission?: Permission;
 }
 
-const NAV: NavItem[] = [
-  { key: "overview", href: "/admin", icon: LayoutDashboard },
-  { key: "creators", href: "/admin/creators", icon: Sparkles },
-  { key: "team", href: "/admin/team", icon: ShieldCheck },
-  { key: "activity", href: "/admin/activity", icon: History },
+/** Two groups: the business (customers and money) and the team's own work (prepared pages). */
+const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
+  {
+    key: "business",
+    items: [
+      { key: "overview", href: "/admin", icon: LayoutDashboard },
+      { key: "customers", href: "/admin/customers", icon: UsersRound, permission: "customers.view" },
+      { key: "subscriptions", href: "/admin/subscriptions", icon: CreditCard, permission: "billing.view" },
+      { key: "security", href: "/admin/security", icon: ShieldAlert, permission: "security.view" },
+      { key: "analytics", href: "/admin/analytics", icon: ChartColumn, permission: "analytics.view" },
+    ],
+  },
+  {
+    key: "teamWork",
+    items: [
+      { key: "creators", href: "/admin/creators", icon: Sparkles },
+      { key: "team", href: "/admin/team", icon: ShieldCheck },
+      { key: "activity", href: "/admin/activity", icon: History },
+    ],
+  },
 ];
+/** The phone's tab bar keeps the three most used; the rest sit under "More". */
+const PHONE_TABS: NavItem["key"][] = ["overview", "customers", "creators"];
 
 const isActive = (pathname: string, href: string) => (href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`));
 
@@ -131,7 +165,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const t = useTranslations("admin.shell");
   const tNav = useTranslations("admin.nav");
   const pathname = usePathname();
-  const { me, role } = useAdmin();
+  const { me, role, can } = useAdmin();
+  const groups = GROUPS.map((group) => ({ ...group, items: group.items.filter((item) => !item.permission || can(item.permission)) })).filter((group) => group.items.length > 0);
+  const all = groups.flatMap((group) => group.items);
+  const tabs = all.filter((item) => PHONE_TABS.includes(item.key));
+  const more = all.filter((item) => !PHONE_TABS.includes(item.key));
+  const moreActive = more.some((item) => isActive(pathname, item.href));
 
   return (
     <div className="flex min-h-dvh bg-canvas text-fg">
@@ -156,17 +195,22 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <RoleBadge role={role} />
           </span>
         </div>
-        <nav aria-label={tNav("label")} className="grid grid-cols-1 gap-0.5">
-          {NAV.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              aria-current={isActive(pathname, item.href) ? "page" : undefined}
-              className="flex h-control-md items-center gap-3 rounded-sm px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring aria-[current=page]:bg-selected aria-[current=page]:text-fg"
-            >
-              <Icon icon={item.icon} size="sm" />
-              {tNav(item.key)}
-            </Link>
+        <nav aria-label={tNav("label")} className="grid grid-cols-1 gap-4">
+          {groups.map((group) => (
+            <div key={group.key} className="grid grid-cols-1 gap-0.5">
+              <p className="px-3 pb-1 text-caption font-semibold tracking-wide text-fg-tertiary uppercase">{tNav(`groups.${group.key}`)}</p>
+              {group.items.map((item) => (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  aria-current={isActive(pathname, item.href) ? "page" : undefined}
+                  className="flex h-control-md items-center gap-3 rounded-sm px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring aria-[current=page]:bg-selected aria-[current=page]:text-fg"
+                >
+                  <Icon icon={item.icon} size="sm" />
+                  {tNav(item.key)}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="mt-auto grid gap-4">
@@ -221,7 +265,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
       <nav aria-label={tNav("label")} className="layer-sticky fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
         <ul className="mx-auto grid h-16 max-w-prose grid-cols-4">
-          {NAV.map((item) => {
+          {tabs.map((item) => {
             const active = isActive(pathname, item.href);
             return (
               <li key={item.key} className="grid">
@@ -238,6 +282,40 @@ export function AdminShell({ children }: { children: ReactNode }) {
               </li>
             );
           })}
+          <li className="grid">
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  type="button"
+                  aria-current={moreActive ? "page" : undefined}
+                  className="grid content-center justify-items-center gap-1 text-caption font-medium text-fg-secondary transition-colors duration-micro focus-visible:focus-ring aria-[current=page]:text-link"
+                >
+                  <span className={cn("grid h-control-sm w-12 place-items-center rounded-full transition-colors duration-micro", moreActive && "bg-selected")}>
+                    <Icon icon={Ellipsis} size="md" />
+                  </span>
+                  {tNav("more")}
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  side="top"
+                  align="end"
+                  sideOffset={tokens.spacing["2"]}
+                  collisionPadding={tokens.spacing["2"]}
+                  className="layer-popover grid min-w-menu gap-0.5 rounded-md border border-line bg-surface-elevated p-1 text-fg shadow-e2 motion-safe:animate-pop-in"
+                >
+                  {more.map((item) => (
+                    <DropdownMenu.Item key={item.key} asChild className="flex h-control-md cursor-default items-center gap-3 rounded-sm px-3 text-small outline-none data-highlighted:bg-hover aria-[current=page]:bg-selected">
+                      <Link href={item.href} aria-current={isActive(pathname, item.href) ? "page" : undefined}>
+                        <Icon icon={item.icon} size="sm" />
+                        {tNav(item.key)}
+                      </Link>
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          </li>
         </ul>
       </nav>
     </div>

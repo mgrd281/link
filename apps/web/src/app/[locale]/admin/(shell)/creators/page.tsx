@@ -3,7 +3,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { CreatorsScreen } from "@/features/admin/creators-screen";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "admin.meta" });
   return { title: t("creators") };

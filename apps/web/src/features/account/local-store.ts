@@ -2,7 +2,7 @@ import { NO_IMAGE, profileSchema, RESERVED_USERNAMES, type Page } from "@linkyo/
 import { z } from "zod";
 
 import { hashPassword, isStrongEnough, verifyPassword, type PasswordHash } from "./password";
-import type { Account, AccountSnapshot, AccountStore, Result, SignUpInput, Site } from "./types";
+import type { Account, AccountSnapshot, AccountStore, LoginContext, LoginEvent, Result, SignUpInput, Site } from "./types";
 
 /**
  * Demo-mode account store: everything lives in this browser's localStorage under one key.
@@ -29,7 +29,13 @@ interface Db {
   accounts: StoredAccount[];
   sites: Record<string, Site>;
   session: { accountId: string; since: string } | null;
+  /** Sign-ins and failed attempts per account (30 days, at most 50), for account security. */
+  logins?: Record<string, LoginEvent[]>;
 }
+
+/** Account-security log retention: 30 days, 50 entries per account. */
+const LOGIN_DAYS = 30;
+const LOGIN_MAX = 50;
 
 const EMPTY: Db = { version: 1, accounts: [], sites: {}, session: null };
 const LOADING: AccountSnapshot = { status: "loading" };
@@ -85,9 +91,31 @@ export class LocalAccountStore implements AccountStore {
   private raw: string | null | undefined;
   private snapshot: AccountSnapshot = LOADING;
   private readonly storage: () => StorageLike | null;
+  private readonly context: (() => Promise<LoginContext>) | null;
 
-  constructor(storage: () => StorageLike | null) {
+  /** `context` describes where a sign-in comes from (IP, place, device); without it nothing is logged. */
+  constructor(storage: () => StorageLike | null, context: (() => Promise<LoginContext>) | null = null) {
     this.storage = storage;
+    this.context = context;
+  }
+
+  /** Adds a sign-in to the account's security log once its context is known (never delays the sign-in). */
+  private async logSignIn(accountId: string, result: LoginEvent["result"]): Promise<void> {
+    if (!this.context) return;
+    const context = await this.context().catch(() => null);
+    if (!context) return;
+    const db = this.db();
+    const cutoff = Date.now() - LOGIN_DAYS * 86_400_000;
+    const event: LoginEvent = { id: `lg_${crypto.randomUUID().slice(0, 12)}`, at: now(), result, ...context };
+    const kept = (db.logins?.[accountId] ?? []).filter((entry) => Date.parse(entry.at) >= cutoff);
+    this.write({ ...db, logins: { ...db.logins, [accountId]: [event, ...kept].slice(0, LOGIN_MAX) } });
+  }
+
+  signIns(): LoginEvent[] {
+    const db = this.db();
+    const id = this.currentId(db);
+    const cutoff = Date.now() - LOGIN_DAYS * 86_400_000;
+    return id ? (db.logins?.[id] ?? []).filter((entry) => Date.parse(entry.at) >= cutoff) : [];
   }
 
   // Arrow properties: React calls these detached.
@@ -138,7 +166,7 @@ export class LocalAccountStore implements AccountStore {
     const password = await hashPassword(input.password);
     const account: StoredAccount = { id: crypto.randomUUID(), email, username, createdAt: now(), password };
     const db = this.db();
-    return this.write({
+    const written = this.write({
       ...db,
       accounts: [...db.accounts, account],
       sites: {
@@ -149,6 +177,8 @@ export class LocalAccountStore implements AccountStore {
       },
       session: { accountId: account.id, since: now() },
     });
+    if (written.ok) void this.logSignIn(account.id, "success");
+    return written;
   }
 
   async logIn(input: { email: string; password: string }): Promise<Result> {
@@ -156,8 +186,14 @@ export class LocalAccountStore implements AccountStore {
     const db = this.db();
     const account = db.accounts.find((candidate) => candidate.email === email);
     // Same answer for "no such email" and "wrong password" (no account enumeration).
-    if (!account || !(await verifyPassword(input.password, account.password))) return { ok: false, error: "invalidCredentials" };
-    return this.write({ ...db, session: { accountId: account.id, since: now() } });
+    if (!account) return { ok: false, error: "invalidCredentials" };
+    if (!(await verifyPassword(input.password, account.password))) {
+      void this.logSignIn(account.id, "failed");
+      return { ok: false, error: "invalidCredentials" };
+    }
+    const written = this.write({ ...db, session: { accountId: account.id, since: now() } });
+    if (written.ok) void this.logSignIn(account.id, "success");
+    return written;
   }
 
   logOut(): void {
@@ -223,7 +259,8 @@ export class LocalAccountStore implements AccountStore {
     const db = this.db();
     const account = db.accounts.find((candidate) => candidate.id === this.currentId(db));
     if (!account) return "{}";
-    return JSON.stringify({ exportedAt: now(), account: publicAccount(account), site: db.sites[account.id] }, null, 2);
+    // Everything kept about the account, its sign-in log included (GDPR Art. 15 and 20).
+    return JSON.stringify({ exportedAt: now(), account: publicAccount(account), site: db.sites[account.id], signIns: db.logins?.[account.id] ?? [] }, null, 2);
   }
 
   deleteAccount(): void {
@@ -231,7 +268,8 @@ export class LocalAccountStore implements AccountStore {
     const id = this.currentId(db);
     if (!id) return;
     const sites = Object.fromEntries(Object.entries(db.sites).filter(([key]) => key !== id));
-    this.write({ ...db, accounts: db.accounts.filter((account) => account.id !== id), sites, session: null });
+    const logins = Object.fromEntries(Object.entries(db.logins ?? {}).filter(([key]) => key !== id));
+    this.write({ ...db, accounts: db.accounts.filter((account) => account.id !== id), sites, logins, session: null });
   }
 
   private read(): string | null {
@@ -263,4 +301,22 @@ export class LocalAccountStore implements AccountStore {
     for (const listener of this.listeners) listener();
     return { ok: true };
   }
+}
+
+/**
+ * The accounts kept in this browser, without their password hashes: for the team console in demo
+ * mode, which runs in the same browser. Phase 1 replaces this with a team-only database view.
+ */
+export function deviceAccounts(storage: StorageLike | null): { account: Account; site: Site; logins: LoginEvent[] }[] {
+  let raw: string | null = null;
+  try {
+    raw = storage?.getItem(STORAGE_KEY) ?? null;
+  } catch {
+    raw = null;
+  }
+  const db = parse(raw);
+  return db.accounts.flatMap((stored) => {
+    const site = db.sites[stored.id];
+    return site ? [{ account: publicAccount(stored), site, logins: db.logins?.[stored.id] ?? [] }] : [];
+  });
 }

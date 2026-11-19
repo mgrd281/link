@@ -1,7 +1,31 @@
 "use client";
 
 import { Icon, Segmented } from "@linkyo/ui";
-import { BadgeCheck, CircleCheck, Download, FilePen, FilePlus2, FileX2, History, Languages, Mail, ShieldCheck, UserMinus, UserPlus, type LucideIcon } from "lucide-react";
+import {
+  Ban,
+  BadgeCheck,
+  CalendarPlus,
+  CircleCheck,
+  CreditCard,
+  Download,
+  FilePen,
+  FilePlus2,
+  FileX2,
+  History,
+  Languages,
+  LogOut,
+  Mail,
+  NotebookPen,
+  ReceiptText,
+  ShieldCheck,
+  ShieldOff,
+  Trash2,
+  UserCheck,
+  UserMinus,
+  UserPlus,
+  UserX,
+  type LucideIcon,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -29,11 +53,29 @@ const ICONS: Record<ActivityEvent["action"], LucideIcon> = {
   "page.language": Languages,
   "invite.add": Mail,
   "invite.remove": Mail,
+  "customer.plan": CreditCard,
+  "customer.trial": CalendarPlus,
+  "customer.cancel": CreditCard,
+  "customer.resume": CreditCard,
+  "customer.refund": ReceiptText,
+  "customer.suspend": UserX,
+  "customer.unsuspend": UserCheck,
+  "customer.verify": BadgeCheck,
+  "customer.unverify": BadgeCheck,
+  "customer.signout": LogOut,
+  "customer.note": NotebookPen,
+  "customer.delete": Trash2,
+  "ip.block": Ban,
+  "ip.unblock": ShieldOff,
 };
 
-type Filter = "all" | "pages" | "team";
-const inFilter = (event: ActivityEvent, filter: Filter) =>
-  filter === "all" || (filter === "team" ? event.action.startsWith("team.") || event.action.startsWith("member.") : event.action.startsWith("page.") || event.action.startsWith("invite."));
+type Filter = "all" | "customers" | "pages" | "team";
+const inFilter = (event: ActivityEvent, filter: Filter) => {
+  if (filter === "all") return true;
+  if (filter === "team") return event.action.startsWith("team.") || event.action.startsWith("member.");
+  if (filter === "customers") return event.action.startsWith("customer.") || event.action.startsWith("ip.");
+  return event.action.startsWith("page.") || event.action.startsWith("invite.");
+};
 
 /** One sentence per change, newest first, grouped by day: who did what to which page. */
 export function ActivityList({ events, now }: { events: ActivityEvent[]; now: number | null }) {
@@ -83,7 +125,7 @@ export function ActivityScreen() {
         value={filter}
         onValueChange={setFilter}
         className="justify-self-start"
-        options={(["all", "pages", "team"] as const).map((value) => ({ value, label: t(`filters.${value}`) }))}
+        options={(["all", "customers", "pages", "team"] as const).map((value) => ({ value, label: t(`filters.${value}`) }))}
       />
       {groups.length === 0 ? (
         <div className="grid justify-items-center gap-3 rounded-xl border border-dashed border-line-strong p-8 text-center">
