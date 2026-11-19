@@ -19,6 +19,11 @@ test.describe("marketing home", () => {
 
   test("pasting a link builds the right block, and examples work with one click", async ({ page }) => {
     const input = page.getByRole("textbox", { name: "Paste or type a link" });
+    // The demo pops in as its panel scrolls into view (scroll-driven). Bring the panel to the middle
+    // first: otherwise the scroll before a click can move a button between press and release.
+    await input.evaluate((element) => {
+      element.closest(".mk-panel")?.scrollIntoView({ block: "center" });
+    });
     await input.fill("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
     await expect(page.getByText("Recognised: Music")).toBeVisible();
     await input.press("Enter");
