@@ -53,7 +53,7 @@ export function MarketingHeader() {
                 {login.label}
               </Link>
               <Link href="/signup" data-signup className="rounded-full px-4 focus-visible:focus-ring">
-                {cta.label}
+                {t("nav.startShort")}
               </Link>
             </div>
           </div>
