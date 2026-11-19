@@ -242,6 +242,13 @@
   }
 }
 
+/* The ring around the face of the page in front fills from nothing (pathLength 1). */
+@keyframes mk-deck-ring {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
 /* A strip that grows to full size as it scrolls into view. */
 @keyframes mk-zoom {
   from {
@@ -688,6 +695,86 @@
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
+  }
+}
+
+/*
+ * The rings around the faces under the deck (SVG circles that start at the top). Every face has a
+ * quiet track. On the page in front a second circle is the deck's timer: it fills clockwise while
+ * the page's time runs, on the same clock as the page's own scroll (mk-deck-scroll) and holding
+ * with it under the mouse or keyboard focus. Once the deck has stopped, and for reduced motion,
+ * the ring is simply full.
+ */
+@utility mk-deck-track {
+  fill: none;
+  stroke-width: var(--border-width-focus);
+  transition: stroke var(--duration-micro) var(--ease-standard);
+}
+
+@utility mk-deck-ring {
+  fill: none;
+  stroke: var(--color-link);
+  stroke-width: var(--border-width-focus);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+
+  &[data-running] {
+    animation: mk-deck-ring var(--duration-carousel) linear both;
+
+    &:is([data-paused="true"] *),
+    &:is([data-deck]:has(:focus-visible) *) {
+      animation-play-state: paused;
+    }
+
+    @media (hover: hover) {
+      &:is([data-deck]:hover *) {
+        animation-play-state: paused;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+}
+
+/*
+ * The people search. From tablets up its panel is as tall as its results, never taller than the
+ * screen leaves room for (it starts under the header: top-24).
+ */
+@utility mk-search-fit {
+  max-height: calc(100dvh - var(--spacing-24) * 2);
+}
+
+/*
+ * The results: rows of one height, and one soft teal highlight behind the chosen row that glides
+ * to it (--active is the row's position) as the arrow keys or the pointer move. The same language
+ * as the header's log in / sign up switch. Still for reduced motion.
+ */
+@utility mk-search-list {
+  --active: 0;
+
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset-inline: 0;
+    top: 0;
+    height: var(--spacing-16);
+    border-radius: var(--radius-lg);
+    background: var(--color-selected);
+    translate: 0 calc(var(--active) * var(--spacing-16));
+    transition: translate var(--duration-standard) var(--ease-emphasized);
+    will-change: translate;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      transition: none;
+    }
   }
 }
 

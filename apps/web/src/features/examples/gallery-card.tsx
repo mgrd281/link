@@ -2,27 +2,16 @@
 
 import type { HeroStyle } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
-import {
-  ArrowUpRight,
-  Briefcase,
-  Clapperboard,
-  CodeXml,
-  GraduationCap,
-  Landmark,
-  Music,
-  ShoppingBag,
-  Sparkles,
-  Star,
-  Store,
-  Trophy,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { CSSProperties, PointerEvent } from "react";
 
 import { MediaImage, Monogram } from "@/features/directions/shared/creator-kit";
 import { displayStyle } from "@/features/directions/poster/styles";
 
+import { CATEGORY_ICONS } from "./category-icons";
 import type { Category } from "./looks";
+
+export { CATEGORY_ICONS } from "./category-icons";
 
 /** Everything a card needs, prepared on the server (theme already resolved to CSS variables). */
 export interface GalleryItem {
@@ -40,21 +29,6 @@ export interface GalleryItem {
   /** Real people: an unofficial concept page or a prepared preview, labelled as such. */
   badge?: "concept" | "preview" | undefined;
 }
-
-/** One icon per category, used on the filter chips, the cards and the preview. */
-export const CATEGORY_ICONS: Record<Category, LucideIcon> = {
-  creators: Sparkles,
-  online: ShoppingBag,
-  tech: CodeXml,
-  music: Music,
-  sport: Trophy,
-  film: Clapperboard,
-  business: Briefcase,
-  public: Landmark,
-  local: Store,
-  careers: GraduationCap,
-  people: Star,
-};
 
 const sizes = {
   grid: "(max-width: 48rem) 50vw, (max-width: 80rem) 33vw, 25vw",

@@ -2,11 +2,12 @@ import { Logo } from "@linkyo/ui";
 import { useLocale, useTranslations } from "next-intl";
 
 import { LocaleSwitch } from "@/components/locale-switch";
+import { PeopleSearch } from "@/features/search/people-search";
 import { Link } from "@/i18n/navigation";
 
 import { MobileMenu } from "./mobile-menu";
 
-/** A flat bar: logo, in-page links, language, a quiet "log in" and one action in Linkyo Teal. */
+/** A flat bar: logo, in-page links, the people search, language, a quiet "log in" and one action in Linkyo Teal. */
 export function MarketingHeader() {
   const t = useTranslations("marketing");
   const locale = useLocale();
@@ -43,6 +44,8 @@ export function MarketingHeader() {
           ))}
         </nav>
         <div className="ms-auto flex items-center gap-1">
+          {/* Find a person: a name, a profession, a place (Ctrl/⌘ K). */}
+          <PeopleSearch />
           <div className="hidden items-center gap-1 sm:flex">
             <LocaleSwitch />
           </div>
@@ -60,7 +63,7 @@ export function MarketingHeader() {
           {/* Phones: the one action stays in reach next to the menu, with a short label. */}
           <Link
             href="/signup"
-            className="inline-flex h-control-sm items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed md:hidden"
+            className="inline-flex h-control-sm items-center rounded-full bg-primary px-3 text-small font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed md:hidden"
           >
             {t("nav.startShort")}
           </Link>

@@ -51,7 +51,8 @@ const subscribeReduced = (onChange: () => void) => {
  * front shown whole. The chip above it is the link to the page: its address, or "Concept · name"
  * for the unofficial concept pages of well-known people (a note at the bottom says so too, ADR
  * 0043). Under the pages a row of faces, one per page, like stories: a click on a face, or on a page
- * beside the front one, brings that page forward. On phones the row scrolls and keeps the chosen
+ * beside the front one, brings that page forward. The ring around the face of the page in front is
+ * the deck's timer: it fills while that page's time runs. On phones the row scrolls and keeps the chosen
  * face in view. Every page's picture is fetched ahead, so the page is there the moment it is chosen.
  *
  * The page in front is alive: its picture scrolls down by itself, as someone reading it would, and
@@ -231,11 +232,21 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                 choose(index);
               }}
               onKeyDown={onTabKey}
-              className={cn(
-                "relative size-touch-target shrink-0 overflow-hidden rounded-full border-emphasis p-0.5 transition-colors duration-slow ease-emphasized focus-visible:focus-ring motion-reduce:transition-none",
-                selected ? "border-link" : "border-transparent hover:border-line-strong",
-              )}
+              className="group relative size-touch-target shrink-0 rounded-full p-1 focus-visible:focus-ring"
             >
+              {/* The ring: a quiet track on every face. On the page in front it fills while the page's
+                  time runs (the same clock as the page's scroll); once the deck has stopped it is full. */}
+              <svg aria-hidden viewBox="0 0 44 44" className="pointer-events-none absolute inset-0 size-full -rotate-90">
+                <circle
+                  cx="22"
+                  cy="22"
+                  r="21"
+                  className={cn("mk-deck-track", selected ? "stroke-line-strong" : "stroke-line group-hover:stroke-line-strong")}
+                />
+                {selected ? (
+                  <circle key={rotating ? active : "full"} cx="22" cy="22" r="21" pathLength="1" data-ring data-running={rotating ? "" : undefined} className="mk-deck-ring" />
+                ) : null}
+              </svg>
               <Image src={page.face} alt="" sizes={faceSize} className="size-full rounded-full object-cover" />
             </button>
           );

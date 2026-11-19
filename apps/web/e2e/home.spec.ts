@@ -75,6 +75,10 @@ test.describe("marketing home", () => {
     await page.mouse.move(0, 0);
     const tour = deck.locator("[data-tour]");
     await expect(tour).toHaveCSS("animation-name", "mk-deck-scroll");
+    // The ring around the face of the page in front is the deck's timer: it fills on the same clock.
+    const ring = deck.locator("[data-ring]");
+    await expect(ring).toHaveCount(1);
+    await expect(deck.getByRole("tab", { name: "Taylor Swift" }).locator("[data-ring][data-running]")).toHaveCSS("animation-name", "mk-deck-ring");
     const taller = await tour.evaluate((picture) => picture.getBoundingClientRect().height / (picture.parentElement?.getBoundingClientRect().height ?? 1));
     expect(taller).toBeGreaterThan(1.5);
     await tour.evaluate((picture) => {
@@ -91,6 +95,9 @@ test.describe("marketing home", () => {
       .poll(() => deck.locator('[data-slot="front"] img').evaluate((picture: HTMLImageElement) => picture.complete && picture.naturalWidth > 0))
       .toBe(true);
     await expect(tour).toHaveCount(0);
+    // The timer has stopped too: the chosen face simply has a full ring.
+    await expect(deck.getByRole("tab", { name: "Elon Musk" }).locator("[data-ring]")).toHaveCount(1);
+    await expect(deck.locator("[data-ring][data-running]")).toHaveCount(0);
     // Arrow keys walk through the faces and wrap around at the ends.
     await deck.getByRole("tab", { name: "Elon Musk" }).press("End");
     await expect(tabs.nth(8)).toBeFocused();

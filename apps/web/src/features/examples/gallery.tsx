@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Dialog } from "radix-ui";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 
+import { ScrollRow } from "@/components/scroll-row";
 import { Link } from "@/i18n/navigation";
 
 import { CardFace, CATEGORY_ICONS, tiltBack, tiltTowards, type GalleryItem } from "./gallery-card";
@@ -78,7 +79,7 @@ function SearchField({
 
 /**
  * The categories in one row, each with its icon and how many pages match. Scrolls sideways; arrows
- * appear on larger screens when there is more, and the row fades out at the edges.
+ * appear on larger screens when there is more, and the row fades out at the edges (ScrollRow).
  */
 function CategoryBar({
   value,
@@ -92,86 +93,27 @@ function CategoryBar({
   total: number;
 }) {
   const t = useTranslations("examples");
-  const scroller = useRef<HTMLDivElement>(null);
-  const [edges, setEdges] = useState({ start: true, end: true });
-
-  useEffect(() => {
-    const element = scroller.current;
-    if (!element) return;
-    // Scroll offsets are negative in right-to-left layouts; the distance from the start is what counts.
-    const measure = () => {
-      const offset = Math.abs(element.scrollLeft);
-      setEdges({ start: offset < 2, end: offset + element.clientWidth >= element.scrollWidth - 2 });
-    };
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    element.addEventListener("scroll", measure, { passive: true });
-    return () => {
-      observer.disconnect();
-      element.removeEventListener("scroll", measure);
-    };
-  }, []);
-
-  const page = (direction: 1 | -1) => {
-    const element = scroller.current;
-    if (!element) return;
-    const rtl = getComputedStyle(element).direction === "rtl";
-    element.scrollBy({ left: direction * (rtl ? -1 : 1) * element.clientWidth * 0.7, behavior: motion() });
-  };
-
-  const fade = "pointer-events-none absolute inset-y-0 flex items-center from-canvas from-50% to-transparent";
   return (
-    <div className="relative min-w-0 flex-1">
-      <div
-        ref={scroller}
-        role="group"
-        aria-label={t("filter")}
-        className="flex gap-2 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none]"
-      >
-        {(["all", ...CATEGORIES] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={value === key}
-            onClick={(event) => {
-              onChange(key);
-              event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest", behavior: motion() });
-            }}
-            className="group inline-flex h-control-md shrink-0 items-center gap-2 rounded-full border border-line bg-surface ps-3 pe-2 text-small font-medium text-fg-secondary transition-colors duration-micro hover:border-line-strong hover:text-fg focus-visible:focus-ring aria-pressed:border-fg aria-pressed:bg-fg aria-pressed:text-canvas"
-          >
-            <Icon icon={key === "all" ? LayoutGrid : CATEGORY_ICONS[key]} size="sm" />
-            {key === "all" ? t("all") : t(`categories.${key}`)}
-            <span className="min-w-6 rounded-full bg-canvas-muted px-2 py-0.5 text-center text-caption text-fg-secondary tabular-nums group-aria-pressed:bg-primary group-aria-pressed:text-primary-fg">
-              {key === "all" ? total : counts[key]}
-            </span>
-          </button>
-        ))}
-      </div>
-      {edges.start ? null : (
-        <div className={cn(fade, "start-0 bg-linear-to-r pe-8 rtl:bg-linear-to-l")}>
-          <IconButton
-            icon={ChevronLeft}
-            label={t("scroll.back")}
-            size="sm"
-            variant="secondary"
-            onClick={() => page(-1)}
-            className="pointer-events-auto max-md:hidden rtl:-scale-x-100"
-          />
-        </div>
-      )}
-      {edges.end ? null : (
-        <div className={cn(fade, "end-0 bg-linear-to-l ps-8 rtl:bg-linear-to-r")}>
-          <IconButton
-            icon={ChevronRight}
-            label={t("scroll.next")}
-            size="sm"
-            variant="secondary"
-            onClick={() => page(1)}
-            className="pointer-events-auto max-md:hidden rtl:-scale-x-100"
-          />
-        </div>
-      )}
-    </div>
+    <ScrollRow label={t("filter")} labels={{ back: t("scroll.back"), next: t("scroll.next") }} fade="from-canvas" className="flex-1">
+      {(["all", ...CATEGORIES] as const).map((key) => (
+        <button
+          key={key}
+          type="button"
+          aria-pressed={value === key}
+          onClick={(event) => {
+            onChange(key);
+            event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest", behavior: motion() });
+          }}
+          className="group inline-flex h-control-md shrink-0 items-center gap-2 rounded-full border border-line bg-surface ps-3 pe-2 text-small font-medium text-fg-secondary transition-colors duration-micro hover:border-line-strong hover:text-fg focus-visible:focus-ring aria-pressed:border-fg aria-pressed:bg-fg aria-pressed:text-canvas"
+        >
+          <Icon icon={key === "all" ? LayoutGrid : CATEGORY_ICONS[key]} size="sm" />
+          {key === "all" ? t("all") : t(`categories.${key}`)}
+          <span className="min-w-6 rounded-full bg-canvas-muted px-2 py-0.5 text-center text-caption text-fg-secondary tabular-nums group-aria-pressed:bg-primary group-aria-pressed:text-primary-fg">
+            {key === "all" ? total : counts[key]}
+          </span>
+        </button>
+      ))}
+    </ScrollRow>
   );
 }
 
