@@ -112,7 +112,7 @@ test.describe("people search", () => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
     const page = await context.newPage();
     await page.goto("/ar");
-    const dialog = await openSearch(page, "ابحث عن أشخاص");
+    const dialog = await openSearch(page, "بحث عن أشخاص");
     // Once it has settled, it covers the whole screen.
     await expect
       .poll(async () => {
@@ -139,7 +139,7 @@ test.describe("people search", () => {
       test(`axe: the open search, /${locale} (${scheme})`, async ({ page }) => {
         await page.emulateMedia({ colorScheme: scheme, reducedMotion: "reduce" });
         await page.goto(`/${locale}`);
-        const name = { de: "Personen suchen", en: "Search people", ar: "ابحث عن أشخاص" }[locale];
+        const name = { de: "Personen suchen", en: "Search people", ar: "بحث عن أشخاص" }[locale];
         const dialog = await openSearch(page, name);
         await dialog.getByRole("combobox").fill(locale === "ar" ? "مو" : "mo");
         await expect(dialog.getByRole("option").first()).toBeVisible();

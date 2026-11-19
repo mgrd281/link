@@ -2624,9 +2624,9 @@
     "position": "{index} من {total}"
   },
   "search": {
-    "open": "ابحث عن أشخاص",
+    "open": "بحث عن أشخاص",
     "openShort": "بحث",
-    "title": "ابحث عن أشخاص",
+    "title": "بحث عن أشخاص",
     "placeholder": "اسم أو مهنة أو مدينة",
     "clear": "مسح البحث",
     "close": "إغلاق البحث",

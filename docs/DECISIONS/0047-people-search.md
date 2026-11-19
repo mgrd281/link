@@ -38,6 +38,12 @@
 - **Shared.** The chip row that scrolls sideways with fading edges and arrows is now one component
   (`components/scroll-row.tsx`), used by the gallery and the search.
 
+**Found on the way: the language cookie.** Checking the live site showed a `NEXT_LOCALE` session cookie on any page
+read with a browser in another language (a German creator page in an English browser). That broke "creator pages set
+no cookies". The cookie is now off (`localeCookie: false` in `i18n/routing.ts`): every address carries its language,
+and "/" follows the browser's language on each visit. A test opens German and Arabic pages with an English browser
+and expects no cookie.
+
 **To undo.** Remove `<PeopleSearch />` from `features/marketing/header.tsx`; delete `features/search` and
 `app/api/people`.
 

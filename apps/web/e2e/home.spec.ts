@@ -149,6 +149,21 @@ test.describe("marketing home", () => {
   });
 });
 
+test("no page sets a cookie, also for a visitor whose browser speaks another language", async ({ browser }) => {
+  // A German page read with an English browser used to get a language cookie.
+  const context = await browser.newContext({ locale: "en-US" });
+  const page = await context.newPage();
+  for (const path of ["/de", "/de/templates", "/de/p/messi", "/ar/p/taylor-swift"]) {
+    await page.goto(path);
+    expect(await context.cookies(), path).toEqual([]);
+  }
+  // The start address still leads to the browser's language.
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/en$/);
+  expect(await context.cookies()).toEqual([]);
+  await context.close();
+});
+
 test("phone menu opens as a popover and closes after choosing a section", async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
