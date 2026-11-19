@@ -50,7 +50,7 @@ export interface Note {
 export interface Customer {
   id: string;
   /** "sample": demo data for the console; "device": a real account created in this browser. */
-  source: "sample" | "device";
+  source: "sample" | "device" | "live";
   name: string;
   email: string;
   username: string;

@@ -2,7 +2,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { parseUserAgent } from "@/features/account/device";
-import { recordSignIn, safePath } from "@/features/account/server/auth";
+import { recordSignIn, safePath, sessionIdOf } from "@/features/account/server/auth";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { cookieServerSupabase, serviceSupabase } from "@/lib/supabase/server";
 import { requestPlace } from "@/lib/request-context";
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       result: "success",
       place: requestPlace(request.headers),
       device: { device: parseUserAgent(request.headers.get("user-agent") ?? ""), deviceId: "dev_email_link" },
-      sessionId: null,
+      sessionId: data.session ? sessionIdOf(data.session.access_token) : null,
     });
   }
   if (type === "recovery") return back(`/${locale}/reset-password`);

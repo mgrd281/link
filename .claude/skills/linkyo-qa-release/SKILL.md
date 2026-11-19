@@ -29,6 +29,13 @@ PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --project desktop
 - **Look at it:** take Playwright screenshots at 390 × 844 for the changed pages, in each language
   that changed. Check RTL on Arabic pages.
 
+## Database changes (supabase/)
+
+When migrations, the account store or the console's data layer changed, also run `pnpm db:reset`,
+`pnpm db:test` and `pnpm db:lint`. Then run the real-account e2e (`e2e/supabase.spec.ts`; see the
+`linkyo-supabase` skill). Then rebuild **without** Supabase keys and run the regular suite: the
+demo must keep working too.
+
 ## Product rules to keep
 
 - **Privacy:**

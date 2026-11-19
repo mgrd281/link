@@ -58,6 +58,8 @@ export interface LoginEvent {
   deviceId: string;
   /** Hash of browser, system, language, time zone and screen: tells devices apart when the id is gone. */
   signature?: string | undefined;
+  /** Real accounts, team view: the session this sign-in opened is still open (device signed in). */
+  active?: boolean | undefined;
   result: "success" | "failed";
 }
 

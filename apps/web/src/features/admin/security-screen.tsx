@@ -19,14 +19,13 @@ import type { LoginEvent } from "@/features/account/types";
 import { Panel, Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
 
+import { useConsoleActions } from "./actions";
 import { KpiTile } from "./charts";
 import { useCustomers } from "./customers/data";
 import { daysAgo, riskFlags, type Customer, type RiskFlag } from "./customers/model";
-import { overrides } from "./customers/overrides";
 import { DemoNote, DeviceLabel, RiskBadges } from "./customers/ui";
 import { count, country, dateTime, timeAgo } from "./format";
 import { useAdmin } from "./session";
-import { adminStore } from "./store";
 
 type Filter = "all" | "failed" | "risky";
 interface Row {
@@ -43,7 +42,9 @@ export function SecurityScreen() {
   const tc = useTranslations("admin.customers");
   const locale = useLocale();
   const params = useSearchParams();
-  const { me, can } = useAdmin();
+  const { can } = useAdmin();
+  const actions = useConsoleActions();
+  const tCustomer = useTranslations("admin.customer");
   const { customers, now, ready, blockedIps } = useCustomers();
   const [filter, setFilter] = useState<Filter>(
     params.get("filter") === "risky" ? "risky" : params.get("filter") === "failed" ? "failed" : "all",
@@ -79,9 +80,9 @@ export function SecurityScreen() {
   const unknown = tc("unknownCountry");
 
   const block = (address: string, why: string) => {
-    overrides.blockIp({ ip: address, at: new Date().toISOString(), by: me.email, reason: why });
-    adminStore.record(me.email, "ip.block", address);
-    toast({ title: t("blockedToast", { ip: address }), tone: "success" });
+    void actions.blockIp(address, why).then((blocked) =>
+      toast(blocked ? { title: t("blockedToast", { ip: address }), tone: "success" } : { title: tCustomer("toast.failed"), tone: "danger" }),
+    );
   };
 
   return (
@@ -272,9 +273,13 @@ export function SecurityScreen() {
                           size="sm"
                           icon={ShieldOff}
                           onClick={() => {
-                            overrides.unblockIp(entry.ip);
-                            adminStore.record(me.email, "ip.unblock", entry.ip);
-                            toast({ title: t("unblockedToast", { ip: entry.ip }), tone: "success" });
+                            void actions.unblockIp(entry.ip).then((unblocked) =>
+                              toast(
+                                unblocked
+                                  ? { title: t("unblockedToast", { ip: entry.ip }), tone: "success" }
+                                  : { title: tCustomer("toast.failed"), tone: "danger" },
+                              ),
+                            );
                           }}
                         >
                           {t("unblock")}

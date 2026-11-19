@@ -16,6 +16,7 @@ Claude Code loads these skills automatically in this repository. They come in tw
 | `linkyo-link-metadata` | Real titles and pictures for pasted links: oEmbed route, image proxy, adding a platform |
 | `linkyo-poster-template` | New Poster templates and layout options (hero, headings, social icons), from a reference |
 | `linkyo-media-assets` | Licensed photos and clips, original cover art with bundled OFL fonts, CREDITS.md and media.ts |
+| `linkyo-supabase` | Real accounts and the database: migrations with RLS, team functions, pgTAP, generated types, the local stack, real-account e2e |
 
 ## Vendored skills (open source, with their licenses)
 

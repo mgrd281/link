@@ -9,7 +9,7 @@ import { DropdownMenu } from "radix-ui";
 import type { ReactNode } from "react";
 
 import { accountStore } from "@/features/account/store";
-import { useAdminDb } from "@/features/admin/store";
+import { useOnTeam } from "@/features/admin/live";
 import { Link, usePathname } from "@/i18n/navigation";
 
 import { AddSheet } from "./add-sheet";
@@ -55,7 +55,7 @@ function AccountMenu({ trigger }: { trigger: ReactNode }) {
   const t = useTranslations("app");
   const { account } = useSite();
   // Linkyo team members also see the way into the team area.
-  const onTeam = useAdminDb()?.members.some((member) => member.email === account.email) ?? false;
+  const onTeam = useOnTeam(account.email);
   const item = "flex h-control-md cursor-default items-center gap-3 rounded-sm px-3 text-small outline-none data-highlighted:bg-hover";
   return (
     <DropdownMenu.Root>

@@ -10,9 +10,9 @@ import { SelectField } from "@/features/app/form";
 import { Panel, Screen } from "@/features/app/screen";
 import { Sheet } from "@/features/app/sheet";
 
+import { useConsoleActions } from "./actions";
 import { useAdmin } from "./session";
 import { RoleBadge } from "./shell";
-import { adminStore } from "./store";
 import { PERMISSIONS, ROLE_PERMISSIONS, ROLES, type Member, type Role } from "./types";
 
 /**
@@ -56,6 +56,7 @@ function MemberRow({ member, lastOwner }: { member: Member; lastOwner: boolean }
   const t = useTranslations("admin.team");
   const tRoles = useTranslations("admin.roles");
   const { me, can } = useAdmin();
+  const actions = useConsoleActions();
   const [removing, setRemoving] = useState(false);
   const id = useId();
   const isMe = member.email === me.email;
@@ -82,8 +83,14 @@ function MemberRow({ member, lastOwner }: { member: Member; lastOwner: boolean }
             id={id}
             value={member.role}
             onChange={(event) => {
-              adminStore.setRole(me.email, member.email, event.target.value as Role);
-              toast({ title: t("roleChanged", { name: member.name, role: tRoles(`${event.target.value as Role}.name`) }), tone: "success" });
+              const next = event.target.value as Role;
+              void actions.setRole(member.email, next).then((changed) =>
+                toast(
+                  changed
+                    ? { title: t("roleChanged", { name: member.name, role: tRoles(`${next}.name`) }), tone: "success" }
+                    : { title: t("failed"), tone: "danger" },
+                ),
+              );
             }}
             className="h-control-md rounded-md border border-line-input bg-surface-elevated px-3 text-small text-fg outline-none hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring"
           >
@@ -102,7 +109,9 @@ function MemberRow({ member, lastOwner }: { member: Member; lastOwner: boolean }
             confirmLabel={t("removeConfirm")}
             cancelLabel={t("cancel")}
             onConfirm={() => {
-              adminStore.removeMember(me.email, member.email);
+              void actions.removeMember(member.email).then((removed) => {
+                if (!removed) toast({ title: t("failed"), tone: "danger" });
+              });
               setRemoving(false);
             }}
           />
@@ -175,7 +184,8 @@ function PermissionsMatrix() {
 function AddMemberSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const t = useTranslations("admin.team.addSheet");
   const tRoles = useTranslations("admin.roles");
-  const { me, db } = useAdmin();
+  const { db } = useAdmin();
+  const actions = useConsoleActions();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("editor");
@@ -199,9 +209,14 @@ function AddMemberSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (
       document.getElementById(nameError ? "member-name" : "member-email")?.focus();
       return;
     }
-    adminStore.addMember(me.email, { name: name.trim(), email: normalized, role });
-    toast({ title: t("added", { name: name.trim() }), tone: "success" });
-    close();
+    void actions.addMember({ name: name.trim(), email: normalized, role }).then((added) => {
+      if (added === true) {
+        toast({ title: t("added", { name: name.trim() }), tone: "success" });
+        close();
+      } else {
+        toast({ title: added === "notFound" ? t("noAccount", { email: normalized }) : t("failed"), tone: "danger" });
+      }
+    });
   };
 
   return (

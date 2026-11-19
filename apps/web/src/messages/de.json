@@ -2139,8 +2139,11 @@
           "taken": "Diese Person ist schon im Team."
         },
         "role": "Rolle",
-        "added": "{name} ist jetzt im Team."
-      }
+        "added": "{name} ist jetzt im Team.",
+        "failed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+        "noAccount": "Mit {email} gibt es noch kein Linkyo-Konto. Bitte die Person, sich zuerst zu registrieren."
+      },
+      "failed": "Das hat nicht geklappt. Bitte versuch es noch einmal."
     },
     "activity": {
       "title": "Verlauf",
@@ -2276,7 +2279,8 @@
         "canceled": "Abo gekündigt",
         "refunded": "Rechnung erstattet",
         "blocked": "{ip} gesperrt",
-        "deleted": "Kunde gelöscht"
+        "deleted": "Kunde gelöscht",
+        "failed": "Das hat nicht geklappt. Bitte versuch es noch einmal."
       },
       "actions": {
         "plan": "Plan ändern",

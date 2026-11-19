@@ -5,6 +5,7 @@ import { FlaskConical, Laptop, Smartphone, Tablet, type LucideIcon } from "lucid
 import { useTranslations } from "next-intl";
 
 import type { DeviceInfo } from "@/features/account/types";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
 import type { Customer, RiskFlag } from "./model";
 
@@ -102,6 +103,8 @@ export function DeviceLabel({ device }: { device: DeviceInfo }) {
 /** Says which numbers are sample data, in every screen that shows them. */
 export function DemoNote() {
   const t = useTranslations("admin.customers");
+  // Real accounts: nothing on these screens is sample data.
+  if (supabaseEnabled) return null;
   return (
     <p className="bg-canvas-muted text-small text-fg-secondary flex items-start gap-2 rounded-md px-3 py-2">
       <Icon icon={FlaskConical} size="sm" className="mt-0.5 shrink-0" />

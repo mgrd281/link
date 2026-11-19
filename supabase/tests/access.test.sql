@@ -98,8 +98,9 @@ select is(public.username_status('eve'), 'ok', 'and their name is free again');
 select public.record_sign_in('ana@example.com', 'failed', '198.51.100.7', '{"type":"desktop","os":"macOS","browser":"Safari"}', 'device-1', 'de', 'Berlin', 'sig');
 select public.record_sign_in('ANA@example.com', 'success', '198.51.100.7', '{"type":"desktop","os":"macOS","browser":"Safari"}', 'device-1', 'de', 'Berlin', 'sig');
 select public.record_sign_in('nobody@example.com', 'failed', '203.0.113.9', '{}', 'device-2');
-select is((select count(*)::int from public.sign_ins), 2, 'sign-ins are recorded; unknown emails leave nothing');
-select is((select distinct country from public.sign_ins), 'DE', 'country codes are stored in capitals');
+select is((select count(*)::int from public.sign_ins where profile_id = 'a0000000-0000-4000-8000-000000000001'), 2, 'sign-ins are recorded');
+select is((select count(*)::int from public.sign_ins where ip = '203.0.113.9'), 0, 'unknown emails leave nothing');
+select is((select distinct country from public.sign_ins where profile_id = 'a0000000-0000-4000-8000-000000000001'), 'DE', 'country codes are stored in capitals');
 select is(public.recent_failures('ana@example.com'), 1, 'recent failures are counted for slowing down guessing');
 select isnt((select last_seen_at from public.profiles where id = 'a0000000-0000-4000-8000-000000000001'), null,
   'a successful sign-in updates "last seen"');
@@ -114,6 +115,8 @@ select is_empty($$ select 1 from public.sign_ins $$, 'customers never see other 
 reset role;
 
 -- ── The team: an owner ──────────────────────────────────────────────────────────────────────
+-- Only this test's team (a database in use may have its own; everything is rolled back).
+delete from public.team_members;
 select public.make_owner('cara@example.com');
 insert into public.team_members (user_id, role) values ('d0000000-0000-4000-8000-000000000004', 'viewer');
 
@@ -121,7 +124,9 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"c0000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
 select is(public.admin_me() ->> 'role', 'owner', 'the owner sees their role');
 select is(jsonb_array_length(public.admin_me() -> 'permissions'), 16, 'owners have every permission');
-select is(jsonb_array_length(public.admin_customers()), 4, 'the console lists every account');
+select is((select count(*)::int from jsonb_array_elements(public.admin_customers()) c
+  where c ->> 'email' in ('ana@example.com', 'ben@example.com', 'cara@example.com', 'dan@example.com')), 4,
+  'the console lists every account');
 select is((select c -> 'logins' -> 0 ->> 'ip' from jsonb_array_elements(public.admin_customers()) c where c ->> 'username' = 'ana-v'),
   '198.51.100.7', 'with the sign-in log, IP included');
 select is((select (c -> 'usage' ->> 'blocks')::int from jsonb_array_elements(public.admin_customers()) c where c ->> 'username' = 'ana-v'),
@@ -143,12 +148,13 @@ select throws_ok($$ select public.admin_set_subscription('b0000000-0000-4000-800
 select is(public.admin_add_note('b0000000-0000-4000-8000-000000000002', ' Called about the invoice ') ->> 'text',
   'Called about the invoice', 'notes are saved');
 select public.admin_block_ip('203.0.113.9', 'password guessing');
-select is(public.admin_blocked_ips() -> 0 ->> 'ip', '203.0.113.9', 'addresses can be blocked');
+select ok(exists (select 1 from jsonb_array_elements(public.admin_blocked_ips()) b where b ->> 'ip' = '203.0.113.9'), 'addresses can be blocked');
 select throws_ok($$ select public.admin_delete_customer('c0000000-0000-4000-8000-000000000003') $$,
   'P0001', 'linkyo:notYourself', 'nobody deletes themselves');
 select throws_ok($$ select public.admin_set_role('c0000000-0000-4000-8000-000000000003', 'admin') $$,
   'P0001', 'linkyo:lastOwner', 'the last owner stays an owner');
-select is(jsonb_array_length(public.admin_team()), 2, 'the owner sees the team');
+select is((select count(*)::int from jsonb_array_elements(public.admin_team()) m
+  where m ->> 'email' in ('cara@example.com', 'dan@example.com')), 2, 'the owner sees the team');
 reset role;
 
 -- Signing one device out ends the session its sign-in opened, and only that one.
@@ -179,7 +185,7 @@ select is((select page #>> '{profile,verified}' from public.sites where profile_
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"d0000000-0000-4000-8000-000000000004","role":"authenticated"}', true);
 select lives_ok($$ select public.admin_customers() $$, 'viewers see customers');
-select ok((select count(*) from public.blocked_ips) = 1, 'and blocked addresses');
+select ok((select count(*) from public.blocked_ips where ip = '203.0.113.9') = 1, 'and blocked addresses');
 select throws_ok($$ select public.admin_set_status('b0000000-0000-4000-8000-000000000002', 'suspended') $$,
   '42501', 'linkyo:forbidden', 'but cannot suspend');
 select throws_ok($$ select public.admin_add_member('ben@example.com', 'admin') $$,
@@ -191,7 +197,8 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"c0000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
 select public.admin_delete_customer('b0000000-0000-4000-8000-000000000002');
-select is(jsonb_array_length(public.admin_customers()), 3, 'the owner deletes a customer');
+select is((select count(*)::int from jsonb_array_elements(public.admin_customers()) c where c ->> 'email' = 'ben@example.com'), 0,
+  'the owner deletes a customer');
 select is((select action from public.audit_log order by id desc limit 1), 'customer.delete', 'and the log keeps the entry');
 reset role;
 select is_empty($$ select 1 from public.sites where profile_id = 'b0000000-0000-4000-8000-000000000002' $$,

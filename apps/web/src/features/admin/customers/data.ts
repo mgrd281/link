@@ -6,6 +6,9 @@ import { deviceAccounts, STORAGE_KEY } from "@/features/account/local-store";
 import { accountStore } from "@/features/account/store";
 import type { LoginEvent } from "@/features/account/types";
 import { useNow } from "@/features/directions/poster/live";
+import { supabaseEnabled } from "@/lib/supabase/config";
+
+import { useLiveCustomers } from "../live";
 
 import type { Customer } from "./model";
 import { useOverrides, type CustomerPatch } from "./overrides";
@@ -118,7 +121,7 @@ export function sessionsOf(customer: Customer, signedOut: readonly string[] = []
  * Every customer the team can see: the accounts on this device first, then the sample customers,
  * with the team's changes applied and deleted ones left out.
  */
-export function useCustomers() {
+function useDemoCustomers() {
   const minute = useNow();
   // Seeded, so the same customers come back every minute; only their times move along with now.
   const sample = useMemo(() => (minute === null ? [] : sampleCustomers(minute)), [minute]);
@@ -142,3 +145,20 @@ export function useCustomers() {
     signedOut: (id: string) => db.patches[id]?.signedOut ?? [],
   };
 }
+
+/** Real accounts: the team-only database view; a device counts as signed out once none of its sessions is open. */
+function useLiveCustomerData() {
+  const live = useLiveCustomers();
+  return {
+    ...live,
+    signedOut: (id: string) => {
+      const customer = live.customers.find((candidate) => candidate.id === id);
+      if (!customer) return [];
+      const devices = new Set(customer.logins.filter((login) => login.result === "success").map((login) => login.deviceId));
+      return [...devices].filter((device) => !customer.logins.some((login) => login.deviceId === device && login.active));
+    },
+  };
+}
+
+/** Every customer the team can see (demo: this device's accounts and sample customers; real: the database). */
+export const useCustomers = supabaseEnabled ? useLiveCustomerData : useDemoCustomers;

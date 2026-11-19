@@ -2139,8 +2139,11 @@
           "taken": "This person is already on the team."
         },
         "role": "Role",
-        "added": "{name} is now on the team."
-      }
+        "added": "{name} is now on the team.",
+        "failed": "That didn't work. Please try again.",
+        "noAccount": "There's no Linkyo account for {email} yet. Ask them to sign up first."
+      },
+      "failed": "That didn't work. Please try again."
     },
     "activity": {
       "title": "Activity",
@@ -2276,7 +2279,8 @@
         "canceled": "Subscription canceled",
         "refunded": "Invoice refunded",
         "blocked": "{ip} blocked",
-        "deleted": "Customer deleted"
+        "deleted": "Customer deleted",
+        "failed": "That didn't work. Please try again."
       },
       "actions": {
         "plan": "Change plan",

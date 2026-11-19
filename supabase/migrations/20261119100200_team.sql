@@ -228,7 +228,8 @@ begin
         'logins', case when security then coalesce((
           select jsonb_agg(jsonb_build_object(
             'id', l.id, 'at', l.at, 'ip', host(l.ip), 'country', l.country, 'city', l.city,
-            'device', l.device, 'deviceId', l.device_id, 'signature', l.signature, 'result', l.result
+            'device', l.device, 'deviceId', l.device_id, 'signature', l.signature, 'result', l.result,
+            'active', l.session_id is not null and exists (select 1 from auth.sessions x where x.id = l.session_id)
           ) order by l.at desc)
           from public.sign_ins l where l.profile_id = p.id
         ), '[]'::jsonb) else '[]'::jsonb end,
@@ -337,10 +338,10 @@ create function public.admin_set_subscription(
   customer uuid,
   action text,
   plan public.plan,
-  status public.subscription_status,
-  started_at timestamptz,
-  trial_ends_at timestamptz,
-  canceled_at timestamptz
+  status public.subscription_status default null,
+  started_at timestamptz default null,
+  trial_ends_at timestamptz default null,
+  canceled_at timestamptz default null
 ) returns void
 language plpgsql security definer set search_path = '' as $$
 begin

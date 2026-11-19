@@ -412,12 +412,12 @@ export type Database = {
       admin_set_subscription: {
         Args: {
           action: string;
-          canceled_at: string;
+          canceled_at?: string;
           customer: string;
           plan: Database["public"]["Enums"]["plan"];
-          started_at: string;
-          status: Database["public"]["Enums"]["subscription_status"];
-          trial_ends_at: string;
+          started_at?: string;
+          status?: Database["public"]["Enums"]["subscription_status"];
+          trial_ends_at?: string;
         };
         Returns: undefined;
       };
@@ -439,6 +439,7 @@ export type Database = {
       my_team_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["team_role"] };
       public_page: { Args: { handle: string }; Returns: Json };
       purge_old_sign_ins: { Args: Record<PropertyKey, never>; Returns: number };
+      purge_unconfirmed_accounts: { Args: Record<PropertyKey, never>; Returns: number };
       recent_failures: { Args: { email: string }; Returns: number };
       record_sign_in: {
         Args: {

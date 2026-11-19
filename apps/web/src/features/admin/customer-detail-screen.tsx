@@ -31,14 +31,12 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import { Panel, Screen } from "@/features/app/screen";
 import { Link, useRouter } from "@/i18n/navigation";
 
+import { useConsoleActions } from "./actions";
 import { sessionsOf, useCustomers } from "./customers/data";
 import { DAY, monthlyRevenue, PLAN_PRICE, riskFlags } from "./customers/model";
-import { overrides } from "./customers/overrides";
 import { DemoNote, DeviceLabel, PlanBadge, RiskBadges, StatusBadges } from "./customers/ui";
 import { count, country, date, dateTime, money, timeAgo } from "./format";
 import { useAdmin } from "./session";
-import { adminStore } from "./store";
-import type { ActivityEvent } from "./types";
 
 type Tab = "overview" | "billing" | "security" | "notes";
 type Pending =
@@ -68,7 +66,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const tk = useTranslations("app.welcome.kinds");
   const locale = useLocale();
   const router = useRouter();
-  const { me, can, db } = useAdmin();
+  const { can, db } = useAdmin();
+  const actions = useConsoleActions();
   const { customers, now, ready, blockedIps, signedOut } = useCustomers();
   const customer = customers.find((candidate) => candidate.id === id);
   const [tab, setTab] = useState<Tab>("overview");
@@ -92,89 +91,65 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const unknown = tc("unknownCountry");
   const sub = customer.subscription;
   const devices = sessionsOf(customer, signedOut(customer.id));
-  const record = (action: ActivityEvent["action"], target = customer.username) =>
-    adminStore.record(me.email, action, target);
-  const done = (message: string) => toast({ title: message, tone: "success" });
+  /** Runs a console action, then says how it went. */
+  const run = async (work: Promise<boolean>, message: string) => {
+    if (await work) toast({ title: message, tone: "success" });
+    else toast({ title: t("toast.failed"), tone: "danger" });
+  };
   const kindLabel = (kind: string) => (tk.has(`${kind}.label`) ? tk(`${kind}.label`) : kind);
 
-  const setPlan = (plan: "free" | "pro") => {
-    overrides.patch(
-      customer.id,
-      plan === "pro"
-        ? { plan, subscriptionStatus: "active", startedAt: new Date(now).toISOString(), canceledAt: null }
-        : { plan, subscriptionStatus: null, canceledAt: null },
+  const setPlan = (plan: "free" | "pro") =>
+    void run(
+      actions.subscription(
+        customer,
+        "plan",
+        plan === "pro"
+          ? { plan, subscriptionStatus: "active", startedAt: new Date(now).toISOString(), canceledAt: null }
+          : { plan, subscriptionStatus: null, canceledAt: null },
+      ),
+      t("toast.plan", { plan: plan === "pro" ? "Pro" : tc("plans.free") }),
     );
-    record("customer.plan");
-    done(t("toast.plan", { plan: plan === "pro" ? "Pro" : tc("plans.free") }));
-  };
   const extendTrial = () => {
     const base = Math.max(now, sub.trialEndsAt ? Date.parse(sub.trialEndsAt) : now);
-    overrides.patch(customer.id, {
-      plan: "pro",
-      subscriptionStatus: "trialing",
-      trialEndsAt: new Date(base + 14 * DAY).toISOString(),
-      ...(sub.startedAt ? {} : { startedAt: new Date(now).toISOString() }),
-    });
-    record("customer.trial");
-    done(t("toast.trial"));
+    void run(
+      actions.subscription(customer, "trial", {
+        plan: "pro",
+        subscriptionStatus: "trialing",
+        trialEndsAt: new Date(base + 14 * DAY).toISOString(),
+        ...(sub.startedAt ? {} : { startedAt: new Date(now).toISOString() }),
+      }),
+      t("toast.trial"),
+    );
   };
-  const resume = () => {
-    overrides.patch(customer.id, { subscriptionStatus: "active", canceledAt: null });
-    record("customer.resume");
-    done(t("toast.resumed"));
-  };
-  const toggleVerified = () => {
-    overrides.patch(customer.id, { verified: !customer.verified });
-    record(customer.verified ? "customer.unverify" : "customer.verify");
-    done(customer.verified ? t("toast.unverified") : t("toast.verified"));
-  };
-  const signOut = (deviceId: string) => {
-    overrides.patch(customer.id, { signedOut: [...signedOut(customer.id), deviceId] });
-    record("customer.signout");
-    done(t("toast.signedOut"));
-  };
+  const resume = () => void run(actions.subscription(customer, "resume", { subscriptionStatus: "active", canceledAt: null }), t("toast.resumed"));
+  const toggleVerified = () =>
+    void run(actions.verified(customer, !customer.verified), customer.verified ? t("toast.unverified") : t("toast.verified"));
+  const signOut = (deviceId: string) => void run(actions.signOut(customer, [deviceId], signedOut(customer.id)), t("toast.signedOut"));
 
   const confirm = () => {
     if (!pending) return;
     if (pending.kind === "suspend") {
       const next = customer.status === "suspended" ? "active" : "suspended";
-      overrides.patch(customer.id, { status: next });
-      record(next === "suspended" ? "customer.suspend" : "customer.unsuspend");
-      done(next === "suspended" ? t("toast.suspended") : t("toast.unsuspended"));
+      void run(actions.status(customer, next), next === "suspended" ? t("toast.suspended") : t("toast.unsuspended"));
     } else if (pending.kind === "cancel") {
-      overrides.patch(customer.id, {
-        subscriptionStatus: "canceled",
-        canceledAt: new Date(now).toISOString(),
-      });
-      record("customer.cancel");
-      done(t("toast.canceled"));
+      void run(
+        actions.subscription(customer, "cancel", { subscriptionStatus: "canceled", canceledAt: new Date(now).toISOString() }),
+        t("toast.canceled"),
+      );
     } else if (pending.kind === "signoutAll") {
-      overrides.patch(customer.id, { signedOut: devices.map((device) => device.deviceId) });
-      record("customer.signout");
-      done(t("toast.signedOutAll"));
+      void run(
+        actions.signOut(customer, devices.map((device) => device.deviceId), signedOut(customer.id)),
+        t("toast.signedOutAll"),
+      );
     } else if (pending.kind === "refund") {
-      overrides.patch(customer.id, {
-        refunded: [
-          ...sub.invoices.filter((invoice) => invoice.status === "refunded").map((invoice) => invoice.id),
-          pending.invoice,
-        ],
-      });
-      record("customer.refund");
-      done(t("toast.refunded"));
+      void run(actions.refund(customer, pending.invoice), t("toast.refunded"));
     } else if (pending.kind === "block") {
-      overrides.blockIp({
-        ip: pending.ip,
-        at: new Date(now).toISOString(),
-        by: me.email,
-        reason: customer.username,
-      });
-      record("ip.block", pending.ip);
-      done(t("toast.blocked", { ip: pending.ip }));
+      void run(actions.blockIp(pending.ip, customer.username), t("toast.blocked", { ip: pending.ip }));
     } else {
-      overrides.patch(customer.id, { deleted: true });
-      record("customer.delete");
-      done(t("toast.deleted"));
-      router.push("/admin/customers");
+      void actions.remove(customer).then((removed) => {
+        toast(removed ? { title: t("toast.deleted"), tone: "success" } : { title: t("toast.failed"), tone: "danger" });
+        if (removed) router.push("/admin/customers");
+      });
     }
     setPending(null);
     setConfirmText("");
@@ -649,14 +624,10 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                 onSubmit={(event) => {
                   event.preventDefault();
                   if (!note.trim()) return;
-                  overrides.addNote(customer.id, {
-                    id: crypto.randomUUID(),
-                    at: new Date().toISOString(),
-                    author: me.name,
-                    text: note.trim(),
+                  void actions.note(customer, note.trim()).then((saved) => {
+                    if (saved) setNote("");
+                    else toast({ title: t("toast.failed"), tone: "danger" });
                   });
-                  record("customer.note");
-                  setNote("");
                 }}
               >
                 <label htmlFor={noteId} className="text-small font-medium">

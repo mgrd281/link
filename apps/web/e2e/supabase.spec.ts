@@ -161,3 +161,83 @@ test("deleting the account removes it from the server", async ({ page }) => {
   await page.getByRole("button", { name: "Endgültig löschen" }).click();
   await expect.poll(async () => (await profileOf(email)) === null).toBe(true);
 });
+
+// ── The team console on real data ───────────────────────────────────────────────────────────
+const stamp = Date.now().toString(36);
+const customerName = `cust-${stamp}`;
+const customerEmail = `${customerName}@example.com`;
+const ownerEmail = `boss-${stamp}@example.com`;
+
+/** A confirmed account made directly in the database (the sign-up flow is covered above). */
+async function account(emailAddress: string, username: string) {
+  const { data, error } = await admin().auth.admin.createUser({
+    email: emailAddress,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { username, locale: "en" },
+  });
+  if (error) throw error;
+  return data.user.id;
+}
+
+async function logInEn(page: Page, emailAddress: string) {
+  await page.goto("/en/login");
+  await page.waitForLoadState("networkidle");
+  await page.getByLabel("Email").fill(emailAddress);
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
+  await page.getByRole("button", { name: "Log in", exact: true }).click();
+  await page.waitForURL(/\/en\/app/);
+}
+
+test("the console is only for team members: the database decides, no code", async ({ page }) => {
+  await account(customerEmail, customerName);
+  await logInEn(page, customerEmail);
+  await page.goto("/en/admin");
+  await expect(page.getByText("No access to the team area")).toBeVisible();
+});
+
+test("the owner finds a customer, suspends them, writes a note and blocks an address; all in the database and the log", async ({ page }) => {
+  await account(ownerEmail, `boss-${stamp}`);
+  await admin().rpc("make_owner", { owner_email: ownerEmail });
+  await logInEn(page, ownerEmail);
+
+  await page.goto("/en/admin/customers");
+  await page.getByLabel("Search").fill(customerName);
+  await page.locator("main a[href*='/admin/customers/']").locator("visible=true").first().click();
+  await expect(page.getByRole("heading", { level: 1, name: customerName })).toBeVisible();
+  const customerId = (await profileOf(customerEmail))?.id ?? "";
+
+  await page.getByRole("button", { name: "Actions" }).click();
+  await page.getByRole("menuitem", { name: "Suspend account" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Suspend account" }).click();
+  await expect(page.getByText("Account suspended").first()).toBeVisible();
+  await expect.poll(async () => (await admin().from("profiles").select("status").eq("id", customerId).single()).data?.status).toBe("suspended");
+
+  await page.getByRole("radio", { name: "Notes" }).click();
+  await page.getByLabel("Add a note").fill("Asked us to pause the account.");
+  await page.getByRole("button", { name: "Save note" }).click();
+  await expect(page.getByText("Asked us to pause the account.")).toBeVisible();
+
+  // The customer's sign-in from the first test is in the security log, with its address.
+  await page.goto("/en/admin/security");
+  const row = page.getByRole("row").filter({ hasText: customerName }).first();
+  await expect(row).toContainText("127.0.0.1");
+  await row.getByRole("button", { name: "Block 127.0.0.1" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Block", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Blocked addresses" }).getByText("127.0.0.1", { exact: true })).toBeVisible();
+  expect((await admin().from("blocked_ips").select("ip")).data?.map((entry) => entry.ip)).toContain("127.0.0.1");
+  await page.getByRole("region", { name: "Blocked addresses" }).getByRole("button", { name: "Unblock" }).click();
+  await expect(page.getByRole("region", { name: "Blocked addresses" }).getByText("127.0.0.1", { exact: true })).toHaveCount(0);
+
+  // Every action is in the database's activity log, by the owner.
+  const { data: log } = await admin()
+    .from("audit_log")
+    .select("action, actor")
+    .in("action", ["customer.suspend", "customer.note", "ip.block", "ip.unblock"])
+    .order("id", { ascending: false })
+    .limit(4);
+  expect(log?.map((entry) => entry.action).sort()).toEqual(["customer.note", "customer.suspend", "ip.block", "ip.unblock"]);
+  expect(log?.every((entry) => entry.actor === ownerEmail)).toBe(true);
+  await page.goto("/en/admin/activity");
+  await expect(page.getByText(/suspended/).first()).toBeVisible();
+});

@@ -9,7 +9,9 @@ import { accountStore, useAccount } from "@/features/account/store";
 import type { Account } from "@/features/account/types";
 import { AppSplash } from "@/features/app/gate";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
+import { refreshLive, useLiveTeam } from "./live";
 import { adminStore, useAdminDb } from "./store";
 import { can, type AdminDb, type Member, type Permission, type Role } from "./types";
 
@@ -37,6 +39,57 @@ export function useAdmin(): AdminValue {
  * very first visitor with the team code sets the team up and becomes its owner.
  */
 export function AdminGate({ children }: { children: ReactNode }) {
+  return supabaseEnabled ? <LiveGate>{children}</LiveGate> : <DemoGate>{children}</DemoGate>;
+}
+
+/**
+ * Real accounts: the team is a table in the database. Membership and role decide, nothing else
+ * (no team code); the first owner is made once with make_owner() in the SQL editor.
+ */
+function LiveGate({ children }: { children: ReactNode }) {
+  const snapshot = useAccount();
+  const router = useRouter();
+  const pathname = usePathname();
+  useEffect(() => {
+    if (snapshot.status === "signedOut") router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+  }, [snapshot.status, pathname, router]);
+  if (snapshot.status !== "signedIn") return <AppSplash />;
+  return <LiveTeamGate account={snapshot.account}>{children}</LiveTeamGate>;
+}
+
+function LiveTeamGate({ account, children }: { account: Account; children: ReactNode }) {
+  const team = useLiveTeam();
+  const local = useAdminDb();
+  const [viewAs, setViewAs] = useState<Role | null>(null);
+  // Another account signed in: read the team again.
+  useEffect(() => {
+    void refreshLive();
+  }, [account.id]);
+  if (team.status === "loading" || local === null) return <AppSplash />;
+  if (team.status === "none") return <NoAccess account={account} />;
+  const role = team.me.role === "owner" && viewAs ? viewAs : team.me.role;
+  // Prepared pages are still kept in this browser and published by script; their history with them.
+  const pageActivity = local.activity.filter((event) => event.action.startsWith("page.") || event.action.startsWith("invite."));
+  const db: AdminDb = {
+    version: 1,
+    members: team.members,
+    drafts: local.drafts,
+    activity: [...team.activity, ...pageActivity].sort((a, b) => b.at.localeCompare(a.at)),
+  };
+  const value: AdminValue = {
+    account,
+    db,
+    me: team.me,
+    role,
+    viewAs: team.me.role === "owner" ? viewAs : null,
+    setViewAs,
+    can: (permission) => can(role, permission),
+  };
+  return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
+}
+
+/** Demo: the team lives in this browser; the first visitor with the team code becomes its owner. */
+function DemoGate({ children }: { children: ReactNode }) {
   const snapshot = useAccount();
   const db = useAdminDb();
   const router = useRouter();

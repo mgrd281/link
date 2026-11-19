@@ -31,3 +31,4 @@
 | [0027](0027-share-kit.md) | Share kit: link preview cards for every page and the site (template colors, labelled examples/concepts, Arabic-safe), plus story and post pictures in the dashboard | **Applied** |
 | [0028](0028-admin-console.md) | Team console: customers, subscriptions, security (IP, device, sign-in log for account holders only, 30 days) and analytics; eight new permissions, owners can do everything | **Applied** |
 | [0029](0029-gallery-redesign.md) | Template gallery redesign: moving wall of pages (pausable, still for reduced motion), sticky search + one row of icon category chips, language filter, photo-led cards that lean and rise in, preview with previous/next | **Applied** |
+| [0030](0030-supabase-accounts.md) | Real accounts on Supabase (Frankfurt), on by configuration: server-side sign-in with security log, email confirmation, background saves, team console through permission-checked database functions | **Applied** |
