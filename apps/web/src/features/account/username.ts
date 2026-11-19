@@ -15,3 +15,28 @@ export function localUsernameStatus(input: string): UsernameStatus {
   if (RESERVED_USERNAMES.has(username)) return "reservedUsername";
   return "ok";
 }
+
+/** Until someone picks their address (in the welcome flow), a new page gets a neutral one. */
+const PROVISIONAL = /^page-[a-z0-9]{6}$/;
+export const isProvisionalUsername = (username: string) => PROVISIONAL.test(username);
+
+/** A neutral, random address like "page-k3x9q2". Never derived from the email: that stays private. */
+export function newProvisionalUsername(): string {
+  const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return `page-${Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("")}`;
+}
+
+/** An address suggested from a name: "Mila Aurel" becomes "mila-aurel" ("" when nothing usable is left). */
+export function suggestUsername(name: string): string {
+  const slug = name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 30)
+    .replace(/-+$/, "");
+  return localUsernameStatus(slug) === "ok" ? slug : "";
+}

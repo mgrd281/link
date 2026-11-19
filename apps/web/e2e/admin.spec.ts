@@ -18,7 +18,7 @@ async function signUp(page: Page, locale = "en") {
   const name = `team-${unique()}`;
   await page.goto(`/${locale}/signup?name=${name}`);
   await page.waitForLoadState("networkidle");
-  await expect(page.locator("#signup-username")).toHaveValue(name);
+  await expect(page.getByText(`linkyo.app/${name}`)).toBeVisible();
   await page.locator("#signup-email").fill(`${name}@example.com`);
   await page.locator("form button[type=submit]").click();
   await enterDemoCode(page);

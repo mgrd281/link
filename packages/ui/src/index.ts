@@ -1,6 +1,6 @@
 export { Avatar, type AvatarProps } from "./avatar";
 export { Badge, type BadgeProps } from "./badge";
-export { Logo, LogoSymbol, LogoWordmark } from "./brand/logo";
+export { Logo, LogoGlyph, LogoSymbol, LogoWordmark } from "./brand/logo";
 export { Button, buttonVariants, type ButtonProps } from "./button";
 export { Card, type CardProps } from "./card";
 export { ConfirmDialog, type ConfirmDialogProps } from "./dialog";

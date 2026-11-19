@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Icon, TextField } from "@linkyo/ui";
-import { ArrowRight, AtSign, CircleCheck } from "lucide-react";
+import { CircleCheck, Link2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type SubmitEvent } from "react";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation";
 
 import { accountStore } from "../store";
 import type { AuthError, CodeRequest, SignUpInput } from "../types";
+import { newProvisionalUsername } from "../username";
 import { AuthHeading } from "./auth-shell";
 import { CodeStep } from "./code-step";
 import { FormError, OrDivider } from "./fields";
@@ -47,12 +48,23 @@ async function lookUpPrepared(input: { email: string; username: string; invite: 
   }
 }
 
+/** A free neutral address for people who did not claim one yet; they pick theirs in the welcome flow. */
+async function freeProvisionalUsername(): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const name = newProvisionalUsername();
+    if ((await accountStore.usernameStatus(name)) === "ok") return name;
+  }
+  return newProvisionalUsername();
+}
+
 const emailOk = (email: string) => z.email().safeParse(email.trim()).success;
 const locales = ["de", "en", "ar"] as const;
+const focusLater = (id: string) => window.setTimeout(() => document.getElementById(id)?.focus(), 0);
 
 /**
- * Two fields, one button, no password: the page address (filled in from the homepage, checked
- * while typing) and the email. The next step is the 6-digit code from the email.
+ * One field, one button, no password: the email. The next step is the 6-digit code from the email.
+ * An address claimed on the homepage comes along and shows as one line (with "Change"); everyone
+ * else picks their address in the welcome flow.
  */
 export function SignupForm() {
   const t = useTranslations("auth");
@@ -68,6 +80,7 @@ export function SignupForm() {
   const kind = look ? look.kind : isKind(kindParam) ? kindParam : null;
   const [typed, setTyped] = useState<string | null>(null);
   const username = typed ?? prefill;
+  const [editing, setEditing] = useState(false);
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [banner, setBanner] = useState<AuthError | null>(null);
@@ -78,26 +91,33 @@ export function SignupForm() {
 
   const status = useUsernameStatus(username);
   const usernameError = errors.username ?? (username.length >= 3 && status && status !== "ok" && status !== "checking" ? status : undefined);
+  const locked = Boolean(invite && prefill);
+  // The address field only shows to change the claimed address or when it has a problem.
+  const showField = !locked && (editing || Boolean(usernameError));
 
   const showError = (error: AuthError) => {
     const field = FIELD_OF[error];
     if (field) {
       setErrors({ [field]: error } satisfies Errors);
-      document.getElementById(`signup-${field}`)?.focus();
+      if (field === "username") setEditing(true);
+      focusLater(`signup-${field}`);
     } else setBanner(error);
   };
 
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const next: Errors = {};
-    const nameStatus = await accountStore.usernameStatus(username);
-    if (nameStatus !== "ok") next.username = nameStatus;
+    if (username) {
+      const nameStatus = await accountStore.usernameStatus(username);
+      if (nameStatus !== "ok") next.username = nameStatus;
+    }
     if (!emailOk(email)) next.email = "invalidEmail";
     setErrors(next);
     setBanner(null);
     const first = (["username", "email"] as const).find((field) => next[field]);
     if (first) {
-      document.getElementById(`signup-${first}`)?.focus();
+      if (first === "username") setEditing(true);
+      focusLater(`signup-${first}`);
       return;
     }
     setBusy(true);
@@ -112,7 +132,7 @@ export function SignupForm() {
       email: email.trim(),
       locale: signupLocale,
       signUp: {
-        username: prepared.kind === "match" ? prepared.username : username,
+        username: prepared.kind === "match" ? prepared.username : username || (await freeProvisionalUsername()),
         prepared: prepared.kind === "match" ? { page: prepared.page, theme: prepared.theme } : undefined,
         invite: invite || undefined,
         start: kind ? { kind, theme: look ? look.theme : STARTERS[kind].theme } : undefined,
@@ -142,7 +162,7 @@ export function SignupForm() {
         onChangeEmail={() => {
           setRequest(null);
           setDemoCode(undefined);
-          window.setTimeout(() => document.getElementById("signup-email")?.focus(), 0);
+          focusLater("signup-email");
         }}
       />
     );
@@ -151,44 +171,68 @@ export function SignupForm() {
   return (
     <>
       {invite ? <AuthHeading title={t("signup.preparedTitle")} lead={t("signup.preparedLead")} /> : <AuthHeading title={t("signup.title")} lead={t("signup.lead")} />}
-      <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-5">
+      <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-4">
         <FormError message={banner ? t(`errors.${banner}`) : null} />
-        <TextField
-          id="signup-username"
-          label={t("fields.username")}
-          size="lg"
-          ltr
-          leading="linkyo.app/"
-          value={username}
-          readOnly={Boolean(invite && prefill)}
-          onChange={(event) => {
-            setTyped(event.target.value.toLowerCase());
-            setErrors((current) => ({ ...current, username: undefined }));
-          }}
-          autoComplete="username"
-          autoCapitalize="none"
-          spellCheck={false}
-          maxLength={30}
-          required
-          error={usernameError ? t(`errors.${usernameError}`) : undefined}
-          hint={
-            status === "ok" ? (
-              <span className="flex items-center gap-2 text-success-strong">
-                <Icon icon={CircleCheck} size="sm" />
-                {invite && prefill ? t("fields.usernameReserved", { name: username }) : t("fields.usernameOk", { name: username })}
-              </span>
-            ) : (
-              t("fields.usernameHint")
-            )
-          }
-        />
+        {username && !showField ? (
+          // The address claimed on the homepage (or reserved by an invite), as one quiet line.
+          <div className="flex min-h-control-lg items-center gap-3 rounded-lg border border-line px-4 text-small">
+            <Icon icon={status === "ok" ? CircleCheck : Link2} size="sm" className={status === "ok" ? "shrink-0 text-success-strong" : "shrink-0 text-fg-tertiary"} />
+            <span className="min-w-0 flex-1 truncate text-start text-fg">
+              {locked ? t("fields.usernameReserved", { name: username }) : status === "ok" ? t("fields.usernameOk", { name: username }) : `linkyo.app/${username}`}
+            </span>
+            {locked ? null : (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(true);
+                  focusLater("signup-username");
+                }}
+                className="shrink-0 rounded-xs font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring"
+              >
+                {t("fields.changeAddress")}
+              </button>
+            )}
+          </div>
+        ) : null}
+        {showField ? (
+          <TextField
+            id="signup-username"
+            label={t("fields.username")}
+            variant="filled"
+            size="xl"
+            ltr
+            leading="linkyo.app/"
+            value={username}
+            onChange={(event) => {
+              setTyped(event.target.value.toLowerCase());
+              setErrors((current) => ({ ...current, username: undefined }));
+            }}
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            maxLength={30}
+            error={usernameError ? t(`errors.${usernameError}`) : undefined}
+            hint={
+              status === "ok" ? (
+                <span className="flex items-center gap-2 text-success-strong">
+                  <Icon icon={CircleCheck} size="sm" />
+                  {t("fields.usernameOk", { name: username })}
+                </span>
+              ) : (
+                t("fields.usernameHint")
+              )
+            }
+          />
+        ) : null}
         <TextField
           id="signup-email"
           label={t("fields.email")}
-          size="lg"
+          hideLabel
+          placeholder={t("fields.email")}
+          variant="filled"
+          size="xl"
           ltr
           type="email"
-          icon={AtSign}
           value={email}
           onChange={(event) => {
             setEmail(event.target.value);
@@ -199,22 +243,15 @@ export function SignupForm() {
           required
           error={errors.email ? t(`errors.${errors.email}`) : undefined}
         />
-        <Button
-          type="submit"
-          variant="primary"
-          size="xl"
-          block
-          loading={busy || leaving}
-          trailing={<Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover/button:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/button:-translate-x-0.5" />}
-        >
+        <Button type="submit" variant="primary" size="xl" block loading={busy || leaving}>
           {t("signup.submit")}
         </Button>
         <p className="text-caption text-pretty text-fg-secondary">{t("signup.terms")}</p>
       </form>
       <OrDivider label={t("social.or")} />
       <SocialButtons emailField="signup-email" />
-      {invite ? <p className="-mt-4 text-caption text-fg-secondary">{t("signup.preparedGoogle")}</p> : null}
-      <p className="text-small text-fg-secondary">
+      {invite ? <p className="-mt-3 text-caption text-fg-secondary">{t("signup.preparedGoogle")}</p> : null}
+      <p className="text-center text-small text-fg-secondary">
         {t("signup.haveAccount")}{" "}
         <Link href="/login" className="font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring">
           {t("signup.login")}

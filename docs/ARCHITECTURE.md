@@ -52,7 +52,7 @@ link/                                   pnpm workspaces + Turborepo, TypeScript 
 │  └─ ios/                              SwiftUI app — XcodeGen spec, app + Share Extension + Widgets
 │     ├─ project.yml                    generates Linkyo.xcodeproj (not committed)
 │     ├─ Linkyo/ · LinkyoShareExtension/ · LinkyoWidgets/
-│     └─ Packages/LinkyoDesignSystem/   SPM package: generated tokens + colors + LoopSymbol, components, Design Gallery
+│     └─ Packages/LinkyoDesignSystem/   SPM package: generated tokens + colors + LinkyoSymbol, components, Design Gallery
 ├─ packages/
 │  ├─ tokens/                           tokens.json (single source of truth) → CSS, Tailwind v4, TS, Swift, xcassets
 │  │  ├─ src/creator/                   creator theme engine: OKLCH palette + WCAG guard, presets, image seed extraction
@@ -108,7 +108,7 @@ All tables: `id uuid pk`, `created_at`, `updated_at`; **RLS enabled in the same 
 
 `packages/tokens/tokens.json` (DTCG) → Style Dictionary 5 → `dist/css/tokens.css`, `dist/tailwind/theme.css` (Tailwind's
 default theme is reset: only tokens produce utilities), `src/generated/tokens.ts`, and for iOS `DesignTokens.swift` +
-`Colors.xcassets` (light/dark/Increase Contrast) + `LoopSymbol.swift` (committed; CI fails on drift).
+`Colors.xcassets` (light/dark/Increase Contrast) + `LinkyoSymbol.swift` (committed; CI fails on drift).
 The **token guard** fails the build on raw hex/px/fonts/motion values outside the tokens package: ESLint rule
 `linkyo/no-raw-design-values`, Stylelint config, SwiftLint custom rules (mirrored on Linux CI), and a lint-coverage check
 ([ADR 0002](DECISIONS/0002-design-tokens-pipeline.md), [ADR 0003](DECISIONS/0003-token-guard.md)).

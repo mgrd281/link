@@ -24,7 +24,7 @@ export function CodeField({ id, label, value, onValue, error, describedBy }: { i
       <label htmlFor={id} className="text-small font-semibold">
         {label}
       </label>
-      <div dir="ltr" className="relative">
+      <div dir="ltr" className="relative max-w-preview">
         <div aria-hidden className="grid grid-cols-6 gap-2 sm:gap-3">
           {Array.from({ length: LENGTH }, (_, index) => {
             const digit = value[index] ?? "";

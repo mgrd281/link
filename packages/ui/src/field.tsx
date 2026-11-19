@@ -20,10 +20,12 @@ export interface TextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   /** Lay the box out left-to-right in every language (addresses, emails, URLs). */
   ltr?: boolean | undefined;
   size?: "md" | "lg" | "xl";
+  /** "filled": a soft teal-50 box without a frame (sign-up, sign-in); "outline" everywhere else. */
+  variant?: "outline" | "filled";
 }
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { label, hideLabel = false, hint, error, icon, leading, trailing, ltr = false, size = "md", className, id, disabled, ...props },
+  { label, hideLabel = false, hint, error, icon, leading, trailing, ltr = false, size = "md", variant = "outline", className, id, disabled, ...props },
   ref,
 ) {
   const autoId = useId();
@@ -40,9 +42,12 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
       <div
         dir={ltr ? "ltr" : undefined}
         className={cn(
-          "group/field flex items-center gap-2 rounded-md border border-line-input bg-surface-elevated text-fg",
-          "transition-[border-color] duration-micro ease-standard",
-          "hover:border-fg-tertiary focus-within:border-focus focus-within:focus-ring",
+          "group/field flex items-center gap-2 border text-fg",
+          "transition-[border-color,background-color] duration-micro ease-standard",
+          variant === "outline"
+            ? "rounded-md border-line-input bg-surface-elevated hover:border-fg-tertiary"
+            : "rounded-lg border-transparent bg-canvas-muted hover:border-line-input focus-within:bg-surface-elevated",
+          "focus-within:border-focus focus-within:focus-ring",
           size === "md" && "h-control-md px-3",
           size === "lg" && "h-control-lg px-4",
           size === "xl" && "h-control-xl px-4 text-body-lg",

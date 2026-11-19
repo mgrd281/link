@@ -22,7 +22,7 @@ struct TodayStatsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: LinkyoTokens.Spacing.s2) {
-            LoopSymbol()
+            LinkyoSymbol()
                 .foregroundStyle(Color.Linkyo.primary)
                 .frame(width: LinkyoTokens.Size.iconLg, height: LinkyoTokens.Size.iconLg)
             Spacer(minLength: 0)

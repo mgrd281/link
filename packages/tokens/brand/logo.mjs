@@ -1,16 +1,21 @@
 /**
- * Generates the Linkyo logo from geometry (brand §3) — reproducible, no hand-edited SVG.
+ * Generates the Linkyo logo from geometry (brand §3): reproducible, no hand-edited SVG.
  *
- * Symbol "the Loop": two rounded-rectangle chain links that interlock (over/under weave) and
- * together draw an abstract lowercase "y". Wordmark: "linkyo", Geist Bold, tracking −2 %.
+ * Symbol "the Linkyo y" (ADR 0039): a Linkyo Teal tile (squircle) with a y cut out of it. The long
+ * arm ends in a soft hook; the short arm stops just short of it, the link point where two paths
+ * meet. Wordmark: "linkyo", Geist SemiBold, tracking +0.5 %.
  *
  * Outputs (committed):
  *   brand/svg/*.svg                       symbol, wordmark, lockups, app icons, favicon
+ *   ../../apps/web/public/favicon.svg     the browser icon (also drawn on link preview cards)
+ *   ../../apps/web/public/logo-on-teal.svg  white tile, teal y: for teal surfaces in pictures
  *   ../ui/src/brand/logo-geometry.ts      path data for the React components
+ *   apps/ios/.../Generated/LinkyoSymbol.swift  the native SwiftUI symbol
+ * The iOS app icon PNGs are rendered from brand/svg/app-icon-*.svg (brand/render-icons.mjs).
  *
  * Run: pnpm --filter @linkyo/tokens brand
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,95 +24,40 @@ import opentype from "opentype.js";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT_SVG = path.join(HERE, "svg");
 const OUT_TS = path.resolve(HERE, "../../ui/src/brand/logo-geometry.ts");
+const WEB_PUBLIC = path.resolve(HERE, "../../../apps/web/public");
 const tokens = JSON.parse((await import("node:fs")).readFileSync(path.join(HERE, "../tokens.json"), "utf8"));
 const C = (p) => p.split(".").reduce((n, k) => n[k], tokens.color).$value;
 
 // ── Symbol geometry (32 × 32 grid) ────────────────────────────────────────────────────────────
-const STROKE = 4;
-const GAP = 1.5; // weave gap on each side of the over-link
-const LONG = { cx: 18.6, cy: 17.8, w: 26, h: 11.5, r: 5.75, rot: -66 };
-const SHORT = { cx: 11.4, cy: 12.0, w: 14, h: 11.5, r: 5.75, rot: 66 };
+/** The tile: a squircle (continuous corners, like an app icon). */
+const TILE = "M16 0C27.6 0 32 4.4 32 16S27.6 32 16 32 0 27.6 0 16 4.4 0 16 0Z";
+const STROKE = 3.9;
+/** Space kept clear around the short arm where it meets the long one (the link point). */
+const GAP = 1.2;
+/** The long arm: down from the top right, ending in a soft hook. */
+const LONG = { start: [22.6, 8.2], line: [16.6, 20], curve: [[15, 23.2], [13, 25], [10.2, 25]] };
+/** The short arm: down from the top left, stopping just before the long arm. */
+const SHORT = { start: [9.4, 8.2], end: [15.3, 16.9] };
+const pt = ([x, y]) => `${x} ${y}`;
+const longD = `M${pt(LONG.start)}L${pt(LONG.line)}C${LONG.curve.map(pt).join(" ")}`;
+const shortD = `M${pt(SHORT.start)}L${pt(SHORT.end)}`;
 
 const f = (n) => +n.toFixed(3);
-function rotate([x, y], link) {
-  const t = (link.rot * Math.PI) / 180;
-  return [link.cx + x * Math.cos(t) - y * Math.sin(t), link.cy + x * Math.sin(t) + y * Math.cos(t)];
-}
+const symbol = { viewBox: "0 0 32 32", tile: TILE, long: longD, short: shortD, stroke: STROKE, gap: GAP };
 
-/** Rounded-rect outline of `link` offset by `o` (centerline ± o), as an SVG path (clockwise). */
-function outline(link, o) {
-  const hw = link.w / 2 + o;
-  const hh = link.h / 2 + o;
-  const r = Math.max(0.01, Math.min(link.r + o, hw, hh));
-  const P = (x, y) => rotate([x, y], link).map(f).join(" ");
-  return [
-    `M${P(-hw + r, -hh)}`,
-    `L${P(hw - r, -hh)}`,
-    `A${f(r)} ${f(r)} 0 0 1 ${P(hw, -hh + r)}`,
-    `L${P(hw, hh - r)}`,
-    `A${f(r)} ${f(r)} 0 0 1 ${P(hw - r, hh)}`,
-    `L${P(-hw + r, hh)}`,
-    `A${f(r)} ${f(r)} 0 0 1 ${P(-hw, hh - r)}`,
-    `L${P(-hw, -hh + r)}`,
-    `A${f(r)} ${f(r)} 0 0 1 ${P(-hw + r, -hh)}`,
-    "Z",
-  ].join("");
-}
-/** A ring (filled, evenodd): band of width `width` around the centerline. */
-const ring = (link, width) => outline(link, width / 2) + outline(link, -width / 2);
-const circle = (x, y, r) => `M${f(x - r)} ${f(y)}a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0Z`;
-
-function centerline(link, n = 30) {
-  const hw = link.w / 2;
-  const hh = link.h / 2;
-  const r = link.r;
-  const corners = [
-    [hw - r, -hh + r, -90],
-    [hw - r, hh - r, 0],
-    [-hw + r, hh - r, 90],
-    [-hw + r, -hh + r, 180],
-  ];
-  const pts = corners.flatMap(([x, y, a0]) =>
-    Array.from({ length: n + 1 }, (_, i) => {
-      const a = ((a0 + (90 * i) / n) * Math.PI) / 180;
-      return rotate([x + r * Math.cos(a), y + r * Math.sin(a)], link);
-    }),
-  );
-  return [...pts, pts[0]];
-}
-function crossings(a, b) {
-  const out = [];
-  for (let i = 0; i < a.length - 1; i++) {
-    for (let j = 0; j < b.length - 1; j++) {
-      const [p1, p2, p3, p4] = [a[i], a[i + 1], b[j], b[j + 1]];
-      const d = (p2[0] - p1[0]) * (p4[1] - p3[1]) - (p2[1] - p1[1]) * (p4[0] - p3[0]);
-      if (Math.abs(d) < 1e-12) continue;
-      const ua = ((p4[0] - p3[0]) * (p1[1] - p3[1]) - (p4[1] - p3[1]) * (p1[0] - p3[0])) / d;
-      const ub = ((p2[0] - p1[0]) * (p1[1] - p3[1]) - (p2[1] - p1[1]) * (p1[0] - p3[0])) / d;
-      if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) out.push({ x: p1[0] + ua * (p2[0] - p1[0]), y: p1[1] + ua * (p2[1] - p1[1]), i });
-    }
-  }
-  return out.filter((p, k) => out.findIndex((q) => Math.hypot(q.x - p.x, q.y - p.y) < 0.5) === k).sort((p, q) => p.i - q.i);
-}
-
-const xs = crossings(centerline(SHORT), centerline(LONG));
-if (xs.length !== 2) throw new Error(`Expected 2 crossings, got ${xs.length}`);
-// Crossing 0: short link over long link. Crossing 1: long link over short link.
-const symbol = {
-  viewBox: "0 0 32 32",
-  long: ring(LONG, STROKE),
-  short: ring(SHORT, STROKE),
-  /** Cut from the long link where the short link passes over it. */
-  longCut: { area: circle(xs[0].x, xs[0].y, STROKE * 1.25), band: ring(SHORT, STROKE + GAP * 2) },
-  /** Cut from the short link where the long link passes over it. */
-  shortCut: { area: circle(xs[1].x, xs[1].y, STROKE * 1.25), band: ring(LONG, STROKE + GAP * 2) },
-};
+/** The y as strokes on a transparent ground (for app icons and the white-tile variant). */
+const glyph = (color, under) =>
+  `<path d="${longD}" fill="none" stroke="${color}" stroke-width="${STROKE}" stroke-linecap="round" stroke-linejoin="round"/>` +
+  `<path d="${shortD}" fill="none" stroke="${under}" stroke-width="${STROKE + GAP * 2}" stroke-linecap="round"/>` +
+  `<path d="${shortD}" fill="none" stroke="${color}" stroke-width="${STROKE}" stroke-linecap="round"/>`;
+/** The full symbol in two colors: the tile and the y on it. */
+const tileMarkup = (tileColor, glyphColor) => `<path d="${TILE}" fill="${tileColor}"/>${glyph(glyphColor, tileColor)}`;
 
 // ── Wordmark ──────────────────────────────────────────────────────────────────────────────────
-const fontFile = path.join(HERE, "../node_modules/geist/dist/fonts/geist-sans/Geist-Bold.ttf");
+const fontFile = path.join(HERE, "../node_modules/geist/dist/fonts/geist-sans/Geist-SemiBold.ttf");
 const font = opentype.loadSync(fontFile);
 const SIZE = 100;
-const TRACKING = -0.02 * SIZE;
+const TRACKING = 0.005 * SIZE;
 let x = 0;
 const glyphs = font.stringToGlyphs("linkyo");
 const wordPath = new opentype.Path();
@@ -129,32 +79,30 @@ const wordmark = {
 };
 
 // ── SVG files ─────────────────────────────────────────────────────────────────────────────────
-function symbolMarkup(id, color = "currentColor") {
-  return `<defs><mask id="${id}-l" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32"><path d="M0 0h32v32H0z" fill="#fff"/><clipPath id="${id}-la"><path d="${symbol.longCut.area}"/></clipPath><path d="${symbol.longCut.band}" fill-rule="evenodd" clip-path="url(#${id}-la)"/></mask><mask id="${id}-s" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32"><path d="M0 0h32v32H0z" fill="#fff"/><clipPath id="${id}-sa"><path d="${symbol.shortCut.area}"/></clipPath><path d="${symbol.shortCut.band}" fill-rule="evenodd" clip-path="url(#${id}-sa)"/></mask></defs><path d="${symbol.long}" fill="${color}" fill-rule="evenodd" mask="url(#${id}-l)"/><path d="${symbol.short}" fill="${color}" fill-rule="evenodd" mask="url(#${id}-s)"/>`;
-}
 const svg = (viewBox, body, extra = "") => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}"${extra}>${body}</svg>\n`;
 
 mkdirSync(OUT_SVG, { recursive: true });
 const write = (name, content) => writeFileSync(path.join(OUT_SVG, name), content);
 const ink = C("ink");
 const paper = C("paper");
-// Linkyo Teal: the deep background, its lighter band, and the light step for dark surfaces.
+const white = C("white");
+// Linkyo Teal: the tile, and the light step that stays readable on dark surfaces.
 const teal700 = C("teal.700");
-const teal600 = C("teal.600");
 const teal350 = C("teal.350");
 
-write("symbol.svg", svg(symbol.viewBox, symbolMarkup("ly", ink)));
+write("symbol.svg", svg(symbol.viewBox, tileMarkup(teal700, white)));
 write("wordmark.svg", svg(wordmark.viewBox, `<path d="${wordmark.d}" fill="${ink}"/>`));
 
-// Horizontal lockup: symbol height = cap height of the wordmark × 1.32, gap = x-height.
-const symbolH = wordmark.height * 1.0;
-const gapH = wordmark.xHeight * 0.55;
-const hW = symbolH + gapH + wordmark.width;
+// Horizontal lockup: the tile a little taller than the word (ascender to descender), centred on it.
+const tileH = wordmark.height * 1.18;
+const gapH = tileH * 0.26;
+const hW = tileH + gapH + wordmark.width;
+const wordY = (tileH - wordmark.height) / 2;
 write(
   "lockup-horizontal.svg",
   svg(
-    `0 0 ${f(hW)} ${f(symbolH)}`,
-    `<svg x="0" y="0" width="${f(symbolH)}" height="${f(symbolH)}" viewBox="0 0 32 32">${symbolMarkup("lh", ink)}</svg><svg x="${f(symbolH + gapH)}" y="0" width="${wordmark.width}" height="${wordmark.height}" viewBox="${wordmark.viewBox}"><path d="${wordmark.d}" fill="${ink}"/></svg>`,
+    `0 0 ${f(hW)} ${f(tileH)}`,
+    `<svg x="0" y="0" width="${f(tileH)}" height="${f(tileH)}" viewBox="0 0 32 32">${tileMarkup(teal700, white)}</svg><svg x="${f(tileH + gapH)}" y="${f(wordY)}" width="${wordmark.width}" height="${wordmark.height}" viewBox="${wordmark.viewBox}"><path d="${wordmark.d}" fill="${ink}"/></svg>`,
   ),
 );
 const sS = wordmark.width * 0.42;
@@ -162,39 +110,34 @@ write(
   "lockup-stacked.svg",
   svg(
     `0 0 ${f(wordmark.width)} ${f(sS + wordmark.xHeight * 0.6 + wordmark.height)}`,
-    `<svg x="${f((wordmark.width - sS) / 2)}" y="0" width="${f(sS)}" height="${f(sS)}" viewBox="0 0 32 32">${symbolMarkup("ls", ink)}</svg><svg x="0" y="${f(sS + wordmark.xHeight * 0.6)}" width="${wordmark.width}" height="${wordmark.height}" viewBox="${wordmark.viewBox}"><path d="${wordmark.d}" fill="${ink}"/></svg>`,
+    `<svg x="${f((wordmark.width - sS) / 2)}" y="0" width="${f(sS)}" height="${f(sS)}" viewBox="0 0 32 32">${tileMarkup(teal700, white)}</svg><svg x="0" y="${f(sS + wordmark.xHeight * 0.6)}" width="${wordmark.width}" height="${wordmark.height}" viewBox="${wordmark.viewBox}"><path d="${wordmark.d}" fill="${ink}"/></svg>`,
   ),
 );
 
-// App icon (iOS 18 appearances): light, dark, tinted. 1024 grid, symbol at 62 %.
-const icon = (id, background, color) =>
-  svg(
-    "0 0 1024 1024",
-    `${background}<svg x="194" y="194" width="636" height="636" viewBox="0 0 32 32">${symbolMarkup(id, color)}</svg>`,
-  );
-write(
-  "app-icon-light.svg",
-  icon(
-    "il",
-    `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${teal700}"/><stop offset="1" stop-color="${teal600}"/></linearGradient></defs><path d="M0 0h1024v1024H0z" fill="url(#g)"/>`,
-    paper,
-  ),
-);
-write("app-icon-dark.svg", icon("id", `<path d="M0 0h1024v1024H0z" fill="${ink}"/>`, teal350));
-write("app-icon-tinted.svg", icon("it", `<path d="M0 0h1024v1024H0z" fill="#000"/>`, "#fff"));
-write(
-  "favicon.svg",
-  svg(
-    "0 0 32 32",
-    `<style>.m{fill:${teal700}}@media (prefers-color-scheme:dark){.m{fill:${teal350}}}</style>${symbolMarkup("fv", "currentColor").replaceAll('fill="currentColor"', 'class="m"')}`,
-  ),
-);
+// App icons (iOS appearances: light, dark, tinted). Full-bleed: the system rounds the corners. The y
+// takes 56 % of the height, centred on its own box.
+const GLYPH_BOX = { cx: 16, cy: 16.6, h: 20.7 };
+const iconScale = (1024 * 0.56) / GLYPH_BOX.h;
+const iconGlyph = (color, ground) =>
+  `<g transform="translate(512 512) scale(${f(iconScale)}) translate(${-GLYPH_BOX.cx} ${-GLYPH_BOX.cy})">${glyph(color, ground)}</g>`;
+const icon = (ground, color) => svg("0 0 1024 1024", `<path d="M0 0h1024v1024H0z" fill="${ground}"/>${iconGlyph(color, ground)}`);
+write("app-icon-light.svg", icon(teal700, white));
+write("app-icon-dark.svg", icon(ink, teal350));
+write("app-icon-tinted.svg", icon("#000", "#fff"));
 
-// Lockup geometry for single-SVG rendering (React): symbol scaled to the wordmark height.
+// Browser icon: the tile as it is. Also the picture used on link preview cards.
+const favicon = svg("0 0 32 32", tileMarkup(teal700, white));
+write("favicon.svg", favicon);
+writeFileSync(path.join(WEB_PUBLIC, "favicon.svg"), favicon);
+// White tile with a teal y, for teal surfaces in generated pictures (share cards).
+writeFileSync(path.join(WEB_PUBLIC, "logo-on-teal.svg"), svg("0 0 32 32", tileMarkup(white, teal700)));
+void paper;
+
+// Lockup geometry for single-SVG rendering (React): tile scaled to tileH, the word beside it.
 const lockup = {
-  viewBox: `0 0 ${f(hW)} ${f(symbolH)}`,
-  symbolTransform: `scale(${f(symbolH / 32)})`,
-  wordmarkTransform: `translate(${f(symbolH + gapH - bb.x1)} ${f(-bb.y1)})`,
+  viewBox: `0 0 ${f(hW)} ${f(tileH)}`,
+  symbolTransform: `scale(${f(tileH / 32)})`,
+  wordmarkTransform: `translate(${f(tileH + gapH - bb.x1)} ${f(wordY - bb.y1)})`,
 };
 
 // ── TS geometry for React ─────────────────────────────────────────────────────────────────────
@@ -209,72 +152,71 @@ export const wordmarkGeometry = ${JSON.stringify(wordmark, null, 2)} as const;
 export const lockupGeometry = ${JSON.stringify(lockup, null, 2)} as const;
 `,
 );
+
 // ── Swift (native SwiftUI symbol) ─────────────────────────────────────────────────────────────
 const IOS_GENERATED = path.resolve(HERE, "../../../apps/ios/Packages/LinkyoDesignSystem/Sources/LinkyoDesignSystem/Generated");
 const sw = (n) => (Number.isInteger(n) ? `${n}.0` : `${+n.toFixed(4)}`);
-const swLink = (l) => `Link(cx: ${sw(l.cx)}, cy: ${sw(l.cy)}, width: ${sw(l.w)}, height: ${sw(l.h)}, radius: ${sw(l.r)}, degrees: ${sw(l.rot)})`;
+const P = ([x, y]) => `CGPoint(x: ${sw(x)}, y: ${sw(y)})`;
 mkdirSync(IOS_GENERATED, { recursive: true });
+rmSync(path.join(IOS_GENERATED, "LoopSymbol.swift"), { force: true });
 writeFileSync(
-  path.join(IOS_GENERATED, "LoopSymbol.swift"),
+  path.join(IOS_GENERATED, "LinkyoSymbol.swift"),
   `// Generated by packages/tokens/brand/logo.mjs — do not edit by hand.
 // swiftlint:disable all
 
 import SwiftUI
 
-/// "The Loop": two interlocking links forming a lowercase y. Drawn natively, follows \`foregroundStyle\`.
-public struct LoopSymbol: View {
+/// "The Linkyo y": a tile in the foreground style with a y cut out of it. The long arm ends in a soft
+/// hook; the short arm stops just short of it (the link point). Drawn natively, follows \`foregroundStyle\`.
+public struct LinkyoSymbol: View {
     public init() {}
 
-    struct Link {
-        let cx: CGFloat, cy: CGFloat, width: CGFloat, height: CGFloat, radius: CGFloat, degrees: CGFloat
-
-        /// Rounded-rect outline offset by \`inset\` (positive grows), rotated around its center.
-        func outline(offset: CGFloat) -> Path {
-            let rect = CGRect(x: cx - width / 2 - offset, y: cy - height / 2 - offset, width: width + offset * 2, height: height + offset * 2)
-            let path = Path(roundedRect: rect, cornerRadius: max(0.01, radius + offset), style: .circular)
-            let transform = CGAffineTransform(translationX: cx, y: cy)
-                .rotated(by: degrees * .pi / 180)
-                .translatedBy(x: -cx, y: -cy)
-            return path.applying(transform)
-        }
-
-        func ring(width band: CGFloat) -> Path {
-            var path = outline(offset: band / 2)
-            path.addPath(outline(offset: -band / 2))
-            return path
-        }
-    }
-
-    static let long = ${swLink(LONG)}
-    static let short = ${swLink(SHORT)}
     static let stroke: CGFloat = ${sw(STROKE)}
     static let gap: CGFloat = ${sw(GAP)}
-    /// Crossing 0: short link over long. Crossing 1: long link over short.
-    static let crossings: [CGPoint] = [${xs.map((p) => `CGPoint(x: ${sw(p.x)}, y: ${sw(p.y)})`).join(", ")}]
+
+    /// The squircle tile on a 32 × 32 grid.
+    static let tile: Path = Path { path in
+        path.move(to: ${P([16, 0])})
+        path.addCurve(to: ${P([32, 16])}, control1: ${P([27.6, 0])}, control2: ${P([32, 4.4])})
+        path.addCurve(to: ${P([16, 32])}, control1: ${P([32, 27.6])}, control2: ${P([27.6, 32])})
+        path.addCurve(to: ${P([0, 16])}, control1: ${P([4.4, 32])}, control2: ${P([0, 27.6])})
+        path.addCurve(to: ${P([16, 0])}, control1: ${P([0, 4.4])}, control2: ${P([4.4, 0])})
+        path.closeSubpath()
+    }
+
+    static let long: Path = Path { path in
+        path.move(to: ${P(LONG.start)})
+        path.addLine(to: ${P(LONG.line)})
+        path.addCurve(to: ${P(LONG.curve[2])}, control1: ${P(LONG.curve[0])}, control2: ${P(LONG.curve[1])})
+    }
+
+    static let short: Path = Path { path in
+        path.move(to: ${P(SHORT.start)})
+        path.addLine(to: ${P(SHORT.end)})
+    }
 
     public var body: some View {
         Canvas { context, size in
             let scale = min(size.width, size.height) / 32
             context.translateBy(x: (size.width - 32 * scale) / 2, y: (size.height - 32 * scale) / 2)
             context.scaleBy(x: scale, y: scale)
-            draw(Self.long, cutBy: Self.short, at: Self.crossings[0], in: context)
-            draw(Self.short, cutBy: Self.long, at: Self.crossings[1], in: context)
+            context.drawLayer { layer in
+                let line = StrokeStyle(lineWidth: Self.stroke, lineCap: .round, lineJoin: .round)
+                layer.fill(Self.tile, with: .foreground)
+                layer.blendMode = .destinationOut
+                layer.stroke(Self.long, with: .color(.black), style: line)
+                // Keep the tile around the short arm: the link point between the two arms.
+                layer.blendMode = .normal
+                layer.stroke(Self.short, with: .foreground, style: StrokeStyle(lineWidth: Self.stroke + Self.gap * 2, lineCap: .round))
+                layer.blendMode = .destinationOut
+                layer.stroke(Self.short, with: .color(.black), style: line)
+            }
         }
         .aspectRatio(1, contentMode: .fit)
         .accessibilityHidden(true)
-    }
-
-    private func draw(_ link: Link, cutBy over: Link, at crossing: CGPoint, in context: GraphicsContext) {
-        context.drawLayer { layer in
-            layer.fill(link.ring(width: Self.stroke), with: .foreground, style: FillStyle(eoFill: true))
-            let radius = Self.stroke * 1.25
-            layer.clip(to: Path(ellipseIn: CGRect(x: crossing.x - radius, y: crossing.y - radius, width: radius * 2, height: radius * 2)))
-            layer.blendMode = .destinationOut
-            layer.fill(over.ring(width: Self.stroke + Self.gap * 2), with: .color(.black), style: FillStyle(eoFill: true))
-        }
     }
 }
 `,
 );
 
-console.warn(`✔ logo: symbol (2 links, ${xs.length} crossings), wordmark ${wordmark.width}×${wordmark.height}`);
+console.warn(`✔ logo: symbol (tile + y), wordmark ${wordmark.width}×${wordmark.height}`);

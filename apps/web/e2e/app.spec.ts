@@ -17,7 +17,7 @@ async function signUp(page: Page, locale = "en") {
   const name = `mila-${unique()}`;
   await page.goto(`/${locale}/signup?name=${name}`);
   await page.waitForLoadState("networkidle");
-  await expect(page.locator("#signup-username")).toHaveValue(name);
+  await expect(page.getByText(`linkyo.app/${name}`)).toBeVisible();
   await page.locator("#signup-email").fill(`${name}@example.com`);
   await page.locator("form button[type=submit]").click();
   await enterDemoCode(page);
@@ -47,13 +47,38 @@ test.describe("accounts", () => {
     await field.fill("mila-aurel");
     await field.press("Enter");
     await page.waitForURL("**/en/signup?name=mila-aurel");
-    await expect(page.locator("#signup-username")).toHaveValue("mila-aurel");
+    // The claimed address comes along as one line; only the email is asked.
+    await expect(page.locator("#signup-username")).toHaveCount(0);
     await expect(page.getByText("linkyo.app/mila-aurel is available")).toBeVisible();
   });
 
-  test("sign-up explains what is missing, field by field", async ({ page }) => {
+  test("sign-up asks only for the email; the page address follows the name in the welcome flow", async ({ page }) => {
     await page.goto("/en/signup");
-    await page.locator("#signup-username").fill("login");
+    // Like the sign-up pages people know: the logo, one field, one button. Language and
+    // light/dark live on the homepage.
+    await expect(page.locator("#signup-username")).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "Language" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Sign up" })).toBeVisible();
+    const id = unique();
+    await page.locator("#signup-email").fill(`solo-${id}@example.com`);
+    await page.locator("form button[type=submit]").click();
+    await enterDemoCode(page);
+    await page.waitForURL("**/en/app/welcome");
+    await page.getByText("Music", { exact: true }).click();
+    await page.getByRole("button", { name: "Continue" }).click();
+    // The address is suggested from the name as it is typed, and can be changed.
+    await page.getByLabel("Your artist name").fill(`Solo ${id}`);
+    await expect(page.getByLabel("Your address")).toHaveValue(`solo-${id}`);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByRole("heading", { name: "Pick a look" })).toBeFocused();
+    await page.getByRole("button", { name: "Skip for now" }).click();
+    await page.waitForURL("**/en/app");
+    await expect(page.getByText(`linkyo.app/solo-${id}`).filter({ visible: true }).first()).toBeVisible();
+  });
+
+  test("sign-up explains what is missing, field by field", async ({ page }) => {
+    // A claimed address that cannot be used opens the address field with the reason.
+    await page.goto("/en/signup?name=login");
     await expect(page.getByText("This address is reserved for Linkyo.")).toBeVisible();
     await page.locator("#signup-username").fill("mila-ok");
     await page.locator("#signup-email").fill("not-an-email");
@@ -84,7 +109,7 @@ test.describe("accounts", () => {
     await expect(page.getByRole("button", { name: /New code in \d+ s/ })).toBeDisabled();
     // A different email goes back to the first step, with what was typed kept.
     await page.getByRole("button", { name: "Use a different email" }).click();
-    await expect(page.locator("#signup-username")).toHaveValue(name);
+    await expect(page.getByText(`linkyo.app/${name}`)).toBeVisible();
     await expect(page.locator("#signup-email")).toBeFocused();
     await page.locator("form button[type=submit]").click();
     await enterDemoCode(page);
@@ -376,7 +401,6 @@ test.describe("private previews", () => {
     await page.waitForURL("**/en/signup?kind=journalist&look=journalist");
     await page.waitForLoadState("networkidle");
     const name = `press-${unique()}`;
-    await page.locator("#signup-username").fill(name);
     await page.locator("#signup-email").fill(`${name}@example.com`);
     await page.locator("form button[type=submit]").click();
     await enterDemoCode(page);
@@ -482,8 +506,9 @@ test.describe("prepared pages for creators", () => {
     await page.goto("/de/signup?name=nizarals9&invite=nizar");
     await page.waitForLoadState("networkidle");
     await expect(page.getByRole("heading", { name: "Deine Seite ist fertig" })).toBeVisible();
-    await expect(page.locator("#signup-username")).toHaveValue("nizarals9");
-    await expect(page.locator("#signup-username")).toHaveAttribute("readonly", "");
+    // The invite reserves the address: it shows as a line, without "Change".
+    await expect(page.getByText("linkyo.app/nizarals9 ist für dich reserviert")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Ändern" })).toHaveCount(0);
     await page.locator("#signup-email").fill("nezaralsweid4@gmail.com");
     await page.locator("form button[type=submit]").click();
     await enterDemoCode(page);

@@ -51,7 +51,7 @@ struct RootView: View {
             List {
                 Section {
                     HStack(spacing: LinkyoTokens.Spacing.s3) {
-                        LoopSymbol()
+                        LinkyoSymbol()
                             .foregroundStyle(Color.Linkyo.primary)
                             .frame(width: LinkyoTokens.Size.avatarMd, height: LinkyoTokens.Size.avatarMd)
                         Text("Linkyo").linkyoText(.h3)

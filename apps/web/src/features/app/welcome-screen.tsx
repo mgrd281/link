@@ -1,13 +1,14 @@
 "use client";
 
 import { detectMany } from "@linkyo/blocks";
-import { Button, cn, Icon, Logo } from "@linkyo/ui";
+import { Button, cn, Icon, Logo, TextField } from "@linkyo/ui";
 import {
   ArrowLeft,
   ArrowRight,
   BadgePercent,
   BriefcaseBusiness,
   Check,
+  CircleCheck,
   CodeXml,
   DraftingCompass,
   Feather,
@@ -29,7 +30,10 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { useUsernameStatus } from "@/features/account/auth/shared";
 import { accountStore } from "@/features/account/store";
+import type { AuthError } from "@/features/account/types";
+import { isProvisionalUsername, suggestUsername } from "@/features/account/username";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
 import { PlatformGlyph } from "@/features/directions/shared/creator-kit";
 import { useRouter } from "@/i18n/navigation";
@@ -101,6 +105,14 @@ export function WelcomeScreen() {
   const { doc, dispatch, account, site, enrich } = useSite();
   const [step, setStep] = useState<Step>("kind");
   const profile = useProfileDraft();
+  const tAuth = useTranslations("auth");
+  const [address, setAddress] = useState<string | null>(null);
+  const [addressError, setAddressError] = useState<AuthError | null>(null);
+  // People who did not claim an address get a neutral one at sign-up; here it follows their name.
+  const provisional = isProvisionalUsername(account.username);
+  const addressValue = (address ?? (provisional ? suggestUsername(profile.profile.displayName) : account.username)).trim().toLowerCase();
+  const addressStatus = useUsernameStatus(addressValue, account.username);
+  const addressProblem = addressError ?? (addressValue.length >= 3 && addressStatus && addressStatus !== "ok" && addressStatus !== "checking" ? addressStatus : null);
   const [kind, setKind] = useState<CreatorKind | null>(isKind(site.kind) ? site.kind : null);
   const starter = STARTERS[kind ?? "other"];
   const [handles, setHandles] = useState<Partial<Record<SocialPlatform, string>>>({});
@@ -138,8 +150,22 @@ export function WelcomeScreen() {
     accountStore.updateSite((current) => ({ ...current, kind: next }));
   };
 
-  const next = () => {
-    if (step === "you" && !profile.save(t("nameRequired"))) return;
+  const next = async () => {
+    if (step === "you") {
+      if (addressProblem) {
+        document.getElementById("welcome-address")?.focus();
+        return;
+      }
+      if (!profile.save(t("nameRequired"))) return;
+      if (addressValue && addressValue !== account.username) {
+        const result = await accountStore.changeUsername(addressValue);
+        if (!result.ok) {
+          setAddressError(result.error);
+          document.getElementById("welcome-address")?.focus();
+          return;
+        }
+      }
+    }
     if (step === "links") {
       const blocks = starterBlocks(
         { kind: kind ?? "other", handles, values, switches, links },
@@ -244,13 +270,41 @@ export function WelcomeScreen() {
           ) : null}
 
           {step === "you" ? (
-            <ProfileFields
-              profile={profile.profile}
-              onChange={profile.change}
-              errors={profile.errors}
-              nameLabel={tKinds(`${kind ?? "other"}.name`)}
-              taglineHint={tKinds(`${kind ?? "other"}.taglineHint`)}
-            />
+            <div className="grid grid-cols-1 gap-5">
+              <ProfileFields
+                profile={profile.profile}
+                onChange={profile.change}
+                errors={profile.errors}
+                nameLabel={tKinds(`${kind ?? "other"}.name`)}
+                taglineHint={tKinds(`${kind ?? "other"}.taglineHint`)}
+              />
+              {/* The page address: the one claimed at sign-up, or one that follows the name. */}
+              <TextField
+                id="welcome-address"
+                label={t("address.label")}
+                ltr
+                leading="linkyo.app/"
+                value={addressValue}
+                onChange={(event) => {
+                  setAddress(event.target.value.toLowerCase());
+                  setAddressError(null);
+                }}
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={30}
+                error={addressProblem ? tAuth(`errors.${addressProblem}`) : undefined}
+                hint={
+                  (addressValue === account.username && !provisional) || addressStatus === "ok" ? (
+                    <span className="flex items-center gap-2 text-success-strong">
+                      <Icon icon={CircleCheck} size="sm" />
+                      {addressValue === account.username ? t("address.yours", { name: addressValue }) : tAuth("fields.usernameOk", { name: addressValue })}
+                    </span>
+                  ) : (
+                    t("address.hint")
+                  )
+                }
+              />
+            </div>
           ) : null}
 
           {step === "look" ? (
@@ -393,7 +447,7 @@ export function WelcomeScreen() {
                   {t("back")}
                 </Button>
               ) : null}
-              <Button variant="primary" size="xl" className="ms-auto min-w-0 flex-1 sm:flex-none" onClick={next} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+              <Button variant="primary" size="xl" className="ms-auto min-w-0 flex-1 sm:flex-none" onClick={() => void next()} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
                 {step === "links" ? t("finish") : t("continue")}
               </Button>
             </div>

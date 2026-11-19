@@ -1,7 +1,6 @@
 "use client";
 
-import { Button, Icon, TextField } from "@linkyo/ui";
-import { ArrowRight, AtSign } from "lucide-react";
+import { Button, TextField } from "@linkyo/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type SubmitEvent } from "react";
 import { z } from "zod";
@@ -75,15 +74,17 @@ export function LoginForm() {
   return (
     <>
       <AuthHeading title={t("login.title")} lead={t("login.lead")} />
-      <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-5">
+      <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-4">
         <FormError message={error && error !== "invalidEmail" ? t(`errors.${error}`) : linkExpired ? t("errors.linkExpired") : null} />
         <TextField
           id="login-email"
           label={t("fields.email")}
-          size="lg"
+          hideLabel
+          placeholder={t("fields.email")}
+          variant="filled"
+          size="xl"
           ltr
           type="email"
-          icon={AtSign}
           value={email}
           onChange={(event) => {
             setEmail(event.target.value);
@@ -94,13 +95,13 @@ export function LoginForm() {
           required
           error={error === "invalidEmail" ? t("errors.invalidEmail") : undefined}
         />
-        <Button type="submit" variant="primary" size="xl" block loading={busy || leaving} trailing={<Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover/button:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/button:-translate-x-0.5" />}>
+        <Button type="submit" variant="primary" size="xl" block loading={busy || leaving}>
           {t("login.submit")}
         </Button>
       </form>
       <OrDivider label={t("social.or")} />
       <SocialButtons emailField="login-email" />
-      <p className="text-small text-fg-secondary">
+      <p className="text-center text-small text-fg-secondary">
         {t("login.noAccount")}{" "}
         <Link href="/signup" className="font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring">
           {t("login.signup")}

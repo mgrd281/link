@@ -1,6 +1,6 @@
 import { tokens } from "@linkyo/tokens";
 import { composite, contrastRatio } from "@linkyo/tokens/creator";
-import { Badge, Logo, LogoSymbol, LogoWordmark } from "@linkyo/ui";
+import { Badge, Logo, LogoGlyph, LogoSymbol, LogoWordmark } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 
 import { Section, Specimen, SubSection } from "./section";
@@ -40,23 +40,23 @@ export function BrandSection() {
             <LogoWordmark className="h-8" />
           </Specimen>
           <div className="flex min-h-24 items-center justify-center gap-8 rounded-lg bg-ink p-5 text-paper">
-            <Logo className="h-8 text-paper" />
+            <Logo tone="mono" className="h-8 text-paper" />
           </div>
           <div className="flex min-h-24 items-center justify-center gap-8 rounded-lg bg-primary p-5 text-paper">
-            <Logo className="h-8 text-paper" />
+            <Logo tone="mono" className="h-8 text-paper" />
           </div>
         </div>
       </SubSection>
       <SubSection title={t("appIcon")} note={t("appIconNote")}>
         <div className="flex flex-wrap items-end gap-6">
           {[
-            { key: "light", bg: "bg-linear-to-br from-teal-700 to-teal-600", fg: "text-paper" },
+            { key: "light", bg: "bg-teal-700", fg: "text-paper" },
             { key: "dark", bg: "bg-ink", fg: "text-teal-350" },
             { key: "tinted", bg: "bg-night-50", fg: "text-paper" },
           ].map((icon) => (
             <figure key={icon.key} className="grid justify-items-center gap-2">
               <div className={`grid size-avatar-2xl place-items-center rounded-xl ${icon.bg}`}>
-                <LogoSymbol className={`size-avatar-lg ${icon.fg}`} />
+                <LogoGlyph className={`size-avatar-lg ${icon.fg}`} />
               </div>
               <figcaption className="text-caption text-fg-secondary">{t(`icon.${icon.key}`)}</figcaption>
             </figure>

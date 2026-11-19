@@ -27,9 +27,8 @@ const PAGES = Promise.all(
   ].map(async ({ file, name }) => ({ name, photo: dataUrl(await readFile(join(process.cwd(), "src/assets/examples", file)), "image/jpeg") })),
 );
 
-const LOGO = readFile(join(process.cwd(), "public/favicon.svg"), "utf8").then((svg) =>
-  dataUrl(Buffer.from(svg.replace(/@media[^}]*\}\}/, "").replace(/#00454C/g, tokens.color.white)), "image/svg+xml"),
-);
+/** White tile with a teal y (generated with the logo): the card itself is Linkyo Teal. */
+const LOGO = readFile(join(process.cwd(), "public/logo-on-teal.svg")).then((svg) => dataUrl(svg, "image/svg+xml"));
 
 const v = tokens.color.teal;
 

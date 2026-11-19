@@ -196,7 +196,7 @@ export function CreatorFooter({ className, credit = true, privacy = false }: { c
           href="https://linkyo.app"
           className="h-control-sm border-creator-line text-creator-fg duration-micro hover:border-creator-line-strong focus-visible:focus-ring inline-flex items-center gap-2 rounded-full border px-3 font-medium transition-colors"
         >
-          <LogoSymbol className="size-icon-sm" />
+          <LogoSymbol tone="mono" className="size-icon-sm" />
           {t("madeWith")}
         </a>
       ) : null}

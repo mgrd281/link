@@ -15,9 +15,7 @@ export function AppSplash() {
   return (
     <div className="grid min-h-dvh place-items-center bg-canvas">
       <div className="grid justify-items-center gap-4" role="status">
-        <span className="grid size-control-xl place-items-center rounded-lg bg-primary text-primary-fg">
-          <LogoSymbol className="size-icon-lg" />
-        </span>
+        <LogoSymbol className="size-control-xl" />
         <Spinner className="size-icon-md text-fg-tertiary" />
         <span className="sr-only">{t("loading")}</span>
       </div>

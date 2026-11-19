@@ -123,9 +123,7 @@ function GateCard({ icon, title, lead, children }: { icon: LucideIcon; title: st
     <main className="grid min-h-dvh place-items-center bg-canvas px-4 py-10 text-fg">
       <div className="grid w-full max-w-preview grid-cols-1 gap-6 rounded-xl border border-line bg-surface p-6 md:p-8">
         <div className="flex items-center gap-3">
-          <span className="grid size-control-lg place-items-center rounded-lg bg-primary text-primary-fg">
-            <LogoSymbol className="size-icon-md" />
-          </span>
+          <LogoSymbol className="size-control-lg" />
           <span className="grid size-control-lg place-items-center rounded-lg bg-selected text-selected-fg">
             <Icon icon={icon} size="md" />
           </span>

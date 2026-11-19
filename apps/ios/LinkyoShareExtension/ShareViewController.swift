@@ -25,7 +25,7 @@ private struct ShareRootView: View {
 
     var body: some View {
         VStack(spacing: LinkyoTokens.Spacing.s6) {
-            LoopSymbol()
+            LinkyoSymbol()
                 .foregroundStyle(Color.Linkyo.primary)
                 .frame(width: LinkyoTokens.Size.avatarLg, height: LinkyoTokens.Size.avatarLg)
             Text("Add to Linkyo").linkyoText(.h2)

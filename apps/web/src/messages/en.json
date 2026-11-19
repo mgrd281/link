@@ -40,13 +40,13 @@
     },
     "brand": {
       "title": "Brand",
-      "description": "The Loop: two links that interlock into a lowercase y. Calm, confident, never loud.",
+      "description": "The Linkyo y: a Linkyo Teal tile with a y whose long stroke ends in a soft hook. The short stroke stops just before it: the point where two paths connect. Calm, precise, premium.",
       "lockups": "Lockups",
-      "lockupsNote": "Horizontal, symbol + wordmark, on Ink and on Linkyo Teal. Clear space equals the height of the “o”.",
+      "lockupsNote": "Horizontal, symbol + wordmark, on Ink and on Linkyo Teal (then in white). Clear space equals a quarter of the tile.",
       "horizontal": "Horizontal lockup",
       "symbolWordmark": "Symbol · wordmark",
       "appIcon": "App icon",
-      "appIconNote": "Paper symbol on Linkyo Teal with a subtle 700 → 600 gradient. Light, dark and tinted appearances for iOS 18+.",
+      "appIconNote": "A white y on flat Linkyo Teal, no gradient. Light, dark and tinted appearances for iOS 18+.",
       "icon": {
         "light": "Light",
         "dark": "Dark",
@@ -850,7 +850,8 @@
       "usernameOk": "linkyo.app/{name} is available",
       "email": "Email",
       "usernameReserved": "linkyo.app/{name} is reserved for you",
-      "code": "Sign-in code"
+      "code": "Sign-in code",
+      "changeAddress": "Change"
     },
     "errors": {
       "required": "Please enter your email.",
@@ -875,7 +876,7 @@
     "signup": {
       "title": "Sign up for free",
       "lead": "Ready to be linkyo?",
-      "submit": "Continue",
+      "submit": "Sign up",
       "terms": "By creating an account you accept the terms of use and confirm the privacy policy.",
       "haveAccount": "Already have an account?",
       "login": "Sign in",
@@ -1788,6 +1789,11 @@
           "empty": "That page has no public links we could read. Paste your links below instead.",
           "failed": "We couldn't read that page right now. Paste your links below instead."
         }
+      },
+      "address": {
+        "label": "Your address",
+        "hint": "This is how people find your page. You can change it later in Settings.",
+        "yours": "linkyo.app/{name} is yours"
       }
     },
     "ownPage": {

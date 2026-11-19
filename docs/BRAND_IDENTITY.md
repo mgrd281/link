@@ -52,10 +52,13 @@ Not a template marketplace. Not cluttered. Not "techy". Not neon-gradient AI aes
 
 ## 3. Logo
 
-- **Wordmark**: "linkyo" in lowercase, custom-tuned geometric sans (based on Geist Bold), tight tracking (-2%).
-- **Symbol ("the Loop")**: two rounded rectangles interlocking like chain links, forming an abstract lowercase "y" in negative space. Works at 16 px.
-- **Lockups**: horizontal (symbol + wordmark), stacked, symbol only (app icon, favicon).
-- **Clear space**: height of the "o" on all sides.
+- **Wordmark**: "linkyo" in lowercase, Geist SemiBold, tracking +0.5 % ([ADR 0040](DECISIONS/0040-logo-linkyo-y.md)).
+- **Symbol ("the Linkyo y")**: a Linkyo Teal tile (squircle, like an app icon) with a lowercase "y" cut out of it.
+  - The long stroke ends in a soft hook. The short stroke stops just before it, leaving a hairline of teal: the link point where two paths meet.
+  - Works at 16 px. Generated from geometry: `packages/tokens/brand/logo.mjs`.
+- **Tones**: brand (teal tile, the y shows the background) and mono (the tile in the surrounding text color: white on teal or photos, creator pages).
+- **Lockups**: horizontal (tile a little taller than the word, centred beside it), stacked, symbol only (favicon). App icons show the white y on flat teal; the system draws the tile.
+- **Clear space**: a quarter of the tile on all sides.
 - **Minimum size**: symbol 16 px, wordmark 64 px wide.
 - **Never**: stretch, rotate, add shadows/gradients/outlines, place on busy photos without a scrim, recolor outside the palette.
 

@@ -40,13 +40,13 @@
     },
     "brand": {
       "title": "Marke",
-      "description": "Der Loop: zwei Glieder, die sich zu einem kleinen y verschränken. Ruhig, selbstbewusst, nie laut.",
+      "description": "Das Linkyo-y: eine Kachel in Linkyo Teal mit einem y, dessen langer Strich in einem weichen Bogen endet. Der kurze Strich hält kurz davor an: der Punkt, an dem sich zwei Wege verbinden. Ruhig, präzise, hochwertig.",
       "lockups": "Logo-Varianten",
-      "lockupsNote": "Horizontal, Symbol + Wortmarke, auf Ink und auf Linkyo Teal. Schutzraum = Höhe des „o“.",
+      "lockupsNote": "Horizontal, Symbol + Wortmarke, auf Ink und auf Linkyo Teal (dann weiß). Schutzraum = ein Viertel der Kachel.",
       "horizontal": "Horizontale Variante",
       "symbolWordmark": "Symbol · Wortmarke",
       "appIcon": "App-Icon",
-      "appIconNote": "Paper-Symbol auf Linkyo Teal mit dezentem Verlauf 700 → 600. Hell, dunkel und getönt für iOS 18+.",
+      "appIconNote": "Weißes y auf flachem Linkyo Teal, ohne Verlauf. Hell, dunkel und getönt für iOS 18+.",
       "icon": {
         "light": "Hell",
         "dark": "Dunkel",
@@ -850,7 +850,8 @@
       "usernameOk": "linkyo.app/{name} ist frei",
       "email": "E-Mail",
       "usernameReserved": "linkyo.app/{name} ist für dich reserviert",
-      "code": "Anmeldecode"
+      "code": "Anmeldecode",
+      "changeAddress": "Ändern"
     },
     "errors": {
       "required": "Bitte gib deine E-Mail ein.",
@@ -875,7 +876,7 @@
     "signup": {
       "title": "Kostenlos registrieren",
       "lead": "Bereit, linkyo zu sein?",
-      "submit": "Weiter",
+      "submit": "Registrieren",
       "terms": "Mit dem Erstellen akzeptierst du die Nutzungsbedingungen und bestätigst die Datenschutzerklärung.",
       "haveAccount": "Schon ein Konto?",
       "login": "Anmelden",
@@ -1788,6 +1789,11 @@
           "empty": "Auf dieser Seite gibt es keine öffentlichen Links, die wir lesen können. Füge deine Links unten ein.",
           "failed": "Wir können diese Seite gerade nicht lesen. Füge deine Links unten ein."
         }
+      },
+      "address": {
+        "label": "Deine Adresse",
+        "hint": "So finden andere deine Seite. Du kannst sie später in den Einstellungen ändern.",
+        "yours": "linkyo.app/{name} gehört dir"
       }
     },
     "ownPage": {

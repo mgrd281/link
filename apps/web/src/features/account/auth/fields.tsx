@@ -16,6 +16,6 @@ export function FormError({ message, id }: { message: string | null; id?: string
 /** "or" divider between social sign-in and email. */
 export function OrDivider({ label }: { label: string }) {
   return (
-    <p className="flex items-center gap-3 text-caption text-fg-tertiary before:flex-1 before:border-t before:border-line after:flex-1 after:border-t after:border-line">{label}</p>
+    <p className="flex items-center gap-4 text-caption font-medium tracking-wide text-fg-tertiary uppercase before:flex-1 before:border-t before:border-line after:flex-1 after:border-t after:border-line">{label}</p>
   );
 }

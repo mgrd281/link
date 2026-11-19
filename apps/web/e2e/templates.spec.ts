@@ -105,7 +105,6 @@ test.describe("template gallery", () => {
     await page.waitForURL("**/en/signup?kind=shop&look=baeckerei-sonnenkorn");
     await page.waitForLoadState("networkidle");
     const name = `bake-${Date.now().toString(36)}`;
-    await page.locator("#signup-username").fill(name);
     await page.locator("#signup-email").fill(`${name}@example.com`);
     await page.locator("form button[type=submit]").click();
     await enterDemoCode(page);

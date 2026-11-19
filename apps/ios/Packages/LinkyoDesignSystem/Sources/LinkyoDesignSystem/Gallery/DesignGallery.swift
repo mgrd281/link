@@ -33,13 +33,13 @@ public struct DesignGallery: View {
             List {
                 Section("Brand") {
                     HStack(spacing: LinkyoTokens.Spacing.s4) {
-                        LoopSymbol()
+                        LinkyoSymbol()
                             .foregroundStyle(Color.Linkyo.primary)
                             .frame(width: LinkyoTokens.Size.avatarLg, height: LinkyoTokens.Size.avatarLg)
-                        LoopSymbol()
+                        LinkyoSymbol()
                             .foregroundStyle(Color.Linkyo.fg)
                             .frame(width: LinkyoTokens.Size.iconLg, height: LinkyoTokens.Size.iconLg)
-                        LoopSymbol()
+                        LinkyoSymbol()
                             .foregroundStyle(Color.Linkyo.fg)
                             .frame(width: LinkyoTokens.Size.iconSm, height: LinkyoTokens.Size.iconSm)
                     }
