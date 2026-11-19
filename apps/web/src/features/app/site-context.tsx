@@ -5,7 +5,7 @@ import { toast } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 
-import { accountStore, useSignedIn } from "@/features/account/store";
+import { accountStore, useAccount, useSignedIn } from "@/features/account/store";
 import type { Account, AuthError, Result, Site } from "@/features/account/types";
 import { editorReducer, initialEditorState, type EditorAction, type EditorDoc, type EditorState } from "@/features/directions/editor/state";
 import { blockTitle } from "@/features/directions/editor/use-editor";
@@ -126,6 +126,9 @@ export function EditorProvider({
   const [state, dispatch] = useReducer(siteReducer, site, (initial) => initialEditorState(toDoc(initial)));
   const doc = state.present;
   const [saved, setSaved] = useState<{ doc: SiteDoc; error: AuthError | null }>({ doc, error: null });
+  // Real accounts: the store saves to the server in the background and reports how that went.
+  const snapshot = useAccount();
+  const sync = snapshot.status === "signedIn" ? snapshot.sync : undefined;
   const [editing, setEditing] = useState<Editing>(null);
   const [draft, setDraft] = useState<Block | null>(null);
   const [profileDraft, setProfileDraft] = useState<Profile | null>(null);
@@ -259,7 +262,7 @@ export function EditorProvider({
     dispatch,
     canUndo: state.past.length > 0,
     canRedo: state.future.length > 0,
-    save: saved.error ?? (doc === saved.doc ? "saved" : "saving"),
+    save: saved.error ?? (doc !== saved.doc || sync === "saving" ? "saving" : sync === "error" ? "serverError" : "saved"),
     previewPage,
     editing,
     edit,

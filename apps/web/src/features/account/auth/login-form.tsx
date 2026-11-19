@@ -11,7 +11,7 @@ import { accountStore } from "../store";
 import type { AuthError } from "../types";
 import { AuthHeading } from "./auth-shell";
 import { FormError, OrDivider, PasswordField } from "./fields";
-import { SocialButtons, useLeaveWhenSignedIn } from "./shared";
+import { SocialButtons, useLeaveWhenSignedIn, useSearchParam } from "./shared";
 
 export function LoginForm() {
   const t = useTranslations("auth");
@@ -26,6 +26,8 @@ export function LoginForm() {
     if (attempt > 0) errorRef.current?.querySelector<HTMLElement>("[role=alert]")?.focus();
   }, [attempt]);
   const leaving = useLeaveWhenSignedIn();
+  // Back from an email link that no longer works (expired or used): say so until the next try.
+  const linkExpired = useSearchParam("link") === "expired";
 
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,7 +50,7 @@ export function LoginForm() {
       <AuthHeading title={t("login.title")} lead={t("login.lead")} />
       <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-5">
         <div ref={errorRef}>
-          <FormError message={error ? t(`errors.${error}`) : null} />
+          <FormError message={error ? t(`errors.${error}`) : linkExpired ? t("errors.linkExpired") : null} />
         </div>
         <TextField
           id="login-email"

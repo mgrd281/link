@@ -51,12 +51,12 @@ create function public.record_sign_in(
   email text,
   result text,
   ip inet,
-  country text,
-  city text,
   device jsonb,
   device_id text,
-  signature text,
-  session_id uuid
+  country text default null,
+  city text default null,
+  signature text default null,
+  session_id uuid default null
 ) returns void
 language plpgsql security definer set search_path = '' as $$
 declare
@@ -78,9 +78,9 @@ begin
   end if;
 end;
 $$;
-revoke execute on function public.record_sign_in(text, text, inet, text, text, jsonb, text, text, uuid)
+revoke execute on function public.record_sign_in(text, text, inet, jsonb, text, text, text, text, uuid)
   from public, anon, authenticated;
-grant execute on function public.record_sign_in(text, text, inet, text, text, jsonb, text, text, uuid)
+grant execute on function public.record_sign_in(text, text, inet, jsonb, text, text, text, text, uuid)
   to service_role;
 
 /** Failed attempts for this email in the last 15 minutes (server: slows down password guessing). */
@@ -108,5 +108,21 @@ end;
 $$;
 revoke execute on function public.purge_old_sign_ins() from public, anon, authenticated;
 
+/** Sign-ups nobody confirmed within 7 days are deleted, so their usernames become free again. */
+create function public.purge_unconfirmed_accounts() returns integer
+language plpgsql security definer set search_path = '' as $$
+declare
+  removed integer;
+begin
+  delete from auth.users
+  where email_confirmed_at is null and created_at < now() - interval '7 days'
+    and not exists (select 1 from public.team_members m where m.user_id = auth.users.id);
+  get diagnostics removed = row_count;
+  return removed;
+end;
+$$;
+revoke execute on function public.purge_unconfirmed_accounts() from public, anon, authenticated;
+
 create extension if not exists pg_cron;
 select cron.schedule('linkyo-purge-sign-ins', '17 3 * * *', 'select public.purge_old_sign_ins()');
+select cron.schedule('linkyo-purge-unconfirmed', '27 3 * * *', 'select public.purge_unconfirmed_accounts()');

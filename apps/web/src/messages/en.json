@@ -787,7 +787,8 @@
     "meta": {
       "signup": "Create account",
       "login": "Log in",
-      "forgot": "Reset password"
+      "forgot": "Reset password",
+      "reset": "New password · Linkyo"
     },
     "skip": "Skip to content",
     "home": "Linkyo home",
@@ -842,7 +843,13 @@
       "storageFull": "This browser's demo storage is full. Remove large images and try again.",
       "unavailable": "This browser doesn't allow storage (private window?). Open Linkyo in a normal window.",
       "inviteMismatch": "This page was prepared for a different email. Use the email you gave the Linkyo team.",
-      "reservedForCreator": "This address is reserved for a creator. Is it yours? Sign up with the email you gave us."
+      "reservedForCreator": "This address is reserved for a creator. Is it yours? Sign up with the email you gave us.",
+      "emailNotConfirmed": "Please confirm your email first. We sent you a link when you signed up.",
+      "suspended": "This account is suspended for now. Please contact Linkyo support.",
+      "tooManyAttempts": "Too many attempts in a short time. Wait a few minutes, then try again.",
+      "blocked": "Signing in isn't possible from this connection right now. Try another network or contact support.",
+      "serverError": "We can't reach Linkyo right now. Try again in a moment.",
+      "linkExpired": "This link has expired or was already used. Just request a new one."
     },
     "signup": {
       "title": "Get your page",
@@ -872,7 +879,26 @@
       "doneTitle": "Password changed",
       "done": "You can now log in with your new password.",
       "toLogin": "Go to log in",
-      "back": "Back to log in"
+      "back": "Back to log in",
+      "emailLead": "Enter your account's email. We'll send you a link to choose a new password.",
+      "emailSubmit": "Send link",
+      "sentTitle": "Check your inbox",
+      "sentLead": "If there's an account for {email}, the link is on its way. It's valid for one hour."
+    },
+    "confirm": {
+      "title": "Almost there: confirm your email",
+      "lead": "We sent a link to {email}. Open it to activate your account, then you'll go straight to your page.",
+      "spam": "Nothing arrived? Check your spam folder or the spelling of {email}.",
+      "toLogin": "Go to log in"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "lead": "Choose a new password for your account.",
+      "submit": "Save password",
+      "doneTitle": "Password changed",
+      "done": "You're signed in and can carry on.",
+      "toApp": "Go to dashboard",
+      "noSession": "Open the link from the email first. It signs you in so you can choose a new password."
     }
   },
   "app": {
@@ -1432,7 +1458,8 @@
       "signInsEmpty": "No sign-ins recorded yet.",
       "thisDevice": "This device",
       "failedSignIn": "Wrong password",
-      "unknownPlace": "Place unknown"
+      "unknownPlace": "Place unknown",
+      "emailConfirm": "Confirm the new address with the link we sent to {email}."
     },
     "welcome": {
       "skip": "Skip for now",

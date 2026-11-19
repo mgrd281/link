@@ -251,13 +251,18 @@ create trigger sites_history after update on public.sites
   for each row execute function public.sites_history();
 
 -- ── Public pages ────────────────────────────────────────────────────────────────────────────
-/** What visitors may see of a page: active accounts that finished the welcome flow only. */
+/**
+ * What visitors may see of a page: active accounts with a confirmed email that finished the
+ * welcome flow. (An address nobody confirmed never goes public under someone's name.)
+ */
 create function public.public_page(handle text) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select jsonb_build_object('page', s.page, 'theme', s.theme, 'legal', s.legal, 'updatedAt', s.updated_at)
   from public.profiles p
   join public.sites s on s.profile_id = p.id
-  where p.username = lower(trim(handle))::extensions.citext and p.status = 'active' and s.onboarded;
+  join auth.users u on u.id = p.id
+  where p.username = lower(trim(handle))::extensions.citext
+    and p.status = 'active' and s.onboarded and u.email_confirmed_at is not null;
 $$;
 grant execute on function public.public_page(text) to anon, authenticated, service_role;
 

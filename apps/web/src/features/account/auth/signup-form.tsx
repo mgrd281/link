@@ -15,7 +15,7 @@ import { accountStore } from "../store";
 import type { AuthError, SignUpInput } from "../types";
 import { AuthHeading } from "./auth-shell";
 import { FormError, OrDivider, PasswordField } from "./fields";
-import { SocialButtons, useLeaveWhenSignedIn, useSearchParam } from "./shared";
+import { CheckInbox, SocialButtons, useLeaveWhenSignedIn, useSearchParam, useUsernameStatus } from "./shared";
 
 type Field = "username" | "email" | "password";
 type Errors = Partial<Record<Field, AuthError | undefined>>;
@@ -76,13 +76,14 @@ export function SignupForm() {
   const [busy, setBusy] = useState(false);
   const leaving = useLeaveWhenSignedIn();
 
-  const status = username ? accountStore.usernameStatus(username) : null;
-  const usernameError = errors.username ?? (username.length >= 3 && status && status !== "ok" ? status : undefined);
+  const status = useUsernameStatus(username);
+  const usernameError = errors.username ?? (username.length >= 3 && status && status !== "ok" && status !== "checking" ? status : undefined);
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const next: Errors = {};
-    const nameStatus = accountStore.usernameStatus(username);
+    const nameStatus = await accountStore.usernameStatus(username);
     if (nameStatus !== "ok") next.username = nameStatus;
     if (!emailOk(email)) next.email = "invalidEmail";
     if (!isStrongEnough(password, { email, username })) next.password = "weakPassword";
@@ -112,7 +113,11 @@ export function SignupForm() {
       start: kind ? { kind, theme: look ? look.theme : STARTERS[kind].theme } : undefined,
     });
     setBusy(false);
-    if (result.ok) return; // useLeaveWhenSignedIn takes it from here.
+    if (result.ok) {
+      // Real accounts confirm the address first; otherwise useLeaveWhenSignedIn takes it from here.
+      if (result.pending === "confirmEmail") setSentTo(email.trim());
+      return;
+    }
     const field = FIELD_OF[result.error];
     if (field) {
       setErrors({ [field]: result.error } satisfies Errors);
@@ -121,6 +126,8 @@ export function SignupForm() {
       setBanner(result.error);
     }
   };
+
+  if (sentTo) return <CheckInbox email={sentTo} title={t("confirm.title")} lead={t("confirm.lead", { email: sentTo })} />;
 
   return (
     <>

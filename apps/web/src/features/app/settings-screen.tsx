@@ -3,15 +3,16 @@
 import { Badge, Button, ConfirmDialog, Icon, TextField, toast } from "@linkyo/ui";
 import { AtSign, CircleCheck, Download, Laptop, LogOut, Smartphone, Tablet, Trash2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState, useSyncExternalStore, type SubmitEvent } from "react";
+import { useEffect, useState, useSyncExternalStore, type SubmitEvent } from "react";
 
 import { LocaleSwitch } from "@/components/locale-switch";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { PasswordField } from "@/features/account/auth/fields";
+import { useUsernameStatus } from "@/features/account/auth/shared";
 import { isStrongEnough } from "@/features/account/password";
 import { STORAGE_KEY } from "@/features/account/local-store";
 import { accountStore } from "@/features/account/store";
-import type { AuthError, Legal } from "@/features/account/types";
+import type { AuthError, Legal, LoginEvent } from "@/features/account/types";
 
 import { TextArea, TextInput } from "./form";
 import { pickFiles } from "./images";
@@ -52,16 +53,16 @@ function AddressPanel() {
   const [value, setValue] = useState(account.username);
   const [error, setError] = useState<AuthError | null>(null);
   const normalized = value.trim().toLowerCase();
-  const status = normalized && normalized !== account.username ? accountStore.usernameStatus(normalized) : null;
-  const submit = (event: SubmitEvent) => {
+  const status = useUsernameStatus(normalized, account.username);
+  const submit = async (event: SubmitEvent) => {
     event.preventDefault();
-    const result = accountStore.changeUsername(normalized);
+    const result = await accountStore.changeUsername(normalized);
     if (result.ok) toast({ title: t("addressChanged", { url: `linkyo.app/${normalized}` }), tone: "success" });
     else setError(result.error);
   };
   return (
     <Panel title={t("address")} id="address-title">
-      <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4">
+      <form onSubmit={(event) => void submit(event)} noValidate className="grid grid-cols-1 gap-4">
         <TextField
           label={t("addressLabel")}
           ltr
@@ -74,7 +75,7 @@ function AddressPanel() {
           autoCapitalize="none"
           spellCheck={false}
           maxLength={30}
-          error={error ? tAuth(`errors.${error}`) : status && status !== "ok" && normalized.length >= 3 ? tAuth(`errors.${status}`) : undefined}
+          error={error ? tAuth(`errors.${error}`) : status && status !== "ok" && status !== "checking" && normalized.length >= 3 ? tAuth(`errors.${status}`) : undefined}
           hint={
             status === "ok" ? (
               <span className="flex items-center gap-2 text-success-strong">
@@ -105,10 +106,10 @@ function AccountPanel() {
   const [passwordError, setPasswordError] = useState<AuthError | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const saveEmail = (event: SubmitEvent) => {
+  const saveEmail = async (event: SubmitEvent) => {
     event.preventDefault();
-    const result = accountStore.changeEmail(email);
-    if (result.ok) toast({ title: t("emailChanged"), tone: "success" });
+    const result = await accountStore.changeEmail(email);
+    if (result.ok) toast({ title: result.pending === "confirmEmail" ? t("emailConfirm", { email: email.trim() }) : t("emailChanged"), tone: "success" });
     else setEmailError(result.error);
   };
   const savePassword = async (event: SubmitEvent) => {
@@ -130,7 +131,7 @@ function AccountPanel() {
 
   return (
     <Panel title={t("account")} id="account-title">
-      <form onSubmit={saveEmail} noValidate className="grid grid-cols-1 gap-4">
+      <form onSubmit={(event) => void saveEmail(event)} noValidate className="grid grid-cols-1 gap-4">
         <TextField
           label={tAuth("fields.email")}
           type="email"
@@ -204,6 +205,7 @@ function LegalPanel() {
 
 function DataPanel() {
   const t = useTranslations("app.settings");
+  const tAuth = useTranslations("auth");
   const { account, doc, dispatch } = useSite();
   const [confirm, setConfirm] = useState(false);
   const [typed, setTyped] = useState("");
@@ -226,8 +228,8 @@ function DataPanel() {
     setIncoming(null);
     toast({ title: t("imported"), tone: "success", action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) } });
   };
-  const exportData = () => {
-    const blob = new Blob([accountStore.exportData()], { type: "application/json" });
+  const exportData = async () => {
+    const blob = new Blob([await accountStore.exportData()], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `linkyo-${account.username}-export.json`;
@@ -238,7 +240,7 @@ function DataPanel() {
     <Panel title={t("data")} id="data-title">
       <div className="grid grid-cols-1 gap-2">
         <p className="text-small text-fg-secondary">{t("exportHint")}</p>
-        <Button icon={Download} className="justify-self-start" onClick={exportData}>
+        <Button icon={Download} className="justify-self-start" onClick={() => void exportData()}>
           {t("export")}
         </Button>
       </div>
@@ -283,8 +285,10 @@ function DataPanel() {
         cancelLabel={t("cancel")}
         confirmDisabled={typed.trim().toLowerCase() !== account.username}
         onConfirm={() => {
-          accountStore.deleteAccount();
-          toast({ title: t("deleted") });
+          void accountStore.deleteAccount().then((result) => {
+            if (result.ok) toast({ title: t("deleted") });
+            else toast({ title: tAuth(`errors.${result.error}`), tone: "danger" });
+          });
         }}
       />
     </Panel>
@@ -304,8 +308,18 @@ const DEVICE_ICONS = { mobile: Smartphone, tablet: Tablet, desktop: Laptop } as 
 function SignInsPanel() {
   const t = useTranslations("app.settings");
   const locale = useLocale();
+  // Demo: the log lives next to the accounts in this browser, so it is read again when they change.
   const raw = useSyncExternalStore((listener) => accountStore.subscribe(listener), readAccounts, () => "");
-  const signIns = useMemo(() => (raw ? accountStore.signIns().slice(0, 8) : []), [raw]);
+  const [signIns, setSignIns] = useState<LoginEvent[]>([]);
+  useEffect(() => {
+    let live = true;
+    void accountStore.signIns().then((list) => {
+      if (live) setSignIns(list.slice(0, 8));
+    });
+    return () => {
+      live = false;
+    };
+  }, [raw]);
   const thisDevice = raw.split("|")[1];
   const place = (code: string | undefined, city: string | undefined) => {
     const country = code ? (new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code) : "";

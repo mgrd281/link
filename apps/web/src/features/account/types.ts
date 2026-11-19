@@ -67,7 +67,13 @@ export type LoginContext = Omit<LoginEvent, "id" | "at" | "result">;
 export type AccountSnapshot =
   | { status: "loading" }
   | { status: "signedOut" }
-  | { status: "signedIn"; account: Account; site: Site };
+  | {
+      status: "signedIn";
+      account: Account;
+      site: Site;
+      /** Real accounts: whether the last change reached the server ("error": it will retry). */
+      sync?: "saving" | "saved" | "error" | undefined;
+    };
 
 export type AuthError =
   | "invalidEmail"
@@ -82,9 +88,24 @@ export type AuthError =
   | "storageFull"
   | "unavailable"
   | "inviteMismatch"
-  | "reservedForCreator";
+  | "reservedForCreator"
+  /** Real accounts: the sign-up link in the email was not opened yet. */
+  | "emailNotConfirmed"
+  /** Real accounts: the team suspended the account. */
+  | "suspended"
+  /** Real accounts: too many failed attempts in a short time (password guessing). */
+  | "tooManyAttempts"
+  /** Real accounts: sign-ins from this address are blocked. */
+  | "blocked"
+  /** Real accounts: the server could not be reached or answered with an error. */
+  | "serverError"
+  /** Real accounts: a link from one of our emails expired or was used already. */
+  | "linkExpired";
 
-export type Result = { ok: true } | { ok: false; error: AuthError };
+/** `pending: "confirmEmail"`: done, but it counts only after the link we emailed is opened. */
+export type Result = { ok: true; pending?: "confirmEmail" | undefined } | { ok: false; error: AuthError };
+
+export type UsernameStatus = "ok" | Extract<AuthError, "invalidUsername" | "reservedUsername" | "usernameTaken">;
 
 export interface SignUpInput {
   email: string;
@@ -100,6 +121,8 @@ export interface SignUpInput {
 export interface AccountStore {
   /** `true` when data lives only in this browser (shown to the user everywhere it matters). */
   readonly demo: boolean;
+  /** A forgotten password: set a new one right here (demo, no email possible) or by emailed link. */
+  readonly passwordReset: "direct" | "email";
   subscribe(listener: () => void): () => void;
   getSnapshot(): AccountSnapshot;
   getServerSnapshot(): AccountSnapshot;
@@ -107,16 +130,20 @@ export interface AccountStore {
   signUp(input: SignUpInput): Promise<Result>;
   logIn(input: { email: string; password: string }): Promise<Result>;
   logOut(): void;
-  /** Demo: sets the new password directly (no email can be sent). Real: sends a reset link. */
-  resetPassword(input: { email: string; password: string }): Promise<Result>;
+  /** Demo: sets `password` directly (no email can be sent). Real: emails a reset link. */
+  resetPassword(input: { email: string; password?: string | undefined }): Promise<Result>;
+  /** After opening a reset link (real accounts): the new password for the signed-in account. */
+  setNewPassword(password: string): Promise<Result>;
   changePassword(input: { current: string; next: string }): Promise<Result>;
-  changeEmail(email: string): Result;
-  changeUsername(username: string): Result;
-  usernameStatus(username: string): "ok" | Extract<AuthError, "invalidUsername" | "reservedUsername" | "usernameTaken">;
+  /** Real accounts confirm the new address by email first (`pending: "confirmEmail"`). */
+  changeEmail(email: string): Promise<Result>;
+  changeUsername(username: string): Promise<Result>;
+  usernameStatus(username: string): Promise<UsernameStatus>;
 
+  /** Applies at once; real accounts save in the background (see `syncState`). */
   updateSite(update: (site: Site) => Site): Result;
   /** The account's sign-ins and failed attempts of the last 30 days, newest first. */
-  signIns(): LoginEvent[];
-  exportData(): string;
-  deleteAccount(): void;
+  signIns(): Promise<LoginEvent[]>;
+  exportData(): Promise<string>;
+  deleteAccount(): Promise<Result>;
 }

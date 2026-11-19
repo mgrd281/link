@@ -6,11 +6,11 @@ create extension if not exists pgtap with schema extensions;
 select no_plan();
 
 -- People: Ana and Ben are customers, Cara owns the team, Dan is a viewer.
-insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, raw_app_meta_data, created_at, updated_at) values
-  ('a0000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ana@example.com', '{"username":"ana","locale":"de"}', '{}', now(), now()),
-  ('b0000000-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ben@example.com', '{"username":"ben","locale":"en"}', '{}', now(), now()),
-  ('c0000000-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'cara@example.com', '{"username":"cara","locale":"ar"}', '{}', now(), now()),
-  ('d0000000-0000-4000-8000-000000000004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dan@example.com', '{}', '{}', now(), now());
+insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, raw_app_meta_data, created_at, updated_at, email_confirmed_at) values
+  ('a0000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ana@example.com', '{"username":"ana","locale":"de"}', '{}', now(), now(), now()),
+  ('b0000000-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ben@example.com', '{"username":"ben","locale":"en"}', '{}', now(), now(), now()),
+  ('c0000000-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'cara@example.com', '{"username":"cara","locale":"ar"}', '{}', now(), now(), now()),
+  ('d0000000-0000-4000-8000-000000000004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dan@example.com', '{}', '{}', now(), now(), now());
 
 -- ── Sign-up ─────────────────────────────────────────────────────────────────────────────────
 select is((select username::text from public.profiles where id = 'a0000000-0000-4000-8000-000000000001'), 'ana',
@@ -59,7 +59,7 @@ update public.profiles set locale = 'en' where id = 'a0000000-0000-4000-8000-000
 select is((select locale from public.profiles), 'en', 'but they choose their language');
 select throws_ok($$ insert into public.sign_ins (profile_id, result, ip, device_id) values ('a0000000-0000-4000-8000-000000000001', 'success', '192.0.2.1', 'x') $$,
   '42501', null, 'browsers cannot write the sign-in log');
-select throws_ok($$ select public.record_sign_in('ana@example.com', 'success', '192.0.2.1', null, null, '{}', 'x', null, null) $$,
+select throws_ok($$ select public.record_sign_in('ana@example.com', 'success', '192.0.2.1', '{}', 'x') $$,
   '42501', null, 'nor call the server''s sign-in recorder');
 select throws_ok($$ select public.admin_customers() $$, '42501', 'linkyo:forbidden', 'customers cannot open the console');
 select throws_ok($$ select public.admin_set_status('b0000000-0000-4000-8000-000000000002', 'suspended') $$,
@@ -86,9 +86,18 @@ select throws_ok($$ select public.delete_my_account() $$, '42501', null, 'visito
 reset role;
 
 -- ── Our server ──────────────────────────────────────────────────────────────────────────────
-select public.record_sign_in('ana@example.com', 'failed', '198.51.100.7', 'de', 'Berlin', '{"type":"desktop","os":"macOS","browser":"Safari"}', 'device-1', 'sig', null);
-select public.record_sign_in('ANA@example.com', 'success', '198.51.100.7', 'de', 'Berlin', '{"type":"desktop","os":"macOS","browser":"Safari"}', 'device-1', 'sig', null);
-select public.record_sign_in('nobody@example.com', 'failed', '203.0.113.9', null, null, '{}', 'device-2', null, null);
+-- Sign-ups nobody confirmed: hidden from visitors, deleted after 7 days (the name is free again).
+insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at) values
+  ('f0000000-0000-4000-8000-000000000006', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'eve@example.com', '{"username":"eve"}', now() - interval '8 days', now());
+insert into public.sites (profile_id, onboarded, theme, page) values
+  ('f0000000-0000-4000-8000-000000000006', true, '{}', '{"profile":{"displayName":"Eve"},"blocks":[]}');
+select is(public.public_page('eve'), null, 'pages of unconfirmed sign-ups stay hidden');
+select is(public.purge_unconfirmed_accounts(), 1, 'unconfirmed sign-ups are deleted after 7 days');
+select is(public.username_status('eve'), 'ok', 'and their name is free again');
+
+select public.record_sign_in('ana@example.com', 'failed', '198.51.100.7', '{"type":"desktop","os":"macOS","browser":"Safari"}', 'device-1', 'de', 'Berlin', 'sig');
+select public.record_sign_in('ANA@example.com', 'success', '198.51.100.7', '{"type":"desktop","os":"macOS","browser":"Safari"}', 'device-1', 'de', 'Berlin', 'sig');
+select public.record_sign_in('nobody@example.com', 'failed', '203.0.113.9', '{}', 'device-2');
 select is((select count(*)::int from public.sign_ins), 2, 'sign-ins are recorded; unknown emails leave nothing');
 select is((select distinct country from public.sign_ins), 'DE', 'country codes are stored in capitals');
 select is(public.recent_failures('ana@example.com'), 1, 'recent failures are counted for slowing down guessing');
@@ -146,8 +155,8 @@ reset role;
 insert into auth.sessions (id, user_id, created_at, updated_at) values
   ('5e550000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000001', now(), now()),
   ('5e550000-0000-4000-8000-000000000002', 'a0000000-0000-4000-8000-000000000001', now(), now());
-select public.record_sign_in('ana@example.com', 'success', '198.51.100.8', 'DE', null, '{}', 'phone-1', null, '5e550000-0000-4000-8000-000000000001');
-select public.record_sign_in('ana@example.com', 'success', '198.51.100.9', 'DE', null, '{}', 'laptop-1', null, '5e550000-0000-4000-8000-000000000002');
+select public.record_sign_in('ana@example.com', 'success', '198.51.100.8', '{}', 'phone-1', 'DE', null, null, '5e550000-0000-4000-8000-000000000001');
+select public.record_sign_in('ana@example.com', 'success', '198.51.100.9', '{}', 'laptop-1', 'DE', null, null, '5e550000-0000-4000-8000-000000000002');
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"c0000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
 select is(public.admin_sign_out_device('a0000000-0000-4000-8000-000000000001', 'phone-1'), 1, 'the team signs one device out');

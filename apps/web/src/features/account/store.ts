@@ -2,12 +2,21 @@
 
 import { useSyncExternalStore } from "react";
 
+import { browserSupabase } from "@/lib/supabase/browser";
+import { supabaseEnabled } from "@/lib/supabase/config";
+
 import { LocalAccountStore } from "./local-store";
-import { browserLoginContext } from "./login-context";
+import { browserDevice, browserLoginContext } from "./login-context";
+import { SupabaseAccountStore } from "./supabase-store";
 import type { AccountStore, Site } from "./types";
 
-/** The app's account store. Swap this one line for the Supabase implementation in Phase 1. */
-export const accountStore: AccountStore = new LocalAccountStore(() => (typeof window === "undefined" ? null : window.localStorage), browserLoginContext);
+/**
+ * The app's account store: real accounts when Supabase is configured (ADR 0030), otherwise the
+ * demo that keeps everything in this browser.
+ */
+export const accountStore: AccountStore = supabaseEnabled
+  ? new SupabaseAccountStore(browserSupabase, browserDevice)
+  : new LocalAccountStore(() => (typeof window === "undefined" ? null : window.localStorage), browserLoginContext);
 
 /** Current session and site; `loading` during server render and hydration. */
 const subscribe = (listener: () => void) => accountStore.subscribe(listener);

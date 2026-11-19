@@ -28,6 +28,8 @@
     "@linkyo/blocks": "workspace:*",
     "@linkyo/tokens": "workspace:*",
     "@linkyo/ui": "workspace:*",
+    "@supabase/ssr": "catalog:",
+    "@supabase/supabase-js": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "cmdk": "catalog:",

@@ -1,13 +1,16 @@
 "use client";
 
-import { Badge, PlatformIcon } from "@linkyo/ui";
+import { Badge, Button, Icon, PlatformIcon } from "@linkyo/ui";
+import { MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { siApple, siGoogle } from "simple-icons";
 
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 
-import { useAccount } from "../store";
+import { accountStore, useAccount } from "../store";
+import type { UsernameStatus } from "../types";
+import { localUsernameStatus, normalizeUsername } from "../username";
 
 const noop = () => () => undefined;
 
@@ -62,6 +65,56 @@ export function SocialButtons() {
           <Badge size="sm">{t("social.soon")}</Badge>
         </button>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Live check of a username while it is typed: format and reserved names at once, "taken" a moment
+ * later (real accounts ask the server). `checking` until the answer for this exact name is in.
+ */
+export function useUsernameStatus(input: string, current?: string): UsernameStatus | "checking" | null {
+  const name = normalizeUsername(input);
+  const skip = !name || name === current;
+  const local = skip ? null : localUsernameStatus(name);
+  const [answer, setAnswer] = useState<{ name: string; status: UsernameStatus } | null>(null);
+  useEffect(() => {
+    if (local !== "ok") return;
+    let live = true;
+    const timer = window.setTimeout(
+      () => {
+        void accountStore.usernameStatus(name).then((status) => {
+          if (live) setAnswer({ name, status });
+        });
+      },
+      accountStore.demo ? 0 : 250,
+    );
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [name, local]);
+  if (skip) return null;
+  if (local !== "ok") return local;
+  return answer?.name === name ? answer.status : "checking";
+}
+
+/** After sign-up, a reset request or an email change with real accounts: the link is on its way. */
+export function CheckInbox({ email, title, lead }: { email: string; title: string; lead: string }) {
+  const t = useTranslations("auth");
+  return (
+    <div className="grid grid-cols-1 gap-6" role="status">
+      <span className="grid size-control-xl place-items-center rounded-full bg-success-subtle text-success-strong">
+        <Icon icon={MailCheck} size="lg" />
+      </span>
+      <div className="grid gap-2">
+        <h1 className="text-h2 tracking-tight text-balance">{title}</h1>
+        <p className="text-body text-fg-secondary text-pretty">{lead}</p>
+      </div>
+      <p className="rounded-md bg-canvas-muted p-3 text-small text-fg-secondary">{t("confirm.spam", { email })}</p>
+      <Button asChild variant="secondary" size="lg" block>
+        <Link href="/login">{t("confirm.toLogin")}</Link>
+      </Button>
     </div>
   );
 }

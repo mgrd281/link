@@ -1,7 +1,7 @@
 "use client";
 
 import { parseUserAgent } from "./device";
-import type { LoginContext } from "./types";
+import type { DeviceInfo, LoginContext } from "./types";
 
 /**
  * Where a sign-in comes from, for the account's security log: the address and rough location as the
@@ -54,4 +54,10 @@ export async function browserLoginContext(): Promise<LoginContext> {
     deviceId: deviceId(),
     ...(hash ? { signature: hash } : {}),
   };
+}
+
+/** The device part only, for real accounts: our server adds the address and place itself. */
+export async function browserDevice(): Promise<{ device: DeviceInfo; deviceId: string; signature?: string }> {
+  const hash = await signature();
+  return { device: parseUserAgent(navigator.userAgent), deviceId: deviceId(), ...(hash ? { signature: hash } : {}) };
 }

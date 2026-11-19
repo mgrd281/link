@@ -787,7 +787,8 @@
     "meta": {
       "signup": "Konto erstellen",
       "login": "Anmelden",
-      "forgot": "Passwort zurücksetzen"
+      "forgot": "Passwort zurücksetzen",
+      "reset": "Neues Passwort · Linkyo"
     },
     "skip": "Zum Inhalt springen",
     "home": "Linkyo – Startseite",
@@ -842,7 +843,13 @@
       "storageFull": "Der Demo-Speicher dieses Browsers ist voll. Entferne große Bilder und versuch es noch einmal.",
       "unavailable": "Dieser Browser erlaubt keinen Speicher (privates Fenster?). Öffne Linkyo in einem normalen Fenster.",
       "inviteMismatch": "Diese Seite wurde für eine andere E-Mail vorbereitet. Nutze die E-Mail, die du dem Linkyo-Team gegeben hast.",
-      "reservedForCreator": "Diese Adresse ist für einen Creator reserviert. Ist es deine? Registriere dich mit der E-Mail, die du uns gegeben hast."
+      "reservedForCreator": "Diese Adresse ist für einen Creator reserviert. Ist es deine? Registriere dich mit der E-Mail, die du uns gegeben hast.",
+      "emailNotConfirmed": "Bitte bestätige zuerst deine E-Mail. Den Link haben wir dir bei der Registrierung geschickt.",
+      "suspended": "Dieses Konto ist vorübergehend gesperrt. Bitte wende dich an den Linkyo-Support.",
+      "tooManyAttempts": "Zu viele Versuche in kurzer Zeit. Warte ein paar Minuten und versuch es dann noch einmal.",
+      "blocked": "Von dieser Verbindung aus ist gerade keine Anmeldung möglich. Versuch es über ein anderes Netz oder wende dich an den Support.",
+      "serverError": "Gerade klappt die Verbindung zu Linkyo nicht. Versuch es in einem Moment noch einmal.",
+      "linkExpired": "Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere einfach einen neuen an."
     },
     "signup": {
       "title": "Hol dir deine Seite",
@@ -872,7 +879,26 @@
       "doneTitle": "Passwort geändert",
       "done": "Du kannst dich jetzt mit dem neuen Passwort anmelden.",
       "toLogin": "Zur Anmeldung",
-      "back": "Zurück zur Anmeldung"
+      "back": "Zurück zur Anmeldung",
+      "emailLead": "Gib die E-Mail deines Kontos ein. Wir schicken dir einen Link, mit dem du ein neues Passwort wählst.",
+      "emailSubmit": "Link senden",
+      "sentTitle": "Schau in dein Postfach",
+      "sentLead": "Wenn es zu {email} ein Konto gibt, ist der Link unterwegs. Er gilt eine Stunde."
+    },
+    "confirm": {
+      "title": "Fast geschafft: Bestätige deine E-Mail",
+      "lead": "Wir haben einen Link an {email} geschickt. Öffne ihn, um dein Konto zu aktivieren. Danach geht es direkt mit deiner Seite weiter.",
+      "spam": "Nichts angekommen? Schau im Spam-Ordner nach oder prüf die Schreibweise von {email}.",
+      "toLogin": "Zur Anmeldung"
+    },
+    "reset": {
+      "title": "Neues Passwort wählen",
+      "lead": "Wähle ein neues Passwort für dein Konto.",
+      "submit": "Passwort speichern",
+      "doneTitle": "Passwort geändert",
+      "done": "Du bist angemeldet und kannst direkt weitermachen.",
+      "toApp": "Zum Dashboard",
+      "noSession": "Öffne zuerst den Link aus der E-Mail. Er meldet dich an, damit du ein neues Passwort wählen kannst."
     }
   },
   "app": {
@@ -1432,7 +1458,8 @@
       "signInsEmpty": "Noch keine Anmeldungen erfasst.",
       "thisDevice": "Dieses Gerät",
       "failedSignIn": "Falsches Passwort",
-      "unknownPlace": "Ort unbekannt"
+      "unknownPlace": "Ort unbekannt",
+      "emailConfirm": "Bestätige die neue Adresse über den Link, den wir an {email} geschickt haben."
     },
     "welcome": {
       "skip": "Später",

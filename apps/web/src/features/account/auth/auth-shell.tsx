@@ -9,6 +9,7 @@ import { ThemeSwitch } from "@/components/theme-switch";
 import { phoneShots, phoneSizes } from "@/features/marketing/assets";
 import { Phone } from "@/features/marketing/phone";
 import { Link } from "@/i18n/navigation";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
 /**
  * Sign-up, log-in and reset share one frame: the form on a calm canvas, and on wide screens a dark
@@ -39,12 +40,14 @@ export function AuthShell({ locale, children }: { locale: string; children: Reac
         <main id="main" className="grid flex-1 place-items-center py-10">
           <div className="grid w-full max-w-preview grid-cols-1 gap-8">{children}</div>
         </main>
-        <p className="mx-auto flex max-w-preview items-start gap-2 rounded-lg border border-line bg-canvas-muted p-3 text-caption text-fg-secondary">
-          <Icon icon={FlaskConical} size="sm" className="mt-0.5 shrink-0 text-link" />
-          <span>
-            <strong className="font-semibold text-fg">{t("demo.title")}</strong> {t("demo.body")}
-          </span>
-        </p>
+        {supabaseEnabled ? null : (
+          <p className="mx-auto flex max-w-preview items-start gap-2 rounded-lg border border-line bg-canvas-muted p-3 text-caption text-fg-secondary">
+            <Icon icon={FlaskConical} size="sm" className="mt-0.5 shrink-0 text-link" />
+            <span>
+              <strong className="font-semibold text-fg">{t("demo.title")}</strong> {t("demo.body")}
+            </span>
+          </p>
+        )}
       </div>
 
       <aside data-theme="dark" aria-label={t("side.label")} className="relative isolate hidden overflow-clip bg-canvas text-fg lg:grid lg:place-items-center">

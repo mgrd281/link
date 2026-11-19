@@ -11,12 +11,73 @@ import { accountStore } from "../store";
 import type { AuthError } from "../types";
 import { AuthHeading } from "./auth-shell";
 import { FormError, PasswordField } from "./fields";
+import { CheckInbox } from "./shared";
 
 /**
  * Reset. With real accounts this sends a link by email. In demo mode no email can be sent, so it
  * says so and lets the person set a new password right here (the data is only in this browser).
  */
 export function ForgotForm() {
+  return accountStore.passwordReset === "email" ? <ForgotByEmail /> : <ForgotHere />;
+}
+
+/** Real accounts: the reset link goes by email; the answer is the same whether or not an account exists. */
+function ForgotByEmail() {
+  const t = useTranslations("auth");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<AuthError | "invalidEmail" | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
+
+  const submit = async (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setError("invalidEmail");
+      return;
+    }
+    setBusy(true);
+    const result = await accountStore.resetPassword({ email });
+    setBusy(false);
+    if (result.ok) setSent(email.trim());
+    else setError(result.error);
+  };
+
+  if (sent) return <CheckInbox email={sent} title={t("forgot.sentTitle")} lead={t("forgot.sentLead", { email: sent })} />;
+
+  return (
+    <>
+      <AuthHeading title={t("forgot.title")} lead={t("forgot.emailLead")} />
+      <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-5">
+        <FormError message={error ? t(`errors.${error}`) : null} />
+        <TextField
+          label={t("fields.email")}
+          size="lg"
+          ltr
+          type="email"
+          icon={AtSign}
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setError(null);
+          }}
+          autoComplete="email"
+          inputMode="email"
+          required
+        />
+        <Button type="submit" variant="primary" size="xl" block loading={busy}>
+          {t("forgot.emailSubmit")}
+        </Button>
+      </form>
+      <Link href="/login" className="inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-medium text-link underline-offset-4 hover:underline focus-visible:focus-ring">
+        <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
+        {t("forgot.back")}
+      </Link>
+    </>
+  );
+}
+
+/** Demo: no email can be sent, so the new password is set right here (the data is only in this browser). */
+function ForgotHere() {
   const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

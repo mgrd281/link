@@ -255,6 +255,20 @@ otp_expiry = 3600
 # subject = "Your password has been changed"
 # content_path = "./supabase/templates/password_changed_notification.html"
 
+# Our emails link straight to /api/auth/confirm with a one-time token (works on any device), in
+# the account's language. The same templates go into the hosted project (see supabase/README.md).
+[auth.email.template.confirmation]
+subject = "Linkyo: Bestätige deine E-Mail · Confirm your email · أكّد بريدك"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Linkyo: Neues Passwort · New password · كلمة مرور جديدة"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Linkyo: Neue E-Mail bestätigen · Confirm new email · تأكيد البريد الجديد"
+content_path = "./supabase/templates/email_change.html"
+
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = false

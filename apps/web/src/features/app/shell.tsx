@@ -167,10 +167,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center justify-between gap-2 px-3">
             <SaveStatus />
-            <Badge size="sm" tone="primary">
-              <Icon icon={FlaskConical} size="sm" />
-              {t("demo")}
-            </Badge>
+            {accountStore.demo ? (
+              <Badge size="sm" tone="primary">
+                <Icon icon={FlaskConical} size="sm" />
+                {t("demo")}
+              </Badge>
+            ) : null}
           </div>
           <AccountMenu
             trigger={

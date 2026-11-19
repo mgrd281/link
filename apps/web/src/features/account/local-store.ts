@@ -1,8 +1,11 @@
-import { NO_IMAGE, profileSchema, RESERVED_USERNAMES, type Page } from "@linkyo/blocks";
 import { z } from "zod";
 
 import { hashPassword, isStrongEnough, verifyPassword, type PasswordHash } from "./password";
-import type { Account, AccountSnapshot, AccountStore, LoginContext, LoginEvent, Result, SignUpInput, Site } from "./types";
+import { firstSite } from "./site-builders";
+import type { Account, AccountSnapshot, AccountStore, LoginContext, LoginEvent, Result, SignUpInput, Site, UsernameStatus } from "./types";
+import { localUsernameStatus, normalizeEmail, normalizeUsername } from "./username";
+
+export { preparedSite, starterSite } from "./site-builders";
 
 /**
  * Demo-mode account store: everything lives in this browser's localStorage under one key.
@@ -42,8 +45,6 @@ const LOADING: AccountSnapshot = { status: "loading" };
 const SIGNED_OUT: AccountSnapshot = { status: "signedOut" };
 
 const emailSchema = z.email();
-const normalizeEmail = (email: string) => email.trim().toLowerCase();
-const normalizeUsername = (username: string) => username.trim().toLowerCase();
 const now = () => new Date().toISOString();
 
 function parse(raw: string | null): Db {
@@ -59,34 +60,9 @@ function parse(raw: string | null): Db {
 
 const publicAccount = ({ id, email, username, createdAt }: StoredAccount): Account => ({ id, email, username, createdAt });
 
-/** A brand-new creator page: the address, no photo yet (monogram), no blocks. */
-export function starterSite(username: string, email: string, locale: Page["profile"]["locale"]): Site {
-  return {
-    page: {
-      profile: { username, displayName: username, bio: "", avatar: { src: NO_IMAGE, alt: "" }, verified: false, locale },
-      blocks: [],
-    },
-    theme: { template: "nocturne" },
-    legal: { name: "", address: "", email, phone: "" },
-    onboarded: false,
-    updatedAt: now(),
-  };
-}
-
-/** A page the Linkyo team prepared: ready to share, no welcome flow, a one-time welcome on Home. */
-export function preparedSite(username: string, email: string, prepared: NonNullable<SignUpInput["prepared"]>): Site {
-  const page = prepared.page;
-  return {
-    ...starterSite(username, email, page.profile.locale),
-    page: { profile: { ...page.profile, username }, blocks: page.blocks },
-    theme: prepared.theme,
-    onboarded: true,
-    prepared: { at: now() },
-  };
-}
-
 export class LocalAccountStore implements AccountStore {
   readonly demo = true;
+  readonly passwordReset = "direct" as const;
   private readonly listeners = new Set<() => void>();
   private raw: string | null | undefined;
   private snapshot: AccountSnapshot = LOADING;
@@ -111,7 +87,11 @@ export class LocalAccountStore implements AccountStore {
     this.write({ ...db, logins: { ...db.logins, [accountId]: [event, ...kept].slice(0, LOGIN_MAX) } });
   }
 
-  signIns(): LoginEvent[] {
+  signIns(): Promise<LoginEvent[]> {
+    return Promise.resolve(this.signInsNow());
+  }
+
+  private signInsNow(): LoginEvent[] {
     const db = this.db();
     const id = this.currentId(db);
     const cutoff = Date.now() - LOGIN_DAYS * 86_400_000;
@@ -144,21 +124,23 @@ export class LocalAccountStore implements AccountStore {
 
   getServerSnapshot = (): AccountSnapshot => LOADING;
 
-  usernameStatus = (input: string) => {
+  usernameStatus = (input: string): Promise<UsernameStatus> => Promise.resolve(this.usernameStatusNow(input));
+
+  private usernameStatusNow(input: string): UsernameStatus {
     const username = normalizeUsername(input);
-    if (!profileSchema.shape.username.safeParse(username).success) return "invalidUsername" as const;
-    if (RESERVED_USERNAMES.has(username)) return "reservedUsername" as const;
+    const local = localUsernameStatus(username);
+    if (local !== "ok") return local;
     const db = this.db();
     const current = this.currentId(db);
-    if (db.accounts.some((account) => account.username === username && account.id !== current)) return "usernameTaken" as const;
-    return "ok" as const;
-  };
+    if (db.accounts.some((account) => account.username === username && account.id !== current)) return "usernameTaken";
+    return "ok";
+  }
 
   async signUp(input: SignUpInput): Promise<Result> {
     const email = normalizeEmail(input.email);
     const username = normalizeUsername(input.username);
     if (!emailSchema.safeParse(email).success) return { ok: false, error: "invalidEmail" };
-    const status = this.usernameStatus(username);
+    const status = this.usernameStatusNow(username);
     if (status !== "ok") return { ok: false, error: status };
     if (!isStrongEnough(input.password, { email, username })) return { ok: false, error: "weakPassword" };
     if (this.db().accounts.some((account) => account.email === email)) return { ok: false, error: "emailTaken" };
@@ -171,9 +153,7 @@ export class LocalAccountStore implements AccountStore {
       accounts: [...db.accounts, account],
       sites: {
         ...db.sites,
-        [account.id]: input.prepared
-          ? preparedSite(username, email, input.prepared)
-          : { ...starterSite(username, email, input.locale), ...(input.start ? { kind: input.start.kind, theme: input.start.theme } : {}) },
+        [account.id]: firstSite({ ...input, username, email }),
       },
       session: { accountId: account.id, since: now() },
     });
@@ -200,13 +180,22 @@ export class LocalAccountStore implements AccountStore {
     this.write({ ...this.db(), session: null });
   }
 
-  async resetPassword(input: { email: string; password: string }): Promise<Result> {
+  async resetPassword(input: { email: string; password?: string | undefined }): Promise<Result> {
     const email = normalizeEmail(input.email);
     const db = this.db();
     const account = db.accounts.find((candidate) => candidate.email === email);
     if (!account) return { ok: false, error: "notFound" };
-    if (!isStrongEnough(input.password, { email, username: account.username })) return { ok: false, error: "weakPassword" };
+    if (!input.password || !isStrongEnough(input.password, { email, username: account.username })) return { ok: false, error: "weakPassword" };
     const password = await hashPassword(input.password);
+    return this.write({ ...this.db(), accounts: db.accounts.map((candidate) => (candidate.id === account.id ? { ...candidate, password } : candidate)) });
+  }
+
+  async setNewPassword(next: string): Promise<Result> {
+    const db = this.db();
+    const account = db.accounts.find((candidate) => candidate.id === this.currentId(db));
+    if (!account) return { ok: false, error: "notFound" };
+    if (!isStrongEnough(next, account)) return { ok: false, error: "weakPassword" };
+    const password = await hashPassword(next);
     return this.write({ ...this.db(), accounts: db.accounts.map((candidate) => (candidate.id === account.id ? { ...candidate, password } : candidate)) });
   }
 
@@ -220,7 +209,11 @@ export class LocalAccountStore implements AccountStore {
     return this.write({ ...this.db(), accounts: db.accounts.map((candidate) => (candidate.id === account.id ? { ...candidate, password } : candidate)) });
   }
 
-  changeEmail(input: string): Result {
+  changeEmail(input: string): Promise<Result> {
+    return Promise.resolve(this.changeEmailNow(input));
+  }
+
+  private changeEmailNow(input: string): Result {
     const email = normalizeEmail(input);
     if (!emailSchema.safeParse(email).success) return { ok: false, error: "invalidEmail" };
     const db = this.db();
@@ -230,9 +223,13 @@ export class LocalAccountStore implements AccountStore {
     return this.write({ ...db, accounts: db.accounts.map((account) => (account.id === id ? { ...account, email } : account)) });
   }
 
-  changeUsername(input: string): Result {
+  changeUsername(input: string): Promise<Result> {
+    return Promise.resolve(this.changeUsernameNow(input));
+  }
+
+  private changeUsernameNow(input: string): Result {
     const username = normalizeUsername(input);
-    const status = this.usernameStatus(username);
+    const status = this.usernameStatusNow(username);
     if (status !== "ok") return { ok: false, error: status };
     const db = this.db();
     const id = this.currentId(db);
@@ -255,7 +252,11 @@ export class LocalAccountStore implements AccountStore {
     return this.write({ ...db, sites: { ...db.sites, [id]: { ...next, updatedAt: now() } } });
   }
 
-  exportData(): string {
+  exportData(): Promise<string> {
+    return Promise.resolve(this.exportNow());
+  }
+
+  private exportNow(): string {
     const db = this.db();
     const account = db.accounts.find((candidate) => candidate.id === this.currentId(db));
     if (!account) return "{}";
@@ -263,13 +264,13 @@ export class LocalAccountStore implements AccountStore {
     return JSON.stringify({ exportedAt: now(), account: publicAccount(account), site: db.sites[account.id], signIns: db.logins?.[account.id] ?? [] }, null, 2);
   }
 
-  deleteAccount(): void {
+  deleteAccount(): Promise<Result> {
     const db = this.db();
     const id = this.currentId(db);
-    if (!id) return;
+    if (!id) return Promise.resolve({ ok: false, error: "notFound" });
     const sites = Object.fromEntries(Object.entries(db.sites).filter(([key]) => key !== id));
     const logins = Object.fromEntries(Object.entries(db.logins ?? {}).filter(([key]) => key !== id));
-    this.write({ ...db, accounts: db.accounts.filter((account) => account.id !== id), sites, logins, session: null });
+    return Promise.resolve(this.write({ ...db, accounts: db.accounts.filter((account) => account.id !== id), sites, logins, session: null }));
   }
 
   private read(): string | null {

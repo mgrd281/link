@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="{{ if .Data.locale }}{{ .Data.locale }}{{ else }}de{{ end }}" dir="{{ if eq .Data.locale "ar" }}rtl{{ else }}ltr{{ end }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Linkyo</title></head>
+<body style="margin:0;padding:24px;background:#f6f5f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0a0a0b;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;">
+    <tr><td style="padding:32px;">
+      <p style="margin:0 0 24px;font-size:22px;font-weight:800;letter-spacing:-0.02em;">linkyo</p>
+      {{ if eq .Data.locale "ar" }}
+      <h1 style="margin:0 0 12px;font-size:22px;">أكّد بريدك الإلكتروني</h1>
+      <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#55555c;">أهلاً بك في Linkyo! نقرة واحدة ويصبح حسابك فعّالاً، ثم تنتقل مباشرة إلى صفحتك.</p>
+      <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=signup" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#9500e9;color:#ffffff;font-weight:600;text-decoration:none;">تأكيد البريد</a>
+      <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#77777e;">لم تسجّل في Linkyo؟ تجاهل هذه الرسالة.</p>
+      {{ else if eq .Data.locale "en" }}
+      <h1 style="margin:0 0 12px;font-size:22px;">Confirm your email</h1>
+      <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#55555c;">Welcome to Linkyo! One click and your account is active. Then you'll go straight to your page.</p>
+      <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=signup" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#9500e9;color:#ffffff;font-weight:600;text-decoration:none;">Confirm email</a>
+      <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#77777e;">Didn't sign up for Linkyo? Just ignore this email.</p>
+      {{ else }}
+      <h1 style="margin:0 0 12px;font-size:22px;">Bestätige deine E-Mail</h1>
+      <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#55555c;">Willkommen bei Linkyo! Ein Klick, und dein Konto ist aktiv. Danach geht es direkt mit deiner Seite weiter.</p>
+      <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=signup" style="display:inline-block;padding:14px 24px;border-radius:999px;background:#9500e9;color:#ffffff;font-weight:600;text-decoration:none;">E-Mail bestätigen</a>
+      <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#77777e;">Du hast dich nicht bei Linkyo registriert? Dann ignoriere diese E-Mail einfach.</p>
+      {{ end }}
+    </td></tr>
+  </table>
+</body>
+</html>
