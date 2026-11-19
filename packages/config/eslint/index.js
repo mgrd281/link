@@ -100,6 +100,12 @@ export function createConfig({ react = false, next = false, tailwindEntry, tscon
       },
     },
     {
+      // Generated pictures (link previews, story images) are drawn in pixels on a fixed canvas by
+      // Satori or <canvas>, which cannot read CSS variables. Their colors still come from the theme.
+      files: ["**/opengraph-image.tsx", "**/features/share/*-card.{ts,tsx}"],
+      rules: { "linkyo/no-raw-design-values": "off" },
+    },
+    {
       files: ["**/*.{js,mjs,cjs}"],
       ...tseslint.configs.disableTypeChecked,
     },

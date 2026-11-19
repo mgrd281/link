@@ -119,3 +119,19 @@ test.describe("mono template", () => {
     expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
   });
 });
+
+test.describe("link previews", () => {
+  test("every page shares with its own preview card (photo, name, address)", async ({ page, request }) => {
+    await page.goto("/en/p/mara-vale");
+    const image = await page.locator('meta[property="og:image"]').getAttribute("content");
+    expect(image).toMatch(/\/en\/p\/mara-vale\/opengraph-image/);
+    await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute("content", "1200");
+    const response = await request.get(new URL(image ?? "", page.url()).pathname);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toBe("image/png");
+    expect((await response.body()).length).toBeGreaterThan(50_000);
+    // The site itself has a card too.
+    const home = await request.get("/de/opengraph-image");
+    expect(home.headers()["content-type"]).toBe("image/png");
+  });
+});

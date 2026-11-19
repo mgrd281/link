@@ -159,6 +159,22 @@ test.describe("accounts", () => {
 });
 
 test.describe("dashboard", () => {
+  test("a picture to post: story and feed formats in the page's look, downloadable", async ({ page }) => {
+    await signedIn(page);
+    await page.getByRole("button", { name: "Image for story & post" }).click();
+    const sheet = page.getByRole("dialog", { name: "Your image to share" });
+    const download = sheet.getByRole("button", { name: "Download" });
+    await expect(download).toBeEnabled();
+    const size = () => sheet.locator("canvas").evaluate((canvas: HTMLCanvasElement) => [canvas.width, canvas.height]);
+    expect(await size()).toEqual([1080, 1920]);
+    await sheet.getByRole("radio", { name: "Post · 4:5" }).click();
+    await expect.poll(size).toEqual([1080, 1350]);
+    const saved = page.waitForEvent("download");
+    await download.click();
+    expect((await saved).suggestedFilename()).toMatch(/^linkyo-.+-post\.png$/);
+    expect(await axe(page)).toEqual([]);
+  });
+
   test("a pasted video gets its real title from the platform, without undo noise", async ({ page }) => {
     // Our server asks the platform (stubbed here); the browser only ever talks to Linkyo.
     await page.route("**/api/link-metadata**", (route) => route.fulfill({ json: { title: "Big Buck Bunny – Short Film", author: "Blender" } }));

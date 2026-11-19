@@ -1270,6 +1270,25 @@
       "preparedEdit": "Edit",
       "preparedDismiss": "Dismiss"
     },
+    "shareImage": {
+      "open": "Image for story & post",
+      "title": "Your image to share",
+      "lead": "Photo, name and link in your page's colors. Post it as a story or in your feed so more people find your page.",
+      "format": "Format",
+      "formats": {
+        "story": "Story · 9:16",
+        "post": "Post · 4:5"
+      },
+      "preview": "Image with {name} and {address}",
+      "hints": {
+        "story": "Tip: add a link sticker with {address} to your Instagram story.",
+        "post": "Tip: add “link in bio” and put {address} in your profile."
+      },
+      "download": "Download",
+      "share": "Share",
+      "downloaded": "Image saved",
+      "close": "Close"
+    },
     "share": {
       "copy": "Copy link",
       "copied": "Link copied",

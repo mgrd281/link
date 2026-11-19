@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { Providers } from "@/components/providers";
 import { fontVariables } from "@/fonts";
 import { isRtl, routing } from "@/i18n/routing";
+import { siteUrl } from "@/lib/site-url";
 import { themeInitScript } from "@/lib/theme-script";
 
 import "../globals.css";
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "meta" });
   return {
+    metadataBase: siteUrl(),
     title: { default: t("title"), template: `%s · Linkyo` },
     description: t("description"),
     icons: { icon: "/favicon.svg" },

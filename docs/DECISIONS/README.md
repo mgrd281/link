@@ -28,3 +28,4 @@
 | [0024](0024-moving-picture.md) | Moving picture: a short silent loop over the hero photo (poster = photo), plays only on screen, never for reduced motion or data saver; self-hosted | **Applied** |
 | [0025](0025-mono-template.md) | Mono, a sixth template: black-and-white portrait melting into white, tall condensed name, titles in capitals, bare social icons; example page Nela Voss | **Applied** |
 | [0026](0026-link-metadata.md) | Pasted songs and videos get their real title and picture (oEmbed via our server, pictures re-served by our optimizer); link buttons keep icons; mobile editor and look-step clean-up | **Applied** |
+| [0027](0027-share-kit.md) | Share kit: link preview cards for every page and the site (template colors, labelled examples/concepts, Arabic-safe), plus story and post pictures in the dashboard | **Applied** |

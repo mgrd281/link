@@ -13,6 +13,7 @@ import { blankBlock } from "./blocks";
 import { ProfileSheet } from "./profile-form";
 import { sampleStats, totals } from "./sample-stats";
 import { Panel, Screen } from "./screen";
+import { ShareImageButton } from "./share-image";
 import { QrButton, ShareButtons } from "./share-tools";
 import { useSite } from "./site-context";
 
@@ -97,6 +98,7 @@ export function HomeScreen() {
         <div className="flex flex-wrap gap-2">
           <ShareButtons username={account.username} compact />
           <QrButton username={account.username} compact />
+          <ShareImageButton compact />
           <Button asChild icon={ExternalLink} size="md">
             <Link href="/app/preview">{t("view")}</Link>
           </Button>

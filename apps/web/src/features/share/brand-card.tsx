@@ -1,0 +1,122 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
+import { tokens } from "@linkyo/tokens";
+import { ImageResponse } from "next/og";
+
+import { OG_SIZE, RtlText } from "./og-card";
+
+/**
+ * The link preview of linkyo.app itself (home, gallery, sign-up): the promise in the brand colors,
+ * next to three example pages. Drawn in pixels on Satori's fixed canvas.
+ */
+const dataUrl = (data: Buffer, mime: string) => `data:${mime};base64,${data.toString("base64")}`;
+
+const FONTS = Promise.all([
+  readFile(join(process.cwd(), "node_modules/geist/dist/fonts/geist-sans/Geist-SemiBold.ttf")).then((data) => ({ name: "Geist", data, weight: 600 as const })),
+  readFile(join(process.cwd(), "node_modules/geist/dist/fonts/geist-sans/Geist-Black.ttf")).then((data) => ({ name: "Geist", data, weight: 900 as const })),
+  readFile(join(process.cwd(), "node_modules/@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-700-normal.woff")).then((data) => ({ name: "Plex Arabic", data, weight: 700 as const })),
+]);
+
+/** Three example pages fanned out on the right: name and photo. */
+const PAGES = Promise.all(
+  [
+    { file: "ex4-motion-mara.jpg", name: "Mara Vale" },
+    { file: "ex5-nela-voss.jpg", name: "Nela Voss" },
+    { file: "ex4-motion-timo.jpg", name: "Timo Lacht" },
+  ].map(async ({ file, name }) => ({ name, photo: dataUrl(await readFile(join(process.cwd(), "src/assets/examples", file)), "image/jpeg") })),
+);
+
+const LOGO = readFile(join(process.cwd(), "public/favicon.svg"), "utf8").then((svg) =>
+  dataUrl(Buffer.from(svg.replace(/@media[^}]*\}\}/, "").replace(/#9500E9/g, tokens.color.white)), "image/svg+xml"),
+);
+
+const v = tokens.color.violet;
+
+export async function brandCard({ kicker, title1, title2, rtl }: { kicker: string; title1: string; title2: string; rtl: boolean }) {
+  const [fonts, pages, logo] = await Promise.all([FONTS, PAGES, LOGO]);
+  const font = rtl ? "Plex Arabic" : "Geist";
+  const cardWidth = 230;
+  const cardHeight = 340;
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: rtl ? "row-reverse" : "row",
+          alignItems: "center",
+          backgroundImage: `linear-gradient(135deg, ${v["950"]} 0%, ${v["800"]} 55%, ${v["500"]} 100%)`,
+          color: tokens.color.white,
+          fontFamily: font,
+          padding: "0 72px",
+        }}
+      >
+        <div style={{ display: "flex", flex: 1, flexDirection: "column", alignItems: rtl ? "flex-end" : "flex-start", gap: 26 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, fontFamily: "Geist", fontSize: 40, fontWeight: 900, letterSpacing: "-0.03em" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws plain <img> elements */}
+            <img src={logo} alt="" width={46} height={46} />
+            linkyo
+          </div>
+          {rtl ? (
+            // Arabic: the promise alone (Satori sets one run per line, so the card keeps to short lines).
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontWeight: 700, lineHeight: 1.3 }}>
+              <RtlText text={title1} size={62} width={560} />
+              <RtlText text={title2} size={62} width={560} style={{ color: v["300"] }} />
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "flex", fontSize: 24, fontWeight: 600, color: v["200"] }}>{kicker}</div>
+              <div style={{ display: "flex", flexDirection: "column", fontSize: 72, fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.035em" }}>
+                <span>{title1}</span>
+                <span style={{ color: v["300"] }}>{title2}</span>
+              </div>
+            </>
+          )}
+        </div>
+        <div style={{ display: "flex", position: "relative", width: 520, height: 470 }}>
+          {pages.map((page, index) => (
+            <div
+              key={page.name}
+              style={{
+                display: "flex",
+                position: "absolute",
+                left: 20 + index * 140,
+                top: index === 1 ? 20 : 80,
+                width: cardWidth,
+                height: cardHeight,
+                borderRadius: 28,
+                overflow: "hidden",
+                border: `4px solid ${tokens.color.white}`,
+                transform: `rotate(${(index - 1) * 6}deg)`,
+                boxShadow: "0 24px 60px rgba(0,0,0,0.35)",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws plain <img> elements */}
+              <img src={page.photo} alt="" width={cardWidth} height={cardHeight} style={{ objectFit: "cover" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "flex",
+                  padding: "60px 18px 18px",
+                  backgroundImage: "linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.75))",
+                  fontFamily: "Geist",
+                  fontSize: 24,
+                  fontWeight: 900,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {page.name}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    { ...OG_SIZE, fonts },
+  );
+}

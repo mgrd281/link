@@ -1270,6 +1270,25 @@
       "preparedEdit": "Bearbeiten",
       "preparedDismiss": "Schließen"
     },
+    "shareImage": {
+      "open": "Bild für Story & Post",
+      "title": "Dein Bild zum Teilen",
+      "lead": "Foto, Name und Link in den Farben deiner Seite. Poste es als Story oder Beitrag, damit mehr Leute deine Seite finden.",
+      "format": "Format",
+      "formats": {
+        "story": "Story · 9:16",
+        "post": "Beitrag · 4:5"
+      },
+      "preview": "Bild mit {name} und {address}",
+      "hints": {
+        "story": "Tipp: Füg in der Instagram-Story einen Link-Sticker mit {address} hinzu.",
+        "post": "Tipp: Schreib „Link in Bio“ dazu und setz {address} in dein Profil."
+      },
+      "download": "Herunterladen",
+      "share": "Teilen",
+      "downloaded": "Bild gespeichert",
+      "close": "Schließen"
+    },
     "share": {
       "copy": "Link kopieren",
       "copied": "Link kopiert",
