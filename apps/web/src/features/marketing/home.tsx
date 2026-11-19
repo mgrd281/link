@@ -1,20 +1,18 @@
 import { MarketingFooter } from "./footer";
 import { MarketingHeader } from "./header";
 import { Hero } from "./hero";
-import { Analytics, Faq, FinalCta, PasteSection, Pricing, Proof, Story, Templates } from "./sections";
+import { Faq, Features, FinalCta, Pricing, Templates, Trust } from "./sections";
 
-/** linkyo.app — the marketing home (de/en/ar). */
-export function MarketingHome({ locale }: { locale: string }) {
+/** linkyo.app — the marketing home (de/en/ar): light, calm, the product in motion. */
+export function MarketingHome() {
   return (
     <>
       <MarketingHeader />
-      <main id="main" className="grid grid-cols-1 gap-4 pt-4">
-        <Hero locale={locale} />
-        <Proof />
+      <main id="main" className="grid grid-cols-1">
+        <Hero />
+        <Trust />
         <Templates />
-        <Story />
-        <PasteSection />
-        <Analytics />
+        <Features />
         <Pricing />
         <Faq />
         <FinalCta />

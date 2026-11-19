@@ -37,7 +37,7 @@ export function ClaimForm({ id, className }: { id: string; className?: string })
       <label htmlFor={id} className="sr-only">
         {t("label")}
       </label>
-      <div className="flex min-w-0 flex-col gap-2 rounded-xl border border-line-strong bg-surface p-2 shadow-e2 transition-colors duration-micro has-[input:focus-visible]:border-focus has-[input:focus-visible]:focus-ring sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-col gap-2 rounded-xl border border-transparent bg-canvas-muted p-2 transition-colors duration-micro has-[input:focus-visible]:border-focus has-[input:focus-visible]:focus-ring sm:flex-row sm:items-center">
         <div dir="ltr" className="flex min-w-0 flex-1 items-center ps-3">
           <span className="shrink-0 text-body-lg text-fg-tertiary">{t("prefix")}</span>
           <input
@@ -57,7 +57,7 @@ export function ClaimForm({ id, className }: { id: string; className?: string })
             className="h-control-lg min-w-0 flex-1 bg-transparent text-body-lg font-medium text-fg outline-none placeholder:text-fg-tertiary"
           />
         </div>
-        <Button type="submit" variant="primary" size="lg" className="rounded-lg" trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+        <Button type="submit" variant="primary" size="lg" className="rounded-lg bg-fg text-canvas shadow-e1 hover:bg-fg active:bg-fg" trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
           {t("cta")}
         </Button>
       </div>

@@ -8,7 +8,7 @@ import { useState, type ReactNode } from "react";
 export function MarqueeControl({ children, pauseLabel, playLabel }: { children: ReactNode; pauseLabel: string; playLabel: string }) {
   const [paused, setPaused] = useState(false);
   return (
-    <div data-paused={paused} className="grid gap-6">
+    <div data-paused={paused} className="grid grid-cols-1 gap-6">
       {children}
       <button
         type="button"

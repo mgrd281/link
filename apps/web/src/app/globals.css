@@ -232,6 +232,68 @@
   }
 }
 
+/* Hero: three pages take turns in front (centre → right → left → centre). */
+@keyframes mk-stack {
+  0%,
+  27%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+    z-index: var(--z-raised);
+  }
+
+  33.34%,
+  60% {
+    translate: var(--stack-x) var(--spacing-10);
+    scale: var(--stack-scale);
+    z-index: var(--z-base);
+  }
+
+  66.67%,
+  94% {
+    translate: calc(var(--stack-x) * -1) var(--spacing-10);
+    scale: var(--stack-scale);
+    z-index: var(--z-base);
+  }
+}
+
+@keyframes mk-stack-show {
+  0%,
+  27%,
+  100% {
+    opacity: 1;
+  }
+
+  33.34%,
+  94% {
+    opacity: 0;
+  }
+}
+
+/* A strip that grows to full size as it scrolls into view. */
+@keyframes mk-zoom {
+  from {
+    scale: var(--scale-zoom-from, 0.86);
+  }
+}
+
+/* Cards behind a lead card fan out as the panel scrolls in. */
+@keyframes mk-fan {
+  from {
+    translate: 0 var(--spacing-6);
+    rotate: 0deg;
+    scale: 0.9;
+  }
+}
+
+@keyframes mk-pop {
+  from {
+    opacity: 0;
+    translate: 0 var(--spacing-8);
+    scale: 0.94;
+  }
+}
+
 @keyframes mk-card-in {
   from {
     opacity: 0;
@@ -386,6 +448,89 @@
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
+  }
+}
+
+/*
+ * The hero's page stack. Each card sits in its resting slot (--slot: 0 centre, 1 right, -1 left),
+ * which is also the still layout for reduced motion; the animation takes them round in turn.
+ */
+@utility mk-stack {
+  --stack-x: 58%;
+  --stack-scale: 0.8;
+}
+
+@utility mk-stack-card {
+  translate: calc(var(--stack-x) * var(--slot, 0)) calc(var(--spacing-10) * var(--side, 0));
+  scale: calc(1 - (1 - var(--stack-scale)) * var(--side, 0));
+  z-index: calc(var(--z-raised) * (1 - var(--side, 0)));
+  animation: mk-stack var(--duration-showcase) var(--ease-standard) infinite;
+  animation-delay: calc(var(--i, 0) * var(--duration-showcase) / -3);
+
+  &:is([data-marquee]:hover *),
+  &:is([data-paused="true"] *) {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* What belongs to the card in front (its address, its caption): shown only while it is in front. */
+@utility mk-stack-front {
+  opacity: calc(1 - var(--side, 0));
+  animation: mk-stack-show var(--duration-showcase) var(--ease-standard) infinite;
+  animation-delay: calc(var(--i, 0) * var(--duration-showcase) / -3);
+
+  &:is([data-marquee]:hover *),
+  &:is([data-paused="true"] *) {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility mk-zoom {
+  @supports (animation-timeline: view()) {
+    animation: mk-zoom linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 45%;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+}
+
+/* A tinted panel names its own view timeline, so what is inside can move with it. */
+@utility mk-panel {
+  view-timeline: --mk-panel block;
+}
+
+@utility mk-fan {
+  @supports (animation-timeline: view()) {
+    animation: mk-fan linear both;
+    animation-timeline: --mk-panel;
+    animation-range: entry 25% cover 50%;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+}
+
+@utility mk-pop {
+  @supports (animation-timeline: view()) {
+    animation: mk-pop linear both;
+    animation-timeline: --mk-panel;
+    animation-range: entry calc(30% + var(--i, 0) * 8%) cover calc(50% + var(--i, 0) * 6%);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 }
 

@@ -49,6 +49,14 @@ describe("product UI semantic colors (brand §4, WCAG 2.2 AA)", () => {
       expect(contrastRatio(s.selectedFg[mode], selected)).toBeGreaterThanOrEqual(4.5);
     });
 
+    it(`${mode}: text on the tinted panels reaches 4.5:1`, () => {
+      for (const tint of [s.tintRose[mode], s.tintLavender[mode], s.tintMint[mode], s.tintLime[mode]]) {
+        for (const role of ["fg", "fgSecondary"] as const) {
+          expect(ratio(s[role][mode], tint), `${role} on ${tint}`).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    });
+
     it(`${mode}: focus ring and input boundaries reach 3:1 (WCAG 1.4.11)`, () => {
       for (const bg of backgrounds) {
         expect(ratio(s.focus[mode], bg), `focus on ${bg}`).toBeGreaterThanOrEqual(3);

@@ -1,6 +1,7 @@
 import { Logo } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 
+import { ThemeSwitch } from "@/components/theme-switch";
 import { Link } from "@/i18n/navigation";
 
 const linkClass = "rounded-xs text-small text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring";
@@ -51,7 +52,10 @@ export function MarketingFooter() {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-caption text-fg-tertiary">
         <span>{t("rights")}</span>
-        <span>{t("made")}</span>
+        <span className="flex flex-wrap items-center gap-3">
+          {t("made")}
+          <ThemeSwitch />
+        </span>
       </div>
     </footer>
   );

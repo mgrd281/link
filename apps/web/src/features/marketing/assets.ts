@@ -19,7 +19,7 @@ import pulseDe from "@/assets/marketing/phone-pulse-de.jpg";
 
 /**
  * Marketing imagery = real Linkyo creator pages (our own sample creators, captured from the product)
- * shown on phones — brand §10: "real creator pages on phones, dark studio backgrounds".
+ * shown on phones (brand §10). The home's example pages are in `examples.ts`.
  */
 const phones: Record<"de" | "ar", Record<CreatorTemplateId, StaticImageData>> = {
   de: { nocturne: nocturneDe, daylight: daylightDe, marquee: marqueeDe, pulse: pulseDe, atelier: atelierDe, mono: monoDe },

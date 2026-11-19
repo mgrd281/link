@@ -171,8 +171,16 @@ public extension Color {
         public static let paletteViolet900 = Color("Palette/Violet900", bundle: .module)
         public static let paletteViolet950 = Color("Palette/Violet950", bundle: .module)
         public static let paletteLime100 = Color("Palette/Lime100", bundle: .module)
+        public static let paletteLime200 = Color("Palette/Lime200", bundle: .module)
         public static let paletteLime400 = Color("Palette/Lime400", bundle: .module)
+        public static let paletteLime900 = Color("Palette/Lime900", bundle: .module)
         public static let paletteLime950 = Color("Palette/Lime950", bundle: .module)
+        public static let paletteRose100 = Color("Palette/Rose100", bundle: .module)
+        public static let paletteRose900 = Color("Palette/Rose900", bundle: .module)
+        public static let paletteMint100 = Color("Palette/Mint100", bundle: .module)
+        public static let paletteMint900 = Color("Palette/Mint900", bundle: .module)
+        public static let paletteLavender100 = Color("Palette/Lavender100", bundle: .module)
+        public static let paletteLavender900 = Color("Palette/Lavender900", bundle: .module)
         public static let paletteGray25 = Color("Palette/Gray25", bundle: .module)
         public static let paletteGray50 = Color("Palette/Gray50", bundle: .module)
         public static let paletteGray75 = Color("Palette/Gray75", bundle: .module)
@@ -251,6 +259,10 @@ public extension Color {
         public static let dangerFillFg = Color("Semantic/DangerFillFg", bundle: .module)
         public static let scrim = Color("Semantic/Scrim", bundle: .module)
         public static let skeleton = Color("Semantic/Skeleton", bundle: .module)
+        public static let tintRose = Color("Semantic/TintRose", bundle: .module)
+        public static let tintLavender = Color("Semantic/TintLavender", bundle: .module)
+        public static let tintMint = Color("Semantic/TintMint", bundle: .module)
+        public static let tintLime = Color("Semantic/TintLime", bundle: .module)
     }
 }
 #endif

@@ -1,13 +1,12 @@
-import { Button, Logo } from "@linkyo/ui";
+import { Logo } from "@linkyo/ui";
 import { useLocale, useTranslations } from "next-intl";
 
 import { LocaleSwitch } from "@/components/locale-switch";
-import { ThemeSwitch } from "@/components/theme-switch";
 import { Link } from "@/i18n/navigation";
 
 import { MobileMenu } from "./mobile-menu";
 
-/** A floating pill navigation: in-page anchors, theme + language, one primary action. */
+/** A flat bar: logo, in-page links, language, a quiet "log in" and one black action. */
 export function MarketingHeader() {
   const t = useTranslations("marketing");
   const locale = useLocale();
@@ -21,14 +20,14 @@ export function MarketingHeader() {
   const cta = { href: `/${locale}/signup`, label: t("nav.start") };
   const login = { href: `/${locale}/login`, label: t("nav.login") };
   return (
-    <header className="layer-sticky sticky top-0 px-3 pt-3 md:px-5">
+    <header className="layer-sticky sticky top-0 bg-canvas">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:rounded-sm focus:bg-surface-elevated focus:px-3 focus:py-2 focus:focus-ring"
       >
         {t("skip")}
       </a>
-      <div className="mx-auto flex h-control-xl max-w-content items-center gap-2 rounded-full border border-line bg-surface ps-5 pe-2 shadow-e2">
+      <div className="mx-auto flex h-16 max-w-content items-center gap-2 px-5 md:px-10">
         <Link href="/" className="rounded-xs focus-visible:focus-ring" aria-label="Linkyo">
           <Logo className="h-6" title="Linkyo" />
         </Link>
@@ -45,18 +44,20 @@ export function MarketingHeader() {
         </nav>
         <div className="ms-auto flex items-center gap-1">
           <div className="hidden items-center gap-1 sm:flex">
-            <ThemeSwitch />
             <LocaleSwitch />
           </div>
           <Link
             href="/login"
-            className="hidden h-control-md items-center rounded-full px-4 text-small font-semibold text-fg hover:bg-hover focus-visible:focus-ring md:inline-flex"
+            className="hidden h-control-md items-center rounded-full bg-canvas-muted px-4 text-small font-semibold text-fg transition-colors duration-micro hover:bg-hover focus-visible:focus-ring md:inline-flex"
           >
             {login.label}
           </Link>
-          <Button asChild variant="primary" size="md" className="hidden rounded-full md:inline-flex">
-            <Link href="/signup">{cta.label}</Link>
-          </Button>
+          <Link
+            href="/signup"
+            className="hidden h-control-md items-center rounded-full bg-fg px-4 text-small font-semibold text-canvas shadow-e1 transition-[box-shadow,scale] duration-micro hover:shadow-e3 focus-visible:focus-ring active:scale-pressed md:inline-flex"
+          >
+            {cta.label}
+          </Link>
           <MobileMenu items={items} cta={cta} secondary={login} labels={{ menu: t("nav.menu"), close: t("nav.close") }} />
         </div>
       </div>

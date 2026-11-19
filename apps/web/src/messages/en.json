@@ -590,7 +590,16 @@
         "No cookies",
         "Data in Frankfurt"
       ],
-      "phones": "Creator pages in the Nocturne, Pulse and Daylight templates"
+      "phones": "Creator pages in the Nocturne, Pulse and Daylight templates",
+      "stackPause": "Pause the page carousel",
+      "stackPlay": "Play the page carousel",
+      "followers": "{count} followers",
+      "listeners": "{count} monthly listeners",
+      "kinds": {
+        "comedy": "Comedy",
+        "music": "Music",
+        "sport": "Sport"
+      }
     },
     "claim": {
       "label": "Choose your page address",
@@ -617,11 +626,12 @@
       }
     },
     "templates": {
-      "title": "Six templates. Your photos.",
-      "lead": "Pick a look, keep your content. Every color in every template is checked for contrast, so your page stays readable for everyone.",
+      "title": "Pages with character",
+      "lead": "Music, sport, comedy, shops, consulting: every page in its own look. All examples are made up – yours will look just as good.",
       "pause": "Pause the template strip",
       "play": "Play the template strip",
-      "label": "Templates"
+      "label": "Templates",
+      "open": "See {name}'s example page"
     },
     "story": {
       "title": "Everything you make. One page.",
@@ -760,8 +770,9 @@
       ]
     },
     "final": {
-      "title": "Your page. In five minutes.",
-      "lead": "Choose your address and start with a template that fits your photo."
+      "title": "Get started. It's free.",
+      "lead": "Choose your address and start with a template that fits your photo. No credit card, no notice period.",
+      "soon": "Coming to Pro:"
     },
     "footer": {
       "tagline": "One link. Everything you create.",
@@ -781,7 +792,38 @@
       "made": "Made in Germany · Hosted in Frankfurt",
       "rights": "© 2026 Linkyo"
     },
-    "skip": "Skip to content"
+    "skip": "Skip to content",
+    "trust": {
+      "title": "What you can count on",
+      "items": [
+        {
+          "title": "Hosted in Frankfurt",
+          "body": "Your page and your data live in data centres in Germany. We pick EU providers first."
+        },
+        {
+          "title": "No cookies, no banner",
+          "body": "Your page sets no cookies and loads no trackers. Videos load only after a tap – nothing to click away."
+        },
+        {
+          "title": "Free for good",
+          "body": "Templates, unlimited links and analytics stay free. No credit card, no notice period."
+        }
+      ]
+    },
+    "features": {
+      "title1": "Everything you need.",
+      "title2": "On one page.",
+      "look": {
+        "title": "A page that looks like you",
+        "body": "Six templates, your photos, your colors. Music, videos, dates and shop arrange themselves – and every color is checked for readability."
+      },
+      "share": {
+        "title": "Share like a pro",
+        "body": "Your link shows your photo and name in WhatsApp, iMessage and LinkedIn. Story and feed pictures in your page's look take one tap.",
+        "story": "Story",
+        "preview": "Link preview"
+      }
+    }
   },
   "auth": {
     "meta": {

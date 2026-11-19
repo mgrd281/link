@@ -36,6 +36,18 @@ test.describe("marketing home", () => {
     await expect(page.getByRole("button", { name: "Play the template strip" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  test("the pages in the hero take turns and can be paused; the example strip opens real example pages", async ({ page }) => {
+    const pause = page.getByRole("button", { name: "Pause the page carousel" });
+    await pause.click();
+    await expect(page.getByRole("button", { name: "Play the page carousel" })).toBeVisible();
+    await expect(page.locator(".mk-stack-card").first()).toHaveCSS("animation-play-state", "paused");
+    const example = page.getByRole("link", { name: /^See .+'s example page$/ }).first();
+    await expect(example).toHaveAttribute("href", /^\/(de|en|ar)\/p\/[a-z0-9-]+$/);
+    // The four feature panels are there, with the paste demo inside one of them.
+    await expect(page.getByRole("heading", { level: 3, name: "A page that looks like you" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 3, name: "Share like a pro" })).toBeAttached();
+  });
+
   test("FAQ answers open in place", async ({ page }) => {
     const answer = page.getByText("Creator pages set no cookies and load no trackers.");
     await expect(answer).toBeHidden();

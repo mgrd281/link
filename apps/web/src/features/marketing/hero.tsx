@@ -1,99 +1,107 @@
-import { creatorTokens, type CreatorTemplateId } from "@linkyo/tokens";
-import { Icon } from "@linkyo/ui";
-import { Check } from "lucide-react";
+import { LogoSymbol } from "@linkyo/ui";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 
-import { phoneShots, phoneSizes } from "./assets";
+import { phoneSizes } from "./assets";
 import { ClaimForm } from "./claim-form";
-import { Phone } from "./phone";
-import { TiltStage } from "./tilt-stage";
+import { EXAMPLE_SHOTS, type ExampleShot } from "./examples";
+import { MotionToggle } from "./motion-toggle";
 
 export const order = (n: number) => ({ "--i": n }) as CSSProperties;
 
-const CYCLE: CreatorTemplateId[] = ["nocturne", "atelier", "marquee", "daylight", "pulse"];
+/** The three pages that take turns in front, with one number from each page. */
+const STACK: { slug: ExampleShot; kind: "comedy" | "music" | "sport"; fact: "followers" | "listeners"; count: number }[] = [
+  { slug: "timo-lacht", kind: "comedy", fact: "followers", count: 2_400_000 },
+  { slug: "rafael-duarte", kind: "sport", fact: "followers", count: 4_100_000 },
+  { slug: "mara-vale", kind: "music", fact: "listeners", count: 12_000_000 },
+];
+/** Resting slots (front, right, left): where the turns start, and the still layout for reduced motion. */
+const SLOTS = [
+  { slot: 0, side: 0 },
+  { slot: 1, side: 1 },
+  { slot: -1, side: 1 },
+] as const;
 
 /**
- * The one orchestrated moment: on a dark studio stage with a soft blue glow, the headline rises
- * line by line while three real creator pages fan in; the centre phone cycles through all five
- * templates and the stage leans toward the mouse.
+ * Light and calm: the promise on the left, real (example) pages on the right that take turns in
+ * front, each with its address above and one number below. Pausable; still for reduced motion.
  */
-export function Hero({ locale }: { locale: string }) {
+export function Hero() {
   const t = useTranslations("marketing");
-  const shots = phoneShots(locale);
+  const locale = useLocale();
   const pills = t.raw("hero.pills") as string[];
+  const compact = new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 });
   return (
-    <section data-theme="dark" aria-labelledby="hero-title" className="relative isolate mx-3 overflow-clip rounded-xl bg-canvas text-fg md:mx-5">
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="mk-glow absolute -end-1/4 top-0 aspect-square w-3/4 rounded-full bg-primary opacity-secondary blur-ambient" />
-        <div className="absolute -start-1/4 bottom-0 aspect-square w-1/2 rounded-full bg-primary-pressed opacity-disabled blur-ambient" />
-      </div>
-      <div className="relative mx-auto grid max-w-content grid-cols-1 items-center gap-12 px-5 pt-24 pb-16 md:px-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-10 lg:pt-32 lg:pb-24">
-        <div className="grid min-w-0 grid-cols-1 justify-items-start gap-6">
-          <p className="mk-rise text-small font-semibold text-fg-secondary" style={order(0)}>
-            {t("hero.kicker")}
-          </p>
-          <h1 id="hero-title" className="max-w-full text-display tracking-display text-balance md:text-display-xl 2xl:text-display-2xl">
-            <span className="mk-rise block" style={order(1)}>
-              {t("hero.title1")}
-            </span>
-            <span className="mk-rise block text-link" style={order(2)}>
-              {t("hero.title2")}
-            </span>
-          </h1>
-          <p className="mk-rise max-w-full text-body-lg text-pretty text-fg-secondary" style={order(3)}>
-            {t("hero.lead")}
-          </p>
-          <div className="mk-rise w-full" style={order(4)}>
-            <ClaimForm id="hero-claim" />
-          </div>
-          <ul className="mk-rise flex flex-wrap gap-2" style={order(5)}>
-            {pills.map((pill) => (
-              <li key={pill} className="inline-flex h-control-sm items-center gap-2 rounded-full border border-line-strong px-3 text-small text-fg-secondary">
-                <Icon icon={Check} size="sm" className="text-success-strong" />
-                {pill}
-              </li>
-            ))}
-          </ul>
+    <section
+      aria-labelledby="hero-title"
+      className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-16 px-5 pt-10 pb-12 md:px-10 md:pt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10 lg:pt-20 lg:pb-20"
+    >
+      <div className="grid min-w-0 grid-cols-1 justify-items-start gap-6">
+        <h1 id="hero-title" className="max-w-full text-display tracking-display text-balance md:text-display-xl">
+          <span className="mk-rise block" style={order(0)}>
+            {t("hero.title1")}
+          </span>
+          <span className="mk-rise block text-primary" style={order(1)}>
+            {t("hero.title2")}
+          </span>
+        </h1>
+        <ul className="mk-rise flex flex-wrap gap-2" style={order(2)}>
+          {pills.map((pill) => (
+            <li key={pill} className="inline-flex h-control-sm items-center rounded-full bg-canvas-muted px-3 text-small font-medium text-fg">
+              {pill}
+            </li>
+          ))}
+        </ul>
+        <p className="mk-rise max-w-prose text-body-lg text-pretty text-fg-secondary" style={order(3)}>
+          {t("hero.lead")}
+        </p>
+        <div className="mk-rise w-full max-w-prose" style={order(4)}>
+          <ClaimForm id="hero-claim" />
         </div>
+      </div>
 
-        <div className="relative mx-auto aspect-square w-full max-w-creator">
-          <p className="sr-only">{t("hero.phones")}</p>
-          <TiltStage className="absolute inset-0">
-            <div aria-hidden className="mk-phone-in absolute start-1/12 top-1/6 w-2/5 -rotate-6" style={order(1)}>
-              <div className="mk-float" style={order(1)}>
-                <Phone>
-                  <Image src={shots.pulse} alt="" fill sizes={phoneSizes.side} placeholder="blur" className="object-cover object-top" />
-                </Phone>
+      <MotionToggle
+        pauseLabel={t("hero.stackPause")}
+        playLabel={t("hero.stackPlay")}
+        className="mx-auto w-full max-w-creator"
+        buttonClassName="end-0 bottom-0"
+      >
+        <p className="sr-only">{t("hero.phones")}</p>
+        <div aria-hidden className="mk-stack mk-phone-in relative aspect-square w-full">
+          {STACK.map((page, index) => (
+            <div
+              key={page.slug}
+              className="mk-stack-card absolute inset-x-0 top-12 mx-auto w-5/12"
+              style={{ "--i": index, "--slot": SLOTS[index]?.slot ?? 0, "--side": SLOTS[index]?.side ?? 0 } as CSSProperties}
+            >
+              <span className="mk-stack-front absolute start-1/2 bottom-full mb-3 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-surface-elevated px-3 py-1 text-small font-semibold whitespace-nowrap text-fg shadow-e2 rtl:translate-x-1/2">
+                <LogoSymbol className="size-4" />
+                <span dir="ltr">linkyo.app/{page.slug}</span>
+              </span>
+              <div className="relative aspect-short overflow-hidden rounded-xl border border-line bg-surface shadow-e3">
+                <Image
+                  src={EXAMPLE_SHOTS[page.slug]}
+                  alt=""
+                  fill
+                  sizes={phoneSizes.hero}
+                  placeholder="blur"
+                  preload={index === 0}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  className="object-cover object-top"
+                />
               </div>
+              <p className="mk-stack-front absolute inset-x-0 top-full mt-4 flex items-center justify-center gap-2 text-small font-semibold whitespace-nowrap text-fg">
+                {t(`hero.kinds.${page.kind}`)}
+                <span className="rounded-full bg-fg px-2 py-0.5 text-caption text-canvas tabular-nums">
+                  {t(`hero.${page.fact}`, { count: compact.format(page.count) })}
+                </span>
+              </p>
             </div>
-            <div aria-hidden className="mk-phone-in absolute end-1/12 top-1/6 w-2/5 rotate-6" style={order(2)}>
-              <div className="mk-float" style={order(2)}>
-                <Phone>
-                  <Image src={shots.daylight} alt="" fill sizes={phoneSizes.side} placeholder="blur" className="object-cover object-top" />
-                </Phone>
-              </div>
-            </div>
-            <div aria-hidden className="mk-phone-in absolute inset-x-0 top-0 mx-auto w-1/2 layer-raised" style={order(0)}>
-              <Phone>
-                {CYCLE.map((id, index) => (
-                  <div key={id} className="mk-cycle-item absolute inset-0" style={order(index)}>
-                    <Image src={shots[id]} alt="" fill sizes={phoneSizes.hero} placeholder="blur" preload={index === 0} fetchPriority={index === 0 ? "high" : "auto"} loading={index === 0 ? "eager" : "lazy"} className="object-cover object-top" />
-                  </div>
-                ))}
-              </Phone>
-              <div className="relative mt-4 grid h-control-sm place-items-center">
-                {CYCLE.map((id, index) => (
-                  <span key={id} className="mk-cycle-label col-start-1 row-start-1 inline-flex h-control-sm items-center rounded-full border border-line-strong bg-surface px-3 text-small font-semibold" style={order(index)}>
-                    {creatorTokens.templates[id].label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </TiltStage>
+          ))}
         </div>
-      </div>
+      </MotionToggle>
     </section>
   );
 }

@@ -590,7 +590,16 @@
         "Ohne Cookies",
         "Daten in Frankfurt"
       ],
-      "phones": "Creator-Seiten in den Vorlagen Nocturne, Pulse und Daylight"
+      "phones": "Creator-Seiten in den Vorlagen Nocturne, Pulse und Daylight",
+      "stackPause": "Seitenwechsel anhalten",
+      "stackPlay": "Seitenwechsel abspielen",
+      "followers": "{count} Follower",
+      "listeners": "{count} Hörer im Monat",
+      "kinds": {
+        "comedy": "Comedy",
+        "music": "Musik",
+        "sport": "Sport"
+      }
     },
     "claim": {
       "label": "Wähl deine Seitenadresse",
@@ -617,11 +626,12 @@
       }
     },
     "templates": {
-      "title": "Sechs Vorlagen. Deine Fotos.",
-      "lead": "Look wählen, Inhalt behalten. Jede Farbe in jeder Vorlage ist auf Kontrast geprüft – deine Seite bleibt für alle lesbar.",
+      "title": "Seiten mit Charakter",
+      "lead": "Musik, Sport, Comedy, Läden, Beratung: jede Seite im eigenen Look. Alle Beispiele sind erfunden – deine wird genauso gut.",
       "pause": "Vorlagen-Leiste anhalten",
       "play": "Vorlagen-Leiste abspielen",
-      "label": "Vorlagen"
+      "label": "Vorlagen",
+      "open": "Beispielseite von {name} ansehen"
     },
     "story": {
       "title": "Alles, was du machst. Eine Seite.",
@@ -760,8 +770,9 @@
       ]
     },
     "final": {
-      "title": "Deine Seite. In fünf Minuten.",
-      "lead": "Wähl deine Adresse und starte mit einer Vorlage, die zu deinem Foto passt."
+      "title": "Leg los. Kostet nichts.",
+      "lead": "Wähle deine Adresse und starte mit einer Vorlage, die zu deinem Foto passt. Ohne Kreditkarte, ohne Kündigungsfrist.",
+      "soon": "Bald in Pro:"
     },
     "footer": {
       "tagline": "Ein Link. Alles, was du erschaffst.",
@@ -781,7 +792,38 @@
       "made": "Gemacht in Deutschland · Gehostet in Frankfurt",
       "rights": "© 2026 Linkyo"
     },
-    "skip": "Zum Inhalt springen"
+    "skip": "Zum Inhalt springen",
+    "trust": {
+      "title": "Worauf du dich verlassen kannst",
+      "items": [
+        {
+          "title": "Gehostet in Frankfurt",
+          "body": "Deine Seite und deine Daten liegen in Rechenzentren in Deutschland. Wir wählen Anbieter aus der EU zuerst."
+        },
+        {
+          "title": "Ohne Cookies, ohne Banner",
+          "body": "Deine Seite setzt keine Cookies und lädt keine Tracker. Videos laden erst nach einem Tipp – nichts zum Wegklicken."
+        },
+        {
+          "title": "Dauerhaft kostenlos",
+          "body": "Vorlagen, unbegrenzte Links und Analytics bleiben kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist."
+        }
+      ]
+    },
+    "features": {
+      "title1": "Alles, was du brauchst.",
+      "title2": "Auf einer Seite.",
+      "look": {
+        "title": "Eine Seite, die nach dir aussieht",
+        "body": "Sechs Vorlagen, deine Fotos, deine Farben. Musik, Videos, Termine und Shop ordnen sich von selbst – und jede Farbe ist auf Lesbarkeit geprüft."
+      },
+      "share": {
+        "title": "Teilen wie ein Profi",
+        "body": "Dein Link zeigt in WhatsApp, iMessage und LinkedIn dein Foto und deinen Namen. Bilder für Story und Feed im Look deiner Seite erstellst du mit einem Tipp.",
+        "story": "Story",
+        "preview": "Link-Vorschau"
+      }
+    }
   },
   "auth": {
     "meta": {
