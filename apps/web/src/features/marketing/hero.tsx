@@ -12,9 +12,9 @@ export const order = (n: number) => ({ "--i": n }) as CSSProperties;
 
 /** The three pages that take turns in front, with one number from each page. */
 const STACK: { slug: ExampleShot; kind: DeckKind; fact: "followers" | "listeners"; count: number }[] = [
-  { slug: "timo-lacht", kind: "comedy", fact: "followers", count: 2_400_000 },
-  { slug: "rafael-duarte", kind: "sport", fact: "followers", count: 4_100_000 },
-  { slug: "mara-vale", kind: "music", fact: "listeners", count: 12_000_000 },
+  { slug: "lou-ferreira", kind: "fashion", fact: "followers", count: 1_200_000 },
+  { slug: "juno-kade", kind: "dj", fact: "listeners", count: 2_300_000 },
+  { slug: "layal-mansour", kind: "music", fact: "followers", count: 3_400_000 },
 ];
 
 /**

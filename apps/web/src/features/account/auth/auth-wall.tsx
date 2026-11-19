@@ -6,9 +6,9 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { EXAMPLE_SHOTS } from "@/features/marketing/examples";
+import { EXAMPLE_SHOTS, WALL } from "@/features/marketing/examples";
 
-const SHOTS = Object.values(EXAMPLE_SHOTS);
+const SHOTS = WALL.map((slug) => EXAMPLE_SHOTS[slug]);
 const COLUMNS = 6;
 /** Pages per column (before the copy that makes the loop seamless): tall enough to fill the panel. */
 const PER_COLUMN = 4;
@@ -21,9 +21,10 @@ const PER_COLUMN = 4;
 export function AuthWall() {
   const t = useTranslations("auth.side");
   const [paused, setPaused] = useState(false);
-  // Column c takes every sixth page from c on (wrapping), so neighbours never show the same page.
+  // Column c steps through the pages five at a time from c on (12 pages, so no page repeats
+  // within a column and neighbours differ).
   const columns = Array.from({ length: COLUMNS }, (_, column) =>
-    Array.from({ length: PER_COLUMN }, (_, row) => SHOTS[(column + row * COLUMNS) % SHOTS.length] ?? SHOTS[0]).filter((shot) => shot !== undefined),
+    Array.from({ length: PER_COLUMN }, (_, row) => SHOTS[(column + row * 5) % SHOTS.length]).filter((shot) => shot !== undefined),
   );
   return (
     <aside aria-label={t("label")} data-paused={paused} className="relative isolate hidden overflow-hidden bg-canvas-muted lg:block">

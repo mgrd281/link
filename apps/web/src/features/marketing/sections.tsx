@@ -243,9 +243,9 @@ export function Features() {
 
       <FeatureRow title={t("features.look.title")} body={t("features.look.body")} tint="bg-tint-teal">
         <div className="relative grid aspect-square w-full max-w-prose place-items-center sm:aspect-4/3">
-          <Shot slug="nela-voss" className="mk-fan absolute w-1/3 -translate-x-3/4 -rotate-6 rtl:translate-x-3/4" />
-          <Shot slug="coach-yara" className="mk-fan absolute w-1/3 translate-x-3/4 rotate-6 rtl:-translate-x-3/4" />
-          <Shot slug="studio-mira" className="relative w-5/12" sizes={phoneSizes.hero} />
+          <Shot slug="juno-kade" className="mk-fan absolute w-1/3 -translate-x-3/4 -rotate-6 rtl:translate-x-3/4" />
+          <Shot slug="salma-rahhal" className="mk-fan absolute w-1/3 translate-x-3/4 rotate-6 rtl:-translate-x-3/4" />
+          <Shot slug="nico-hale" className="relative w-5/12" sizes={phoneSizes.hero} />
         </div>
       </FeatureRow>
 

@@ -594,9 +594,9 @@
       "followers": "{count} followers",
       "listeners": "{count} monthly listeners",
       "kinds": {
-        "comedy": "Comedy",
-        "music": "Music",
-        "sport": "Sport"
+        "fashion": "Fashion",
+        "dj": "DJ",
+        "music": "Music"
       },
       "deck": {
         "carousel": "carousel",
@@ -2551,10 +2551,10 @@
   "examples": {
     "meta": {
       "title": "Templates & examples · Linkyo",
-      "description": "60+ example pages for creators, online stores, affiliate, marketing, developers, music, sport, shops, careers and well-known people. Look, try and use them as a template."
+      "description": "70+ example pages for creators, online stores, affiliate, marketing, developers, music, sport, shops, careers and well-known people. Look, try and use them as a template."
     },
     "eyebrow": "Templates & examples",
-    "title": "Find your look in 60+ examples",
+    "title": "Find your look in 70+ examples",
     "lead": "For creators, online stores, developers, shops, practices and careers. Every page has its own design: open it, scroll through, make it yours in one click.",
     "count": "{count} examples",
     "filter": "Filter by category",

@@ -594,9 +594,9 @@
       "followers": "{count} Follower",
       "listeners": "{count} Hörer im Monat",
       "kinds": {
-        "comedy": "Comedy",
-        "music": "Musik",
-        "sport": "Sport"
+        "fashion": "Mode",
+        "dj": "DJ",
+        "music": "Musik"
       },
       "deck": {
         "carousel": "Karussell",
@@ -2551,10 +2551,10 @@
   "examples": {
     "meta": {
       "title": "Vorlagen & Beispiele · Linkyo",
-      "description": "Über 60 Beispielseiten für Creator, Online-Händler, Affiliate, Marketing, Entwickler:innen, Musik, Sport, Läden, Berufe und bekannte Persönlichkeiten. Ansehen, ausprobieren und als Vorlage nutzen."
+      "description": "Über 70 Beispielseiten für Creator, Online-Händler, Affiliate, Marketing, Entwickler:innen, Musik, Sport, Läden, Berufe und bekannte Persönlichkeiten. Ansehen, ausprobieren und als Vorlage nutzen."
     },
     "eyebrow": "Vorlagen & Beispiele",
-    "title": "Finde deinen Look in über 60 Beispielen",
+    "title": "Finde deinen Look in über 70 Beispielen",
     "lead": "Für Creator, Online-Händler, Entwickler:innen, Läden, Praxen und Berufe – jede Seite in eigenem Design. Öffnen, durchscrollen, mit einem Klick übernehmen.",
     "count": "{count} Beispiele",
     "filter": "Nach Kategorie filtern",

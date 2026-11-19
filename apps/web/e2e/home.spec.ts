@@ -53,18 +53,18 @@ test.describe("marketing home", () => {
     await expect(deck.locator(".mk-progress")).toHaveCSS("animation-play-state", "paused");
 
     // The page in front opens the real example page.
-    await expect(deck.getByRole("link", { name: "View page, Timo Lacht" })).toHaveAttribute("href", "/de/p/timo-lacht");
+    await expect(deck.getByRole("link", { name: "View page, Lou Ferreira" })).toHaveAttribute("href", "/de/p/lou-ferreira");
 
     // When the timer line under the tab is full, the next page comes to the front.
     await deck.locator(".mk-progress").evaluate((line) => {
       for (const animation of line.getAnimations()) animation.finish();
     });
     await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-    await expect(deck.getByRole("link", { name: "View page, Rafael Duarte" })).toBeVisible();
+    await expect(deck.getByRole("link", { name: "View page, Juno Kade" })).toBeVisible();
 
     // Tabs choose directly; arrow keys move between them.
     await tabs.nth(2).click();
-    await expect(deck.getByRole("link", { name: "View page, Mara Vale" })).toBeVisible();
+    await expect(deck.getByRole("link", { name: /^View page, / })).toHaveAttribute("href", "/ar/p/layal-mansour");
     await tabs.nth(2).press("ArrowRight");
     await expect(tabs.nth(0)).toBeFocused();
     await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn, Icon, IconButton, LogoSymbol } from "@linkyo/ui";
-import { ArrowUpRight, Laugh, Music, Pause, Play, Trophy, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Disc3, Mic, Pause, Play, Shirt, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
@@ -9,7 +9,7 @@ import { useId, useRef, useState, useSyncExternalStore, type CSSProperties, type
 import { phoneSizes } from "./assets";
 import { EXAMPLE_SHOTS, type ExampleShot } from "./examples";
 
-export type DeckKind = "comedy" | "music" | "sport";
+export type DeckKind = "fashion" | "dj" | "music";
 
 export interface DeckPage {
   slug: ExampleShot;
@@ -20,7 +20,7 @@ export interface DeckPage {
   stat: string;
 }
 
-const KIND_ICONS: Record<DeckKind, LucideIcon> = { comedy: Laugh, music: Music, sport: Trophy };
+const KIND_ICONS: Record<DeckKind, LucideIcon> = { fashion: Shirt, dj: Disc3, music: Mic };
 const SLOTS = ["front", "next", "prev"] as const;
 
 const reducedQuery = "(prefers-reduced-motion: reduce)";
