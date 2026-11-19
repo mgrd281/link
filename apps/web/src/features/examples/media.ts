@@ -129,6 +129,21 @@ import ex6NicoHale from "@/assets/examples/ex6-nico-hale.jpg";
 import ex6SalmaRahhal from "@/assets/examples/ex6-salma-rahhal.jpg";
 import ex6TennisBalls from "@/assets/examples/ex6-tennis-balls.jpg";
 import ex6TomasReyes from "@/assets/examples/ex6-tomas-reyes.jpg";
+import ex7BookLowTide from "@/assets/examples/ex7-book-low-tide.jpg";
+import ex7BookSaltYears from "@/assets/examples/ex7-book-salt-years.jpg";
+import ex7BookSpark from "@/assets/examples/ex7-book-spark.jpg";
+import ex7Bookshop from "@/assets/examples/ex7-bookshop.jpg";
+import ex7CoverYazan from "@/assets/examples/ex7-cover-yazan.jpg";
+import ex7KaiMoreno from "@/assets/examples/ex7-kai-moreno.jpg";
+import ex7Keyboard from "@/assets/examples/ex7-keyboard.jpg";
+import ex7MoritzAlbrecht from "@/assets/examples/ex7-moritz-albrecht.jpg";
+import ex7NoahSarkis from "@/assets/examples/ex7-noah-sarkis.jpg";
+import ex7NoelAmadi from "@/assets/examples/ex7-noel-amadi.jpg";
+import ex7Sunglasses from "@/assets/examples/ex7-sunglasses.jpg";
+import ex7TheoBaptiste from "@/assets/examples/ex7-theo-baptiste.jpg";
+import ex7Watch from "@/assets/examples/ex7-watch.jpg";
+import ex7YazanKhoury from "@/assets/examples/ex7-yazan-khoury.jpg";
+import ex7YazanSession from "@/assets/examples/ex7-yazan-session.jpg";
 
 /** Pictures of the example gallery (stock photos, see assets/examples/CREDITS.md; logos are original). */
 export const exampleMedia = {
@@ -261,4 +276,19 @@ export const exampleMedia = {
   "sample:ex6-salma-rahhal": ex6SalmaRahhal,
   "sample:ex6-tennis-balls": ex6TennisBalls,
   "sample:ex6-tomas-reyes": ex6TomasReyes,
+  "sample:ex7-book-low-tide": ex7BookLowTide,
+  "sample:ex7-book-salt-years": ex7BookSaltYears,
+  "sample:ex7-book-spark": ex7BookSpark,
+  "sample:ex7-bookshop": ex7Bookshop,
+  "sample:ex7-cover-yazan": ex7CoverYazan,
+  "sample:ex7-kai-moreno": ex7KaiMoreno,
+  "sample:ex7-keyboard": ex7Keyboard,
+  "sample:ex7-moritz-albrecht": ex7MoritzAlbrecht,
+  "sample:ex7-noah-sarkis": ex7NoahSarkis,
+  "sample:ex7-noel-amadi": ex7NoelAmadi,
+  "sample:ex7-sunglasses": ex7Sunglasses,
+  "sample:ex7-theo-baptiste": ex7TheoBaptiste,
+  "sample:ex7-watch": ex7Watch,
+  "sample:ex7-yazan-khoury": ex7YazanKhoury,
+  "sample:ex7-yazan-session": ex7YazanSession,
 } satisfies Record<string, StaticImageData>;

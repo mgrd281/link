@@ -5,7 +5,7 @@ used under the Unsplash License (free to use, attribution appreciated); each lic
 photo's own page. Moving pictures (ex4-motion-*: the poster here, the looping clip in public/media/motion)
 are Mixkit clips under the Mixkit Stock Video Free License (checked on each clip page; cut, cropped and
 re-encoded for Linkyo). The logos (ex-logo-*.png) are original artwork made for Linkyo. The release
-covers (ex5-cover-*, ex5-album-banner, ex6-cover-*) are original Linkyo designs set on Unsplash photos, with typefaces
+covers (ex5-cover-*, ex5-album-banner, ex6-cover-*, ex7-cover-*) and book covers (ex7-book-*) are original Linkyo designs set on Unsplash photos, with typefaces
 under the SIL Open Font License. People in the photos and clips are models or anonymous; they have no
 connection to the fictional names and are not endorsing Linkyo.
 
@@ -135,6 +135,21 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex6-salma-rahhal.jpg | Jimmy Fermin (cropped) | https://unsplash.com/photos/woman-staring-directly-at-camera-near-pink-wall-bqe0J0b26RQ | Unsplash License |
 | ex6-tennis-balls.jpg | Ahmed (@mutecevvil) (cropped) | https://unsplash.com/photos/several-tennis-balls-on-a-blue-tennis-court-8iZbdNevfhY | Unsplash License |
 | ex6-tomas-reyes.jpg | Warren (cropped) | https://unsplash.com/photos/smiling-man-standing-near-green-trees-VVEwJJRRHgk | Unsplash License |
+| ex7-book-low-tide.jpg | Linkyo cover design on a photo by Sue Winston | https://unsplash.com/photos/886sl0Z9Qmc | Unsplash License; type: Gloock, Work Sans, DM Mono (OFL) |
+| ex7-book-salt-years.jpg | Linkyo cover design on a photo by Zetong Li | https://unsplash.com/photos/an-aerial-view-of-a-red-and-white-landscape-MidHkipS5uU | Unsplash License; type: Instrument Serif, Work Sans (OFL) |
+| ex7-book-spark.jpg | Linkyo cover design on a photo by Nowbelov | https://unsplash.com/photos/a-single-red-chili-pepper-on-a-black-background-_qsuF10PuSU | Unsplash License; type: Anton, Work Sans (OFL) |
+| ex7-bookshop.jpg | Rudy Issa (cropped) | https://unsplash.com/photos/books-on-brown-wooden-shelf-jedKD4yaTvk | Unsplash License |
+| ex7-cover-yazan.jpg | Linkyo cover design on a photo by Sonny Mauricio | https://unsplash.com/photos/man-in-black-button-up-shirt-holding-microphone-kREj1lNROtA | Unsplash License; type: IBM Plex Sans Arabic (OFL) |
+| ex7-kai-moreno.jpg | Agon Mustafa (cropped) | https://unsplash.com/photos/man-in-black-crew-neck-shirt-aKo64P57B54 | Unsplash License |
+| ex7-keyboard.jpg | Bruce (cropped) | https://unsplash.com/photos/a-mechanical-keyboard-with-white-teal-and-coral-keycaps-2BmIqyTdW-I | Unsplash License |
+| ex7-moritz-albrecht.jpg | Gruescu Ovidiu (cropped) | https://unsplash.com/photos/a-man-in-a-suit-standing-with-his-arms-crossed-hlU9Pg588ig | Unsplash License |
+| ex7-noah-sarkis.jpg | muhamad kamaran (cropped) | https://unsplash.com/photos/young-man-with-glasses-and-curly-hair-vDnEgKl25lQ | Unsplash License |
+| ex7-noel-amadi.jpg | Venrick Azcueta (cropped) | https://unsplash.com/photos/a-man-with-dreadlocks-standing-in-front-of-a-building-PzrUNCZzp_k | Unsplash License |
+| ex7-sunglasses.jpg | Sebastian Coman Travel (cropped) | https://unsplash.com/photos/white-framed-brown-lens-sunglasses-dtOTQYmTEs0 | Unsplash License |
+| ex7-theo-baptiste.jpg | Venti Views (cropped) | https://unsplash.com/photos/a-man-in-a-chefs-uniform-is-sprinkled-with-flour-XHGTrx2clAs | Unsplash License |
+| ex7-watch.jpg | Rick Muigo (cropped, the brand name on the dial removed) | https://unsplash.com/photos/round-gray-analog-watch-with-brown-band-SX9IouL_qOg | Unsplash License |
+| ex7-yazan-khoury.jpg | Sonny Mauricio (cropped) | https://unsplash.com/photos/man-in-black-blazer-holding-red-flower-vs4jZRV91XM | Unsplash License |
+| ex7-yazan-session.jpg | Sonny Mauricio (cropped) | https://unsplash.com/photos/man-in-black-blazer-holding-microphone-Zmq2rQs0Kww | Unsplash License |
 | ex-logo-*.png | Linkyo (original artwork) | — | © Linkyo |
 
 Unsplash License: https://unsplash.com/license

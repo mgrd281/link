@@ -33,6 +33,13 @@ export const LOOKS = {
   "elias-navarro": { kind: "coach", category: "sport", locale: "en", theme: { template: "daylight", accent: SW.tangerine, neutral: SW.apricot, tint: 0.8, pairing: "bold", buttonStyle: "filled", buttonShape: "pill" } },
   "layal-mansour": { kind: "music", category: "music", locale: "ar", theme: { template: "daylight", accent: SW.cyan, mode: "vivid", buttonShape: "pill" } },
   "tomas-reyes": { kind: "youtube", category: "creators", locale: "de", theme: { template: "nocturne", accent: SW.apricot, neutral: SW.tangerine, tint: 0.6, pairing: "modern", buttonShape: "pill" } },
+  // Spotlight, second set: young men, each look taken from the colours of the portrait.
+  "yazan-khoury": { kind: "music", category: "music", locale: "ar", theme: { template: "nocturne", accent: SW.rose, neutral: SW.wine, tint: 1, buttonStyle: "filled", buttonShape: "pill" } },
+  "kai-moreno": { kind: "youtube", category: "creators", locale: "en", theme: { template: "nocturne", accent: SW.amethyst, mode: "vivid", pairing: "modern", buttonShape: "rounded" } },
+  "moritz-albrecht": { kind: "lawyer", category: "careers", locale: "de", theme: { template: "nocturne", accent: SW.sky, neutral: SW["ink-blue"], tint: 1, pairing: "elegant", buttonStyle: "filled", buttonShape: "rounded" } },
+  "noah-sarkis": { kind: "writer", category: "creators", locale: "en", theme: { template: "atelier", accent: SW.honey, neutral: SW.sage, tint: 0.5, mode: "dark", pairing: "editorial" } },
+  "theo-baptiste": { kind: "tiktok", category: "creators", locale: "en", theme: { template: "nocturne", accent: SW.flame, pairing: "stage", buttonStyle: "filled", buttonShape: "pill" } },
+  "noel-amadi": { kind: "affiliate", category: "online", locale: "de", theme: { template: "nocturne", accent: SW.marigold, neutral: SW.pine, tint: 0.7, pairing: "modern", buttonShape: "pill" } },
   // Sport
   "rafael-duarte": { kind: "other", category: "sport", locale: "en", theme: { template: "pulse", accent: SW.pitch, pairing: "bold", buttonShape: "square" } },
   "lena-vogt": { kind: "other", category: "sport", locale: "de", theme: { template: "daylight", accent: SW.flame, pairing: "modern", buttonStyle: "filled", buttonShape: "pill" } },
