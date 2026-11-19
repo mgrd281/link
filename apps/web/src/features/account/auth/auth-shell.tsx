@@ -51,14 +51,14 @@ export function AuthShell({ children }: { children: ReactNode }) {
   );
 }
 
-/** Title + lead of an auth step. */
+/** Title + lead of an auth step: one short line each, like "Sign up for free" / "Ready to be linkyo?". */
 export function AuthHeading({ title, lead }: { title: string; lead: string }) {
   return (
-    <div className="grid grid-cols-1 gap-3">
-      <h1 id="auth-title" tabIndex={-1} className="text-display tracking-display text-balance outline-none">
+    <div className="grid grid-cols-1 gap-1">
+      <h1 id="auth-title" tabIndex={-1} className="text-h2 tracking-tight text-balance outline-none">
         {title}
       </h1>
-      <p id="auth-lead" className="text-body-lg text-pretty text-fg-secondary">
+      <p id="auth-lead" className="text-body text-pretty text-fg-secondary">
         {lead}
       </p>
     </div>

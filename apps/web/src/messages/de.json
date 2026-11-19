@@ -883,8 +883,8 @@
       "codeExpired": "Dieser Code ist abgelaufen. Fordere unten einen neuen an."
     },
     "signup": {
-      "title": "Erstelle deine kostenlose Seite",
-      "lead": "Wähle deine Adresse und gib deine E-Mail ein. Ganz ohne Passwort.",
+      "title": "Kostenlos registrieren",
+      "lead": "Bereit, linkyo zu sein?",
       "submit": "Weiter",
       "terms": "Mit dem Erstellen akzeptierst du die Nutzungsbedingungen und bestätigst die Datenschutzerklärung.",
       "haveAccount": "Schon ein Konto?",
