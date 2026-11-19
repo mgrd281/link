@@ -40,3 +40,6 @@ apps/ios/.build/
 apps/ios/**/xcuserdata/
 apps/ios/Packages/**/.build/
 apps/ios/Packages/**/.swiftpm/
+
+# Agent worktrees (local only)
+.claude/worktrees/
