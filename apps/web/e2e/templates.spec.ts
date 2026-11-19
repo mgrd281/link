@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import { enterDemoCode } from "./auth";
+
 /** The template gallery (/templates) and its example pages. */
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -101,8 +103,8 @@ test.describe("template gallery", () => {
     const name = `bake-${Date.now().toString(36)}`;
     await page.locator("#signup-username").fill(name);
     await page.locator("#signup-email").fill(`${name}@example.com`);
-    await page.locator("#signup-password").fill("night-shift-42");
     await page.locator("form button[type=submit]").click();
+    await enterDemoCode(page);
     await page.waitForURL("**/en/app/welcome");
     await expect(page.getByRole("radio", { name: /^Local shop/ })).toBeChecked();
   });

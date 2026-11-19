@@ -834,120 +834,84 @@
   },
   "auth": {
     "meta": {
-      "signup": "Konto erstellen",
-      "login": "Anmelden",
-      "forgot": "Passwort zurücksetzen",
-      "reset": "Neues Passwort · Linkyo"
+      "signup": "Seite erstellen",
+      "login": "Anmelden"
     },
     "skip": "Zum Inhalt springen",
     "home": "Linkyo – Startseite",
     "demo": {
       "title": "Demo:",
-      "body": "Konto und Seite werden nur in diesem Browser gespeichert und nirgendwohin gesendet. Echte Konten kommen mit dem Start."
+      "body": "Dein Konto und deine Seite bleiben in diesem Browser und werden nirgendwohin gesendet. Es wird keine E-Mail verschickt: Dein Code steht hier auf dem Bildschirm."
     },
     "side": {
-      "label": "Was dich erwartet",
-      "title": "Deine Seite steht in zwei Minuten.",
-      "points": [
-        "Kostenlos, ohne Kreditkarte",
-        "Keine Cookies, kein Tracking auf deiner Seite",
-        "Daten in der EU, DSGVO-konform"
-      ]
+      "label": "Seiten, gemacht mit Linkyo",
+      "pause": "Bewegte Seiten anhalten",
+      "play": "Bewegte Seiten abspielen"
     },
     "social": {
       "google": "Weiter mit Google",
       "apple": "Weiter mit Apple",
       "soon": "Zum Start",
-      "or": "oder mit E-Mail"
+      "or": "oder"
     },
     "fields": {
       "username": "Deine Adresse",
       "usernameHint": "Kleinbuchstaben, Zahlen und Bindestriche, 3–30 Zeichen.",
       "usernameOk": "linkyo.app/{name} ist frei",
       "email": "E-Mail",
-      "password": "Passwort",
-      "newPassword": "Neues Passwort",
-      "show": "Passwort anzeigen",
-      "hide": "Passwort verbergen",
-      "usernameReserved": "linkyo.app/{name} ist für dich reserviert"
-    },
-    "checks": {
-      "length": "Mindestens 8 Zeichen",
-      "mixed": "Buchstaben und eine Zahl oder ein Zeichen",
-      "personal": "Nicht dein Name oder deine E-Mail",
-      "met": "(erfüllt)",
-      "open": "(noch offen)"
+      "usernameReserved": "linkyo.app/{name} ist für dich reserviert",
+      "code": "Anmeldecode"
     },
     "errors": {
-      "required": "Bitte E-Mail und Passwort eingeben.",
+      "required": "Bitte gib deine E-Mail ein.",
       "invalidEmail": "Diese E-Mail-Adresse sieht unvollständig aus, z. B. name@beispiel.de.",
-      "weakPassword": "Wähle ein Passwort, das alle drei Punkte erfüllt.",
       "invalidUsername": "Nur Kleinbuchstaben, Zahlen und Bindestriche, 3–30 Zeichen.",
       "reservedUsername": "Diese Adresse ist für Linkyo reserviert. Probier eine andere.",
       "usernameTaken": "Diese Adresse ist schon vergeben. Probier eine Variante, z. B. mit Bindestrich.",
       "emailTaken": "Mit dieser E-Mail gibt es schon ein Konto.",
-      "invalidCredentials": "E-Mail oder Passwort stimmt nicht. Prüf die Schreibweise oder setz das Passwort zurück.",
-      "wrongPassword": "Das aktuelle Passwort stimmt nicht.",
-      "notFound": "In diesem Browser gibt es kein Konto mit dieser E-Mail.",
+      "notFound": "Mit dieser E-Mail gibt es noch kein Konto.",
       "storageFull": "Der Demo-Speicher dieses Browsers ist voll. Entferne große Bilder und versuch es noch einmal.",
       "unavailable": "Dieser Browser erlaubt keinen Speicher (privates Fenster?). Öffne Linkyo in einem normalen Fenster.",
       "inviteMismatch": "Diese Seite wurde für eine andere E-Mail vorbereitet. Nutze die E-Mail, die du dem Linkyo-Team gegeben hast.",
       "reservedForCreator": "Diese Adresse ist für einen Creator reserviert. Ist es deine? Registriere dich mit der E-Mail, die du uns gegeben hast.",
-      "emailNotConfirmed": "Bitte bestätige zuerst deine E-Mail. Den Link haben wir dir bei der Registrierung geschickt.",
       "suspended": "Dieses Konto ist vorübergehend gesperrt. Bitte wende dich an den Linkyo-Support.",
-      "tooManyAttempts": "Zu viele Versuche in kurzer Zeit. Warte ein paar Minuten und versuch es dann noch einmal.",
+      "tooManyAttempts": "Zu viele Versuche in kurzer Zeit. Warte ein paar Minuten und versuche es dann erneut.",
       "blocked": "Von dieser Verbindung aus ist gerade keine Anmeldung möglich. Versuch es über ein anderes Netz oder wende dich an den Support.",
       "serverError": "Gerade klappt die Verbindung zu Linkyo nicht. Versuch es in einem Moment noch einmal.",
-      "linkExpired": "Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere einfach einen neuen an."
+      "linkExpired": "Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere einfach einen neuen Code an.",
+      "invalidCode": "Dieser Code passt nicht. Prüfe die Ziffern oder fordere einen neuen Code an.",
+      "codeExpired": "Dieser Code ist abgelaufen. Fordere unten einen neuen an."
     },
     "signup": {
-      "title": "Hol dir deine Seite",
-      "lead": "Kostenlos. In zwei Minuten online.",
-      "submit": "Seite erstellen",
+      "title": "Erstelle deine kostenlose Seite",
+      "lead": "Wähle deine Adresse und gib deine E-Mail ein. Ganz ohne Passwort.",
+      "submit": "Weiter",
       "terms": "Mit dem Erstellen akzeptierst du die Nutzungsbedingungen und bestätigst die Datenschutzerklärung.",
       "haveAccount": "Schon ein Konto?",
       "login": "Anmelden",
-      "loginInstead": "Stattdessen anmelden",
       "preparedTitle": "Deine Seite ist fertig",
       "preparedLead": "Das Linkyo-Team hat sie für dich vorbereitet. Registriere dich mit der E-Mail, die du uns gegeben hast – dann ist alles sofort da.",
       "preparedGoogle": "Zum Start geht das auch mit Google: gleiche E-Mail, gleiche Seite."
     },
     "login": {
       "title": "Willkommen zurück",
-      "lead": "Melde dich an, um deine Seite zu bearbeiten.",
-      "submit": "Anmelden",
-      "forgot": "Passwort vergessen?",
+      "lead": "Gib deine E-Mail ein, wir schicken dir einen 6-stelligen Code. Ganz ohne Passwort.",
+      "submit": "Code senden",
       "noAccount": "Neu bei Linkyo?",
       "signup": "Seite erstellen"
     },
-    "forgot": {
-      "title": "Passwort zurücksetzen",
-      "lead": "Gib deine E-Mail ein und wähle ein neues Passwort.",
-      "demoNote": "In der Demo werden keine E-Mails verschickt. Du setzt dein neues Passwort deshalb direkt hier. Später bekommst du einen Link per E-Mail.",
-      "submit": "Neues Passwort speichern",
-      "doneTitle": "Passwort geändert",
-      "done": "Du kannst dich jetzt mit dem neuen Passwort anmelden.",
-      "toLogin": "Zur Anmeldung",
-      "back": "Zurück zur Anmeldung",
-      "emailLead": "Gib die E-Mail deines Kontos ein. Wir schicken dir einen Link, mit dem du ein neues Passwort wählst.",
-      "emailSubmit": "Link senden",
-      "sentTitle": "Schau in dein Postfach",
-      "sentLead": "Wenn es zu {email} ein Konto gibt, ist der Link unterwegs. Er gilt eine Stunde."
-    },
-    "confirm": {
-      "title": "Fast geschafft: Bestätige deine E-Mail",
-      "lead": "Wir haben einen Link an {email} geschickt. Öffne ihn, um dein Konto zu aktivieren. Danach geht es direkt mit deiner Seite weiter.",
-      "spam": "Nichts angekommen? Schau im Spam-Ordner nach oder prüf die Schreibweise von {email}.",
-      "toLogin": "Zur Anmeldung"
-    },
-    "reset": {
-      "title": "Neues Passwort wählen",
-      "lead": "Wähle ein neues Passwort für dein Konto.",
-      "submit": "Passwort speichern",
-      "doneTitle": "Passwort geändert",
-      "done": "Du bist angemeldet und kannst direkt weitermachen.",
-      "toApp": "Zum Dashboard",
-      "noSession": "Öffne zuerst den Link aus der E-Mail. Er meldet dich an, damit du ein neues Passwort wählen kannst."
+    "code": {
+      "title": "Gib deinen Code ein",
+      "lead": "Wir haben einen 6-stelligen Code an {email} geschickt. Gib ihn unten ein oder tippe auf den Link in der E-Mail.",
+      "leadLogin": "Wenn es für {email} ein Linkyo-Konto gibt, ist ein 6-stelliger Code unterwegs. Gib ihn unten ein oder tippe auf den Link in der E-Mail.",
+      "submit": "Weiter",
+      "submitLogin": "Anmelden",
+      "change": "Andere E-Mail verwenden",
+      "resend": "Neuen Code senden",
+      "resendIn": "Neuer Code in {seconds} s",
+      "resent": "Ein neuer Code ist unterwegs. Nur der neueste gilt.",
+      "spam": "Nichts angekommen? Schau in deinen Spam-Ordner.",
+      "demo": "Demo: Es wird keine E-Mail verschickt. Dein Code ist <strong>{code}</strong>."
     }
   },
   "app": {
@@ -1466,10 +1430,6 @@
       "account": "Login",
       "emailSave": "E-Mail ändern",
       "emailChanged": "E-Mail geändert",
-      "password": "Passwort",
-      "currentPassword": "Aktuelles Passwort",
-      "passwordSave": "Passwort ändern",
-      "passwordChanged": "Passwort geändert",
       "legal": "Impressum",
       "legalHint": "In Deutschland brauchen Seiten mit geschäftlichem Zweck ein Impressum (§ 5 DDG). Es wird unten auf deiner Seite als „Impressum“ verlinkt.",
       "legalName": "Vollständiger Name oder Firma",
@@ -1508,7 +1468,8 @@
       "thisDevice": "Dieses Gerät",
       "failedSignIn": "Falsches Passwort",
       "unknownPlace": "Ort unbekannt",
-      "emailConfirm": "Bestätige die neue Adresse über den Link, den wir an {email} geschickt haben."
+      "emailConfirm": "Bestätige die neue Adresse über den Link, den wir an {email} geschickt haben.",
+      "signInByCode": "Du meldest dich jedes Mal mit einem Code an, den wir dir per E-Mail schicken. Es gibt also kein Passwort, das du dir merken musst oder das verloren gehen kann."
     },
     "welcome": {
       "skip": "Später",
@@ -1822,6 +1783,21 @@
         "newsletter": "Newsletter abonnieren",
         "liveTitle": "Live auf TikTok",
         "cv": "Mein Lebenslauf"
+      },
+      "import": {
+        "title": "Du kommst von Linktree, Beacons & Co.?",
+        "lead": "Füge deine bisherige Seite ein. Wir übernehmen deine Profile und Links, du prüfst sie unten.",
+        "label": "Adresse deiner bisherigen Link-Seite",
+        "placeholder": "linktr.ee/deinname",
+        "button": "Übernehmen",
+        "hint": "Klappt mit Linktree, Beacons, bio.link, lnk.bio, Carrd und ähnlichen Seiten.",
+        "done": "{profiles, plural, =0 {Keine Profile} one {# Profil} other {# Profile}} und {links, plural, =0 {keine Links} one {# Link} other {# Links}} übernommen. Prüfe sie unten.",
+        "errors": {
+          "unsupported": "Füge die Adresse einer Linktree-, Beacons-, bio.link-, lnk.bio- oder Carrd-Seite ein, z. B. linktr.ee/deinname.",
+          "notFound": "Diese Seite haben wir nicht gefunden. Prüfe die Adresse.",
+          "empty": "Auf dieser Seite gibt es keine öffentlichen Links, die wir lesen können. Füge deine Links unten ein.",
+          "failed": "Wir können diese Seite gerade nicht lesen. Füge deine Links unten ein."
+        }
       }
     },
     "ownPage": {

@@ -1,57 +1,82 @@
 "use client";
 
-import { Button, TextField } from "@linkyo/ui";
-import { AtSign } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState, type SubmitEvent } from "react";
+import { Button, Icon, TextField } from "@linkyo/ui";
+import { ArrowRight, AtSign } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useState, type SubmitEvent } from "react";
+import { z } from "zod";
 
 import { Link } from "@/i18n/navigation";
 
 import { accountStore } from "../store";
-import type { AuthError } from "../types";
+import type { AuthError, CodeRequest } from "../types";
 import { AuthHeading } from "./auth-shell";
-import { FormError, OrDivider, PasswordField } from "./fields";
+import { CodeStep } from "./code-step";
+import { FormError, OrDivider } from "./fields";
 import { SocialButtons, useLeaveWhenSignedIn, useSearchParam } from "./shared";
 
+const locales = ["de", "en", "ar"] as const;
+
+/** Sign in without a password: the email, then the 6-digit code we send to it. */
 export function LoginForm() {
   const t = useTranslations("auth");
+  const locale = useLocale();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<AuthError | "required" | null>(null);
+  const [error, setError] = useState<AuthError | null>(null);
   const [busy, setBusy] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  const errorRef = useRef<HTMLDivElement>(null);
-  // After a failed attempt the message is focused once it is on screen, so it is read out.
-  useEffect(() => {
-    if (attempt > 0) errorRef.current?.querySelector<HTMLElement>("[role=alert]")?.focus();
-  }, [attempt]);
+  const [request, setRequest] = useState<CodeRequest | null>(null);
+  const [demoCode, setDemoCode] = useState<string | undefined>(undefined);
   const leaving = useLeaveWhenSignedIn();
   // Back from an email link that no longer works (expired or used): say so until the next try.
   const linkExpired = useSearchParam("link") === "expired";
 
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!email.trim() || !password) {
-      setError("required");
-      document.getElementById(email.trim() ? "login-password" : "login-email")?.focus();
+    if (!z.email().safeParse(email.trim()).success) {
+      setError("invalidEmail");
+      document.getElementById("login-email")?.focus();
       return;
     }
     setBusy(true);
-    const result = await accountStore.logIn({ email, password });
+    setError(null);
+    const codeRequest: CodeRequest = { email: email.trim(), locale: locales.find((code) => code === locale) ?? "de" };
+    const result = await accountStore.requestCode(codeRequest);
     setBusy(false);
-    if (result.ok) return;
-    setError(result.error);
-    setPassword("");
-    setAttempt((count) => count + 1);
+    if (result.ok) {
+      setDemoCode(result.demoCode);
+      setRequest(codeRequest);
+    } else {
+      setError(result.error);
+      document.getElementById("login-email")?.focus();
+    }
   };
+
+  if (request) {
+    return (
+      <CodeStep
+        email={request.email}
+        intent="logIn"
+        demoCode={demoCode}
+        onVerify={(code) => accountStore.verifyCode({ ...request, code })}
+        onResend={async () => {
+          const result = await accountStore.requestCode(request);
+          if (result.ok) setDemoCode(result.demoCode);
+          return result;
+        }}
+        onChangeEmail={() => {
+          setRequest(null);
+          setDemoCode(undefined);
+          window.setTimeout(() => document.getElementById("login-email")?.focus(), 0);
+        }}
+      />
+    );
+  }
 
   return (
     <>
       <AuthHeading title={t("login.title")} lead={t("login.lead")} />
       <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-5">
-        <div ref={errorRef}>
-          <FormError message={error ? t(`errors.${error}`) : linkExpired ? t("errors.linkExpired") : null} />
-        </div>
+        <FormError message={error && error !== "invalidEmail" ? t(`errors.${error}`) : linkExpired ? t("errors.linkExpired") : null} />
         <TextField
           id="login-email"
           label={t("fields.email")}
@@ -60,26 +85,16 @@ export function LoginForm() {
           type="email"
           icon={AtSign}
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            if (error === "invalidEmail") setError(null);
+          }}
           autoComplete="email"
           inputMode="email"
           required
+          error={error === "invalidEmail" ? t("errors.invalidEmail") : undefined}
         />
-        <div className="grid grid-cols-1 gap-2">
-          <PasswordField
-            id="login-password"
-            label={t("fields.password")}
-            size="lg"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-            required
-          />
-          <Link href="/forgot" className="justify-self-end rounded-xs text-small font-medium text-link underline-offset-4 hover:underline focus-visible:focus-ring">
-            {t("login.forgot")}
-          </Link>
-        </div>
-        <Button type="submit" variant="primary" size="xl" block loading={busy || leaving}>
+        <Button type="submit" variant="primary" size="xl" block loading={busy || leaving} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
           {t("login.submit")}
         </Button>
       </form>

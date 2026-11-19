@@ -46,12 +46,16 @@ In Authentication → URL Configuration, or with `PATCH /v1/projects/<ref>/confi
 - **Site URL:** the production address (today `https://link-web-one.vercel.app`, later
   `https://linkyo.app`).
 - **Redirect URLs:** `https://link-web-one.vercel.app/**` (and `https://linkyo.app/**` later).
-- **Email:**
-  - confirm email on;
+- **Email (sign-in is a 6-digit code, no passwords, ADR 0035):**
+  - email provider on, confirm email on;
   - secure email change on;
-  - minimum password length 8.
-- **Templates:** the three files in `supabase/templates/` (confirmation, recovery, email change),
-  with the subjects from `supabase/config.toml`.
+  - email OTP length 6, OTP expiry 600 seconds (10 minutes);
+  - minimum interval between emails per user: 30 seconds (the app offers a new code after 30 s).
+- **Templates:** the three files in `supabase/templates/`, with the subjects from
+  `supabase/config.toml`:
+  - Confirm signup: `confirmation.html` (new accounts: the code and a one-click link);
+  - Magic Link: `magic_link.html` (returning accounts: the same);
+  - Change Email Address: `email_change.html`.
 - **SMTP:** the built-in mailer only sends a few test emails per hour. Before real sign-ups,
   set up custom SMTP (Scaleway TEM, docs/SETUP_ACCOUNTS.md row 5).
 

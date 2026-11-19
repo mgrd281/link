@@ -408,6 +408,15 @@
   }
 }
 
+/* Sign-up and sign-in: the wall of example pages leans back; its columns drift (mk-marquee-y). */
+@utility mk-wall {
+  rotate: -10deg;
+
+  &:is([dir="rtl"] *) {
+    rotate: 10deg;
+  }
+}
+
 /* The middle column drifts the other way, a little slower: the wall never moves as one block. */
 @utility mk-marquee-reverse {
   animation-direction: reverse;

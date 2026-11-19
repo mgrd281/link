@@ -1,12 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
+import { enterDemoCode } from "./auth";
+
 /**
  * Accounts + dashboard, end to end (demo mode: everything lives in this browser's storage).
  * Runs on desktop and on a phone. Each test starts with an empty browser.
  */
 
-const PASSWORD = "night-shift-42";
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 let counter = 0;
@@ -18,8 +19,8 @@ async function signUp(page: Page, locale = "en") {
   await page.waitForLoadState("networkidle");
   await expect(page.locator("#signup-username")).toHaveValue(name);
   await page.locator("#signup-email").fill(`${name}@example.com`);
-  await page.locator("#signup-password").fill(PASSWORD);
   await page.locator("form button[type=submit]").click();
+  await enterDemoCode(page);
   await page.waitForURL(`**/${locale}/app/welcome`);
   return { name, email: `${name}@example.com` };
 }
@@ -56,11 +57,38 @@ test.describe("accounts", () => {
     await expect(page.getByText("This address is reserved for Linkyo.")).toBeVisible();
     await page.locator("#signup-username").fill("mila-ok");
     await page.locator("#signup-email").fill("not-an-email");
-    await page.locator("#signup-password").fill("short");
     await page.locator("form button[type=submit]").click();
     await expect(page.locator("#signup-email")).toBeFocused();
     await expect(page.getByText("This email address looks incomplete")).toBeVisible();
-    await expect(page.getByText("Choose a password that meets all three points.")).toBeVisible();
+    // No password anywhere: the next step is a code by email.
+    await expect(page.getByLabel(/password/i)).toHaveCount(0);
+  });
+
+  test("the code step: six boxes, wrong code explained, other email, new code after a wait", async ({ page }) => {
+    const name = `code-${unique()}`;
+    await page.goto(`/en/signup?name=${name}`);
+    await page.waitForLoadState("networkidle");
+    await page.locator("#signup-email").fill(`${name}@example.com`);
+    await page.locator("form button[type=submit]").click();
+    await expect(page.getByRole("heading", { name: "Enter your code" })).toBeVisible();
+    await expect(page.getByText(`We sent a 6-digit code to ${name}@example.com.`)).toBeVisible();
+    const field = page.getByLabel("Sign-in code");
+    await expect(field).toBeFocused();
+    expect(await axe(page)).toEqual([]);
+    const shown = (await page.locator("[id$='-demo'] strong").textContent()) ?? "";
+    const wrong = shown === "000000" ? "111111" : "000000";
+    // Six digits submit by themselves; letters are ignored.
+    await field.pressSequentially(`${wrong.slice(0, 3)}a${wrong.slice(3)}`);
+    await expect(page.getByText("This code doesn't match.")).toBeVisible();
+    await expect(field).toHaveValue("");
+    await expect(page.getByRole("button", { name: /New code in \d+ s/ })).toBeDisabled();
+    // A different email goes back to the first step, with what was typed kept.
+    await page.getByRole("button", { name: "Use a different email" }).click();
+    await expect(page.locator("#signup-username")).toHaveValue(name);
+    await expect(page.locator("#signup-email")).toBeFocused();
+    await page.locator("form button[type=submit]").click();
+    await enterDemoCode(page);
+    await page.waitForURL("**/en/app/welcome");
   });
 
   test("sign up → welcome → dashboard, then log out and back in", async ({ page }) => {
@@ -102,16 +130,30 @@ test.describe("accounts", () => {
     await page.waitForURL("**/en/login?next=%2Fapp%2Fdesign");
     await page.waitForLoadState("networkidle");
 
-    // Wrong password: one calm message, focus moves to it.
+    // Signing back in: the email, then the code.
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password", { exact: true }).fill("wrong-pass-1");
-    await page.getByRole("button", { name: "Log in", exact: true }).click();
-    await expect(page.getByText("Email or password doesn't match")).toBeFocused();
-    await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
-    await page.getByRole("button", { name: "Log in", exact: true }).click();
+    await page.getByRole("button", { name: "Send code", exact: true }).click();
+    await expect(page.getByText(`If there's a Linkyo account for ${email}`)).toBeVisible();
+    await enterDemoCode(page);
     // Back where they wanted to go.
     await page.waitForURL("**/en/app/design");
     await expect(page.getByRole("heading", { name: "Design", level: 1 })).toBeVisible();
+  });
+
+  test("the links step offers to bring links over from another link page", async ({ page }) => {
+    await signUp(page);
+    await page.getByText("Music", { exact: true }).click();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByLabel("Your artist name").fill("Mila Aurel");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Continue" }).click();
+    const box = page.getByRole("region", { name: "Coming from Linktree, Beacons & co.?" });
+    await expect(box).toBeVisible();
+    // Only link-in-bio services are read; anything else is explained (no request leaves for it).
+    await box.getByLabel("Address of your current link page").fill("example.com/mila");
+    await box.getByRole("button", { name: "Import" }).click();
+    await expect(box.getByText("Paste the address of a Linktree, Beacons")).toBeVisible();
+    expect(await axe(page)).toEqual([]);
   });
 
   test("a shop owner gets the shop template and is asked for address, phone and opening hours", async ({ page }) => {
@@ -135,26 +177,17 @@ test.describe("accounts", () => {
     await expect(page.getByText("Call", { exact: true }).first()).toBeVisible();
   });
 
-  test("forgot password sets a new one (demo) and it works", async ({ page }) => {
-    const { email } = await signedIn(page);
-    await page.goto("/en/app/settings");
-    await page.getByRole("button", { name: "Log out" }).last().click();
-    await page.waitForURL("**/en/login**");
-    await page.waitForLoadState("networkidle");
-    await page.getByRole("link", { name: "Forgot password?" }).click();
-    await page.waitForURL("**/en/forgot");
-    await page.waitForLoadState("networkidle");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("New password").fill("after-reset-77");
-    await page.getByRole("button", { name: "Save new password" }).click();
-    await expect(page.getByRole("heading", { name: "Password changed" })).toBeVisible();
-    await page.getByRole("link", { name: "Go to log in" }).click();
+  test("old password links lead to sign-in, and an unknown email gets the same answer", async ({ page }) => {
+    await page.goto("/en/forgot");
+    await page.waitForURL("**/en/login");
+    await page.goto("/en/reset-password");
     await page.waitForURL("**/en/login");
     await page.waitForLoadState("networkidle");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password", { exact: true }).fill("after-reset-77");
-    await page.getByRole("button", { name: "Log in", exact: true }).click();
-    await page.waitForURL("**/en/app");
+    await page.getByLabel("Email").fill("nobody-here@example.com");
+    await page.getByRole("button", { name: "Send code", exact: true }).click();
+    await expect(page.getByText("If there's a Linkyo account for nobody-here@example.com")).toBeVisible();
+    // No account, so the demo has no code to show.
+    await expect(page.locator("[id$='-demo']")).toHaveCount(0);
   });
 });
 
@@ -345,8 +378,8 @@ test.describe("private previews", () => {
     const name = `press-${unique()}`;
     await page.locator("#signup-username").fill(name);
     await page.locator("#signup-email").fill(`${name}@example.com`);
-    await page.locator("#signup-password").fill(PASSWORD);
     await page.locator("form button[type=submit]").click();
+    await enterDemoCode(page);
     await page.waitForURL("**/en/app/welcome");
     // The kind is already chosen; the next steps ask what a journalist needs.
     await expect(page.getByRole("radio", { name: /^Journalist/ })).toBeChecked();
@@ -452,8 +485,8 @@ test.describe("prepared pages for creators", () => {
     await expect(page.locator("#signup-username")).toHaveValue("nizarals9");
     await expect(page.locator("#signup-username")).toHaveAttribute("readonly", "");
     await page.locator("#signup-email").fill("nezaralsweid4@gmail.com");
-    await page.locator("#signup-password").fill(PASSWORD);
     await page.locator("form button[type=submit]").click();
+    await enterDemoCode(page);
     // No welcome steps: straight to Home, with the page already there.
     await page.waitForURL("**/de/app");
     await expect(page.getByRole("heading", { name: "Willkommen, Nizar Alkrizma! Deine Seite ist fertig." })).toBeVisible();
@@ -469,13 +502,11 @@ test.describe("prepared pages for creators", () => {
     await page.goto("/de/signup?name=nizarals9&invite=nizar");
     await page.waitForLoadState("networkidle");
     await page.locator("#signup-email").fill("someone.else@example.com");
-    await page.locator("#signup-password").fill(PASSWORD);
     await page.locator("form button[type=submit]").click();
     await expect(page.getByText("Diese Seite wurde für eine andere E-Mail vorbereitet.")).toBeVisible();
     await page.goto("/de/signup?name=nizarals9");
     await page.waitForLoadState("networkidle");
     await page.locator("#signup-email").fill("someone.else@example.com");
-    await page.locator("#signup-password").fill(PASSWORD);
     await page.locator("form button[type=submit]").click();
     await expect(page.getByText("Diese Adresse ist für einen Creator reserviert.")).toBeVisible();
   });

@@ -14,13 +14,23 @@ them the demo store runs. Both must keep working (ADR 0030).
 |---|---|
 | Schema, RLS, functions | `supabase/migrations/*.sql`: core (profiles, sites, history, public_page), security (sign_ins, blocked_ips, retention), team (roles, audit, billing, notes, `admin_*` functions) |
 | DB tests (pgTAP) | `supabase/tests/access.test.sql`, run as customer, visitor, server, owner and viewer |
-| Email templates | `supabase/templates/*.html` (de/en/ar by `.Data.locale`), wired in `supabase/config.toml` |
+| Email templates | `supabase/templates/{confirmation,magic_link,email_change}.html` (de/en/ar by `.Data.locale`; the first two carry the 6-digit `{{ .Token }}` and the one-click link), wired in `supabase/config.toml` |
 | Clients | `apps/web/src/lib/supabase/{config,browser,server,json}.ts`, `database.types.ts` (generated) |
-| Server routes | `app/api/auth/{sign-up,log-in,confirm}` + `features/account/server/auth.ts` |
+| Server routes | `app/api/auth/code` (sends the code; checks sign-ups), `app/api/auth/verify` (code → session, security log, first page), `app/api/auth/confirm` (the emailed link) + `features/account/server/{auth,first-site}.ts` |
 | Store | `features/account/supabase-store.ts` (same contract as `local-store.ts`) |
 | Console | `features/admin/{live,actions}.ts`; screens call `useConsoleActions()`, never `overrides` directly |
 | E2E (real) | `apps/web/e2e/supabase.spec.ts` (skipped unless `E2E_SUPABASE=1`) |
 | Founder setup | `docs/SUPABASE_SETUP.md` |
+
+## Sign-in is a code, never a password (ADR 0035)
+
+- `requestCode` → `/api/auth/code` → `signInWithOtp` (new accounts with `{ username, locale, invite, start }`
+  as metadata; the `handle_new_user` trigger checks the name). Same answer whether or not the
+  address has an account.
+- `verifyCode` → `/api/auth/verify` → `verifyOtp({ type: "email" })`, then `ensureFirstSite` (the
+  prepared page or a starter, from the metadata) and the security log.
+- The demo store mirrors this: the code comes back as `demoCode` and is shown on screen.
+- Real-account e2e reads codes from Mailpit (`clearMail` before asking, `mail()` to wait).
 
 ## Rules
 

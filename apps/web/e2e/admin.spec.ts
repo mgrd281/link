@@ -1,12 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
+import { enterDemoCode } from "./auth";
+
 /**
  * The Linkyo team area (/admin), end to end. Demo mode: accounts and team data live in this
  * browser; the team code is checked by the server. Runs on desktop and on a phone.
  */
 
-const PASSWORD = "night-shift-42";
 const TEAM_CODE = "linkyo-team-4827";
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
@@ -19,8 +20,8 @@ async function signUp(page: Page, locale = "en") {
   await page.waitForLoadState("networkidle");
   await expect(page.locator("#signup-username")).toHaveValue(name);
   await page.locator("#signup-email").fill(`${name}@example.com`);
-  await page.locator("#signup-password").fill(PASSWORD);
   await page.locator("form button[type=submit]").click();
+  await enterDemoCode(page);
   await page.waitForURL(`**/${locale}/app/welcome`);
   return { name, email: `${name}@example.com` };
 }

@@ -1,12 +1,11 @@
 "use client";
 
-import { Badge, Button, Icon, PlatformIcon } from "@linkyo/ui";
-import { MailCheck } from "lucide-react";
+import { Badge, PlatformIcon } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { siApple, siGoogle } from "simple-icons";
+import { siGoogle } from "simple-icons";
 
-import { Link, useRouter } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 
 import { accountStore, useAccount } from "../store";
 import type { UsernameStatus } from "../types";
@@ -43,17 +42,14 @@ export function useLeaveWhenSignedIn() {
 }
 
 /**
- * Google and Apple sign-in arrive with real accounts (Supabase Auth). Until then the buttons are
- * shown, clearly marked, so the final layout can be judged; they do nothing.
+ * Google sign-in arrives with real accounts (Supabase Auth). Until then the button is shown,
+ * clearly marked, so the final layout can be judged; it does nothing. (Apple follows with the app.)
  */
 export function SocialButtons() {
   const t = useTranslations("auth");
   return (
     <div className="grid grid-cols-1 gap-2">
-      {[
-        { key: "google", icon: siGoogle },
-        { key: "apple", icon: siApple },
-      ].map((provider) => (
+      {[{ key: "google", icon: siGoogle }].map((provider) => (
         <button
           key={provider.key}
           type="button"
@@ -97,24 +93,4 @@ export function useUsernameStatus(input: string, current?: string): UsernameStat
   if (skip) return null;
   if (local !== "ok") return local;
   return answer?.name === name ? answer.status : "checking";
-}
-
-/** After sign-up, a reset request or an email change with real accounts: the link is on its way. */
-export function CheckInbox({ email, title, lead }: { email: string; title: string; lead: string }) {
-  const t = useTranslations("auth");
-  return (
-    <div className="grid grid-cols-1 gap-6" role="status">
-      <span className="grid size-control-xl place-items-center rounded-full bg-success-subtle text-success-strong">
-        <Icon icon={MailCheck} size="lg" />
-      </span>
-      <div className="grid gap-2">
-        <h1 className="text-h2 tracking-tight text-balance">{title}</h1>
-        <p className="text-body text-fg-secondary text-pretty">{lead}</p>
-      </div>
-      <p className="rounded-md bg-canvas-muted p-3 text-small text-fg-secondary">{t("confirm.spam", { email })}</p>
-      <Button asChild variant="secondary" size="lg" block>
-        <Link href="/login">{t("confirm.toLogin")}</Link>
-      </Button>
-    </div>
-  );
 }

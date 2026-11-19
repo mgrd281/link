@@ -79,23 +79,22 @@ export type AccountSnapshot =
 
 export type AuthError =
   | "invalidEmail"
-  | "weakPassword"
   | "invalidUsername"
   | "reservedUsername"
   | "usernameTaken"
   | "emailTaken"
-  | "invalidCredentials"
-  | "wrongPassword"
+  /** The 6-digit code does not match the one we sent. */
+  | "invalidCode"
+  /** The code is older than 10 minutes, was used, or was guessed wrong too often: ask for a new one. */
+  | "codeExpired"
   | "notFound"
   | "storageFull"
   | "unavailable"
   | "inviteMismatch"
   | "reservedForCreator"
-  /** Real accounts: the sign-up link in the email was not opened yet. */
-  | "emailNotConfirmed"
   /** Real accounts: the team suspended the account. */
   | "suspended"
-  /** Real accounts: too many failed attempts in a short time (password guessing). */
+  /** Too many codes or wrong codes in a short time (guessing), or emails sent too quickly. */
   | "tooManyAttempts"
   /** Real accounts: sign-ins from this address are blocked. */
   | "blocked"
@@ -104,39 +103,53 @@ export type AuthError =
   /** Real accounts: a link from one of our emails expired or was used already. */
   | "linkExpired";
 
-/** `pending: "confirmEmail"`: done, but it counts only after the link we emailed is opened. */
-export type Result = { ok: true; pending?: "confirmEmail" | undefined } | { ok: false; error: AuthError };
+/**
+ * `pending: "confirmEmail"`: done, but it counts only after the link we emailed is opened.
+ * `pending: "code"`: a 6-digit code is on its way (the demo, which sends no email, returns it as
+ * `demoCode` so it can be shown on screen).
+ */
+export type Result =
+  | { ok: true; pending?: "confirmEmail" | "code" | undefined; demoCode?: string | undefined }
+  | { ok: false; error: AuthError };
 
 export type UsernameStatus = "ok" | Extract<AuthError, "invalidUsername" | "reservedUsername" | "usernameTaken">;
 
+/** A new account's page: the address they chose and how it starts. */
 export interface SignUpInput {
-  email: string;
-  password: string;
   username: string;
-  locale: Page["profile"]["locale"];
   /** A page the Linkyo team prepared for this email: the account starts with it, ready. */
   prepared?: { page: Page; theme: CreatorThemeConfig } | undefined;
+  /** The invite from a prepared page's link (real accounts: the server looks the page up again). */
+  invite?: string | undefined;
   /** Came from an example page (e.g. for journalists): start with that kind and its template. */
   start?: { kind: string; theme: CreatorThemeConfig } | undefined;
+}
+
+/**
+ * Signing in without a password: an email gets a 6-digit code (and a one-click link). Someone new
+ * also sends `signUp` with the page they want; someone coming back sends only the email.
+ */
+export interface CodeRequest {
+  email: string;
+  locale: Page["profile"]["locale"];
+  signUp?: SignUpInput | undefined;
 }
 
 export interface AccountStore {
   /** `true` when data lives only in this browser (shown to the user everywhere it matters). */
   readonly demo: boolean;
-  /** A forgotten password: set a new one right here (demo, no email possible) or by emailed link. */
-  readonly passwordReset: "direct" | "email";
   subscribe(listener: () => void): () => void;
   getSnapshot(): AccountSnapshot;
   getServerSnapshot(): AccountSnapshot;
 
-  signUp(input: SignUpInput): Promise<Result>;
-  logIn(input: { email: string; password: string }): Promise<Result>;
+  /**
+   * Sends a 6-digit code (valid 10 minutes) to the email. The answer is the same whether or not the
+   * address has an account (no account enumeration); a sign-up checks the page address first.
+   */
+  requestCode(input: CodeRequest): Promise<Result>;
+  /** Signs in with the code. Someone new gets their account and first page here. */
+  verifyCode(input: CodeRequest & { code: string }): Promise<Result>;
   logOut(): void;
-  /** Demo: sets `password` directly (no email can be sent). Real: emails a reset link. */
-  resetPassword(input: { email: string; password?: string | undefined }): Promise<Result>;
-  /** After opening a reset link (real accounts): the new password for the signed-in account. */
-  setNewPassword(password: string): Promise<Result>;
-  changePassword(input: { current: string; next: string }): Promise<Result>;
   /** Real accounts confirm the new address by email first (`pending: "confirmEmail"`). */
   changeEmail(email: string): Promise<Result>;
   changeUsername(username: string): Promise<Result>;

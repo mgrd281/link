@@ -1,8 +1,8 @@
 import { NO_IMAGE } from "@linkyo/blocks";
 import { describe, expect, it } from "vitest";
 
-import { LocalAccountStore, STORAGE_KEY, type StorageLike } from "./local-store";
-import { isStrongEnough, passwordChecks } from "./password";
+import { LocalAccountStore, sixDigits, STORAGE_KEY, type StorageLike } from "./local-store";
+import type { CodeRequest } from "./types";
 
 function memory(): StorageLike & { data: Map<string, string>; full: boolean } {
   const data = new Map<string, string>();
@@ -23,14 +23,26 @@ const fresh = () => {
   return new LocalAccountStore(() => storage);
 };
 
-const input = { email: "Mila@Example.com", password: "night-shift-42", username: "mila", locale: "de" as const };
+const signUp: CodeRequest = { email: "Mila@Example.com", locale: "de", signUp: { username: "mila" } };
+const logIn: CodeRequest = { email: " MILA@example.com ", locale: "de" };
+
+/** Asks for a code and enters it, as the screens do. */
+async function withCode(store: LocalAccountStore, request: CodeRequest) {
+  const sent = await store.requestCode(request);
+  if (!sent.ok || !sent.demoCode) return sent;
+  return store.verifyCode({ ...request, code: sent.demoCode });
+}
 
 describe("LocalAccountStore", () => {
-  it("signs up, starts a session and creates a starter page", async () => {
+  it("signs up with a code, starts a session and creates a starter page", async () => {
     const storage = memory();
     const store = new LocalAccountStore(() => storage);
     expect(store.getSnapshot().status).toBe("signedOut");
-    expect(await store.signUp(input)).toEqual({ ok: true });
+    const sent = await store.requestCode(signUp);
+    expect(sent).toMatchObject({ ok: true, pending: "code" });
+    expect(sent.ok && sent.demoCode).toMatch(/^\d{6}$/);
+    expect(store.getSnapshot().status).toBe("signedOut");
+    expect(await store.verifyCode({ ...signUp, code: sent.ok ? (sent.demoCode ?? "") : "" })).toEqual({ ok: true });
     const snapshot = store.getSnapshot();
     expect(snapshot.status).toBe("signedIn");
     if (snapshot.status !== "signedIn") return;
@@ -38,8 +50,31 @@ describe("LocalAccountStore", () => {
     expect(snapshot.site.page.profile).toMatchObject({ username: "mila", displayName: "mila", locale: "de" });
     expect(snapshot.site.page.profile.avatar.src).toBe(NO_IMAGE);
     expect(snapshot.site.onboarded).toBe(false);
-    // The plain password is never stored.
-    expect(storage.data.get(STORAGE_KEY)).not.toContain(input.password);
+    // Codes live only in memory, never in storage.
+    expect(storage.data.get(STORAGE_KEY)).not.toMatch(/"code"/);
+  });
+
+  it("refuses wrong codes, then expires the code after five tries", async () => {
+    const store = fresh();
+    const sent = await store.requestCode(signUp);
+    const right = sent.ok ? (sent.demoCode ?? "") : "";
+    const wrong = right === "000000" ? "111111" : "000000";
+    for (let i = 0; i < 4; i += 1) expect(await store.verifyCode({ ...signUp, code: wrong })).toEqual({ ok: false, error: "invalidCode" });
+    expect(await store.verifyCode({ ...signUp, code: wrong })).toEqual({ ok: false, error: "codeExpired" });
+    expect(await store.verifyCode({ ...signUp, code: right })).toEqual({ ok: false, error: "codeExpired" });
+    expect(store.getSnapshot().status).toBe("signedOut");
+    // A new code works.
+    expect(await withCode(store, signUp)).toEqual({ ok: true });
+  });
+
+  it("only the newest code counts", async () => {
+    const store = fresh();
+    const first = await store.requestCode(signUp);
+    const second = await store.requestCode(signUp);
+    const old = first.ok ? (first.demoCode ?? "") : "";
+    const now = second.ok ? (second.demoCode ?? "") : "";
+    if (old !== now) expect(await store.verifyCode({ ...signUp, code: old })).toEqual({ ok: false, error: "invalidCode" });
+    expect(await store.verifyCode({ ...signUp, code: now })).toEqual({ ok: true });
   });
 
   it("keeps the snapshot reference stable until something changes", async () => {
@@ -47,88 +82,78 @@ describe("LocalAccountStore", () => {
     expect(store.getSnapshot()).toBe(store.getSnapshot());
     const shared = memory();
     const a = new LocalAccountStore(() => shared);
-    await a.signUp(input);
+    await withCode(a, signUp);
     const first = a.getSnapshot();
     expect(a.getSnapshot()).toBe(first);
     a.updateSite((site) => ({ ...site, onboarded: true }));
     expect(a.getSnapshot()).not.toBe(first);
   });
 
-  it("rejects taken, reserved and invalid usernames and duplicate emails", async () => {
+  it("checks the page address and email before sending a code", async () => {
     const store = fresh();
-    await store.signUp(input);
+    await withCode(store, signUp);
     store.logOut();
-    expect(await store.signUp({ ...input, email: "other@example.com" })).toEqual({ ok: false, error: "usernameTaken" });
-    expect(await store.signUp({ ...input, username: "mila2" })).toEqual({ ok: false, error: "emailTaken" });
-    expect(await store.signUp({ ...input, email: "x@example.com", username: "login" })).toEqual({ ok: false, error: "reservedUsername" });
-    expect(await store.signUp({ ...input, email: "x@example.com", username: "Mila Aurel!" })).toEqual({ ok: false, error: "invalidUsername" });
-    expect(await store.signUp({ ...input, email: "not-an-email", username: "mila3" })).toEqual({ ok: false, error: "invalidEmail" });
-    expect(await store.signUp({ ...input, email: "y@example.com", username: "mila4", password: "short" })).toEqual({ ok: false, error: "weakPassword" });
+    const other = (email: string, username: string) => store.requestCode({ email, locale: "de", signUp: { username } });
+    expect(await other("other@example.com", "mila")).toEqual({ ok: false, error: "usernameTaken" });
+    expect(await other("x@example.com", "login")).toEqual({ ok: false, error: "reservedUsername" });
+    expect(await other("x@example.com", "Mila Aurel!")).toEqual({ ok: false, error: "invalidUsername" });
+    expect(await other("not-an-email", "mila3")).toEqual({ ok: false, error: "invalidEmail" });
   });
 
-  it("logs in with the right password only, with one answer for unknown emails", async () => {
+  it("signs in with a code, with the same answer for unknown emails", async () => {
     const store = fresh();
-    await store.signUp(input);
+    await withCode(store, signUp);
     store.logOut();
     expect(store.getSnapshot().status).toBe("signedOut");
-    expect(await store.logIn({ email: input.email, password: "wrong-pass-1" })).toEqual({ ok: false, error: "invalidCredentials" });
-    expect(await store.logIn({ email: "nobody@example.com", password: input.password })).toEqual({ ok: false, error: "invalidCredentials" });
-    expect(await store.logIn({ email: " MILA@example.com ", password: input.password })).toEqual({ ok: true });
+    // No account: the same "code is on its way", but there is no code.
+    expect(await store.requestCode({ email: "nobody@example.com", locale: "de" })).toEqual({ ok: true, pending: "code" });
+    expect(await store.verifyCode({ email: "nobody@example.com", locale: "de", code: "123456" })).toEqual({ ok: false, error: "codeExpired" });
+    expect(await withCode(store, logIn)).toEqual({ ok: true });
     expect(store.getSnapshot().status).toBe("signedIn");
   });
 
-  it("resets and changes passwords", async () => {
+  it("signs an existing account in when someone signs up again with its email", async () => {
     const store = fresh();
-    await store.signUp(input);
-    expect(await store.changePassword({ current: "nope-nope-1", next: "new-secret-77" })).toEqual({ ok: false, error: "wrongPassword" });
-    expect(await store.changePassword({ current: input.password, next: "new-secret-77" })).toEqual({ ok: true });
+    await withCode(store, signUp);
     store.logOut();
-    expect(await store.resetPassword({ email: input.email, password: "after-reset-9" })).toEqual({ ok: true });
-    expect(await store.logIn({ email: input.email, password: "new-secret-77" })).toEqual({ ok: false, error: "invalidCredentials" });
-    expect(await store.logIn({ email: input.email, password: "after-reset-9" })).toEqual({ ok: true });
+    expect(await withCode(store, { ...signUp, signUp: { username: "mila-new" } })).toEqual({ ok: true });
+    const snapshot = store.getSnapshot();
+    expect(snapshot.status === "signedIn" && snapshot.account.username).toBe("mila");
   });
 
   it("renames the address everywhere and exports, then deletes everything", async () => {
     const store = fresh();
-    await store.signUp(input);
+    await withCode(store, signUp);
     expect(await store.changeUsername("mila-aurel")).toEqual({ ok: true });
     const snapshot = store.getSnapshot();
     expect(snapshot.status === "signedIn" && snapshot.site.page.profile.username).toBe("mila-aurel");
-    const exported = JSON.parse(await store.exportData()) as { account: { username: string; password?: unknown } };
+    const exported = JSON.parse(await store.exportData()) as { account: { username: string } };
     expect(exported.account.username).toBe("mila-aurel");
-    expect(exported.account.password).toBeUndefined();
     await store.deleteAccount();
     expect(store.getSnapshot().status).toBe("signedOut");
-    expect(await store.logIn({ email: input.email, password: input.password })).toEqual({ ok: false, error: "invalidCredentials" });
+    expect(await store.requestCode(logIn)).toEqual({ ok: true, pending: "code" });
   });
 
   it("reports a full storage instead of losing data silently", async () => {
     const storage = memory();
     const store = new LocalAccountStore(() => storage);
-    await store.signUp(input);
+    await withCode(store, signUp);
     storage.full = true;
     expect(store.updateSite((site) => ({ ...site, onboarded: true }))).toEqual({ ok: false, error: "storageFull" });
   });
-});
 
-describe("password rules", () => {
-  it("asks for 8+ characters, a letter and a non-letter, nothing personal", () => {
-    expect(passwordChecks("abc")).toMatchObject({ length: false });
-    expect(passwordChecks("abcdefgh")).toMatchObject({ length: true, mixed: false });
-    expect(isStrongEnough("night-shift-42")).toBe(true);
-    expect(isStrongEnough("mila-2026!", { username: "mila" })).toBe(false);
-  });
-
-  it("logs sign-ins and failed attempts with their context, exports and deletes them with the account", async () => {
+  it("logs sign-ins and wrong codes with their context, exports and deletes them with the account", async () => {
     const storage = memory();
     const context = () => Promise.resolve({ ip: "192.0.2.4", country: "DE", city: "Berlin", device: { type: "desktop" as const, os: "macOS", browser: "Safari" }, deviceId: "dev_test" });
     const store = new LocalAccountStore(() => storage, context);
-    await store.signUp(input);
+    await withCode(store, signUp);
     await new Promise((resolve) => setTimeout(resolve, 0));
     store.logOut();
-    expect((await store.logIn({ email: input.email, password: "wrong-pass-1" })).ok).toBe(false);
+    const sent = await store.requestCode(logIn);
+    const right = sent.ok ? (sent.demoCode ?? "") : "";
+    expect((await store.verifyCode({ ...logIn, code: right === "000000" ? "111111" : "000000" })).ok).toBe(false);
     await new Promise((resolve) => setTimeout(resolve, 0));
-    await store.logIn({ email: input.email, password: input.password });
+    await store.verifyCode({ ...logIn, code: right });
     await new Promise((resolve) => setTimeout(resolve, 0));
     const log = await store.signIns();
     expect(log.map((entry) => entry.result)).toEqual(["success", "failed", "success"]);
@@ -136,5 +161,11 @@ describe("password rules", () => {
     expect((JSON.parse(await store.exportData()) as { signIns: unknown[] }).signIns).toHaveLength(3);
     await store.deleteAccount();
     expect((JSON.parse(storage.data.get(STORAGE_KEY) ?? "{}") as { logins: unknown }).logins).toEqual({});
+  });
+});
+
+describe("sixDigits", () => {
+  it("is always six digits", () => {
+    for (let i = 0; i < 200; i += 1) expect(sixDigits()).toMatch(/^\d{6}$/);
   });
 });

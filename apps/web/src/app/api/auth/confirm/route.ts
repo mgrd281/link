@@ -3,15 +3,17 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { parseUserAgent } from "@/features/account/device";
 import { recordSignIn, safePath, sessionIdOf } from "@/features/account/server/auth";
+import { ensureFirstSite } from "@/features/account/server/first-site";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { cookieServerSupabase, serviceSupabase } from "@/lib/supabase/server";
 import { requestPlace } from "@/lib/request-context";
 
-const TYPES: readonly EmailOtpType[] = ["signup", "email", "recovery", "email_change", "invite", "magiclink"];
+const TYPES: readonly EmailOtpType[] = ["signup", "email", "email_change", "invite", "magiclink"];
 
 /**
- * Where the links in our emails land (sign-up, password reset, new address). Verifies the one-time
- * token, puts the session in first-party cookies and continues in the app. Works on any device:
+ * Where the links in our emails land (the one-click sign-in next to the code, a new address).
+ * Verifies the one-time token, puts the session in first-party cookies, makes a new account's first
+ * page and continues in the app. Works on any device:
  * the token is in the link, nothing has to be remembered by the browser that asked for it.
  */
 export async function GET(request: NextRequest) {
@@ -31,7 +33,9 @@ export async function GET(request: NextRequest) {
   if (error || !data.user) return back(`/${locale}/login?link=expired`);
 
   if (data.user.email && type !== "email_change") {
-    await recordSignIn(serviceSupabase(), {
+    const service = serviceSupabase();
+    await ensureFirstSite(service, data.user);
+    await recordSignIn(service, {
       email: data.user.email,
       result: "success",
       place: requestPlace(request.headers),
@@ -39,6 +43,5 @@ export async function GET(request: NextRequest) {
       sessionId: data.session ? sessionIdOf(data.session.access_token) : null,
     });
   }
-  if (type === "recovery") return back(`/${locale}/reset-password`);
   return back(safePath(url.searchParams.get("next"), `/${locale}/app`));
 }

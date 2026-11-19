@@ -1,15 +1,15 @@
 import { z } from "zod";
 
-import { hashPassword, isStrongEnough, verifyPassword, type PasswordHash } from "./password";
 import { firstSite } from "./site-builders";
-import type { Account, AccountSnapshot, AccountStore, LoginContext, LoginEvent, Result, SignUpInput, Site, UsernameStatus } from "./types";
+import type { Account, AccountSnapshot, AccountStore, CodeRequest, LoginContext, LoginEvent, Result, Site, UsernameStatus } from "./types";
 import { localUsernameStatus, normalizeEmail, normalizeUsername } from "./username";
 
 export { preparedSite, starterSite } from "./site-builders";
 
 /**
  * Demo-mode account store: everything lives in this browser's localStorage under one key.
- * - Passwords are hashed (PBKDF2), never stored in plain text.
+ * - No passwords: sign-in is a 6-digit code, as with real accounts. The demo sends no email, so the
+ *   code comes back in the answer and is shown on screen. Codes live only in memory.
  * - Snapshots are cached by the raw string, so `useSyncExternalStore` re-renders only on change.
  * - Other tabs stay in sync through the `storage` event.
  * Nothing is sent anywhere: no cookies, no network.
@@ -23,8 +23,22 @@ export interface StorageLike {
   removeItem(key: string): void;
 }
 
-interface StoredAccount extends Account {
-  password: PasswordHash;
+/** Older demo data may still carry a password hash; it is ignored. */
+type StoredAccount = Account;
+
+/** A code that was sent: valid 10 minutes, five wrong tries. */
+interface PendingCode {
+  code: string;
+  until: number;
+  tries: number;
+}
+const CODE_MINUTES = 10;
+const CODE_TRIES = 5;
+
+/** Six random digits (cryptographically random, leading zeros kept). */
+export function sixDigits(): string {
+  const [value = 0] = crypto.getRandomValues(new Uint32Array(1));
+  return String(value % 1_000_000).padStart(6, "0");
 }
 
 interface Db {
@@ -62,7 +76,7 @@ const publicAccount = ({ id, email, username, createdAt }: StoredAccount): Accou
 
 export class LocalAccountStore implements AccountStore {
   readonly demo = true;
-  readonly passwordReset = "direct" as const;
+  private readonly codes = new Map<string, PendingCode>();
   private readonly listeners = new Set<() => void>();
   private raw: string | null | undefined;
   private snapshot: AccountSnapshot = LOADING;
@@ -136,77 +150,64 @@ export class LocalAccountStore implements AccountStore {
     return "ok";
   }
 
-  async signUp(input: SignUpInput): Promise<Result> {
+  requestCode(input: CodeRequest): Promise<Result> {
     const email = normalizeEmail(input.email);
-    const username = normalizeUsername(input.username);
-    if (!emailSchema.safeParse(email).success) return { ok: false, error: "invalidEmail" };
+    if (!emailSchema.safeParse(email).success) return Promise.resolve({ ok: false, error: "invalidEmail" });
+    const known = this.db().accounts.some((account) => account.email === email);
+    if (input.signUp && !known) {
+      const status = this.usernameStatusNow(input.signUp.username);
+      if (status !== "ok") return Promise.resolve({ ok: false, error: status });
+    }
+    // Coming back with an address that has no account: the same answer, but no code (as real accounts).
+    if (!known && !input.signUp) return Promise.resolve({ ok: true, pending: "code" });
+    const code = sixDigits();
+    this.codes.set(email, { code, until: Date.now() + CODE_MINUTES * 60_000, tries: 0 });
+    return Promise.resolve({ ok: true, pending: "code", demoCode: code });
+  }
+
+  verifyCode(input: CodeRequest & { code: string }): Promise<Result> {
+    return Promise.resolve(this.verifyCodeNow(input));
+  }
+
+  private verifyCodeNow(input: CodeRequest & { code: string }): Result {
+    const email = normalizeEmail(input.email);
+    const pending = this.codes.get(email);
+    if (!pending || pending.until < Date.now() || pending.tries >= CODE_TRIES) {
+      this.codes.delete(email);
+      return { ok: false, error: "codeExpired" };
+    }
+    const db = this.db();
+    const existing = db.accounts.find((candidate) => candidate.email === email);
+    if (input.code.replace(/\D/g, "") !== pending.code) {
+      pending.tries += 1;
+      if (existing) void this.logSignIn(existing.id, "failed");
+      return { ok: false, error: pending.tries >= CODE_TRIES ? "codeExpired" : "invalidCode" };
+    }
+    this.codes.delete(email);
+
+    if (existing) {
+      const written = this.write({ ...db, session: { accountId: existing.id, since: now() } });
+      if (written.ok) void this.logSignIn(existing.id, "success");
+      return written;
+    }
+    const signUp = input.signUp;
+    if (!signUp) return { ok: false, error: "notFound" };
+    const username = normalizeUsername(signUp.username);
     const status = this.usernameStatusNow(username);
     if (status !== "ok") return { ok: false, error: status };
-    if (!isStrongEnough(input.password, { email, username })) return { ok: false, error: "weakPassword" };
-    if (this.db().accounts.some((account) => account.email === email)) return { ok: false, error: "emailTaken" };
-
-    const password = await hashPassword(input.password);
-    const account: StoredAccount = { id: crypto.randomUUID(), email, username, createdAt: now(), password };
-    const db = this.db();
+    const account: StoredAccount = { id: crypto.randomUUID(), email, username, createdAt: now() };
     const written = this.write({
       ...db,
       accounts: [...db.accounts, account],
-      sites: {
-        ...db.sites,
-        [account.id]: firstSite({ ...input, username, email }),
-      },
+      sites: { ...db.sites, [account.id]: firstSite({ ...signUp, username, email, locale: input.locale }) },
       session: { accountId: account.id, since: now() },
     });
     if (written.ok) void this.logSignIn(account.id, "success");
     return written;
   }
 
-  async logIn(input: { email: string; password: string }): Promise<Result> {
-    const email = normalizeEmail(input.email);
-    const db = this.db();
-    const account = db.accounts.find((candidate) => candidate.email === email);
-    // Same answer for "no such email" and "wrong password" (no account enumeration).
-    if (!account) return { ok: false, error: "invalidCredentials" };
-    if (!(await verifyPassword(input.password, account.password))) {
-      void this.logSignIn(account.id, "failed");
-      return { ok: false, error: "invalidCredentials" };
-    }
-    const written = this.write({ ...db, session: { accountId: account.id, since: now() } });
-    if (written.ok) void this.logSignIn(account.id, "success");
-    return written;
-  }
-
   logOut(): void {
     this.write({ ...this.db(), session: null });
-  }
-
-  async resetPassword(input: { email: string; password?: string | undefined }): Promise<Result> {
-    const email = normalizeEmail(input.email);
-    const db = this.db();
-    const account = db.accounts.find((candidate) => candidate.email === email);
-    if (!account) return { ok: false, error: "notFound" };
-    if (!input.password || !isStrongEnough(input.password, { email, username: account.username })) return { ok: false, error: "weakPassword" };
-    const password = await hashPassword(input.password);
-    return this.write({ ...this.db(), accounts: db.accounts.map((candidate) => (candidate.id === account.id ? { ...candidate, password } : candidate)) });
-  }
-
-  async setNewPassword(next: string): Promise<Result> {
-    const db = this.db();
-    const account = db.accounts.find((candidate) => candidate.id === this.currentId(db));
-    if (!account) return { ok: false, error: "notFound" };
-    if (!isStrongEnough(next, account)) return { ok: false, error: "weakPassword" };
-    const password = await hashPassword(next);
-    return this.write({ ...this.db(), accounts: db.accounts.map((candidate) => (candidate.id === account.id ? { ...candidate, password } : candidate)) });
-  }
-
-  async changePassword(input: { current: string; next: string }): Promise<Result> {
-    const db = this.db();
-    const account = db.accounts.find((candidate) => candidate.id === this.currentId(db));
-    if (!account) return { ok: false, error: "notFound" };
-    if (!(await verifyPassword(input.current, account.password))) return { ok: false, error: "wrongPassword" };
-    if (!isStrongEnough(input.next, account)) return { ok: false, error: "weakPassword" };
-    const password = await hashPassword(input.next);
-    return this.write({ ...this.db(), accounts: db.accounts.map((candidate) => (candidate.id === account.id ? { ...candidate, password } : candidate)) });
   }
 
   changeEmail(input: string): Promise<Result> {
@@ -305,7 +306,7 @@ export class LocalAccountStore implements AccountStore {
 }
 
 /**
- * The accounts kept in this browser, without their password hashes: for the team console in demo
+ * The accounts kept in this browser: for the team console in demo
  * mode, which runs in the same browser. Phase 1 replaces this with a team-only database view.
  */
 export function deviceAccounts(storage: StorageLike | null): { account: Account; site: Site; logins: LoginEvent[] }[] {

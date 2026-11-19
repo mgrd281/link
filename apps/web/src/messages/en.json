@@ -834,120 +834,84 @@
   },
   "auth": {
     "meta": {
-      "signup": "Create account",
-      "login": "Log in",
-      "forgot": "Reset password",
-      "reset": "New password · Linkyo"
+      "signup": "Create your page",
+      "login": "Sign in"
     },
     "skip": "Skip to content",
     "home": "Linkyo home",
     "demo": {
       "title": "Demo:",
-      "body": "Your account and page are saved only in this browser and sent nowhere. Real accounts arrive at launch."
+      "body": "Your account and page stay in this browser and are sent nowhere. No email is sent: your code is shown on screen."
     },
     "side": {
-      "label": "What you get",
-      "title": "Your page is ready in two minutes.",
-      "points": [
-        "Free, no credit card",
-        "No cookies, no tracking on your page",
-        "Data in the EU, GDPR-ready"
-      ]
+      "label": "Pages made with Linkyo",
+      "pause": "Pause the moving pages",
+      "play": "Play the moving pages"
     },
     "social": {
       "google": "Continue with Google",
       "apple": "Continue with Apple",
       "soon": "At launch",
-      "or": "or with email"
+      "or": "or"
     },
     "fields": {
       "username": "Your address",
       "usernameHint": "Lowercase letters, numbers and dashes, 3–30 characters.",
       "usernameOk": "linkyo.app/{name} is available",
       "email": "Email",
-      "password": "Password",
-      "newPassword": "New password",
-      "show": "Show password",
-      "hide": "Hide password",
-      "usernameReserved": "linkyo.app/{name} is reserved for you"
-    },
-    "checks": {
-      "length": "At least 8 characters",
-      "mixed": "Letters and a number or symbol",
-      "personal": "Not your name or email",
-      "met": "(done)",
-      "open": "(not yet)"
+      "usernameReserved": "linkyo.app/{name} is reserved for you",
+      "code": "Sign-in code"
     },
     "errors": {
-      "required": "Please enter your email and password.",
+      "required": "Please enter your email.",
       "invalidEmail": "This email address looks incomplete, e.g. name@example.com.",
-      "weakPassword": "Choose a password that meets all three points.",
       "invalidUsername": "Only lowercase letters, numbers and dashes, 3–30 characters.",
       "reservedUsername": "This address is reserved for Linkyo. Try another one.",
       "usernameTaken": "This address is taken. Try a variation, e.g. with a dash.",
       "emailTaken": "There is already an account with this email.",
-      "invalidCredentials": "Email or password doesn't match. Check the spelling or reset your password.",
-      "wrongPassword": "Your current password doesn't match.",
-      "notFound": "There is no account with this email in this browser.",
+      "notFound": "There's no account with this email yet.",
       "storageFull": "This browser's demo storage is full. Remove large images and try again.",
       "unavailable": "This browser doesn't allow storage (private window?). Open Linkyo in a normal window.",
       "inviteMismatch": "This page was prepared for a different email. Use the email you gave the Linkyo team.",
       "reservedForCreator": "This address is reserved for a creator. Is it yours? Sign up with the email you gave us.",
-      "emailNotConfirmed": "Please confirm your email first. We sent you a link when you signed up.",
       "suspended": "This account is suspended for now. Please contact Linkyo support.",
       "tooManyAttempts": "Too many attempts in a short time. Wait a few minutes, then try again.",
       "blocked": "Signing in isn't possible from this connection right now. Try another network or contact support.",
       "serverError": "We can't reach Linkyo right now. Try again in a moment.",
-      "linkExpired": "This link has expired or was already used. Just request a new one."
+      "linkExpired": "This link has expired or was already used. Just ask for a new code.",
+      "invalidCode": "This code doesn't match. Check the digits or ask for a new code.",
+      "codeExpired": "This code has expired. Ask for a new one below."
     },
     "signup": {
-      "title": "Get your page",
-      "lead": "Free. Online in two minutes.",
-      "submit": "Create my page",
+      "title": "Create your free page",
+      "lead": "Choose your address and enter your email. No password needed.",
+      "submit": "Continue",
       "terms": "By creating an account you accept the terms of use and confirm the privacy policy.",
       "haveAccount": "Already have an account?",
-      "login": "Log in",
-      "loginInstead": "Log in instead",
+      "login": "Sign in",
       "preparedTitle": "Your page is ready",
       "preparedLead": "The Linkyo team prepared it for you. Sign up with the email you gave us and everything is there right away.",
       "preparedGoogle": "At launch this works with Google too: same email, same page."
     },
     "login": {
       "title": "Welcome back",
-      "lead": "Log in to edit your page.",
-      "submit": "Log in",
-      "forgot": "Forgot password?",
+      "lead": "Enter your email and we'll send you a 6-digit code. No password needed.",
+      "submit": "Send code",
       "noAccount": "New to Linkyo?",
       "signup": "Create a page"
     },
-    "forgot": {
-      "title": "Reset your password",
-      "lead": "Enter your email and choose a new password.",
-      "demoNote": "The demo can't send emails, so you set your new password right here. Later you'll get a link by email.",
-      "submit": "Save new password",
-      "doneTitle": "Password changed",
-      "done": "You can now log in with your new password.",
-      "toLogin": "Go to log in",
-      "back": "Back to log in",
-      "emailLead": "Enter your account's email. We'll send you a link to choose a new password.",
-      "emailSubmit": "Send link",
-      "sentTitle": "Check your inbox",
-      "sentLead": "If there's an account for {email}, the link is on its way. It's valid for one hour."
-    },
-    "confirm": {
-      "title": "Almost there: confirm your email",
-      "lead": "We sent a link to {email}. Open it to activate your account, then you'll go straight to your page.",
-      "spam": "Nothing arrived? Check your spam folder or the spelling of {email}.",
-      "toLogin": "Go to log in"
-    },
-    "reset": {
-      "title": "Choose a new password",
-      "lead": "Choose a new password for your account.",
-      "submit": "Save password",
-      "doneTitle": "Password changed",
-      "done": "You're signed in and can carry on.",
-      "toApp": "Go to dashboard",
-      "noSession": "Open the link from the email first. It signs you in so you can choose a new password."
+    "code": {
+      "title": "Enter your code",
+      "lead": "We sent a 6-digit code to {email}. Enter it below or tap the link in the email.",
+      "leadLogin": "If there's a Linkyo account for {email}, a 6-digit code is on its way. Enter it below or tap the link in the email.",
+      "submit": "Continue",
+      "submitLogin": "Sign in",
+      "change": "Use a different email",
+      "resend": "Send a new code",
+      "resendIn": "New code in {seconds} s",
+      "resent": "A new code is on its way. Only the newest one works.",
+      "spam": "Nothing arrived? Check your spam folder.",
+      "demo": "Demo: no email is sent. Your code is <strong>{code}</strong>."
     }
   },
   "app": {
@@ -1466,10 +1430,6 @@
       "account": "Login",
       "emailSave": "Change email",
       "emailChanged": "Email changed",
-      "password": "Password",
-      "currentPassword": "Current password",
-      "passwordSave": "Change password",
-      "passwordChanged": "Password changed",
       "legal": "Legal notice (Impressum)",
       "legalHint": "In Germany, pages with a business purpose need a legal notice (§ 5 DDG). It's linked at the bottom of your page as “Imprint”.",
       "legalName": "Full name or company",
@@ -1508,7 +1468,8 @@
       "thisDevice": "This device",
       "failedSignIn": "Wrong password",
       "unknownPlace": "Place unknown",
-      "emailConfirm": "Confirm the new address with the link we sent to {email}."
+      "emailConfirm": "Confirm the new address with the link we sent to {email}.",
+      "signInByCode": "You sign in with a code we email you each time, so there's no password to remember or to leak."
     },
     "welcome": {
       "skip": "Skip for now",
@@ -1822,6 +1783,21 @@
         "newsletter": "Subscribe to the newsletter",
         "liveTitle": "Live on TikTok",
         "cv": "My CV"
+      },
+      "import": {
+        "title": "Coming from Linktree, Beacons & co.?",
+        "lead": "Paste your current page. We bring your profiles and links over, and you check them below.",
+        "label": "Address of your current link page",
+        "placeholder": "linktr.ee/yourname",
+        "button": "Import",
+        "hint": "Works with Linktree, Beacons, bio.link, lnk.bio, Carrd and similar pages.",
+        "done": "{profiles, plural, =0 {No profiles} one {# profile} other {# profiles}} and {links, plural, =0 {no links} one {# link} other {# links}} brought over. Check them below.",
+        "errors": {
+          "unsupported": "Paste the address of a Linktree, Beacons, bio.link, lnk.bio or Carrd page, e.g. linktr.ee/yourname.",
+          "notFound": "We couldn't find that page. Check the address.",
+          "empty": "That page has no public links we could read. Paste your links below instead.",
+          "failed": "We couldn't read that page right now. Paste your links below instead."
+        }
       }
     },
     "ownPage": {

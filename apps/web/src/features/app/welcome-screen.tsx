@@ -35,6 +35,8 @@ import { PlatformGlyph } from "@/features/directions/shared/creator-kit";
 import { useRouter } from "@/i18n/navigation";
 
 import { SwitchRow, TextArea, TextInput } from "./form";
+import { ImportBox, useImport } from "./import-box";
+import { sortImported } from "./import-links";
 import { isKind, KINDS, SOCIAL_PREFIX, STARTERS, starterBlocks, type CreatorKind, type SocialPlatform, type StarterField } from "./kinds";
 import { PhonePreview, PreviewButton } from "./preview";
 import { ProfileFields, useProfileDraft } from "./profile-form";
@@ -106,6 +108,16 @@ export function WelcomeScreen() {
   const [switches, setSwitches] = useState<Partial<Record<StarterField, boolean>>>({});
   const [links, setLinks] = useState("");
   const index = STEPS.indexOf(step);
+  const importer = useImport({
+    onLinks: (found) => {
+      const sorted = sortImported(found, starter.socials, handles);
+      setHandles((current) => ({ ...current, ...sorted.handles }));
+      const pasted = new Set(links.split(/\s+/).filter(Boolean));
+      const added = sorted.links.filter((url) => !pasted.has(url));
+      setLinks((current) => [current.trim(), ...added].filter(Boolean).join("\n"));
+      return { profiles: Object.keys(sorted.handles).length, links: added.length };
+    },
+  });
   // Moving between steps puts focus on the new step's title (after it is on screen).
   const [moved, setMoved] = useState(false);
   useEffect(() => {
@@ -255,6 +267,7 @@ export function WelcomeScreen() {
 
           {step === "links" ? (
             <div className="grid grid-cols-1 gap-6">
+              <ImportBox importer={importer} />
               <fieldset className="grid min-w-0 grid-cols-1 gap-3">
                 <legend className="mb-3 text-body font-semibold">{t("socials")}</legend>
                 {starter.socials.map((platform) => (

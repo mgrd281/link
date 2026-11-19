@@ -31,7 +31,7 @@ export function preparedSite(username: string, email: string, prepared: NonNulla
 }
 
 /** The site a new account starts with: a prepared page, an example's kind and look, or a blank one. */
-export function firstSite(input: Pick<SignUpInput, "prepared" | "start" | "locale"> & { username: string; email: string }): Site {
+export function firstSite(input: Pick<SignUpInput, "prepared" | "start"> & { username: string; email: string; locale: Site["page"]["profile"]["locale"] }): Site {
   if (input.prepared) return preparedSite(input.username, input.email, input.prepared);
   const site = starterSite(input.username, input.email, input.locale);
   return input.start ? { ...site, kind: input.start.kind, theme: input.start.theme } : site;

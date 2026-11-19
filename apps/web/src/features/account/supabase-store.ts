@@ -14,11 +14,11 @@ import type {
   AccountSnapshot,
   AccountStore,
   AuthError,
+  CodeRequest,
   DeviceInfo,
   Legal,
   LoginEvent,
   Result,
-  SignUpInput,
   Site,
   UsernameStatus,
 } from "./types";
@@ -94,7 +94,6 @@ const localeOf = (site: Site | null) => site?.page.profile.locale ?? "de";
 
 export class SupabaseAccountStore implements AccountStore {
   readonly demo = false;
-  readonly passwordReset = "email" as const;
   private snapshot: AccountSnapshot = LOADING;
   private readonly listeners = new Set<() => void>();
   private started = false;
@@ -184,7 +183,7 @@ export class SupabaseAccountStore implements AccountStore {
     this.set({ status: "signedIn", account, site: fromRow(row), sync: "saved" });
   }
 
-  /** Takes over the session our server opened (sign-up without confirmation, sign-in). */
+  /** Takes over the session our server opened (after a correct code). */
   private async adopt(result: ServerResult): Promise<Result> {
     if (!result.ok) return result;
     if (result.session) {
@@ -216,49 +215,25 @@ export class SupabaseAccountStore implements AccountStore {
     return data === "invalidUsername" || data === "reservedUsername" || data === "usernameTaken" ? data : "ok";
   };
 
-  async signUp(input: SignUpInput): Promise<Result> {
-    return this.adopt(
-      await this.post("/api/auth/sign-up", {
-        email: input.email,
-        password: input.password,
-        username: input.username,
-        locale: input.locale,
-        invite: new URLSearchParams(window.location.search).get("invite") ?? undefined,
-        start: input.start,
-      }),
-    );
+  /** What our server needs to know about a new account (the page itself is built there). */
+  private static codeBody(input: CodeRequest) {
+    return {
+      email: input.email,
+      locale: input.locale,
+      signUp: input.signUp ? { username: input.signUp.username, invite: input.signUp.invite, start: input.signUp.start } : undefined,
+    };
   }
 
-  async logIn(input: { email: string; password: string }): Promise<Result> {
-    return this.adopt(await this.post("/api/auth/log-in", input));
+  async requestCode(input: CodeRequest): Promise<Result> {
+    return this.adopt(await this.post("/api/auth/code", SupabaseAccountStore.codeBody(input)));
+  }
+
+  async verifyCode(input: CodeRequest & { code: string }): Promise<Result> {
+    return this.adopt(await this.post("/api/auth/verify", { ...SupabaseAccountStore.codeBody(input), code: input.code }));
   }
 
   logOut(): void {
     void this.flush().finally(() => void this.client().auth.signOut({ scope: "local" }));
-  }
-
-  async resetPassword(input: { email: string }): Promise<Result> {
-    const { error } = await this.client().auth.resetPasswordForEmail(normalizeEmail(input.email), {
-      redirectTo: `${origin()}/api/auth/confirm?next=/${document.documentElement.lang || "de"}/reset-password`,
-    });
-    if (error?.status === 429) return { ok: false, error: "tooManyAttempts" };
-    // The same answer whether or not the address has an account.
-    return { ok: true, pending: "confirmEmail" };
-  }
-
-  async setNewPassword(password: string): Promise<Result> {
-    const { error } = await this.client().auth.updateUser({ password });
-    if (!error) return { ok: true };
-    return { ok: false, error: error.code === "weak_password" || error.code === "same_password" ? "weakPassword" : "serverError" };
-  }
-
-  async changePassword(input: { current: string; next: string }): Promise<Result> {
-    const signedIn = this.snapshot.status === "signedIn" ? this.snapshot : null;
-    if (!signedIn) return { ok: false, error: "notFound" };
-    const supabase = this.client();
-    const check = await supabase.auth.signInWithPassword({ email: signedIn.account.email, password: input.current });
-    if (check.error) return { ok: false, error: "wrongPassword" };
-    return this.setNewPassword(input.next);
   }
 
   async changeEmail(input: string): Promise<Result> {

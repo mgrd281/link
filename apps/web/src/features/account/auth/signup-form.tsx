@@ -10,14 +10,14 @@ import { isKind, STARTERS } from "@/features/app/kinds";
 import { findLook } from "@/features/examples/looks";
 import { Link } from "@/i18n/navigation";
 
-import { isStrongEnough } from "../password";
 import { accountStore } from "../store";
-import type { AuthError, SignUpInput } from "../types";
+import type { AuthError, CodeRequest, SignUpInput } from "../types";
 import { AuthHeading } from "./auth-shell";
-import { FormError, OrDivider, PasswordField } from "./fields";
-import { CheckInbox, SocialButtons, useLeaveWhenSignedIn, useSearchParam, useUsernameStatus } from "./shared";
+import { CodeStep } from "./code-step";
+import { FormError, OrDivider } from "./fields";
+import { SocialButtons, useLeaveWhenSignedIn, useSearchParam, useUsernameStatus } from "./shared";
 
-type Field = "username" | "email" | "password";
+type Field = "username" | "email";
 type Errors = Partial<Record<Field, AuthError | undefined>>;
 const FIELD_OF: Partial<Record<AuthError, Field>> = {
   invalidUsername: "username",
@@ -25,7 +25,6 @@ const FIELD_OF: Partial<Record<AuthError, Field>> = {
   usernameTaken: "username",
   invalidEmail: "email",
   emailTaken: "email",
-  weakPassword: "password",
   inviteMismatch: "email",
   reservedForCreator: "username",
 };
@@ -52,8 +51,8 @@ const emailOk = (email: string) => z.email().safeParse(email.trim()).success;
 const locales = ["de", "en", "ar"] as const;
 
 /**
- * Three fields, one button. The address from the homepage is already filled in, availability is
- * checked while typing, and the password rules turn green as they are met.
+ * Two fields, one button, no password: the page address (filled in from the homepage, checked
+ * while typing) and the email. The next step is the 6-digit code from the email.
  */
 export function SignupForm() {
   const t = useTranslations("auth");
@@ -70,15 +69,23 @@ export function SignupForm() {
   const [typed, setTyped] = useState<string | null>(null);
   const username = typed ?? prefill;
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [banner, setBanner] = useState<AuthError | null>(null);
   const [busy, setBusy] = useState(false);
+  const [request, setRequest] = useState<CodeRequest | null>(null);
+  const [demoCode, setDemoCode] = useState<string | undefined>(undefined);
   const leaving = useLeaveWhenSignedIn();
 
   const status = useUsernameStatus(username);
   const usernameError = errors.username ?? (username.length >= 3 && status && status !== "ok" && status !== "checking" ? status : undefined);
-  const [sentTo, setSentTo] = useState<string | null>(null);
+
+  const showError = (error: AuthError) => {
+    const field = FIELD_OF[error];
+    if (field) {
+      setErrors({ [field]: error } satisfies Errors);
+      document.getElementById(`signup-${field}`)?.focus();
+    } else setBanner(error);
+  };
 
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,10 +93,9 @@ export function SignupForm() {
     const nameStatus = await accountStore.usernameStatus(username);
     if (nameStatus !== "ok") next.username = nameStatus;
     if (!emailOk(email)) next.email = "invalidEmail";
-    if (!isStrongEnough(password, { email, username })) next.password = "weakPassword";
     setErrors(next);
     setBanner(null);
-    const first = (["username", "email", "password"] as const).find((field) => next[field]);
+    const first = (["username", "email"] as const).find((field) => next[field]);
     if (first) {
       document.getElementById(`signup-${first}`)?.focus();
       return;
@@ -99,42 +105,52 @@ export function SignupForm() {
     const prepared = await lookUpPrepared({ email, username, invite, locale: signupLocale });
     if (prepared.kind === "mismatch" || prepared.kind === "reserved") {
       setBusy(false);
-      const field = prepared.kind === "mismatch" ? "email" : "username";
-      setErrors({ [field]: prepared.kind === "mismatch" ? "inviteMismatch" : "reservedForCreator" } satisfies Errors);
-      document.getElementById(`signup-${field}`)?.focus();
+      showError(prepared.kind === "mismatch" ? "inviteMismatch" : "reservedForCreator");
       return;
     }
-    const result = await accountStore.signUp({
-      email,
-      password,
-      username: prepared.kind === "match" ? prepared.username : username,
+    const codeRequest: CodeRequest = {
+      email: email.trim(),
       locale: signupLocale,
-      prepared: prepared.kind === "match" ? { page: prepared.page, theme: prepared.theme } : undefined,
-      start: kind ? { kind, theme: look ? look.theme : STARTERS[kind].theme } : undefined,
-    });
+      signUp: {
+        username: prepared.kind === "match" ? prepared.username : username,
+        prepared: prepared.kind === "match" ? { page: prepared.page, theme: prepared.theme } : undefined,
+        invite: invite || undefined,
+        start: kind ? { kind, theme: look ? look.theme : STARTERS[kind].theme } : undefined,
+      },
+    };
+    const result = await accountStore.requestCode(codeRequest);
     setBusy(false);
     if (result.ok) {
-      // Real accounts confirm the address first; otherwise useLeaveWhenSignedIn takes it from here.
-      if (result.pending === "confirmEmail") setSentTo(email.trim());
-      return;
-    }
-    const field = FIELD_OF[result.error];
-    if (field) {
-      setErrors({ [field]: result.error } satisfies Errors);
-      document.getElementById(`signup-${field}`)?.focus();
-    } else {
-      setBanner(result.error);
-    }
+      setDemoCode(result.demoCode);
+      setRequest(codeRequest);
+    } else showError(result.error);
   };
 
-  if (sentTo) return <CheckInbox email={sentTo} title={t("confirm.title")} lead={t("confirm.lead", { email: sentTo })} />;
+  if (request) {
+    return (
+      <CodeStep
+        email={request.email}
+        intent="signUp"
+        demoCode={demoCode}
+        // A correct code signs in; useLeaveWhenSignedIn then opens the welcome flow.
+        onVerify={(code) => accountStore.verifyCode({ ...request, code })}
+        onResend={async () => {
+          const result = await accountStore.requestCode(request);
+          if (result.ok) setDemoCode(result.demoCode);
+          return result;
+        }}
+        onChangeEmail={() => {
+          setRequest(null);
+          setDemoCode(undefined);
+          window.setTimeout(() => document.getElementById("signup-email")?.focus(), 0);
+        }}
+      />
+    );
+  }
 
   return (
     <>
       {invite ? <AuthHeading title={t("signup.preparedTitle")} lead={t("signup.preparedLead")} /> : <AuthHeading title={t("signup.title")} lead={t("signup.lead")} />}
-      <SocialButtons />
-      {invite ? <p className="-mt-4 text-caption text-fg-secondary">{t("signup.preparedGoogle")}</p> : null}
-      <OrDivider label={t("social.or")} />
       <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-5">
         <FormError message={banner ? t(`errors.${banner}`) : null} />
         <TextField
@@ -183,27 +199,6 @@ export function SignupForm() {
           required
           error={errors.email ? t(`errors.${errors.email}`) : undefined}
         />
-        {errors.email === "emailTaken" ? (
-          <p className="-mt-3 text-small">
-            <Link href="/login" className="font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring">
-              {t("signup.loginInstead")}
-            </Link>
-          </p>
-        ) : null}
-        <PasswordField
-          id="signup-password"
-          label={t("fields.password")}
-          size="lg"
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value);
-            setErrors((current) => ({ ...current, password: undefined }));
-          }}
-          autoComplete="new-password"
-          required
-          checks={{ email, username }}
-          error={errors.password ? t(`errors.${errors.password}`) : undefined}
-        />
         <Button
           type="submit"
           variant="primary"
@@ -214,8 +209,11 @@ export function SignupForm() {
         >
           {t("signup.submit")}
         </Button>
-        <p className="text-caption text-fg-secondary">{t("signup.terms")}</p>
+        <p className="text-caption text-pretty text-fg-secondary">{t("signup.terms")}</p>
       </form>
+      <OrDivider label={t("social.or")} />
+      <SocialButtons />
+      {invite ? <p className="-mt-4 text-caption text-fg-secondary">{t("signup.preparedGoogle")}</p> : null}
       <p className="text-small text-fg-secondary">
         {t("signup.haveAccount")}{" "}
         <Link href="/login" className="font-semibold text-link underline-offset-4 hover:underline focus-visible:focus-ring">

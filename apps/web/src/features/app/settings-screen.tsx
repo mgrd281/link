@@ -1,15 +1,13 @@
 "use client";
 
 import { Badge, Button, ConfirmDialog, Icon, TextField, toast } from "@linkyo/ui";
-import { AtSign, CircleCheck, Download, Laptop, LogOut, Smartphone, Tablet, Trash2, Upload } from "lucide-react";
+import { AtSign, CircleCheck, Download, KeyRound, Laptop, LogOut, Smartphone, Tablet, Trash2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useSyncExternalStore, type SubmitEvent } from "react";
 
 import { LocaleSwitch } from "@/components/locale-switch";
 import { ThemeSwitch } from "@/components/theme-switch";
-import { PasswordField } from "@/features/account/auth/fields";
 import { useUsernameStatus } from "@/features/account/auth/shared";
-import { isStrongEnough } from "@/features/account/password";
 import { STORAGE_KEY } from "@/features/account/local-store";
 import { accountStore } from "@/features/account/store";
 import type { AuthError, Legal, LoginEvent } from "@/features/account/types";
@@ -101,10 +99,6 @@ function AccountPanel() {
   const { account } = useSite();
   const [email, setEmail] = useState(account.email);
   const [emailError, setEmailError] = useState<AuthError | null>(null);
-  const [current, setCurrent] = useState("");
-  const [next, setNext] = useState("");
-  const [passwordError, setPasswordError] = useState<AuthError | null>(null);
-  const [busy, setBusy] = useState(false);
 
   const saveEmail = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -112,23 +106,6 @@ function AccountPanel() {
     if (result.ok) toast({ title: result.pending === "confirmEmail" ? t("emailConfirm", { email: email.trim() }) : t("emailChanged"), tone: "success" });
     else setEmailError(result.error);
   };
-  const savePassword = async (event: SubmitEvent) => {
-    event.preventDefault();
-    if (!isStrongEnough(next, account)) {
-      setPasswordError("weakPassword");
-      return;
-    }
-    setBusy(true);
-    const result = await accountStore.changePassword({ current, next });
-    setBusy(false);
-    if (result.ok) {
-      setCurrent("");
-      setNext("");
-      setPasswordError(null);
-      toast({ title: t("passwordChanged"), tone: "success" });
-    } else setPasswordError(result.error);
-  };
-
   return (
     <Panel title={t("account")} id="account-title">
       <form onSubmit={(event) => void saveEmail(event)} noValidate className="grid grid-cols-1 gap-4">
@@ -149,24 +126,10 @@ function AccountPanel() {
           {t("emailSave")}
         </Button>
       </form>
-      <form onSubmit={(event) => void savePassword(event)} noValidate className="grid grid-cols-1 gap-4 border-t border-line pt-4">
-        <p className="text-small font-semibold">{t("password")}</p>
-        <PasswordField label={t("currentPassword")} value={current} onChange={(event) => setCurrent(event.target.value)} autoComplete="current-password" />
-        <PasswordField
-          label={tAuth("fields.newPassword")}
-          value={next}
-          onChange={(event) => {
-            setNext(event.target.value);
-            setPasswordError(null);
-          }}
-          autoComplete="new-password"
-          checks={account}
-          error={passwordError ? tAuth(`errors.${passwordError}`) : undefined}
-        />
-        <Button type="submit" className="justify-self-start" loading={busy} disabled={!current || !next}>
-          {t("passwordSave")}
-        </Button>
-      </form>
+      <p className="flex items-start gap-2 border-t border-line pt-4 text-small text-fg-secondary">
+        <Icon icon={KeyRound} size="sm" className="mt-0.5 shrink-0" />
+        {t("signInByCode")}
+      </p>
     </Panel>
   );
 }

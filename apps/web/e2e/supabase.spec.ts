@@ -14,7 +14,6 @@ import type { Database } from "../src/lib/supabase/database.types";
 const enabled = process.env.E2E_SUPABASE === "1";
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
 const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
-const PASSWORD = "night-shift-42";
 
 test.skip(!enabled, "Needs the local Supabase stack (E2E_SUPABASE=1).");
 test.describe.configure({ mode: "serial" });
@@ -24,22 +23,28 @@ const admin = () => createClient<Database>(URL_, process.env.SUPABASE_SECRET_KEY
 interface MailSummary {
   ID: string;
 }
-/** The newest email to this address in Mailpit, and the link with a one-time token inside it. */
-async function findLink(page: Page, to: string, type: string): Promise<string> {
-  const search = await page.request.get(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`);
-  const { messages } = (await search.json()) as { messages: MailSummary[] };
-  for (const message of messages) {
-    const detail = await page.request.get(`${MAILPIT}/api/v1/message/${message.ID}`);
-    const { HTML } = (await detail.json()) as { HTML: string };
-    const found = /href="([^"]*type=([a-z_]+)[^"]*)"/.exec(HTML);
-    if (found?.[2] === type) return (found[1] ?? "").replaceAll("&amp;", "&");
-  }
-  return "";
+
+/** Empties this address's inbox in Mailpit, so the next email is the one we wait for. */
+async function clearMail(page: Page, to: string) {
+  await page.request.delete(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`);
 }
 
-async function linkFromMail(page: Page, to: string, type: string): Promise<string> {
-  await expect.poll(async () => (await findLink(page, to, type)) !== "", { timeout: 15_000 }).toBe(true);
-  return findLink(page, to, type);
+/** The newest email to this address in Mailpit: its 6-digit code and its one-click link. */
+async function latestMail(page: Page, to: string): Promise<{ code: string; link: string } | null> {
+  const search = await page.request.get(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`);
+  const { messages } = (await search.json()) as { messages: MailSummary[] };
+  const newest = messages[0];
+  if (!newest) return null;
+  const detail = await page.request.get(`${MAILPIT}/api/v1/message/${newest.ID}`);
+  const { HTML } = (await detail.json()) as { HTML: string };
+  const code = />\s*(\d{6})\s*</.exec(HTML)?.[1] ?? "";
+  const link = (/href="([^"]*token_hash=[^"]*)"/.exec(HTML)?.[1] ?? "").replaceAll("&amp;", "&");
+  return code ? { code, link } : null;
+}
+
+async function mail(page: Page, to: string): Promise<{ code: string; link: string }> {
+  await expect.poll(async () => (await latestMail(page, to)) !== null, { timeout: 15_000 }).toBe(true);
+  return (await latestMail(page, to)) ?? { code: "", link: "" };
 }
 
 async function profileOf(email: string): Promise<{ id: string; confirmed: boolean } | null> {
@@ -53,33 +58,36 @@ async function signIns(id: string) {
   return data ?? [];
 }
 
-async function logIn(page: Page, email: string, password: string) {
+/** Signing in: the email, then (when `enter`) the code from the email. */
+async function logIn(page: Page, email: string, { enter = true }: { enter?: boolean } = {}) {
+  await clearMail(page, email);
   await page.goto("/de/login");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("E-Mail").fill(email);
-  await page.getByLabel("Passwort", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+  await page.getByRole("button", { name: "Code senden", exact: true }).click();
+  if (!enter) return;
+  await expect(page.getByRole("heading", { name: "Gib deinen Code ein" })).toBeVisible();
+  await page.getByLabel("Anmeldecode").fill((await mail(page, email)).code);
 }
 
 const name = `real-${Date.now().toString(36)}`;
 const email = `${name}@example.com`;
 
-test("sign up, confirm by email, build the page; it is saved on the server", async ({ page }) => {
+test("sign up with the code from the email, build the page; it is saved on the server", async ({ page }) => {
+  await clearMail(page, email);
   await page.goto(`/de/signup?name=${name}`);
   await page.waitForLoadState("networkidle");
   await expect(page.getByText(`linkyo.app/${name} ist frei`)).toBeVisible();
   await page.locator("#signup-email").fill(email);
-  await page.locator("#signup-password").fill(PASSWORD);
   await page.locator("form button[type=submit]").click();
-  // No session yet: the address has to be confirmed first.
-  await expect(page.getByRole("heading", { name: "Fast geschafft: Bestätige deine E-Mail" })).toBeVisible();
-  await expect(page.getByText(email).first()).toBeVisible();
+  // No session yet: the code from the email comes first. No demo notes with real accounts.
+  await expect(page.getByRole("heading", { name: "Gib deinen Code ein" })).toBeVisible();
+  await expect(page.locator("[id$='-demo']")).toHaveCount(0);
+  await expect(page.getByText("Es wird keine E-Mail verschickt")).toHaveCount(0);
   expect((await profileOf(email))?.confirmed).toBe(false);
-  // No demo notes with real accounts.
-  await expect(page.getByText("Konto und Seite werden nur in diesem Browser gespeichert")).toHaveCount(0);
 
-  // The link in the email signs in and continues with the welcome flow.
-  await page.goto(await linkFromMail(page, email, "signup"));
+  const { code } = await mail(page, email);
+  await page.getByLabel("Anmeldecode").fill(code);
   await page.waitForURL("**/de/app/welcome");
   const account = await profileOf(email);
   expect(account?.confirmed).toBe(true);
@@ -102,11 +110,14 @@ test("sign up, confirm by email, build the page; it is saved on the server", asy
   await expect(page.getByLabel("Vollständiger Name oder Firma")).toHaveValue("Rea Lund");
 });
 
-test("a wrong password is logged as failed; the right one signs in and is logged with the device", async ({ page }) => {
+test("a wrong code is logged as failed; the right one signs in and is logged with the device", async ({ page }) => {
   const account = await profileOf(email);
-  await logIn(page, email, "wrong-pass-1");
-  await expect(page.getByText("E-Mail oder Passwort stimmt nicht")).toBeVisible();
-  await logIn(page, email, PASSWORD);
+  await logIn(page, email, { enter: false });
+  await expect(page.getByRole("heading", { name: "Gib deinen Code ein" })).toBeVisible();
+  const { code } = await mail(page, email);
+  await page.getByLabel("Anmeldecode").fill(code === "000000" ? "111111" : "000000");
+  await expect(page.getByText("Dieser Code passt nicht")).toBeVisible();
+  await page.getByLabel("Anmeldecode").fill(code);
   await page.waitForURL("**/de/app");
   const log = await signIns(account?.id ?? "");
   expect(log.slice(0, 2).map((entry) => entry.result)).toEqual(["success", "failed"]);
@@ -117,43 +128,45 @@ test("a wrong password is logged as failed; the right one signs in and is logged
   await expect(page.getByText("Dieses Gerät").first()).toBeVisible();
 });
 
+test("the one-click link in the email signs in as well", async ({ page }) => {
+  await logIn(page, email, { enter: false });
+  const { link } = await mail(page, email);
+  expect(link).toContain("type=email");
+  await page.goto(link);
+  await page.waitForURL("**/de/app");
+});
+
+test("an address without an account gets the same answer, and no email", async ({ page }) => {
+  const nobody = `nobody-${name}@example.com`;
+  await logIn(page, nobody, { enter: false });
+  await expect(page.getByText(`Wenn es für ${nobody} ein Linkyo-Konto gibt`)).toBeVisible();
+  await page.waitForTimeout(1500);
+  expect(await latestMail(page, nobody)).toBeNull();
+  expect(await profileOf(nobody)).toBeNull();
+});
+
 test("the username check asks the server: a taken name is refused while typing", async ({ page }) => {
   await page.goto(`/de/signup?name=${name}`);
   await page.waitForLoadState("networkidle");
   await expect(page.getByText("Diese Adresse ist schon vergeben").first()).toBeVisible();
 });
 
-test("forgot password: the link by email leads to a new password, which then works", async ({ page }) => {
-  await page.goto("/de/forgot");
-  await page.waitForLoadState("networkidle");
-  await page.getByLabel("E-Mail").fill(email);
-  await page.getByRole("button", { name: "Link senden" }).click();
-  await expect(page.getByRole("heading", { name: "Schau in dein Postfach" })).toBeVisible();
-  await page.goto(await linkFromMail(page, email, "recovery"));
-  await page.waitForURL("**/de/reset-password");
-  await page.getByLabel("Neues Passwort").fill("brand-new-pass-7");
-  await page.getByRole("button", { name: "Passwort speichern" }).click();
-  await expect(page.getByRole("heading", { name: "Passwort geändert" })).toBeVisible();
-  await page.context().clearCookies();
-  await logIn(page, email, "brand-new-pass-7");
-  await page.waitForURL("**/de/app");
-});
-
 test("suspended accounts and blocked addresses cannot sign in", async ({ page }) => {
   const account = await profileOf(email);
   await admin().from("profiles").update({ status: "suspended" }).eq("id", account?.id ?? "");
-  await logIn(page, email, "brand-new-pass-7");
+  await logIn(page, email);
   await expect(page.getByText("Dieses Konto ist vorübergehend gesperrt")).toBeVisible();
   await admin().from("profiles").update({ status: "active" }).eq("id", account?.id ?? "");
 
+  // A blocked address doesn't even get a code.
   await admin().from("blocked_ips").insert({ ip: "127.0.0.1", reason: "e2e" });
-  await logIn(page, email, "brand-new-pass-7");
+  await logIn(page, email, { enter: false });
   await expect(page.getByText("Von dieser Verbindung aus ist gerade keine Anmeldung möglich")).toBeVisible();
   await admin().from("blocked_ips").delete().eq("ip", "127.0.0.1");
 });
 
 test("deleting the account removes it from the server", async ({ page }) => {
-  await logIn(page, email, "brand-new-pass-7");
+  await logIn(page, email);
   await page.waitForURL("**/de/app");
   await page.goto("/de/app/settings");
   await page.getByRole("button", { name: "Konto löschen" }).first().click();
@@ -172,7 +185,6 @@ const ownerEmail = `boss-${stamp}@example.com`;
 async function account(emailAddress: string, username: string) {
   const { data, error } = await admin().auth.admin.createUser({
     email: emailAddress,
-    password: PASSWORD,
     email_confirm: true,
     user_metadata: { username, locale: "en" },
   });
@@ -181,11 +193,12 @@ async function account(emailAddress: string, username: string) {
 }
 
 async function logInEn(page: Page, emailAddress: string) {
+  await clearMail(page, emailAddress);
   await page.goto("/en/login");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Email").fill(emailAddress);
-  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
-  await page.getByRole("button", { name: "Log in", exact: true }).click();
+  await page.getByRole("button", { name: "Send code", exact: true }).click();
+  await page.getByLabel("Sign-in code").fill((await mail(page, emailAddress)).code);
   await page.waitForURL(/\/en\/app/);
 }
 

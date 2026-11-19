@@ -62,5 +62,5 @@ export async function isBlocked(service: Db, place: RequestPlace): Promise<boole
 /** Only in-app destinations after a link from an email (no open redirects). */
 export function safePath(value: string | null, fallback: string): string {
   if (!value) return fallback;
-  return /^\/(?:de|en|ar)\/(?:app|admin|reset-password)(?:\/[\w/-]*)?$/.test(value) ? value : fallback;
+  return /^\/(?:de|en|ar)\/(?:app|admin)(?:\/[\w/-]*)?$/.test(value) ? value : fallback;
 }
