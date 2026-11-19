@@ -58,6 +58,13 @@ export function MarketingHeader() {
           >
             {cta.label}
           </Link>
+          {/* Phones: the one action stays in reach next to the menu, with a short label. */}
+          <Link
+            href="/signup"
+            className="inline-flex h-control-sm items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg shadow-cta transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed md:hidden"
+          >
+            {t("nav.startShort")}
+          </Link>
           <MobileMenu items={items} cta={cta} secondary={login} labels={{ menu: t("nav.menu"), close: t("nav.close") }} />
         </div>
       </div>

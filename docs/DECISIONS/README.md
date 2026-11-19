@@ -37,3 +37,4 @@
 | [0033](0033-white-and-teal.md) | White backgrounds with Linkyo Teal: white page and cards, teal 50 soft fills, teal 100 panels on the home instead of rose/lavender/mint/lime | **Applied** |
 | [0034](0034-hero-deck.md) | Hero deck: example pages as a tabbed carousel (open the page in front, click a side page, tabs with a timer line, pause, keyboard, mirrored in Arabic) | **Applied** |
 | [0035](0035-sign-in-by-code.md) | No passwords: sign-up and sign-in by 6-digit email code (and one-click link), new split sign-up screen with a drifting wall of example pages, import from Linktree & co. in the welcome flow | **Applied** |
+| [0036](0036-motion-without-pause-buttons.md) | Motion without pause buttons (deck: two rounds, stops on choice, holds on hover/focus; strip: moves with scrolling or swipes; walls: one pass, hold on hover/keyboard), hero sized to the screen, phone-first first screen | **Applied** |

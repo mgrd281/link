@@ -214,18 +214,6 @@
   }
 }
 
-@keyframes mk-marquee {
-  to {
-    translate: -50% 0;
-  }
-}
-
-@keyframes mk-marquee-rtl {
-  to {
-    translate: 50% 0;
-  }
-}
-
 @keyframes mk-marquee-y {
   to {
     translate: 0 -50%;
@@ -376,29 +364,16 @@
   }
 }
 
-@utility mk-marquee {
-  animation: mk-marquee var(--duration-marquee) linear infinite;
-
-  &:is([dir="rtl"] *) {
-    animation-name: mk-marquee-rtl;
-  }
-
-  &:hover,
-  &:focus-within,
-  &:is([data-paused="true"] *) {
-    animation-play-state: paused;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-}
-
-/* A column of cards drifting upwards (the template wall). Hovering the wall or its pause button stops it. */
+/*
+ * A column of cards drifting upwards (the walls beside sign-up and atop the gallery). Decorative:
+ * one pass and it rests; it holds under the mouse and while the keyboard moves through the page.
+ */
 @utility mk-marquee-y {
-  animation: mk-marquee-y var(--duration-marquee) linear infinite;
+  /* One slow pass (a minute or so), then the wall rests: it never runs for good. */
+  animation: mk-marquee-y var(--duration-marquee) linear 1 both;
 
   &:is([data-marquee]:hover *),
+  &:is(body:has(:focus-visible) *),
   &:is([data-paused="true"] *) {
     animation-play-state: paused;
   }
@@ -435,8 +410,9 @@
 
 /*
  * The hero deck: three example pages. The one in front (data-slot="front") is the page you can
- * open; the next one waits on the reading side, the previous one on the other. Cards glide between
- * slots; mirrored for right-to-left. Reduced motion: they change places without moving.
+ * open; the next one waits on the reading side, the previous one on the other. Cards share one box
+ * (the front card's) and glide between slots; mirrored for right-to-left. Reduced motion: they
+ * change places without moving.
  */
 @utility mk-deck-card {
   --deck-dir: 1;
@@ -445,7 +421,7 @@
   --deck-scale: 1;
   --deck-rotate: 0deg;
 
-  translate: calc(var(--deck-x) * var(--deck-dir)) calc(-50% + var(--deck-y));
+  translate: calc(var(--deck-x) * var(--deck-dir)) var(--deck-y);
   scale: var(--deck-scale);
   rotate: calc(var(--deck-rotate) * var(--deck-dir));
   z-index: var(--z-raised);
@@ -496,7 +472,75 @@
   }
 }
 
-/* What belongs to the page in front (its address, one number): it arrives just after the card. */
+/*
+ * On wide screens the deck never grows taller than the screen: the front phone (390 × 844) gets at
+ * most the screen height minus the header, its address, the tabs and some air (16rem).
+ */
+@utility mk-deck-fit {
+  max-width: calc((100svh - var(--spacing-32) * 2) * 390 / 844);
+}
+
+/* The soft disc and the thin ring behind the deck, centred on the front phone. */
+@utility mk-deck-halo {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: var(--radius-full);
+
+  &:is([dir="rtl"] *) {
+    translate: 50% -50%;
+  }
+}
+
+/* The first screen: the hero fills it (below the header) and centres its content. */
+@utility mk-hero-fit {
+  min-height: calc(100svh - var(--spacing-16));
+}
+
+/*
+ * The example strip moves with the page: scrolling down slides it along. It has no motion of its
+ * own, so there is nothing to pause. Wide screens only; phones get a plain swipeable row.
+ */
+@keyframes mk-drift {
+  from {
+    translate: var(--drift-from, 0) 0;
+  }
+
+  to {
+    translate: var(--drift-to, -36%) 0;
+  }
+}
+
+@utility mk-drift {
+  @variant md {
+    @supports (animation-timeline: view()) {
+      animation: mk-drift linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+  }
+
+  &:is([dir="rtl"] *) {
+    --drift-to: 36%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* A swipeable row without a scrollbar (the cards themselves show there is more). */
+@utility mk-no-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* What belongs to the page in front (its address): it arrives just after the card. */
 @utility mk-deck-chip {
   animation: mk-card-in var(--duration-slow) var(--ease-emphasized) both;
   animation-delay: calc(var(--duration-move) * 0.55 + var(--i, 0) * var(--duration-micro));

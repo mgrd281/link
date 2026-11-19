@@ -35,36 +35,41 @@ test.describe("marketing home", () => {
     await expect(list.getByRole("listitem")).toHaveCount(1);
   });
 
-  test("the template strip can be paused (WCAG 2.2.2)", async ({ page }) => {
-    const toggle = page.getByRole("button", { name: "Pause the template strip" });
-    await toggle.click();
-    await expect(page.getByRole("button", { name: "Play the template strip" })).toHaveAttribute("aria-pressed", "true");
+  test("the template strip has no motion of its own: it slides with the page, nothing to pause", async ({ page }) => {
+    const strip = page.getByRole("list", { name: "Templates" });
+    await expect(strip.getByRole("link")).toHaveCount(16);
+    // Driven by scrolling (a view timeline), never by a clock; so no pause button (WCAG 2.2.2).
+    await expect(strip).toHaveCSS("animation-name", "mk-drift");
+    expect(await strip.evaluate((list) => getComputedStyle(list).getPropertyValue("animation-timeline"))).toContain("view");
+    await expect(page.getByRole("button", { name: /^(Pause|Play) the template strip$/ })).toHaveCount(0);
   });
 
-  test("the pages in the hero take turns, can be chosen and paused; the example strip opens real example pages", async ({ page }) => {
+  test("the hero pages take turns, stop as soon as one is chosen, and open the real example page", async ({ page }) => {
     const deck = page.getByRole("region", { name: "Example pages" });
     const tabs = deck.getByRole("tab");
     await expect(tabs).toHaveCount(3);
     await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
+    // No pause button: choosing a page stops the deck, it ends by itself after two rounds, and it
+    // holds under the mouse or keyboard focus (WCAG 2.2.2).
+    await expect(deck.getByRole("button", { name: /Pause|Play/ })).toHaveCount(0);
 
-    // The pause button stops the timer (WCAG 2.2.2), so nothing below depends on timing.
-    await deck.getByRole("button", { name: "Pause the page carousel" }).click();
-    await expect(deck.getByRole("button", { name: "Play the page carousel" })).toBeVisible();
-    await expect(deck.locator(".mk-progress")).toHaveCSS("animation-play-state", "paused");
-
-    // The page in front opens the real example page.
-    await expect(deck.getByRole("link", { name: "View page, Lou Ferreira" })).toHaveAttribute("href", "/de/p/lou-ferreira");
+    // The address above the phone in front is the link to the real example page.
+    const front = deck.getByRole("link", { name: /View page, Lou Ferreira/ });
+    await expect(front).toHaveAttribute("href", "/de/p/lou-ferreira");
+    await expect(front).toContainText("linkyo.app/lou-ferreira");
 
     // When the timer line under the tab is full, the next page comes to the front.
+    await page.mouse.move(0, 0);
     await deck.locator(".mk-progress").evaluate((line) => {
       for (const animation of line.getAnimations()) animation.finish();
     });
     await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-    await expect(deck.getByRole("link", { name: "View page, Juno Kade" })).toBeVisible();
+    await expect(deck.getByRole("link", { name: /View page, Juno Kade/ })).toBeVisible();
 
-    // Tabs choose directly; arrow keys move between them.
+    // Choosing a page stops the deck for good: no timer any more.
     await tabs.nth(2).click();
-    await expect(deck.getByRole("link", { name: /^View page, / })).toHaveAttribute("href", "/ar/p/layal-mansour");
+    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/ar/p/layal-mansour");
+    await expect(deck.locator(".mk-progress")).toHaveCount(0);
     await tabs.nth(2).press("ArrowRight");
     await expect(tabs.nth(0)).toBeFocused();
     await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
@@ -121,8 +126,9 @@ test("phone menu opens as a popover and closes after choosing a section", async 
 test("the hero pages follow the reading direction in Arabic", async ({ page }) => {
   await page.goto("/ar");
   const deck = page.getByRole("region", { name: "صفحات أمثلة" });
-  await deck.getByRole("button", { name: "إيقاف تبديل الصفحات" }).click();
   const tabs = deck.getByRole("tab");
+  // Choosing a page stops the deck, so nothing below depends on timing.
+  await tabs.nth(0).click();
   // The next page waits on the left (the reading side), and ArrowLeft moves forward.
   const front = await deck.locator('[data-slot="front"]').boundingBox();
   const next = await deck.locator('[data-slot="next"]').boundingBox();

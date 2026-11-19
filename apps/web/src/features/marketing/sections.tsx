@@ -12,7 +12,6 @@ import { phoneSizes } from "./assets";
 import { ClaimForm } from "./claim-form";
 import { EXAMPLE_SHOTS, STRIP, type ExampleShot } from "./examples";
 import { order } from "./hero";
-import { MarqueeControl } from "./marquee-control";
 import { PasteDemo } from "./paste-demo";
 
 function SectionHeader({ id, title, lead, center = false }: { id: string; title: string; lead?: string; center?: boolean }) {
@@ -36,7 +35,7 @@ function Shell({ id, labelledBy, className, children }: { id?: string; labelledB
 
 const TRUST_ICONS = [Server, ShieldCheck, Gift] as const;
 
-/** Three plain promises on soft cards. */
+/** Three plain promises on soft cards, each with its icon in Linkyo Teal. */
 export function Trust() {
   const t = useTranslations("marketing.trust");
   const items = t.raw("items") as { title: string; body: string }[];
@@ -45,14 +44,19 @@ export function Trust() {
       <h2 id="trust-title" className="sr-only">
         {t("title")}
       </h2>
-      <ul className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      {/* Phones: compact rows (icon beside the words); wide screens: three cards side by side. */}
+      <ul className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
         {items.map((item, index) => (
-          <li key={item.title} className="mk-reveal grid content-start gap-4 rounded-xl bg-canvas-muted p-6 md:p-8" style={order(index)}>
-            <span aria-hidden className="grid size-control-md place-items-center rounded-full bg-surface-elevated text-fg shadow-e1">
+          <li
+            key={item.title}
+            className="mk-reveal grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-1 rounded-xl bg-canvas-muted p-5 md:grid-cols-1 md:content-start md:gap-4 md:p-8"
+            style={order(index)}
+          >
+            <span aria-hidden className="row-span-2 grid size-control-md place-items-center rounded-full bg-primary text-primary-fg shadow-cta md:row-span-1">
               <Icon icon={TRUST_ICONS[index] ?? Check} size="md" />
             </span>
-            <h3 className="text-h3 text-balance">{item.title}</h3>
-            <p className="text-body text-pretty text-fg-secondary">{item.body}</p>
+            <h3 className="text-body-lg font-semibold text-balance md:text-h3">{item.title}</h3>
+            <p className="text-small text-pretty text-fg-secondary md:text-body">{item.body}</p>
           </li>
         ))}
       </ul>
@@ -63,46 +67,43 @@ export function Trust() {
 const nameOf = (slug: ExampleShot) => EXAMPLES[slug]?.profile.displayName ?? slug;
 const pageHref = (slug: ExampleShot) => `/${LOOKS[slug].locale}/p/${slug}`;
 
-/** Example pages drifting by; the strip grows to full size as it scrolls in. Pausable, still on reduced motion. */
+/**
+ * Example pages in one row. On wide screens the row slides along as the page scrolls (it has no
+ * motion of its own, so there is nothing to pause); on phones it is a row to swipe, card by card.
+ * It grows to full size as it scrolls in; reduced motion keeps it still.
+ */
 export function Templates() {
   const t = useTranslations("marketing.templates");
   const tExamples = useTranslations("examples");
-  const loop = [...STRIP, ...STRIP];
   return (
     <section id="templates" aria-labelledby="templates-title" className="scroll-mt-24 overflow-clip py-16 md:py-24">
       <div className="mx-auto max-w-content px-5 md:px-10">
         <SectionHeader id="templates-title" title={t("title")} lead={t("lead")} center />
       </div>
-      <MarqueeControl pauseLabel={t("pause")} playLabel={t("play")}>
-        <div className="mk-zoom mt-12 mask-x-from-90% mask-x-to-100%">
-          <ul aria-label={t("label")} className="mk-marquee flex w-max gap-4 px-2 py-4 motion-reduce:w-auto motion-reduce:flex-wrap motion-reduce:justify-center">
-            {loop.map((slug, index) => {
-              const copy = index >= STRIP.length;
-              return (
-                <li key={`${slug}-${index}`} aria-hidden={copy || undefined} className={cn("w-[min(56vw,var(--container-menu))] shrink-0", copy && "motion-reduce:hidden")}>
-                  <a
-                    href={pageHref(slug)}
-                    tabIndex={copy ? -1 : undefined}
-                    aria-label={t("open", { name: nameOf(slug) })}
-                    className="group block overflow-hidden rounded-xl border border-line bg-surface shadow-e2 transition-[translate,box-shadow] duration-standard ease-standard hover:-translate-y-1 hover:shadow-e3 focus-visible:focus-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-                  >
-                    <span className="relative block aspect-short">
-                      <Image
-                        src={EXAMPLE_SHOTS[slug]}
-                        alt=""
-                        fill
-                        sizes={phoneSizes.rail}
-                        placeholder="blur"
-                        className="object-cover object-top transition-transform duration-slow ease-standard group-hover:scale-lift motion-reduce:transition-none"
-                      />
-                    </span>
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </MarqueeControl>
+      <div className="mk-zoom mk-no-scrollbar mt-10 snap-x snap-mandatory scroll-px-5 overflow-x-auto md:mt-12 md:snap-none md:overflow-x-hidden md:mask-x-from-90% md:mask-x-to-100%">
+        <ul aria-label={t("label")} className="mk-drift flex w-max gap-4 px-5 py-4 md:px-10">
+          {STRIP.map((slug) => (
+            <li key={slug} className="w-[min(62vw,var(--container-menu))] shrink-0 snap-start">
+              <a
+                href={pageHref(slug)}
+                aria-label={t("open", { name: nameOf(slug) })}
+                className="group block overflow-hidden rounded-xl border border-line bg-surface shadow-e2 transition-[translate,box-shadow] duration-standard ease-standard hover:-translate-y-1 hover:shadow-e3 focus-visible:focus-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              >
+                <span className="relative block aspect-short">
+                  <Image
+                    src={EXAMPLE_SHOTS[slug]}
+                    alt=""
+                    fill
+                    sizes={phoneSizes.rail}
+                    placeholder="blur"
+                    className="object-cover object-top transition-transform duration-slow ease-standard group-hover:scale-lift motion-reduce:transition-none"
+                  />
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
       <div className="mt-10 flex justify-center px-5">
         <Link
           href="/templates"
@@ -243,9 +244,9 @@ export function Features() {
 
       <FeatureRow title={t("features.look.title")} body={t("features.look.body")} tint="bg-tint-teal">
         <div className="relative grid aspect-square w-full max-w-prose place-items-center sm:aspect-4/3">
-          <Shot slug="juno-kade" className="mk-fan absolute w-1/3 -translate-x-3/4 -rotate-6 rtl:translate-x-3/4" />
-          <Shot slug="salma-rahhal" className="mk-fan absolute w-1/3 translate-x-3/4 rotate-6 rtl:-translate-x-3/4" />
-          <Shot slug="nico-hale" className="relative w-5/12" sizes={phoneSizes.hero} />
+          <Shot slug="juno-kade" className="mk-fan absolute w-5/12 -translate-x-3/4 -rotate-6 sm:w-1/3 rtl:translate-x-3/4" />
+          <Shot slug="salma-rahhal" className="mk-fan absolute w-5/12 translate-x-3/4 rotate-6 sm:w-1/3 rtl:-translate-x-3/4" />
+          <Shot slug="nico-hale" className="relative w-1/2 sm:w-5/12" sizes={phoneSizes.hero} />
         </div>
       </FeatureRow>
 

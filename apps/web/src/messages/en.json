@@ -577,7 +577,8 @@
       "start": "Sign up for free",
       "menu": "Menu",
       "close": "Close menu",
-      "label": "Main"
+      "label": "Main",
+      "startShort": "Sign up"
     },
     "hero": {
       "kicker": "For creators, artists and the teams behind them",
@@ -589,10 +590,6 @@
         "No cookies",
         "Data in Frankfurt"
       ],
-      "stackPause": "Pause the page carousel",
-      "stackPlay": "Play the page carousel",
-      "followers": "{count} followers",
-      "listeners": "{count} monthly listeners",
       "kinds": {
         "fashion": "Fashion",
         "dj": "DJ",
@@ -604,8 +601,10 @@
         "label": "Example pages",
         "choose": "Choose an example page",
         "view": "View page",
-        "viewNamed": "View page, {name}"
-      }
+        "viewNamed": "View page, {name}",
+        "auto": "Changes every 6 seconds, twice round, until you choose a page."
+      },
+      "promises": "What you get"
     },
     "claim": {
       "label": "Choose your page address",
@@ -634,8 +633,6 @@
     "templates": {
       "title": "Pages with character",
       "lead": "Music, sport, comedy, shops, consulting: every page in its own look. All examples are made up – yours will look just as good.",
-      "pause": "Pause the template strip",
-      "play": "Play the template strip",
       "label": "Templates",
       "open": "See {name}'s example page"
     },
@@ -841,11 +838,6 @@
     "demo": {
       "title": "Demo:",
       "body": "Your account and page stay in this browser and are sent nowhere. No email is sent: your code is shown on screen."
-    },
-    "side": {
-      "label": "Pages made with Linkyo",
-      "pause": "Pause the moving pages",
-      "play": "Play the moving pages"
     },
     "social": {
       "google": "Continue with Google",
@@ -2619,10 +2611,6 @@
     "scroll": {
       "back": "Previous categories",
       "next": "More categories"
-    },
-    "motion": {
-      "pause": "Pause motion",
-      "play": "Play motion"
     },
     "language": {
       "label": "Page language",

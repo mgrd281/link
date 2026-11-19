@@ -1,10 +1,7 @@
 "use client";
 
-import { cn, IconButton } from "@linkyo/ui";
-import { Pause, Play } from "lucide-react";
+import { cn } from "@linkyo/ui";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
-import { useState } from "react";
 
 import { EXAMPLE_SHOTS, WALL } from "@/features/marketing/examples";
 
@@ -15,20 +12,19 @@ const PER_COLUMN = 4;
 
 /**
  * Beside the sign-up and sign-in forms: a tilted wall of example pages made with Linkyo, its columns
- * drifting past each other. Decorative (hidden from screen readers); hover or the button stops it
- * (WCAG 2.2.2), reduced motion keeps it still.
+ * drifting past each other. Decorative (hidden from screen readers). No pause button: the wall makes
+ * one slow pass and rests, holds under the mouse and while the keyboard moves through the page, and
+ * stays still with reduced motion (mk-marquee-y, WCAG 2.2.2).
  */
 export function AuthWall() {
-  const t = useTranslations("auth.side");
-  const [paused, setPaused] = useState(false);
   // Column c steps through the pages five at a time from c on (18 pages: five and 18 share no
   // factor, so no page repeats within a column and neighbours differ).
   const columns = Array.from({ length: COLUMNS }, (_, column) =>
     Array.from({ length: PER_COLUMN }, (_, row) => SHOTS[(column + row * 5) % SHOTS.length]).filter((shot) => shot !== undefined),
   );
   return (
-    <aside aria-label={t("label")} data-paused={paused} className="relative isolate hidden overflow-hidden bg-canvas-muted lg:block">
-      <div aria-hidden data-marquee className="mk-wall absolute -inset-1/4 grid grid-cols-6 gap-5">
+    <div aria-hidden className="relative isolate hidden overflow-hidden bg-canvas-muted lg:block">
+      <div data-marquee className="mk-wall absolute -inset-1/4 grid grid-cols-6 gap-5">
         {columns.map((column, index) => (
           <div key={index} className={cn(index % 2 === 1 && "-mt-32")}>
             <ul className={cn("mk-marquee-y grid content-start gap-5 pb-5", index % 2 === 1 && "mk-marquee-reverse")}>
@@ -43,16 +39,6 @@ export function AuthWall() {
           </div>
         ))}
       </div>
-      <IconButton
-        icon={paused ? Play : Pause}
-        label={paused ? t("play") : t("pause")}
-        variant="secondary"
-        size="sm"
-        onClick={() => {
-          setPaused((value) => !value);
-        }}
-        className="absolute end-4 bottom-4 rounded-full motion-reduce:hidden"
-      />
-    </aside>
+    </div>
   );
 }

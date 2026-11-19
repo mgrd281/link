@@ -107,17 +107,17 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
               <div className="flex flex-wrap gap-3">
                 <Link
                   href="/signup"
-                  className="inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-e2 transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+                  className="group inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-5 text-body font-semibold text-primary-fg shadow-cta transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
                 >
                   {t("ctaButton")}
-                  <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+                  <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
                 </Link>
                 <a
                   href="#gallery"
-                  className="inline-flex h-control-lg items-center gap-2 rounded-full border border-line-strong bg-surface px-6 text-body font-semibold text-fg shadow-e1 transition-colors duration-micro hover:bg-surface-elevated focus-visible:focus-ring active:scale-pressed"
+                  className="group inline-flex h-control-lg items-center gap-2 rounded-full border border-line-strong bg-surface px-5 text-body font-semibold text-fg shadow-e1 transition-colors duration-micro hover:bg-surface-elevated focus-visible:focus-ring active:scale-pressed"
                 >
                   {t("browse")}
-                  <Icon icon={ArrowDown} size="md" />
+                  <Icon icon={ArrowDown} size="md" className="transition-transform duration-micro group-hover:translate-y-0.5" />
                 </a>
               </div>
               <ul aria-label={t("stats.label")} className="grid grid-cols-3 gap-4 border-t border-line pt-6 sm:flex sm:gap-x-8">

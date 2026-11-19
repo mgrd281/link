@@ -64,18 +64,22 @@ test.describe("template gallery", () => {
     await expect(dialog).toBeHidden();
   });
 
-  test("the moving wall can be paused and stays still for reduced motion; nothing overflows", async ({ page }) => {
+  test("the moving wall makes one pass and rests, holds under the mouse, stays still for reduced motion; nothing overflows", async ({ page, isMobile }) => {
     await page.goto("/en/templates");
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
-    const pause = page.getByRole("button", { name: "Pause motion" });
-    await pause.click();
-    await expect(page.getByRole("button", { name: "Play motion" })).toBeVisible();
-    const lane = page.locator(".mk-marquee-y, .mk-marquee").filter({ visible: true }).first();
-    await expect(lane).toHaveCSS("animation-play-state", "paused");
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.reload();
-    await expect(page.locator(".mk-marquee-y, .mk-marquee").filter({ visible: true }).first()).toHaveCSS("animation-name", "none");
-    await expect(page.getByRole("button", { name: "Pause motion" })).toBeHidden();
+    // No pause button (WCAG 2.2.2 is met by the motion itself): one pass on wide screens, a row to
+    // swipe on phones.
+    await expect(page.getByRole("button", { name: /^(Pause|Play) motion$/ })).toHaveCount(0);
+    if (!isMobile) {
+      const lane = page.locator(".mk-marquee-y").first();
+      await expect(lane).toHaveCSS("animation-iteration-count", "1");
+      // The lane itself never stands still long enough to be "stable"; hover its frame.
+      await page.locator("[data-marquee]").first().hover();
+      await expect(lane).toHaveCSS("animation-play-state", "paused");
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.reload();
+      await expect(page.locator(".mk-marquee-y").first()).toHaveCSS("animation-name", "none");
+    }
   });
 
   test("well-known people are listed too, labelled as concepts, and start with their look", async ({ page }) => {

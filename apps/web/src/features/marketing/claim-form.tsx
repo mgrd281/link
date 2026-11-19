@@ -36,7 +36,7 @@ export function ClaimForm({ id, className, tone = "default" }: { id: string; cla
           router.push(`/signup?name=${encodeURIComponent(name)}`);
         } else setState({ kind: "invalid" });
       }}
-      className={cn("grid min-w-0 grid-cols-1 gap-3", className)}
+      className={cn("group/claim grid min-w-0 grid-cols-1 gap-3", className)}
     >
       <label htmlFor={id} className="sr-only">
         {t("label")}
@@ -65,7 +65,16 @@ export function ClaimForm({ id, className, tone = "default" }: { id: string; cla
           {t("cta")}
         </Button>
       </div>
-      <p id={messageId} role="status" className={cn("flex items-start gap-2 ps-1 text-small", tone === "brand" ? "text-primary-fg" : state.kind === "invalid" ? "text-danger-strong" : "text-fg-secondary")}>
+      {/* The rules show while the field is in use; screen readers always get them with the field. */}
+      <p
+        id={messageId}
+        role="status"
+        className={cn(
+          "flex items-start gap-2 ps-1 text-small",
+          tone === "brand" ? "text-primary-fg" : state.kind === "invalid" ? "text-danger-strong" : "text-fg-secondary",
+          state.kind === "idle" && "sr-only group-focus-within/claim:not-sr-only",
+        )}
+      >
         {state.kind === "ok" ? (
           <>
             <Icon icon={CircleCheck} size="sm" className={cn("mt-0.5 shrink-0", tone === "default" && "text-success-strong")} />

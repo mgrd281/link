@@ -577,7 +577,8 @@
       "start": "Kostenlos registrieren",
       "menu": "Menü",
       "close": "Menü schließen",
-      "label": "Hauptmenü"
+      "label": "Hauptmenü",
+      "startShort": "Registrieren"
     },
     "hero": {
       "kicker": "Für Creator, Artists und die Teams dahinter",
@@ -589,10 +590,6 @@
         "Ohne Cookies",
         "Daten in Frankfurt"
       ],
-      "stackPause": "Seitenwechsel anhalten",
-      "stackPlay": "Seitenwechsel abspielen",
-      "followers": "{count} Follower",
-      "listeners": "{count} Hörer im Monat",
       "kinds": {
         "fashion": "Mode",
         "dj": "DJ",
@@ -604,8 +601,10 @@
         "label": "Beispielseiten",
         "choose": "Beispielseite wählen",
         "view": "Seite ansehen",
-        "viewNamed": "Seite ansehen, {name}"
-      }
+        "viewNamed": "Seite ansehen, {name}",
+        "auto": "Wechselt alle 6 Sekunden, zweimal reihum, bis du selbst eine Seite wählst."
+      },
+      "promises": "Was du bekommst"
     },
     "claim": {
       "label": "Wähl deine Seitenadresse",
@@ -634,8 +633,6 @@
     "templates": {
       "title": "Seiten mit Charakter",
       "lead": "Musik, Sport, Comedy, Läden, Beratung: jede Seite im eigenen Look. Alle Beispiele sind erfunden – deine wird genauso gut.",
-      "pause": "Vorlagen-Leiste anhalten",
-      "play": "Vorlagen-Leiste abspielen",
       "label": "Vorlagen",
       "open": "Beispielseite von {name} ansehen"
     },
@@ -841,11 +838,6 @@
     "demo": {
       "title": "Demo:",
       "body": "Dein Konto und deine Seite bleiben in diesem Browser und werden nirgendwohin gesendet. Es wird keine E-Mail verschickt: Dein Code steht hier auf dem Bildschirm."
-    },
-    "side": {
-      "label": "Seiten, gemacht mit Linkyo",
-      "pause": "Bewegte Seiten anhalten",
-      "play": "Bewegte Seiten abspielen"
     },
     "social": {
       "google": "Weiter mit Google",
@@ -2619,10 +2611,6 @@
     "scroll": {
       "back": "Vorherige Kategorien",
       "next": "Weitere Kategorien"
-    },
-    "motion": {
-      "pause": "Bewegung anhalten",
-      "play": "Bewegung abspielen"
     },
     "language": {
       "label": "Sprache der Seite",

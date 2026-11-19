@@ -1,9 +1,7 @@
 "use client";
 
-import { cn, IconButton } from "@linkyo/ui";
-import { Pause, Play } from "lucide-react";
+import { cn } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 
 import { CardFace, type GalleryItem } from "./gallery-card";
 import { CATEGORIES } from "./looks";
@@ -25,14 +23,15 @@ export function pickShowcase(items: readonly GalleryItem[], count: number): Gall
 }
 
 /**
- * The hero's moving wall: three columns drifting past each other on large screens, one strip on
- * phones. Decorative (the same pages are in the gallery below as named buttons), so it is hidden
- * from screen readers and out of the tab order; a mouse click still opens the preview. Hover or the
- * pause button stops it (WCAG 2.2.2); reduced motion keeps it still.
+ * The hero's moving wall: three columns drifting past each other on large screens, a row to swipe
+ * on phones. Decorative (the same pages are in the gallery below as named buttons), so it is hidden
+ * from screen readers and out of the tab order; a mouse click still opens the preview. No pause
+ * button: the wall makes one slow pass and rests, holds under the mouse and while the keyboard
+ * moves through the page (mk-marquee-y, WCAG 2.2.2); phones get a row to swipe; reduced motion
+ * keeps everything still.
  */
 export function Showcase({ items, onOpen }: { items: readonly GalleryItem[]; onOpen: (item: GalleryItem) => void }) {
   const t = useTranslations("examples");
-  const [paused, setPaused] = useState(false);
   const columns = [0, 1, 2].map((column) => items.filter((_, index) => index % 3 === column));
   const label = (item: GalleryItem) => (item.badge ? t(`badges.${item.badge}`) : t(`categories.${item.category}`));
   const card = (item: GalleryItem, key: string, className?: string) => (
@@ -46,7 +45,7 @@ export function Showcase({ items, onOpen }: { items: readonly GalleryItem[]; onO
   );
 
   return (
-    <div data-paused={paused} className="relative grid min-w-0 gap-3">
+    <div className="relative grid min-w-0 gap-3">
       <div aria-hidden className="relative isolate hidden lg:block">
         <div className="mk-glow absolute inset-x-8 inset-y-16 rounded-full bg-selected blur-ambient" />
         <div data-marquee className="relative grid h-(--container-prose) grid-cols-3 gap-4 overflow-hidden mask-y-from-85% mask-y-to-100%">
@@ -58,20 +57,11 @@ export function Showcase({ items, onOpen }: { items: readonly GalleryItem[]; onO
         </div>
       </div>
 
-      <div aria-hidden data-marquee className="-mx-5 overflow-hidden mask-x-from-90% mask-x-to-100% md:-mx-10 lg:hidden">
-        <ul className="mk-marquee flex w-max gap-4 px-2 py-2">
-          {[...items, ...items].map((item, position) => card(item, `${item.slug}-${position}`, "w-[40vw] max-w-(--container-menu) shrink-0"))}
+      <div aria-hidden className="mk-no-scrollbar -mx-5 snap-x snap-mandatory scroll-px-5 overflow-x-auto md:-mx-10 md:scroll-px-10 lg:hidden">
+        <ul className="flex w-max gap-4 px-5 py-2 md:px-10">
+          {items.map((item) => card(item, item.slug, "w-[44vw] max-w-(--container-menu) shrink-0 snap-start"))}
         </ul>
       </div>
-
-      <IconButton
-        icon={paused ? Play : Pause}
-        label={paused ? t("motion.play") : t("motion.pause")}
-        variant="secondary"
-        size="sm"
-        onClick={() => setPaused((value) => !value)}
-        className="justify-self-end motion-reduce:hidden lg:absolute lg:end-3 lg:bottom-3"
-      />
     </div>
   );
 }

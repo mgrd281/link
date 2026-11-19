@@ -2,7 +2,7 @@
 
 import { detectLink, type Detection } from "@linkyo/blocks";
 import { Badge, cn, Icon } from "@linkyo/ui";
-import { Clapperboard, Image as ImageIcon, Link2, Music2, Plus, Radio, ShoppingBag, Ticket, Video, X, type LucideIcon } from "lucide-react";
+import { Clapperboard, CornerDownLeft, Image as ImageIcon, Link2, Music2, Plus, Radio, ShoppingBag, Ticket, Video, X, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, useMemo, useRef, useState } from "react";
 
@@ -105,9 +105,11 @@ export function PasteDemo() {
           />
           <button
             type="submit"
-            className="inline-flex h-control-md shrink-0 items-center rounded-md bg-primary px-4 text-small font-semibold text-primary-fg shadow-cta transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+            className="inline-flex h-control-md shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-3 text-small font-semibold text-primary-fg shadow-cta transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed max-sm:size-control-md sm:px-4"
           >
-            {t("add")}
+            {/* Phones: a round "enter" arrow leaves room for the link; the word comes back on wider screens. */}
+            <Icon icon={CornerDownLeft} size="md" className="sm:hidden rtl:-scale-x-100" />
+            <span className="max-sm:sr-only">{t("add")}</span>
           </button>
         </div>
         <p id={`${inputId}-hint`} className={cn("min-h-control-sm text-small", error ? "text-danger-strong" : "text-fg-secondary")}>
