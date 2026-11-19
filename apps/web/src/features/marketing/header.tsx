@@ -46,18 +46,17 @@ export function MarketingHeader() {
           <div className="hidden items-center gap-1 sm:flex">
             <LocaleSwitch />
           </div>
-          <Link
-            href="/login"
-            className="hidden h-control-md items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro ease-standard hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0 md:inline-flex"
-          >
-            {login.label}
-          </Link>
-          <Link
-            href="/signup"
-            className="hidden h-control-md items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro ease-standard hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0 md:inline-flex"
-          >
-            {cta.label}
-          </Link>
+          {/* One switch for both: the teal highlight sits on "sign up" and slides to "log in" under the pointer. */}
+          <div className="hidden md:block">
+            <div className="mk-auth-switch h-control-md text-small font-semibold">
+              <Link href="/login" data-login className="rounded-full px-4 focus-visible:focus-ring">
+                {login.label}
+              </Link>
+              <Link href="/signup" data-signup className="rounded-full px-4 focus-visible:focus-ring">
+                {cta.label}
+              </Link>
+            </div>
+          </div>
           {/* Phones: the one action stays in reach next to the menu, with a short label. */}
           <Link
             href="/signup"

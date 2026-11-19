@@ -494,6 +494,69 @@
   }
 }
 
+/*
+ * "Log in" and "Sign up" as one switch: a teal highlight rests on "Sign up" and slides to "Log in"
+ * while the pointer or keyboard focus is there. Both halves are equally wide. Mirrored in Arabic.
+ */
+@utility mk-auth-switch {
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  padding: var(--spacing-1);
+  border-radius: var(--radius-full);
+  background: var(--color-canvas-muted);
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset-block: var(--spacing-1);
+    inset-inline-start: var(--spacing-1);
+    width: calc(50% - var(--spacing-1));
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    translate: 100% 0;
+    transition: translate var(--duration-standard) var(--ease-emphasized);
+  }
+
+  &:is([dir="rtl"] *)::before {
+    translate: -100% 0;
+  }
+
+  &:has([data-login]:is(:hover, :focus-visible))::before {
+    translate: 0 0;
+  }
+
+  & > a {
+    display: grid;
+    place-items: center;
+    color: var(--color-fg);
+    white-space: nowrap;
+    transition: color var(--duration-standard) var(--ease-standard);
+  }
+
+  & > [data-signup],
+  &:has([data-login]:is(:hover, :focus-visible)) > [data-login] {
+    color: var(--color-primary-fg);
+  }
+
+  &:has([data-login]:is(:hover, :focus-visible)) > [data-signup] {
+    color: var(--color-fg);
+  }
+
+  & > a:active {
+    scale: var(--scale-pressed);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before,
+    & > a {
+      transition: none;
+    }
+  }
+}
+
 /* The first screen: the hero fills it (below the header) and centres its content. */
 @utility mk-hero-fit {
   min-height: calc(100svh - var(--spacing-16));
