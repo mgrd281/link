@@ -25,7 +25,7 @@ export function Menu({ trigger, items, align = "end" }: { trigger: ReactNode; it
           align={align}
           sideOffset={tokens.spacing["1"]}
           collisionPadding={tokens.spacing["2"]}
-          className="layer-popover min-w-menu rounded-md border border-line bg-surface-elevated p-1 text-fg shadow-e2 motion-safe:animate-pop-in"
+          className="layer-popover min-w-menu rounded-md border border-line bg-surface-elevated p-1 text-fg motion-safe:animate-pop-in"
         >
           {items.map((item) => (
             <DropdownMenu.Item

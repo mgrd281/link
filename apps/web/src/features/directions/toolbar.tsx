@@ -53,23 +53,23 @@ export function DirectionToolbar({
       </div>
     );
   }
-  const seg = "inline-flex h-control-sm items-center rounded-sm px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring";
+  const seg = "inline-flex h-control-sm items-center rounded-sm border border-transparent px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring";
   return (
     <div data-theme="dark" className="layer-overlay fixed inset-x-0 bottom-4 flex justify-center px-4">
       <nav
         aria-label={t("toolbar.label")}
-        className="flex max-w-full flex-wrap items-center gap-2 overflow-x-auto rounded-xl border border-line-strong bg-surface-elevated p-1 text-fg shadow-e3"
+        className="flex max-w-full flex-wrap items-center gap-2 overflow-x-auto rounded-xl border border-line-strong bg-surface-elevated p-1 text-fg"
       >
         <div className="flex gap-0.5 rounded-md bg-canvas-muted p-0.5" role="group" aria-label={t("toolbar.direction")}>
           {DIRECTIONS.map((d) => (
-            <Link key={d} href={href(d, view)} aria-current={d === direction ? "page" : undefined} className={cn(seg, d === direction && "bg-surface text-fg shadow-e1")}>
+            <Link key={d} href={href(d, view)} aria-current={d === direction ? "page" : undefined} className={cn(seg, d === direction && "border-line bg-surface text-fg")}>
               {t(`${d}.name`)}
             </Link>
           ))}
         </div>
         <div className="flex gap-0.5 rounded-md bg-canvas-muted p-0.5" role="group" aria-label={t("toolbar.view")}>
           {(["page", "dashboard"] as const).map((v) => (
-            <Link key={v} href={href(direction, v)} aria-current={v === view ? "page" : undefined} className={cn(seg, v === view && "bg-surface text-fg shadow-e1")}>
+            <Link key={v} href={href(direction, v)} aria-current={v === view ? "page" : undefined} className={cn(seg, v === view && "border-line bg-surface text-fg")}>
               {t(`toolbar.${v}`)}
             </Link>
           ))}
@@ -79,7 +79,7 @@ export function DirectionToolbar({
             {TEMPLATE_IDS.map((id) => {
               const active = id === (template ?? activeTemplate);
               return (
-                <Link key={id} href={`/directions/${direction}${query({ template: id, preset: "", mode: null })}`} aria-current={active ? "true" : undefined} className={cn(seg, active && "bg-surface text-fg shadow-e1")}>
+                <Link key={id} href={`/directions/${direction}${query({ template: id, preset: "", mode: null })}`} aria-current={active ? "true" : undefined} className={cn(seg, active && "border-line bg-surface text-fg")}>
                   {creatorTokens.templates[id].label}
                 </Link>
               );

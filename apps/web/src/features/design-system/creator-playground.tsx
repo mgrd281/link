@@ -32,7 +32,7 @@ function MiniPage({ theme, name, bio, links }: { theme: ResolvedCreatorTheme; na
     <div
       style={themeStyle(theme)}
       className={cn(
-        "grid gap-5 rounded-xl border border-line p-6 font-creator-body text-creator-fg shadow-e2",
+        "grid gap-5 rounded-xl border border-line p-6 font-creator-body text-creator-fg",
         theme.background === "gradient" ? "bg-(image:--creator-gradient)" : "bg-creator-bg",
       )}
     >
@@ -241,7 +241,7 @@ export function CreatorThemesSection() {
                 style={themeStyle(preset)}
                 className={cn(
                   "group grid h-32 content-between rounded-lg border border-line p-4 text-start text-creator-fg",
-                  "transition-[box-shadow,scale] duration-standard ease-standard hover:shadow-e2 focus-visible:focus-ring active:scale-pressed",
+                  "transition-[scale] duration-standard ease-standard focus-visible:focus-ring active:scale-pressed",
                   "aria-pressed:focus-ring",
                   preset.background === "gradient" ? "bg-(image:--creator-gradient)" : "bg-creator-bg",
                 )}

@@ -2,6 +2,7 @@ import {
   COLOR_PROPERTIES,
   FRAGMENT_ATTRIBUTES,
   NEUTRAL_VALUE,
+  SHADOW_PROPERTIES,
   SIZE_ATTRIBUTES,
   SIZE_PROPERTY,
   SVG_GEOMETRY_ELEMENTS,
@@ -20,6 +21,8 @@ const MESSAGES = {
   duration: "Raw motion duration. Use a motion token from @linkyo/tokens.",
   easing: "Raw easing curve. Use a motion token from @linkyo/tokens.",
   attrNumber: "Raw size '{{value}}' for '{{attr}}'. Use a size token (e.g. <Icon size=\"md\" />).",
+  shadow: "Shadow utility '{{value}}'. Linkyo is flat (ADR 0037): separate surfaces with a border (border-line) or a surface step, never a shadow.",
+  shadowStyle: "'{{prop}}' draws a shadow. Linkyo is flat (ADR 0037): use a border or a surface step instead.",
 };
 
 /** @param {import("estree").Node | null | undefined} node */
@@ -87,6 +90,13 @@ const rule = {
         const literal = staticString(prop.value);
         const number = numericLiteral(prop.value);
 
+        // No shadows at all (ADR 0037); "none" only takes one away.
+        if (SHADOW_PROPERTIES.has(name) || (name === "filter" && literal !== null && /drop-shadow\(/.test(literal))) {
+          if (literal === null || literal.trim() !== "none") {
+            context.report({ node: prop.value, messageId: "shadowStyle", data: { prop: name } });
+          }
+          continue;
+        }
         if (COLOR_PROPERTIES.has(name)) {
           if (literal !== null && !NEUTRAL_VALUE.test(literal.trim()) && !/^var\(--/.test(literal.trim())) {
             context.report({ node: prop.value, messageId: "styleColor", data: { prop: name } });

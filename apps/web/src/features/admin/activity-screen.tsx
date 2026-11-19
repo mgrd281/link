@@ -134,7 +134,7 @@ export function ActivityScreen() {
         </div>
       ) : (
         groups.map((group) => (
-          <section key={group.key} aria-label={group.label} className="grid grid-cols-1 gap-2 rounded-xl border border-line bg-surface p-4 shadow-e1">
+          <section key={group.key} aria-label={group.label} className="grid grid-cols-1 gap-2 rounded-xl border border-line bg-surface p-4">
             <h2 className="text-small font-semibold text-fg-secondary">{group.label}</h2>
             <ActivityList events={group.events} now={now} />
           </section>

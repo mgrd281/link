@@ -54,14 +54,14 @@ export function MarketingHeader() {
           </Link>
           <Link
             href="/signup"
-            className="hidden h-control-md items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg shadow-cta transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0 md:inline-flex"
+            className="hidden h-control-md items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0 md:inline-flex"
           >
             {cta.label}
           </Link>
           {/* Phones: the one action stays in reach next to the menu, with a short label. */}
           <Link
             href="/signup"
-            className="inline-flex h-control-sm items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg shadow-cta transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed md:hidden"
+            className="inline-flex h-control-sm items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed md:hidden"
           >
             {t("nav.startShort")}
           </Link>

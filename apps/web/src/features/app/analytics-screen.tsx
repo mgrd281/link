@@ -23,7 +23,7 @@ function StatTile({ label, value, change, previousLabel }: { label: string; valu
   const locale = useLocale();
   const up = (change ?? 0) >= 0;
   return (
-    <div className="grid content-start gap-1 rounded-xl border border-line bg-surface p-4 shadow-e1">
+    <div className="grid content-start gap-1 rounded-xl border border-line bg-surface p-4">
       <dt className="text-small text-fg-secondary">{label}</dt>
       <dd className="text-h2 font-semibold">{value}</dd>
       {change !== null ? (
@@ -116,7 +116,7 @@ function ViewsChart({ days, label }: { days: DayStat[]; label: string }) {
           {current && active !== null ? (
             <div
               aria-hidden
-              className="pointer-events-none absolute start-(--x) top-0 layer-popover grid min-w-32 -translate-x-1/2 gap-1 rounded-md border border-line bg-surface-elevated p-2 text-small shadow-e2 rtl:translate-x-1/2"
+              className="pointer-events-none absolute start-(--x) top-0 layer-popover grid min-w-32 -translate-x-1/2 gap-1 rounded-md border border-line bg-surface-elevated p-2 text-small rtl:translate-x-1/2"
               style={{ "--x": `${((active + 0.5) / days.length) * 100}%` } as CSSProperties}
             >
               <span className="text-caption text-fg-secondary">{date(current.date, true)}</span>

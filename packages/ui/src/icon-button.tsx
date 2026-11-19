@@ -22,7 +22,7 @@ const iconButtonVariants = cva(
     variants: {
       variant: {
         ghost: "hover:bg-hover active:bg-pressed data-[state=on]:bg-selected",
-        secondary: "border border-line-strong bg-surface shadow-e1 hover:bg-surface-elevated active:bg-pressed",
+        secondary: "border border-line-strong bg-surface hover:bg-surface-elevated active:bg-pressed",
         primary: "bg-primary text-primary-fg hover:bg-primary-hover active:bg-primary-pressed",
       },
       size: {

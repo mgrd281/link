@@ -79,7 +79,7 @@ export function CardFace({
   return (
     <div
       style={item.style}
-      className="mk-tilt relative isolate aspect-portrait overflow-hidden rounded-xl bg-creator-bg font-creator-body text-creator-fg"
+      className="mk-tilt relative isolate aspect-portrait overflow-hidden rounded-xl border border-line bg-creator-bg font-creator-body text-creator-fg"
     >
       <div className={cn("absolute inset-0 overflow-hidden", item.hero === "duotone" && "isolate bg-creator-bg")}>
         {item.photo ? (

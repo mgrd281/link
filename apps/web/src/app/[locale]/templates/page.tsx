@@ -96,7 +96,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
           items={items}
           intro={
             <header className="mk-rise grid content-center gap-6">
-              <p className="inline-flex items-center gap-2 justify-self-start rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary shadow-e1">
+              <p className="inline-flex items-center gap-2 justify-self-start rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary">
                 <span className="grid size-6 place-items-center rounded-full bg-selected text-selected-fg">
                   <Icon icon={Sparkles} size="sm" />
                 </span>
@@ -107,14 +107,14 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
               <div className="flex flex-wrap gap-3">
                 <Link
                   href="/signup"
-                  className="group inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-5 text-body font-semibold text-primary-fg shadow-cta transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
+                  className="group inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-5 text-body font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
                 >
                   {t("ctaButton")}
                   <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
                 </Link>
                 <a
                   href="#gallery"
-                  className="group inline-flex h-control-lg items-center gap-2 rounded-full border border-line-strong bg-surface px-5 text-body font-semibold text-fg shadow-e1 transition-colors duration-micro hover:bg-surface-elevated focus-visible:focus-ring active:scale-pressed"
+                  className="group inline-flex h-control-lg items-center gap-2 rounded-full border border-line-strong bg-surface px-5 text-body font-semibold text-fg transition-colors duration-micro hover:bg-surface-elevated focus-visible:focus-ring active:scale-pressed"
                 >
                   {t("browse")}
                   <Icon icon={ArrowDown} size="md" className="transition-transform duration-micro group-hover:translate-y-0.5" />
@@ -137,7 +137,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
           }
         />
 
-        <section className="relative isolate grid gap-6 overflow-hidden rounded-xl bg-primary p-6 text-primary-fg shadow-e2 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:p-10">
+        <section className="relative isolate grid gap-6 overflow-hidden rounded-xl bg-primary p-6 text-primary-fg md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:p-10">
           <div aria-hidden className="mk-glow absolute -end-16 -top-16 size-32 rounded-full bg-primary-hover blur-ambient" />
           <span aria-hidden className="relative grid size-control-xl place-items-center rounded-full bg-primary-fg text-primary">
             <Icon icon={WandSparkles} size="lg" />
@@ -145,7 +145,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
           <p className="relative text-h3 text-balance">{t("cta")}</p>
           <Link
             href="/signup"
-            className="relative inline-flex h-control-lg items-center justify-center gap-2 justify-self-start rounded-full bg-primary-fg px-6 text-body font-semibold text-primary shadow-e1 transition-transform duration-micro hover:-translate-y-0.5 focus-visible:focus-ring active:scale-pressed md:justify-self-end"
+            className="relative inline-flex h-control-lg items-center justify-center gap-2 justify-self-start rounded-full bg-primary-fg px-6 text-body font-semibold text-primary transition-transform duration-micro hover:-translate-y-0.5 focus-visible:focus-ring active:scale-pressed md:justify-self-end"
           >
             {t("ctaButton")}
             <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />

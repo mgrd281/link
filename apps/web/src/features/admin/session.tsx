@@ -121,9 +121,9 @@ function DemoGate({ children }: { children: ReactNode }) {
 function GateCard({ icon, title, lead, children }: { icon: LucideIcon; title: string; lead: ReactNode; children: ReactNode }) {
   return (
     <main className="grid min-h-dvh place-items-center bg-canvas px-4 py-10 text-fg">
-      <div className="grid w-full max-w-preview grid-cols-1 gap-6 rounded-xl border border-line bg-surface p-6 shadow-e2 md:p-8">
+      <div className="grid w-full max-w-preview grid-cols-1 gap-6 rounded-xl border border-line bg-surface p-6 md:p-8">
         <div className="flex items-center gap-3">
-          <span className="grid size-control-lg place-items-center rounded-lg bg-primary text-primary-fg shadow-e1">
+          <span className="grid size-control-lg place-items-center rounded-lg bg-primary text-primary-fg">
             <LogoSymbol className="size-icon-md" />
           </span>
           <span className="grid size-control-lg place-items-center rounded-lg bg-selected text-selected-fg">
@@ -219,7 +219,7 @@ function NoAccess({ account }: { account: Account }) {
       <div className="flex flex-wrap gap-2">
         <Link
           href="/app"
-          className="inline-flex h-control-lg items-center gap-2 rounded-md bg-primary px-5 text-body font-semibold text-primary-fg shadow-e1 hover:bg-primary-hover focus-visible:focus-ring"
+          className="inline-flex h-control-lg items-center gap-2 rounded-md bg-primary px-5 text-body font-semibold text-primary-fg hover:bg-primary-hover focus-visible:focus-ring"
         >
           {t("backToApp")}
         </Link>

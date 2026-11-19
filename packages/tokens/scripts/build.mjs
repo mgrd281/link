@@ -58,7 +58,6 @@ function hexToRgba(hex) {
 const cssColor = (/** @type {string} */ hex) => hex.toLowerCase();
 
 /** @param {{ color: string, offsetX: string, offsetY: string, blur: string, spread: string }} s */
-const cssShadow = (s) => `${s.offsetX} ${s.offsetY} ${s.blur} ${s.spread} ${cssColor(s.color)}`.replace(/\b0px\b/g, "0");
 
 /**
  * CSS font stack. Families with a self-hosted face get `var(--font-face-<id>, "Family")` so apps can
@@ -122,12 +121,6 @@ function webModel(dictionary) {
 
   for (const t of byPath(dictionary, ["radius"])) light.push([`--radius-${t.path[1]}`, t.$value === "0px" ? "0" : t.$value]);
   for (const t of byPath(dictionary, ["border-width"])) light.push([`--border-width-${t.path[1]}`, t.$value]);
-
-  for (const t of byPath(dictionary, ["shadow"])) {
-    light.push([`--shadow-${t.path[1]}`, cssShadow(t.$value)]);
-    const e = ext(t);
-    if (e.dark) dark.push([`--shadow-${t.path[1]}`, cssShadow(resolve(e.dark, dictionary))]);
-  }
 
   for (const t of byPath(dictionary, ["motion", "duration"])) light.push([`--duration-${t.path[2]}`, `${ms(t.$value)}ms`]);
   for (const t of byPath(dictionary, ["motion", "easing"])) light.push([`--ease-${t.path[2]}`, `cubic-bezier(${t.$value.join(", ")})`]);
@@ -281,12 +274,6 @@ ${decls(m.creator)}
   outline: var(--border-width-focus) solid var(--color-focus);
   outline-offset: var(--border-width-focus-offset);
 }
-/* Primary actions: a soft light edge on top and a glow in the brand color below (ADR 0036). */
-@utility shadow-cta {
-  box-shadow:
-    inset 0 var(--border-width-hairline) 0 0 color-mix(in oklab, var(--color-primary-fg) 22%, transparent),
-    0 var(--spacing-2) var(--spacing-5) calc(var(--spacing-2) * -1) color-mix(in oklab, var(--color-primary) 60%, transparent);
-}
 /* 2 px emphasized border (drop targets, selected tiles). Width only; pair with a border color. */
 @utility border-emphasis {
   border-width: var(--border-width-focus);
@@ -361,8 +348,6 @@ StyleDictionary.registerFormat({
           ...(e.highContrast ? { highContrast: resolve(e.highContrast, dictionary) } : {}),
           ...(e.highContrastDark ? { highContrastDark: resolve(e.highContrastDark, dictionary) } : {}),
         });
-      } else if (t.path[0] === "shadow") {
-        set(out, keys, { light: cssShadow(t.$value), dark: cssShadow(resolve(e.dark ?? t.$value, dictionary)) });
       } else if (t.$type === "dimension" && /px$/.test(String(t.$value))) {
         set(out, keys, px(t.$value));
       } else if (t.$type === "duration") {
@@ -521,22 +506,6 @@ ${byPath(dictionary, ["motion", "duration"])
     public enum Opacity {
 ${byPath(dictionary, ["opacity"])
   .map((t) => `        public static let ${t.path[1]}: Double = ${t.$value}`)
-  .join("\n")}
-    }
-
-    public enum Elevation {
-        public struct Shadow: Sendable, Equatable {
-            public let opacityLight: Double
-            public let opacityDark: Double
-            public let y: CGFloat
-            public let radius: CGFloat
-        }
-${byPath(dictionary, ["shadow"])
-  .map((t) => {
-    const light = t.$value;
-    const dark = resolve(ext(t).dark ?? light, dictionary);
-    return `        public static let ${t.path[1]} = Shadow(opacityLight: ${+hexToRgba(light.color).a.toFixed(3)}, opacityDark: ${+hexToRgba(dark.color).a.toFixed(3)}, y: ${px(light.offsetY)}, radius: ${px(light.blur) / 2})`;
-  })
   .join("\n")}
     }
 }

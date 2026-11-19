@@ -68,7 +68,7 @@ export function PreviewPane({
       </div>
       <div
         className={cn(
-          "relative mx-auto min-h-0 w-full max-w-preview flex-1 overflow-hidden rounded-xl border shadow-e3",
+          "relative mx-auto min-h-0 w-full max-w-preview flex-1 overflow-hidden rounded-xl border",
           tone === "dark" ? "border-line-strong" : "border-line",
         )}
         style={{ transform: "translateZ(0)" }}

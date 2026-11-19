@@ -33,7 +33,7 @@ export function TeamPreviewScreen({ slug, lang }: { slug: string; lang: string |
         <p className="p-8 text-body text-fg-secondary">{published.status === "loading" ? t("loading") : t("missing")}</p>
       )}
       <nav aria-label={t("label")} className="layer-sticky fixed inset-x-0 bottom-0 flex justify-center px-4 pb-[max(var(--spacing-4),env(safe-area-inset-bottom))]">
-        <div className="flex items-center gap-2 rounded-full border border-line bg-surface-elevated p-1 ps-4 text-fg shadow-e3">
+        <div className="flex items-center gap-2 rounded-full border border-line bg-surface-elevated p-1 ps-4 text-fg">
           <span className="text-small font-medium">{t("badge")}</span>
           <Button asChild variant="primary" className="rounded-full">
             <Link href={`/admin/creators/${slug}`}>

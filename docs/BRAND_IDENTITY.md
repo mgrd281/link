@@ -143,10 +143,12 @@ The creator's page does **not** use Linkyo colors. It uses a generated theme:
 - **Creator page**: single column, max-width 560 px, side padding 20 px (mobile) / centered on desktop with optional ambient background.
 - **Dashboard**: sidebar 248 px + content (max 1120 px) + live phone preview 390 px on ≥ 1280 px screens.
 - **Radius tokens**: `xs 6`, `sm 10`, `md 14`, `lg 20`, `xl 28`, `full 9999`. Cards = `lg`, buttons = `md` or `full` (creator choice), inputs = `md`.
-- **Elevation**: 3 levels only. Prefer borders + subtle shadow over heavy shadows.
-  - `e1`: 0 1px 2px rgba(0,0,0,.06)
-  - `e2`: 0 4px 16px rgba(0,0,0,.08)
-  - `e3`: 0 12px 40px rgba(0,0,0,.14)
+- **No shadows: Linkyo is flat** ([ADR 0037](DECISIONS/0037-no-shadows.md)). No `box-shadow`, `drop-shadow` or `text-shadow` anywhere: not on cards, buttons, menus, dialogs, phones, creator pages, share pictures or iOS views. The tokens have no shadow scale. A surface stands apart in one of three ways:
+  - **Hairline border** (`border-line`): cards, chips, menus, popovers, dialogs, sheets.
+  - **Stronger border** (`border-line-strong`, `border-line-input`): fields and secondary buttons.
+  - **Step in the fill**: a white `surface` tile on a teal 50 `canvas-muted` panel; a chosen tab or segment is white with a hairline border.
+  - Modal overlays also sit on the scrim. Lint (`linkyo/no-raw-design-values`, Stylelint) rejects any shadow.
+- **Sticky bars** sit flush under the header on a solid background: nothing scrolls between the header and a sticky filter row.
 - **Touch targets**: minimum 44 × 44 pt everywhere.
 
 ---
@@ -166,7 +168,7 @@ The creator's page does **not** use Linkyo colors. It uses a generated theme:
 - Label: verb first, max 3 words. Icon left (16/20 px) only when it adds meaning.
 
 ### Creator page link buttons (themeable)
-Styles: Filled, Outline, Soft, Glass (backdrop blur), Shadow, Minimal (text + arrow). Shapes: square, rounded, pill. Optional thumbnail/icon left, chevron or "new" badge right.
+Styles: Filled, Outline, Soft, Glass (backdrop blur), Card (surface fill + hairline border, saved as `shadow`), Minimal (text + arrow). Shapes: square, rounded, pill. Optional thumbnail/icon left, chevron or "new" badge right.
 
 ---
 
@@ -184,7 +186,7 @@ Styles: Filled, Outline, Soft, Glass (backdrop blur), Shadow, Minimal (text + ar
 - **Principle**: motion explains, never decorates.
 - **Durations**: 120 ms (micro), 200 ms (standard), 320 ms (sheets/pages).
 - **Easing**: `cubic-bezier(0.2, 0.8, 0.2, 1)` (web); spring response 0.35, damping 0.85 (iOS).
-- Drag & drop: lifted item scales 1.03 + `e3` shadow; others reflow smoothly.
+- Drag & drop: lifted item scales 1.03 and gets a Linkyo Teal border (no shadow); others reflow smoothly.
 - Respect `prefers-reduced-motion` / Reduce Motion: replace movement with opacity fades.
 - **iOS haptics**: selection tick on reorder, success on publish, warning on destructive confirm. Never on every tap.
 

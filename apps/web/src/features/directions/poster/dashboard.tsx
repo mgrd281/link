@@ -98,7 +98,7 @@ export function PosterDashboard({ initial, profile, pageHref }: { initial: Edito
             </Button>
           </header>
 
-          <section aria-label={t("addLabel")} className="grid gap-4 rounded-xl border border-line bg-surface p-5 shadow-e1">
+          <section aria-label={t("addLabel")} className="grid gap-4 rounded-xl border border-line bg-surface p-5">
             <div className="flex items-center gap-3 rounded-lg border border-line-input bg-surface-elevated px-4 focus-within:border-focus focus-within:focus-ring">
               <Icon icon={Plus} size="md" className="text-fg-tertiary" />
               <label className="sr-only" htmlFor="poster-add">
@@ -264,8 +264,8 @@ function SectionRow({ block, label, count, focus, first, last, onToggle, onRenam
       style={rowStyle}
       className={cn(
         "group flex items-center gap-3 rounded-lg pe-2 pt-4 pb-1",
-        "transition-[box-shadow,opacity,scale] duration-standard ease-standard",
-        isDragging && "layer-raised relative scale-lift bg-surface shadow-e3",
+        "transition-[opacity,scale] duration-standard ease-standard",
+        isDragging && "layer-raised relative scale-lift bg-surface",
         !block.visible && "opacity-secondary",
       )}
     >
@@ -346,12 +346,12 @@ function PosterRow({
       ref={rowRef}
       style={rowStyle}
       className={cn(
-        "group flex items-center gap-3 rounded-lg border border-line bg-surface p-2 pe-2 shadow-e1",
-        "transition-[box-shadow,opacity,scale] duration-standard ease-standard",
+        "group flex items-center gap-3 rounded-lg border border-line bg-surface p-2 pe-2",
+        "transition-[opacity,scale] duration-standard ease-standard",
         nested && "ms-4 md:ms-8",
         opensSection && "mt-4",
-        isDragging && "layer-raised relative scale-lift shadow-e3",
-        !block.visible && "border-dashed bg-canvas-muted shadow-none",
+        isDragging && "layer-raised relative scale-lift border-primary",
+        !block.visible && "border-dashed bg-canvas-muted",
       )}
     >
       <DragHandle sortable={sortable} label={label} onMove={onMove} />

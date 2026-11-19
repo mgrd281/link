@@ -289,17 +289,18 @@ export function LayoutSection() {
           ))}
         </div>
       </SubSection>
-      <SubSection title={t("elevation")} note={t("elevationNote")}>
+      <SubSection title={t("depth")} note={t("depthNote")}>
+        {/* No shadows (ADR 0037): the three ways a surface stands apart. */}
         <div className="grid gap-6 sm:grid-cols-3">
-          {(["e1", "e2", "e3"] as const).map((level) => (
-            <div
-              key={level}
-              className="grid h-32 place-items-center rounded-lg border border-line bg-surface-elevated"
-              style={{ boxShadow: `var(--shadow-${level})` }}
-            >
-              <span className="font-mono text-small">{level}</span>
-            </div>
-          ))}
+          <div className="grid h-32 place-items-center rounded-lg border border-line bg-surface">
+            <span className="font-mono text-small">border-line</span>
+          </div>
+          <div className="grid h-32 place-items-center rounded-lg border border-line-strong bg-surface">
+            <span className="font-mono text-small">border-line-strong</span>
+          </div>
+          <div className="grid h-32 place-items-center rounded-lg bg-canvas-muted p-4">
+            <span className="grid size-full place-items-center rounded-md bg-surface font-mono text-small">canvas-muted · surface</span>
+          </div>
         </div>
       </SubSection>
       <SubSection title={t("grid")} note={t("gridNote")}>

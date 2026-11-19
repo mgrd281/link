@@ -37,7 +37,7 @@ export function Showcase({ items, onOpen }: { items: readonly GalleryItem[]; onO
   const card = (item: GalleryItem, key: string, className?: string) => (
     <li key={key} className={className}>
       <button type="button" tabIndex={-1} onClick={() => onOpen(item)} className="group block w-full cursor-pointer rounded-xl text-start">
-        <span className="block rounded-xl shadow-e2 transition-[translate,box-shadow] duration-standard ease-standard group-hover:-translate-y-1 group-hover:shadow-e3 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
+        <span className="block rounded-xl transition-[translate] duration-standard ease-standard group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
           <CardFace item={item} label={label(item)} compact />
         </span>
       </button>

@@ -9,7 +9,8 @@ export const linkStyleClasses: Record<CreatorButtonStyle, string> = {
   outline: "border border-creator-line-strong text-creator-fg",
   soft: "bg-creator-surface-2 text-creator-fg",
   glass: "border border-creator-line bg-creator-glass text-creator-fg backdrop-blur-glass",
-  shadow: "bg-creator-surface text-creator-fg shadow-e2 hover:shadow-e3",
+  // "shadow" is the saved name of the card style: a flat surface with a hairline border (no shadows, ADR 0037).
+  shadow: "border border-creator-line bg-creator-surface text-creator-fg hover:border-creator-line-strong",
   minimal: "rounded-none border-b border-creator-line px-1 text-creator-fg hover:text-creator-accent-text",
 };
 
@@ -33,7 +34,7 @@ export function CreatorLink({ label, href, variant, leading, badge, className, e
       className={cn(
         "group/link relative isolate flex min-h-creator-button w-full items-center gap-3 rounded-creator-button px-4 py-2",
         "font-creator-body text-body font-medium",
-        "transition-[box-shadow,color,scale] duration-standard ease-standard active:scale-pressed motion-reduce:active:scale-none",
+        "transition-[border-color,color,scale] duration-standard ease-standard active:scale-pressed motion-reduce:active:scale-none",
         "focus-visible:focus-ring",
         // Hover/press overlay in currentColor — works on every style and theme.
         "after:pointer-events-none after:absolute after:inset-0 after:-z-0 after:rounded-[inherit] after:bg-current after:opacity-0",

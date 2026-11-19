@@ -110,7 +110,7 @@ export function QrButton({ username, compact = false }: { username: string; comp
         }
       >
         <div className="grid justify-items-center gap-4">
-          <div ref={holder} className="w-full max-w-menu rounded-xl border border-line bg-white p-4 text-ink shadow-e2">
+          <div ref={holder} className="w-full max-w-menu rounded-xl border border-line bg-white p-4 text-ink">
             <QrCode value={url} label={t("qrLabel", { url: `linkyo.app/${username}` })} className="w-full" />
           </div>
           <p dir="ltr" className="font-mono text-small text-fg-secondary">

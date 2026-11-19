@@ -52,7 +52,7 @@ export function Sheet({
             else content.focus();
           }}
           className={cn(
-            "layer-modal fixed inset-x-0 bottom-0 flex max-h-[92dvh] flex-col rounded-t-xl border border-line bg-surface-elevated text-fg shadow-e3 outline-none motion-safe:animate-rise-in",
+            "layer-modal fixed inset-x-0 bottom-0 flex max-h-[92dvh] flex-col rounded-t-xl border border-line bg-surface-elevated text-fg outline-none motion-safe:animate-rise-in",
             "lg:inset-y-0 lg:start-auto lg:end-0 lg:max-h-none lg:w-full lg:max-w-prose lg:rounded-none lg:rounded-s-xl",
             besidePreview && "xl:end-[calc(var(--container-preview)+var(--spacing-8))]",
           )}

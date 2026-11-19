@@ -54,7 +54,7 @@ public struct LinkyoBadge: View {
 }
 
 public extension View {
-    /// Card surface: `surface` fill, hairline border, radius lg, e1 elevation.
+    /// Card surface: `surface` fill, hairline border, radius lg. Flat: Linkyo uses no shadows (ADR 0037).
     func linkyoCard() -> some View {
         padding(LinkyoTokens.Spacing.s4)
             .background(Color.Linkyo.surface, in: RoundedRectangle(cornerRadius: LinkyoTokens.Radius.lg, style: .continuous))
@@ -62,6 +62,5 @@ public extension View {
                 RoundedRectangle(cornerRadius: LinkyoTokens.Radius.lg, style: .continuous)
                     .strokeBorder(Color.Linkyo.line, lineWidth: LinkyoTokens.BorderWidth.hairline)
             }
-            .shadow(color: Color.black.opacity(LinkyoTokens.Elevation.e1.opacityLight), radius: LinkyoTokens.Elevation.e1.radius, y: LinkyoTokens.Elevation.e1.y)
     }
 }

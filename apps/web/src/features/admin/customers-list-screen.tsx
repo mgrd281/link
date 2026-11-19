@@ -163,7 +163,7 @@ export function CustomersListScreen() {
         </Button>
       }
     >
-      <div className="border-line bg-surface shadow-e1 grid grid-cols-1 gap-3 rounded-xl border p-4 md:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))] md:items-end">
+      <div className="border-line bg-surface grid grid-cols-1 gap-3 rounded-xl border p-4 md:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))] md:items-end">
         <TextField
           label={t("search")}
           icon={Search}
@@ -219,7 +219,7 @@ export function CustomersListScreen() {
       {shown.length > 0 ? (
         <>
           {/* Wide screens: a table. */}
-          <div className="border-line bg-surface shadow-e1 hidden overflow-hidden rounded-xl border md:block">
+          <div className="border-line bg-surface hidden overflow-hidden rounded-xl border md:block">
             <table className="text-small w-full">
               <caption className="sr-only">{t("title")}</caption>
               <thead className="bg-canvas-muted text-caption text-fg-secondary">
@@ -300,7 +300,7 @@ export function CustomersListScreen() {
               <li key={customer.id}>
                 <Link
                   href={`/admin/customers/${customer.id}`}
-                  className="border-line bg-surface shadow-e1 focus-visible:focus-ring grid gap-2 rounded-xl border p-3"
+                  className="border-line bg-surface focus-visible:focus-ring grid gap-2 rounded-xl border p-3"
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <Avatar name={customer.name} size="sm" />

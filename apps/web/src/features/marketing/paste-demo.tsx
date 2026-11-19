@@ -67,7 +67,7 @@ export function PasteDemo() {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-5 rounded-xl border border-line bg-surface p-4 shadow-e2 md:p-6">
+    <div className="grid grid-cols-1 gap-5 rounded-xl border border-line bg-surface p-4 md:p-6">
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -105,7 +105,7 @@ export function PasteDemo() {
           />
           <button
             type="submit"
-            className="inline-flex h-control-md shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-3 text-small font-semibold text-primary-fg shadow-cta transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed max-sm:size-control-md sm:px-4"
+            className="inline-flex h-control-md shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-3 text-small font-semibold text-primary-fg transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed max-sm:size-control-md sm:px-4"
           >
             {/* Phones: a round "enter" arrow leaves room for the link; the word comes back on wider screens. */}
             <Icon icon={CornerDownLeft} size="md" className="sm:hidden rtl:-scale-x-100" />
@@ -140,7 +140,7 @@ export function PasteDemo() {
         ) : (
           <ul className="grid gap-2">
             {items.map((item) => (
-              <li key={item.key} className="flex items-center gap-3 rounded-lg border border-line bg-surface-elevated p-2 pe-2 shadow-e1 motion-safe:animate-pop-in">
+              <li key={item.key} className="flex items-center gap-3 rounded-lg border border-line bg-surface-elevated p-2 pe-2 motion-safe:animate-pop-in">
                 <span className="grid size-control-lg shrink-0 place-items-center rounded-md bg-selected text-selected-fg">
                   <Icon icon={ICONS[item.type] ?? Link2} size="md" />
                 </span>

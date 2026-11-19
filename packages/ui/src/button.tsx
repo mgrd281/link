@@ -12,7 +12,7 @@ import { Spinner } from "./spinner";
 export const buttonVariants = cva(
   [
     "group/button relative inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium",
-    "transition-[background-color,border-color,color,scale,translate,box-shadow] duration-micro ease-standard",
+    "transition-[background-color,border-color,color,scale,translate] duration-micro ease-standard",
     "focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none",
     "disabled:pointer-events-none disabled:opacity-disabled aria-disabled:pointer-events-none aria-disabled:opacity-disabled",
     "data-loading:pointer-events-none",
@@ -20,9 +20,9 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-fg shadow-cta hover:-translate-y-0.5 hover:bg-primary-hover active:translate-y-0 active:bg-primary-pressed motion-reduce:hover:translate-y-0",
+        primary: "bg-primary text-primary-fg hover:-translate-y-0.5 hover:bg-primary-hover active:translate-y-0 active:bg-primary-pressed motion-reduce:hover:translate-y-0",
         secondary:
-          "border border-line-strong bg-surface text-fg shadow-e1 hover:bg-surface-elevated hover:border-line-input active:bg-pressed",
+          "border border-line-strong bg-surface text-fg hover:bg-surface-elevated hover:border-line-input active:bg-pressed",
         ghost: "bg-transparent text-fg hover:bg-hover active:bg-pressed",
         destructive: "bg-transparent text-danger-strong hover:bg-danger-subtle active:bg-pressed",
         /** Only inside confirmation dialogs (brand §7). */

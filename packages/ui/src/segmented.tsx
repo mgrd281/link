@@ -44,10 +44,10 @@ export function Segmented<T extends string>({ value, onValueChange, options, lab
           value={option.value}
           aria-label={option.iconOnly ? option.label : undefined}
           className={cn(
-            "inline-flex items-center justify-center gap-2 rounded-sm px-3 font-medium text-fg-secondary",
-            "transition-[background-color,color,box-shadow] duration-micro ease-standard",
+            "inline-flex items-center justify-center gap-2 rounded-sm border border-transparent px-3 font-medium text-fg-secondary",
+            "transition-[background-color,border-color,color] duration-micro ease-standard",
             "hover:text-fg focus-visible:focus-ring",
-            "data-[state=on]:bg-surface-elevated data-[state=on]:text-fg data-[state=on]:shadow-e1",
+            "data-[state=on]:border-line data-[state=on]:bg-surface-elevated data-[state=on]:text-fg",
             size === "sm" ? "text-caption" : "text-small",
             option.iconOnly && "px-2",
           )}

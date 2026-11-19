@@ -86,7 +86,7 @@ export function TextArea({
         aria-invalid={error ? true : undefined}
         aria-describedby={error || hint ? `${id}-hint` : undefined}
         className={cn(
-          "min-h-control-xl resize-y rounded-md border border-line-input bg-surface-elevated px-3 py-2 text-body text-fg outline-none transition-[border-color,box-shadow] duration-micro",
+          "min-h-control-xl resize-y rounded-md border border-line-input bg-surface-elevated px-3 py-2 text-body text-fg outline-none transition-[border-color] duration-micro",
           "hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring placeholder:text-fg-tertiary",
           error && "border-danger-strong",
         )}

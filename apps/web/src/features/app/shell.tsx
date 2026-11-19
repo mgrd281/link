@@ -65,7 +65,7 @@ function AccountMenu({ trigger }: { trigger: ReactNode }) {
           align="end"
           sideOffset={tokens.spacing["2"]}
           collisionPadding={tokens.spacing["2"]}
-          className="layer-popover grid min-w-menu gap-0.5 rounded-md border border-line bg-surface-elevated p-1 text-fg shadow-e2 motion-safe:animate-pop-in"
+          className="layer-popover grid min-w-menu gap-0.5 rounded-md border border-line bg-surface-elevated p-1 text-fg motion-safe:animate-pop-in"
         >
           <DropdownMenu.Label className="grid grid-cols-1 gap-0.5 px-3 py-2">
             <span className="text-small font-semibold">@{account.username}</span>
@@ -139,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          className="inline-flex h-control-lg items-center justify-center gap-2 rounded-md bg-primary px-4 text-body font-semibold text-primary-fg shadow-e1 transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+          className="inline-flex h-control-lg items-center justify-center gap-2 rounded-md bg-primary px-4 text-body font-semibold text-primary-fg transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
         >
           <Icon icon={Plus} size="md" />
           {t("nav.add")}
@@ -239,7 +239,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               type="button"
               onClick={() => setAddOpen(true)}
               aria-label={t("nav.add")}
-              className="grid size-control-xl -translate-y-3 place-items-center rounded-full bg-primary text-primary-fg shadow-e3 transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+              className="grid size-control-xl -translate-y-3 place-items-center rounded-full bg-primary text-primary-fg transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
             >
               <Icon icon={Plus} size="lg" />
             </button>

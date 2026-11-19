@@ -95,7 +95,7 @@ export default async function PreviewRoute({ params }: Props) {
           <aside
             data-theme="dark"
             aria-label={t("label")}
-            className="border-line bg-surface text-caption text-fg shadow-e2 flex items-center gap-2 rounded-full border py-1 ps-2 pe-1 font-sans"
+            className="border-line bg-surface text-caption text-fg flex items-center gap-2 rounded-full border py-1 ps-2 pe-1 font-sans"
           >
             <span className="size-control-sm bg-primary text-primary-fg grid place-items-center rounded-full">
               <LogoSymbol className="size-icon-sm" />
@@ -114,7 +114,7 @@ export default async function PreviewRoute({ params }: Props) {
                 <div
                   id="preview-language"
                   popover="auto"
-                  className="border-line bg-surface-elevated text-small text-fg shadow-e3 backdrop:bg-scrim inset-x-4 top-16 bottom-auto m-0 mx-auto w-auto max-w-preview rounded-xl border p-2 text-start font-sans"
+                  className="border-line bg-surface-elevated text-small text-fg backdrop:bg-scrim inset-x-4 top-16 bottom-auto m-0 mx-auto w-auto max-w-preview rounded-xl border p-2 text-start font-sans"
                 >
                   <p className="text-caption text-fg-secondary px-3 py-2 font-semibold">{t("language")}</p>
                   <ul className="grid gap-1">
@@ -148,7 +148,7 @@ export default async function PreviewRoute({ params }: Props) {
             <div
               id="preview-info"
               popover="auto"
-              className="max-w-preview border-line bg-surface-elevated text-small text-fg shadow-e3 backdrop:bg-scrim inset-x-4 top-16 bottom-auto m-0 mx-auto w-auto rounded-xl border p-4 text-start font-sans"
+              className="max-w-preview border-line bg-surface-elevated text-small text-fg backdrop:bg-scrim inset-x-4 top-16 bottom-auto m-0 mx-auto w-auto rounded-xl border p-4 text-start font-sans"
             >
               <p className="flex items-center gap-2 font-semibold">
                 <Icon icon={Eye} size="sm" className="text-link" />

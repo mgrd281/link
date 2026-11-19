@@ -154,7 +154,7 @@ export function HeroLive({ block }: { block: Live }) {
     return (
       <a
         href={block.url}
-        className="inline-flex h-control-md items-center gap-2 rounded-full bg-danger-fill px-4 text-small font-bold tracking-wide text-danger-fill-fg uppercase shadow-e2 transition-transform duration-micro hover:scale-lift focus-visible:focus-ring motion-reduce:hover:scale-none"
+        className="inline-flex h-control-md items-center gap-2 rounded-full bg-danger-fill px-4 text-small font-bold tracking-wide text-danger-fill-fg uppercase transition-transform duration-micro hover:scale-lift focus-visible:focus-ring motion-reduce:hover:scale-none"
       >
         <span aria-hidden className="size-dot rounded-full bg-current motion-safe:animate-pulse" />
         {t("liveOn", { platform })}

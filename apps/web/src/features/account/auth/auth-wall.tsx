@@ -29,7 +29,7 @@ export function AuthWall() {
           <div key={index} className={cn(index % 2 === 1 && "-mt-32")}>
             <ul className={cn("mk-marquee-y grid content-start gap-5 pb-5", index % 2 === 1 && "mk-marquee-reverse")}>
               {[...column, ...column].map((shot, position) => (
-                <li key={position} className="overflow-hidden rounded-lg bg-surface shadow-e2">
+                <li key={position} className="overflow-hidden rounded-lg border border-line bg-surface">
                   <div className="relative aspect-phone">
                     <Image src={shot} alt="" fill sizes="13vw" placeholder="blur" className="object-cover object-top" />
                   </div>

@@ -112,7 +112,7 @@ function AccountMenu({ trigger }: { trigger: ReactNode }) {
           align="end"
           sideOffset={tokens.spacing["2"]}
           collisionPadding={tokens.spacing["2"]}
-          className="layer-popover grid min-w-menu gap-0.5 rounded-md border border-line bg-surface-elevated p-1 text-fg shadow-e2 motion-safe:animate-pop-in"
+          className="layer-popover grid min-w-menu gap-0.5 rounded-md border border-line bg-surface-elevated p-1 text-fg motion-safe:animate-pop-in"
         >
           <DropdownMenu.Label className="grid grid-cols-1 gap-0.5 px-3 py-2">
             <span className="text-small font-semibold">{me.name}</span>
@@ -302,7 +302,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   align="end"
                   sideOffset={tokens.spacing["2"]}
                   collisionPadding={tokens.spacing["2"]}
-                  className="layer-popover grid min-w-menu gap-0.5 rounded-md border border-line bg-surface-elevated p-1 text-fg shadow-e2 motion-safe:animate-pop-in"
+                  className="layer-popover grid min-w-menu gap-0.5 rounded-md border border-line bg-surface-elevated p-1 text-fg motion-safe:animate-pop-in"
                 >
                   {more.map((item) => (
                     <DropdownMenu.Item key={item.key} asChild className="flex h-control-md cursor-default items-center gap-3 rounded-sm px-3 text-small outline-none data-highlighted:bg-hover aria-[current=page]:bg-selected">

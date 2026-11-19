@@ -58,7 +58,7 @@ export function Screen({
 /** A white card on the canvas; the dashboard's basic surface. */
 export function Panel({ children, className, title, action, id }: { children: ReactNode; className?: string; title?: string; action?: ReactNode; id?: string }) {
   return (
-    <section aria-labelledby={title && id ? id : undefined} className={cn("grid min-w-0 grid-cols-1 content-start gap-4 rounded-xl border border-line bg-surface p-4 shadow-e1 md:p-5", className)}>
+    <section aria-labelledby={title && id ? id : undefined} className={cn("grid min-w-0 grid-cols-1 content-start gap-4 rounded-xl border border-line bg-surface p-4 md:p-5", className)}>
       {title ? (
         <div className="flex items-center justify-between gap-3">
           <h2 id={id} className="text-body-lg font-semibold">

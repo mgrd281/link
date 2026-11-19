@@ -8,10 +8,12 @@ const config = {
   rules: {
     "color-no-hex": true,
     "color-named": "never",
-    "function-disallowed-list": ["rgb", "rgba", "hsl", "hsla", "hwb", "lab", "lch", "oklab", "oklch"],
+    // No shadows anywhere (ADR 0037): `drop-shadow()` is out, and box-/text-shadow may only be "none".
+    "function-disallowed-list": ["rgb", "rgba", "hsl", "hsla", "hwb", "lab", "lch", "oklab", "oklch", "drop-shadow"],
     "unit-disallowed-list": ["px", "pt", "pc", "cm", "mm", "in", "q"],
     "declaration-property-value-allowed-list": {
       "font-family": ["/^var\\(--/", "inherit"],
+      "/^(box-shadow|text-shadow)$/": ["none"],
     },
     "declaration-property-value-disallowed-list": {
       "/^(margin|padding|gap|row-gap|column-gap|width|height|min-|max-|inset|top|right|bottom|left|font-size|letter-spacing|line-height|border-radius|border-width|outline-width|outline-offset|box-shadow|transition-duration|animation-duration|z-index)/":

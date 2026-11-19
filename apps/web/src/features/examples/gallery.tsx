@@ -307,17 +307,23 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
 
         <SearchField id="examples-search-phone" ref={searchPhone} className="md:hidden" {...searchProps} />
 
-        <div className="layer-raised sticky top-20 -mx-5 border-b border-line bg-canvas px-4 py-1 md:mx-0 md:flex md:items-center md:gap-2 md:rounded-full md:border md:py-1 md:ps-2 md:pe-1 md:shadow-e1">
-          <SearchField id="examples-search" ref={searchWide} className="max-md:hidden md:w-(--container-sidebar) md:shrink-0" {...searchProps} />
-          <CategoryBar
-            value={category}
-            onChange={(next) => {
-              setCategory(next);
-              settle();
-            }}
-            counts={counts}
-            total={matching.length}
-          />
+        {/* Sticks right under the header (no gap for cards to show through) on a solid band: on phones
+            a full-width strip with a hairline, on larger screens the bordered bar inside the band. */}
+        <div data-filters className="layer-raised mk-stuck-band sticky top-16 -mx-5 border-b border-line bg-canvas px-4 py-1 md:mx-0 md:-my-3 md:border-b-0 md:px-0 md:py-3">
+          {/* Larger screens: a hairline under the band only while it is stuck, where cards slide beneath it. */}
+          <span aria-hidden className="mk-stuck-edge pointer-events-none absolute inset-x-0 bottom-0 hidden border-b border-transparent md:block" />
+          <div className="md:flex md:items-center md:gap-2 md:rounded-full md:border md:border-line md:py-1 md:ps-2 md:pe-1">
+            <SearchField id="examples-search" ref={searchWide} className="max-md:hidden md:w-(--container-sidebar) md:shrink-0" {...searchProps} />
+            <CategoryBar
+              value={category}
+              onChange={(next) => {
+                setCategory(next);
+                settle();
+              }}
+              counts={counts}
+              total={matching.length}
+            />
+          </div>
         </div>
 
         {shown.length > 0 ? (
@@ -335,7 +341,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
                   {/* The card is a picture of the page; the button's name says what it does. */}
                   <span
                     aria-hidden
-                    className="block rounded-xl shadow-e1 transition-[translate,box-shadow] duration-standard ease-standard group-hover:-translate-y-1 group-hover:shadow-e3 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
+                    className="block rounded-xl transition-[translate] duration-standard ease-standard group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
                   >
                     <CardFace item={item} label={label(item)} />
                   </span>
@@ -374,7 +380,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
             {open ? (
               <>
                 <div className="flex items-center gap-2 lg:hidden">
-                  <Dialog.Title className="min-w-0 flex-1 truncate rounded-full bg-surface-elevated px-3 py-1 text-small font-semibold text-fg shadow-e1">
+                  <Dialog.Title className="min-w-0 flex-1 truncate rounded-full border border-line bg-surface-elevated px-3 py-1 text-small font-semibold text-fg">
                     {open.name}
                   </Dialog.Title>
                   <IconButton icon={ChevronLeft} label={t("prev")} variant="secondary" onClick={() => step(-1)} className="rtl:-scale-x-100" />
@@ -384,7 +390,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
                   </Dialog.Close>
                 </div>
                 {/* A spinner until the page inside has loaded. */}
-                <div className="mx-auto grid min-h-0 w-full max-w-preview flex-1 grid-cols-1 grid-rows-1 overflow-hidden rounded-xl border border-line-strong bg-canvas p-1 shadow-e3 lg:mx-0 lg:h-full lg:max-h-dvh lg:flex-none">
+                <div className="mx-auto grid min-h-0 w-full max-w-preview flex-1 grid-cols-1 grid-rows-1 overflow-hidden rounded-xl border border-line-strong bg-canvas p-1 lg:mx-0 lg:h-full lg:max-h-dvh lg:flex-none">
                   {loaded === open.slug ? null : (
                     <Spinner className="col-start-1 row-start-1 size-icon-lg place-self-center text-fg-tertiary" />
                   )}
@@ -396,7 +402,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
                     className="col-start-1 row-start-1 size-full rounded-lg"
                   />
                 </div>
-                <div className="grid gap-2 rounded-xl bg-surface-elevated p-3 text-fg shadow-e3 lg:w-(--container-preview) lg:gap-4 lg:p-6">
+                <div className="grid gap-2 rounded-xl border border-line bg-surface-elevated p-3 text-fg lg:w-(--container-preview) lg:gap-4 lg:p-6">
                   <div className="hidden items-start justify-between gap-2 lg:flex">
                     <div className="grid min-w-0 gap-2">
                       <span className="inline-flex items-center gap-2 justify-self-start rounded-full bg-selected px-3 py-1 text-caption font-semibold text-selected-fg">
@@ -414,7 +420,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
                   {open.badge ? <p className="text-caption text-fg-secondary">{t(`badgeNotes.${open.badge}`)}</p> : null}
                   <Link
                     href={open.signup}
-                    className="inline-flex h-control-lg items-center justify-center gap-2 rounded-full bg-primary px-5 text-body font-semibold text-primary-fg shadow-e1 transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+                    className="inline-flex h-control-lg items-center justify-center gap-2 rounded-full bg-primary px-5 text-body font-semibold text-primary-fg transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
                   >
                     {t("use")}
                     <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />

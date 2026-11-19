@@ -75,7 +75,7 @@ export function LinkyoDock({ title, cta, href, closeLabel }: { title: string; ct
         shown ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0 motion-reduce:translate-y-0",
       )}
     >
-      <div className="mx-auto flex max-w-creator items-center gap-2 rounded-full border border-line bg-surface p-1 ps-4 text-fg shadow-e3">
+      <div className="mx-auto flex max-w-creator items-center gap-2 rounded-full border border-line bg-surface p-1 ps-4 text-fg">
         <Logo className="h-5 shrink-0" title="Linkyo" />
         {/* Phones: logo, button, close. The line of text joins on wider screens, where it fits. */}
         <span className="min-w-0 flex-1 truncate text-small text-fg-secondary max-sm:invisible">{title}</span>

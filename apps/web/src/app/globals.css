@@ -540,6 +540,18 @@
   }
 }
 
+/* A sticky band that shows its bottom hairline only while it is stuck under the header (scroll-state
+   queries). The band is the container; the edge is a child at its bottom. Without support: no line. */
+@utility mk-stuck-band {
+  container-type: scroll-state;
+}
+
+@utility mk-stuck-edge {
+  @container scroll-state(stuck: top) {
+    border-bottom-color: var(--color-line);
+  }
+}
+
 /* What belongs to the page in front (its address): it arrives just after the card. */
 @utility mk-deck-chip {
   animation: mk-card-in var(--duration-slow) var(--ease-emphasized) both;

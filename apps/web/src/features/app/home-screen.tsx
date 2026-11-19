@@ -57,7 +57,7 @@ export function HomeScreen() {
   return (
     <Screen title={t("title", { name })} lead={t("lead")} preview>
       {site.prepared && !site.prepared.seen ? (
-        <section aria-labelledby="prepared-title" className="relative grid gap-3 overflow-hidden rounded-xl bg-primary p-5 text-primary-fg shadow-e2">
+        <section aria-labelledby="prepared-title" className="relative grid gap-3 overflow-hidden rounded-xl bg-primary p-5 text-primary-fg">
           <div className="flex items-start gap-3">
             <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-primary-fg text-primary">
               <Icon icon={Sparkles} size="md" />
@@ -217,7 +217,7 @@ export function HomeScreen() {
             </>
           );
           const className =
-            "grid content-start gap-3 rounded-xl border border-line bg-surface p-4 text-start shadow-e1 transition-colors duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed";
+            "grid content-start gap-3 rounded-xl border border-line bg-surface p-4 text-start transition-colors duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed";
           return item.href ? (
             <Link key={item.key} href={item.href} className={className}>
               {inner}

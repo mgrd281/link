@@ -32,7 +32,7 @@ export function Tooltip({ content, children, side = "top", shortcut }: TooltipPr
           sideOffset={tokens.spacing["2"]}
           collisionPadding={tokens.spacing["2"]}
           className={cn(
-            "layer-tooltip flex items-center gap-2 rounded-sm bg-fg px-2 py-1 text-caption text-fg-inverse shadow-e2",
+            "layer-tooltip flex items-center gap-2 rounded-sm bg-fg px-2 py-1 text-caption text-fg-inverse",
             "motion-safe:animate-fade-in",
           )}
         >

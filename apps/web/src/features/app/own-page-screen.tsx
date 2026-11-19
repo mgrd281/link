@@ -36,7 +36,7 @@ export function OwnPageScreen() {
     <>
       <PosterRenderer page={previewPage} theme={theme} />
       <nav aria-label={t("label")} className="layer-sticky fixed inset-x-0 bottom-0 flex justify-center px-4 pb-[max(var(--spacing-4),env(safe-area-inset-bottom))]">
-        <div className="flex items-center gap-1 rounded-full border border-line bg-surface-elevated p-1 text-fg shadow-e3">
+        <div className="flex items-center gap-1 rounded-full border border-line bg-surface-elevated p-1 text-fg">
           <Button asChild variant="ghost" className="rounded-full">
             <Link href="/app">
               <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />

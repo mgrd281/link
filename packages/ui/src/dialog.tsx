@@ -36,7 +36,7 @@ export function ConfirmDialog({
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="layer-modal fixed inset-0 bg-scrim motion-safe:animate-fade-in" />
-        <AlertDialog.Content className="layer-modal fixed inset-x-4 top-1/2 mx-auto w-auto max-w-prose -translate-y-1/2 rounded-xl border border-line bg-surface-elevated p-6 text-fg shadow-e3 motion-safe:animate-pop-in sm:inset-x-0 sm:w-full">
+        <AlertDialog.Content className="layer-modal fixed inset-x-4 top-1/2 mx-auto w-auto max-w-prose -translate-y-1/2 rounded-xl border border-line bg-surface-elevated p-6 text-fg motion-safe:animate-pop-in sm:inset-x-0 sm:w-full">
           <AlertDialog.Title className="text-h3">{title}</AlertDialog.Title>
           <AlertDialog.Description className="mt-2 text-body text-fg-secondary">{description}</AlertDialog.Description>
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

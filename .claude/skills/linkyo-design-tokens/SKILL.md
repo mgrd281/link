@@ -1,6 +1,6 @@
 ---
 name: linkyo-design-tokens
-description: Linkyo's design-token rules. Use before writing or changing any UI in apps/web or packages/ui (colors, spacing, sizes, fonts, z-index, radii, shadows, motion), when adding a creator accent color or theme, or when ESLint reports linkyo/no-raw-design-values or an unknown Tailwind class.
+description: Linkyo's design-token rules. Use before writing or changing any UI in apps/web or packages/ui (colors, spacing, sizes, fonts, z-index, radii, borders and depth (Linkyo uses no shadows), motion), when adding a creator accent color or theme, or when ESLint reports linkyo/no-raw-design-values or an unknown Tailwind class.
 ---
 
 # Linkyo design tokens
@@ -11,6 +11,21 @@ reports unknown classes.
 
 ## Rules
 
+- **No shadows. Ever.** Linkyo is flat (ADR 0037). No `shadow-*`, `drop-shadow-*`, `inset-shadow-*` or
+  `text-shadow-*` classes, no `boxShadow`/`textShadow` styles, no `drop-shadow()` filters, no canvas
+  `shadowBlur`, on any screen, creator page, share picture or iOS view. The tokens have no shadow scale,
+  so these classes do not even exist; the lint rule and Stylelint reject them too (`shadow-none` and
+  `box-shadow: none` stay allowed). A surface stands apart in one of three ways:
+  - a hairline border: `border border-line` (cards, chips, menus, popovers, dialogs, sheets);
+  - a stronger border: `border-line-strong` / `border-line-input` (fields, secondary buttons);
+  - a step in the fill: a `bg-surface` tile on a `bg-canvas-muted` panel. A chosen tab or segment in a
+    muted track is `bg-surface-elevated` + `border-line`; give every item `border border-transparent`
+    so nothing jumps.
+  - Drag and drop: the lifted item scales (`scale-lift`) and gets `border-primary`.
+  - Creator pages: `border-creator-line(-strong)`. The button style saved as `shadow` is the "Card"
+    style: `bg-creator-surface` + `border-creator-line`.
+- **Sticky bars sit flush under the header** (`sticky top-16`: the header is `h-16`) on a solid
+  `bg-canvas` band, so no content shows between them.
 - **No raw colors, lengths or fonts** in `apps/web` or `packages/ui`. That rules out `#hex`, `rgb()`,
   `12px`, arbitrary Tailwind values like `p-[13px]` and `z-10`, and inline `style` lengths.
 - **Use token utilities.**
@@ -28,7 +43,7 @@ reports unknown classes.
   for anything that moves.
 - **Opacity:** `opacity-hover`, `opacity-pressed`, `opacity-secondary` (overlays use `bg-current`
   with these).
-- **Radii and shadows:** `rounded-creator-button`, `rounded-creator-card`, `rounded-xl`; `shadow-e1…e3`.
+- **Radii:** `rounded-creator-button`, `rounded-creator-card`, `rounded-xl`. Depth: borders and fills only (see the first rule).
 
 
 ## When a general design or motion skill says otherwise
@@ -36,6 +51,8 @@ reports unknown classes.
 The vendored skills (`ui-ux-pro-max`, `web-design-guidelines`, `motion`, `motion-design`,
 `gsap-*`, `accessibility`, `performance`, …) give general advice. In this repository these rules win:
 
+- **Flat, not shadowed.** Advice to add a shadow, an elevation scale, "shadow lift" on hover or a soft
+  glow under buttons does not apply here: use a border, a fill step or a color change instead.
 - **Values come from tokens.** Palettes, font pairings and spacing scales that a search suggests are
   ideas to discuss, not values to paste. Add new values to `tokens.json` first, then use the
   generated utility.

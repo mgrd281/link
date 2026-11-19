@@ -139,18 +139,6 @@ public enum LinkyoTokens {
         public static let pressed: Double = 0.12
         public static let glass: Double = 0.62
     }
-
-    public enum Elevation {
-        public struct Shadow: Sendable, Equatable {
-            public let opacityLight: Double
-            public let opacityDark: Double
-            public let y: CGFloat
-            public let radius: CGFloat
-        }
-        public static let e1 = Shadow(opacityLight: 0.059, opacityDark: 0.502, y: 1, radius: 1)
-        public static let e2 = Shadow(opacityLight: 0.078, opacityDark: 0.549, y: 4, radius: 8)
-        public static let e3 = Shadow(opacityLight: 0.141, opacityDark: 0.651, y: 12, radius: 20)
-    }
 }
 
 #if canImport(SwiftUI)

@@ -32,7 +32,6 @@ const twMerge = extendTailwindMerge({
         ),
       ],
       radius: [...keys(tokens.radius), "creator-button"],
-      shadow: keys(tokens.shadow),
       tracking: keys(tokens.tracking),
       leading: keys(tokens.leading),
       font: ["sans", "mono", "display", "arabic", "creator-display", "creator-body"],

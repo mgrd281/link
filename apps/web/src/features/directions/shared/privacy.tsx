@@ -81,7 +81,7 @@ function ThemedSwitch({ checked, onChange, label, disabled = false }: { checked:
       <span
         aria-hidden
         className={cn(
-          "size-6 rounded-full shadow-e1 transition-transform duration-micro ease-standard",
+          "size-6 rounded-full transition-transform duration-micro ease-standard",
           checked ? "translate-x-5 bg-creator-accent-fg rtl:-translate-x-5" : "bg-creator-surface",
         )}
       />
@@ -128,7 +128,7 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
   return (
     <section
       aria-label={t("privacyLabel")}
-      className="layer-overlay fixed inset-x-0 bottom-0 border-t border-creator-line bg-creator-bg text-creator-fg shadow-e3 motion-safe:animate-rise-in"
+      className="layer-overlay fixed inset-x-0 bottom-0 border-t border-creator-line bg-creator-bg text-creator-fg motion-safe:animate-rise-in"
     >
       <div className="mx-auto grid max-w-creator gap-4 px-5 pt-5 pb-[max(var(--spacing-5),env(safe-area-inset-bottom))]">
         <div className="grid gap-2">

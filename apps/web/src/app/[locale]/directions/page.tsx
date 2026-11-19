@@ -36,7 +36,7 @@ async function Snapshot({
   const theme = resolveCreatorTheme(config, { rtlScript: locale === "ar" });
   return (
     <div
-      className="aspect-short border-line shadow-e2 relative overflow-hidden rounded-xl border"
+      className="aspect-short border-line relative overflow-hidden rounded-xl border"
       aria-hidden
       inert
     >
@@ -79,7 +79,7 @@ export default async function DirectionsPage({ params }: { params: Promise<{ loc
 
         <section
           aria-labelledby="poster-title"
-          className="border-line bg-surface shadow-e1 grid gap-10 rounded-xl border p-5 md:p-8"
+          className="border-line bg-surface grid gap-10 rounded-xl border p-5 md:p-8"
         >
           <div
             role="region"

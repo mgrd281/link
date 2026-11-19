@@ -64,7 +64,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
       <button
         type="button"
         onClick={() => setProfileOpen(true)}
-        className="group flex min-w-0 items-center gap-4 rounded-xl border border-line bg-surface p-4 text-start shadow-e1 transition-colors duration-micro hover:border-line-input focus-visible:focus-ring"
+        className="group flex min-w-0 items-center gap-4 rounded-xl border border-line bg-surface p-4 text-start transition-colors duration-micro hover:border-line-input focus-visible:focus-ring"
       >
         <ProfileAvatar size="lg" />
         <span className="grid min-w-0 flex-1 gap-0.5">
@@ -197,12 +197,12 @@ function BlockRow({
       ref={rowRef}
       style={rowStyle}
       className={cn(
-        "group flex min-w-0 items-center gap-2 transition-[box-shadow,opacity,scale] duration-standard ease-standard",
-        isHeader ? "rounded-lg pt-4 pe-1 pb-1" : "rounded-lg border border-line bg-surface p-2 pe-1 shadow-e1",
+        "group flex min-w-0 items-center gap-2 transition-[opacity,scale] duration-standard ease-standard",
+        isHeader ? "rounded-lg pt-4 pe-1 pb-1" : "rounded-lg border border-line bg-surface p-2 pe-1",
         nested && !isHeader && "ms-4 md:ms-6",
         opensSection && !isHeader && "mt-3",
-        isDragging && "layer-raised relative scale-lift bg-surface shadow-e3",
-        !block.visible && !isHeader && "border-dashed bg-canvas-muted shadow-none",
+        isDragging && "layer-raised relative scale-lift border-primary bg-surface",
+        !block.visible && !isHeader && "border-dashed bg-canvas-muted",
         !block.visible && isHeader && "opacity-secondary",
       )}
     >

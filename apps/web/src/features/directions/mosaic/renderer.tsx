@@ -72,7 +72,7 @@ export function MosaicRenderer({
       )}
     >
       <div className="mx-auto grid max-w-creator gap-3 px-3 pt-3 @preview:px-creator-gutter @preview:pt-creator-gutter @prose:pt-12">
-        <header className="grid grid-cols-5 items-end gap-4 rounded-xl bg-creator-surface p-5 shadow-e1">
+        <header className="grid grid-cols-5 items-end gap-4 rounded-xl border border-creator-line bg-creator-surface p-5">
           <div className="relative col-span-2 aspect-square overflow-hidden rounded-lg">
             <MediaImage src={profile.avatar.src} alt={profile.avatar.alt} sizes={mediaSizes.third} priority={!preview} />
           </div>
@@ -94,7 +94,7 @@ export function MosaicRenderer({
                 <a
                   key={item.url}
                   href={item.url}
-                  className="group flex h-control-xl items-center gap-3 rounded-xl bg-creator-surface px-4 shadow-e1 transition-[box-shadow,scale] duration-standard ease-standard hover:shadow-e2 active:scale-pressed focus-visible:focus-ring"
+                  className="group flex h-control-xl items-center gap-3 rounded-xl border border-creator-line bg-creator-surface px-4 transition-[border-color,scale] duration-standard ease-standard active:scale-pressed focus-visible:focus-ring"
                 >
                   <PlatformGlyph platform={item.platform} />
                   <span className="truncate text-small font-semibold">{platformName(item.platform)}</span>
@@ -129,9 +129,9 @@ function Tile({
   const classes = cn(
     "group relative isolate overflow-hidden rounded-xl",
     span[size],
-    tone === "surface" && "bg-creator-surface shadow-e1",
-    tone === "accent" && "bg-creator-accent text-creator-accent-fg shadow-e1",
-    href && "transition-[box-shadow,scale] duration-standard ease-standard hover:shadow-e2 active:scale-pressed focus-visible:focus-ring",
+    tone === "surface" && "border border-creator-line bg-creator-surface",
+    tone === "accent" && "bg-creator-accent text-creator-accent-fg",
+    href && "transition-[scale] duration-standard ease-standard active:scale-pressed focus-visible:focus-ring",
     className,
   );
   return href ? (

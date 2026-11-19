@@ -32,6 +32,16 @@ export const RAW_NUMERIC_UTILITY =
 export const COLOR_OPACITY_MODIFIER =
   /(?:^|[\s:!"'`])((?:bg|text|border(?:-[trblxyse])?|ring|ring-offset|fill|stroke|outline|shadow|from|via|to|divide|placeholder|decoration|accent|caret)-[a-z][\w-]*\/\d+)(?![\w.-])/;
 
+/**
+ * Shadow utilities: `shadow-e2`, `hover:shadow-lg`, `drop-shadow-md`, `inset-shadow-sm`, `text-shadow-xs`,
+ * `shadow-[0_1px_2px_black]`. Linkyo is flat (ADR 0037): borders and fills separate surfaces, never
+ * shadows. `shadow-none` stays allowed: it only takes a shadow away.
+ */
+export const SHADOW_UTILITY = /(?:^|[\s:!"'`])((?:inset-|drop-|text-)?shadow-(?!none(?![\w-]))[\w[\]().,#%/-]+)/;
+
+/** Style properties that draw a shadow. */
+export const SHADOW_PROPERTIES = new Set(["boxShadow", "textShadow"]);
+
 /** Font family declarations in strings (`font-family: Inter`) or Tailwind `font-['Inter']`. */
 export const FONT_FAMILY_TEXT = /font-family\s*:|font-\[['"]/i;
 
@@ -135,10 +145,13 @@ export const SVG_GEOMETRY_ELEMENTS = new Set([
  * Inspect a single text value.
  * @param {string} text
  * @param {{ fragmentContext?: boolean }} [options]
- * @returns {{ kind: "hex" | "colorFn" | "length" | "arbitrary" | "font", value: string } | null}
+ * @returns {{ kind: "hex" | "colorFn" | "length" | "arbitrary" | "font" | "shadow", value: string } | null}
  */
 export function findRawValue(text, options = {}) {
   if (!text) return null;
+
+  const shadow = text.match(SHADOW_UTILITY);
+  if (shadow) return { kind: "shadow", value: shadow[1] ?? shadow[0] };
 
   // Tailwind arbitrary values first: they produce the most precise message.
   for (const match of text.matchAll(TAILWIND_ARBITRARY)) {

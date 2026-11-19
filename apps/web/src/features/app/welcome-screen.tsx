@@ -361,7 +361,7 @@ export function WelcomeScreen() {
 
           {step === "done" ? (
             <div className="grid grid-cols-1 gap-6">
-              <div className="grid justify-items-start gap-4 rounded-xl border border-line bg-surface p-5 shadow-e1">
+              <div className="grid justify-items-start gap-4 rounded-xl border border-line bg-surface p-5">
                 <span className="grid size-control-xl place-items-center rounded-full bg-success-subtle text-success-strong">
                   <Icon icon={PartyPopper} size="lg" />
                 </span>

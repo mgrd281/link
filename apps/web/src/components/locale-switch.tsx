@@ -24,9 +24,9 @@ export function LocaleSwitch() {
           hrefLang={code}
           aria-current={code === locale ? "true" : undefined}
           className={cn(
-            "inline-flex min-w-8 items-center justify-center rounded-sm px-2 text-caption font-medium text-fg-secondary",
+            "inline-flex min-w-8 items-center justify-center rounded-sm border border-transparent px-2 text-caption font-medium text-fg-secondary",
             "transition-colors duration-micro hover:text-fg focus-visible:focus-ring",
-            code === locale && "bg-surface-elevated text-fg shadow-e1",
+            code === locale && "border-line bg-surface-elevated text-fg",
           )}
         >
           {names[code]}

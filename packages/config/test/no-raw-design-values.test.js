@@ -18,7 +18,10 @@ const tester = new RuleTester({
 
 tester.run("no-raw-design-values", rule, {
   valid: [
-    `const a = <div className="bg-canvas p-4 text-fg rounded-lg shadow-e2" />;`,
+    `const a = <div className="bg-canvas p-4 text-fg rounded-lg border border-line" />;`,
+    `const a = <input className="appearance-none shadow-none" />;`,
+    `const a = <div style={{ boxShadow: "none" }} />;`,
+    `const look = { buttonStyle: "shadow" };`,
     `const a = <a href="#add">Add</a>;`,
     `const a = <div className="w-(--creator-width) grid-cols-[1fr_auto] aspect-video" />;`,
     `const a = <div style={{ "--creator-accent": theme.accent, width: "100%", minHeight: "100dvh", margin: 0 }} />;`,
@@ -61,5 +64,11 @@ tester.run("no-raw-design-values", rule, {
     { code: `const t = { type: "spring", duration: 0.4 };`, errors: [{ messageId: "duration" }] },
     { code: `const a = <motion.div transition={{ duration: 0.3 }} />;`, errors: [{ messageId: "duration" }] },
     { code: `const t = { ease: [0.2, 0.8, 0.2, 1] };`, errors: [{ messageId: "easing" }] },
+    { code: `const a = <div className="rounded-lg shadow-e2" />;`, errors: [{ messageId: "shadow" }] },
+    { code: `const a = <div className="hover:shadow-lg" />;`, errors: [{ messageId: "shadow" }] },
+    { code: `const c = cn("drop-shadow-md", active && "bg-canvas");`, errors: [{ messageId: "shadow" }] },
+    { code: `const a = <div className="text-shadow-sm" />;`, errors: [{ messageId: "shadow" }] },
+    { code: `const a = <div style={{ boxShadow: "var(--shadow-e1)" }} />;`, errors: [{ messageId: "shadowStyle" }] },
+    { code: `const a = <div style={{ filter: "drop-shadow(var(--x))" }} />;`, errors: [{ messageId: "shadowStyle" }] },
   ],
 });

@@ -41,7 +41,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
         dir={ltr ? "ltr" : undefined}
         className={cn(
           "group/field flex items-center gap-2 rounded-md border border-line-input bg-surface-elevated text-fg",
-          "transition-[border-color,box-shadow] duration-micro ease-standard",
+          "transition-[border-color] duration-micro ease-standard",
           "hover:border-fg-tertiary focus-within:border-focus focus-within:focus-ring",
           size === "md" && "h-control-md px-3",
           size === "lg" && "h-control-lg px-4",

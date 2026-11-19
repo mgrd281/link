@@ -127,6 +127,28 @@ test.describe("template gallery", () => {
     await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Templates" }).click();
     await page.waitForURL("**/en/templates");
   });
+
+  test("scrolled down, the filters stick flush under the header on a solid band, with no card between them", async ({ page }) => {
+    await page.goto("/en/templates");
+    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight / 2, behavior: "instant" }));
+    const filters = page.locator("[data-filters]");
+    await expect(filters.getByRole("button", { name: /^All/ })).toBeVisible();
+    const header = await page.getByRole("banner").boundingBox();
+    const band = await filters.boundingBox();
+    expect(header && band && Math.abs(band.y - (header.y + header.height))).toBeLessThanOrEqual(1);
+    // Just under the header there is the filter band itself, not a card showing through a gap.
+    const underHeader = await page.evaluate((y) => {
+      const element = document.elementFromPoint(window.innerWidth / 2, y);
+      return element?.closest("[data-filters]") !== null;
+    }, (header?.y ?? 0) + (header?.height ?? 0) + 1);
+    expect(underHeader).toBe(true);
+    expect(await filters.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
+    // Flat: nothing on the page draws a shadow (ADR 0037).
+    const shadowed = await page.evaluate(() =>
+      [...document.querySelectorAll("body *")].filter((element) => getComputedStyle(element).boxShadow !== "none").length,
+    );
+    expect(shadowed).toBe(0);
+  });
 });
 
 test.describe("moving pictures", () => {

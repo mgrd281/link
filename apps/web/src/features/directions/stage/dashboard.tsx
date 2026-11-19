@@ -222,8 +222,8 @@ function StageRow({
       style={rowStyle}
       className={cn(
         "group flex h-control-xl items-center gap-3 border-b border-line bg-surface px-2 last:border-b-0",
-        "transition-[background-color,box-shadow,scale] duration-micro hover:bg-surface-elevated",
-        isDragging && "layer-raised relative scale-lift rounded-md shadow-e3",
+        "transition-[background-color,scale] duration-micro hover:bg-surface-elevated",
+        isDragging && "layer-raised relative scale-lift rounded-md border border-primary",
       )}
     >
       <button

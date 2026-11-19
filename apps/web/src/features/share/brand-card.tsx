@@ -92,7 +92,6 @@ export async function brandCard({ kicker, title1, title2, rtl }: { kicker: strin
                 overflow: "hidden",
                 border: `4px solid ${tokens.color.white}`,
                 transform: `rotate(${(index - 1) * 6}deg)`,
-                boxShadow: "0 24px 60px rgba(0,0,0,0.35)",
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws plain <img> elements */}

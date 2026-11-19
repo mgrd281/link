@@ -128,7 +128,7 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
     case "music":
       return (
         <article className="grid grid-cols-1 gap-4 pt-4">
-          <div className="relative aspect-square overflow-hidden rounded-xl shadow-e3">
+          <div className="relative aspect-square overflow-hidden rounded-xl">
             <MediaImage src={block.cover.src} alt={block.cover.alt} sizes={mediaSizes.column} />
           </div>
           <div className="grid gap-1">

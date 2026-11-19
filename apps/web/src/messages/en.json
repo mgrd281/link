@@ -82,12 +82,12 @@
     },
     "layout": {
       "title": "Space, shape & depth",
-      "description": "4 px base, 8 px rhythm. Borders first, shadows second.",
+      "description": "4 px base, 8 px rhythm. Flat: borders and fills, never shadows.",
       "spacing": "Spacing",
       "spacingNote": "Only these steps exist in the theme. Anything else fails the build.",
       "radius": "Radius",
-      "elevation": "Elevation",
-      "elevationNote": "Three levels only. Cards use e1, menus e2, dialogs e3.",
+      "depth": "Depth without shadows",
+      "depthNote": "Linkyo uses no shadows. A surface stands apart with a hairline border, a stronger border for fields, or a step in the fill.",
       "grid": "Layout",
       "gridNote": "Creator column, dashboard regions and touch targets (px)."
     },
@@ -1362,7 +1362,7 @@
         "outline": "Outline",
         "soft": "Soft",
         "glass": "Glass",
-        "shadow": "Shadow",
+        "shadow": "Card",
         "minimal": "Minimal"
       },
       "sampleButton": "My new song",

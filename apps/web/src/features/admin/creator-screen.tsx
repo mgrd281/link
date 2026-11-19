@@ -34,7 +34,7 @@ const EMPTY_LEGAL = { name: "", address: "", email: "", phone: "" };
 export function StaticPhone({ page, theme, className }: { page: Page; theme: CreatorThemeConfig; className?: string }) {
   const resolved = useMemo(() => resolveCreatorTheme(theme, { rtlScript: page.profile.locale === "ar" }), [theme, page.profile.locale]);
   return (
-    <div className={cn("relative mx-auto w-full max-w-preview overflow-hidden rounded-xl border border-line-strong bg-ink p-1 shadow-e3", className)}>
+    <div className={cn("relative mx-auto w-full max-w-preview overflow-hidden rounded-xl border border-line-strong bg-ink p-1", className)}>
       <div className="relative size-full overflow-hidden rounded-lg" style={{ transform: "translateZ(0)" }}>
         <div className="absolute inset-0 overflow-y-auto overscroll-contain" tabIndex={0} role="region" aria-label={page.profile.displayName}>
           <PosterRenderer page={page} theme={resolved} preview />

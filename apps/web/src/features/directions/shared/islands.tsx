@@ -91,7 +91,7 @@ export function ClickToLoad({
     <span className="absolute inset-0 grid place-items-center" aria-hidden>
       <span
         className={cn(
-          "grid place-items-center rounded-full bg-creator-accent text-creator-accent-fg shadow-e3",
+          "grid place-items-center rounded-full bg-creator-accent text-creator-accent-fg",
           "transition-[scale] duration-standard ease-standard group-hover/video:scale-lift motion-reduce:transition-none",
           compact ? "size-control-md" : "size-control-xl",
         )}
@@ -134,7 +134,7 @@ export function ClickToLoad({
             href={youtubeWatchUrl(video, PREVIEW_SECONDS)}
             target="_blank"
             rel="noopener"
-            className="inline-flex h-control-md items-center gap-2 rounded-full bg-creator-accent px-4 text-small font-semibold text-creator-accent-fg shadow-e2 focus-visible:focus-ring"
+            className="inline-flex h-control-md items-center gap-2 rounded-full bg-creator-accent px-4 text-small font-semibold text-creator-accent-fg focus-visible:focus-ring"
           >
             {t("continueOn", { provider })}
             <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
@@ -235,7 +235,7 @@ export function NewsletterForm() {
         <button
           type="submit"
           disabled={state === "sending"}
-          className="inline-flex h-control-lg w-full items-center justify-center gap-2 rounded-creator-button bg-creator-accent px-6 text-body font-semibold text-creator-accent-fg shadow-e1 transition-[scale,opacity] duration-micro focus-visible:focus-ring active:scale-pressed disabled:opacity-secondary @prose:w-auto"
+          className="inline-flex h-control-lg w-full items-center justify-center gap-2 rounded-creator-button bg-creator-accent px-6 text-body font-semibold text-creator-accent-fg transition-[scale,opacity] duration-micro focus-visible:focus-ring active:scale-pressed disabled:opacity-secondary @prose:w-auto"
         >
           {t("subscribe")}
           <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />

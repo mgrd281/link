@@ -82,12 +82,12 @@
     },
     "layout": {
       "title": "Raum, Form & Tiefe",
-      "description": "4 px Basis, 8 px Rhythmus. Erst Linien, dann Schatten.",
+      "description": "4 px Basis, 8 px Rhythmus. Flach: Linien und Flächen, nie Schatten.",
       "spacing": "Abstände",
       "spacingNote": "Nur diese Stufen existieren im Theme. Alles andere bricht den Build.",
       "radius": "Radien",
-      "elevation": "Ebenen",
-      "elevationNote": "Nur drei Ebenen. Karten e1, Menüs e2, Dialoge e3.",
+      "depth": "Tiefe ohne Schatten",
+      "depthNote": "Linkyo nutzt keine Schatten. Eine Fläche hebt sich durch eine feine Linie ab, durch eine stärkere Linie bei Feldern oder durch eine Stufe in der Füllung.",
       "grid": "Layout",
       "gridNote": "Creator-Spalte, Dashboard-Bereiche und Touch-Ziele (px)."
     },
@@ -1362,7 +1362,7 @@
         "outline": "Kontur",
         "soft": "Sanft",
         "glass": "Glas",
-        "shadow": "Schatten",
+        "shadow": "Karte",
         "minimal": "Minimal"
       },
       "sampleButton": "Mein neuer Song",

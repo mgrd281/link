@@ -33,7 +33,7 @@ export function CodeField({ id, label, value, onValue, error, describedBy }: { i
               <span
                 key={index}
                 className={cn(
-                  "grid aspect-square place-items-center rounded-lg border bg-canvas-muted text-h2 font-semibold tabular-nums transition-[border-color,box-shadow] duration-micro",
+                  "grid aspect-square place-items-center rounded-lg border bg-canvas-muted text-h2 font-semibold tabular-nums transition-[border-color] duration-micro",
                   error ? "border-danger" : active ? "border-focus focus-ring" : digit ? "border-line-strong" : "border-transparent",
                 )}
               >

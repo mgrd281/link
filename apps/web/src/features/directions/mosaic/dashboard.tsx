@@ -70,7 +70,7 @@ export function MosaicDashboard({ initial, profile, pageHref }: { initial: Edito
             </Button>
           </header>
 
-          <div className="flex items-center gap-3 rounded-full border border-line-input bg-surface-elevated ps-2 pe-4 shadow-e1 focus-within:border-focus focus-within:focus-ring">
+          <div className="flex items-center gap-3 rounded-full border border-line-input bg-surface-elevated ps-2 pe-4 focus-within:border-focus focus-within:focus-ring">
             <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-primary text-primary-fg">
               <Icon icon={Plus} size="md" />
             </span>
@@ -114,7 +114,7 @@ export function MosaicDashboard({ initial, profile, pageHref }: { initial: Edito
               </div>
             </section>
 
-            <aside aria-label={t("inspector.title")} className="grid content-start gap-4 rounded-xl border border-line bg-surface p-5 shadow-e1">
+            <aside aria-label={t("inspector.title")} className="grid content-start gap-4 rounded-xl border border-line bg-surface p-5">
               {selected ? (
                 <>
                   <div className="flex items-center gap-3">
@@ -225,18 +225,18 @@ function MosaicEditTile({
         onClick={onSelect}
         aria-pressed={selected}
         className={cn(
-          "relative isolate flex w-full cursor-grab touch-none flex-col justify-end gap-1 overflow-hidden rounded-lg bg-creator-surface p-3 text-start text-creator-fg shadow-e1",
-          "transition-[box-shadow,scale,opacity] duration-standard ease-standard hover:shadow-e2 focus-visible:focus-ring active:cursor-grabbing",
+          "relative isolate flex w-full cursor-grab touch-none flex-col justify-end gap-1 overflow-hidden rounded-lg bg-creator-surface p-3 text-start text-creator-fg",
+          "transition-[scale,opacity] duration-standard ease-standard focus-visible:focus-ring active:cursor-grabbing",
           size === "l" ? "aspect-video" : size === "s" ? "aspect-square" : "h-24",
           selected && "focus-ring",
-          isDragging && "scale-lift shadow-e3",
-          !block.visible && "border-emphasis border-dashed border-creator-line-strong shadow-none",
+          isDragging && "scale-lift",
+          block.visible ? "border border-creator-line" : "border-emphasis border-dashed border-creator-line-strong",
         )}
       >
         {resolved ? (
           <Image src={resolved} alt="" fill sizes={size === "s" ? mediaSizes.third : mediaSizes.half} className="object-cover" unoptimized={typeof resolved === "string"} />
         ) : null}
-        <span className={cn("relative grid min-w-0 gap-0.5", resolved && "self-start rounded-md bg-creator-surface px-2 py-1 shadow-e1")}>
+        <span className={cn("relative grid min-w-0 gap-0.5", resolved && "self-start rounded-md bg-creator-surface px-2 py-1")}>
           <span className="flex items-center gap-2 text-caption font-medium text-creator-fg-muted">
             <Icon icon={blockIcon[block.type]} size="sm" />
             {typeLabel}

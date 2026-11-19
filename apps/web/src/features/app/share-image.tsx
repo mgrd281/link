@@ -149,7 +149,7 @@ export function ShareImageButton({ compact = false }: { compact?: boolean }) {
           />
           {/* The canvas is the picture; its description is the figure's caption for screen readers. */}
           <figure aria-label={t("preview", { name: profile.displayName, address })} className={cn("grid", format === "story" ? "w-3/5 max-w-menu" : "w-4/5 max-w-menu")}>
-            <canvas ref={setCanvas} aria-hidden width={size.width} height={size.height} className="h-auto w-full rounded-lg border border-line shadow-e2" />
+            <canvas ref={setCanvas} aria-hidden width={size.width} height={size.height} className="h-auto w-full rounded-lg border border-line" />
           </figure>
           <p className="max-w-prose text-center text-caption text-fg-tertiary">{t(`hints.${format}`, { address })}</p>
         </div>

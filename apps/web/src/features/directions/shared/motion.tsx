@@ -121,7 +121,7 @@ export function HeroMotion({ src, className }: { src: string; className?: string
         type="button"
         onClick={toggle}
         aria-label={playing ? t("motionPause") : t("motionPlay")}
-        className="absolute end-3 top-3 grid size-control-sm place-items-center rounded-full bg-creator-glass text-creator-fg shadow-e1 backdrop-blur-glass focus-visible:focus-ring"
+        className="absolute end-3 top-3 grid size-control-sm place-items-center rounded-full border border-creator-line bg-creator-glass text-creator-fg backdrop-blur-glass focus-visible:focus-ring"
       >
         <Icon icon={playing ? Pause : Play} size="sm" className={playing ? undefined : "translate-x-px fill-current"} />
       </button>

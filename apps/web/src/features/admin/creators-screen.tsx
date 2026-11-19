@@ -46,7 +46,7 @@ function Row({ row, now }: { row: CreatorRow; now: number | null }) {
     <li>
       <Link
         href={`/admin/creators/${row.slug}`}
-        className="group flex min-w-0 items-center gap-3 rounded-lg border border-line bg-surface p-3 shadow-e1 transition-colors duration-micro hover:border-line-input focus-visible:focus-ring"
+        className="group flex min-w-0 items-center gap-3 rounded-lg border border-line bg-surface p-3 transition-colors duration-micro hover:border-line-input focus-visible:focus-ring"
       >
         <CreatorAvatar row={row} />
         <span className="grid min-w-0 flex-1 gap-1">

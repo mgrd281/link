@@ -52,7 +52,7 @@ export function Trust() {
             className="mk-reveal grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-1 rounded-xl bg-canvas-muted p-5 md:grid-cols-1 md:content-start md:gap-4 md:p-8"
             style={order(index)}
           >
-            <span aria-hidden className="row-span-2 grid size-control-md place-items-center rounded-full bg-primary text-primary-fg shadow-cta md:row-span-1">
+            <span aria-hidden className="row-span-2 grid size-control-md place-items-center rounded-full bg-primary text-primary-fg md:row-span-1">
               <Icon icon={TRUST_ICONS[index] ?? Check} size="md" />
             </span>
             <h3 className="text-body-lg font-semibold text-balance md:text-h3">{item.title}</h3>
@@ -87,7 +87,7 @@ export function Templates() {
               <a
                 href={pageHref(slug)}
                 aria-label={t("open", { name: nameOf(slug) })}
-                className="group block overflow-hidden rounded-xl border border-line bg-surface shadow-e2 transition-[translate,box-shadow] duration-standard ease-standard hover:-translate-y-1 hover:shadow-e3 focus-visible:focus-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className="group block overflow-hidden rounded-xl border border-line bg-surface transition-[translate] duration-standard ease-standard hover:-translate-y-1 focus-visible:focus-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
                 <span className="relative block aspect-short">
                   <Image
@@ -107,7 +107,7 @@ export function Templates() {
       <div className="mt-10 flex justify-center px-5">
         <Link
           href="/templates"
-          className="inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-cta transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
+          className="inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
         >
           {tExamples("seeAll", { count: Object.keys(LOOKS).length })}
           <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
@@ -133,7 +133,7 @@ function FeatureRow({ title, body, tint, reverse = false, children }: { title: s
 /** A page capture as a card (the top of the page). */
 function Shot({ slug, className, sizes = phoneSizes.side }: { slug: ExampleShot; className?: string; sizes?: string }) {
   return (
-    <div className={cn("relative aspect-portrait overflow-hidden rounded-lg border border-line bg-surface shadow-e3", className)}>
+    <div className={cn("relative aspect-portrait overflow-hidden rounded-lg border border-line bg-surface", className)}>
       <Image src={EXAMPLE_SHOTS[slug]} alt="" fill sizes={sizes} placeholder="blur" className="object-cover object-top" />
     </div>
   );
@@ -151,7 +151,7 @@ function AnalyticsCard() {
   const n = new Intl.NumberFormat(locale);
   const pct = new Intl.NumberFormat(locale, { style: "percent" });
   return (
-    <figure className="mk-pop grid w-full max-w-prose gap-5 rounded-xl bg-surface-elevated p-5 shadow-e3 md:p-6">
+    <figure className="mk-pop grid w-full max-w-prose gap-5 rounded-xl border border-line bg-surface-elevated p-5 md:p-6">
       <figcaption className="flex items-center justify-between gap-3">
         <span className="text-small font-semibold">{t("week")}</span>
         <Badge size="sm">{t("sample")}</Badge>
@@ -206,13 +206,13 @@ function ShareCard() {
     <div className="relative grid w-full max-w-prose grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-end gap-4">
       <div className="mk-fan grid gap-2 -rotate-3">
         <span className="justify-self-start rounded-full bg-fg px-2 py-0.5 text-caption font-semibold text-canvas">{t("story")}</span>
-        <div className="relative aspect-short overflow-hidden rounded-lg border border-line shadow-e3">
+        <div className="relative aspect-short overflow-hidden rounded-lg border border-line">
           <Image src={EXAMPLE_SHOTS[slug]} alt="" fill sizes={phoneSizes.side} placeholder="blur" className="object-cover object-top" />
         </div>
       </div>
       <div className="mk-pop grid gap-2" style={order(1)}>
         <span className="justify-self-start rounded-full bg-fg px-2 py-0.5 text-caption font-semibold text-canvas">{t("preview")}</span>
-        <div className="overflow-hidden rounded-xl rounded-ee-xs bg-surface-elevated shadow-e3">
+        <div className="overflow-hidden rounded-xl rounded-ee-xs border border-line bg-surface-elevated">
           <div className="relative aspect-og">
             <Image src={EXAMPLE_SHOTS[slug]} alt="" fill sizes={phoneSizes.side} placeholder="blur" className="object-cover object-[50%_18%]" />
           </div>
@@ -275,7 +275,7 @@ export function Pricing() {
     <Shell id="pricing" labelledBy="pricing-title" className="grid w-full grid-cols-1 gap-12 py-16 md:py-24">
       <SectionHeader id="pricing-title" title={t("title")} lead={t("lead")} center />
       <div className="mx-auto grid w-full gap-4 md:grid-cols-2">
-        <article className="mk-reveal grid content-start gap-6 rounded-xl border border-line bg-surface-elevated p-6 shadow-e2 md:p-10">
+        <article className="mk-reveal grid content-start gap-6 rounded-xl border border-line bg-surface-elevated p-6 md:p-10">
           <div className="grid gap-2">
             <h3 className="text-h3">{t("free.name")}</h3>
             <p className="flex items-baseline gap-2">
@@ -293,7 +293,7 @@ export function Pricing() {
           </ul>
           <Link
             href="/signup"
-            className="inline-flex h-control-xl items-center justify-center rounded-full bg-primary px-6 text-body font-semibold text-primary-fg shadow-cta transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
+            className="inline-flex h-control-xl items-center justify-center rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
           >
             {t("free.cta")}
           </Link>
@@ -352,7 +352,7 @@ export function FinalCta() {
   const pro = t.raw("pricing.pro.features") as string[];
   return (
     <section id="start" aria-labelledby="final-title" className="mx-auto w-full max-w-content scroll-mt-24 px-5 md:px-10">
-      <div className="mk-reveal grid overflow-hidden rounded-xl bg-primary text-primary-fg shadow-e2">
+      <div className="mk-reveal grid overflow-hidden rounded-xl bg-primary text-primary-fg">
         <div className="grid justify-items-center gap-6 px-5 py-16 text-center md:px-10 md:py-24">
           <h2 id="final-title" className="text-h1 tracking-tight text-balance md:text-display">
             {t("final.title")}

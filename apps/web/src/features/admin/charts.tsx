@@ -32,7 +32,7 @@ export function KpiTile({
   tone?: "neutral" | "warning" | "danger";
 }) {
   return (
-    <div className="border-line bg-surface shadow-e1 grid min-w-0 content-start gap-3 rounded-xl border p-4">
+    <div className="border-line bg-surface grid min-w-0 content-start gap-3 rounded-xl border p-4">
       <div className="flex min-w-0 items-start gap-2 text-small text-fg-secondary">
         <span
           className={cn(

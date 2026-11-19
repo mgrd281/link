@@ -26,7 +26,7 @@ function ProfilePanel() {
     <Panel title={t("title")} id="profile-title">
       <ProfileFields profile={form.profile} onChange={form.change} errors={form.errors} />
       {form.dirty ? (
-        <div className="sticky bottom-20 flex flex-wrap justify-end gap-2 rounded-lg border border-line bg-surface-elevated p-3 shadow-e3 lg:bottom-4">
+        <div className="sticky bottom-20 flex flex-wrap justify-end gap-2 rounded-lg border border-line bg-surface-elevated p-3 lg:bottom-4">
           <Button variant="ghost" onClick={form.reset}>
             {t("cancel")}
           </Button>

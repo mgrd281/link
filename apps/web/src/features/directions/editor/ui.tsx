@@ -244,7 +244,7 @@ export function CommandPalette({
       onOpenChange={setOpen}
       label={t("command.label")}
       overlayClassName="layer-modal fixed inset-0 bg-scrim motion-safe:animate-fade-in"
-      contentClassName="layer-modal fixed inset-x-4 top-24 mx-auto max-w-prose overflow-hidden rounded-xl border border-line bg-surface-elevated text-fg shadow-e3 motion-safe:animate-pop-in"
+      contentClassName="layer-modal fixed inset-x-4 top-24 mx-auto max-w-prose overflow-hidden rounded-xl border border-line bg-surface-elevated text-fg motion-safe:animate-pop-in"
     >
       <Command.Input
         placeholder={t("command.placeholder")}

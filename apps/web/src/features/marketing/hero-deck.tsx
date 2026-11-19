@@ -108,7 +108,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                 data-slot={slot}
                 className="mk-deck-card group absolute inset-x-0 top-0"
               >
-                <div className="rounded-xl bg-ink p-1 shadow-e3">
+                <div className="rounded-xl bg-ink p-1">
                   <div className="relative aspect-phone overflow-hidden rounded-lg bg-surface">
                     <Image
                       src={EXAMPLE_SHOTS[page.slug]}
@@ -127,10 +127,10 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                 {front ? (
                   <a href={page.href} className="absolute inset-0 rounded-xl focus-visible:focus-ring">
                     {/* The address above the phone is the visible link: "linkyo.app/name ↗". */}
-                    <span className="mk-deck-chip absolute inset-x-0 bottom-full mx-auto mb-3 inline-flex h-control-md w-max items-center gap-2 rounded-full bg-surface-elevated ps-3 pe-1 text-small font-semibold whitespace-nowrap text-fg shadow-e2 transition-[translate,box-shadow] duration-standard ease-standard group-hover:-translate-y-0.5 group-hover:shadow-e3 motion-reduce:group-hover:translate-y-0">
+                    <span className="mk-deck-chip absolute inset-x-0 bottom-full mx-auto mb-3 inline-flex h-control-md w-max items-center gap-2 rounded-full border border-line bg-surface-elevated ps-3 pe-1 text-small font-semibold whitespace-nowrap text-fg transition-[translate] duration-standard ease-standard group-hover:-translate-y-0.5 motion-reduce:group-hover:translate-y-0">
                       <LogoSymbol className="size-4 text-primary" />
                       <span dir="ltr">linkyo.app/{page.slug}</span>
-                      <span className="grid size-control-sm place-items-center rounded-full bg-primary text-primary-fg shadow-cta">
+                      <span className="grid size-control-sm place-items-center rounded-full bg-primary text-primary-fg">
                         <Icon
                           icon={ArrowUpRight}
                           size="sm"
@@ -164,7 +164,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
         role="tablist"
         aria-label={t("deck.choose")}
         aria-describedby={`${id}-auto`}
-        className="relative flex items-center gap-1 rounded-full bg-canvas-muted p-1 shadow-e1"
+        className="relative flex items-center gap-1 rounded-full bg-canvas-muted p-1"
       >
         {pages.map((page, index) => {
           const selected = index === active;
@@ -185,8 +185,8 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
               }}
               onKeyDown={onTabKey}
               className={cn(
-                "relative inline-flex h-control-md items-center gap-2 overflow-hidden rounded-full px-4 text-small font-semibold transition-[background-color,color,box-shadow] duration-standard ease-standard focus-visible:focus-ring",
-                selected ? "bg-surface-elevated text-fg shadow-e1" : "text-fg-secondary hover:text-fg",
+                "relative inline-flex h-control-md items-center gap-2 overflow-hidden rounded-full border border-transparent px-4 text-small font-semibold transition-[background-color,border-color,color] duration-standard ease-standard focus-visible:focus-ring",
+                selected ? "border-line bg-surface-elevated text-fg" : "text-fg-secondary hover:text-fg",
               )}
             >
               <Icon icon={KIND_ICONS[page.kind]} size="sm" className={cn(selected ? "text-primary" : "text-fg-tertiary")} />

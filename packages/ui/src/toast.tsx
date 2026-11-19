@@ -59,7 +59,7 @@ export function Toaster({ closeLabel }: { closeLabel: string }) {
             if (!open) dismiss(item.id);
           }}
           className={cn(
-            "pointer-events-auto flex w-full items-center gap-3 rounded-md bg-fg py-2 ps-4 pe-2 text-fg-inverse shadow-e3",
+            "pointer-events-auto flex w-full items-center gap-3 rounded-md bg-fg py-2 ps-4 pe-2 text-fg-inverse",
             "motion-safe:animate-rise-in data-[swipe=move]:translate-y-(--radix-toast-swipe-move-y) data-[swipe=end]:hidden",
           )}
         >

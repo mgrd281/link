@@ -374,7 +374,7 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
   const primary = block.highlight;
   const onColor = primary || style === "filled";
   const glyph = linkGlyph(block.url, block.icon);
-  const tone = primary ? "bg-creator-accent text-creator-accent-fg shadow-e2" : linkStyleClasses[style];
+  const tone = primary ? "bg-creator-accent text-creator-accent-fg" : linkStyleClasses[style];
   return (
     <a
       href={block.url}
@@ -466,7 +466,7 @@ export function NewsletterCard({ block, surface, heading: Heading }: { block: Bl
   return (
     <section aria-label={block.title} className={cn("grid gap-5 rounded-creator-card p-5 @prose:p-6", surface)}>
       <div className="flex items-start gap-4">
-        <span aria-hidden className="grid size-control-lg shrink-0 place-items-center rounded-full bg-creator-accent text-creator-accent-fg shadow-e1">
+        <span aria-hidden className="grid size-control-lg shrink-0 place-items-center rounded-full bg-creator-accent text-creator-accent-fg">
           <Icon icon={Mail} size="md" />
         </span>
         <div className="grid min-w-0 gap-1">

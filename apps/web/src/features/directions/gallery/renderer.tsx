@@ -150,7 +150,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
       return block.isLive ? (
         <a
           href={block.url}
-          className={cn(card, "flex items-center gap-3 p-4 transition-shadow duration-standard hover:shadow-e2 focus-visible:focus-ring")}
+          className={cn(card, "flex items-center gap-3 p-4 transition-colors duration-standard hover:border-creator-line-strong focus-visible:focus-ring")}
         >
           <span className="relative grid size-control-md shrink-0 place-items-center rounded-full bg-creator-accent text-creator-accent-fg">
             <Icon icon={Radio} size="sm" />
@@ -251,7 +251,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
 
     case "product":
       return (
-        <a href={block.url} className={cn(card, "flex items-center gap-4 p-3 transition-shadow duration-standard hover:shadow-e2 focus-visible:focus-ring")}>
+        <a href={block.url} className={cn(card, "flex items-center gap-4 p-3 transition-colors duration-standard hover:border-creator-line-strong focus-visible:focus-ring")}>
           <span className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-md">
             <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.thumb} />
           </span>
@@ -267,7 +267,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
 
     case "card":
       return (
-        <a href={block.url} className={cn(card, "group grid transition-shadow duration-standard hover:shadow-e2 focus-visible:focus-ring")}>
+        <a href={block.url} className={cn(card, "group grid transition-colors duration-standard hover:border-creator-line-strong focus-visible:focus-ring")}>
           <span className="relative aspect-video">
             <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.column} />
           </span>

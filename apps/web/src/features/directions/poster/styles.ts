@@ -16,13 +16,13 @@ export const cardSurface: Record<CreatorButtonStyle, string> = {
   soft: "bg-creator-surface-2",
   outline: "border border-creator-line-strong",
   glass: "border border-creator-line bg-creator-glass backdrop-blur-glass",
-  shadow: "bg-creator-surface shadow-e2",
+  shadow: "border border-creator-line bg-creator-surface",
   minimal: "border-b border-creator-line",
 };
 
 /** Hover/press feedback in currentColor: works on every surface, theme and photo. */
 export const pressable = cn(
-  "relative isolate transition-[scale,box-shadow] duration-standard ease-standard active:scale-pressed motion-reduce:active:scale-none",
+  "relative isolate transition-[scale] duration-standard ease-standard active:scale-pressed motion-reduce:active:scale-none",
   "after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-current after:opacity-0",
   "after:transition-opacity after:duration-micro hover:after:opacity-hover active:after:opacity-pressed",
   "focus-visible:focus-ring",

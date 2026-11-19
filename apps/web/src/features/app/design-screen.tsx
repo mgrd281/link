@@ -102,10 +102,10 @@ export function DesignScreen() {
                   <span
                     aria-hidden
                     style={{ "--swatch": hex } as CSSProperties}
-                    className={cn("grid size-control-md place-items-center rounded-full border border-line bg-(--swatch) shadow-e1", selected && "border-emphasis border-focus")}
+                    className={cn("grid size-control-md place-items-center rounded-full border border-line bg-(--swatch)", selected && "border-emphasis border-focus")}
                   >
                     {selected ? (
-                      <span className="grid size-5 place-items-center rounded-full bg-surface-elevated text-fg shadow-e1">
+                      <span className="grid size-5 place-items-center rounded-full bg-surface-elevated text-fg">
                         <Icon icon={Check} size="sm" />
                       </span>
                     ) : null}

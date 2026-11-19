@@ -22,6 +22,9 @@ describe("stylelint token rules", () => {
     [".a { margin: 12px; }\n", "unit-disallowed-list"],
     [".a { padding: 1.5rem; }\n", "declaration-property-value-disallowed-list"],
     [".a { font-family: Inter, sans-serif; }\n", "declaration-property-value-allowed-list"],
+    [".a { box-shadow: 0 0 0 var(--spacing-1) var(--color-line); }\n", "declaration-property-value-allowed-list"],
+    [".a { text-shadow: var(--x); }\n", "declaration-property-value-allowed-list"],
+    [".a { filter: drop-shadow(var(--x)); }\n", "function-disallowed-list"],
   ])("rejects %s", async (code, rule) => {
     expect(await lint(code)).toContain(rule);
   });

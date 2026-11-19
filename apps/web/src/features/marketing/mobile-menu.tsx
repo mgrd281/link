@@ -27,7 +27,7 @@ export function MobileMenu({ items, labels, cta, secondary }: { items: NavItem[]
       <div
         id="mk-menu"
         popover="auto"
-        className="inset-x-3 top-3 bottom-auto m-0 w-auto rounded-xl border border-line bg-surface-elevated p-3 text-fg shadow-e3 backdrop:bg-scrim motion-safe:open:animate-pop-in"
+        className="inset-x-3 top-3 bottom-auto m-0 w-auto rounded-xl border border-line bg-surface-elevated p-3 text-fg backdrop:bg-scrim motion-safe:open:animate-pop-in"
       >
         <div className="flex justify-end">
           <button

@@ -120,7 +120,7 @@ export function PosterHero({
       {treatment === "monogram" ? (
         // No photo yet: a large monogram on the accent color, so a new page still feels finished.
         <div className="poster-hero-fade grid w-full justify-items-center pt-20 pb-24">
-          <span className="relative size-avatar-2xl overflow-hidden rounded-full text-display shadow-e2">
+          <span className="relative size-avatar-2xl overflow-hidden rounded-full text-display">
             <Monogram name={profile.displayName} />
           </span>
         </div>

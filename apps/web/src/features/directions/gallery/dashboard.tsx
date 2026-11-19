@@ -69,7 +69,7 @@ export function GalleryDashboard({ initial, profile, pageHref }: { initial: Edit
             </Button>
           </header>
 
-          <section aria-label={t("addLabel")} className="grid gap-4 rounded-xl border border-line bg-surface p-5 shadow-e1">
+          <section aria-label={t("addLabel")} className="grid gap-4 rounded-xl border border-line bg-surface p-5">
             <div className="flex items-center gap-3 rounded-lg border border-line-input bg-surface-elevated px-4 focus-within:border-focus focus-within:focus-ring">
               <Icon icon={Plus} size="md" className="text-fg-tertiary" />
               <label className="sr-only" htmlFor="gallery-add">
@@ -200,10 +200,10 @@ function GalleryRow({
       ref={rowRef}
       style={rowStyle}
       className={cn(
-        "group flex items-center gap-3 rounded-lg border border-line bg-surface p-3 pe-2 shadow-e1",
-        "transition-[box-shadow,opacity,scale] duration-standard ease-standard",
-        isDragging && "layer-raised relative scale-lift shadow-e3",
-        !block.visible && "border-dashed bg-canvas-muted shadow-none",
+        "group flex items-center gap-3 rounded-lg border border-line bg-surface p-3 pe-2",
+        "transition-[opacity,scale] duration-standard ease-standard",
+        isDragging && "layer-raised relative scale-lift border-primary",
+        !block.visible && "border-dashed bg-canvas-muted",
       )}
     >
       <button
