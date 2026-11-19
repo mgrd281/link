@@ -597,16 +597,11 @@
         "choose": "Choose an example page",
         "view": "View page",
         "viewNamed": "View page, {name}",
-        "auto": "The page in front scrolls down by itself, then the next one comes: every 9 seconds, twice round, until you choose a page.",
+        "auto": "The page in front scrolls down by itself, then the next one comes: every 9 seconds, once through all nine, until you choose a page.",
         "conceptNamed": "Concept · {name}",
         "conceptNote": "Concept pages are unofficial: this is how a Linkyo page could look. We are not affiliated with the people shown."
       },
-      "promises": "What you get",
-      "tabs": {
-        "taylor-swift": "Taylor Swift",
-        "cristiano": "Ronaldo",
-        "messi": "Messi"
-      }
+      "promises": "What you get"
     },
     "claim": {
       "label": "Choose your page address",

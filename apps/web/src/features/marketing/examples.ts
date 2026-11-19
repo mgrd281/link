@@ -28,15 +28,42 @@ import studioMira from "@/assets/marketing/examples/studio-mira.jpg";
 import lenaVogt from "@/assets/marketing/examples/lena-vogt.jpg";
 import karimAlmansour from "@/assets/marketing/examples/karim-almansour.jpg";
 import trattoriaLucia from "@/assets/marketing/examples/trattoria-lucia.jpg";
+import alshamiAr from "@/assets/marketing/concepts/alshami.ar.jpg";
+import alshamiDe from "@/assets/marketing/concepts/alshami.de.jpg";
+import alshamiEn from "@/assets/marketing/concepts/alshami.en.jpg";
 import cristianoAr from "@/assets/marketing/concepts/cristiano.ar.jpg";
 import cristianoDe from "@/assets/marketing/concepts/cristiano.de.jpg";
 import cristianoEn from "@/assets/marketing/concepts/cristiano.en.jpg";
+import elonMuskAr from "@/assets/marketing/concepts/elon-musk.ar.jpg";
+import elonMuskDe from "@/assets/marketing/concepts/elon-musk.de.jpg";
+import elonMuskEn from "@/assets/marketing/concepts/elon-musk.en.jpg";
+import jeffBezosAr from "@/assets/marketing/concepts/jeff-bezos.ar.jpg";
+import jeffBezosDe from "@/assets/marketing/concepts/jeff-bezos.de.jpg";
+import jeffBezosEn from "@/assets/marketing/concepts/jeff-bezos.en.jpg";
 import messiAr from "@/assets/marketing/concepts/messi.ar.jpg";
 import messiDe from "@/assets/marketing/concepts/messi.de.jpg";
 import messiEn from "@/assets/marketing/concepts/messi.en.jpg";
+import moSalahAr from "@/assets/marketing/concepts/mo-salah.ar.jpg";
+import moSalahDe from "@/assets/marketing/concepts/mo-salah.de.jpg";
+import moSalahEn from "@/assets/marketing/concepts/mo-salah.en.jpg";
+import mrbeastAr from "@/assets/marketing/concepts/mrbeast.ar.jpg";
+import mrbeastDe from "@/assets/marketing/concepts/mrbeast.de.jpg";
+import mrbeastEn from "@/assets/marketing/concepts/mrbeast.en.jpg";
+import nadineNjeimAr from "@/assets/marketing/concepts/nadine-njeim.ar.jpg";
+import nadineNjeimDe from "@/assets/marketing/concepts/nadine-njeim.de.jpg";
+import nadineNjeimEn from "@/assets/marketing/concepts/nadine-njeim.en.jpg";
 import taylorSwiftAr from "@/assets/marketing/concepts/taylor-swift.ar.jpg";
 import taylorSwiftDe from "@/assets/marketing/concepts/taylor-swift.de.jpg";
 import taylorSwiftEn from "@/assets/marketing/concepts/taylor-swift.en.jpg";
+import alshamiFace from "@/assets/marketing/concepts/faces/alshami.jpg";
+import cristianoFace from "@/assets/marketing/concepts/faces/cristiano.jpg";
+import elonMuskFace from "@/assets/marketing/concepts/faces/elon-musk.jpg";
+import jeffBezosFace from "@/assets/marketing/concepts/faces/jeff-bezos.jpg";
+import messiFace from "@/assets/marketing/concepts/faces/messi.jpg";
+import moSalahFace from "@/assets/marketing/concepts/faces/mo-salah.jpg";
+import mrbeastFace from "@/assets/marketing/concepts/faces/mrbeast.jpg";
+import nadineNjeimFace from "@/assets/marketing/concepts/faces/nadine-njeim.jpg";
+import taylorSwiftFace from "@/assets/marketing/concepts/faces/taylor-swift.jpg";
 
 /**
  * Phone captures of our own fictional example pages (390 × 844, the top of each page), taken from
@@ -79,16 +106,38 @@ export type ExampleShot = keyof typeof EXAMPLE_SHOTS;
 
 /**
  * Tall captures (up to two and a half screens) of the unofficial concept pages of well-known people
- * shown in the hero (ADR 0043 and 0044), one per language: these pages exist in German, English
- * and Arabic. The hero scrolls through them. Taken by the same script.
+ * shown in the hero (ADR 0043 to 0045), one per language: these pages exist in German, English and
+ * Arabic. The hero scrolls through them. Taken by the same script. The order is the hero's order.
  */
 export const CONCEPT_SHOTS = {
   "taylor-swift": { de: taylorSwiftDe, en: taylorSwiftEn, ar: taylorSwiftAr },
   cristiano: { de: cristianoDe, en: cristianoEn, ar: cristianoAr },
+  "nadine-njeim": { de: nadineNjeimDe, en: nadineNjeimEn, ar: nadineNjeimAr },
+  mrbeast: { de: mrbeastDe, en: mrbeastEn, ar: mrbeastAr },
+  alshami: { de: alshamiDe, en: alshamiEn, ar: alshamiAr },
+  "jeff-bezos": { de: jeffBezosDe, en: jeffBezosEn, ar: jeffBezosAr },
+  "mo-salah": { de: moSalahDe, en: moSalahEn, ar: moSalahAr },
+  "elon-musk": { de: elonMuskDe, en: elonMuskEn, ar: elonMuskAr },
   messi: { de: messiDe, en: messiEn, ar: messiAr },
 } satisfies Record<string, Record<"de" | "en" | "ar", StaticImageData>>;
 
 export type ConceptShot = keyof typeof CONCEPT_SHOTS;
+
+/**
+ * A face for each concept page, cut square from the page's own credited portrait (Al Shami: the
+ * artwork of his official video, as on his page). They are the buttons under the hero's pages.
+ */
+export const CONCEPT_FACES = {
+  "taylor-swift": taylorSwiftFace,
+  cristiano: cristianoFace,
+  "nadine-njeim": nadineNjeimFace,
+  mrbeast: mrbeastFace,
+  alshami: alshamiFace,
+  "jeff-bezos": jeffBezosFace,
+  "mo-salah": moSalahFace,
+  "elon-musk": elonMuskFace,
+  messi: messiFace,
+} satisfies Record<ConceptShot, StaticImageData>;
 
 /**
  * The strip, in an order that keeps neighbours different (colors, kinds, languages). The

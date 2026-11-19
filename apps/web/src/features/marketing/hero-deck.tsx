@@ -4,16 +4,16 @@ import { cn, Icon, LogoSymbol } from "@linkyo/ui";
 import { ArrowUpRight } from "lucide-react";
 import Image, { type StaticImageData } from "next/image";
 import { useTranslations } from "next-intl";
-import { useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 
-import { phoneSizes } from "./assets";
+import { faceSize, phoneSizes } from "./assets";
 
 export interface DeckPage {
   slug: string;
   name: string;
   href: string;
-  /** The short name on the page's tab. */
-  tab: string;
+  /** The face on the page's button under the deck. */
+  face: StaticImageData;
   /**
    * The picture of the page, in the visitor's language where the page has one. A picture taller
    * than the screen scrolls by itself while the page is in front.
@@ -23,9 +23,19 @@ export interface DeckPage {
   concept?: boolean;
 }
 
-const SLOTS = ["front", "next", "prev"] as const;
-/** The deck goes round twice on its own, then rests on the first page. */
-const ROUNDS = 2;
+/**
+ * Where a page stands: in front, beside it (next on the reading side, prev on the other), or out of
+ * sight behind one of them, waiting for its turn (after: it comes in next; before: it just left).
+ */
+function slotOf(index: number, active: number, count: number) {
+  const offset = (index - active + count) % count;
+  if (offset === 0) return "front";
+  if (offset === 1) return "next";
+  if (offset === count - 1) return "prev";
+  return offset <= count / 2 ? "after" : "before";
+}
+/** The deck goes through all its pages once on its own, then rests on the first. */
+const ROUNDS = 1;
 
 const reducedQuery = "(prefers-reduced-motion: reduce)";
 const subscribeReduced = (onChange: () => void) => {
@@ -37,18 +47,19 @@ const subscribeReduced = (onChange: () => void) => {
 };
 
 /**
- * The hero's pages as a carousel (WAI-ARIA tabbed carousel): three pages, the one in front shown
- * whole. The chip above it is the link to the page: its address, or "Concept · name" for the
- * unofficial concept pages of well-known people (a note under the tabs says so too, ADR 0043).
- * A click on a page beside it, or on a tab, brings that page forward, and the teal highlight glides
- * to its tab.
+ * The hero's pages as a carousel (WAI-ARIA tabbed carousel): nine pages, three in view, the one in
+ * front shown whole. The chip above it is the link to the page: its address, or "Concept · name"
+ * for the unofficial concept pages of well-known people (a note at the bottom says so too, ADR
+ * 0043). Under the pages a row of faces, one per page, like stories: a click on a face, or on a page
+ * beside the front one, brings that page forward. On phones the row scrolls and keeps the chosen
+ * face in view. Every page's picture is fetched ahead, so the page is there the moment it is chosen.
  *
  * The page in front is alive: its picture scrolls down by itself, as someone reading it would, and
  * returns to the top; then the next page comes forward. That scroll is the deck's clock.
  *
- * Motion without a pause button (WCAG 2.2.2): the deck moves on its own only for two rounds, holds
- * while the mouse is over it or keyboard focus is inside, stops for good as soon as someone chooses
- * a page, and never moves on its own with reduced motion.
+ * Motion without a pause button (WCAG 2.2.2): the deck goes through its pages once on its own,
+ * holds while the mouse is over it or keyboard focus is inside, stops for good as soon as someone
+ * chooses a page, and never moves on its own with reduced motion.
  */
 export function HeroDeck({ pages }: { pages: DeckPage[] }) {
   const t = useTranslations("marketing.hero");
@@ -56,7 +67,9 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
   const [active, setActive] = useState(0);
   const [turns, setTurns] = useState(0);
   const [chosen, setChosen] = useState(false);
+  const [warm, setWarm] = useState(false);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const row = useRef<HTMLDivElement | null>(null);
   const reduced = useSyncExternalStore(subscribeReduced, () => window.matchMedia(reducedQuery).matches, () => false);
   const count = pages.length;
   const rotating = !chosen && !reduced && turns < count * ROUNDS;
@@ -67,6 +80,25 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
     setChosen(true);
     setActive(next);
     if (focus) tabs.current[next]?.focus();
+  };
+
+  // On narrow screens the row of faces scrolls: keep the chosen face in the middle. Only the row
+  // moves (scrollIntoView would also move the page).
+  useEffect(() => {
+    const list = row.current;
+    const tab = tabs.current[active];
+    if (!list || !tab || list.scrollWidth <= list.clientWidth) return;
+    list.scrollTo({ left: tab.offsetLeft - (list.clientWidth - tab.offsetWidth) / 2, behavior: reduced ? "auto" : "smooth" });
+  }, [active, reduced]);
+
+  /**
+   * The first picture is there: now the pages still out of sight fetch theirs, quietly, so a tap on
+   * any face shows its page at once. Not when the browser asks to save data: there a picture loads
+   * when its page comes near.
+   */
+  const warmUp = () => {
+    const { connection } = navigator as Navigator & { connection?: { saveData?: boolean } };
+    if (!connection?.saveData) setWarm(true);
   };
 
   const advance = () => {
@@ -101,8 +133,12 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
           <div aria-hidden className="invisible aspect-phone" />
 
           {pages.map((page, index) => {
-            const slot = SLOTS[(index - active + count) % count] ?? "next";
+            const slot = slotOf(index, active, count);
             const front = slot === "front";
+            const beside = slot === "next" || slot === "prev";
+            // Pictures load for the pages in view and the two about to come into view; the others
+            // follow once the first is there (warmUp).
+            const near = [0, 1, 2, count - 2, count - 1].includes((index - active + count) % count);
             return (
               <div
                 key={page.slug}
@@ -116,18 +152,21 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
               >
                 {/* The page itself, edge to edge: no bezel, no frame. In front, it scrolls by itself. */}
                 <div className="mk-deck-screen aspect-phone overflow-hidden rounded-xl bg-canvas-muted">
-                  <Image
-                    src={page.shot}
-                    alt=""
-                    sizes={phoneSizes.hero}
-                    placeholder="blur"
-                    preload={index === 0}
-                    fetchPriority={index === 0 ? "high" : "auto"}
-                    loading={index === 0 ? "eager" : "lazy"}
-                    data-tour={front && rotating ? "" : undefined}
-                    onAnimationEnd={front && rotating ? advance : undefined}
-                    className={cn("h-auto w-full", front && rotating && "mk-deck-scroll")}
-                  />
+                  {near || warm ? (
+                    <Image
+                      src={page.shot}
+                      alt=""
+                      sizes={phoneSizes.hero}
+                      placeholder="blur"
+                      preload={index === 0}
+                      fetchPriority={index === 0 ? "high" : near ? "auto" : "low"}
+                      loading={index === 0 || !beside ? "eager" : "lazy"}
+                      onLoad={index === 0 ? warmUp : undefined}
+                      data-tour={front && rotating ? "" : undefined}
+                      onAnimationEnd={front && rotating ? advance : undefined}
+                      className={cn("h-auto w-full", front && rotating && "mk-deck-scroll")}
+                    />
+                  ) : null}
                 </div>
 
                 {front ? (
@@ -146,7 +185,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                     </span>
                     <span className="sr-only">{t("deck.viewNamed", { name: page.name })}</span>
                   </a>
-                ) : (
+                ) : beside ? (
                   <button
                     type="button"
                     tabIndex={-1}
@@ -156,7 +195,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                     }}
                     className="absolute inset-0 cursor-pointer rounded-xl"
                   />
-                )}
+                ) : null}
               </div>
             );
           })}
@@ -167,11 +206,11 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
         {t("deck.auto")}
       </p>
       <div
+        ref={row}
         role="tablist"
         aria-label={t("deck.choose")}
         aria-describedby={`${id}-auto`}
-        style={{ "--tab": active, "--tabs": count } as CSSProperties}
-        className="mk-deck-tabs"
+        className="mk-no-scrollbar relative flex w-full items-center justify-between gap-1 overflow-x-auto rounded-full bg-canvas-muted p-1"
       >
         {pages.map((page, index) => {
           const selected = index === active;
@@ -184,6 +223,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
               type="button"
               role="tab"
               id={`${id}-tab-${index}`}
+              aria-label={page.name}
               aria-selected={selected}
               aria-controls={`${id}-slide-${index}`}
               tabIndex={selected ? 0 : -1}
@@ -192,11 +232,11 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
               }}
               onKeyDown={onTabKey}
               className={cn(
-                "inline-flex h-control-md items-center justify-center rounded-full px-3 text-small font-semibold whitespace-nowrap transition-colors duration-slow ease-emphasized focus-visible:focus-ring motion-reduce:transition-none sm:px-5",
-                selected ? "text-primary-fg" : "text-fg-secondary hover:text-fg",
+                "relative size-touch-target shrink-0 overflow-hidden rounded-full border-emphasis p-0.5 transition-colors duration-slow ease-emphasized focus-visible:focus-ring motion-reduce:transition-none",
+                selected ? "border-link" : "border-transparent hover:border-line-strong",
               )}
             >
-              {page.tab}
+              <Image src={page.face} alt="" sizes={faceSize} className="size-full rounded-full object-cover" />
             </button>
           );
         })}

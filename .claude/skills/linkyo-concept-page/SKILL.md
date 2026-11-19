@@ -72,3 +72,17 @@ PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test e2e/stars.spec.ts
 
 Screenshot the page in de, en and ar at 390 px and check the colors, crops and that each page uses
 only its own language.
+
+## If the page is in the hero deck
+
+Nine concept pages take turns on the homepage (`CONCEPT_SHOTS` in `src/features/marketing/examples.ts`,
+ADR 0045). The deck shows pictures of them, not the live pages. After any change to one of these pages
+(look, photo, name, top sections), retake its three pictures against the running production build:
+
+```bash
+cd apps/web && PW_CHROMIUM_PATH=/opt/pw-browsers/chromium node scripts/capture-example-shots.mjs concept:<slug>
+```
+
+- A new page in the deck also needs its line in `CONCEPT_SHOTS` (the order there is the deck's order;
+  keep neighbours different) and a 192 × 192 face crop in `src/assets/marketing/concepts/faces/`.
+- Then rebuild and run `e2e/home.spec.ts`.

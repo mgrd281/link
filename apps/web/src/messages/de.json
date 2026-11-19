@@ -597,16 +597,11 @@
         "choose": "Beispielseite wählen",
         "view": "Seite ansehen",
         "viewNamed": "Seite ansehen, {name}",
-        "auto": "Die Seite vorn scrollt von selbst nach unten, dann kommt die nächste: alle 9 Sekunden, zweimal reihum, bis du selbst eine Seite wählst.",
+        "auto": "Die Seite vorn scrollt von selbst nach unten, dann kommt die nächste: alle 9 Sekunden, einmal durch alle neun, bis du selbst eine Seite wählst.",
         "conceptNamed": "Konzept · {name}",
         "conceptNote": "Konzeptseiten sind inoffiziell: So könnte eine Linkyo-Seite aussehen. Wir sind nicht mit den gezeigten Personen verbunden."
       },
-      "promises": "Was du bekommst",
-      "tabs": {
-        "taylor-swift": "Taylor Swift",
-        "cristiano": "Ronaldo",
-        "messi": "Messi"
-      }
+      "promises": "Was du bekommst"
     },
     "claim": {
       "label": "Wähl deine Seitenadresse",

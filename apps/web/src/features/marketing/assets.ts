@@ -33,6 +33,8 @@ export const fullPage = (locale: string): StaticImageData => (locale === "ar" ? 
 export const PHONE_SCREEN_RATIO = 844 / 390;
 
 const px = (n: number): string => `${n}px`;
+/** The round faces under the hero's pages (touch-target size). */
+export const faceSize = px(tokens.size.touchTarget);
 /** `sizes` hints derived from layout tokens (no raw lengths in components). */
 export const phoneSizes = {
   hero: `(max-width: ${px(tokens.breakpoint.lg)}) 45vw, ${px(Math.round(tokens.layout.creator / 2))}`,

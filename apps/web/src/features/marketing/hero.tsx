@@ -6,17 +6,17 @@ import type { CSSProperties } from "react";
 import { STARS } from "@/features/previews/stars-data";
 
 import { ClaimForm } from "./claim-form";
-import { CONCEPT_SHOTS, type ConceptShot } from "./examples";
+import { CONCEPT_FACES, CONCEPT_SHOTS, type ConceptShot } from "./examples";
 import { HeroDeck, type DeckPage } from "./hero-deck";
 
 export const order = (n: number) => ({ "--i": n }) as CSSProperties;
 
 /**
- * The three pages that take turns in front: a singer in black, a footballer in red and one in sky
- * blue. All three are well known: theirs are unofficial concept pages, labelled as such (founder's
- * decision, ADR 0043).
+ * The nine pages that take turns in front, three in view at a time, in an order that keeps
+ * neighbours different (dark beside light, one color beside another). All are well-known people:
+ * theirs are unofficial concept pages, labelled as such (founder's decision, ADR 0043).
  */
-const STACK: ConceptShot[] = ["taylor-swift", "cristiano", "messi"];
+const STACK = Object.keys(CONCEPT_SHOTS) as ConceptShot[];
 
 const LOCALES = ["de", "en", "ar"] as const;
 
@@ -37,7 +37,7 @@ export function Hero() {
   const pages: DeckPage[] = STACK.map((slug) => ({
     slug,
     concept: true,
-    tab: t(`hero.tabs.${slug}`),
+    face: CONCEPT_FACES[slug],
     name: STARS.find((star) => star.slug === slug)?.name[locale] ?? slug,
     href: `/${locale}/p/${slug}`,
     shot: CONCEPT_SHOTS[slug][locale],

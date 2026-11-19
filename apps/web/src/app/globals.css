@@ -436,7 +436,7 @@
   scale: var(--deck-scale);
   rotate: calc(var(--deck-rotate) * var(--deck-dir));
   z-index: var(--z-raised);
-  transition-property: translate, scale, rotate;
+  transition-property: translate, scale, rotate, opacity, visibility;
   transition-duration: var(--duration-move);
   transition-timing-function: var(--ease-emphasized);
 
@@ -473,6 +473,30 @@
   &[data-slot="next"]:hover,
   &[data-slot="prev"]:hover {
     --deck-scale: 0.85;
+  }
+
+  /* Out of sight, behind the page it will follow (after) or has just left (before). */
+  &[data-slot="after"],
+  &[data-slot="before"] {
+    --deck-y: var(--spacing-12);
+    --deck-scale: 0.66;
+
+    z-index: calc(var(--z-base) - 1);
+    opacity: 0;
+
+    /* Hidden once it has faded: nothing to paint, nothing to hit. */
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  &[data-slot="after"] {
+    --deck-x: 112%;
+    --deck-rotate: 11deg;
+  }
+
+  &[data-slot="before"] {
+    --deck-x: -112%;
+    --deck-rotate: -11deg;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -664,49 +688,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
-  }
-}
-
-/*
- * The deck's tabs: one track, equally wide tabs, and a teal highlight that glides to the chosen tab
- * (--tab is its index), the same language as the header's log in / sign up switch. Mirrored in
- * Arabic; still for reduced motion.
- */
-@utility mk-deck-tabs {
-  --tab: 0;
-  --dir: 1;
-
-  position: relative;
-  isolation: isolate;
-  display: inline-grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  padding: var(--spacing-1);
-  border-radius: var(--radius-full);
-  background: var(--color-canvas-muted);
-
-  &:is([dir="rtl"] *) {
-    --dir: -1;
-  }
-
-  &::before {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    inset-block: var(--spacing-1);
-    inset-inline-start: var(--spacing-1);
-    width: calc((100% - var(--spacing-1) * 2) / var(--tabs, 3));
-    border-radius: var(--radius-full);
-    background: var(--color-primary);
-    translate: calc(var(--tab) * 100% * var(--dir)) 0;
-    transition: translate var(--duration-move) var(--ease-emphasized);
-    will-change: translate;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    &::before {
-      transition: none;
-    }
   }
 }
 

@@ -44,14 +44,24 @@ test.describe("marketing home", () => {
     await expect(page.getByRole("button", { name: /^(Pause|Play) the template strip$/ })).toHaveCount(0);
   });
 
-  test("the hero pages take turns, stop as soon as one is chosen, and open the real example page", async ({ page }) => {
+  test("nine pages take turns, three in view; the one in front scrolls by itself; a face brings any page forward", async ({ page }) => {
     const deck = page.getByRole("region", { name: "Example pages" });
     const tabs = deck.getByRole("tab");
-    await expect(tabs).toHaveCount(3);
-    await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
-    // No pause button: choosing a page stops the deck, it ends by itself after two rounds, and it
+    // Nine pages, one face each (the face is the tab, the name its label).
+    await expect(tabs).toHaveCount(9);
+    await expect(deck.getByRole("tab", { name: "Taylor Swift" })).toHaveAttribute("aria-selected", "true");
+    // No pause button: choosing a page stops the deck, it ends by itself after one round, and it
     // holds under the mouse or keyboard focus (WCAG 2.2.2).
     await expect(deck.getByRole("button", { name: /Pause|Play/ })).toHaveCount(0);
+
+    // Three pages are in view; the other six wait out of sight.
+    await expect(deck.locator('[data-slot="front"], [data-slot="next"], [data-slot="prev"]')).toHaveCount(3);
+    const waiting = deck.locator('[data-slot="after"], [data-slot="before"]');
+    await expect(waiting).toHaveCount(6);
+    await expect(waiting.first()).toHaveCSS("opacity", "0");
+    await expect(waiting.first()).toBeHidden();
+    // Their pictures are fetched ahead, once the first is there: a chosen page shows at once.
+    await expect(deck.locator('[role="tabpanel"] img')).toHaveCount(9);
 
     // The chip above the page in front is the link to it. Pages of well-known people are unofficial
     // concept pages: the chip says so instead of showing an address, and so does a note below.
@@ -60,11 +70,8 @@ test.describe("marketing home", () => {
     await expect(front).toContainText("Concept · Taylor Swift");
     await expect(deck.getByText("Concept pages are unofficial")).toBeVisible();
 
-    // The tabs carry the names.
-    await expect(tabs).toHaveText(["Taylor Swift", "Ronaldo", "Messi"]);
     // No moving line anywhere. The page in front is alive instead: its picture is taller than its
-    // screen and scrolls down by itself. When it is back at the top, the next page comes to the
-    // front and the highlight glides to its tab.
+    // screen and scrolls down by itself. When it is back at the top, the next page comes to the front.
     await page.mouse.move(0, 0);
     const tour = deck.locator("[data-tour]");
     await expect(tour).toHaveCSS("animation-name", "mk-deck-scroll");
@@ -73,16 +80,21 @@ test.describe("marketing home", () => {
     await tour.evaluate((picture) => {
       for (const animation of picture.getAnimations()) animation.finish();
     });
-    await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+    await expect(deck.getByRole("tab", { name: "Cristiano Ronaldo" })).toHaveAttribute("aria-selected", "true");
     await expect(deck.getByRole("link", { name: /View page, Cristiano Ronaldo/ })).toBeVisible();
-    expect(await deck.getByRole("tablist").evaluate((list) => getComputedStyle(list).getPropertyValue("--tab").trim())).toBe("1");
 
-    // Choosing a page stops the deck for good: nothing scrolls or changes on its own any more.
-    await tabs.nth(2).click();
-    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/en/p/messi");
-    await expect(deck.getByRole("link", { name: /View page, / })).toContainText("Concept · Lionel Messi");
+    // Choosing a face stops the deck for good: nothing scrolls or changes on its own any more.
+    await deck.getByRole("tab", { name: "Elon Musk" }).click();
+    await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/en/p/elon-musk");
+    await expect(deck.getByRole("link", { name: /View page, / })).toContainText("Concept · Elon Musk");
+    await expect
+      .poll(() => deck.locator('[data-slot="front"] img').evaluate((picture: HTMLImageElement) => picture.complete && picture.naturalWidth > 0))
+      .toBe(true);
     await expect(tour).toHaveCount(0);
-    await tabs.nth(2).press("ArrowRight");
+    // Arrow keys walk through the faces and wrap around at the ends.
+    await deck.getByRole("tab", { name: "Elon Musk" }).press("End");
+    await expect(tabs.nth(8)).toBeFocused();
+    await tabs.nth(8).press("ArrowRight");
     await expect(tabs.nth(0)).toBeFocused();
     await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
 
