@@ -1787,7 +1787,7 @@
       "import": {
         "title": "Coming from Linktree, Beacons & co.?",
         "lead": "Paste your current page. We bring your profiles and links over, and you check them below.",
-        "label": "Address of your current link page",
+        "label": "Your current link page",
         "placeholder": "linktr.ee/yourname",
         "button": "Import",
         "hint": "Works with Linktree, Beacons, bio.link, lnk.bio, Carrd and similar pages.",

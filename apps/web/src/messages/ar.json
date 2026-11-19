@@ -1787,7 +1787,7 @@
       "import": {
         "title": "قادم من Linktree أو Beacons وغيرها؟",
         "lead": "الصق صفحتك الحالية. ننقل حساباتك وروابطك، وتراجعها أنت بالأسفل.",
-        "label": "عنوان صفحة روابطك الحالية",
+        "label": "صفحة روابطك الحالية",
         "placeholder": "linktr.ee/اسمك",
         "button": "نقل",
         "hint": "يعمل مع Linktree وBeacons وbio.link وlnk.bio وCarrd والصفحات المشابهة.",

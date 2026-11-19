@@ -150,7 +150,7 @@ test.describe("accounts", () => {
     const box = page.getByRole("region", { name: "Coming from Linktree, Beacons & co.?" });
     await expect(box).toBeVisible();
     // Only link-in-bio services are read; anything else is explained (no request leaves for it).
-    await box.getByLabel("Address of your current link page").fill("example.com/mila");
+    await box.getByLabel("Your current link page").fill("example.com/mila");
     await box.getByRole("button", { name: "Import" }).click();
     await expect(box.getByText("Paste the address of a Linktree, Beacons")).toBeVisible();
     expect(await axe(page)).toEqual([]);

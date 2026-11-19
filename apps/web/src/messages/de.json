@@ -1787,7 +1787,7 @@
       "import": {
         "title": "Du kommst von Linktree, Beacons & Co.?",
         "lead": "Füge deine bisherige Seite ein. Wir übernehmen deine Profile und Links, du prüfst sie unten.",
-        "label": "Adresse deiner bisherigen Link-Seite",
+        "label": "Deine bisherige Link-Seite",
         "placeholder": "linktr.ee/deinname",
         "button": "Übernehmen",
         "hint": "Klappt mit Linktree, Beacons, bio.link, lnk.bio, Carrd und ähnlichen Seiten.",
