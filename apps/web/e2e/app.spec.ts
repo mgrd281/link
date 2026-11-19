@@ -159,6 +159,21 @@ test.describe("accounts", () => {
 });
 
 test.describe("dashboard", () => {
+  test("a pasted video gets its real title from the platform, without undo noise", async ({ page }) => {
+    // Our server asks the platform (stubbed here); the browser only ever talks to Linkyo.
+    await page.route("**/api/link-metadata**", (route) => route.fulfill({ json: { title: "Big Buck Bunny – Short Film", author: "Blender" } }));
+    await signedIn(page);
+    await page.goto("/en/app/editor");
+    await addButton(page).click();
+    const sheet = page.getByRole("dialog", { name: "Add to your page" });
+    await sheet.getByLabel("Paste a link").fill("https://www.youtube.com/watch?v=aqz-KE-bpKQ");
+    await sheet.getByRole("button", { name: "Add", exact: true }).click();
+    await expect(page.getByText("Big Buck Bunny – Short Film").first()).toBeVisible();
+    // One undo removes the video itself (the filled-in title is not a step of its own).
+    await page.keyboard.press("ControlOrMeta+z");
+    await expect(page.getByText("Big Buck Bunny – Short Film")).toHaveCount(0);
+  });
+
   test("paste a link from the Add sheet, edit it, see it live, undo a delete", async ({ page }) => {
     await signedIn(page);
     await page.goto("/en/app/editor");

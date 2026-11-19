@@ -31,6 +31,7 @@ import {
 import { LINKEDIN_GLYPH } from "./link-icons";
 import { resolveMedia } from "./media";
 import { PrivacySettingsLink } from "./privacy";
+import { isProxiedImage } from "./remote-images";
 
 const SIMPLE: Partial<Record<Platform, SimpleIcon>> = {
   youtube: siYoutube,
@@ -128,9 +129,9 @@ export function MediaImage({
       fetchPriority={priority ? "high" : "auto"}
       loading={priority ? "eager" : "lazy"}
       placeholder={typeof resolved === "string" ? "empty" : "blur"}
-      // Pictures that stay on the creator's own platform are shown as they are, not re-hosted,
-      // and without telling that platform which page they appear on.
-      unoptimized={typeof resolved === "string" && /^https?:/.test(resolved)}
+      // Platform pictures (thumbnails, covers) go through our optimizer, so visitors never contact the
+      // platform; other remote pictures are shown as they are, without a referrer.
+      unoptimized={typeof resolved === "string" && /^https?:/.test(resolved) && !isProxiedImage(resolved)}
       referrerPolicy="no-referrer"
       className={cn("object-cover", className)}
     />

@@ -97,7 +97,7 @@ export function HomeScreen() {
         <div className="flex flex-wrap gap-2">
           <ShareButtons username={account.username} compact />
           <QrButton username={account.username} compact />
-          <Button asChild icon={ExternalLink} size="md" variant="ghost">
+          <Button asChild icon={ExternalLink} size="md">
             <Link href="/app/preview">{t("view")}</Link>
           </Button>
         </div>

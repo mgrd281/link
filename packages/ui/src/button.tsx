@@ -58,7 +58,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref,
 ) {
   const iconSize = size === "lg" || size === "xl" ? "md" : "sm";
-  const Component = asChild ? Slot.Root : "button";
   const leading = icon ? (
     loading ? (
       <Spinner className={iconSize === "md" ? "size-icon-md" : "size-icon-sm"} />
@@ -67,32 +66,39 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     )
   ) : null;
 
+  const classes = cn(buttonVariants({ variant, size, block }), className);
+
+  if (asChild) {
+    // A link styled as a button keeps its icon: the icon and any trailing element go inside the link.
+    // They must be direct children of the slot, next to <Slottable>, for the slot to find its target.
+    return (
+      <Slot.Root ref={ref} className={classes} aria-disabled={disabled ? true : undefined} aria-busy={loading || undefined} {...props}>
+        {leading}
+        <Slot.Slottable>{children}</Slot.Slottable>
+        {trailing}
+      </Slot.Root>
+    );
+  }
+
   return (
-    <Component
+    <button
       ref={ref}
-      className={cn(buttonVariants({ variant, size, block }), className)}
-      disabled={asChild ? undefined : disabled}
-      aria-disabled={asChild && disabled ? true : undefined}
+      className={classes}
+      disabled={disabled}
       aria-busy={loading || undefined}
       data-loading={loading ? "" : undefined}
-      type={asChild ? undefined : (props.type ?? "button")}
+      type={props.type ?? "button"}
       {...props}
     >
-      {asChild ? (
-        children
-      ) : (
-        <>
-          {leading}
-          {/* Without an icon the spinner overlays the label; the label keeps the width and the accessible name. */}
-          <span className={cn("inline-flex items-center gap-2", loading && !icon && "opacity-0")}>{children}</span>
-          {loading && !icon ? (
-            <span className="absolute inset-0 grid place-items-center">
-              <Spinner className={iconSize === "md" ? "size-icon-md" : "size-icon-sm"} />
-            </span>
-          ) : null}
-          {trailing}
-        </>
-      )}
-    </Component>
+      {leading}
+      {/* Without an icon the spinner overlays the label; the label keeps the width and the accessible name. */}
+      <span className={cn("inline-flex items-center gap-2", loading && !icon && "opacity-0")}>{children}</span>
+      {loading && !icon ? (
+        <span className="absolute inset-0 grid place-items-center">
+          <Spinner className={iconSize === "md" ? "size-icon-md" : "size-icon-sm"} />
+        </span>
+      ) : null}
+      {trailing}
+    </button>
   );
 });

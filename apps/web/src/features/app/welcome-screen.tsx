@@ -92,12 +92,11 @@ const TEXT_FIELDS: Partial<Record<StarterField, { multiline?: boolean; type?: "u
 export function WelcomeScreen() {
   const t = useTranslations("app.welcome");
   const tTypes = useTranslations("dashboard.types");
-  const tTemplates = useTranslations("templates");
   const router = useRouter();
   const tKinds = useTranslations("app.welcome.kinds");
   const tFields = useTranslations("app.welcome.fields");
   const tBlocks = useTranslations("app.welcome.blocks");
-  const { doc, dispatch, account, site } = useSite();
+  const { doc, dispatch, account, site, enrich } = useSite();
   const [step, setStep] = useState<Step>("kind");
   const profile = useProfileDraft();
   const [kind, setKind] = useState<CreatorKind | null>(isKind(site.kind) ? site.kind : null);
@@ -149,6 +148,8 @@ export function WelcomeScreen() {
         },
       ).filter((block) => block.type !== "socials" || !doc.blocks.some((existing) => existing.type === "socials"));
       blocks.forEach((block, i) => dispatch({ type: "add", block, index: i }));
+      // Songs and videos get their real title and picture a moment later.
+      enrich(blocks);
     }
     const following = STEPS[index + 1];
     if (following) {
@@ -243,14 +244,12 @@ export function WelcomeScreen() {
           {step === "look" ? (
             <div className="grid grid-cols-1 gap-3">
               <TemplatePicker value={doc.theme.template} profile={doc.profile} onChange={(template) => dispatch({ type: "theme", theme: { template } })} />
-              {doc.theme.template ? <p className="text-small text-fg-secondary">{tTemplates(`${doc.theme.template}.description`)}</p> : null}
               {kind && doc.theme.template === STARTERS[kind].theme.template ? (
                 <p className="flex items-center gap-2 text-small font-medium text-link">
                   <Icon icon={Sparkles} size="sm" />
                   {t("lookSuggested", { kind: tKinds(`${kind}.label`) })}
                 </p>
               ) : null}
-              <p className="text-small text-fg-tertiary">{t("lookLater")}</p>
             </div>
           ) : null}
 

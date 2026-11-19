@@ -1172,6 +1172,7 @@
       "add": "Add",
       "addSection": "Add section",
       "tips": "Tip: drag rows to reorder, or focus the handle and press ⌥↑ / ⌥↓. ⌘Z undoes everything.",
+      "tipsTouch": "Tip: drag a row by its handle, or use the ⋯ menu.",
       "drag": "Move {title}",
       "editItem": "Edit {title} ({type})",
       "hidden": "Hidden",

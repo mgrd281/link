@@ -1172,6 +1172,7 @@
       "add": "Hinzufügen",
       "addSection": "Abschnitt hinzufügen",
       "tips": "Tipp: Zeilen zum Sortieren ziehen, oder den Griff fokussieren und ⌥↑ / ⌥↓ drücken. ⌘Z macht alles rückgängig.",
+      "tipsTouch": "Tipp: Zieh eine Zeile am Griff an ihren Platz, oder nutze das Menü ⋯.",
       "drag": "{title} verschieben",
       "editItem": "{title} bearbeiten ({type})",
       "hidden": "Versteckt",

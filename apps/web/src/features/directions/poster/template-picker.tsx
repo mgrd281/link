@@ -100,7 +100,16 @@ export function TemplatePicker({
           })}
         </div>
       </div>
-      <p className="text-caption text-fg-tertiary">{t("templateHint")}</p>
+      {/* One line about the chosen look (the cards only have room for a few words). */}
+      <p aria-live="polite" className="text-small text-fg-secondary">
+        {value ? (
+          <>
+            <span className="font-semibold text-fg">{creatorTokens.templates[value].label}</span> · {tTemplates(`${value}.description`)}
+          </>
+        ) : (
+          t("templateHint")
+        )}
+      </p>
     </fieldset>
   );
 }

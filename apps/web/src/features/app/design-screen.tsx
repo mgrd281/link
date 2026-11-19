@@ -48,7 +48,6 @@ function Choice({ name, checked, onChange, children, label }: { name: string; ch
  */
 export function DesignScreen() {
   const t = useTranslations("app.design");
-  const tTemplates = useTranslations("templates");
   const { doc, dispatch } = useSite();
   const id = useId();
   const theme = doc.theme;
@@ -79,7 +78,6 @@ export function DesignScreen() {
             toast({ title: t("applied", { name: creatorTokens.templates[template].label }), tone: "success", action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) } });
           }}
         />
-        {theme.template ? <p className="text-small text-fg-secondary">{tTemplates(`${theme.template}.description`)}</p> : null}
       </Panel>
 
       <Panel

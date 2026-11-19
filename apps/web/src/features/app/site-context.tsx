@@ -10,6 +10,8 @@ import type { Account, AuthError, Result, Site } from "@/features/account/types"
 import { editorReducer, initialEditorState, type EditorAction, type EditorDoc, type EditorState } from "@/features/directions/editor/state";
 import { blockTitle } from "@/features/directions/editor/use-editor";
 
+import { fetchLinkMetadata, metadataPatch, metadataUrl } from "./metadata";
+
 type Profile = Page["profile"];
 
 /** Everything on the page that undo/redo covers: profile, blocks and look. */
@@ -57,6 +59,8 @@ interface SiteContextValue {
   addOpen: boolean;
   setAddOpen: (open: boolean) => void;
   addBlocks: (blocks: Block[], options?: { open?: boolean }) => void;
+  /** Fills in title and picture of freshly added songs and videos from their platform. */
+  enrich: (blocks: Block[]) => void;
   removeBlock: (block: Block) => void;
   label: (block: Block) => string;
   /** Where "open the page" goes: the creator's own page, or a prepared page in the team area. */
@@ -191,10 +195,28 @@ export function EditorProvider({
 
   const label = useCallback((block: Block) => blockTitle(block, (type) => tTypes(type)), [tTypes]);
 
+  // The latest document, for details that arrive after the block was added.
+  const docRef = useRef(doc);
+  useEffect(() => {
+    docRef.current = doc;
+  }, [doc]);
+  const enrich = useCallback((blocks: Block[]) => {
+    for (const added of blocks) {
+      const url = metadataUrl(added);
+      if (!url) continue;
+      void fetchLinkMetadata(url).then((meta) => {
+        const current = docRef.current.blocks.find((block) => block.id === added.id);
+        const patch = meta && current ? metadataPatch(current, added, meta) : null;
+        if (patch) dispatch({ type: "enrich", id: added.id, patch });
+      });
+    }
+  }, []);
+
   const addBlocks = useCallback(
     (blocks: Block[], options: { open?: boolean } = {}) => {
       const insertAt = doc.blocks[0]?.type === "socials" ? 1 : 0;
       blocks.forEach((block, i) => dispatch({ type: "add", block, index: insertAt + i }));
+      enrich(blocks);
       const first = blocks[0];
       if (!first) return;
       toast({
@@ -203,7 +225,7 @@ export function EditorProvider({
         ...(options.open === false ? {} : { action: { label: t("added.edit"), onAction: () => setEditing({ mode: "edit", id: first.id }) } }),
       });
     },
-    [doc.blocks, t, tTypes],
+    [doc.blocks, enrich, t, tTypes],
   );
 
   const removeBlock = useCallback(
@@ -246,6 +268,7 @@ export function EditorProvider({
     addOpen,
     setAddOpen,
     addBlocks,
+    enrich,
     removeBlock,
     label,
     previewHref,

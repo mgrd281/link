@@ -19,6 +19,8 @@ export interface EditorState<D extends EditorDoc = EditorDoc> {
 export type EditorAction =
   | { type: "add"; block: Block; index?: number }
   | { type: "update"; id: string; patch: Partial<Block> }
+  /** Details fetched for a block after it was added (title, cover): no undo step of its own. */
+  | { type: "enrich"; id: string; patch: Partial<Block> }
   | { type: "toggle"; id: string }
   | { type: "remove"; id: string }
   | { type: "move"; id: string; to: number }
@@ -83,6 +85,10 @@ export function editorReducer<D extends EditorDoc>(state: EditorState<D>, action
       const previous = state.past.at(-1);
       if (!previous) return state;
       return { ...state, past: state.past.slice(0, -1), present: previous, future: [state.present, ...state.future] };
+    }
+    case "enrich": {
+      const present = apply(state.present, { type: "update", id: action.id, patch: action.patch });
+      return present === state.present ? state : { ...state, present };
     }
     case "redo": {
       const next = state.future[0];

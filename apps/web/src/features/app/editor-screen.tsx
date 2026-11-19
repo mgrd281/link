@@ -119,7 +119,8 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
           </SortableBlocks>
         )}
 
-        <div className="grid grid-cols-2 gap-2">
+        {/* Side by side where both labels fit; stacked on narrow phones. */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Button size="lg" variant="primary" icon={Plus} onClick={() => setAddOpen(true)}>
             {t("add")}
           </Button>
@@ -127,7 +128,9 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
             {t("addSection")}
           </Button>
         </div>
-        <p className="text-caption text-fg-tertiary">{t("tips")}</p>
+        {/* Keyboard shortcuts only where there is a keyboard and a mouse; touch gets the touch tip. */}
+        <p className="hidden text-caption text-fg-tertiary pointer-fine:block">{t("tips")}</p>
+        <p className="text-caption text-fg-tertiary pointer-fine:hidden">{t("tipsTouch")}</p>
       </section>
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </Screen>
