@@ -19,7 +19,7 @@ export const CATALOG_G: Record<string, Page> = {
       bio: "Ich teste Apps, damit du es nicht musst. Hier findest du jede App aus meinen Videos, mit Codes, die nur hier gelten.",
       location: "Köln",
       photo: "ex9-merve-aksoy",
-      focal: [0.47, 0.33],
+      focal: [0.55, 0.38],
       stats: [
         ["1,2 Mio.", "Follower"],
         ["412", "Apps getestet"],

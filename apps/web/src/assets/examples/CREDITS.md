@@ -203,7 +203,7 @@ picture are original Linkyo designs: the apps and the skills are fictional.
 
 | File | Photographer / source | Photo page | License |
 |---|---|---|---|
-| ex9-merve-aksoy.jpg | Unsplash photo 1517841905240-472988babdf9 | https://images.unsplash.com/photo-1517841905240-472988babdf9 | Unsplash License |
+| ex9-merve-aksoy.jpg | Mehrpouya H | https://unsplash.com/photos/woman-in-white-t-shirt-outdoors-isuiNDHQPzs | Unsplash License |
 | ex9-arjun-mehta.jpg | Naim Ahmed | https://unsplash.com/photos/man-in-black-zip-up-jacket-8BcVHmAHtlw | Unsplash License |
 | ex9-app-fokuskreis.png | Original Linkyo icon | – | Original artwork |
 | ex9-app-sprachfuchs.png | Original Linkyo icon (Outfit; OFL) | – | Original artwork |
