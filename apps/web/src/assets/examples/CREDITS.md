@@ -20,7 +20,7 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex-care.jpg | Age Cymru (Jon Pountney) | https://unsplash.com/photos/nurse-smiling-with-elderly-patient-in-room-dMhB7w99ju8 | Unsplash License |
 | ex-comedian.jpg | Timothy Dykes | https://unsplash.com/photos/man-in-green-crew-neck-shirt-smiling-yd4ubMUNTG0 | Unsplash License |
 | ex-councillor.jpg | Ernest Flowers | https://unsplash.com/photos/smiling-man-in-navy-blue-suit-2uqsukZ8Pzc | Unsplash License |
-| ex-dentist.jpg | Vitaly Gariev | https://unsplash.com/photos/a-smiling-doctor-with-glasses-and-stethoscope-stands-arms-crossed-XqMo4OlBnh0 | Unsplash License |
+| ex-dentist.jpg | Humberto Chávez | https://unsplash.com/photos/woman-standing-under-tree-FVh_yqLR9eA | Unsplash License |
 | ex-engineer.jpg | SMKN 1 Gantar | https://unsplash.com/photos/construction-worker-wearing-a-hard-hat-and-vest-at-site-B8lr-Wvz-iM | Unsplash License |
 | ex-fitness.jpg | Meagan Stone | https://unsplash.com/photos/a-woman-holding-a-kettle-in-a-gym-r951FqxHTao | Unsplash License |
 | ex-food-creator.jpg | Jason Briscoe | https://unsplash.com/photos/woman-cooking-inside-kitchen-room-7MAjXGUmaPw | Unsplash License |
@@ -30,13 +30,13 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex-founder.jpg | Vitaly Gariev | https://unsplash.com/photos/a-smiling-man-in-a-suit-and-glasses-o3PdpOz_iaA | Unsplash License |
 | ex-investor.jpg | Omar Ramadan | https://unsplash.com/photos/a-man-with-a-beard-wearing-a-suit-EWpuW7HPfis | Unsplash License |
 | ex-jewelry.jpg | engin akyurt | https://unsplash.com/photos/assortment-of-colorful-handmade-earrings-displayed-7px-5vm-GIY | Unsplash License |
-| ex-lawyer.jpg | Vitaly Gariev | https://unsplash.com/photos/a-professional-woman-in-a-suit-smiling-confidently-LlcpQWSWPUo | Unsplash License |
+| ex-lawyer.jpg | Kawê Rodrigues | https://unsplash.com/photos/a-smiling-woman-in-a-white-jacket-and-brown-pants-ERbgk96BOGg | Unsplash License |
 | ex-logistics.jpg | Bernd Dittrich | https://unsplash.com/photos/a-forklift-driving-through-a-warehouse-filled-with-pallets-F2C_mSrb6iM | Unsplash License |
 | ex-makeup.jpg | Vitaly Gariev | https://unsplash.com/photos/woman-applying-makeup-in-front-of-a-mirror-Zi1R0uKTJSs | Unsplash License |
 | ex-mechanic.jpg | Jimmy Nilsson Masth | https://unsplash.com/photos/a-man-working-on-a-car-in-a-garage-jL9zfzTVSwY | Unsplash License |
 | ex-ngo.jpg | Ismael Paramo | https://unsplash.com/photos/women-packing-food-bags-at-distribution-Cns0h4ypRyA | Unsplash License |
 | ex-painter.jpg | Vitaly Gariev | https://unsplash.com/photos/bearded-man-painting-in-art-studio-t_v0GguF9JQ | Unsplash License |
-| ex-photographer.jpg | Sanket Mishra | https://unsplash.com/photos/a-man-holding-a-camera-in-his-hands-39Vd6gbEb60 | Unsplash License |
+| ex-photographer.jpg | Brandon Atchison | https://unsplash.com/photos/a-woman-holding-a-camera-in-front-of-a-wall-jJFz-eAZhao | Unsplash License |
 | ex-podcast.jpg | Gritte | https://unsplash.com/photos/two-gray-microphones-5JhHiSAEiz0 | Unsplash License |
 | ex-politician.jpg | AMONWAT DUMKRUT | https://unsplash.com/photos/a-woman-speaking-into-a-microphone-on-a-stage-u6RJY5F3yM8 | Unsplash License |
 | ex-pop-star.jpg | Eduardo Balderas | https://unsplash.com/photos/AfEAFwmQzMc | Unsplash License |
@@ -44,10 +44,10 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex-restaurant.jpg | Elena Leya | https://unsplash.com/photos/a-plate-of-spaghetti-with-meatballs-and-sauce-ptJf7Aqq16I | Unsplash License |
 | ex-sami-travels.jpg | Sadiq Ahmad | https://unsplash.com/photos/a-man-with-a-beard-wearing-a-white-shirt-rBM9AZSdQOE | Unsplash License |
 | ex-streamer.jpg | Fausto Sandoval | https://unsplash.com/photos/Cc-KUNmV1UE | Unsplash License |
-| ex-student.jpg | Vitaly Gariev | https://unsplash.com/photos/diverse-group-of-students-gathered-around-laptop-kp7qkHTgSKc | Unsplash License |
+| ex-student.jpg | Andreea Avramescu | https://unsplash.com/photos/woman-in-black-jacket-wearing-black-framed-eyeglasses-Ja9j6aU3mCg | Unsplash License |
 | ex-sweets.jpg | Syed F Hashemi | https://unsplash.com/photos/brown-and-green-bread-with-green-leaves-bGAPRnJITpQ | Unsplash License |
 | ex-travel.jpg | Karl Paul Baldacchino | https://unsplash.com/photos/a-man-standing-on-top-of-a-mountain-with-a-backpack-p1dtEefClWY | Unsplash License |
-| ex-tutor.jpg | Centre for Ageing Better | https://unsplash.com/photos/a-person-writing-on-a-whiteboard-cPyO3GEYjZ4 | Unsplash License |
+| ex-tutor.jpg | Vitaly Gariev | https://unsplash.com/photos/man-in-glasses-stands-by-chalkboard-with-math-equations-orpe_PL-lFM | Unsplash License |
 | ex-wedding.jpg | Bruno Ngarukiye | https://unsplash.com/photos/a-beautifully-set-outdoor-dining-table-with-floral-arrangements-olOdSVw5THI | Unsplash License |
 | ex-yoga.jpg | Jaspinder Singh | https://unsplash.com/photos/a-group-of-people-doing-yoga-in-a-room-vpVE1Xk1eR4 | Unsplash License |
 | ex-youtuber.jpg | Vitaly Gariev | https://unsplash.com/photos/man-sitting-on-floor-talking-to-camera-on-tripod-B8FYNyMRpX0 | Unsplash License |
@@ -97,7 +97,7 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex3-developer.jpg | Pooja Roy | https://unsplash.com/photos/man-in-black-crew-neck-t-shirt-dwogG5EROW4 | Unsplash License |
 | ex3-gift-box.jpg | Annie Spratt | https://unsplash.com/photos/white-box-with-red-ribbon-rR59irzeUl0 | Unsplash License |
 | ex3-headphones.jpg | Kiran CK | https://unsplash.com/photos/black-and-silver-headphones-on-white-surface-LSNJ-pltdu8 | Unsplash License |
-| ex3-marketer.jpg | Phạm Duy Quang | https://unsplash.com/photos/woman-in-grey-blazer-business-portrait-QGr6H7pri-Q | Unsplash License |
+| ex3-marketer.jpg | Vitaly Gariev | https://unsplash.com/photos/a-woman-standing-in-front-of-a-brick-wall-bjjOM0i7uUQ | Unsplash License |
 | ex3-mobile-app.jpg | Balázs Kétyi | https://unsplash.com/photos/smartphone-displaying-environmental-data-dashboard-sScmok4Iq1o | Unsplash License |
 | ex3-moodboard.jpg | Fiona Murray-deGraaff | https://unsplash.com/photos/a-bunch-of-pictures-and-a-pair-of-scissors-on-a-table-HszbGgaGjOg | Unsplash License |
 | ex3-parcel.jpg | Bench Accounting | https://unsplash.com/photos/person-holding-cardboard-box-on-table-MGaFENpDCsw | Unsplash License |
@@ -163,7 +163,7 @@ picture was looked at: adults only, no celebrities, no brand logos as the subjec
 | File | Photographer / source | Photo page | License |
 |---|---|---|---|
 | ex8-lenz.jpg | Unsplash photo 1506794778202-cad84cf45f1d (cropped) | https://images.unsplash.com/photo-1506794778202-cad84cf45f1d | Unsplash License |
-| ex8-mira-sol.jpg | Unsplash photo 1508214751196-bcfd4ca60f91 (cropped) | https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91 | Unsplash License |
+| ex8-mira-sol.jpg | Darius Bashar | https://unsplash.com/photos/woman-in-black-tank-top-pDNhqxEwcXg | Unsplash License |
 | ex8-jonas-ek.jpg | Unsplash photo 1535713875002-d1d0cf377fde (cropped) | https://images.unsplash.com/photo-1535713875002-d1d0cf377fde | Unsplash License |
 | ex8-rina-vex.jpg | Unsplash photo 1542103749-8ef59b94f47e (cropped) | https://images.unsplash.com/photo-1542103749-8ef59b94f47e | Unsplash License |
 | ex8-dana-issa.jpg | Farzin Yarahmadi | https://unsplash.com/photos/a-woman-putting-food-in-an-oven-in-a-kitchen-ydMeDjSCPbo | Unsplash License |

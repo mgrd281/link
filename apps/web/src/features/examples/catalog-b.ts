@@ -198,7 +198,7 @@ export const CATALOG_B: Record<string, Page> = {
       bio: "Ich fotografiere echte Momente, keine gestellten Posen.",
       location: "Hamburg",
       photo: "ex-photographer",
-      focal: [0.5, 0.35],
+      focal: [0.5, 0.38],
     },
     (h) => [
       h.gallery("Ausgewählte Arbeiten", ["ex2-wedding-couple", "ex2-portrait-light", "ex-travel", "ex-wedding"]),
@@ -352,7 +352,7 @@ export const CATALOG_B: Record<string, Page> = {
       bio: "Prophylaxe, Implantate und Angstpatienten – wir nehmen uns Zeit.",
       location: "Stuttgart-West",
       photo: "ex-dentist",
-      focal: [0.5, 0.35],
+      focal: [0.49, 0.29],
     },
     (h) => [
       h.link("Termin online buchen", "termin", { highlight: true }),
@@ -473,7 +473,7 @@ export const CATALOG_B: Record<string, Page> = {
       bio: "Kündigung, Abfindung, Arbeitsvertrag: klare Antworten, faire Kosten.",
       location: "Köln",
       photo: "ex-lawyer",
-      focal: [0.5, 0.35],
+      focal: [0.52, 0.34],
     },
     (h) => [
       h.link("Erstberatung buchen (30 Min.)", "erstberatung", { highlight: true }),
@@ -543,7 +543,7 @@ export const CATALOG_B: Record<string, Page> = {
       bio: "Ich suche ein Praktikum im Bereich Web oder Data ab April. Hier sind meine Projekte.",
       location: "Berlin",
       photo: "ex-student",
-      focal: [0.5, 0.35],
+      focal: [0.63, 0.36],
     },
     (h) => [
       h.link("Lebenslauf (PDF)", "cv", { highlight: true }),
@@ -565,7 +565,7 @@ export const CATALOG_B: Record<string, Page> = {
       bio: "Klasse 5 bis Abi. Geduldig, verständlich – auch online.",
       location: "Leipzig & online",
       photo: "ex-tutor",
-      focal: [0.5, 0.35],
+      focal: [0.6, 0.21],
       stats: [
         ["300+", "Schüler:innen"],
         ["1,7", "Ø Abiturnote"],

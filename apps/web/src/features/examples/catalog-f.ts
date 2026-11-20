@@ -58,7 +58,7 @@ export const CATALOG_F: Record<string, Page> = {
       bio: "Slow mornings, calmer nights. Breathwork for busy people, online and in Lisbon.",
       location: "Lisbon",
       photo: "ex8-mira-sol",
-      focal: [0.5, 0.3],
+      focal: [0.56, 0.28],
     },
     (h) => [
       h.link("Book a 1:1 session", "book", { highlight: true, icon: "calendar", subtitle: "50 min · online or in Lisbon" }),

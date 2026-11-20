@@ -127,6 +127,7 @@ export const CATALOG_C: Record<string, Page> = {
       bio: "Ich helfe Shops, aus Werbebudget Umsatz zu machen: Google Ads, Meta, SEO und saubere Daten.",
       location: "München",
       photo: "ex3-marketer",
+      focal: [0.72, 0.38],
       stats: [
         ["120+", "Projekte"],
         ["4,2×", "Ø ROAS"],
