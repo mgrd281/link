@@ -443,17 +443,22 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   useEffect(() => {
     const element = root.current;
     if (!element) return;
+    let timer = 0;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return;
         observer.disconnect();
-        if (!interacted.current) playRef.current();
+        // A moment to arrive (and for anyone who came here to type to start typing), then it plays.
+        timer = window.setTimeout(() => {
+          if (!interacted.current) playRef.current();
+        }, 600);
       },
       { threshold: 0.4 },
     );
     observer.observe(element);
     return () => {
       observer.disconnect();
+      window.clearTimeout(timer);
       controller.current?.abort();
     };
   }, []);
