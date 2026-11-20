@@ -447,7 +447,11 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
                     data-linkyo-preview=""
                     title={t("frame", { name: open.name })}
                     src={`/${open.locale}/p/${open.slug}`}
-                    onLoad={() => setLoaded(open.slug)}
+                    onLoad={(event) => {
+                      // The page inside scrolls without a grey bar at its edge: a preview, not a window.
+                      event.currentTarget.contentDocument?.documentElement.classList.add("mk-no-scrollbar");
+                      setLoaded(open.slug);
+                    }}
                     className="col-start-1 row-start-1 size-full rounded-lg"
                   />
                 </div>
