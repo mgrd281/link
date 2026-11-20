@@ -94,7 +94,7 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex3-designer.jpg | TourBox | https://unsplash.com/photos/artist-works-on-a-digital-tablet-in-her-studio-GTYPaQyspYA | Unsplash License |
 | ex3-desk-setup.jpg | Omar Prestwich | https://unsplash.com/photos/black-flat-screen-computer-monitor-on-brown-wooden-desk-0HAPFlyy9o4 | Unsplash License |
 | ex3-developer-2.jpg | Af Hfmn | https://unsplash.com/photos/a-man-sitting-at-a-desk-in-front-of-a-computer-InWUkRKyNbI | Unsplash License |
-| ex3-developer.jpg | Felipe Souza | https://unsplash.com/photos/man-in-hoodie-at-workspace-desk-kB3iUKqK-ts | Unsplash License |
+| ex3-developer.jpg | Pooja Roy | https://unsplash.com/photos/man-in-black-crew-neck-t-shirt-dwogG5EROW4 | Unsplash License |
 | ex3-gift-box.jpg | Annie Spratt | https://unsplash.com/photos/white-box-with-red-ribbon-rR59irzeUl0 | Unsplash License |
 | ex3-headphones.jpg | Kiran CK | https://unsplash.com/photos/black-and-silver-headphones-on-white-surface-LSNJ-pltdu8 | Unsplash License |
 | ex3-marketer.jpg | Phạm Duy Quang | https://unsplash.com/photos/woman-in-grey-blazer-business-portrait-QGr6H7pri-Q | Unsplash License |

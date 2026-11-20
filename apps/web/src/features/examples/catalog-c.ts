@@ -209,6 +209,7 @@ export const CATALOG_C: Record<string, Page> = {
       bio: "I build fast, accessible web apps. Open-source maintainer, conference speaker, available for freelance work from March.",
       location: "Berlin",
       photo: "ex3-developer",
+      focal: [0.5, 0.38],
       stats: [
         ["2.4k", "GitHub stars"],
         ["8", "years shipping"],
