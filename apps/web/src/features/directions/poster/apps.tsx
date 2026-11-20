@@ -32,7 +32,7 @@ function AppFacts({ block, pricing = true, wrap = false }: { block: BlockOf<"app
   const facts = [block.category, pricing && block.pricing ? t(`pricing.${block.pricing}`) : undefined].filter(Boolean);
   if (!rating && facts.length === 0) return null;
   return (
-    <p className={cn("flex min-w-0 items-center gap-1 text-caption text-creator-fg-muted", wrap && "flex-wrap")}>
+    <p className={cn("flex min-w-0 items-center text-caption text-creator-fg-muted", wrap ? "flex-wrap gap-x-3 gap-y-1" : "gap-1")}>
       {rating ? (
         <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-creator-fg">
           <Icon icon={Star} size="sm" className="fill-current text-creator-accent-text" />
@@ -40,7 +40,8 @@ function AppFacts({ block, pricing = true, wrap = false }: { block: BlockOf<"app
           <span className="sr-only">{t("rating", { rating: rating })}</span>
         </span>
       ) : null}
-      {rating && facts.length > 0 ? <span aria-hidden>·</span> : null}
+      {/* One line: a dot between rating and facts. Wrapping: space instead, so no dot is left at a line's end. */}
+      {rating && facts.length > 0 && !wrap ? <span aria-hidden>·</span> : null}
       {facts.length > 0 ? <span className={wrap ? undefined : "truncate"}>{facts.join(" · ")}</span> : null}
     </p>
   );
