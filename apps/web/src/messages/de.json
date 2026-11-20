@@ -668,11 +668,11 @@
       "title": "Link einfügen. Fertig.",
       "lead": "Linkyo erkennt, was du einfügst, und baut den passenden Block. Probier es aus.",
       "label": "Link einfügen oder tippen",
-      "placeholder": "Spotify-, YouTube- oder Ticket-Link einfügen",
+      "placeholder": "Link einfügen …",
       "examples": "Beispiele",
       "add": "Hinzufügen",
       "detected": "Erkannt: {type}",
-      "empty": "Noch nichts hier. Füg einfach einen Link ein.",
+      "empty": "Deine Blöcke erscheinen hier.",
       "invalid": "Das sieht nicht nach einem Link aus. Prüf ihn und versuch es nochmal.",
       "added": "{type} zu deiner Seite hinzugefügt",
       "types": {
@@ -720,7 +720,7 @@
     },
     "pricing": {
       "title": "Kostenlos starten. Kostenlos bleiben.",
-      "lead": "Alles hier bleibt dauerhaft kostenlos. Pro bringt später Verkauf und Power-Funktionen – ohne Karte, ohne Kündigungsfrist.",
+      "lead": "Alles hier bleibt dauerhaft kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist.",
       "free": {
         "name": "Free",
         "price": "0 €",
@@ -733,7 +733,8 @@
           "Assistent für Impressum und Datenschutz",
           "iOS-App (in Arbeit)"
         ],
-        "cta": "Kostenlos registrieren"
+        "cta": "Kostenlos registrieren",
+        "lead": "Alles, was deine Seite braucht."
       },
       "pro": {
         "name": "Pro",
@@ -745,7 +746,8 @@
           "Erweiterte Analytics",
           "Linkyo-Hinweis entfernen"
         ],
-        "cta": "Später benachrichtigen"
+        "cta": "Später benachrichtigen",
+        "lead": "Für alle, die verkaufen und wachsen wollen."
       }
     },
     "faq": {
@@ -775,7 +777,8 @@
           "q": "Gibt es eine App?",
           "a": "Eine native iOS-App ist in Arbeit: Seite bearbeiten, Links über das Teilen-Menü hinzufügen und Zahlen im Widget sehen."
         }
-      ]
+      ],
+      "lead": "Kurz und ehrlich beantwortet."
     },
     "final": {
       "title": "Leg los. Kostet nichts.",
@@ -798,7 +801,8 @@
       "privacy": "Datenschutz",
       "terms": "AGB",
       "made": "Gemacht in Deutschland · Gehostet in Frankfurt",
-      "rights": "© 2026 Linkyo"
+      "rights": "© 2026 Linkyo",
+      "features": "Funktionen"
     },
     "skip": "Zum Inhalt springen",
     "trust": {
@@ -823,13 +827,43 @@
       "title2": "Auf einer Seite.",
       "look": {
         "title": "Eine Seite, die nach dir aussieht",
-        "body": "Sechs Vorlagen, deine Fotos, deine Farben. Musik, Videos, Termine und Shop ordnen sich von selbst – und jede Farbe ist auf Lesbarkeit geprüft."
+        "body": "Wähl einen Look – Farben, Schrift und Buttons ziehen mit. Jede Farbe wird auf Lesbarkeit geprüft.",
+        "choose": "Look wählen",
+        "custom": "Eigene Farbe",
+        "customHint": "Deine Farbe für die ganze Seite, auf Lesbarkeit geprüft.",
+        "tagline": "DJ & Producerin · Berlin",
+        "links": [
+          {
+            "title": "Neue Single",
+            "subtitle": "Jetzt hören"
+          },
+          {
+            "title": "Tour 2026",
+            "subtitle": "Tickets sichern"
+          },
+          {
+            "title": "Merch-Shop",
+            "subtitle": "Vinyl & Shirts"
+          }
+        ]
       },
       "share": {
         "title": "Teilen wie ein Profi",
-        "body": "Dein Link zeigt in WhatsApp, iMessage und LinkedIn dein Foto und deinen Namen. Bilder für Story und Feed im Look deiner Seite erstellst du mit einem Tipp.",
+        "body": "In WhatsApp, iMessage und LinkedIn zeigt dein Link dein Foto und deinen Namen. Bilder für Story und Feed: ein Tipp.",
         "story": "Story",
-        "preview": "Link-Vorschau"
+        "preview": "Link-Vorschau",
+        "chatIn": "Wo finde ich deine neue Single?",
+        "chatOut": "Hier, alles an einem Ort:",
+        "today": "Heute"
+      },
+      "eyebrow": "So geht's",
+      "lead": "Vier Schritte, eine Seite – alles im Browser, ohne Code.",
+      "steps": {
+        "label": "Die vier Schritte",
+        "look": "Gestalten",
+        "paste": "Einfügen",
+        "share": "Teilen",
+        "analytics": "Auswerten"
       }
     }
   },

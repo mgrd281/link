@@ -937,6 +937,32 @@
   }
 }
 
+/*
+ * An FAQ answer opens and closes smoothly in place, where the browser can animate the size of a
+ * details element; elsewhere it simply opens. Still for reduced motion.
+ */
+@utility mk-faq {
+  interpolate-size: allow-keywords;
+
+  &::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size var(--duration-slow) var(--ease-emphasized),
+      content-visibility var(--duration-slow) allow-discrete;
+  }
+
+  &[open]::details-content {
+    block-size: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::details-content {
+      transition: none;
+    }
+  }
+}
+
 @utility mk-zoom {
   @supports (animation-timeline: view()) {
     animation: mk-zoom linear both;

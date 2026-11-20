@@ -27,7 +27,7 @@ test.describe("marketing home", () => {
     await input.fill("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
     await expect(page.getByText("Recognised: Music")).toBeVisible();
     await input.press("Enter");
-    const list = page.getByRole("list").filter({ has: page.getByRole("button", { name: /^Remove / }) });
+    const list = page.locator("#step-paste").getByRole("list").filter({ has: page.getByRole("button", { name: /^Remove / }) });
     await expect(list.getByRole("listitem")).toHaveCount(1);
     await page.getByRole("button", { name: "YouTube", exact: true }).click();
     await expect(list.getByRole("listitem")).toHaveCount(2);
@@ -114,6 +114,76 @@ test.describe("marketing home", () => {
     // The four feature panels are there, with the paste demo inside one of them.
     await expect(page.getByRole("heading", { level: 3, name: "A page that looks like you" })).toBeVisible();
     await expect(page.getByRole("heading", { level: 3, name: "Share like a pro" })).toBeAttached();
+  });
+
+  test("the tour: four steps in the order people use Linkyo; the step bar follows the reader and jumps to a step", async ({ page }) => {
+    const titles = page.locator("#features ol > li h3");
+    await expect(titles).toHaveText(["A page that looks like you", "Paste a link. Done.", "Share like a pro", "Analytics without cookies"]);
+    const rail = page.getByRole("navigation", { name: "The four steps" });
+    await expect(rail.getByRole("link")).toHaveText([/1\s*Design/, /2\s*Add/, /3\s*Share/, /4\s*Measure/]);
+    // A tap on a step brings it under the bar, and the bar marks it as the current one.
+    await rail.getByRole("link", { name: /Share/ }).click();
+    await expect(rail.getByRole("link", { name: /Share/ })).toHaveAttribute("aria-current", "step");
+    await expect(rail.getByRole("link", { name: /Design/ })).not.toHaveAttribute("aria-current", "step");
+    // The bars of the steps before it are full.
+    await expect
+      .poll(() => rail.locator("li").first().locator("[style]").evaluate((fill) => Number(getComputedStyle(fill).getPropertyValue("--p"))))
+      .toBe(1);
+  });
+
+  test("step 1: a tap puts the small page in another look, arrow keys walk the looks, and any color works", async ({ page }) => {
+    const step = page.locator("#step-look");
+    const looks = step.getByRole("radiogroup", { name: "Choose a look" });
+    await expect(looks.getByRole("radio")).toHaveCount(5);
+    await expect(looks.getByRole("radio", { name: "Nocturne" })).toHaveAttribute("aria-checked", "true");
+    const preview = step.locator("[data-look-preview]");
+    const before = await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"));
+    await looks.getByRole("radio", { name: "Daylight" }).click();
+    await expect(looks.getByRole("radio", { name: "Daylight" })).toHaveAttribute("aria-checked", "true");
+    await expect(step.locator("[aria-live]")).toContainText("Daylight");
+    expect(await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"))).not.toBe(before);
+    // A radio group: the arrow keys move the choice.
+    await looks.getByRole("radio", { name: "Daylight" }).press("ArrowRight");
+    await expect(looks.getByRole("radio", { name: "Pulse" })).toBeFocused();
+    await expect(looks.getByRole("radio", { name: "Pulse" })).toHaveAttribute("aria-checked", "true");
+    // Any color: the theme engine makes a whole, readable page of it.
+    await step.getByLabel("Your color").fill("#ff7a00");
+    await expect(step.locator("[aria-live]")).toContainText("Your color");
+    await expect(looks.getByRole("radio", { checked: true })).toHaveCount(0);
+  });
+
+  test("step 2 shows itself once: two links become blocks by themselves, quietly", async ({ page }) => {
+    const step = page.locator("#step-paste");
+    // Jump there at once (no smooth scroll): under load a long smooth scroll plus the tour's own
+    // three and a half seconds can outlast the wait.
+    await step.locator(".mk-panel").evaluate((element) => {
+      element.scrollIntoView({ block: "center", behavior: "instant" });
+    });
+    const blocks = step.getByRole("list").filter({ has: page.getByRole("button", { name: /^Remove / }) }).getByRole("listitem");
+    await expect(blocks).toHaveCount(2, { timeout: 15_000 });
+    await expect(blocks.first()).toContainText("Video");
+    await expect(blocks.last()).toContainText("Music");
+    // Only what a visitor adds is announced.
+    await expect(step.getByRole("status")).toHaveText("");
+  });
+
+  test("step 4: sample figures for everyone, counted up for the eye", async ({ page }) => {
+    const figures = page.locator("#analytics dd .sr-only");
+    await expect(figures).toHaveText(["12,480", "3,912", "31%"]);
+    await expect(page.locator("#analytics")).toContainText("Sample data");
+    await expect(page.locator("#analytics").getByRole("listitem").filter({ hasText: "No cookies, no fingerprinting" })).toBeVisible();
+  });
+
+  test("pricing, questions, the last word and the footer", async ({ page }) => {
+    const pricing = page.locator("#pricing");
+    await expect(pricing.getByRole("heading", { level: 3 })).toHaveText(["Free", /Pro/]);
+    await expect(pricing.getByRole("link", { name: "Sign up for free" })).toHaveAttribute("href", "/en/signup");
+    // Pro is not for sale yet: no button.
+    await expect(pricing.locator("article").last().getByRole("link")).toHaveCount(0);
+    await expect(page.locator("#start").getByRole("textbox", { name: "Choose your page address" })).toBeVisible();
+    const footer = page.locator("footer");
+    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link")).toHaveText(["Features", "Templates", "Pricing", "FAQ"]);
+    await expect(footer).toContainText("Imprint");
   });
 
   test("the promise sits on two lines and the sentence under it on two at most", async ({ page }) => {
@@ -219,6 +289,31 @@ test("on phones a visitor first learns what Linkyo is and sees pages, then meets
   // Back at the top, it leaves again.
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(header).toBeHidden();
+  await context.close();
+});
+
+test("on phones the step bar sits flush under the header during the tour, and leaves with it", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  await page.goto("/de");
+  await page.locator("#step-paste").evaluate((element) => {
+    element.scrollIntoView({ block: "start" });
+  });
+  const rail = page.locator("[data-step-rail]");
+  const header = page.locator("header").first();
+  await expect.poll(async () => {
+    const [bar, top] = [await rail.boundingBox(), await header.boundingBox()];
+    return bar && top ? Math.round(bar.y) - Math.round(top.y + top.height) : null;
+  }).toBe(0);
+  await expect(rail.getByRole("link", { name: /Einfügen/ })).toHaveAttribute("aria-current", "step");
+  // After the last step it goes with the tour.
+  await page.locator("#pricing").evaluate((element) => {
+    element.scrollIntoView({ block: "start" });
+  });
+  await expect.poll(async () => {
+    const bar = await rail.boundingBox();
+    return bar ? bar.y + bar.height <= 64 : true;
+  }).toBe(true);
   await context.close();
 });
 

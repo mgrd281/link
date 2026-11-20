@@ -1,7 +1,8 @@
 import { MarketingFooter } from "./footer";
 import { MarketingHeader } from "./header";
 import { Hero } from "./hero";
-import { Faq, Features, FinalCta, Pricing, Templates, Trust } from "./sections";
+import { Features } from "./features";
+import { Faq, FinalCta, Pricing, Templates, Trust } from "./sections";
 
 /** linkyo.app — the marketing home (de/en/ar): light, calm, the product in motion. */
 export function MarketingHome() {

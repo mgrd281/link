@@ -668,11 +668,11 @@
       "title": "Paste a link. Done.",
       "lead": "Linkyo recognises what you paste and builds the right block. Try it.",
       "label": "Paste or type a link",
-      "placeholder": "Paste a Spotify, YouTube or ticket link",
+      "placeholder": "Paste a link …",
       "examples": "Examples",
       "add": "Add",
       "detected": "Recognised: {type}",
-      "empty": "Nothing here yet. Paste any link to start.",
+      "empty": "Your blocks appear here.",
       "invalid": "That doesn't look like a link. Check it and try again.",
       "added": "{type} added to your page",
       "types": {
@@ -720,7 +720,7 @@
     },
     "pricing": {
       "title": "Start free. Stay free.",
-      "lead": "Everything below is free for good. Pro adds selling and power features later — no card, no notice period.",
+      "lead": "Everything here stays free for good. No card, no notice period.",
       "free": {
         "name": "Free",
         "price": "0 €",
@@ -733,7 +733,8 @@
           "Imprint and privacy page helper",
           "iOS app (coming)"
         ],
-        "cta": "Sign up for free"
+        "cta": "Sign up for free",
+        "lead": "Everything your page needs."
       },
       "pro": {
         "name": "Pro",
@@ -745,7 +746,8 @@
           "Advanced analytics",
           "Remove the Linkyo credit"
         ],
-        "cta": "Notify me later"
+        "cta": "Notify me later",
+        "lead": "For everyone who wants to sell and grow."
       }
     },
     "faq": {
@@ -775,7 +777,8 @@
           "q": "Is there an app?",
           "a": "A native iOS app is in the works: edit your page, add links from the share sheet and see your stats in a widget."
         }
-      ]
+      ],
+      "lead": "Short, honest answers."
     },
     "final": {
       "title": "Get started. It's free.",
@@ -798,7 +801,8 @@
       "privacy": "Privacy",
       "terms": "Terms",
       "made": "Made in Germany · Hosted in Frankfurt",
-      "rights": "© 2026 Linkyo"
+      "rights": "© 2026 Linkyo",
+      "features": "Features"
     },
     "skip": "Skip to content",
     "trust": {
@@ -823,13 +827,43 @@
       "title2": "On one page.",
       "look": {
         "title": "A page that looks like you",
-        "body": "Six templates, your photos, your colors. Music, videos, dates and shop arrange themselves – and every color is checked for readability."
+        "body": "Pick a look – colors, type and buttons follow. Every color is checked for readability.",
+        "choose": "Choose a look",
+        "custom": "Your color",
+        "customHint": "Your color across the whole page, checked for readability.",
+        "tagline": "DJ & producer · Berlin",
+        "links": [
+          {
+            "title": "New single",
+            "subtitle": "Listen now"
+          },
+          {
+            "title": "Tour 2026",
+            "subtitle": "Get tickets"
+          },
+          {
+            "title": "Merch shop",
+            "subtitle": "Vinyl & shirts"
+          }
+        ]
       },
       "share": {
         "title": "Share like a pro",
-        "body": "Your link shows your photo and name in WhatsApp, iMessage and LinkedIn. Story and feed pictures in your page's look take one tap.",
+        "body": "In WhatsApp, iMessage and LinkedIn your link shows your photo and name. Story and feed pictures: one tap.",
         "story": "Story",
-        "preview": "Link preview"
+        "preview": "Link preview",
+        "chatIn": "Where can I find your new single?",
+        "chatOut": "Here – everything in one place:",
+        "today": "Today"
+      },
+      "eyebrow": "How it works",
+      "lead": "Four steps, one page – all in your browser, no code.",
+      "steps": {
+        "label": "The four steps",
+        "look": "Design",
+        "paste": "Add",
+        "share": "Share",
+        "analytics": "Measure"
       }
     }
   },

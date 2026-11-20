@@ -1,8 +1,8 @@
-import { Badge, cn, Icon } from "@linkyo/ui";
-import { ArrowRight, Check, Gift, Link2, Plus, Server, ShieldCheck } from "lucide-react";
+import { Badge, cn, Icon, LogoGlyph } from "@linkyo/ui";
+import { ArrowRight, ChartColumn, Check, EyeOff, Gift, Globe, Mail, Plus, Server, ShieldCheck, ShoppingBag } from "lucide-react";
 import Image from "next/image";
-import { useLocale, useTranslations } from "next-intl";
-import type { CSSProperties, ReactNode } from "react";
+import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import { EXAMPLES } from "@/features/examples/catalog";
 import { LOOKS } from "@/features/examples/looks";
@@ -12,7 +12,6 @@ import { phoneSizes } from "./assets";
 import { ClaimForm } from "./claim-form";
 import { EXAMPLE_SHOTS, STRIP, type ExampleShot } from "./examples";
 import { order } from "./hero";
-import { PasteDemo } from "./paste-demo";
 
 function SectionHeader({ id, title, lead, center = false }: { id: string; title: string; lead?: string; center?: boolean }) {
   return (
@@ -117,200 +116,63 @@ export function Templates() {
   );
 }
 
-/** One feature: words on one side, a tinted panel with the product in motion on the other. */
-function FeatureRow({ title, body, tint, reverse = false, children }: { title: string; body: string; tint: string; reverse?: boolean; children: ReactNode }) {
-  return (
-    <article className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-16">
-      <div className={cn("mk-reveal grid max-w-prose gap-3", reverse && "lg:order-last")}>
-        <h3 className="text-h2 text-balance">{title}</h3>
-        <p className="text-body-lg text-pretty text-fg-secondary">{body}</p>
-      </div>
-      <div className={cn("mk-panel relative isolate grid min-w-0 place-items-center overflow-hidden rounded-xl p-6 md:p-10", tint)}>{children}</div>
-    </article>
-  );
-}
+const PRO_ICONS = [Globe, ShoppingBag, Mail, ChartColumn, EyeOff] as const;
 
-/** A page capture as a card (the top of the page). */
-function Shot({ slug, className, sizes = phoneSizes.side }: { slug: ExampleShot; className?: string; sizes?: string }) {
-  return (
-    <div className={cn("relative aspect-portrait overflow-hidden rounded-lg border border-line bg-surface", className)}>
-      <Image src={EXAMPLE_SHOTS[slug]} alt="" fill sizes={sizes} placeholder="blur" className="object-cover object-top" />
-    </div>
-  );
-}
-
-const VISITS = [42, 58, 51, 66, 74, 96, 83] as const;
-const LINKS = [46, 31, 23] as const;
-
-/** Cookie-free analytics, with clearly marked sample numbers; the bars grow as they scroll in. */
-function AnalyticsCard() {
-  const t = useTranslations("marketing.analytics");
-  const locale = useLocale();
-  const days = t.raw("days") as string[];
-  const links = t.raw("links") as string[];
-  const n = new Intl.NumberFormat(locale);
-  const pct = new Intl.NumberFormat(locale, { style: "percent" });
-  return (
-    <figure className="mk-pop grid w-full max-w-prose gap-5 rounded-xl border border-line bg-surface-elevated p-5 md:p-6">
-      <figcaption className="flex items-center justify-between gap-3">
-        <span className="text-small font-semibold">{t("week")}</span>
-        <Badge size="sm">{t("sample")}</Badge>
-      </figcaption>
-      <dl className="grid grid-cols-3 gap-2">
-        {[
-          [t("visitors"), n.format(12480)],
-          [t("clicks"), n.format(3912)],
-          [t("ctr"), pct.format(0.31)],
-        ].map(([label, value]) => (
-          <div key={label} className="grid gap-1 rounded-lg bg-canvas-muted p-3">
-            <dt className="text-caption font-medium text-fg-secondary">{label}</dt>
-            <dd className="text-h3 tabular-nums">{value}</dd>
-          </div>
-        ))}
-      </dl>
-      <div role="img" aria-label={`${t("visitors")}: ${days.map((day, i) => `${day} ${VISITS[i] ?? 0}`).join(", ")} (${t("sample")})`} className="grid h-24 grid-cols-7 gap-2">
-        {VISITS.map((value, index) => (
-          <div key={days[index]} className="flex h-full flex-col items-center gap-2">
-            <span className="relative w-full flex-1">
-              <span className={cn("mk-grow absolute inset-x-0 bottom-0 h-(--h) rounded-t-md", index === 5 ? "bg-primary" : "bg-selected")} style={{ "--h": `${value}%`, "--i": index } as CSSProperties} />
-            </span>
-            <span aria-hidden className="text-caption text-fg-tertiary">
-              {days[index]}
-            </span>
-          </div>
-        ))}
-      </div>
-      <ul className="grid gap-2">
-        {LINKS.map((share, index) => (
-          <li key={links[index]} className="grid gap-1">
-            <span className="flex justify-between text-small">
-              <span>{links[index]}</span>
-              <span className="text-fg-secondary tabular-nums">{pct.format(share / 100)}</span>
-            </span>
-            <span className="block h-2 overflow-hidden rounded-full bg-canvas-muted">
-              <span className="mk-grow block h-full w-(--w) origin-left rounded-full bg-primary rtl:origin-right" style={{ "--w": `${share * 2}%`, "--i": index } as CSSProperties} />
-            </span>
-          </li>
-        ))}
-      </ul>
-    </figure>
-  );
-}
-
-/** A shared link as it appears in a chat, next to the story picture in the page's look. */
-function ShareCard() {
-  const t = useTranslations("marketing.features.share");
-  const slug: ExampleShot = "mara-vale";
-  const page = EXAMPLES[slug];
-  return (
-    <div className="relative grid w-full max-w-prose grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-end gap-4">
-      <div className="mk-fan grid gap-2 -rotate-3">
-        <span className="justify-self-start rounded-full bg-fg px-2 py-0.5 text-caption font-semibold text-canvas">{t("story")}</span>
-        <div className="relative aspect-short overflow-hidden rounded-lg border border-line">
-          <Image src={EXAMPLE_SHOTS[slug]} alt="" fill sizes={phoneSizes.side} placeholder="blur" className="object-cover object-top" />
-        </div>
-      </div>
-      <div className="mk-pop grid gap-2" style={order(1)}>
-        <span className="justify-self-start rounded-full bg-fg px-2 py-0.5 text-caption font-semibold text-canvas">{t("preview")}</span>
-        <div className="overflow-hidden rounded-xl rounded-ee-xs border border-line bg-surface-elevated">
-          <div className="relative aspect-og">
-            <Image src={EXAMPLE_SHOTS[slug]} alt="" fill sizes={phoneSizes.side} placeholder="blur" className="object-cover object-[50%_18%]" />
-          </div>
-          <div className="grid gap-0.5 p-3" dir="ltr">
-            <p className="truncate text-small font-semibold">{page?.profile.displayName}</p>
-            <p className="line-clamp-2 text-caption text-fg-secondary">{page?.profile.tagline ?? page?.profile.bio}</p>
-            <p className="flex items-center gap-1 text-caption text-fg-tertiary">
-              <Icon icon={Link2} size="sm" />
-              linkyo.app/{slug}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** Everything a page can do, as four rows on light Linkyo Teal panels; what is inside each panel moves in as it scrolls in. */
-export function Features() {
-  const t = useTranslations("marketing");
-  return (
-    <Shell id="features" labelledBy="features-title" className="grid w-full gap-16 py-16 md:gap-24 md:py-24">
-      <header className="mk-reveal mx-auto grid max-w-prose justify-items-center text-center">
-        <h2 id="features-title" className="text-h2 tracking-tight text-balance md:text-h1">
-          <span className="block text-fg-tertiary">{t("features.title1")}</span>
-          <span className="block">{t("features.title2")}</span>
-        </h2>
-      </header>
-
-      <FeatureRow title={t("features.look.title")} body={t("features.look.body")} tint="bg-tint-teal">
-        <div className="relative grid aspect-square w-full max-w-prose place-items-center sm:aspect-4/3">
-          <Shot slug="juno-kade" className="mk-fan absolute w-5/12 -translate-x-3/4 -rotate-6 sm:w-1/3 rtl:translate-x-3/4" />
-          <Shot slug="salma-rahhal" className="mk-fan absolute w-5/12 translate-x-3/4 rotate-6 sm:w-1/3 rtl:-translate-x-3/4" />
-          <Shot slug="nico-hale" className="relative w-1/2 sm:w-5/12" sizes={phoneSizes.hero} />
-        </div>
-      </FeatureRow>
-
-      <FeatureRow title={t("paste.title")} body={t("paste.lead")} tint="bg-canvas-muted" reverse>
-        <div className="mk-pop w-full max-w-prose">
-          <PasteDemo />
-        </div>
-      </FeatureRow>
-
-      <FeatureRow title={t("analytics.title")} body={t("analytics.lead")} tint="bg-tint-teal">
-        <AnalyticsCard />
-      </FeatureRow>
-
-      <FeatureRow title={t("features.share.title")} body={t("features.share.body")} tint="bg-canvas-muted" reverse>
-        <ShareCard />
-      </FeatureRow>
-    </Shell>
-  );
-}
-
+/**
+ * Two plans. Free is the offer: the price, everything in it, one button. Pro is what comes later,
+ * quieter, as a list of what it will add (no button: there is nothing to buy yet).
+ */
 export function Pricing() {
   const t = useTranslations("marketing.pricing");
   const free = t.raw("free.features") as string[];
   const pro = t.raw("pro.features") as string[];
   return (
-    <Shell id="pricing" labelledBy="pricing-title" className="grid w-full grid-cols-1 gap-12 py-16 md:py-24">
+    <Shell id="pricing" labelledBy="pricing-title" className="grid w-full grid-cols-1 gap-10 py-16 md:gap-12 md:py-24">
       <SectionHeader id="pricing-title" title={t("title")} lead={t("lead")} center />
-      <div className="mx-auto grid w-full gap-4 md:grid-cols-2">
+      <div className="mx-auto grid w-full max-w-content gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <article className="mk-reveal grid content-start gap-6 rounded-xl border border-line bg-surface-elevated p-6 md:p-10">
-          <div className="grid gap-2">
+          <header className="grid gap-1">
             <h3 className="text-h3">{t("free.name")}</h3>
-            <p className="flex items-baseline gap-2">
-              <span className="text-display font-extrabold tracking-display">{t("free.price")}</span>
-              <span className="text-body text-fg-secondary">{t("free.per")}</span>
-            </p>
-          </div>
-          <ul className="grid gap-3">
+            <p className="text-body text-fg-secondary">{t("free.lead")}</p>
+          </header>
+          <p className="flex items-baseline gap-2">
+            <span className="text-display font-extrabold tracking-display tabular-nums">{t("free.price")}</span>
+            <span className="text-body font-medium text-fg-secondary">{t("free.per")}</span>
+          </p>
+          <ul className="grid gap-3 border-t border-line pt-6 sm:grid-cols-2 sm:gap-x-6">
             {free.map((feature) => (
               <li key={feature} className="flex items-start gap-3 text-body">
-                <Icon icon={Check} size="md" className="shrink-0 text-success-strong" />
+                <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-selected text-selected-fg">
+                  <Icon icon={Check} size="sm" />
+                </span>
                 {feature}
               </li>
             ))}
           </ul>
           <Link
             href="/signup"
-            className="inline-flex h-control-xl items-center justify-center rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
+            className="group inline-flex h-control-xl items-center justify-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
           >
             {t("free.cta")}
+            <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
           </Link>
         </article>
-        <article className="mk-reveal grid content-start gap-6 rounded-xl bg-tint-teal p-6 md:p-10">
-          <div className="grid gap-2">
+        <article className="mk-reveal grid content-start gap-5 rounded-xl bg-canvas-muted p-6 md:p-10">
+          <header className="grid gap-1">
             <h3 className="flex items-center gap-3 text-h3">
               {t("pro.name")}
               <Badge tone="primary" dot>
                 {t("pro.badge")}
               </Badge>
             </h3>
-          </div>
-          <ul className="grid gap-3">
-            {pro.map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-body">
-                <Icon icon={Plus} size="md" className="shrink-0" />
+            <p className="text-body text-fg-secondary">{t("pro.lead")}</p>
+          </header>
+          <ul className="grid gap-2">
+            {pro.map((feature, index) => (
+              <li key={feature} className="flex min-h-12 items-center gap-3 rounded-lg bg-surface px-3 py-2 text-body">
+                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-canvas-muted text-fg-secondary">
+                  <Icon icon={PRO_ICONS[index] ?? Plus} size="sm" />
+                </span>
                 {feature}
               </li>
             ))}
@@ -321,20 +183,31 @@ export function Pricing() {
   );
 }
 
+/**
+ * Questions as a calm list: hairlines between them, a round button that turns into a cross, and the
+ * answer that opens smoothly in place (where the browser can animate it; it simply opens elsewhere).
+ */
 export function Faq() {
   const t = useTranslations("marketing.faq");
   const items = t.raw("items") as { q: string; a: string }[];
   return (
-    <Shell id="faq" labelledBy="faq-title" className="grid grid-cols-1 gap-10 py-16 md:py-24 lg:grid-cols-3 lg:gap-16">
-      <SectionHeader id="faq-title" title={t("title")} />
-      <div className="grid gap-2 lg:col-span-2">
+    <Shell id="faq" labelledBy="faq-title" className="grid grid-cols-1 gap-8 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
+      <header className="mk-reveal grid content-start gap-3 lg:sticky lg:top-24 lg:self-start">
+        <h2 id="faq-title" className="text-h2 tracking-tight text-balance md:text-h1">
+          {t("title")}
+        </h2>
+        <p className="text-body-lg text-pretty text-fg-secondary">{t("lead")}</p>
+      </header>
+      <div className="divide-y divide-line border-y border-line">
         {items.map((item) => (
-          <details key={item.q} className="group mk-reveal rounded-lg border border-line bg-surface has-[summary:focus-visible]:focus-ring">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-body-lg font-semibold outline-none [&::-webkit-details-marker]:hidden">
+          <details key={item.q} className="group mk-faq">
+            <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-md py-4 text-body-lg font-semibold text-balance outline-none focus-visible:focus-ring [&::-webkit-details-marker]:hidden">
               {item.q}
-              <Icon icon={Plus} size="md" className="shrink-0 text-fg-secondary transition-transform duration-standard ease-standard group-open:rotate-45 motion-reduce:transition-none" />
+              <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-canvas-muted text-fg-secondary transition-[rotate,background-color,color] duration-standard ease-standard group-open:rotate-45 group-open:bg-primary group-open:text-primary-fg motion-reduce:transition-none">
+                <Icon icon={Plus} size="sm" />
+              </span>
             </summary>
-            <p className="px-5 pb-5 text-body text-fg-secondary">{item.a}</p>
+            <p className="pe-12 pb-5 text-body text-pretty text-fg-secondary">{item.a}</p>
           </details>
         ))}
       </div>
@@ -342,35 +215,23 @@ export function Faq() {
   );
 }
 
-
 /**
- * The last word, in the brand color: a Linkyo Teal card with its lighter band along the bottom,
- * white text, the address field and what Pro will add.
+ * The last word, in the brand color: a Linkyo Teal card with the Linkyo y as a large, quiet mark
+ * in its corner, the promise, and the address field.
  */
 export function FinalCta() {
   const t = useTranslations("marketing");
-  const pro = t.raw("pricing.pro.features") as string[];
   return (
     <section id="start" aria-labelledby="final-title" className="mx-auto w-full max-w-content scroll-mt-24 px-5 md:px-10">
-      <div className="mk-reveal grid overflow-hidden rounded-xl bg-primary text-primary-fg">
-        <div className="grid justify-items-center gap-6 px-5 py-16 text-center md:px-10 md:py-24">
-          <h2 id="final-title" className="text-h1 tracking-tight text-balance md:text-display">
-            {t("final.title")}
-          </h2>
-          <p className="max-w-prose text-body-lg text-pretty">{t("final.lead")}</p>
-          <ClaimForm id="final-claim" tone="brand" className="w-full max-w-prose text-start" />
-          <div className="grid justify-items-center gap-3 pt-6">
-            <p className="text-small font-semibold">{t("final.soon")}</p>
-            <ul className="flex max-w-prose flex-wrap justify-center gap-2">
-              {pro.map((feature) => (
-                <li key={feature} className="inline-flex h-control-sm items-center rounded-full bg-primary-hover px-3 text-small font-medium text-primary-fg">
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div aria-hidden className="h-6 bg-primary-hover md:h-8" />
+      <div className="mk-reveal relative isolate grid justify-items-center gap-6 overflow-hidden rounded-xl bg-primary px-5 py-16 text-center text-primary-fg md:px-10 md:py-24">
+        {/* The Linkyo y, large and tone on tone, leaning out of the top corner. Painted first and the words
+            positioned after it, so it stays behind them. */}
+        <LogoGlyph className="pointer-events-none absolute -end-12 -top-12 h-auto w-2/5 rotate-12 text-primary-hover md:-end-16 md:-top-20 md:w-1/4 rtl:-rotate-12" />
+        <h2 id="final-title" className="relative text-h1 tracking-tight text-balance md:text-display">
+          {t("final.title")}
+        </h2>
+        <p className="relative max-w-prose text-body-lg text-pretty">{t("final.lead")}</p>
+        <ClaimForm id="final-claim" tone="brand" className="relative w-full max-w-prose text-start" />
       </div>
     </section>
   );
