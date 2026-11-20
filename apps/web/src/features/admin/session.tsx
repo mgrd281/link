@@ -7,7 +7,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode, type Su
 
 import { accountStore, useAccount } from "@/features/account/store";
 import type { Account } from "@/features/account/types";
-import { AppSplash } from "@/features/app/gate";
+import { BrandSplash } from "@/features/app/gate";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
@@ -53,7 +53,7 @@ function LiveGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (snapshot.status === "signedOut") router.replace(`/login?next=${encodeURIComponent(pathname)}`);
   }, [snapshot.status, pathname, router]);
-  if (snapshot.status !== "signedIn") return <AppSplash />;
+  if (snapshot.status !== "signedIn") return <BrandSplash />;
   return <LiveTeamGate account={snapshot.account}>{children}</LiveTeamGate>;
 }
 
@@ -65,7 +65,7 @@ function LiveTeamGate({ account, children }: { account: Account; children: React
   useEffect(() => {
     void refreshLive();
   }, [account.id]);
-  if (team.status === "loading" || local === null) return <AppSplash />;
+  if (team.status === "loading" || local === null) return <BrandSplash />;
   if (team.status === "none") return <NoAccess account={account} />;
   const role = team.me.role === "owner" && viewAs ? viewAs : team.me.role;
   // Prepared pages are still kept in this browser and published by script; their history with them.
@@ -100,7 +100,7 @@ function DemoGate({ children }: { children: ReactNode }) {
     if (snapshot.status === "signedOut") router.replace(`/login?next=${encodeURIComponent(pathname)}`);
   }, [snapshot.status, pathname, router]);
 
-  if (snapshot.status !== "signedIn" || db === null) return <AppSplash />;
+  if (snapshot.status !== "signedIn" || db === null) return <BrandSplash />;
   if (db.members.length === 0) return <TeamSetup account={snapshot.account} />;
   const me = db.members.find((member) => member.email === snapshot.account.email);
   if (!me) return <NoAccess account={snapshot.account} />;

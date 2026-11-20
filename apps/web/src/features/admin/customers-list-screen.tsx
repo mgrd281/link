@@ -49,7 +49,7 @@ function Select({
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-control-md border-line-input bg-surface-elevated text-small text-fg hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring min-w-0 rounded-md border px-3 outline-none"
+        className="h-control-md border-line-input bg-surface-elevated text-body sm:text-small text-fg hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring min-w-0 rounded-md border px-3 outline-none"
       >
         {children}
       </select>

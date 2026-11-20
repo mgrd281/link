@@ -253,10 +253,19 @@ test.describe("apps and skills on example pages", () => {
     // Still frames for axe (sections fade in as they scroll into view).
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/de/p/merve-aksoy");
+    // The featured app shows the official badges: App Store first, then Google Play, each to its own store.
+    const appStore = page.getByRole("link", { name: "Laden im App Store: Fokuskreis" });
+    const googlePlay = page.getByRole("link", { name: "Jetzt bei Google Play: Fokuskreis" });
+    await expect(appStore).toHaveAttribute("href", "https://example.com/merve-aksoy/apps/fokuskreis/appstore");
+    await expect(googlePlay).toHaveAttribute("href", "https://example.com/merve-aksoy/apps/fokuskreis/googleplay");
+    expect((await appStore.boundingBox())?.x ?? 1).toBeLessThan((await googlePlay.boundingBox())?.x ?? 0);
+    // Apple allows one App Store badge per layout: the other apps get a "Get" button, and the marks are credited.
+    await expect(page.getByRole("link", { name: /^Laden im App Store: / })).toHaveCount(1);
+    await expect(page.getByText(/Apple, das Apple Logo und App Store sind Marken der Apple Inc\./)).toBeVisible();
     // The phone project is an Android phone: its button opens Google Play; a computer gets the first store.
     const android = info.project.name === "mobile";
-    const [mine, other] = android ? ["Fokuskreis bei Google Play laden", "Fokuskreis im App Store laden"] : ["Fokuskreis im App Store laden", "Fokuskreis bei Google Play laden"];
-    await expect(page.getByRole("link", { name: mine }).first()).toHaveAttribute("href", `https://example.com/merve-aksoy/apps/fokuskreis/${android ? "googleplay" : "appstore"}`);
+    const [mine, other] = android ? ["Sprachfuchs bei Google Play laden", "Sprachfuchs im App Store laden"] : ["Sprachfuchs im App Store laden", "Sprachfuchs bei Google Play laden"];
+    await expect(page.getByRole("link", { name: mine })).toHaveAttribute("href", `https://example.com/merve-aksoy/apps/sprachfuchs/${android ? "googleplay" : "appstore"}`);
     // The other store stays one tap away; an app only in the App Store opens there for everyone.
     await expect(page.getByRole("link", { name: other })).toBeVisible();
     await expect(page.getByRole("link", { name: "Schlafwelle im App Store laden" })).toBeVisible();

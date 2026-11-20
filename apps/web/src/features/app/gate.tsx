@@ -1,6 +1,6 @@
 "use client";
 
-import { LogoSymbol, Spinner } from "@linkyo/ui";
+import { LogoSymbol, Skeleton, Spinner } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import { useEffect, type ReactNode } from "react";
 
@@ -9,8 +9,8 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 
 import { SiteProvider } from "./site-context";
 
-/** Shown while the session is read (server render, hydration) or while redirecting. */
-export function AppSplash() {
+/** The admin console's loading screen: the Linkyo symbol and a spinner (its layout is not the dashboard's). */
+export function BrandSplash() {
   const t = useTranslations("app");
   return (
     <div className="grid min-h-dvh place-items-center bg-canvas">
@@ -18,6 +18,43 @@ export function AppSplash() {
         <LogoSymbol className="size-control-xl" />
         <Spinner className="size-icon-md text-fg-tertiary" />
         <span className="sr-only">{t("loading")}</span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Shown while the session is read (server render, hydration) or while redirecting: the dashboard's
+ * own outline in soft placeholders (header, title, profile, blocks, tab bar), as native apps load,
+ * so the real screen fills in where the eye already is instead of after a spinner.
+ */
+export function AppSplash() {
+  const t = useTranslations("app");
+  return (
+    <div className="min-h-dvh bg-canvas" role="status">
+      <span className="sr-only">{t("loading")}</span>
+      <div aria-hidden className="flex h-16 items-center gap-3 border-b border-line ps-4 pe-4">
+        <Skeleton className="size-avatar-sm shrink-0 rounded-full" />
+        <div className="grid flex-1 gap-2">
+          <Skeleton className="h-3 w-1/3" />
+          <Skeleton className="h-2 w-1/4" />
+        </div>
+        <Skeleton className="size-control-sm rounded-md" />
+      </div>
+      <div aria-hidden className="mx-auto grid max-w-prose gap-4 px-4 pt-6">
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-3 w-3/4" />
+        <Skeleton className="h-24 rounded-lg" />
+        <Skeleton className="h-16 rounded-lg" />
+        <Skeleton className="h-16 rounded-lg" />
+        <Skeleton className="h-16 rounded-lg" />
+      </div>
+      <div aria-hidden className="fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <div className="mx-auto grid h-16 max-w-prose grid-cols-5 place-items-center">
+          {[0, 1, 2, 3, 4].map((slot) => (
+            <Skeleton key={slot} className={slot === 2 ? "size-control-xl -translate-y-3 rounded-full" : "h-control-sm w-12 rounded-full"} />
+          ))}
+        </div>
       </div>
     </div>
   );

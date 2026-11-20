@@ -87,7 +87,7 @@ export function DirectionToolbar({
           </div>
         ) : null}
         {view === "page" ? (
-          <label className="flex items-center gap-2 px-2 text-small text-fg-secondary">
+          <label className="flex items-center gap-2 px-2 text-body text-fg-secondary sm:text-small">
             <span>{t("toolbar.theme")}</span>
             <select
               value={preset}

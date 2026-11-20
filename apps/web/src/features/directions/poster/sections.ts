@@ -41,7 +41,7 @@ export function selfTitle(block: Block): string | null {
   return "title" in block && typeof block.title === "string" && block.title.trim() ? block.title : null;
 }
 
-export function groupSections(blocks: readonly Block[]): PosterSection[] {
+export function groupSections(blocks: readonly Block[], featured?: string): PosterSection[] {
   const sections: PosterSection[] = [{ id: "top", title: null, items: [] }];
   for (const block of blocks) {
     if (block.type === "socials") continue; // rendered in the hero
@@ -63,7 +63,7 @@ export function groupSections(blocks: readonly Block[]): PosterSection[] {
     } else if (block.type === "product") {
       if (last?.kind === "products") last.blocks.push(block);
       else current.items.push({ kind: "products", blocks: [block] });
-    } else if (block.type === "app") {
+    } else if (block.type === "app" && block.id !== featured) {
       if (last?.kind === "apps") last.blocks.push(block);
       else current.items.push({ kind: "apps", blocks: [block] });
     } else if (isRowBlock(block)) {
@@ -86,4 +86,13 @@ export function linkDestination(url: string): string {
   } catch {
     return url;
   }
+}
+
+/**
+ * The one app on a page that shows the official store badges (Apple allows one App Store badge per
+ * layout): the first highlighted app, or the only app on the page. Web-only apps have no badges.
+ */
+export function featuredApp(blocks: readonly Block[]): string | undefined {
+  const apps = blocks.filter((block): block is BlockOf<"app"> => block.type === "app" && block.stores.some((store) => store.store !== "web"));
+  return (apps.find((app) => app.highlight) ?? (apps.length === 1 ? apps[0] : undefined))?.id;
 }

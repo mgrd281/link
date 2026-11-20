@@ -388,7 +388,12 @@
     "copyInstall": "Copy the install command for {name}",
     "viewOnGithub": "View on GitHub",
     "skill": "Skill",
-    "stars": "{count, plural, one {# star} other {# stars}} on GitHub"
+    "stars": "{count, plural, one {# star} other {# stars}} on GitHub",
+    "badges": {
+      "appstore": "Download on the App Store",
+      "googleplay": "Get it on Google Play"
+    },
+    "trademarks": "Apple, the Apple logo and App Store are trademarks of Apple Inc., registered in the U.S. and other countries. Google Play and the Google Play logo are trademarks of Google LLC."
   },
   "directions": {
     "title": "Directions",

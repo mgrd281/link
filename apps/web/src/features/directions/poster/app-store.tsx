@@ -39,7 +39,8 @@ export function StoreGlyph({ store, size = "sm" }: { store: AppStore; size?: "sm
 
 /**
  * One button, the right store: on an iPhone it opens the App Store, on Android Google Play, else the
- * first store the creator added. An app that only lives on the web opens instead of installing.
+ * first store the creator added. Drawn like the stores' own "Get" capsules in their lists (the page's
+ * accent on a soft fill); an app that only lives on the web opens instead of installing.
  */
 export function GetButton({ title, stores }: { title: string; stores: readonly Store[] }) {
   const t = useTranslations("creator");
@@ -50,11 +51,10 @@ export function GetButton({ title, stores }: { title: string; stores: readonly S
       href={store.url}
       aria-label={t("getApp", { app: title, store: store.store })}
       className={cn(
-        "inline-flex h-control-sm shrink-0 items-center gap-1 rounded-full bg-creator-accent ps-3 pe-4 text-small font-bold text-creator-accent-fg uppercase",
+        "inline-flex h-control-sm min-w-touch-target shrink-0 items-center justify-center rounded-full bg-creator-surface-2 px-4 text-small font-bold text-creator-accent-text uppercase",
         pressable,
       )}
     >
-      <StoreGlyph store={store.store} />
       {store.store === "web" ? t("open") : t("get")}
     </a>
   );

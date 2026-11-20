@@ -6,15 +6,43 @@ import { useLocale, useTranslations } from "next-intl";
 import { CopyButton } from "../shared/copy-button";
 import { MediaImage, mediaSizes, Monogram, PlatformGlyph, useCreatorFormat } from "../shared/creator-kit";
 import { GetButton, OtherStores } from "./app-store";
+import { StoreBadges } from "./store-badges";
 import { AdLabel } from "./cards";
 import { pressable, type HeadingTag } from "./styles";
 
 /** An app icon: the store's picture with the rounded corners phones give icons, or its initials. */
-function AppIcon({ block }: { block: BlockOf<"app"> }) {
+function AppIcon({ block, size = "lg" }: { block: BlockOf<"app">; size?: "lg" | "xl" }) {
   return (
-    <span className="relative size-avatar-lg shrink-0 overflow-hidden rounded-md border border-creator-line bg-creator-surface-2">
-      {hasImage(block.icon) ? <MediaImage src={block.icon.src} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={block.title} className="text-h3" />}
+    <span
+      className={cn(
+        "relative shrink-0 overflow-hidden border border-creator-line bg-creator-surface-2",
+        size === "xl" ? "size-avatar-xl rounded-lg" : "size-avatar-lg rounded-md",
+      )}
+    >
+      {hasImage(block.icon) ? <MediaImage src={block.icon.src} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={block.title} className={size === "xl" ? "text-h2" : "text-h3"} />}
     </span>
+  );
+}
+
+/** Rating, category and price in one quiet line ("★ 4,8 · Produktivität · Kostenlos"). */
+function AppFacts({ block, pricing = true, wrap = false }: { block: BlockOf<"app">; pricing?: boolean; wrap?: boolean }) {
+  const t = useTranslations("creator");
+  const locale = useLocale();
+  const rating = block.rating === undefined ? null : new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(block.rating);
+  const facts = [block.category, pricing && block.pricing ? t(`pricing.${block.pricing}`) : undefined].filter(Boolean);
+  if (!rating && facts.length === 0) return null;
+  return (
+    <p className={cn("flex min-w-0 items-center gap-1 text-caption text-creator-fg-muted", wrap && "flex-wrap")}>
+      {rating ? (
+        <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-creator-fg">
+          <Icon icon={Star} size="sm" className="fill-current text-creator-accent-text" />
+          <span aria-hidden>{rating}</span>
+          <span className="sr-only">{t("rating", { rating: rating })}</span>
+        </span>
+      ) : null}
+      {rating && facts.length > 0 ? <span aria-hidden>·</span> : null}
+      {facts.length > 0 ? <span className={wrap ? undefined : "truncate"}>{facts.join(" · ")}</span> : null}
+    </p>
   );
 }
 
@@ -27,7 +55,7 @@ function CodeChip({ code, app }: { code: string; app: string }) {
       label={t("copyCode", { code, app })}
       className="inline-flex h-control-sm items-center gap-2 rounded-full border border-dashed border-creator-line-strong bg-creator-surface ps-3 pe-2 text-small hover:bg-creator-surface-2"
     >
-      <span className="text-caption font-semibold tracking-wide text-creator-fg-muted uppercase">{t("code")}</span>{" "}
+      <span className="text-caption font-semibold tracking-wide text-creator-fg uppercase">{t("code")}</span>{" "}
       {/* The space keeps "Code NORA20" one phrase for screen readers and voice control (label in name). */}
       <bdi dir="ltr" className="font-mono font-semibold tracking-wide">
         {code}
@@ -43,8 +71,6 @@ function CodeChip({ code, app }: { code: string; app: string }) {
  */
 function AppItem({ block, heading: Heading }: { block: BlockOf<"app">; heading: HeadingTag }) {
   const t = useTranslations("creator");
-  const locale = useLocale();
-  const rating = block.rating === undefined ? null : new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(block.rating);
   const more = Boolean(block.description) || Boolean(block.code) || block.stores.length > 1;
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 p-3 @prose:p-4">
@@ -58,19 +84,7 @@ function AppItem({ block, heading: Heading }: { block: BlockOf<"app">; heading: 
             {block.developer ? <span className="truncate">{block.developer}</span> : null}
           </p>
         ) : null}
-        {rating || block.category ? (
-          <p className="flex min-w-0 items-center gap-1 text-caption text-creator-fg-muted">
-            {rating ? (
-              <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-creator-fg">
-                <Icon icon={Star} size="sm" className="fill-current text-creator-accent-text" />
-                <span aria-hidden>{rating}</span>
-                <span className="sr-only">{t("rating", { rating: rating })}</span>
-              </span>
-            ) : null}
-            {rating && block.category ? <span aria-hidden>·</span> : null}
-            {block.category ? <span className="truncate">{block.category}</span> : null}
-          </p>
-        ) : null}
+        <AppFacts block={block} pricing={false} />
       </div>
       {/* As in the stores: the price under the button. */}
       <div className="grid justify-items-center gap-1">
@@ -100,11 +114,43 @@ export function AppList({ apps, surface, heading }: { apps: BlockOf<"app">[]; su
   return (
     <ul className={cn("grid divide-y divide-creator-line overflow-hidden rounded-creator-card", surface)}>
       {apps.map((app) => (
-        <li key={app.id} className={cn("relative", app.highlight && "bg-creator-surface-2")}>
+        <li key={app.id} className={cn("relative", app.highlight && "border-s-emphasis border-creator-accent")}>
           <AppItem block={app} heading={heading} />
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * The page's featured app (its first highlighted one, or its only one): a card like the top of a store
+ * page, with a large icon, the name, maker, rating, category and price, the creator's line and code,
+ * and the official App Store and Google Play badges under it, in a subordinate place as Apple asks.
+ */
+export function AppFeature({ block, surface, heading: Heading }: { block: BlockOf<"app">; surface: string; heading: HeadingTag }) {
+  return (
+    <article className={cn("grid gap-4 rounded-creator-card p-4 @prose:p-5", surface)}>
+      <div className="flex items-center gap-4">
+        <AppIcon block={block} size="xl" />
+        <div className="grid min-w-0 gap-1">
+          <Heading className="text-h3 leading-tight font-semibold text-balance break-words">{block.title}</Heading>
+          {block.developer || block.affiliate ? (
+            <p className="flex min-w-0 items-center gap-2 text-small text-creator-fg-muted">
+              {block.affiliate ? <AdLabel /> : null}
+              {block.developer ? <span className="truncate">{block.developer}</span> : null}
+            </p>
+          ) : null}
+          <AppFacts block={block} wrap />
+        </div>
+      </div>
+      {block.description ? <p className="text-body text-pretty">{block.description}</p> : null}
+      {block.code ? (
+        <div className="flex">
+          <CodeChip code={block.code} app={block.title} />
+        </div>
+      ) : null}
+      <StoreBadges title={block.title} stores={block.stores} />
+    </article>
   );
 }
 

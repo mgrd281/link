@@ -88,7 +88,7 @@ function ViewAs() {
         id={id}
         value={viewAs ?? "owner"}
         onChange={(event) => setViewAs(event.target.value === "owner" ? null : (event.target.value as Role))}
-        className="h-control-sm rounded-sm border border-line-input bg-surface-elevated px-2 text-small text-fg outline-none hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring"
+        className="h-control-sm rounded-sm border border-line-input bg-surface-elevated px-2 text-body sm:text-small text-fg outline-none hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring"
       >
         {ROLES.map((role) => (
           <option key={role} value={role}>

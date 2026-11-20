@@ -124,6 +124,21 @@ function webModel(dictionary) {
 
   for (const t of byPath(dictionary, ["motion", "duration"])) light.push([`--duration-${t.path[2]}`, `${ms(t.$value)}ms`]);
   for (const t of byPath(dictionary, ["motion", "easing"])) light.push([`--ease-${t.path[2]}`, `cubic-bezier(${t.$value.join(", ")})`]);
+  // The iOS spring (motion.spring, also used by the Swift design system) as a CSS easing: the damped
+  // oscillator sampled into linear(), lasting until it has settled to within 0.1 %.
+  {
+    const response = dictionary.tokens.motion.spring.response.$value;
+    const zeta = dictionary.tokens.motion.spring.damping.$value;
+    const w0 = (2 * Math.PI) / response;
+    const wd = w0 * Math.sqrt(1 - zeta * zeta);
+    const x = (t) => 1 - Math.exp(-zeta * w0 * t) * (Math.cos(wd * t) + (zeta / Math.sqrt(1 - zeta * zeta)) * Math.sin(wd * t));
+    let settle = 0;
+    for (let t = 0; t < 3; t += 0.001) if (Math.abs(1 - x(t)) > 0.001) settle = t;
+    const steps = 24;
+    const points = Array.from({ length: steps + 1 }, (_, i) => (i === steps ? 1 : Number(x((settle * i) / steps).toFixed(4))));
+    light.push(["--ease-spring", `linear(${points.join(", ")})`]);
+    light.push(["--duration-spring", `${Math.round(settle * 1000)}ms`]);
+  }
   for (const t of byPath(dictionary, ["motion", "scale"])) light.push([`--scale-${t.path[2]}`, String(t.$value)]);
   for (const t of byPath(dictionary, ["opacity"])) light.push([`--opacity-${t.path[1]}`, String(t.$value)]);
   for (const t of byPath(dictionary, ["blur"])) light.push([`--blur-${t.path[1]}`, t.$value]);
@@ -211,6 +226,9 @@ ${decls(m.light)}
   --animate-fade-in: fade-in var(--duration-micro) var(--ease-standard);
   --animate-pop-in: pop-in var(--duration-standard) var(--ease-standard);
   --animate-rise-in: rise-in var(--duration-slow) var(--ease-standard);
+  --animate-sheet-in: sheet-in var(--duration-spring) var(--ease-spring);
+  --animate-sheet-out: sheet-out var(--duration-standard) var(--ease-exit) forwards;
+  --animate-fade-out: fade-out var(--duration-standard) var(--ease-exit) forwards;
 
   @keyframes spin {
     to {
@@ -241,6 +259,28 @@ ${decls(m.light)}
     from {
       opacity: 0;
       translate: 0 var(--spacing-2);
+    }
+  }
+
+  /* A sheet slides up from below the screen, and away again (from wherever a drag left it). */
+  @keyframes sheet-in {
+    from {
+      translate: 0 100%;
+    }
+  }
+
+  @keyframes sheet-out {
+    from {
+      translate: 0 var(--sheet-drag, 0px);
+    }
+    to {
+      translate: 0 100%;
+    }
+  }
+
+  @keyframes fade-out {
+    to {
+      opacity: 0;
     }
   }
 }

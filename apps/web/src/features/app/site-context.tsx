@@ -177,12 +177,13 @@ export function EditorProvider({
     };
   }, []);
 
-  // ⌘Z / Ctrl+Z undo, ⇧⌘Z / Ctrl+Y redo — everywhere except inside text fields and open panels.
+  // ⌘Z / Ctrl+Z undo, ⇧⌘Z / Ctrl+Y redo — everywhere except inside text fields and open panels (a
+  // panel that is sliding away no longer counts).
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target;
       if (target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
-      if (document.querySelector("[role=dialog]")) return;
+      if (document.querySelector("[role=dialog]:not([data-state=closed])")) return;
       const mod = event.metaKey || event.ctrlKey;
       if (mod && event.key.toLowerCase() === "z") {
         event.preventDefault();

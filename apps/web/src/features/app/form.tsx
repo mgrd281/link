@@ -11,6 +11,8 @@ import { remoteImageProps, resolveMedia } from "@/features/directions/shared/med
 
 import { ImageError, pickFiles, prepareImage, type ImageKind } from "./images";
 
+import { haptic } from "@/lib/haptics";
+
 /** A form section with a small heading (forms read top to bottom, one column — brand §5). */
 export function FormSection({ title, description, children, className }: { title?: string; description?: string; children: ReactNode; className?: string }) {
   return (
@@ -156,7 +158,15 @@ export function SwitchRow({
         <span className="text-small font-medium">{label}</span>
         {description ? <span className="text-caption text-fg-secondary">{description}</span> : null}
       </label>
-      <Switch id={id} checked={checked} onCheckedChange={onChecked} disabled={disabled} />
+      <Switch
+        id={id}
+        checked={checked}
+        onCheckedChange={(value) => {
+          haptic();
+          onChecked(value);
+        }}
+        disabled={disabled}
+      />
     </div>
   );
 }

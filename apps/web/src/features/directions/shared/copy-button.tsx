@@ -5,6 +5,8 @@ import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { haptic } from "@/lib/haptics";
+
 /** How long the check mark stays before the copy icon returns. */
 const CONFIRM_MS = 1800;
 
@@ -21,6 +23,7 @@ export function CopyButton({ value, label, className, children }: { value: strin
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(value);
+      haptic();
       setCopied(true);
       window.clearTimeout(timer.current);
       timer.current = window.setTimeout(() => setCopied(false), CONFIRM_MS);

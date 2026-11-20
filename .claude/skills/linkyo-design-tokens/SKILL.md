@@ -45,6 +45,11 @@ reports unknown classes.
   - icons: `size-icon-*` via the `Icon` component's `size`.
 - **Motion:** `duration-micro|standard|slow` and `ease-standard`. Always add a `motion-reduce:` variant
   for anything that moves.
+- **Springs and sheets (ADR 0056):** `ease-spring` + `duration-spring` are the iOS spring of
+  `motion.spring` (response 0.35 s, damping 0.85) sampled into CSS `linear()`, so web and the Swift
+  design system move alike. Use them for things that settle (a sheet, a pressed tab pill). Things
+  leaving the screen use `ease-exit`. Ready-made: `animate-sheet-in`, `animate-sheet-out` (starts from
+  `--sheet-drag`), `animate-fade-out`. Haptics: `haptic()` from `@/lib/haptics`, only on a user's tap.
 - **Opacity:** `opacity-hover`, `opacity-pressed`, `opacity-secondary` (overlays use `bg-current`
   with these).
 - **Radii:** `rounded-creator-button`, `rounded-creator-card`, `rounded-xl`. Depth: borders and fills only (see the first rule).

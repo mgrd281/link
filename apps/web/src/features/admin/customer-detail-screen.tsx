@@ -640,7 +640,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                   rows={3}
                   dir="auto"
                   placeholder={t("notePlaceholder")}
-                  className="border-line-input bg-surface-elevated text-small text-fg hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring rounded-md border p-3 outline-none"
+                  className="border-line-input bg-surface-elevated text-body sm:text-small text-fg hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring rounded-md border p-3 outline-none"
                 />
                 <Button
                   type="submit"

@@ -24,10 +24,10 @@ import {
   VideoFeature,
   VideoRail,
 } from "./cards";
-import { AppList, RepoCard } from "./apps";
+import { AppFeature, AppList, RepoCard } from "./apps";
 import { EventTabs } from "./events";
 import { PosterBar, PosterHero } from "./hero";
-import { groupSections, type PosterItem } from "./sections";
+import { featuredApp, groupSections, type PosterItem } from "./sections";
 import { cardSurface, pressable, railFrame, sectionTitle, type HeadingTag } from "./styles";
 
 /**
@@ -58,7 +58,9 @@ export function PosterRenderer({
   // Live now beats a planned live; either one gets a pill in the hero.
   const lives = blocks.filter((block): block is BlockOf<"live"> => block.type === "live");
   const live = lives.find((block) => block.isLive) ?? lives.find((block) => block.startsAt !== undefined);
-  const sections = groupSections(blocks);
+  // One app on the page shows the official store badges; the trademarks are credited in the footer.
+  const featured = featuredApp(blocks);
+  const sections = groupSections(blocks, featured);
   const isRtl = profile.locale === "ar";
   const photo = profile.hero ?? profile.avatar;
   const surface = cardSurface[theme.buttonStyle];
@@ -125,13 +127,14 @@ export function PosterRenderer({
                   label={section.title ?? profile.displayName}
                   nested={section.title !== null}
                   gallery={layout.gallery}
+                  featured={featured}
                 />
               ))}
             </PosterSection>
           ))}
         </Main>
         {/* With a Linkyo bar at the bottom, the footer drops its own Linkyo credit (one is enough). */}
-        <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} credit={!dock} privacy={providers.length > 0} />
+        <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} credit={!dock} privacy={providers.length > 0} trademarks={featured !== undefined} />
         {dock}
         {/* Over everything, including the claim bar, until the visitor has decided. */}
         {providers.length > 0 ? <PrivacyNotice providers={providers} /> : null}
@@ -190,6 +193,7 @@ function PosterItemView({
   label,
   nested,
   gallery,
+  featured,
 }: {
   item: PosterItem;
   linkStyle: CreatorButtonStyle;
@@ -197,6 +201,7 @@ function PosterItemView({
   label: string;
   nested: boolean;
   gallery: CreatorLayout["gallery"];
+  featured: string | undefined;
 }) {
   switch (item.kind) {
     case "videos":
@@ -208,7 +213,7 @@ function PosterItemView({
     case "rows":
       return <RowGroup blocks={item.blocks} surface={surface} label={label} />;
     case "block":
-      return <PosterBlock block={item.block} linkStyle={linkStyle} surface={surface} heading={nested ? "h3" : "h2"} gallery={gallery} />;
+      return <PosterBlock block={item.block} linkStyle={linkStyle} surface={surface} heading={nested ? "h3" : "h2"} gallery={gallery} featured={featured} />;
   }
 }
 
@@ -218,12 +223,14 @@ function PosterBlock({
   surface,
   heading,
   gallery,
+  featured,
 }: {
   block: Block;
   linkStyle: CreatorButtonStyle;
   surface: string;
   heading: HeadingTag;
   gallery: CreatorLayout["gallery"];
+  featured?: string | undefined;
 }) {
   const t = useTranslations("creator");
   switch (block.type) {
@@ -291,7 +298,7 @@ function PosterBlock({
     case "product":
       return <ProductRow product={block} surface={surface} />;
     case "app":
-      return <AppList apps={[block]} surface={surface} heading={heading} />;
+      return block.id === featured ? <AppFeature block={block} surface={surface} heading={heading} /> : <AppList apps={[block]} surface={surface} heading={heading} />;
     case "repo":
       return <RepoCard block={block} surface={surface} heading={heading} />;
     case "header":

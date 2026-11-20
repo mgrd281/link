@@ -1,7 +1,7 @@
 import type { Block } from "@linkyo/blocks";
 import { describe, expect, it } from "vitest";
 
-import { groupSections, linkDestination } from "./sections";
+import { featuredApp, groupSections, linkDestination } from "./sections";
 
 const base = { visible: true, highlight: false } as const;
 const header = (id: string, title: string): Block => ({ ...base, id, type: "header", title });
@@ -95,5 +95,23 @@ describe("linkDestination", () => {
     expect(linkDestination("https://www.milaaurel.com/samples")).toBe("milaaurel.com");
     expect(linkDestination("mailto:booking@milaaurel.com")).toBe("booking@milaaurel.com");
     expect(linkDestination("tel:+4930123")).toBe("+4930123");
+  });
+});
+
+describe("featuredApp", () => {
+  const app = (id: string, stores: ("appstore" | "googleplay" | "web")[], highlight = false) =>
+    ({ ...base, id, highlight, type: "app", title: id, icon: { src: "sample:x", alt: "" }, stores: stores.map((store) => ({ store, url: `https://example.com/${id}/${store}` })) }) as const;
+
+  it("is the first highlighted app, or the only one; web apps have no badges", () => {
+    expect(featuredApp([app("a", ["appstore"]), app("b", ["googleplay"], true), app("c", ["appstore"], true)])).toBe("b");
+    expect(featuredApp([app("a", ["appstore", "googleplay"])])).toBe("a");
+    expect(featuredApp([app("a", ["appstore"]), app("b", ["googleplay"])])).toBeUndefined();
+    expect(featuredApp([app("w", ["web"], true)])).toBeUndefined();
+  });
+
+  it("stands alone, the other apps stay one list", () => {
+    const blocks = [app("a", ["appstore"]), app("b", ["appstore"], true), app("c", ["appstore"]), app("d", ["googleplay"])];
+    const items = groupSections(blocks, featuredApp(blocks))[0]?.items ?? [];
+    expect(items.map((item) => (item.kind === "block" ? `block:${item.block.id}` : `${item.kind}:${item.blocks.map((block) => block.id).join("")}`))).toEqual(["apps:a", "block:b", "apps:cd"]);
   });
 });

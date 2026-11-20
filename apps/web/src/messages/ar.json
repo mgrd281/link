@@ -388,7 +388,12 @@
     "copyInstall": "انسخ أمر تثبيت {name}",
     "viewOnGithub": "اعرضها على GitHub",
     "skill": "مهارة",
-    "stars": "{count, plural, one {نجمة واحدة} two {نجمتان} few {# نجوم} many {# نجمة} other {# نجمة}} على GitHub"
+    "stars": "{count, plural, one {نجمة واحدة} two {نجمتان} few {# نجوم} many {# نجمة} other {# نجمة}} على GitHub",
+    "badges": {
+      "appstore": "تنزيل من App Store",
+      "googleplay": "احصل عليه من Google Play"
+    },
+    "trademarks": "Apple وشعار Apple وApp Store علامات تجارية لشركة Apple Inc.، مسجلة في الولايات المتحدة ودول أخرى. Google Play وشعار Google Play علامتان تجاريتان لشركة Google LLC."
   },
   "directions": {
     "title": "الاتجاهات",

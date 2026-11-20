@@ -1,3 +1,4 @@
+import { tokens } from "@linkyo/tokens";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
@@ -23,7 +24,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     metadataBase: siteUrl(),
     title: { default: t("title"), template: `%s · Linkyo` },
     description: t("description"),
-    icons: { icon: "/favicon.svg" },
+    // The home-screen icon: the symbol on teal, full bleed (iOS rounds the corners itself).
+    icons: { icon: "/favicon.svg", apple: { url: "/apple-icon.png", sizes: "180x180", type: "image/png" } },
+    // Added to the home screen it opens like an app: full screen, its own name, the system's status bar.
+    appleWebApp: { capable: true, title: "Linkyo", statusBarStyle: "default" },
+    // Numbers stay numbers (follower counts, codes, prices): no automatic phone or address links.
+    formatDetection: { telephone: false, email: false, address: false },
     // Public pages are indexed; private, internal and example pages say otherwise themselves (lib/seo.ts).
     robots: { index: true, follow: true },
   };
@@ -33,6 +39,11 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Safari's bars and the status bar take the page's own background (creator pages set their own).
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: tokens.semantic.canvas.light },
+    { media: "(prefers-color-scheme: dark)", color: tokens.semantic.canvas.dark },
+  ],
 };
 
 export default async function LocaleLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {

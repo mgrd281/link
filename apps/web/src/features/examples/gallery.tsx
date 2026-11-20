@@ -54,7 +54,7 @@ function SearchField({
         autoComplete="off"
         enterKeyHint="search"
         aria-keyshortcuts="/"
-        className="h-control-md w-full appearance-none rounded-full border border-line bg-surface ps-10 pe-10 text-small text-fg transition-colors duration-micro placeholder:text-fg-tertiary hover:border-line-strong focus-visible:focus-ring [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-control-md w-full appearance-none rounded-full border border-line bg-surface ps-10 pe-10 text-body text-fg transition-colors sm:text-small duration-micro placeholder:text-fg-tertiary hover:border-line-strong focus-visible:focus-ring [&::-webkit-search-cancel-button]:appearance-none"
       />
       {value ? (
         <button

@@ -11,6 +11,20 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     text-rendering: optimizelegibility;
+
+    /* Touch feels native: no grey flash on tap (every control has its own pressed state). */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Taps answer at once: no double-tap zoom on controls. */
+  :where(a, button, [role="button"], [role="tab"], label, summary, input, select, textarea) {
+    touch-action: manipulation;
+  }
+
+  /* App chrome is not text to select or links to preview with a long press. */
+  :where([data-tabbar], [data-tabbar] *) {
+    -webkit-touch-callout: none;
+    user-select: none;
   }
 
   body {
@@ -25,7 +39,7 @@
     background-color: var(--color-selected);
   }
 
-  /* Toasts sit above the dashboard's bottom tab bar on phones. */
+  /* Toasts clear the home indicator, and sit above the dashboard's bottom tab bar on phones. */
   :root {
     --toast-offset: 0;
   }
@@ -33,6 +47,9 @@
   :root:has([data-tabbar]) {
     @variant max-lg {
       --toast-offset: calc(var(--spacing-16) + env(safe-area-inset-bottom));
+
+      /* The tab bar already clears the home indicator. */
+      --toast-inset: var(--spacing-4);
     }
   }
 

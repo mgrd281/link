@@ -248,6 +248,31 @@ test.describe("dashboard", () => {
     await expect(page.getByText("Big Buck Bunny – Short Film")).toHaveCount(0);
   });
 
+  test("on a phone the Add sheet slides up and closes when pulled down; a short pull springs back", async ({ page, isMobile }) => {
+    test.skip(!isMobile, "phones only: wide screens get a side panel");
+    await signedIn(page);
+    await page.goto("/en/app/editor");
+    const sheet = page.getByRole("dialog", { name: "Add to your page" });
+    const pull = async (distance: number) => {
+      const box = await sheet.getByRole("heading", { name: "Add to your page" }).boundingBox();
+      if (!box) throw new Error("no sheet title");
+      await page.mouse.move(box.x + 8, box.y + 4);
+      await page.mouse.down();
+      for (let step = 1; step <= 8; step++) await page.mouse.move(box.x + 8, box.y + 4 + (distance * step) / 8);
+      await page.mouse.up();
+    };
+    await addButton(page).click();
+    await expect(sheet).toBeVisible();
+    // A short pull is not a decision: the sheet springs back and stays open.
+    await pull(40);
+    await expect(sheet).toBeVisible();
+    await expect.poll(() => sheet.evaluate((element) => getComputedStyle(element).translate)).toMatch(/^(none|0px)$/);
+    // Pulled far enough, it slides away and the page is usable again.
+    await pull(420);
+    await expect(sheet).toBeHidden();
+    await expect(addButton(page)).toBeEnabled();
+  });
+
   test("an App Store link becomes an app card with its real name and rating; a GitHub skill gets its install command", async ({ page }) => {
     // Our server asks Apple and GitHub (stubbed here); the browser only ever talks to Linkyo.
     await page.route("**/api/link-metadata**", (route) => {
@@ -277,7 +302,8 @@ test.describe("dashboard", () => {
     await page.goto("/en/app/preview");
     const notice = page.getByRole("region", { name: "Privacy" });
     if (await notice.isVisible()) await notice.getByRole("button", { name: "Essential only" }).click();
-    await expect(page.getByRole("link", { name: /^Get Fokus Timer on the App Store$|^Get Fokus Timer on Google Play$/ })).toBeVisible();
+    // The only app on the page is its featured app: the official App Store badge leads to it.
+    await expect(page.getByRole("link", { name: "Download on the App Store: Fokus Timer" })).toHaveAttribute("href", "https://apps.apple.com/de/app/fokus-timer/id1234567890");
     await expect(page.getByText("Rated 4.8 out of 5")).toBeAttached();
     await expect(page.getByText("npx skills add example-org/agent-skills --skill brand-voice")).toBeVisible();
     await expect(page.getByRole("button", { name: "Copy the install command for brand-voice" })).toBeVisible();

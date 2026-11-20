@@ -388,7 +388,12 @@
     "copyInstall": "Installationsbefehl für {name} kopieren",
     "viewOnGithub": "Auf GitHub ansehen",
     "skill": "Skill",
-    "stars": "{count, plural, one {# Stern} other {# Sterne}} auf GitHub"
+    "stars": "{count, plural, one {# Stern} other {# Sterne}} auf GitHub",
+    "badges": {
+      "appstore": "Laden im App Store",
+      "googleplay": "Jetzt bei Google Play"
+    },
+    "trademarks": "Apple, das Apple Logo und App Store sind Marken der Apple Inc., eingetragen in den USA und weiteren Ländern. Google Play und das Google Play-Logo sind Marken der Google LLC."
   },
   "directions": {
     "title": "Richtungen",

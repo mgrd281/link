@@ -104,7 +104,18 @@ export function useCreatorFormat(locale: string) {
  * Sticky-free footer: subtle "Made with Linkyo" (removable in Pro) + legal links (DSA "Report"). Pages
  * with embedded players also link to the privacy settings (there are no tracking cookies to manage).
  */
-export function CreatorFooter({ className, credit = true, privacy = false }: { className?: string; credit?: boolean; privacy?: boolean }) {
+export function CreatorFooter({
+  className,
+  credit = true,
+  privacy = false,
+  trademarks = false,
+}: {
+  className?: string;
+  credit?: boolean;
+  privacy?: boolean;
+  /** The page shows the official App Store and Google Play badges: credit the marks, as Apple and Google ask. */
+  trademarks?: boolean;
+}) {
   const t = useTranslations("creator");
   return (
     <footer
@@ -136,6 +147,7 @@ export function CreatorFooter({ className, credit = true, privacy = false }: { c
           <PrivacySettingsLink className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2" />
         ) : null}
       </nav>
+      {trademarks ? <p className="max-w-prose text-center text-pretty">{t("trademarks")}</p> : null}
     </footer>
   );
 }

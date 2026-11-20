@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { DropdownMenu } from "radix-ui";
 import type { ReactNode } from "react";
 
+import { haptic } from "@/lib/haptics";
 import { accountStore } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -220,7 +221,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             }
           />
         </header>
-        <main id="main" tabIndex={-1} className="min-w-0 flex-1 pb-24 outline-none lg:pb-0">
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 pb-[calc(var(--spacing-24)+env(safe-area-inset-bottom))] outline-none lg:pb-0">
           {children}
         </main>
       </div>
@@ -237,9 +238,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <li className="grid place-items-center">
             <button
               type="button"
-              onClick={() => setAddOpen(true)}
+              onClick={() => {
+                haptic();
+                setAddOpen(true);
+              }}
               aria-label={t("nav.add")}
-              className="grid size-control-xl -translate-y-3 place-items-center rounded-full bg-primary text-primary-fg transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+              className="grid size-control-xl -translate-y-3 place-items-center rounded-full bg-primary text-primary-fg transition-[background-color,scale] duration-micro ease-spring hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
             >
               <Icon icon={Plus} size="lg" />
             </button>
@@ -262,9 +266,18 @@ function TabLink({ item, active, label }: { item: NavItem; active: boolean; labe
       <Link
         href={item.href}
         aria-current={active ? "page" : undefined}
-        className="grid content-center justify-items-center gap-1 text-caption font-medium text-fg-secondary transition-colors duration-micro focus-visible:focus-ring aria-[current=page]:text-link"
+        onClick={() => {
+          if (!active) haptic();
+        }}
+        className="group grid content-center justify-items-center gap-1 text-caption font-medium text-fg-secondary transition-colors duration-micro focus-visible:focus-ring aria-[current=page]:text-link"
       >
-        <span className={cn("grid h-control-sm w-12 place-items-center rounded-full transition-colors duration-micro", active && "bg-selected")}>
+        {/* The pill fills in on a spring when a tab becomes active; a press dips it like a native tab. */}
+        <span
+          className={cn(
+            "grid h-control-sm w-12 place-items-center rounded-full transition-[background-color,scale] duration-spring ease-spring group-active:scale-pressed",
+            active && "bg-selected",
+          )}
+        >
           <Icon icon={item.icon} size="md" />
         </span>
         {label}
