@@ -41,7 +41,7 @@ export const CATALOG_C: Record<string, Page> = {
     "maya-finds",
     "en",
     {
-      name: "Maya Lin",
+      name: "Maya Lindqvist",
       tagline: "Home, beauty & everyday finds",
       bio: "Things I actually use and love. Some links are affiliate links: I may earn a small commission at no extra cost to you.",
       location: "Portland",

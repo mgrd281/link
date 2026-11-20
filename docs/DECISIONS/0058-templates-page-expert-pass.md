@@ -95,6 +95,9 @@ level on phone and desktop. They also asked for the best possible photos on the 
   - `motion.delay.glide` (1200 ms) and `motion.delay.spinner` (400 ms);
   - `--animate-scrim-in`, `--animate-page-in` and `--animate-spinner-in`;
   - `mk-settle`, an entrance without a fade.
+- **Names.** The affiliate example was called "Maya Lin", which is also the exact name of a famous
+  living architect. A fictional page under her name that recommends products could read as hers,
+  so the example is now "Maya Lindqvist" (same address, `maya-finds`).
 - **Skills.** 17 more open-source skills were vendored. Each was read in full twice, and every
   change is marked. See `.claude/skills/README.md`.
 
@@ -105,7 +108,8 @@ level on phone and desktop. They also asked for the best possible photos on the 
 - **Preview script.** The preview dialog's script could load on first touch, and card pictures could
   resolve on the server.
 - **Photos.** Some cards found no clearly better free photo (Lena Vogt, Halawiyat al-Sham, Zwei Kaffee,
-  Julia Brandt, Maya Lin and others); they keep their photos. For Maya Lin, a still-published frame
-  from the same shoot (Joel Mott, `kvxohKMEWbE`) is a candidate that has not been judged yet.
+  Julia Brandt, Maya and others); they keep their photos. Two proposals for Maya were rejected: one
+  photo had been removed from Unsplash, and a still-published frame from the same shoot
+  (`kvxohKMEWbE`) put her face small and low in the gallery's 4:5 cut.
 
 **Status.** Applied.
