@@ -246,3 +246,50 @@ test.describe("link previews", () => {
     expect(home.headers()["content-type"]).toBe("image/png");
   });
 });
+
+test.describe("apps and skills on example pages", () => {
+  test("an app explainer: one button opens the visitor's own store, codes copy in one tap, partner apps are ads", async ({ page, context }, info) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    // Still frames for axe (sections fade in as they scroll into view).
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/de/p/merve-aksoy");
+    // The phone project is an Android phone: its button opens Google Play; a computer gets the first store.
+    const android = info.project.name === "mobile";
+    const [mine, other] = android ? ["Fokuskreis bei Google Play laden", "Fokuskreis im App Store laden"] : ["Fokuskreis im App Store laden", "Fokuskreis bei Google Play laden"];
+    await expect(page.getByRole("link", { name: mine }).first()).toHaveAttribute("href", `https://example.com/merve-aksoy/apps/fokuskreis/${android ? "googleplay" : "appstore"}`);
+    // The other store stays one tap away; an app only in the App Store opens there for everyone.
+    await expect(page.getByRole("link", { name: other })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Schlafwelle im App Store laden" })).toBeVisible();
+    // Partner codes are advertising, labelled right by the app's name (and read out with it).
+    await expect(page.getByText("Anzeige", { exact: true })).toHaveCount(2);
+    await expect(page.getByText("Bewertung 4,8 von 5")).toBeAttached();
+    await page.getByRole("button", { name: "Code MERVE30 für Fokuskreis kopieren" }).click();
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("MERVE30");
+    // Screen readers hear it too (a polite live region in the button).
+    await expect(page.getByText("Kopiert", { exact: true }).first()).toBeAttached();
+    // From the top: the compact bar fades in with the scroll, half-faded text is not a resting state.
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+  });
+
+  test("a skills author: install commands copy in one tap; stars, language and license are readable", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/en/p/arjun-mehta");
+    const card = page.getByRole("article").filter({ hasText: "Brand voice" });
+    await expect(card.getByText("Skill", { exact: true })).toBeVisible();
+    await expect(card.getByText("2,140 stars on GitHub")).toBeAttached();
+    await expect(card.getByText("arjun-mehta/brand-voice", { exact: true })).toBeVisible();
+    await card.getByRole("button", { name: "Copy the install command for Brand voice" }).click();
+    // Fictional pages hand out example.com commands only: nobody installs a stranger's code from a demo.
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("npx skills add https://example.com/arjun-mehta/brand-voice");
+    await expect(card.getByRole("link", { name: "View on GitHub" })).toHaveAttribute("href", "https://example.com/arjun-mehta/brand-voice");
+    // A collection is a repository, not a skill.
+    await expect(page.getByRole("article").filter({ hasText: "Agent skills" }).getByText("Skill", { exact: true })).toHaveCount(0);
+    // From the top: the compact bar fades in with the scroll, half-faded text is not a resting state.
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+  });
+});

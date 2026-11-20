@@ -14,7 +14,7 @@ labelled "Example · {category}" and is `noindex`. See ADR 0019, 0021, 0022 and 
 |---|---|
 | Look, kind, category, language | `features/examples/looks.ts`, `LOOKS` (every theme JSON must be unique) |
 | Page content | `features/examples/catalog-a.ts`, `-b.ts`, `-c.ts`, using `examplePage(slug, locale, persona, h => [...])` |
-| Helpers | `features/examples/build.ts`: `h.link`, `h.card`, `h.product`, `h.video`, `h.music`, `h.events`, `h.gallery`, `h.newsletter`, `h.mail`, `h.call`, `h.socials` |
+| Helpers | `features/examples/build.ts`: `h.link`, `h.card`, `h.product`, `h.video`, `h.music`, `h.events`, `h.gallery`, `h.newsletter`, `h.mail`, `h.call`, `h.socials`, `h.app` (icon, rating, pricing, stores, code), `h.repo` (a skill or repository with stars, language, license) |
 | Pictures | `src/assets/examples/ex*-name.jpg`, listed in `features/examples/media.ts` (`"sample:<file>"` → static import) |
 | Moving pictures | `public/media/motion/<name>.mp4`; persona `motion: "<name>"`, photo = the clip's first frame |
 | Credits | `src/assets/examples/CREDITS.md` (one row per photo or clip) |
@@ -25,7 +25,9 @@ labelled "Example · {category}" and is `noindex`. See ADR 0019, 0021, 0022 and 
 ## Rules
 
 - **Fictional only.** Links go to `https://example.com/<slug>/<path>` (enforced by
-  `catalog.test.ts`). Phone `tel:+49300000000`, mail `<box>@example.com`.
+  `catalog.test.ts`). Phone `tel:+49300000000`, mail `<box>@example.com`. Store links and install
+  commands too (`h.app`, `h.repo` do it): a demo must never install a real stranger's code.
+- **Apps with a partner code** are advertising: `affiliate: true` shows the label under the name.
 - **One language per page.** All texts in the page's locale. Arabic pages are RTL; avoid a dash
   between Arabic text and numbers (bidi), use «،» instead.
 - **Buttons** (ADR 0022):

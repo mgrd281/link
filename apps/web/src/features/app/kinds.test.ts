@@ -88,6 +88,27 @@ describe("page kinds in the welcome flow", () => {
     expect(socialUrl("whatsapp", "12")).toBeNull();
   });
 
+  it("app explainers start in Aura; store links become app cards and GitHub links skills, all valid", () => {
+    expect(STARTERS.apps.theme.template).toBe("aura");
+    expect(STARTERS.apps.socials[0]).toBe("tiktok");
+    const blocks = build({
+      kind: "apps",
+      links: "https://apps.apple.com/de/app/fokus-timer/id1234567890\nhttps://play.google.com/store/apps/details?id=com.example.schlafwelle\nhttps://github.com/acme/agent-skills/tree/main/skills/brand-voice",
+    });
+    expect(blocks.map((block) => block.type)).toEqual(["app", "app", "repo"]);
+    for (const block of blocks) expect(blockSchema.safeParse(block).success, block.type).toBe(true);
+    const [apple, google, skill] = blocks;
+    expect(apple?.type === "app" && [apple.title, apple.stores]).toEqual(["Fokus Timer", [{ store: "appstore", url: "https://apps.apple.com/de/app/fokus-timer/id1234567890" }]]);
+    expect(google?.type === "app" && [google.title, google.stores[0]?.store]).toEqual(["Schlafwelle", "googleplay"]);
+    expect(skill?.type === "repo" && [skill.owner, skill.repo, skill.path, skill.kind, skill.install]).toEqual([
+      "acme",
+      "agent-skills",
+      "skills/brand-voice",
+      "skill",
+      "npx skills add acme/agent-skills --skill brand-voice",
+    ]);
+  });
+
   it("pasted links still become the right blocks", () => {
     const blocks = build({ kind: "youtube", links: "https://www.youtube.com/watch?v=aqz-KE-bpKQ" });
     expect(blocks.map((block) => block.type)).toEqual(["video"]);

@@ -366,7 +366,29 @@
     "opensOn": "Opens {provider}",
     "watchOn": "Watch \"{title}\" on {provider}",
     "motionPause": "Pause the moving picture",
-    "motionPlay": "Play the moving picture"
+    "motionPlay": "Play the moving picture",
+    "get": "Get",
+    "open": "Open",
+    "getApp": "{store, select, appstore {Get {app} on the App Store} googleplay {Get {app} on Google Play} other {Open {app} on the web}}",
+    "alsoOn": "Also on",
+    "stores": {
+      "appstore": "App Store",
+      "googleplay": "Google Play",
+      "web": "Web"
+    },
+    "pricing": {
+      "free": "Free",
+      "freemium": "In-app purchases",
+      "paid": "Paid"
+    },
+    "rating": "Rated {rating} out of 5",
+    "code": "Code",
+    "copyCode": "Copy code {code} for {app}",
+    "copied": "Copied",
+    "copyInstall": "Copy the install command for {name}",
+    "viewOnGithub": "View on GitHub",
+    "skill": "Skill",
+    "stars": "{count, plural, one {# star} other {# stars}} on GitHub"
   },
   "directions": {
     "title": "Directions",
@@ -472,7 +494,9 @@
       "product": "Product",
       "newsletter": "Newsletter",
       "live": "Live status",
-      "brands": "Partners"
+      "brands": "Partners",
+      "app": "App",
+      "repo": "GitHub skill"
     },
     "blocks": "Blocks",
     "blockCount": "{count, plural, one {# block} other {# blocks}}",
@@ -699,7 +723,9 @@
         "live": "Live stream",
         "image": "Image",
         "card": "Link",
-        "link": "Link"
+        "link": "Link",
+        "app": "App",
+        "repo": "GitHub skill"
       },
       "list": "Blocks on your page",
       "remove": "Remove {title}"
@@ -1054,7 +1080,8 @@
       "unavailable": "Not saved: this browser doesn't allow storage.",
       "imageRequired": "Please add a picture.",
       "inviteMismatch": "This page was prepared for a different email. Use the email you gave the Linkyo team.",
-      "reservedForCreator": "This address is reserved for a creator. Is it yours? Sign up with the email you gave us."
+      "reservedForCreator": "This address is reserved for a creator. Is it yours? Sign up with the email you gave us.",
+      "githubUrl": "A link to a GitHub repository or a skill’s folder."
     },
     "added": {
       "one": "{type} added",
@@ -1230,6 +1257,36 @@
         "inline": "Play the whole video here",
         "preview": "30 s here, then continue on YouTube",
         "external": "Open on YouTube right away"
+      },
+      "appIcon": "App icon",
+      "appName": "App name",
+      "developer": "Developer",
+      "appLine": "One line from you",
+      "appLineHint": "What it does or why you like it, e.g. \"My timer for deep work\".",
+      "stores": "Where to get it",
+      "storesHint": "App Store, Google Play or the web. On phones the button opens the visitor’s own store.",
+      "addStore": "Add a store",
+      "store": "Store",
+      "storeWeb": "Web",
+      "pricing": "Price",
+      "pricingNone": "Don’t show",
+      "pricings": {
+        "free": "Free",
+        "freemium": "Free with in-app purchases",
+        "paid": "Paid"
+      },
+      "category": "Category",
+      "promoCode": "Promo code",
+      "promoCodeHint": "Visitors copy it in one tap, e.g. NORA20.",
+      "githubUrl": "GitHub link",
+      "githubUrlHint": "A repository, or a skill’s folder.",
+      "skillName": "Name",
+      "install": "Install command",
+      "installHint": "Copied in one tap. Suggested: npx skills add …",
+      "repoKind": "Kind",
+      "repoKinds": {
+        "skill": "Skill (with a SKILL.md)",
+        "repo": "Repository"
       }
     },
     "edit": {
@@ -1261,7 +1318,9 @@
         "product": "Something you sell, with price.",
         "newsletter": "Let fans sign up for your emails.",
         "brands": "Partners, sponsors or your team as logo tiles.",
-        "live": "Shows when you're live on Twitch, YouTube or Kick."
+        "live": "Shows when you're live on Twitch, YouTube or Kick.",
+        "app": "An app from your videos: visitors get it from their own store in one tap.",
+        "repo": "A skill or repository from GitHub: visitors copy the install command in one tap."
       }
     },
     "preview": {
@@ -1297,7 +1356,9 @@
         "product": "With price",
         "newsletter": "Email sign-up",
         "brands": "Logo tiles",
-        "live": "Twitch, YouTube, Kick"
+        "live": "Twitch, YouTube, Kick",
+        "app": "App Store & Google Play",
+        "repo": "With install command"
       },
       "photosHint": "Have photos on this device? One becomes an image, several a gallery.",
       "photos": "Upload photos",
@@ -1786,11 +1847,11 @@
         },
         "developer": {
           "label": "Developer",
-          "description": "GitHub, projects, CV",
+          "description": "GitHub, skills, projects, CV",
           "name": "Your name",
           "taglineHint": "e.g. \"Full-stack developer · TypeScript & Go\".",
           "links": "Projects or apps (optional)",
-          "linksHint": "Links to repos, apps or blog posts — one link per line.",
+          "linksHint": "Links to repos, skills, apps or blog posts, one per line. GitHub links become cards with stars and an install command.",
           "extras": "For recruiters & clients"
         },
         "designer": {
@@ -1828,6 +1889,15 @@
           "links": "Episodes (optional)",
           "linksHint": "Links to episodes on Spotify, Apple or YouTube — one link per line.",
           "extras": "For your listeners"
+        },
+        "apps": {
+          "label": "App tips",
+          "description": "Apps from your videos, codes, store links",
+          "name": "Your name",
+          "taglineHint": "e.g. \"One app a day that makes your phone better\".",
+          "links": "Apps from your videos (optional)",
+          "linksHint": "Links from the App Store or Google Play, one per line. We turn them into app cards.",
+          "extras": "More"
         }
       },
       "fields": {

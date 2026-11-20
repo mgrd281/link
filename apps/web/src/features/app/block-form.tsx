@@ -1,12 +1,29 @@
 "use client";
 
-import { detectLink, LINK_ICONS, NO_IMAGE, PLATFORMS, VIDEO_PLAYBACK, type Block, type BlockOf, type LinkIcon, type Platform, type VideoPlayback } from "@linkyo/blocks";
+import {
+  APP_PRICING,
+  APP_STORES,
+  detectLink,
+  LINK_ICONS,
+  NO_IMAGE,
+  PLATFORMS,
+  VIDEO_PLAYBACK,
+  type AppPricing,
+  type AppStore,
+  type Block,
+  type BlockOf,
+  type LinkIcon,
+  type Platform,
+  type VideoPlayback,
+} from "@linkyo/blocks";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { platformName } from "@/features/directions/shared/creator-kit";
+import { STORE_NAMES } from "@/features/directions/shared/stores";
 
 import { FormSection, ImageInput, Repeater, SelectField, SwitchRow, TextArea, TextInput, UrlInput } from "./form";
+import { installCommand } from "./metadata";
 import type { FieldErrors } from "./validate";
 
 const noImage = { src: NO_IMAGE, alt: "" };
@@ -16,6 +33,22 @@ const platformOptions = PLATFORMS.map((value) => ({ value, label: platformName(v
 const platformOf = (url: string): Platform | null => {
   const found = detectLink(url)?.platform;
   return found && (PLATFORMS as readonly string[]).includes(found) ? (found as Platform) : null;
+};
+
+/** Store names are the stores' own (the same in every language), except "Web". */
+
+/** The store a pasted address belongs to: Apple's, Google's, or the web. */
+const storeOf = (url: string): AppStore => {
+  const platform = detectLink(url)?.platform;
+  return platform === "appstore" || platform === "googleplay" ? platform : "web";
+};
+
+/** A GitHub link → owner, repository and (for a skill) its folder; null for anything else. */
+const repoOf = (url: string): { owner: string; repo: string; path: string } | null => {
+  const found = detectLink(url);
+  if (found?.type !== "repo" || !found.id) return null;
+  const [owner = "", repo = "", ...folders] = found.id.split("/");
+  return { owner, repo, path: folders.join("/") };
 };
 
 const toLocalInput = (iso: string | undefined) => {
@@ -50,7 +83,7 @@ export function BlockForm({ block, onChange, errors }: { block: Block; onChange:
     "title" in current && current.type !== "header" && current.type !== "newsletter" ? (
       <SwitchRow label={t("highlight")} description={t("highlightHint")} checked={current.highlight} onChecked={(highlight) => onChange({ ...current, highlight })} />
     ) : null;
-  const affiliate = (current: BlockOf<"link"> | BlockOf<"card"> | BlockOf<"product">) => (
+  const affiliate = (current: BlockOf<"link"> | BlockOf<"card"> | BlockOf<"product"> | BlockOf<"app">) => (
     <SwitchRow label={t("affiliate")} description={t("affiliateHint")} checked={current.affiliate ?? false} onChecked={(value) => set(current, { affiliate: value })} />
   );
 
@@ -331,6 +364,92 @@ export function BlockForm({ block, onChange, errors }: { block: Block; onChange:
               </>
             )}
           />
+        </>
+      );
+      break;
+    case "app":
+      fields = (
+        <>
+          <ImageInput label={t("appIcon")} kind="thumb" image={block.icon} onImage={(icon) => set(block, { icon: icon ?? noImage })} withAlt={false} />
+          <TextInput label={t("appName")} value={block.title} onValue={(title) => set(block, { title })} maxLength={80} error={err("title")} />
+          <TextInput label={t("developer")} value={block.developer ?? ""} onValue={(developer) => set(block, { developer: developer || undefined })} maxLength={80} />
+          <TextInput label={t("appLine")} hint={t("appLineHint")} value={block.description ?? ""} onValue={(description) => set(block, { description: description || undefined })} maxLength={140} />
+          <FormSection title={t("stores")} description={err("stores") ?? t("storesHint")}>
+            <Repeater<BlockOf<"app">["stores"][number]>
+              items={block.stores}
+              onItems={(stores) => set(block, { stores })}
+              make={() => ({ store: block.stores.some((store) => store.store === "googleplay") ? "web" : "googleplay", url: "" })}
+              max={APP_STORES.length}
+              itemLabel={(item) => (item.store === "web" ? t("storeWeb") : STORE_NAMES[item.store])}
+              addLabel={t("addStore")}
+              render={(item, update, index) => (
+                <>
+                  <UrlInput label={t("url")} value={item.url} onValue={(url) => update({ ...item, url, store: url ? storeOf(url) : item.store })} error={err(`stores.${index}.url`)} />
+                  <SelectField<AppStore>
+                    label={t("store")}
+                    value={item.store}
+                    onValue={(store) => update({ ...item, store })}
+                    options={APP_STORES.map((value) => ({ value, label: value === "web" ? t("storeWeb") : STORE_NAMES[value] }))}
+                  />
+                </>
+              )}
+            />
+          </FormSection>
+          <SelectField<AppPricing | "none">
+            label={t("pricing")}
+            value={block.pricing ?? "none"}
+            onValue={(pricing) => onChange(pricing === "none" ? { ...block, pricing: undefined } : { ...block, pricing })}
+            options={[{ value: "none", label: t("pricingNone") }, ...APP_PRICING.map((value) => ({ value, label: t(`pricings.${value}`) }))]}
+          />
+          <TextInput label={t("category")} value={block.category ?? ""} onValue={(category) => set(block, { category: category || undefined })} maxLength={40} />
+          <TextInput label={t("promoCode")} hint={t("promoCodeHint")} value={block.code ?? ""} onValue={(code) => set(block, { code: code.trim() ? code.toUpperCase() : undefined })} maxLength={32} />
+          {featured(block)}
+          {affiliate(block)}
+        </>
+      );
+      break;
+    case "repo":
+      fields = (
+        <>
+          <UrlInput
+            label={t("githubUrl")}
+            hint={t("githubUrlHint")}
+            value={block.url}
+            onValue={(url) => {
+              const found = repoOf(url);
+              if (!found) {
+                set(block, { url });
+                return;
+              }
+              const skill = found.path ? found.path.split("/").at(-1) : undefined;
+              // The suggested command follows the link until the creator writes their own.
+              const suggested = !block.install || block.install === installCommand(block.owner, block.repo, block.path?.split("/").at(-1));
+              onChange({
+                ...block,
+                url,
+                owner: found.owner,
+                repo: found.repo,
+                path: found.path || undefined,
+                kind: found.path ? "skill" : block.kind,
+                title: block.title || (skill ?? found.repo),
+                ...(suggested ? { install: installCommand(found.owner, found.repo, skill) } : {}),
+              });
+            }}
+            error={err("url")}
+          />
+          <TextInput label={t("skillName")} value={block.title} onValue={(title) => set(block, { title })} maxLength={80} error={err("title")} />
+          <TextArea label={t("description")} value={block.description ?? ""} onValue={(description) => set(block, { description: description || undefined })} max={240} />
+          <TextInput label={t("install")} hint={t("installHint")} value={block.install ?? ""} onValue={(install) => set(block, { install: install.trim() ? install : undefined })} maxLength={200} />
+          <SelectField<"skill" | "repo">
+            label={t("repoKind")}
+            value={block.kind}
+            onValue={(kind) => set(block, { kind })}
+            options={[
+              { value: "skill", label: t("repoKinds.skill") },
+              { value: "repo", label: t("repoKinds.repo") },
+            ]}
+          />
+          {featured(block)}
         </>
       );
       break;

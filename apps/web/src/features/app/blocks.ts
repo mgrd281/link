@@ -11,7 +11,7 @@ const noImage = { src: NO_IMAGE, alt: "" };
 const soon = () => new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
 
 /** The order people find things in the Add sheet: most used first. */
-export const ADDABLE: BlockType[] = ["link", "header", "socials", "music", "video", "events", "product", "image", "gallery", "card", "text", "shorts", "brands", "newsletter", "live", "divider"];
+export const ADDABLE: BlockType[] = ["link", "header", "socials", "music", "video", "events", "product", "app", "repo", "image", "gallery", "card", "text", "shorts", "brands", "newsletter", "live", "divider"];
 
 /** An empty block of a type, ready for the edit panel (it is only added once it is valid). */
 export function blankBlock(type: BlockType, defaults: { artist: string; newsletter: string }): Block {
@@ -49,6 +49,10 @@ export function blankBlock(type: BlockType, defaults: { artist: string; newslett
       return { ...base, type, columns: 3, items: [{ name: "", logo: noImage }] };
     case "live":
       return { ...base, type, platform: "twitch", channel: "", url: "", isLive: false };
+    case "app":
+      return { ...base, type, title: "", icon: noImage, stores: [{ store: "appstore", url: "" }] };
+    case "repo":
+      return { ...base, type, title: "", url: "", owner: "", repo: "", kind: "skill" };
   }
 }
 

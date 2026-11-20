@@ -248,6 +248,42 @@ test.describe("dashboard", () => {
     await expect(page.getByText("Big Buck Bunny – Short Film")).toHaveCount(0);
   });
 
+  test("an App Store link becomes an app card with its real name and rating; a GitHub skill gets its install command", async ({ page }) => {
+    // Our server asks Apple and GitHub (stubbed here); the browser only ever talks to Linkyo.
+    await page.route("**/api/link-metadata**", (route) => {
+      const asked = new URL(route.request().url()).searchParams.get("url") ?? "";
+      return route.fulfill({
+        json: asked.includes("apps.apple.com")
+          ? { title: "Fokus Timer", author: "Kreisel Labs", rating: 4.8, category: "Productivity", pricing: "free" }
+          : { title: "brand-voice", description: "Writes in your brand's voice.", stars: 2140, language: "Python", license: "MIT", kind: "skill" },
+      });
+    });
+    await signedIn(page);
+    await page.goto("/en/app/editor");
+    const sheet = page.getByRole("dialog", { name: "Add to your page" });
+    for (const link of ["https://apps.apple.com/de/app/fokus-timer/id1234567890", "https://github.com/example-org/agent-skills/tree/main/skills/brand-voice"]) {
+      await addButton(page).click();
+      await sheet.getByLabel("Paste a link").fill(link);
+      await sheet.getByRole("button", { name: "Add", exact: true }).click();
+      await expect(sheet).toBeHidden();
+      // Adding opens the new block's editor; close it to add the next one.
+      const editor = page.getByRole("dialog").first();
+      if (await editor.isVisible()) await page.keyboard.press("Escape");
+    }
+    await expect(page.getByText("Fokus Timer").first()).toBeVisible();
+    await expect(page.getByText("Kreisel Labs").first()).toBeVisible();
+    await expect(page.getByText("example-org/agent-skills/skills/brand-voice").first()).toBeVisible();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/en/app/preview");
+    const notice = page.getByRole("region", { name: "Privacy" });
+    if (await notice.isVisible()) await notice.getByRole("button", { name: "Essential only" }).click();
+    await expect(page.getByRole("link", { name: /^Get Fokus Timer on the App Store$|^Get Fokus Timer on Google Play$/ })).toBeVisible();
+    await expect(page.getByText("Rated 4.8 out of 5")).toBeAttached();
+    await expect(page.getByText("npx skills add example-org/agent-skills --skill brand-voice")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Copy the install command for brand-voice" })).toBeVisible();
+    expect(await axe(page)).toEqual([]);
+  });
+
   test("View my page: the owner's bar steps aside while the privacy notice is open, then comes back down", async ({ page }) => {
     await page.route("**/api/link-metadata**", (route) => route.fulfill({ json: {} }));
     await signedIn(page);

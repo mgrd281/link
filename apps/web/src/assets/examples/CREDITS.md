@@ -195,4 +195,20 @@ picture was looked at: adults only, no celebrities, no brand logos as the subjec
 | ex8-journal.jpg | Original Linkyo illustration (Instrument Serif, Work Sans; OFL) | – | Original artwork; photo under the Unsplash License |
 | ex8-neon-drift.jpg | Original Linkyo design (Silkscreen, Geist Mono; OFL) on ex8-arcade.jpg | – | Original artwork; photo under the Unsplash License |
 
+## Apps and skills (ADR 0055)
+
+Portraits from the Unsplash CDN's free library, checked as above. The app icons and the video
+picture are original Linkyo designs: the apps and the skills are fictional.
+
+| File | Photographer / source | Photo page | License |
+|---|---|---|---|
+| ex9-merve-aksoy.jpg | Unsplash photo 1517841905240-472988babdf9 | https://images.unsplash.com/photo-1517841905240-472988babdf9 | Unsplash License |
+| ex9-arjun-mehta.jpg | Unsplash photo 1547425260-76bcadfb4f2c | https://images.unsplash.com/photo-1547425260-76bcadfb4f2c | Unsplash License |
+| ex9-app-fokuskreis.png | Original Linkyo icon | – | Original artwork |
+| ex9-app-sprachfuchs.png | Original Linkyo icon (Outfit; OFL) | – | Original artwork |
+| ex9-app-kassenklar.png | Original Linkyo icon (Outfit; OFL) | – | Original artwork |
+| ex9-app-schlafwelle.png | Original Linkyo icon | – | Original artwork |
+| ex9-app-pixelnote.png | Original Linkyo icon | – | Original artwork |
+| ex9-skill-video.jpg | Original Linkyo design (JetBrains Mono, Instrument Sans; OFL) | – | Original artwork |
+
 Unsplash License: https://unsplash.com/license

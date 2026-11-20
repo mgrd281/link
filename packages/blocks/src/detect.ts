@@ -8,7 +8,7 @@ import type { BlockType, Platform } from "./schema";
 export interface Detection {
   type: BlockType;
   /** Platform/provider when known. */
-  platform?: Platform | "vimeo" | "eventbrite" | "eventim" | "ticketmaster" | "shopify" | "pdf" | "image" | "phone" | undefined;
+  platform?: Platform | "vimeo" | "eventbrite" | "eventim" | "ticketmaster" | "shopify" | "pdf" | "image" | "phone" | "appstore" | "googleplay" | undefined;
   /** Provider-specific id (e.g. YouTube video id). */
   id?: string | undefined;
   /** Normalized URL (https, no tracking params). */
@@ -44,6 +44,22 @@ export function normalizeUrl(input: string): URL | null {
 }
 
 const host = (url: URL): string => url.hostname.replace(/^(www|m|music|open|on|vm)\./, "");
+
+/** First path segments on github.com that are GitHub's own pages, not a user's repository. */
+const GITHUB_PAGES = new Set(["orgs", "sponsors", "settings", "marketplace", "topics", "collections", "features", "about", "login", "join", "explore", "trending", "pricing", "apps", "search", "notifications", "pulls", "issues", "codespaces", "enterprise"]);
+
+/**
+ * "owner/repo", or "owner/repo/path/to/folder" when the link points at a folder (a skill) or at a
+ * file in it (its SKILL.md): github.com/owner/repo/tree/<branch>/<path>. Null for profiles.
+ */
+export function githubRepo(segments: readonly string[]): string | null {
+  const [owner, name, view, , ...rest] = segments;
+  if (!owner || !name || GITHUB_PAGES.has(owner.toLowerCase())) return null;
+  const repo = `${owner}/${name.replace(/\.git$/, "")}`;
+  if (view !== "tree" && view !== "blob") return repo;
+  const path = (rest.at(-1)?.toLowerCase() === "skill.md" ? rest.slice(0, -1) : view === "blob" ? rest.slice(0, -1) : rest).join("/");
+  return path ? `${repo}/${path}` : repo;
+}
 
 export function detectLink(input: string): Detection | null {
   const url = normalizeUrl(input);
@@ -103,7 +119,20 @@ export function detectLink(input: string): Detection | null {
   if (h === "bsky.app") return { type: "link", platform: "bluesky", url: href, label: "Bluesky" };
   if (h === "discord.gg" || h === "discord.com") return { type: "link", platform: "discord", url: href, label: "Discord" };
   if (h === "linkedin.com") return { type: "link", platform: "linkedin", url: href, label: "LinkedIn" };
-  if (h === "github.com" && segments[0]) return { type: "link", platform: "github", url: href, label: "GitHub" };
+  // Apps: a store page is an app (Apple's id is the last segment, Google's the "id" parameter).
+  if (url.hostname === "apps.apple.com") {
+    const id = /^id(\d+)$/.exec(segments.at(-1) ?? "")?.[1];
+    if (id) return { type: "app", platform: "appstore", id, url: href, label: "App Store" };
+  }
+  if (url.hostname === "play.google.com" && segments[0] === "store" && segments[1] === "apps") {
+    const id = url.searchParams.get("id");
+    if (id) return { type: "app", platform: "googleplay", id, url: href, label: "Google Play" };
+  }
+  if (h === "github.com" && segments[0]) {
+    const repo = githubRepo(segments);
+    if (repo) return { type: "repo", platform: "github", id: repo, url: href, label: repo };
+    return { type: "link", platform: "github", url: href, label: "GitHub" };
+  }
 
   if (/\.(png|jpe?g|webp|avif|gif)$/i.test(path)) return { type: "image", platform: "image", url: href, label: segments.at(-1) ?? h };
   if (/\.pdf$/i.test(path)) return { type: "link", platform: "pdf", url: href, label: segments.at(-1) ?? "PDF" };

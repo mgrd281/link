@@ -3,7 +3,8 @@ import type { Block, BlockOf } from "@linkyo/blocks";
 /**
  * Poster pages are read as titled sections. Creators never build containers: a "header" block
  * starts a section, a titled list block (events, shorts, gallery) starts one with its own title,
- * consecutive videos become a swipeable row and consecutive products a two-up grid.
+ * consecutive videos become a swipeable row, consecutive products a two-up grid and consecutive
+ * apps one list.
  */
 export type RowBlock = BlockOf<"music"> | BlockOf<"card"> | BlockOf<"link">;
 
@@ -11,6 +12,8 @@ export type PosterItem =
   | { kind: "block"; block: Block }
   | { kind: "videos"; blocks: BlockOf<"video">[] }
   | { kind: "products"; blocks: BlockOf<"product">[] }
+  /** Consecutive apps: one card, one app per row, like a store's list. */
+  | { kind: "apps"; blocks: BlockOf<"app">[] }
   /** Artwork-beside-title cards. Up to RAIL_THRESHOLD - 1 stack; more become a two-row swipe rail. */
   | { kind: "rows"; blocks: RowBlock[] };
 
@@ -60,6 +63,9 @@ export function groupSections(blocks: readonly Block[]): PosterSection[] {
     } else if (block.type === "product") {
       if (last?.kind === "products") last.blocks.push(block);
       else current.items.push({ kind: "products", blocks: [block] });
+    } else if (block.type === "app") {
+      if (last?.kind === "apps") last.blocks.push(block);
+      else current.items.push({ kind: "apps", blocks: [block] });
     } else if (isRowBlock(block)) {
       if (last?.kind === "rows") last.blocks.push(block);
       else current.items.push({ kind: "rows", blocks: [block] });

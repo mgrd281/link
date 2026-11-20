@@ -28,6 +28,12 @@ export function validateBlock(block: Block): FieldErrors | null {
     }
   }
   if (block.type === "image" && !hasImage(block.image)) errors["image.src"] = "imageRequired";
+  // Owner and repository come from the GitHub address: a problem with them is a problem with the link.
+  if (block.type === "repo" && (errors.owner || errors.repo || errors.url)) {
+    delete errors.owner;
+    delete errors.repo;
+    errors.url = "githubUrl";
+  }
   if (block.type === "gallery") {
     if (block.images.length === 0) errors.images = "atLeastOne";
     block.images.forEach((image, index) => {

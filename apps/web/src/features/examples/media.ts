@@ -177,6 +177,14 @@ import ex8Retro from "@/assets/examples/ex8-retro.jpg";
 import ex8RinaVex from "@/assets/examples/ex8-rina-vex.jpg";
 import ex8SunsetYoga from "@/assets/examples/ex8-sunset-yoga.jpg";
 import ex8SweaterWhite from "@/assets/examples/ex8-sweater-white.jpg";
+import ex9AppFokuskreis from "@/assets/examples/ex9-app-fokuskreis.png";
+import ex9AppKassenklar from "@/assets/examples/ex9-app-kassenklar.png";
+import ex9AppPixelnote from "@/assets/examples/ex9-app-pixelnote.png";
+import ex9AppSchlafwelle from "@/assets/examples/ex9-app-schlafwelle.png";
+import ex9AppSprachfuchs from "@/assets/examples/ex9-app-sprachfuchs.png";
+import ex9ArjunMehta from "@/assets/examples/ex9-arjun-mehta.jpg";
+import ex9MerveAksoy from "@/assets/examples/ex9-merve-aksoy.jpg";
+import ex9SkillVideo from "@/assets/examples/ex9-skill-video.jpg";
 
 /** Pictures of the example gallery (stock photos, see assets/examples/CREDITS.md; logos are original). */
 export const exampleMedia = {
@@ -357,4 +365,12 @@ export const exampleMedia = {
   "sample:ex8-rina-vex": ex8RinaVex,
   "sample:ex8-sunset-yoga": ex8SunsetYoga,
   "sample:ex8-sweater-white": ex8SweaterWhite,
+  "sample:ex9-app-fokuskreis": ex9AppFokuskreis,
+  "sample:ex9-app-kassenklar": ex9AppKassenklar,
+  "sample:ex9-app-pixelnote": ex9AppPixelnote,
+  "sample:ex9-app-schlafwelle": ex9AppSchlafwelle,
+  "sample:ex9-app-sprachfuchs": ex9AppSprachfuchs,
+  "sample:ex9-arjun-mehta": ex9ArjunMehta,
+  "sample:ex9-merve-aksoy": ex9MerveAksoy,
+  "sample:ex9-skill-video": ex9SkillVideo,
 } satisfies Record<string, StaticImageData>;

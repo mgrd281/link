@@ -24,6 +24,7 @@ import {
   VideoFeature,
   VideoRail,
 } from "./cards";
+import { AppList, RepoCard } from "./apps";
 import { EventTabs } from "./events";
 import { PosterBar, PosterHero } from "./hero";
 import { groupSections, type PosterItem } from "./sections";
@@ -202,6 +203,8 @@ function PosterItemView({
       return item.blocks.length > 1 ? <VideoRail videos={item.blocks} /> : <VideoFeature video={item.blocks[0]} />;
     case "products":
       return item.blocks.length > 1 ? <ProductGrid products={item.blocks} surface={surface} /> : <ProductRow product={item.blocks[0]} surface={surface} />;
+    case "apps":
+      return <AppList apps={item.blocks} surface={surface} heading={nested ? "h3" : "h2"} />;
     case "rows":
       return <RowGroup blocks={item.blocks} surface={surface} label={label} />;
     case "block":
@@ -287,6 +290,10 @@ function PosterBlock({
       return <VideoFeature video={block} />;
     case "product":
       return <ProductRow product={block} surface={surface} />;
+    case "app":
+      return <AppList apps={[block]} surface={surface} heading={heading} />;
+    case "repo":
+      return <RepoCard block={block} surface={surface} heading={heading} />;
     case "header":
     case "socials":
       return null;

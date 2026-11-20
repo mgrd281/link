@@ -23,6 +23,9 @@ export interface Look {
 }
 
 export const LOOKS = {
+  // Apps and skills (ADR 0055): an app explainer and a skills author, first in the gallery.
+  "merve-aksoy": { kind: "apps", category: "tech", locale: "de", theme: { template: "aura", accent: SW.sky } },
+  "arjun-mehta": { kind: "developer", category: "tech", locale: "en", theme: { template: "folio", accent: SW["ink-blue"] } },
   // The five newer templates, one example each (ADR 0054): first in the gallery.
   lenz: { kind: "music", category: "music", locale: "de", theme: { template: "studio" } },
   "mira-sol": { kind: "coach", category: "creators", locale: "en", theme: { template: "aura" } },

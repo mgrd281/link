@@ -366,7 +366,29 @@
     "opensOn": "Öffnet {provider}",
     "watchOn": "„{title}“ auf {provider} ansehen",
     "motionPause": "Bewegtes Bild anhalten",
-    "motionPlay": "Bewegtes Bild abspielen"
+    "motionPlay": "Bewegtes Bild abspielen",
+    "get": "Laden",
+    "open": "Öffnen",
+    "getApp": "{store, select, appstore {{app} im App Store laden} googleplay {{app} bei Google Play laden} other {{app} im Web öffnen}}",
+    "alsoOn": "Auch bei",
+    "stores": {
+      "appstore": "App Store",
+      "googleplay": "Google Play",
+      "web": "Web"
+    },
+    "pricing": {
+      "free": "Kostenlos",
+      "freemium": "In-App-Käufe",
+      "paid": "Kostenpflichtig"
+    },
+    "rating": "Bewertung {rating} von 5",
+    "code": "Code",
+    "copyCode": "Code {code} für {app} kopieren",
+    "copied": "Kopiert",
+    "copyInstall": "Installationsbefehl für {name} kopieren",
+    "viewOnGithub": "Auf GitHub ansehen",
+    "skill": "Skill",
+    "stars": "{count, plural, one {# Stern} other {# Sterne}} auf GitHub"
   },
   "directions": {
     "title": "Richtungen",
@@ -472,7 +494,9 @@
       "product": "Produkt",
       "newsletter": "Newsletter",
       "live": "Live-Status",
-      "brands": "Partner"
+      "brands": "Partner",
+      "app": "App",
+      "repo": "GitHub-Skill"
     },
     "blocks": "Blöcke",
     "blockCount": "{count, plural, one {# Block} other {# Blöcke}}",
@@ -699,7 +723,9 @@
         "live": "Livestream",
         "image": "Bild",
         "card": "Link",
-        "link": "Link"
+        "link": "Link",
+        "app": "App",
+        "repo": "GitHub-Skill"
       },
       "list": "Blöcke auf deiner Seite",
       "remove": "{title} entfernen"
@@ -1054,7 +1080,8 @@
       "unavailable": "Nicht gespeichert: Dieser Browser erlaubt keinen Speicher.",
       "imageRequired": "Bitte füge ein Bild hinzu.",
       "inviteMismatch": "Diese Seite wurde für eine andere E-Mail vorbereitet. Nutze die E-Mail, die du dem Linkyo-Team gegeben hast.",
-      "reservedForCreator": "Diese Adresse ist für einen Creator reserviert. Ist es deine? Registriere dich mit der E-Mail, die du uns gegeben hast."
+      "reservedForCreator": "Diese Adresse ist für einen Creator reserviert. Ist es deine? Registriere dich mit der E-Mail, die du uns gegeben hast.",
+      "githubUrl": "Ein Link zu einem GitHub-Repository oder zum Ordner eines Skills."
     },
     "added": {
       "one": "{type} hinzugefügt",
@@ -1230,6 +1257,36 @@
         "inline": "Ganz hier abspielen",
         "preview": "30 Sek. hier, dann weiter auf YouTube",
         "external": "Direkt auf YouTube öffnen"
+      },
+      "appIcon": "App-Icon",
+      "appName": "Name der App",
+      "developer": "Entwickler",
+      "appLine": "Eine Zeile von dir",
+      "appLineHint": "Was sie kann oder warum du sie magst, z. B. „Mein Timer für tiefe Arbeit“.",
+      "stores": "Wo es die App gibt",
+      "storesHint": "App Store, Google Play oder Web. Auf dem Handy öffnet der Button den passenden Store.",
+      "addStore": "Store hinzufügen",
+      "store": "Store",
+      "storeWeb": "Web",
+      "pricing": "Preis",
+      "pricingNone": "Nicht angeben",
+      "pricings": {
+        "free": "Kostenlos",
+        "freemium": "Kostenlos mit In-App-Käufen",
+        "paid": "Kostenpflichtig"
+      },
+      "category": "Kategorie",
+      "promoCode": "Rabattcode",
+      "promoCodeHint": "Besucher kopieren ihn mit einem Tipp, z. B. NORA20.",
+      "githubUrl": "Link zu GitHub",
+      "githubUrlHint": "Ein Repository oder der Ordner eines Skills.",
+      "skillName": "Name",
+      "install": "Installationsbefehl",
+      "installHint": "Wird mit einem Tipp kopiert. Vorschlag: npx skills add …",
+      "repoKind": "Art",
+      "repoKinds": {
+        "skill": "Skill (mit SKILL.md)",
+        "repo": "Repository"
       }
     },
     "edit": {
@@ -1261,7 +1318,9 @@
         "product": "Etwas, das du verkaufst, mit Preis.",
         "newsletter": "Fans melden sich für deine E-Mails an.",
         "brands": "Partner, Sponsoren oder dein Team als Logo-Kacheln.",
-        "live": "Zeigt, wenn du auf Twitch, YouTube oder Kick live bist."
+        "live": "Zeigt, wenn du auf Twitch, YouTube oder Kick live bist.",
+        "app": "Eine App aus deinen Videos: Besucher laden sie mit einem Tipp in ihrem eigenen Store.",
+        "repo": "Ein Skill oder Repository von GitHub: Besucher kopieren den Installationsbefehl mit einem Tipp."
       }
     },
     "preview": {
@@ -1297,7 +1356,9 @@
         "product": "Mit Preis",
         "newsletter": "E-Mail-Anmeldung",
         "brands": "Logo-Kacheln",
-        "live": "Twitch, YouTube, Kick"
+        "live": "Twitch, YouTube, Kick",
+        "app": "App Store & Google Play",
+        "repo": "Mit Installationsbefehl"
       },
       "photosHint": "Fotos auf diesem Gerät? Eins wird ein Bild, mehrere eine Galerie.",
       "photos": "Fotos hochladen",
@@ -1786,11 +1847,11 @@
         },
         "developer": {
           "label": "Entwickler:in",
-          "description": "GitHub, Projekte, Lebenslauf",
+          "description": "GitHub, Skills, Projekte, Lebenslauf",
           "name": "Dein Name",
           "taglineHint": "z. B. „Full-Stack-Entwickler · TypeScript & Go“.",
           "links": "Projekte oder Apps (optional)",
-          "linksHint": "Links zu Repos, Apps oder Blogposts – ein Link pro Zeile.",
+          "linksHint": "Links zu Repos, Skills, Apps oder Blogposts – ein Link pro Zeile. Aus GitHub-Links werden Karten mit Sternen und Installationsbefehl.",
           "extras": "Für Recruiter & Kund:innen"
         },
         "designer": {
@@ -1828,6 +1889,15 @@
           "links": "Folgen (optional)",
           "linksHint": "Links zu Folgen auf Spotify, Apple oder YouTube – ein Link pro Zeile.",
           "extras": "Für deine Hörer:innen"
+        },
+        "apps": {
+          "label": "App-Tipps",
+          "description": "Apps aus deinen Videos, Codes, Store-Links",
+          "name": "Dein Name",
+          "taglineHint": "z. B. „Jeden Tag eine App, die dein Handy besser macht“.",
+          "links": "Apps aus deinen Videos (optional)",
+          "linksHint": "Links aus dem App Store oder von Google Play – einer pro Zeile. Wir machen App-Karten daraus.",
+          "extras": "Mehr"
         }
       },
       "fields": {

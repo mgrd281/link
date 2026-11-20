@@ -1,4 +1,4 @@
-import { PLATFORMS, type Block, type Detection, type Platform } from "@linkyo/blocks";
+import { NO_IMAGE, PLATFORMS, type Block, type Detection, type Platform } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import type { TileSize } from "../mosaic/renderer";
@@ -120,6 +120,23 @@ const newId = (type: string) => `${type}-${Date.now().toString(36)}-${(counter++
  * Optimistic block from a smart-detect result. In production the server fetches metadata
  * (title, image, price, platform links via our resolver) and patches the block a moment later.
  */
+/**
+ * A readable name until the store's details arrive: Apple's address carries it ("…/app/fokus-timer/id1…"
+ * → "Fokus Timer"), Google's the package ("com.example.fokus" → "Fokus").
+ */
+function appName(detection: Detection): string {
+  // Title Case that also works for letters like "ü" (\b only knows ASCII word characters).
+  const words = (value: string) => value.replace(/[-_.]+/g, " ").replace(/(^|\s)(\p{L})/gu, (_, space: string, letter: string) => space + letter.toUpperCase()).trim();
+  try {
+    const url = new URL(detection.url);
+    if (detection.platform === "googleplay") return words(detection.id?.split(".").at(-1) ?? detection.label) || detection.label;
+    const slug = url.pathname.split("/").filter(Boolean).at(-2);
+    return slug && slug !== "app" ? words(decodeURIComponent(slug)) : detection.label;
+  } catch {
+    return detection.label;
+  }
+}
+
 export function blockFromDetection(detection: Detection, labels: { video: string; music: string; event: string }): Block {
   const base = { id: newId(detection.type), visible: true, highlight: false };
   switch (detection.type) {
@@ -147,6 +164,24 @@ export function blockFromDetection(detection: Detection, labels: { video: string
       return { ...base, type: "card", title: detection.label, url: detection.url, image: { src: "sample:mila-wide", alt: "" } };
     case "shorts":
       return { ...base, type: "link", title: `YouTube · ${detection.id ?? detection.label}`, url: detection.url };
+    case "app":
+      return { ...base, type: "app", title: appName(detection), icon: { src: NO_IMAGE, alt: "" }, stores: [{ store: detection.platform === "googleplay" ? "googleplay" : "appstore", url: detection.url }] };
+    case "repo": {
+      const [owner = "", repo = "", ...folders] = (detection.id ?? "").split("/");
+      const path = folders.join("/");
+      const skill = folders.at(-1);
+      return {
+        ...base,
+        type: "repo",
+        title: skill ?? repo,
+        url: detection.url,
+        owner,
+        repo,
+        ...(path ? { path } : {}),
+        kind: path ? "skill" : "repo",
+        install: `npx skills add ${owner}/${repo}${skill ? ` --skill ${skill}` : ""}`,
+      };
+    }
     default:
       return { ...base, type: "link", title: detection.label, url: detection.url };
   }

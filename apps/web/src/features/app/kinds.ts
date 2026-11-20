@@ -1,4 +1,5 @@
 import { detectMany, type Block, type BlockOf, type LinkIcon, type Platform } from "@linkyo/blocks";
+import { creatorTokens } from "@linkyo/tokens";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import { blockFromLink, newBlockId } from "./blocks";
@@ -12,6 +13,7 @@ export const KINDS = [
   "tiktok",
   "instagram",
   "youtube",
+  "apps",
   "streamer",
   "podcast",
   "music",
@@ -67,6 +69,8 @@ export const STARTERS: Record<CreatorKind, Starter> = {
   tiktok: { theme: { template: "pulse" }, socials: ["tiktok", "instagram", "youtube"], fields: ["tiktokLive"], logoFirst: false },
   instagram: { theme: { template: "daylight" }, socials: ["instagram", "tiktok", "threads"], fields: [], logoFirst: false },
   youtube: { theme: { template: "nocturne" }, socials: ["youtube", "instagram", "tiktok"], fields: [], logoFirst: false },
+  // App tips: the apps from the videos as a store-like list (pasted store links become app cards).
+  apps: { theme: { template: "aura", accent: creatorTokens.swatches.sky }, socials: ["tiktok", "instagram", "youtube"], fields: [], logoFirst: false },
   writer: { theme: { template: "atelier" }, socials: ["instagram", "x", "threads"], fields: ["book", "newsletter"], logoFirst: false },
   journalist: { theme: { template: "atelier", pairing: "editorial" }, socials: ["x", "linkedin", "instagram"], fields: ["email"], logoFirst: false },
   business: { theme: { template: "daylight", pairing: "modern" }, socials: ["linkedin", "instagram", "whatsapp"], fields: ["website", "booking", "email"], logoFirst: true },

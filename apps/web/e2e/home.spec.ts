@@ -19,6 +19,31 @@ test.describe("marketing home", () => {
     await page.waitForURL("**/en/signup?name=mila-aurel");
   });
 
+  test("try it: an App Store link becomes an app card, a GitHub skill a card with its install command", async ({ page }) => {
+    const playground = page.locator("#try");
+    await page.route("**/api/link-metadata?**", (route) => {
+      const asked = new URL(route.request().url()).searchParams.get("url") ?? "";
+      return route.fulfill({ json: asked.includes("apps.apple.com") ? { title: "Fokus Timer", author: "Kreisel Labs", rating: 4.8 } : { title: "brand-voice", stars: 2140, kind: "skill" } });
+    });
+    await playground.getByRole("tab", { name: /Links/ }).click();
+    const input = playground.getByRole("textbox", { name: "Paste or type a link" });
+    const preview = playground.locator("[data-try-preview]");
+    await input.fill("https://apps.apple.com/de/app/fokus-timer/id1234567890");
+    await expect(playground.getByText("Recognised: App")).toBeVisible();
+    await input.press("Enter");
+    await expect(preview).toContainText("Fokus Timer", { timeout: 15_000 });
+    // The phone is a picture of the page (not in the tab order): its button leads to the App Store.
+    await expect(preview.locator('a[href="https://apps.apple.com/de/app/fokus-timer/id1234567890"]').first()).toBeVisible();
+    await input.fill("https://github.com/example-org/agent-skills/tree/main/skills/brand-voice");
+    await expect(playground.getByText("Recognised: GitHub skill")).toBeVisible();
+    await input.press("Enter");
+    await expect(preview).toContainText("npx skills add example-org/agent-skills --skill brand-voice");
+    // The list says what each one is: the app's maker, the skill's place on GitHub.
+    const added = playground.getByRole("list", { name: "On your page" }).getByRole("listitem");
+    await expect(added.filter({ hasText: "Fokus Timer" })).toContainText("Kreisel Labs");
+    await expect(added.filter({ hasText: "brand-voice" })).toContainText("example-org/agent-skills/skills/brand-voice");
+  });
+
   test("try it: a pasted link becomes the real block with its real title; examples are samples", async ({ page }) => {
     const playground = page.locator("#try");
     // What our server finds for a pasted song (stubbed here: the test must not depend on Spotify).

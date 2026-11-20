@@ -17,7 +17,10 @@ const urls = (block: Block): string[] => {
     case "music":
       return block.links.map((item) => item.url);
     case "live":
+    case "repo":
       return [block.url];
+    case "app":
+      return block.stores.map((store) => store.url);
     default:
       return [];
   }
@@ -40,6 +43,10 @@ describe("example gallery", () => {
       expect(page.profile.verified, slug).toBe(false);
       for (const url of page.blocks.flatMap(urls)) {
         expect(url, `${slug}: ${url}`).toMatch(/^(https:\/\/example\.com\/|mailto:[a-z]+@example\.com$|tel:\+49300000000$)/);
+      }
+      // Install commands too: a fictional page must never install someone's real code.
+      for (const block of page.blocks) {
+        if (block.type === "repo" && block.install) expect(block.install, slug).toMatch(/^npx skills add https:\/\/example\.com\//);
       }
     }
   });

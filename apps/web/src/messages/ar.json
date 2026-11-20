@@ -366,7 +366,29 @@
     "opensOn": "يفتح {provider}",
     "watchOn": "مشاهدة «{title}» على {provider}",
     "motionPause": "إيقاف الصورة المتحركة",
-    "motionPlay": "تشغيل الصورة المتحركة"
+    "motionPlay": "تشغيل الصورة المتحركة",
+    "get": "تحميل",
+    "open": "فتح",
+    "getApp": "{store, select, appstore {حمّل {app} من App Store} googleplay {حمّل {app} من Google Play} other {افتح {app} على الويب}}",
+    "alsoOn": "متوفر أيضًا على",
+    "stores": {
+      "appstore": "App Store",
+      "googleplay": "Google Play",
+      "web": "الويب"
+    },
+    "pricing": {
+      "free": "مجاني",
+      "freemium": "شراء داخل التطبيق",
+      "paid": "مدفوع"
+    },
+    "rating": "التقييم {rating} من 5",
+    "code": "الكود",
+    "copyCode": "انسخ الكود {code} لتطبيق {app}",
+    "copied": "تم النسخ",
+    "copyInstall": "انسخ أمر تثبيت {name}",
+    "viewOnGithub": "اعرضها على GitHub",
+    "skill": "مهارة",
+    "stars": "{count, plural, one {نجمة واحدة} two {نجمتان} few {# نجوم} many {# نجمة} other {# نجمة}} على GitHub"
   },
   "directions": {
     "title": "الاتجاهات",
@@ -472,7 +494,9 @@
       "product": "منتج",
       "newsletter": "نشرة بريدية",
       "live": "حالة البث",
-      "brands": "الشركاء"
+      "brands": "الشركاء",
+      "app": "تطبيق",
+      "repo": "مهارة من GitHub"
     },
     "blocks": "العناصر",
     "blockCount": "{count, plural, zero {لا عناصر} one {عنصر واحد} two {عنصران} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
@@ -699,7 +723,9 @@
         "live": "بث مباشر",
         "image": "صورة",
         "card": "رابط",
-        "link": "رابط"
+        "link": "رابط",
+        "app": "تطبيق",
+        "repo": "مهارة من GitHub"
       },
       "list": "الكتل على صفحتك",
       "remove": "إزالة {title}"
@@ -1054,7 +1080,8 @@
       "unavailable": "لم يُحفظ: هذا المتصفح لا يسمح بالتخزين.",
       "imageRequired": "يرجى إضافة صورة.",
       "inviteMismatch": "هذه الصفحة مُعدّة لبريد إلكتروني آخر. استخدم البريد الذي أعطيته لفريق Linkyo.",
-      "reservedForCreator": "هذا العنوان محجوز لصانع محتوى. هل هو لك؟ سجّل بالبريد الذي أعطيتنا إياه."
+      "reservedForCreator": "هذا العنوان محجوز لصانع محتوى. هل هو لك؟ سجّل بالبريد الذي أعطيتنا إياه.",
+      "githubUrl": "رابط إلى مستودع على GitHub أو إلى مجلد مهارة."
     },
     "added": {
       "one": "تمت إضافة {type}",
@@ -1230,6 +1257,36 @@
         "inline": "تشغيل الفيديو كاملاً هنا",
         "preview": "30 ثانية هنا ثم المتابعة على يوتيوب",
         "external": "فتح يوتيوب مباشرة"
+      },
+      "appIcon": "أيقونة التطبيق",
+      "appName": "اسم التطبيق",
+      "developer": "المطوّر",
+      "appLine": "سطر منك",
+      "appLineHint": "ماذا يفعل أو لماذا تحبه، مثل «مؤقّتي للتركيز العميق».",
+      "stores": "أين يتوفر",
+      "storesHint": "App Store أو Google Play أو الويب. على الهاتف يفتح الزر المتجر المناسب للزائر.",
+      "addStore": "أضف متجرًا",
+      "store": "المتجر",
+      "storeWeb": "الويب",
+      "pricing": "السعر",
+      "pricingNone": "لا تعرضه",
+      "pricings": {
+        "free": "مجاني",
+        "freemium": "مجاني مع مشتريات داخل التطبيق",
+        "paid": "مدفوع"
+      },
+      "category": "الفئة",
+      "promoCode": "كود الخصم",
+      "promoCodeHint": "ينسخه الزوار بلمسة واحدة، مثل NORA20.",
+      "githubUrl": "رابط GitHub",
+      "githubUrlHint": "مستودع، أو مجلد مهارة.",
+      "skillName": "الاسم",
+      "install": "أمر التثبيت",
+      "installHint": "يُنسخ بلمسة واحدة. المقترح: npx skills add …",
+      "repoKind": "النوع",
+      "repoKinds": {
+        "skill": "مهارة (فيها SKILL.md)",
+        "repo": "مستودع"
       }
     },
     "edit": {
@@ -1261,7 +1318,9 @@
         "product": "شيء تبيعه، مع السعر.",
         "newsletter": "يشترك المعجبون في رسائلك البريدية.",
         "brands": "الشركاء أو الرعاة أو فريقك كبطاقات شعارات.",
-        "live": "يُظهر متى تكون في بث مباشر على Twitch أو YouTube أو Kick."
+        "live": "يُظهر متى تكون في بث مباشر على Twitch أو YouTube أو Kick.",
+        "app": "تطبيق من فيديوهاتك: يحمّله الزوار من متجرهم بلمسة واحدة.",
+        "repo": "مهارة أو مستودع من GitHub: ينسخ الزوار أمر التثبيت بلمسة واحدة."
       }
     },
     "preview": {
@@ -1297,7 +1356,9 @@
         "product": "مع السعر",
         "newsletter": "اشتراك بالبريد",
         "brands": "بطاقات شعارات",
-        "live": "Twitch، YouTube، Kick"
+        "live": "Twitch، YouTube، Kick",
+        "app": "App Store و Google Play",
+        "repo": "مع أمر التثبيت"
       },
       "photosHint": "لديك صور على هذا الجهاز؟ صورة واحدة تصبح صورة، وعدة صور تصبح معرضًا.",
       "photos": "رفع صور",
@@ -1786,11 +1847,11 @@
         },
         "developer": {
           "label": "مبرمج ومطوّر",
-          "description": "GitHub، مشاريع، سيرة ذاتية",
+          "description": "GitHub، مهارات، مشاريع، سيرة ذاتية",
           "name": "اسمك",
           "taglineHint": "مثلاً: «مطوّر تطبيقات · Flutter وNode.js».",
           "links": "مشاريع أو تطبيقات (اختياري)",
-          "linksHint": "روابط مستودعات أو تطبيقات أو مقالات — رابط في كل سطر.",
+          "linksHint": "روابط لمستودعات أو مهارات أو تطبيقات أو مقالات، رابط في كل سطر. روابط GitHub تصبح بطاقات بالنجوم وأمر التثبيت.",
           "extras": "لأصحاب العمل والعملاء"
         },
         "designer": {
@@ -1828,6 +1889,15 @@
           "links": "حلقات (اختياري)",
           "linksHint": "روابط حلقات على سبوتيفاي أو آبل أو يوتيوب — رابط في كل سطر.",
           "extras": "لمستمعيك"
+        },
+        "apps": {
+          "label": "نصائح التطبيقات",
+          "description": "تطبيقات من فيديوهاتك، أكواد، روابط المتاجر",
+          "name": "اسمك",
+          "taglineHint": "مثل «كل يوم تطبيق يجعل هاتفك أفضل».",
+          "links": "تطبيقات من فيديوهاتك (اختياري)",
+          "linksHint": "روابط من App Store أو Google Play، رابط في كل سطر. نحوّلها إلى بطاقات تطبيقات.",
+          "extras": "المزيد"
         }
       },
       "fields": {

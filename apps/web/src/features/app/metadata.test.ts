@@ -2,7 +2,7 @@ import type { Block, BlockOf } from "@linkyo/blocks";
 import { NO_IMAGE } from "@linkyo/blocks";
 import { describe, expect, it } from "vitest";
 
-import { metadataPatch, metadataUrl } from "./metadata";
+import { installCommand, metadataPatch, metadataUrl } from "./metadata";
 
 const video: BlockOf<"video"> = {
   id: "video-1",
@@ -52,5 +52,38 @@ describe("link metadata", () => {
     expect(metadataPatch(renamed, video, { title: "Big Buck Bunny", image: "https://i.ytimg.com/vi/x/hqdefault.jpg" })).toEqual({
       poster: { src: "https://i.ytimg.com/vi/x/hqdefault.jpg", alt: "" },
     });
+  });
+
+  it("apps are looked up in the App Store only; skills fill in their details and keep the command in step", () => {
+    const base = { visible: true, highlight: false } as const;
+    const app: BlockOf<"app"> = { ...base, id: "app-1", type: "app", title: "Fokus Timer", icon: { src: NO_IMAGE, alt: "" }, stores: [{ store: "googleplay", url: "https://play.google.com/store/apps/details?id=com.example.fokus" }] };
+    expect(metadataUrl(app)).toBeNull();
+    const both = { ...app, stores: [...app.stores, { store: "appstore" as const, url: "https://apps.apple.com/de/app/fokus-timer/id1234567890" }] };
+    expect(metadataUrl(both)).toBe("https://apps.apple.com/de/app/fokus-timer/id1234567890");
+    expect(metadataPatch(both, both, { title: "Fokuskreis", author: "Kreisel Labs", rating: 4.8, pricing: "free", image: "https://is1-ssl.mzstatic.com/a.png" })).toEqual({
+      title: "Fokuskreis",
+      developer: "Kreisel Labs",
+      rating: 4.8,
+      pricing: "free",
+      icon: { src: "https://is1-ssl.mzstatic.com/a.png", alt: "" },
+    });
+    const skill: BlockOf<"repo"> = {
+      ...base,
+      id: "repo-1",
+      type: "repo",
+      title: "voice",
+      url: "https://github.com/acme/skills/tree/main/voice",
+      owner: "acme",
+      repo: "skills",
+      path: "voice",
+      kind: "skill",
+      install: installCommand("acme", "skills", "voice"),
+    };
+    expect(metadataUrl(skill)).toBe(skill.url);
+    expect(metadataPatch(skill, skill, { title: "brand-voice", stars: 12, kind: "skill" })).toEqual({ title: "brand-voice", stars: 12, kind: "skill", install: "npx skills add acme/skills --skill brand-voice" });
+    // A display name would need quotes on the command line: the folder's name stays.
+    expect(metadataPatch(skill, skill, { title: "Brand Voice", kind: "skill" })).toEqual({ title: "Brand Voice", kind: "skill" });
+    // The creator's own command is never replaced.
+    expect(metadataPatch({ ...skill, install: "npx skills add acme/skills -s voice" }, skill, { title: "brand-voice", kind: "skill" })).toEqual({ title: "brand-voice", kind: "skill" });
   });
 });

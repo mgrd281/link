@@ -11,6 +11,7 @@ import {
   Check,
   CircleCheck,
   Clapperboard,
+  FolderGit2,
   Image as ImageIcon,
   Link2,
   MousePointer2,
@@ -21,6 +22,7 @@ import {
   Radio,
   RotateCcw,
   ShoppingBag,
+  Smartphone,
   Ticket,
   UserRound,
   Video,
@@ -38,6 +40,7 @@ import { ImageError, pickFiles, prepareImage } from "@/features/app/images";
 import { socialProfile } from "@/features/app/import-links";
 import type { SocialPlatform } from "@/features/app/kinds";
 import { mediaSizes, PlatformGlyph, platformName } from "@/features/directions/shared/platforms";
+import { STORE_NAMES } from "@/features/directions/shared/stores";
 import { Link } from "@/i18n/navigation";
 
 import type { TryItem, TryPageInput } from "./try-page";
@@ -77,8 +80,8 @@ const TABS: { id: Tab; icon: LucideIcon }[] = [
   { id: "look", icon: Palette },
 ];
 
-const TYPE_ICONS: Record<string, LucideIcon> = { music: Music2, video: Video, shorts: Clapperboard, events: Ticket, product: ShoppingBag, live: Radio, image: ImageIcon };
-const KNOWN = new Set(["music", "video", "shorts", "events", "product", "live", "image", "card", "link"]);
+const TYPE_ICONS: Record<string, LucideIcon> = { music: Music2, video: Video, shorts: Clapperboard, events: Ticket, product: ShoppingBag, live: Radio, image: ImageIcon, app: Smartphone, repo: FolderGit2 };
+const KNOWN = new Set(["music", "video", "shorts", "events", "product", "live", "image", "card", "link", "app", "repo"]);
 /** Profiles that become an icon under the name, as in the welcome flow (songs, videos and channels stay blocks). */
 const ICON_PROFILES: readonly SocialPlatform[] = ["instagram", "tiktok", "x", "threads", "linkedin", "facebook", "github", "whatsapp", "discord"];
 const MAX_LINKS = 6;
@@ -117,8 +120,8 @@ function toAdded(found: Detection, key: string): Added {
 
 function BlockIcon({ item }: { item: Added }) {
   const platform = item.social ?? item.platform;
-  // A shop link shows a bag, whichever shop system it runs on.
-  if (item.type === "product" && !item.social) return <Icon icon={ShoppingBag} size="sm" />;
+  // A shop link shows a bag, whichever shop system it runs on; an app a phone, whichever store it is in.
+  if ((item.type === "product" || item.type === "app") && !item.social) return <Icon icon={TYPE_ICONS[item.type] ?? Link2} size="sm" />;
   return platform && platform !== "website" ? <PlatformGlyph platform={platform} size="sm" /> : <Icon icon={TYPE_ICONS[item.type] ?? Link2} size="sm" />;
 }
 
@@ -308,6 +311,9 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       const { duration } = SAMPLE_FACTS.youtube;
       return { title: t("samples.video"), detail: `YouTube · ${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, "0")}` };
     }
+    // An app: its maker (or the store); a skill or repository: where it lives on GitHub.
+    if (item.type === "app") return { title: item.meta?.title ?? itemLabel(item), detail: item.meta?.author ?? STORE_NAMES[detectLink(item.url)?.platform === "googleplay" ? "googleplay" : "appstore"] };
+    if (item.type === "repo") return { title: item.meta?.title ?? itemLabel(item), detail: detectLink(item.url)?.id ?? host };
     // YouTube's artist channels are called "Artist - Topic".
     return { title: item.meta?.title ?? itemLabel(item), detail: item.meta?.author?.replace(/ - Topic$/, "") ?? host };
   };

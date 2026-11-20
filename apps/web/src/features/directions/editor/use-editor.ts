@@ -5,6 +5,7 @@ import { toast } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ChangeEvent, type ClipboardEvent, type KeyboardEvent } from "react";
 
+import { storeLabel } from "../shared/stores";
 import { blockFromDetection, editorReducer, initialEditorState, type EditorDoc } from "./state";
 
 const isTypingTarget = (target: EventTarget | null): boolean =>
@@ -219,6 +220,10 @@ export function blockSummary(block: Block, platformLabel: (platform: string) => 
       return list(block.items.map((item) => item.name));
     case "newsletter":
       return block.description ?? "";
+    case "app":
+      return block.developer ?? list(block.stores.map(storeLabel));
+    case "repo":
+      return `${block.owner}/${block.repo}${block.path ? `/${block.path}` : ""}`;
     case "text":
       return block.text;
     case "header":

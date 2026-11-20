@@ -25,6 +25,12 @@ describe("detectLink", () => {
     ["https://wa.me/4915112345678", "link", "whatsapp", undefined],
     ["https://www.linkedin.com/in/lukas-weber", "link", "linkedin", undefined],
     ["https://github.com/leonpark", "link", "github", undefined],
+    ["https://github.com/vercel-labs/agent-skills", "repo", "github", "vercel-labs/agent-skills"],
+    ["https://github.com/anthropics/skills/tree/main/skills/pdf", "repo", "github", "anthropics/skills/skills/pdf"],
+    ["https://github.com/anthropics/skills/blob/main/skills/pdf/SKILL.md", "repo", "github", "anthropics/skills/skills/pdf"],
+    ["https://github.com/orgs/linkyo/repositories", "link", "github", undefined],
+    ["https://apps.apple.com/de/app/fokus-timer/id1234567890", "app", "appstore", "1234567890"],
+    ["https://play.google.com/store/apps/details?id=com.example.fokus&hl=de", "app", "googleplay", "com.example.fokus"],
     ["hello@milaaurel.com", "link", "email", undefined],
     ["+49 151 1234 5678", "link", "phone", undefined],
     ["https://milaaurel.com/about", "card", "website", undefined],
@@ -52,6 +58,38 @@ describe("detectLink", () => {
 });
 
 describe("block schema", () => {
+  it("validates an app with its stores and a skill with its install command", () => {
+    const app = blockSchema.parse({
+      id: "a1",
+      type: "app",
+      title: "Fokus",
+      icon: { src: "sample:app-fokus", alt: "" },
+      rating: 4.7,
+      pricing: "freemium",
+      stores: [
+        { store: "appstore", url: "https://apps.apple.com/de/app/fokus/id1" },
+        { store: "googleplay", url: "https://play.google.com/store/apps/details?id=a.b" },
+      ],
+      code: "NORA20",
+    });
+    expect(app.type).toBe("app");
+    expect(blockSchema.safeParse({ ...app, stores: [] }).success).toBe(false);
+    expect(blockSchema.safeParse({ ...app, rating: 6 }).success).toBe(false);
+    const skill = blockSchema.parse({
+      id: "r1",
+      type: "repo",
+      title: "brand-voice",
+      url: "https://github.com/theo/skills/tree/main/brand-voice",
+      owner: "theo",
+      repo: "skills",
+      path: "brand-voice",
+      kind: "skill",
+      stars: 1280,
+      install: "npx skills add theo/skills --skill brand-voice",
+    });
+    expect(skill.type).toBe("repo");
+  });
+
   it("validates a link block and applies defaults", () => {
     const block = blockSchema.parse({ id: "1", type: "link", title: "Tickets", url: "https://example.com" });
     expect(block.visible).toBe(true);

@@ -1,4 +1,4 @@
-import { NO_IMAGE, type Block, type BlockOf, type LinkIcon, type Page, type Platform } from "@linkyo/blocks";
+import { NO_IMAGE, type AppPricing, type AppStore, type Block, type BlockOf, type LinkIcon, type Page, type Platform } from "@linkyo/blocks";
 
 /**
  * Small helpers to write example pages compactly. Every link goes to example.com (a reserved
@@ -190,6 +190,66 @@ export function makeHelpers(slug: string, persona: Persona) {
       ...(title ? { title } : {}),
     }),
     gallery: (title: string, keys: string[]): BlockOf<"gallery"> => ({ ...base("gallery"), type: "gallery", title, images: keys.map((key) => image(key)) }),
+    /** An app from the creator's videos, with its stores (example.com too), rating and promo code. */
+    app: (
+      title: string,
+      icon: string,
+      options: {
+        developer?: string;
+        description?: string;
+        rating?: number;
+        category?: string;
+        pricing?: AppPricing;
+        code?: string;
+        stores?: AppStore[];
+        highlight?: boolean;
+        affiliate?: boolean;
+      } = {},
+    ): BlockOf<"app"> => {
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      return {
+        ...base("app"),
+        type: "app",
+        title,
+        icon: image(icon),
+        stores: (options.stores ?? ["appstore", "googleplay"]).map((store) => ({ store, url: url(`apps/${slug}/${store}`) })),
+        ...(options.developer ? { developer: options.developer } : {}),
+        ...(options.description ? { description: options.description } : {}),
+        ...(options.rating !== undefined ? { rating: options.rating } : {}),
+        ...(options.category ? { category: options.category } : {}),
+        ...(options.pricing ? { pricing: options.pricing } : {}),
+        ...(options.code ? { code: options.code } : {}),
+        ...(options.highlight ? { highlight: true } : {}),
+        ...(options.affiliate ? { affiliate: true } : {}),
+      };
+    },
+    /**
+     * A skill or repository. The address is example.com and so is the install command: a fictional
+     * page must never hand out a command that installs someone's real code.
+     */
+    repo: (
+      title: string,
+      repo: string,
+      options: { path?: string; kind?: "skill" | "repo"; description?: string; stars?: number; language?: string; license?: string; highlight?: boolean } = {},
+    ): BlockOf<"repo"> => {
+      const skill = options.path?.split("/").at(-1);
+      return {
+        ...base("repo"),
+        type: "repo",
+        title,
+        url: url(options.path ? `${repo}/${options.path}` : repo),
+        owner: slug,
+        repo,
+        ...(options.path ? { path: options.path } : {}),
+        kind: options.kind ?? (options.path ? "skill" : "repo"),
+        install: `npx skills add ${url(repo)}${skill ? ` --skill ${skill}` : ""}`,
+        ...(options.description ? { description: options.description } : {}),
+        ...(options.stars !== undefined ? { stars: options.stars } : {}),
+        ...(options.language ? { language: options.language } : {}),
+        ...(options.license ? { license: options.license } : {}),
+        ...(options.highlight ? { highlight: true } : {}),
+      };
+    },
   };
 }
 

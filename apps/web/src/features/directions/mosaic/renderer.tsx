@@ -21,6 +21,8 @@ export const defaultTileSize = (block: Block): TileSize => {
     case "image":
     case "link":
     case "live":
+    case "app":
+    case "repo":
       return "s";
     default:
       return "w";
@@ -201,6 +203,20 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
           {size === "s" ? null : <Icon icon={ArrowUpRight} size="md" className="shrink-0 rtl:-scale-x-100" />}
         </Tile>
       ) : null;
+
+    // Apps and skills get their full cards in Poster; here they are link tiles to the store or repository.
+    case "app":
+    case "repo": {
+      const href = block.type === "app" ? block.stores[0]?.url : block.url;
+      return href ? (
+        <Tile size={size} href={href} tone="surface" className={cn("flex flex-col justify-between gap-6 p-4", size === "s" && "aspect-square")}>
+          <Icon icon={ArrowUpRight} size="md" className="self-end transition-transform duration-micro group-hover:-translate-y-0.5 rtl:-scale-x-100" />
+          <span className="font-creator-display text-h3 leading-tight" style={displayStyle}>
+            {block.title}
+          </span>
+        </Tile>
+      ) : null;
+    }
 
     case "link":
       return (

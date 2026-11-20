@@ -32,6 +32,7 @@
 | 4 | **Apple**: Small Business Program + **EU DSA trader status** in App Store Connect | https://developer.apple.com/app-store/small-business-program/ | — |
 | any | **UptimeRobot** (status page) | https://uptimerobot.com/signUp | — |
 | any | **Trademark** "Linkyo": DPMA (€290, 3 classes) or EUIPO (€850+) — search first | https://www.dpma.de/marken/anmeldung/index.html | — |
+| any | **GitHub** token for skill and repository details (optional: without it GitHub allows 60 lookups an hour per server address; a fine-grained token with no permissions, public repositories only, raises that to 5,000; ADR 0055) | https://github.com/settings/personal-access-tokens | `GITHUB_TOKEN` (server only, a Vercel environment variable) |
 
 **Not needed:** Odesli/song.link (keyless access ended, and Odesli belongs to Linktree — see [ADR 0009](DECISIONS/0009-music-smart-links.md)) ·
 Meta app (Instagram/Threads oEmbed is tokenless since 2026-06-15) · TikTok app (oEmbed/Embed Player are keyless).

@@ -15,8 +15,12 @@ later the editor fills in the real details.
    - `metadataUrl(block)` picks the URL: a video's page or a release's first link;
    - `fetchLinkMetadata(url)` calls our route;
    - `metadataPatch(current, added, meta)` only fills fields that still hold their placeholder.
-3. `src/app/api/link-metadata/route.ts` asks the platform's oEmbed (`OEMBED` map). It never fetches
-   the pasted address itself. It has a 3 s timeout, a 200 kB cap and a one-day cache.
+3. `src/app/api/link-metadata/route.ts` asks the platform's oEmbed (`OEMBED` map). Apps and skills
+   have their own sources (ADR 0055): `appStore()` uses Apple's public lookup
+   (`itunes.apple.com/lookup?id=…&country=…`), `github()` uses GitHub's API plus the folder's
+   `SKILL.md` front matter (`skillFrontMatter`; optional server-only `GITHUB_TOKEN`). Google Play has
+   no keyless API. The route never fetches the pasted address itself. It has a 3 s timeout, a 200 kB
+   cap and a one-day cache.
 4. The `enrich` reducer action patches the block without an undo step of its own.
 
 ## Pictures stay private
@@ -30,7 +34,8 @@ later the editor fills in the real details.
 
 1. Make sure `detectLink` recognises the address (`packages/blocks/src/detect.ts`, add a test in
    `test/detect.test.ts`).
-2. Add its keyless oEmbed endpoint to `OEMBED`, keyed by `detection.platform`. Check the real
+2. Add its keyless oEmbed endpoint to `OEMBED`, keyed by `detection.platform` (or, with no oEmbed,
+   a source function like `appStore()` that reads a fixed host, routed in `GET`). Check the real
    response first, for example with
    `curl -s "https://<platform>/oembed?url=<encoded>" | python3 -m json.tool`, and note which
    fields carry the title, author and thumbnail.

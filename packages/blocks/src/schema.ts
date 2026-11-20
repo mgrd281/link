@@ -74,6 +74,14 @@ export const LINK_ICONS = [
 ] as const;
 export type LinkIcon = (typeof LINK_ICONS)[number];
 
+/** Where an app can be got: Apple's App Store, Google Play, or the web. */
+export const APP_STORES = ["appstore", "googleplay", "web"] as const;
+export type AppStore = (typeof APP_STORES)[number];
+
+/** How an app is paid for, as the stores say it (no prices: they differ by country). */
+export const APP_PRICING = ["free", "freemium", "paid"] as const;
+export type AppPricing = (typeof APP_PRICING)[number];
+
 /** How a video plays after the tap (see the video block). */
 export const VIDEO_PLAYBACK = ["inline", "preview", "external"] as const;
 export type VideoPlayback = (typeof VIDEO_PLAYBACK)[number];
@@ -199,6 +207,48 @@ export const blockSchema = z.discriminatedUnion("type", [
     /** Partners, sponsors, teams: logo tiles. Two columns show the role, three show logos only. */
     columns: z.union([z.literal(2), z.literal(3)]).default(3),
     items: z.array(z.object({ name: z.string().min(1).max(80), role: z.string().max(80).optional(), logo: image, url: url.optional() })).min(1).max(24),
+  }),
+  base.extend({
+    /**
+     * An app, for creators who show apps in their videos ("the app is in my link"). One button opens
+     * the visitor's own store (App Store on an iPhone, Google Play on Android); the other stores stay
+     * one tap away. Details come from the store when the link is pasted.
+     */
+    type: z.literal("app"),
+    title: z.string().min(1).max(80),
+    /** Who makes it. */
+    developer: z.string().max(80).optional(),
+    /** One line in the creator's words: what it does, or why they like it. */
+    description: z.string().max(140).optional(),
+    icon: image,
+    /** The store's average rating, 0–5. */
+    rating: z.number().min(0).max(5).optional(),
+    category: z.string().max(40).optional(),
+    pricing: z.enum(APP_PRICING).optional(),
+    stores: z.array(z.object({ store: z.enum(APP_STORES), url })).min(1).max(3),
+    /** A promo code visitors can copy. */
+    code: z.string().max(32).optional(),
+    affiliate,
+  }),
+  base.extend({
+    /**
+     * A GitHub repository, or a skill: a folder with a SKILL.md for AI agents. Visitors copy the
+     * install command in one tap; stars, language and license come from GitHub when it is pasted.
+     */
+    type: z.literal("repo"),
+    title: z.string().min(1).max(80),
+    description: z.string().max(240).optional(),
+    url,
+    owner: z.string().min(1).max(39),
+    repo: z.string().min(1).max(100),
+    /** The folder inside the repository, when the link points at one skill. */
+    path: z.string().max(240).optional(),
+    kind: z.enum(["skill", "repo"]),
+    stars: z.number().int().nonnegative().optional(),
+    language: z.string().max(40).optional(),
+    license: z.string().max(40).optional(),
+    /** What visitors copy to install it, e.g. "npx skills add owner/repo". */
+    install: z.string().max(200).optional(),
   }),
   base.extend({
     type: z.literal("live"),

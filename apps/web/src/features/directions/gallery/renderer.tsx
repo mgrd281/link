@@ -170,6 +170,14 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
     case "link":
       return <CreatorLink label={block.title} href={block.url} variant={theme.buttonStyle} badge={block.badge} />;
 
+    // Apps and skills get their full cards in Poster; here they are plain buttons to the store or repository.
+    case "app": {
+      const store = block.stores[0];
+      return store ? <CreatorLink label={block.title} href={store.url} variant={theme.buttonStyle} /> : null;
+    }
+    case "repo":
+      return <CreatorLink label={block.title} href={block.url} variant={theme.buttonStyle} />;
+
     case "events":
       return (
         <section aria-label={block.title} className="grid gap-2">

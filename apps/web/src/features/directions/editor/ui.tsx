@@ -25,8 +25,10 @@ import {
   AtSign,
   BarChart3,
   CalendarDays,
+  Clapperboard,
   ExternalLink,
   FileText,
+  FolderGit2,
   Handshake,
   Heading,
   Image as ImageIcon,
@@ -48,7 +50,6 @@ import {
   Undo2,
   Upload,
   Video,
-  Clapperboard,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -71,6 +72,8 @@ export const blockIcon: Record<BlockType, LucideIcon> = {
   newsletter: Mail,
   live: Radio,
   brands: Handshake,
+  app: Smartphone,
+  repo: FolderGit2,
 };
 
 export const ADD_TYPES: BlockType[] = ["link", "video", "music", "events", "image", "product", "newsletter", "header"];
