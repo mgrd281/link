@@ -15,7 +15,22 @@ const PER_COLUMN = 4;
  * the mouse and while the keyboard moves through the page, still with reduced motion, WCAG 2.2.2).
  * The templates page shows the same wall standing still, on phones as a band of smaller cards.
  */
-export function PageWall({ moving = false, className }: { moving?: boolean; className?: string }) {
+export function PageWall({
+  moving = false,
+  eager = false,
+  sizes = "(min-width: 64rem) 13vw, 25vw",
+  className,
+}: {
+  moving?: boolean;
+  /**
+   * The wall is the first thing on screen (templates page): its top rows load at once, the first
+   * three at high priority, and on phones and tablets the rows the band never shows are not rendered
+   * (so never downloaded).
+   */
+  eager?: boolean;
+  sizes?: string;
+  className?: string;
+}) {
   // Column c steps through the pages five at a time from c on (18 pages: five and 18 share no
   // factor, so no page repeats within a column and neighbours differ).
   const columns = Array.from({ length: COLUMNS }, (_, column) =>
@@ -28,9 +43,21 @@ export function PageWall({ moving = false, className }: { moving?: boolean; clas
           <div key={index} className={cn(index % 2 === 1 && "-mt-16 lg:-mt-32")}>
             <ul className={cn("grid content-start gap-2 pb-2 sm:gap-3 sm:pb-3 lg:gap-5 lg:pb-5", moving && "mk-marquee-y", moving && index % 2 === 1 && "mk-marquee-reverse")}>
               {(moving ? [...column, ...column] : column).map((shot, position) => (
-                <li key={position} className="overflow-hidden rounded-md border border-line bg-surface lg:rounded-lg">
+                <li
+                  key={position}
+                  className={cn("overflow-hidden rounded-md border border-line bg-surface lg:rounded-lg", eager && !moving && position > 1 && "max-lg:hidden")}
+                >
                   <div className="relative aspect-phone">
-                    <Image src={shot} alt="" fill sizes="(min-width: 64rem) 13vw, 25vw" placeholder="blur" className="object-cover object-top" />
+                    <Image
+                      src={shot}
+                      alt=""
+                      fill
+                      sizes={sizes}
+                      placeholder="blur"
+                      {...(eager && position < 2 ? { loading: "eager" as const } : {})}
+                      {...(eager && position === 0 && index < 3 ? { fetchPriority: "high" as const } : {})}
+                      className="object-cover object-top"
+                    />
                   </div>
                 </li>
               ))}

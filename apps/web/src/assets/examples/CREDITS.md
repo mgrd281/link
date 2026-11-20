@@ -12,12 +12,12 @@ connection to the fictional names and are not endorsing Linkyo.
 | File | Photographer / source | Photo page | License |
 |---|---|---|---|
 | ex-actor.jpg | mehdi pezhvak | https://unsplash.com/photos/man-with-a-beard-looking-off-to-the-side-JyBxZzwaZ9s | Unsplash License |
-| ex-actress.jpg | FOTOGRAFÍA EDITORIAL | https://unsplash.com/photos/woman-in-shimmering-purple-evening-gown-LrYNu1zKR1I | Unsplash License |
-| ex-arab-singer.jpg | HamZa NOUASRIA | https://unsplash.com/photos/a-man-singing-into-a-microphone-on-stage-CmqBx-EFtfk | Unsplash License |
+| ex-actress.jpg | Mihaela Claudia Puscas | https://unsplash.com/photos/elegant-woman-with-a-bun-and-statement-necklace-AwaKOSnm10w | Unsplash License |
+| ex-arab-singer.jpg | Les Taylor | https://unsplash.com/photos/man-wearing-glasses-singing-into-a-microphone-eaVRV6ZwjIA | Unsplash License |
 | ex-bakery.jpg | Clark Young | https://unsplash.com/photos/brown-breads-on-brown-wooden-cabinet-jfbMODLPrQ0 | Unsplash License |
 | ex-bank.jpg | Rafael Garcin | https://unsplash.com/photos/modern-skyscraper-with-glass-facade-against-sky-Lp3L3ZP_y3g | Unsplash License |
-| ex-barber.jpg | Hair Spies | https://unsplash.com/photos/a-person-cutting-another-persons-hair-with-a-pair-of-scissors-LU2XkVyhf_c | Unsplash License |
-| ex-care.jpg | Age Cymru | https://unsplash.com/photos/caregiver-assisting-elderly-couple-with-coloring-bSXk1lOp8T0 | Unsplash License |
+| ex-barber.jpg | Obi | https://unsplash.com/photos/man-cutting-hair-man--sRVfY0f2d8 | Unsplash License |
+| ex-care.jpg | Age Cymru (Jon Pountney) | https://unsplash.com/photos/nurse-smiling-with-elderly-patient-in-room-dMhB7w99ju8 | Unsplash License |
 | ex-comedian.jpg | Timothy Dykes | https://unsplash.com/photos/man-in-green-crew-neck-shirt-smiling-yd4ubMUNTG0 | Unsplash License |
 | ex-councillor.jpg | Ernest Flowers | https://unsplash.com/photos/smiling-man-in-navy-blue-suit-2uqsukZ8Pzc | Unsplash License |
 | ex-dentist.jpg | Vitaly Gariev | https://unsplash.com/photos/a-smiling-doctor-with-glasses-and-stethoscope-stands-arms-crossed-XqMo4OlBnh0 | Unsplash License |
@@ -42,6 +42,7 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex-pop-star.jpg | Eduardo Balderas | https://unsplash.com/photos/AfEAFwmQzMc | Unsplash License |
 | ex-realestate.jpg | Aalo Lens | https://unsplash.com/photos/modern-house-with-large-windows-and-lush-garden-eWOgoFHlE8g | Unsplash License |
 | ex-restaurant.jpg | Elena Leya | https://unsplash.com/photos/a-plate-of-spaghetti-with-meatballs-and-sauce-ptJf7Aqq16I | Unsplash License |
+| ex-sami-travels.jpg | Sadiq Ahmad | https://unsplash.com/photos/a-man-with-a-beard-wearing-a-white-shirt-rBM9AZSdQOE | Unsplash License |
 | ex-streamer.jpg | Fausto Sandoval | https://unsplash.com/photos/Cc-KUNmV1UE | Unsplash License |
 | ex-student.jpg | Vitaly Gariev | https://unsplash.com/photos/diverse-group-of-students-gathered-around-laptop-kp7qkHTgSKc | Unsplash License |
 | ex-sweets.jpg | Syed F Hashemi | https://unsplash.com/photos/brown-and-green-bread-with-green-leaves-bGAPRnJITpQ | Unsplash License |
@@ -165,7 +166,7 @@ picture was looked at: adults only, no celebrities, no brand logos as the subjec
 | ex8-mira-sol.jpg | Unsplash photo 1508214751196-bcfd4ca60f91 (cropped) | https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91 | Unsplash License |
 | ex8-jonas-ek.jpg | Unsplash photo 1535713875002-d1d0cf377fde (cropped) | https://images.unsplash.com/photo-1535713875002-d1d0cf377fde | Unsplash License |
 | ex8-rina-vex.jpg | Unsplash photo 1542103749-8ef59b94f47e (cropped) | https://images.unsplash.com/photo-1542103749-8ef59b94f47e | Unsplash License |
-| ex8-dana-issa.jpg | Unsplash photo 1494790108377-be9c29b29330 (cropped) | https://images.unsplash.com/photo-1494790108377-be9c29b29330 | Unsplash License |
+| ex8-dana-issa.jpg | Farzin Yarahmadi | https://unsplash.com/photos/a-woman-putting-food-in-an-oven-in-a-kitchen-ydMeDjSCPbo | Unsplash License |
 | ex8-hoodie-grey.jpg | Unsplash photo 1556821840-3a63f95609a7 (cropped) | https://images.unsplash.com/photo-1556821840-3a63f95609a7 | Unsplash License |
 | ex8-sweater-white.jpg | Unsplash photo 1620799140408-edc6dcb6d633 (cropped) | https://images.unsplash.com/photo-1620799140408-edc6dcb6d633 | Unsplash License |
 | ex8-retreat.jpg | Unsplash photo 1506126613408-eca07ce68773 (cropped) | https://images.unsplash.com/photo-1506126613408-eca07ce68773 | Unsplash License |

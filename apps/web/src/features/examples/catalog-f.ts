@@ -161,7 +161,7 @@ export const CATALOG_F: Record<string, Page> = {
       bio: "أخبز كل صباح بالعجين المخمّر والزبدة الطازجة في نويكولن. اطلب قبل الثامنة مساءً، ويكون طلبك جاهزًا في الصباح.",
       location: "برلين",
       photo: "ex8-dana-issa",
-      focal: [0.5, 0.25],
+      focal: [0.5, 0.3],
     },
     (h) => [
       h.link("اطلب لصباح الغد", "order", { highlight: true, icon: "cart", subtitle: "قبل الثامنة مساءً، والاستلام من الفرن" }),

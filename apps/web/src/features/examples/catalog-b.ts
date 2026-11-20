@@ -170,8 +170,8 @@ export const CATALOG_B: Record<string, Page> = {
       name: "سامي يسافر",
       tagline: "رحلات بميزانية ذكية",
       bio: "زرت 47 دولة بحقيبة واحدة. أشارك الطرق والفنادق والأسعار الحقيقية.",
-      photo: "ex-travel",
-      focal: [0.5, 0.4],
+      photo: "ex-sami-travels",
+      focal: [0.43, 0.32],
       stats: [
         ["47", "دولة"],
         ["920 ألف", "متابع"],
@@ -330,7 +330,7 @@ export const CATALOG_B: Record<string, Page> = {
       bio: "Ohne Termin oder mit – wir nehmen uns Zeit für dich.",
       location: "Frankfurt, Nordend",
       photo: "ex-barber",
-      focal: [0.5, 0.4],
+      focal: [0.49, 0.35],
     },
     (h) => [
       h.link("Termin online buchen", "termin", { highlight: true }),
@@ -413,6 +413,7 @@ export const CATALOG_B: Record<string, Page> = {
       bio: "Wir pflegen, beraten und entlasten – zu Hause, wo man sich wohlfühlt.",
       location: "Bremen",
       photo: "ex-care",
+      focal: [0.27, 0.28],
     },
     (h) => [
       h.link("Kostenlose Pflegeberatung", "beratung", { highlight: true }),

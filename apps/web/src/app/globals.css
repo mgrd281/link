@@ -640,6 +640,25 @@
   }
 }
 
+/*
+ * An entrance for a headline: it settles from a little below, but never fades. Text that starts
+ * transparent is not a Largest Contentful Paint candidate, so a faded hero headline makes the page
+ * measure (and feel) slower than it is.
+ */
+@keyframes mk-settle {
+  from {
+    translate: 0 var(--spacing-2);
+  }
+}
+
+@utility mk-settle {
+  animation: mk-settle var(--duration-slow) var(--ease-standard) both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
 @utility mk-tap {
   animation: mk-tap var(--duration-slow) var(--ease-standard) both;
 }
@@ -985,6 +1004,8 @@
 }
 
 @utility mk-stuck-edge {
+  transition: border-color var(--duration-standard) var(--ease-standard);
+
   @container scroll-state(stuck: top) {
     border-bottom-color: var(--color-line);
   }
@@ -1385,3 +1406,15 @@
   }
 }
 /* stylelint-enable no-invalid-position-declaration, nesting-selector-no-missing-scoping-root */
+
+/*
+ * The cards below the fold show each page's own typeface. Those faces (eleven files) load only once
+ * the first screen is done (ExampleGallery sets data-fonts when the page has loaded): until then the
+ * names stand in the site's own face. The cards are pictures in fixed boxes, so nothing moves.
+ */
+[data-fonts="later"] :is(.font-creator-display, .font-creator-body) {
+  font-family: var(--font-sans);
+}
+
+/* Very short screens (a phone in landscape, 400 % zoom): the filter band scrolls away with the page. */
+@custom-variant short (@media (max-height: 30rem));

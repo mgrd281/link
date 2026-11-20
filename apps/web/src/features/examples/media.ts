@@ -39,6 +39,7 @@ import exRestaurant from "@/assets/examples/ex-restaurant.jpg";
 import exStreamer from "@/assets/examples/ex-streamer.jpg";
 import exStudent from "@/assets/examples/ex-student.jpg";
 import exSweets from "@/assets/examples/ex-sweets.jpg";
+import exSamiTravels from "@/assets/examples/ex-sami-travels.jpg";
 import exTravel from "@/assets/examples/ex-travel.jpg";
 import exTutor from "@/assets/examples/ex-tutor.jpg";
 import exWedding from "@/assets/examples/ex-wedding.jpg";
@@ -227,6 +228,7 @@ export const exampleMedia = {
   "sample:ex-streamer": exStreamer,
   "sample:ex-student": exStudent,
   "sample:ex-sweets": exSweets,
+  "sample:ex-sami-travels": exSamiTravels,
   "sample:ex-travel": exTravel,
   "sample:ex-tutor": exTutor,
   "sample:ex-wedding": exWedding,

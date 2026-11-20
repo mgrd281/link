@@ -178,7 +178,7 @@ export function SignupForm() {
 
   return (
     <>
-      {invite ? <AuthHeading title={t("signup.preparedTitle")} lead={t("signup.preparedLead")} /> : <AuthHeading title={t("signup.title")} lead={t("signup.lead")} />}
+      {invite ? <AuthHeading title={t("signup.preparedTitle")} lead={t("signup.preparedLead")} /> : <AuthHeading title={t("signup.title")} lead={look ? t("signup.fromTemplate") : t("signup.lead")} />}
       <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-4">
         <FormError message={banner ? t(`errors.${banner}`) : null} />
         {username && !showField ? (

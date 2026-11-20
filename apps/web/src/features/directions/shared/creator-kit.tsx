@@ -18,12 +18,15 @@ export function MediaImage({
   sizes,
   className,
   priority = false,
+  focal,
 }: {
   src: string;
   alt: string;
   sizes: string;
   className?: string | undefined;
   priority?: boolean;
+  /** Where the subject is (0-1, 0-1): cropping keeps it in view. Centered when not given. */
+  focal?: readonly [number, number] | undefined;
 }) {
   if (!hasImage({ src })) {
     // No picture yet (new creators, links pasted before metadata arrives): a calm tile, never a broken image.
@@ -55,6 +58,7 @@ export function MediaImage({
       // platform; other remote pictures are shown as they are, without a referrer.
       unoptimized={typeof resolved === "string" && /^https?:/.test(resolved) && !isProxiedImage(resolved)}
       referrerPolicy="no-referrer"
+      {...(focal ? { style: { objectPosition: `${focal[0] * 100}% ${focal[1] * 100}%` } } : {})}
       className={cn("object-cover", className)}
     />
   );

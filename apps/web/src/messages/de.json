@@ -17,7 +17,8 @@
       "label": "Darstellung",
       "light": "Hell",
       "dark": "Dunkel"
-    }
+    },
+    "notifications": "Mitteilungen ({hotkey})"
   },
   "brand": {
     "oneLiner": "Ein Link. Alles, was du erschaffst."
@@ -772,7 +773,7 @@
         "price": "0 €",
         "per": "für immer",
         "features": [
-          "Alle sechs Vorlagen",
+          "Alle Vorlagen",
           "Unbegrenzt Links und Abschnitte",
           "Musik, Shows, Videos, Shop-Links",
           "Analytics ohne Cookies",
@@ -1031,7 +1032,8 @@
       "login": "Anmelden",
       "preparedTitle": "Deine Seite ist fertig",
       "preparedLead": "Das Linkyo-Team hat sie für dich vorbereitet. Registriere dich mit der E-Mail, die du uns gegeben hast – dann ist alles sofort da.",
-      "preparedGoogle": "Zum Start geht das auch mit Google: gleiche E-Mail, gleiche Seite."
+      "preparedGoogle": "Zum Start geht das auch mit Google: gleiche E-Mail, gleiche Seite.",
+      "fromTemplate": "Deine Vorlage ist gewählt. Foto, Name und Links trägst du gleich ein."
     },
     "login": {
       "title": "Willkommen zurück",
@@ -2742,70 +2744,69 @@
   "examples": {
     "meta": {
       "title": "Vorlagen & Beispiele · Linkyo",
-      "description": "Über 70 Beispielseiten für Creator, Online-Händler, Affiliate, Marketing, Entwickler:innen, Musik, Sport, Läden, Berufe und bekannte Persönlichkeiten. Ansehen, ausprobieren und als Vorlage nutzen."
+      "description": "{count} Vorlagen für deine Seite zum Link in der Bio: Creator, Musik, Shops, Läden, Praxen und Berufe. Ansehen und kostenlos mit dem Design starten."
     },
-    "eyebrow": "Vorlagen & Beispiele",
-    "title": "Finde deinen Look in über 70 Beispielen",
-    "lead": "Für Creator, Online-Händler, Entwickler:innen, Läden, Praxen und Berufe – jede Seite in eigenem Design. Öffnen, durchscrollen, mit einem Klick übernehmen.",
+    "eyebrow": "Alle Vorlagen kostenlos",
+    "title": "Finde deinen Look unter {count} Vorlagen",
+    "lead": "Öffne eine Vorlage, sieh sie dir an und starte mit ihrem Design – mit deinem Foto und deinen Links.",
     "count": "{count} Beispiele",
     "filter": "Nach Kategorie filtern",
     "all": "Alle",
     "categories": {
       "creators": "Creator",
-      "online": "Online-Business",
+      "online": "Online verkaufen",
       "tech": "Tech & Design",
       "music": "Musik & Podcast",
       "sport": "Sport",
       "film": "Film & TV",
-      "business": "Business",
-      "public": "Öffentliches Leben",
+      "business": "Unternehmen",
+      "public": "Politik & Vereine",
       "local": "Läden & Praxen",
       "careers": "Beruf & Karriere",
-      "people": "Bekannte Persönlichkeiten"
+      "people": "Prominente"
     },
     "languages": {
       "de": "Deutsch",
       "en": "Englisch",
       "ar": "Arabisch"
     },
-    "preview": "Vorschau: {name}",
-    "open": "Seite öffnen",
+    "preview": "{name} ansehen – {category}, Seite auf {language}",
+    "open": "Ganze Seite öffnen",
     "use": "Diese Vorlage nutzen",
     "close": "Vorschau schließen",
-    "frame": "Beispielseite {name}",
-    "fictional": "Die Beispiele sind erfunden (Fotos von Unsplash); Ähnlichkeiten mit echten Personen sind zufällig. Seiten bekannter Persönlichkeiten sind inoffizielle Konzepte aus öffentlichen Quellen, ohne Verbindung zu den Personen; Fotos von Wikimedia Commons.",
-    "useHint": "Du startest mit diesem Design und deinen eigenen Inhalten.",
-    "cta": "Keine passende Vorlage? Starte leer – das Design passt du in Minuten an.",
+    "frame": "Seitenvorschau: {name}",
+    "fictional": "Personen und Firmen in den Vorlagen sind erfunden (Fotos von Unsplash); Ähnlichkeiten mit echten Personen sind zufällig. Seiten von Prominenten sind inoffizielle Konzepte aus öffentlichen Quellen, ohne Verbindung zu den Personen; Fotos von Wikimedia Commons.",
+    "useHint": "Du übernimmst das Design. Foto, Name und Links trägst du selbst ein.",
     "ctaButton": "Kostenlos registrieren",
-    "seeAll": "Alle {count} Beispiele ansehen",
+    "seeAll": "Alle {count} Vorlagen ansehen",
     "featured": "Ausgewählte Beispiele",
     "badges": {
       "concept": "Konzept",
-      "preview": "Vorschau"
+      "preview": "Vorbereitet"
     },
     "badgeNotes": {
       "concept": "Inoffizielles Konzept aus öffentlichen Quellen: nicht die offizielle Seite, keine Verbindung zur Person.",
-      "preview": "Vorschau einer Seite, die wir für diese Person vorbereitet haben."
+      "preview": "Eine Seite, die wir für diese Person vorbereitet haben."
     },
-    "browse": "Beispiele durchsuchen",
+    "browse": "Vorlagen ansehen",
     "stats": {
       "label": "Auf einen Blick",
-      "examples": "Beispiele",
-      "designs": "Designs",
-      "languages": "Sprachen"
+      "examples": "{count, plural, one {Vorlage} other {Vorlagen}}",
+      "designs": "{count, plural, one {Design} other {Designs}}",
+      "languages": "{count, plural, one {Sprache} other {Sprachen}}"
     },
-    "galleryTitle": "Alle Beispiele",
+    "galleryTitle": "Wähl eine Vorlage",
     "search": {
-      "label": "Beispiele durchsuchen",
-      "placeholder": "Name oder Branche",
+      "label": "Vorlagen durchsuchen",
+      "placeholder": "Name oder Beruf, z. B. Coach",
       "clear": "Suche leeren",
       "shortcut": "Taste / springt zur Suche"
     },
-    "results": "{count, plural, =0 {Keine Treffer} one {# Treffer} other {# Treffer}}",
+    "results": "{count, plural, =0 {Keine Vorlage gefunden} one {# Vorlage} other {# Vorlagen}}",
     "empty": {
-      "title": "Nichts gefunden",
-      "text": "Probier einen anderen Begriff, eine andere Kategorie oder Sprache.",
-      "reset": "Filter zurücksetzen"
+      "title": "Keine passende Vorlage",
+      "text": "Probier einen Beruf wie „Coach“ oder „Musik“ – oder sieh dir alle Vorlagen an.",
+      "reset": "Alle Vorlagen zeigen"
     },
     "scroll": {
       "back": "Vorherige Kategorien",
@@ -2813,13 +2814,22 @@
     },
     "language": {
       "label": "Sprache der Seite",
-      "all": "Alle"
+      "all": "Alle Sprachen"
     },
-    "prev": "Vorheriges Beispiel",
-    "next": "Nächstes Beispiel",
+    "prev": "Vorherige Vorlage",
+    "next": "Nächste Vorlage",
     "position": "{index} von {total}",
-    "more": "{count} weitere zeigen",
-    "shownOf": "{shown} von {total} Beispielen"
+    "more": "{count, plural, one {Eine weitere zeigen} other {# weitere zeigen}}",
+    "shownOf": "{shown} von {total} Vorlagen",
+    "newTab": "(öffnet in neuem Tab)",
+    "ctaTitle": "Nichts Passendes dabei?",
+    "ctaLead": "Sag uns, was du machst – wir wählen ein Design, du passt es an.",
+    "keys": "Leertaste scrollt · ←/→ wechselt die Vorlage",
+    "glide": {
+      "pause": "Automatisches Scrollen anhalten",
+      "play": "Seite automatisch scrollen"
+    },
+    "previewHint": "Die Seite scrollt langsam von selbst. Jede Taste oder Berührung hält sie an. Mit den Pfeiltasten blätterst du zur nächsten Vorlage."
   },
   "search": {
     "open": "Personen suchen",
@@ -2835,7 +2845,7 @@
     "badges": {
       "example": "Beispiel",
       "concept": "Konzept",
-      "preview": "Vorschau"
+      "preview": "Vorbereitet"
     },
     "pageIn": "Seite auf {language}",
     "loading": "Personen werden geladen",

@@ -297,7 +297,7 @@ export const CATALOG_A: Record<string, Page> = {
       bio: "أغنيتي الجديدة «ليل الشام» متوفرة الآن على كل المنصات. شكراً لأنكم معي.",
       location: "برلين · دمشق",
       photo: "ex-arab-singer",
-      focal: [0.5, 0.3],
+      focal: [0.52, 0.38],
       stats: [
         ["1.8 مليون", "متابع"],
         ["240 مليون", "استماع"],
@@ -407,7 +407,7 @@ export const CATALOG_A: Record<string, Page> = {
       bio: "Currently filming “The Winter Garden”. Represented by Lumière Talent.",
       location: "Paris · London",
       photo: "ex-actress",
-      focal: [0.5, 0.3],
+      focal: [0.66, 0.38],
     },
     (h) => [
       h.video("The Winter Garden: first look", "youtube", "first-look", undefined, 96),

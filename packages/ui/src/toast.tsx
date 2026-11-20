@@ -48,7 +48,11 @@ const snapshot = () => items;
 const NONE: ToastItem[] = [];
 const serverSnapshot = () => NONE;
 
-export function Toaster({ closeLabel }: { closeLabel: string }) {
+/**
+ * `regionLabel` names the notification landmark for screen readers, in the page's language; "{hotkey}"
+ * stands for the shortcut that jumps there (F8).
+ */
+export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regionLabel?: string }) {
   const list = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   return (
     <T.Provider swipeDirection="down" duration={tokens.motion.delay.toast}>
@@ -92,7 +96,7 @@ export function Toaster({ closeLabel }: { closeLabel: string }) {
           </T.Close>
         </T.Root>
       ))}
-      <T.Viewport className="layer-toast fixed inset-x-0 bottom-(--toast-offset) mx-auto flex w-full max-w-prose flex-col gap-2 p-4 pb-[max(var(--spacing-4),var(--toast-inset,env(safe-area-inset-bottom)))] outline-none" />
+      <T.Viewport {...(regionLabel ? { label: regionLabel } : {})} className="layer-toast fixed inset-x-0 bottom-(--toast-offset) mx-auto flex w-full max-w-prose flex-col gap-2 p-4 pb-[max(var(--spacing-4),var(--toast-inset,env(safe-area-inset-bottom)))] outline-none" />
     </T.Provider>
   );
 }

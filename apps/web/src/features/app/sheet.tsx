@@ -71,6 +71,8 @@ export function useDragToDismiss(onClose: () => void) {
     if (sheet && delta > 0 && (delta > sheet.offsetHeight * DISMISS_SHARE || current.speed > DISMISS_SPEED)) {
       // The closing slide starts where the finger left the sheet.
       sheet.style.setProperty("--sheet-drag", `${delta}px`);
+      // A flick carries on at the finger's speed instead of starting again from rest.
+      sheet.style.animationTimingFunction = "var(--ease-standard)";
       haptic();
       onClose();
     } else {

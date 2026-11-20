@@ -3,7 +3,7 @@
 import type { HeroStyle } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
 import { ArrowUpRight } from "lucide-react";
-import type { CSSProperties, PointerEvent } from "react";
+import type { CSSProperties } from "react";
 
 import { MediaImage, Monogram } from "@/features/directions/shared/creator-kit";
 import { displayStyle } from "@/features/directions/poster/styles";
@@ -22,16 +22,20 @@ export interface GalleryItem {
   locale: "de" | "en" | "ar";
   style: CSSProperties;
   photo: string | null;
+  /** Where the face is in the photo (0-1, 0-1), so the card's crop keeps it. */
+  focal?: readonly [number, number] | undefined;
   logo: string | null;
   hero: HeroStyle;
   links: string[];
+  /** Search words in all three languages (kind of page and category), see the templates page. */
+  keywords?: string;
   signup: string;
   /** Real people: an unofficial concept page or a prepared preview, labelled as such. */
   badge?: "concept" | "preview" | undefined;
 }
 
 const sizes = {
-  grid: "(max-width: 48rem) 50vw, (max-width: 80rem) 33vw, 25vw",
+  grid: "(min-width: 80rem) 16rem, (min-width: 48rem) 30vw, 46vw",
   wall: "(max-width: 64rem) 40vw, 12rem",
 } as const;
 
@@ -56,17 +60,22 @@ export function CardFace({
   return (
     <div
       style={item.style}
-      className="mk-tilt relative isolate aspect-portrait overflow-hidden rounded-xl border border-line bg-creator-bg font-creator-body text-creator-fg"
+      className={cn(
+        "relative isolate aspect-portrait overflow-hidden border border-line bg-creator-bg font-creator-body text-creator-fg",
+        compact ? "rounded-xl" : "rounded-lg md:rounded-xl",
+      )}
     >
       <div className={cn("absolute inset-0 overflow-hidden", item.hero === "duotone" && "isolate bg-creator-bg")}>
         {item.photo ? (
           <MediaImage
             src={item.photo}
             alt=""
+            focal={item.focal}
             sizes={compact ? sizes.wall : sizes.grid}
             priority={priority}
             className={cn(
-              "transition-transform duration-slow ease-standard group-hover:scale-lift motion-reduce:transition-none",
+              // One move with the card's lift: same spring, same moment. Reduced motion: no zoom at all.
+              !logo && "transition-[scale] duration-spring ease-spring group-hover:scale-lift motion-reduce:transition-none motion-reduce:group-hover:scale-none",
               logo && "scale-lift blur-glass",
               item.hero === "duotone" && "grayscale contrast-125 mix-blend-screen",
               item.hero === "mono" && "grayscale",
@@ -87,13 +96,15 @@ export function CardFace({
       {/* The name sits on the page's own background, as it does on the page itself. */}
       <div aria-hidden className="absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-creator-bg from-30% to-transparent" />
 
-      <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-        <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-creator-glass px-2 py-1 text-caption font-semibold text-creator-fg backdrop-blur-glass">
+      {/* The chips line up with the name below. They sit on the page's own surface (not glass), so
+          their text keeps its contrast on any photo; a hairline in the page's line color frames them. */}
+      <div className={cn("absolute flex items-start justify-between gap-2", compact ? "inset-x-3 top-3" : "inset-x-3 top-3 sm:inset-x-4 sm:top-4")}>
+        <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-creator-line bg-creator-surface px-2 py-1 text-caption font-semibold text-creator-fg">
           <Icon icon={CATEGORY_ICONS[item.category]} size="sm" className="shrink-0" />
           {compact ? null : <span className="truncate max-sm:hidden">{label}</span>}
         </span>
         {compact ? null : (
-          <span className="shrink-0 rounded-full bg-creator-glass px-2 py-1 text-caption font-semibold text-creator-fg uppercase backdrop-blur-glass">
+          <span className="shrink-0 rounded-full border border-creator-line bg-creator-surface px-2 py-1 text-caption font-semibold text-creator-fg uppercase">
             {item.locale}
           </span>
         )}
@@ -108,28 +119,21 @@ export function CardFace({
           >
             {item.name}
           </p>
-          {compact ? null : <p className="line-clamp-1 text-caption text-creator-fg-muted sm:line-clamp-2">{item.tagline}</p>}
+          {/* One line, so names share a baseline across a row. Phones show the first part only: a
+              role ("App-Tipps"), never a list cut after its first dot. */}
+          {compact ? null : (
+            <>
+              <p className="line-clamp-1 text-caption text-creator-fg-muted sm:hidden">{item.tagline.split(" · ")[0]}</p>
+              <p className="line-clamp-1 text-caption text-creator-fg-muted max-sm:hidden">{item.tagline}</p>
+            </>
+          )}
         </div>
         {compact ? null : (
-          <span className="grid size-control-sm shrink-0 place-items-center rounded-full bg-creator-glass text-creator-fg backdrop-blur-glass transition-colors duration-standard ease-standard group-hover:bg-creator-accent group-hover:text-creator-accent-fg group-focus-visible:bg-creator-accent group-focus-visible:text-creator-accent-fg">
+          <span className="grid size-control-sm shrink-0 place-items-center rounded-full border border-creator-line bg-creator-glass text-creator-fg backdrop-blur-glass transition-colors max-sm:hidden duration-standard ease-standard group-hover:bg-creator-accent group-hover:text-creator-accent-fg group-focus-visible:bg-creator-accent group-focus-visible:text-creator-accent-fg">
             <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
           </span>
         )}
       </div>
     </div>
   );
-}
-
-/** The card leans towards the mouse a little (CSS does the motion; reduced motion keeps it flat). */
-export function tiltTowards(event: PointerEvent<HTMLElement>) {
-  if (event.pointerType !== "mouse") return;
-  const target = event.currentTarget;
-  const box = target.getBoundingClientRect();
-  target.style.setProperty("--tilt-x", (((event.clientX - box.left) / box.width) * 2 - 1).toFixed(3));
-  target.style.setProperty("--tilt-y", (((event.clientY - box.top) / box.height) * 2 - 1).toFixed(3));
-}
-
-export function tiltBack(event: PointerEvent<HTMLElement>) {
-  event.currentTarget.style.removeProperty("--tilt-x");
-  event.currentTarget.style.removeProperty("--tilt-y");
 }

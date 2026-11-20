@@ -54,7 +54,7 @@ export function ScrollRow({
   const edge = cn("pointer-events-none absolute inset-y-0 flex items-center from-50% to-transparent", fade);
   return (
     <div className={cn("relative min-w-0", className)}>
-      <div ref={scroller} role="group" aria-label={label} className="flex gap-2 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none]">
+      <div ref={scroller} role="group" aria-label={label} className="flex scroll-px-10 gap-2 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none] md:scroll-px-20">
         {children}
       </div>
       {edges.start ? null : (

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { EXAMPLES } from "@/features/examples/catalog";
-import { LOOKS } from "@/features/examples/looks";
+import { LOOKS, PEOPLE_LOOKS } from "@/features/examples/looks";
 import { Link } from "@/i18n/navigation";
 
 import { phoneSizes } from "./assets";
@@ -108,7 +108,7 @@ export function Templates() {
           href="/templates"
           className="inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
         >
-          {tExamples("seeAll", { count: Object.keys(LOOKS).length })}
+          {tExamples("seeAll", { count: Object.keys(LOOKS).length + Object.keys(PEOPLE_LOOKS).length })}
           <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
         </Link>
       </div>

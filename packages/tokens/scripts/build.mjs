@@ -124,6 +124,7 @@ function webModel(dictionary) {
 
   for (const t of byPath(dictionary, ["motion", "duration"])) light.push([`--duration-${t.path[2]}`, `${ms(t.$value)}ms`]);
   for (const t of byPath(dictionary, ["motion", "easing"])) light.push([`--ease-${t.path[2]}`, `cubic-bezier(${t.$value.join(", ")})`]);
+  for (const t of byPath(dictionary, ["motion", "delay"])) light.push([`--delay-${t.path[2]}`, `${ms(t.$value)}ms`]);
   // The iOS spring (motion.spring, also used by the Swift design system) as a CSS easing: the damped
   // oscillator sampled into linear(), lasting until it has settled to within 0.1 %.
   {
@@ -229,6 +230,9 @@ ${decls(m.light)}
   --animate-sheet-in: sheet-in var(--duration-spring) var(--ease-spring);
   --animate-sheet-out: sheet-out var(--duration-standard) var(--ease-exit) forwards;
   --animate-fade-out: fade-out var(--duration-standard) var(--ease-exit) forwards;
+  --animate-scrim-in: fade-in var(--duration-spring) var(--ease-standard);
+  --animate-page-in: page-in var(--duration-spring) var(--ease-spring);
+  --animate-spinner-in: fade-in var(--duration-standard) var(--ease-standard) var(--delay-spinner) both;
 
   @keyframes spin {
     to {
@@ -281,6 +285,14 @@ ${decls(m.light)}
   @keyframes fade-out {
     to {
       opacity: 0;
+    }
+  }
+
+  /* The next page in a preview: it comes in from the side it was asked for (--step: 1 or -1). */
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      translate: calc(var(--spacing-6) * var(--step, 1)) 0;
     }
   }
 }

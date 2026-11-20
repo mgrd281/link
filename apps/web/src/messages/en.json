@@ -17,7 +17,8 @@
       "label": "Theme",
       "light": "Light",
       "dark": "Dark"
-    }
+    },
+    "notifications": "Notifications ({hotkey})"
   },
   "brand": {
     "oneLiner": "One link. Everything you create."
@@ -772,7 +773,7 @@
         "price": "0 €",
         "per": "forever",
         "features": [
-          "All six templates",
+          "All templates",
           "Unlimited links and sections",
           "Music, shows, videos, shop links",
           "Cookie-free analytics",
@@ -1031,7 +1032,8 @@
       "login": "Sign in",
       "preparedTitle": "Your page is ready",
       "preparedLead": "The Linkyo team prepared it for you. Sign up with the email you gave us and everything is there right away.",
-      "preparedGoogle": "At launch this works with Google too: same email, same page."
+      "preparedGoogle": "At launch this works with Google too: same email, same page.",
+      "fromTemplate": "Your template is set. You'll add your photo, name and links next."
     },
     "login": {
       "title": "Welcome back",
@@ -2742,70 +2744,69 @@
   "examples": {
     "meta": {
       "title": "Templates & examples · Linkyo",
-      "description": "70+ example pages for creators, online stores, affiliate, marketing, developers, music, sport, shops, careers and well-known people. Look, try and use them as a template."
+      "description": "{count} templates for your link-in-bio page: creators, music, online stores, local shops and careers. Browse them and start free with the design you like."
     },
-    "eyebrow": "Templates & examples",
-    "title": "Find your look in 70+ examples",
-    "lead": "For creators, online stores, developers, shops, practices and careers. Every page has its own design: open it, scroll through, make it yours in one click.",
+    "eyebrow": "Every template is free",
+    "title": "Find your look among {count} templates",
+    "lead": "Open a template, look around, then start with its design – with your own photo and links.",
     "count": "{count} examples",
     "filter": "Filter by category",
     "all": "All",
     "categories": {
       "creators": "Creators",
-      "online": "Online business",
+      "online": "Selling online",
       "tech": "Tech & design",
       "music": "Music & podcasts",
       "sport": "Sport",
       "film": "Film & TV",
-      "business": "Business",
-      "public": "Public life",
+      "business": "Companies",
+      "public": "Politics & non-profits",
       "local": "Local businesses",
       "careers": "Careers",
-      "people": "Well-known people"
+      "people": "Famous people"
     },
     "languages": {
       "de": "German",
       "en": "English",
       "ar": "Arabic"
     },
-    "preview": "Preview: {name}",
-    "open": "Open page",
+    "preview": "Preview {name} – {category}, page in {language}",
+    "open": "Open full page",
     "use": "Use this template",
     "close": "Close preview",
-    "frame": "Example page {name}",
-    "fictional": "Examples are fictional (photos from Unsplash); any resemblance to real people is coincidental. Pages of well-known people are unofficial concepts from public sources, not affiliated with them; photos from Wikimedia Commons.",
-    "useHint": "You start with this design and your own content.",
-    "cta": "Nothing quite right? Start blank and shape the design in minutes.",
+    "frame": "Page preview: {name}",
+    "fictional": "People and businesses in the templates are fictional (photos from Unsplash); any resemblance to real people is coincidental. Pages of famous people are unofficial concepts from public sources, not affiliated with them; photos from Wikimedia Commons.",
+    "useHint": "You get the design; the photo, name and links are yours.",
     "ctaButton": "Sign up for free",
-    "seeAll": "See all {count} examples",
+    "seeAll": "See all {count} templates",
     "featured": "Featured examples",
     "badges": {
       "concept": "Concept",
-      "preview": "Preview"
+      "preview": "Prepared"
     },
     "badgeNotes": {
       "concept": "Unofficial concept from public sources: not the official page, not affiliated with the person.",
-      "preview": "A preview of a page we prepared for this person."
+      "preview": "A page we prepared for this person."
     },
-    "browse": "Browse examples",
+    "browse": "Browse templates",
     "stats": {
       "label": "At a glance",
-      "examples": "examples",
-      "designs": "designs",
-      "languages": "languages"
+      "examples": "{count, plural, one {template} other {templates}}",
+      "designs": "{count, plural, one {design} other {designs}}",
+      "languages": "{count, plural, one {language} other {languages}}"
     },
-    "galleryTitle": "All examples",
+    "galleryTitle": "Pick a template",
     "search": {
-      "label": "Search examples",
-      "placeholder": "Name or field",
+      "label": "Search templates",
+      "placeholder": "Name or profession, e.g. coach",
       "clear": "Clear search",
       "shortcut": "Press / to search"
     },
-    "results": "{count, plural, =0 {No results} one {# result} other {# results}}",
+    "results": "{count, plural, =0 {No templates found} one {# template} other {# templates}}",
     "empty": {
-      "title": "Nothing found",
-      "text": "Try another word, category or language.",
-      "reset": "Reset filters"
+      "title": "No matching template",
+      "text": "Try a field like “coach” or “music”, or see all templates.",
+      "reset": "Show all templates"
     },
     "scroll": {
       "back": "Previous categories",
@@ -2813,13 +2814,22 @@
     },
     "language": {
       "label": "Page language",
-      "all": "All"
+      "all": "All languages"
     },
-    "prev": "Previous example",
-    "next": "Next example",
+    "prev": "Previous template",
+    "next": "Next template",
     "position": "{index} of {total}",
-    "more": "Show {count} more",
-    "shownOf": "{shown} of {total} examples"
+    "more": "{count, plural, one {Show 1 more} other {Show # more}}",
+    "shownOf": "{shown} of {total} templates",
+    "newTab": "(opens in a new tab)",
+    "ctaTitle": "Nothing quite right?",
+    "ctaLead": "Tell us what you do – we'll pick a design, you fine-tune it.",
+    "keys": "Space scrolls · ←/→ switches template",
+    "glide": {
+      "pause": "Pause auto-scroll",
+      "play": "Auto-scroll the page"
+    },
+    "previewHint": "The page scrolls slowly by itself. Any key or touch stops it. Use the arrow keys to move to the next template."
   },
   "search": {
     "open": "Search people",
@@ -2835,7 +2845,7 @@
     "badges": {
       "example": "Example",
       "concept": "Concept",
-      "preview": "Preview"
+      "preview": "Prepared"
     },
     "pageIn": "Page in {language}",
     "loading": "Loading people",

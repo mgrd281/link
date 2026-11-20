@@ -12,7 +12,8 @@ import { STAR_LOOKS } from "@/features/previews/stars-looks";
 /** Accent colors come from the tokens (no raw colors in app code). */
 const SW = creatorTokens.swatches;
 
-export const CATEGORIES = ["creators", "online", "tech", "music", "sport", "film", "business", "public", "local", "careers", "people"] as const;
+/** In the order of the filter chips: the biggest audiences first. */
+export const CATEGORIES = ["creators", "music", "local", "online", "sport", "tech", "business", "careers", "film", "public", "people"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export interface Look {
@@ -29,7 +30,7 @@ export const LOOKS = {
   // The five newer templates, one example each (ADR 0054): first in the gallery.
   lenz: { kind: "music", category: "music", locale: "de", theme: { template: "studio" } },
   "mira-sol": { kind: "coach", category: "creators", locale: "en", theme: { template: "aura" } },
-  "jonas-ek": { kind: "designer", category: "business", locale: "de", theme: { template: "folio" } },
+  "jonas-ek": { kind: "designer", category: "tech", locale: "de", theme: { template: "folio" } },
   "rina-vex": { kind: "streamer", category: "creators", locale: "en", theme: { template: "signal" } },
   "dana-issa": { kind: "business", category: "local", locale: "ar", theme: { template: "bloom" } },
   // Spotlight: magazine-style pages of people, first in the gallery. Full-colour portraits on templates
@@ -115,6 +116,21 @@ export const LOOKS = {
 } as const satisfies Record<string, Look>;
 
 export type LookId = keyof typeof LOOKS;
+
+/**
+ * The gallery opens with these: the most vivid pages, one per template where possible (ADR 0054
+ * and 0055 pages included), then every other look in the order above.
+ */
+export const GALLERY_LEAD: readonly LookId[] = [
+  "lou-ferreira", "juno-kade", "salma-rahhal", "fenja-roth", "kai-moreno", "layal-mansour", "lenz", "nico-hale",
+  "yazan-khoury", "tomas-reyes", "rina-vex", "dana-issa", "merve-aksoy", "arjun-mehta", "mira-sol", "jonas-ek",
+];
+
+/** Pages of well-known people, those creators know best first. */
+export const PEOPLE_ORDER: readonly string[] = [
+  "taylor-swift", "mrbeast", "cristiano", "messi", "mo-salah", "nadine-njeim", "alshami", "taim-hassan", "nizar",
+  "elon-musk", "jeff-bezos", "friedrich-merz", "donald-trump",
+];
 
 export const isLook = (value: unknown): value is LookId => typeof value === "string" && value in LOOKS;
 

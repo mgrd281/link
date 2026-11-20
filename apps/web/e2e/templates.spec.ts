@@ -8,42 +8,42 @@ import { enterDemoCode } from "./auth";
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 test.describe("template gallery", () => {
-  test("shows about forty examples, filters by category and is accessible", async ({ page }) => {
+  test("shows all templates, filters by category and is accessible", async ({ page }) => {
     await page.goto("/en/templates");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("70+ examples");
-    const cards = page.getByRole("button", { name: /^Preview: / });
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/among \d+ templates/);
+    const cards = page.getByRole("button", { name: /^Preview / });
     // The grid shows the first twelve; the line under it counts them all.
-    const total = Number((await page.getByText(/^12 of \d+ examples$/).textContent())?.match(/of (\d+)/)?.[1]);
+    const total = Number((await page.getByText(/^12 of \d+ templates$/).textContent())?.match(/of (\d+)/)?.[1]);
     expect(total).toBeGreaterThanOrEqual(40);
     await page.getByRole("button", { name: /^Local businesses/ }).click();
     await expect(page.getByRole("button", { name: /^Local businesses/ })).toHaveAttribute("aria-pressed", "true");
     await expect(cards.first()).toBeVisible();
     expect(await cards.count()).toBeLessThan(20);
-    await expect(page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).last()).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Preview Bäckerei Sonnenkorn – / }).last()).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
   });
 
   test("search, language and category narrow the grid; nothing found offers a reset", async ({ page }) => {
     await page.goto("/en/templates");
-    const cards = page.getByRole("button", { name: /^Preview: / });
+    const cards = page.getByRole("button", { name: /^Preview / });
     const all = await cards.count();
-    const search = page.getByRole("searchbox", { name: "Search examples" });
+    const search = page.getByRole("searchbox", { name: "Search templates" });
     await search.fill("backerei");
-    await expect(page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Preview Bäckerei Sonnenkorn – / })).toBeVisible();
     expect(await cards.count()).toBeLessThan(5);
     await search.fill("");
     await expect(cards).toHaveCount(all);
 
-    await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: "Arabic" }).click();
-    await expect(page.getByRole("button", { name: "Preview: آدم نور" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" })).toHaveCount(0);
+    await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: /^Arabic/ }).click();
+    await expect(page.getByRole("button", { name: /^Preview آدم نور – / })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Preview Bäckerei Sonnenkorn – / })).toHaveCount(0);
     // The category chips count what the other filters leave.
     await expect(page.getByRole("button", { name: /^Local businesses/ })).toContainText(/\d/);
 
     await search.fill("zzzz nothing");
-    await expect(page.getByText("Nothing found")).toBeVisible();
-    await page.getByRole("button", { name: "Reset filters" }).click();
+    await expect(page.getByText("No matching template")).toBeVisible();
+    await page.getByRole("button", { name: "Show all templates" }).click();
     await expect(cards).toHaveCount(all);
     await expect(search).toHaveValue("");
   });
@@ -51,22 +51,22 @@ test.describe("template gallery", () => {
   test("the grid shows twelve, then twelve more on demand; focus moves to the first new card; a filter starts over", async ({ page }) => {
     await page.goto("/en/templates");
     const grid = page.locator("#gallery ul").first();
-    const cards = grid.getByRole("button", { name: /^Preview: / });
+    const cards = grid.getByRole("button", { name: /^Preview / });
     await expect(cards).toHaveCount(12);
-    const progress = page.getByText(/^12 of \d+ examples$/);
+    const progress = page.getByText(/^12 of \d+ templates$/);
     await expect(progress).toBeVisible();
     const total = Number((await progress.textContent())?.match(/of (\d+)/)?.[1]);
     expect(total).toBeGreaterThan(24);
     await page.getByRole("button", { name: "Show 12 more" }).click();
     await expect(cards).toHaveCount(24);
-    await expect(page.getByText(`24 of ${total} examples`)).toBeVisible();
+    await expect(page.getByText(`24 of ${total} templates`)).toBeVisible();
     // Keyboards carry on at the first new card.
     await expect(cards.nth(12)).toBeFocused();
     // A filter starts over at twelve (or fewer).
-    await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: "German" }).click();
+    await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: /^German/ }).click();
     expect(await cards.count()).toBeLessThanOrEqual(12);
     // To the end: no button once everything is shown.
-    await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: "All" }).click();
+    await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: "All languages" }).click();
     for (let shown = 12; shown < total; shown += 12) await page.getByRole("button", { name: /^Show \d+ more$/ }).click();
     await expect(cards).toHaveCount(total);
     await expect(page.getByRole("button", { name: /^Show \d+ more$/ })).toHaveCount(0);
@@ -75,7 +75,7 @@ test.describe("template gallery", () => {
   test("the preview flips through the examples and closes with Escape", async ({ page }) => {
     await page.goto("/en/templates");
     await page.getByRole("button", { name: /^Local businesses/ }).click();
-    await page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).click();
+    await page.getByRole("button", { name: /^Preview Bäckerei Sonnenkorn – / }).click();
     const dialog = page.getByRole("dialog");
     const frame = dialog.locator("iframe");
     await expect(frame).toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
@@ -84,7 +84,7 @@ test.describe("template gallery", () => {
     await expect(frame).not.toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
     await page.keyboard.press("ArrowLeft");
     await expect(frame).toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
-    await dialog.getByRole("button", { name: "Next example" }).first().click();
+    await dialog.getByRole("button", { name: "Next template" }).first().click();
     await expect(frame).not.toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
@@ -103,8 +103,8 @@ test.describe("template gallery", () => {
 
   test("a previewed page scrolls down by itself, and stops for good when the visitor scrolls", async ({ page }) => {
     await page.goto("/en/templates");
-    await page.getByRole("button", { name: /^Preview: / }).first().click();
-    const frame = page.locator('iframe[title^="Example page"]');
+    await page.getByRole("button", { name: /^Preview / }).first().click();
+    const frame = page.locator('iframe[title^="Page preview"]');
     const scrolled = () => frame.evaluate((element) => (element as HTMLIFrameElement).contentWindow?.scrollY ?? 0);
     await expect.poll(scrolled, { timeout: 10_000 }).toBeGreaterThan(80);
     // The visitor takes over: one turn of the wheel in the page, and it stays where they leave it.
@@ -122,8 +122,8 @@ test.describe("template gallery", () => {
   test("with reduced motion a previewed page stays at the top", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/en/templates");
-    await page.getByRole("button", { name: /^Preview: / }).first().click();
-    const frame = page.locator('iframe[title^="Example page"]');
+    await page.getByRole("button", { name: /^Preview / }).first().click();
+    const frame = page.locator('iframe[title^="Page preview"]');
     await expect(frame).toBeVisible();
     await page.waitForTimeout(2500);
     expect(await frame.evaluate((element) => (element as HTMLIFrameElement).contentWindow?.scrollY ?? 0)).toBe(0);
@@ -131,24 +131,24 @@ test.describe("template gallery", () => {
 
   test("well-known people are listed too, labelled as concepts, and start with their look", async ({ page }) => {
     await page.goto("/en/templates");
-    await page.getByRole("button", { name: /^Well-known people/ }).click();
-    const found = Number((await page.getByText(/^\d+ results$/).textContent())?.match(/\d+/)?.[0]);
+    await page.getByRole("button", { name: /^Famous people/ }).click();
+    const found = Number((await page.getByText(/^\d+ templates$/).textContent())?.match(/\d+/)?.[0]);
     expect(found).toBeGreaterThanOrEqual(13);
     // Twelve at first, the rest one tap away.
     await page.getByRole("button", { name: /^Show \d+ more$/ }).click();
-    await page.getByRole("button", { name: "Preview: Lionel Messi" }).click();
+    await page.getByRole("button", { name: /^Preview Lionel Messi – / }).click();
     const dialog = page.getByRole("dialog");
-    await expect(dialog.locator('iframe[title="Example page Lionel Messi"]')).toHaveAttribute("src", "/en/p/messi");
+    await expect(dialog.locator('iframe[title="Page preview: Lionel Messi"]')).toHaveAttribute("src", "/en/p/messi");
     await expect(dialog.getByText("Unofficial concept from public sources")).toBeVisible();
     await expect(dialog.getByRole("link", { name: /Use this template/ })).toHaveAttribute("href", "/en/signup?kind=other&look=messi");
   });
 
   test("preview a page, then start with exactly that template", async ({ page }) => {
     await page.goto("/en/templates");
-    await page.getByRole("searchbox", { name: "Search examples" }).fill("Sonnenkorn");
-    await page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).last().click();
+    await page.getByRole("searchbox", { name: "Search templates" }).fill("Sonnenkorn");
+    await page.getByRole("button", { name: /^Preview Bäckerei Sonnenkorn – / }).last().click();
     const dialog = page.getByRole("dialog");
-    await expect(dialog.locator('iframe[title="Example page Bäckerei Sonnenkorn"]')).toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
+    await expect(dialog.locator('iframe[title="Page preview: Bäckerei Sonnenkorn"]')).toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");
     const use = dialog.getByRole("link", { name: "Use this template" });
     await expect(use).toHaveAttribute("href", "/en/signup?kind=shop&look=baeckerei-sonnenkorn");
     await use.click();
@@ -175,6 +175,52 @@ test.describe("template gallery", () => {
     await page.goto("/en");
     await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Templates" }).click();
     await page.waitForURL("**/en/templates");
+  });
+
+  test("closing the preview brings focus back to the card of the page last shown", async ({ page }) => {
+    await page.goto("/en/templates");
+    const cards = page.locator("#gallery ul").first().getByRole("button", { name: /^Preview / });
+    await cards.nth(2).focus();
+    await page.keyboard.press("Enter");
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    // Prev and next are announced for screen readers.
+    await expect(dialog.getByRole("status")).toContainText(/\d+ of \d+/);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(cards.nth(3)).toBeFocused();
+  });
+
+  test("the self-scrolling preview has a pause button (WCAG 2.2.2)", async ({ page }) => {
+    await page.goto("/en/templates");
+    await page.getByRole("button", { name: /^Preview / }).first().click();
+    const dialog = page.getByRole("dialog");
+    const frame = dialog.locator('iframe[title^="Page preview"]');
+    const scrolled = () => frame.evaluate((element) => (element as HTMLIFrameElement).contentWindow?.scrollY ?? 0);
+    await expect.poll(scrolled, { timeout: 10_000 }).toBeGreaterThan(40);
+    await dialog.getByRole("button", { name: "Pause auto-scroll" }).first().click();
+    const at = await scrolled();
+    await page.waitForTimeout(1200);
+    expect(Math.abs((await scrolled()) - at)).toBeLessThan(4);
+    await expect(dialog.getByRole("button", { name: "Auto-scroll the page" }).first()).toBeVisible();
+  });
+
+  test("search finds pages by profession in any language", async ({ page }) => {
+    await page.goto("/en/templates");
+    const search = page.getByRole("searchbox", { name: "Search templates" });
+    // The lawyer's page is written in German; "lawyer" still finds it.
+    await search.fill("lawyer");
+    await expect(page.getByRole("button", { name: /^Preview Moritz Albrecht – / })).toBeVisible();
+    await search.fill("Entwickler");
+    await expect(page.getByRole("button", { name: /^Preview Arjun Mehta – / })).toBeVisible();
+  });
+
+  test("in Arabic the gallery opens with an Arabic page and the language filter runs right to left", async ({ page }) => {
+    await page.goto("/ar/templates");
+    const first = page.locator("#gallery ul").first().locator("li").first();
+    await expect(first.locator("[lang]").first()).toHaveAttribute("lang", "ar");
+    await expect(page.getByRole("radiogroup", { name: "لغة الصفحة" })).toHaveAttribute("dir", "rtl");
   });
 
   test("scrolled down, the filters stick flush under the header on a solid band, with no card between them", async ({ page }) => {

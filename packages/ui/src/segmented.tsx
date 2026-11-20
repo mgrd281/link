@@ -12,6 +12,8 @@ export interface SegmentedOption<T extends string> {
   icon?: LucideIcon;
   /** Hide the label visually (icon-only segment). */
   iconOnly?: boolean;
+  /** A fuller name for screen readers, when the visible label is short (a code like "DE"). */
+  ariaLabel?: string;
 }
 
 export interface SegmentedProps<T extends string> {
@@ -42,7 +44,7 @@ export function Segmented<T extends string>({ value, onValueChange, options, lab
         <ToggleGroup.Item
           key={option.value}
           value={option.value}
-          aria-label={option.iconOnly ? option.label : undefined}
+          aria-label={option.ariaLabel ?? (option.iconOnly ? option.label : undefined)}
           className={cn(
             "inline-flex items-center justify-center gap-2 rounded-sm border border-transparent px-3 font-medium text-fg-secondary",
             "transition-[background-color,border-color,color] duration-micro ease-standard",
