@@ -128,7 +128,8 @@ const GLIDE_DELAY = 1200;
  * Once a previewed page has loaded, it scrolls down by itself, top to bottom, as someone reading it
  * would (the page's own scroll, so its sections rise in as they would for a visitor). Once, never in
  * a loop. The visitor takes over at any time: a wheel turn, a touch, a click or a key in the page stops
- * it for good, and the mouse resting on the page holds it. Reduced motion: it never starts.
+ * it for good. (No hold under a resting mouse: after a click on a card the pointer often rests right
+ * where the preview opens, and the page would never start.) Reduced motion: it never starts.
  * (WCAG 2.2.2: one pass, stopped by any interaction.)
  */
 function useAutoScroll(frame: RefObject<HTMLIFrameElement | null>, page: string | null) {
@@ -138,38 +139,27 @@ function useAutoScroll(frame: RefObject<HTMLIFrameElement | null>, page: string 
     if (!element || !view || !page || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let raf = 0;
     let stopped = false;
-    let held = false;
     let last = 0;
     let position = view.scrollY;
     const stop = () => {
       stopped = true;
       cancelAnimationFrame(raf);
     };
-    const hold = () => {
-      held = true;
-    };
-    const release = () => {
-      held = false;
-    };
     const glide = (time: number) => {
       if (stopped) return;
       const elapsed = last ? time - last : 0;
       last = time;
-      if (!held) {
-        const end = view.document.documentElement.scrollHeight - view.innerHeight;
-        position = Math.min(end, position + elapsed * GLIDE);
-        view.scrollTo(0, position);
-        if (position >= end) {
-          stop();
-          return;
-        }
+      const end = view.document.documentElement.scrollHeight - view.innerHeight;
+      position = Math.min(end, position + elapsed * GLIDE);
+      view.scrollTo(0, position);
+      if (position >= end) {
+        stop();
+        return;
       }
       raf = requestAnimationFrame(glide);
     };
     const interactions = ["wheel", "touchstart", "pointerdown", "keydown"] as const;
     for (const type of interactions) view.addEventListener(type, stop, { passive: true });
-    element.addEventListener("pointerenter", hold);
-    element.addEventListener("pointerleave", release);
     const start = window.setTimeout(() => {
       raf = requestAnimationFrame(glide);
     }, GLIDE_DELAY);
@@ -177,8 +167,6 @@ function useAutoScroll(frame: RefObject<HTMLIFrameElement | null>, page: string 
       window.clearTimeout(start);
       stop();
       for (const type of interactions) view.removeEventListener(type, stop);
-      element.removeEventListener("pointerenter", hold);
-      element.removeEventListener("pointerleave", release);
     };
   }, [frame, page]);
 }

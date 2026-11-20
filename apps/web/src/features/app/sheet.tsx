@@ -33,7 +33,9 @@ export function useDragToDismiss(onClose: () => void) {
   const move = (offset: number, animate: boolean) => {
     const sheet = content.current;
     if (!sheet) return;
-    const transition = animate ? "translate var(--duration-spring) var(--ease-spring), opacity var(--duration-spring) var(--ease-spring)" : "none";
+    // Reduced motion: the sheet goes straight back instead of springing.
+    const spring = animate && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const transition = spring ? "translate var(--duration-spring) var(--ease-spring), opacity var(--duration-spring) var(--ease-spring)" : "none";
     sheet.style.transition = transition;
     sheet.style.translate = offset === 0 ? "" : `0 ${offset}px`;
     if (overlay.current) {

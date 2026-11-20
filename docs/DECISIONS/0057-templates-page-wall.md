@@ -55,8 +55,9 @@ search area busy: frames inside a frame. It also lacked a way to see a whole pag
 - **The preview reads itself.** Once a previewed page has loaded, it scrolls down by itself, top to
   bottom, once, at a calm pace (about half a minute for a long page). It is the page's own scroll, so
   its sections rise in as they would for a visitor.
-  - **The visitor takes over:** a wheel turn, a touch, a click or a key in the page stops it for good,
-    and the mouse resting on the page holds it.
+  - **The visitor takes over:** a wheel turn, a touch, a click or a key in the page stops it for good.
+    There is no hold under a resting mouse: after a click on a card, the pointer often rests where the
+    preview opens, and the page would never start.
   - **Reduced motion:** it never starts. This meets WCAG 2.2.2: a single pass, stopped by any
     interaction.
   - **Nothing on top inside the preview frame** (`data-linkyo-preview`):
@@ -65,4 +66,12 @@ search area busy: frames inside a frame. It also lacked a way to see a whole pag
     - The visitor sign-up bar stays away too; the panel beside the frame already offers "Use this
       template".
     - On the page itself both show as always.
+
+**Found while testing it:** the global reduced-motion rule gave every element a 120 ms transition.
+With `transition-property: all` by default, an image without any transition of its own gained one:
+its blur placeholder slid away as it loaded, exactly when less motion was asked for. Under load the
+reduced-motion e2e caught it running, and on html and body (the background fading as the page set its
+colours). Now only elements with a transition class are shortened; the stylesheet's own transitions
+already handle reduced motion. The sheet goes straight back instead of springing with reduced motion,
+and the test names any animation it finds.
 

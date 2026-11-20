@@ -63,8 +63,15 @@
     *::before,
     *::after {
       animation-duration: var(--duration-micro) !important;
-      transition-duration: var(--duration-micro) !important;
       scroll-behavior: auto !important;
+    }
+
+    /* Transitions get short only where an element has one (a transition class; the stylesheet's own
+       transitions handle reduced motion themselves). Forcing a duration on every element would give
+       each one transitions it never had, transition-property being "all" by default: the page's
+       background fading as it loads, a picture's placeholder sliding away. */
+    [class*="transition"] {
+      transition-duration: var(--duration-micro) !important;
     }
   }
 }

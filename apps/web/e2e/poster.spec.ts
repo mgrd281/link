@@ -62,8 +62,18 @@ test.describe("poster creator page", () => {
     for (const template of ["studio", "aura", "signal", "bloom", "folio"]) {
       await page.goto(`/en/directions/poster?chrome=0&template=${template}`);
       // Time-based animations only: the hero's scroll-linked fade stays (opacity only with reduced motion).
-      const moving = await page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === "running" && animation.timeline === document.timeline).length);
-      expect(moving, template).toBe(0);
+      // Named, so a failure says which animation ran (and on what) instead of only how many.
+      const moving = await page.evaluate(() =>
+        document
+          .getAnimations()
+          .filter((animation) => animation.playState === "running" && animation.timeline === document.timeline)
+          .map((animation) => {
+            const target = animation.effect instanceof KeyframeEffect ? animation.effect.target : null;
+            const name = animation instanceof CSSAnimation ? animation.animationName : animation instanceof CSSTransition ? `transition:${animation.transitionProperty}` : "script";
+            return `${name} on ${target?.tagName.toLowerCase() ?? "?"}.${(target?.getAttribute("class") ?? "").split(" ").slice(0, 4).join(".")}`;
+          }),
+      );
+      expect(moving, template).toEqual([]);
     }
     await context.close();
   });
