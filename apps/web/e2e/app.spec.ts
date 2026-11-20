@@ -248,6 +248,30 @@ test.describe("dashboard", () => {
     await expect(page.getByText("Big Buck Bunny – Short Film")).toHaveCount(0);
   });
 
+  test("View my page: the owner's bar steps aside while the privacy notice is open, then comes back down", async ({ page }) => {
+    await page.route("**/api/link-metadata**", (route) => route.fulfill({ json: {} }));
+    await signedIn(page);
+    await page.goto("/en/app/editor");
+    await addButton(page).click();
+    const sheet = page.getByRole("dialog", { name: "Add to your page" });
+    await sheet.getByLabel("Paste a link").fill("https://www.youtube.com/watch?v=aqz-KE-bpKQ");
+    await sheet.getByRole("button", { name: "Add", exact: true }).click();
+    await expect(sheet).toBeHidden();
+    await page.goto("/en/app/preview");
+    const notice = page.getByRole("region", { name: "Privacy" });
+    const bar = page.getByRole("navigation", { name: "Page actions" });
+    await expect(notice).toBeVisible();
+    // Both reachable, neither on top of the other: the bar waits at the top.
+    const [noticeBox, barBox] = [await notice.boundingBox(), await bar.boundingBox()];
+    expect(noticeBox && barBox && barBox.y + barBox.height <= noticeBox.y).toBe(true);
+    await notice.getByRole("button", { name: "Essential only" }).click();
+    await expect(notice).toBeHidden();
+    // Decided: the bar is back at the bottom.
+    const after = await bar.boundingBox();
+    const viewport = page.viewportSize();
+    expect(after && viewport && after.y > viewport.height / 2).toBe(true);
+  });
+
   test("paste a link from the Add sheet, edit it, see it live, undo a delete", async ({ page }) => {
     await signedIn(page);
     await page.goto("/en/app/editor");

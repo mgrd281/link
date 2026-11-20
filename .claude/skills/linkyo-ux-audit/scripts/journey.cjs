@@ -25,8 +25,11 @@ const L = {
   await step("signup", async () => {
     await page.goto(`${B}/${LOCALE}/signup?name=ux-${MODE}-${RUN}`); await page.waitForLoadState("networkidle"); await shot("03-signup");
     await page.locator("#signup-email").fill(`ux-${MODE}-${RUN}@example.com`);
-    await page.locator("#signup-password").fill("night-shift-42");
     await page.locator("form button[type=submit]").click();
+    // Passwordless: demo mode shows the 6-digit code on screen; enter it as from the email.
+    const shown = page.locator("[id$='-demo'] strong");
+    await shown.waitFor();
+    await page.locator('input[autocomplete="one-time-code"]').fill(((await shown.textContent()) || "").trim());
     await page.waitForURL(/\/app\/welcome/); await page.waitForLoadState("networkidle");
   });
   await step("welcome", async () => {

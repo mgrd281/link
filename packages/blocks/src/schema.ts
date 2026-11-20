@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { USERNAME_MAX, USERNAME_MIN, USERNAME_PATTERN } from "./rules";
+
 /**
  * Block schemas — shared by the editor, the renderer and the API (and mirrored in Swift).
  * `config` lives in Postgres as jsonb and is validated with these schemas on every write.
@@ -216,11 +218,7 @@ export type BlockType = Block["type"];
 export type BlockOf<T extends BlockType> = Extract<Block, { type: T }>;
 
 export const profileSchema = z.object({
-  username: z
-    .string()
-    .min(3)
-    .max(30)
-    .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, "lowercase letters, numbers and dashes"),
+  username: z.string().min(USERNAME_MIN).max(USERNAME_MAX).regex(USERNAME_PATTERN, "lowercase letters, numbers and dashes"),
   displayName: z.string().min(1).max(60),
   bio: z.string().max(160),
   location: z.string().max(60).optional(),
@@ -247,19 +245,6 @@ export type Profile = z.infer<typeof profileSchema>;
 
 export const pageSchema = z.object({ profile: profileSchema, blocks: z.array(blockSchema).max(200) });
 
-/**
- * Image source of a creator who has not added a photo yet. Renderers show a monogram instead of an
- * image, so a brand-new page never shows a broken or borrowed picture.
- */
-export const NO_IMAGE = "none:";
-export const hasImage = (image: { src: string } | undefined | null): image is { src: string } => !!image && image.src !== NO_IMAGE && image.src.length > 0;
-
-/** Names we never hand out as page addresses: product routes and words people could be misled by. */
-export const RESERVED_USERNAMES = new Set([
-  "about", "admin", "api", "app", "ar", "auth", "billing", "blog", "de", "design", "directions", "en", "forgot",
-  "help", "imprint", "impressum", "legal", "linkyo", "login", "logout", "official", "preview", "pricing", "privacy",
-  "report", "security", "settings", "signup", "status", "support", "terms", "welcome", "www",
-]);
 export type Page = z.infer<typeof pageSchema>;
 
 /** Blocks that should render now (visible + inside schedule). */

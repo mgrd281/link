@@ -1,4 +1,4 @@
-import { profileSchema, RESERVED_USERNAMES } from "@linkyo/blocks";
+import { isUsernameFormat, RESERVED_USERNAMES } from "@linkyo/blocks/rules";
 
 import type { UsernameStatus } from "./types";
 
@@ -11,7 +11,7 @@ export const normalizeEmail = (email: string) => email.trim().toLowerCase();
  */
 export function localUsernameStatus(input: string): UsernameStatus {
   const username = normalizeUsername(input);
-  if (!profileSchema.shape.username.safeParse(username).success) return "invalidUsername";
+  if (!isUsernameFormat(username)) return "invalidUsername";
   if (RESERVED_USERNAMES.has(username)) return "reservedUsername";
   return "ok";
 }
@@ -25,6 +25,15 @@ export function newProvisionalUsername(): string {
   const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
   const bytes = crypto.getRandomValues(new Uint8Array(6));
   return `page-${Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("")}`;
+}
+
+/** A name from an address, for a first guess: "mila-aurel" becomes "Mila Aurel". */
+export function nameFromUsername(username: string): string {
+  return username
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 /** An address suggested from a name: "Mila Aurel" becomes "mila-aurel" ("" when nothing usable is left). */

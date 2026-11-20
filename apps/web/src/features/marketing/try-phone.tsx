@@ -1,13 +1,14 @@
 "use client";
 
-import type { Page } from "@linkyo/blocks";
-import type { ResolvedCreatorTheme } from "@linkyo/tokens/creator";
+import { resolveCreatorTheme, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
 import { BatteryFull, CircleCheck, Lock, SignalHigh, Wifi } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
+
+import { buildTryPage, type TryPageInput } from "./try-page";
 
 /**
  * Where the phone should scroll to after a change: the top for the name and photo (the page's photo
@@ -26,17 +27,22 @@ export interface Reveal {
  * the screen has focus) but cannot be clicked: links and players stay inert in a preview.
  *
  * After a change it scrolls to where the change is, so the visitor sees what they just did.
+ *
+ * It builds the page and resolves the look itself: this module (with the renderer, the picture
+ * catalogue and the theme engine) loads only when the playground comes near (see Playground).
  */
 export function TryPhone({
-  page,
-  theme,
+  input,
+  config,
+  rtl,
   label,
   reveal,
   toast,
   className,
 }: {
-  page: Page;
-  theme: ResolvedCreatorTheme;
+  input: TryPageInput;
+  config: CreatorThemeConfig;
+  rtl: boolean;
   label: string;
   reveal: Reveal;
   /** A short message dropping in over the page, like a phone's notification ("Your page is live"). */
@@ -47,6 +53,8 @@ export function TryPhone({
   const inner = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState<number | null>(null);
+  const page = useMemo(() => buildTryPage(input), [input]);
+  const theme = useMemo(() => resolveCreatorTheme(config, { rtlScript: rtl }), [config, rtl]);
 
   // Fit the 390 px wide screen into whatever width the frame has.
   useEffect(() => {

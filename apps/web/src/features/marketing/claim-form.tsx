@@ -1,6 +1,6 @@
 "use client";
 
-import { profileSchema } from "@linkyo/blocks";
+import { isUsernameFormat } from "@linkyo/blocks/rules";
 import { Button, cn, Icon } from "@linkyo/ui";
 import { ArrowRight, CircleAlert, CircleCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -31,7 +31,7 @@ export function ClaimForm({ id, className, tone = "default" }: { id: string; cla
       onSubmit={(event) => {
         event.preventDefault();
         const name = value.trim().toLowerCase();
-        if (profileSchema.shape.username.safeParse(name).success) {
+        if (isUsernameFormat(name)) {
           setState({ kind: "ok", name });
           router.push(`/signup?name=${encodeURIComponent(name)}`);
         } else setState({ kind: "invalid" });

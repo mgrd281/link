@@ -47,7 +47,8 @@ describe("LocalAccountStore", () => {
     expect(snapshot.status).toBe("signedIn");
     if (snapshot.status !== "signedIn") return;
     expect(snapshot.account.email).toBe("mila@example.com");
-    expect(snapshot.site.page.profile).toMatchObject({ username: "mila", displayName: "mila", locale: "de" });
+    // The first name is made from the address ("mila" → "Mila"); the welcome flow asks for the real one.
+    expect(snapshot.site.page.profile).toMatchObject({ username: "mila", displayName: "Mila", locale: "de" });
     expect(snapshot.site.page.profile.avatar.src).toBe(NO_IMAGE);
     expect(snapshot.site.onboarded).toBe(false);
     // Codes live only in memory, never in storage.

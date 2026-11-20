@@ -28,13 +28,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { clearTryDraft, readTryDraft } from "@/features/account/try-draft";
 import { useUsernameStatus } from "@/features/account/auth/shared";
 import { accountStore } from "@/features/account/store";
 import type { AuthError } from "@/features/account/types";
-import { isProvisionalUsername, suggestUsername } from "@/features/account/username";
+import { isProvisionalUsername, nameFromUsername, suggestUsername } from "@/features/account/username";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
 import { PlatformGlyph } from "@/features/directions/shared/creator-kit";
 import { useRouter } from "@/i18n/navigation";
@@ -114,6 +114,15 @@ export function WelcomeScreen() {
   const addressValue = (address ?? (provisional ? suggestUsername(profile.profile.displayName) : account.username)).trim().toLowerCase();
   const addressStatus = useUsernameStatus(addressValue, account.username);
   const addressProblem = addressError ?? (addressValue.length >= 3 && addressStatus && addressStatus !== "ok" && addressStatus !== "checking" ? addressStatus : null);
+  // A name that is still the address is only a placeholder: a neutral address leaves the field empty
+  // (the address then follows what they type), a chosen one becomes a name ("mila-aurel" → "Mila Aurel").
+  const named = useRef(false);
+  useEffect(() => {
+    if (named.current) return;
+    named.current = true;
+    if (profile.profile.displayName !== account.username) return;
+    profile.change({ ...profile.profile, displayName: provisional ? "" : nameFromUsername(account.username) });
+  }, [profile, account.username, provisional]);
   const [kind, setKind] = useState<CreatorKind | null>(isKind(site.kind) ? site.kind : null);
   const starter = STARTERS[kind ?? "other"];
   const [handles, setHandles] = useState<Partial<Record<SocialPlatform, string>>>({});

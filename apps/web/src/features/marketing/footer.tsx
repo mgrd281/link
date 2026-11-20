@@ -4,8 +4,9 @@ import { useTranslations } from "next-intl";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { Link } from "@/i18n/navigation";
 
-const linkClass = "rounded-xs text-small text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring";
-const groupTitle = "text-caption font-semibold text-fg";
+// Each link is a 28 px row (comfortable for a finger), the rows 32 px apart as before.
+const linkClass = "inline-flex items-center self-start rounded-xs py-1 text-small text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring";
+const groupTitle = "mb-2 text-caption font-semibold text-fg";
 
 /**
  * The footer: the logo and its line, two short groups side by side, then one quiet band with the
@@ -22,7 +23,7 @@ export function MarketingFooter() {
           <p className="max-w-prose text-small text-pretty text-fg-secondary">{t("tagline")}</p>
         </div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-10">
-          <nav aria-label={t("product")} className="grid content-start gap-3">
+          <nav aria-label={t("product")} className="grid content-start gap-1">
             <p className={groupTitle}>{t("product")}</p>
             <Link href="/#features" className={linkClass}>
               {t("features")}
@@ -37,7 +38,7 @@ export function MarketingFooter() {
               {t("faq")}
             </Link>
           </nav>
-          <nav aria-label={t("resources")} className="grid content-start gap-3">
+          <nav aria-label={t("resources")} className="grid content-start gap-1">
             <p className={groupTitle}>{t("resources")}</p>
             <Link href="/directions/poster/dashboard" className={linkClass}>
               {t("editor")}

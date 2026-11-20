@@ -16,6 +16,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 type Choice = "media" | "essential";
 const KEY = "linkyo.privacy.v1";
 const OPEN_EVENT = "linkyo:privacy-open";
+const CLOSE_EVENT = "linkyo:privacy-close";
 const listeners = new Set<() => void>();
 
 const read = (): Choice | null => {
@@ -51,6 +52,30 @@ const subscribe = (listener: () => void) => {
 /** "media", "essential", null (not decided yet), or undefined while rendering on the server. */
 export function usePrivacyChoice(): Choice | null | undefined {
   return useSyncExternalStore(subscribe, read, () => undefined);
+}
+
+/**
+ * Whether the notice is on screen: not decided yet, or opened again from the footer. For bars that
+ * share the bottom of the screen with it (the owner's bar on "View my page"), so they can step aside.
+ */
+export function usePrivacyNoticeOpen(hasProviders: boolean): boolean {
+  const choice = usePrivacyChoice();
+  const [reopened, setReopened] = useState(false);
+  useEffect(() => {
+    const open = () => {
+      setReopened(true);
+    };
+    const close = () => {
+      setReopened(false);
+    };
+    window.addEventListener(OPEN_EVENT, open);
+    window.addEventListener(CLOSE_EVENT, close);
+    return () => {
+      window.removeEventListener(OPEN_EVENT, open);
+      window.removeEventListener(CLOSE_EVENT, close);
+    };
+  }, []);
+  return hasProviders && choice !== undefined && (choice === null || reopened);
 }
 
 /** Footer link that brings the notice back, so a decision can always be changed. */
@@ -117,6 +142,7 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
   const list = new Intl.ListFormat(locale, { type: "conjunction" }).format(providers);
   const decide = (next: Choice) => {
     save(next);
+    window.dispatchEvent(new Event(CLOSE_EVENT));
     setReopened(false);
     setDetails(false);
   };

@@ -53,7 +53,7 @@ export function Hero() {
     shot: CONCEPT_SHOTS[slug][locale],
   }));
   return (
-    <section aria-labelledby="hero-title" className="overflow-x-clip lg:overflow-x-visible">
+    <section aria-labelledby="hero-title" className="overflow-x-clip xl:overflow-x-visible">
       <div className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-10 px-5 pt-6 pb-12 md:px-10 md:pt-12 lg:mk-hero-fit lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:grid-rows-2 lg:gap-x-10 lg:gap-y-8 lg:py-8">
         {/* 1. What it is. */}
         <div className="grid min-w-0 grid-cols-1 justify-items-start gap-5 md:gap-6 lg:self-end">

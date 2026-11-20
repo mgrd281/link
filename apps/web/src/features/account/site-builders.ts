@@ -1,14 +1,20 @@
 import { NO_IMAGE, type Page } from "@linkyo/blocks";
 
 import type { SignUpInput, Site } from "./types";
+import { isProvisionalUsername, nameFromUsername } from "./username";
 
 const now = () => new Date().toISOString();
 
-/** A brand-new creator page: the address, no photo yet (monogram), no blocks. */
+/**
+ * A brand-new creator page: the address, a first name made from it ("mila-aurel" → "Mila Aurel"; a
+ * neutral address stays as it is until the welcome flow asks for the name), no photo yet (monogram),
+ * no blocks.
+ */
 export function starterSite(username: string, email: string, locale: Page["profile"]["locale"]): Site {
+  const displayName = isProvisionalUsername(username) ? username : nameFromUsername(username) || username;
   return {
     page: {
-      profile: { username, displayName: username, bio: "", avatar: { src: NO_IMAGE, alt: "" }, verified: false, locale },
+      profile: { username, displayName, bio: "", avatar: { src: NO_IMAGE, alt: "" }, verified: false, locale },
       blocks: [],
     },
     theme: { template: "nocturne" },

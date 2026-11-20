@@ -81,7 +81,7 @@ describe("product UI semantic colors (brand §4, WCAG 2.2 AA)", () => {
     expect(tokens.color.violet["400"]).toBe("#B35EFF");
     expect(tokens.color.lime["400"]).toBe("#D4FF3A");
     expect(tokens.color.success["500"]).toBe("#12B76A");
-    expect(tokens.color.warning["500"]).toBe("#F79009");
+    expect(tokens.color.warning["500"]).toBe("#E0A800");
     expect(tokens.color.danger["500"]).toBe("#F04438");
     expect(s.canvas.dark).toBe("#0A0A0B");
     expect(s.surface.dark).toBe("#141416");

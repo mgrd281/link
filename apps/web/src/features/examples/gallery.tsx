@@ -285,7 +285,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
                     aria-hidden
                     className="block rounded-xl transition-[translate] duration-standard ease-standard group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
                   >
-                    <CardFace item={item} label={label(item)} />
+                    <CardFace item={item} label={label(item)} priority={index < 2} />
                   </span>
                 </button>
               </li>

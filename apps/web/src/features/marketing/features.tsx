@@ -12,7 +12,7 @@ import { phoneSizes } from "./assets";
 import { CountUp } from "./count-up";
 import { EXAMPLE_SHOTS, type ExampleShot } from "./examples";
 import { Playground, type LookOption } from "./playground";
-import { TRY_LOOKS } from "./try-samples";
+import { TRY_LOOKS } from "./try-looks";
 
 const SW = creatorTokens.swatches;
 
@@ -202,7 +202,13 @@ export function TryIt() {
   const rtl = locale === "ar";
   const [head, ...tail]: LookOption[] = TRY_LOOKS.map(({ id, config }) => {
     const template = config.template ?? "nocturne";
-    return { id, config, name: creatorTokens.templates[template].label, description: names(`${template}.description`) };
+    return {
+      id,
+      config,
+      name: creatorTokens.templates[template].label,
+      description: names(`${template}.description`),
+      vars: resolveCreatorTheme(config, { rtlScript: rtl }).cssVars,
+    };
   });
   return (
     <section id="try" aria-labelledby="try-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-16 md:px-10 md:py-24">

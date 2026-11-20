@@ -1,4 +1,5 @@
-import { detectLink, type LinkIcon, type Platform } from "@linkyo/blocks";
+import type { LinkIcon, Platform } from "@linkyo/blocks";
+import { detectLink } from "@linkyo/blocks/detect";
 import { Icon } from "@linkyo/ui";
 import {
   BadgePercent,

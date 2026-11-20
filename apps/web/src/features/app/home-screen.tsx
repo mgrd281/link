@@ -158,7 +158,7 @@ export function HomeScreen() {
         title={t("stats.title")}
         id="stats-title"
         action={
-          <Badge tone="warning" size="sm">
+          <Badge size="sm">
             {t("stats.sample")}
           </Badge>
         }

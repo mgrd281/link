@@ -43,11 +43,14 @@ export function CardFace({
   item,
   label,
   compact = false,
+  priority = false,
 }: {
   item: GalleryItem;
   /** Category or badge, shown as a chip with the category's icon. */
   label: string;
   compact?: boolean;
+  /** The first cards on screen: their pictures load first (they are the largest thing in view). */
+  priority?: boolean;
 }) {
   const logo = item.hero === "logo" && item.logo;
   return (
@@ -61,6 +64,7 @@ export function CardFace({
             src={item.photo}
             alt=""
             sizes={compact ? sizes.wall : sizes.grid}
+            priority={priority}
             className={cn(
               "transition-transform duration-slow ease-standard group-hover:scale-lift motion-reduce:transition-none",
               logo && "scale-lift blur-glass",

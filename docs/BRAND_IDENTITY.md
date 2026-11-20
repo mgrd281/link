@@ -86,7 +86,7 @@ All colors are defined as design tokens (CSS variables + Swift `Color` assets). 
 | `lime-400` (**Spark**) | #D4FF3A | Rare accent: "Live", badges, celebration moments. Max 5 % of any screen. |
 | `gray-50…950` | neutral scale, slight warm tint | Surfaces, borders, secondary text |
 | `success` | #12B76A | Success |
-| `warning` | #F79009 | Warnings |
+| `warning` | #E0A800 (text `warning-700` #735500, 6.9:1 on white) | Warnings. Gold, not orange: Linkyo's own interface uses no orange ([ADR 0053](DECISIONS/0053-audit-nov-2026.md)) |
 | `danger` | #F04438 | Destructive, errors |
 
 ### 4.2 Dark mode (product UI)

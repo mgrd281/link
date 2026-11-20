@@ -222,7 +222,7 @@ export function AnalyticsScreen() {
       wide
       lead={
         <span className="flex flex-wrap items-center gap-2">
-          <Badge tone="warning" size="sm">
+          <Badge size="sm">
             {t("sample")}
           </Badge>
           {t("lead")}

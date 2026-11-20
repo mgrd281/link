@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { socialProfile } from "@/features/app/import-links";
 
-import { EXAMPLES, PERSONA, sampleBlock, sampleOf, TRY_LOOKS } from "./try-samples";
+import { TRY_LOOKS } from "./try-looks";
+import { sampleBlock } from "./try-page";
+import { EXAMPLES, PERSONA, sampleOf } from "./try-samples";
 
 describe("playground samples", () => {
   it("every example is detected as the block it shows, and recognised as a sample", () => {

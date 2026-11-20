@@ -1,4 +1,4 @@
-import { hasImage } from "@linkyo/blocks";
+import { hasImage } from "@linkyo/blocks/rules";
 
 import { LOOKS, PEOPLE_LOOKS, type LookId } from "@/features/examples/looks";
 import { resolveMedia } from "@/features/directions/shared/media";

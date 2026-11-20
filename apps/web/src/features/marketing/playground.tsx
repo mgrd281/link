@@ -1,7 +1,8 @@
 "use client";
 
-import { detectLink, NO_IMAGE, type Block, type Detection, type Page, type Platform } from "@linkyo/blocks";
-import { resolveCreatorTheme, type CreatorThemeConfig } from "@linkyo/tokens/creator";
+import type { Platform } from "@linkyo/blocks";
+import { detectLink, type Detection } from "@linkyo/blocks/detect";
+import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { cn, Icon, PlatformIcon } from "@linkyo/ui";
 import {
   ArrowRight,
@@ -25,23 +26,34 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { saveTryDraft } from "@/features/account/try-draft";
 import { suggestUsername } from "@/features/account/username";
-import { blockFromLink } from "@/features/app/blocks";
 import { ImageError, pickFiles, prepareImage } from "@/features/app/images";
 import { socialProfile } from "@/features/app/import-links";
 import type { SocialPlatform } from "@/features/app/kinds";
-import { fetchLinkMetadata, metadataPatch, metadataUrl, type LinkMetadata } from "@/features/app/metadata";
-import { mediaSizes, PlatformGlyph, platformName } from "@/features/directions/shared/creator-kit";
-import { resolveMedia } from "@/features/directions/shared/media";
+import { mediaSizes, PlatformGlyph, platformName } from "@/features/directions/shared/platforms";
 import { Link } from "@/i18n/navigation";
 
-import { TryPhone, type Reveal } from "./try-phone";
-import { EXAMPLES, PERSONA, sampleBlock, sampleOf, type SampleId } from "./try-samples";
+import type { TryItem, TryPageInput } from "./try-page";
+import type { Reveal } from "./try-phone";
+import { EXAMPLES, PERSONA, sampleOf } from "./try-samples";
+
+/** The phone with the real page: its own chunk (renderer, pictures, theme engine), loaded when needed. */
+const TryPhone = dynamic(() => import("./try-phone").then((module) => module.TryPhone), { ssr: false, loading: () => <PhoneFrame /> });
+
+/** The phone's frame while its page loads: the same size, so nothing moves when it arrives. */
+function PhoneFrame({ className }: { className?: string }) {
+  return (
+    <div aria-hidden className={cn("relative rounded-xl border border-line-strong bg-ink p-2", className)}>
+      <div className="aspect-phone rounded-lg bg-night-200" />
+    </div>
+  );
+}
 
 /** One look to try: a complete look from the template gallery, named after its template. */
 export interface LookOption {
@@ -49,6 +61,8 @@ export interface LookOption {
   config: CreatorThemeConfig;
   name: string;
   description: string;
+  /** The look's colors for its swatch, resolved on the server (the engine loads with the phone). */
+  vars: Record<string, string>;
 }
 
 type Tab = "name" | "links" | "look";
@@ -68,17 +82,14 @@ const FIRST_LOOK = "daylight";
 /** The demo's steps, each with its caption: photo, name and line, links, look, live. */
 const DEMO_STEPS = ["photo", "profile", "links", "look", "live"] as const;
 
-interface Added {
-  key: string;
-  url: string;
+/**
+ * A link as the controls keep it. A social profile (social) becomes an icon under the name; an
+ * example (sample) shows the persona's pictures and is never looked up or carried over; meta is the
+ * real title and picture of a pasted song or video, once the server found them.
+ */
+interface Added extends TryItem {
   type: string;
   platform: Platform | undefined;
-  /** A social profile: an icon under the name instead of a block. */
-  social: SocialPlatform | undefined;
-  /** An example link: shown with the persona's pictures, never looked up or carried over. */
-  sample: SampleId | undefined;
-  /** The real title and picture of a pasted song or video, once the server found them. */
-  meta?: LinkMetadata;
 }
 
 interface Photo {
@@ -157,6 +168,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   // The look's template, and the visitor's own color on it (null: the look's own accent).
   const [lookIndex, setLookIndex] = useState(() => Math.max(0, looks.findIndex((option) => option.id === FIRST_LOOK)));
   const [accent, setAccent] = useState<string | null>(null);
+  const [customVars, setCustomVars] = useState<Record<string, string> | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const [reveal, setReveal] = useState<Reveal>({ to: "top", at: 0 });
   // The demo: which step it is on, the cursor, the control it pretends to focus, the phone's message.
@@ -168,11 +180,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     setReveal((current) => ({ to, at: current.at + 1 }));
   };
 
-  const themes = useMemo(() => looks.map((option) => resolveCreatorTheme(option.config, { rtlScript: rtl })), [looks, rtl]);
   const base = looks[lookIndex] ?? looks[0];
-  const config: CreatorThemeConfig = accent ? { ...base.config, accent } : base.config;
-  const customTheme = useMemo(() => (accent ? resolveCreatorTheme({ ...base.config, accent }, { rtlScript: rtl }) : null), [accent, base, rtl]);
-  const theme = customTheme ?? themes[lookIndex] ?? resolveCreatorTheme(base.config, { rtlScript: rtl });
+  const config = useMemo<CreatorThemeConfig>(() => (accent ? { ...base.config, accent } : base.config), [accent, base]);
   const look = accent ? { ...base, name: tLook("custom"), description: tLook("customHint") } : base;
 
   const detection = draft.trim() ? detectLink(draft.trim()) : null;
@@ -182,50 +191,40 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   const displayName = name.trim() || t("preview.name");
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
 
-  // The page as the renderer gets it: the same profile and blocks a new account starts with.
-  const page = useMemo<Page>(() => {
-    const socials = items.flatMap((item) => (item.social ? [{ platform: item.social, url: item.url }] : []));
-    const blocks = items.flatMap((item): Block[] => {
-      if (item.social) return [];
-      if (item.sample && item.sample !== "instagram") {
-        return [
-          sampleBlock(item.sample, item.key, item.url, {
-            artist: displayName,
-            channel: (address || "junokade").replace(/-/g, "_"),
-            texts: { video: t("samples.video"), product: t("samples.product") },
-          }),
-        ];
-      }
-      const found = detectLink(item.url);
-      if (!found) return [];
-      const block = { ...blockFromLink(found, labels, displayName), id: item.key };
-      const patch = item.meta ? metadataPatch(block, block, item.meta) : null;
-      return [patch ? ({ ...block, ...patch } as Block) : block];
-    });
-    const line = tagline.trim();
-    return {
-      profile: {
-        username: address || "…",
-        displayName,
-        bio: "",
-        avatar: photo ? { src: photo.src, alt: "", tone: photo.tone } : { src: NO_IMAGE, alt: "" },
-        ...(line ? { tagline: line } : {}),
-        verified: false,
-        locale: locale === "ar" || locale === "en" ? locale : "de",
+  // What the phone builds the page from (see try-page.ts).
+  const phoneInput = useMemo<TryPageInput>(
+    () => ({ id, displayName, address, tagline, photo, items, locale, labels, texts: { video: t("samples.video"), product: t("samples.product") } }),
+    [id, displayName, address, tagline, photo, items, locale, labels, t],
+  );
+  // The phone loads a screen before the playground is in view.
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const element = root.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setNear(true);
+          observer.disconnect();
+        }
       },
-      blocks: socials.length > 0 ? [{ id: `${id}-socials`, type: "socials", visible: true, highlight: false, items: socials }, ...blocks] : blocks,
+      // One screen ahead.
+      { rootMargin: "100% 0%" },
+    );
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
     };
-  }, [items, displayName, tagline, address, photo, labels, locale, t, id]);
+  }, []);
 
   /** Songs and videos the visitor pasted get their real title and cover, as in the app. */
   const enrich = (item: Added) => {
     if (item.sample || item.social) return;
-    const found = detectLink(item.url);
-    const url = found ? metadataUrl(blockFromLink(found, labels, "")) : null;
-    if (!url) return;
-    void fetchLinkMetadata(url).then((meta) => {
-      if (meta) setItems((current) => current.map((candidate) => (candidate.key === item.key ? { ...candidate, meta } : candidate)));
-    });
+    void import("./try-page").then(({ findMetadata }) =>
+      findMetadata(item.url, labels).then((meta) => {
+        if (meta) setItems((current) => current.map((candidate) => (candidate.key === item.key ? { ...candidate, meta } : candidate)));
+      }),
+    );
   };
 
   const add = (text: string) => {
@@ -502,8 +501,13 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   // Any color, in the look that is showing: one result per frame while the picker is dragged.
   const pickColor = (value: string) => {
     cancelAnimationFrame(frame.current);
+    const look = base.config;
     frame.current = requestAnimationFrame(() => {
       setAccent(value);
+      // The swatch shows the whole look in that color; the engine loads on first use.
+      void import("@linkyo/tokens/creator").then(({ resolveCreatorTheme }) => {
+        setCustomVars(resolveCreatorTheme({ ...look, accent: value }, { rtlScript: rtl }).cssVars);
+      });
     });
   };
 
@@ -534,8 +538,9 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     // All panels share one cell, so switching tabs never changes the card's height.
     className: cn("col-start-1 row-start-1 grid content-start gap-3 transition-opacity duration-standard ease-standard motion-reduce:transition-none", tab === entry ? "opacity-100" : "invisible opacity-0"),
   });
+  // One line each: when the caption and the buttons do not fit side by side, the buttons go below.
   const demoButton =
-    "inline-flex h-control-sm items-center gap-2 rounded-full border border-line bg-surface px-3 text-small font-semibold text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed";
+    "inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-3 text-small font-semibold whitespace-nowrap text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed";
   const field =
     "h-control-lg w-full min-w-0 rounded-full border border-transparent bg-canvas-muted px-4 text-body text-fg outline-none transition-colors duration-micro placeholder:text-fg-tertiary focus-visible:border-link focus-visible:focus-ring";
 
@@ -552,7 +557,11 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       <div className="relative isolate grid justify-items-center overflow-hidden border-b border-line bg-canvas-muted max-lg:aspect-portrait max-lg:pt-8 lg:order-last lg:items-center lg:border-s lg:border-b-0 lg:py-12">
         <div aria-hidden className="mk-deck-halo w-[140%] border border-line" />
         <div aria-hidden className="mk-deck-halo w-[95%] bg-tint-teal" />
-        <TryPhone page={page} theme={theme} label={t("preview.label")} reveal={reveal} toast={toast} className="w-sidebar max-lg:self-start lg:w-3/5" />
+        {near ? (
+          <TryPhone input={phoneInput} config={config} rtl={rtl} label={t("preview.label")} reveal={reveal} toast={toast} className="w-sidebar max-lg:self-start lg:w-3/5" />
+        ) : (
+          <PhoneFrame className="w-sidebar max-lg:self-start lg:w-3/5" />
+        )}
       </div>
 
       <div className="grid content-start gap-4 p-4 sm:p-6 lg:content-center lg:p-8">
@@ -579,7 +588,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 {t("demo.play")}
               </button>
             ) : demo.state === "done" ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button type="button" onClick={play} className={demoButton}>
                   <Icon icon={RotateCcw} size="sm" className="rtl:-scale-x-100" />
                   {t("demo.replay")}
@@ -590,7 +599,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                     reset();
                     setAnnouncement(t("demo.cleared"));
                   }}
-                  className="inline-flex h-control-sm items-center gap-2 rounded-full px-3 text-small font-semibold text-fg-secondary transition-[color,background-color,scale] duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring active:scale-pressed"
+                  className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full px-3 text-small font-semibold whitespace-nowrap text-fg-secondary transition-[color,background-color,scale] duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring active:scale-pressed"
                 >
                   <Icon icon={Eraser} size="sm" />
                   {t("demo.clear")}
@@ -649,7 +658,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   )}
                 >
                   {photo ? (
-                    <Image key={photo.src} src={resolveMedia(photo.src)} alt="" fill sizes={mediaSizes.thumb} className="object-cover motion-safe:animate-pop-in" />
+                    <Image key={photo.src} src={photo.own ? photo.src : PERSONA.picture} alt="" fill sizes={mediaSizes.thumb} className="object-cover motion-safe:animate-pop-in" />
                   ) : (
                     <Icon icon={Camera} size="md" />
                   )}
@@ -850,7 +859,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                         chooseLook(index);
                       }}
                       onKeyDown={onLookKey}
-                      style={themes[index]?.cssVars}
+                      style={option.vars}
                       className={cn(
                         "grid size-touch-target shrink-0 place-items-center rounded-full border-emphasis p-1 transition-[border-color,scale] duration-standard ease-standard focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none",
                         selected ? "border-link" : "border-transparent hover:border-line-strong",
@@ -862,7 +871,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 })}
               </div>
               <label
-                style={customTheme?.cssVars}
+                style={customVars ?? undefined}
                 className={cn(
                   "relative grid size-touch-target shrink-0 cursor-pointer place-items-center rounded-full border-emphasis p-1 transition-[border-color,scale] duration-standard ease-standard has-[input:focus-visible]:focus-ring active:scale-pressed motion-reduce:transition-none",
                   accent ? "border-link" : "border-transparent hover:border-line-strong",
