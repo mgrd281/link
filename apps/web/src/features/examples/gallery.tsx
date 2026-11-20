@@ -41,6 +41,11 @@ const motion = (): ScrollBehavior => (reducedMotion() ? "auto" : "smooth");
 const typing = (target: EventTarget | null) =>
   target !== null && "closest" in target && (target as Element).closest("input, textarea, select, [contenteditable]") !== null;
 
+/** Widgets in a previewed page that use the arrow keys themselves (month tabs, scrolling rails, players). */
+const ARROW_WIDGETS = "[role=tablist], [role=radiogroup], [role=slider], [role=listbox], [role=menu], [role=grid], [role=region], [role=toolbar], video, audio";
+const ownsArrows = (target: EventTarget | null) =>
+  target !== null && "closest" in target && (target as Element).closest(ARROW_WIDGETS) !== null;
+
 /** The search box. On phones it sits above the filters; on larger screens inside the sticky bar. */
 function SearchField({
   id,
@@ -153,21 +158,26 @@ const FRAME_CAP = 34;
  * out (as the glide easing), once, never in a loop. The visitor takes over at any time: a wheel turn,
  * a touch, a click or a key in the page, or any key or tap in the preview around it, pauses it; the
  * pause button does the same and starts it again (WCAG 2.2.2). Reduced motion: it never starts.
+ * Reaching the end pauses it too, and marks `ended`, so turning to the next page starts that one.
+ * Only our own page is touched: after a link in it was followed, the frame holds another site.
  */
 function useAutoScroll(
   frame: RefObject<HTMLIFrameElement | null>,
   page: string | null,
   paused: boolean,
   setPaused: Dispatch<SetStateAction<boolean>>,
+  ended: RefObject<boolean>,
 ) {
   useEffect(() => {
-    const view = frame.current?.contentWindow;
-    if (!view || !page || paused || reducedMotion()) return;
+    const element = frame.current;
+    const doc = element?.contentDocument;
+    const view = doc?.defaultView;
+    if (!element || !doc || !view || !page || paused || reducedMotion()) return;
     let raf = 0;
     let began = 0;
     let last = 0;
     let position = view.scrollY;
-    const root = view.document.documentElement;
+    const root = doc.documentElement;
     let end = root.scrollHeight - view.innerHeight;
     // At the end already (played through before): start again from the top.
     if (position >= end - 1) {
@@ -180,6 +190,8 @@ function useAutoScroll(
     });
     resize.observe(root);
     const glide = (time: number) => {
+      // A link in the page was followed (with a screen reader, say, so nothing paused it): stop here.
+      if (element.contentDocument !== doc) return;
       if (!began) began = time;
       const elapsed = last ? Math.min(time - last, FRAME_CAP) : 0;
       last = time;
@@ -189,6 +201,7 @@ function useAutoScroll(
       position = Math.min(end, position + elapsed * GLIDE * rampIn * rampOut);
       view.scrollTo(0, position);
       if (position >= end) {
+        ended.current = true;
         setPaused(true);
         return;
       }
@@ -213,9 +226,10 @@ function useAutoScroll(
       cancelAnimationFrame(raf);
       resize.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
-      for (const type of interactions) view.removeEventListener(type, takeOver);
+      // The frame may hold another site by now; its window is out of reach then, and so are the listeners.
+      if (element.contentDocument === doc) for (const type of interactions) view.removeEventListener(type, takeOver);
     };
-  }, [frame, page, paused, setPaused]);
+  }, [frame, page, paused, setPaused, ended]);
 }
 
 /** Cards per step: a full last row with two, three or four columns. */
@@ -239,6 +253,8 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
   // The grid follows the search once typing pauses: the results come in as one wave, not card by card.
   const [settled, setSettled] = useState("");
   const [open, setOpen] = useState<GalleryItem | null>(null);
+  // The page the sheet shows: it stays while the sheet slides away, so a closing sheet is never empty.
+  const [sheet, setSheet] = useState<GalleryItem | null>(null);
   const [loaded, setLoaded] = useState<string | null>(null);
   const [limit, setLimit] = useState(STEP);
   const [paused, setPaused] = useState(false);
@@ -255,6 +271,8 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
   const lastShown = useRef<string | null>(null);
   const warmed = useRef(new Set<string>());
   const frameKey = useRef<(event: globalThis.KeyboardEvent) => void>(() => undefined);
+  // The glide stopped because the page was read to its end (not because the visitor paused it).
+  const ended = useRef(false);
 
   useEffect(() => {
     const id = window.setTimeout(() => setSettled(query), tokens.motion.duration.standard);
@@ -344,29 +362,35 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
     document.head.append(link);
   };
 
-  const deck = open && shown.includes(open) ? shown : items;
-  const position = open ? deck.indexOf(open) : -1;
+  const current = open ?? sheet;
+  const deck = current && shown.includes(current) ? shown : items;
+  const position = current ? deck.indexOf(current) : -1;
   const show = (item: GalleryItem) => {
     if (open?.slug !== item.slug) setLoaded(null);
     setOpen(item);
+    setSheet(item);
   };
   const openCard = (item: GalleryItem, button: HTMLButtonElement) => {
     haptic();
     opener.current = button;
     setStepped(false);
+    ended.current = false;
     setPaused(false);
     setDirection(1);
     setLoaded(null);
     setOpen(item);
+    setSheet(item);
   };
-  const close = () => {
-    setOpen(null);
-    setLoaded(null);
-  };
+  const close = () => setOpen(null);
   const step = (delta: 1 | -1) => {
     if (position < 0) return;
     const next = deck[(position + delta + deck.length) % deck.length];
     if (!next || next === open) return;
+    // A page read to its end does not keep the next one still: stepping on starts the glide again.
+    if (ended.current) {
+      ended.current = false;
+      setPaused(false);
+    }
     // The next page comes in from the side it was asked for (mirrored in Arabic).
     const rtl = document.documentElement.dir === "rtl";
     setDirection(rtl ? (delta === 1 ? -1 : 1) : delta);
@@ -382,7 +406,9 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
         close();
         return;
       }
-      if ((event.key !== "ArrowLeft" && event.key !== "ArrowRight") || typing(event.target)) return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      // The page's own tabs, rails and players keep their arrow keys.
+      if (event.defaultPrevented || typing(event.target) || ownsArrows(event.target)) return;
       event.preventDefault();
       stepByKey(event.key, document.documentElement.dir === "rtl");
     };
@@ -396,7 +422,7 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
       return;
     }
     // With the preview itself focused, the scroll keys scroll the page inside it.
-    const view = frame.current?.contentWindow;
+    const view = frame.current?.contentDocument?.defaultView;
     if (!view || event.target !== event.currentTarget) return;
     const screen = view.innerHeight * 0.85;
     const line = view.innerHeight / 10;
@@ -428,7 +454,7 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
   }, []);
 
   // The previewed page scrolls down by itself once it has loaded (see useAutoScroll).
-  useAutoScroll(frame, open !== null && loaded === open.slug ? open.slug : null, paused, setPaused);
+  useAutoScroll(frame, open !== null && loaded === open.slug ? open.slug : null, paused, setPaused, ended);
   // The preview on phones: pull it down (its top bar or its action panel) to close it, as with every sheet.
   const { content: previewSheet, overlay: previewScrim, handle: previewHandle } = useDragToDismiss(close);
   const searchProps = {
@@ -468,7 +494,10 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
       label={playLabel}
       variant="secondary"
       data-keep-glide=""
-      onClick={() => setPaused((now) => !now)}
+      onClick={() => {
+        ended.current = false;
+        setPaused((now) => !now);
+      }}
       className={cn("rounded-full motion-reduce:hidden", className)}
     />
   );
@@ -601,14 +630,17 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
             // Any key or tap in the preview pauses the self-scrolling page, except turning the page
             // and the pause button itself.
             onKeyDownCapture={(event) => {
-              if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Escape") setPaused(true);
+              if (event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "Escape") return;
+              const activates = event.key === "Enter" || event.key === " ";
+              if (activates && event.target instanceof Element && event.target.closest("[data-keep-glide]")) return;
+              setPaused(true);
             }}
             onPointerDownCapture={(event) => {
               if (!(event.target instanceof Element && event.target.closest("[data-keep-glide]"))) setPaused(true);
             }}
             // Large screens: a click on the dimmed space around the phone and the panel closes it.
             onPointerDown={(event) => {
-              if (event.target === event.currentTarget && window.matchMedia("(width >= 64rem)").matches) close();
+              if (event.target === event.currentTarget && window.matchMedia(`(min-width: ${tokens.breakpoint.lg}px)`).matches) close();
             }}
             // Focus the dialog itself, not the first tabbable element: on large screens that is the
             // page frame, and keys pressed inside a frame never reach Escape or the arrow keys here.
@@ -632,18 +664,22 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
               "motion-reduce:animate-fade-in data-[state=closed]:motion-reduce:animate-fade-out",
             )}
           >
-            {open ? (
+            {current ? (
               <>
-                <Dialog.Description className="sr-only">{t("previewHint")}</Dialog.Description>
+                {/* No word about a self-scrolling page where it never moves (reduced motion). */}
+                <Dialog.Description className="sr-only">
+                  <span className="motion-reduce:hidden">{t("previewGlide")} </span>
+                  {t("previewHint")}
+                </Dialog.Description>
                 {/* Prev and next are announced: which page, and where in the list. */}
                 <p role="status" className="sr-only">
-                  {stepped ? `${open.name}, ${t("position", { index: position + 1, total: deck.length })}` : ""}
+                  {stepped ? `${current.name}, ${t("position", { index: position + 1, total: deck.length })}` : ""}
                 </p>
                 <div {...previewHandle} className="grid touch-none gap-2 pt-2 lg:hidden">
                   <span aria-hidden className="mx-auto h-1 w-10 rounded-full bg-line-strong" />
                   <div className="flex items-center gap-2">
                     <Dialog.Title className="min-w-0 flex-1 truncate rounded-full border border-line bg-surface-elevated px-3 py-1 text-small font-semibold text-fg">
-                      {open.name}
+                      {current.name}
                     </Dialog.Title>
                     {playButton()}
                     <IconButton icon={ChevronLeft} label={t("prev")} variant="secondary" data-keep-glide="" onClick={() => step(-1)} className="rounded-full rtl:-scale-x-100" />
@@ -653,35 +689,35 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
                     </Dialog.Close>
                   </div>
                 </div>
-                {/* The panel comes first for the keyboard (its main action is a Tab away), last on screen. */}
+                {/* The panel comes before the page for the keyboard (Close, then its main action), last on screen. */}
                 <div
                   {...previewHandle}
                   className="order-last mx-auto grid w-full max-w-preview touch-none gap-2 rounded-xl border border-line bg-surface-elevated p-3 text-fg lg:mx-0 lg:w-(--container-preview) lg:touch-auto lg:gap-4 lg:p-6"
                 >
                   <div className="hidden items-start justify-between gap-2 lg:flex">
                     <div className="grid min-w-0 gap-2">
-                      <span key={`chip-${open.slug}`} className="inline-flex items-center gap-2 justify-self-start rounded-full bg-selected px-3 py-1 text-caption font-semibold text-selected-fg motion-safe:animate-fade-in">
-                        <Icon icon={CATEGORY_ICONS[open.category]} size="sm" />
-                        {label(open)} · {t(`languages.${open.locale}`)}
+                      <span key={`chip-${current.slug}`} className="inline-flex items-center gap-2 justify-self-start rounded-full bg-selected px-3 py-1 text-caption font-semibold text-selected-fg motion-safe:animate-fade-in">
+                        <Icon icon={CATEGORY_ICONS[current.category]} size="sm" />
+                        {label(current)} · {t(`languages.${current.locale}`)}
                       </span>
-                      <p key={`name-${open.slug}`} dir="auto" className="text-h3 text-balance motion-safe:animate-fade-in">
-                        {open.name}
+                      <p key={`name-${current.slug}`} dir="auto" className="text-h3 text-balance motion-safe:animate-fade-in">
+                        {current.name}
                       </p>
                     </div>
                     <Dialog.Close asChild>
                       <IconButton icon={X} label={t("close")} className="rounded-full" />
                     </Dialog.Close>
                   </div>
-                  {open.badge ? <p className="text-caption text-fg-secondary">{t(`badgeNotes.${open.badge}`)}</p> : null}
+                  {current.badge ? <p className="text-caption text-fg-secondary">{t(`badgeNotes.${current.badge}`)}</p> : null}
                   <Button asChild variant="primary" size="lg" block className="rounded-full">
-                    <Link href={open.signup}>
+                    <Link href={current.signup}>
                       {t("use")}
                       <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
                     </Link>
                   </Button>
                   <p className="text-center text-caption text-fg-secondary lg:text-start">{t("useHint")}</p>
                   <a
-                    href={`/${open.locale}/p/${open.slug}`}
+                    href={`/${current.locale}/p/${current.slug}`}
                     target="_blank"
                     rel="noopener"
                     className="inline-flex h-control-md items-center justify-center gap-2 rounded-full px-4 text-small font-semibold text-fg transition-colors duration-micro hover:bg-hover focus-visible:focus-ring"
@@ -703,33 +739,33 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
                 {/* The phone frame takes the next page's own background at once; a spinner shows only if
                     loading takes a while; the page comes in from the side it was asked for. */}
                 <div
-                  style={open.style}
+                  style={current.style}
                   className="mx-auto grid min-h-0 w-full max-w-preview flex-1 grid-cols-1 grid-rows-1 overflow-hidden rounded-xl border border-line-strong bg-creator-bg p-1 transition-colors duration-standard ease-standard lg:mx-0 lg:aspect-phone lg:h-auto lg:max-h-full lg:flex-none"
                 >
-                  {loaded === open.slug ? null : (
-                    <span className="col-start-1 row-start-1 place-self-center motion-safe:animate-spinner-in">
+                  {loaded === current.slug ? null : (
+                    <span className="col-start-1 row-start-1 place-self-center animate-spinner-in">
                       <Spinner className="size-icon-lg text-creator-fg-muted" />
                     </span>
                   )}
                   <iframe
                     ref={frame}
                     // A new frame per page: no history entries pile up in the visitor's back button.
-                    key={open.slug}
+                    key={current.slug}
                     data-linkyo-preview=""
-                    title={t("frame", { name: open.name })}
-                    src={`/${open.locale}/p/${open.slug}`}
+                    title={t("frame", { name: current.name })}
+                    src={`/${current.locale}/p/${current.slug}`}
                     onLoad={(event) => {
-                      const view = event.currentTarget.contentWindow;
+                      const view = event.currentTarget.contentDocument?.defaultView;
                       // The page inside scrolls without a grey bar at its edge: a preview, not a window.
                       view?.document.documentElement.classList.add("mk-no-scrollbar");
                       view?.addEventListener("keydown", (key) => frameKey.current(key));
-                      setLoaded(open.slug);
+                      setLoaded(current.slug);
                       // The pages either side are fetched ahead, so flipping is quick.
                       warm(deck[(position + 1) % deck.length]);
                       warm(deck[(position - 1 + deck.length) % deck.length]);
                     }}
                     style={{ "--step": direction } as CSSProperties}
-                    className={cn("col-start-1 row-start-1 size-full rounded-lg", loaded === open.slug ? "motion-safe:animate-page-in" : "opacity-0")}
+                    className={cn("col-start-1 row-start-1 size-full rounded-lg", loaded === current.slug ? "motion-safe:animate-page-in" : "opacity-0")}
                   />
                 </div>
               </>

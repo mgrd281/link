@@ -34,7 +34,7 @@ export function GalleryRenderer({ page, theme, preview = false }: { page: Page; 
       <div className="mx-auto max-w-creator px-creator-gutter">
         <header className="grid justify-items-center gap-5 pt-16 pb-10 text-center @prose:pt-24">
           <div className="relative size-avatar-xl overflow-hidden rounded-full border border-creator-line bg-creator-surface-2 @prose:size-avatar-2xl">
-            <MediaImage src={profile.avatar.src} alt={profile.avatar.alt} sizes={mediaSizes.avatar} priority={!preview} />
+            <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt={profile.avatar.alt} sizes={mediaSizes.avatar} priority={!preview} />
           </div>
           <div className="grid gap-3">
             <h1
@@ -118,7 +118,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
         <article className={cn(card, "grid gap-5 p-4")}>
           <div className="flex items-center gap-4">
             <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-md @preview:w-32">
-              <MediaImage src={block.cover.src} alt={block.cover.alt} sizes={mediaSizes.cover} />
+              <MediaImage src={block.cover.src} focal={block.cover.focal} alt={block.cover.alt} sizes={mediaSizes.cover} />
             </div>
             <div className="grid min-w-0 gap-1">
               <p className="text-caption font-medium tracking-wide text-creator-accent-text uppercase">
@@ -221,7 +221,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
             provider="YouTube"
             title={block.title}
             className="aspect-video"
-            poster={<MediaImage src={block.poster.src} alt="" sizes={mediaSizes.column} />}
+            poster={<MediaImage src={block.poster.src} focal={block.poster.focal} alt="" sizes={mediaSizes.column} />}
           >
             {block.duration ? (
               <span className="rounded-full bg-creator-glass px-2 py-1 font-mono text-creator-fg backdrop-blur-glass">
@@ -245,7 +245,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
                   provider="YouTube"
                   title={item.title}
                   className="aspect-short rounded-md"
-                  poster={<MediaImage src={item.poster.src} alt="" sizes={mediaSizes.third} />}
+                  poster={<MediaImage src={item.poster.src} focal={item.poster.focal} alt="" sizes={mediaSizes.third} />}
                 />
                 <span className="line-clamp-2 text-caption text-creator-fg-muted">
                   {item.title}
@@ -261,7 +261,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
       return (
         <a href={block.url} className={cn(card, "flex items-center gap-4 p-3 transition-colors duration-standard hover:border-creator-line-strong focus-visible:focus-ring")}>
           <span className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-md">
-            <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.thumb} />
+            <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.thumb} />
           </span>
           <span className="grid min-w-0 flex-1 gap-1">
             <span className="line-clamp-2 text-body font-medium">{block.title}</span>
@@ -277,7 +277,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
       return (
         <a href={block.url} className={cn(card, "group grid transition-colors duration-standard hover:border-creator-line-strong focus-visible:focus-ring")}>
           <span className="relative aspect-video">
-            <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.column} />
+            <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.column} />
           </span>
           <span className="grid gap-1 p-4">
             <span className="font-creator-display text-h3" style={{ fontWeight: "var(--creator-display-weight)" }}>
@@ -310,7 +310,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
     case "image":
       return (
         <div className={cn(card, "relative aspect-portrait")}>
-          <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.column} />
+          <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.column} />
         </div>
       );
     case "gallery":
@@ -318,7 +318,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
         <ul className="grid grid-cols-2 gap-2">
           {block.images.map((image) => (
             <li key={image.src} className="relative aspect-square overflow-hidden rounded-md">
-              <MediaImage src={image.src} alt={image.alt} sizes={mediaSizes.half} />
+              <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={mediaSizes.half} />
             </li>
           ))}
         </ul>

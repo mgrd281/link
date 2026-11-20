@@ -210,6 +210,42 @@ test.describe("template gallery", () => {
     await expect(dialog.getByRole("button", { name: "Auto-scroll the page" }).first()).toBeVisible();
   });
 
+  test("the pause button works from the keyboard too, and starts the page again", async ({ page }) => {
+    await page.goto("/en/templates");
+    await page.getByRole("button", { name: /^Preview / }).first().click();
+    const dialog = page.getByRole("dialog");
+    const frame = dialog.locator('iframe[title^="Page preview"]');
+    const scrolled = () => frame.evaluate((element) => (element as HTMLIFrameElement).contentWindow?.scrollY ?? 0);
+    await expect.poll(scrolled, { timeout: 10_000 }).toBeGreaterThan(40);
+    await dialog.getByRole("button", { name: "Pause auto-scroll" }).first().focus();
+    await page.keyboard.press("Enter");
+    await expect(dialog.getByRole("button", { name: "Auto-scroll the page" }).first()).toBeFocused();
+    const at = await scrolled();
+    await page.waitForTimeout(1200);
+    expect(Math.abs((await scrolled()) - at)).toBeLessThan(4);
+    await page.keyboard.press("Enter");
+    await expect(dialog.getByRole("button", { name: "Pause auto-scroll" }).first()).toBeFocused();
+    await expect.poll(scrolled, { timeout: 10_000 }).toBeGreaterThan(at + 20);
+  });
+
+  test("inside the preview, the page's own month tabs keep the arrow keys", async ({ page }) => {
+    await page.goto("/en/templates");
+    await page.getByRole("searchbox", { name: "Search templates" }).fill("Rafael");
+    await page.getByRole("button", { name: /^Preview Rafael Duarte – / }).click();
+    const dialog = page.getByRole("dialog");
+    const tabs = dialog.frameLocator('iframe[title="Page preview: Rafael Duarte"]').getByRole("tab");
+    await tabs.first().focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(tabs.nth(1)).toBeFocused();
+    // Still the same page: the arrow moved the tab, not the gallery.
+    await expect(dialog.locator('iframe[title="Page preview: Rafael Duarte"]')).toBeVisible();
+  });
+
+  test("a page's hero keeps the face of an off-centre photo in view (focal point)", async ({ page }) => {
+    await page.goto("/de/p/hanna-berger");
+    await expect(page.getByRole("img", { name: "Hanna Berger" }).first()).toHaveCSS("object-position", "72% 38%");
+  });
+
   test("search finds pages by profession in any language", async ({ page }) => {
     await page.goto("/en/templates");
     const search = page.getByRole("searchbox", { name: "Search templates" });

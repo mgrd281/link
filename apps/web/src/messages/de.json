@@ -2829,7 +2829,8 @@
       "pause": "Automatisches Scrollen anhalten",
       "play": "Seite automatisch scrollen"
     },
-    "previewHint": "Die Seite scrollt langsam von selbst. Jede Taste oder Berührung hält sie an. Mit den Pfeiltasten blätterst du zur nächsten Vorlage."
+    "previewGlide": "Die Seite scrollt langsam von selbst. Jede Taste oder Berührung hält sie an.",
+    "previewHint": "Mit den Pfeiltasten blätterst du zur nächsten Vorlage."
   },
   "search": {
     "open": "Personen suchen",

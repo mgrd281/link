@@ -39,13 +39,13 @@ export function StageRenderer({ page, theme, preview = false }: { page: Page; th
     >
       {/* Ambient backdrop (desktop): the hero photo, heavily blurred. Decorative. */}
       <div aria-hidden className="absolute inset-0 hidden opacity-secondary @prose:block">
-        <MediaImage src={hero.src} alt="" sizes={mediaSizes.wide} className="scale-lift blur-ambient" />
+        <MediaImage src={hero.src} focal={hero.focal} alt="" sizes={mediaSizes.wide} className="scale-lift blur-ambient" />
         <div className="absolute inset-0 bg-linear-to-b from-transparent via-creator-bg to-creator-bg" />
       </div>
 
       <div className="relative mx-auto max-w-creator @prose:px-creator-gutter @prose:pt-12">
         <header className="relative aspect-portrait overflow-hidden @prose:rounded-xl">
-          <MediaImage src={hero.src} alt={hero.alt} sizes={mediaSizes.column} priority={!preview} />
+          <MediaImage src={hero.src} focal={hero.focal} alt={hero.alt} sizes={mediaSizes.column} priority={!preview} />
           <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-creator-bg" />
           <div className="absolute inset-x-0 bottom-0 grid gap-3 px-creator-gutter pb-6">
             <p className="inline-flex items-center gap-2 text-small font-medium text-creator-fg">
@@ -129,7 +129,7 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
       return (
         <article className="grid grid-cols-1 gap-4 pt-4">
           <div className="relative aspect-square overflow-hidden rounded-xl">
-            <MediaImage src={block.cover.src} alt={block.cover.alt} sizes={mediaSizes.column} />
+            <MediaImage src={block.cover.src} focal={block.cover.focal} alt={block.cover.alt} sizes={mediaSizes.column} />
           </div>
           <div className="grid gap-1">
             <p className="text-caption font-semibold tracking-wide text-creator-accent-text uppercase">
@@ -167,7 +167,7 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
                   provider="YouTube"
                   title={item.title}
                   className="aspect-short rounded-lg"
-                  poster={<MediaImage src={item.poster.src} alt="" sizes={mediaSizes.third} />}
+                  poster={<MediaImage src={item.poster.src} focal={item.poster.focal} alt="" sizes={mediaSizes.third} />}
                 >
                   {item.views ? (
                     <span className="absolute start-2 bottom-2 rounded-full bg-creator-glass px-2 py-0.5 text-caption font-medium backdrop-blur-glass">
@@ -233,7 +233,7 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
             provider="YouTube"
             title={block.title}
             className="aspect-video rounded-xl"
-            poster={<MediaImage src={block.poster.src} alt="" sizes={mediaSizes.column} />}
+            poster={<MediaImage src={block.poster.src} focal={block.poster.focal} alt="" sizes={mediaSizes.column} />}
           >
             {block.duration ? (
               <span className="rounded-full bg-creator-glass px-2 py-1 font-mono text-creator-fg backdrop-blur-glass">
@@ -265,7 +265,7 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
           className="group grid grid-cols-5 items-center gap-4 rounded-xl border border-creator-line bg-creator-surface p-3 transition-colors duration-micro hover:border-creator-line-strong focus-visible:focus-ring"
         >
           <span className="relative col-span-2 aspect-square overflow-hidden rounded-lg">
-            <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.third} />
+            <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.third} />
           </span>
           <span className="col-span-3 grid gap-2">
             <span className="font-creator-display text-h3 leading-tight" style={displayStyle}>
@@ -282,7 +282,7 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
     case "card":
       return (
         <a href={block.url} className="group relative isolate block aspect-video overflow-hidden rounded-xl focus-visible:focus-ring">
-          <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.column} />
+          <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.column} />
           <span className="absolute inset-0 bg-linear-to-t from-creator-bg via-transparent to-transparent" />
           <span className="absolute inset-x-0 bottom-0 grid gap-1 p-5">
             <span className="font-creator-display text-h2 leading-none" style={displayStyle}>
@@ -315,7 +315,7 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
     case "image":
       return (
         <div className="relative aspect-portrait overflow-hidden rounded-xl">
-          <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.column} />
+          <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.column} />
         </div>
       );
     case "gallery":
@@ -323,7 +323,7 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
         <ul className="-mx-creator-gutter flex snap-x gap-2 overflow-x-auto px-creator-gutter">
           {block.images.map((image) => (
             <li key={image.src} className="relative aspect-portrait w-3/5 shrink-0 snap-start overflow-hidden rounded-lg">
-              <MediaImage src={image.src} alt={image.alt} sizes={mediaSizes.half} />
+              <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={mediaSizes.half} />
             </li>
           ))}
         </ul>

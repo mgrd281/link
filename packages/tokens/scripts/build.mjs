@@ -208,6 +208,7 @@ StyleDictionary.registerFormat({
   format: ({ dictionary }) => {
     const m = webModel(dictionary);
     const z = byPath(dictionary, ["z"]);
+    const short = rem(dictionary.tokens.viewport.short.$value);
     return `/* ${HEADER} */
 /* Tailwind v4 theme. The default theme is reset: only Linkyo tokens generate utilities. */
 
@@ -342,6 +343,9 @@ ${decls(m.creator)}
     }
   }
 }
+
+/* Very short screens (viewport.short, max-height): sticky bars scroll away there. */
+@custom-variant short (@media (max-height: ${short}));
 
 @layer base {
   :root {

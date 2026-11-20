@@ -16,7 +16,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <Direction.Provider dir={isRtl(locale) ? "rtl" : "ltr"}>
       <TooltipProvider>
         {children}
-        <Toaster closeLabel={t("close")} regionLabel={t("notifications")} />
+        <Toaster closeLabel={t("close")} regionLabel={String(t.raw("notifications"))} />
       </TooltipProvider>
     </Direction.Provider>
   );

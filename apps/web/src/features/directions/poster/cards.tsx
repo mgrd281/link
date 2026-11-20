@@ -38,7 +38,7 @@ export function MediaRow({
   className,
 }: {
   href: string;
-  image: { src: string; alt: string };
+  image: { src: string; alt: string; focal?: readonly [number, number] | undefined };
   title: string;
   subtitle?: ReactNode;
   trailing?: ReactNode;
@@ -49,7 +49,7 @@ export function MediaRow({
   return (
     <a href={href} className={cn("group flex items-center overflow-hidden rounded-creator-card", surface, pressable, className)}>
       <span className="relative aspect-square w-24 shrink-0 self-stretch @prose:w-32">
-        <MediaImage src={image.src} alt={image.alt} sizes={mediaSizes.cover} />
+        <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={mediaSizes.cover} />
       </span>
       <span className="grid min-w-0 flex-1 gap-0.5 px-4 py-3">
         <span className="line-clamp-2 text-body-lg leading-snug font-semibold">{title}</span>
@@ -91,7 +91,7 @@ export function FeaturedRelease({ block, surface, heading: Heading }: { block: B
   return (
     <article className={cn("overflow-hidden rounded-creator-card", surface)}>
       <div className="relative aspect-square">
-        <MediaImage src={block.cover.src} alt={block.cover.alt} sizes={mediaSizes.column} />
+        <MediaImage src={block.cover.src} focal={block.cover.focal} alt={block.cover.alt} sizes={mediaSizes.column} />
       </div>
       <div className="grid gap-4 p-4 @prose:p-5">
         <div className="grid gap-1">
@@ -119,7 +119,7 @@ function ReleaseRow({ block, surface }: { block: BlockOf<"music">; surface: stri
     <details className={cn("group/release overflow-hidden rounded-creator-card has-[summary:focus-visible]:focus-ring", surface)}>
       <summary className="flex cursor-pointer list-none items-center outline-none [&::-webkit-details-marker]:hidden">
         <span className="relative aspect-square w-24 shrink-0 self-stretch @prose:w-32">
-          <MediaImage src={block.cover.src} alt={block.cover.alt} sizes={mediaSizes.cover} />
+          <MediaImage src={block.cover.src} focal={block.cover.focal} alt={block.cover.alt} sizes={mediaSizes.cover} />
         </span>
         <span className="grid min-w-0 flex-1 gap-0.5 px-4 py-3">
           <span className="line-clamp-2 text-body-lg leading-snug font-semibold">{block.title}</span>
@@ -204,7 +204,7 @@ export function VideoFeature({ video }: { video: BlockOf<"video"> | undefined })
         playback={video.playback}
         title={video.title}
         className="aspect-video rounded-creator-card"
-        poster={<MediaImage src={video.poster.src} alt="" sizes={mediaSizes.column} />}
+        poster={<MediaImage src={video.poster.src} focal={video.poster.focal} alt="" sizes={mediaSizes.column} />}
       >
         {video.duration ? <Duration seconds={video.duration} /> : null}
       </ClickToLoad>
@@ -231,7 +231,7 @@ export function VideoRail({ videos }: { videos: BlockOf<"video">[] }) {
               playback={video.playback}
               title={video.title}
               className="aspect-video rounded-creator-card"
-              poster={<MediaImage src={video.poster.src} alt="" sizes={mediaSizes.column} />}
+              poster={<MediaImage src={video.poster.src} focal={video.poster.focal} alt="" sizes={mediaSizes.column} />}
             >
               {video.duration ? (
                 <span aria-hidden className="absolute end-2 bottom-2">
@@ -263,7 +263,7 @@ export function ShortsRail({ block }: { block: BlockOf<"shorts"> }) {
               url={item.url}
               title={item.title}
               className="aspect-short rounded-creator-card"
-              poster={<MediaImage src={item.poster.src} alt="" sizes={mediaSizes.third} />}
+              poster={<MediaImage src={item.poster.src} focal={item.poster.focal} alt="" sizes={mediaSizes.third} />}
             >
               <span aria-hidden className="absolute end-2 top-2 grid size-control-sm place-items-center rounded-full bg-creator-glass text-creator-fg backdrop-blur-glass">
                 <PlatformIcon icon={siYoutubeshorts} size="sm" />
@@ -293,7 +293,7 @@ export function ProductGrid({ products, surface }: { products: BlockOf<"product"
         <li key={product.id} className="min-w-0">
           <a href={product.url} className={cn("grid h-full content-start overflow-hidden rounded-creator-card", surface, pressable)}>
             <span className="relative aspect-square">
-              <MediaImage src={product.image.src} alt={product.image.alt} sizes={mediaSizes.half} />
+              <MediaImage src={product.image.src} focal={product.image.focal} alt={product.image.alt} sizes={mediaSizes.half} />
             </span>
             <span className="grid gap-1 p-3 @preview:p-4">
               <span className="line-clamp-2 text-body leading-snug font-semibold">{product.title}</span>
@@ -449,7 +449,7 @@ export function FeaturedCard({ block, surface }: { block: BlockOf<"card">; surfa
   return (
     <a href={block.url} className={cn("grid overflow-hidden rounded-creator-card", surface, pressable)}>
       <span className="relative aspect-video">
-        <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.column} />
+        <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.column} />
       </span>
       <span className="grid gap-1 p-4 @prose:p-5">
         <span className="font-creator-display text-h3 leading-tight" style={displayStyle}>

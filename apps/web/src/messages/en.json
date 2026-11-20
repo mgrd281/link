@@ -2829,7 +2829,8 @@
       "pause": "Pause auto-scroll",
       "play": "Auto-scroll the page"
     },
-    "previewHint": "The page scrolls slowly by itself. Any key or touch stops it. Use the arrow keys to move to the next template."
+    "previewGlide": "The page scrolls slowly by itself. Any key or touch stops it.",
+    "previewHint": "Use the arrow keys to move to the next template."
   },
   "search": {
     "open": "Search people",

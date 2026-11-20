@@ -94,7 +94,7 @@ function Photo({ profile, preview, className, imageClass }: { profile: Profile; 
   const photo = profile.hero ?? profile.avatar;
   return (
     <div className={cn("relative overflow-hidden bg-creator-surface-2", className)}>
-      <MediaImage src={photo.src} alt={photo.alt} sizes={mediaSizes.column} priority={!preview} className={imageClass} />
+      <MediaImage src={photo.src} focal={photo.focal} alt={photo.alt} sizes={mediaSizes.column} priority={!preview} className={imageClass} />
       {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}
     </div>
   );
@@ -196,7 +196,7 @@ export function PosterHero({
       </div>
     ) : treatment === "logo" && profile.logo ? (
       <div className="poster-hero-fade relative grid aspect-square w-full place-items-center overflow-hidden mask-b-from-55% mask-b-to-100% @prose:rounded-t-xl">
-        <MediaImage src={photo.src} alt="" sizes={mediaSizes.column} priority={!preview} className="scale-lift blur-glass" />
+        <MediaImage src={photo.src} focal={photo.focal} alt="" sizes={mediaSizes.column} priority={!preview} className="scale-lift blur-glass" />
         <div aria-hidden className="absolute inset-0 bg-creator-bg opacity-secondary" />
         <h1 className="relative w-3/5">
           <span className="relative block aspect-square">
@@ -246,7 +246,7 @@ export function PosterHero({
         )}
       >
         <MediaImage
-          src={photo.src}
+          src={photo.src} focal={photo.focal}
           alt={photo.alt}
           sizes={mediaSizes.column}
           priority={!preview}
@@ -289,7 +289,7 @@ export function PosterBar({ profile }: { profile: Profile }) {
     <div className="pointer-events-none sticky top-0 layer-sticky h-0">
       <div className="poster-bar pointer-events-auto flex h-control-xl items-center gap-3 border-b border-creator-line bg-creator-glass ps-creator-gutter pe-2 backdrop-blur-glass">
         <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-small">
-          {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
+          {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
         </span>
         <p className="min-w-0 flex-1 truncate text-body font-semibold">{profile.displayName}</p>
         <ShareButton title={profile.displayName} />

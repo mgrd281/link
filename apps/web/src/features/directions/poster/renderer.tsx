@@ -86,7 +86,7 @@ export function PosterRenderer({
       {/* Wide screens: the portrait becomes a soft ambient glow behind the column. Decorative. */}
       {ambient ? (
         <div aria-hidden className="absolute inset-x-0 top-0 hidden h-dvh overflow-hidden opacity-secondary @prose:block">
-          <MediaImage src={photo.src} alt="" sizes={mediaSizes.wide} className={cn("scale-lift blur-ambient", layout.hero === "mono" && "grayscale")} />
+          <MediaImage src={photo.src} focal={photo.focal} alt="" sizes={mediaSizes.wide} className={cn("scale-lift blur-ambient", layout.hero === "mono" && "grayscale")} />
           <div className="absolute inset-0 bg-linear-to-b from-transparent to-creator-bg" />
         </div>
       ) : null}
@@ -257,7 +257,7 @@ function PosterBlock({
           <ul aria-label={block.title ?? t("gallery")} className="columns-2 gap-2">
             {block.images.map((image, index) => (
               <li key={image.src} className={cn("relative mb-2 break-inside-avoid overflow-hidden rounded-creator-card", index % 3 === 0 ? "aspect-portrait" : "aspect-square")}>
-                <MediaImage src={image.src} alt={image.alt} sizes={mediaSizes.half} />
+                <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={mediaSizes.half} />
               </li>
             ))}
           </ul>
@@ -269,7 +269,7 @@ function PosterBlock({
           <ul className="flex gap-2 px-creator-gutter @prose:px-0">
             {block.images.map((image) => (
               <li key={image.src} className="relative aspect-portrait w-3/5 shrink-0 snap-start overflow-hidden rounded-creator-card">
-                <MediaImage src={image.src} alt={image.alt} sizes={mediaSizes.half} />
+                <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={mediaSizes.half} />
               </li>
             ))}
           </ul>
@@ -278,7 +278,7 @@ function PosterBlock({
     case "image": {
       const picture = (
         <span className="relative block aspect-portrait overflow-hidden rounded-creator-card">
-          <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.column} />
+          <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.column} />
         </span>
       );
       return block.url ? (

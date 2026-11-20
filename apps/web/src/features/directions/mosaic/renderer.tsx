@@ -76,7 +76,7 @@ export function MosaicRenderer({
       <div className="mx-auto grid max-w-creator gap-3 px-3 pt-3 @preview:px-creator-gutter @preview:pt-creator-gutter @prose:pt-12">
         <header className="grid grid-cols-5 items-end gap-4 rounded-xl border border-creator-line bg-creator-surface p-5">
           <div className="relative col-span-2 aspect-square overflow-hidden rounded-lg">
-            <MediaImage src={profile.avatar.src} alt={profile.avatar.alt} sizes={mediaSizes.third} priority={!preview} />
+            <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt={profile.avatar.alt} sizes={mediaSizes.third} priority={!preview} />
           </div>
           <div className="col-span-3 grid gap-2">
             <h1 className="font-creator-display text-h1 leading-none break-words" style={displayStyle}>
@@ -156,7 +156,7 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
       return (
         <Tile size={size} className={cn("grid", size === "s" ? "aspect-square" : "")}>
           <div className={cn("relative", size === "l" ? "aspect-square" : size === "w" ? "aspect-video" : "absolute inset-0")}>
-            <MediaImage src={block.cover.src} alt={block.cover.alt} sizes={size === "s" ? mediaSizes.half : mediaSizes.column} priority={size === "l"} />
+            <MediaImage src={block.cover.src} focal={block.cover.focal} alt={block.cover.alt} sizes={size === "s" ? mediaSizes.half : mediaSizes.column} priority={size === "l"} />
           </div>
           <div className="flex items-center gap-3 p-4">
             <div className="grid min-w-0 flex-1">
@@ -282,7 +282,7 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
             provider="YouTube"
             title={block.title}
             className="aspect-video"
-            poster={<MediaImage src={block.poster.src} alt="" sizes={mediaSizes.column} />}
+            poster={<MediaImage src={block.poster.src} focal={block.poster.focal} alt="" sizes={mediaSizes.column} />}
           />
           <p className="truncate px-4 py-3 text-small font-semibold">{block.title}</p>
         </Tile>
@@ -299,7 +299,7 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
                   provider="YouTube"
                   title={item.title}
                   className="aspect-short rounded-lg"
-                  poster={<MediaImage src={item.poster.src} alt="" sizes={mediaSizes.third} />}
+                  poster={<MediaImage src={item.poster.src} focal={item.poster.focal} alt="" sizes={mediaSizes.third} />}
                 />
               </li>
             ))}
@@ -312,7 +312,7 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
       return (
         <Tile size={size} href={block.url} className="grid">
           <span className="relative aspect-square">
-            <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.half} />
+            <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.half} />
             <span className="absolute end-2 top-2 rounded-full bg-creator-accent px-2 py-0.5 text-caption font-semibold text-creator-accent-fg">
               {f.price(block.price, block.currency)}
             </span>
@@ -325,7 +325,7 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
       return (
         <Tile size={size} href={block.url} className={cn("grid", size === "s" && "aspect-square")}>
           <span className={cn(size === "s" ? "absolute inset-0" : "relative aspect-video")}>
-            <MediaImage src={block.image.src} alt={block.image.alt} sizes={size === "s" ? mediaSizes.half : mediaSizes.column} />
+            <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={size === "s" ? mediaSizes.half : mediaSizes.column} />
           </span>
           <span className={cn("relative grid gap-1 p-4", size === "s" && "self-end bg-linear-to-t from-creator-surface to-transparent pt-12")}>
             <span className="font-creator-display text-h3 leading-tight" style={displayStyle}>
@@ -352,7 +352,7 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
     case "image":
       return (
         <Tile size={size} className="aspect-square">
-          <MediaImage src={block.image.src} alt={block.image.alt} sizes={mediaSizes.half} />
+          <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.half} />
         </Tile>
       );
     case "gallery":
@@ -360,7 +360,7 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
         <Tile size={size} className="grid grid-cols-2 gap-1 p-1">
           {block.images.slice(0, 4).map((image) => (
             <span key={image.src} className="relative aspect-square overflow-hidden rounded-lg">
-              <MediaImage src={image.src} alt={image.alt} sizes={mediaSizes.third} />
+              <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={mediaSizes.third} />
             </span>
           ))}
         </Tile>

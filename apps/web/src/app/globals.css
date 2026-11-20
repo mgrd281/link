@@ -1415,6 +1415,3 @@
 [data-fonts="later"] :is(.font-creator-display, .font-creator-body) {
   font-family: var(--font-sans);
 }
-
-/* Very short screens (a phone in landscape, 400 % zoom): the filter band scrolls away with the page. */
-@custom-variant short (@media (max-height: 30rem));
