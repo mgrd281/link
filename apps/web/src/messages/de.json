@@ -870,10 +870,10 @@
       "eyebrow": "Ohne Anmeldung",
       "title1": "Probier's aus.",
       "title2": "Deine Seite, live.",
-      "lead": "Tipp deinen Namen, füg Links ein, wähl einen Look – deine Seite entsteht, während du zusiehst.",
+      "lead": "Foto, Name, Links, Look – und das Handy zeigt deine echte Seite, genau so, wie Besucher sie sehen.",
       "tabs": {
         "label": "Deine Seite bearbeiten",
-        "name": "Name",
+        "name": "Profil",
         "links": "Links",
         "look": "Look"
       },
@@ -883,14 +883,22 @@
         "address": "Deine Adresse: {address}"
       },
       "preview": {
-        "label": "Vorschau deiner Seite",
-        "name": "Dein Name",
-        "empty": "Deine Links erscheinen hier"
+        "label": "Deine Seite im Handy",
+        "name": "Dein Name"
       },
       "limit": "Vier Links reichen zum Ausprobieren.",
       "added": "Auf deiner Seite",
       "cta": "Diese Seite sichern",
-      "ctaHint": "Kostenlos · ohne Kreditkarte · dein Entwurf kommt mit"
+      "ctaHint": "Kostenlos · ohne Kreditkarte · dein Entwurf kommt mit",
+      "photo": {
+        "add": "Foto hinzufügen",
+        "change": "Foto ändern",
+        "remove": "Foto entfernen"
+      },
+      "samples": {
+        "video": "Live in Berlin",
+        "product": "Lichtfeld · Vinyl"
+      }
     },
     "more": {
       "title1": "Alles, was du brauchst.",

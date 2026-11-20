@@ -870,10 +870,10 @@
       "eyebrow": "No sign-up needed",
       "title1": "Try it.",
       "title2": "Your page, live.",
-      "lead": "Type your name, paste links, pick a look – your page builds itself as you watch.",
+      "lead": "Photo, name, links, look – and the phone shows your real page, exactly as visitors will see it.",
       "tabs": {
         "label": "Edit your page",
-        "name": "Name",
+        "name": "Profile",
         "links": "Links",
         "look": "Look"
       },
@@ -883,14 +883,22 @@
         "address": "Your address: {address}"
       },
       "preview": {
-        "label": "Preview of your page",
-        "name": "Your name",
-        "empty": "Your links appear here"
+        "label": "Your page on a phone",
+        "name": "Your name"
       },
       "limit": "Four links are enough to try it.",
       "added": "On your page",
       "cta": "Keep this page",
-      "ctaHint": "Free · no card · your draft comes along"
+      "ctaHint": "Free · no card · your draft comes along",
+      "photo": {
+        "add": "Add a photo",
+        "change": "Change photo",
+        "remove": "Remove photo"
+      },
+      "samples": {
+        "video": "Live in Berlin",
+        "product": "Lichtfeld · vinyl"
+      }
     },
     "more": {
       "title1": "Everything you need.",

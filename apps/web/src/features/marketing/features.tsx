@@ -15,10 +15,13 @@ import { Playground, type LookOption } from "./playground";
 
 const SW = creatorTokens.swatches;
 
-/** The looks to try in step 1: five templates, each as different from its neighbours as it can be. */
+/**
+ * The looks in the playground: five templates, each as different from its neighbours as it can be.
+ * Template and accent are all a look is, so sign-up starts the real page with exactly this one.
+ */
 const LOOKS: { template: CreatorTemplateId; config: CreatorThemeConfig }[] = [
   { template: "nocturne", config: { template: "nocturne", accent: SW.aqua } },
-  { template: "daylight", config: { template: "daylight", accent: SW.sky, buttonShape: "pill" } },
+  { template: "daylight", config: { template: "daylight", accent: SW.sky } },
   { template: "pulse", config: { template: "pulse", accent: SW.flamingo } },
   { template: "atelier", config: { template: "atelier" } },
   { template: "mono", config: { template: "mono" } },
@@ -208,17 +211,12 @@ export function TryIt() {
   const names = useTranslations("templates");
   const locale = useLocale();
   const rtl = locale === "ar";
-  const [head, ...tail]: LookOption[] = LOOKS.map(({ template, config }) => {
-    const theme = resolveCreatorTheme(config, { rtlScript: rtl });
-    return {
-      id: template,
-      template,
-      name: creatorTokens.templates[template].label,
-      description: names(`${template}.description`),
-      vars: theme.cssVars,
-      buttonStyle: theme.buttonStyle,
-    };
-  });
+  const [head, ...tail]: LookOption[] = LOOKS.map(({ template, config }) => ({
+    id: template,
+    config,
+    name: creatorTokens.templates[template].label,
+    description: names(`${template}.description`),
+  }));
   return (
     <section id="try" aria-labelledby="try-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-16 md:px-10 md:py-24">
       <header className="mk-reveal mx-auto grid max-w-prose justify-items-center gap-4 text-center">

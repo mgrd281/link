@@ -133,10 +133,12 @@ export function WelcomeScreen() {
       return { profiles: Object.keys(sorted.handles).length, links: added.length };
     },
   });
-  // The playground's draft is used once.
+  // The playground's draft is used once; its photo becomes the page's photo (the phone shows it).
   useEffect(() => {
-    if (tried) clearTryDraft();
-  }, [tried]);
+    if (!tried) return;
+    clearTryDraft();
+    if (tried.photo) dispatch({ type: "profile", patch: { avatar: { src: tried.photo.src, alt: "", tone: tried.photo.tone } } });
+  }, [tried, dispatch]);
   // Moving between steps puts focus on the new step's title (after it is on screen).
   const [moved, setMoved] = useState(false);
   useEffect(() => {

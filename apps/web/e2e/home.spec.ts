@@ -19,8 +19,10 @@ test.describe("marketing home", () => {
     await page.waitForURL("**/en/signup?name=mila-aurel");
   });
 
-  test("try it: paste a link and it becomes a block on the page; examples work with one tap", async ({ page }) => {
+  test("try it: a pasted link becomes the real block with its real title; examples are samples", async ({ page }) => {
     const playground = page.locator("#try");
+    // What our server finds for a pasted song (stubbed here: the test must not depend on Spotify).
+    await page.route("**/api/link-metadata?**", (route) => route.fulfill({ json: { title: "Golden Hour", author: "Sample Artist - Topic" } }));
     // Taking over first stops the self-demo, so only what this test does counts.
     await playground.getByRole("tab", { name: /Links/ }).click();
     const input = playground.getByRole("textbox", { name: "Paste or type a link" });
@@ -28,21 +30,25 @@ test.describe("marketing home", () => {
     await expect(playground.getByText("Recognised: Music")).toBeVisible();
     await input.press("Enter");
     const added = playground.getByRole("list", { name: "On your page" }).getByRole("listitem");
-    const preview = playground.locator("[data-try-preview] li");
+    const preview = playground.locator("[data-try-preview]");
     await expect(added).toHaveCount(1);
-    await expect(preview).toHaveCount(1);
-    await expect(preview.first()).toContainText("Music");
+    // The real page shows the release under its real title and artist.
+    await expect(preview).toContainText("Golden Hour");
+    await expect(preview).toContainText("Sample Artist");
+    await expect(playground.getByRole("status")).toHaveText("Music added to your page");
+    // An example: a sample with Linkyo's own picture and title.
     await playground.getByRole("button", { name: "YouTube", exact: true }).click();
     await expect(added).toHaveCount(2);
-    await expect(preview.nth(1)).toContainText("Video");
+    await expect(preview).toContainText("Live in Berlin");
     await playground.getByRole("button", { name: "Remove Music" }).click();
     await expect(added).toHaveCount(1);
-    await expect(preview.first()).toContainText("Video");
+    await expect(preview).not.toContainText("Golden Hour");
     // Four links are enough to try it.
     for (const example of ["Spotify", "Twitch", "Shop"]) await playground.getByRole("button", { name: example, exact: true }).click();
     await playground.getByRole("button", { name: "YouTube", exact: true }).click();
     await expect(added).toHaveCount(4);
     await expect(playground.getByText("Four links are enough to try it.")).toBeVisible();
+    await expect(preview).toContainText("Lichtfeld · vinyl");
   });
 
   test("the template strip has no motion of its own: it slides with the page, nothing to pause", async ({ page }) => {
@@ -132,26 +138,63 @@ test.describe("marketing home", () => {
       element.scrollIntoView({ block: "center", behavior: "instant" });
     });
     const preview = playground.locator("[data-try-preview]");
-    await expect(preview.locator("li")).toHaveCount(2, { timeout: 15_000 });
-    await expect(preview).toContainText("Juno Kade");
+    await expect(preview).toContainText("Live in Berlin", { timeout: 15_000 });
+    await expect(preview.getByRole("heading", { level: 1, includeHidden: true })).toHaveText("Juno Kade");
     await expect(preview).toContainText("linkyo.app/juno-kade");
+    await expect(preview).toContainText("Lichtfeld");
     await expect(playground.getByRole("radio", { name: "Pulse" })).toHaveAttribute("aria-checked", "true", { timeout: 5_000 });
     await expect(playground.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
     // Only what a visitor does is announced.
     await expect(playground.getByRole("status")).toHaveText("");
   });
 
+  test("try it: the phone shows the real page, scaled from a real phone's width, scrollable but not clickable", async ({ page }) => {
+    const playground = page.locator("#try");
+    const screen = playground.getByRole("region", { name: "Your page on a phone" });
+    await playground.getByRole("tab", { name: /Links/ }).click();
+    for (const example of ["Spotify", "YouTube", "Shop"]) await playground.getByRole("button", { name: example, exact: true }).click();
+    // Laid out 390 px wide, like a phone, and scaled down into the frame.
+    const width = await screen.evaluate((element) => (element as HTMLElement).offsetWidth);
+    expect(width).toBe(390);
+    const box = await screen.boundingBox();
+    expect(box && box.width < 390).toBe(true);
+    // It scrolled to the newest block by itself, and can be scrolled back with the keyboard.
+    await expect.poll(() => screen.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await screen.focus();
+    await page.keyboard.press("Home");
+    await expect.poll(() => screen.evaluate((element) => element.scrollTop)).toBe(0);
+    // Its links are there to see, not to follow.
+    await expect(screen.locator("[inert] a").first()).toBeAttached();
+    expect(await screen.locator("a").evaluateAll((links) => links.every((link) => link.closest("[inert]") !== null))).toBe(true);
+  });
+
+  test("try it: a photo goes onto the page at once, and can be taken off again", async ({ page }) => {
+    const playground = page.locator("#try");
+    await playground.getByRole("tab", { name: "Profile" }).click();
+    const preview = playground.locator("[data-try-preview]");
+    await expect(preview.locator("img")).toHaveCount(0);
+    const chooser = page.waitForEvent("filechooser");
+    await playground.getByRole("button", { name: "Add a photo" }).click();
+    await (await chooser).setFiles("src/assets/samples/mila-avatar.jpg");
+    // Resized in the browser: the page shows it as a data picture, nothing was uploaded.
+    await expect(preview.locator("img[src^='data:image/']").first()).toBeAttached();
+    await expect(playground.getByRole("button", { name: "Change photo" })).toBeVisible();
+    await playground.getByRole("button", { name: "Remove photo" }).click();
+    await expect(preview.locator("img")).toHaveCount(0);
+    await expect(playground.getByRole("button", { name: "Add a photo" })).toBeVisible();
+  });
+
   test("try it: a name gives the page its title and address; looks and any color dress it; tabs work with arrow keys", async ({ page }) => {
     const playground = page.locator("#try");
     const tabs = playground.getByRole("tablist", { name: "Edit your page" });
-    await tabs.getByRole("tab", { name: "Name" }).click();
+    await tabs.getByRole("tab", { name: "Profile" }).click();
     await playground.getByLabel("Your name").fill("Lea Hartmann");
     const preview = playground.locator("[data-try-preview]");
-    await expect(preview).toContainText("Lea Hartmann");
+    await expect(preview.getByRole("heading", { level: 1, includeHidden: true })).toHaveText("Lea Hartmann");
     await expect(preview).toContainText("linkyo.app/lea-hartmann");
     await expect(playground.getByText("Your address: linkyo.app/lea-hartmann")).toBeVisible();
     // Tabs: arrow keys move between them.
-    await tabs.getByRole("tab", { name: "Name" }).press("ArrowRight");
+    await tabs.getByRole("tab", { name: "Profile" }).press("ArrowRight");
     await expect(tabs.getByRole("tab", { name: /Links/ })).toBeFocused();
     await tabs.getByRole("tab", { name: /Links/ }).press("ArrowRight");
     await expect(tabs.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
@@ -166,7 +209,9 @@ test.describe("marketing home", () => {
     // Any color: the theme engine makes a whole, readable page of it.
     await playground.getByLabel("Your color").fill("#ff7a00");
     await expect(playground.locator("[aria-live]")).toContainText("Your color");
-    await expect(playground.getByRole("link", { name: "Keep this page" })).toHaveAttribute("href", /accent=ff7a00/);
+    // Your color goes onto the look that was showing (Pulse, picked with the arrow key), not onto another.
+    await expect(playground.getByRole("link", { name: "Keep this page" })).toHaveAttribute("href", /template=pulse&accent=ff7a00$/);
+    await expect(looks.getByRole("radio", { checked: true })).toHaveCount(0);
   });
 
   test("try it: taking over mid-demo stops it and keeps what it typed, selected", async ({ page }) => {
@@ -181,7 +226,8 @@ test.describe("marketing home", () => {
     await expect(name).toHaveValue("Mila Aurel");
     // The demo has stopped: no links arrive by themselves.
     await page.waitForTimeout(4000);
-    await expect(playground.locator("[data-try-preview] li").filter({ hasText: /Music|Video/ })).toHaveCount(0);
+    await expect(playground.locator("[data-try-preview]")).not.toContainText("Lichtfeld");
+    await expect(playground.getByRole("tab", { name: "Links" })).toHaveAttribute("aria-selected", "false");
   });
 
   test("step 4: sample figures for everyone, counted up for the eye", async ({ page }) => {
@@ -198,7 +244,8 @@ test.describe("marketing home", () => {
     // Pro is not for sale yet: no button.
     await expect(pricing.locator("article").last().getByRole("link")).toHaveCount(0);
     await expect(page.locator("#start").getByRole("textbox", { name: "Choose your page address" })).toBeVisible();
-    const footer = page.locator("footer");
+    // The site's footer (the page in the playground's phone has its own).
+    const footer = page.getByRole("contentinfo");
     await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link")).toHaveText(["Features", "Templates", "Pricing", "FAQ"]);
     await expect(footer).toContainText("Imprint");
   });
@@ -309,32 +356,41 @@ test("on phones a visitor first learns what Linkyo is and sees pages, then meets
   await context.close();
 });
 
-test("on phones the page and its controls share one screen; keeping it carries name, look and links into the welcome flow", async ({ browser }) => {
+test("on phones the page sits above its controls; keeping it carries the visitor's own name, photo, look and links into the welcome flow", async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await context.newPage();
+  await page.route("**/api/link-metadata?**", (route) => route.fulfill({ json: {} }));
   await page.goto("/en");
   const playground = page.locator("#try");
-  await playground.getByRole("tab", { name: "Name" }).click();
-  // The page above, the controls and the button below, together on screen.
+  await playground.getByRole("tab", { name: "Profile" }).click();
+  // The page first, then the controls and the button.
   const preview = await playground.locator("[data-try-preview]").boundingBox();
   const tablist = await playground.getByRole("tablist").boundingBox();
   expect(preview && tablist && preview.y < tablist.y).toBe(true);
   const id = Date.now().toString(36);
   await playground.getByLabel("Your name").fill(`Lea ${id}`);
+  const chooser = page.waitForEvent("filechooser");
+  await playground.getByRole("button", { name: "Add a photo" }).click();
+  await (await chooser).setFiles("src/assets/samples/mila-avatar.jpg");
+  await expect(playground.getByRole("button", { name: "Change photo" })).toBeVisible();
   await playground.getByRole("tab", { name: /Links/ }).click();
-  await playground.getByRole("button", { name: "Spotify", exact: true }).click();
+  await playground.getByRole("textbox", { name: "Paste or type a link" }).fill("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
+  await playground.getByRole("button", { name: "Add", exact: true }).click();
+  // An example stays an example: it is not carried into the real page.
+  await playground.getByRole("button", { name: "Twitch", exact: true }).click();
   await playground.getByRole("tab", { name: "Look" }).click();
   await playground.getByRole("radio", { name: "Daylight" }).click();
   await playground.getByRole("link", { name: "Keep this page" }).click();
-  await page.waitForURL(`**/en/signup?name=lea-${id}&display=Lea+${id}&template=daylight`);
+  await page.waitForURL(new RegExp(`/en/signup\\?name=lea-${id}&display=Lea\\+${id}&template=daylight&accent=[0-9a-f]{6}$`));
   await page.locator("#signup-email").fill(`try-${id}@example.com`);
   await page.locator("form button[type=submit]").click();
   await enterDemoCode(page);
   await page.waitForURL("**/en/app/welcome");
-  // The welcome flow continues from the playground: the name is there, the links wait in their step.
+  // The welcome flow continues from the playground: the name and photo are there, the links wait in their step.
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByLabel("Name", { exact: true })).toHaveValue(`Lea ${id}`);
   await expect(page.getByLabel("Your address")).toHaveValue(`lea-${id}`);
+  await expect(page.locator("img[src^='data:image/']").first()).toBeAttached();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.locator("textarea")).toHaveValue("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
