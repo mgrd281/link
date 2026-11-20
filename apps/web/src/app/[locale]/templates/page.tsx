@@ -1,5 +1,5 @@
 import { resolveCreatorTheme, TEMPLATE_IDS } from "@linkyo/tokens/creator";
-import { Icon, LogoGlyph } from "@linkyo/ui";
+import { Button, Icon, LogoGlyph } from "@linkyo/ui";
 import { ArrowDown, ArrowRight, Info, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -158,21 +158,20 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
               </p>
               <h1 className="text-h1 tracking-tight text-balance md:text-display lg:text-display-sm">{t("title", { count: items.length })}</h1>
               <p className="max-w-prose text-body text-pretty text-fg-secondary md:text-body-lg">{t("lead")}</p>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/signup"
-                  className="group inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-5 text-body font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
-                >
-                  {t("ctaButton")}
-                  <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
-                </Link>
-                <a
-                  href="#gallery"
-                  className="group inline-flex h-control-lg items-center gap-2 rounded-full border border-line-strong bg-surface px-5 text-body font-semibold text-fg transition-colors duration-micro hover:bg-surface-elevated focus-visible:focus-ring active:scale-pressed"
-                >
-                  {t("browse")}
-                  <Icon icon={ArrowDown} size="md" className="transition-transform duration-micro group-hover:translate-y-0.5" />
-                </a>
+              {/* Phones: two equal, full-width buttons, as in an app; wider screens: side by side. */}
+              <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
+                <Button asChild variant="primary" size="xl" className="group rounded-full font-semibold sm:h-control-lg sm:px-5">
+                  <Link href="/signup">
+                    {t("ctaButton")}
+                    <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+                  </Link>
+                </Button>
+                <Button asChild variant="tinted" size="xl" className="group rounded-full font-semibold sm:h-control-lg sm:px-5">
+                  <a href="#gallery">
+                    {t("browse")}
+                    <Icon icon={ArrowDown} size="md" className="transition-transform duration-micro group-hover:translate-y-0.5" />
+                  </a>
+                </Button>
               </div>
               <ul aria-label={t("stats.label")} className="flex gap-8 border-t border-line pt-5 sm:pt-6">
                 {stats.map((stat) => (

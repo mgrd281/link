@@ -23,6 +23,8 @@ export const buttonVariants = cva(
         primary: "bg-primary text-primary-fg hover:-translate-y-0.5 hover:bg-primary-hover active:translate-y-0 active:bg-primary-pressed motion-reduce:hover:translate-y-0",
         secondary:
           "border border-line-strong bg-surface text-fg hover:bg-surface-elevated hover:border-line-input active:bg-pressed",
+        /** The quiet partner of a primary action (as on iOS): a soft teal fill, never an outline. */
+        tinted: "bg-tinted text-tinted-fg hover:bg-tinted-hover active:bg-tinted-hover",
         ghost: "bg-transparent text-fg hover:bg-hover active:bg-pressed",
         destructive: "bg-transparent text-danger-strong hover:bg-danger-subtle active:bg-pressed",
         /** Only inside confirmation dialogs (brand §7). */

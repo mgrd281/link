@@ -99,7 +99,7 @@ export function PosterDashboard({ initial, profile, pageHref }: { initial: Edito
           </header>
 
           <section aria-label={t("addLabel")} className="grid gap-4 rounded-xl border border-line bg-surface p-5">
-            <div className="flex items-center gap-3 rounded-lg border border-line-input bg-surface-elevated px-4 focus-within:border-focus focus-within:focus-ring">
+            <div className="flex items-center gap-3 rounded-lg border border-line-input bg-surface-elevated px-4 focus-within:border-focus focus-within:focus-field">
               <Icon icon={Plus} size="md" className="text-fg-tertiary" />
               <label className="sr-only" htmlFor="poster-add">
                 {t("addLabel")}

@@ -70,7 +70,7 @@ export function MosaicDashboard({ initial, profile, pageHref }: { initial: Edito
             </Button>
           </header>
 
-          <div className="flex items-center gap-3 rounded-full border border-line-input bg-surface-elevated ps-2 pe-4 focus-within:border-focus focus-within:focus-ring">
+          <div className="flex items-center gap-3 rounded-full border border-line-input bg-surface-elevated ps-2 pe-4 focus-within:border-focus focus-within:focus-field">
             <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-primary text-primary-fg">
               <Icon icon={Plus} size="md" />
             </span>

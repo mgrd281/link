@@ -77,7 +77,7 @@ function SearchField({
         autoComplete="off"
         enterKeyHint="search"
         aria-keyshortcuts="/"
-        className="h-control-md w-full appearance-none rounded-full border border-line-strong bg-surface ps-10 pe-10 text-body text-fg transition-colors duration-micro placeholder:text-fg-secondary hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring sm:text-small [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-control-md w-full appearance-none rounded-full border border-transparent bg-canvas-muted ps-10 pe-10 text-body text-fg transition-colors duration-micro placeholder:text-fg-secondary hover:border-line-strong focus-visible:border-focus focus-visible:bg-surface focus-visible:focus-field sm:text-small [&::-webkit-search-cancel-button]:appearance-none"
       />
       {value ? (
         <button
@@ -592,15 +592,18 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
               ))}
             </ul>
             {more > 0 ? (
-              <div className="grid justify-items-center gap-3 pt-4">
-                <p className="text-small text-fg-secondary tabular-nums">{t("shownOf", { shown: visible.length, total: shown.length })}</p>
-                <span aria-hidden className="h-1 w-(--container-menu) max-w-full overflow-hidden rounded-full bg-line">
-                  <span className="block h-full origin-left rounded-full bg-primary transition-[scale] duration-standard ease-standard motion-reduce:transition-none rtl:origin-right" style={{ scale: `${visible.length / shown.length} 1` }} />
-                </span>
-                <Button variant="secondary" size="lg" onClick={showMore} className="rounded-full">
-                  <Icon icon={ChevronDown} size="md" />
+              // One wide, quiet button, as in an app (full width on phones), with the count beneath it.
+              <div className="grid justify-items-center gap-3 pt-6">
+                <Button variant="tinted" size="xl" onClick={showMore} className="group w-full rounded-full font-semibold sm:w-auto sm:min-w-(--container-sidebar)">
                   {t("more", { count: more })}
+                  <Icon icon={ChevronDown} size="md" className="transition-transform duration-micro group-hover:translate-y-0.5 motion-reduce:transition-none" />
                 </Button>
+                <p className="flex items-center gap-3 text-caption text-fg-secondary tabular-nums">
+                  <span aria-hidden className="h-1 w-16 overflow-hidden rounded-full bg-line">
+                    <span className="block h-full origin-left rounded-full bg-primary transition-[scale] duration-standard ease-standard motion-reduce:transition-none rtl:origin-right" style={{ scale: `${visible.length / shown.length} 1` }} />
+                  </span>
+                  {t("shownOf", { shown: visible.length, total: shown.length })}
+                </p>
               </div>
             ) : null}
           </>

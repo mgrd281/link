@@ -327,6 +327,12 @@ ${decls(m.creator)}
   outline: var(--border-width-focus) solid var(--color-focus);
   outline-offset: var(--border-width-focus-offset);
 }
+/* Focus on a text field: the same 2 px teal, drawn inside the field's edge (over its border), so a
+   field that is tapped or clicked shows a calm frame, not a ring around a frame, and nothing moves. */
+@utility focus-field {
+  outline: var(--border-width-focus) solid var(--color-focus);
+  outline-offset: calc(var(--border-width-focus) * -1);
+}
 /* 2 px emphasized border (drop targets, selected tiles). Width only; pair with a border color. */
 @utility border-emphasis {
   border-width: var(--border-width-focus);

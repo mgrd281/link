@@ -2819,7 +2819,7 @@
     "prev": "Vorherige Vorlage",
     "next": "Nächste Vorlage",
     "position": "{index} von {total}",
-    "more": "{count, plural, one {Eine weitere zeigen} other {# weitere zeigen}}",
+    "more": "{count, plural, one {Eine weitere Vorlage} other {# weitere Vorlagen}}",
     "shownOf": "{shown} von {total} Vorlagen",
     "newTab": "(öffnet in neuem Tab)",
     "ctaTitle": "Nichts Passendes dabei?",

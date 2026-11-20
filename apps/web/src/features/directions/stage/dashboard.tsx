@@ -112,7 +112,7 @@ export function StageDashboard({ initial, profile, pageHref }: { initial: Editor
             ))}
           </dl>
 
-          <div className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3 focus-within:border-focus focus-within:focus-ring">
+          <div className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3 focus-within:border-focus focus-within:focus-field">
             <span className="grid size-control-sm place-items-center rounded-sm bg-primary text-primary-fg">
               <Icon icon={Plus} size="sm" />
             </span>

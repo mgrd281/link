@@ -236,10 +236,12 @@ export function PeopleSearchPanel({
         >
           <Dialog.Title className="sr-only">{t("title")}</Dialog.Title>
 
-          {/* What you type. Phones: a soft pill with "Cancel" beside it. Wider: one line, a hairline under it. */}
-          <div className="flex shrink-0 items-center gap-1 px-3 pt-3 pb-1 transition-colors duration-micro md:gap-0 md:border-b md:border-line md:p-0 md:focus-within:border-link">
-            <div className="flex h-control-lg min-w-0 flex-1 items-center gap-3 rounded-full border border-transparent bg-canvas-muted ps-4 pe-1 transition-colors duration-micro focus-within:border-link md:h-16 md:rounded-none md:border-0 md:bg-transparent md:ps-5">
-              <Icon icon={Search} size="md" className="shrink-0 text-fg-secondary" />
+          {/* What you type. Phones: a soft pill with "Cancel" beside it. Wider: one line, a hairline under it.
+              Focus stays visible but quiet, as in a native search field: a neutral hairline and a teal
+              magnifier, never a heavy dark ring. */}
+          <div className="flex shrink-0 items-center gap-1 px-3 pt-3 pb-1 md:gap-0 md:border-b md:border-line md:p-0">
+            <div className="group/field flex h-control-lg min-w-0 flex-1 items-center gap-3 rounded-full border border-transparent bg-canvas-muted ps-4 pe-1 transition-colors duration-micro focus-within:border-line-strong md:h-16 md:rounded-none md:border-0 md:bg-transparent md:ps-5">
+              <Icon icon={Search} size="md" className="shrink-0 text-fg-secondary transition-colors duration-micro group-focus-within/field:text-link" />
               <label htmlFor={`${id}-input`} className="sr-only">
                 {t("placeholder")}
               </label>

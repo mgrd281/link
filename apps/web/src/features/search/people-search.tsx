@@ -48,6 +48,8 @@ export function PeopleSearch() {
   const [used, setUsed] = useState(false);
   const apple = useSyncExternalStore(never, onApple, () => false);
   const button = useRef<HTMLButtonElement>(null);
+  // How the visitor last acted: a tap or click closes the search without a focus ring on the way back.
+  const lastInput = useRef<"pointer" | "keyboard">("pointer");
   // Once opened, the dialog stays mounted, so it can leave with a motion and open again at once.
   if (open && !used) setUsed(true);
 
@@ -67,9 +69,19 @@ export function PeopleSearch() {
       if (isSearchOpen()) closeSearch();
       else openSearch();
     };
+    const onPointer = () => {
+      lastInput.current = "pointer";
+    };
+    const onAnyKey = () => {
+      lastInput.current = "keyboard";
+    };
     window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onPointer, true);
+    window.addEventListener("keydown", onAnyKey, true);
     return () => {
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onPointer, true);
+      window.removeEventListener("keydown", onAnyKey, true);
     };
   }, []);
 
@@ -84,11 +96,18 @@ export function PeopleSearch() {
         }}
         onPointerEnter={warm}
         onFocus={warm}
+        // The quiet return (see onClosed) lasts until the next key or until focus moves on.
+        onKeyDown={(event) => {
+          delete event.currentTarget.dataset.quietFocus;
+        }}
+        onBlur={(event) => {
+          delete event.currentTarget.dataset.quietFocus;
+        }}
         onTouchStart={warm}
         aria-label={t("open")}
         aria-haspopup="dialog"
         aria-keyshortcuts="Control+K Meta+K"
-        className="inline-flex size-control-md shrink-0 items-center justify-center gap-2 rounded-full text-fg transition-[background-color,border-color,color,scale] duration-micro hover:bg-hover focus-visible:focus-ring active:scale-pressed xl:w-auto xl:border xl:border-line xl:bg-surface xl:ps-3 xl:pe-2 xl:text-fg-secondary xl:hover:border-line-strong xl:hover:bg-surface xl:hover:text-fg"
+        className="inline-flex size-control-md shrink-0 items-center justify-center gap-2 rounded-full text-fg transition-[background-color,border-color,color,scale] duration-micro hover:bg-hover focus-visible:focus-ring data-quiet-focus:focus-visible:outline-none active:scale-pressed xl:w-auto xl:border xl:border-line xl:bg-surface xl:ps-3 xl:pe-2 xl:text-fg-secondary xl:hover:border-line-strong xl:hover:bg-surface xl:hover:text-fg"
       >
         <Icon icon={Search} size="md" />
         <span className="hidden text-small font-medium xl:inline">{t("openShort")}</span>
@@ -103,7 +122,14 @@ export function PeopleSearch() {
             closeSearch();
           }}
           onReady={returnKeyboard}
-          onClosed={() => button.current?.focus()}
+          // Focus goes back to the magnifier either way, so keyboards and screen readers land where they
+          // left. After a tap or a click it shows no ring, as in an app: the ring is for keyboard use.
+          onClosed={() => {
+            const target = button.current;
+            if (!target) return;
+            if (lastInput.current === "pointer") target.dataset.quietFocus = "";
+            target.focus({ preventScroll: true });
+          }}
           locale={locale}
         />
       ) : null}

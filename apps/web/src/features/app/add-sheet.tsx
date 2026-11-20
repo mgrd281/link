@@ -89,7 +89,7 @@ export function AddSheet() {
           <label htmlFor={inputId} className="text-small font-semibold">
             {t("pasteLabel")}
           </label>
-          <div className="flex items-center gap-2 rounded-lg border border-line-input bg-surface ps-4 pe-2 has-[input:focus-visible]:border-focus has-[input:focus-visible]:focus-ring">
+          <div className="flex items-center gap-2 rounded-lg border border-line-input bg-surface ps-4 pe-2 has-[input:focus-visible]:border-focus has-[input:focus-visible]:focus-field">
             <Icon icon={ClipboardPaste} size="md" className="shrink-0 text-fg-tertiary" />
             <input
               id={inputId}

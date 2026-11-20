@@ -47,11 +47,11 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
           variant === "outline"
             ? "rounded-md border-line-input bg-surface-elevated hover:border-fg-tertiary"
             : "rounded-lg border-transparent bg-canvas-muted hover:border-line-input focus-within:bg-surface-elevated",
-          "focus-within:border-focus focus-within:focus-ring",
+          "focus-within:border-focus focus-within:focus-field",
           size === "md" && "h-control-md px-3",
           size === "lg" && "h-control-lg px-4",
           size === "xl" && "h-control-xl px-4 text-body-lg",
-          error && "border-danger-strong focus-within:border-danger-strong",
+          error && "border-danger-strong focus-within:border-danger-strong focus-within:outline-danger-strong",
           disabled && "opacity-disabled",
         )}
       >

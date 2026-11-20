@@ -89,7 +89,7 @@ export function TextArea({
         aria-describedby={error || hint ? `${id}-hint` : undefined}
         className={cn(
           "min-h-control-xl resize-y rounded-md border border-line-input bg-surface-elevated px-3 py-2 text-body text-fg outline-none transition-[border-color] duration-micro",
-          "hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring placeholder:text-fg-tertiary",
+          "hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-field placeholder:text-fg-tertiary",
           error && "border-danger-strong",
         )}
         {...props}
@@ -126,7 +126,7 @@ export function SelectField<T extends string>({
         id={id}
         value={value}
         onChange={(event) => onValue(event.target.value as T)}
-        className="h-control-md rounded-md border border-line-input bg-surface-elevated px-3 text-body text-fg outline-none hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring"
+        className="h-control-md rounded-md border border-line-input bg-surface-elevated px-3 text-body text-fg outline-none hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-field"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

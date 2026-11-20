@@ -41,7 +41,7 @@ export function ClaimForm({ id, className, tone = "default" }: { id: string; cla
       <label htmlFor={id} className="sr-only">
         {t("label")}
       </label>
-      <div className="flex min-w-0 flex-col gap-2 rounded-xl border border-transparent bg-canvas-muted p-2 transition-colors duration-micro has-[input:focus-visible]:border-focus has-[input:focus-visible]:focus-ring sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-col gap-2 rounded-xl border border-transparent bg-canvas-muted p-2 transition-colors duration-micro has-[input:focus-visible]:border-focus has-[input:focus-visible]:focus-field sm:flex-row sm:items-center">
         <div dir="ltr" className="flex min-w-0 flex-1 items-center ps-3">
           <span className="shrink-0 text-body-lg text-fg-tertiary">{t("prefix")}</span>
           <input

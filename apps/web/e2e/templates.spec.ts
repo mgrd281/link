@@ -61,7 +61,7 @@ test.describe("template gallery", () => {
     await expect(progress).toBeVisible();
     const total = Number((await progress.textContent())?.match(/of (\d+)/)?.[1]);
     expect(total).toBeGreaterThan(24);
-    await page.getByRole("button", { name: "Show 12 more" }).click();
+    await page.getByRole("button", { name: "Show 12 more templates" }).click();
     await expect(cards).toHaveCount(24);
     await expect(page.getByText(`24 of ${total} templates`)).toBeVisible();
     // Keyboards carry on at the first new card.
@@ -71,9 +71,9 @@ test.describe("template gallery", () => {
     expect(await cards.count()).toBeLessThanOrEqual(12);
     // To the end: no button once everything is shown.
     await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: "All languages" }).click();
-    for (let shown = 12; shown < total; shown += 12) await page.getByRole("button", { name: /^Show \d+ more$/ }).click();
+    for (let shown = 12; shown < total; shown += 12) await page.getByRole("button", { name: /^Show \d+ more templates$/ }).click();
     await expect(cards).toHaveCount(total);
-    await expect(page.getByRole("button", { name: /^Show \d+ more$/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Show \d+ more templates$/ })).toHaveCount(0);
   });
 
   test("the preview flips through the examples and closes with Escape", async ({ page }) => {
@@ -139,7 +139,7 @@ test.describe("template gallery", () => {
     const found = Number((await page.getByText(/^\d+ templates$/).textContent())?.match(/\d+/)?.[0]);
     expect(found).toBeGreaterThanOrEqual(13);
     // Twelve at first, the rest one tap away.
-    await page.getByRole("button", { name: /^Show \d+ more$/ }).click();
+    await page.getByRole("button", { name: /^Show \d+ more templates$/ }).click();
     await page.getByRole("button", { name: /^Preview Lionel Messi – / }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator('iframe[title="Page preview: Lionel Messi"]')).toHaveAttribute("src", "/en/p/messi");

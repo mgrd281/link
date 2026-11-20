@@ -2819,7 +2819,7 @@
     "prev": "Previous template",
     "next": "Next template",
     "position": "{index} of {total}",
-    "more": "{count, plural, one {Show 1 more} other {Show # more}}",
+    "more": "{count, plural, one {Show 1 more template} other {Show # more templates}}",
     "shownOf": "{shown} of {total} templates",
     "newTab": "(opens in a new tab)",
     "ctaTitle": "Nothing quite right?",

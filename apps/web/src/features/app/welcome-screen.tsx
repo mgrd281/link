@@ -354,7 +354,7 @@ export function WelcomeScreen() {
                 {starter.socials.map((platform) => (
                   <label key={platform} className="grid grid-cols-1 gap-2">
                     <span className="text-small">{t(`platforms.${platform}`)}</span>
-                    <span dir="ltr" className="flex h-control-lg items-center rounded-md border border-line-input bg-surface-elevated px-3 focus-within:border-focus focus-within:focus-ring">
+                    <span dir="ltr" className="flex h-control-lg items-center rounded-md border border-line-input bg-surface-elevated px-3 focus-within:border-focus focus-within:focus-field">
                       <span className="shrink-0 text-fg-tertiary select-none">{SOCIAL_PREFIX[platform]}</span>
                       <input
                         value={handles[platform] ?? ""}
