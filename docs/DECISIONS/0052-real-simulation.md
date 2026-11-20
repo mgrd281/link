@@ -43,6 +43,23 @@ each link. A visitor could not see what their page would actually look like.
   - The visitor's line and the whole look (page color, type, buttons, not only template and accent) go to sign-up in
     the draft. Sign-up starts the page with that look, and the welcome flow applies it again for sign-ups that skip
     the email form.
+- **A guided demo shows how a page is made, completely.** The founder asked to "show the customer how to build a
+  page professionally, completely: the best simulation". The persona's page is now built by a visible cursor in the
+  real controls, like a screen recording but live.
+  - The cursor moves to each control and taps it, with a ring opening from its tip:
+    - the photo button (the portrait appears);
+    - the name and the line, each focused and typed;
+    - the Links tab, then three links, each pasted into the field ("Recognised: …") and added with +;
+    - the Look tab, Pulse first, then the persona's own look;
+    - the phone says "Your page is live", and "Keep this page" lights up.
+  - Above the tabs, a thin bar of five segments and the step's name: Add a photo, Your name and a line, Paste your
+    links, Pick a look, Live. It takes about twenty seconds.
+  - Afterwards, or as soon as the visitor touches anything, the bar says "Your turn – just start" and offers
+    **Watch again** (from an empty page) and **Start empty** (photo, name, line, links and look cleared). Before it
+    has played, it offers **Watch**.
+  - With reduced motion there is no cursor: the finished page appears, and the same buttons are there.
+  - The demo's fields are only shown as focused; real focus never moves, so the page does not scroll by itself and
+    nothing is announced.
 - **One card, like an app window.**
   - Computers: the controls on the reading side and the stage with the whole phone on the other.
   - Phones: the stage first, showing the upper part of the phone (it scrolls to each change), then the tabs and
@@ -61,6 +78,7 @@ each link. A visitor could not see what their page would actually look like.
 - the phone lays the page out 390 px wide and scales it down, scrolls to the newest block and back with the
   keyboard, and holds no link that can be followed;
 - a photo goes onto the page and comes off again;
-- the persona: photo, name, line, Instagram icon, single, live set, their look;
+- the guided demo: photo, name, line, Instagram icon, single, live set, their look, "live", then "Your turn";
+- Watch, a touch that stops it, Start empty;
 - on a phone, name, photo, own link and look reach the welcome flow and an example does not;
 - axe on the homepage in three languages, light and dark.

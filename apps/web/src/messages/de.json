@@ -905,6 +905,22 @@
       },
       "persona": {
         "tagline": "DJ · Produzentin · House & Disco"
+      },
+      "demo": {
+        "watch": "So entsteht eine Seite",
+        "steps": {
+          "photo": "Foto hinzufügen",
+          "profile": "Name und eine Zeile",
+          "links": "Links einfügen",
+          "look": "Look wählen",
+          "live": "Online – fertig"
+        },
+        "yourTurn": "Jetzt du – tipp einfach los",
+        "replay": "Nochmal ansehen",
+        "clear": "Leer beginnen",
+        "cleared": "Leere Seite. Fang mit deinem Foto und Namen an.",
+        "live": "Deine Seite ist online",
+        "play": "Ansehen"
       }
     },
     "more": {

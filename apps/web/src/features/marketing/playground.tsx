@@ -3,7 +3,28 @@
 import { detectLink, NO_IMAGE, type Block, type Detection, type Page, type Platform } from "@linkyo/blocks";
 import { resolveCreatorTheme, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { cn, Icon, PlatformIcon } from "@linkyo/ui";
-import { ArrowRight, Camera, CircleCheck, Clapperboard, Image as ImageIcon, Link2, Music2, Palette, Plus, Radio, ShoppingBag, Ticket, UserRound, Video, X, type LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  Camera,
+  CircleCheck,
+  Clapperboard,
+  Eraser,
+  Image as ImageIcon,
+  Link2,
+  MousePointer2,
+  Music2,
+  Palette,
+  Play,
+  Plus,
+  Radio,
+  RotateCcw,
+  ShoppingBag,
+  Ticket,
+  UserRound,
+  Video,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
@@ -42,8 +63,10 @@ const KNOWN = new Set(["music", "video", "shorts", "events", "product", "live", 
 /** Profiles that become an icon under the name, as in the welcome flow (songs, videos and channels stay blocks). */
 const ICON_PROFILES: readonly SocialPlatform[] = ["instagram", "tiktok", "x", "threads", "linkedin", "facebook", "github", "whatsapp", "discord"];
 const MAX_LINKS = 6;
-/** A look starts the playground; the persona's own look ends the self-demo. */
+/** A look starts the playground; the persona's own look ends the demo. */
 const FIRST_LOOK = "daylight";
+/** The demo's steps, each with its caption: photo, name and line, links, look, live. */
+const DEMO_STEPS = ["photo", "profile", "links", "look", "live"] as const;
 
 interface Added {
   key: string;
@@ -110,7 +133,15 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   const root = useRef<HTMLDivElement>(null);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const radios = useRef<(HTMLButtonElement | null)[]>([]);
-  const touched = useRef(false);
+  const interacted = useRef(false);
+  const controller = useRef<AbortController | null>(null);
+  // What the demo's cursor goes to.
+  const photoTarget = useRef<HTMLButtonElement>(null);
+  const nameTarget = useRef<HTMLInputElement>(null);
+  const taglineTarget = useRef<HTMLInputElement>(null);
+  const linkTarget = useRef<HTMLInputElement>(null);
+  const addTarget = useRef<HTMLButtonElement>(null);
+  const ctaTarget = useRef<HTMLAnchorElement>(null);
   const frame = useRef(0);
   const personaTagline = t("persona.tagline");
   const [tab, setTab] = useState<Tab>("name");
@@ -128,6 +159,11 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   const [accent, setAccent] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const [reveal, setReveal] = useState<Reveal>({ to: "top", at: 0 });
+  // The demo: which step it is on, the cursor, the control it pretends to focus, the phone's message.
+  const [demo, setDemo] = useState<{ step: number; state: "idle" | "running" | "done" }>({ step: -1, state: "idle" });
+  const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false, tap: 0 });
+  const [demoFocus, setDemoFocus] = useState<"name" | "tagline" | "link" | "cta" | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const show = (to: Reveal["to"]) => {
     setReveal((current) => ({ to, at: current.at + 1 }));
   };
@@ -225,101 +261,207 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     }
   };
 
-  // The persona, once, when most of the playground is on screen, unless someone got there first.
+  // The guided demo: a cursor builds the persona's page, step by step, in the real controls.
+  const personaLook = Math.max(
+    0,
+    looks.findIndex((option) => option.id === PERSONA.look),
+  );
+  const pulseLook = looks.findIndex((option) => option.id === "pulse");
+  const firstLook = Math.max(
+    0,
+    looks.findIndex((option) => option.id === FIRST_LOOK),
+  );
+  const personaUrls = PERSONA.links.map((sample) => EXAMPLES.find((example) => example.id === sample)?.url ?? "");
+  const personaItem = (url: string, index: number) => {
+    const found = detectLink(url);
+    return found ? [toAdded(found, `persona-${index}`)] : [];
+  };
+
+  /** Everything back to an empty page. */
+  const reset = () => {
+    setPhoto(null);
+    setName("");
+    setTagline("");
+    setOwn({ name: false, tagline: false });
+    setItems([]);
+    setDraft("");
+    setError(null);
+    setLookIndex(firstLook);
+    setAccent(null);
+    setTab("name");
+    setToast(null);
+    show("top");
+  };
+
+  /** The persona's finished page at once (reduced motion). */
+  const finish = () => {
+    setPhoto({ ...PERSONA.photo, own: false });
+    setName(PERSONA.name);
+    setTagline(personaTagline);
+    setItems(personaUrls.flatMap(personaItem));
+    setLookIndex(personaLook);
+    setAccent(null);
+    setTab("look");
+    setDemo({ step: DEMO_STEPS.length, state: "done" });
+  };
+
+  const pointAt = (element: Element | null | undefined) => {
+    const box = root.current?.getBoundingClientRect();
+    const target = element?.getBoundingClientRect();
+    if (!box || !target) return;
+    setCursor((current) => ({ ...current, visible: true, x: target.left - box.left + target.width / 2, y: target.top - box.top + target.height / 2 }));
+  };
+  const tap = () => {
+    setCursor((current) => ({ ...current, tap: current.tap + 1 }));
+  };
+
+  const play = () => {
+    controller.current?.abort();
+    const run = new AbortController();
+    controller.current = run;
+    const wait = (ms: number) =>
+      new Promise<void>((resolve, reject) => {
+        const timer = window.setTimeout(resolve, ms);
+        run.signal.addEventListener(
+          "abort",
+          () => {
+            window.clearTimeout(timer);
+            reject(new Error("stopped"));
+          },
+          { once: true },
+        );
+      });
+    const step = (index: number) => {
+      setDemo({ step: index, state: "running" });
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      finish();
+      return;
+    }
+    reset();
+    void (async () => {
+      try {
+        step(0);
+        await wait(700);
+        pointAt(photoTarget.current);
+        await wait(700);
+        tap();
+        setPhoto({ ...PERSONA.photo, own: false });
+        await wait(800);
+
+        step(1);
+        pointAt(nameTarget.current);
+        await wait(650);
+        tap();
+        setDemoFocus("name");
+        for (const [index] of Array.from(PERSONA.name).entries()) {
+          setName(PERSONA.name.slice(0, index + 1));
+          await wait(60);
+        }
+        await wait(250);
+        pointAt(taglineTarget.current);
+        await wait(600);
+        tap();
+        setDemoFocus("tagline");
+        for (const [index] of Array.from(personaTagline).entries()) {
+          setTagline(personaTagline.slice(0, index + 1));
+          await wait(28);
+        }
+        await wait(400);
+        setDemoFocus(null);
+
+        step(2);
+        pointAt(tabs.current[1]);
+        await wait(650);
+        tap();
+        setTab("links");
+        await wait(450);
+        for (const [index, url] of personaUrls.entries()) {
+          pointAt(linkTarget.current);
+          await wait(index === 0 ? 600 : 450);
+          tap();
+          setDemoFocus("link");
+          setDraft(url);
+          await wait(850);
+          pointAt(addTarget.current);
+          await wait(450);
+          tap();
+          const added = personaItem(url, index);
+          setItems((current) => [...current, ...added]);
+          setDraft("");
+          setDemoFocus(null);
+          show(added[0]?.social ? "top" : "end");
+          await wait(750);
+        }
+
+        step(3);
+        pointAt(tabs.current[2]);
+        await wait(650);
+        tap();
+        setTab("look");
+        await wait(450);
+        if (pulseLook >= 0) {
+          pointAt(radios.current[pulseLook]);
+          await wait(550);
+          tap();
+          setLookIndex(pulseLook);
+          await wait(1100);
+        }
+        pointAt(radios.current[personaLook]);
+        await wait(550);
+        tap();
+        setLookIndex(personaLook);
+        show("top");
+        await wait(900);
+
+        step(4);
+        setToast(t("demo.live"));
+        pointAt(ctaTarget.current);
+        await wait(700);
+        setDemoFocus("cta");
+        await wait(1800);
+        setDemoFocus(null);
+        setCursor((current) => ({ ...current, visible: false }));
+        setDemo({ step: DEMO_STEPS.length, state: "done" });
+        await wait(1500);
+        setToast(null);
+      } catch {
+        // Stopped by the visitor: what is there stays, and it is their turn.
+        setCursor((current) => ({ ...current, visible: false }));
+        setDemoFocus(null);
+        setToast(null);
+        setDemo((current) => (current.state === "running" ? { ...current, state: "done" } : current));
+      }
+    })();
+  };
+
+  // The demo plays once, when most of the playground is on screen, unless someone got there first.
+  const playRef = useRef(play);
+  useEffect(() => {
+    playRef.current = play;
+  });
   useEffect(() => {
     const element = root.current;
     if (!element) return;
-    const timers: number[] = [];
-    const at = (ms: number, run: () => void) => {
-      timers.push(
-        window.setTimeout(() => {
-          if (!touched.current) run();
-        }, ms),
-      );
-    };
-    const personaLook = Math.max(
-      0,
-      looks.findIndex((option) => option.id === PERSONA.look),
-    );
-    const urls = PERSONA.links.map((sample) => EXAMPLES.find((example) => example.id === sample)?.url ?? "");
-    const personaItem = (url: string, index: number) => {
-      const found = detectLink(url);
-      return found ? [toAdded(found, `persona-${index}`)] : [];
-    };
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry?.isIntersecting || touched.current) return;
+        if (!entry?.isIntersecting) return;
         observer.disconnect();
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          // No motion: the finished page at once.
-          setPhoto({ ...PERSONA.photo, own: false });
-          setName(PERSONA.name);
-          setTagline(personaTagline);
-          setItems(urls.flatMap(personaItem));
-          setLookIndex(personaLook);
-          return;
-        }
-        let time = 400;
-        at(time, () => {
-          setPhoto({ ...PERSONA.photo, own: false });
-        });
-        time += 500;
-        Array.from(PERSONA.name).forEach((_, index) => {
-          time += 60;
-          at(time, () => {
-            setName(PERSONA.name.slice(0, index + 1));
-          });
-        });
-        time += 300;
-        Array.from(personaTagline).forEach((_, index) => {
-          time += 30;
-          at(time, () => {
-            setTagline(personaTagline.slice(0, index + 1));
-          });
-        });
-        time += 600;
-        at(time, () => {
-          setTab("links");
-        });
-        urls.forEach((url, index) => {
-          time += 450;
-          at(time, () => {
-            setDraft(url);
-          });
-          time += 800;
-          at(time, () => {
-            const added = personaItem(url, index);
-            setItems((current) => [...current, ...added]);
-            setDraft("");
-            show(added[0]?.social ? "top" : "end");
-          });
-          time += 400;
-        });
-        time += 400;
-        at(time, () => {
-          setTab("look");
-        });
-        time += 600;
-        // Their look, and back to the top: the portrait, the name and the line in it.
-        at(time, () => {
-          setLookIndex(personaLook);
-          show("top");
-        });
+        if (!interacted.current) playRef.current();
       },
       { threshold: 0.4 },
     );
     observer.observe(element);
     return () => {
       observer.disconnect();
-      timers.forEach((timer) => {
-        window.clearTimeout(timer);
-      });
+      controller.current?.abort();
     };
-  }, [looks, personaTagline]);
+  }, []);
 
-  /** The visitor took over: the persona stops where it is. */
+  /** The visitor took over: the demo stops where it is. */
   const takeOver = () => {
-    touched.current = true;
+    interacted.current = true;
+    controller.current?.abort();
   };
 
   const showTab = (index: number, focus = false) => {
@@ -387,6 +529,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     // All panels share one cell, so switching tabs never changes the card's height.
     className: cn("col-start-1 row-start-1 grid content-start gap-3 transition-opacity duration-standard ease-standard motion-reduce:transition-none", tab === entry ? "opacity-100" : "invisible opacity-0"),
   });
+  const demoButton =
+    "inline-flex h-control-sm items-center gap-2 rounded-full border border-line bg-surface px-3 text-small font-semibold text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed";
   const field =
     "h-control-lg w-full min-w-0 rounded-full border border-transparent bg-canvas-muted px-4 text-body text-fg outline-none transition-colors duration-micro placeholder:text-fg-tertiary focus-visible:border-link focus-visible:focus-ring";
 
@@ -396,17 +540,61 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       onPointerDownCapture={takeOver}
       onFocusCapture={takeOver}
       onKeyDownCapture={takeOver}
-      className="mx-auto grid w-full max-w-prose grid-cols-1 overflow-hidden rounded-xl border border-line bg-surface lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+      className="relative mx-auto grid w-full max-w-prose grid-cols-1 overflow-hidden rounded-xl border border-line bg-surface lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
     >
       {/* The stage: the phone with the page, above the controls on phones (its lower part out of
           view, it scrolls to each change) and beside them, whole, on wide screens. */}
       <div className="relative isolate grid justify-items-center overflow-hidden border-b border-line bg-canvas-muted max-lg:aspect-portrait max-lg:pt-8 lg:order-last lg:items-center lg:border-s lg:border-b-0 lg:py-12">
         <div aria-hidden className="mk-deck-halo w-[140%] border border-line" />
         <div aria-hidden className="mk-deck-halo w-[95%] bg-tint-teal" />
-        <TryPhone page={page} theme={theme} label={t("preview.label")} reveal={reveal} className="w-sidebar max-lg:self-start lg:w-3/5" />
+        <TryPhone page={page} theme={theme} label={t("preview.label")} reveal={reveal} toast={toast} className="w-sidebar max-lg:self-start lg:w-3/5" />
       </div>
 
       <div className="grid content-start gap-4 p-4 sm:p-6 lg:content-center lg:p-8">
+        {/* The demo's progress, its caption, and afterwards the way to watch it again or start empty. */}
+        <div className="grid gap-2">
+          <div aria-hidden className="grid grid-cols-5 gap-1">
+            {DEMO_STEPS.map((entry, index) => (
+              <span
+                key={entry}
+                className={cn(
+                  "h-1 rounded-full transition-colors duration-standard ease-standard motion-reduce:transition-none",
+                  demo.state !== "idle" && index <= demo.step ? "bg-primary" : "bg-line",
+                )}
+              />
+            ))}
+          </div>
+          <div className="flex min-h-control-sm flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <p data-demo-caption className="text-small font-semibold text-fg">
+              {demo.state === "running" ? t(`demo.steps.${DEMO_STEPS[demo.step] ?? "live"}`) : demo.state === "done" ? t("demo.yourTurn") : t("demo.watch")}
+            </p>
+            {demo.state === "idle" ? (
+              <button type="button" onClick={play} className={demoButton}>
+                <Icon icon={Play} size="sm" className="rtl:-scale-x-100" />
+                {t("demo.play")}
+              </button>
+            ) : demo.state === "done" ? (
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={play} className={demoButton}>
+                  <Icon icon={RotateCcw} size="sm" className="rtl:-scale-x-100" />
+                  {t("demo.replay")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    reset();
+                    setAnnouncement(t("demo.cleared"));
+                  }}
+                  className="inline-flex h-control-sm items-center gap-2 rounded-full px-3 text-small font-semibold text-fg-secondary transition-[color,background-color,scale] duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring active:scale-pressed"
+                >
+                  <Icon icon={Eraser} size="sm" />
+                  {t("demo.clear")}
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
         <div role="tablist" aria-label={t("tabs.label")} className="grid grid-cols-3 gap-1 rounded-full bg-canvas-muted p-1">
           {TABS.map((entry, index) => {
             const selected = tab === entry.id;
@@ -446,6 +634,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
             <div className="flex items-end gap-3">
               <div className="relative shrink-0">
                 <button
+                  ref={photoTarget}
                   type="button"
                   onClick={() => void pickPhoto()}
                   aria-label={photo?.own ? t("photo.change") : t("photo.add")}
@@ -479,6 +668,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   {t("name.label")}
                 </label>
                 <input
+                  ref={nameTarget}
                   id={`${id}-name`}
                   value={name}
                   onChange={(event) => {
@@ -493,7 +683,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   autoComplete="name"
                   placeholder={t("name.placeholder")}
                   aria-describedby={`${id}-name-hint`}
-                  className={field}
+                  className={cn(field, demoFocus === "name" && "border-link focus-ring")}
                 />
               </div>
             </div>
@@ -502,6 +692,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 {t("tagline.label")}
               </label>
               <input
+                ref={taglineTarget}
                 id={`${id}-tagline`}
                 value={tagline}
                 onChange={(event) => {
@@ -514,7 +705,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 }}
                 maxLength={80}
                 placeholder={t("tagline.placeholder")}
-                className={field}
+                className={cn(field, demoFocus === "tagline" && "border-link focus-ring")}
               />
             </div>
             <p id={`${id}-name-hint`} className={cn("flex min-w-0 items-center gap-2 px-1 text-small", photoError ? "text-danger-strong" : "text-fg-secondary")}>
@@ -538,9 +729,15 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
               <label htmlFor={`${id}-link`} className="sr-only">
                 {tPaste("label")}
               </label>
-              <div className="flex h-control-lg items-center gap-2 rounded-full border border-transparent bg-canvas-muted ps-4 pe-1 transition-colors duration-micro has-[input:focus-visible]:border-link has-[input:focus-visible]:focus-ring">
+              <div
+                className={cn(
+                  "flex h-control-lg items-center gap-2 rounded-full border border-transparent bg-canvas-muted ps-4 pe-1 transition-colors duration-micro has-[input:focus-visible]:border-link has-[input:focus-visible]:focus-ring",
+                  demoFocus === "link" && "border-link focus-ring",
+                )}
+              >
                 <Icon icon={Link2} size="md" className="shrink-0 text-fg-tertiary" />
                 <input
+                  ref={linkTarget}
                   id={`${id}-link`}
                   value={draft}
                   onChange={(event) => {
@@ -569,6 +766,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   className="h-full min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-fg-tertiary"
                 />
                 <button
+                  ref={addTarget}
                   type="submit"
                   aria-label={tPaste("add")}
                   className="grid size-control-md shrink-0 place-items-center rounded-full bg-primary text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
@@ -687,15 +885,31 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
 
         <div className="grid gap-2 border-t border-line pt-4">
           <Link
+            ref={ctaTarget}
             href={signup}
             onClick={keep}
-            className="group inline-flex h-control-xl items-center justify-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+            className={cn(
+              "group inline-flex h-control-xl items-center justify-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed",
+              demoFocus === "cta" && "bg-primary-hover focus-ring",
+            )}
           >
             {t("cta")}
             <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
           </Link>
           <p className="text-center text-caption text-fg-secondary">{t("ctaHint")}</p>
         </div>
+      </div>
+      {/* The demo's cursor: it moves to each control and taps it. Decoration only. */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute top-0 left-0 layer-raised transition-[translate,opacity] duration-slow ease-standard motion-reduce:hidden",
+          cursor.visible ? "opacity-100" : "opacity-0",
+        )}
+        style={{ translate: `${cursor.x}px ${cursor.y}px` }}
+      >
+        {cursor.tap > 0 ? <span key={cursor.tap} className="mk-tap absolute -top-4 -left-4 size-8 rounded-full bg-primary" /> : null}
+        <Icon icon={MousePointer2} size="lg" className="relative fill-ink text-white" />
       </div>
       <p role="status" className="sr-only">
         {announcement}

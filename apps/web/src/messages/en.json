@@ -905,6 +905,22 @@
       },
       "persona": {
         "tagline": "DJ · Producer · House & Disco"
+      },
+      "demo": {
+        "watch": "How a page is made",
+        "steps": {
+          "photo": "Add a photo",
+          "profile": "Your name and a line",
+          "links": "Paste your links",
+          "look": "Pick a look",
+          "live": "Live – done"
+        },
+        "yourTurn": "Your turn – just start",
+        "replay": "Watch again",
+        "clear": "Start empty",
+        "cleared": "Empty page. Start with your photo and name.",
+        "live": "Your page is live",
+        "play": "Watch"
       }
     },
     "more": {

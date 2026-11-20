@@ -3,7 +3,7 @@
 import type { Page } from "@linkyo/blocks";
 import type { ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
-import { BatteryFull, Lock, SignalHigh, Wifi } from "lucide-react";
+import { BatteryFull, CircleCheck, Lock, SignalHigh, Wifi } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
@@ -27,7 +27,22 @@ export interface Reveal {
  *
  * After a change it scrolls to where the change is, so the visitor sees what they just did.
  */
-export function TryPhone({ page, theme, label, reveal, className }: { page: Page; theme: ResolvedCreatorTheme; label: string; reveal: Reveal; className?: string }) {
+export function TryPhone({
+  page,
+  theme,
+  label,
+  reveal,
+  toast,
+  className,
+}: {
+  page: Page;
+  theme: ResolvedCreatorTheme;
+  label: string;
+  reveal: Reveal;
+  /** A short message over the page, like the app's ("Your page is live"). */
+  toast?: string | null;
+  className?: string;
+}) {
   const screen = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -96,6 +111,16 @@ export function TryPhone({ page, theme, label, reveal, className }: { page: Page
               <PosterRenderer page={page} theme={theme} preview />
             </div>
           </div>
+          {toast ? (
+            <p
+              key={toast}
+              aria-hidden
+              className="pointer-events-none absolute inset-x-6 bottom-10 flex items-center justify-center gap-2 rounded-full bg-creator-accent px-4 py-3 font-sans text-small font-semibold text-creator-accent-fg motion-safe:animate-pop-in"
+            >
+              <Icon icon={CircleCheck} size="sm" className="shrink-0" />
+              <span className="truncate">{toast}</span>
+            </p>
+          ) : null}
           <span aria-hidden className="pointer-events-none absolute bottom-2 left-1/2 h-1 w-32 -translate-x-1/2 rounded-full bg-creator-fg opacity-secondary" />
         </div>
       </div>

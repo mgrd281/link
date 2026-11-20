@@ -161,6 +161,19 @@
   }
 }
 
+/* The playground's demo cursor taps: a ring that opens from the tip and fades. */
+@keyframes mk-tap {
+  from {
+    opacity: var(--opacity-secondary);
+    scale: 0.3;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+
 @keyframes mk-phone-in {
   from {
     opacity: 0;
@@ -360,6 +373,10 @@
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
+}
+
+@utility mk-tap {
+  animation: mk-tap var(--duration-slow) var(--ease-standard) both;
 }
 
 @utility mk-phone-in {
