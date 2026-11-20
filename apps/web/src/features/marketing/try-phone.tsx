@@ -39,7 +39,7 @@ export function TryPhone({
   theme: ResolvedCreatorTheme;
   label: string;
   reveal: Reveal;
-  /** A short message over the page, like the app's ("Your page is live"). */
+  /** A short message dropping in over the page, like a phone's notification ("Your page is live"). */
   toast?: string | null;
   className?: string;
 }) {
@@ -115,7 +115,7 @@ export function TryPhone({
             <p
               key={toast}
               aria-hidden
-              className="pointer-events-none absolute inset-x-6 bottom-10 flex items-center justify-center gap-2 rounded-full bg-creator-accent px-4 py-3 font-sans text-small font-semibold text-creator-accent-fg motion-safe:animate-pop-in"
+              className="pointer-events-none absolute inset-x-6 top-24 flex items-center justify-center gap-2 rounded-full bg-creator-accent px-4 py-3 font-sans text-small font-semibold text-creator-accent-fg motion-safe:animate-pop-in"
             >
               <Icon icon={CircleCheck} size="sm" className="shrink-0" />
               <span className="truncate">{toast}</span>
