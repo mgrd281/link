@@ -8,9 +8,11 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type Keyboard
 
 import { ScrollRow } from "@/components/scroll-row";
 import { Link } from "@/i18n/navigation";
+import { PageWall } from "@/features/marketing/page-wall";
+import { useDragToDismiss } from "@/features/app/sheet";
+import { haptic } from "@/lib/haptics";
 
 import { CardFace, CATEGORY_ICONS, tiltBack, tiltTowards, type GalleryItem } from "./gallery-card";
-import { pickShowcase, Showcase } from "./gallery-showcase";
 import { CATEGORIES, type Category } from "./looks";
 
 export type { GalleryItem } from "./gallery-card";
@@ -161,7 +163,6 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
       ),
     [items, t],
   );
-  const showcase = useMemo(() => pickShowcase(items, 15), [items]);
 
   const terms = fold(query).split(/\s+/).filter(Boolean);
   const matching = items.filter(
@@ -222,6 +223,8 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
     event.preventDefault();
     step((event.key === "ArrowRight") !== rtl ? 1 : -1);
   };
+  // The preview on phones: pull its top bar down to close it, as with every sheet.
+  const { content: previewSheet, overlay: previewScrim, handle: previewHandle } = useDragToDismiss(() => setOpen(null));
   const searchProps = {
     value: query,
     onChange: (next: string) => {
@@ -235,7 +238,9 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
     <>
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
         {intro}
-        <Showcase items={showcase} onOpen={setOpen} />
+        {/* The same tilted wall of pages as beside the sign-in form, standing still: a full-bleed band on
+            phones, a framed panel beside the intro on wide screens. */}
+        <PageWall className="-mx-5 aspect-video border-y border-line md:-mx-10 lg:mx-0 lg:aspect-auto lg:h-(--container-prose) lg:rounded-xl lg:border" />
       </div>
 
       <section id="gallery" aria-labelledby="gallery-title" className="grid scroll-mt-24 grid-cols-1 gap-5">
@@ -298,7 +303,10 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
                 <li key={item.slug} className="mk-card-in" style={{ "--i": index % STEP } as CSSProperties}>
                   <button
                     type="button"
-                    onClick={() => setOpen(item)}
+                    onClick={() => {
+                      haptic();
+                      setOpen(item);
+                    }}
                     onPointerMove={tiltTowards}
                     onPointerLeave={tiltBack}
                     className="group block w-full rounded-xl text-start focus-visible:focus-ring"
@@ -307,7 +315,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
                     {/* The card is a picture of the page; the button's name says what it does. */}
                     <span
                       aria-hidden
-                      className="block rounded-xl transition-[translate] duration-standard ease-standard group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
+                      className="block rounded-xl transition-[translate,scale] duration-standard ease-spring group-hover:-translate-y-1 group-active:scale-pressed motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
                     >
                       <CardFace item={item} label={label(item)} priority={index < 2} />
                     </span>
@@ -344,8 +352,9 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
 
       <Dialog.Root open={open !== null} onOpenChange={(next) => (next ? undefined : setOpen(null))}>
         <Dialog.Portal>
-          <Dialog.Overlay className="layer-modal fixed inset-0 bg-scrim motion-safe:animate-fade-in" />
+          <Dialog.Overlay ref={previewScrim} className="layer-modal fixed inset-0 bg-scrim motion-safe:animate-fade-in data-[state=closed]:motion-safe:animate-fade-out" />
           <Dialog.Content
+            ref={previewSheet}
             aria-describedby={undefined}
             onKeyDown={onDialogKey}
             // Focus the dialog itself, not the first tabbable element: on large screens that is the
@@ -354,11 +363,15 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
               event.preventDefault();
               if (event.currentTarget instanceof HTMLElement) event.currentTarget.focus();
             }}
-            className="layer-modal fixed inset-0 flex flex-col gap-3 p-3 outline-none motion-safe:animate-pop-in sm:p-6 lg:flex-row lg:items-center lg:justify-center lg:gap-8"
+            // Phones: slides up like an iOS full-screen sheet, and away again (pull the top bar down to close).
+            className={cn(
+              "layer-modal fixed inset-0 flex flex-col gap-3 p-3 outline-none sm:p-6 lg:flex-row lg:items-center lg:justify-center lg:gap-8",
+              "motion-safe:animate-sheet-in data-[state=closed]:motion-safe:animate-sheet-out lg:motion-safe:animate-pop-in lg:data-[state=closed]:motion-safe:animate-fade-out",
+            )}
           >
             {open ? (
               <>
-                <div className="flex items-center gap-2 lg:hidden">
+                <div {...previewHandle} className="flex touch-none items-center gap-2 lg:hidden">
                   <Dialog.Title className="min-w-0 flex-1 truncate rounded-full border border-line bg-surface-elevated px-3 py-1 text-small font-semibold text-fg">
                     {open.name}
                   </Dialog.Title>

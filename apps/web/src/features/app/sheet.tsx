@@ -26,7 +26,7 @@ interface Drag {
  * enough closes the sheet with a tick of haptic feedback; otherwise it springs back. Phones only: on
  * wide screens the sheet is a side panel. Buttons in the header keep working (a tap is not a drag).
  */
-function useDragToDismiss(onClose: () => void) {
+export function useDragToDismiss(onClose: () => void) {
   const content = useRef<HTMLDivElement>(null);
   const overlay = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);

@@ -121,10 +121,10 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
                   <Icon icon={ArrowDown} size="md" className="transition-transform duration-micro group-hover:translate-y-0.5" />
                 </a>
               </div>
-              <ul aria-label={t("stats.label")} className="grid grid-cols-3 gap-4 border-t border-line pt-6 sm:flex sm:gap-x-8">
+              <ul aria-label={t("stats.label")} className="grid grid-cols-3 gap-3 border-t border-line pt-5 sm:flex sm:gap-x-8 sm:pt-6">
                 {stats.map((stat) => (
-                  <li key={stat.label} className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
-                    <span aria-hidden className="grid size-control-md place-items-center rounded-lg bg-selected text-selected-fg">
+                  <li key={stat.label} className="flex items-center gap-2 sm:gap-3">
+                    <span aria-hidden className="grid size-control-sm shrink-0 place-items-center rounded-md bg-selected text-selected-fg sm:size-control-md sm:rounded-lg">
                       <Icon icon={stat.icon} size="md" />
                     </span>
                     <span className="grid">

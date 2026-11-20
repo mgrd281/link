@@ -90,22 +90,15 @@ test.describe("template gallery", () => {
     await expect(dialog).toBeHidden();
   });
 
-  test("the moving wall makes one pass and rests, holds under the mouse, stays still for reduced motion; nothing overflows", async ({ page, isMobile }) => {
+  test("the wall of pages is the sign-in screen's, standing still; nothing overflows", async ({ page }) => {
     await page.goto("/en/templates");
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
-    // No pause button (WCAG 2.2.2 is met by the motion itself): one pass on wide screens, a row to
-    // swipe on phones.
+    // The same tilted wall of page captures as beside the sign-in form, but nothing in it moves.
+    const wall = page.locator(".mk-wall").first();
+    await expect(wall).toBeVisible();
+    await expect(wall.locator("img").first()).toBeVisible();
+    expect(await page.locator(".mk-marquee-y").count()).toBe(0);
     await expect(page.getByRole("button", { name: /^(Pause|Play) motion$/ })).toHaveCount(0);
-    if (!isMobile) {
-      const lane = page.locator(".mk-marquee-y").first();
-      await expect(lane).toHaveCSS("animation-iteration-count", "1");
-      // The lane itself never stands still long enough to be "stable"; hover its frame.
-      await page.locator("[data-marquee]").first().hover();
-      await expect(lane).toHaveCSS("animation-play-state", "paused");
-      await page.emulateMedia({ reducedMotion: "reduce" });
-      await page.reload();
-      await expect(page.locator(".mk-marquee-y").first()).toHaveCSS("animation-name", "none");
-    }
   });
 
   test("well-known people are listed too, labelled as concepts, and start with their look", async ({ page }) => {

@@ -20,7 +20,7 @@ labelled "Example · {category}" and is `noindex`. See ADR 0019, 0021, 0022 and 
 | Credits | `src/assets/examples/CREDITS.md` (one row per photo or clip) |
 | Categories | `CATEGORIES` in `looks.ts` plus `examples.categories.*` in `src/messages/{de,en,ar}.json` |
 | Category icon | `CATEGORY_ICONS` in `features/examples/gallery-card.tsx` (one lucide icon per category; TypeScript fails without it) |
-| Gallery UI | `gallery.tsx` (search, chips, grid, preview), `gallery-card.tsx` (card face, tilt), `gallery-showcase.tsx` (moving wall: `pickShowcase` takes one page per category in turn, never real people). See ADR 0029 |
+| Gallery UI | `gallery.tsx` (search, chips, grid, preview: a pull-to-close sheet on phones), `gallery-card.tsx` (card face, tilt). The hero shows `marketing/page-wall.tsx`, the sign-in screen's tilted wall of page captures, standing still (ADR 0057; the pages are `WALL` in `marketing/examples.ts`). See ADR 0029 |
 
 ## Rules
 
