@@ -300,8 +300,10 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
           setTab("look");
         });
         time += 600;
+        // Their look, and back to the top: the portrait, the name and the line in it.
         at(time, () => {
           setLookIndex(personaLook);
+          show("top");
         });
       },
       { threshold: 0.4 },

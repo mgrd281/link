@@ -48,9 +48,9 @@ test.describe("marketing home", () => {
     await expect(playground.getByRole("status")).toHaveText("Instagram added to your page");
     await expect(preview.locator("header a[aria-label='Instagram']")).toHaveCount(1);
     // Six links are enough to try it.
-    for (const example of ["Spotify", "Twitch", "Shop"]) await playground.getByRole("button", { name: example, exact: true }).click();
+    for (const example of ["Spotify", "Twitch", "Shop", "YouTube"]) await playground.getByRole("button", { name: example, exact: true }).click();
     await expect(added).toHaveCount(6);
-    await playground.getByRole("button", { name: "YouTube", exact: true }).click();
+    await playground.getByRole("button", { name: "Spotify", exact: true }).click();
     await expect(added).toHaveCount(6);
     await expect(playground.getByText("Six links are enough to try it.")).toBeVisible();
     await expect(preview).toContainText("Afterglow · vinyl");
@@ -149,9 +149,9 @@ test.describe("marketing home", () => {
     await expect(preview).toContainText("linkyo.app/juno-kade");
     await expect(preview).toContainText("Afterglow");
     await expect(preview.locator("header a[aria-label='Instagram']")).toHaveCount(1);
-    // The portrait in the page's hero, and in the photo button.
+    // The portrait in the page's hero, and in the photo button (still "Add a photo": it is not the visitor's).
     await expect(preview.locator("header img").first()).toBeAttached();
-    await expect(playground.getByRole("button", { name: "Add a photo" })).toBeAttached();
+    await expect(playground.locator("button[aria-label='Add a photo'] img")).toBeAttached();
     await expect(playground.getByRole("radio", { name: "Nocturne" })).toHaveAttribute("aria-checked", "true", { timeout: 5_000 });
     await expect(playground.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
     // Only what a visitor does is announced.
