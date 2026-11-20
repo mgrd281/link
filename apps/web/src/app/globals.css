@@ -571,6 +571,22 @@
   max-width: calc((100svh - var(--spacing-32) * 2 - var(--spacing-20)) * 390 / 844);
 }
 
+/*
+ * The playground on wide screens: as tall as the screen allows under the header (with a margin), so
+ * the controls, the whole phone and "Keep this page" are seen at once, between 40 and 50 rem. A fixed
+ * height also means nothing on the page moves while the demo adds links or switches tabs.
+ */
+@utility mk-play {
+  --play-h: clamp(calc(var(--spacing-32) * 5), calc(100svh - var(--spacing-16) - var(--spacing-12)), calc(var(--spacing-32) * 6.25));
+
+  height: var(--play-h);
+}
+
+/* The playground's phone: as tall as the stage (less its padding), as wide as a phone that tall. */
+@utility mk-play-phone {
+  width: calc((var(--play-h) - var(--spacing-10) * 2 - var(--spacing-2) * 2) * 390 / 844 + var(--spacing-2) * 2);
+}
+
 /* The soft disc and the thin ring behind the deck, centred on the front phone. */
 @utility mk-deck-halo {
   position: absolute;

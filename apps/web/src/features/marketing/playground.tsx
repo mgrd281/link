@@ -2,11 +2,13 @@
 
 import type { Platform } from "@linkyo/blocks";
 import { detectLink, type Detection } from "@linkyo/blocks/detect";
+import type { CreatorButtonStyle } from "@linkyo/tokens";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
-import { cn, Icon, LogoGlyph, PlatformIcon } from "@linkyo/ui";
+import { cn, Icon, PlatformIcon } from "@linkyo/ui";
 import {
   ArrowRight,
   Camera,
+  Check,
   CircleCheck,
   Clapperboard,
   Image as ImageIcon,
@@ -26,9 +28,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 
 import { saveTryDraft } from "@/features/account/try-draft";
 import { suggestUsername } from "@/features/account/username";
@@ -40,7 +42,7 @@ import { Link } from "@/i18n/navigation";
 
 import type { TryItem, TryPageInput } from "./try-page";
 import type { Reveal } from "./try-phone";
-import { EXAMPLES, PERSONA, sampleOf } from "./try-samples";
+import { EXAMPLES, PERSONA, SAMPLE_FACTS, sampleOf } from "./try-samples";
 
 /** The phone with the real page: its own chunk (renderer, pictures, theme engine), loaded when needed. */
 const TryPhone = dynamic(() => import("./try-phone").then((module) => module.TryPhone), { ssr: false, loading: () => <PhoneFrame /> });
@@ -60,8 +62,10 @@ export interface LookOption {
   config: CreatorThemeConfig;
   name: string;
   description: string;
-  /** The look's colors for its swatch, resolved on the server (the engine loads with the phone). */
+  /** The look's colors and type for its card, resolved on the server (the engine loads with the phone). */
   vars: Record<string, string>;
+  /** How its buttons look (filled, outlined …), for the card's two little buttons. */
+  button: CreatorButtonStyle;
 }
 
 type Tab = "name" | "links" | "look";
@@ -114,6 +118,76 @@ function BlockIcon({ item }: { item: Added }) {
   // A shop link shows a bag, whichever shop system it runs on.
   if (item.type === "product" && !item.social) return <Icon icon={ShoppingBag} size="sm" />;
   return platform && platform !== "website" ? <PlatformGlyph platform={platform} size="sm" /> : <Icon icon={TYPE_ICONS[item.type] ?? Link2} size="sm" />;
+}
+
+/** A link's thumbnail in the list: an example's own picture, else the platform's or the block's icon. */
+function ItemThumb({ item }: { item: Added }) {
+  const picture = item.sample === "necklace" || item.sample === "perfume" || item.sample === "youtube" ? SAMPLE_FACTS[item.sample].picture : null;
+  return (
+    <span aria-hidden className="relative grid size-control-md shrink-0 place-items-center overflow-hidden rounded-sm bg-canvas-muted text-fg">
+      {picture ? <Image src={picture} alt="" fill sizes={mediaSizes.thumb} className="object-cover" /> : <BlockIcon item={item} />}
+    </span>
+  );
+}
+
+/** The little buttons on a look's card, in the look's own button style. */
+const MINI_BUTTON: Record<CreatorButtonStyle, string> = {
+  filled: "bg-creator-accent",
+  soft: "bg-creator-surface-2",
+  outline: "border border-creator-accent",
+  glass: "border border-creator-line bg-creator-glass",
+  shadow: "border border-creator-line bg-creator-surface",
+  minimal: "border-b border-creator-line-strong",
+};
+
+/** The look's display type: its weight, spacing and capitals come with the look. */
+const DISPLAY_TYPE = {
+  fontWeight: "var(--creator-display-weight)",
+  letterSpacing: "var(--creator-display-tracking)",
+  textTransform: "var(--creator-display-transform)",
+} as CSSProperties;
+
+/**
+ * A look in miniature, in its own colors and type: the photo fading into the page, the first name,
+ * two buttons. Decoration only: the radio around it says which look it is.
+ */
+function LookPreview({
+  vars,
+  button,
+  photo,
+  name,
+  mono,
+}: {
+  vars: Record<string, string>;
+  button: CreatorButtonStyle;
+  photo: string | StaticImageData | null;
+  name: string;
+  mono: boolean;
+}) {
+  return (
+    <span aria-hidden style={vars} className="relative flex min-h-0 flex-col overflow-hidden rounded-md border border-line bg-creator-bg text-creator-fg max-lg:aspect-portrait">
+      <span className="relative h-1/2 shrink-0 bg-creator-surface-2">
+        {photo ? <Image src={photo} alt="" fill sizes={mediaSizes.third} className={cn("object-cover object-top", mono && "grayscale")} /> : null}
+        <span className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-creator-bg to-transparent" />
+      </span>
+      <span className="relative -mt-3 truncate px-2 text-center font-creator-display text-body leading-tight" style={DISPLAY_TYPE}>
+        {name}
+      </span>
+      <span className="mt-auto grid gap-1 p-2">
+        <span className={cn("h-2 rounded-creator-button", MINI_BUTTON[button])} />
+        <span className={cn("h-2 rounded-creator-button", MINI_BUTTON[button])} />
+      </span>
+    </span>
+  );
+}
+
+/** The mark on the chosen look's card. */
+function Chosen() {
+  return (
+    <span aria-hidden className="absolute end-2 top-2 grid size-6 place-items-center rounded-full bg-primary text-primary-fg motion-safe:animate-pop-in">
+      <Icon icon={Check} size="sm" />
+    </span>
+  );
 }
 
 /**
@@ -195,14 +269,28 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     () => ({ id, displayName, address, tagline, photo, items, locale, labels, texts: { video: t("samples.video"), necklace: t("samples.necklace"), perfume: t("samples.perfume") } }),
     [id, displayName, address, tagline, photo, items, locale, labels, t],
   );
-  /** The second line in the outline: what the block shows (the sample's title, the real one, or the profile). */
-  const itemDetail = (item: Added): string | undefined => {
-    if (item.social) return item.url.replace(/^https?:\/\/(www\.)?/, "");
-    if (item.sample === "necklace") return t("samples.necklace");
-    if (item.sample === "perfume") return t("samples.perfume");
-    if (item.sample === "youtube") return t("samples.video");
-    return item.meta?.title;
+  /** What a row in "On your page" says: the block's title, then its price, handle, length or source. */
+  const describe = (item: Added): { title: string; detail: string } => {
+    const host = item.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0] ?? item.url;
+    if (item.social) {
+      const handle = socialProfile(item.url, ICON_PROFILES)?.handle;
+      return { title: platformName(item.social), detail: handle ? `@${handle}` : host };
+    }
+    if (item.sample === "necklace" || item.sample === "perfume") {
+      const fact = SAMPLE_FACTS[item.sample];
+      const price = new Intl.NumberFormat(locale, { style: "currency", currency: fact.currency, minimumFractionDigits: 0 }).format(fact.price);
+      return { title: item.sample === "necklace" ? t("samples.necklace") : t("samples.perfume"), detail: price };
+    }
+    if (item.sample === "youtube") {
+      const { duration } = SAMPLE_FACTS.youtube;
+      return { title: t("samples.video"), detail: `YouTube · ${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, "0")}` };
+    }
+    // YouTube's artist channels are called "Artist - Topic".
+    return { title: item.meta?.title ?? itemLabel(item), detail: item.meta?.author?.replace(/ - Topic$/, "") ?? host };
   };
+  // The look cards show the visitor's photo and first name (or the persona's), in each look.
+  const previewPhoto = photo ? (photo.own ? photo.src : PERSONA.picture) : null;
+  const previewName = name.trim() ? (name.trim().split(/\s+/)[0] ?? "Aa") : "Aa";
   // The phone loads a screen before the playground is in view.
   const [near, setNear] = useState(false);
   useEffect(() => {
@@ -530,11 +618,20 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     role: "tabpanel" as const,
     "aria-labelledby": tabId(entry),
     inert: tab !== entry,
-    // All panels share one cell, so switching tabs never changes the card's height.
-    className: cn("col-start-1 row-start-1 grid content-start gap-3 transition-opacity duration-standard ease-standard motion-reduce:transition-none", tab === entry ? "opacity-100" : "invisible opacity-0"),
+    // All panels share one cell and fill it, so switching tabs never changes the card's height.
+    className: cn("col-start-1 row-start-1 flex min-h-0 flex-col gap-3 transition-opacity duration-standard ease-standard motion-reduce:transition-none", tab === entry ? "opacity-100" : "invisible opacity-0"),
   });
   const field =
     "h-control-lg w-full min-w-0 rounded-full border border-transparent bg-canvas-muted px-4 text-body text-fg outline-none transition-colors duration-micro placeholder:text-fg-tertiary focus-visible:border-link focus-visible:focus-ring";
+  const lookCard = (selected: boolean) =>
+    cn(
+      "grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-1 rounded-lg border-emphasis p-1 text-start transition-[border-color,scale] duration-standard ease-standard active:scale-pressed motion-reduce:transition-none",
+      selected ? "border-link" : "border-transparent hover:border-line-strong",
+    );
+  const remove = (key: string) => {
+    setItems((current) => current.filter((candidate) => candidate.key !== key));
+    setError(null);
+  };
 
   return (
     <div
@@ -542,12 +639,12 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       onPointerDownCapture={takeOver}
       onFocusCapture={takeOver}
       onKeyDownCapture={takeOver}
-      className="relative mx-auto grid w-full max-w-prose grid-cols-1 overflow-hidden rounded-xl border border-line bg-surface lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+      className="relative mx-auto grid w-full max-w-prose grid-cols-1 overflow-hidden rounded-xl border border-line bg-surface lg:mk-play lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-1"
     >
-      {/* The stage: the phone with the page, above the controls on phones (its lower part out of
-          view, it scrolls to each change) and beside them, whole, on wide screens. */}
-      {/* The stage: deep Linkyo teal, so the phone (and the page in it) is what you look at. */}
-      <div className="relative isolate grid justify-items-center overflow-hidden border-b border-line bg-teal-900 max-lg:aspect-portrait max-lg:pt-8 lg:order-last lg:items-center lg:border-s lg:border-b-0 lg:py-12">
+      {/* The stage, in deep Linkyo teal: the phone with the page, above the controls on phones (its
+          lower part out of view; it scrolls to each change) and beside them, whole, on wide screens,
+          where the card is as tall as the screen allows. */}
+      <div className="relative isolate grid justify-items-center overflow-hidden border-b border-line bg-teal-900 max-lg:aspect-portrait max-lg:pt-8 lg:order-last lg:items-center lg:border-s lg:border-b-0 lg:py-10">
         <div aria-hidden className="mk-deck-halo w-[140%] border border-teal-800" />
         <div aria-hidden className="mk-deck-halo w-[95%] bg-teal-800" />
         {/* Watch the demo (again): a quiet round button in the stage's corner, not while it plays. */}
@@ -557,33 +654,21 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
             onClick={play}
             aria-label={demo === "done" ? t("demo.replay") : t("demo.play")}
             title={demo === "done" ? t("demo.replay") : t("demo.play")}
-            className="absolute end-3 top-3 layer-raised grid size-touch-target place-items-center rounded-full border border-teal-700 bg-teal-800 text-teal-50 transition-[background-color,scale] duration-micro hover:bg-teal-700 focus-visible:focus-ring active:scale-pressed motion-safe:animate-fade-in"
+            className="absolute end-2 top-2 layer-raised grid size-control-md place-items-center rounded-full border border-teal-700 bg-teal-800 text-teal-50 transition-[background-color,scale] duration-micro hover:bg-teal-700 focus-visible:focus-ring active:scale-pressed motion-safe:animate-fade-in lg:end-3 lg:top-3 lg:size-touch-target"
           >
             <Icon icon={demo === "done" ? RotateCcw : Play} size="sm" className="rtl:-scale-x-100" />
           </button>
         )}
         {near ? (
-          <TryPhone input={phoneInput} config={config} rtl={rtl} label={t("preview.label")} reveal={reveal} toast={toast} className="w-sidebar max-lg:self-start lg:w-3/5" />
+          <TryPhone input={phoneInput} config={config} rtl={rtl} label={t("preview.label")} reveal={reveal} toast={toast} className="w-sidebar max-lg:self-start lg:mk-play-phone" />
         ) : (
-          <PhoneFrame className="w-sidebar max-lg:self-start lg:w-3/5" />
+          <PhoneFrame className="w-sidebar max-lg:self-start lg:mk-play-phone" />
         )}
       </div>
 
-      {/* The editor: on computers a full panel (its name and the address on top, the page's outline
-          under the controls, "Keep this page" at the foot); on phones just the controls. */}
-      <div className="grid content-start gap-4 p-4 sm:p-6 lg:flex lg:flex-col lg:gap-5 lg:p-8">
-        {/* (The address is in the phone's address bar; no need to say it twice.) */}
-        <div className="flex items-center gap-3 border-b border-line pb-5 max-lg:hidden">
-          <span aria-hidden className="grid size-control-md shrink-0 place-items-center rounded-md bg-primary text-primary-fg">
-            <LogoGlyph className="size-5" />
-          </span>
-          <div className="grid min-w-0">
-            <p className="text-body font-semibold text-fg">{t("editor.title")}</p>
-            <p className="text-caption text-pretty text-fg-secondary">{t("editor.subtitle")}</p>
-          </div>
-        </div>
-
-        <div role="tablist" aria-label={t("tabs.label")} className="grid grid-cols-3 gap-1 rounded-full bg-canvas-muted p-1">
+      {/* The editor: three tabs, each a full panel (nothing jumps between them), and "Keep this page". */}
+      <div className="flex min-h-0 flex-col gap-4 p-4 sm:p-6 lg:p-8">
+        <div role="tablist" aria-label={t("tabs.label")} className="grid shrink-0 grid-cols-3 gap-1 rounded-full bg-canvas-muted p-1">
           {TABS.map((entry, index) => {
             const selected = tab === entry.id;
             return (
@@ -617,24 +702,26 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
           })}
         </div>
 
-        <div className="grid">
+        {/* One column no wider than the card (the examples' row scrolls inside it on phones). */}
+        <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-1">
+          {/* Profile: the photo large on a quiet stage, then the name, the line and the address. */}
           <div {...panel("name")}>
-            <div className="flex items-end gap-3">
-              <div className="relative shrink-0">
+            <div className="grid min-h-0 flex-1 place-content-center justify-items-center gap-3 rounded-lg bg-canvas-muted p-4">
+              <div className="relative">
                 <button
                   ref={photoTarget}
                   type="button"
                   onClick={() => void pickPhoto()}
                   aria-label={photo?.own ? t("photo.change") : t("photo.add")}
                   className={cn(
-                    "relative grid size-control-xl place-items-center overflow-hidden rounded-full transition-[border-color,background-color,scale] duration-micro focus-visible:focus-ring active:scale-pressed",
-                    photo ? "border border-line" : "border border-dashed border-line-strong bg-canvas-muted text-fg-secondary hover:border-link hover:text-link",
+                    "relative grid size-avatar-xl place-items-center overflow-hidden rounded-full transition-[border-color,background-color,scale] duration-micro focus-visible:focus-ring active:scale-pressed lg:size-avatar-2xl",
+                    photo ? "border border-line" : "border border-dashed border-line-strong bg-surface text-fg-secondary hover:border-link hover:text-link",
                   )}
                 >
                   {photo ? (
-                    <Image key={photo.src} src={photo.own ? photo.src : PERSONA.picture} alt="" fill sizes={mediaSizes.thumb} className="object-cover motion-safe:animate-pop-in" />
+                    <Image key={photo.src} src={photo.own ? photo.src : PERSONA.picture} alt="" fill sizes={mediaSizes.avatar} className="object-cover motion-safe:animate-pop-in" />
                   ) : (
-                    <Icon icon={Camera} size="md" />
+                    <Icon icon={Camera} size="lg" />
                   )}
                 </button>
                 {photo ? (
@@ -645,37 +732,40 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                       show("top");
                     }}
                     aria-label={t("photo.remove")}
-                    className="absolute -end-1 -top-1 grid size-6 place-items-center rounded-full border border-line bg-surface-elevated text-fg transition-colors duration-micro hover:bg-hover focus-visible:focus-ring"
+                    className="absolute -end-1 -top-1 grid size-8 place-items-center rounded-full border border-line bg-surface-elevated text-fg transition-colors duration-micro hover:bg-hover focus-visible:focus-ring"
                   >
                     <Icon icon={X} size="sm" />
                   </button>
                 ) : null}
               </div>
-              <div className="grid min-w-0 flex-1 gap-1">
-                <label htmlFor={`${id}-name`} className="px-1 text-small font-semibold">
-                  {t("name.label")}
-                </label>
-                <input
-                  ref={nameTarget}
-                  id={`${id}-name`}
-                  value={name}
-                  onChange={(event) => {
-                    setName(event.target.value.slice(0, 60));
-                    setOwn((current) => ({ ...current, name: true }));
-                    show("top");
-                  }}
-                  onFocus={(event) => {
-                    if (event.currentTarget.value === PERSONA.name) event.currentTarget.select();
-                  }}
-                  maxLength={60}
-                  autoComplete="name"
-                  placeholder={t("name.placeholder")}
-                  aria-describedby={`${id}-name-hint`}
-                  className={cn(field, demoFocus === "name" && "border-link focus-ring")}
-                />
-              </div>
+              <p aria-live="polite" className={cn("text-center text-caption text-pretty", photoError ? "text-danger-strong" : "text-fg-secondary")}>
+                {photoError ?? t("photo.hint")}
+              </p>
             </div>
-            <div className="grid gap-1">
+            <div className="grid shrink-0 grid-cols-1 gap-1">
+              <label htmlFor={`${id}-name`} className="px-1 text-small font-semibold">
+                {t("name.label")}
+              </label>
+              <input
+                ref={nameTarget}
+                id={`${id}-name`}
+                value={name}
+                onChange={(event) => {
+                  setName(event.target.value.slice(0, 60));
+                  setOwn((current) => ({ ...current, name: true }));
+                  show("top");
+                }}
+                onFocus={(event) => {
+                  if (event.currentTarget.value === PERSONA.name) event.currentTarget.select();
+                }}
+                maxLength={60}
+                autoComplete="name"
+                placeholder={t("name.placeholder")}
+                aria-describedby={`${id}-name-hint`}
+                className={cn(field, demoFocus === "name" && "border-link focus-ring")}
+              />
+            </div>
+            <div className="grid shrink-0 grid-cols-1 gap-1">
               <label htmlFor={`${id}-tagline`} className="px-1 text-small font-semibold">
                 {t("tagline.label")}
               </label>
@@ -696,23 +786,20 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 className={cn(field, demoFocus === "tagline" && "border-link focus-ring")}
               />
             </div>
-            <p id={`${id}-name-hint`} className={cn("flex min-w-0 items-center gap-2 px-1 text-small", photoError ? "text-danger-strong" : "text-fg-secondary")}>
-              {photoError ?? (
-                <>
-                  <Icon icon={Link2} size="sm" className="shrink-0" />
-                  <span className="truncate">{t("name.address", { address: `linkyo.app/${address || "…"}` })}</span>
-                </>
-              )}
+            <p id={`${id}-name-hint`} className="flex min-w-0 shrink-0 items-center gap-2 px-1 text-small text-fg-secondary">
+              <Icon icon={Link2} size="sm" className="shrink-0" />
+              <span className="truncate">{t("name.address", { address: `linkyo.app/${address || "…"}` })}</span>
             </p>
           </div>
 
+          {/* Links: paste or pick an example; below, what is on the page, each with its picture and detail. */}
           <div {...panel("links")}>
             <form
               onSubmit={(event) => {
                 event.preventDefault();
                 add(draft);
               }}
-              className="grid gap-1"
+              className="grid shrink-0 grid-cols-1 gap-1"
             >
               <label htmlFor={`${id}-link`} className="sr-only">
                 {tPaste("label")}
@@ -775,7 +862,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 ) : null}
               </p>
             </form>
-            <div role="group" aria-label={tPaste("examples")} className="mk-no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
+            {/* One row on phones (it scrolls sideways), so the demo's links never make the card taller. */}
+            <div role="group" aria-label={tPaste("examples")} className="mk-no-scrollbar -mx-1 flex shrink-0 gap-2 overflow-x-auto px-1 lg:flex-wrap">
               {EXAMPLES.filter((example) => example.chip).map((example) => (
                 <button
                   key={example.id}
@@ -790,33 +878,56 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 </button>
               ))}
             </div>
-            {items.length > 0 ? (
-              // On computers the page's outline below lists them (with the same name), so this row is for phones.
-              <ul aria-label={t("added")} className="mk-no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 lg:hidden">
-                {items.map((item) => (
-                  <li key={item.key} className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-selected ps-3 pe-1 text-small font-medium text-selected-fg">
-                    <BlockIcon item={item} />
-                    {itemLabel(item)}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setItems((current) => current.filter((candidate) => candidate.key !== item.key));
-                        setError(null);
-                      }}
-                      aria-label={tPaste("remove", { title: itemLabel(item) })}
-                      className="grid size-6 place-items-center rounded-full transition-colors duration-micro hover:bg-hover focus-visible:focus-ring"
-                    >
-                      <Icon icon={X} size="sm" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            <section aria-labelledby={`${id}-added`} className="flex min-h-0 flex-1 flex-col rounded-lg border border-line">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-2">
+                <h3 id={`${id}-added`} className="text-caption font-semibold tracking-wide text-fg-secondary uppercase">
+                  {t("added")}
+                </h3>
+                <span className="text-caption font-semibold text-fg-secondary tabular-nums">{t("count", { count: items.length, max: MAX_LINKS })}</span>
+              </div>
+              {items.length > 0 ? (
+                <ul aria-label={t("added")} className="grid min-h-0 flex-1 content-start gap-1 overflow-y-auto p-2">
+                  {items.map((item) => {
+                    const about = describe(item);
+                    return (
+                      <li key={item.key} className="flex min-h-control-lg items-center gap-3 rounded-md ps-1 motion-safe:animate-fade-in">
+                        <ItemThumb item={item} />
+                        <span className="grid min-w-0 flex-1">
+                          <span className="truncate text-small font-semibold text-fg">{about.title}</span>
+                          <span className="truncate text-caption text-fg-secondary">
+                            <bdi>{about.detail}</bdi>
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            remove(item.key);
+                          }}
+                          aria-label={tPaste("remove", { title: about.title })}
+                          className="grid size-touch-target shrink-0 place-items-center rounded-full text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring"
+                        >
+                          <Icon icon={X} size="sm" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="grid flex-1 place-content-center justify-items-center gap-2 p-6 text-center text-small text-fg-secondary">
+                  <span aria-hidden className="grid size-control-lg place-items-center rounded-full bg-canvas-muted">
+                    <Icon icon={Link2} size="md" />
+                  </span>
+                  {t("editor.empty")}
+                </p>
+              )}
+            </section>
           </div>
 
+          {/* Look: every look as a little page in its own colors, type and buttons, and any color. */}
           <div {...panel("look")}>
-            <div className="flex flex-wrap items-center gap-1">
-              <div role="radiogroup" aria-label={tLook("choose")} className="flex items-center gap-1">
+            {/* Wide screens: the cards fill the panel. Phones: they keep a page's proportions. */}
+            <div className="grid min-h-0 flex-1 grid-cols-3 grid-rows-2 gap-2 max-lg:flex-none">
+              <div role="radiogroup" aria-label={tLook("choose")} className="col-span-full row-span-full grid grid-cols-3 grid-rows-2 gap-2">
                 {looks.map((option, index) => {
                   const selected = !accent && index === lookIndex;
                   return (
@@ -834,24 +945,19 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                         chooseLook(index);
                       }}
                       onKeyDown={onLookKey}
-                      style={option.vars}
-                      className={cn(
-                        "grid size-touch-target shrink-0 place-items-center rounded-full border-emphasis p-1 transition-[border-color,scale] duration-standard ease-standard focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none",
-                        selected ? "border-link" : "border-transparent hover:border-line-strong",
-                      )}
+                      className={cn(lookCard(selected), "focus-visible:focus-ring")}
                     >
-                      <span className="size-full rounded-full border border-line bg-linear-135 from-creator-bg from-50% to-creator-accent to-50%" />
+                      <span className="relative grid min-h-0">
+                        <LookPreview vars={option.vars} button={option.button} photo={previewPhoto} name={previewName} mono={option.config.template === "mono"} />
+                        {selected ? <Chosen /> : null}
+                      </span>
+                      <span className="truncate px-1 text-small font-semibold text-fg max-sm:text-caption">{option.name}</span>
                     </button>
                   );
                 })}
               </div>
-              <label
-                style={customVars ?? undefined}
-                className={cn(
-                  "relative grid size-touch-target shrink-0 cursor-pointer place-items-center rounded-full border-emphasis p-1 transition-[border-color,scale] duration-standard ease-standard has-[input:focus-visible]:focus-ring active:scale-pressed motion-reduce:transition-none",
-                  accent ? "border-link" : "border-transparent hover:border-line-strong",
-                )}
-              >
+              {/* Any color, on the look that is showing (in the free cell after the five looks). */}
+              <label className={cn(lookCard(accent !== null), "relative col-start-3 row-start-2 cursor-pointer has-[input:focus-visible]:focus-ring")}>
                 <input
                   type="color"
                   aria-label={tLook("custom")}
@@ -860,72 +966,27 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   }}
                   className="absolute inset-0 size-full cursor-pointer opacity-0"
                 />
-                <span className={cn("pointer-events-none grid size-full place-items-center rounded-full", accent ? "bg-creator-accent text-creator-accent-fg" : "border border-dashed border-line-input text-fg-secondary")}>
-                  <Icon icon={Palette} size="sm" />
+                <span className="pointer-events-none relative grid min-h-0">
+                  {accent && customVars ? (
+                    <LookPreview vars={customVars} button={base.button} photo={previewPhoto} name={previewName} mono={base.config.template === "mono"} />
+                  ) : (
+                    <span className="grid place-items-center rounded-md border border-dashed border-line-strong bg-canvas-muted text-fg-secondary max-lg:aspect-portrait">
+                      <Icon icon={Palette} size="lg" />
+                    </span>
+                  )}
+                  {accent ? <Chosen /> : null}
                 </span>
+                <span className="pointer-events-none truncate px-1 text-small font-semibold text-fg max-sm:text-caption">{tLook("custom")}</span>
               </label>
             </div>
-            <p aria-live="polite" className="text-small text-pretty">
+            <p aria-live="polite" className="shrink-0 text-small text-pretty">
               <span className="font-semibold text-fg">{look.name}</span>
               <span className="text-fg-secondary"> · {look.description}</span>
             </p>
           </div>
         </div>
 
-        {/* Computers: the page as it grows, top to bottom (what the phone shows), each link removable. */}
-        <section aria-labelledby={`${id}-outline`} className="grid content-start gap-2 max-lg:hidden">
-          <h3 id={`${id}-outline`} className="text-caption font-semibold tracking-wide text-fg-secondary uppercase">
-            {t("added")}
-          </h3>
-          <div className="grid gap-1 rounded-lg border border-line p-2">
-            <div className="flex min-h-control-lg items-center gap-3 rounded-md px-2">
-              <span aria-hidden className="relative grid size-control-sm shrink-0 place-items-center overflow-hidden rounded-full bg-canvas-muted text-caption font-semibold text-fg-secondary">
-                {photo ? <Image src={photo.own ? photo.src : PERSONA.picture} alt="" fill sizes={mediaSizes.thumb} className="object-cover" /> : <Icon icon={UserRound} size="sm" />}
-              </span>
-              <span className="grid min-w-0 flex-1">
-                <span className={cn("truncate text-small font-semibold", name.trim() ? "text-fg" : "text-fg-tertiary")}>{displayName}</span>
-                {tagline.trim() ? <span className="truncate text-caption text-fg-secondary">{tagline.trim()}</span> : null}
-              </span>
-            </div>
-            {items.length > 0 ? (
-              <ul aria-label={t("added")} className="grid gap-1">
-                {items.map((item) => (
-                  <li key={item.key} className="flex min-h-control-md items-center gap-3 rounded-md px-2 motion-safe:animate-fade-in">
-                    <span aria-hidden className="grid size-control-sm shrink-0 place-items-center rounded-full bg-selected text-selected-fg">
-                      <BlockIcon item={item} />
-                    </span>
-                    <span className="grid min-w-0 flex-1">
-                      <span className="truncate text-small text-fg">{itemLabel(item)}</span>
-                      {itemDetail(item) ? <span className="truncate text-caption text-fg-secondary">{itemDetail(item)}</span> : null}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setItems((current) => current.filter((candidate) => candidate.key !== item.key));
-                        setError(null);
-                      }}
-                      aria-label={tPaste("remove", { title: itemLabel(item) })}
-                      className="grid size-touch-target shrink-0 place-items-center rounded-full text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring"
-                    >
-                      <Icon icon={X} size="sm" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="flex min-h-control-md items-center gap-3 rounded-md border border-dashed border-line-strong px-3 text-small text-fg-tertiary">
-                <Icon icon={Link2} size="sm" className="shrink-0" />
-                {t("editor.empty")}
-              </p>
-            )}
-            <div className="flex min-h-control-md items-center gap-3 rounded-md px-2">
-              <span aria-hidden style={config === base.config ? base.vars : (customVars ?? base.vars)} className="size-control-sm shrink-0 rounded-full border border-line bg-linear-135 from-creator-bg from-50% to-creator-accent to-50%" />
-              <span className="min-w-0 flex-1 truncate text-small text-fg">{look.name}</span>
-            </div>
-          </div>
-        </section>
-
-        <div className="grid gap-2 border-t border-line pt-4 lg:mt-auto">
+        <div className="grid shrink-0 gap-2 border-t border-line pt-4">
           <Link
             ref={ctaTarget}
             href={signup}

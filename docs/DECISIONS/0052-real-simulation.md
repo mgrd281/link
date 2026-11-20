@@ -88,12 +88,36 @@ be the best level possible".
   no shadows), so the black-and-gold page reads as the object on display.
 - Shop rows in "On your page" show a bag, whichever shop system the link runs on.
 
+**Update: the phone no longer catches the scroll, and the card fits the screen.** The founder, on a laptop:
+"when scrolling down, it must not go down", and "a bigger improvement, the best user experience possible".
+- **No scroll trap.** The phone's screen was a scroll area that kept the scroll (`overscroll-contain`): with
+  the pointer over the phone, scrolling moved Lou's page inside the phone and the website stood still. Now
+  the wheel, a trackpad and a finger over the phone scroll the website, as anywhere else. The page in the phone
+  scrolls by itself to each change, can be dragged with a mouse like a phone (a grab cursor), and scrolls with
+  the keys once it has focus.
+- **Nothing moves by itself.** On wide screens the card has a fixed height: as tall as the screen allows under
+  the header, 40 to 50 rem (`mk-play`). The controls, the whole phone and "Keep this page" are in view at once.
+  The phone is sized from that height (`mk-play-phone`), so it is as large as possible. The three tabs share one
+  cell, and the demo's links fit without making it taller, also on phones (the example chips stay on one
+  row there and scroll sideways). The website never scrolls or shifts while the demo plays.
+- **Panels that fill, no filler.** The "Your editor" header and the separate page outline are gone. Each tab is
+  one full panel:
+  - Profile: the photo large on a quiet stage, with the note that it stays in the browser until sign-up;
+    then the name, the line and the address.
+  - Links: the paste field and examples; below, "On your page · 3 of 6", each link with its picture or icon,
+    its title and a detail (the price, the @handle, the video's length, the artist or the site).
+  - Look: every look as a little page in its own colors, type and buttons, with the visitor's photo and first
+    name, and any color as a sixth card.
+
 **Status.** Applied. Tests:
 - a pasted song shows its real title and artist (metadata stubbed in the test);
 - an example shows its sample;
 - the limit of four;
 - the phone lays the page out 390 px wide and scales it down, scrolls to the newest block and back with the
   keyboard, and holds no link that can be followed;
+- the wheel over the phone scrolls the website and leaves the phone's page where it is; a mouse drag scrolls it;
+- while the demo plays, the website does not scroll and the card keeps its height;
+- each link's row shows its real title, a shop piece its price, and the count "6 of 6";
 - a photo goes onto the page and comes off again;
 - the guided demo: photo, name, line, Instagram icon, the two shop pieces, Nocturne, "live", then only Watch again
   (no Start empty, no Clear);

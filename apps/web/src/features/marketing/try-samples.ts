@@ -1,5 +1,8 @@
 import { siInstagram, siTiktok, siYoutube, type SimpleIcon } from "simple-icons";
 
+import actressPoster from "@/assets/examples/ex-actress.jpg";
+import necklacePicture from "@/assets/examples/ex2-necklace.jpg";
+import perfumePicture from "@/assets/examples/ex3-perfume-2.jpg";
 import louPortrait from "@/assets/examples/ex6-lou-ferreira.jpg";
 
 export type SampleId = "instagram" | "necklace" | "perfume" | "youtube" | "tiktok";
@@ -19,6 +22,16 @@ export const EXAMPLES: readonly { id: SampleId; label: string; url: string; icon
 ];
 
 export const sampleOf = (url: string): SampleId | undefined => EXAMPLES.find((example) => example.url === url)?.id;
+
+/**
+ * What the shop and video examples show, the same in the controls and on the page: the picture (as a
+ * file for the controls' thumbnails, as a sample key for the page), the price, the length.
+ */
+export const SAMPLE_FACTS = {
+  necklace: { picture: necklacePicture, src: "sample:ex2-necklace", price: 2450, currency: "EUR" },
+  perfume: { picture: perfumePicture, src: "sample:ex3-perfume-2", price: 185, currency: "EUR" },
+  youtube: { picture: actressPoster, src: "sample:ex-actress", duration: 754 },
+} as const;
 
 /** The persona the playground introduces itself with: Lou Ferreira, as in the template gallery. */
 export const PERSONA = {

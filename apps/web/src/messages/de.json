@@ -893,7 +893,8 @@
       "photo": {
         "add": "Foto hinzufügen",
         "change": "Foto ändern",
-        "remove": "Foto entfernen"
+        "remove": "Foto entfernen",
+        "hint": "Dein Foto bleibt in deinem Browser, bis du dich anmeldest."
       },
       "samples": {
         "video": "Gala-Abend: der Look",
@@ -913,10 +914,9 @@
         "play": "Ansehen"
       },
       "editor": {
-        "title": "Dein Editor",
-        "subtitle": "Jede Änderung siehst du sofort im Handy.",
         "empty": "Deine Links erscheinen hier"
-      }
+      },
+      "count": "{count} von {max}"
     },
     "more": {
       "title1": "Alles, was du brauchst.",

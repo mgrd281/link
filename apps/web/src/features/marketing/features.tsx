@@ -202,12 +202,14 @@ export function TryIt() {
   const rtl = locale === "ar";
   const [head, ...tail]: LookOption[] = TRY_LOOKS.map(({ id, config }) => {
     const template = config.template ?? "nocturne";
+    const theme = resolveCreatorTheme(config, { rtlScript: rtl });
     return {
       id,
       config,
       name: creatorTokens.templates[template].label,
       description: names(`${template}.description`),
-      vars: resolveCreatorTheme(config, { rtlScript: rtl }).cssVars,
+      vars: theme.cssVars,
+      button: theme.buttonStyle,
     };
   });
   return (

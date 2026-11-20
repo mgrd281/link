@@ -893,7 +893,8 @@
       "photo": {
         "add": "Add a photo",
         "change": "Change photo",
-        "remove": "Remove photo"
+        "remove": "Remove photo",
+        "hint": "Your photo stays in your browser until you sign up."
       },
       "samples": {
         "video": "Gala night: the look",
@@ -913,10 +914,9 @@
         "play": "Watch"
       },
       "editor": {
-        "title": "Your editor",
-        "subtitle": "Every change shows in the phone at once.",
         "empty": "Your links appear here"
-      }
+      },
+      "count": "{count} of {max}"
     },
     "more": {
       "title1": "Everything you need.",

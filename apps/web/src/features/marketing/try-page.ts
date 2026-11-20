@@ -4,7 +4,7 @@ import { blockFromLink } from "@/features/app/blocks";
 import type { SocialPlatform } from "@/features/app/kinds";
 import { fetchLinkMetadata, metadataPatch, metadataUrl, type LinkMetadata } from "@/features/app/metadata";
 
-import type { SampleId } from "./try-samples";
+import { SAMPLE_FACTS, type SampleId } from "./try-samples";
 
 /**
  * Building the playground's page. This module (with the blocks schemas and the metadata helpers) is
@@ -41,11 +41,12 @@ export function sampleBlock(sample: Exclude<SampleId, "instagram" | "tiktok">, i
   const base = { id, visible: true, highlight: false };
   switch (sample) {
     case "necklace":
-      return { ...base, type: "product", title: texts.necklace, price: 2450, currency: "EUR", url, image: { src: "sample:ex2-necklace", alt: "" } };
-    case "perfume":
-      return { ...base, type: "product", title: texts.perfume, price: 185, currency: "EUR", url, image: { src: "sample:ex3-perfume-2", alt: "" } };
+    case "perfume": {
+      const fact = SAMPLE_FACTS[sample];
+      return { ...base, type: "product", title: texts[sample], price: fact.price, currency: fact.currency, url, image: { src: fact.src, alt: "" } };
+    }
     case "youtube":
-      return { ...base, type: "video", title: texts.video, provider: "youtube", url, poster: { src: "sample:ex-actress", alt: "" }, duration: 754 };
+      return { ...base, type: "video", title: texts.video, provider: "youtube", url, poster: { src: SAMPLE_FACTS.youtube.src, alt: "" }, duration: SAMPLE_FACTS.youtube.duration };
   }
 }
 

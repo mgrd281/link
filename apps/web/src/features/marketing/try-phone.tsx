@@ -23,10 +23,12 @@ export interface Reveal {
 /**
  * A phone showing a page exactly as its visitors will see it: the real page renderer at a real
  * phone's width (390 px, the "preview" layout token), scaled down to fit the frame, under a status
- * bar and the browser's address bar. The page scrolls inside (wheel, touch or the arrow keys once
- * the screen has focus) but cannot be clicked: links and players stay inert in a preview.
+ * bar and the browser's address bar. Links and players stay inert in a preview.
  *
- * After a change it scrolls to where the change is, so the visitor sees what they just did.
+ * It never takes the website's scroll: the wheel, a trackpad and a finger over the phone scroll the
+ * website, as anywhere else on it (a second scroll area in the middle of the page would catch them).
+ * The page in the phone scrolls by itself to each change, so the visitor sees what they just did; it
+ * can also be dragged with a mouse, like a phone, and scrolled with the keys once it has focus.
  *
  * It builds the page and resolves the look itself: this module (with the renderer, the picture
  * catalogue and the theme engine) loads only when the playground comes near (see Playground).
@@ -84,6 +86,54 @@ export function TryPhone({
     };
   }, [reveal]);
 
+  // The page in the phone scrolls when asked: dragged with a mouse (it moves under the pointer; the
+  // page is scaled, the pointer is not) and with the keys a scrolling page answers to.
+  useEffect(() => {
+    const element = scroller.current;
+    if (!element) return;
+    const ratio = scale ?? 1;
+    let drag: { y: number; top: number } | null = null;
+    const down = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse" || event.button !== 0) return;
+      drag = { y: event.clientY, top: element.scrollTop };
+      element.setPointerCapture(event.pointerId);
+    };
+    const move = (event: PointerEvent) => {
+      if (drag) element.scrollTop = drag.top - (event.clientY - drag.y) / ratio;
+    };
+    const up = () => {
+      drag = null;
+    };
+    const key = (event: KeyboardEvent) => {
+      const screenful = element.clientHeight * 0.85;
+      const step: Record<string, number> = {
+        ArrowDown: element.clientHeight / 8,
+        ArrowUp: -element.clientHeight / 8,
+        PageDown: screenful,
+        PageUp: -screenful,
+        " ": event.shiftKey ? -screenful : screenful,
+      };
+      const by = step[event.key];
+      if (event.key === "Home") element.scrollTo({ top: 0 });
+      else if (event.key === "End") element.scrollTo({ top: element.scrollHeight });
+      else if (by !== undefined) element.scrollBy({ top: by });
+      else return;
+      event.preventDefault();
+    };
+    element.addEventListener("pointerdown", down);
+    element.addEventListener("pointermove", move);
+    element.addEventListener("pointerup", up);
+    element.addEventListener("pointercancel", up);
+    element.addEventListener("keydown", key);
+    return () => {
+      element.removeEventListener("pointerdown", down);
+      element.removeEventListener("pointermove", move);
+      element.removeEventListener("pointerup", up);
+      element.removeEventListener("pointercancel", up);
+      element.removeEventListener("keydown", key);
+    };
+  }, [scale]);
+
   const address = `linkyo.app/${page.profile.username}`;
   return (
     <div className={cn("relative rounded-xl border border-line-strong bg-ink p-2", className)}>
@@ -113,7 +163,13 @@ export function TryPhone({
               <span className="truncate">{address}</span>
             </p>
           </div>
-          <div ref={scroller} role="region" aria-label={label} tabIndex={0} className="mk-no-scrollbar relative min-h-0 flex-1 overflow-y-auto overscroll-contain focus-visible:focus-ring">
+          <div
+            ref={scroller}
+            role="region"
+            aria-label={label}
+            tabIndex={0}
+            className="relative min-h-0 flex-1 cursor-grab overflow-hidden focus-visible:focus-ring active:cursor-grabbing"
+          >
             {/* The page itself: seen, scrolled, never clicked (and not read twice: the controls say what it holds). */}
             <div inert aria-hidden className="min-h-full">
               <PosterRenderer page={page} theme={theme} preview />

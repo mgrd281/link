@@ -40,7 +40,9 @@ test.describe("marketing home", () => {
     await playground.getByRole("button", { name: "YouTube", exact: true }).click();
     await expect(added).toHaveCount(2);
     await expect(preview).toContainText("Gala night: the look");
-    await playground.getByRole("button", { name: "Remove Music" }).click();
+    // Each row says what the block shows: the release's real title (and its artist).
+    await expect(added.first()).toContainText("Golden Hour");
+    await playground.getByRole("button", { name: "Remove Golden Hour" }).click();
     await expect(added).toHaveCount(1);
     await expect(preview).not.toContainText("Golden Hour");
     // A profile becomes an icon under the name, not a block.
@@ -53,8 +55,10 @@ test.describe("marketing home", () => {
     await playground.getByRole("button", { name: "Shop", exact: true }).click();
     await expect(added).toHaveCount(6);
     await expect(playground.getByText("Six links are enough to try it.")).toBeVisible();
-    // A piece from the shop: its picture, title and price.
+    await expect(playground.getByText("6 of 6")).toBeVisible();
+    // A piece from the shop: its picture, title and price, in the phone and in its row.
     await expect(preview).toContainText("“Soleil” necklace · gold");
+    await expect(added.filter({ hasText: "“Soleil” necklace · gold" }).first()).toContainText("€2,450");
   });
 
   test("the template strip has no motion of its own: it slides with the page, nothing to pause", async ({ page }) => {
@@ -144,6 +148,11 @@ test.describe("marketing home", () => {
       element.scrollIntoView({ block: "center", behavior: "instant" });
     });
     const preview = playground.locator("[data-try-preview]");
+    // Nothing on the website moves while it plays: the card keeps its height and the page stays put.
+    const card = playground.getByRole("tablist").locator("xpath=../..");
+    await expect(preview).toBeVisible({ timeout: 15_000 });
+    const scrolled = await page.evaluate(() => window.scrollY);
+    const height = (await card.boundingBox())?.height;
     await expect(preview).toContainText("“Ambre” eau de parfum", { timeout: 20_000 });
     await expect(preview.getByRole("heading", { level: 1, includeHidden: true })).toHaveText("Lou Ferreira");
     await expect(preview).toContainText("Silk · Jewellery · Fragrance");
@@ -160,6 +169,8 @@ test.describe("marketing home", () => {
     await expect(preview).toContainText("Your page is live", { timeout: 8_000 });
     await expect(playground.getByRole("button", { name: "Watch again" })).toBeVisible({ timeout: 8_000 });
     await expect(playground.getByRole("button", { name: /Start empty|Clear/ })).toHaveCount(0);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
+    expect((await card.boundingBox())?.height).toBe(height);
     // Only what a visitor does is announced.
     await expect(playground.getByRole("status")).toHaveText("");
   });
@@ -179,7 +190,7 @@ test.describe("marketing home", () => {
     await expect(playground.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
   });
 
-  test("try it: the phone shows the real page, scaled from a real phone's width, scrollable but not clickable", async ({ page }) => {
+  test("try it: the phone shows the real page, scaled from a real phone's width; it never takes the website's scroll and cannot be clicked", async ({ page }) => {
     const playground = page.locator("#try");
     const screen = playground.getByRole("region", { name: "Your page on a phone" });
     await playground.getByRole("tab", { name: /Links/ }).click();
@@ -194,6 +205,25 @@ test.describe("marketing home", () => {
     await screen.focus();
     await page.keyboard.press("Home");
     await expect.poll(() => screen.evaluate((element) => element.scrollTop)).toBe(0);
+    // The wheel over the phone scrolls the website, as anywhere else on it, and leaves the phone's page alone.
+    await screen.scrollIntoViewIfNeeded();
+    const frame = await screen.boundingBox();
+    if (!frame) throw new Error("The phone has no box");
+    const before = await page.evaluate(() => window.scrollY);
+    await page.mouse.move(frame.x + frame.width / 2, frame.y + frame.height / 2);
+    await page.mouse.wheel(0, 240);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(before);
+    expect(await screen.evaluate((element) => element.scrollTop)).toBe(0);
+    // A mouse can drag the page in the phone, as a finger would on a phone.
+    const moved = await screen.boundingBox();
+    if (!moved) throw new Error("The phone has no box");
+    const x = moved.x + moved.width / 2;
+    const y = moved.y + moved.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x, y - 120, { steps: 4 });
+    await page.mouse.up();
+    await expect.poll(() => screen.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
     // Its links are there to see, not to follow.
     await expect(screen.locator("[inert] a").first()).toBeAttached();
     expect(await screen.locator("a").evaluateAll((links) => links.every((link) => link.closest("[inert]") !== null))).toBe(true);
@@ -240,7 +270,7 @@ test.describe("marketing home", () => {
     await expect(looks.getByRole("radio", { name: "Atelier" })).toBeFocused();
     // Any color: the theme engine makes a whole, readable page of it.
     await playground.getByLabel("Your color").fill("#ff7a00");
-    await expect(playground.locator("[aria-live]")).toContainText("Your color");
+    await expect(playground.getByRole("tabpanel", { name: "Look" }).locator("[aria-live]")).toContainText("Your color");
     // Your color goes onto the look that was showing (Atelier, picked with the arrow key), not onto another.
     await expect(playground.getByRole("link", { name: "Keep this page" })).toHaveAttribute("href", /template=atelier&accent=ff7a00$/);
     await expect(looks.getByRole("radio", { checked: true })).toHaveCount(0);
