@@ -28,14 +28,44 @@ test.describe("poster creator page", () => {
   });
 
   test("every template renders the same content structure", async ({ page }) => {
+    // Numbered and monospace titles add a decorative "01" or "//" (hidden from screen readers).
     const headings = async (template: string) => {
       await page.goto(`/en/directions/poster?chrome=0&template=${template}`);
-      return page.getByRole("heading", { level: 2 }).allInnerTexts();
+      return (await page.getByRole("heading", { level: 2 }).allInnerTexts()).map((text) => text.replace(/^(\d{2}|\/\/)\s*/, "").trim().toLowerCase());
     };
     const reference = await headings("nocturne");
-    for (const template of ["daylight", "marquee", "pulse", "atelier"]) {
-      expect((await headings(template)).map((text) => text.toLowerCase())).toEqual(reference.map((text) => text.toLowerCase()));
+    for (const template of ["daylight", "marquee", "pulse", "atelier", "mono", "studio", "aura", "folio", "signal", "bloom"]) {
+      expect(await headings(template), template).toEqual(reference);
     }
+  });
+
+  test("the newer templates bring their own layout: a cinema still, a halo, a framed picture, corner marks, an arch", async ({ page }) => {
+    await page.goto("/en/directions/poster?chrome=0&template=studio");
+    // Studio: the name sits over the still, at the reading start; titles are numbered.
+    const name = page.getByRole("heading", { level: 1 });
+    await expect(name).toHaveCSS("text-align", "start");
+    // The first titled section is number 01 (the number is decoration: the heading's name stays the title).
+    await expect(page.getByRole("heading", { level: 2, name: "Shows & tickets", exact: true })).toContainText("01");
+    await page.goto("/en/directions/poster?chrome=0&template=signal");
+    await expect(page.locator(".poster-corner")).toHaveCount(4);
+    await expect(page.locator(".poster-grid")).toHaveCount(1);
+    await page.goto("/en/directions/poster?chrome=0&template=aura");
+    await expect(page.locator(".poster-halo")).toHaveCount(1);
+    await expect(page.locator(".poster-glow")).toHaveCount(3);
+    await page.goto("/en/directions/poster?chrome=0&template=bloom");
+    await expect(page.locator(".poster-arch-line")).toHaveCount(1);
+  });
+
+  test("with reduced motion nothing on the newer templates moves", async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion: "reduce" });
+    const page = await context.newPage();
+    for (const template of ["studio", "aura", "signal", "bloom", "folio"]) {
+      await page.goto(`/en/directions/poster?chrome=0&template=${template}`);
+      // Time-based animations only: the hero's scroll-linked fade stays (opacity only with reduced motion).
+      const moving = await page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === "running" && animation.timeline === document.timeline).length);
+      expect(moving, template).toBe(0);
+    }
+    await context.close();
   });
 
   test("Marquee shows the logo as the page heading", async ({ page }) => {

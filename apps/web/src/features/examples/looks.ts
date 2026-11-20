@@ -23,6 +23,12 @@ export interface Look {
 }
 
 export const LOOKS = {
+  // The five newer templates, one example each (ADR 0054): first in the gallery.
+  lenz: { kind: "music", category: "music", locale: "de", theme: { template: "studio" } },
+  "mira-sol": { kind: "coach", category: "creators", locale: "en", theme: { template: "aura" } },
+  "jonas-ek": { kind: "designer", category: "business", locale: "de", theme: { template: "folio" } },
+  "rina-vex": { kind: "streamer", category: "creators", locale: "en", theme: { template: "signal" } },
+  "dana-issa": { kind: "business", category: "local", locale: "ar", theme: { template: "bloom" } },
   // Spotlight: magazine-style pages of people, first in the gallery. Full-colour portraits on templates
   // that keep the photo's own colors (no duotone); vivid mode puts the page in the photo's color.
   "lou-ferreira": { kind: "instagram", category: "creators", locale: "de", theme: { template: "nocturne", accent: SW.ruby, mode: "vivid", pairing: "elegant", buttonShape: "pill" } },

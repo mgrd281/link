@@ -3,7 +3,7 @@
 import type { Platform } from "@linkyo/blocks";
 import { detectLink, type Detection } from "@linkyo/blocks/detect";
 import type { CreatorButtonStyle } from "@linkyo/tokens";
-import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
+import type { CreatorThemeConfig, HeroStyle } from "@linkyo/tokens/creator";
 import { cn, Icon, PlatformIcon } from "@linkyo/ui";
 import {
   ArrowRight,
@@ -66,6 +66,8 @@ export interface LookOption {
   vars: Record<string, string>;
   /** How its buttons look (filled, outlined …), for the card's two little buttons. */
   button: CreatorButtonStyle;
+  /** Where the photo sits (a cinema still, a halo, an arch …), so each card shows the template's shape. */
+  hero: HeroStyle;
 }
 
 type Tab = "name" | "links" | "look";
@@ -148,32 +150,53 @@ const DISPLAY_TYPE = {
 } as CSSProperties;
 
 /**
- * A look in miniature, in its own colors and type: the photo fading into the page, the first name,
- * two buttons. Decoration only: the radio around it says which look it is.
+ * A look in miniature, in its own colors and type: the photo in the template's shape (fading into the
+ * page, a cinema still with the name over it, a halo or an arch), the first name, two buttons.
+ * Decoration only: the radio around it says which look it is.
  */
 function LookPreview({
   vars,
   button,
+  hero,
   photo,
   name,
-  mono,
 }: {
   vars: Record<string, string>;
   button: CreatorButtonStyle;
+  hero: HeroStyle;
   photo: string | StaticImageData | null;
   name: string;
-  mono: boolean;
 }) {
+  const picture = photo ? <Image src={photo} alt="" fill sizes={mediaSizes.third} className={cn("object-cover object-top", hero === "mono" && "grayscale")} /> : null;
+  const cinema = hero === "cinema";
   return (
     <span aria-hidden style={vars} className="relative flex min-h-0 flex-col overflow-hidden rounded-md border border-line bg-creator-bg text-creator-fg max-lg:aspect-portrait">
-      <span className="relative h-1/2 shrink-0 bg-creator-surface-2">
-        {photo ? <Image src={photo} alt="" fill sizes={mediaSizes.third} className={cn("object-cover object-top", mono && "grayscale")} /> : null}
-        <span className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-creator-bg to-transparent" />
-      </span>
-      <span className="relative -mt-3 truncate px-2 text-center font-creator-display text-body leading-tight" style={DISPLAY_TYPE}>
+      {cinema ? (
+        // The whole card is the still; the name sits low, at the reading start.
+        <span className="absolute inset-0 bg-creator-surface-2">
+          {picture}
+          <span className="absolute inset-0 bg-linear-to-t from-creator-bg from-10% to-transparent to-70%" />
+        </span>
+      ) : hero === "halo" || hero === "arch" ? (
+        <span className="relative grid h-1/2 shrink-0 place-items-center pt-2">
+          <span className={cn("relative h-full", hero === "halo" ? "aspect-square" : "aspect-portrait")}>
+            {hero === "halo" ? <span className="poster-halo absolute -inset-0.5" /> : null}
+            <span className={cn("absolute inset-0 overflow-hidden bg-creator-surface-2", hero === "halo" ? "rounded-full border-emphasis border-creator-bg" : "rounded-t-full")}>{picture}</span>
+          </span>
+        </span>
+      ) : (
+        <span className="relative h-1/2 shrink-0 bg-creator-surface-2">
+          {picture}
+          <span className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-creator-bg to-transparent" />
+        </span>
+      )}
+      <span
+        className={cn("relative truncate px-2 font-creator-display text-body leading-tight", cinema ? "mt-auto text-start" : "text-center", hero === "halo" || hero === "arch" ? "mt-1" : !cinema && "-mt-3")}
+        style={DISPLAY_TYPE}
+      >
         {name}
       </span>
-      <span className="mt-auto grid gap-1 p-2">
+      <span className={cn("relative grid gap-1 p-2", !cinema && "mt-auto")}>
         <span className={cn("h-2 rounded-creator-button", MINI_BUTTON[button])} />
         <span className={cn("h-2 rounded-creator-button", MINI_BUTTON[button])} />
       </span>
@@ -948,7 +971,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                       className={cn(lookCard(selected), "focus-visible:focus-ring")}
                     >
                       <span className="relative grid min-h-0">
-                        <LookPreview vars={option.vars} button={option.button} photo={previewPhoto} name={previewName} mono={option.config.template === "mono"} />
+                        <LookPreview vars={option.vars} button={option.button} hero={option.hero} photo={previewPhoto} name={previewName} />
                         {selected ? <Chosen /> : null}
                       </span>
                       <span className="truncate px-1 text-small font-semibold text-fg max-sm:text-caption">{option.name}</span>
@@ -968,7 +991,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 />
                 <span className="pointer-events-none relative grid min-h-0">
                   {accent && customVars ? (
-                    <LookPreview vars={customVars} button={base.button} photo={previewPhoto} name={previewName} mono={base.config.template === "mono"} />
+                    <LookPreview vars={customVars} button={base.button} hero={base.hero} photo={previewPhoto} name={previewName} />
                   ) : (
                     <span className="grid place-items-center rounded-md border border-dashed border-line-strong bg-canvas-muted text-fg-secondary max-lg:aspect-portrait">
                       <Icon icon={Palette} size="lg" />

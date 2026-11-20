@@ -20,6 +20,11 @@ our own expression; no code, text, images or marks are copied.
    | Pulse | the whole page in the creator's color | photo toned into the color (duotone) |
    | Atelier | warm paper, serif name, square corners, titles in caps | portrait |
    | Mono (added later, ADR 0025) | white, black-and-white portrait, condensed name, titles in caps, bare social icons | portrait in greyscale |
+   | Studio (ADR 0054) | near-black, red accent, condensed caps, numbered sections | a full-height still, the name set low over it |
+   | Aura (ADR 0054) | violet light, drifting colour fields, serif name, frosted pills | round portrait in a turning halo |
+   | Folio (ADR 0054) | warm paper, ruled titles, rows with hairlines, work in a grid | framed picture, name at the reading start |
+   | Signal (ADR 0054) | night blue, lime, a fine grid, monospace details | square picture in corner marks |
+   | Bloom (ADR 0054) | cream and rose, round bold type, filled pills | portrait in an arch with an outline arch behind |
 
 2. **Vivid mode** in the palette engine: the background is the seed hue at the lightest lightness where white text
    still reaches 7:1 on every surface; buttons become near-white with a dark label in the same hue. Property-tested

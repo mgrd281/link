@@ -133,7 +133,7 @@ function webModel(dictionary) {
   light.push(["--icon-stroke", String(dictionary.tokens.icon.stroke.$value)]);
 
   // Creator page roles: values are injected per page by the theme engine (src/creator).
-  const creatorColors = ["bg", "surface", "surface-2", "fg", "fg-muted", "accent", "accent-fg", "accent-text", "line", "line-strong", "glass"];
+  const creatorColors = ["bg", "surface", "surface-2", "fg", "fg-muted", "accent", "accent-fg", "accent-text", "line", "line-strong", "glass", "glow-1", "glow-2"];
   const creator = [
     ...creatorColors.map((role) => [`--color-creator-${role}`, `var(--creator-${role})`]),
     ["--font-creator-display", "var(--creator-font-display)"],

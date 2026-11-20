@@ -423,7 +423,7 @@
     "earlier": "Frühere Richtungen",
     "poster": {
       "name": "Poster",
-      "tagline": "Sechs Vorlagen. Klare Abschnitte. Dein Foto zuerst.",
+      "tagline": "Elf Vorlagen. Klare Abschnitte. Dein Foto zuerst.",
       "description": "Gebaut nach den Seiten, die du geschickt hast: Porträt über die volle Breite oder dein Logo, der Name wie auf einem Konzertplakat, danach Abschnitte mit Titel – Releases, Shows mit Monats-Tabs, Mixe in einer zweizeiligen Leiste, ein Shop im Zweier-Raster, Partner-Kacheln und Videos. Vorlage wählen, der Inhalt bleibt. Das Dashboard bearbeitet die Seite Abschnitt für Abschnitt.",
       "traits": [
         "Sechs Vorlagen: Nocturne, Daylight, Marquee, Pulse, Atelier, Mono",
@@ -561,12 +561,27 @@
     },
     "mono": {
       "description": "Schwarzweiß: Das Porträt verschmilzt mit Weiß, ein hoher Name, Titel in Großbuchstaben."
+    },
+    "studio": {
+      "description": "Kinoreif: ein Porträt über die ganze Höhe, der Name groß unten, nummerierte Abschnitte."
+    },
+    "aura": {
+      "description": "Weiches Licht: Farben ziehen langsam hinter mattem Glas, das Porträt trägt einen Lichtring."
+    },
+    "folio": {
+      "description": "Ein ruhiges Portfolio: ein gerahmtes Bild, der Name links, Abschnitte mit Linie, Arbeiten im Raster."
+    },
+    "signal": {
+      "description": "Für die Nacht, für Streamer und Macher: ein feines Raster, ein Bild in Eckmarken, Details in Monospace."
+    },
+    "bloom": {
+      "description": "Warm und freundlich: das Porträt in einem Bogen, runde kräftige Schrift, große Buttons."
     }
   },
   "marketing": {
     "meta": {
       "title": "Linkyo — Ein Link. Alles, was du erschaffst.",
-      "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: sechs Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
+      "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: elf Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
     },
     "nav": {
       "features": "Funktionen",
@@ -1584,7 +1599,7 @@
         "look": {
           "short": "Look",
           "title": "Wähl deinen Look",
-          "lead": "Sechs Vorlagen, alle mit deinem Foto und Namen. Probier sie aus – die Vorschau ändert sich sofort."
+          "lead": "Elf Vorlagen, alle mit deinem Foto und Namen. Probier sie aus – die Vorschau ändert sich sofort."
         },
         "links": {
           "short": "Links",

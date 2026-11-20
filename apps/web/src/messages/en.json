@@ -423,7 +423,7 @@
     "earlier": "Earlier directions",
     "poster": {
       "name": "Poster",
-      "tagline": "Six templates. Clear sections. Your photo first.",
+      "tagline": "Eleven templates. Clear sections. Your photo first.",
       "description": "Built from the pages you sent: a full-width portrait or your logo, the name set like a gig poster, then titled sections — releases, shows with month tabs, mixes in a two-row rail, a two-up shop, partner tiles and videos. Pick a template, the content stays. The dashboard edits the page section by section.",
       "traits": [
         "Six templates: Nocturne, Daylight, Marquee, Pulse, Atelier, Mono",
@@ -561,12 +561,27 @@
     },
     "mono": {
       "description": "Black and white: the portrait melts into white, a tall name, titles in capitals."
+    },
+    "studio": {
+      "description": "Cinematic: a full-height portrait, the name set low and large, numbered sections."
+    },
+    "aura": {
+      "description": "Soft light: colors drift slowly behind frosted glass, the portrait wears a halo."
+    },
+    "folio": {
+      "description": "A quiet portfolio: a framed picture, the name on the left, ruled sections, work in a grid."
+    },
+    "signal": {
+      "description": "After dark, for streamers and makers: a fine grid, a picture in corner marks, monospace details."
+    },
+    "bloom": {
+      "description": "Warm and friendly: the portrait in an arch, round bold type, big buttons."
     }
   },
   "marketing": {
     "meta": {
       "title": "Linkyo — One link. Everything you create.",
-      "description": "The creator page that looks premium in five minutes: six templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
+      "description": "The creator page that looks premium in five minutes: eleven templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
     },
     "nav": {
       "features": "Features",
@@ -1584,7 +1599,7 @@
         "look": {
           "short": "Look",
           "title": "Pick a look",
-          "lead": "Six templates, all with your photo and name. Try them — the preview changes instantly."
+          "lead": "Eleven templates, all with your photo and name. Try them — the preview changes instantly."
         },
         "links": {
           "short": "Links",

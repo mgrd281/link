@@ -26,20 +26,34 @@ export interface CreatorThemeConfig {
   background?: BackgroundKind | undefined;
 }
 
-/** Section titles: the display face, the body face in title case, or the body face set in caps. */
-export type HeadingStyle = "display" | "sans" | "sans-upper";
+/**
+ * Section titles: the display face, the body face in title case, the body face set in caps, small
+ * caps with the section's number ("01"), a title followed by a hairline rule, or monospace caps.
+ */
+export type HeadingStyle = "display" | "sans" | "sans-upper" | "numbered" | "rule" | "mono";
 /**
  * Hero treatment: the portrait, a logo over a blurred photo, the portrait toned into the page color,
- * or the portrait in black and white.
+ * the portrait in black and white, a full-height cinema still with the name set low (cinema), a round
+ * portrait with a halo (halo), a framed picture with the name on the left (inset), a square picture in
+ * corner marks (frame), or the portrait in an arch (arch).
  */
-export type HeroStyle = "portrait" | "logo" | "duotone" | "mono";
+export type HeroStyle = "portrait" | "logo" | "duotone" | "mono" | "cinema" | "halo" | "inset" | "frame" | "arch";
 /** Social profiles under the name: round tiles, or bare glyphs for quiet, editorial looks. */
 export type SocialStyle = "tiles" | "plain";
+/** Behind the page: nothing, the page's colors drifting slowly (aurora), or a fine grid. */
+export type BackdropStyle = "none" | "aurora" | "grid";
+/** Photo galleries: a sideways rail, or a two-column grid for portfolios. */
+export type GalleryStyle = "rail" | "grid";
+/** Sections stay put (calm) or rise in as they scroll into view (reveal); never with reduced motion. */
+export type MotionStyle = "calm" | "reveal";
 
 export interface CreatorLayout {
   headings: HeadingStyle;
   hero: HeroStyle;
   socials: SocialStyle;
+  backdrop: BackdropStyle;
+  gallery: GalleryStyle;
+  motion: MotionStyle;
 }
 
 export interface ResolvedCreatorTheme {
@@ -57,7 +71,7 @@ export interface ResolvedCreatorTheme {
 
 export const PRESET_IDS = Object.keys(creatorTokens.presets) as CreatorPresetId[];
 export const TEMPLATE_IDS = Object.keys(creatorTokens.templates) as CreatorTemplateId[];
-export const DEFAULT_LAYOUT: CreatorLayout = { headings: "display", hero: "portrait", socials: "tiles" };
+export const DEFAULT_LAYOUT: CreatorLayout = { headings: "display", hero: "portrait", socials: "tiles", backdrop: "none", gallery: "rail", motion: "calm" };
 export const PAIRING_IDS = Object.keys(creatorTokens.pairings) as CreatorPairingId[];
 export const BUTTON_STYLES = creatorTokens.buttonStyles;
 export const BUTTON_SHAPES = Object.keys(creatorTokens.buttonShapes) as CreatorButtonShape[];
@@ -77,6 +91,9 @@ interface TemplateDefaults {
   headings?: HeadingStyle | undefined;
   hero?: HeroStyle | undefined;
   socials?: SocialStyle | undefined;
+  backdrop?: BackdropStyle | undefined;
+  gallery?: GalleryStyle | undefined;
+  motion?: MotionStyle | undefined;
 }
 
 /** What a preset or template contributes before the creator's own choices. */
@@ -128,6 +145,9 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     headings: t.headings ?? DEFAULT_LAYOUT.headings,
     hero: t.hero ?? DEFAULT_LAYOUT.hero,
     socials: t.socials ?? DEFAULT_LAYOUT.socials,
+    backdrop: t.backdrop ?? DEFAULT_LAYOUT.backdrop,
+    gallery: t.gallery ?? DEFAULT_LAYOUT.gallery,
+    motion: t.motion ?? DEFAULT_LAYOUT.motion,
   };
   const background = config.background ?? preset.background;
 
@@ -151,6 +171,9 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     "--creator-line-strong": palette.lineStrong,
     "--creator-glass": `color-mix(in oklab, ${palette.surface} ${Math.round(tokens.opacity.glass * 100)}%, transparent)`,
     "--creator-gradient": `linear-gradient(160deg, ${palette.gradient[0]} 0%, ${palette.gradient[1]} 55%, ${palette.gradient[2]} 100%)`,
+    // The gradient's two hue-shifted neighbours of the page color (safe under text): the aurora's colors.
+    "--creator-glow-1": palette.gradient[1],
+    "--creator-glow-2": palette.gradient[2],
     "--creator-font-display": display.stack,
     "--creator-font-body": pairing.body.stack,
     "--creator-display-weight": String(display.weight),

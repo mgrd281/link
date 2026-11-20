@@ -105,7 +105,7 @@ describe("presets", () => {
     for (const preset of PRESET_IDS) {
       const theme = resolveCreatorTheme({ preset });
       expect(auditPalette(theme.palette).every((c) => c.pass), preset).toBe(true);
-      expect(Object.keys(theme.cssVars)).toHaveLength(19);
+      expect(Object.keys(theme.cssVars)).toHaveLength(21);
     }
     const random = rng(42);
     for (let i = 0; i < 200; i++) {
@@ -149,8 +149,14 @@ describe("presets", () => {
     expect(resolveCreatorTheme({ template: "marquee" }).layout.hero).toBe("logo");
     expect(resolveCreatorTheme({ template: "atelier" }).layout.headings).toBe("sans-upper");
     expect(resolveCreatorTheme({ template: "nocturne", mode: "light" }).palette.mode).toBe("light");
-    expect(resolveCreatorTheme({ preset: "midnight" }).layout).toEqual({ headings: "display", hero: "portrait", socials: "tiles" });
-    expect(resolveCreatorTheme({ template: "mono" }).layout).toEqual({ headings: "sans-upper", hero: "mono", socials: "plain" });
+    expect(resolveCreatorTheme({ preset: "midnight" }).layout).toEqual({ headings: "display", hero: "portrait", socials: "tiles", backdrop: "none", gallery: "rail", motion: "calm" });
+    expect(resolveCreatorTheme({ template: "mono" }).layout).toEqual({ headings: "sans-upper", hero: "mono", socials: "plain", backdrop: "none", gallery: "rail", motion: "calm" });
+    // The five newer looks bring their own layouts.
+    expect(resolveCreatorTheme({ template: "studio" }).layout).toEqual({ headings: "numbered", hero: "cinema", socials: "plain", backdrop: "none", gallery: "rail", motion: "reveal" });
+    expect(resolveCreatorTheme({ template: "aura" }).layout).toEqual({ headings: "display", hero: "halo", socials: "tiles", backdrop: "aurora", gallery: "rail", motion: "reveal" });
+    expect(resolveCreatorTheme({ template: "folio" }).layout).toEqual({ headings: "rule", hero: "inset", socials: "plain", backdrop: "none", gallery: "grid", motion: "reveal" });
+    expect(resolveCreatorTheme({ template: "signal" }).layout).toEqual({ headings: "mono", hero: "frame", socials: "tiles", backdrop: "grid", gallery: "rail", motion: "reveal" });
+    expect(resolveCreatorTheme({ template: "bloom" }).layout).toEqual({ headings: "display", hero: "arch", socials: "tiles", backdrop: "none", gallery: "rail", motion: "reveal" });
     expect(resolveCreatorTheme({ template: "mono" }).palette.mode).toBe("light");
   });
 

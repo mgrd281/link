@@ -152,4 +152,47 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex7-yazan-session.jpg | Sonny Mauricio (cropped) | https://unsplash.com/photos/man-in-black-blazer-holding-microphone-Zmq2rQs0Kww | Unsplash License |
 | ex-logo-*.png | Linkyo (original artwork) | — | © Linkyo |
 
+## The five newer templates (ADR 0054)
+
+Photos from the Unsplash CDN's free library (`images.unsplash.com/photo-…`; Unsplash+ photos are only
+served from `plus.unsplash.com/premium_photo-…`, so none of these is an Unsplash+ photo). Unsplash's
+photo pages refuse automated visits, so the source is given as the photo's permanent CDN id. Every
+picture was looked at: adults only, no celebrities, no brand logos as the subject.
+
+| File | Photographer / source | Photo page | License |
+|---|---|---|---|
+| ex8-lenz.jpg | Unsplash photo 1506794778202-cad84cf45f1d (cropped) | https://images.unsplash.com/photo-1506794778202-cad84cf45f1d | Unsplash License |
+| ex8-mira-sol.jpg | Unsplash photo 1508214751196-bcfd4ca60f91 (cropped) | https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91 | Unsplash License |
+| ex8-jonas-ek.jpg | Unsplash photo 1535713875002-d1d0cf377fde (cropped) | https://images.unsplash.com/photo-1535713875002-d1d0cf377fde | Unsplash License |
+| ex8-rina-vex.jpg | Unsplash photo 1542103749-8ef59b94f47e (cropped) | https://images.unsplash.com/photo-1542103749-8ef59b94f47e | Unsplash License |
+| ex8-dana-issa.jpg | Unsplash photo 1494790108377-be9c29b29330 (cropped) | https://images.unsplash.com/photo-1494790108377-be9c29b29330 | Unsplash License |
+| ex8-hoodie-grey.jpg | Unsplash photo 1556821840-3a63f95609a7 (cropped) | https://images.unsplash.com/photo-1556821840-3a63f95609a7 | Unsplash License |
+| ex8-sweater-white.jpg | Unsplash photo 1620799140408-edc6dcb6d633 (cropped) | https://images.unsplash.com/photo-1620799140408-edc6dcb6d633 | Unsplash License |
+| ex8-retreat.jpg | Unsplash photo 1506126613408-eca07ce68773 (cropped) | https://images.unsplash.com/photo-1506126613408-eca07ce68773 | Unsplash License |
+| ex8-sunset-yoga.jpg | Unsplash photo 1544367567-0f2fcb009e0b (cropped) | https://images.unsplash.com/photo-1544367567-0f2fcb009e0b | Unsplash License |
+| ex8-arch-white.jpg | Unsplash photo 1496307653780-42ee777d4833 (cropped) | https://images.unsplash.com/photo-1496307653780-42ee777d4833 | Unsplash License |
+| ex8-arch-curves.jpg | Unsplash photo 1486718448742-163732cd1544 (cropped) | https://images.unsplash.com/photo-1486718448742-163732cd1544 | Unsplash License |
+| ex8-arch-steps.jpg | Unsplash photo 1460574283810-2aab119d8511 (cropped) | https://images.unsplash.com/photo-1460574283810-2aab119d8511 | Unsplash License |
+| ex8-arch-diagonal.jpg | Unsplash photo 1488972685288-c3fd157d7c7a (cropped) | https://images.unsplash.com/photo-1488972685288-c3fd157d7c7a | Unsplash License |
+| ex8-arch-cubes.jpg | Unsplash photo 1479839672679-a46483c0e7c8 (cropped) | https://images.unsplash.com/photo-1479839672679-a46483c0e7c8 | Unsplash License |
+| ex8-arch-blue.jpg | Unsplash photo 1518005020951-eccb494ad742 (cropped) | https://images.unsplash.com/photo-1518005020951-eccb494ad742 | Unsplash License |
+| ex8-keyboard.jpg | Unsplash photo 1538481199705-c710c4e965fc (cropped) | https://images.unsplash.com/photo-1538481199705-c710c4e965fc | Unsplash License |
+| ex8-controller.jpg | Unsplash photo 1612287230202-1ff1d85d1bdf (cropped) | https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf | Unsplash License |
+| ex8-retro.jpg | Unsplash photo 1550745165-9bc0b252726f (cropped) | https://images.unsplash.com/photo-1550745165-9bc0b252726f | Unsplash License |
+| ex8-arcade.jpg | Unsplash photo 1511512578047-dfb367046420 (cropped) | https://images.unsplash.com/photo-1511512578047-dfb367046420 | Unsplash License |
+| ex8-esports.jpg | Unsplash photo 1542751371-adc38448a05e (cropped) | https://images.unsplash.com/photo-1542751371-adc38448a05e | Unsplash License |
+| ex8-bread.jpg | Unsplash photo 1509440159596-0249088772ff (cropped) | https://images.unsplash.com/photo-1509440159596-0249088772ff | Unsplash License |
+| ex8-croissant.jpg | Unsplash photo 1555507036-ab1f4038808a (cropped) | https://images.unsplash.com/photo-1555507036-ab1f4038808a | Unsplash License |
+| ex8-cake.jpg | Unsplash photo 1578985545062-69928b1d9587 (cropped) | https://images.unsplash.com/photo-1578985545062-69928b1d9587 | Unsplash License |
+| ex8-cookies.jpg | Unsplash photo 1558961363-fa8fdf82db35 (cropped) | https://images.unsplash.com/photo-1558961363-fa8fdf82db35 | Unsplash License |
+| ex8-lemon-tart.jpg | Unsplash photo 1519915028121-7d3463d20b13 (cropped) | https://images.unsplash.com/photo-1519915028121-7d3463d20b13 | Unsplash License |
+| ex8-bakery-shop.jpg | Unsplash photo 1517433670267-08bbd4be890f (cropped) | https://images.unsplash.com/photo-1517433670267-08bbd4be890f | Unsplash License |
+| ex8-banner-nachtfahrt.jpg | Original Linkyo design (Big Shoulders, Work Sans; OFL) on Unsplash photo 1534447677768-be436bb09401 | – | Original artwork; photo under the Unsplash License |
+| ex8-cover-spiegel.jpg | Original Linkyo design (Big Shoulders, Work Sans; OFL) on Unsplash photo 1557672172-298e090bd0f1 | – | Original artwork; photo under the Unsplash License |
+| ex8-cover-polarlicht.jpg | Original Linkyo design (Instrument Serif, Work Sans; OFL) on Unsplash photo 1444703686981-a3abbc4d4fe3 | – | Original artwork; photo under the Unsplash License |
+| ex8-cover-lenz-playlist.jpg | Original Linkyo design (Big Shoulders, Work Sans; OFL) on ex8-lenz.jpg | – | Original artwork; photo under the Unsplash License |
+| ex8-course-cover.jpg | Original Linkyo design (Instrument Serif, Work Sans; OFL) on Unsplash photo 1470252649378-9c29740c9fa8 | – | Original artwork; photo under the Unsplash License |
+| ex8-journal.jpg | Original Linkyo illustration (Instrument Serif, Work Sans; OFL) | – | Original artwork; photo under the Unsplash License |
+| ex8-neon-drift.jpg | Original Linkyo design (Silkscreen, Geist Mono; OFL) on ex8-arcade.jpg | – | Original artwork; photo under the Unsplash License |
+
 Unsplash License: https://unsplash.com/license

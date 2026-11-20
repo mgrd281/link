@@ -144,6 +144,39 @@ import ex7TheoBaptiste from "@/assets/examples/ex7-theo-baptiste.jpg";
 import ex7Watch from "@/assets/examples/ex7-watch.jpg";
 import ex7YazanKhoury from "@/assets/examples/ex7-yazan-khoury.jpg";
 import ex7YazanSession from "@/assets/examples/ex7-yazan-session.jpg";
+import ex8Arcade from "@/assets/examples/ex8-arcade.jpg";
+import ex8ArchBlue from "@/assets/examples/ex8-arch-blue.jpg";
+import ex8ArchCubes from "@/assets/examples/ex8-arch-cubes.jpg";
+import ex8ArchCurves from "@/assets/examples/ex8-arch-curves.jpg";
+import ex8ArchDiagonal from "@/assets/examples/ex8-arch-diagonal.jpg";
+import ex8ArchSteps from "@/assets/examples/ex8-arch-steps.jpg";
+import ex8ArchWhite from "@/assets/examples/ex8-arch-white.jpg";
+import ex8BakeryShop from "@/assets/examples/ex8-bakery-shop.jpg";
+import ex8BannerNachtfahrt from "@/assets/examples/ex8-banner-nachtfahrt.jpg";
+import ex8Bread from "@/assets/examples/ex8-bread.jpg";
+import ex8Cake from "@/assets/examples/ex8-cake.jpg";
+import ex8Controller from "@/assets/examples/ex8-controller.jpg";
+import ex8Cookies from "@/assets/examples/ex8-cookies.jpg";
+import ex8CourseCover from "@/assets/examples/ex8-course-cover.jpg";
+import ex8CoverLenzPlaylist from "@/assets/examples/ex8-cover-lenz-playlist.jpg";
+import ex8CoverPolarlicht from "@/assets/examples/ex8-cover-polarlicht.jpg";
+import ex8CoverSpiegel from "@/assets/examples/ex8-cover-spiegel.jpg";
+import ex8Croissant from "@/assets/examples/ex8-croissant.jpg";
+import ex8DanaIssa from "@/assets/examples/ex8-dana-issa.jpg";
+import ex8Esports from "@/assets/examples/ex8-esports.jpg";
+import ex8HoodieGrey from "@/assets/examples/ex8-hoodie-grey.jpg";
+import ex8JonasEk from "@/assets/examples/ex8-jonas-ek.jpg";
+import ex8Journal from "@/assets/examples/ex8-journal.jpg";
+import ex8Keyboard from "@/assets/examples/ex8-keyboard.jpg";
+import ex8LemonTart from "@/assets/examples/ex8-lemon-tart.jpg";
+import ex8Lenz from "@/assets/examples/ex8-lenz.jpg";
+import ex8MiraSol from "@/assets/examples/ex8-mira-sol.jpg";
+import ex8NeonDrift from "@/assets/examples/ex8-neon-drift.jpg";
+import ex8Retreat from "@/assets/examples/ex8-retreat.jpg";
+import ex8Retro from "@/assets/examples/ex8-retro.jpg";
+import ex8RinaVex from "@/assets/examples/ex8-rina-vex.jpg";
+import ex8SunsetYoga from "@/assets/examples/ex8-sunset-yoga.jpg";
+import ex8SweaterWhite from "@/assets/examples/ex8-sweater-white.jpg";
 
 /** Pictures of the example gallery (stock photos, see assets/examples/CREDITS.md; logos are original). */
 export const exampleMedia = {
@@ -291,4 +324,37 @@ export const exampleMedia = {
   "sample:ex7-watch": ex7Watch,
   "sample:ex7-yazan-khoury": ex7YazanKhoury,
   "sample:ex7-yazan-session": ex7YazanSession,
+  "sample:ex8-arcade": ex8Arcade,
+  "sample:ex8-arch-blue": ex8ArchBlue,
+  "sample:ex8-arch-cubes": ex8ArchCubes,
+  "sample:ex8-arch-curves": ex8ArchCurves,
+  "sample:ex8-arch-diagonal": ex8ArchDiagonal,
+  "sample:ex8-arch-steps": ex8ArchSteps,
+  "sample:ex8-arch-white": ex8ArchWhite,
+  "sample:ex8-bakery-shop": ex8BakeryShop,
+  "sample:ex8-banner-nachtfahrt": ex8BannerNachtfahrt,
+  "sample:ex8-bread": ex8Bread,
+  "sample:ex8-cake": ex8Cake,
+  "sample:ex8-controller": ex8Controller,
+  "sample:ex8-cookies": ex8Cookies,
+  "sample:ex8-course-cover": ex8CourseCover,
+  "sample:ex8-cover-lenz-playlist": ex8CoverLenzPlaylist,
+  "sample:ex8-cover-polarlicht": ex8CoverPolarlicht,
+  "sample:ex8-cover-spiegel": ex8CoverSpiegel,
+  "sample:ex8-croissant": ex8Croissant,
+  "sample:ex8-dana-issa": ex8DanaIssa,
+  "sample:ex8-esports": ex8Esports,
+  "sample:ex8-hoodie-grey": ex8HoodieGrey,
+  "sample:ex8-jonas-ek": ex8JonasEk,
+  "sample:ex8-journal": ex8Journal,
+  "sample:ex8-keyboard": ex8Keyboard,
+  "sample:ex8-lemon-tart": ex8LemonTart,
+  "sample:ex8-lenz": ex8Lenz,
+  "sample:ex8-mira-sol": ex8MiraSol,
+  "sample:ex8-neon-drift": ex8NeonDrift,
+  "sample:ex8-retreat": ex8Retreat,
+  "sample:ex8-retro": ex8Retro,
+  "sample:ex8-rina-vex": ex8RinaVex,
+  "sample:ex8-sunset-yoga": ex8SunsetYoga,
+  "sample:ex8-sweater-white": ex8SweaterWhite,
 } satisfies Record<string, StaticImageData>;

@@ -28,9 +28,15 @@ export const pressable = cn(
   "focus-visible:focus-ring",
 );
 
-/** Section titles per template: the display face, or the body face in title case or in caps. */
+/**
+ * Section titles per template: the display face; the body face in title case or in caps; or, for the
+ * newer templates, small caps after a number, before a rule, or after "//" (the renderer adds those).
+ */
 export function sectionTitle(style: HeadingStyle): { className: string; style?: CSSProperties } {
   if (style === "display") return { className: "font-creator-display text-h2 leading-tight", style: displayStyle };
+  if (style === "numbered" || style === "rule" || style === "mono") {
+    return { className: "flex items-center gap-3 font-creator-body text-small leading-tight font-bold tracking-wide uppercase" };
+  }
   return { className: cn("font-creator-body text-h3 leading-tight font-bold tracking-tight", style === "sans-upper" && "uppercase") };
 }
 

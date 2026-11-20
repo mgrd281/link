@@ -210,6 +210,7 @@ export function TryIt() {
       description: names(`${template}.description`),
       vars: theme.cssVars,
       button: theme.buttonStyle,
+      hero: theme.layout.hero,
     };
   });
   return (

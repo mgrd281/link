@@ -20,7 +20,7 @@ type Profile = Page["profile"];
  */
 const GLYPH_WIDTH: Record<string, number> = { classic: 0.53, stage: 0.47, editorial: 0.46, modern: 0.49, bold: 0.48, elegant: 0.5, tech: 0.52, arabic: 0.47 };
 
-function Name({ profile, isRtl, theme }: { profile: Profile; isRtl: boolean; theme: ResolvedCreatorTheme }) {
+function Name({ profile, isRtl, theme, compact = false }: { profile: Profile; isRtl: boolean; theme: ResolvedCreatorTheme; compact?: boolean }) {
   const t = useTranslations("creator");
   const pairing = PAIRING_IDS.find((id) => creatorTokens.pairings[id] === theme.pairing) ?? "classic";
   const ems = Array.from(profile.displayName).length * (GLYPH_WIDTH[pairing] ?? 0.53);
@@ -33,7 +33,10 @@ function Name({ profile, isRtl, theme }: { profile: Profile; isRtl: boolean; the
       className={cn(
         "font-creator-display text-balance break-words",
         // Never larger than the display size, never smaller than a headline; long names still wrap.
-        "text-[length:clamp(var(--text-h1),var(--name-fit),var(--text-display))] @prose:text-[length:clamp(var(--text-h1),var(--name-fit),var(--text-display-xl))]",
+        // Compact (portfolios): a headline, so the work stays the loudest thing.
+        compact
+          ? "text-[length:clamp(var(--text-h2),var(--name-fit),var(--text-h1))] @prose:text-[length:clamp(var(--text-h2),var(--name-fit),var(--text-display-sm))]"
+          : "text-[length:clamp(var(--text-h1),var(--name-fit),var(--text-display))] @prose:text-[length:clamp(var(--text-h1),var(--name-fit),var(--text-display-xl))]",
         isRtl ? "leading-tight" : "leading-none",
       )}
       style={{ ...displayStyle, "--name-fit": `calc((${room}) / ${ems.toFixed(2)})` } as CSSProperties}
@@ -49,9 +52,9 @@ function Name({ profile, isRtl, theme }: { profile: Profile; isRtl: boolean; the
 }
 
 /** Social profiles under the name: round tiles, or (plain) bare glyphs at a larger size for quiet looks. */
-function Socials({ block, plain }: { block: BlockOf<"socials">; plain: boolean }) {
+function Socials({ block, plain, start = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean }) {
   return (
-    <ul className={cn("flex flex-wrap justify-center", plain ? "gap-2" : "gap-3")}>
+    <ul className={cn("flex flex-wrap", start ? "-ms-3 justify-start" : "justify-center", plain ? "gap-2" : "gap-3")}>
       {block.items.map((item) => (
         <li key={item.url}>
           <a
@@ -86,14 +89,32 @@ function Stats({ stats }: { stats: NonNullable<Profile["stats"]> }) {
   );
 }
 
+/** The creator's photo (or moving picture) filling its frame. */
+function Photo({ profile, preview, className, imageClass }: { profile: Profile; preview: boolean; className?: string; imageClass?: string }) {
+  const photo = profile.hero ?? profile.avatar;
+  return (
+    <div className={cn("relative overflow-hidden bg-creator-surface-2", className)}>
+      <MediaImage src={photo.src} alt={photo.alt} sizes={mediaSizes.column} priority={!preview} className={imageClass} />
+      {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}
+    </div>
+  );
+}
+
 /**
- * The hero. Four treatments chosen by the template:
+ * The hero. Nine treatments chosen by the template:
  * - portrait: the photo fades into the page, the name overlaps the fade;
  * - mono: the same in black and white (photo and moving picture), for editorial looks;
  * - duotone: the photo is toned into the page color (screen for dark photos, multiply for light);
- * - logo: the creator's logo over a softly blurred photo (falls back to portrait without a logo).
- * On scroll the photo softens and fades away (CSS scroll-driven animation, no JavaScript). A moving
- * picture (profile.motion) loops silently over the photo, always in its own colors (portrait).
+ * - logo: the creator's logo over a softly blurred photo (falls back to portrait without a logo);
+ * - cinema (Studio): a full-height still that settles like a slow camera move, the name set low and
+ *   large at the reading start, over the photo;
+ * - halo (Aura): a round portrait inside a slowly turning ring of the page's colors;
+ * - inset (Folio): a framed picture that uncovers itself, the name smaller, at the reading start;
+ * - frame (Signal): a square picture whose corner marks lock on as the page opens, a blinking cursor;
+ * - arch (Bloom): the portrait in an arch that rises in, an outline arch offset behind it.
+ * On scroll the hero softens and fades away (CSS scroll-driven animation, no JavaScript). A moving
+ * picture (profile.motion) loops silently over the photo, always in its own colors (portrait). The
+ * newer templates (motion "reveal") bring their lines in one after the other; never with reduced motion.
  */
 export function PosterHero({
   profile,
@@ -114,61 +135,146 @@ export function PosterHero({
   // A moving picture always shows in its own colors: toning a face on video into the page color
   // reads as a filter, not as a portrait.
   const treatment = !hasImage(photo) && !profile.logo ? "monogram" : layout === "logo" && !profile.logo ? "portrait" : layout === "duotone" && profile.motion ? "portrait" : layout;
+  const plain = theme.layout.socials === "plain";
+  const enter = theme.layout.motion === "reveal";
+  // Each line of the hero rises in after the one before (newer templates only).
+  const rise = (index: number) => (enter ? { className: "poster-rise", style: { "--poster-i": index } as CSSProperties } : { className: undefined, style: undefined });
+  const start = treatment === "cinema" || treatment === "inset";
 
-  return (
-    <header className="poster-hero-timeline grid justify-items-center text-center">
-      {treatment === "monogram" ? (
-        // No photo yet: a large monogram on the accent color, so a new page still feels finished.
-        <div className="poster-hero-fade grid w-full justify-items-center pt-20 pb-24">
-          <span className="relative size-avatar-2xl overflow-hidden rounded-full text-display">
-            <Monogram name={profile.displayName} />
-          </span>
-        </div>
-      ) : treatment === "logo" && profile.logo ? (
-        <div className="poster-hero-fade relative grid aspect-square w-full place-items-center overflow-hidden mask-b-from-55% mask-b-to-100% @prose:rounded-t-xl">
-          <MediaImage src={photo.src} alt="" sizes={mediaSizes.column} priority={!preview} className="scale-lift blur-glass" />
-          <div aria-hidden className="absolute inset-0 bg-creator-bg opacity-secondary" />
-          <h1 className="relative w-3/5">
-            <span className="relative block aspect-square">
-              <MediaImage src={profile.logo.src} alt={profile.displayName} sizes={mediaSizes.half} className="object-contain" />
-            </span>
-          </h1>
-        </div>
-      ) : (
-        <div
-          className={cn(
-            "poster-hero-fade relative aspect-portrait w-full overflow-hidden mask-b-from-45% mask-b-to-90% @prose:rounded-t-xl",
-            treatment === "duotone" && "isolate bg-creator-bg",
-          )}
-        >
-          <MediaImage
-            src={photo.src}
-            alt={photo.alt}
-            sizes={mediaSizes.column}
-            priority={!preview}
-            className={
-              treatment === "duotone"
-                ? cn("grayscale contrast-125", photo.tone === "light" ? "mix-blend-multiply" : "mix-blend-screen")
-                : treatment === "mono"
-                  ? "grayscale"
-                  : undefined
-            }
-          />
-          {/* A moving picture plays over the photo (the photo is its poster and its still version). */}
-          {profile.motion ? <HeroMotion src={profile.motion.src} className={treatment === "mono" ? "grayscale" : undefined} /> : null}
+  const lines = (
+    <>
+      {live ? <HeroLive block={live} /> : null}
+      {treatment === "logo" && profile.logo ? null : (
+        <div className={rise(0).className} style={rise(0).style}>
+          <Name profile={profile} isRtl={isRtl} theme={theme} compact={treatment === "inset"} />
         </div>
       )}
-      <div className={cn("relative grid justify-items-center gap-3 px-creator-gutter", treatment === "logo" && profile.logo ? "-mt-6" : treatment === "monogram" ? "-mt-12" : "-mt-16")}>
-        {live ? <HeroLive block={live} /> : null}
-        {treatment === "logo" && profile.logo ? null : <Name profile={profile} isRtl={isRtl} theme={theme} />}
-        {profile.tagline ? <p className="text-small font-semibold tracking-wide text-balance uppercase">{profile.tagline}</p> : null}
-        {profile.stats?.length ? <Stats stats={profile.stats} /> : null}
-        {profile.bio ? <p className="max-w-prose text-body-lg text-balance text-creator-fg-muted">{profile.bio}</p> : null}
-        {socials ? (
-          <div className="pt-2">
-            <Socials block={socials} plain={theme.layout.socials === "plain"} />
-          </div>
-        ) : null}
+      {profile.tagline ? (
+        <p className={cn("text-small font-semibold tracking-wide text-balance uppercase", rise(1).className)} style={rise(1).style}>
+          {profile.tagline}
+          {treatment === "frame" ? (
+            <span aria-hidden className="poster-caret ms-1 text-creator-accent-text">
+              ▍
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+      {profile.stats?.length ? <Stats stats={profile.stats} /> : null}
+      {profile.bio ? (
+        <p className={cn("max-w-prose text-body-lg text-balance text-creator-fg-muted", rise(2).className)} style={rise(2).style}>
+          {profile.bio}
+        </p>
+      ) : null}
+      {socials ? (
+        <div className={cn("pt-2", rise(3).className)} style={rise(3).style}>
+          <Socials block={socials} plain={plain} start={start} />
+        </div>
+      ) : null}
+    </>
+  );
+
+  // Studio: the name and lines sit low over the still, at the reading start.
+  if (treatment === "cinema") {
+    return (
+      <header className="poster-hero-timeline grid">
+        <div className="poster-hero-fade relative grid aspect-short max-h-dvh w-full content-end overflow-hidden @prose:rounded-t-xl">
+          <Photo profile={profile} preview={preview} className="absolute! inset-0" imageClass="poster-settle" />
+          <div aria-hidden className="absolute inset-0 bg-linear-to-t from-creator-bg from-10% to-transparent to-65%" />
+          <div className="relative grid justify-items-start gap-3 px-creator-gutter pb-8 text-start">{lines}</div>
+        </div>
+      </header>
+    );
+  }
+
+  const media =
+    treatment === "monogram" ? (
+      // No photo yet: a large monogram on the accent color, so a new page still feels finished.
+      <div className="poster-hero-fade grid w-full justify-items-center pt-20 pb-24">
+        <span className="relative size-avatar-2xl overflow-hidden rounded-full text-display">
+          <Monogram name={profile.displayName} />
+        </span>
+      </div>
+    ) : treatment === "logo" && profile.logo ? (
+      <div className="poster-hero-fade relative grid aspect-square w-full place-items-center overflow-hidden mask-b-from-55% mask-b-to-100% @prose:rounded-t-xl">
+        <MediaImage src={photo.src} alt="" sizes={mediaSizes.column} priority={!preview} className="scale-lift blur-glass" />
+        <div aria-hidden className="absolute inset-0 bg-creator-bg opacity-secondary" />
+        <h1 className="relative w-3/5">
+          <span className="relative block aspect-square">
+            <MediaImage src={profile.logo.src} alt={profile.displayName} sizes={mediaSizes.half} className="object-contain" />
+          </span>
+        </h1>
+      </div>
+    ) : treatment === "halo" ? (
+      // Aura: the portrait inside a ring of the page's colors, turning slowly.
+      <div className="poster-hero-fade grid w-full justify-items-center pt-16 pb-2">
+        <span className="poster-arch-in relative grid size-avatar-2xl place-items-center @prose:size-avatar-2xl">
+          <span aria-hidden className="poster-halo absolute -inset-2" />
+          <span className="relative size-full rounded-full bg-creator-bg p-1">
+            <Photo profile={profile} preview={preview} className="size-full rounded-full" />
+          </span>
+        </span>
+      </div>
+    ) : treatment === "inset" ? (
+      // Folio: a framed picture with a margin, uncovering itself.
+      <div className="poster-hero-fade w-full px-creator-gutter pt-creator-gutter @prose:px-0 @prose:pt-0">
+        <Photo profile={profile} preview={preview} className="poster-uncover aspect-portrait rounded-creator-card" />
+      </div>
+    ) : treatment === "frame" ? (
+      // Signal: a square picture in four corner marks.
+      <div className="poster-hero-fade grid w-full justify-items-center pt-16 pb-2">
+        <div className="relative aspect-square w-3/5">
+          <span aria-hidden className="poster-corner poster-corner-ts" />
+          <span aria-hidden className="poster-corner poster-corner-te" />
+          <span aria-hidden className="poster-corner poster-corner-bs" />
+          <span aria-hidden className="poster-corner poster-corner-be" />
+          <Photo profile={profile} preview={preview} className="size-full rounded-creator-card" />
+        </div>
+      </div>
+    ) : treatment === "arch" ? (
+      // Bloom: the portrait in an arch, an outline arch offset behind it.
+      <div className="poster-hero-fade grid w-full justify-items-center pt-12 pb-2">
+        <div className="poster-arch-in relative w-3/4">
+          <span aria-hidden className="poster-arch-line rounded-t-full rounded-b-creator-card" />
+          <Photo profile={profile} preview={preview} className="aspect-portrait rounded-t-full rounded-b-creator-card" />
+        </div>
+      </div>
+    ) : (
+      <div
+        className={cn(
+          "poster-hero-fade relative aspect-portrait w-full overflow-hidden mask-b-from-45% mask-b-to-90% @prose:rounded-t-xl",
+          treatment === "duotone" && "isolate bg-creator-bg",
+        )}
+      >
+        <MediaImage
+          src={photo.src}
+          alt={photo.alt}
+          sizes={mediaSizes.column}
+          priority={!preview}
+          className={
+            treatment === "duotone"
+              ? cn("grayscale contrast-125", photo.tone === "light" ? "mix-blend-multiply" : "mix-blend-screen")
+              : treatment === "mono"
+                ? "grayscale"
+                : undefined
+          }
+        />
+        {/* A moving picture plays over the photo (the photo is its poster and its still version). */}
+        {profile.motion ? <HeroMotion src={profile.motion.src} className={treatment === "mono" ? "grayscale" : undefined} /> : null}
+      </div>
+    );
+
+  const below = treatment === "halo" || treatment === "inset" || treatment === "frame" || treatment === "arch";
+  return (
+    <header className={cn("poster-hero-timeline grid", start ? "justify-items-stretch" : "justify-items-center text-center")}>
+      {media}
+      <div
+        className={cn(
+          "relative grid gap-3 px-creator-gutter",
+          start ? "justify-items-start text-start @prose:px-0" : "justify-items-center",
+          below ? "pt-6" : treatment === "logo" && profile.logo ? "-mt-6" : treatment === "monogram" ? "-mt-12" : "-mt-16",
+        )}
+      >
+        {lines}
       </div>
     </header>
   );

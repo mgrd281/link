@@ -2,7 +2,7 @@
 
 import { hasImage, type Page } from "@linkyo/blocks";
 import { creatorTokens, type CreatorTemplateId } from "@linkyo/tokens";
-import { resolveCreatorTheme, TEMPLATE_IDS } from "@linkyo/tokens/creator";
+import { resolveCreatorTheme, TEMPLATE_IDS, type HeroStyle } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
 import { Check } from "lucide-react";
 import Image from "next/image";
@@ -16,8 +16,17 @@ import { initials } from "../shared/creator-kit";
 import { resolveMedia } from "../shared/media";
 import { displayStyle } from "./styles";
 
+/** Where each newer template puts the picture in its card (the others: the top, fading into the page). */
+const PICTURE: Partial<Record<HeroStyle, string>> = {
+  cinema: "inset-0 mask-b-from-40% mask-b-to-95%",
+  halo: "top-4 left-1/2 aspect-square w-1/2 -translate-x-1/2 rounded-full",
+  inset: "inset-x-2 top-2 h-1/2 rounded-sm",
+  frame: "top-4 left-1/2 aspect-square w-1/2 -translate-x-1/2 rounded-xs border-emphasis border-creator-accent",
+  arch: "top-3 left-1/2 h-1/2 w-3/5 -translate-x-1/2 rounded-t-full rounded-b-xs",
+};
+
 /**
- * Template picker: six looks, each previewed with the creator's own photo and name in that
+ * Template picker: eleven looks, each previewed with the creator's own photo and name in that
  * template's real colors and fonts (resolved by the theme engine, so every swatch is AA).
  * Native radio inputs: arrow keys move between templates, screen readers announce the choice.
  */
@@ -62,20 +71,31 @@ export function TemplatePicker({
                     selected ? "border-focus border-emphasis" : "border-line",
                   )}
                 >
-                  <span className="absolute inset-x-0 top-0 h-3/5 overflow-hidden mask-b-from-30% mask-b-to-100%">
-                    {avatar ? (
-                      <Image
-                        src={avatar}
-                        alt=""
-                        fill
-                        sizes={thumbSizes}
-                        className={cn("object-cover", theme.layout.hero === "duotone" && "grayscale mix-blend-screen", theme.layout.hero === "mono" && "grayscale", theme.layout.hero === "logo" && "blur-glass")}
-                        unoptimized={typeof avatar === "string"}
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <span className="absolute inset-0 grid place-items-center bg-creator-surface-2 font-creator-display text-h2 text-creator-fg">{initials(profile.displayName)}</span>
+                  {theme.layout.backdrop === "grid" ? <span className="poster-grid absolute inset-0 mask-b-from-10% mask-b-to-90%" /> : null}
+                  {theme.layout.backdrop === "aurora" ? <span className="poster-glow poster-glow-1" /> : null}
+                  {/* The picture in the template's own shape: full, round with a halo, framed, in corner marks or in an arch. */}
+                  <span
+                    className={cn(
+                      "absolute overflow-hidden",
+                      PICTURE[theme.layout.hero] ?? "inset-x-0 top-0 h-3/5 mask-b-from-30% mask-b-to-100%",
                     )}
+                  >
+                    {theme.layout.hero === "halo" ? <span className="poster-halo absolute inset-0" /> : null}
+                    <span className={cn("absolute overflow-hidden", theme.layout.hero === "halo" ? "inset-1 rounded-full" : "inset-0")}>
+                      {avatar ? (
+                        <Image
+                          src={avatar}
+                          alt=""
+                          fill
+                          sizes={thumbSizes}
+                          className={cn("object-cover", theme.layout.hero === "duotone" && "grayscale mix-blend-screen", theme.layout.hero === "mono" && "grayscale", theme.layout.hero === "logo" && "blur-glass")}
+                          unoptimized={typeof avatar === "string"}
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <span className="absolute inset-0 grid place-items-center bg-creator-surface-2 font-creator-display text-h2 text-creator-fg">{initials(profile.displayName)}</span>
+                      )}
+                    </span>
                   </span>
                   <span className="relative truncate font-creator-display text-body leading-none" style={displayStyle}>
                     {profile.displayName}

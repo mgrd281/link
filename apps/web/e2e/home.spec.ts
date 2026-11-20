@@ -263,16 +263,16 @@ test.describe("marketing home", () => {
     const looks = playground.getByRole("radiogroup", { name: "Choose a look" });
     const before = await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"));
     await expect(looks.getByRole("radio", { name: "Mono" })).toHaveAttribute("aria-checked", "true");
-    await looks.getByRole("radio", { name: "Pulse" }).click();
-    await expect(looks.getByRole("radio", { name: "Pulse" })).toHaveAttribute("aria-checked", "true");
+    await looks.getByRole("radio", { name: "Aura" }).click();
+    await expect(looks.getByRole("radio", { name: "Aura" })).toHaveAttribute("aria-checked", "true");
     expect(await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"))).not.toBe(before);
-    await looks.getByRole("radio", { name: "Pulse" }).press("ArrowRight");
-    await expect(looks.getByRole("radio", { name: "Atelier" })).toBeFocused();
+    await looks.getByRole("radio", { name: "Aura" }).press("ArrowRight");
+    await expect(looks.getByRole("radio", { name: "Bloom" })).toBeFocused();
     // Any color: the theme engine makes a whole, readable page of it.
     await playground.getByLabel("Your color").fill("#ff7a00");
     await expect(playground.getByRole("tabpanel", { name: "Look" }).locator("[aria-live]")).toContainText("Your color");
-    // Your color goes onto the look that was showing (Atelier, picked with the arrow key), not onto another.
-    await expect(playground.getByRole("link", { name: "Keep this page" })).toHaveAttribute("href", /template=atelier&accent=ff7a00$/);
+    // Your color goes onto the look that was showing (Bloom, picked with the arrow key), not onto another.
+    await expect(playground.getByRole("link", { name: "Keep this page" })).toHaveAttribute("href", /template=bloom&accent=ff7a00$/);
     await expect(looks.getByRole("radio", { checked: true })).toHaveCount(0);
   });
 
@@ -445,9 +445,9 @@ test("on phones the page sits above its controls; keeping it carries the visitor
   // An example stays an example: it is not carried into the real page.
   await playground.getByRole("button", { name: "YouTube", exact: true }).click();
   await playground.getByRole("tab", { name: "Look" }).click();
-  await playground.getByRole("radio", { name: "Daylight" }).click();
+  await playground.getByRole("radio", { name: "Studio" }).click();
   await playground.getByRole("link", { name: "Keep this page" }).click();
-  await page.waitForURL(new RegExp(`/en/signup\\?name=lea-${id}&display=Lea\\+${id}&template=daylight&accent=[0-9a-f]{6}$`));
+  await page.waitForURL(new RegExp(`/en/signup\\?name=lea-${id}&display=Lea\\+${id}&template=studio$`));
   await page.locator("#signup-email").fill(`try-${id}@example.com`);
   await page.locator("form button[type=submit]").click();
   await enterDemoCode(page);

@@ -134,6 +134,247 @@
   }
 }
 
+/*
+ * The five newer Poster templates (Studio, Aura, Folio, Signal, Bloom) each move in their own way:
+ * the cinema still settles like a slow camera move, the aurora drifts, the halo turns, the corner
+ * marks lock onto the picture, the arch rises, the folio picture uncovers. Sections rise in as they
+ * scroll into view (scroll-driven, no JavaScript). With prefers-reduced-motion nothing moves; browsers
+ * without scroll-driven animations show the sections as they are.
+ */
+@keyframes poster-settle {
+  from {
+    scale: 1.12;
+  }
+}
+
+@keyframes poster-rise {
+  from {
+    opacity: 0;
+    translate: 0 var(--spacing-6);
+  }
+}
+
+@keyframes poster-uncover {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+}
+
+@keyframes poster-arch-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--spacing-8);
+    scale: 0.94;
+  }
+}
+
+@keyframes poster-lock {
+  from {
+    opacity: 0;
+    translate: var(--poster-from-x, 0) var(--poster-from-y, 0);
+  }
+}
+
+@keyframes poster-turn {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@keyframes poster-drift {
+  50% {
+    translate: var(--poster-drift-x, 0) var(--poster-drift-y, 0);
+    scale: 1.15;
+  }
+}
+
+@keyframes poster-pan {
+  to {
+    background-position: var(--spacing-8) var(--spacing-8);
+  }
+}
+
+@keyframes poster-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@utility poster-settle {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: poster-settle var(--duration-ambient) var(--ease-emphasized) both;
+  }
+}
+
+/* Load entrance for the hero's name and lines; --poster-i staggers them. */
+@utility poster-rise {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: poster-rise var(--duration-reveal) var(--ease-emphasized) both;
+    animation-delay: calc(var(--duration-micro) * (2 + var(--poster-i, 0)));
+  }
+}
+
+@utility poster-uncover {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: poster-uncover var(--duration-reveal) var(--ease-emphasized) both;
+  }
+}
+
+@utility poster-arch-in {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: poster-arch-in var(--duration-reveal) var(--ease-emphasized) both;
+  }
+}
+
+/* Sections rise in once, as they enter the screen. */
+@utility poster-reveal {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: poster-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 50%;
+    }
+  }
+}
+
+/* Aura: soft color fields along the page, each drifting on its own slow path. */
+@utility poster-glow {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: poster-drift var(--duration-marquee) ease-in-out calc(var(--duration-marquee) * var(--poster-phase, 0)) infinite;
+  }
+}
+
+/* The aurora's three fields: where each sits, how large it is, its color and its path. */
+@utility poster-glow-1 {
+  --poster-drift-x: 14%;
+  --poster-drift-y: 10%;
+
+  inset-block-start: -8%;
+  inset-inline-start: -30%;
+  inline-size: 95%;
+  background: radial-gradient(closest-side, var(--creator-glow-1), transparent);
+}
+
+@utility poster-glow-2 {
+  --poster-drift-x: -16%;
+  --poster-drift-y: 8%;
+  --poster-phase: -0.33;
+
+  inset-block-start: 22%;
+  inset-inline-end: -35%;
+  inline-size: 100%;
+  background: radial-gradient(closest-side, var(--creator-glow-2), transparent);
+}
+
+@utility poster-glow-3 {
+  --poster-drift-x: 10%;
+  --poster-drift-y: -12%;
+  --poster-phase: -0.66;
+
+  inset-block-start: 55%;
+  inset-inline-start: -25%;
+  inline-size: 90%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--creator-accent) 28%, transparent), transparent);
+}
+
+/* Aura: the halo ring turns slowly around the portrait. */
+@utility poster-halo {
+  background: conic-gradient(from 0turn, var(--creator-accent), var(--creator-glow-1), var(--creator-glow-2), var(--creator-accent));
+  border-radius: var(--radius-full);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: poster-turn var(--duration-showcase) linear infinite;
+  }
+}
+
+/* Signal: a fine grid in the page's line color, panning very slowly. */
+@utility poster-grid {
+  background-image:
+    linear-gradient(to right, var(--creator-line) var(--border-width-hairline), transparent var(--border-width-hairline)),
+    linear-gradient(to bottom, var(--creator-line) var(--border-width-hairline), transparent var(--border-width-hairline));
+  background-size: var(--spacing-8) var(--spacing-8);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: poster-pan var(--duration-marquee) linear infinite;
+  }
+}
+
+/* Signal: the four corner marks around the picture, locking on as the page opens. */
+@utility poster-corner {
+  position: absolute;
+  inline-size: var(--spacing-6);
+  block-size: var(--spacing-6);
+  border: 0 solid var(--creator-accent);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: poster-lock var(--duration-reveal) var(--ease-emphasized) both;
+    animation-delay: var(--duration-standard);
+  }
+}
+
+@utility poster-corner-ts {
+  --poster-from-x: calc(var(--spacing-3) * -1);
+  --poster-from-y: calc(var(--spacing-3) * -1);
+
+  inset-block-start: calc(var(--spacing-2) * -1);
+  inset-inline-start: calc(var(--spacing-2) * -1);
+  border-block-start-width: var(--border-width-focus);
+  border-inline-start-width: var(--border-width-focus);
+}
+
+@utility poster-corner-te {
+  --poster-from-x: var(--spacing-3);
+  --poster-from-y: calc(var(--spacing-3) * -1);
+
+  inset-block-start: calc(var(--spacing-2) * -1);
+  inset-inline-end: calc(var(--spacing-2) * -1);
+  border-block-start-width: var(--border-width-focus);
+  border-inline-end-width: var(--border-width-focus);
+}
+
+@utility poster-corner-bs {
+  --poster-from-x: calc(var(--spacing-3) * -1);
+  --poster-from-y: var(--spacing-3);
+
+  inset-block-end: calc(var(--spacing-2) * -1);
+  inset-inline-start: calc(var(--spacing-2) * -1);
+  border-block-end-width: var(--border-width-focus);
+  border-inline-start-width: var(--border-width-focus);
+}
+
+@utility poster-corner-be {
+  --poster-from-x: var(--spacing-3);
+  --poster-from-y: var(--spacing-3);
+
+  inset-block-end: calc(var(--spacing-2) * -1);
+  inset-inline-end: calc(var(--spacing-2) * -1);
+  border-block-end-width: var(--border-width-focus);
+  border-inline-end-width: var(--border-width-focus);
+}
+
+/* Signal: a cursor after the line under the name. */
+@utility poster-caret {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: poster-blink var(--duration-carousel) steps(1) infinite;
+    animation-duration: calc(var(--duration-reveal) * 1.5);
+  }
+}
+
+/* Bloom: the outline arch behind the photo, offset up and toward the reading end (logical, so RTL mirrors). */
+@utility poster-arch-line {
+  position: absolute;
+  inset-block-start: calc(var(--spacing-3) * -1);
+  inset-inline-start: var(--spacing-3);
+  inline-size: 100%;
+  block-size: 100%;
+  border: var(--border-width-focus) solid var(--creator-accent);
+}
+
 /* stylelint-enable no-invalid-position-declaration */
 
 /*
