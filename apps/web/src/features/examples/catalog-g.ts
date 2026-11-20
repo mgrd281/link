@@ -89,7 +89,7 @@ export const CATALOG_G: Record<string, Page> = {
       bio: "I write small, sharp skills for coding agents: one folder, one job, tested. Open source and free to use.",
       location: "Amsterdam",
       photo: "ex9-arjun-mehta",
-      focal: [0.48, 0.38],
+      focal: [0.67, 0.41],
       stats: [
         ["9.7k", "GitHub stars"],
         ["14", "skills"],
