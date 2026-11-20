@@ -14,7 +14,7 @@ export const CATALOG_G: Record<string, Page> = {
     "merve-aksoy",
     "de",
     {
-      name: "Merve Aksoy",
+      name: "Merve Ilgaz",
       tagline: "App-Tipps · Jeden Tag eine App, die dein Handy besser macht",
       bio: "Ich teste Apps, damit du es nicht musst. Hier findest du jede App aus meinen Videos, mit Codes, die nur hier gelten.",
       location: "Köln",

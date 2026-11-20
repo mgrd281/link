@@ -37,7 +37,10 @@ level on phone and desktop. They also asked for the best possible photos on the 
   - The focal point in the catalog is updated.
   - A tall photo is cut to 4:5 around the face, because posters and other crops are centered.
   - CREDITS.md names the photographer and the photo page.
-  - Gallery cards now honor the focal point (`MediaImage` takes `focal`), so no face is cut.
+  - Gallery cards now honor the focal point (`MediaImage` takes `focal`), so no face is cut. The
+    pages themselves do too: every renderer passes an image's `focal` (hero, avatar, covers), so a
+    wide photo with the face off-centre keeps the face in a portrait hero. Without a focal point,
+    pictures stay centred as before.
 - **Words.**
   - Each card is a "Vorlage / template / قالب" everywhere, matching the nav and "Use this template".
   - Counts are real, not "70+". Arabic counts use full ICU plurals.
@@ -78,13 +81,17 @@ level on phone and desktop. They also asked for the best possible photos on the 
     - the spinner only shows after 400 ms;
     - the pages either side are fetched ahead.
   - **Self-scrolling:** it eases in and out and stops on any key or tap in the preview. A pause button
-    starts it again (WCAG 2.2.2).
+    starts it again (WCAG 2.2.2), by mouse, touch or keyboard. After a page is read to its end, the
+    next one still glides. A link followed inside the preview stops the glide without breaking it.
   - **Keyboard:**
-    - "Use this template" is one Tab away;
+    - the panel with "Use this template" comes before the page in the Tab order (right after Close;
+      on phones after the top bar);
     - the scroll keys scroll the page;
-    - Escape and the arrows work even inside the page;
+    - Escape and the arrows work even inside the page, except where the page's own tabs, rails and
+      players use the arrows;
     - focus returns to the card of the page last shown.
-  - **Screen readers:** prev and next are announced, and the preview describes itself.
+  - **Screen readers:** prev and next are announced, and the preview describes itself (with reduced
+    motion, without the sentence about scrolling).
   - **Reduced motion:** a short crossfade instead of a cut.
 - **Everywhere.**
   - Radix components follow the page's direction (Arabic menus, toggles and tooltips run right to
@@ -95,9 +102,16 @@ level on phone and desktop. They also asked for the best possible photos on the 
   - `motion.delay.glide` (1200 ms) and `motion.delay.spinner` (400 ms);
   - `--animate-scrim-in`, `--animate-page-in` and `--animate-spinner-in`;
   - `mk-settle`, an entrance without a fade.
-- **Names.** The affiliate example was called "Maya Lin", which is also the exact name of a famous
-  living architect. A fictional page under her name that recommends products could read as hers,
-  so the example is now "Maya Lindqvist" (same address, `maya-finds`).
+- **Names.** A fictional page under a real person's exact name could read as theirs, and as their
+  endorsement of the products on it. So every example name (73) was checked against Wikipedia
+  (de, en, ar, tr), and each match was checked again by a second reviewer. Three exact matches with
+  living public figures were renamed; the addresses stay, so no link breaks:
+  - "Maya Lin" (a famous architect) → "Maya Lindqvist" (`maya-finds`);
+  - "Lena Vogt" (a German actress; ours is a footballer) → "Lena Wendtland" (`lena-vogt`);
+  - "Merve Aksoy" (a German-Turkish actress; ours gives app tips) → "Merve Ilgaz" (`merve-aksoy`).
+  The other matches were long-dead namesakes, very common names or only similar names. The address
+  of the Arabic perfume shop, `rihana-store`, reads like Rihanna, who sells perfume too; its shown
+  name, متجر ريحانة, is fine. Changing that address needs a redirect and is left for a decision.
 - **Skills.** 17 more open-source skills were vendored. Each was read in full twice, and every
   change is marked. See `.claude/skills/README.md`.
 
@@ -107,7 +121,7 @@ level on phone and desktop. They also asked for the best possible photos on the 
   them helps every route, needs a per-route provider, and gets its own change.
 - **Preview script.** The preview dialog's script could load on first touch, and card pictures could
   resolve on the server.
-- **Photos.** Some cards found no clearly better free photo (Lena Vogt, Halawiyat al-Sham, Zwei Kaffee,
+- **Photos.** Some cards found no clearly better free photo (Lena Wendtland, Halawiyat al-Sham, Zwei Kaffee,
   Julia Brandt, Maya and others); they keep their photos. Two proposals for Maya were rejected: one
   photo had been removed from Unsplash, and a still-published frame from the same shoot
   (`kvxohKMEWbE`) put her face small and low in the gallery's 4:5 cut.

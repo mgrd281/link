@@ -41,7 +41,7 @@ export const CATALOG_A: Record<string, Page> = {
     "lena-vogt",
     "de",
     {
-      name: "Lena Vogt",
+      name: "Lena Wendtland",
       tagline: "Mittelfeld · Frauen-Bundesliga",
       bio: "Fußball mit Herz und Kopf. Hier findest du Spiele, Camps und alles rund um mein Team.",
       location: "Wolfsburg",
