@@ -141,6 +141,15 @@ const PROFILE: Record<SocialPlatform, RegExp> = {
   discord: /^https?:\/\/(?:www\.)?discord(?:\.gg|\.com\/invite)\/([\w-]+)\/?(?:\?.*)?$/i,
 };
 
+/** The platform and handle of a social profile address (instagram.com/name …), if it is one of these. */
+export function socialProfile(url: string, platforms: readonly SocialPlatform[]): { platform: SocialPlatform; handle: string } | null {
+  for (const platform of platforms) {
+    const handle = PROFILE[platform].exec(url)?.[1];
+    if (handle) return { platform, handle };
+  }
+  return null;
+}
+
 /**
  * Sorts imported links for the welcome flow: profiles on the platforms this page asks for go into
  * their fields (only where nothing was typed yet); everything else becomes a pasted link.

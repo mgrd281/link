@@ -133,11 +133,17 @@ export function WelcomeScreen() {
       return { profiles: Object.keys(sorted.handles).length, links: added.length };
     },
   });
-  // The playground's draft is used once; its photo becomes the page's photo (the phone shows it).
+  // The playground's draft is used once: its photo and line go onto the page, and its whole look
+  // (also for sign-ups that did not pass through the email form, like Google).
   useEffect(() => {
     if (!tried) return;
     clearTryDraft();
-    if (tried.photo) dispatch({ type: "profile", patch: { avatar: { src: tried.photo.src, alt: "", tone: tried.photo.tone } } });
+    if (tried.theme) dispatch({ type: "theme", theme: tried.theme });
+    const patch = {
+      ...(tried.photo ? { avatar: { src: tried.photo.src, alt: "", tone: tried.photo.tone } } : {}),
+      ...(tried.tagline ? { tagline: tried.tagline } : {}),
+    };
+    if (Object.keys(patch).length > 0) dispatch({ type: "profile", patch });
   }, [tried, dispatch]);
   // Moving between steps puts focus on the new step's title (after it is on screen).
   const [moved, setMoved] = useState(false);

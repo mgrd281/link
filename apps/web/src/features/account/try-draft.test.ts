@@ -18,9 +18,10 @@ describe("try draft", () => {
     vi.unstubAllGlobals();
   });
 
-  it("keeps name, links and a resized photo until cleared", () => {
-    saveTryDraft({ name: "Lea", links: ["https://example.com/a"], photo });
-    expect(readTryDraft()).toEqual({ name: "Lea", links: ["https://example.com/a"], photo });
+  it("keeps name, line, links, a resized photo and the look until cleared", () => {
+    const theme = { template: "nocturne" as const, accent: "#ff4fa3", neutral: "#1b2a4a", tint: 1, pairing: "stage" as const, buttonStyle: "filled" as const, buttonShape: "pill" as const };
+    saveTryDraft({ name: "Lea", links: ["https://example.com/a"], tagline: "DJ · Berlin", photo, theme });
+    expect(readTryDraft()).toEqual({ name: "Lea", links: ["https://example.com/a"], tagline: "DJ · Berlin", photo, theme });
     clearTryDraft();
     expect(readTryDraft()).toBeNull();
   });
@@ -30,5 +31,12 @@ describe("try draft", () => {
       sessionStorage.setItem("linkyo.try", JSON.stringify({ name: "Lea", links: [], photo: { src, tone: "dark" } }));
       expect(readTryDraft()).toEqual({ name: "Lea", links: [] });
     }
+  });
+
+  it("drops a look it does not know and values that are not ours", () => {
+    sessionStorage.setItem("linkyo.try", JSON.stringify({ name: "", links: [], theme: { template: "nope", accent: "#fff" } }));
+    expect(readTryDraft()).toEqual({ name: "", links: [] });
+    sessionStorage.setItem("linkyo.try", JSON.stringify({ name: "", links: [], theme: { template: "mono", accent: "red;x", pairing: "<b>", tint: 7 } }));
+    expect(readTryDraft()).toEqual({ name: "", links: [], theme: { template: "mono" } });
   });
 });

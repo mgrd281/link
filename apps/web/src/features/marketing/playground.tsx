@@ -1,25 +1,28 @@
 "use client";
 
-import { detectLink, NO_IMAGE, type Block, type Detection, type Page } from "@linkyo/blocks";
+import { detectLink, NO_IMAGE, type Block, type Detection, type Page, type Platform } from "@linkyo/blocks";
 import { resolveCreatorTheme, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { cn, Icon, PlatformIcon } from "@linkyo/ui";
-import { ArrowRight, Camera, CircleCheck, Clapperboard, Image as ImageIcon, Link2, Music2, Palette, Plus, Radio, ShoppingBag, Ticket, Type, Video, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, Camera, CircleCheck, Clapperboard, Image as ImageIcon, Link2, Music2, Palette, Plus, Radio, ShoppingBag, Ticket, UserRound, Video, X, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { siSpotify, siTwitch, siYoutube, type SimpleIcon } from "simple-icons";
 
-import { saveTryDraft, type TryDraft } from "@/features/account/try-draft";
+import { saveTryDraft } from "@/features/account/try-draft";
 import { suggestUsername } from "@/features/account/username";
 import { blockFromLink } from "@/features/app/blocks";
 import { ImageError, pickFiles, prepareImage } from "@/features/app/images";
+import { socialProfile } from "@/features/app/import-links";
+import type { SocialPlatform } from "@/features/app/kinds";
 import { fetchLinkMetadata, metadataPatch, metadataUrl, type LinkMetadata } from "@/features/app/metadata";
+import { mediaSizes, PlatformGlyph, platformName } from "@/features/directions/shared/creator-kit";
+import { resolveMedia } from "@/features/directions/shared/media";
 import { Link } from "@/i18n/navigation";
 
 import { TryPhone, type Reveal } from "./try-phone";
-import { EXAMPLES, sampleBlock, sampleOf, type SampleId } from "./try-samples";
+import { EXAMPLES, PERSONA, sampleBlock, sampleOf, type SampleId } from "./try-samples";
 
-/** One look to try: a template with its accent, named as in the template gallery. */
+/** One look to try: a complete look from the template gallery, named after its template. */
 export interface LookOption {
   id: string;
   config: CreatorThemeConfig;
@@ -29,56 +32,72 @@ export interface LookOption {
 
 type Tab = "name" | "links" | "look";
 const TABS: { id: Tab; icon: LucideIcon }[] = [
-  { id: "name", icon: Type },
+  { id: "name", icon: UserRound },
   { id: "links", icon: Link2 },
   { id: "look", icon: Palette },
 ];
 
 const TYPE_ICONS: Record<string, LucideIcon> = { music: Music2, video: Video, shorts: Clapperboard, events: Ticket, product: ShoppingBag, live: Radio, image: ImageIcon };
-const PLATFORM_ICONS: Partial<Record<string, SimpleIcon>> = { spotify: siSpotify, youtube: siYoutube, twitch: siTwitch };
 const KNOWN = new Set(["music", "video", "shorts", "events", "product", "live", "image", "card", "link"]);
-const MAX_LINKS = 4;
-
-/** What the playground shows by itself, once: a name typed, two links pasted, a look picked. */
-const TOUR = { name: "Juno Kade", links: [EXAMPLES[0]?.url ?? "", EXAMPLES[1]?.url ?? ""], look: "pulse" } as const;
+/** Profiles that become an icon under the name, as in the welcome flow (songs, videos and channels stay blocks). */
+const ICON_PROFILES: readonly SocialPlatform[] = ["instagram", "tiktok", "x", "threads", "linkedin", "facebook", "github", "whatsapp", "discord"];
+const MAX_LINKS = 6;
+/** A look starts the playground; the persona's own look ends the self-demo. */
+const FIRST_LOOK = "daylight";
 
 interface Added {
   key: string;
   url: string;
   type: string;
-  platform: string | undefined;
-  /** An example link: shown with Linkyo's sample pictures, never looked up or carried over. */
+  platform: Platform | undefined;
+  /** A social profile: an icon under the name instead of a block. */
+  social: SocialPlatform | undefined;
+  /** An example link: shown with the persona's pictures, never looked up or carried over. */
   sample: SampleId | undefined;
   /** The real title and picture of a pasted song or video, once the server found them. */
   meta?: LinkMetadata;
 }
 
+interface Photo {
+  src: string;
+  tone: "light" | "dark";
+  /** The visitor's own photo (the persona's is not carried into an account). */
+  own: boolean;
+}
+
 const typeKey = (detection: Detection): string => (KNOWN.has(detection.type) ? detection.type : "link");
 
 function toAdded(found: Detection, key: string): Added {
-  return { key, url: found.url, type: typeKey(found), platform: found.platform, sample: sampleOf(found.url) };
+  return {
+    key,
+    url: found.url,
+    type: typeKey(found),
+    platform: found.platform as Platform | undefined,
+    social: socialProfile(found.url, ICON_PROFILES)?.platform,
+    sample: sampleOf(found.url),
+  };
 }
 
-function BlockIcon({ type, platform }: { type: string; platform: string | undefined }) {
-  const mark = platform ? PLATFORM_ICONS[platform] : undefined;
-  return mark ? <PlatformIcon icon={mark} size="sm" /> : <Icon icon={TYPE_ICONS[type] ?? Link2} size="sm" />;
+function BlockIcon({ item }: { item: Added }) {
+  const platform = item.social ?? item.platform;
+  return platform && platform !== "website" ? <PlatformGlyph platform={platform} size="sm" /> : <Icon icon={TYPE_ICONS[item.type] ?? Link2} size="sm" />;
 }
-
 
 /**
  * Try Linkyo before signing up: a real page, built while you watch. The phone shows the page exactly
  * as visitors will see it (the real renderer, templates and blocks, see TryPhone); the controls
- * beside it (below it on phones) are the editor in miniature: a photo and a name, links, a look.
+ * beside it (below it on phones) are the editor in miniature: photo, name and a line about you, links,
+ * a look.
  *
- * Pasted links go through the real detector and become the real blocks; songs and videos get their
- * real title and cover from our server, as in the app. The example links are samples with Linkyo's
- * own pictures. A photo is resized in the browser and stays there until the visitor signs up.
+ * Pasted links go through the real detector and become the real blocks; profiles (Instagram, TikTok …)
+ * become icons under the name; songs and videos get their real title and cover from our server, as
+ * in the app. A photo is resized in the browser and stays there until the visitor signs up.
  *
- * The first time it scrolls into view it fills itself in once (a name typed, two links pasted, a
- * look picked) and stops for good at the visitor's first touch; what it typed is selected on focus,
- * so typing replaces it. "Keep this page" goes to sign-up with what the visitor made themselves: their
- * name, photo and links (try-draft.ts) and the look on screen. The tour's name and the examples stay
- * here.
+ * The first time it scrolls into view it introduces Juno Kade, the DJ from the template gallery: the
+ * portrait, the name and the line typed, Instagram, the new single and a live set pasted, and their own
+ * look picked. It runs once and stops for good at the visitor's first touch; what it typed is selected
+ * on focus, so typing replaces it. "Keep this page" goes to sign-up with what the visitor made
+ * themselves (name, line, photo, links; try-draft.ts) and the look on screen. The persona stays here.
  */
 export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]]; rtl: boolean }) {
   const t = useTranslations("marketing.try");
@@ -93,17 +112,19 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   const radios = useRef<(HTMLButtonElement | null)[]>([]);
   const touched = useRef(false);
   const frame = useRef(0);
+  const personaTagline = t("persona.tagline");
   const [tab, setTab] = useState<Tab>("name");
   const [name, setName] = useState("");
-  // Whether the name is the visitor's own (and not the tour's): only theirs goes to sign-up.
-  const [ownName, setOwnName] = useState(false);
-  const [photo, setPhoto] = useState<NonNullable<TryDraft["photo"]> | null>(null);
+  const [tagline, setTagline] = useState("");
+  // What is the visitor's own (and not the persona's): only that goes to sign-up.
+  const [own, setOwn] = useState({ name: false, tagline: false });
+  const [photo, setPhoto] = useState<Photo | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [items, setItems] = useState<Added[]>([]);
   const [error, setError] = useState<"invalid" | "limit" | null>(null);
   // The look's template, and the visitor's own color on it (null: the look's own accent).
-  const [lookIndex, setLookIndex] = useState(0);
+  const [lookIndex, setLookIndex] = useState(() => Math.max(0, looks.findIndex((option) => option.id === FIRST_LOOK)));
   const [accent, setAccent] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const [reveal, setReveal] = useState<Reveal>({ to: "top", at: 0 });
@@ -113,6 +134,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
 
   const themes = useMemo(() => looks.map((option) => resolveCreatorTheme(option.config, { rtlScript: rtl })), [looks, rtl]);
   const base = looks[lookIndex] ?? looks[0];
+  const config: CreatorThemeConfig = accent ? { ...base.config, accent } : base.config;
   const customTheme = useMemo(() => (accent ? resolveCreatorTheme({ ...base.config, accent }, { rtlScript: rtl }) : null), [accent, base, rtl]);
   const theme = customTheme ?? themes[lookIndex] ?? resolveCreatorTheme(base.config, { rtlScript: rtl });
   const look = accent ? { ...base, name: tLook("custom"), description: tLook("customHint") } : base;
@@ -120,17 +142,20 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   const detection = draft.trim() ? detectLink(draft.trim()) : null;
   const address = suggestUsername(name);
   const typeLabel = (type: string) => tPaste(`types.${type}`);
+  const itemLabel = (item: Added) => (item.social ? platformName(item.social) : typeLabel(item.type));
   const displayName = name.trim() || t("preview.name");
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
 
   // The page as the renderer gets it: the same profile and blocks a new account starts with.
   const page = useMemo<Page>(() => {
+    const socials = items.flatMap((item) => (item.social ? [{ platform: item.social, url: item.url }] : []));
     const blocks = items.flatMap((item): Block[] => {
-      if (item.sample) {
+      if (item.social) return [];
+      if (item.sample && item.sample !== "instagram") {
         return [
           sampleBlock(item.sample, item.key, item.url, {
             artist: displayName,
-            channel: (address || "lichtfeld").replace(/-/g, "_"),
+            channel: (address || "junokade").replace(/-/g, "_"),
             texts: { video: t("samples.video"), product: t("samples.product") },
           }),
         ];
@@ -141,22 +166,24 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       const patch = item.meta ? metadataPatch(block, block, item.meta) : null;
       return [patch ? ({ ...block, ...patch } as Block) : block];
     });
+    const line = tagline.trim();
     return {
       profile: {
         username: address || "…",
         displayName,
         bio: "",
         avatar: photo ? { src: photo.src, alt: "", tone: photo.tone } : { src: NO_IMAGE, alt: "" },
+        ...(line ? { tagline: line } : {}),
         verified: false,
         locale: locale === "ar" || locale === "en" ? locale : "de",
       },
-      blocks,
+      blocks: socials.length > 0 ? [{ id: `${id}-socials`, type: "socials", visible: true, highlight: false, items: socials }, ...blocks] : blocks,
     };
-  }, [items, displayName, address, photo, labels, locale, t]);
+  }, [items, displayName, tagline, address, photo, labels, locale, t, id]);
 
   /** Songs and videos the visitor pasted get their real title and cover, as in the app. */
   const enrich = (item: Added) => {
-    if (item.sample) return;
+    if (item.sample || item.social) return;
     const found = detectLink(item.url);
     const url = found ? metadataUrl(blockFromLink(found, labels, "")) : null;
     if (!url) return;
@@ -178,10 +205,11 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     const item = toAdded(found, `${id}-${Date.now().toString(36)}-${items.length}`);
     setItems((current) => [...current, item].slice(0, MAX_LINKS));
     enrich(item);
-    setAnnouncement(tPaste("added", { type: typeLabel(item.type) }));
+    setAnnouncement(tPaste("added", { type: itemLabel(item) }));
     setDraft("");
     setError(null);
-    show("end");
+    // A profile shows under the name; anything else is the newest block, at the end.
+    show(item.social ? "top" : "end");
   };
 
   const pickPhoto = async () => {
@@ -189,7 +217,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     if (!file) return;
     try {
       const prepared = await prepareImage(file, "avatar");
-      setPhoto({ src: prepared.src, tone: prepared.tone });
+      setPhoto({ src: prepared.src, tone: prepared.tone, own: true });
       setPhotoError(null);
       show("top");
     } catch (problem) {
@@ -197,7 +225,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     }
   };
 
-  // The tour, once, when most of the playground is on screen, unless someone got there first.
+  // The persona, once, when most of the playground is on screen, unless someone got there first.
   useEffect(() => {
     const element = root.current;
     if (!element) return;
@@ -209,56 +237,71 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         }, ms),
       );
     };
-    const pulse = Math.max(
+    const personaLook = Math.max(
       0,
-      looks.findIndex((option) => option.id === TOUR.look),
+      looks.findIndex((option) => option.id === PERSONA.look),
     );
-    const tourItem = (url: string, index: number) => {
+    const urls = PERSONA.links.map((sample) => EXAMPLES.find((example) => example.id === sample)?.url ?? "");
+    const personaItem = (url: string, index: number) => {
       const found = detectLink(url);
-      return found ? [toAdded(found, `tour-${index}`)] : [];
+      return found ? [toAdded(found, `persona-${index}`)] : [];
     };
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting || touched.current) return;
         observer.disconnect();
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          // No motion: the finished example at once.
-          setName(TOUR.name);
-          setItems(TOUR.links.flatMap(tourItem));
-          setLookIndex(pulse);
+          // No motion: the finished page at once.
+          setPhoto({ ...PERSONA.photo, own: false });
+          setName(PERSONA.name);
+          setTagline(personaTagline);
+          setItems(urls.flatMap(personaItem));
+          setLookIndex(personaLook);
           return;
         }
-        let time = 500;
-        Array.from(TOUR.name).forEach((_, index) => {
-          time += 70;
+        let time = 400;
+        at(time, () => {
+          setPhoto({ ...PERSONA.photo, own: false });
+        });
+        time += 500;
+        Array.from(PERSONA.name).forEach((_, index) => {
+          time += 60;
           at(time, () => {
-            setName(TOUR.name.slice(0, index + 1));
+            setName(PERSONA.name.slice(0, index + 1));
           });
         });
-        time += 700;
+        time += 300;
+        Array.from(personaTagline).forEach((_, index) => {
+          time += 30;
+          at(time, () => {
+            setTagline(personaTagline.slice(0, index + 1));
+          });
+        });
+        time += 600;
         at(time, () => {
           setTab("links");
         });
-        TOUR.links.forEach((url, index) => {
-          time += 500;
+        urls.forEach((url, index) => {
+          time += 450;
           at(time, () => {
             setDraft(url);
           });
-          time += 900;
+          time += 800;
           at(time, () => {
-            setItems((current) => [...current, ...tourItem(url, index)]);
+            const added = personaItem(url, index);
+            setItems((current) => [...current, ...added]);
             setDraft("");
-            show("end");
+            show(added[0]?.social ? "top" : "end");
           });
-          time += 600;
+          time += 400;
         });
-        time += 500;
+        time += 400;
         at(time, () => {
           setTab("look");
         });
-        time += 700;
+        time += 600;
         at(time, () => {
-          setLookIndex(pulse);
+          setLookIndex(personaLook);
         });
       },
       { threshold: 0.4 },
@@ -270,9 +313,9 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         window.clearTimeout(timer);
       });
     };
-  }, [looks]);
+  }, [looks, personaTagline]);
 
-  /** The visitor took over: the tour stops where it is. */
+  /** The visitor took over: the persona stops where it is. */
   const takeOver = () => {
     touched.current = true;
   };
@@ -315,15 +358,22 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     });
   };
 
-  const own = items.filter((item) => !item.sample);
-  const handOver = ownName ? name.trim() : "";
+  const ownName = own.name ? name.trim() : "";
   const params = new URLSearchParams();
   if (ownName && address) params.set("name", address);
-  if (handOver) params.set("display", handOver);
-  params.set("template", base.config.template ?? "nocturne");
-  const lookAccent = accent ?? base.config.accent;
-  if (lookAccent) params.set("accent", lookAccent.replace("#", "").toLowerCase());
+  if (ownName) params.set("display", ownName);
+  params.set("template", config.template ?? "nocturne");
+  if (config.accent) params.set("accent", config.accent.replace("#", "").toLowerCase());
   const signup = `/signup?${params.toString()}`;
+  const keep = () => {
+    saveTryDraft({
+      name: ownName,
+      links: items.filter((item) => !item.sample).map((item) => item.url),
+      ...(own.tagline && tagline.trim() ? { tagline: tagline.trim() } : {}),
+      ...(photo?.own ? { photo: { src: photo.src, tone: photo.tone } } : {}),
+      theme: config,
+    });
+  };
 
   const tabId = (entry: Tab) => `${id}-tab-${entry}`;
   const panelId = (entry: Tab) => `${id}-panel-${entry}`;
@@ -391,21 +441,22 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
 
         <div className="grid">
           <div {...panel("name")}>
-            <label htmlFor={`${id}-name`} className="text-small font-semibold">
-              {t("name.label")}
-            </label>
-            <div className="flex items-center gap-3">
+            <div className="flex items-end gap-3">
               <div className="relative shrink-0">
                 <button
                   type="button"
                   onClick={() => void pickPhoto()}
-                  aria-label={photo ? t("photo.change") : t("photo.add")}
+                  aria-label={photo?.own ? t("photo.change") : t("photo.add")}
                   className={cn(
-                    "relative grid size-control-lg place-items-center overflow-hidden rounded-full transition-[border-color,background-color,scale] duration-micro focus-visible:focus-ring active:scale-pressed",
+                    "relative grid size-control-xl place-items-center overflow-hidden rounded-full transition-[border-color,background-color,scale] duration-micro focus-visible:focus-ring active:scale-pressed",
                     photo ? "border border-line" : "border border-dashed border-line-strong bg-canvas-muted text-fg-secondary hover:border-link hover:text-link",
                   )}
                 >
-                  {photo ? <Image src={photo.src} alt="" fill unoptimized className="object-cover" /> : <Icon icon={Camera} size="md" />}
+                  {photo ? (
+                    <Image key={photo.src} src={resolveMedia(photo.src)} alt="" fill sizes={mediaSizes.thumb} className="object-cover motion-safe:animate-pop-in" />
+                  ) : (
+                    <Icon icon={Camera} size="md" />
+                  )}
                 </button>
                 {photo ? (
                   <button
@@ -421,21 +472,46 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   </button>
                 ) : null}
               </div>
+              <div className="grid min-w-0 flex-1 gap-1">
+                <label htmlFor={`${id}-name`} className="px-1 text-small font-semibold">
+                  {t("name.label")}
+                </label>
+                <input
+                  id={`${id}-name`}
+                  value={name}
+                  onChange={(event) => {
+                    setName(event.target.value.slice(0, 60));
+                    setOwn((current) => ({ ...current, name: true }));
+                    show("top");
+                  }}
+                  onFocus={(event) => {
+                    if (event.currentTarget.value === PERSONA.name) event.currentTarget.select();
+                  }}
+                  maxLength={60}
+                  autoComplete="name"
+                  placeholder={t("name.placeholder")}
+                  aria-describedby={`${id}-name-hint`}
+                  className={field}
+                />
+              </div>
+            </div>
+            <div className="grid gap-1">
+              <label htmlFor={`${id}-tagline`} className="px-1 text-small font-semibold">
+                {t("tagline.label")}
+              </label>
               <input
-                id={`${id}-name`}
-                value={name}
+                id={`${id}-tagline`}
+                value={tagline}
                 onChange={(event) => {
-                  setName(event.target.value.slice(0, 60));
-                  setOwnName(true);
+                  setTagline(event.target.value.slice(0, 80));
+                  setOwn((current) => ({ ...current, tagline: true }));
                   show("top");
                 }}
                 onFocus={(event) => {
-                  if (event.currentTarget.value === TOUR.name) event.currentTarget.select();
+                  if (event.currentTarget.value === personaTagline) event.currentTarget.select();
                 }}
-                maxLength={60}
-                autoComplete="name"
-                placeholder={t("name.placeholder")}
-                aria-describedby={`${id}-name-hint`}
+                maxLength={80}
+                placeholder={t("tagline.placeholder")}
                 className={field}
               />
             </div>
@@ -471,7 +547,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   }}
                   onFocus={(event) => {
                     const input = event.currentTarget;
-                    if (TOUR.links.some((url) => url === input.value)) input.select();
+                    if (EXAMPLES.some((example) => example.url === input.value)) input.select();
                   }}
                   onPaste={(event) => {
                     const text = event.clipboardData.getData("text");
@@ -530,15 +606,15 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
               <ul aria-label={t("added")} className="mk-no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
                 {items.map((item) => (
                   <li key={item.key} className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-selected ps-3 pe-1 text-small font-medium text-selected-fg">
-                    <BlockIcon type={item.type} platform={item.platform} />
-                    {typeLabel(item.type)}
+                    <BlockIcon item={item} />
+                    {itemLabel(item)}
                     <button
                       type="button"
                       onClick={() => {
                         setItems((current) => current.filter((candidate) => candidate.key !== item.key));
                         setError(null);
                       }}
-                      aria-label={tPaste("remove", { title: typeLabel(item.type) })}
+                      aria-label={tPaste("remove", { title: itemLabel(item) })}
                       className="grid size-6 place-items-center rounded-full transition-colors duration-micro hover:bg-hover focus-visible:focus-ring"
                     >
                       <Icon icon={X} size="sm" />
@@ -610,9 +686,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         <div className="grid gap-2 border-t border-line pt-4">
           <Link
             href={signup}
-            onClick={() => {
-              saveTryDraft({ name: handOver, links: own.map((item) => item.url), ...(photo ? { photo } : {}) });
-            }}
+            onClick={keep}
             className="group inline-flex h-control-xl items-center justify-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
           >
             {t("cta")}

@@ -28,6 +28,21 @@ each link. A visitor could not see what their page would actually look like.
   - The example links (Spotify, YouTube, Twitch, Shop) are **samples**: a release with its cover, a live video, a
     live channel and a record in the shop, all with Linkyo's own sample pictures. The release carries the typed name
     as its artist. Examples are never looked up and never carried into an account.
+- **A persona introduces it.** The founder asked for "a character, very elegant, with colors and arrangement: this
+  is marketing, it must be the best it can be". The self-demo is now **Juno Kade**, the fictional DJ from the
+  template gallery (`try-samples.ts`, `PERSONA`). Their portrait appears, the name and the line "DJ · Producer · House &
+  Disco" are typed, Instagram (an icon under the name), the single "Afterglow" with its cover and a rooftop live set
+  are pasted, and their own look is picked: Nocturne, pink on night blue, stage type, filled pill buttons. It takes
+  about ten seconds, starts on Daylight so the change of look shows, and runs once. The persona's name, line, photo
+  and links stay on the homepage.
+  - The five looks are complete looks from the gallery, one per template: Juno Kade's Nocturne, a vivid sky Daylight,
+    an amethyst Pulse, a wine Atelier with the elegant type, and Mono.
+  - The Profile tab has a third field, **one line about you** (the page's tagline).
+  - Pasted profiles (Instagram, TikTok, X, Threads, LinkedIn, Facebook, GitHub, WhatsApp, Discord) become icons under
+    the name, as in the welcome flow; up to six links.
+  - The visitor's line and the whole look (page color, type, buttons, not only template and accent) go to sign-up in
+    the draft. Sign-up starts the page with that look, and the welcome flow applies it again for sign-ups that skip
+    the email form.
 - **One card, like an app window.**
   - Computers: the controls on the reading side and the stage with the whole phone on the other.
   - Phones: the stage first, showing the upper part of the phone (it scrolls to each change), then the tabs and
@@ -46,6 +61,6 @@ each link. A visitor could not see what their page would actually look like.
 - the phone lays the page out 390 px wide and scales it down, scrolls to the newest block and back with the
   keyboard, and holds no link that can be followed;
 - a photo goes onto the page and comes off again;
-- the self-demo;
+- the persona: photo, name, line, Instagram icon, single, live set, their look;
 - on a phone, name, photo, own link and look reach the welcome flow and an example does not;
 - axe on the homepage in three languages, light and dark.

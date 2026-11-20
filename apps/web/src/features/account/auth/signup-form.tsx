@@ -12,6 +12,7 @@ import { findLook } from "@/features/examples/looks";
 import { Link } from "@/i18n/navigation";
 
 import { accountStore } from "../store";
+import { readTryDraft } from "../try-draft";
 import type { AuthError, CodeRequest, SignUpInput } from "../types";
 import { newProvisionalUsername } from "../username";
 import { AuthHeading } from "./auth-shell";
@@ -141,7 +142,8 @@ export function SignupForm() {
         username: prepared.kind === "match" ? prepared.username : username || (await freeProvisionalUsername()),
         prepared: prepared.kind === "match" ? { page: prepared.page, theme: prepared.theme } : undefined,
         invite: invite || undefined,
-        start: kind ? { kind, theme: look ? look.theme : (tried ?? STARTERS[kind].theme), displayName: displayName || undefined } : undefined,
+        // From the playground the whole look waits in the draft (page color, type, buttons); the address has its template and accent.
+        start: kind ? { kind, theme: look ? look.theme : tried ? (readTryDraft()?.theme ?? tried) : STARTERS[kind].theme, displayName: displayName || undefined } : undefined,
       },
     };
     const result = await accountStore.requestCode(codeRequest);

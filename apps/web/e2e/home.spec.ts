@@ -39,16 +39,21 @@ test.describe("marketing home", () => {
     // An example: a sample with Linkyo's own picture and title.
     await playground.getByRole("button", { name: "YouTube", exact: true }).click();
     await expect(added).toHaveCount(2);
-    await expect(preview).toContainText("Live in Berlin");
+    await expect(preview).toContainText("Rooftop set · Afterglow live");
     await playground.getByRole("button", { name: "Remove Music" }).click();
     await expect(added).toHaveCount(1);
     await expect(preview).not.toContainText("Golden Hour");
-    // Four links are enough to try it.
+    // A profile becomes an icon under the name, not a block.
+    await playground.getByRole("button", { name: "Instagram", exact: true }).click();
+    await expect(playground.getByRole("status")).toHaveText("Instagram added to your page");
+    await expect(preview.locator("header a[aria-label='Instagram']")).toHaveCount(1);
+    // Six links are enough to try it.
     for (const example of ["Spotify", "Twitch", "Shop"]) await playground.getByRole("button", { name: example, exact: true }).click();
+    await expect(added).toHaveCount(6);
     await playground.getByRole("button", { name: "YouTube", exact: true }).click();
-    await expect(added).toHaveCount(4);
-    await expect(playground.getByText("Four links are enough to try it.")).toBeVisible();
-    await expect(preview).toContainText("Lichtfeld · vinyl");
+    await expect(added).toHaveCount(6);
+    await expect(playground.getByText("Six links are enough to try it.")).toBeVisible();
+    await expect(preview).toContainText("Afterglow · vinyl");
   });
 
   test("the template strip has no motion of its own: it slides with the page, nothing to pause", async ({ page }) => {
@@ -132,17 +137,22 @@ test.describe("marketing home", () => {
     await expect(page.getByRole("heading", { level: 3, name: "Share like a pro" })).toBeAttached();
   });
 
-  test("try it fills itself in once: a name, two links, a look, quietly", async ({ page }) => {
+  test("try it introduces a persona once: photo, name, line, Instagram, a single, a live set, their look, quietly", async ({ page }) => {
     const playground = page.locator("#try");
     await playground.evaluate((element) => {
       element.scrollIntoView({ block: "center", behavior: "instant" });
     });
     const preview = playground.locator("[data-try-preview]");
-    await expect(preview).toContainText("Live in Berlin", { timeout: 15_000 });
+    await expect(preview).toContainText("Rooftop set · Afterglow live", { timeout: 20_000 });
     await expect(preview.getByRole("heading", { level: 1, includeHidden: true })).toHaveText("Juno Kade");
+    await expect(preview).toContainText("DJ · Producer · House & Disco");
     await expect(preview).toContainText("linkyo.app/juno-kade");
-    await expect(preview).toContainText("Lichtfeld");
-    await expect(playground.getByRole("radio", { name: "Pulse" })).toHaveAttribute("aria-checked", "true", { timeout: 5_000 });
+    await expect(preview).toContainText("Afterglow");
+    await expect(preview.locator("header a[aria-label='Instagram']")).toHaveCount(1);
+    // The portrait in the page's hero, and in the photo button.
+    await expect(preview.locator("header img").first()).toBeAttached();
+    await expect(playground.getByRole("button", { name: "Add a photo" })).toBeAttached();
+    await expect(playground.getByRole("radio", { name: "Nocturne" })).toHaveAttribute("aria-checked", "true", { timeout: 5_000 });
     await expect(playground.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
     // Only what a visitor does is announced.
     await expect(playground.getByRole("status")).toHaveText("");
@@ -201,16 +211,17 @@ test.describe("marketing home", () => {
     // Looks: the page changes at once; a radio group with arrow keys.
     const looks = playground.getByRole("radiogroup", { name: "Choose a look" });
     const before = await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"));
-    await looks.getByRole("radio", { name: "Daylight" }).click();
     await expect(looks.getByRole("radio", { name: "Daylight" })).toHaveAttribute("aria-checked", "true");
+    await looks.getByRole("radio", { name: "Pulse" }).click();
+    await expect(looks.getByRole("radio", { name: "Pulse" })).toHaveAttribute("aria-checked", "true");
     expect(await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"))).not.toBe(before);
-    await looks.getByRole("radio", { name: "Daylight" }).press("ArrowRight");
-    await expect(looks.getByRole("radio", { name: "Pulse" })).toBeFocused();
+    await looks.getByRole("radio", { name: "Pulse" }).press("ArrowRight");
+    await expect(looks.getByRole("radio", { name: "Atelier" })).toBeFocused();
     // Any color: the theme engine makes a whole, readable page of it.
     await playground.getByLabel("Your color").fill("#ff7a00");
     await expect(playground.locator("[aria-live]")).toContainText("Your color");
-    // Your color goes onto the look that was showing (Pulse, picked with the arrow key), not onto another.
-    await expect(playground.getByRole("link", { name: "Keep this page" })).toHaveAttribute("href", /template=pulse&accent=ff7a00$/);
+    // Your color goes onto the look that was showing (Atelier, picked with the arrow key), not onto another.
+    await expect(playground.getByRole("link", { name: "Keep this page" })).toHaveAttribute("href", /template=atelier&accent=ff7a00$/);
     await expect(looks.getByRole("radio", { checked: true })).toHaveCount(0);
   });
 
@@ -226,7 +237,7 @@ test.describe("marketing home", () => {
     await expect(name).toHaveValue("Mila Aurel");
     // The demo has stopped: no links arrive by themselves.
     await page.waitForTimeout(4000);
-    await expect(playground.locator("[data-try-preview]")).not.toContainText("Lichtfeld");
+    await expect(playground.locator("[data-try-preview]")).not.toContainText("Afterglow");
     await expect(playground.getByRole("tab", { name: "Links" })).toHaveAttribute("aria-selected", "false");
   });
 
@@ -369,6 +380,7 @@ test("on phones the page sits above its controls; keeping it carries the visitor
   expect(preview && tablist && preview.y < tablist.y).toBe(true);
   const id = Date.now().toString(36);
   await playground.getByLabel("Your name").fill(`Lea ${id}`);
+  await playground.getByLabel("One line about you").fill("Singer · Manchester");
   const chooser = page.waitForEvent("filechooser");
   await playground.getByRole("button", { name: "Add a photo" }).click();
   await (await chooser).setFiles("src/assets/samples/mila-avatar.jpg");
@@ -391,6 +403,8 @@ test("on phones the page sits above its controls; keeping it carries the visitor
   await expect(page.getByLabel("Name", { exact: true })).toHaveValue(`Lea ${id}`);
   await expect(page.getByLabel("Your address")).toHaveValue(`lea-${id}`);
   await expect(page.locator("img[src^='data:image/']").first()).toBeAttached();
+  // The line under the name and the whole look came along too.
+  await expect(page.getByText("Singer · Manchester").first()).toBeAttached();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.locator("textarea")).toHaveValue("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
