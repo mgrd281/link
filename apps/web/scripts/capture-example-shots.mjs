@@ -79,7 +79,11 @@ for (const [locale, slug, file, tall] of jobs) {
     continue;
   }
   const note = page.getByRole("button", { name: essential[locale], exact: true });
-  if ((await note.count()) > 0) await note.first().click();
+  if ((await note.count()) > 0) {
+    await note.first().click();
+    // The pointer leaves the spot: whatever lies under the closed note must not be pictured hovered.
+    await page.mouse.move(0, 0);
+  }
   await page.evaluate(() => document.fonts.ready);
   let height = PHONE.height;
   if (tall) {
