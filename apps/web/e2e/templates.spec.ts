@@ -20,6 +20,10 @@ test.describe("template gallery", () => {
     await expect(cards.first()).toBeVisible();
     expect(await cards.count()).toBeLessThan(20);
     await expect(page.getByRole("button", { name: /^Preview Bäckerei Sonnenkorn – / }).last()).toBeVisible();
+    // Contrast is measured at rest: a card caught halfway through its entrance fade is not what people read.
+    await page.waitForFunction(() =>
+      document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity),
+    );
     const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
   });

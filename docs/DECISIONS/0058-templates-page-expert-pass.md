@@ -13,10 +13,14 @@ level on phone and desktop. They also asked for the best possible photos on the 
 - **Photo judging.** An independent judge compared each proposal with the old card, checked the
   crops, and found the photo page and photographer. It also checked that the uploader is plausibly
   the rights holder, using the CDN's embedded metadata.
-  - Judges rejected more than half of the proposals:
+  - 16 cards got a new photo (15 replaced in place, plus Sami, who no longer shares Nina's travel
+    picture). Judges rejected more than half of the proposals:
     - visible brand logos (Columbia, Nike, a gym-equipment brand);
-    - a retoucher re-uploading a client shoot;
-    - a removed account;
+    - a retoucher re-uploading a client shoot, and two photos uploaded by the subject or the
+      client rather than the photographer;
+    - a removed account, and a photo removed from Unsplash although its file still loads;
+    - a real professional from a documentary photo series, which would have shown her as a
+      fictional political candidate;
     - faces hidden by a VR headset or by hair;
     - stock poses;
     - pictures that turned flat under a duotone.
@@ -100,7 +104,8 @@ level on phone and desktop. They also asked for the best possible photos on the 
   them helps every route, needs a per-route provider, and gets its own change.
 - **Preview script.** The preview dialog's script could load on first touch, and card pictures could
   resolve on the server.
-- **Photos.** Some cards found no clearly better free photo (Lena Vogt, Halawiyat al-Sham, Zwei Kaffee
-  and others); they keep their photos.
+- **Photos.** Some cards found no clearly better free photo (Lena Vogt, Halawiyat al-Sham, Zwei Kaffee,
+  Julia Brandt, Maya Lin and others); they keep their photos. For Maya Lin, a still-published frame
+  from the same shoot (Joel Mott, `kvxohKMEWbE`) is a candidate that has not been judged yet.
 
 **Status.** Applied.
