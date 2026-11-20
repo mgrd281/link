@@ -156,7 +156,8 @@ test.describe("team area", () => {
     await expect(page.getByText("You're viewing the team area as Editor.")).toBeVisible();
     // Editors build pages; approval, verification and invites are for admins.
     await nav(page).getByRole("link", { name: "Creators" }).click();
-    await page.getByRole("link", { name: /^Mo/ }).click();
+    // The page just made (other pages may start with "Mo" too, like Mo Salah's concept page).
+    await page.locator(`a[href$="/admin/creators/${username}"]`).click();
     await page.getByRole("radio", { name: "Invite & approval" }).click();
     await expect(page.getByText("Admins and owners can approve and publish.")).toBeVisible();
     await expect(page.getByLabel("Verified (blue check)")).toBeDisabled();
