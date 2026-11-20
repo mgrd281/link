@@ -101,6 +101,34 @@ test.describe("template gallery", () => {
     await expect(page.getByRole("button", { name: /^(Pause|Play) motion$/ })).toHaveCount(0);
   });
 
+  test("a previewed page scrolls down by itself, and stops for good when the visitor scrolls", async ({ page }) => {
+    await page.goto("/en/templates");
+    await page.getByRole("button", { name: /^Preview: / }).first().click();
+    const frame = page.locator('iframe[title^="Example page"]');
+    const scrolled = () => frame.evaluate((element) => (element as HTMLIFrameElement).contentWindow?.scrollY ?? 0);
+    await expect.poll(scrolled, { timeout: 10_000 }).toBeGreaterThan(80);
+    // The visitor takes over: one turn of the wheel in the page, and it stays where they leave it.
+    const box = await frame.boundingBox();
+    if (!box) throw new Error("no preview frame");
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(400);
+    const at = await scrolled();
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(1200);
+    expect(Math.abs((await scrolled()) - at)).toBeLessThan(4);
+  });
+
+  test("with reduced motion a previewed page stays at the top", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/en/templates");
+    await page.getByRole("button", { name: /^Preview: / }).first().click();
+    const frame = page.locator('iframe[title^="Example page"]');
+    await expect(frame).toBeVisible();
+    await page.waitForTimeout(2500);
+    expect(await frame.evaluate((element) => (element as HTMLIFrameElement).contentWindow?.scrollY ?? 0)).toBe(0);
+  });
+
   test("well-known people are listed too, labelled as concepts, and start with their look", async ({ page }) => {
     await page.goto("/en/templates");
     await page.getByRole("button", { name: /^Well-known people/ }).click();

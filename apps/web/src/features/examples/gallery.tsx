@@ -45,7 +45,7 @@ function SearchField({
       <label htmlFor={id} className="sr-only">
         {t("label")}
       </label>
-      <Icon icon={Search} size="sm" className="pointer-events-none absolute start-3 text-fg-tertiary" />
+      <Icon icon={Search} size="sm" className="pointer-events-none absolute start-4 text-fg-secondary" />
       <input
         ref={ref}
         id={id}
@@ -56,7 +56,7 @@ function SearchField({
         autoComplete="off"
         enterKeyHint="search"
         aria-keyshortcuts="/"
-        className="h-control-md w-full appearance-none rounded-full border border-line bg-surface ps-10 pe-10 text-body text-fg transition-colors sm:text-small duration-micro placeholder:text-fg-tertiary hover:border-line-strong focus-visible:focus-ring [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-control-md w-full appearance-none rounded-full border border-line-strong bg-surface ps-10 pe-10 text-body text-fg transition-colors duration-micro placeholder:text-fg-secondary hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring sm:text-small [&::-webkit-search-cancel-button]:appearance-none"
       />
       {value ? (
         <button
@@ -106,17 +106,81 @@ function CategoryBar({
             onChange(key);
             event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest", behavior: motion() });
           }}
-          className="group inline-flex h-control-md shrink-0 items-center gap-2 rounded-full border border-line bg-surface ps-3 pe-2 text-small font-medium text-fg-secondary transition-colors duration-micro hover:border-line-strong hover:text-fg focus-visible:focus-ring aria-pressed:border-fg aria-pressed:bg-fg aria-pressed:text-canvas"
+          className="group inline-flex h-control-md shrink-0 items-center gap-2 rounded-full bg-canvas-muted ps-3 pe-2 text-small font-medium text-fg-secondary transition-[background-color,color,scale] duration-micro ease-spring hover:bg-selected hover:text-fg focus-visible:focus-ring active:scale-pressed aria-pressed:bg-fg aria-pressed:text-canvas"
         >
           <Icon icon={key === "all" ? LayoutGrid : CATEGORY_ICONS[key]} size="sm" />
           {key === "all" ? t("all") : t(`categories.${key}`)}
-          <span className="min-w-6 rounded-full bg-canvas-muted px-2 py-0.5 text-center text-caption text-fg-secondary tabular-nums group-aria-pressed:bg-primary group-aria-pressed:text-primary-fg">
+          <span className="min-w-6 rounded-full bg-surface px-2 py-0.5 text-center text-caption text-fg-secondary tabular-nums group-aria-pressed:bg-primary group-aria-pressed:text-primary-fg">
             {key === "all" ? total : counts[key]}
           </span>
         </button>
       ))}
     </ScrollRow>
   );
+}
+
+/** How fast a previewed page scrolls by itself (px per ms): a calm read, a long page in about half a minute. */
+const GLIDE = 0.12;
+/** The first screen stays a moment before the page starts to move. */
+const GLIDE_DELAY = 1200;
+
+/**
+ * Once a previewed page has loaded, it scrolls down by itself, top to bottom, as someone reading it
+ * would (the page's own scroll, so its sections rise in as they would for a visitor). Once, never in
+ * a loop. The visitor takes over at any time: a wheel turn, a touch, a click or a key in the page stops
+ * it for good, and the mouse resting on the page holds it. Reduced motion: it never starts.
+ * (WCAG 2.2.2: one pass, stopped by any interaction.)
+ */
+function useAutoScroll(frame: RefObject<HTMLIFrameElement | null>, page: string | null) {
+  useEffect(() => {
+    const element = frame.current;
+    const view = element?.contentWindow;
+    if (!element || !view || !page || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    let stopped = false;
+    let held = false;
+    let last = 0;
+    let position = view.scrollY;
+    const stop = () => {
+      stopped = true;
+      cancelAnimationFrame(raf);
+    };
+    const hold = () => {
+      held = true;
+    };
+    const release = () => {
+      held = false;
+    };
+    const glide = (time: number) => {
+      if (stopped) return;
+      const elapsed = last ? time - last : 0;
+      last = time;
+      if (!held) {
+        const end = view.document.documentElement.scrollHeight - view.innerHeight;
+        position = Math.min(end, position + elapsed * GLIDE);
+        view.scrollTo(0, position);
+        if (position >= end) {
+          stop();
+          return;
+        }
+      }
+      raf = requestAnimationFrame(glide);
+    };
+    const interactions = ["wheel", "touchstart", "pointerdown", "keydown"] as const;
+    for (const type of interactions) view.addEventListener(type, stop, { passive: true });
+    element.addEventListener("pointerenter", hold);
+    element.addEventListener("pointerleave", release);
+    const start = window.setTimeout(() => {
+      raf = requestAnimationFrame(glide);
+    }, GLIDE_DELAY);
+    return () => {
+      window.clearTimeout(start);
+      stop();
+      for (const type of interactions) view.removeEventListener(type, stop);
+      element.removeEventListener("pointerenter", hold);
+      element.removeEventListener("pointerleave", release);
+    };
+  }, [frame, page]);
 }
 
 /** Cards per step: a full last row with two, three or four columns. */
@@ -223,6 +287,9 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
     event.preventDefault();
     step((event.key === "ArrowRight") !== rtl ? 1 : -1);
   };
+  // The previewed page scrolls down by itself once it has loaded (see useAutoScroll).
+  const frame = useRef<HTMLIFrameElement>(null);
+  useAutoScroll(frame, open !== null && loaded === open.slug ? open.slug : null);
   // The preview on phones: pull its top bar down to close it, as with every sheet.
   const { content: previewSheet, overlay: previewScrim, handle: previewHandle } = useDragToDismiss(() => setOpen(null));
   const searchProps = {
@@ -280,7 +347,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
         <div data-filters className="layer-raised mk-stuck-band sticky top-16 -mx-5 border-b border-line bg-canvas px-4 py-1 md:mx-0 md:-my-3 md:border-b-0 md:px-0 md:py-3">
           {/* Larger screens: a hairline under the band only while it is stuck, where cards slide beneath it. */}
           <span aria-hidden className="mk-stuck-edge pointer-events-none absolute inset-x-0 bottom-0 hidden border-b border-transparent md:block" />
-          <div className="md:flex md:items-center md:gap-2 md:rounded-full md:border md:border-line md:py-1 md:ps-2 md:pe-1">
+          <div className="md:flex md:items-center md:gap-3">
             <SearchField id="examples-search" ref={searchWide} className="max-md:hidden md:w-(--container-sidebar) md:shrink-0" {...searchProps} />
             <CategoryBar
               value={category}
@@ -387,7 +454,9 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
                     <Spinner className="col-start-1 row-start-1 size-icon-lg place-self-center text-fg-tertiary" />
                   )}
                   <iframe
+                    ref={frame}
                     key={open.slug}
+                    data-linkyo-preview=""
                     title={t("frame", { name: open.name })}
                     src={`/${open.locale}/p/${open.slug}`}
                     onLoad={() => setLoaded(open.slug)}

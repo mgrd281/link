@@ -117,6 +117,16 @@ function ThemedSwitch({ checked, onChange, label, disabled = false }: { checked:
 const sheetButton = "min-h-control-lg w-full rounded-creator-button px-4 py-2 text-body font-semibold leading-tight text-balance transition-[scale,background-color] duration-micro focus-visible:focus-ring active:scale-pressed";
 
 /**
+ * Inside the templates gallery's preview frame (`data-linkyo-preview`) the notice stays away: it would
+ * cover the page being shown, and nothing external loads there anyway (each video still asks when
+ * tapped). On the page itself, and in any other frame, it shows as always.
+ */
+const inGalleryPreview = () => window.frameElement?.hasAttribute("data-linkyo-preview") ?? false;
+const staysPut = () => () => undefined;
+/** Whether this page is shown inside the templates gallery's preview frame (false on the server). */
+export const useInGalleryPreview = (): boolean => useSyncExternalStore(staysPut, inGalleryPreview, () => false);
+
+/**
  * A sheet across the bottom of the page in the creator's own colors: their background and text, the
  * title in their accent, the main button filled with it. Two clear choices, and settings for those who
  * want to decide per category. Honest copy: there are no tracking cookies here.
@@ -125,6 +135,7 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
   const t = useTranslations("creator");
   const locale = useLocale();
   const choice = usePrivacyChoice();
+  const previewed = useInGalleryPreview();
   const [reopened, setReopened] = useState(false);
   const [details, setDetails] = useState(false);
   const [media, setMedia] = useState(false);
@@ -138,7 +149,7 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
     return () => window.removeEventListener(OPEN_EVENT, open);
   }, []);
 
-  if (choice === undefined || (choice !== null && !reopened)) return null;
+  if (previewed || choice === undefined || (choice !== null && !reopened)) return null;
   const list = new Intl.ListFormat(locale, { type: "conjunction" }).format(providers);
   const decide = (next: Choice) => {
     save(next);

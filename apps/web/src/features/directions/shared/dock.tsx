@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 
 import { Link } from "@/i18n/navigation";
 
+import { useInGalleryPreview } from "./privacy";
+
 const CLOSED = "linkyo.dock.closed";
 
 /** True once the hero has mostly scrolled away (the page's own name is then out of sight). */
@@ -52,7 +54,9 @@ export function LinkyoDock({ title, cta, href, closeLabel }: { title: string; ct
   const past = usePastHero();
   // Hidden until scrolled either way, so the server and the first client render agree.
   const [closed, setClosed] = useState(() => typeof window !== "undefined" && wasClosed());
-  const shown = past && !closed;
+  // In the templates gallery's preview the panel beside the page already offers "Use this template".
+  const previewed = useInGalleryPreview();
+  const shown = past && !closed && !previewed;
 
   const close = () => {
     setClosed(true);
