@@ -2732,7 +2732,9 @@
     },
     "prev": "المثال السابق",
     "next": "المثال التالي",
-    "position": "{index} من {total}"
+    "position": "{index} من {total}",
+    "more": "اعرض المزيد ({count})",
+    "shownOf": "{shown} من أصل {total}"
   },
   "search": {
     "open": "بحث عن أشخاص",

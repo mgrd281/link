@@ -12,7 +12,9 @@ test.describe("template gallery", () => {
     await page.goto("/en/templates");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("70+ examples");
     const cards = page.getByRole("button", { name: /^Preview: / });
-    expect(await cards.count()).toBeGreaterThanOrEqual(40);
+    // The grid shows the first twelve; the line under it counts them all.
+    const total = Number((await page.getByText(/^12 of \d+ examples$/).textContent())?.match(/of (\d+)/)?.[1]);
+    expect(total).toBeGreaterThanOrEqual(40);
     await page.getByRole("button", { name: /^Local businesses/ }).click();
     await expect(page.getByRole("button", { name: /^Local businesses/ })).toHaveAttribute("aria-pressed", "true");
     await expect(cards.first()).toBeVisible();
@@ -44,6 +46,30 @@ test.describe("template gallery", () => {
     await page.getByRole("button", { name: "Reset filters" }).click();
     await expect(cards).toHaveCount(all);
     await expect(search).toHaveValue("");
+  });
+
+  test("the grid shows twelve, then twelve more on demand; focus moves to the first new card; a filter starts over", async ({ page }) => {
+    await page.goto("/en/templates");
+    const grid = page.locator("#gallery ul").first();
+    const cards = grid.getByRole("button", { name: /^Preview: / });
+    await expect(cards).toHaveCount(12);
+    const progress = page.getByText(/^12 of \d+ examples$/);
+    await expect(progress).toBeVisible();
+    const total = Number((await progress.textContent())?.match(/of (\d+)/)?.[1]);
+    expect(total).toBeGreaterThan(24);
+    await page.getByRole("button", { name: "Show 12 more" }).click();
+    await expect(cards).toHaveCount(24);
+    await expect(page.getByText(`24 of ${total} examples`)).toBeVisible();
+    // Keyboards carry on at the first new card.
+    await expect(cards.nth(12)).toBeFocused();
+    // A filter starts over at twelve (or fewer).
+    await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: "German" }).click();
+    expect(await cards.count()).toBeLessThanOrEqual(12);
+    // To the end: no button once everything is shown.
+    await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: "All" }).click();
+    for (let shown = 12; shown < total; shown += 12) await page.getByRole("button", { name: /^Show \d+ more$/ }).click();
+    await expect(cards).toHaveCount(total);
+    await expect(page.getByRole("button", { name: /^Show \d+ more$/ })).toHaveCount(0);
   });
 
   test("the preview flips through the examples and closes with Escape", async ({ page }) => {
@@ -85,8 +111,10 @@ test.describe("template gallery", () => {
   test("well-known people are listed too, labelled as concepts, and start with their look", async ({ page }) => {
     await page.goto("/en/templates");
     await page.getByRole("button", { name: /^Well-known people/ }).click();
-    const cards = page.getByRole("button", { name: /^Preview: / });
-    expect(await cards.count()).toBeGreaterThanOrEqual(13);
+    const found = Number((await page.getByText(/^\d+ results$/).textContent())?.match(/\d+/)?.[0]);
+    expect(found).toBeGreaterThanOrEqual(13);
+    // Twelve at first, the rest one tap away.
+    await page.getByRole("button", { name: /^Show \d+ more$/ }).click();
     await page.getByRole("button", { name: "Preview: Lionel Messi" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator('iframe[title="Example page Lionel Messi"]')).toHaveAttribute("src", "/en/p/messi");
@@ -96,6 +124,7 @@ test.describe("template gallery", () => {
 
   test("preview a page, then start with exactly that template", async ({ page }) => {
     await page.goto("/en/templates");
+    await page.getByRole("searchbox", { name: "Search examples" }).fill("Sonnenkorn");
     await page.getByRole("button", { name: "Preview: Bäckerei Sonnenkorn" }).last().click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator('iframe[title="Example page Bäckerei Sonnenkorn"]')).toHaveAttribute("src", "/de/p/baeckerei-sonnenkorn");

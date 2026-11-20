@@ -2732,7 +2732,9 @@
     },
     "prev": "Vorheriges Beispiel",
     "next": "Nächstes Beispiel",
-    "position": "{index} von {total}"
+    "position": "{index} von {total}",
+    "more": "{count} weitere zeigen",
+    "shownOf": "{shown} von {total} Beispielen"
   },
   "search": {
     "open": "Personen suchen",

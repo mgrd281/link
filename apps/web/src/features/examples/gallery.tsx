@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, cn, Icon, IconButton, Kbd, Segmented, Spinner } from "@linkyo/ui";
-import { ArrowRight, ChevronLeft, ChevronRight, ExternalLink, LayoutGrid, Search, SearchX, X } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, LayoutGrid, Search, SearchX, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Dialog } from "radix-ui";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from "react";
@@ -117,10 +117,16 @@ function CategoryBar({
   );
 }
 
+/** Cards per step: a full last row with two, three or four columns. */
+const STEP = 12;
+
 /**
  * The gallery: a moving wall of pages next to the intro, then search, language and category filters
  * over a grid of cards. A card opens a phone-sized preview to flip through (buttons or arrow keys),
  * use as a template (sign-up starts with exactly that look) or open in full.
+ *
+ * The grid shows twelve cards, then twelve more at each "Show more" (any filter starts over at
+ * twelve): the page opens fast and stays easy to scan; the preview still flips through all results.
  */
 export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: ReactNode }) {
   const t = useTranslations("examples");
@@ -129,6 +135,8 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<GalleryItem | null>(null);
   const [loaded, setLoaded] = useState<string | null>(null);
+  const [limit, setLimit] = useState(STEP);
+  const grid = useRef<HTMLUListElement>(null);
   const anchor = useRef<HTMLDivElement>(null);
   const searchWide = useRef<HTMLInputElement>(null);
   const searchPhone = useRef<HTMLInputElement>(null);
@@ -175,6 +183,17 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
     setQuery("");
     setLanguage("all");
     setCategory("all");
+    setLimit(STEP);
+  };
+  const visible = shown.slice(0, limit);
+  const more = Math.min(STEP, shown.length - visible.length);
+  /** Twelve more; focus goes to the first new card (without scrolling), so keyboards carry on there. */
+  const showMore = () => {
+    const first = limit;
+    setLimit(limit + STEP);
+    requestAnimationFrame(() => {
+      grid.current?.querySelectorAll<HTMLButtonElement>(":scope > li > button")[first]?.focus({ preventScroll: true });
+    });
   };
 
   // "/" jumps to the search box, as on many sites with search.
@@ -207,6 +226,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
     value: query,
     onChange: (next: string) => {
       setQuery(next);
+      setLimit(STEP);
       settle("auto");
     },
   };
@@ -236,6 +256,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
             value={language}
             onValueChange={(next) => {
               setLanguage(next);
+              setLimit(STEP);
               settle();
             }}
             options={[
@@ -260,6 +281,7 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
               value={category}
               onChange={(next) => {
                 setCategory(next);
+                setLimit(STEP);
                 settle();
               }}
               counts={counts}
@@ -269,28 +291,43 @@ export function ExampleGallery({ items, intro }: { items: GalleryItem[]; intro: 
         </div>
 
         {shown.length > 0 ? (
-          <ul key={`${category}|${language}`} className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
-            {shown.map((item, index) => (
-              <li key={item.slug} className="mk-card-in" style={{ "--i": index } as CSSProperties}>
-                <button
-                  type="button"
-                  onClick={() => setOpen(item)}
-                  onPointerMove={tiltTowards}
-                  onPointerLeave={tiltBack}
-                  className="group block w-full rounded-xl text-start focus-visible:focus-ring"
-                >
-                  <span className="sr-only">{t("preview", { name: item.name })}</span>
-                  {/* The card is a picture of the page; the button's name says what it does. */}
-                  <span
-                    aria-hidden
-                    className="block rounded-xl transition-[translate] duration-standard ease-standard group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
+          <>
+            <ul ref={grid} key={`${category}|${language}`} className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+              {visible.map((item, index) => (
+                // Each new set comes in with its own short stagger, not after the cards above it.
+                <li key={item.slug} className="mk-card-in" style={{ "--i": index % STEP } as CSSProperties}>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(item)}
+                    onPointerMove={tiltTowards}
+                    onPointerLeave={tiltBack}
+                    className="group block w-full rounded-xl text-start focus-visible:focus-ring"
                   >
-                    <CardFace item={item} label={label(item)} priority={index < 2} />
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+                    <span className="sr-only">{t("preview", { name: item.name })}</span>
+                    {/* The card is a picture of the page; the button's name says what it does. */}
+                    <span
+                      aria-hidden
+                      className="block rounded-xl transition-[translate] duration-standard ease-standard group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
+                    >
+                      <CardFace item={item} label={label(item)} priority={index < 2} />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {more > 0 ? (
+              <div className="grid justify-items-center gap-3 pt-4">
+                <p className="text-small text-fg-secondary tabular-nums">{t("shownOf", { shown: visible.length, total: shown.length })}</p>
+                <span aria-hidden className="h-1 w-(--container-menu) max-w-full overflow-hidden rounded-full bg-line">
+                  <span className="block h-full origin-left rounded-full bg-primary transition-[scale] duration-standard ease-standard motion-reduce:transition-none rtl:origin-right" style={{ scale: `${visible.length / shown.length} 1` }} />
+                </span>
+                <Button variant="secondary" size="lg" onClick={showMore}>
+                  <Icon icon={ChevronDown} size="md" />
+                  {t("more", { count: more })}
+                </Button>
+              </div>
+            ) : null}
+          </>
         ) : (
           <div className="grid justify-items-center gap-3 rounded-xl border border-dashed border-line-strong px-6 py-16 text-center">
             <span className="grid size-control-xl place-items-center rounded-full bg-canvas-muted text-fg-secondary">
