@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { enterDemoCode } from "./auth";
+
 test.describe("marketing home", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/en");
@@ -17,22 +19,30 @@ test.describe("marketing home", () => {
     await page.waitForURL("**/en/signup?name=mila-aurel");
   });
 
-  test("pasting a link builds the right block, and examples work with one click", async ({ page }) => {
-    const input = page.getByRole("textbox", { name: "Paste or type a link" });
-    // The demo pops in as its panel scrolls into view (scroll-driven). Bring the panel to the middle
-    // first: otherwise the scroll before a click can move a button between press and release.
-    await input.evaluate((element) => {
-      element.closest(".mk-panel")?.scrollIntoView({ block: "center" });
-    });
+  test("try it: paste a link and it becomes a block on the page; examples work with one tap", async ({ page }) => {
+    const playground = page.locator("#try");
+    // Taking over first stops the self-demo, so only what this test does counts.
+    await playground.getByRole("tab", { name: /Links/ }).click();
+    const input = playground.getByRole("textbox", { name: "Paste or type a link" });
     await input.fill("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
-    await expect(page.getByText("Recognised: Music")).toBeVisible();
+    await expect(playground.getByText("Recognised: Music")).toBeVisible();
     await input.press("Enter");
-    const list = page.locator("#step-paste").getByRole("list").filter({ has: page.getByRole("button", { name: /^Remove / }) });
-    await expect(list.getByRole("listitem")).toHaveCount(1);
-    await page.getByRole("button", { name: "YouTube", exact: true }).click();
-    await expect(list.getByRole("listitem")).toHaveCount(2);
-    await page.getByRole("button", { name: /^Remove Music/ }).click();
-    await expect(list.getByRole("listitem")).toHaveCount(1);
+    const added = playground.getByRole("list", { name: "On your page" }).getByRole("listitem");
+    const preview = playground.locator("[data-try-preview] li");
+    await expect(added).toHaveCount(1);
+    await expect(preview).toHaveCount(1);
+    await expect(preview.first()).toContainText("Music");
+    await playground.getByRole("button", { name: "YouTube", exact: true }).click();
+    await expect(added).toHaveCount(2);
+    await expect(preview.nth(1)).toContainText("Video");
+    await playground.getByRole("button", { name: "Remove Music" }).click();
+    await expect(added).toHaveCount(1);
+    await expect(preview.first()).toContainText("Video");
+    // Four links are enough to try it.
+    for (const example of ["Spotify", "Twitch", "Shop"]) await playground.getByRole("button", { name: example, exact: true }).click();
+    await playground.getByRole("button", { name: "YouTube", exact: true }).click();
+    await expect(added).toHaveCount(4);
+    await expect(playground.getByText("Four links are enough to try it.")).toBeVisible();
   });
 
   test("the template strip has no motion of its own: it slides with the page, nothing to pause", async ({ page }) => {
@@ -111,80 +121,67 @@ test.describe("marketing home", () => {
 
     const example = page.getByRole("link", { name: /^See .+'s example page$/ }).first();
     await expect(example).toHaveAttribute("href", /^\/(de|en|ar)\/p\/[a-z0-9-]+$/);
-    // The four feature panels are there, with the paste demo inside one of them.
-    await expect(page.getByRole("heading", { level: 3, name: "A page that looks like you" })).toBeVisible();
+    // Further down: the playground, then the feature tiles.
+    await expect(page.getByRole("heading", { level: 2, name: "Try it. Your page, live." })).toBeAttached();
     await expect(page.getByRole("heading", { level: 3, name: "Share like a pro" })).toBeAttached();
   });
 
-  test("the tour: four steps in the order people use Linkyo; the step bar follows the reader and jumps to a step", async ({ page }) => {
-    const titles = page.locator("#features ol > li h3");
-    await expect(titles).toHaveText(["A page that looks like you", "Paste a link. Done.", "Share like a pro", "Analytics without cookies"]);
-    const rail = page.getByRole("navigation", { name: "The four steps" });
-    await expect(rail.getByRole("link")).toHaveText([/1\s*Design/, /2\s*Add/, /3\s*Share/, /4\s*Measure/]);
-    // A tap on a step brings it under the bar, and the bar marks it as the current one.
-    await rail.getByRole("link", { name: /Share/ }).click();
-    await expect(rail.getByRole("link", { name: /Share/ })).toHaveAttribute("aria-current", "step");
-    await expect(rail.getByRole("link", { name: /Design/ })).not.toHaveAttribute("aria-current", "step");
-    // The bars of the steps before it are full.
-    await expect
-      .poll(() => rail.locator("li").first().locator("[style]").evaluate((fill) => Number(getComputedStyle(fill).getPropertyValue("--p"))))
-      .toBe(1);
+  test("try it fills itself in once: a name, two links, a look, quietly", async ({ page }) => {
+    const playground = page.locator("#try");
+    await playground.evaluate((element) => {
+      element.scrollIntoView({ block: "center", behavior: "instant" });
+    });
+    const preview = playground.locator("[data-try-preview]");
+    await expect(preview.locator("li")).toHaveCount(2, { timeout: 15_000 });
+    await expect(preview).toContainText("Juno Kade");
+    await expect(preview).toContainText("linkyo.app/juno-kade");
+    await expect(playground.getByRole("radio", { name: "Pulse" })).toHaveAttribute("aria-checked", "true", { timeout: 5_000 });
+    await expect(playground.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
+    // Only what a visitor does is announced.
+    await expect(playground.getByRole("status")).toHaveText("");
   });
 
-  test("step 1: a tap puts the small page in another look, arrow keys walk the looks, and any color works", async ({ page }) => {
-    const step = page.locator("#step-look");
-    const looks = step.getByRole("radiogroup", { name: "Choose a look" });
-    await expect(looks.getByRole("radio")).toHaveCount(5);
-    await expect(looks.getByRole("radio", { name: "Nocturne" })).toHaveAttribute("aria-checked", "true");
-    const preview = step.locator("[data-look-preview]");
+  test("try it: a name gives the page its title and address; looks and any color dress it; tabs work with arrow keys", async ({ page }) => {
+    const playground = page.locator("#try");
+    const tabs = playground.getByRole("tablist", { name: "Edit your page" });
+    await tabs.getByRole("tab", { name: "Name" }).click();
+    await playground.getByLabel("Your name").fill("Lea Hartmann");
+    const preview = playground.locator("[data-try-preview]");
+    await expect(preview).toContainText("Lea Hartmann");
+    await expect(preview).toContainText("linkyo.app/lea-hartmann");
+    await expect(playground.getByText("Your address: linkyo.app/lea-hartmann")).toBeVisible();
+    // Tabs: arrow keys move between them.
+    await tabs.getByRole("tab", { name: "Name" }).press("ArrowRight");
+    await expect(tabs.getByRole("tab", { name: /Links/ })).toBeFocused();
+    await tabs.getByRole("tab", { name: /Links/ }).press("ArrowRight");
+    await expect(tabs.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
+    // Looks: the page changes at once; a radio group with arrow keys.
+    const looks = playground.getByRole("radiogroup", { name: "Choose a look" });
     const before = await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"));
     await looks.getByRole("radio", { name: "Daylight" }).click();
     await expect(looks.getByRole("radio", { name: "Daylight" })).toHaveAttribute("aria-checked", "true");
-    await expect(step.locator("[aria-live]")).toContainText("Daylight");
     expect(await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"))).not.toBe(before);
-    // A radio group: the arrow keys move the choice.
     await looks.getByRole("radio", { name: "Daylight" }).press("ArrowRight");
     await expect(looks.getByRole("radio", { name: "Pulse" })).toBeFocused();
-    await expect(looks.getByRole("radio", { name: "Pulse" })).toHaveAttribute("aria-checked", "true");
     // Any color: the theme engine makes a whole, readable page of it.
-    await step.getByLabel("Your color").fill("#ff7a00");
-    await expect(step.locator("[aria-live]")).toContainText("Your color");
-    await expect(looks.getByRole("radio", { checked: true })).toHaveCount(0);
+    await playground.getByLabel("Your color").fill("#ff7a00");
+    await expect(playground.locator("[aria-live]")).toContainText("Your color");
+    await expect(playground.getByRole("link", { name: "Keep this page" })).toHaveAttribute("href", /accent=ff7a00/);
   });
 
-  test("step 2 shows itself once: two links become blocks by themselves, quietly", async ({ page }) => {
-    const step = page.locator("#step-paste");
-    // Jump there at once (no smooth scroll): under load a long smooth scroll plus the tour's own
-    // three and a half seconds can outlast the wait.
-    await step.locator(".mk-panel").evaluate((element) => {
+  test("try it: taking over mid-demo stops it and keeps what it typed, selected", async ({ page }) => {
+    const playground = page.locator("#try");
+    await playground.evaluate((element) => {
       element.scrollIntoView({ block: "center", behavior: "instant" });
     });
-    const blocks = step.getByRole("list").filter({ has: page.getByRole("button", { name: /^Remove / }) }).getByRole("listitem");
-    await expect(blocks).toHaveCount(2, { timeout: 15_000 });
-    await expect(blocks.first()).toContainText("Video");
-    await expect(blocks.last()).toContainText("Music");
-    // Only what a visitor adds is announced.
-    await expect(step.getByRole("status")).toHaveText("");
-  });
-
-  test("step 2: taking over in the middle of the tour stops it and keeps what it showed", async ({ page }) => {
-    const step = page.locator("#step-paste");
-    await step.locator(".mk-panel").evaluate((element) => {
-      element.scrollIntoView({ block: "center", behavior: "instant" });
-    });
-    const input = step.getByRole("textbox", { name: "Paste or type a link" });
-    // The tour puts its first link in the field...
-    await expect(input).toHaveValue(/open\.spotify\.com/, { timeout: 10_000 });
-    // ...and a visitor arriving now finds it selected: the same link pasted again still counts.
-    await input.fill("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
-    await expect(step.getByText("Recognised: Music")).toBeVisible();
-    await input.press("Enter");
-    const blocks = step.getByRole("list").filter({ has: page.getByRole("button", { name: /^Remove / }) }).getByRole("listitem");
-    await expect(blocks).toHaveCount(1);
-    // The tour has stopped: nothing more arrives by itself.
-    await page.waitForTimeout(3500);
-    await expect(blocks).toHaveCount(1);
-    await expect(step.getByRole("status")).toHaveText("Music added to your page");
+    const name = playground.getByLabel("Your name");
+    await expect(name).toHaveValue("Juno Kade", { timeout: 10_000 });
+    await name.click();
+    await page.keyboard.type("Mila Aurel");
+    await expect(name).toHaveValue("Mila Aurel");
+    // The demo has stopped: no links arrive by themselves.
+    await page.waitForTimeout(4000);
+    await expect(playground.locator("[data-try-preview] li").filter({ hasText: /Music|Video/ })).toHaveCount(0);
   });
 
   test("step 4: sample figures for everyone, counted up for the eye", async ({ page }) => {
@@ -312,28 +309,37 @@ test("on phones a visitor first learns what Linkyo is and sees pages, then meets
   await context.close();
 });
 
-test("on phones the step bar sits flush under the header during the tour, and leaves with it", async ({ browser }) => {
+test("on phones the page and its controls share one screen; keeping it carries name, look and links into the welcome flow", async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await context.newPage();
-  await page.goto("/de");
-  await page.locator("#step-paste").evaluate((element) => {
-    element.scrollIntoView({ block: "start" });
-  });
-  const rail = page.locator("[data-step-rail]");
-  const header = page.locator("header").first();
-  await expect.poll(async () => {
-    const [bar, top] = [await rail.boundingBox(), await header.boundingBox()];
-    return bar && top ? Math.round(bar.y) - Math.round(top.y + top.height) : null;
-  }).toBe(0);
-  await expect(rail.getByRole("link", { name: /Einfügen/ })).toHaveAttribute("aria-current", "step");
-  // After the last step it goes with the tour.
-  await page.locator("#pricing").evaluate((element) => {
-    element.scrollIntoView({ block: "start" });
-  });
-  await expect.poll(async () => {
-    const bar = await rail.boundingBox();
-    return bar ? bar.y + bar.height <= 64 : true;
-  }).toBe(true);
+  await page.goto("/en");
+  const playground = page.locator("#try");
+  await playground.getByRole("tab", { name: "Name" }).click();
+  // The page above, the controls and the button below, together on screen.
+  const preview = await playground.locator("[data-try-preview]").boundingBox();
+  const tablist = await playground.getByRole("tablist").boundingBox();
+  expect(preview && tablist && preview.y < tablist.y).toBe(true);
+  const id = Date.now().toString(36);
+  await playground.getByLabel("Your name").fill(`Lea ${id}`);
+  await playground.getByRole("tab", { name: /Links/ }).click();
+  await playground.getByRole("button", { name: "Spotify", exact: true }).click();
+  await playground.getByRole("tab", { name: "Look" }).click();
+  await playground.getByRole("radio", { name: "Daylight" }).click();
+  await playground.getByRole("link", { name: "Keep this page" }).click();
+  await page.waitForURL(`**/en/signup?name=lea-${id}&display=Lea+${id}&template=daylight`);
+  await page.locator("#signup-email").fill(`try-${id}@example.com`);
+  await page.locator("form button[type=submit]").click();
+  await enterDemoCode(page);
+  await page.waitForURL("**/en/app/welcome");
+  // The welcome flow continues from the playground: the name is there, the links wait in their step.
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(`Lea ${id}`);
+  await expect(page.getByLabel("Your address")).toHaveValue(`lea-${id}`);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.locator("textarea")).toHaveValue("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
+  // Used once: the draft is gone from the tab.
+  expect(await page.evaluate(() => sessionStorage.getItem("linkyo.try"))).toBeNull();
   await context.close();
 });
 

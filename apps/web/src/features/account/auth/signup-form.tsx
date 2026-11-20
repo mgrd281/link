@@ -1,5 +1,6 @@
 "use client";
 
+import { isTemplate } from "@linkyo/tokens/creator";
 import { Button, Icon, TextField } from "@linkyo/ui";
 import { CircleCheck, Link2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -77,7 +78,12 @@ export function SignupForm() {
   const kindParam = useSearchParam("kind");
   const lookParam = useSearchParam("look");
   const look = findLook(lookParam);
-  const kind = look ? look.kind : isKind(kindParam) ? kindParam : null;
+  // From the homepage playground ("?template=pulse&accent=ff7a00&display=Juno Kade"): that look and name.
+  const templateParam = useSearchParam("template");
+  const accentParam = useSearchParam("accent").replace(/[^0-9a-f]/gi, "");
+  const displayName = useSearchParam("display").trim().slice(0, 60);
+  const tried = isTemplate(templateParam) ? { template: templateParam, ...(accentParam.length === 6 ? { accent: `#${accentParam}` } : {}) } : null;
+  const kind = look ? look.kind : isKind(kindParam) ? kindParam : tried ? "other" : null;
   const [typed, setTyped] = useState<string | null>(null);
   const username = typed ?? prefill;
   const [editing, setEditing] = useState(false);
@@ -135,7 +141,7 @@ export function SignupForm() {
         username: prepared.kind === "match" ? prepared.username : username || (await freeProvisionalUsername()),
         prepared: prepared.kind === "match" ? { page: prepared.page, theme: prepared.theme } : undefined,
         invite: invite || undefined,
-        start: kind ? { kind, theme: look ? look.theme : STARTERS[kind].theme } : undefined,
+        start: kind ? { kind, theme: look ? look.theme : (tried ?? STARTERS[kind].theme), displayName: displayName || undefined } : undefined,
       },
     };
     const result = await accountStore.requestCode(codeRequest);

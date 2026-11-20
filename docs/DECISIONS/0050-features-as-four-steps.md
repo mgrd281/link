@@ -47,7 +47,7 @@ list twice (pricing and the last card), and a long footer with entries that look
 - **Motion**: rises, pops, the bars of the analytics, the step bar and the count-up all follow the reader's scrolling
   or run once; nothing loops. With reduced motion everything is simply there.
 
-**Status.** Applied. Tests: the steps in order; the bar marks the current step and jumps; looks change by tap and by
+**Status.** Applied; the four steps and the step bar were replaced by the playground and tiles of 0051. Pricing, FAQ, the last card and the footer stand. Tests: the steps in order; the bar marks the current step and jumps; looks change by tap and by
 arrow keys, any color works; the paste tour adds two blocks quietly and stops when the visitor takes over; sample
 figures readable; pricing, last card and footer; on phones the bar sits flush under the header and leaves with the
 tour; axe on the homepage in three languages, light and dark.

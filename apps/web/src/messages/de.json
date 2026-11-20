@@ -865,6 +865,44 @@
         "share": "Teilen",
         "analytics": "Auswerten"
       }
+    },
+    "try": {
+      "eyebrow": "Ohne Anmeldung",
+      "title1": "Probier's aus.",
+      "title2": "Deine Seite, live.",
+      "lead": "Tipp deinen Namen, füg Links ein, wähl einen Look – deine Seite entsteht, während du zusiehst.",
+      "tabs": {
+        "label": "Deine Seite bearbeiten",
+        "name": "Name",
+        "links": "Links",
+        "look": "Look"
+      },
+      "name": {
+        "label": "Dein Name",
+        "placeholder": "z. B. Juno Kade",
+        "address": "Deine Adresse: {address}"
+      },
+      "preview": {
+        "label": "Vorschau deiner Seite",
+        "name": "Dein Name",
+        "empty": "Deine Links erscheinen hier"
+      },
+      "limit": "Vier Links reichen zum Ausprobieren.",
+      "added": "Auf deiner Seite",
+      "cta": "Diese Seite sichern",
+      "ctaHint": "Kostenlos · ohne Kreditkarte · dein Entwurf kommt mit"
+    },
+    "more": {
+      "title1": "Alles, was du brauchst.",
+      "title2": "Auf einer Seite.",
+      "languages": {
+        "title": "Drei Sprachen, beide Richtungen",
+        "body": "Deutsch, Englisch und Arabisch – von rechts nach links mit passender Schrift."
+      },
+      "colors": {
+        "title": "Jede Farbe lesbar",
+        "body": "Wähl irgendeine Farbe: Text und Buttons bleiben gut lesbar, geprüft nach WCAG AA."
+      }
     }
   },
   "auth": {

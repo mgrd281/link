@@ -30,9 +30,19 @@ export function preparedSite(username: string, email: string, prepared: NonNulla
   };
 }
 
-/** The site a new account starts with: a prepared page, an example's kind and look, or a blank one. */
+/**
+ * The site a new account starts with: a prepared page, an example's (or the playground's) kind and
+ * look with the name typed there, or a blank one.
+ */
 export function firstSite(input: Pick<SignUpInput, "prepared" | "start"> & { username: string; email: string; locale: Site["page"]["profile"]["locale"] }): Site {
   if (input.prepared) return preparedSite(input.username, input.email, input.prepared);
   const site = starterSite(input.username, input.email, input.locale);
-  return input.start ? { ...site, kind: input.start.kind, theme: input.start.theme } : site;
+  if (!input.start) return site;
+  const displayName = input.start.displayName?.trim();
+  return {
+    ...site,
+    kind: input.start.kind,
+    theme: input.start.theme,
+    page: displayName ? { ...site.page, profile: { ...site.page.profile, displayName } } : site.page,
+  };
 }

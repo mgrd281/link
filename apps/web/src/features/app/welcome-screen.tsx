@@ -30,6 +30,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { clearTryDraft, readTryDraft } from "@/features/account/try-draft";
 import { useUsernameStatus } from "@/features/account/auth/shared";
 import { accountStore } from "@/features/account/store";
 import type { AuthError } from "@/features/account/types";
@@ -118,7 +119,9 @@ export function WelcomeScreen() {
   const [handles, setHandles] = useState<Partial<Record<SocialPlatform, string>>>({});
   const [values, setValues] = useState<Partial<Record<StarterField, string>>>({});
   const [switches, setSwitches] = useState<Partial<Record<StarterField, boolean>>>({});
-  const [links, setLinks] = useState("");
+  // Coming from the homepage playground: its links wait in the links step, its look stays.
+  const [tried] = useState(readTryDraft);
+  const [links, setLinks] = useState(() => tried?.links.join("\n") ?? "");
   const index = STEPS.indexOf(step);
   const importer = useImport({
     onLinks: (found) => {
@@ -130,6 +133,10 @@ export function WelcomeScreen() {
       return { profiles: Object.keys(sorted.handles).length, links: added.length };
     },
   });
+  // The playground's draft is used once.
+  useEffect(() => {
+    if (tried) clearTryDraft();
+  }, [tried]);
   // Moving between steps puts focus on the new step's title (after it is on screen).
   const [moved, setMoved] = useState(false);
   useEffect(() => {
@@ -146,7 +153,8 @@ export function WelcomeScreen() {
   /** Picking a kind applies its template right away (the phone shows it) and remembers the choice. */
   const choose = (next: CreatorKind) => {
     setKind(next);
-    dispatch({ type: "theme", theme: STARTERS[next].theme });
+    // A look chosen in the playground is kept; otherwise the kind brings its own.
+    if (!tried) dispatch({ type: "theme", theme: STARTERS[next].theme });
     accountStore.updateSite((current) => ({ ...current, kind: next }));
   };
 

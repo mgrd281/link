@@ -865,6 +865,44 @@
         "share": "Share",
         "analytics": "Measure"
       }
+    },
+    "try": {
+      "eyebrow": "No sign-up needed",
+      "title1": "Try it.",
+      "title2": "Your page, live.",
+      "lead": "Type your name, paste links, pick a look – your page builds itself as you watch.",
+      "tabs": {
+        "label": "Edit your page",
+        "name": "Name",
+        "links": "Links",
+        "look": "Look"
+      },
+      "name": {
+        "label": "Your name",
+        "placeholder": "e.g. Juno Kade",
+        "address": "Your address: {address}"
+      },
+      "preview": {
+        "label": "Preview of your page",
+        "name": "Your name",
+        "empty": "Your links appear here"
+      },
+      "limit": "Four links are enough to try it.",
+      "added": "On your page",
+      "cta": "Keep this page",
+      "ctaHint": "Free · no card · your draft comes along"
+    },
+    "more": {
+      "title1": "Everything you need.",
+      "title2": "On one page.",
+      "languages": {
+        "title": "Three languages, both directions",
+        "body": "German, English and Arabic – right to left with a fitting typeface."
+      },
+      "colors": {
+        "title": "Every color readable",
+        "body": "Pick any color: text and buttons stay easy to read, checked against WCAG AA."
+      }
     }
   },
   "auth": {

@@ -9,7 +9,7 @@ import type { Db } from "@/lib/supabase/server";
 import { firstSite } from "../site-builders";
 
 /** How a new page starts (an example's kind and look); sent at sign-up, kept in the user's metadata. */
-export const startSchema = z.object({ kind: z.string().max(40), theme: z.record(z.string(), z.unknown()) });
+export const startSchema = z.object({ kind: z.string().max(40), theme: z.record(z.string(), z.unknown()), displayName: z.string().max(60).optional() });
 
 /**
  * A new account's first page, made once, right after its first sign-in (code or emailed link):
@@ -32,7 +32,7 @@ export async function ensureFirstSite(service: Db, user: User): Promise<void> {
     email,
     locale,
     prepared: claim.kind === "match" ? { page: claim.page, theme: claim.theme } : undefined,
-    start: claim.kind !== "match" && start.success ? { kind: start.data.kind, theme: fromJson<CreatorThemeConfig>(toJson(start.data.theme)) } : undefined,
+    start: claim.kind !== "match" && start.success ? { kind: start.data.kind, theme: fromJson<CreatorThemeConfig>(toJson(start.data.theme)), displayName: start.data.displayName } : undefined,
   });
   const { error } = await service.from("sites").insert({
     profile_id: user.id,

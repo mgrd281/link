@@ -121,8 +121,11 @@ export interface SignUpInput {
   prepared?: { page: Page; theme: CreatorThemeConfig } | undefined;
   /** The invite from a prepared page's link (real accounts: the server looks the page up again). */
   invite?: string | undefined;
-  /** Came from an example page (e.g. for journalists): start with that kind and its template. */
-  start?: { kind: string; theme: CreatorThemeConfig } | undefined;
+  /**
+   * Came from an example page (e.g. for journalists) or the homepage playground: start with that
+   * kind and look, and the name typed there.
+   */
+  start?: { kind: string; theme: CreatorThemeConfig; displayName?: string | undefined } | undefined;
 }
 
 /**
