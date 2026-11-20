@@ -167,6 +167,26 @@ test.describe("marketing home", () => {
     await expect(step.getByRole("status")).toHaveText("");
   });
 
+  test("step 2: taking over in the middle of the tour stops it and keeps what it showed", async ({ page }) => {
+    const step = page.locator("#step-paste");
+    await step.locator(".mk-panel").evaluate((element) => {
+      element.scrollIntoView({ block: "center", behavior: "instant" });
+    });
+    const input = step.getByRole("textbox", { name: "Paste or type a link" });
+    // The tour puts its first link in the field...
+    await expect(input).toHaveValue(/open\.spotify\.com/, { timeout: 10_000 });
+    // ...and a visitor arriving now finds it selected: the same link pasted again still counts.
+    await input.fill("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
+    await expect(step.getByText("Recognised: Music")).toBeVisible();
+    await input.press("Enter");
+    const blocks = step.getByRole("list").filter({ has: page.getByRole("button", { name: /^Remove / }) }).getByRole("listitem");
+    await expect(blocks).toHaveCount(1);
+    // The tour has stopped: nothing more arrives by itself.
+    await page.waitForTimeout(3500);
+    await expect(blocks).toHaveCount(1);
+    await expect(step.getByRole("status")).toHaveText("Music added to your page");
+  });
+
   test("step 4: sample figures for everyone, counted up for the eye", async ({ page }) => {
     const figures = page.locator("#analytics dd .sr-only");
     await expect(figures).toHaveText(["12,480", "3,912", "31%"]);

@@ -60,7 +60,8 @@ function BlockIcon({ type, platform }: { type: string; platform: string | undefi
  *
  * The first time it scrolls into view it shows itself once: a Spotify link appears in the field,
  * is recognised, becomes a block; then a YouTube link. It stops for good the moment someone
- * touches it, and it is quiet for screen readers (only the visitor's own additions are announced).
+ * touches it (a link it left in the field stays, selected: Enter adds it, typing replaces it), and
+ * it is quiet for screen readers (only the visitor's own additions are announced).
  */
 export function PasteDemo() {
   const t = useTranslations("marketing.paste");
@@ -126,11 +127,9 @@ export function PasteDemo() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** The visitor took over: the tour stops, and a half-shown link leaves the field. */
+  /** The visitor took over: the tour stops where it is. */
   const takeOver = () => {
-    if (touched.current) return;
     touched.current = true;
-    setValue((current) => (TOUR.some((url) => url === current) ? "" : current));
   };
 
   const detectedType = detection ? t(`types.${typeKey(detection)}`) : null;
@@ -156,6 +155,11 @@ export function PasteDemo() {
             onChange={(event) => {
               setValue(event.target.value);
               setError(false);
+            }}
+            // A link the tour left in the field is selected on focus: Enter adds it, typing replaces it.
+            onFocus={(event) => {
+              const field = event.currentTarget;
+              if (TOUR.some((url) => url === field.value)) field.select();
             }}
             onPaste={(event) => {
               const text = event.clipboardData.getData("text");

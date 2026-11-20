@@ -30,6 +30,8 @@ list twice (pricing and the last card), and a long footer with entries that look
   button, example chips with the platforms' own marks, blocks like page rows. The first time it scrolls into view, a
   Spotify link appears in the field, is recognised and becomes a block, then a YouTube link (about three and a half
   seconds). It stops for good the moment someone touches it, and only the visitor's own additions are announced.
+  A link it left in the field stays there, selected on focus: Enter adds it, typing replaces it. (Clearing it on
+  focus lost the visitor's own paste when it was the same link: React saw no change.)
 - **Step 3 is a chat**: a question, the answer with the page's link preview, the story picture leaning behind; the
   bubbles pop in one after the other.
 - **Step 4** keeps the sample analytics, the figures now count up once (the final numbers are in the page for screen
