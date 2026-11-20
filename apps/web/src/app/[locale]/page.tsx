@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { MarketingHome } from "@/features/marketing/home";
+import { localeAlternates } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "marketing.meta" });
-  return { title: { absolute: t("title") }, description: t("description") };
+  return { title: { absolute: t("title") }, description: t("description"), alternates: localeAlternates("", locale) };
 }
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {

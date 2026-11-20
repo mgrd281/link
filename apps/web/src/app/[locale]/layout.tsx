@@ -24,7 +24,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: { default: t("title"), template: `%s · Linkyo` },
     description: t("description"),
     icons: { icon: "/favicon.svg" },
-    robots: { index: false, follow: false },
+    // Public pages are indexed; private, internal and example pages say otherwise themselves (lib/seo.ts).
+    robots: { index: true, follow: true },
   };
 }
 

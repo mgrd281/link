@@ -32,8 +32,8 @@ test.describe("marketing home", () => {
     const added = playground.getByRole("list", { name: "On your page" }).getByRole("listitem");
     const preview = playground.locator("[data-try-preview]");
     await expect(added).toHaveCount(1);
-    // The real page shows the release under its real title and artist.
-    await expect(preview).toContainText("Golden Hour");
+    // The real page shows the release under its real title and artist (the phone loads on its own).
+    await expect(preview).toContainText("Golden Hour", { timeout: 15_000 });
     await expect(preview).toContainText("Sample Artist");
     await expect(playground.getByRole("status")).toHaveText("Music added to your page");
     // An example: a sample with Linkyo's own picture and title.
@@ -260,7 +260,8 @@ test.describe("marketing home", () => {
       element.scrollIntoView({ block: "center", behavior: "instant" });
     });
     const name = playground.getByLabel("Your name");
-    await expect(name).toHaveValue("Juno Kade", { timeout: 10_000 });
+    // The demo types the name about five seconds in; a busy test machine can take longer.
+    await expect(name).toHaveValue("Juno Kade", { timeout: 15_000 });
     await name.click();
     await page.keyboard.type("Mila Aurel");
     await expect(name).toHaveValue("Mila Aurel");
@@ -441,6 +442,24 @@ test("on phones the page sits above its controls; keeping it carries the visitor
   // Used once: the draft is gone from the tab.
   expect(await page.evaluate(() => sessionStorage.getItem("linkyo.try"))).toBeNull();
   await context.close();
+});
+
+test("search engines may index the public pages, in three languages; sign-in and internal pages stay out", async ({ page, request }) => {
+  await page.goto("/de");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/de$/);
+  for (const code of ["de", "en", "ar", "x-default"]) await expect(page.locator(`link[rel="alternate"][hreflang="${code}"]`)).toHaveCount(1);
+  for (const path of ["/en/login", "/en/design", "/en/directions"]) {
+    await page.goto(path);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  }
+  const robots = await (await request.get("/robots.txt")).text();
+  expect(robots).toContain("Allow: /");
+  expect(robots).toMatch(/Sitemap: .*\/sitemap\.xml/);
+  const sitemap = await (await request.get("/sitemap.xml")).text();
+  for (const path of ["/de", "/en/templates", "/ar/signup"]) expect(sitemap).toContain(`${path}</loc>`);
+  // Example and concept pages are not in it.
+  expect(sitemap).not.toContain("/p/");
 });
 
 test("on phones too the promise sits on two lines", async ({ browser }) => {

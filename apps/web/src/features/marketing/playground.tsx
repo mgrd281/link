@@ -3,7 +3,7 @@
 import type { Platform } from "@linkyo/blocks";
 import { detectLink, type Detection } from "@linkyo/blocks/detect";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
-import { cn, Icon, PlatformIcon } from "@linkyo/ui";
+import { cn, Icon, LogoGlyph, PlatformIcon } from "@linkyo/ui";
 import {
   ArrowRight,
   Camera,
@@ -196,6 +196,15 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     () => ({ id, displayName, address, tagline, photo, items, locale, labels, texts: { video: t("samples.video"), product: t("samples.product") } }),
     [id, displayName, address, tagline, photo, items, locale, labels, t],
   );
+  /** The second line in the outline: what the block shows (the sample's title, the real one, or the profile). */
+  const itemDetail = (item: Added): string | undefined => {
+    if (item.social) return item.url.replace(/^https?:\/\/(www\.)?/, "");
+    if (item.sample === "spotify") return "Afterglow";
+    if (item.sample === "youtube") return t("samples.video");
+    if (item.sample === "shop") return t("samples.product");
+    if (item.sample === "twitch") return `@${(address || "junokade").replace(/-/g, "_")}`;
+    return item.meta?.title;
+  };
   // The phone loads a screen before the playground is in view.
   const [near, setNear] = useState(false);
   useEffect(() => {
@@ -212,8 +221,11 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       { rootMargin: "100% 0%" },
     );
     observer.observe(element);
+    // Once the page is idle, its code is fetched ahead, so a fast scroll never waits for it.
+    const idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(() => void import("./try-phone"), { timeout: 5000 }) : 0;
     return () => {
       observer.disconnect();
+      if (idle) window.cancelIdleCallback(idle);
     };
   }, []);
 
@@ -564,7 +576,20 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         )}
       </div>
 
-      <div className="grid content-start gap-4 p-4 sm:p-6 lg:content-center lg:p-8">
+      {/* The editor: on computers a full panel (its name and the address on top, the page's outline
+          under the controls, "Keep this page" at the foot); on phones just the controls. */}
+      <div className="grid content-start gap-4 p-4 sm:p-6 lg:flex lg:flex-col lg:gap-5 lg:p-8">
+        {/* (The address is in the phone's address bar; no need to say it twice.) */}
+        <div className="flex items-center gap-3 border-b border-line pb-5 max-lg:hidden">
+          <span aria-hidden className="grid size-control-md shrink-0 place-items-center rounded-md bg-primary text-primary-fg">
+            <LogoGlyph className="size-5" />
+          </span>
+          <div className="grid min-w-0">
+            <p className="text-body font-semibold text-fg">{t("editor.title")}</p>
+            <p className="text-caption text-pretty text-fg-secondary">{t("editor.subtitle")}</p>
+          </div>
+        </div>
+
         {/* The demo's progress, its caption, and afterwards the way to watch it again or start empty. */}
         <div className="grid gap-2">
           <div aria-hidden className="grid grid-cols-5 gap-1">
@@ -817,7 +842,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
               ))}
             </div>
             {items.length > 0 ? (
-              <ul aria-label={t("added")} className="mk-no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
+              // On computers the page's outline below lists them (with the same name), so this row is for phones.
+              <ul aria-label={t("added")} className="mk-no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 lg:hidden">
                 {items.map((item) => (
                   <li key={item.key} className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-selected ps-3 pe-1 text-small font-medium text-selected-fg">
                     <BlockIcon item={item} />
@@ -897,7 +923,60 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
           </div>
         </div>
 
-        <div className="grid gap-2 border-t border-line pt-4">
+        {/* Computers: the page as it grows, top to bottom (what the phone shows), each link removable. */}
+        <section aria-labelledby={`${id}-outline`} className="grid content-start gap-2 max-lg:hidden">
+          <h3 id={`${id}-outline`} className="text-caption font-semibold tracking-wide text-fg-secondary uppercase">
+            {t("added")}
+          </h3>
+          <div className="grid gap-1 rounded-lg border border-line p-2">
+            <div className="flex min-h-control-lg items-center gap-3 rounded-md px-2">
+              <span aria-hidden className="relative grid size-control-sm shrink-0 place-items-center overflow-hidden rounded-full bg-canvas-muted text-caption font-semibold text-fg-secondary">
+                {photo ? <Image src={photo.own ? photo.src : PERSONA.picture} alt="" fill sizes={mediaSizes.thumb} className="object-cover" /> : <Icon icon={UserRound} size="sm" />}
+              </span>
+              <span className="grid min-w-0 flex-1">
+                <span className={cn("truncate text-small font-semibold", name.trim() ? "text-fg" : "text-fg-tertiary")}>{displayName}</span>
+                {tagline.trim() ? <span className="truncate text-caption text-fg-secondary">{tagline.trim()}</span> : null}
+              </span>
+            </div>
+            {items.length > 0 ? (
+              <ul aria-label={t("added")} className="grid gap-1">
+                {items.map((item) => (
+                  <li key={item.key} className="flex min-h-control-md items-center gap-3 rounded-md px-2 motion-safe:animate-fade-in">
+                    <span aria-hidden className="grid size-control-sm shrink-0 place-items-center rounded-full bg-selected text-selected-fg">
+                      <BlockIcon item={item} />
+                    </span>
+                    <span className="grid min-w-0 flex-1">
+                      <span className="truncate text-small text-fg">{itemLabel(item)}</span>
+                      {itemDetail(item) ? <span className="truncate text-caption text-fg-secondary">{itemDetail(item)}</span> : null}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setItems((current) => current.filter((candidate) => candidate.key !== item.key));
+                        setError(null);
+                      }}
+                      aria-label={tPaste("remove", { title: itemLabel(item) })}
+                      className="grid size-touch-target shrink-0 place-items-center rounded-full text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring"
+                    >
+                      <Icon icon={X} size="sm" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="flex min-h-control-md items-center gap-3 rounded-md border border-dashed border-line-strong px-3 text-small text-fg-tertiary">
+                <Icon icon={Link2} size="sm" className="shrink-0" />
+                {t("editor.empty")}
+              </p>
+            )}
+            <div className="flex min-h-control-md items-center gap-3 rounded-md px-2">
+              <span aria-hidden style={config === base.config ? base.vars : (customVars ?? base.vars)} className="size-control-sm shrink-0 rounded-full border border-line bg-linear-135 from-creator-bg from-50% to-creator-accent to-50%" />
+              <span className="min-w-0 flex-1 truncate text-small text-fg">{look.name}</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="grid gap-2 border-t border-line pt-4 lg:mt-auto">
           <Link
             ref={ctaTarget}
             href={signup}

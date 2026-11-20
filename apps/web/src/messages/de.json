@@ -921,6 +921,11 @@
         "cleared": "Leere Seite. Fang mit deinem Foto und Namen an.",
         "live": "Deine Seite ist online",
         "play": "Ansehen"
+      },
+      "editor": {
+        "title": "Dein Editor",
+        "subtitle": "Jede Änderung siehst du sofort im Handy.",
+        "empty": "Deine Links erscheinen hier"
       }
     },
     "more": {

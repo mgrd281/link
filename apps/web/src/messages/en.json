@@ -921,6 +921,11 @@
         "cleared": "Empty page. Start with your photo and name.",
         "live": "Your page is live",
         "play": "Watch"
+      },
+      "editor": {
+        "title": "Your editor",
+        "subtitle": "Every change shows in the phone at once.",
+        "empty": "Your links appear here"
       }
     },
     "more": {
