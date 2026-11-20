@@ -1,0 +1,129 @@
+# Law Reference — DSGVO / TDDDG / BDSG / TMG
+
+German data protection law quick-reference for the legal-audit skill. Load this when classifying violations or drafting legal text.
+
+---
+
+## Core DSGVO Articles
+
+| Article | Rule | Plain summary |
+|---|---|---|
+| Art. 5(1)(a) | Lawfulness, fairness, transparency | Every processing must have a legal basis AND be disclosed |
+| Art. 5(1)(b) | Purpose limitation | Collect only for specified, explicit purposes — no repurposing |
+| Art. 5(1)(c) | Data minimisation | Collect only what is necessary for the stated purpose |
+| Art. 5(1)(e) | Storage limitation | Delete when no longer needed; document retention periods |
+| Art. 6(1)(a) | Consent | Valid for analytics, marketing — freely given, specific, informed, unambiguous; pre-ticked = invalid |
+| Art. 6(1)(b) | Contract | Processing necessary to perform a contract with the data subject |
+| Art. 6(1)(c) | Legal obligation | Required by law (e.g. tax retention per AO § 147) |
+| Art. 6(1)(f) | Legitimate interest | Must pass 3-step LIA: legitimate interest → necessary → not overridden by subject rights |
+| Art. 7 | Consent conditions | Must be withdrawable at any time, as easy to withdraw as to give |
+| Art. 12–14 | Transparency | Inform data subjects at point of collection (Art. 13) or within 1 month if not collected directly (Art. 14) |
+| Art. 13 | Art. 13 notice | Required at collection: controller identity, DPA contact, purpose, legal basis, retention, recipients, rights, supervisory authority |
+| Art. 17 | Right to erasure | Delete on request unless legal retention obligation applies |
+| Art. 20 | Data portability | Provide data in machine-readable format on request (applies to consent or contract basis only) |
+| Art. 25 | Privacy by design | Default to least data, most privacy — enforceable design obligation |
+| Art. 28 | Processor contracts | Written DPA required with every third-party processor; mandatory clauses at Art. 28(3) |
+| Art. 30 | Records of processing | VVT required if >250 employees OR processing is non-occasional or involves sensitive/criminal data |
+| Art. 32 | Security | Appropriate TOMs — encryption, pseudonymisation, access controls |
+| Art. 33 | Breach notification | Notify supervisory authority within 72 hours of becoming aware of a breach |
+| Art. 37 | DPO appointment | Required for public bodies, large-scale systematic monitoring, or large-scale sensitive data processing |
+| Art. 46(2)(c) | SCCs | Standard Contractual Clauses required for transfers to non-adequate countries (USA: only for recipients not certified under the EU-US Data Privacy Framework, adequacy since 10.07.2023) <!-- Linkyo change: was "incl. USA post-Schrems II". --> |
+| Art. 83(4) | Fines tier 1 | Up to €10M or 2% global turnover — Art. 28, Art. 30, Art. 37 |
+| Art. 83(5) | Fines tier 2 | Up to €20M or 4% global turnover — Art. 5, Art. 6, Art. 7, Art. 13 |
+
+---
+
+## TDDDG (Telekommunikation-Digitale-Dienste-Datenschutz-Gesetz, bis 13.05.2024 „TTDSG“)
+
+Cite as TDDDG; § 25 is unchanged in substance. Users may still say "TTDSG".
+
+| Section | Rule | Summary |
+|---|---|---|
+| § 25(1) | Consent for device access | Any storage in or access to user's device requires consent — covers cookies, localStorage, device fingerprinting |
+| § 25(2) | Strictly necessary exemption | Exempts: session management cookies, consent preference storage, load balancing <!-- Linkyo change: removed "first-party analytics with no cross-site tracking"; § 25(2) has no analytics exemption, and German authorities generally treat reach measurement as not strictly necessary. --> |
+| — | Relation to DSGVO | TDDDG § 25 governs the device access; DSGVO governs the data collected afterwards <!-- Linkyo change: was cited as "§ 25(3)"; § 25 has only two paragraphs. --> |
+
+**Key implication:** TDDDG § 25(1) is stricter than DSGVO Art. 6 — even a legitimate interest under DSGVO still requires consent for the device access step (unless strictly necessary).
+
+---
+
+## BDSG (Bundesdatenschutzgesetz)
+
+| Section | Rule | Summary |
+|---|---|---|
+| § 26 | Employee data | Permissible if necessary for employment relationship; consent is weakly valid due to power imbalance |
+| § 38 | DPO obligation | Mandatory DPO if 20+ employees regularly process personal data using automated means, OR if processing requires DPIA |
+| § 43 | Fines | BDSG-specific violations up to €50,000 |
+
+---
+
+## TMG / DDG (Telemediengesetz / Digitale-Dienste-Gesetz)
+
+DDG replaced TMG on 14.05.2024; § 5 requirements are substantively identical. Citing "§ 5 TMG" on a live Impressum is outdated (🟡, fix wording). Editorial responsibility: § 18 Abs. 2 MStV (the RStV § 55 was replaced in 2020).
+
+**Required Impressum fields (DDG § 5):**
+- Full name or company name + legal form
+- Street address (no PO box)
+- Contact: email address AND phone or fax number
+- VAT ID (if applicable)
+- Supervisory authority (if regulated profession)
+- Responsible for content per § 18 Abs. 2 MStV (if journalistic/editorial content)
+
+---
+
+## Violation-to-Article Mapping
+
+| Scenario | Article | Severity | Fix |
+|---|---|---|---|
+| Analytics script fires before consent granted | TDDDG § 25(1), Art. 6(1)(a) | 🔴 | Gate behind consent check |
+| Third-party script loaded, not disclosed in policy | Art. 13, Art. 5(1)(a) | 🔴 | Add processor section to privacy page |
+| Email processor undisclosed (nodemailer, Resend, etc.) | Art. 13, Art. 28 | 🔴 | Add to privacy page + sign DPA |
+| No Impressum page | DDG § 5 | 🔴 | Create /impressum page |
+| US processor without SCC mention in policy | Art. 46(2)(c) | 🟡 | Document SCCs in privacy page |
+| Google Fonts from CDN, no consent or self-hosting | LG München I 2022, Art. 6(1)(f) | 🟡 | Self-host or document LIA |
+| No retention period documented | Art. 5(1)(e) | 🟡 | Add retention periods to VVT and privacy page |
+| localStorage for consent preference only | TDDDG § 25(2) | 🟢 | Strictly necessary — no action needed |
+| Analytics only after explicit opt-in | Art. 6(1)(a), TDDDG § 25(1) | ✅ | Compliant — document it |
+
+---
+
+## Key German Case Law
+
+| Case | Court | Year | Ruling |
+|---|---|---|---|
+| Google Fonts (3 O 17493/20) | LG München I | 2022 | Loading Google Fonts from Google CDN = IP transfer to Google = DSGVO violation if no consent. Self-host or block with consent. |
+| Planet49 (C-673/17) | CJEU | 2019 | Pre-ticked checkboxes for cookies are not valid consent. Consent must be active. |
+| Schrems II (C-311/18) | CJEU | 2020 | EU-US Privacy Shield invalid. Use SCCs + supplementary measures for US transfers. |
+| Cookie-Einwilligung II (I ZR 7/16) <!-- Linkyo change: was "I ZR 186/17", which is the App-Zentrum case. --> | BGH | 2020 | German implementation of Planet49 — active consent required for all non-essential cookies. |
+
+---
+
+## Supervisory Authorities by Bundesland
+
+| Bundesland | Authority | Contact |
+|---|---|---|
+| Berlin | BlnBDI | mailbox@datenschutz-berlin.de |
+| Bavaria | BayLDA | poststelle@lda.bayern.de |
+| Hamburg | HmbBfDI | mailbox@datenschutz.hamburg.de |
+| Baden-Württemberg | LfDI BW | poststelle@lfdi.bwl.de |
+| North Rhine-Westphalia | LDI NRW | poststelle@ldi.nrw.de |
+| Hesse | HBDI | poststelle@datenschutz.hessen.de |
+| Lower Saxony | LfD Niedersachsen | poststelle@lfd.niedersachsen.de |
+| Saxony | SDSuB | saechsdsb@slt.sachsen.de |
+| Federal public bodies, telecom and postal services | BfDI | poststelle@bfdi.bund.de <!-- Linkyo change: was "cross-Länder"; a private company answers to the authority of the Land of its main establishment. --> |
+| Austria | DSB | dsb@dsb.gv.at |
+| Switzerland | EDÖB/PFPDT | info@edoeb.admin.ch |
+
+---
+
+## Legitimate Interest Assessment (LIA) — 3-step test
+
+Required before relying on Art. 6(1)(f):
+
+1. **Legitimate interest:** Is there a genuine, lawful business reason? (e.g. fraud prevention, security logging, infrastructure analytics)
+2. **Necessity:** Is processing necessary for that interest, or could a less invasive method work?
+3. **Balancing:** Would the data subject reasonably expect this processing? Does it override their rights?
+
+**Example — server-side hosting logs pass LIA:** (1) operating and securing the site is a legitimate business interest, (2) short-lived server logs are the least invasive method — no cookies, nothing runs on the device, (3) reasonable expectation for any site operator. Vercel Web Analytics is different: it runs client-side JS (no cookies), so TDDDG § 25(1) must be checked too. <!-- Linkyo change: the original said Vercel Analytics uses "no JS", which is wrong. -->
+
+**Example — Google Fonts CDN fails LIA** (post-LG München I): self-hosting is equally effective and involves no third-party data transfer — step 2 fails because a less invasive method exists.

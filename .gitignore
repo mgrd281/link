@@ -43,3 +43,6 @@ apps/ios/Packages/**/.swiftpm/
 
 # Agent worktrees (local only)
 .claude/worktrees/
+
+# Playwright trace viewer extracts (request bodies, cookies): never commit
+.playwright-cli/
