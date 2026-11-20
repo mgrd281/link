@@ -71,6 +71,23 @@ each link. A visitor could not see what their page would actually look like.
   - The look on screen, now always with its accent, so the new page looks exactly like the one in the phone.
   - The self-demo's name and the examples stay on the homepage.
 
+**Update: a luxury persona and a quieter demo.** The founder found the step bar and the Watch again / Start empty
+buttons too busy and asked for "a more modern design" and "a very luxurious persona: this is the example, it must
+be the best level possible".
+- **Lou Ferreira** replaces Juno Kade: the fictional silk, jewellery and fragrance designer from the template
+  gallery (`PERSONA` in `try-samples.ts`). Line: "Silk · Jewellery · Fragrance". Her links: Instagram (an icon under
+  the name) and two pieces from her shop, side by side with picture and price: the "Soleil" gold necklace and the
+  "Ambre" eau de parfum. The other examples are YouTube (a gala look) and TikTok. All are samples, as before.
+- **Her look is Nocturne in black and gold:** the `gold-leaf` accent, the elegant serif and outlined pill buttons.
+  The demo starts on Mono (black and white), so the change to gold is the last thing it shows. The "Your page is
+  live" note in the phone takes the page's accent: gold.
+- **No step bar and no buttons under the tabs.** One round icon button sits in the corner of the stage: Watch
+  (play) before the demo and Watch again (replay) after it. It steps aside while the demo plays. A touch still stops
+  the demo where it is. To clear the page, a visitor removes rows in "On your page".
+- **The stage is deep teal** (`teal-900`) with two quiet rings behind the phone (hairline and a step in the fill,
+  no shadows), so the black-and-gold page reads as the object on display.
+- Shop rows in "On your page" show a bag, whichever shop system the link runs on.
+
 **Status.** Applied. Tests:
 - a pasted song shows its real title and artist (metadata stubbed in the test);
 - an example shows its sample;
@@ -78,7 +95,8 @@ each link. A visitor could not see what their page would actually look like.
 - the phone lays the page out 390 px wide and scales it down, scrolls to the newest block and back with the
   keyboard, and holds no link that can be followed;
 - a photo goes onto the page and comes off again;
-- the guided demo: photo, name, line, Instagram icon, single, live set, their look, "live", then "Your turn";
-- Watch, a touch that stops it, Start empty;
+- the guided demo: photo, name, line, Instagram icon, the two shop pieces, Nocturne, "live", then only Watch again
+  (no Start empty, no Clear);
+- Watch, which steps aside while it plays, and a touch that stops it;
 - on a phone, name, photo, own link and look reach the welcome flow and an example does not;
 - axe on the homepage in three languages, light and dark.

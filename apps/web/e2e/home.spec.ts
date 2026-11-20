@@ -39,7 +39,7 @@ test.describe("marketing home", () => {
     // An example: a sample with Linkyo's own picture and title.
     await playground.getByRole("button", { name: "YouTube", exact: true }).click();
     await expect(added).toHaveCount(2);
-    await expect(preview).toContainText("Rooftop set · Afterglow live");
+    await expect(preview).toContainText("Gala night: the look");
     await playground.getByRole("button", { name: "Remove Music" }).click();
     await expect(added).toHaveCount(1);
     await expect(preview).not.toContainText("Golden Hour");
@@ -48,12 +48,13 @@ test.describe("marketing home", () => {
     await expect(playground.getByRole("status")).toHaveText("Instagram added to your page");
     await expect(preview.locator("header a[aria-label='Instagram']")).toHaveCount(1);
     // Six links are enough to try it.
-    for (const example of ["Spotify", "Twitch", "Shop", "YouTube"]) await playground.getByRole("button", { name: example, exact: true }).click();
+    for (const example of ["Shop", "TikTok", "Shop", "YouTube"]) await playground.getByRole("button", { name: example, exact: true }).click();
     await expect(added).toHaveCount(6);
-    await playground.getByRole("button", { name: "Spotify", exact: true }).click();
+    await playground.getByRole("button", { name: "Shop", exact: true }).click();
     await expect(added).toHaveCount(6);
     await expect(playground.getByText("Six links are enough to try it.")).toBeVisible();
-    await expect(preview).toContainText("Afterglow · vinyl");
+    // A piece from the shop: its picture, title and price.
+    await expect(preview).toContainText("“Soleil” necklace · gold");
   });
 
   test("the template strip has no motion of its own: it slides with the page, nothing to pause", async ({ page }) => {
@@ -137,61 +138,52 @@ test.describe("marketing home", () => {
     await expect(page.getByRole("heading", { level: 3, name: "Share like a pro" })).toBeAttached();
   });
 
-  test("try it shows once how a page is made, step by step: photo, name, line, Instagram, a single, a live set, a look, live", async ({ page }) => {
+  test("try it shows once how a page is made: photo, name, line, Instagram, two pieces from the shop, a look, live", async ({ page }) => {
     const playground = page.locator("#try");
     await playground.evaluate((element) => {
       element.scrollIntoView({ block: "center", behavior: "instant" });
     });
     const preview = playground.locator("[data-try-preview]");
-    await expect(preview).toContainText("Rooftop set · Afterglow live", { timeout: 20_000 });
-    await expect(preview.getByRole("heading", { level: 1, includeHidden: true })).toHaveText("Juno Kade");
-    await expect(preview).toContainText("DJ · Producer · House & Disco");
-    await expect(preview).toContainText("linkyo.app/juno-kade");
-    await expect(preview).toContainText("Afterglow");
+    await expect(preview).toContainText("“Ambre” eau de parfum", { timeout: 20_000 });
+    await expect(preview.getByRole("heading", { level: 1, includeHidden: true })).toHaveText("Lou Ferreira");
+    await expect(preview).toContainText("Silk · Jewellery · Fragrance");
+    await expect(preview).toContainText("linkyo.app/lou-ferreira");
+    await expect(preview).toContainText("“Soleil” necklace · gold");
     await expect(preview.locator("header a[aria-label='Instagram']")).toHaveCount(1);
     // The portrait in the page's hero, and in the photo button (still "Add a photo": it is not the visitor's).
     await expect(preview.locator("header img").first()).toBeAttached();
     await expect(playground.locator("button[aria-label='Add a photo'] img")).toBeAttached();
+    // Her own look: Nocturne, black and gold.
     await expect(playground.getByRole("radio", { name: "Nocturne" })).toHaveAttribute("aria-checked", "true", { timeout: 5_000 });
     await expect(playground.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
-    // The phone says the page is live, then it is the visitor's turn.
+    // The phone says the page is live; one quiet button plays it again. No step bar, no extra buttons.
     await expect(preview).toContainText("Your page is live", { timeout: 8_000 });
-    await expect(playground.locator("[data-demo-caption]")).toHaveText("Your turn – just start", { timeout: 8_000 });
-    await expect(playground.getByRole("button", { name: "Watch again" })).toBeVisible();
+    await expect(playground.getByRole("button", { name: "Watch again" })).toBeVisible({ timeout: 8_000 });
+    await expect(playground.getByRole("button", { name: /Start empty|Clear/ })).toHaveCount(0);
     // Only what a visitor does is announced.
     await expect(playground.getByRole("status")).toHaveText("");
   });
 
-  test("try it: watch the demo on demand, stop it with a touch, then start from an empty page", async ({ page }) => {
+  test("try it: watch the demo on demand and stop it with a touch", async ({ page }) => {
     const playground = page.locator("#try");
-    await expect(playground.locator("[data-demo-caption]")).toHaveText("How a page is made");
     await playground.getByLabel("Your name").fill("Lea");
     await playground.getByRole("button", { name: "Watch", exact: true }).click();
-    // It starts from an empty page and shows each step by name.
+    // It starts from an empty page; the button steps aside while it plays.
     await expect(playground.getByLabel("Your name")).toHaveValue("");
-    await expect(playground.locator("[data-demo-caption]")).toHaveText("Add a photo");
-    await expect(playground.locator("[data-demo-caption]")).toHaveText("Your name and a line", { timeout: 5_000 });
-    await expect(playground.getByLabel("Your name")).toHaveValue("Juno Kade", { timeout: 5_000 });
-    // A touch stops it where it is.
+    await expect(playground.getByRole("button", { name: /^Watch/ })).toHaveCount(0);
+    await expect(playground.getByLabel("Your name")).toHaveValue("Lou Ferreira", { timeout: 8_000 });
+    // A touch stops it where it is, and it can be watched again.
     await playground.getByRole("tab", { name: "Look" }).click();
-    await expect(playground.locator("[data-demo-caption]")).toHaveText("Your turn – just start");
+    await expect(playground.getByRole("button", { name: "Watch again" })).toBeVisible();
     await page.waitForTimeout(1500);
     await expect(playground.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
-    // Start empty: no photo, no name, no links, the first look.
-    await playground.getByRole("button", { name: "Start empty" }).click();
-    await expect(playground.getByRole("status")).toHaveText("Empty page. Start with your photo and name.");
-    await expect(playground.getByRole("tab", { name: "Profile" })).toHaveAttribute("aria-selected", "true");
-    await expect(playground.getByLabel("Your name")).toHaveValue("");
-    await expect(playground.locator("[data-try-preview] img")).toHaveCount(0);
-    // (The looks sit behind the Look tab, so they are found directly.)
-    await expect(playground.locator("[role=radio][aria-label=Daylight]")).toHaveAttribute("aria-checked", "true");
   });
 
   test("try it: the phone shows the real page, scaled from a real phone's width, scrollable but not clickable", async ({ page }) => {
     const playground = page.locator("#try");
     const screen = playground.getByRole("region", { name: "Your page on a phone" });
     await playground.getByRole("tab", { name: /Links/ }).click();
-    for (const example of ["Spotify", "YouTube", "Shop"]) await playground.getByRole("button", { name: example, exact: true }).click();
+    for (const example of ["YouTube", "Shop", "YouTube"]) await playground.getByRole("button", { name: example, exact: true }).click();
     // Laid out 390 px wide, like a phone, and scaled down into the frame.
     const width = await screen.evaluate((element) => (element as HTMLElement).offsetWidth);
     expect(width).toBe(390);
@@ -240,7 +232,7 @@ test.describe("marketing home", () => {
     // Looks: the page changes at once; a radio group with arrow keys.
     const looks = playground.getByRole("radiogroup", { name: "Choose a look" });
     const before = await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"));
-    await expect(looks.getByRole("radio", { name: "Daylight" })).toHaveAttribute("aria-checked", "true");
+    await expect(looks.getByRole("radio", { name: "Mono" })).toHaveAttribute("aria-checked", "true");
     await looks.getByRole("radio", { name: "Pulse" }).click();
     await expect(looks.getByRole("radio", { name: "Pulse" })).toHaveAttribute("aria-checked", "true");
     expect(await preview.evaluate((element) => getComputedStyle(element).getPropertyValue("--creator-bg"))).not.toBe(before);
@@ -261,13 +253,13 @@ test.describe("marketing home", () => {
     });
     const name = playground.getByLabel("Your name");
     // The demo types the name about five seconds in; a busy test machine can take longer.
-    await expect(name).toHaveValue("Juno Kade", { timeout: 15_000 });
+    await expect(name).toHaveValue("Lou Ferreira", { timeout: 15_000 });
     await name.click();
     await page.keyboard.type("Mila Aurel");
     await expect(name).toHaveValue("Mila Aurel");
     // The demo has stopped: no links arrive by themselves.
     await page.waitForTimeout(4000);
-    await expect(playground.locator("[data-try-preview]")).not.toContainText("Afterglow");
+    await expect(playground.locator("[data-try-preview]")).not.toContainText("Soleil");
     await expect(playground.getByRole("tab", { name: "Links" })).toHaveAttribute("aria-selected", "false");
     await expect(playground.getByRole("button", { name: "Watch again" })).toBeVisible();
   });
@@ -405,7 +397,8 @@ test("on phones the page sits above its controls; keeping it carries the visitor
   await page.goto("/en");
   const playground = page.locator("#try");
   await playground.getByRole("tab", { name: "Profile" }).click();
-  // The page first, then the controls and the button.
+  // The page first, then the controls and the button (the phone loads as it comes near).
+  await expect(playground.locator("[data-try-preview]")).toBeVisible({ timeout: 15_000 });
   const preview = await playground.locator("[data-try-preview]").boundingBox();
   const tablist = await playground.getByRole("tablist").boundingBox();
   expect(preview && tablist && preview.y < tablist.y).toBe(true);
@@ -420,7 +413,7 @@ test("on phones the page sits above its controls; keeping it carries the visitor
   await playground.getByRole("textbox", { name: "Paste or type a link" }).fill("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC");
   await playground.getByRole("button", { name: "Add", exact: true }).click();
   // An example stays an example: it is not carried into the real page.
-  await playground.getByRole("button", { name: "Twitch", exact: true }).click();
+  await playground.getByRole("button", { name: "YouTube", exact: true }).click();
   await playground.getByRole("tab", { name: "Look" }).click();
   await playground.getByRole("radio", { name: "Daylight" }).click();
   await playground.getByRole("link", { name: "Keep this page" }).click();

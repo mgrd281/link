@@ -9,7 +9,6 @@ import {
   Camera,
   CircleCheck,
   Clapperboard,
-  Eraser,
   Image as ImageIcon,
   Link2,
   MousePointer2,
@@ -78,9 +77,7 @@ const KNOWN = new Set(["music", "video", "shorts", "events", "product", "live", 
 const ICON_PROFILES: readonly SocialPlatform[] = ["instagram", "tiktok", "x", "threads", "linkedin", "facebook", "github", "whatsapp", "discord"];
 const MAX_LINKS = 6;
 /** A look starts the playground; the persona's own look ends the demo. */
-const FIRST_LOOK = "daylight";
-/** The demo's steps, each with its caption: photo, name and line, links, look, live. */
-const DEMO_STEPS = ["photo", "profile", "links", "look", "live"] as const;
+const FIRST_LOOK = "mono";
 
 /**
  * A link as the controls keep it. A social profile (social) becomes an icon under the name; an
@@ -114,6 +111,8 @@ function toAdded(found: Detection, key: string): Added {
 
 function BlockIcon({ item }: { item: Added }) {
   const platform = item.social ?? item.platform;
+  // A shop link shows a bag, whichever shop system it runs on.
+  if (item.type === "product" && !item.social) return <Icon icon={ShoppingBag} size="sm" />;
   return platform && platform !== "website" ? <PlatformGlyph platform={platform} size="sm" /> : <Icon icon={TYPE_ICONS[item.type] ?? Link2} size="sm" />;
 }
 
@@ -127,9 +126,9 @@ function BlockIcon({ item }: { item: Added }) {
  * become icons under the name; songs and videos get their real title and cover from our server, as
  * in the app. A photo is resized in the browser and stays there until the visitor signs up.
  *
- * The first time it scrolls into view it introduces Juno Kade, the DJ from the template gallery: the
- * portrait, the name and the line typed, Instagram, the new single and a live set pasted, and their own
- * look picked. It runs once and stops for good at the visitor's first touch; what it typed is selected
+ * The first time it scrolls into view it introduces Lou Ferreira, the designer from the template gallery: the
+ * portrait, the name and the line typed, Instagram and two pieces from the shop pasted, and the
+ * black-and-gold look picked. It runs once and stops for good at the visitor's first touch; what it typed is selected
  * on focus, so typing replaces it. "Keep this page" goes to sign-up with what the visitor made
  * themselves (name, line, photo, links; try-draft.ts) and the look on screen. The persona stays here.
  */
@@ -172,7 +171,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   const [announcement, setAnnouncement] = useState("");
   const [reveal, setReveal] = useState<Reveal>({ to: "top", at: 0 });
   // The demo: which step it is on, the cursor, the control it pretends to focus, the phone's message.
-  const [demo, setDemo] = useState<{ step: number; state: "idle" | "running" | "done" }>({ step: -1, state: "idle" });
+  const [demo, setDemo] = useState<"idle" | "running" | "done">("idle");
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false, tap: 0 });
   const [demoFocus, setDemoFocus] = useState<"name" | "tagline" | "link" | "cta" | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -193,16 +192,15 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
 
   // What the phone builds the page from (see try-page.ts).
   const phoneInput = useMemo<TryPageInput>(
-    () => ({ id, displayName, address, tagline, photo, items, locale, labels, texts: { video: t("samples.video"), product: t("samples.product") } }),
+    () => ({ id, displayName, address, tagline, photo, items, locale, labels, texts: { video: t("samples.video"), necklace: t("samples.necklace"), perfume: t("samples.perfume") } }),
     [id, displayName, address, tagline, photo, items, locale, labels, t],
   );
   /** The second line in the outline: what the block shows (the sample's title, the real one, or the profile). */
   const itemDetail = (item: Added): string | undefined => {
     if (item.social) return item.url.replace(/^https?:\/\/(www\.)?/, "");
-    if (item.sample === "spotify") return "Afterglow";
+    if (item.sample === "necklace") return t("samples.necklace");
+    if (item.sample === "perfume") return t("samples.perfume");
     if (item.sample === "youtube") return t("samples.video");
-    if (item.sample === "shop") return t("samples.product");
-    if (item.sample === "twitch") return `@${(address || "junokade").replace(/-/g, "_")}`;
     return item.meta?.title;
   };
   // The phone loads a screen before the playground is in view.
@@ -277,7 +275,6 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     0,
     looks.findIndex((option) => option.id === PERSONA.look),
   );
-  const pulseLook = looks.findIndex((option) => option.id === "pulse");
   const firstLook = Math.max(
     0,
     looks.findIndex((option) => option.id === FIRST_LOOK),
@@ -313,7 +310,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     setLookIndex(personaLook);
     setAccent(null);
     setTab("look");
-    setDemo({ step: DEMO_STEPS.length, state: "done" });
+    setDemo("done");
   };
 
   const pointAt = (element: Element | null | undefined) => {
@@ -342,17 +339,14 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
           { once: true },
         );
       });
-    const step = (index: number) => {
-      setDemo({ step: index, state: "running" });
-    };
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       finish();
       return;
     }
     reset();
+    setDemo("running");
     void (async () => {
       try {
-        step(0);
         await wait(700);
         pointAt(photoTarget.current);
         await wait(700);
@@ -360,7 +354,6 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         setPhoto({ ...PERSONA.photo, own: false });
         await wait(800);
 
-        step(1);
         pointAt(nameTarget.current);
         await wait(650);
         tap();
@@ -381,7 +374,6 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         await wait(400);
         setDemoFocus(null);
 
-        step(2);
         pointAt(tabs.current[1]);
         await wait(650);
         tap();
@@ -405,19 +397,11 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
           await wait(750);
         }
 
-        step(3);
         pointAt(tabs.current[2]);
         await wait(650);
         tap();
         setTab("look");
         await wait(450);
-        if (pulseLook >= 0) {
-          pointAt(radios.current[pulseLook]);
-          await wait(550);
-          tap();
-          setLookIndex(pulseLook);
-          await wait(1100);
-        }
         pointAt(radios.current[personaLook]);
         await wait(550);
         tap();
@@ -425,7 +409,6 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         show("top");
         await wait(900);
 
-        step(4);
         setToast(t("demo.live"));
         pointAt(ctaTarget.current);
         await wait(700);
@@ -433,7 +416,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         await wait(1800);
         setDemoFocus(null);
         setCursor((current) => ({ ...current, visible: false }));
-        setDemo({ step: DEMO_STEPS.length, state: "done" });
+        setDemo("done");
         await wait(1500);
         setToast(null);
       } catch {
@@ -441,7 +424,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         setCursor((current) => ({ ...current, visible: false }));
         setDemoFocus(null);
         setToast(null);
-        setDemo((current) => (current.state === "running" ? { ...current, state: "done" } : current));
+        setDemo((current) => (current === "running" ? "done" : current));
       }
     })();
   };
@@ -550,9 +533,6 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     // All panels share one cell, so switching tabs never changes the card's height.
     className: cn("col-start-1 row-start-1 grid content-start gap-3 transition-opacity duration-standard ease-standard motion-reduce:transition-none", tab === entry ? "opacity-100" : "invisible opacity-0"),
   });
-  // One line each: when the caption and the buttons do not fit side by side, the buttons go below.
-  const demoButton =
-    "inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-3 text-small font-semibold whitespace-nowrap text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed";
   const field =
     "h-control-lg w-full min-w-0 rounded-full border border-transparent bg-canvas-muted px-4 text-body text-fg outline-none transition-colors duration-micro placeholder:text-fg-tertiary focus-visible:border-link focus-visible:focus-ring";
 
@@ -566,9 +546,22 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     >
       {/* The stage: the phone with the page, above the controls on phones (its lower part out of
           view, it scrolls to each change) and beside them, whole, on wide screens. */}
-      <div className="relative isolate grid justify-items-center overflow-hidden border-b border-line bg-canvas-muted max-lg:aspect-portrait max-lg:pt-8 lg:order-last lg:items-center lg:border-s lg:border-b-0 lg:py-12">
-        <div aria-hidden className="mk-deck-halo w-[140%] border border-line" />
-        <div aria-hidden className="mk-deck-halo w-[95%] bg-tint-teal" />
+      {/* The stage: deep Linkyo teal, so the phone (and the page in it) is what you look at. */}
+      <div className="relative isolate grid justify-items-center overflow-hidden border-b border-line bg-teal-900 max-lg:aspect-portrait max-lg:pt-8 lg:order-last lg:items-center lg:border-s lg:border-b-0 lg:py-12">
+        <div aria-hidden className="mk-deck-halo w-[140%] border border-teal-800" />
+        <div aria-hidden className="mk-deck-halo w-[95%] bg-teal-800" />
+        {/* Watch the demo (again): a quiet round button in the stage's corner, not while it plays. */}
+        {demo === "running" ? null : (
+          <button
+            type="button"
+            onClick={play}
+            aria-label={demo === "done" ? t("demo.replay") : t("demo.play")}
+            title={demo === "done" ? t("demo.replay") : t("demo.play")}
+            className="absolute end-3 top-3 layer-raised grid size-touch-target place-items-center rounded-full border border-teal-700 bg-teal-800 text-teal-50 transition-[background-color,scale] duration-micro hover:bg-teal-700 focus-visible:focus-ring active:scale-pressed motion-safe:animate-fade-in"
+          >
+            <Icon icon={demo === "done" ? RotateCcw : Play} size="sm" className="rtl:-scale-x-100" />
+          </button>
+        )}
         {near ? (
           <TryPhone input={phoneInput} config={config} rtl={rtl} label={t("preview.label")} reveal={reveal} toast={toast} className="w-sidebar max-lg:self-start lg:w-3/5" />
         ) : (
@@ -587,50 +580,6 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
           <div className="grid min-w-0">
             <p className="text-body font-semibold text-fg">{t("editor.title")}</p>
             <p className="text-caption text-pretty text-fg-secondary">{t("editor.subtitle")}</p>
-          </div>
-        </div>
-
-        {/* The demo's progress, its caption, and afterwards the way to watch it again or start empty. */}
-        <div className="grid gap-2">
-          <div aria-hidden className="grid grid-cols-5 gap-1">
-            {DEMO_STEPS.map((entry, index) => (
-              <span
-                key={entry}
-                className={cn(
-                  "h-1 rounded-full transition-colors duration-standard ease-standard motion-reduce:transition-none",
-                  demo.state !== "idle" && index <= demo.step ? "bg-primary" : "bg-line",
-                )}
-              />
-            ))}
-          </div>
-          <div className="flex min-h-control-sm flex-wrap items-center justify-between gap-x-3 gap-y-2">
-            <p data-demo-caption className="text-small font-semibold text-fg">
-              {demo.state === "running" ? t(`demo.steps.${DEMO_STEPS[demo.step] ?? "live"}`) : demo.state === "done" ? t("demo.yourTurn") : t("demo.watch")}
-            </p>
-            {demo.state === "idle" ? (
-              <button type="button" onClick={play} className={demoButton}>
-                <Icon icon={Play} size="sm" className="rtl:-scale-x-100" />
-                {t("demo.play")}
-              </button>
-            ) : demo.state === "done" ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={play} className={demoButton}>
-                  <Icon icon={RotateCcw} size="sm" className="rtl:-scale-x-100" />
-                  {t("demo.replay")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    reset();
-                    setAnnouncement(t("demo.cleared"));
-                  }}
-                  className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full px-3 text-small font-semibold whitespace-nowrap text-fg-secondary transition-[color,background-color,scale] duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring active:scale-pressed"
-                >
-                  <Icon icon={Eraser} size="sm" />
-                  {t("demo.clear")}
-                </button>
-              </div>
-            ) : null}
           </div>
         </div>
 
@@ -827,7 +776,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
               </p>
             </form>
             <div role="group" aria-label={tPaste("examples")} className="mk-no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
-              {EXAMPLES.map((example) => (
+              {EXAMPLES.filter((example) => example.chip).map((example) => (
                 <button
                   key={example.id}
                   type="button"

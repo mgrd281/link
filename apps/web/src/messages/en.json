@@ -879,7 +879,7 @@
       },
       "name": {
         "label": "Your name",
-        "placeholder": "e.g. Juno Kade",
+        "placeholder": "e.g. Mila Aurel",
         "address": "Your address: {address}"
       },
       "preview": {
@@ -896,29 +896,19 @@
         "remove": "Remove photo"
       },
       "samples": {
-        "video": "Rooftop set · Afterglow live",
-        "product": "Afterglow · vinyl"
+        "video": "Gala night: the look",
+        "necklace": "“Soleil” necklace · gold",
+        "perfume": "“Ambre” eau de parfum"
       },
       "tagline": {
         "label": "One line about you",
         "placeholder": "e.g. Singer · Manchester"
       },
       "persona": {
-        "tagline": "DJ · Producer · House & Disco"
+        "tagline": "Silk · Jewellery · Fragrance"
       },
       "demo": {
-        "watch": "How a page is made",
-        "steps": {
-          "photo": "Add a photo",
-          "profile": "Your name and a line",
-          "links": "Paste your links",
-          "look": "Pick a look",
-          "live": "Live – done"
-        },
-        "yourTurn": "Your turn – just start",
         "replay": "Watch again",
-        "clear": "Start empty",
-        "cleared": "Empty page. Start with your photo and name.",
         "live": "Your page is live",
         "play": "Watch"
       },

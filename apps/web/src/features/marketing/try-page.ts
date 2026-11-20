@@ -29,36 +29,23 @@ export interface TryPageInput {
   items: TryItem[];
   locale: string;
   labels: { video: string; music: string; event: string };
-  texts: { video: string; product: string };
+  texts: { video: string; necklace: string; perfume: string };
 }
 
 /**
  * What an example link becomes on the page: the same blocks a pasted link makes, filled in the way a
- * creator's would be (a release with its cover, a live set with its picture, a live channel, a record
- * in the shop), with Juno Kade's pictures. The release carries the typed name as its artist. Instagram
- * is a profile, so it becomes an icon under the name, not a block.
+ * creator's would be (two pieces from the shop with their pictures, a video with its picture), with
+ * Lou Ferreira's pictures. Instagram and TikTok are profiles, so they become icons under the name.
  */
-export function sampleBlock(sample: Exclude<SampleId, "instagram">, id: string, url: string, context: { artist: string; channel: string; texts: TryPageInput["texts"] }): Block {
+export function sampleBlock(sample: Exclude<SampleId, "instagram" | "tiktok">, id: string, url: string, texts: TryPageInput["texts"]): Block {
   const base = { id, visible: true, highlight: false };
   switch (sample) {
-    case "spotify":
-      // The first release leads, as on musicians' pages: large, with its cover.
-      return {
-        ...base,
-        highlight: true,
-        type: "music",
-        title: "Afterglow",
-        artist: context.artist,
-        kind: "single",
-        cover: { src: "sample:ex6-cover-afterglow", alt: "" },
-        links: [{ platform: "spotify", url }],
-      };
+    case "necklace":
+      return { ...base, type: "product", title: texts.necklace, price: 2450, currency: "EUR", url, image: { src: "sample:ex2-necklace", alt: "" } };
+    case "perfume":
+      return { ...base, type: "product", title: texts.perfume, price: 185, currency: "EUR", url, image: { src: "sample:ex3-perfume-2", alt: "" } };
     case "youtube":
-      return { ...base, type: "video", title: context.texts.video, provider: "youtube", url, poster: { src: "sample:ex6-club-lasers", alt: "" }, duration: 3540 };
-    case "twitch":
-      return { ...base, type: "live", platform: "twitch", channel: context.channel, url, isLive: true, viewers: 1240 };
-    case "shop":
-      return { ...base, type: "product", title: context.texts.product, price: 29, currency: "EUR", url, image: { src: "sample:ex6-cover-afterglow", alt: "" } };
+      return { ...base, type: "video", title: texts.video, provider: "youtube", url, poster: { src: "sample:ex-actress", alt: "" }, duration: 754 };
   }
 }
 
@@ -68,9 +55,7 @@ export function buildTryPage(input: TryPageInput): Page {
   const socials = items.flatMap((item) => (item.social ? [{ platform: item.social, url: item.url }] : []));
   const blocks = items.flatMap((item): Block[] => {
     if (item.social) return [];
-    if (item.sample && item.sample !== "instagram") {
-      return [sampleBlock(item.sample, item.key, item.url, { artist: displayName, channel: (address || "junokade").replace(/-/g, "_"), texts: input.texts })];
-    }
+    if (item.sample && item.sample !== "instagram" && item.sample !== "tiktok") return [sampleBlock(item.sample, item.key, item.url, input.texts)];
     const found = detectLink(item.url);
     if (!found) return [];
     const block = { ...blockFromLink(found, input.labels, displayName), id: item.key };

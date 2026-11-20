@@ -879,7 +879,7 @@
       },
       "name": {
         "label": "Dein Name",
-        "placeholder": "z. B. Juno Kade",
+        "placeholder": "z. B. Mila Aurel",
         "address": "Deine Adresse: {address}"
       },
       "preview": {
@@ -896,29 +896,19 @@
         "remove": "Foto entfernen"
       },
       "samples": {
-        "video": "Rooftop-Set · Afterglow live",
-        "product": "Afterglow · Vinyl"
+        "video": "Gala-Abend: der Look",
+        "necklace": "Collier „Soleil“ · Gold",
+        "perfume": "Eau de Parfum „Ambre“"
       },
       "tagline": {
         "label": "Eine Zeile über dich",
         "placeholder": "z. B. Sängerin · Hamburg"
       },
       "persona": {
-        "tagline": "DJ · Produzentin · House & Disco"
+        "tagline": "Seide · Schmuck · Parfum"
       },
       "demo": {
-        "watch": "So entsteht eine Seite",
-        "steps": {
-          "photo": "Foto hinzufügen",
-          "profile": "Name und eine Zeile",
-          "links": "Links einfügen",
-          "look": "Look wählen",
-          "live": "Online – fertig"
-        },
-        "yourTurn": "Jetzt du – tipp einfach los",
-        "replay": "Wiederholen",
-        "clear": "Leeren",
-        "cleared": "Leere Seite. Fang mit deinem Foto und Namen an.",
+        "replay": "Nochmal ansehen",
         "live": "Deine Seite ist online",
         "play": "Ansehen"
       },
