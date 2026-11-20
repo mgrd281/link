@@ -240,7 +240,8 @@ test.describe("customer console", () => {
     const account = await owner(page);
     await go(page, "Security");
     await expect(page.getByRole("heading", { level: 1, name: "Security" })).toBeVisible();
-    const row = page.getByRole("row").filter({ hasText: account.name }).first();
+    // The list shows the person's name, which a new page makes from its address ("team-x1" → "Team X1").
+    const row = page.getByRole("row").filter({ hasText: new RegExp(account.name.replace(/-/g, " "), "i") }).first();
     await expect(row).toContainText(/127\.0\.0\.1|::1/);
     await expect(row).toContainText("Signed in");
     const ip = (await row.locator("td span.font-mono").first().textContent())?.trim() ?? "";
