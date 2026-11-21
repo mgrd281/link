@@ -4,59 +4,46 @@ import type { Block } from "@linkyo/blocks";
 import { Button, ConfirmDialog } from "@linkyo/ui";
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { BlockForm } from "./block-form";
+import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { PreviewButton } from "./preview";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
-import { validateBlock, type FieldErrors } from "./validate";
 
-/** The one place blocks are edited (and created): a sheet with the form, the page live beside it. */
+/** The one place blocks are edited (and created, except from the Add sheet): a sheet with the form, the page live beside it. */
 export function EditSheet() {
   const { editing, edit, doc } = useSite();
+  // A block picked in the Add sheet is filled in there.
+  if (editing?.mode === "create" && editing.inAddSheet) return null;
   const source = editing?.mode === "edit" ? doc.blocks.find((block) => block.id === editing.id) : editing?.mode === "create" ? editing.block : undefined;
   if (!source || !editing) return null;
   // Keyed by block: opening another block starts a fresh draft.
-  return <EditForm key={source.id} source={source} creating={editing.mode === "create"} onDone={() => edit(null)} />;
+  return (
+    <EditForm
+      key={source.id}
+      source={source}
+      creating={editing.mode === "create"}
+      index={editing.mode === "create" ? editing.index : undefined}
+      onDone={() => edit(null)}
+    />
+  );
 }
 
-function EditForm({ source, creating, onDone }: { source: Block; creating: boolean; onDone: () => void }) {
+function EditForm({ source, creating, index, onDone }: { source: Block; creating: boolean; index: number | undefined; onDone: () => void }) {
   const t = useTranslations("app.edit");
   const tTypes = useTranslations("dashboard.types");
-  const { dispatch, setDraft, removeBlock, editing } = useSite();
-  const [draft, setLocalDraft] = useState(source);
-  const [errors, setErrors] = useState<FieldErrors | null>(null);
+  const { removeBlock } = useSite();
+  const editor = useBlockEditor({ source, creating, index });
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const [failedSaves, setFailedSaves] = useState(0);
-  // After a save that needs fixes, focus the first field to fix once it shows its error.
-  useEffect(() => {
-    if (failedSaves > 0) document.querySelector<HTMLElement>("[role=dialog] [aria-invalid=true]")?.focus();
-  }, [failedSaves]);
-  const dirty = creating || draft !== source;
   const type = tTypes(source.type);
 
-  const change = (next: Block) => {
-    setLocalDraft(next);
-    setDraft(next);
-    // After a first save attempt, errors update as people fix them.
-    if (errors) setErrors(validateBlock(next) ?? {});
-  };
-
   const save = () => {
-    const problems = validateBlock(draft);
-    if (problems) {
-      setErrors(problems);
-      setFailedSaves((count) => count + 1);
-      return;
-    }
-    if (creating) dispatch({ type: "add", block: draft, ...(editing?.mode === "create" && editing.index !== undefined ? { index: editing.index } : {}) });
-    else if (draft !== source) dispatch({ type: "update", id: source.id, patch: draft });
-    onDone();
+    if (editor.save()) onDone();
   };
 
   const close = () => {
-    if (dirty && draft !== source) setConfirmDiscard(true);
+    if (editor.dirty) setConfirmDiscard(true);
     else onDone();
   };
 
@@ -76,8 +63,9 @@ function EditForm({ source, creating, onDone }: { source: Block; creating: boole
         description={t(`hints.${source.type}`)}
         closeLabel={t("close")}
         besidePreview
-        headerAction={<PreviewButton className="xl:hidden" />}
-        confirm={{ label: creating ? t("add") : t("save"), onConfirm: save }}
+        headerAction={<PreviewButton className="desk:hidden" />}
+        // The navigation row has room for one short word; the button's name stays "Add to page".
+        confirm={creating ? { label: t("addShort"), ariaLabel: t("add"), onConfirm: save } : { label: t("save"), onConfirm: save }}
         cancel={{ label: t("cancel"), onCancel: close }}
         footer={
           <>
@@ -95,29 +83,7 @@ function EditForm({ source, creating, onDone }: { source: Block; creating: boole
           </>
         }
       >
-        <form
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            save();
-          }}
-          className="grid grid-cols-1 gap-6"
-        >
-          {errors && Object.keys(errors).length > 0 ? (
-            <p role="alert" className="rounded-md border border-danger-strong bg-danger-subtle p-3 text-small">
-              {t("fixErrors", { count: Object.keys(errors).length })}
-            </p>
-          ) : null}
-          <BlockForm block={draft} onChange={change} errors={errors ?? {}} creating={creating} />
-          {/* Phones: Delete sits at the end of the form, a thumb's reach away from Save (as in iOS Contacts). */}
-          {!creating ? (
-            <Button variant="destructive" size="lg" block icon={Trash2} className="lg:hidden" onClick={remove}>
-              {t("delete")}
-            </Button>
-          ) : null}
-          {/* Enter in a single-line field saves. */}
-          <button type="submit" hidden aria-hidden tabIndex={-1} />
-        </form>
+        <BlockEditorFields editor={editor} creating={creating} onSave={save} onRemove={remove} />
       </Sheet>
       <ConfirmDialog
         open={confirmDiscard}

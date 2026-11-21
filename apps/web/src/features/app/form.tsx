@@ -1,8 +1,8 @@
 "use client";
 
 import { hasImage, normalizeUrl } from "@linkyo/blocks";
-import { Button, cn, Icon, IconButton, Switch, TextField, toast, type TextFieldProps } from "@linkyo/ui";
-import { ArrowDown, ArrowUp, ImagePlus, Link2, Plus, Trash2 } from "lucide-react";
+import { Button, cn, Icon, IconButton, Switch, TextField, type TextFieldProps } from "@linkyo/ui";
+import { ArrowDown, ArrowUp, ChevronDown, CircleAlert, ImagePlus, Link2, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useId, useState, type ReactNode, type TextareaHTMLAttributes } from "react";
@@ -31,21 +31,23 @@ export function FormSection({ title, description, children, className }: { title
 type TextProps = Omit<TextFieldProps, "value" | "onChange"> & { value: string; onValue: (value: string) => void };
 
 /**
- * Dashboard fields are filled and 48 px tall, as on iOS and in sign-up: a thumb-sized target with a
- * soft fill instead of a dark frame. Callers can still ask for another look.
+ * Dashboard fields are outlined (a 3:1 frame, WCAG 1.4.11), 48 px on touch screens and 40 px with a
+ * mouse on wide screens, with 16 px text so iOS does not zoom in. Their message is a polite live
+ * region from the start, so an error that appears later is read out. Callers can still ask for another look.
  */
-export function TextInput({ value, onValue, variant = "filled", size = "lg", ...props }: TextProps) {
-  return <TextField {...props} variant={variant} size={size} value={value} onChange={(event) => onValue(event.target.value)} />;
+export function TextInput({ value, onValue, variant = "outline", size = "auto", live = true, ...props }: TextProps) {
+  return <TextField {...props} variant={variant} size={size} live={live} value={value} onChange={(event) => onValue(event.target.value)} />;
 }
 
 /** URLs: typed with or without https://, cleaned up when the field is left. */
-export function UrlInput({ value, onValue, variant = "filled", size = "lg", ...props }: TextProps) {
+export function UrlInput({ value, onValue, variant = "outline", size = "auto", live = true, onBlur, ...props }: TextProps) {
   return (
     <TextField
       icon={Link2}
       {...props}
       variant={variant}
       size={size}
+      live={live}
       ltr
       type="url"
       inputMode="url"
@@ -54,15 +56,20 @@ export function UrlInput({ value, onValue, variant = "filled", size = "lg", ...p
       placeholder={props.placeholder ?? "https://"}
       value={value}
       onChange={(event) => onValue(event.target.value)}
-      onBlur={() => {
+      onBlur={(event) => {
         const trimmed = value.trim();
-        if (!trimmed || /^(?:https?|mailto|tel):/i.test(trimmed)) return;
-        const url = normalizeUrl(trimmed);
-        if (url) onValue(url.toString());
+        if (trimmed && !/^(?:https?|mailto|tel):/i.test(trimmed)) {
+          const url = normalizeUrl(trimmed);
+          if (url) onValue(url.toString());
+        }
+        onBlur?.(event);
       }}
     />
   );
 }
+
+/** Rows a text area shows: what is written plus an empty line, between `rows` and eight (then it scrolls). */
+const MAX_ROWS = 8;
 
 export function TextArea({
   label,
@@ -71,43 +78,71 @@ export function TextArea({
   max,
   hint,
   error,
+  live = true,
   rows = 3,
   ...props
-}: Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "onChange"> & { label: string; value: string; onValue: (value: string) => void; max: number; hint?: string | undefined; error?: string | undefined }) {
+}: Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "onChange"> & {
+  label: string;
+  value: string;
+  onValue: (value: string) => void;
+  max: number;
+  hint?: string | undefined;
+  error?: string | undefined;
+  /** Keep the message mounted (a polite live region) even with no hint or error, as `TextField` does. */
+  live?: boolean | undefined;
+}) {
+  const t = useTranslations("app.form");
   const id = useId();
+  const messageId = `${id}-message`;
+  const hasMessage = live || hint !== undefined || error !== undefined;
+  const lines = value.split("\n").length;
+  const full = value.length >= max;
   return (
     <div className="grid grid-cols-1 gap-2">
       <div className="flex items-baseline justify-between gap-2">
         <label htmlFor={id} className="text-small text-fg">
           {label}
         </label>
-        <span className={cn("text-caption tabular-nums", value.length > max ? "text-danger-strong" : "text-fg-tertiary")} aria-hidden>
-          {value.length}/{max}
-        </span>
+        {/* The count only shows near the limit; the limit itself is read out below. */}
+        {value.length >= max * 0.8 ? (
+          <span className={cn("text-caption tabular-nums", full ? "text-danger-strong" : "text-fg-tertiary")} aria-hidden>
+            {value.length}/{max}
+          </span>
+        ) : null}
       </div>
       <textarea
         id={id}
-        rows={rows}
+        rows={Math.min(MAX_ROWS, Math.max(rows, lines + 1))}
         value={value}
         maxLength={max}
         onChange={(event) => onValue(event.target.value)}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error || hint ? `${id}-hint` : undefined}
+        aria-describedby={hasMessage ? messageId : undefined}
         // Text runs in its own direction (a German bio on an Arabic page reads left to right); an empty
         // field follows the page, so the placeholder and the caret start on the page's side.
         dir={value ? "auto" : undefined}
         className={cn(
-          // Filled like the text fields above it (see TextInput).
-          "min-h-control-xl resize-y rounded-lg border border-transparent bg-canvas-muted px-4 py-3 text-start text-body text-fg outline-none transition-[border-color,background-color] duration-micro ease-standard",
-          "hover:border-line-input focus-visible:border-focus focus-visible:bg-surface-elevated focus-visible:focus-field placeholder:text-fg-tertiary",
-          error && "border-danger-strong",
+          // Outlined like the text fields above it (see TextInput); it grows with its text instead of a resize handle.
+          "resize-none rounded-md border px-4 py-3 text-start text-body text-fg outline-none transition-[border-color,background-color] duration-micro ease-standard lg:pointer-fine:px-3 lg:pointer-fine:py-2",
+          "focus-visible:focus-field placeholder:text-fg-tertiary",
+          error
+            ? "border-danger-strong bg-danger-subtle focus-visible:border-danger-strong [--color-focus:var(--color-danger-strong)]"
+            : "border-line-input bg-surface-elevated hover:border-fg-tertiary focus-visible:border-focus",
         )}
         {...props}
       />
-      {error || hint ? (
-        <p id={`${id}-hint`} className={cn("text-small", error ? "text-danger-strong" : "text-fg-secondary")}>
-          {error ?? hint}
-        </p>
+      {hasMessage ? (
+        <div id={messageId} aria-live="polite" className="text-small empty:-mt-2">
+          {error ? (
+            <span className="flex items-start gap-2 text-danger-strong">
+              <Icon icon={CircleAlert} size="sm" className="mt-0.5 shrink-0" />
+              {error}
+            </span>
+          ) : hint ? (
+            <span className="block font-regular text-fg-secondary">{hint}</span>
+          ) : null}
+          {full ? <span className="sr-only">{t("limit")}</span> : null}
+        </div>
       ) : null}
     </div>
   );
@@ -132,18 +167,22 @@ export function SelectField<T extends string>({
       <label htmlFor={id} className="text-small text-fg">
         {label}
       </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(event) => onValue(event.target.value as T)}
-        className="h-control-lg rounded-lg border border-transparent bg-canvas-muted px-4 text-body text-fg outline-none transition-[border-color,background-color] duration-micro ease-standard hover:border-line-input focus-visible:border-focus focus-visible:bg-surface-elevated focus-visible:focus-field"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      {/* The real select (the system's own list on iOS and macOS), framed like a text field, with our chevron. */}
+      <div className="relative grid">
+        <select
+          id={id}
+          value={value}
+          onChange={(event) => onValue(event.target.value as T)}
+          className="h-control-lg min-w-0 appearance-none rounded-md border border-line-input bg-surface-elevated ps-4 pe-10 text-body text-fg outline-none transition-[border-color,background-color] duration-micro ease-standard hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-field lg:pointer-fine:h-control-md lg:pointer-fine:ps-3"
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <Icon icon={ChevronDown} size="sm" className="pointer-events-none absolute inset-y-0 end-3 my-auto text-fg-tertiary" />
+      </div>
     </div>
   );
 }
@@ -190,6 +229,7 @@ export function ImageInput({
   shape = "square",
   withAlt = true,
   error,
+  hint,
 }: {
   label: string;
   image: { src: string; alt: string; tone?: "light" | "dark" | undefined } | undefined;
@@ -198,9 +238,12 @@ export function ImageInput({
   shape?: "square" | "round" | "wide";
   withAlt?: boolean;
   error?: string | undefined;
+  hint?: string | undefined;
 }) {
   const t = useTranslations("app.form");
   const [busy, setBusy] = useState(false);
+  // A picture that could not be used (wrong type, too big): said under the field, where it was chosen.
+  const [problem, setProblem] = useState<ImageError["reason"] | "decode" | null>(null);
   const present = hasImage(image);
   const choose = async () => {
     const [file] = await pickFiles();
@@ -208,49 +251,73 @@ export function ImageInput({
     setBusy(true);
     try {
       const prepared = await prepareImage(file, kind);
+      setProblem(null);
       onImage({ src: prepared.src, alt: image?.alt ?? "", tone: prepared.tone });
-    } catch (problem) {
-      toast({ title: t(`imageErrors.${problem instanceof ImageError ? problem.reason : "decode"}`), tone: "danger" });
+    } catch (reason) {
+      setProblem(reason instanceof ImageError ? reason.reason : "decode");
     } finally {
       setBusy(false);
     }
   };
   const resolved = present ? resolveMedia(image.src) : null;
-  const labelId = useId();
+  const messageId = useId();
+  const message = problem ? t(`imageErrors.${problem}`) : error;
   return (
     <div className="grid grid-cols-1 gap-3">
-      <p id={labelId} className="text-small text-fg">
-        {label}
-      </p>
+      <p className="text-small text-fg">{label}</p>
       <div className="flex items-center gap-4">
-        {/* The picture itself is the big target, as in iOS Contacts' "Add Photo"; the button beside it says what a tap does. */}
+        {/* The picture itself is a big target for a tap or a click, as in iOS Contacts' "Add Photo". The
+            button beside it is the one control for the keyboard and screen readers, and says what it does. */}
         <button
           type="button"
+          tabIndex={-1}
+          aria-hidden
           onClick={() => void choose()}
-          aria-label={present ? t("replace") : t("upload")}
-          aria-describedby={labelId}
           disabled={busy}
           className={cn(
             "relative grid shrink-0 place-items-center overflow-hidden border border-line bg-canvas-muted text-fg-tertiary",
-            "transition-[background-color,scale] duration-micro ease-standard hover:bg-hover active:scale-pressed motion-reduce:active:scale-none focus-visible:focus-ring disabled:pointer-events-none",
+            "transition-[background-color,scale] duration-micro ease-standard hover:bg-hover active:scale-pressed motion-reduce:active:scale-none disabled:pointer-events-none",
             shape === "round" ? "size-avatar-xl rounded-full" : shape === "wide" ? "aspect-video w-32 rounded-md" : "size-avatar-xl rounded-md",
-            error && "border-danger-strong",
+            message && "border-danger-strong",
           )}
         >
           {resolved ? <Image src={resolved} alt="" fill sizes="10vw" className={kind === "logo" ? "object-contain p-2" : "object-cover"} {...remoteImageProps(resolved)} /> : <Icon icon={ImagePlus} size="lg" />}
         </button>
         <div className="flex flex-wrap gap-2">
-          <Button variant="tinted" size="sm" icon={ImagePlus} loading={busy} onClick={() => void choose()}>
+          {/* The visible word ("Upload") starts the name ("Upload Profile photo"), so voice control finds it. */}
+          <Button
+            variant="tinted"
+            size="sm"
+            icon={ImagePlus}
+            loading={busy}
+            onClick={() => void choose()}
+            aria-label={present ? t("replaceNamed", { label }) : t("uploadNamed", { label })}
+            aria-describedby={message ? messageId : undefined}
+          >
             {present ? t("replace") : t("upload")}
           </Button>
           {present ? (
-            <Button size="sm" variant="destructive" icon={Trash2} onClick={() => onImage(undefined)}>
+            <Button
+              size="sm"
+              variant="destructive"
+              icon={Trash2}
+              onClick={() => {
+                setProblem(null);
+                onImage(undefined);
+              }}
+            >
               {t("removeImage")}
             </Button>
           ) : null}
         </div>
       </div>
-      {error ? <p className="text-small text-danger-strong">{error}</p> : null}
+      {hint ? <p className="text-small font-regular text-fg-secondary">{hint}</p> : null}
+      {message ? (
+        <p key={problem ? "problem" : "error"} id={messageId} role={problem ? "alert" : undefined} className="flex items-start gap-2 text-small text-danger-strong">
+          <Icon icon={CircleAlert} size="sm" className="mt-0.5 shrink-0" />
+          {message}
+        </p>
+      ) : null}
       {withAlt && present ? (
         <TextInput label={t("alt")} hint={t("altHint")} value={image.alt} onValue={(alt) => onImage({ ...image, alt })} maxLength={300} />
       ) : null}
