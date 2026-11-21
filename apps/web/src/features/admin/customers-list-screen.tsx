@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, Button, Icon, TextField } from "@linkyo/ui";
+import { Avatar, Badge, Button, Icon, TextField } from "@linkyo/ui";
 import { ChevronLeft, ChevronRight, Download, Search, UsersRound } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -10,7 +10,7 @@ import { Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
 
 import { useCustomers } from "./customers/data";
-import { monthlyRevenue, type Customer } from "./customers/model";
+import { hasProForLife, monthlyRevenue, type Customer } from "./customers/model";
 import { DemoNote, PlanBadge, StatusBadges } from "./customers/ui";
 import { count, country, date, money, timeAgo } from "./format";
 import { useAdmin } from "./session";
@@ -55,6 +55,16 @@ function Select({
       </select>
     </div>
   );
+}
+
+/** Pro for life from invites: a reward beside the plan (the plan stays Free, it is never revenue). */
+function ProForLifeBadge({ customer }: { customer: Customer }) {
+  const t = useTranslations("admin.customers");
+  return hasProForLife(customer) ? (
+    <Badge size="sm" tone="outline">
+      {t("proForLife")}
+    </Badge>
+  ) : null;
 }
 
 /** Every customer: search, filter, sort, open one; export what you see as CSV. */
@@ -269,6 +279,7 @@ export function CustomersListScreen() {
                     <td className="px-3 py-2">
                       <span className="flex flex-wrap items-center gap-1">
                         <PlanBadge customer={customer} />
+                        <ProForLifeBadge customer={customer} />
                         <StatusBadges customer={customer} />
                       </span>
                     </td>
@@ -310,7 +321,10 @@ export function CustomersListScreen() {
                         {customer.email}
                       </span>
                     </span>
-                    <PlanBadge customer={customer} />
+                    <span className="flex shrink-0 flex-wrap justify-end gap-1">
+                      <PlanBadge customer={customer} />
+                      <ProForLifeBadge customer={customer} />
+                    </span>
                   </span>
                   <span className="text-caption text-fg-secondary flex flex-wrap items-center justify-between gap-2">
                     <StatusBadges customer={customer} />
