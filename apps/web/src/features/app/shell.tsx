@@ -128,7 +128,7 @@ export function SaveStatus({ compact = false }: { compact?: boolean }) {
   return (
     <p role="status" className={cn("flex min-w-0 items-center", shown === "error" && "text-danger-strong")}>
       {shown === "unsavedLegal" ? (
-        <Link href={LEGAL_HREF} className="flex min-w-0 items-center gap-3 rounded-sm font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring">
+        <Link href={LEGAL_HREF} className="flex min-w-0 items-center gap-3 rounded-sm font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring">
           {content}
         </Link>
       ) : (
@@ -372,7 +372,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <ShellChromeContext.Provider value={chrome}>
       <ShellBackContext.Provider value={goBack}>
-        <div data-grouped className="group/app flex min-h-dvh bg-canvas-muted text-fg">
+        {/* data-console="frame": the dashboard and everything it opens (sheets, menus, toasts) are black and grey (ADR 0062). */}
+        <div data-grouped data-console="frame" className="group/app flex min-h-dvh bg-canvas-muted text-fg">
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:layer-toast focus:rounded-sm focus:bg-surface-elevated focus:px-3 focus:py-2 focus:focus-ring"
@@ -384,7 +385,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-e border-line bg-surface px-3 pb-3 lg:flex">
             {/* The logo is a picture here, not a link: "Start" is the first row (one name, one place). */}
             <div className="flex h-16 shrink-0 items-center ps-3">
-              <Logo className="h-6" title="Linkyo" />
+              <Logo className="h-6" title="Linkyo" tone="mono" />
             </div>
             <Link
               href={previewHref}

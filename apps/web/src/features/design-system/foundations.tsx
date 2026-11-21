@@ -76,7 +76,8 @@ export function BrandSection() {
   );
 }
 
-const SCALES = ["teal", "gray", "night", "success", "warning", "danger", "lime"] as const;
+// graphite: the creator dashboard's cool greys (ADR 0062); gray is the website's warm neutral.
+const SCALES = ["teal", "gray", "night", "graphite", "success", "warning", "danger", "lime"] as const;
 const ROLES = [
   "canvas",
   "canvasMuted",
@@ -87,6 +88,7 @@ const ROLES = [
   "fgTertiary",
   "primary",
   "link",
+  "linkHover",
   "focus",
   "lineInput",
   "spark",
@@ -94,7 +96,7 @@ const ROLES = [
   "warningStrong",
   "dangerStrong",
 ] as const;
-const TEXT_ROLES = new Set(["fg", "fgSecondary", "fgTertiary", "link", "successStrong", "warningStrong", "dangerStrong"]);
+const TEXT_ROLES = new Set(["fg", "fgSecondary", "fgTertiary", "link", "linkHover", "successStrong", "warningStrong", "dangerStrong"]);
 
 export function ColorSection() {
   const t = useTranslations("design.color");
@@ -307,6 +309,8 @@ export function LayoutSection() {
         <div className="grid gap-3 rounded-lg border border-line bg-surface p-5 font-mono text-caption text-fg-secondary sm:grid-cols-2 lg:grid-cols-4">
           <p>creator · {tokens.layout.creator}</p>
           <p>sidebar · {tokens.layout.sidebar}</p>
+          <p>nav-rail · {tokens.layout.navRail}</p>
+          <p>nav-panel · {tokens.layout.navPanel}</p>
           <p>content · {tokens.layout.content}</p>
           <p>preview · {tokens.layout.preview}</p>
           <p>gutter · {tokens.spacing.creatorGutter}</p>

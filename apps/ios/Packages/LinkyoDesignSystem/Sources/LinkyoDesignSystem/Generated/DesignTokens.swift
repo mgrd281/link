@@ -81,6 +81,10 @@ public enum LinkyoTokens {
         public static let creator: CGFloat = 560
         /// Dashboard sidebar.
         public static let sidebar: CGFloat = 248
+        /// Dashboard icon rail (lg and up).
+        public static let navRail: CGFloat = 64
+        /// Section panel beside the rail; rail + panel = 248 px, the former sidebar.
+        public static let navPanel: CGFloat = 184
         /// Dashboard content (max width).
         public static let content: CGFloat = 1120
         /// Live phone preview width.
@@ -206,6 +210,14 @@ public extension Color {
         public static let paletteNight200 = Color("Palette/Night200", bundle: .module)
         public static let paletteNight300 = Color("Palette/Night300", bundle: .module)
         public static let paletteNight400 = Color("Palette/Night400", bundle: .module)
+        public static let paletteGraphite50 = Color("Palette/Graphite50", bundle: .module)
+        public static let paletteGraphite100 = Color("Palette/Graphite100", bundle: .module)
+        public static let paletteGraphite200 = Color("Palette/Graphite200", bundle: .module)
+        public static let paletteGraphite300 = Color("Palette/Graphite300", bundle: .module)
+        public static let paletteGraphite400 = Color("Palette/Graphite400", bundle: .module)
+        public static let paletteGraphite500 = Color("Palette/Graphite500", bundle: .module)
+        public static let paletteGraphite600 = Color("Palette/Graphite600", bundle: .module)
+        public static let paletteGraphite700 = Color("Palette/Graphite700", bundle: .module)
         public static let paletteSuccess50 = Color("Palette/Success50", bundle: .module)
         public static let paletteSuccess100 = Color("Palette/Success100", bundle: .module)
         public static let paletteSuccess400 = Color("Palette/Success400", bundle: .module)
@@ -254,6 +266,7 @@ public extension Color {
         public static let primaryPressed = Color("Semantic/PrimaryPressed", bundle: .module)
         public static let primaryFg = Color("Semantic/PrimaryFg", bundle: .module)
         public static let link = Color("Semantic/Link", bundle: .module)
+        public static let linkHover = Color("Semantic/LinkHover", bundle: .module)
         public static let focus = Color("Semantic/Focus", bundle: .module)
         public static let spark = Color("Semantic/Spark", bundle: .module)
         public static let sparkFg = Color("Semantic/SparkFg", bundle: .module)

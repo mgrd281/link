@@ -54,7 +54,9 @@ export function OwnPageScreen() {
   return (
     <>
       <PosterRenderer page={previewPage} theme={theme} />
+      {/* The bar is dashboard chrome (black and grey); the creator's page under it keeps its own colours (ADR 0062). */}
       <nav
+        data-console="local"
         aria-label={t("label")}
         className={cn(
           "layer-sticky fixed inset-x-0 flex justify-center px-4",

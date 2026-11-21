@@ -27,7 +27,8 @@ reports unknown classes.
 - **No underlines. Ever.** No `underline`, `hover:underline`, `underline-offset-*` or `decoration-*`
   anywhere (ADR 0041); the lint rule rejects them and Stylelint allows only `text-decoration: none`
   or `line-through` (old prices). Links: `text-link font-semibold` with `hover:text-fg` and a
-  `transition-colors`; on creator pages `hover:text-creator-fg`; keyboard focus shows `focus-ring`.
+  `transition-colors`; in the dashboard `hover:text-link-hover` (see "Dashboard palette"); on creator
+  pages `hover:text-creator-fg`; keyboard focus shows `focus-ring`.
 - **Buttons and focus that feel like an app (ADR 0059):**
   - The quiet partner of a primary action is `variant="tinted"` (`bg-tinted text-tinted-fg`, a soft
     teal fill), on `Button` and `IconButton`; not a white outlined button.
@@ -82,6 +83,47 @@ The vendored skills (`ui-ux-pro-max`, `web-design-guidelines`, `motion`, `motion
 - **No third-party requests from pages.** No Google Fonts or CDN links, and no analytics or embed
   scripts by default. Fonts are self-hosted, as they are today.
 - **Three languages, both directions.** German, English and Arabic: check every layout in RTL.
+
+## Dashboard palette (ADR 0062)
+
+The creator dashboard (`/app/*`) is black and grey; the website, sign-up, creator pages, the team area,
+share pictures and iOS stay teal. Nothing changes in class names: inside the dashboard the same
+semantic classes (`bg-primary`, `text-link`, `bg-selected`, `bg-tinted`, `bg-canvas-muted`, …) resolve
+to the console palette. Its greys come from the cool `graphite` scale, never the website's warm `gray`.
+
+- **Two markers.**
+  - `data-console="frame"` on a screen's root element (the shell, `AppSplash`, the welcome flow)
+    gives the palette to the whole window through `:root:has(…)`, so sheets, dialogs, menus, tooltips
+    and toasts, which render in `<body>`, follow it. Use it only on a root that fills the window.
+  - `data-console="local"` gives it to one subtree only (the owner's bar over "View my page", where
+    the creator's page under it keeps its colours).
+- **Console values come in pairs.** A role gets the console palette through `console` *and*
+  `consoleDark` in its `$extensions["app.linkyo"]`. The token build throws when one is missing (the
+  console's light rule outranks the plain dark rule, so dark mode would turn light) and when a role
+  has console and high-contrast values together. Read them in code as
+  `tokens.semantic.<role>.console.light | .dark` (every role has them; unchanged roles repeat their
+  own values).
+- **No palette or tint classes under `features/app`** (`teal-*`, `gray-*`, `graphite-*`, `night-*`,
+  `ink`, `white`, `tint-*` …): they would not follow the palette. Only the preview's phone bezel
+  (`bg-ink`) and the QR code on paper (`bg-white`, `text-ink`, `fill-white`, `fill-ink`) are allowed.
+  No `data-theme` there either: a light subtree would bring the teal roles back.
+- **Links in the dashboard** are body coloured (`link` = `fg` there): a link is a standalone control,
+  `text-link font-semibold` with an icon (chevron, arrow, eye or status glyph), and hovers with
+  `hover:text-link-hover` (a lighter grey; outside the dashboard `link-hover` equals `fg`, so it
+  behaves like `hover:text-fg`). No links inside running text, so no `t.rich()` that maps to `<Link>`
+  or `<a>`. Never `text-link` with `hover:text-fg`.
+- **Switch thumb:** on, the knob is `bg-primary-fg` (white on the black track; ink on the white
+  track of the dark dashboard). Anything drawn on a `bg-primary` fill takes `text-primary-fg` too.
+- **Logo:** `tone="mono"` inside the dashboard.
+- **The creator preview** reads only `--creator-*`; never use the roles above in
+  `features/directions/poster` or `features/directions/shared` (except the dashboard chrome in
+  `template-picker.tsx`, `dashboard.tsx` and Linkyo's bar in `dock.tsx`).
+- **Tests:** `apps/web/src/features/app/console-guard.test.ts` (the five rules above, as static
+  checks), the "dashboard palette" tests in `packages/tokens/test/tokens.test.ts` (AA in both modes,
+  graphite stays cool, the generated CSS blocks, iOS stays teal) and
+  `apps/web/e2e/console-theme-app.spec.ts` (computed colours in the dashboard, in a portalled sheet,
+  in dark mode, in the preview and outside the dashboard).
+
 ## Creator colors
 
 - Creator pages are themed by `resolveCreatorTheme(config)` from `@linkyo/tokens/creator`. The config

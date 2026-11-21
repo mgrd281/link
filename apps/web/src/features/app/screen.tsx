@@ -46,7 +46,7 @@ export function BackLink({ href, label, variant = "bar", className }: { href: st
         if (goBack?.(href)) event.preventDefault();
       }}
       className={cn(
-        "inline-flex min-w-0 items-center gap-1 rounded-sm pe-2 text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring",
+        "inline-flex min-w-0 items-center gap-1 rounded-sm pe-2 text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring",
         variant === "bar" ? "h-touch-target max-w-full text-body font-semibold" : "h-control-sm shrink-0 text-small font-semibold",
         className,
       )}
@@ -189,7 +189,8 @@ export function Panel({ children, className, title, action, id }: { children: Re
     >
       {title ? (
         <div className="flex items-center justify-between gap-3">
-          <h2 id={id} className="text-title rtl:tracking-normal">
+          {/* With an id it is a jump target of the section panel: focusable by script, no ring of its own. */}
+          <h2 id={id} tabIndex={id ? -1 : undefined} className={cn("text-title rtl:tracking-normal", id && "outline-none")}>
             {title}
           </h2>
           {action}

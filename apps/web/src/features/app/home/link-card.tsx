@@ -41,7 +41,8 @@ export function LinkCard({ username, ready }: { username: string; ready: boolean
         <div className="flex items-center gap-2">
           {/* An address reads left to right in every language; in Arabic it still hugs the start (right). */}
           <p dir="ltr" className="min-w-0 flex-1 truncate text-start text-h3 font-semibold rtl:text-right">
-            linkyo.app/<span className="text-link">{username}</span>
+            <span className="text-fg-secondary">linkyo.app/</span>
+            {username}
           </p>
           <CopyLinkButton username={username} />
         </div>

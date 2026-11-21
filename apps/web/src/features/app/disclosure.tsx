@@ -33,7 +33,7 @@ export function Disclosure({
         onClick={() => setOpen((current) => !current)}
         className={cn(
           "inline-flex min-h-control-md items-center gap-2 justify-self-start rounded-sm text-small font-semibold text-link",
-          "transition-colors duration-micro hover:text-fg focus-visible:focus-ring",
+          "transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring",
           triggerClassName,
         )}
       >
