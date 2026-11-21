@@ -62,16 +62,6 @@ export function LegalScreen() {
     if (failedSaves > 0) form.current?.querySelector<HTMLElement>("[aria-invalid=true]")?.focus();
   }, [failedSaves]);
 
-  // Closing the tab or reloading would lose the edits: the browser asks first.
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
-
   const save = () => {
     if (blockers > 0) {
       setFailedSaves((count) => count + 1);

@@ -1,7 +1,12 @@
+import { tokens } from "@linkyo/tokens";
 import { useCallback, useSyncExternalStore } from "react";
 
-/** The `desk` breakpoint (tokens: 1200 px): the compact live preview shows beside the content from here. */
-export const DESK_QUERY = "(width >= 75rem)";
+/**
+ * The `desk` breakpoint token: the compact live preview shows beside the content from here. In rem,
+ * as the generated CSS has it (1 rem = 16 px there): a media query's rem follows the browser's font
+ * size setting, so this query and the `desk:` classes always switch at the same width.
+ */
+export const DESK_QUERY = `(width >= ${tokens.breakpoint.desk / 16}rem)`;
 
 /**
  * Whether a media query matches, kept in sync as the window changes. The server (and the first client

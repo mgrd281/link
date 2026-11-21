@@ -31,6 +31,12 @@ const NAV: readonly { key: TabKey; icon: LucideIcon }[] = [
 /** Where the legal notice is edited (its unsaved draft links there). */
 const LEGAL_HREF = "/app/settings/legal";
 
+/**
+ * Browsers keep about 50 history entries per tab (Chrome, Firefox). From there a new page no longer
+ * changes the history's length, so a length that stays the same no longer means "replaced".
+ */
+const HISTORY_CAP = 50;
+
 /** A click that opens a new tab or window, which leaves this page as it is. */
 const modified = (event: MouseEvent) => event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
 
@@ -122,7 +128,7 @@ export function SaveStatus({ compact = false }: { compact?: boolean }) {
   return (
     <p role="status" className={cn("flex min-w-0 items-center", shown === "error" && "text-danger-strong")}>
       {shown === "unsavedLegal" ? (
-        <Link href={LEGAL_HREF} className="flex min-w-0 items-center gap-3 rounded-sm font-medium text-fg transition-colors duration-micro hover:text-link focus-visible:focus-ring">
+        <Link href={LEGAL_HREF} className="flex min-w-0 items-center gap-3 rounded-sm font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring">
           {content}
         </Link>
       ) : (
@@ -180,7 +186,14 @@ function subscribeHistory(onChange: () => void) {
   };
 }
 
-const readLastMove = () => lastMoveWasPop;
+/*
+ * The router renders the restored screen inside its own popstate listener, which is added at start-up
+ * and so runs before ours (React finishes popstate updates at once). A render during that event is
+ * therefore a history move too.
+ */
+const readLastMove = () =>
+  // eslint-disable-next-line @typescript-eslint/no-deprecated -- the only way to see the event being dispatched; React checks popstate the same way
+  lastMoveWasPop || window.event?.type === "popstate";
 
 function readOriginTab(): TabKey {
   try {
@@ -252,25 +265,48 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // The paths visited in this tab, in step with the browser's history, so "‹ back" can go back
   // through history (Safari's swipe and Back then agree) when the parent is the previous page.
-  const visited = useRef<{ paths: string[]; length: number }>({ paths: [], length: 0 });
+  // `index` is the entry shown: after a Back the entries ahead stay (Forward) until a new page drops
+  // them. How the history's length changed tells a new page (the entries ahead go, one is added) from
+  // a replaced one (a redirect: the length stays). When a move fits neither, only this page is known
+  // and "‹ back" opens its link until the paths are known again: a wrong step back is worse.
+  const visited = useRef({ paths: [] as string[], index: -1, length: 0 });
   useEffect(() => {
-    const { paths } = visited.current;
+    const model = visited.current;
+    const { paths } = model;
     const length = window.history.length;
-    if (route.pop) {
-      if (paths.at(-2) === pathname) paths.pop();
-      else paths.push(pathname);
-    } else if (paths.length > 0 && length === visited.current.length) {
-      // The history did not grow: the page was replaced (a redirect), not added.
-      paths[paths.length - 1] = pathname;
+    const ahead = paths.length - 1 - model.index;
+    const restart = () => {
+      paths.splice(0, Infinity, pathname);
+      model.index = 0;
+    };
+    if (paths.length === 0) {
+      restart();
+    } else if (route.pop) {
+      // One step, back first: if both neighbours match, a wrong guess then only costs a link.
+      if (paths[model.index - 1] === pathname) model.index -= 1;
+      else if (paths[model.index + 1] === pathname) model.index += 1;
+      else restart();
+    } else if (length === model.length - ahead + 1) {
+      // A new page. With one entry ahead this is also what a replace looks like; in the app only
+      // old Settings links are replaced, and they never follow a Back.
+      paths.splice(model.index + 1, Infinity, pathname);
+      model.index += 1;
+    } else if (length === model.length && length < HISTORY_CAP) {
+      paths[model.index] = pathname;
     } else {
-      paths.push(pathname);
+      restart();
     }
-    visited.current.length = length;
-    if (paths.length > 50) paths.splice(0, paths.length - 50);
+    model.length = length;
+    const extra = paths.length - HISTORY_CAP;
+    if (extra > 0) {
+      paths.splice(0, extra);
+      model.index -= extra;
+    }
   }, [pathname, route.pop]);
   const goBack = useCallback(
     (target: string) => {
-      if (visited.current.paths.at(-2) !== target) return false;
+      const { paths, index } = visited.current;
+      if (index < 1 || paths[index - 1] !== target) return false;
       router.back();
       return true;
     },
@@ -293,8 +329,32 @@ export function AppShell({ children }: { children: ReactNode }) {
     const saved = scrollMemory.current.get(pathname);
     if (target === pathname) window.scrollTo({ top: saved ?? 0, behavior: "instant" });
     else if (route.pop && saved !== undefined) window.scrollTo({ top: saved, behavior: "instant" });
-    else scrollMemory.current.delete(pathname);
+    // A position is used once: the user scrolls on from there, and only the next tap away saves it
+    // again. Otherwise a later Back would jump to where the screen was before that.
+    scrollMemory.current.delete(pathname);
   }, [pathname, route.pop]);
+
+  // A move that removed the focused element (the avatar, "‹ back", a pane's toolbar) would leave focus
+  // on the page itself: the new screen's title takes it instead. Screens run their effects first, so a
+  // pushed pane has already focused its own title, and a tab or sidebar row that stays keeps focus.
+  useEffect(() => {
+    if (!route.navigated) return;
+    const focused = document.activeElement;
+    if (focused && focused !== document.body) return;
+    document.querySelector<HTMLElement>("#main h1")?.focus({ preventScroll: true });
+  }, [pathname, route.navigated]);
+
+  // Unsaved edits (the legal notice) live outside their screen, so closing or reloading the tab asks
+  // first wherever the user is, not only on the screen they were typed on.
+  const unsaved = useHasUnsavedDraft(account.id);
+  useEffect(() => {
+    if (!unsaved) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [unsaved]);
 
   const chrome = useMemo(() => ({ navigated: route.navigated, pop: route.pop }), [route.navigated, route.pop]);
 
