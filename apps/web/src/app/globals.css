@@ -63,6 +63,20 @@
     }
   }
 
+  /* Design keeps a small live page in sight under the bar (data-sticky-preview): a focused control
+     scrolls clear of it, never under it (WCAG 2.4.11). Wide screens show the page beside instead. */
+  html:has([data-sticky-preview]) {
+    @variant max-lg {
+      scroll-padding-top: calc(var(--spacing-16) + 30svh + var(--spacing-3) + var(--spacing-2));
+    }
+
+    @variant lg {
+      @variant max-xl {
+        scroll-padding-top: calc(30svh + var(--spacing-3) + var(--spacing-2));
+      }
+    }
+  }
+
   /* The dashboard's grouped background on phones (see AppShell) reaches past the page's edges, so a
      rubber-band scroll on iPhone shows no white band above the top bar or below the tab bar. */
   body:has([data-grouped]) {

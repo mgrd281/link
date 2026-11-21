@@ -112,6 +112,7 @@ export function AddSheet() {
           noValidate
           onSubmit={(event) => {
             event.preventDefault();
+            if (!value.trim()) return;
             addText(value);
           }}
           className="grid grid-cols-1 gap-3"

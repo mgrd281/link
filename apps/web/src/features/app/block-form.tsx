@@ -82,6 +82,8 @@ function useLinkTitle(block: Block, onChange: (block: Block) => void, creating: 
   const url = creating && block.type === "link" ? block.url : null;
   useEffect(() => {
     if (url === null) return;
+    // Replies that arrive after the sheet closed or the address changed are dropped.
+    let live = true;
     const timer = window.setTimeout(() => {
       const current = latest.current.block;
       if (current.type !== "link" || (current.title.trim() && current.title !== filled.current)) return;
@@ -93,13 +95,17 @@ function useLinkTitle(block: Block, onChange: (block: Block) => void, creating: 
       // Our server only knows titles for platforms it recognises (it answers nothing for other sites).
       if (!detectLink(address.toString())?.platform) return;
       void fetchLinkMetadata(address.toString()).then((meta) => {
+        if (!live) return;
         const now = latest.current.block;
         if (!meta?.title || now.type !== "link" || now.title !== site) return;
         filled.current = meta.title;
         latest.current.onChange({ ...now, title: meta.title });
       });
     }, TITLE_DELAY);
-    return () => window.clearTimeout(timer);
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
   }, [url]);
 }
 

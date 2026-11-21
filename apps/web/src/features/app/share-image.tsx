@@ -110,15 +110,11 @@ export function ShareImageButton({ compact = false, appearance = "button" }: { c
     const data = await blob();
     if (!data) return;
     const file = new File([data], fileName, { type: "image/png" });
-    // The address rides along as the caption where the target takes one (WhatsApp Status, Messages).
-    // Where files and text cannot go together, the picture goes alone, so Instagram stays a target.
+    // The address rides along as the caption wherever files can be shared (targets that take no
+    // text simply drop it; the browser cannot tell us which ones do).
     const withLink = { files: [file], title: address, text: pageUrl(account.username) };
-    const pictureOnly = { files: [file], title: address };
-    const canShare = typeof navigator.canShare === "function";
-    if (canShare && navigator.canShare(withLink)) {
+    if (typeof navigator.canShare === "function" && navigator.canShare(withLink)) {
       await navigator.share(withLink).catch(() => undefined);
-    } else if (canShare && navigator.canShare(pictureOnly)) {
-      await navigator.share(pictureOnly).catch(() => undefined);
     } else {
       await download();
       toast({ title: t("downloaded"), tone: "success" });

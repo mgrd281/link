@@ -104,8 +104,8 @@ export function DesignScreen() {
       }
     >
       {/* Phones and laptops: the page stays in sight while you change it (wide screens have it beside). */}
-      <div className="sticky top-16 layer-raised -mx-4 bg-canvas px-4 pb-3 max-lg:group-data-[grouped]/app:bg-canvas-muted md:-mx-8 md:px-8 lg:top-0 xl:hidden">
-        <PhonePreview className="h-[30dvh]" />
+      <div data-sticky-preview className="sticky top-16 layer-raised -mx-4 bg-canvas px-4 pb-3 max-lg:group-data-[grouped]/app:bg-canvas-muted md:-mx-8 md:px-8 lg:top-0 xl:hidden">
+        <PhonePreview className="h-[30svh]" />
       </div>
 
       <Panel title={t("template")} id={`${id}-template`}>

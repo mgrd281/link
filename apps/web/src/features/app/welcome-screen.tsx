@@ -213,6 +213,8 @@ export function WelcomeScreen() {
         },
       ).filter((block) => block.type !== "socials" || !doc.blocks.some((existing) => existing.type === "socials"));
       blocks.forEach((block, i) => dispatch({ type: "add", block, index: i }));
+      // The starter page is not a fresh addition: the editor opens without a highlight.
+      dispatch({ type: "select", id: null });
       // Songs and videos get their real title and picture a moment later.
       enrich(blocks);
     }

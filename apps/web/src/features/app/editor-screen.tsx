@@ -46,7 +46,8 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   const { doc, dispatch, edit, setAddOpen, label, announce, justAdded } = useSite();
   const [profileOpen, setProfileOpen] = useState(false);
   const [reorder, setReorder] = useState(false);
-  // Reordering needs two rows; when undo leaves fewer, the list goes back to normal by itself.
+  // Reordering needs two rows; when fewer are left, the list goes back to normal (and stays there).
+  if (reorder && doc.blocks.length < 2) setReorder(false);
   const arranging = reorder && doc.blocks.length > 1;
   const last = doc.blocks.length - 1;
 
@@ -98,10 +99,10 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
         <ProfileAvatar size="lg" />
         <span className="grid min-w-0 flex-1 gap-0.5">
           <span className="sr-only">{t("editProfile")}: </span>
-          <span dir="auto" className="truncate text-body-lg font-semibold">
+          <span dir="auto" className="truncate text-body-lg font-semibold [text-align:match-parent]">
             {doc.profile.displayName}
           </span>
-          <span dir="auto" className="truncate text-small text-fg-secondary">
+          <span dir="auto" className="truncate text-small text-fg-secondary [text-align:match-parent]">
             {[doc.profile.tagline, doc.profile.bio].find((text) => text?.trim()) ?? t("profileEmpty")}
           </span>
         </span>
@@ -366,13 +367,14 @@ function BlockRow({
           <span
             dir="auto"
             className={cn(
-              "line-clamp-2 break-words",
+              "line-clamp-2 break-words [text-align:match-parent]",
               isHeader
                 ? "text-body-lg font-semibold max-lg:group-data-[grouped]/app:text-small max-lg:group-data-[grouped]/app:text-fg-secondary"
                 : opensSection
                   ? "text-body font-semibold"
                   : "text-body font-medium",
-              dim,
+              // A hidden section title on phones is already secondary text: dim it no further (contrast).
+              isHeader ? !block.visible && "opacity-secondary max-lg:group-data-[grouped]/app:opacity-100 max-lg:group-data-[grouped]/app:text-fg-tertiary" : dim,
             )}
           >
             {label}

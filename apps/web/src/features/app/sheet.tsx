@@ -189,7 +189,7 @@ export function Sheet({
                     </Button>
                   </Dialog.Close>
                 )}
-                <Dialog.Title className="truncate text-center text-body font-semibold lg:flex-1 lg:text-start lg:text-h3 lg:whitespace-normal">{title}</Dialog.Title>
+                <Dialog.Title className="line-clamp-2 text-center text-body font-semibold text-balance lg:flex-1 lg:text-start lg:text-h3">{title}</Dialog.Title>
                 <Button variant="primary" size="sm" className="justify-self-end lg:hidden" onClick={confirm.onConfirm}>
                   {confirm.label}
                 </Button>

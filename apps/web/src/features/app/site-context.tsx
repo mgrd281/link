@@ -324,12 +324,22 @@ export function EditorProvider({
   const removeBlock = useCallback(
     (block: Block) => {
       const index = doc.blocks.findIndex((candidate) => candidate.id === block.id);
+      const next = doc.blocks[index + 1]?.id;
       dispatch({ type: "remove", id: block.id });
-      // Undo puts this block back where it was. A plain "undo" could take back a later change instead
-      // (a switch flipped while the toast was still showing).
+      // Undo puts this block back where it was (before the block that followed it, if that is still
+      // there), and only once. A plain "undo" could take back a later change instead (a switch
+      // flipped while the toast was still showing).
       toast({
         title: t("removed", { title: isolate(label(block), rtl) }),
-        action: { label: t("undo"), onAction: () => dispatch({ type: "add", block, ...(index >= 0 ? { index } : {}) }) },
+        action: {
+          label: t("undo"),
+          onAction: () => {
+            const blocks = docRef.current.blocks;
+            if (blocks.some((candidate) => candidate.id === block.id)) return;
+            const before = next ? blocks.findIndex((candidate) => candidate.id === next) : -1;
+            dispatch({ type: "add", block, index: before >= 0 ? before : Math.min(Math.max(index, 0), blocks.length) });
+          },
+        },
       });
     },
     [dispatch, doc.blocks, label, rtl, t],
