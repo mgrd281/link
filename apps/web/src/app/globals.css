@@ -39,9 +39,14 @@
     background-color: var(--color-selected);
   }
 
-  /* Toasts clear the home indicator, and sit above the dashboard's bottom tab bar on phones. */
+  /* Toasts clear the home indicator, and sit above the dashboard's bottom tab bar on phones. On wide
+     screens they are centred over the dashboard's content column: --toast-start skips the sidebar,
+     --toast-end the live preview (--preview-column, also used by side panels opened beside it). */
   :root {
     --toast-offset: 0;
+    --toast-start: 0;
+    --toast-end: 0;
+    --preview-column: 0;
   }
 
   :root:has([data-tabbar]) {
@@ -50,6 +55,22 @@
 
       /* The tab bar already clears the home indicator. */
       --toast-inset: var(--spacing-4);
+    }
+
+    @variant lg {
+      --toast-start: var(--container-sidebar);
+    }
+  }
+
+  /* The live preview column: compact from the desk breakpoint, full width from xl (its frame plus p-4). */
+  :root:has([data-preview-aside]) {
+    @variant desk {
+      --preview-column: calc(var(--container-preview-compact) + var(--spacing-8));
+      --toast-end: var(--preview-column);
+    }
+
+    @variant xl {
+      --preview-column: calc(var(--container-preview) + var(--spacing-8));
     }
   }
 
@@ -63,26 +84,45 @@
     }
   }
 
+  /* Wide screens: each dashboard screen has a sticky 64 px toolbar (data-app-toolbar); a focused
+     control scrolls clear of it (WCAG 2.4.11). */
+  html:has([data-app-toolbar]) {
+    @variant lg {
+      scroll-padding-top: calc(var(--spacing-16) + var(--spacing-2));
+    }
+  }
+
   /* Design keeps a small live page in sight under the bar (data-sticky-preview): a focused control
-     scrolls clear of it, never under it (WCAG 2.4.11). Wide screens show the page beside instead. */
+     scrolls clear of it, never under it (WCAG 2.4.11). From the desk breakpoint the page is beside
+     instead. After the toolbar rule, so this one wins where both apply. */
   html:has([data-sticky-preview]) {
     @variant max-lg {
       scroll-padding-top: calc(var(--spacing-16) + 30svh + var(--spacing-3) + var(--spacing-2));
     }
 
     @variant lg {
-      @variant max-xl {
-        scroll-padding-top: calc(30svh + var(--spacing-3) + var(--spacing-2));
+      @variant max-desk {
+        scroll-padding-top: calc(var(--spacing-16) + 30svh + var(--spacing-3) + var(--spacing-2));
       }
     }
   }
 
-  /* The dashboard's grouped background on phones (see AppShell) reaches past the page's edges, so a
-     rubber-band scroll on iPhone shows no white band above the top bar or below the tab bar. */
+  /* The dashboard's grouped background (see AppShell) reaches past the page's edges, so a rubber-band
+     scroll shows no white band above the top bar or below the tab bar. */
   body:has([data-grouped]) {
-    @variant max-lg {
-      background-color: var(--color-canvas-muted);
+    background-color: var(--color-canvas-muted);
+  }
+
+  /* Wide screens: tabs never shift sideways when a screen gains or loses an always-on scrollbar. */
+  html:has([data-grouped]) {
+    @variant lg {
+      scrollbar-gutter: stable;
     }
+  }
+
+  /* In the dashboard everything that acts on a click shows the hand, as links do. */
+  [data-grouped] :where(button:not(:disabled), [role="switch"], [role="tab"], summary, select, label:has(> input, > select)) {
+    cursor: pointer;
   }
 
   :focus-visible {
@@ -95,6 +135,9 @@
     *::before,
     *::after {
       animation-duration: var(--duration-micro) !important;
+
+      /* An animation that is left runs once and stops: nothing loops. */
+      animation-iteration-count: 1 !important;
       scroll-behavior: auto !important;
     }
 
@@ -432,6 +475,12 @@
 }
 
 /* stylelint-enable no-invalid-position-declaration */
+
+/* A still template picker (the dashboard's Design screen): the thumbnails keep their look, without
+   the ambient loops, so nothing moves while the creator compares them. */
+[data-still] :is(.poster-grid, .poster-glow, .poster-halo) {
+  animation: none;
+}
 
 /*
  * Marketing site motion (tokens only). One orchestrated hero entrance, ambient loops that never
