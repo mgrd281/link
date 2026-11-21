@@ -1448,7 +1448,6 @@
       "lead": "Here's your page at a glance.",
       "yourLink": "Your link",
       "linkDemo": "Demo: this address goes live at launch. Until then your page is only in this browser.",
-      "view": "View page",
       "checklist": {
         "title": "Finish your page",
         "doneTitle": "Your page is complete",
@@ -1494,13 +1493,6 @@
         "chartLabel": "Views per day, last 7 days",
         "dayLabel": "{day}: {views} views",
         "more": "All stats"
-      },
-      "quick": {
-        "label": "Shortcuts",
-        "add": "Add something",
-        "page": "Edit page",
-        "design": "Change look",
-        "settings": "Settings"
       },
       "preparedTitle": "Welcome, {name}! Your page is ready.",
       "preparedBody": "The Linkyo team prepared it for you. Have a look and change anything you like – it's all yours.",
@@ -1549,7 +1541,6 @@
       "undo": "Undo",
       "color": "Your color",
       "reset": "Use template color",
-      "swatch": "Color {hex}",
       "custom": "Custom",
       "customLabel": "Pick any color",
       "colorHint": "Buttons, highlights and (in Colorful) the whole page use it. We adjust shades so text stays readable.",

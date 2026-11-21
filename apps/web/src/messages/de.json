@@ -1448,7 +1448,6 @@
       "lead": "Deine Seite auf einen Blick.",
       "yourLink": "Dein Link",
       "linkDemo": "Demo: Diese Adresse geht mit dem Start online. Bis dahin gibt es deine Seite nur in diesem Browser.",
-      "view": "Seite ansehen",
       "checklist": {
         "title": "Mach deine Seite fertig",
         "doneTitle": "Deine Seite ist komplett",
@@ -1494,13 +1493,6 @@
         "chartLabel": "Aufrufe pro Tag, letzte 7 Tage",
         "dayLabel": "{day}: {views} Aufrufe",
         "more": "Alle Zahlen"
-      },
-      "quick": {
-        "label": "Schnellzugriff",
-        "add": "Etwas hinzufügen",
-        "page": "Seite bearbeiten",
-        "design": "Look ändern",
-        "settings": "Einstellungen"
       },
       "preparedTitle": "Willkommen, {name}! Deine Seite ist fertig.",
       "preparedBody": "Das Linkyo-Team hat sie für dich vorbereitet. Schau sie dir an und ändere, was du möchtest – alles gehört dir.",
@@ -1549,7 +1541,6 @@
       "undo": "Rückgängig",
       "color": "Deine Farbe",
       "reset": "Farbe der Vorlage",
-      "swatch": "Farbe {hex}",
       "custom": "Eigene",
       "customLabel": "Beliebige Farbe wählen",
       "colorHint": "Buttons, Akzente und (bei „Farbig“) die ganze Seite nutzen sie. Wir passen Töne an, damit Text lesbar bleibt.",
