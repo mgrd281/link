@@ -1,63 +1,62 @@
 "use client";
 
-import { hasImage } from "@linkyo/blocks";
 import { Badge, Icon } from "@linkyo/ui";
-import { ArrowRight, AtSign, ImagePlus, Palette, Plus, Scale, Sparkles, TextQuote, X } from "lucide-react";
+import { ArrowRight, AtSign, Gift, ImagePlus, Palette, Plus, Scale, Sparkles, TextQuote, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type CSSProperties } from "react";
 
 import { accountStore } from "@/features/account/store";
+import { REFERRAL_RULES } from "@/features/referrals/rules";
 import { Link, useRouter } from "@/i18n/navigation";
 
 import { blankBlock } from "./blocks";
 import { LinkCard } from "./home/link-card";
 import { NextStep, TaskRow, type HomeTask } from "./home/next-step";
-import { legalStatus } from "./legal";
-import { ListGroup } from "./list";
+import { homeProgress, homeTasksDone } from "./home/progress";
+import { ListGroup, ListRow } from "./list";
 import { ProfileSheet } from "./profile-form";
+import { INVITE_HREF, NAV_ANCHORS } from "./routes";
 import { sampleStats, totals } from "./sample-stats";
 import { Panel, Screen } from "./screen";
 import { useSite } from "./site-context";
-
-/** What a link-in-bio page needs before it is worth sharing: something to tap, a face, a line about you. */
-const ESSENTIALS = new Set<HomeTask["key"]>(["links", "photo", "bio"]);
 
 /**
  * Home answers one question: what is my next step to get visitors? While the page is being built,
  * that step is the one primary action. Once the essentials are there, sharing the link is, with the
  * remaining steps as quiet rows. Sample stats appear only then: an empty page has nothing to count.
+ * Which steps are done, and when the page counts as ready, comes from `homeProgress` (the section
+ * panel reads it too, so it lists exactly the parts shown here).
  */
 export function HomeScreen() {
   const t = useTranslations("app.home");
+  const tInvite = useTranslations("app.invite");
   const router = useRouter();
   const { doc, site, account, setAddOpen, edit } = useSite();
   const [profileOpen, setProfileOpen] = useState(false);
   const name = doc.profile.displayName;
 
-  const contentBlocks = doc.blocks.filter((block) => block.type !== "header" && block.type !== "divider");
-  // Content first: a page without links has nothing to tap.
+  const isDone = homeTasksDone(doc, site);
+  // Content first: a page without links has nothing to tap (the order of HOME_TASKS).
   const tasks: HomeTask[] = [
-    { key: "links", icon: Plus, done: contentBlocks.length >= 3, run: () => setAddOpen(true) },
-    { key: "photo", icon: ImagePlus, done: hasImage(doc.profile.avatar) || hasImage(doc.profile.hero), run: () => setProfileOpen(true) },
-    { key: "bio", icon: TextQuote, done: doc.profile.bio.trim().length > 0, run: () => setProfileOpen(true) },
+    { key: "links", icon: Plus, done: isDone.links, run: () => setAddOpen(true) },
+    { key: "photo", icon: ImagePlus, done: isDone.photo, run: () => setProfileOpen(true) },
+    { key: "bio", icon: TextQuote, done: isDone.bio, run: () => setProfileOpen(true) },
     {
       key: "socials",
       icon: AtSign,
-      done: doc.blocks.some((block) => block.type === "socials" && block.items.some((item) => item.url)),
+      done: isDone.socials,
       run: () => {
         const existing = doc.blocks.find((block) => block.type === "socials");
         edit(existing ? { mode: "edit", id: existing.id } : { mode: "create", block: blankBlock("socials", { artist: name, newsletter: "" }), index: 0 });
       },
     },
-    { key: "look", icon: Palette, done: Object.keys(doc.theme).some((key) => key !== "template") || doc.theme.template !== "nocturne", run: () => router.push("/app/design") },
-    { key: "legal", icon: Scale, done: legalStatus(site.legal) === "complete", run: () => router.push("/app/settings/legal") },
+    { key: "look", icon: Palette, done: isDone.look, run: () => router.push("/app/design") },
+    { key: "legal", icon: Scale, done: isDone.legal, run: () => router.push("/app/settings/legal") },
   ];
-  const done = tasks.filter((task) => task.done).length;
-  const complete = done === tasks.length;
-  const ready = tasks.every((task) => task.done || !ESSENTIALS.has(task.key));
+  const { ready, complete, done, total } = homeProgress(doc, site);
   const open = tasks.filter((task) => !task.done);
 
-  const lead = complete ? t("leadComplete") : ready ? t("leadReady") : t("leadProgress", { done, total: tasks.length });
+  const lead = complete ? t("leadComplete") : ready ? t("leadReady") : t("leadProgress", { done, total });
 
   return (
     <Screen title={t("title", { name })} lead={lead} preview>
@@ -106,7 +105,8 @@ export function HomeScreen() {
       {ready && !complete ? (
         <ListGroup
           title={t("open.title")}
-          trailing={<span className="text-caption tabular-nums text-fg-secondary">{t("checklist.progress", { done, total: tasks.length })}</span>}
+          titleId={NAV_ANCHORS.homeTodo}
+          trailing={<span className="text-caption tabular-nums text-fg-secondary">{t("checklist.progress", { done, total })}</span>}
         >
           {open.map((task) => (
             <TaskRow key={task.key} task={task} />
@@ -114,6 +114,18 @@ export function HomeScreen() {
         </ListGroup>
       ) : null}
       {ready ? <WeekStats /> : null}
+      {/* Once the page is worth sharing, the invite program (the rail's Invite on wide screens). The
+          subtitle names the rewards, never a count: no request, no numbers to load. */}
+      {ready ? (
+        <ListGroup>
+          <ListRow
+            icon={Gift}
+            title={tInvite("title")}
+            subtitle={t("inviteSubtitle", { verify: REFERRAL_RULES.verificationAt, pro: REFERRAL_RULES.proForLifeAt })}
+            href={INVITE_HREF}
+          />
+        </ListGroup>
+      ) : null}
 
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </Screen>
@@ -132,7 +144,7 @@ function WeekStats() {
   const weekday = (iso: string) => new Intl.DateTimeFormat(locale, { weekday: "narrow", timeZone: "UTC" }).format(new Date(iso));
 
   return (
-    <Panel title={t("stats.title")} id="stats-title" action={<Badge size="sm">{t("stats.sample")}</Badge>}>
+    <Panel title={t("stats.title")} id={NAV_ANCHORS.homeWeek} action={<Badge size="sm">{t("stats.sample")}</Badge>}>
       <dl className="grid grid-cols-3">
         {[
           { key: "views", value: number(week.views) },

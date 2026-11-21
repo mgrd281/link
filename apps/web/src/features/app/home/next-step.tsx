@@ -3,12 +3,14 @@
 import { Button, Icon } from "@linkyo/ui";
 import { Check, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useId, type CSSProperties } from "react";
 
 import { Disclosure } from "../disclosure";
 import { ListRow } from "../list";
+import { ProgressBar } from "../progress-bar";
+import { NAV_ANCHORS } from "../routes";
+import type { HomeTaskKey } from "./progress";
 
-export type HomeTaskKey = "links" | "photo" | "bio" | "socials" | "look" | "legal";
+export type { HomeTaskKey } from "./progress";
 
 /** One step to a finished page; `run` opens the place that completes it. */
 export interface HomeTask {
@@ -43,7 +45,6 @@ export function TaskRow({ task }: { task: HomeTask }) {
  */
 export function NextStep({ tasks }: { tasks: readonly HomeTask[] }) {
   const t = useTranslations("app.home");
-  const eyebrowId = useId();
   const open = tasks.filter((task) => !task.done);
   const finished = tasks.filter((task) => task.done);
   const [step, ...later] = open;
@@ -51,9 +52,10 @@ export function NextStep({ tasks }: { tasks: readonly HomeTask[] }) {
   const progress = t("checklist.progress", { done: finished.length, total: tasks.length });
 
   return (
-    <section aria-labelledby={eyebrowId} className="grid grid-cols-1 gap-4 rounded-lg bg-group p-4 lg:border lg:border-line lg:p-6">
+    <section aria-labelledby={NAV_ANCHORS.homeNext} className="grid grid-cols-1 gap-4 rounded-lg bg-group p-4 lg:border lg:border-line lg:p-6">
       <div className="flex items-baseline justify-between gap-3">
-        <p id={eyebrowId} className="text-caption font-semibold text-fg-secondary">
+        {/* A jump target of the section panel: focusable by script, no ring of its own. */}
+        <p id={NAV_ANCHORS.homeNext} tabIndex={-1} className="text-caption font-semibold text-fg-secondary outline-none">
           {t("next.eyebrow")}
         </p>
         {/* The bar below says the same to screen readers. */}
@@ -61,20 +63,7 @@ export function NextStep({ tasks }: { tasks: readonly HomeTask[] }) {
           {progress}
         </p>
       </div>
-      <div
-        role="progressbar"
-        aria-label={t("checklist.title")}
-        aria-valuemin={0}
-        aria-valuemax={tasks.length}
-        aria-valuenow={finished.length}
-        aria-valuetext={progress}
-        className="h-1 overflow-hidden rounded-full bg-tinted"
-      >
-        <div
-          className="h-full w-(--w) rounded-full bg-link transition-[width] duration-standard ease-emphasized motion-reduce:transition-none"
-          style={{ "--w": `${(finished.length / tasks.length) * 100}%` } as CSSProperties}
-        />
-      </div>
+      <ProgressBar value={finished.length} max={tasks.length} label={t("checklist.title")} valueText={progress} />
 
       <div className="flex items-start gap-4">
         <span className="grid size-control-lg shrink-0 place-items-center rounded-md bg-tinted text-tinted-fg">

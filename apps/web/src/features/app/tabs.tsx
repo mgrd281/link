@@ -36,6 +36,8 @@ export function Tabs<T extends string>({ label, value, onValueChange, tabs, chil
           <TabsPrimitive.Trigger
             key={tab.value}
             value={tab.value}
+            // The dashboard's section panel finds a tab by its value to focus it (Design's ?tab=).
+            data-tab={tab.value}
             // Radix focuses a pressed tab from script, which makes browsers draw the keyboard focus ring
             // for a mouse click. Select and focus it here instead, without the ring (the keyboard keeps it).
             onMouseDown={(event) => {

@@ -125,13 +125,13 @@ async function legalDraft(page: Page, name: string) {
 
 /** The Settings row that opens the profile; it shows the page's name. */
 const profileRow = (page: Page) =>
-  page
+  page.locator("#main")
     .getByRole("listitem")
     .filter({ has: page.getByText("Profile", { exact: true }) })
     .getByRole("button");
 /** The Settings row that opens the legal notice (the shell's "not saved" status links there too). */
 const legalRow = (page: Page) =>
-  page
+  page.locator("#main")
     .getByRole("listitem")
     .filter({ has: page.getByText("Legal notice", { exact: true }) })
     .getByRole("link");

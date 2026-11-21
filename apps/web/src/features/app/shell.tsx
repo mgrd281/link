@@ -2,25 +2,25 @@
 
 import { hasImage } from "@linkyo/blocks";
 import { tokens } from "@linkyo/tokens";
-import { Avatar, Button, cn, Icon, initialsOf, Logo, Spinner } from "@linkyo/ui";
-import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, LayoutList, Palette, Plus, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Avatar, cn, Icon, initialsOf, Spinner } from "@linkyo/ui";
+import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, LayoutList, Palette, Plus, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { haptic } from "@/lib/haptics";
-import { accountStore } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 
 import { AddSheet } from "./add-sheet";
 import { useHasUnsavedDraft } from "./drafts";
 import { EditSheet } from "./edit-sheet";
-import { isSettingsPath, LAST_APP_PATH_KEY, ORIGIN_TAB_KEY, routeInfo, SETTINGS_HREF, TAB_HREF, TABS, type TabKey } from "./routes";
+import { modified, NavRail, SectionPanel } from "./nav";
+import { LAST_APP_PATH_KEY, ORIGIN_TAB_KEY, routeInfo, SETTINGS_HREF, TAB_HREF, TABS, type TabKey } from "./routes";
 import { BackLink, ShellBackContext, ShellChromeContext } from "./screen";
 import { useSite } from "./site-context";
 import { useScrolled } from "./use-scrolled";
 
-/** The four places; Settings sits apart (the sidebar's foot, the avatar on phones). */
+/** The four tabs of the phone tab bar (Add sits in the middle; Settings is the avatar in the top bar). */
 const NAV: readonly { key: TabKey; icon: LucideIcon }[] = [
   { key: "home", icon: House },
   { key: "page", icon: LayoutList },
@@ -36,9 +36,6 @@ const LEGAL_HREF = "/app/settings/legal";
  * changes the history's length, so a length that stays the same no longer means "replaced".
  */
 const HISTORY_CAP = 50;
-
-/** A click that opens a new tab or window, which leaves this page as it is. */
-const modified = (event: MouseEvent) => event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
 
 export function ProfileAvatar({ size = "md", className }: { size?: "sm" | "md" | "lg" | "xl"; className?: string }) {
   const { doc } = useSite();
@@ -76,13 +73,19 @@ function useShownSave(): ShownSave {
 /**
  * "Saved" / "Saving…" / "Not saved" / "Legal notice not saved", announced politely. The status
  * element always holds the text it shows, so quick saves change nothing and nothing is read out.
- * The sidebar form shows glyph and text. The compact form (phone top bar) shows a glyph only when
- * there is something to see: a lone green tick beside the avatar read as a "verified" badge.
+ *
+ * - `panel` (the section panel's foot): an inline glyph and text that wraps, never truncated.
+ * - `compact` (the phone top bar, and the rail while the panel is folded): a glyph only when there is
+ *   something to see; a lone green tick beside the avatar read as a "verified" badge.
+ *
+ * Only one of them is visible at any width (phone bar `lg:hidden`, panel `nav-folded:hidden`, rail
+ * `hidden nav-folded:contents`), so only one live region speaks.
  */
-export function SaveStatus({ compact = false }: { compact?: boolean }) {
+export function SaveStatus({ layout }: { layout: "compact" | "panel" }) {
   const t = useTranslations("app.save");
   const shown = useShownSave();
   const text = t(shown);
+  const compact = layout === "compact";
   const glyph =
     shown === "saving" ? (
       <Spinner className={compact ? "size-icon-md" : "size-icon-sm"} />
@@ -96,7 +99,7 @@ export function SaveStatus({ compact = false }: { compact?: boolean }) {
 
   if (compact) {
     return (
-      // In the top bar the glyph sits in a 44 px slot, so it lines up with the buttons beside it.
+      // The glyph sits in a 44 px slot, so it lines up with the buttons beside it (or the rail's icons).
       <p role="status" className={shown === "saved" ? "sr-only" : "grid size-touch-target place-items-center"}>
         {shown === "saved" ? (
           text
@@ -118,21 +121,22 @@ export function SaveStatus({ compact = false }: { compact?: boolean }) {
     );
   }
 
+  // The panel is 144 px of text wide: "Impressum nicht gespeichert" wraps to a second line, and the
+  // glyph stays with the first.
   const content = (
     <>
-      {/* The glyph takes the 32 px slot of the nav icons, so the text starts where theirs does. */}
-      <span className="grid size-8 shrink-0 place-items-center">{glyph}</span>
-      <span className="truncate">{text}</span>
+      {glyph}
+      <span className="min-w-0">{text}</span>
     </>
   );
   return (
-    <p role="status" className={cn("flex min-w-0 items-center", shown === "error" && "text-danger-strong")}>
+    <p role="status" className={cn("flex min-w-0 items-start", shown === "error" && "text-danger-strong")}>
       {shown === "unsavedLegal" ? (
-        <Link href={LEGAL_HREF} className="flex min-w-0 items-center gap-3 rounded-sm font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring">
+        <Link href={LEGAL_HREF} className="flex min-w-0 items-start gap-2 rounded-sm font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring">
           {content}
         </Link>
       ) : (
-        <span className="flex min-w-0 items-center gap-3">{content}</span>
+        <span className="flex min-w-0 items-start gap-2">{content}</span>
       )}
     </p>
   );
@@ -215,8 +219,9 @@ function remember(key: string, value: string) {
 /**
  * The dashboard frame, one structure on every width.
  *
- * - Wide screens: a white sidebar (logo, the page card that opens "View my page", Add, the four
- *   places, then Team area, Settings and the save status at its foot).
+ * - Wide screens (ADR 0063): an icon rail (the symbol, Add, the places, Team area and Settings, then
+ *   View my page and the fold toggle) and the section panel with the current place's parts and the
+ *   save status. Rail + panel are the former 248 px sidebar; folded, only the 64 px rail stays.
  * - Phones: an iOS-style top bar (avatar → Settings, or "‹ back" on pushed screens; the screen's name
  *   once its title scrolls away; save state; the page) and a bottom tab bar with a labelled Add in
  *   the middle, within thumb reach.
@@ -228,24 +233,28 @@ export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations("app");
   const pathname = usePathname();
   const router = useRouter();
-  const { doc, account, setAddOpen, edit, previewHref } = useSite();
+  const { doc, account, setAddOpen, edit } = useSite();
   // Linkyo team members also see the way into the team area.
   const onTeam = useOnTeam(account.email);
   const info = routeInfo(pathname);
-  const inSettings = isSettingsPath(pathname);
+  // Settings, its panes and Invite are pushed over a tab (phones): that tab stays marked meanwhile.
+  const pushedScreen = info.tab === null;
   const titleAway = useTitleScrolledAway(pathname);
   const scrolled = useScrolled();
   const lastMoveWasHistory = useSyncExternalStore(subscribeHistory, readLastMove, () => false);
 
   // Bookkeeping for a new path, done while rendering so the new screen sees it on its first render:
   // whether the user has moved inside the app (pushed panes animate only then) and how.
-  const [route, setRoute] = useState({ path: pathname, navigated: false, pop: false });
+  const [route, setRoute] = useState({ path: pathname, navigated: false, pop: false, fromNav: false });
   // The place just tapped shows as selected at once, before its screen has loaded.
   const [pending, setPending] = useState<string | null>(null);
   // The tab Settings was opened from: it stays marked under Settings, and "‹ back" names it.
   const [origin, setOrigin] = useState<TabKey>(readOriginTab);
   if (route.path !== pathname) {
-    setRoute({ path: pathname, navigated: true, pop: lastMoveWasHistory });
+    // A move to the route just tapped in the chrome (rail, panel, tab bar) is a nav move: its item
+    // stays where it is with focus, so the new screen does not slide in or take focus. Read before
+    // `pending` is cleared.
+    setRoute({ path: pathname, navigated: true, pop: lastMoveWasHistory, fromNav: pending === pathname });
     setPending(null);
   }
   if (info.tab && info.tab !== origin) setOrigin(info.tab);
@@ -356,17 +365,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [unsaved]);
 
-  const chrome = useMemo(() => ({ navigated: route.navigated, pop: route.pop }), [route.navigated, route.pop]);
+  const chrome = useMemo(() => ({ navigated: route.navigated, pop: route.pop, fromNav: route.fromNav }), [route.navigated, route.pop, route.fromNav]);
 
   const photo = hasImage(doc.profile.avatar);
   const initials = initialsOf(doc.profile.displayName);
   // Without a photo the avatar shows the initials, so its name contains them too: a voice control user
   // can say what they see (WCAG 2.5.3). A name without letters shows a person glyph and no initials.
   const avatarName = !photo && initials ? t("settingsButtonInitials", { initials }) : t("settingsButton");
-  const currentHref = inSettings ? SETTINGS_HREF : info.tab ? TAB_HREF[info.tab] : null;
-  const selectedHref = pending ?? currentHref;
   const pendingTab = NAV.find((item) => TAB_HREF[item.key] === pending)?.key;
-  const selectedTab = pendingTab ?? info.tab ?? (inSettings ? origin : null);
+  const selectedTab = pendingTab ?? info.tab ?? (pushedScreen ? origin : null);
   const backTarget = info.parent === "origin" ? { href: TAB_HREF[origin], label: t(`nav.${origin}`) } : info.parent ? { href: info.parent, label: t("nav.settings") } : null;
 
   return (
@@ -381,53 +388,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             {t("skip")}
           </a>
 
-          {/* Wide screens. A plain box, not an <aside>: it holds the main navigation, which is named. */}
-          <div className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-e border-line bg-surface px-3 pb-3 lg:flex">
-            {/* The logo is a picture here, not a link: "Start" is the first row (one name, one place). */}
-            <div className="flex h-16 shrink-0 items-center ps-3">
-              <Logo className="h-6" title="Linkyo" tone="mono" />
-            </div>
-            <Link
-              href={previewHref}
-              className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-2 transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
-            >
-              <span className="sr-only">{t("viewPage")}: </span>
-              <ProfileAvatar size="sm" />
-              <span className="grid min-w-0">
-                <span className="truncate text-small font-semibold">
-                  <bdi>{doc.profile.displayName}</bdi>
-                </span>
-                {/* An address reads left to right in every language; in Arabic it still hugs the avatar. */}
-                <span dir="ltr" className="truncate text-caption text-fg-tertiary rtl:text-right">
-                  linkyo.app/{account.username}
-                </span>
-              </span>
-              <Icon icon={Eye} size="sm" className="text-fg-tertiary" />
-            </Link>
-            <Button variant="tinted" size="md" block icon={Plus} className="mt-2" onClick={() => setAddOpen(true)}>
-              {t("nav.add")}
-            </Button>
-            <nav aria-label={t("nav.label")} className="mt-4 grid grid-cols-1 gap-0.5">
-              {NAV.map((item) => (
-                <NavRow
-                  key={item.key}
-                  href={TAB_HREF[item.key]}
-                  icon={item.icon}
-                  label={t(`nav.${item.key}`)}
-                  current={info.tab === item.key && !inSettings}
-                  selected={selectedHref === TAB_HREF[item.key]}
-                  onNavigate={setPending}
-                />
-              ))}
-            </nav>
-            <div className="mt-auto grid grid-cols-1 gap-0.5 border-t border-line pt-3">
-              {onTeam ? <NavRow href="/admin" icon={ShieldCheck} label={t("teamArea")} current={false} selected={pending === "/admin"} onNavigate={setPending} /> : null}
-              <NavRow href={SETTINGS_HREF} icon={Settings} label={t("nav.settings")} current={inSettings} selected={selectedHref === SETTINGS_HREF} onNavigate={setPending} />
-              <div className="flex h-control-sm min-w-0 items-center gap-1 px-3 text-caption text-fg-tertiary">
-                <SaveStatus />
-                {accountStore.demo ? <span className="shrink-0">· {t("demo")}</span> : null}
-              </div>
-            </div>
+          {/* Wide screens: the rail and the section panel. A plain box, not an <aside>: it holds the
+              main navigation, which is named. The panel's width is CSS only (nav-folded:), set before
+              paint, so the frame never shifts. */}
+          <div data-nav className="sticky top-0 hidden h-dvh shrink-0 lg:flex">
+            <NavRail pathname={pathname} pending={pending} onNavigate={setPending} onTeam={onTeam} status={<SaveStatus layout="compact" />} />
+            <SectionPanel pathname={pathname} pending={pending} onNavigate={setPending} status={<SaveStatus layout="panel" />} />
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col">
@@ -458,7 +424,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {t(info.title)}
               </p>
               <div className="flex items-center justify-self-end">
-                <SaveStatus compact />
+                <SaveStatus layout="compact" />
                 <Link
                   href="/app/preview"
                   aria-label={t("viewPage")}
@@ -485,7 +451,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   item={item}
                   label={t(`nav.${item.key}`)}
                   current={info.tab === item.key}
-                  origin={inSettings && origin === item.key}
+                  origin={pushedScreen && origin === item.key}
                   pending={pendingTab === item.key}
                   selected={selectedTab === item.key}
                   onLeave={(href) => {
@@ -517,7 +483,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   item={item}
                   label={t(`nav.${item.key}`)}
                   current={info.tab === item.key}
-                  origin={inSettings && origin === item.key}
+                  origin={pushedScreen && origin === item.key}
                   pending={pendingTab === item.key}
                   selected={selectedTab === item.key}
                   onLeave={(href) => {
@@ -538,46 +504,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 /**
- * A sidebar row. `current` is the page you are on (announced); `selected` is what shows as chosen,
- * which moves to a tapped row at once, before its screen has loaded.
- */
-function NavRow({
-  href,
-  icon,
-  label,
-  current,
-  selected,
-  onNavigate,
-}: {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  current: boolean;
-  selected: boolean;
-  onNavigate: (href: string) => void;
-}) {
-  return (
-    <Link
-      href={href}
-      aria-current={current ? "page" : undefined}
-      data-selected={selected ? "" : undefined}
-      onClick={(event) => {
-        if (!current && !modified(event)) onNavigate(href);
-      }}
-      className="flex h-control-md items-center gap-3 rounded-sm px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring data-[selected]:bg-selected data-[selected]:font-semibold data-[selected]:text-selected-fg forced-colors:aria-[current=page]:outline"
-    >
-      <span className="grid size-8 shrink-0 place-items-center">
-        <Icon icon={icon} size="sm" />
-      </span>
-      <span className="truncate">{label}</span>
-    </Link>
-  );
-}
-
-/**
- * A tab. As on iOS, the chosen tab is marked by the tint alone (no pill behind it). Under Settings
- * the tab it was opened from stays marked (`data-origin`), without claiming to be the current page.
- * Tapping the current tab again scrolls its screen back to the top.
+ * A tab. As on iOS, the chosen tab is marked by the tint alone (no pill behind it). Under a pushed
+ * screen (Settings, its panes, Invite) the tab it was opened from stays marked (`data-origin`),
+ * without claiming to be the current page. Tapping the current tab again scrolls its screen back to
+ * the top.
  */
 function TabLink({
   item,

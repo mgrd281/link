@@ -4,6 +4,7 @@ import { creatorTokens, type CreatorButtonShape, type CreatorButtonStyle, type C
 import { BUTTON_SHAPES, BUTTON_STYLES, PAIRING_IDS, resolveCreatorTheme, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { Button, cn, Icon, Segmented, toast } from "@linkyo/ui";
 import { Check, Moon, PaintBucket, RotateCcw, Sun, SwatchBook } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { startTransition, useId, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 
@@ -12,7 +13,9 @@ import { linkStyleClasses } from "@/features/creator/link-button";
 import { displayStyle } from "@/features/directions/poster/styles";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
 
+import { setDesignTabUrl } from "./jump";
 import { PhonePreview, PreviewButton } from "./preview";
+import { DESIGN_TABS, designTabFrom, NAV_ANCHORS, type DesignTab } from "./routes";
 import { Panel, Screen, UndoRedo, useShellChrome } from "./screen";
 import { useSite } from "./site-context";
 import { Tabs } from "./tabs";
@@ -27,10 +30,6 @@ type SwatchName = (typeof NAMED)[number];
 const SWATCHES = NAMED.map((name) => ({ name, hex: creatorTokens.swatches[name].toUpperCase() }));
 
 type Mode = "light" | "dark" | "vivid";
-
-/** The groups of "Customize", one tab each. The background lives with the color. */
-const GROUPS = ["color", "fonts", "buttons"] as const;
-type Group = (typeof GROUPS)[number];
 
 /** One color chip: a native radio (arrow keys, screen readers) drawn as a disc, with a mark when chosen. */
 function Swatch({ name, hex, checked, label, onChange }: { name: string; hex: string; checked: boolean; label: string; onChange: () => void }) {
@@ -85,7 +84,13 @@ export function DesignScreen() {
   // From the desk breakpoint the shell shows the page in its own column; below it a small copy stays
   // in sight under the bar. Only the one that shows is mounted, so the page is not rendered twice.
   const desk = useMediaQuery(DESK_QUERY);
-  const [group, setGroup] = useState<Group>("color");
+  // "Customize" has three tabs (DESIGN_TABS; the background lives with the color). In the dashboard the
+  // tab is in the URL (`?tab=`), so the section panel can open one and a reload keeps it. The team
+  // area's creator view keeps it in local state and never writes the URL.
+  const params = useSearchParams();
+  const [localGroup, setLocalGroup] = useState<DesignTab>("color");
+  const group = inShell ? designTabFrom(params.get("tab")) : localGroup;
+  const setGroup = inShell ? setDesignTabUrl : setLocalGroup;
   const theme = doc.theme;
   const rtlScript = doc.profile.locale === "ar";
   const resolved = useMemo(() => resolveCreatorTheme(theme, { rtlScript }), [theme, rtlScript]);
@@ -248,12 +253,13 @@ export function DesignScreen() {
         </div>
       )}
 
-      <Panel title={t("template")} id={`${id}-template`}>
+      {/* Stable ids: the section panel jumps to these titles. */}
+      <Panel title={t("template")} id={NAV_ANCHORS.designTemplate}>
         <TemplatePicker still value={theme.template} profile={doc.profile} onChange={pickTemplate} />
       </Panel>
 
-      <Panel title={t("customize")} id={`${id}-customize`}>
-        <Tabs<Group> label={t("tabsLabel")} value={group} onValueChange={setGroup} tabs={GROUPS.map((value) => ({ value, label: t(`tabs.${value}`) }))}>
+      <Panel title={t("customize")} id={NAV_ANCHORS.designCustomize}>
+        <Tabs<DesignTab> label={t("tabsLabel")} value={group} onValueChange={setGroup} tabs={DESIGN_TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))}>
           {(active) => (active === "color" ? color() : active === "fonts" ? fonts() : buttons())}
         </Tabs>
         {customized ? (
