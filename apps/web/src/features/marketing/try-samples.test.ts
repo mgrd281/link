@@ -33,7 +33,7 @@ describe("playground samples", () => {
     for (const sample of PERSONA.links) expect(EXAMPLES.some((example) => example.id === sample)).toBe(true);
     expect(socialProfile(EXAMPLES[0]?.url ?? "", ["instagram"])).toEqual({ platform: "instagram", handle: "louferreira" });
     expect(socialProfile(EXAMPLES.find((example) => example.id === "tiktok")?.url ?? "", ["tiktok"])).toEqual({ platform: "tiktok", handle: "louferreira" });
-    expect(TRY_LOOKS.map((look) => look.config.template)).toEqual(["nocturne", "studio", "aura", "bloom", "mono"]);
+    expect(TRY_LOOKS.map((look) => look.config.template)).toEqual(["mono", "nocturne", "studio", "aura", "bloom"]);
     expect(TRY_LOOKS.some((look) => look.id === PERSONA.look)).toBe(true);
   });
 });
