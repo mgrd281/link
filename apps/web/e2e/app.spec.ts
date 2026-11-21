@@ -494,7 +494,7 @@ test.describe("dashboard structure", () => {
   test("with reduced motion nothing in the dashboard loops", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await signedIn(page);
-    for (const path of ["", "/editor", "/design", "/settings"]) {
+    for (const path of ["", "/editor", "/design", "/settings", "/invite"]) {
       await page.goto(`/en/app${path}`);
       await page.locator("#main").waitFor();
       const loops = await page.evaluate(() => document.getAnimations().filter((animation) => animation.effect?.getComputedTiming().iterations === Infinity).length);
@@ -512,7 +512,7 @@ test.describe("accessibility", () => {
         expect(await axe(page)).toEqual([]);
         await page.getByRole("button", { name: locale === "ar" ? "لاحقًا" : "Skip for now" }).click();
         await page.waitForURL(`**/${locale}/app`);
-        for (const path of ["", "/editor", "/design", "/analytics", "/settings", "/settings/account", "/settings/address", "/settings/legal", "/preview"]) {
+        for (const path of ["", "/editor", "/design", "/analytics", "/settings", "/settings/account", "/settings/address", "/settings/legal", "/invite", "/preview"]) {
           await page.goto(`/${locale}/app${path}`);
           await page.locator("#main, .poster-scope").first().waitFor();
           expect(await axe(page), `/${locale}/app${path}`).toEqual([]);
