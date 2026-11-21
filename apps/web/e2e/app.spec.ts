@@ -447,7 +447,8 @@ test.describe("accessibility", () => {
         await addButton(page).or(page.getByRole("button", { name: "إضافة", exact: true }).first()).first().click();
         await page.getByRole("dialog").waitFor();
         expect(await axe(page), "add sheet").toEqual([]);
-        await page.getByRole("dialog").locator("ul button").nth(4).click(); // Video
+        // By type, not by position: the tiles' order follows the kind of page.
+        await page.getByRole("dialog").locator('[data-type="video"]').click();
         await page.getByRole("dialog").waitFor();
         expect(await axe(page), "edit sheet").toEqual([]);
       });

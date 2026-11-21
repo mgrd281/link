@@ -2,14 +2,16 @@
 
 import type { Block, Page } from "@linkyo/blocks";
 import { toast } from "@linkyo/ui";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 
 import { accountStore, useAccount, useSignedIn } from "@/features/account/store";
 import type { Account, AuthError, Result, Site } from "@/features/account/types";
 import { editorReducer, initialEditorState, type EditorAction, type EditorDoc, type EditorState } from "@/features/directions/editor/state";
 import { blockTitle } from "@/features/directions/editor/use-editor";
+import { isRtl } from "@/i18n/routing";
 
+import { insertAt } from "./blocks";
 import { fetchLinkMetadata, metadataPatch, metadataUrl } from "./metadata";
 
 type Profile = Page["profile"];
@@ -19,11 +21,39 @@ export interface SiteDoc extends EditorDoc {
   profile: Profile;
 }
 
-export type SiteAction = EditorAction | { type: "profile"; patch: Partial<Profile> } | { type: "replace"; doc: SiteDoc };
+export type SiteAction =
+  | EditorAction
+  | { type: "profile"; patch: Partial<Profile> }
+  | { type: "replace"; doc: SiteDoc }
+  /** Several blocks at once (a pasted list of links): one step in the history, so one undo takes them all back. */
+  | { type: "addMany"; blocks: Block[]; index: number }
+  /** Takes several blocks off the page in one step (the Undo of an `addMany`). */
+  | { type: "removeIds"; ids: string[] };
 
 const HISTORY_LIMIT = 50;
 
+/** One more step in the history: what was there before goes into `past`, and redo starts over. */
+const step = (state: EditorState<SiteDoc>, present: SiteDoc, selectedId = state.selectedId): EditorState<SiteDoc> => ({
+  past: [...state.past, state.present].slice(-HISTORY_LIMIT),
+  present,
+  future: [],
+  selectedId,
+});
+
 export function siteReducer(state: EditorState<SiteDoc>, action: SiteAction): EditorState<SiteDoc> {
+  if (action.type === "addMany") {
+    const first = action.blocks[0];
+    if (!first) return state;
+    // The same insert as a single "add", block after block, but written to the history only once.
+    const present = action.blocks.reduce((doc, block, i) => editorReducer({ ...state, present: doc }, { type: "add", block, index: action.index + i }).present, state.present);
+    return step(state, present, first.id);
+  }
+  if (action.type === "removeIds") {
+    const ids = new Set(action.ids);
+    const blocks = state.present.blocks.filter((block) => !ids.has(block.id));
+    if (blocks.length === state.present.blocks.length) return state;
+    return step(state, { ...state.present, blocks }, state.selectedId !== null && ids.has(state.selectedId) ? null : state.selectedId);
+  }
   if (action.type === "replace") {
     // Importing a page is one step in the history, so it can be undone like any edit.
     return { ...state, past: [...state.past, state.present].slice(-HISTORY_LIMIT), present: action.doc, future: [], selectedId: null };
@@ -57,11 +87,18 @@ interface SiteContextValue {
   /** Live draft of the profile form (name, bio, photos), shown in the preview before saving. */
   setProfileDraft: (profile: Profile | null) => void;
   addOpen: boolean;
-  setAddOpen: (open: boolean) => void;
-  addBlocks: (blocks: Block[], options?: { open?: boolean }) => void;
+  /** Opens the Add sheet; with `index`, what is added goes there (the row menu's "Add below"). */
+  setAddOpen: (open: boolean, index?: number) => void;
+  /** Where the open Add sheet puts new blocks; undefined means the usual place (see `insertAt`). */
+  addIndex: number | undefined;
+  addBlocks: (blocks: Block[], options?: { open?: boolean; index?: number | undefined }) => void;
   /** Fills in title and picture of freshly added songs and videos from their platform. */
   enrich: (blocks: Block[]) => void;
   removeBlock: (block: Block) => void;
+  /** The block added last (pasted, picked or restored), until the next change: the editor marks and shows it. */
+  justAdded: string | null;
+  /** Reads a short message out to screen readers (a move, a duplicate, undo and redo). */
+  announce: (text: string) => void;
   label: (block: Block) => string;
   /** Where "open the page" goes: the creator's own page, or a prepared page in the team area. */
   previewHref: string;
@@ -78,6 +115,17 @@ export function useSite(): SiteContextValue {
 }
 
 const AUTOSAVE_DELAY = 400;
+
+/** Letters of right-to-left scripts (Hebrew, Arabic and their extensions and presentation forms). */
+const RTL_LETTER = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+
+/**
+ * A creator's text inside one of our sentences, wrapped in first-strong isolates (FSI … PDI) wherever
+ * its direction can differ from the sentence. Otherwise "Big Buck Bunny – Short Film" in an Arabic
+ * toast drags the quotation marks to the wrong side and splits the title. Latin text in a German or
+ * English sentence needs nothing, so it stays exactly as typed.
+ */
+const isolate = (text: string, rtl: boolean): string => (rtl || RTL_LETTER.test(text) ? `\u2068${text}\u2069` : text);
 
 const toDoc = (site: Site): SiteDoc => ({ profile: site.page.profile, blocks: site.page.blocks, sizes: {}, theme: site.theme });
 
@@ -119,11 +167,12 @@ export function EditorProvider({
 }) {
   const t = useTranslations("app");
   const tTypes = useTranslations("dashboard.types");
+  const rtl = isRtl(useLocale());
   const writeRef = useRef(write);
   useEffect(() => {
     writeRef.current = write;
   }, [write]);
-  const [state, dispatch] = useReducer(siteReducer, site, (initial) => initialEditorState(toDoc(initial)));
+  const [state, reduce] = useReducer(siteReducer, site, (initial) => initialEditorState(toDoc(initial)));
   const doc = state.present;
   const [saved, setSaved] = useState<{ doc: SiteDoc; error: AuthError | null }>({ doc, error: null });
   // Real accounts: the store saves to the server in the background and reports how that went.
@@ -132,7 +181,37 @@ export function EditorProvider({
   const [editing, setEditing] = useState<Editing>(null);
   const [draft, setDraft] = useState<Block | null>(null);
   const [profileDraft, setProfileDraft] = useState<Profile | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
+  const [add, setAdd] = useState<{ open: boolean; index?: number | undefined }>({ open: false });
+  // Closing forgets the chosen place, so the next Add from the tab bar goes to the usual one.
+  const setAddOpen = useCallback((open: boolean, index?: number) => setAdd(open ? { open, index } : { open: false }), []);
+  const [justAdded, setJustAdded] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  // The same words twice in a row are still read out: a trailing no-break space makes them new.
+  const announce = useCallback((text: string) => setAnnouncement((current) => (current === text ? `${text}\u00a0` : text)), []);
+
+  // How much there is to undo and redo, so "Undone" is never announced when nothing changed.
+  const history = useRef({ past: 0, future: 0 });
+  useEffect(() => {
+    history.current = { past: state.past.length, future: state.future.length };
+  }, [state.past.length, state.future.length]);
+
+  /**
+   * Every change goes through here, wherever it comes from (a button, ⌘Z, the edit sheet, a toast).
+   * It remembers the block that was just added, so the editor can mark it and scroll to it, and it
+   * tells screen readers when something was undone or redone (otherwise the page changes silently).
+   */
+  const dispatch = useCallback(
+    (action: SiteAction) => {
+      if (action.type === "undo" && history.current.past > 0) announce(t("editor.undone"));
+      if (action.type === "redo" && history.current.future > 0) announce(t("editor.redone"));
+      reduce(action);
+      // Details filled in later (enrich) belong to the same addition; any other change ends it.
+      if (action.type === "add") setJustAdded(action.block.id);
+      else if (action.type === "addMany") setJustAdded(action.blocks[0]?.id ?? null);
+      else if (action.type !== "enrich") setJustAdded(null);
+    },
+    [announce, t],
+  );
 
   // Autosave: write the document shortly after the last change (the address always comes from the account).
   const pending = useRef<SiteDoc | null>(null);
@@ -195,7 +274,7 @@ export function EditorProvider({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [dispatch]);
 
   const label = useCallback((block: Block) => blockTitle(block, (type) => tTypes(type)), [tTypes]);
 
@@ -204,40 +283,56 @@ export function EditorProvider({
   useEffect(() => {
     docRef.current = doc;
   }, [doc]);
-  const enrich = useCallback((blocks: Block[]) => {
-    for (const added of blocks) {
-      const url = metadataUrl(added);
-      if (!url) continue;
-      void fetchLinkMetadata(url).then((meta) => {
-        const current = docRef.current.blocks.find((block) => block.id === added.id);
-        const patch = meta && current ? metadataPatch(current, added, meta) : null;
-        if (patch) dispatch({ type: "enrich", id: added.id, patch });
-      });
-    }
-  }, []);
+  const enrich = useCallback(
+    (blocks: Block[]) => {
+      for (const added of blocks) {
+        const url = metadataUrl(added);
+        if (!url) continue;
+        void fetchLinkMetadata(url).then((meta) => {
+          const current = docRef.current.blocks.find((block) => block.id === added.id);
+          const patch = meta && current ? metadataPatch(current, added, meta) : null;
+          if (patch) dispatch({ type: "enrich", id: added.id, patch });
+        });
+      }
+    },
+    [dispatch],
+  );
 
   const addBlocks = useCallback(
-    (blocks: Block[], options: { open?: boolean } = {}) => {
-      const insertAt = doc.blocks[0]?.type === "socials" ? 1 : 0;
-      blocks.forEach((block, i) => dispatch({ type: "add", block, index: insertAt + i }));
-      enrich(blocks);
+    (blocks: Block[], options: { open?: boolean; index?: number | undefined } = {}) => {
       const first = blocks[0];
       if (!first) return;
+      dispatch({ type: "addMany", blocks, index: options.index ?? insertAt(doc.blocks) });
+      enrich(blocks);
+      const ids = blocks.map((block) => block.id);
+      // Several blocks: "Edit" would open only the first one, so the toast offers to take them all back.
+      const action =
+        blocks.length > 1
+          ? { label: t("undo"), onAction: () => dispatch({ type: "removeIds", ids }) }
+          : options.open === false
+            ? undefined
+            : { label: t("added.edit"), onAction: () => setEditing({ mode: "edit", id: first.id }) };
       toast({
         title: blocks.length > 1 ? t("added.many", { count: blocks.length }) : t("added.one", { type: tTypes(first.type) }),
         tone: "success",
-        ...(options.open === false ? {} : { action: { label: t("added.edit"), onAction: () => setEditing({ mode: "edit", id: first.id }) } }),
+        ...(action ? { action } : {}),
       });
     },
-    [doc.blocks, enrich, t, tTypes],
+    [dispatch, doc.blocks, enrich, t, tTypes],
   );
 
   const removeBlock = useCallback(
     (block: Block) => {
+      const index = doc.blocks.findIndex((candidate) => candidate.id === block.id);
       dispatch({ type: "remove", id: block.id });
-      toast({ title: t("removed", { title: label(block) }), action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) } });
+      // Undo puts this block back where it was. A plain "undo" could take back a later change instead
+      // (a switch flipped while the toast was still showing).
+      toast({
+        title: t("removed", { title: isolate(label(block), rtl) }),
+        action: { label: t("undo"), onAction: () => dispatch({ type: "add", block, ...(index >= 0 ? { index } : {}) }) },
+      });
     },
-    [label, t],
+    [dispatch, doc.blocks, label, rtl, t],
   );
 
   const edit = useCallback((next: Editing) => {
@@ -269,14 +364,25 @@ export function EditorProvider({
     edit,
     setDraft,
     setProfileDraft,
-    addOpen,
+    addOpen: add.open,
     setAddOpen,
+    addIndex: add.index,
     addBlocks,
     enrich,
     removeBlock,
+    justAdded,
+    announce,
     label,
     previewHref,
     flush,
   };
-  return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;
+  return (
+    <SiteContext.Provider value={value}>
+      {children}
+      {/* One polite live region for the whole dashboard: moves, duplicates, undo and redo. */}
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
+    </SiteContext.Provider>
+  );
 }

@@ -1,7 +1,8 @@
 import { blockSchema, detectLink, hasImage, NO_IMAGE } from "@linkyo/blocks";
 import { describe, expect, it } from "vitest";
 
-import { ADDABLE, blankBlock, blockFromLink } from "./blocks";
+import { ADD_GROUPS, ADDABLE, addGroups, blankBlock, blockFromLink, insertAt } from "./blocks";
+import { KINDS } from "./kinds";
 import { sampleStats, totals } from "./sample-stats";
 import { validateBlock } from "./validate";
 
@@ -27,6 +28,55 @@ describe("blank blocks", () => {
   it("get unique ids", () => {
     const ids = new Set(Array.from({ length: 50 }, () => blankBlock("link", defaults).id));
     expect(ids.size).toBe(50);
+  });
+});
+
+describe("the Add sheet's groups", () => {
+  const sorted = (types: readonly string[]) => [...types].sort();
+
+  it("put every addable type in exactly one fixed group", () => {
+    expect(sorted(Object.values(ADD_GROUPS).flat())).toEqual(sorted(ADDABLE));
+  });
+
+  it("list every type exactly once for every page kind, and without one", () => {
+    for (const kind of [...KINDS, undefined, "constructor", "unknown"]) {
+      const groups = addGroups(kind);
+      expect(sorted(groups.flatMap((group) => group.types)), String(kind)).toEqual(sorted(ADDABLE));
+      expect(groups.every((group) => group.types.length > 0), String(kind)).toBe(true);
+    }
+  });
+
+  it("start with what the page kind adds most, else with the popular types", () => {
+    expect(addGroups("music")[0]).toEqual({ key: "suggested", types: ["music", "video", "events", "socials"] });
+    expect(addGroups("other")[0]?.key).toBe("popular");
+    expect(addGroups(undefined)[0]?.key).toBe("popular");
+  });
+});
+
+describe("new blocks", () => {
+  it("go to the top, or under the social icons when the page starts with them", () => {
+    expect(insertAt([])).toBe(0);
+    expect(insertAt([blankBlock("link", defaults)])).toBe(0);
+    expect(insertAt([blankBlock("socials", defaults), blankBlock("link", defaults)])).toBe(1);
+  });
+});
+
+describe("adding several blocks at once", () => {
+  it("is one step in the history, and one undo takes them all back", async () => {
+    const { siteReducer } = await import("./site-context");
+    const profile = { username: "mila", displayName: "Mila Aurel", bio: "", avatar: { src: NO_IMAGE, alt: "" }, verified: false, locale: "en" as const };
+    const before = { past: [], future: [], selectedId: null, present: { profile, blocks: [blankBlock("socials", defaults)], sizes: {}, theme: { template: "nocturne" as const } } };
+    const added = [blankBlock("link", defaults), blankBlock("video", defaults)];
+    const after = siteReducer(before, { type: "addMany", blocks: added, index: 1 });
+    expect(after.present.blocks.map((block) => block.type)).toEqual(["socials", "link", "video"]);
+    expect(after.past).toHaveLength(1);
+    expect(after.selectedId).toBe(added[0]?.id);
+    expect(siteReducer(after, { type: "undo" }).present.blocks).toHaveLength(1);
+    const removed = siteReducer(after, { type: "removeIds", ids: added.map((block) => block.id) });
+    expect(removed.present.blocks.map((block) => block.type)).toEqual(["socials"]);
+    expect(removed.past).toHaveLength(2);
+    // Nothing to remove: no empty step.
+    expect(siteReducer(removed, { type: "removeIds", ids: ["gone"] })).toBe(removed);
   });
 });
 

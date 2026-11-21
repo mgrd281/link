@@ -224,6 +224,10 @@ export function blockSummary(block: Block, platformLabel: (platform: string) => 
       return block.developer ?? list(block.stores.map(storeLabel));
     case "repo":
       return `${block.owner}/${block.repo}${block.path ? `/${block.path}` : ""}`;
+    // The platform, like music rows, instead of a long "www.youtube.com/watch?v=…". An uploaded clip
+    // has no platform. Vimeo has no glyph, so the platform labeller would call it "Website".
+    case "video":
+      return block.provider === "upload" ? "" : block.provider === "vimeo" ? "Vimeo" : platformLabel(block.provider);
     case "text":
       return block.text;
     case "header":
