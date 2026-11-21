@@ -129,16 +129,23 @@ export function ShareToolRow({ icon, label, onClick }: { icon: LucideIcon; label
   );
 }
 
+/**
+ * What a QR code points to: a creator's page address (`username`), or any other link of ours, such as
+ * an invite link, with the address as people read it and the PNG's file name.
+ */
+type QrTarget = { username: string; url?: never; address?: never; fileName?: never } | { url: string; address: string; fileName: string; username?: never };
+
 /** QR code for posters, flyers and merch: shown large, downloadable as PNG, shareable where the phone can. */
-export function QrButton({ username, compact = false, appearance = "button" }: { username: string; compact?: boolean; appearance?: "button" | "row" }) {
+export function QrButton({ compact = false, appearance = "button", ...target }: QrTarget & { compact?: boolean; appearance?: "button" | "row" }) {
   const t = useTranslations("app.share");
   const [open, setOpen] = useState(false);
   // Read when the sheet opens, not while rendering: the server has no navigator, and the footer must match.
   const [canShare, setCanShare] = useState(false);
   const holder = useRef<HTMLDivElement>(null);
-  const url = pageUrl(username);
-  const address = `linkyo.app/${username}`;
-  const fileName = `linkyo-${username}-qr.png`;
+  const { url, address, fileName } =
+    target.username === undefined
+      ? target
+      : { url: pageUrl(target.username), address: `linkyo.app/${target.username}`, fileName: `linkyo-${target.username}-qr.png` };
 
   const show = () => {
     setCanShare(typeof navigator.share === "function");
