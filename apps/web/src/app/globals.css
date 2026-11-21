@@ -53,6 +53,24 @@
     }
   }
 
+  /* WCAG 2.4.11 (focus not obscured): on phones the dashboard has a sticky top bar (h-16) and a
+     fixed tab bar, so a control reached with Tab or by a screen reader is scrolled clear of both,
+     with a small gap at the top. The bottom matches the padding <main> keeps for the tab bar.
+     Wide screens have neither bar. */
+  html:has([data-tabbar]) {
+    @variant max-lg {
+      scroll-padding-block: calc(var(--spacing-16) + var(--spacing-2)) calc(var(--spacing-24) + env(safe-area-inset-bottom));
+    }
+  }
+
+  /* The dashboard's grouped background on phones (see AppShell) reaches past the page's edges, so a
+     rubber-band scroll on iPhone shows no white band above the top bar or below the tab bar. */
+  body:has([data-grouped]) {
+    @variant max-lg {
+      background-color: var(--color-canvas-muted);
+    }
+  }
+
   :focus-visible {
     outline: var(--border-width-focus) solid var(--color-focus);
     outline-offset: var(--border-width-focus-offset);
