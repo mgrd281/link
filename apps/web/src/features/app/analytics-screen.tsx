@@ -18,19 +18,24 @@ const niceMax = (value: number) => {
   return Math.ceil(value / (step * magnitude)) * step * magnitude;
 };
 
-/** Stat tile: label, value, change vs the previous period (sign + arrow + words, never color alone). */
+/**
+ * Stat tile: label, value, change vs the previous period (sign + arrow + words, never color alone).
+ * Three fit side by side on a phone, so the comparison is said once under the row and only read out
+ * per tile.
+ */
 function StatTile({ label, value, change, previousLabel }: { label: string; value: string; change: number | null; previousLabel: string }) {
   const locale = useLocale();
   const up = (change ?? 0) >= 0;
   return (
-    <div className="grid content-start gap-1 rounded-xl border border-line bg-surface p-4">
-      <dt className="text-small text-fg-secondary">{label}</dt>
-      <dd className="text-h2 font-semibold">{value}</dd>
+    <div className="grid min-w-0 content-start gap-1 rounded-lg border border-line bg-surface p-3 max-lg:group-data-[grouped]/app:border-transparent dark:max-lg:group-data-[grouped]/app:bg-surface-elevated">
+      <dt className="truncate text-caption text-fg-secondary">{label}</dt>
+      <dd className="text-h3 font-semibold tabular-nums">{value}</dd>
       {change !== null ? (
-        <dd className={cn("flex items-center gap-1 text-small", up ? "text-success-strong" : "text-danger-strong")}>
-          <Icon icon={up ? ArrowUpRight : ArrowDownRight} size="sm" />
-          <span className="font-semibold">{new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0, signDisplay: "always" }).format(change)}</span>
-          <span className="text-fg-secondary">{previousLabel}</span>
+        <dd className={cn("flex items-center gap-1 text-caption", up ? "text-success-strong" : "text-danger-strong")}>
+          {/* The trend leans into the reading direction: up and to the end, also in Arabic. */}
+          <Icon icon={up ? ArrowUpRight : ArrowDownRight} size="sm" className="rtl:-scale-x-100" />
+          <span className="font-semibold tabular-nums">{new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0, signDisplay: "always" }).format(change)}</span>
+          <span className="sr-only">{previousLabel}</span>
         </dd>
       ) : null}
     </div>
@@ -52,7 +57,8 @@ function ViewsChart({ days, label }: { days: DayStat[]; label: string }) {
     new Intl.DateTimeFormat(locale, long ? { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" } : { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(iso));
   const current = active !== null ? days[active] : undefined;
   const readout = (day: DayStat | undefined) => (day ? `${date(day.date, true)}: ${number(day.views)} ${t("views")}, ${number(day.clicks)} ${t("clicks")}` : "");
-  const every = Math.ceil(days.length / 6);
+  // At most four dates under the columns: six overlapped on a phone ("23. Okt.28. Okt.").
+  const every = Math.ceil(days.length / 4);
 
   const onKey = (event: KeyboardEvent<HTMLDivElement>) => {
     const rtl = getComputedStyle(event.currentTarget).direction === "rtl";
@@ -230,19 +236,29 @@ export function AnalyticsScreen() {
       }
     >
       <div className="flex flex-wrap items-center gap-3">
+        {/* Full width on phones, like an iOS segmented control; its natural width from sm up. */}
         <Segmented<Range>
           label={t("range")}
           value={range}
           onValueChange={setRange}
+          className="w-full *:flex-1 sm:w-auto sm:*:flex-none"
           options={(["7", "30", "90"] as const).map((value) => ({ value, label: t("days", { days: value }) }))}
         />
       </div>
 
-      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatTile label={t("views")} value={number(sum.views)} change={change(sum.views, stats.previous.views)} previousLabel={previousLabel} />
-        <StatTile label={t("clicks")} value={number(sum.clicks)} change={change(sum.clicks, stats.previous.clicks)} previousLabel={previousLabel} />
-        <StatTile label={t("ctr")} value={percent(sum.ctr)} change={change(sum.ctr, prevCtr)} previousLabel={previousLabel} />
-      </dl>
+      <div className="grid grid-cols-1 gap-2">
+        <dl className="grid grid-cols-3 gap-2 sm:gap-3">
+          <StatTile label={t("views")} value={number(sum.views)} change={change(sum.views, stats.previous.views)} previousLabel={previousLabel} />
+          <StatTile label={t("clicks")} value={number(sum.clicks)} change={change(sum.clicks, stats.previous.clicks)} previousLabel={previousLabel} />
+          <StatTile label={t("ctr")} value={percent(sum.ctr)} change={change(sum.ctr, prevCtr)} previousLabel={previousLabel} />
+        </dl>
+        {/* Each tile reads its comparison out; on screen it is said once for all three. */}
+        {stats.previous.views > 0 ? (
+          <p aria-hidden className="text-caption text-fg-tertiary">
+            {previousLabel}
+          </p>
+        ) : null}
+      </div>
 
       <Panel title={t("viewsPerDay")} id="views-chart-title">
         <ViewsChart days={stats.days} label={t("viewsPerDay")} />
