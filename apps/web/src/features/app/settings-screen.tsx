@@ -61,6 +61,13 @@ function AddressPanel() {
   return (
     <Panel title={t("address")} id="address-title">
       <form onSubmit={(event) => void submit(event)} noValidate className="grid grid-cols-1 gap-4">
+        {/* Where the page is now (the phone bar shows the screen's name, not the address). */}
+        <p className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-small text-fg-secondary">
+          {t("current")}
+          <bdi dir="ltr" className="min-w-0 truncate font-semibold text-fg">
+            linkyo.app/{account.username}
+          </bdi>
+        </p>
         <TextField
           label={t("addressLabel")}
           ltr

@@ -1677,7 +1677,8 @@
       "failedSignIn": "Wrong password",
       "unknownPlace": "Place unknown",
       "emailConfirm": "Confirm the new address with the link we sent to {email}.",
-      "signInByCode": "You sign in with a code we email you each time, so there's no password to remember or to leak."
+      "signInByCode": "You sign in with a code we email you each time, so there's no password to remember or to leak.",
+      "current": "Your page:"
     },
     "welcome": {
       "skip": "Skip for now",

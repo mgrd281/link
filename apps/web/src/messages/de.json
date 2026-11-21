@@ -1677,7 +1677,8 @@
       "failedSignIn": "Falsches Passwort",
       "unknownPlace": "Ort unbekannt",
       "emailConfirm": "Bestätige die neue Adresse über den Link, den wir an {email} geschickt haben.",
-      "signInByCode": "Du meldest dich jedes Mal mit einem Code an, den wir dir per E-Mail schicken. Es gibt also kein Passwort, das du dir merken musst oder das verloren gehen kann."
+      "signInByCode": "Du meldest dich jedes Mal mit einem Code an, den wir dir per E-Mail schicken. Es gibt also kein Passwort, das du dir merken musst oder das verloren gehen kann.",
+      "current": "Deine Seite:"
     },
     "welcome": {
       "skip": "Später",

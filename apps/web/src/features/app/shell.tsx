@@ -253,7 +253,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 aria-label={t("accountMenu")}
                 className="relative grid size-touch-target place-items-center justify-self-start rounded-full transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
               >
-                <ProfileAvatar size="sm" />
+                {/* The initials are a picture of the account, not its name (WCAG 2.5.3). */}
+                <span aria-hidden className="contents">
+                  <ProfileAvatar size="sm" />
+                </span>
               </button>
             }
           />
