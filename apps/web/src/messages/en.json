@@ -1038,7 +1038,11 @@
       "preparedTitle": "Your page is ready",
       "preparedLead": "The Linkyo team prepared it for you. Sign up with the email you gave us and everything is there right away.",
       "preparedGoogle": "At launch this works with Google too: same email, same page.",
-      "fromTemplate": "Your template is set. You'll add your photo, name and links next."
+      "fromTemplate": "Your template is set. You'll add your photo, name and links next.",
+      "invitedBy": "Invited by {name}",
+      "invited": "You were invited to Linkyo",
+      "invitedNote": "{name} will see your page name in their invite list, never your email.",
+      "invitedNoteAnon": "The person who invited you will see your page name, never your email."
     },
     "login": {
       "title": "Welcome back",
@@ -1067,6 +1071,7 @@
       "editor": "Edit page",
       "design": "Design",
       "analytics": "Analytics",
+      "invite": "Invite friends",
       "settings": "Settings",
       "welcome": "Welcome",
       "preview": "Preview"
@@ -1109,8 +1114,13 @@
       "page": "Page",
       "design": "Design",
       "analytics": "Stats",
+      "invite": "Invite",
       "settings": "Settings",
-      "add": "Add"
+      "add": "Add",
+      "panel": "Sidebar"
+    },
+    "navPanel": {
+      "sources": "Sources"
     },
     "viewPage": "View my page",
     "demo": "Demo",
@@ -1524,7 +1534,8 @@
         "howTo": "How to add it to your profile",
         "howToBody": "Open your profile in the app and tap “Edit profile”. Paste the link under “Links” or “Website”. Done: it now sits under your name.",
         "reserved": "Your address is reserved and goes live at launch."
-      }
+      },
+      "inviteSubtitle": "{verify, plural, one {# friend} other {# friends}}: free verification review · {pro, plural, one {# friend} other {# friends}}: Pro for life"
     },
     "shareImage": {
       "open": "Image for story & post",
@@ -1659,6 +1670,103 @@
       },
       "privacy": "Linkyo counts visits without cookies and without storing IP addresses. Your visitors stay anonymous, and you see everything you need.",
       "topInsight": "Tapped most: {title}"
+    },
+    "invite": {
+      "title": "Invite friends",
+      "lead": "Friends who join with your link bring you rewards.",
+      "demoNote": "Demo: invites only work in this browser. To try it, sign out, open your link here and make a second account. With real accounts, sign-ups from your own device don't count.",
+      "loadError": "Your invites couldn't be loaded.",
+      "retry": "Try again",
+      "invitedBy": "You joined through {name}'s invite.",
+      "link": {
+        "eyebrow": "Your invite link",
+        "copy": "Copy invite link",
+        "copied": "Invite link copied",
+        "share": "Share invite link",
+        "shareText": "Make your own link-in-bio page with Linkyo. It's free:"
+      },
+      "rewards": {
+        "title": "Rewards",
+        "counted": "{count, plural, =0 {No friends counted yet} one {# friend counted} other {# friends counted}}",
+        "footer": "Friends count once they confirm their email.",
+        "more": "{count, plural, one {# more friend} other {# more friends}}",
+        "progress": "{done} of {total}",
+        "removed": "This reward was removed. Questions? Get in touch.",
+        "verification": {
+          "title": "Free verification review",
+          "locked": "At {count, plural, one {# friend} other {# friends}}, our team reviews your page for the blue check.",
+          "ready": "Unlocked. Ask for your review.",
+          "request": "Request review",
+          "requested": "Requested on {date}. You'll see the result here.",
+          "verified": "Verified. The blue check is on your page.",
+          "declined": "Not approved: {reason}",
+          "retryAt": "You can ask again from {date}.",
+          "requestAgain": "Request again"
+        },
+        "pro": {
+          "title": "Pro for life",
+          "locked": "At {count, plural, one {# friend} other {# friends}}: every Pro feature, free, for good.",
+          "yours": "Yours. Pro is coming soon, and you'll never pay for it.",
+          "active": "Yours: every Pro feature, free, for good."
+        }
+      },
+      "people": {
+        "title": "People you invited",
+        "empty": "No one yet. Share your link: people show up here as soon as they sign up.",
+        "newMember": "New member",
+        "deleted": "Deleted account",
+        "status": {
+          "counted": "Counts",
+          "pending": "Not confirmed",
+          "checking": "Being checked",
+          "notCounted": "Doesn't count"
+        },
+        "showAll": "Show all ({count})"
+      },
+      "rules": {
+        "title": "How it works",
+        "share": "Share your link. A friend counts once they sign up with it and confirm their email.",
+        "once": "Each new account can be invited once, by one person. Existing accounts can't be added later.",
+        "notCounted": "Sign-ups from your own phone or computer, with throwaway email addresses or from fake accounts don't count. Our team checks some by hand.",
+        "deleted": "If someone you invited deletes their account later, they still count.",
+        "verify": "{count, plural, one {# friend} other {# friends}}: a free verification review. Our team checks that the page is really yours, then gives it the blue check.",
+        "pro": "{count, plural, one {# friend} other {# friends}}: Pro for life. Every Pro feature, no subscription, no card. Pro isn't out yet: it's yours the day it launches.",
+        "terms": "Program terms"
+      },
+      "terms": {
+        "personal": "Rewards are personal, can't be transferred and have no cash value. Pro for life lasts as long as your account exists and we offer Pro.",
+        "review": "The blue check is given only if the review shows the page is yours; there is no right to it. After a decline you can ask again after {days, plural, one {# day} other {# days}}.",
+        "abuse": "We can remove invites and rewards that came about against these rules. You can ask a person on our team to review any decision.",
+        "ads": "If you share your link publicly and get rewards for it, you may have to label it as advertising, for example with “Ad”.",
+        "changes": "We may change or end the program with 30 days' notice in the app. Rewards you already earned stay."
+      },
+      "sheet": {
+        "title": "Request verification",
+        "lead": "Put linkyo.app/{username} in the bio of at least one official profile, then send us its link. We'll check it's really you.",
+        "link": "Official profile",
+        "linkN": "Official profile {n}",
+        "linkHint": "A link that starts with https://",
+        "addLink": "Add another profile",
+        "note": "Anything we should know? (optional)",
+        "submit": "Send request",
+        "close": "Close",
+        "sent": "Request sent. You'll see the result on this screen.",
+        "errors": {
+          "invalidLinks": "Enter links that start with https://.",
+          "alreadyOpen": "Your request is already with us.",
+          "tooSoon": "You can ask again from {date}.",
+          "notUnlocked": "This unlocks at {count, plural, one {# friend} other {# friends}}.",
+          "alreadyVerified": "Your page is already verified.",
+          "unavailable": "This isn't available for your account right now.",
+          "serverError": "That didn't work. Try again in a moment."
+        }
+      },
+      "declineReasons": {
+        "profileNotLinked": "we couldn't find your Linkyo link on that profile.",
+        "identityUnclear": "we couldn't tell that the profile is yours.",
+        "impersonation": "the page seems to stand for someone else.",
+        "other": "the request didn't meet the rules."
+      }
     },
     "settings": {
       "title": "Settings",
@@ -2144,6 +2252,7 @@
       "overview": "Team · Overview",
       "creators": "Team · Creator pages",
       "creator": "Team · Creator page",
+      "referrals": "Team · Referrals",
       "team": "Team · Members & roles",
       "activity": "Team · Activity",
       "preview": "Team · Preview",
@@ -2183,6 +2292,7 @@
       "label": "Team area",
       "overview": "Overview",
       "creators": "Creators",
+      "referrals": "Referrals",
       "team": "Team",
       "activity": "Activity",
       "customers": "Customers",
@@ -2437,6 +2547,67 @@
         "cancel": "Cancel"
       }
     },
+    "referrals": {
+      "title": "Referrals",
+      "lead": "Verification requests and invites to check. Pro for life from invites is never revenue.",
+      "tabs": {
+        "verifications": "Verification ({count})",
+        "held": "To check ({count})"
+      },
+      "verifications": {
+        "empty": "No open requests.",
+        "requested": "Requested {date}",
+        "invites": "{count, plural, one {# invite} other {# invites}}",
+        "links": "Official profiles",
+        "note": "Note",
+        "approve": "Approve (blue check)",
+        "approveTitle": "Verify this page?",
+        "approveBody": "The page gets the blue check right away.",
+        "decline": "Decline …",
+        "declineTitle": "Decline the request?",
+        "reason": "Reason",
+        "decided": "Decided in the last 30 days",
+        "approved": "Approved",
+        "declined": "Declined"
+      },
+      "held": {
+        "empty": "Nothing to check.",
+        "release": "Count it",
+        "reject": "Don't count",
+        "why": "Reason (for the activity log, optional)"
+      },
+      "kind": {
+        "verification_review": "Verification review",
+        "pro_for_life": "Pro for life"
+      },
+      "source": {
+        "referrals": "Invites",
+        "team": "Team"
+      },
+      "reasons": {
+        "self": "Same mailbox as the inviter",
+        "sameDevice": "Same browser as the inviter",
+        "disposable": "Throwaway email address",
+        "inviteeSuspended": "Account suspended",
+        "noSignals": "Confirmed without our sign-in log",
+        "sameNetwork": "Same network and browser signature",
+        "cluster": "Several sign-ups from one network within {days, plural, one {# day} other {# days}}",
+        "team": "Removed by the team"
+      },
+      "declineReasons": {
+        "profileNotLinked": "Linkyo link not on the profile",
+        "identityUnclear": "Identity unclear",
+        "impersonation": "Impersonation",
+        "other": "Other reason"
+      },
+      "signals": {
+        "sameNetwork": "Same network",
+        "sameSignature": "Same signature",
+        "cluster": "Cluster",
+        "disposable": "Throwaway",
+        "emailLink": "Confirmed by link"
+      }
+    },
     "team": {
       "title": "Team & roles",
       "lead": "Who works on Linkyo and what each role may do. Members sign in with their own Linkyo account (same email).",
@@ -2519,7 +2690,17 @@
         "customer_note": "{actor} added a note to {target}",
         "customer_delete": "{actor} deleted the customer {target}",
         "ip_block": "{actor} blocked {target}",
-        "ip_unblock": "{actor} unblocked {target}"
+        "ip_unblock": "{actor} unblocked {target}",
+        "referral_release": "{actor} counted an invite for {target}",
+        "referral_revoke": "{actor} removed an invite from {target}",
+        "referral_restore": "{actor} restored an invite for {target}",
+        "reward_verification": "{target} unlocked a free verification review",
+        "reward_pro": "{target} earned Pro for life",
+        "reward_revoke": "{actor} removed a reward from {target}",
+        "reward_restore": "{actor} gave {target} a reward",
+        "verification_request": "{target} asked for verification",
+        "verification_approve": "{actor} verified {target} (request)",
+        "verification_decline": "{actor} declined {target}'s verification"
       }
     },
     "preview": {
@@ -2543,6 +2724,7 @@
       "plans": {
         "free": "Free"
       },
+      "proForLife": "Pro for life",
       "subscription": {
         "active": "Active",
         "trialing": "Trial",
@@ -2654,7 +2836,8 @@
         "overview": "Overview",
         "billing": "Subscription",
         "security": "Security",
-        "notes": "Notes"
+        "notes": "Notes",
+        "invites": "Invites"
       },
       "account": "Account",
       "page": "Page",
@@ -2710,6 +2893,33 @@
       "notePlaceholder": "Only the team sees this.",
       "saveNote": "Save note",
       "noNotes": "No notes yet.",
+      "invites": {
+        "title": "Invite program",
+        "code": "Invite code",
+        "invitedBy": "Invited by",
+        "counted": "Counted",
+        "none": "–",
+        "rewards": "Rewards",
+        "granted": "Granted {date} ({source})",
+        "removed": "Removed {date}: {reason}",
+        "revoke": "Remove reward …",
+        "revokeBody": "The reward ends now. Invites already counted stay counted.",
+        "grant": "Give reward …",
+        "why": "Reason (for the activity log)",
+        "list": "Invited accounts",
+        "state": {
+          "pending": "Not confirmed",
+          "qualified": "Counts",
+          "held": "To check",
+          "rejected": "Doesn't count",
+          "revoked": "Removed"
+        },
+        "release": "Count it",
+        "revokeInvite": "Remove",
+        "restore": "Restore",
+        "paysAndPro": "Pays for Pro and has Pro for life: cancel the paid plan.",
+        "verifications": "Verification requests"
+      },
       "history": "What the team changed",
       "noHistory": "Nothing changed by the team yet.",
       "historyLine": {
@@ -2725,7 +2935,17 @@
         "customer_signout": "{actor} signed out devices",
         "customer_note": "{actor} added a note",
         "customer_delete": "{actor} deleted the customer",
-        "ip_block": "{actor} blocked an IP address"
+        "ip_block": "{actor} blocked an IP address",
+        "referral_release": "{actor} counted an invite",
+        "referral_revoke": "{actor} removed an invite",
+        "referral_restore": "{actor} restored an invite",
+        "reward_verification": "Free verification review unlocked",
+        "reward_pro": "Pro for life earned",
+        "reward_revoke": "{actor} removed a reward",
+        "reward_restore": "{actor} gave a reward",
+        "verification_request": "Asked for verification",
+        "verification_approve": "{actor} verified (request)",
+        "verification_decline": "{actor} declined the verification"
       }
     },
     "subscriptions": {
@@ -2744,6 +2964,7 @@
       "freeHint": "Everything a page needs, for good",
       "assumption": "Price assumed",
       "proHint": "Custom domain, selling, email list, advanced analytics",
+      "proForLife": "Pro for life (rewards): {count} · not revenue",
       "month": "month",
       "conversion": "Free → Pro",
       "churn": "Churn (30 days)",

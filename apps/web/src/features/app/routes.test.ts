@@ -1,0 +1,90 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  DESIGN_TABS,
+  designTabFrom,
+  INVITE_HREF,
+  isReturnPath,
+  isSettingsPath,
+  NAV_ANCHORS,
+  routeInfo,
+  SECTION_HREF,
+  SETTINGS_HREF,
+  TAB_HREF,
+  TABS,
+} from "./routes";
+
+describe("dashboard routes", () => {
+  it("keeps every existing place as it was, now with its section", () => {
+    expect(routeInfo("/app")).toEqual({ title: "nav.home", tab: "home", parent: null, section: "home" });
+    expect(routeInfo("/app/editor")).toEqual({ title: "nav.page", tab: "page", parent: null, section: "page" });
+    expect(routeInfo("/app/design")).toEqual({ title: "nav.design", tab: "design", parent: null, section: "design" });
+    expect(routeInfo("/app/analytics")).toEqual({ title: "nav.analytics", tab: "analytics", parent: null, section: "analytics" });
+    expect(routeInfo("/app/settings")).toEqual({ title: "nav.settings", tab: null, parent: "origin", section: "settings" });
+    expect(routeInfo("/app/settings/account")).toEqual({ title: "settings.panes.account", tab: null, parent: SETTINGS_HREF, section: "settings" });
+    expect(routeInfo("/app/settings/address")).toEqual({ title: "settings.panes.address", tab: null, parent: SETTINGS_HREF, section: "settings" });
+    expect(routeInfo("/app/settings/legal")).toEqual({ title: "settings.panes.legal", tab: null, parent: SETTINGS_HREF, section: "settings" });
+  });
+
+  it("pushes Invite over Settings in its own section", () => {
+    expect(INVITE_HREF).toBe("/app/invite");
+    expect(routeInfo("/app/invite")).toEqual({ title: "invite.title", tab: null, parent: "/app/settings", section: "invite" });
+    expect(routeInfo("/app/invite/")).toEqual(routeInfo("/app/invite"));
+  });
+
+  it("counts every Settings path, known or not, as the settings section", () => {
+    for (const path of ["/app/settings", "/app/settings/", "/app/settings/account", "/app/settings/address", "/app/settings/legal", "/app/settings/unknown"]) {
+      expect(isSettingsPath(path.replace(/\/$/, ""))).toBe(true);
+      expect(routeInfo(path).section).toBe("settings");
+      expect(routeInfo(path).tab).toBeNull();
+    }
+    expect(routeInfo("/app/settings/unknown")).toEqual({ title: "nav.settings", tab: null, parent: SETTINGS_HREF, section: "settings" });
+  });
+
+  it("treats an unknown path as Home", () => {
+    expect(routeInfo("/app/nowhere")).toEqual({ title: "nav.home", tab: "home", parent: null, section: "home" });
+    expect(routeInfo("/app/")).toEqual(routeInfo("/app"));
+  });
+
+  it("links every section to its place", () => {
+    expect(SECTION_HREF).toEqual({ ...TAB_HREF, invite: "/app/invite", settings: "/app/settings" });
+    for (const tab of TABS) {
+      expect(routeInfo(SECTION_HREF[tab])).toMatchObject({ tab, section: tab, parent: null });
+    }
+    expect(routeInfo(SECTION_HREF.invite).section).toBe("invite");
+    expect(routeInfo(SECTION_HREF.settings).section).toBe("settings");
+  });
+
+  it("still lets Fertig return to Invite but never to the own page", () => {
+    expect(isReturnPath("/app/invite")).toBe(true);
+    expect(isReturnPath("/app/preview")).toBe(false);
+  });
+});
+
+describe("design tabs in the URL", () => {
+  it("reads ?tab= and falls back to Color", () => {
+    expect(DESIGN_TABS).toEqual(["color", "fonts", "buttons"]);
+    for (const tab of DESIGN_TABS) expect(designTabFrom(tab)).toBe(tab);
+    expect(designTabFrom(null)).toBe("color");
+    expect(designTabFrom("")).toBe("color");
+    expect(designTabFrom("junk")).toBe("color");
+    expect(designTabFrom("FONTS")).toBe("color");
+  });
+});
+
+describe("panel anchors", () => {
+  it("are unique, valid ids", () => {
+    const ids = Object.values(NAV_ANCHORS);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) expect(id).toMatch(/^[a-z][a-z-]*[a-z]$/);
+  });
+
+  it("include the four Invite sections", () => {
+    expect([NAV_ANCHORS.inviteLink, NAV_ANCHORS.inviteRewards, NAV_ANCHORS.invitePeople, NAV_ANCHORS.inviteRules]).toEqual([
+      "invite-link",
+      "invite-rewards",
+      "invite-people",
+      "invite-rules",
+    ]);
+  });
+});

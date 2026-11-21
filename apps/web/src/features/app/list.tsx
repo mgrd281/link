@@ -21,7 +21,11 @@ const separator = (inset: boolean) =>
 
 const rowBox = "flex w-full min-h-control-lg items-center gap-4 px-4 py-2 text-start lg:pointer-fine:min-h-touch-target";
 
-function Tile({ icon, tone = "default", done = false }: { icon: LucideIcon; tone?: "default" | "danger"; done?: boolean }) {
+/**
+ * The 32 px icon tile that leads a row: tinted, red for a dangerous action, green once a step is
+ * done (Home's checklist, the Invite milestones).
+ */
+export function Tile({ icon, tone = "default", done = false }: { icon: LucideIcon; tone?: "default" | "danger"; done?: boolean }) {
   return (
     <span
       className={cn(
@@ -55,7 +59,8 @@ export function ListGroup({ title, titleId, headingLevel = 2, trailing, footer, 
       {title || trailing ? (
         <div className="flex items-baseline justify-between gap-3 px-4">
           {title ? (
-            <Heading id={headingId} className="text-small font-semibold text-fg-secondary">
+            // With a known id the heading is a jump target of the section panel, so it can take focus.
+            <Heading id={headingId} tabIndex={titleId ? -1 : undefined} className="text-small font-semibold text-fg-secondary outline-none">
               {title}
             </Heading>
           ) : null}

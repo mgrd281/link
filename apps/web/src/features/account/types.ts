@@ -1,6 +1,8 @@
 import type { Page } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
+import type { ReferralOverview, VerificationResult } from "@/features/referrals/types";
+
 /**
  * The account contract the whole app talks to. Today it is backed by the browser (demo mode,
  * `local-store.ts`); in Phase 1 a Supabase implementation (Auth + Postgres, EU region) replaces it
@@ -126,6 +128,8 @@ export interface SignUpInput {
    * kind and look, and the name typed there.
    */
   start?: { kind: string; theme: CreatorThemeConfig; displayName?: string | undefined } | undefined;
+  /** An invite-link code (`/i/<code>` → `?ref=`): who invited this new account. Not the team's prepared-page `invite`. */
+  ref?: string | undefined;
 }
 
 /**
@@ -164,4 +168,11 @@ export interface AccountStore {
   signIns(): Promise<LoginEvent[]>;
   exportData(): Promise<string>;
   deleteAccount(): Promise<Result>;
+
+  /** The signed-in account's invite program (code, counted invites, rewards); null when signed out. */
+  referrals(): Promise<ReferralOverview | null>;
+  /** Asks the team for the verification review that counted invites unlocked. */
+  requestVerification(input: { links: string[]; note?: string | undefined }): Promise<VerificationResult>;
+  /** For the sign-up page: the inviter's public page name (`name: null` if not shown), or null for an unknown code. */
+  referralInviter(code: string): Promise<{ name: string | null } | null>;
 }
