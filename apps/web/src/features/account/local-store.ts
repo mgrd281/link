@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { ReferralOverview, VerificationResult } from "@/features/referrals/types";
+
 import { firstSite } from "./site-builders";
 import type { Account, AccountSnapshot, AccountStore, CodeRequest, LoginContext, LoginEvent, Result, Site, UsernameStatus } from "./types";
 import { localUsernameStatus, normalizeEmail, normalizeUsername } from "./username";
@@ -272,6 +274,20 @@ export class LocalAccountStore implements AccountStore {
     const sites = Object.fromEntries(Object.entries(db.sites).filter(([key]) => key !== id));
     const logins = Object.fromEntries(Object.entries(db.logins ?? {}).filter(([key]) => key !== id));
     return Promise.resolve(this.write({ ...db, accounts: db.accounts.filter((account) => account.id !== id), sites, logins, session: null }));
+  }
+
+  // Invite program: placeholders until the demo records invites (an empty program, nothing to ask).
+  referrals(): Promise<ReferralOverview | null> {
+    if (!this.currentId(this.db())) return Promise.resolve(null);
+    return Promise.resolve({ code: "22222222", counted: 0, rewards: {}, verification: null, invited: [], invitedBy: null });
+  }
+
+  requestVerification(): Promise<VerificationResult> {
+    return Promise.resolve({ ok: false, error: "unavailable" });
+  }
+
+  referralInviter(): Promise<{ name: string | null } | null> {
+    return Promise.resolve(null);
   }
 
   private read(): string | null {

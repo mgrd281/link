@@ -1038,7 +1038,11 @@
       "preparedTitle": "Deine Seite ist fertig",
       "preparedLead": "Das Linkyo-Team hat sie für dich vorbereitet. Registriere dich mit der E-Mail, die du uns gegeben hast – dann ist alles sofort da.",
       "preparedGoogle": "Zum Start geht das auch mit Google: gleiche E-Mail, gleiche Seite.",
-      "fromTemplate": "Deine Vorlage ist gewählt. Foto, Name und Links trägst du gleich ein."
+      "fromTemplate": "Deine Vorlage ist gewählt. Foto, Name und Links trägst du gleich ein.",
+      "invitedBy": "Eingeladen von {name}",
+      "invited": "Du wurdest zu Linkyo eingeladen",
+      "invitedNote": "{name} sieht deinen Seitennamen in der Einladungsliste, nie deine E-Mail.",
+      "invitedNoteAnon": "Wer dich eingeladen hat, sieht deinen Seitennamen, nie deine E-Mail."
     },
     "login": {
       "title": "Willkommen zurück",
@@ -1067,6 +1071,7 @@
       "editor": "Seite bearbeiten",
       "design": "Design",
       "analytics": "Statistik",
+      "invite": "Freund:innen einladen",
       "settings": "Einstellungen",
       "welcome": "Willkommen",
       "preview": "Vorschau"
@@ -1109,8 +1114,13 @@
       "page": "Seite",
       "design": "Design",
       "analytics": "Statistik",
+      "invite": "Einladen",
       "settings": "Einstellungen",
-      "add": "Hinzufügen"
+      "add": "Hinzufügen",
+      "panel": "Seitenleiste"
+    },
+    "navPanel": {
+      "sources": "Herkunft"
     },
     "viewPage": "Meine Seite ansehen",
     "demo": "Demo",
@@ -1524,7 +1534,8 @@
         "howTo": "So kommt der Link in dein Profil",
         "howToBody": "Öffne dein Profil in der App und tippe auf „Profil bearbeiten“. Füg den Link bei „Links“ oder „Website“ ein. Fertig: Er steht jetzt unter deinem Namen.",
         "reserved": "Deine Adresse ist reserviert und geht mit dem Start online."
-      }
+      },
+      "inviteSubtitle": "{verify, plural, one {# Person} other {# Personen}}: kostenlose Verifizierung · {pro, plural, one {# Person} other {# Personen}}: Pro für immer"
     },
     "shareImage": {
       "open": "Bild für Story & Post",
@@ -1659,6 +1670,103 @@
       },
       "privacy": "Linkyo zählt Besuche ohne Cookies und ohne IP-Adressen zu speichern. Deine Besucher bleiben anonym, und du siehst alles, was du brauchst.",
       "topInsight": "Am häufigsten angetippt: {title}"
+    },
+    "invite": {
+      "title": "Freund:innen einladen",
+      "lead": "Wer mit deinem Link dazukommt, bringt dir Belohnungen.",
+      "demoNote": "Demo: Einladungen funktionieren nur in diesem Browser. Zum Ausprobieren meldest du dich ab, öffnest hier deinen Link und erstellst ein zweites Konto. Bei echten Konten zählen Anmeldungen von deinem eigenen Gerät nicht.",
+      "loadError": "Deine Einladungen konnten nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "invitedBy": "Du bist über die Einladung von {name} dabei.",
+      "link": {
+        "eyebrow": "Dein Einladungslink",
+        "copy": "Einladungslink kopieren",
+        "copied": "Einladungslink kopiert",
+        "share": "Einladungslink teilen",
+        "shareText": "Mach dir deine eigene Link-in-Bio-Seite mit Linkyo. Kostenlos:"
+      },
+      "rewards": {
+        "title": "Belohnungen",
+        "counted": "{count, plural, =0 {Noch niemand gezählt} one {# Person zählt} other {# Personen zählen}}",
+        "footer": "Eine Person zählt, sobald sie ihre E-Mail bestätigt hat.",
+        "more": "{count, plural, one {Noch # Person} other {Noch # Personen}}",
+        "progress": "{done} von {total}",
+        "removed": "Diese Belohnung wurde entfernt. Fragen? Schreib uns.",
+        "verification": {
+          "title": "Kostenlose Verifizierung",
+          "locked": "Ab {count, plural, one {# Person} other {# Personen}} prüft unser Team deine Seite für den blauen Haken.",
+          "ready": "Freigeschaltet. Fordere deine Prüfung an.",
+          "request": "Prüfung anfordern",
+          "requested": "Angefordert am {date}. Das Ergebnis siehst du hier.",
+          "verified": "Verifiziert. Der blaue Haken ist auf deiner Seite.",
+          "declined": "Nicht bestätigt: {reason}",
+          "retryAt": "Du kannst ab {date} erneut anfragen.",
+          "requestAgain": "Erneut anfordern"
+        },
+        "pro": {
+          "title": "Pro für immer",
+          "locked": "Ab {count, plural, one {# Person} other {# Personen}}: alle Pro-Funktionen, kostenlos und dauerhaft.",
+          "yours": "Gehört dir. Pro kommt bald, und du zahlst nie dafür.",
+          "active": "Gehört dir: alle Pro-Funktionen, kostenlos und dauerhaft."
+        }
+      },
+      "people": {
+        "title": "Von dir eingeladen",
+        "empty": "Noch niemand. Teile deinen Link: Wer sich anmeldet, erscheint sofort hier.",
+        "newMember": "Neues Mitglied",
+        "deleted": "Gelöschtes Konto",
+        "status": {
+          "counted": "Zählt",
+          "pending": "Nicht bestätigt",
+          "checking": "Wird geprüft",
+          "notCounted": "Zählt nicht"
+        },
+        "showAll": "Alle zeigen ({count})"
+      },
+      "rules": {
+        "title": "So funktioniert's",
+        "share": "Teile deinen Link. Eine Person zählt, sobald sie sich damit anmeldet und ihre E-Mail bestätigt.",
+        "once": "Jedes neue Konto kann nur einmal eingeladen werden, von einer Person. Bestehende Konten lassen sich nicht nachträglich zuordnen.",
+        "notCounted": "Anmeldungen von deinem eigenen Handy oder Computer, mit Wegwerf-Adressen oder von unechten Konten zählen nicht. Manche prüft unser Team von Hand.",
+        "deleted": "Löscht jemand, den du eingeladen hast, später das Konto, zählt die Person weiter.",
+        "verify": "{count, plural, one {# Person} other {# Personen}}: eine kostenlose Verifizierung. Unser Team prüft, ob die Seite wirklich dir gehört, und vergibt dann den blauen Haken.",
+        "pro": "{count, plural, one {# Person} other {# Personen}}: Pro für immer. Alle Pro-Funktionen, ohne Abo, ohne Karte. Pro gibt es noch nicht: Es gehört dir ab dem Tag, an dem es startet.",
+        "terms": "Teilnahmebedingungen"
+      },
+      "terms": {
+        "personal": "Belohnungen sind persönlich, nicht übertragbar und nicht in Geld einlösbar. Pro für immer gilt, solange dein Konto besteht und wir Pro anbieten.",
+        "review": "Den blauen Haken gibt es nur, wenn die Prüfung zeigt, dass die Seite dir gehört; ein Anspruch darauf besteht nicht. Nach einer Ablehnung kannst du nach {days, plural, one {# Tag} other {# Tagen}} erneut anfragen.",
+        "abuse": "Einladungen und Belohnungen, die gegen diese Regeln entstanden sind, können wir entfernen. Jede Entscheidung kannst du von einem Menschen aus unserem Team prüfen lassen.",
+        "ads": "Teilst du deinen Link öffentlich und bekommst dafür Belohnungen, musst du ihn unter Umständen als Werbung kennzeichnen, etwa mit „Anzeige“.",
+        "changes": "Wir können das Programm mit 30 Tagen Vorlauf in der App ändern oder beenden. Bereits verdiente Belohnungen bleiben."
+      },
+      "sheet": {
+        "title": "Verifizierung anfragen",
+        "lead": "Setz linkyo.app/{username} in die Bio mindestens eines offiziellen Profils und schick uns dessen Link. Wir prüfen, dass du es wirklich bist.",
+        "link": "Offizielles Profil",
+        "linkN": "Offizielles Profil {n}",
+        "linkHint": "Ein Link, der mit https:// beginnt",
+        "addLink": "Weiteres Profil hinzufügen",
+        "note": "Sollen wir noch etwas wissen? (optional)",
+        "submit": "Anfrage senden",
+        "close": "Schließen",
+        "sent": "Anfrage gesendet. Das Ergebnis siehst du hier.",
+        "errors": {
+          "invalidLinks": "Gib Links ein, die mit https:// beginnen.",
+          "alreadyOpen": "Deine Anfrage liegt uns schon vor.",
+          "tooSoon": "Du kannst ab {date} erneut anfragen.",
+          "notUnlocked": "Das gibt es ab {count, plural, one {# Person} other {# Personen}}.",
+          "alreadyVerified": "Deine Seite ist schon verifiziert.",
+          "unavailable": "Für dein Konto ist das gerade nicht möglich.",
+          "serverError": "Das hat nicht geklappt. Versuch es gleich noch einmal."
+        }
+      },
+      "declineReasons": {
+        "profileNotLinked": "Wir haben deinen Linkyo-Link in diesem Profil nicht gefunden.",
+        "identityUnclear": "Wir konnten nicht erkennen, dass das Profil dir gehört.",
+        "impersonation": "Die Seite scheint für jemand anderen zu stehen.",
+        "other": "Die Anfrage erfüllt die Regeln nicht."
+      }
     },
     "settings": {
       "title": "Einstellungen",
@@ -2144,6 +2252,7 @@
       "overview": "Team · Übersicht",
       "creators": "Team · Creator-Seiten",
       "creator": "Team · Creator-Seite",
+      "referrals": "Team · Empfehlungen",
       "team": "Team · Mitglieder & Rechte",
       "activity": "Team · Verlauf",
       "preview": "Team · Vorschau",
@@ -2183,6 +2292,7 @@
       "label": "Teambereich",
       "overview": "Übersicht",
       "creators": "Creator",
+      "referrals": "Empfehlungen",
       "team": "Team",
       "activity": "Verlauf",
       "customers": "Kunden",
@@ -2437,6 +2547,67 @@
         "cancel": "Abbrechen"
       }
     },
+    "referrals": {
+      "title": "Empfehlungen",
+      "lead": "Verifizierungsanfragen und Einladungen zur Prüfung. Pro für immer aus Einladungen ist nie Umsatz.",
+      "tabs": {
+        "verifications": "Verifizierung ({count})",
+        "held": "Zu prüfen ({count})"
+      },
+      "verifications": {
+        "empty": "Keine offenen Anfragen.",
+        "requested": "Angefragt {date}",
+        "invites": "{count, plural, one {# Einladung} other {# Einladungen}}",
+        "links": "Offizielle Profile",
+        "note": "Notiz",
+        "approve": "Bestätigen (blauer Haken)",
+        "approveTitle": "Seite verifizieren?",
+        "approveBody": "Die Seite bekommt sofort den blauen Haken.",
+        "decline": "Ablehnen …",
+        "declineTitle": "Anfrage ablehnen?",
+        "reason": "Grund",
+        "decided": "Entschieden in den letzten 30 Tagen",
+        "approved": "Bestätigt",
+        "declined": "Abgelehnt"
+      },
+      "held": {
+        "empty": "Nichts zu prüfen.",
+        "release": "Zählen",
+        "reject": "Nicht zählen",
+        "why": "Grund (für den Verlauf, optional)"
+      },
+      "kind": {
+        "verification_review": "Verifizierung",
+        "pro_for_life": "Pro für immer"
+      },
+      "source": {
+        "referrals": "Einladungen",
+        "team": "Team"
+      },
+      "reasons": {
+        "self": "Gleiches Postfach wie die einladende Person",
+        "sameDevice": "Gleicher Browser wie die einladende Person",
+        "disposable": "Wegwerf-Adresse",
+        "inviteeSuspended": "Konto gesperrt",
+        "noSignals": "Ohne unser Anmeldeprotokoll bestätigt",
+        "sameNetwork": "Gleiches Netz und gleiche Browser-Signatur",
+        "cluster": "Mehrere Anmeldungen aus einem Netz in {days, plural, one {# Tag} other {# Tagen}}",
+        "team": "Vom Team entfernt"
+      },
+      "declineReasons": {
+        "profileNotLinked": "Linkyo-Link fehlt im Profil",
+        "identityUnclear": "Identität unklar",
+        "impersonation": "Gibt sich als jemand anderes aus",
+        "other": "Anderer Grund"
+      },
+      "signals": {
+        "sameNetwork": "Gleiches Netz",
+        "sameSignature": "Gleiche Signatur",
+        "cluster": "Häufung",
+        "disposable": "Wegwerf-Adresse",
+        "emailLink": "Per Link bestätigt"
+      }
+    },
     "team": {
       "title": "Team & Rechte",
       "lead": "Wer mitarbeitet und was jede Rolle darf. Mitglieder melden sich mit ihrem eigenen Linkyo-Konto an (gleiche E-Mail).",
@@ -2519,7 +2690,17 @@
         "customer_note": "{actor} hat eine Notiz zu {target} hinzugefügt",
         "customer_delete": "{actor} hat den Kunden {target} gelöscht",
         "ip_block": "{actor} hat {target} gesperrt",
-        "ip_unblock": "{actor} hat {target} entsperrt"
+        "ip_unblock": "{actor} hat {target} entsperrt",
+        "referral_release": "{actor} hat eine Einladung von {target} gezählt",
+        "referral_revoke": "{actor} hat eine Einladung von {target} entfernt",
+        "referral_restore": "{actor} hat eine Einladung von {target} wiederhergestellt",
+        "reward_verification": "{target} hat die kostenlose Verifizierung freigeschaltet",
+        "reward_pro": "{target} hat Pro für immer erreicht",
+        "reward_revoke": "{actor} hat {target} eine Belohnung entzogen",
+        "reward_restore": "{actor} hat {target} eine Belohnung gegeben",
+        "verification_request": "{target} hat eine Verifizierung angefragt",
+        "verification_approve": "{actor} hat {target} auf Anfrage verifiziert",
+        "verification_decline": "{actor} hat die Verifizierung von {target} abgelehnt"
       }
     },
     "preview": {
@@ -2543,6 +2724,7 @@
       "plans": {
         "free": "Free"
       },
+      "proForLife": "Pro für immer",
       "subscription": {
         "active": "Aktiv",
         "trialing": "Testphase",
@@ -2654,7 +2836,8 @@
         "overview": "Übersicht",
         "billing": "Abo",
         "security": "Sicherheit",
-        "notes": "Notizen"
+        "notes": "Notizen",
+        "invites": "Einladungen"
       },
       "account": "Konto",
       "page": "Seite",
@@ -2710,6 +2893,33 @@
       "notePlaceholder": "Sieht nur das Team.",
       "saveNote": "Notiz speichern",
       "noNotes": "Noch keine Notizen.",
+      "invites": {
+        "title": "Einladungsprogramm",
+        "code": "Einladungscode",
+        "invitedBy": "Eingeladen von",
+        "counted": "Gezählt",
+        "none": "–",
+        "rewards": "Belohnungen",
+        "granted": "Vergeben {date} ({source})",
+        "removed": "Entfernt {date}: {reason}",
+        "revoke": "Belohnung entfernen …",
+        "revokeBody": "Die Belohnung endet jetzt. Bereits gezählte Einladungen bleiben gezählt.",
+        "grant": "Belohnung vergeben …",
+        "why": "Grund (für den Verlauf)",
+        "list": "Eingeladene Konten",
+        "state": {
+          "pending": "Nicht bestätigt",
+          "qualified": "Zählt",
+          "held": "Zu prüfen",
+          "rejected": "Zählt nicht",
+          "revoked": "Entfernt"
+        },
+        "release": "Zählen",
+        "revokeInvite": "Entfernen",
+        "restore": "Wiederherstellen",
+        "paysAndPro": "Zahlt für Pro und hat Pro für immer: das bezahlte Abo kündigen.",
+        "verifications": "Verifizierungsanfragen"
+      },
       "history": "Was das Team geändert hat",
       "noHistory": "Das Team hat noch nichts geändert.",
       "historyLine": {
@@ -2725,7 +2935,17 @@
         "customer_signout": "{actor} hat Geräte abgemeldet",
         "customer_note": "{actor} hat eine Notiz hinzugefügt",
         "customer_delete": "{actor} hat den Kunden gelöscht",
-        "ip_block": "{actor} hat eine IP-Adresse gesperrt"
+        "ip_block": "{actor} hat eine IP-Adresse gesperrt",
+        "referral_release": "{actor} hat eine Einladung gezählt",
+        "referral_revoke": "{actor} hat eine Einladung entfernt",
+        "referral_restore": "{actor} hat eine Einladung wiederhergestellt",
+        "reward_verification": "Kostenlose Verifizierung freigeschaltet",
+        "reward_pro": "Pro für immer erreicht",
+        "reward_revoke": "{actor} hat eine Belohnung entzogen",
+        "reward_restore": "{actor} hat eine Belohnung gegeben",
+        "verification_request": "Verifizierung angefragt",
+        "verification_approve": "{actor} hat auf Anfrage verifiziert",
+        "verification_decline": "{actor} hat die Verifizierung abgelehnt"
       }
     },
     "subscriptions": {
@@ -2744,6 +2964,7 @@
       "freeHint": "Alles, was eine Seite braucht – dauerhaft",
       "assumption": "Preis angenommen",
       "proHint": "Eigene Domain, Verkauf, E-Mail-Liste, erweiterte Analysen",
+      "proForLife": "Pro für immer (Belohnungen): {count} · kein Umsatz",
       "month": "Monat",
       "conversion": "Free → Pro",
       "churn": "Kündigungen (30 Tage)",

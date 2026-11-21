@@ -4,6 +4,7 @@ import type { Page } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 
+import type { ReferralOverview, VerificationResult } from "@/features/referrals/types";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 import type { Database, Tables } from "@/lib/supabase/database.types";
 import { fromJson, toJson } from "@/lib/supabase/json";
@@ -403,5 +404,19 @@ export class SupabaseAccountStore implements AccountStore {
     if (error) return { ok: false, error: "serverError" };
     await supabase.auth.signOut({ scope: "local" });
     return { ok: true };
+  }
+
+  // Invite program: placeholders until its database functions exist (an empty program, nothing to ask).
+  referrals(): Promise<ReferralOverview | null> {
+    if (this.snapshot.status !== "signedIn") return Promise.resolve(null);
+    return Promise.resolve({ code: "22222222", counted: 0, rewards: {}, verification: null, invited: [], invitedBy: null });
+  }
+
+  requestVerification(): Promise<VerificationResult> {
+    return Promise.resolve({ ok: false, error: "unavailable" });
+  }
+
+  referralInviter(): Promise<{ name: string | null } | null> {
+    return Promise.resolve(null);
   }
 }
