@@ -6,7 +6,7 @@
  *   src/generated/tokens.ts      Typed JS values (OG images, charts, theme engine)
  *   apps/ios/…/Generated/        DesignTokens.swift + Colors.xcassets (committed; CI checks drift)
  */
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -78,6 +78,72 @@ const fontStack = (families, faces) => {
 const byPath = (dictionary, prefix) =>
   dictionary.allTokens.filter((t) => prefix.every((segment, i) => t.path[i] === segment));
 
+/**
+ * The creator dashboard's palette (ADR 0062): every semantic role's `console` / `consoleDark` pair,
+ * as CSS declarations for the light and the dark console. Exported for the unit tests.
+ *
+ * It throws when a role has only one of the two: the console's light rule outranks the plain dark rule
+ * on :root, so a missing dark value would turn the dark dashboard light. It also throws when a role has
+ * console and high-contrast values: the two override blocks would fight over one variable.
+ *
+ * @param {{ name: string, console?: string | undefined, consoleDark?: string | undefined, highContrast?: string | undefined, highContrastDark?: string | undefined }[]} roles
+ *   CSS variable name and the role's resolved mode values
+ * @returns {{ light: [string, string][], dark: [string, string][] }}
+ */
+export function consolePalette(roles) {
+  /** @type {[string, string][]} */ const light = [];
+  /** @type {[string, string][]} */ const dark = [];
+  for (const role of roles) {
+    const hasLight = role.console !== undefined;
+    const hasDark = role.consoleDark !== undefined;
+    if (!hasLight && !hasDark) continue;
+    if (hasLight !== hasDark) {
+      throw new Error(
+        `${role.name}: "console" and "consoleDark" come in pairs (ADR 0062). With only "${hasLight ? "console" : "consoleDark"}", the dashboard would turn ${hasLight ? "light in dark mode" : "dark in light mode"}.`,
+      );
+    }
+    if (role.highContrast !== undefined || role.highContrastDark !== undefined) {
+      throw new Error(`${role.name}: a role takes console values or high-contrast values, never both (ADR 0062).`);
+    }
+    light.push([role.name, cssColor(/** @type {string} */ (role.console))]);
+    dark.push([role.name, cssColor(/** @type {string} */ (role.consoleDark))]);
+  }
+  return { light, dark };
+}
+
+/** The selectors that carry the dashboard palette: the whole window while a frame is mounted, or one subtree. */
+const CONSOLE = {
+  light: [`:root:has([data-console="frame"])`, `[data-console]`],
+  dark: [`:root[data-theme="dark"]:has([data-console="frame"])`, `[data-theme="dark"] [data-console]`],
+  systemDark: [`:root:not([data-theme="light"]):has([data-console="frame"])`, `:root:not([data-theme="light"]) [data-console]`],
+};
+
+/**
+ * The three console blocks, indented by `indent` (a level deeper inside the media query).
+ * @param {{ consoleLight: [string, string][], consoleDark: [string, string][] }} m
+ */
+function consoleBlocks(m, indent = "") {
+  const inner = `${indent}  `;
+  const selector = (/** @type {string[]} */ list, pad) => list.join(`,\n${pad}`);
+  return `${indent}/* The creator dashboard is black and grey (ADR 0062). data-console="frame" on its root element carries the
+${indent}   palette to the whole window: its sheets, dialogs, menus, tooltips and toasts render outside it, in <body>.
+${indent}   data-console="local" gives it to one subtree only. Without :has() the frame still gets it on its own subtree.
+${indent}   Every role here has both values: the light rule outranks the plain dark rules, the dark rules win it back. */
+${indent}${selector(CONSOLE.light, indent)} {
+${decls(m.consoleLight, inner)}
+${indent}}
+
+${indent}${selector(CONSOLE.dark, indent)} {
+${decls(m.consoleDark, inner)}
+${indent}}
+
+${indent}@media (prefers-color-scheme: dark) {
+${inner}${selector(CONSOLE.systemDark, inner)} {
+${decls(m.consoleDark, `${inner}  `)}
+${inner}}
+${indent}}`;
+}
+
 // ---------------------------------------------------------------------------------------------
 // shared model: one place that decides names/values for every web output
 
@@ -87,6 +153,8 @@ function webModel(dictionary) {
   /** @type {[string, string][]} */ const contrast = [];
   /** @type {[string, string][]} */ const contrastDark = [];
 
+  /** @type {Parameters<typeof consolePalette>[0]} */ const consoleRoles = [];
+
   for (const t of byPath(dictionary, ["color"])) light.push([`--color-${kebab(t.path.slice(1))}`, cssColor(t.$value)]);
   for (const t of byPath(dictionary, ["semantic"])) {
     const name = `--color-${t.path.slice(1).join("-")}`;
@@ -95,7 +163,16 @@ function webModel(dictionary) {
     if (e.dark) dark.push([name, cssColor(resolve(e.dark, dictionary))]);
     if (e.highContrast) contrast.push([name, cssColor(resolve(e.highContrast, dictionary))]);
     if (e.highContrastDark) contrastDark.push([name, cssColor(resolve(e.highContrastDark, dictionary))]);
+    const value = (/** @type {unknown} */ v) => (v === undefined ? undefined : resolve(v, dictionary));
+    consoleRoles.push({
+      name,
+      console: value(e.console),
+      consoleDark: value(e.consoleDark),
+      highContrast: value(e.highContrast),
+      highContrastDark: value(e.highContrastDark),
+    });
   }
+  const { light: consoleLight, dark: consoleDark } = consolePalette(consoleRoles);
 
   for (const t of byPath(dictionary, ["font", "family"])) {
     light.push([`--font-${t.path[2]}`, fontStack(t.$value, ext(t).faces)]);
@@ -161,7 +238,7 @@ function webModel(dictionary) {
 
   const darkNames = new Set(dark.map(([name]) => name));
   const lightSemantic = light.filter(([name]) => darkNames.has(name));
-  return { light, dark, contrast, contrastDark, creator, lightSemantic };
+  return { light, dark, contrast, contrastDark, creator, lightSemantic, consoleLight, consoleDark };
 }
 
 const decls = (/** @type {[string, string][]} */ list, indent = "  ") => list.map(([k, v]) => `${indent}${k}: ${v};`).join("\n");
@@ -190,6 +267,8 @@ ${decls(m.dark, "    ")}
     color-scheme: dark;
   }
 }
+
+${consoleBlocks(m)}
 
 @media (prefers-contrast: more) {
   :root {
@@ -376,6 +455,8 @@ ${decls(m.lightSemantic, "    ")}
     color-scheme: light;
   }
 
+${consoleBlocks(m, "  ")}
+
   @media (prefers-contrast: more) {
     :root {
 ${decls(m.contrast, "      ")}
@@ -409,6 +490,11 @@ StyleDictionary.registerFormat({
           dark: resolve(e.dark ?? t.$value, dictionary),
           ...(e.highContrast ? { highContrast: resolve(e.highContrast, dictionary) } : {}),
           ...(e.highContrastDark ? { highContrastDark: resolve(e.highContrastDark, dictionary) } : {}),
+          // The creator dashboard (ADR 0062); roles it does not change keep their own values.
+          console: {
+            light: resolve(e.console ?? t.$value, dictionary),
+            dark: resolve(e.consoleDark ?? e.dark ?? t.$value, dictionary),
+          },
         });
       } else if (t.$type === "dimension" && /px$/.test(String(t.$value))) {
         set(out, keys, px(t.$value));
@@ -667,32 +753,43 @@ StyleDictionary.registerAction({
 
 // ---------------------------------------------------------------------------------------------
 
-const sd = new StyleDictionary({
-  source: [path.join(ROOT, "tokens.json")],
-  log: { verbosity: "default", warnings: "error" },
-  platforms: {
-    css: {
-      transforms: ["name/kebab"],
-      buildPath: `${path.join(ROOT, "dist/css")}/`,
-      files: [{ destination: "tokens.css", format: "linkyo/css-variables" }],
-    },
-    tailwind: {
-      transforms: ["name/kebab"],
-      buildPath: `${path.join(ROOT, "dist/tailwind")}/`,
-      files: [{ destination: "theme.css", format: "linkyo/tailwind-theme" }],
-    },
-    ts: {
-      transforms: ["name/kebab"],
-      buildPath: `${path.join(ROOT, "src/generated")}/`,
-      files: [{ destination: "tokens.ts", format: "linkyo/typescript" }],
-    },
-    swift: {
-      transforms: ["name/kebab"],
-      buildPath: `${IOS_GENERATED}/`,
-      files: [{ destination: "DesignTokens.swift", format: "linkyo/swift" }],
-      actions: ["linkyo/xcassets", "linkyo/ios-accent"],
-    },
-  },
-});
+// Built when run as a script (`pnpm build`); the unit tests import consolePalette without building.
+const isScript = (() => {
+  try {
+    return realpathSync(process.argv[1] ?? "") === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
+})();
 
-await sd.buildAllPlatforms();
+if (isScript) {
+  const sd = new StyleDictionary({
+    source: [path.join(ROOT, "tokens.json")],
+    log: { verbosity: "default", warnings: "error" },
+    platforms: {
+      css: {
+        transforms: ["name/kebab"],
+        buildPath: `${path.join(ROOT, "dist/css")}/`,
+        files: [{ destination: "tokens.css", format: "linkyo/css-variables" }],
+      },
+      tailwind: {
+        transforms: ["name/kebab"],
+        buildPath: `${path.join(ROOT, "dist/tailwind")}/`,
+        files: [{ destination: "theme.css", format: "linkyo/tailwind-theme" }],
+      },
+      ts: {
+        transforms: ["name/kebab"],
+        buildPath: `${path.join(ROOT, "src/generated")}/`,
+        files: [{ destination: "tokens.ts", format: "linkyo/typescript" }],
+      },
+      swift: {
+        transforms: ["name/kebab"],
+        buildPath: `${IOS_GENERATED}/`,
+        files: [{ destination: "DesignTokens.swift", format: "linkyo/swift" }],
+        actions: ["linkyo/xcassets", "linkyo/ios-accent"],
+      },
+    },
+  });
+
+  await sd.buildAllPlatforms();
+}
