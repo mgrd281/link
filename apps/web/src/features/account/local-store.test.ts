@@ -165,6 +165,180 @@ describe("LocalAccountStore", () => {
   });
 });
 
+describe("LocalAccountStore: the invite program (demo)", () => {
+  interface Stored {
+    referralCodes?: Record<string, string>;
+    referrals?: { inviterId: string; inviteeId: string | null; state: string; reason?: string }[];
+    rewards?: Record<string, Record<string, { at: string; revokedAt?: string }>>;
+  }
+  const stored = (storage: ReturnType<typeof memory>) => JSON.parse(storage.data.get(STORAGE_KEY) ?? "{}") as Stored;
+
+  /** Signs a new account up (optionally through an invite link) and answers its id; it stays signed in. */
+  async function join(store: LocalAccountStore, email: string, username: string, ref?: string) {
+    store.logOut();
+    expect(await withCode(store, { email, locale: "en", signUp: { username, ...(ref ? { ref } : {}) } })).toEqual({ ok: true });
+    const snapshot = store.getSnapshot();
+    return snapshot.status === "signedIn" ? snapshot.account.id : "";
+  }
+  async function signInAs(store: LocalAccountStore, email: string) {
+    store.logOut();
+    expect(await withCode(store, { email, locale: "en" })).toEqual({ ok: true });
+  }
+  const setUp = () => {
+    const storage = memory();
+    return { storage, store: new LocalAccountStore(() => storage) };
+  };
+
+  it("gives every new account a code and records an invite made with it", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    const code = stored(storage).referralCodes?.[ana] ?? "";
+    expect(code).toMatch(/^[2-9a-hjkmnp-z]{8}$/);
+    const ben = await join(store, "ben@example.com", "ben-ott", code);
+    expect(stored(storage).referrals).toEqual([expect.objectContaining({ inviterId: ana, inviteeId: ben, state: "qualified" })]);
+    // The invited person sees who invited them; the inviter sees one counted.
+    expect((await store.referrals())?.invitedBy).toEqual({ name: "Ana Lund" });
+    await signInAs(store, "ana@example.com");
+    const overview = await store.referrals();
+    expect(overview).toMatchObject({ code, counted: 1, rewards: {}, verification: null, invitedBy: null });
+    expect(overview?.invited).toEqual([expect.objectContaining({ status: "counted", deleted: false, name: null })]);
+  });
+
+  it("ignores codes nobody has, and makes a code for accounts from before the program", async () => {
+    const { storage, store } = setUp();
+    await join(store, "ana@example.com", "ana-lund", "zzzzzzzz");
+    expect(stored(storage).referrals ?? []).toEqual([]);
+    const db = JSON.parse(storage.data.get(STORAGE_KEY) ?? "{}") as Stored;
+    delete db.referralCodes;
+    storage.data.set(STORAGE_KEY, JSON.stringify(db));
+    const overview = await store.referrals();
+    expect(overview?.code).toMatch(/^[2-9a-hjkmnp-z]{8}$/);
+    expect((await store.referrals())?.code).toBe(overview?.code);
+  });
+
+  it("does not count the inviter's own mailbox (a +alias)", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "a@example.com", "ana-lund");
+    await join(store, "a+1@example.com", "ana-two", stored(storage).referralCodes?.[ana]);
+    expect(stored(storage).referrals).toEqual([expect.objectContaining({ state: "rejected", reason: "self" })]);
+    await signInAs(store, "a@example.com");
+    expect(await store.referrals()).toMatchObject({ counted: 0, invited: [expect.objectContaining({ status: "notCounted" })] });
+  });
+
+  it("writes the verification review at 3 counted invites and Pro for life at 10, once", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    const code = stored(storage).referralCodes?.[ana];
+    for (let n = 1; n <= 2; n += 1) await join(store, `f${String(n)}@example.com`, `friend-${String(n)}`, code);
+    expect(stored(storage).rewards?.[ana]).toBeUndefined();
+    await join(store, "f3@example.com", "friend-3", code);
+    expect(Object.keys(stored(storage).rewards?.[ana] ?? {})).toEqual(["verification_review"]);
+    for (let n = 4; n <= 9; n += 1) await join(store, `f${String(n)}@example.com`, `friend-${String(n)}`, code);
+    expect(Object.keys(stored(storage).rewards?.[ana] ?? {})).toEqual(["verification_review"]);
+    await join(store, "f10@example.com", "friend-10", code);
+    const first = stored(storage).rewards?.[ana];
+    expect(Object.keys(first ?? {}).sort()).toEqual(["pro_for_life", "verification_review"]);
+    await join(store, "f11@example.com", "friend-11", code);
+    expect(stored(storage).rewards?.[ana]).toEqual(first);
+    await signInAs(store, "ana@example.com");
+    expect(await store.referrals()).toMatchObject({ counted: 11, rewards: { verification_review: { revoked: false }, pro_for_life: { revoked: false } } });
+  });
+
+  it("keeps counting a friend who deletes their account; deleting the inviter removes their invites", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    await join(store, "ben@example.com", "ben-ott", stored(storage).referralCodes?.[ana]);
+    expect(await store.deleteAccount()).toEqual({ ok: true });
+    await signInAs(store, "ana@example.com");
+    expect(await store.referrals()).toMatchObject({ counted: 1, invited: [{ deleted: true, name: null, status: "counted" }] });
+    expect(await store.deleteAccount()).toEqual({ ok: true });
+    expect(stored(storage).referrals).toEqual([]);
+    expect(stored(storage).referralCodes).toEqual({});
+  });
+
+  it("exports the program without the names of the people invited", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    await join(store, "ben@example.com", "ben-ott", stored(storage).referralCodes?.[ana]);
+    store.updateSite((site) => ({ ...site, onboarded: true, page: { ...site.page, profile: { ...site.page.profile, displayName: "Bea Friend" } } }));
+    await signInAs(store, "ana@example.com");
+    // The inviter's screen shows the friend's page name once the page is set up …
+    expect((await store.referrals())?.invited[0]?.name).toBe("Bea Friend");
+    // … the export never does.
+    const exported = await store.exportData();
+    expect(exported).not.toContain("Bea Friend");
+    expect(exported).not.toContain("ben@example.com");
+    const { referrals } = JSON.parse(exported) as { referrals: { counted: number; invited: object[] } };
+    expect(referrals.counted).toBe(1);
+    expect(referrals.invited).toEqual([{ status: "counted", at: expect.any(String) as string }]);
+  });
+
+  it("answers a verification request as the database does: notUnlocked, ok, alreadyOpen, then tooSoon after a decline", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    const links = ["https://instagram.com/ana"];
+    expect(await store.requestVerification({ links })).toEqual({ ok: false, error: "notUnlocked" });
+    for (let n = 1; n <= 3; n += 1) await join(store, `f${String(n)}@example.com`, `friend-${String(n)}`, stored(storage).referralCodes?.[ana]);
+    await signInAs(store, "ana@example.com");
+    expect(await store.requestVerification({ links: ["http://instagram.com/ana"] })).toEqual({ ok: false, error: "invalidLinks" });
+    expect(await store.requestVerification({ links: ["https://a.example/1", "https://a.example/2", "https://a.example/3", "https://a.example/4"] })).toEqual({ ok: false, error: "invalidLinks" });
+    expect(await store.requestVerification({ links, note: "My only account" })).toEqual({ ok: true });
+    expect(await store.requestVerification({ links })).toEqual({ ok: false, error: "alreadyOpen" });
+    const request = store.teamQueue().verifications[0];
+    expect(request).toMatchObject({ customerId: ana, username: "ana-lund", links, note: "My only account", state: "requested", invites: 3 });
+    expect(store.teamReview(request?.id ?? "", "decline")).toBe(false);
+    expect(store.teamReview(request?.id ?? "", "decline", "identityUnclear")).toBe(true);
+    expect(await store.requestVerification({ links })).toEqual({ ok: false, error: "tooSoon" });
+    const verification = (await store.referrals())?.verification;
+    expect(verification).toMatchObject({ state: "declined", declineReason: "identityUnclear" });
+    expect(Date.parse(verification?.retryAt ?? "") - Date.parse(verification?.decidedAt ?? "")).toBe(7 * 86_400_000);
+  });
+
+  it("approving a request in the demo team console gives the page the blue check", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    for (let n = 1; n <= 3; n += 1) await join(store, `f${String(n)}@example.com`, `friend-${String(n)}`, stored(storage).referralCodes?.[ana]);
+    await signInAs(store, "ana@example.com");
+    expect(await store.requestVerification({ links: ["https://instagram.com/ana"] })).toEqual({ ok: true });
+    const request = store.teamQueue().verifications[0];
+    expect(store.teamReview(request?.id ?? "", "approve")).toBe(true);
+    const snapshot = store.getSnapshot();
+    expect(snapshot.status === "signedIn" && snapshot.site.page.profile.verified).toBe(true);
+    expect(store.teamReview(request?.id ?? "", "approve")).toBe(false);
+    expect(await store.requestVerification({ links: ["https://instagram.com/ana"] })).toEqual({ ok: false, error: "alreadyVerified" });
+    expect(store.teamCustomer(ana)?.verifications).toEqual([expect.objectContaining({ state: "approved" })]);
+  });
+
+  it("lets the demo team remove and restore an invite or a reward; a removed reward is not given again", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    const code = stored(storage).referralCodes?.[ana];
+    for (let n = 1; n <= 3; n += 1) await join(store, `f${String(n)}@example.com`, `friend-${String(n)}`, code);
+    const invite = store.teamCustomer(ana)?.invited[0]?.id ?? "";
+    expect(store.teamSetReferral(invite, "revoked")).toBe("qualified");
+    expect(store.teamCustomer(ana)).toMatchObject({ counted: 2, rewards: { verification_review: { source: "referrals", revokedAt: null } } });
+    expect(store.teamSetReferral(invite, "qualified")).toBe("revoked");
+    expect(store.teamSetReward(ana, "verification_review", false, "abuse")).toBe(true);
+    expect(store.teamSetReward(ana, "verification_review", false)).toBe(false);
+    await join(store, "f4@example.com", "friend-4", code);
+    expect(store.teamCustomer(ana)?.rewards.verification_review).toMatchObject({ reason: "abuse", revokedAt: expect.any(String) as string });
+    expect(store.teamQueue().rewards).toEqual([expect.objectContaining({ customerId: ana, kind: "verification_review", counted: 4 })]);
+    expect(store.teamSetReward(ana, "verification_review", true)).toBe(true);
+    expect(store.teamCustomer(ana)?.rewards.verification_review?.revokedAt).toBeNull();
+    expect(store.teamCustomer("nobody")).toBeNull();
+  });
+
+  it("tells the sign-up page who invited: the page name once it is set up, nothing for an unknown code", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    const code = stored(storage).referralCodes?.[ana] ?? "";
+    expect(await store.referralInviter("zzzzzzzz")).toBeNull();
+    expect(await store.referralInviter(code)).toEqual({ name: null });
+    store.updateSite((site) => ({ ...site, onboarded: true }));
+    expect(await store.referralInviter(code.toUpperCase())).toEqual({ name: "Ana Lund" });
+  });
+});
+
 describe("sixDigits", () => {
   it("is always six digits", () => {
     for (let i = 0; i < 200; i += 1) expect(sixDigits()).toMatch(/^\d{6}$/);
