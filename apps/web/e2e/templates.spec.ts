@@ -344,6 +344,10 @@ test.describe("link previews", () => {
     const image = await page.locator('meta[property="og:image"]').getAttribute("content");
     expect(image).toMatch(/\/en\/p\/mara-vale\/opengraph-image/);
     await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute("content", "1200");
+    // Messengers print these under the card: the person's name first, their own line, no internal wording.
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", /^Mara Vale · /);
+    await expect(page.locator('meta[property="og:description"]')).not.toHaveAttribute("content", /Design ?system/i);
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute("content", /\S/);
     const response = await request.get(new URL(image ?? "", page.url()).pathname);
     expect(response.status()).toBe(200);
     expect(response.headers()["content-type"]).toBe("image/png");

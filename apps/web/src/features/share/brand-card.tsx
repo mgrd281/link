@@ -18,13 +18,18 @@ const FONTS = Promise.all([
   readFile(join(process.cwd(), "node_modules/@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-700-normal.woff")).then((data) => ({ name: "Plex Arabic", data, weight: 700 as const })),
 ]);
 
-/** Three example pages fanned out on the right: name and photo. */
+/**
+ * Three example pages fanned out on the right: name and photo. `focal` keeps each face in view in the
+ * narrow cards, which crop the 4:5 portraits at the sides. Mara's face sits right of centre and the
+ * middle card covers her card's right third, so her photo is pinned to its right edge: centred, the
+ * card showed her only up to the nose.
+ */
 const PAGES = Promise.all(
   [
-    { file: "ex4-motion-mara.jpg", name: "Mara Vale" },
-    { file: "ex5-nela-voss.jpg", name: "Nela Voss" },
-    { file: "ex4-motion-timo.jpg", name: "Timo Lacht" },
-  ].map(async ({ file, name }) => ({ name, photo: dataUrl(await readFile(join(process.cwd(), "src/assets/examples", file)), "image/jpeg") })),
+    { file: "ex4-motion-mara.jpg", name: "Mara Vale", focal: "100% 15%" },
+    { file: "ex5-nela-voss.jpg", name: "Nela Voss", focal: "50% 20%" },
+    { file: "ex4-motion-timo.jpg", name: "Timo Lacht", focal: "50% 20%" },
+  ].map(async ({ file, name, focal }) => ({ name, focal, photo: dataUrl(await readFile(join(process.cwd(), "src/assets/examples", file)), "image/jpeg") })),
 );
 
 /** White tile with a teal y (generated with the logo): the card itself is Linkyo Teal. */
@@ -94,7 +99,7 @@ export async function brandCard({ kicker, title1, title2, rtl }: { kicker: strin
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws plain <img> elements */}
-              <img src={page.photo} alt="" width={cardWidth} height={cardHeight} style={{ objectFit: "cover" }} />
+              <img src={page.photo} alt="" width={cardWidth} height={cardHeight} style={{ objectFit: "cover", objectPosition: page.focal }} />
               <div
                 style={{
                   position: "absolute",

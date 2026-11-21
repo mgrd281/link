@@ -13,6 +13,9 @@ import { Link } from "@/i18n/navigation";
 /** Each language in its own name, so people find theirs whatever the page is in. */
 const LANGUAGE_NAMES: Record<string, string> = { de: "Deutsch", en: "English", ar: "العربية" };
 
+/** The page's language as Open Graph names it (language_TERRITORY). */
+const OG_LOCALES: Record<string, string> = { de: "de_DE", en: "en_US", ar: "ar_AR" };
+
 /** What an example page is an example of: its gallery category, or else its kind of page. */
 async function sampleLabel(locale: string, sample: { kind: string; category?: string | undefined }) {
   if (sample.category && sample.kind !== "journalist") return (await getTranslations({ locale, namespace: "examples.categories" }))(sample.category);
@@ -40,10 +43,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: "preview" });
   const sample = found.preview.sample;
   const label = sample ? await sampleLabel(locale, sample) : "";
+  const { profile } = found.page;
+  const name = profile.displayName;
+  // WhatsApp, iMessage and LinkedIn print og:title and og:description under the card: the person's
+  // name comes first, and examples and concepts still say what they are.
+  const ogTitle = sample ? t("ogTitle.sample", { name, kind: label }) : found.preview.concept ? t("ogTitle.concept", { name }) : t("ogTitle.prepared", { name });
+  // Their own line (tagline, else bio); without one the site's description stays.
+  const line = [profile.tagline, profile.bio].map((text) => text?.trim() ?? "").find(Boolean) ?? "";
+  const description = line.length > 160 ? `${line.slice(0, 159).trimEnd()}…` : line;
+  const said = description ? { description } : {};
   return {
     title: {
-      absolute: sample ? t("sampleTitle", { kind: label }) : found.preview.concept ? t("conceptTitle", { name: found.page.profile.displayName }) : t("title", { name: found.page.profile.displayName }),
+      absolute: sample ? t("sampleTitle", { kind: label }) : found.preview.concept ? t("conceptTitle", { name }) : t("title", { name }),
     },
+    ...said,
+    openGraph: { title: ogTitle, ...said, type: "profile", siteName: "Linkyo", locale: OG_LOCALES[locale] ?? "en_US" },
+    twitter: { card: "summary_large_image", title: ogTitle, ...said },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }
