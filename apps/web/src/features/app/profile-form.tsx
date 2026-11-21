@@ -131,9 +131,13 @@ export function useProfileDraft() {
   const profile = draft ?? doc.profile;
   // A form that goes away unsaved (its screen closed) leaves nothing behind in the preview.
   useEffect(() => () => setProfileDraft(null), [setProfileDraft]);
+  // Only a new moving-header link is checked: one saved earlier plays on the page today (any https
+  // link does) and never blocks another edit, such as a bio typed from Home.
+  const motionInvalid = (src: string | undefined) =>
+    src !== doc.profile.motion?.src && !isMotionUrl(src ?? "");
   const errors: ProfileErrors = {
     ...(nameMessage && !validName(profile.displayName) ? { displayName: nameMessage } : {}),
-    ...(motionChecked && !isMotionUrl(profile.motion?.src ?? "") ? { motion: t("motionInvalid") } : {}),
+    ...(motionChecked && motionInvalid(profile.motion?.src) ? { motion: t("motionInvalid") } : {}),
   };
   const forget = () => {
     setLocal(null);
@@ -157,7 +161,7 @@ export function useProfileDraft() {
     save: (requiredMessage: string): boolean => {
       if (!draft) return true;
       const nameOk = validName(draft.displayName);
-      const motionOk = isMotionUrl(draft.motion?.src ?? "");
+      const motionOk = !motionInvalid(draft.motion?.src);
       if (!nameOk || !motionOk) {
         if (!nameOk) setNameMessage(requiredMessage);
         if (!motionOk) setMotionChecked(true);

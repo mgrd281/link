@@ -56,6 +56,20 @@ export function LegalScreen() {
     setTouched({});
     setFailedSaves(0);
   };
+  // Save and Discard go away once used. A keyboard user on one of them goes on from the last field,
+  // not from the top of the page; a tap moves nothing (on a phone, a focused field opens the keyboard).
+  const keepFocus = () => {
+    const root = form.current;
+    const active = document.activeElement;
+    if (
+      !root ||
+      !(active instanceof HTMLButtonElement) ||
+      !root.contains(active) ||
+      !active.matches(":focus-visible")
+    )
+      return;
+    [...root.querySelectorAll<HTMLElement>("input, textarea")].at(-1)?.focus();
+  };
 
   // After a save that needs fixes, the first field to fix takes focus once it shows its error.
   useEffect(() => {
@@ -82,6 +96,7 @@ export function LegalScreen() {
       toast({ title: t("saveFailed"), tone: "danger" });
       return;
     }
+    keepFocus();
     forget();
     toast({ title: t("legalSaved"), tone: "success" });
   };
@@ -173,7 +188,14 @@ export function LegalScreen() {
           </div>
           {dirty ? (
             <FormActions status={t("legalUnsaved")}>
-              <Button variant="ghost" size="md" onClick={forget}>
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={() => {
+                  keepFocus();
+                  forget();
+                }}
+              >
                 {t("legalDiscard")}
               </Button>
               <Button type="submit" variant="primary" size="md">
