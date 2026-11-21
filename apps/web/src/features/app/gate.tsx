@@ -31,15 +31,22 @@ export function BrandSplash() {
 export function AppSplash() {
   const t = useTranslations("app");
   return (
-    <div className="min-h-dvh bg-canvas" role="status">
+    <div className="min-h-dvh bg-canvas max-lg:bg-canvas-muted" role="status">
       <span className="sr-only">{t("loading")}</span>
-      <div aria-hidden className="flex h-16 items-center gap-3 border-b border-line ps-4 pe-4">
-        <Skeleton className="size-avatar-sm shrink-0 rounded-full" />
-        <div className="grid flex-1 gap-2">
-          <Skeleton className="h-3 w-1/3" />
-          <Skeleton className="h-2 w-1/4" />
-        </div>
-        <Skeleton className="size-control-sm rounded-md" />
+      {/* The same bar as the shell's (avatar at the start, two buttons at the end), so nothing jumps
+          when the dashboard appears. */}
+      <div aria-hidden className="flex h-16 items-center justify-between border-b border-line px-2">
+        <span className="grid size-touch-target place-items-center">
+          <Skeleton className="size-avatar-sm rounded-full" />
+        </span>
+        <span className="flex">
+          <span className="grid size-touch-target place-items-center">
+            <Skeleton className="size-icon-md rounded-md" />
+          </span>
+          <span className="grid size-touch-target place-items-center">
+            <Skeleton className="size-icon-md rounded-md" />
+          </span>
+        </span>
       </div>
       <div aria-hidden className="mx-auto grid max-w-prose gap-4 px-4 pt-6">
         <Skeleton className="h-8 w-1/2" />
@@ -52,7 +59,7 @@ export function AppSplash() {
       <div aria-hidden className="fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
         <div className="mx-auto grid h-16 max-w-prose grid-cols-5 place-items-center">
           {[0, 1, 2, 3, 4].map((slot) => (
-            <Skeleton key={slot} className={slot === 2 ? "size-control-xl -translate-y-3 rounded-full" : "h-control-sm w-12 rounded-full"} />
+            <Skeleton key={slot} className={slot === 2 ? "h-control-sm w-12 rounded-full" : "size-icon-md rounded-md"} />
           ))}
         </div>
       </div>
