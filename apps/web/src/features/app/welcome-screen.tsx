@@ -233,10 +233,11 @@ export function WelcomeScreen() {
   };
 
   return (
-    <div className="grid min-h-dvh grid-cols-1 bg-canvas text-fg xl:grid-cols-[minmax(0,1fr)_auto]">
+    // data-console="frame": the welcome flow is part of the dashboard, black and grey (ADR 0062).
+    <div data-console="frame" className="grid min-h-dvh grid-cols-1 bg-canvas text-fg xl:grid-cols-[minmax(0,1fr)_auto]">
       <div className="flex min-w-0 flex-col">
         <header className="flex items-center gap-4 px-5 pt-4 md:px-10">
-          <Logo className="h-6" title="Linkyo" />
+          <Logo className="h-6" title="Linkyo" tone="mono" />
           <div className="ms-auto flex items-center gap-2">
             <PreviewButton className="xl:hidden" />
             {step !== "done" ? (
@@ -453,7 +454,8 @@ export function WelcomeScreen() {
                   <Icon icon={PartyPopper} size="lg" />
                 </span>
                 <p dir="ltr" className="text-h3 font-semibold">
-                  linkyo.app/<span className="text-link">{account.username}</span>
+                  <span className="text-fg-secondary">linkyo.app/</span>
+                  {account.username}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <ShareButtons username={account.username} compact />

@@ -110,7 +110,7 @@ export function PreviewAside() {
         <p className="text-small font-medium">{t("label")}</p>
         <Link
           href={previewHref}
-          className="inline-flex h-control-sm items-center gap-2 rounded-sm px-2 text-small font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
+          className="inline-flex h-control-sm items-center gap-2 rounded-sm px-2 text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
         >
           {t("open")}
           {/* The page opens inside the dashboard: an eye, not the "leave the app" arrow. */}

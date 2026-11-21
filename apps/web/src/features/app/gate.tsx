@@ -45,12 +45,13 @@ export function AppSplash() {
   const t = useTranslations("app");
   return (
     // data-grouped: the same ground and scrollbar gutter as the shell, so nothing shifts when it appears.
-    <div data-grouped className="flex min-h-dvh bg-canvas-muted" role="status">
+    // data-console="frame": black and grey from the first paint, as the shell (ADR 0062).
+    <div data-grouped data-console="frame" className="flex min-h-dvh bg-canvas-muted" role="status">
       <span className="sr-only">{t("loading")}</span>
 
       <div aria-hidden className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-e border-line bg-surface px-3 pb-3 lg:flex">
         <div className="flex h-16 shrink-0 items-center ps-3">
-          <Logo className="h-6" />
+          <Logo className="h-6" tone="mono" />
         </div>
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-3 py-2">
           <Skeleton className="size-avatar-sm rounded-full" />
