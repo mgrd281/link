@@ -142,8 +142,10 @@ and accessibility.
 
 **Measured** (production build, Chromium):
 - **Tests.**
-  - The full Playwright suite (desktop, phone and review projects) passed with 0 failures; the
-    numbers are in the commit that adds this ADR.
+  - The full Playwright suite (desktop, phone and review projects) on the final build: 550 passed,
+    0 failed and 83 skipped. The skipped tests are the review screenshots (they run only with
+    `REVIEW=1`), the real-account specs (run separately below) and tests that apply to only one
+    project.
   - Real accounts on a local Supabase stack: 11 of 11 passed. They cover sign-up, the Impressum
     saved on the server, sign-ins on the Konto pane, the address and the email changed only after
     a confirm, account deletion and the team console.
