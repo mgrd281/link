@@ -41,8 +41,10 @@ use, icons, the experience and adding things to a page.
     early.
 - **The home tile shows the real thing.**
   - "Link-Vorschau" is now a chat: a message bubble with the real preview card of an example page,
-    as a messenger would show it (title, description, `linkyo.app`). It loads through our image
-    optimizer, so the phone gets about 9 KB of AVIF instead of a 620 KB PNG.
+    as a messenger would show it (title, description, `linkyo.app`). It loads lazily, below the
+    fold, through the image optimizer. Locally that makes about 9 KB of AVIF, but on Vercel
+    generated images pass through unchanged, so live it is still the 620 KB PNG (see "Left for
+    later").
   - "Story" is the real story picture, drawn on a canvas the way the dashboard draws it. It stands
     upright, uncropped, in the visitor's language.
   - Faces stay in view (focal points).
@@ -97,8 +99,9 @@ use, icons, the experience and adding things to a page.
   hairlines.
 
 **Left for later.**
-- **Preview card format.** The cards are still PNG (about 620 KB). JPEG would need `sharp` as a
-  direct dependency, so it waits for the founder's approval of a new dependency.
+- **Preview card format.** The cards are still PNG (about 620 KB), and Vercel does not shrink
+  generated images, so the home tile loads that PNG too. JPEG would need `sharp` as a direct
+  dependency, so it waits for the founder's approval of a new dependency.
 - **The slug `rihana-store`.** It reads like a real artist's name. Changing it needs a redirect, so
   it gets its own change.
 - **More layouts and screens:**

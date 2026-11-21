@@ -326,7 +326,7 @@ test.describe("marketing home", () => {
     // The very card a messenger fetches for the example page, in the visitor's language.
     const card = tile.locator("img");
     await expect(card).toHaveCount(1);
-    // Through our image optimizer (a small modern format at the width shown), still our own card.
+    // Through the image optimizer (locally a small modern format; Vercel passes generated images through), still our own card.
     await expect(card).toHaveAttribute("src", /(\/|%2F)en(\/|%2F)p(\/|%2F)journalist(\/|%2F)opengraph-image/);
     await expect.poll(() => card.evaluate((image: HTMLImageElement) => image.naturalWidth), { timeout: 15_000 }).toBeGreaterThan(0);
     // Under it, the words the messengers print: the page's name first.
