@@ -49,6 +49,11 @@ const KEEPALIVE_LIMIT = 60_000;
 const RETRY_DELAYS = [2_000, 5_000, 15_000, 30_000];
 
 const AUTH_ERRORS = new Set<string>(["invalidUsername", "reservedUsername", "usernameTaken"]);
+
+type VerificationError = Extract<VerificationResult, { ok: false }>["error"];
+/** What request_verification() answers besides 'ok' (anything else counts as a server error). */
+const VERIFICATION_ERRORS: readonly VerificationError[] = ["invalidLinks", "alreadyOpen", "tooSoon", "notUnlocked", "alreadyVerified", "unavailable"];
+const verificationError = (answer: string): VerificationError => VERIFICATION_ERRORS.find((known) => known === answer) ?? "serverError";
 const emptyLegal: Legal = { name: "", address: "", email: "", phone: "" };
 
 function fromRow(row: SiteRow): Site {
@@ -221,7 +226,7 @@ export class SupabaseAccountStore implements AccountStore {
     return {
       email: input.email,
       locale: input.locale,
-      signUp: input.signUp ? { username: input.signUp.username, invite: input.signUp.invite, start: input.signUp.start } : undefined,
+      signUp: input.signUp ? { username: input.signUp.username, invite: input.signUp.invite, start: input.signUp.start, ref: input.signUp.ref } : undefined,
     };
   }
 
@@ -384,14 +389,28 @@ export class SupabaseAccountStore implements AccountStore {
     if (this.snapshot.status !== "signedIn") return "{}";
     const { account, site } = this.snapshot;
     const supabase = this.client();
-    const [signIns, subscription, invoices] = await Promise.all([
+    const [signIns, subscription, invoices, program, requests] = await Promise.all([
       this.signIns(),
       supabase.from("subscriptions").select("plan, status, started_at, renews_at, trial_ends_at, canceled_at").maybeSingle(),
       supabase.from("invoices").select("id, at, amount_cents, status").order("at", { ascending: false }),
+      supabase.rpc("my_referrals"),
+      supabase.rpc("my_verification_requests"),
     ]);
+    // The invite program: the people this account invited appear without names (other people's data).
+    const overview = fromJson<ReferralOverview | null>(program.data ?? null);
+    const referrals = overview
+      ? {
+          code: overview.code,
+          counted: overview.counted,
+          rewards: overview.rewards,
+          verifications: requests.data ?? [],
+          invitedBy: overview.invitedBy,
+          invited: overview.invited.map(({ status, at }) => ({ status, at })),
+        }
+      : null;
     // Everything kept about the account (GDPR Art. 15 and 20).
     return JSON.stringify(
-      { exportedAt: new Date().toISOString(), account, site, signIns, subscription: subscription.data, invoices: invoices.data ?? [] },
+      { exportedAt: new Date().toISOString(), account, site, signIns, subscription: subscription.data, invoices: invoices.data ?? [], referrals },
       null,
       2,
     );
@@ -406,17 +425,27 @@ export class SupabaseAccountStore implements AccountStore {
     return { ok: true };
   }
 
-  // Invite program: placeholders until its database functions exist (an empty program, nothing to ask).
-  referrals(): Promise<ReferralOverview | null> {
-    if (this.snapshot.status !== "signedIn") return Promise.resolve(null);
-    return Promise.resolve({ code: "22222222", counted: 0, rewards: {}, verification: null, invited: [], invitedBy: null });
+  // ── Invite program (ADR 0064): database functions only; customers never read the tables ─────
+
+  async referrals(): Promise<ReferralOverview | null> {
+    if (this.snapshot.status !== "signedIn") return null;
+    const { data, error } = await this.client().rpc("my_referrals");
+    // A failed load is an error on screen (with "Try again"), not an empty program.
+    if (error) throw new Error(error.message);
+    return fromJson<ReferralOverview | null>(data);
   }
 
-  requestVerification(): Promise<VerificationResult> {
-    return Promise.resolve({ ok: false, error: "unavailable" });
+  async requestVerification(input: { links: string[]; note?: string | undefined }): Promise<VerificationResult> {
+    const { data, error } = await this.client().rpc("request_verification", { links: input.links, ...(input.note ? { note: input.note } : {}) });
+    if (error) return { ok: false, error: "serverError" };
+    return data === "ok" ? { ok: true } : { ok: false, error: verificationError(data) };
   }
 
-  referralInviter(): Promise<{ name: string | null } | null> {
-    return Promise.resolve(null);
+  async referralInviter(code: string): Promise<{ name: string | null } | null> {
+    // Works signed out (the sign-up page): the function answers visitors with the public page name only.
+    const { data, error } = await this.client().rpc("referral_inviter", { code });
+    if (error || !data) return null;
+    const { name } = fromJson<{ name?: unknown }>(data);
+    return { name: typeof name === "string" && name ? name : null };
   }
 }

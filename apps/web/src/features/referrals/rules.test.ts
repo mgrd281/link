@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { emailIdentity, isReferralCode, newReferralCode, PRO_AVAILABLE, REFERRAL_ALPHABET, REFERRAL_CODE, REFERRAL_RULES, remaining } from "./rules";
@@ -61,5 +64,43 @@ describe("invite program rules", () => {
     expect(remaining(2, 3)).toBe(1);
     expect(remaining(3, 3)).toBe(0);
     expect(remaining(12, 10)).toBe(0);
+  });
+});
+
+/** The migration that defines public.referral_rule(), the codes and public.email_identity(). */
+const MIGRATION = readFileSync(path.resolve(import.meta.dirname, "../../../../../supabase/migrations/20261121120000_referrals.sql"), "utf8");
+
+/** A function's body in the migration (between its $$ quotes). */
+const sqlBody = (signature: string) => {
+  const start = MIGRATION.indexOf(`create function public.${signature}`);
+  const open = MIGRATION.indexOf("$$", start);
+  return start < 0 || open < 0 ? "" : MIGRATION.slice(open + 2, MIGRATION.indexOf("$$", open + 2));
+};
+
+/** REFERRAL_RULES' names as SQL spells them: verificationAt → verification_at. */
+const sqlName = (key: string) => key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+
+describe("the database mirrors the rules", () => {
+  it("public.referral_rule() has exactly the numbers of REFERRAL_RULES", () => {
+    const sql = Object.fromEntries([...sqlBody("referral_rule(name text)").matchAll(/when '([a-z_]+)' then (\d+)/g)].map((match): [string, number] => [match[1] ?? "", Number(match[2])]));
+    const app = Object.fromEntries(Object.entries(REFERRAL_RULES).map(([key, value]) => [sqlName(key), value]));
+    expect(Object.keys(sql)).toHaveLength(Object.keys(REFERRAL_RULES).length);
+    expect(sql).toEqual(app);
+  });
+
+  it("makes codes from the same alphabet and checks them with the same pattern", () => {
+    expect(sqlBody("new_referral_code()")).toContain(`alphabet constant text := '${REFERRAL_ALPHABET}'`);
+    expect(sqlBody("new_referral_code()")).toContain(`% ${String(REFERRAL_ALPHABET.length)}, 1)`);
+    // The column constraint and the sign-up trigger.
+    const patterns = [...MIGRATION.matchAll(/~ '(\^\[[^']+\]\{8\}\$)'/g)].map((match) => match[1]);
+    expect(patterns).toHaveLength(2);
+    for (const pattern of patterns) expect(pattern).toBe(REFERRAL_CODE.source);
+  });
+
+  it("public.email_identity() treats the same domains as Gmail", () => {
+    const body = sqlBody("email_identity(address text)");
+    expect(body).toContain("when domain in ('gmail.com', 'googlemail.com')");
+    expect(body).toContain("replace(split_part(local, '+', 1), '.', '') || '@gmail.com'");
+    expect(emailIdentity("x.y+z@googlemail.com")).toBe("xy@gmail.com");
   });
 });

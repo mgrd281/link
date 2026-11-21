@@ -307,3 +307,85 @@ test("the owner finds a customer, suspends them, writes a note and blocks an add
   await page.goto("/en/admin/activity");
   await expect(page.getByText(/suspended/).first()).toBeVisible();
 });
+
+// ── The invite program on real data (ADR 0064) ──────────────────────────────────────────────
+
+/**
+ * What the app itself sends to the database from this page: its publishable key and, once signed in,
+ * the account's access token. Lets the test ask the database as that account (row-level security
+ * and auth.uid() apply), exactly as the app does.
+ */
+function databaseCredentials(page: Page) {
+  const seen = { apikey: "", token: "" };
+  page.on("request", (request) => {
+    if (!request.url().startsWith(`${URL_}/rest/v1/`)) return;
+    const headers = request.headers();
+    if (headers.apikey) seen.apikey = headers.apikey;
+    const bearer = /^Bearer (ey\S+)$/.exec(headers.authorization ?? "")?.[1];
+    if (bearer) seen.token = bearer;
+  });
+  return seen;
+}
+
+const asAccount = (seen: { apikey: string; token: string }) =>
+  createClient<Database>(URL_, seen.apikey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${seen.token}` } },
+  });
+
+test("a friend who signs up through an invite link in another browser counts; the team can remove it", async ({ page, browser }) => {
+  const inviterName = `inv-${stamp}`;
+  const inviterEmail = `${inviterName}@example.com`;
+  const friendEmail = `friend-${stamp}@example.com`;
+
+  // The inviter signs in here (browser A): the security log has A's device.
+  const inviterSeen = databaseCredentials(page);
+  const inviterId = await account(inviterEmail, inviterName);
+  await logInEn(page, inviterEmail);
+  await expect.poll(() => inviterSeen.token).not.toBe("");
+  const code = (await admin().from("profiles").select("referral_code").eq("id", inviterId).single()).data?.referral_code ?? "";
+  expect(code).toMatch(/^[2-9a-hjkmnp-z]{8}$/);
+
+  // The friend uses the link in another browser (its own device id; loopback addresses are never compared).
+  const other = await browser.newContext();
+  const friend = await other.newPage();
+  await clearMail(friend, friendEmail);
+  await friend.goto(`/en/i/${code}`);
+  await friend.waitForURL(`**/en/signup?ref=${code}`);
+  await friend.waitForLoadState("networkidle");
+  // The inviter's page isn't set up yet, so it isn't named.
+  await expect(friend.getByText("You were invited to Linkyo")).toBeVisible();
+  await expect(friend.getByRole("textbox")).toHaveCount(1);
+  await friend.locator("#signup-email").fill(friendEmail);
+  await friend.locator("form button[type=submit]").click();
+  await expect(friend.getByRole("heading", { name: "Enter your code" })).toBeVisible();
+  await friend.getByLabel("Sign-in code").fill((await mail(friend, friendEmail)).code);
+  await friend.waitForURL("**/en/app/welcome");
+  await other.close();
+
+  // Our server settled it right after the friend's first sign-in.
+  const friendId = (await profileOf(friendEmail))?.id ?? "";
+  const { data: referral } = await admin().from("referrals").select("id, inviter_id, state, reason, signals").eq("invitee_id", friendId).single();
+  expect(referral).toMatchObject({ inviter_id: inviterId, state: "qualified", reason: null, signals: { sameNetwork: false, emailLink: false } });
+
+  // The inviter sees one counted friend, without their email.
+  const asInviter = asAccount(inviterSeen);
+  const { data: overview, error } = await asInviter.rpc("my_referrals");
+  expect(error).toBeNull();
+  expect(overview).toMatchObject({ code, counted: 1, invited: [{ status: "counted", deleted: false, name: null }] });
+  expect(JSON.stringify(overview)).not.toContain(friendEmail);
+
+  // The owner (made by the console test above) removes it as fraud; the inviter's count drops.
+  // The console screen for this comes with the team-console package; here the same database call.
+  const ownerPage = await (await browser.newContext()).newPage();
+  const ownerSeen = databaseCredentials(ownerPage);
+  await logInEn(ownerPage, ownerEmail);
+  await expect.poll(() => ownerSeen.token).not.toBe("");
+  const { error: removeError } = await asAccount(ownerSeen).rpc("admin_set_referral", { referral: referral?.id ?? "", next_state: "revoked", why: "e2e" });
+  expect(removeError).toBeNull();
+  await ownerPage.context().close();
+  const { data: after } = await asInviter.rpc("my_referrals");
+  expect(after).toMatchObject({ counted: 0, invited: [{ status: "notCounted" }] });
+  const { data: logged } = await admin().from("audit_log").select("action, actor").eq("target_id", inviterId).eq("action", "referral.revoke");
+  expect(logged).toEqual([{ action: "referral.revoke", actor: ownerEmail }]);
+});

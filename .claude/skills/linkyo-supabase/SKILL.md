@@ -12,8 +12,8 @@ them the demo store runs. Both must keep working (ADR 0030).
 
 | What | Where |
 |---|---|
-| Schema, RLS, functions | `supabase/migrations/*.sql`: core (profiles, sites, history, public_page), security (sign_ins, blocked_ips, retention), team (roles, audit, billing, notes, `admin_*` functions) |
-| DB tests (pgTAP) | `supabase/tests/access.test.sql`, run as customer, visitor, server, owner and viewer |
+| Schema, RLS, functions | `supabase/migrations/*.sql`: core (profiles, sites, history, public_page), security (sign_ins, blocked_ips, retention), team (roles, audit, billing, notes, `admin_*` functions), referrals (the invite program, ADR 0064: codes, `referrals`, `rewards`, `verification_requests`, `settle_referral`, hourly cron) |
+| DB tests (pgTAP) | `supabase/tests/access.test.sql`, run as customer, visitor, server, owner and viewer; `supabase/tests/referrals.test.sql` (codes, sign-up attribution, the abuse checks, counting, rewards, verification, team writes, privacy) |
 | Email templates | `supabase/templates/{confirmation,magic_link,email_change}.html` (de/en/ar by `.Data.locale`; the first two carry the 6-digit `{{ .Token }}` and the one-click link), wired in `supabase/config.toml` |
 | Clients | `apps/web/src/lib/supabase/{config,browser,server,json}.ts`, `database.types.ts` (generated) |
 | Server routes | `app/api/auth/code` (sends the code; checks sign-ups), `app/api/auth/verify` (code → session, security log, first page), `app/api/auth/confirm` (the emailed link) + `features/account/server/{auth,first-site}.ts` |
@@ -31,6 +31,31 @@ them the demo store runs. Both must keep working (ADR 0030).
   prepared page or a starter, from the metadata) and the security log.
 - The demo store mirrors this: the code comes back as `demoCode` and is shown on screen.
 - Real-account e2e reads codes from Mailpit (`clearMail` before asking, `mail()` to wait).
+
+## Invite program (ADR 0064)
+
+- **The word is "referral" in code, data and URLs** (`?ref=`, `referrals`, `features/referrals/*`).
+  "invite" already means the team's prepared-page invite (`?invite=`, `SignUpInput.invite`,
+  `invites.manage`, ADR 0015). Never mix them: `findPrepared()` reads `invite`, `handle_new_user`
+  reads `ref`.
+- **Sign-up:** `/i/<code>` → 307 to `/<locale>/signup?ref=<code>` (no cookie). The sign-up page
+  looks the inviter up (`referral_inviter`) and sends `ref` only for a known code;
+  `/api/auth/code` drops a malformed one and puts it in the user metadata; `handle_new_user`
+  writes a `pending` referral for a new account only.
+- **Settling:** after `recordSignIn` in `/api/auth/verify` and in `/api/auth/confirm` (not for an
+  email change), `settleReferral()` (`features/account/server/referrals.ts`) calls
+  `settle_referral(invitee)`. It never throws and never fails a sign-in; the hourly
+  `linkyo-settle-referrals` job settles what the routes missed.
+- **Rewards are not subscriptions.** `grant_referral_rewards()` writes `rewards` at
+  `referral_rule('verification_at')` and `('pro_for_life_at')`. Nothing in the program writes
+  `subscriptions` or `invoices`. A removed reward is never given again automatically.
+- **The numbers live in `features/referrals/rules.ts`;** `referral_rule()` mirrors them and
+  `rules.test.ts` reads the migration to compare.
+- **Customers read only through functions** (`my_referrals`, `my_verification_requests`,
+  `referral_inviter`, `request_verification`); the team through `admin_customer_referrals`,
+  `admin_referral_queue`, `admin_set_referral`, `admin_set_reward`, `admin_review_verification`
+  (`features/referrals/team.ts`). Both stores implement the same contract; the demo applies the
+  self check only.
 
 ## Rules
 

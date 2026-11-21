@@ -4,6 +4,7 @@ import { deviceBody, fail, isBlocked, json } from "@/features/account/server/aut
 import { startSchema } from "@/features/account/server/first-site";
 import { localUsernameStatus, normalizeEmail, normalizeUsername } from "@/features/account/username";
 import { findPrepared } from "@/features/previews/claim";
+import { isReferralCode } from "@/features/referrals/rules";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { anonServerSupabase, serviceSupabase } from "@/lib/supabase/server";
 import { requestPlace } from "@/lib/request-context";
@@ -12,8 +13,11 @@ const body = z
   .object({
     email: z.string().max(254),
     locale: z.enum(["de", "en", "ar"]),
-    // Someone new: the page address they chose, an invite from a prepared page, an example to start from.
-    signUp: z.object({ username: z.string().max(40), invite: z.string().max(64).optional(), start: startSchema.optional() }).optional(),
+    // Someone new: the page address they chose, an invite from a prepared page, an example to start
+    // from, and the code of the invite link they came through (`ref`, not the prepared-page `invite`).
+    signUp: z
+      .object({ username: z.string().max(40), invite: z.string().max(64).optional(), start: startSchema.optional(), ref: z.string().max(16).optional() })
+      .optional(),
   })
   .and(deviceBody);
 
@@ -47,11 +51,14 @@ export async function POST(request: Request) {
     const { data: status } = await service.rpc("username_status", { candidate: username });
     if (status !== "ok") return fail(status === "reservedUsername" || status === "invalidUsername" ? status : "usernameTaken");
 
+    // An invite link's code: a malformed one is dropped and never fails the sign-up. The database
+    // attributes the account only if the code belongs to someone (handle_new_user).
+    const ref = input.signUp.ref && isReferralCode(input.signUp.ref.toLowerCase()) ? input.signUp.ref.toLowerCase() : undefined;
     const { error } = await auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: true,
-        data: { username, locale: input.locale, invite: input.signUp.invite, start: input.signUp.start },
+        data: { username, locale: input.locale, invite: input.signUp.invite, start: input.signUp.start, ref },
         emailRedirectTo: `${origin}/api/auth/confirm?next=/${input.locale}/app/welcome`,
       },
     });

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { deviceBody, fail, isBlocked, json, recordSignIn, sessionIdOf } from "@/features/account/server/auth";
 import { ensureFirstSite } from "@/features/account/server/first-site";
+import { settleReferral } from "@/features/account/server/referrals";
 import { normalizeEmail } from "@/features/account/username";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { anonServerSupabase, serviceSupabase } from "@/lib/supabase/server";
@@ -47,5 +48,7 @@ export async function POST(request: Request) {
   }
   await ensureFirstSite(service, data.user);
   await recordSignIn(service, { email, result: "success", place, device: input, sessionId: sessionIdOf(data.session.access_token) });
+  // A new account from an invite link: the checks need the sign-in just logged.
+  await settleReferral(service, data.user.id);
   return json({ ok: true, session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } });
 }

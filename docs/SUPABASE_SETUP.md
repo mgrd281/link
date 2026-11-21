@@ -39,6 +39,20 @@ The migrations in `supabase/migrations/`, in order. Either:
 
 Then `pnpm db:test` can run against a branch or staging copy.
 
+The migrations schedule three jobs with pg_cron (enabled by the security migration); check them
+under Database → Cron Jobs, or with `select jobname, schedule from cron.job;`:
+
+| Job | When | What |
+|---|---|---|
+| `linkyo-purge-sign-ins` | daily 03:17 | deletes sign-ins older than 30 days |
+| `linkyo-purge-unconfirmed` | daily 03:27 | deletes sign-ups nobody confirmed within 7 days |
+| `linkyo-settle-referrals` | hourly at :41 | the invite program (ADR 0064): settles invites the sign-in routes missed, and gives rewards an inviter reached while suspended |
+
+The invite program needs no setting of its own. Invite links use `NEXT_PUBLIC_SITE_URL` when it is
+set, otherwise the address the app is served from; set it once `linkyo.app` is live. The throwaway
+domains the checks refuse are in `public.disposable_domains` (48 seeded); the team adds more with
+SQL (`insert into public.disposable_domains values ('example.org');`).
+
 ## 4. Auth settings
 
 In Authentication → URL Configuration, or with `PATCH /v1/projects/<ref>/config/auth`:
@@ -76,4 +90,8 @@ Redeploy on Vercel (environment variables apply to new deployments). Then check:
 - sign up, the email arrives, and the link opens the welcome flow;
 - the page saves;
 - sign out, then sign in, and Settings → Recent sign-ins shows the device;
-- `/admin` opens for the owner and shows the account under Customers and Security.
+- `/admin` opens for the owner and shows the account under Customers and Security;
+- an invite link (`/i/<code>`, the code is in `profiles.referral_code`) opened in a private
+  window leads to the sign-up with "You were invited to Linkyo" (or the inviter's page name), and
+  after the code is entered `select state from public.referrals order by created_at desc limit 1;`
+  says `qualified`.

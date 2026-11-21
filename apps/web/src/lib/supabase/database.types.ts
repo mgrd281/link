@@ -97,6 +97,19 @@ export type Database = {
           },
         ];
       };
+      disposable_domains: {
+        Row: {
+          domain: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          domain: string;
+        };
+        Update: {
+          domain?: string;
+        };
+        Relationships: [];
+      };
       invoices: {
         Row: {
           amount_cents: number;
@@ -136,6 +149,7 @@ export type Database = {
           id: string;
           last_seen_at: string | null;
           locale: string;
+          referral_code: string;
           status: Database["public"]["Enums"]["account_status"];
           updated_at: string;
           username: string;
@@ -147,6 +161,7 @@ export type Database = {
           id: string;
           last_seen_at?: string | null;
           locale?: string;
+          referral_code?: string;
           status?: Database["public"]["Enums"]["account_status"];
           updated_at?: string;
           username: string;
@@ -157,12 +172,65 @@ export type Database = {
           id?: string;
           last_seen_at?: string | null;
           locale?: string;
+          referral_code?: string;
           status?: Database["public"]["Enums"]["account_status"];
           updated_at?: string;
           username?: string;
           verified?: boolean;
         };
         Relationships: [];
+      };
+      referrals: {
+        Row: {
+          created_at: string;
+          decided_by: string | null;
+          id: string;
+          invitee_id: string | null;
+          inviter_id: string;
+          reason: string | null;
+          settled_at: string | null;
+          signals: NonNullable<Json>;
+          state: Database["public"]["Enums"]["referral_state"];
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          decided_by?: string | null;
+          id?: string;
+          invitee_id?: string | null;
+          inviter_id: string;
+          reason?: string | null;
+          settled_at?: string | null;
+          signals?: NonNullable<Json>;
+          state?: Database["public"]["Enums"]["referral_state"];
+        };
+        Update: {
+          created_at?: string;
+          decided_by?: string | null;
+          id?: string;
+          invitee_id?: string | null;
+          inviter_id?: string;
+          reason?: string | null;
+          settled_at?: string | null;
+          signals?: NonNullable<Json>;
+          state?: Database["public"]["Enums"]["referral_state"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "referrals_invitee_id_fkey";
+            columns: ["invitee_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "referrals_inviter_id_fkey";
+            columns: ["inviter_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       reserved_usernames: {
         Row: {
@@ -179,6 +247,45 @@ export type Database = {
           username?: string;
         };
         Relationships: [];
+      };
+      rewards: {
+        Row: {
+          granted_at: string;
+          kind: Database["public"]["Enums"]["reward_kind"];
+          profile_id: string;
+          revoke_reason: string | null;
+          revoked_at: string | null;
+          revoked_by: string | null;
+          source: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          granted_at?: string;
+          kind: Database["public"]["Enums"]["reward_kind"];
+          profile_id: string;
+          revoke_reason?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          source?: string;
+        };
+        Update: {
+          granted_at?: string;
+          kind?: Database["public"]["Enums"]["reward_kind"];
+          profile_id?: string;
+          revoke_reason?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          source?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rewards_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       role_permissions: {
         Row: {
@@ -383,6 +490,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      verification_requests: {
+        Row: {
+          created_at: string;
+          decided_at: string | null;
+          decline_reason: string | null;
+          id: string;
+          links: string[];
+          note: string;
+          profile_id: string;
+          reviewer_id: string | null;
+          state: Database["public"]["Enums"]["verification_state"];
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          decided_at?: string | null;
+          decline_reason?: string | null;
+          id?: string;
+          links: string[];
+          note?: string;
+          profile_id: string;
+          reviewer_id?: string | null;
+          state?: Database["public"]["Enums"]["verification_state"];
+        };
+        Update: {
+          created_at?: string;
+          decided_at?: string | null;
+          decline_reason?: string | null;
+          id?: string;
+          links?: string[];
+          note?: string;
+          profile_id?: string;
+          reviewer_id?: string | null;
+          state?: Database["public"]["Enums"]["verification_state"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "verification_requests_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -396,11 +548,30 @@ export type Database = {
       admin_add_note: { Args: { body: string; customer: string }; Returns: Json };
       admin_block_ip: { Args: { address: unknown; why: string }; Returns: undefined };
       admin_blocked_ips: { Args: Record<PropertyKey, never>; Returns: Json };
+      admin_customer_referrals: { Args: { customer: string }; Returns: Json };
       admin_customers: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_delete_customer: { Args: { customer: string }; Returns: undefined };
       admin_me: { Args: Record<PropertyKey, never>; Returns: Json };
+      admin_referral_queue: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_refund_invoice: { Args: { invoice: string }; Returns: undefined };
       admin_remove_member: { Args: { member: string }; Returns: undefined };
+      admin_review_verification: {
+        Args: { decision: string; reason?: string; request: string };
+        Returns: undefined;
+      };
+      admin_set_referral: {
+        Args: { next_state: Database["public"]["Enums"]["referral_state"]; referral: string; why?: string };
+        Returns: undefined;
+      };
+      admin_set_reward: {
+        Args: {
+          customer: string;
+          granted: boolean;
+          kind: Database["public"]["Enums"]["reward_kind"];
+          why?: string;
+        };
+        Returns: undefined;
+      };
       admin_set_role: {
         Args: { member: string; member_role: Database["public"]["Enums"]["team_role"] };
         Returns: undefined;
@@ -432,11 +603,16 @@ export type Database = {
       change_username: { Args: { candidate: string }; Returns: string };
       customer_label: { Args: { customer: string }; Returns: string };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
+      email_identity: { Args: { address: string }; Returns: string };
+      grant_referral_rewards: { Args: { inviter: string }; Returns: undefined };
       has_permission: { Args: { wanted: string }; Returns: boolean };
       is_active: { Args: { account: string }; Returns: boolean };
       is_ip_blocked: { Args: { address: unknown }; Returns: boolean };
       make_owner: { Args: { owner_email: string }; Returns: undefined };
+      my_referrals: { Args: Record<PropertyKey, never>; Returns: Json };
       my_team_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["team_role"] };
+      my_verification_requests: { Args: Record<PropertyKey, never>; Returns: Json };
+      new_referral_code: { Args: Record<PropertyKey, never>; Returns: string };
       public_page: { Args: { handle: string }; Returns: Json };
       purge_old_sign_ins: { Args: Record<PropertyKey, never>; Returns: number };
       purge_unconfirmed_accounts: { Args: Record<PropertyKey, never>; Returns: number };
@@ -455,14 +631,24 @@ export type Database = {
         };
         Returns: undefined;
       };
+      referral_count: { Args: { inviter: string }; Returns: number };
+      referral_inviter: { Args: { code: string }; Returns: Json };
+      referral_rule: { Args: { name: string }; Returns: number };
+      request_verification: { Args: { links: string[]; note?: string }; Returns: string };
       require_permission: { Args: { wanted: string }; Returns: undefined };
+      same_network: { Args: { a: unknown; b: unknown }; Returns: boolean };
+      settle_pending_referrals: { Args: Record<PropertyKey, never>; Returns: number };
+      settle_referral: { Args: { invitee: string }; Returns: string };
       username_status: { Args: { candidate: string }; Returns: string };
     };
     Enums: {
       account_status: "active" | "suspended";
       plan: "free" | "pro";
+      referral_state: "pending" | "qualified" | "held" | "rejected" | "revoked";
+      reward_kind: "verification_review" | "pro_for_life";
       subscription_status: "active" | "trialing" | "past_due" | "canceled";
       team_role: "owner" | "admin" | "editor" | "viewer";
+      verification_state: "requested" | "approved" | "declined";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -575,8 +761,11 @@ export const Constants = {
     Enums: {
       account_status: ["active", "suspended"],
       plan: ["free", "pro"],
+      referral_state: ["pending", "qualified", "held", "rejected", "revoked"],
+      reward_kind: ["verification_review", "pro_for_life"],
       subscription_status: ["active", "trialing", "past_due", "canceled"],
       team_role: ["owner", "admin", "editor", "viewer"],
+      verification_state: ["requested", "approved", "declined"],
     },
   },
 } as const;
