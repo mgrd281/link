@@ -117,6 +117,8 @@ export function PosterRenderer({
               headings={layout.headings}
               number={titled.indexOf(section) + 1}
               reveal={layout.motion === "reveal"}
+              // The dashboard's preview finds the block being edited by these ids (a section by its title block).
+              blockIds={preview && section.id !== "top" ? section.id : undefined}
             >
               {section.items.map((item) => (
                 <PosterItemView
@@ -128,6 +130,7 @@ export function PosterRenderer({
                   nested={section.title !== null}
                   gallery={layout.gallery}
                   featured={featured}
+                  preview={preview}
                 />
               ))}
             </PosterSection>
@@ -155,19 +158,26 @@ function PosterSection({
   headings,
   number,
   reveal,
+  blockIds,
   children,
 }: {
   title: string | null;
   headings: HeadingStyle;
   number: number;
   reveal: boolean;
+  blockIds?: string | undefined;
   children: ReactNode;
 }) {
   const id = useId();
-  if (title === null) return <div className={cn("grid min-w-0 grid-cols-1 gap-3", reveal && "poster-reveal")}>{children}</div>;
+  if (title === null)
+    return (
+      <div data-block-ids={blockIds} className={cn("grid min-w-0 grid-cols-1 gap-3", reveal && "poster-reveal")}>
+        {children}
+      </div>
+    );
   const heading = sectionTitle(headings);
   return (
-    <section aria-labelledby={id} className={cn("grid min-w-0 grid-cols-1 gap-3", reveal && "poster-reveal")}>
+    <section aria-labelledby={id} data-block-ids={blockIds} className={cn("grid min-w-0 grid-cols-1 gap-3", reveal && "poster-reveal")}>
       <h2 id={id} className={heading.className} style={heading.style}>
         {headings === "numbered" ? (
           <span aria-hidden className="text-creator-accent-text tabular-nums">
@@ -186,15 +196,7 @@ function PosterSection({
   );
 }
 
-function PosterItemView({
-  item,
-  linkStyle,
-  surface,
-  label,
-  nested,
-  gallery,
-  featured,
-}: {
+interface ItemProps {
   item: PosterItem;
   linkStyle: CreatorButtonStyle;
   surface: string;
@@ -202,7 +204,25 @@ function PosterItemView({
   nested: boolean;
   gallery: CreatorLayout["gallery"];
   featured: string | undefined;
-}) {
+}
+
+/**
+ * One item of a section. In the dashboard's preview it is wrapped in a box that names the blocks it
+ * shows, so the preview can scroll to (and outline) the block being edited; the page itself renders
+ * the item as it is.
+ */
+function PosterItemView({ preview, ...props }: ItemProps & { preview: boolean }) {
+  if (!preview) return <PosterItemBody {...props} />;
+  const { item } = props;
+  const ids = item.kind === "block" ? [item.block.id] : item.blocks.map((block) => block.id);
+  return (
+    <div data-block-ids={ids.join(" ")} className="min-w-0">
+      <PosterItemBody {...props} />
+    </div>
+  );
+}
+
+function PosterItemBody({ item, linkStyle, surface, label, nested, gallery, featured }: ItemProps) {
   switch (item.kind) {
     case "videos":
       return item.blocks.length > 1 ? <VideoRail videos={item.blocks} /> : <VideoFeature video={item.blocks[0]} />;
