@@ -16,7 +16,8 @@
     "theme": {
       "label": "Theme",
       "light": "Light",
-      "dark": "Dark"
+      "dark": "Dark",
+      "system": "Automatic"
     },
     "notifications": "Notifications ({hotkey})"
   },
@@ -1063,12 +1064,12 @@
   "app": {
     "meta": {
       "home": "Home",
-      "editor": "Your page",
+      "editor": "Edit page",
       "design": "Design",
       "analytics": "Analytics",
       "settings": "Settings",
       "welcome": "Welcome",
-      "preview": "Your page"
+      "preview": "Preview"
     },
     "loading": "Loading your dashboard…",
     "skip": "Skip to content",
@@ -1120,7 +1121,8 @@
     "save": {
       "saved": "Saved",
       "saving": "Saving…",
-      "error": "Not saved"
+      "error": "Not saved",
+      "unsavedLegal": "Legal notice not saved"
     },
     "form": {
       "upload": "Upload",
@@ -1135,7 +1137,10 @@
         "type": "That file isn't an image. Choose a JPG, PNG or WebP.",
         "size": "That image is over 25 MB. Choose a smaller one.",
         "decode": "This image couldn't be read. Try another file."
-      }
+      },
+      "uploadNamed": "Upload {label}",
+      "replaceNamed": "Replace {label}",
+      "limit": "Maximum length reached."
     },
     "fields": {
       "title": "Title",
@@ -1334,13 +1339,17 @@
         "live": "Shows when you're live on Twitch, YouTube or Kick.",
         "app": "An app from your videos: visitors get it from their own store in one tap.",
         "repo": "A skill or repository from GitHub: visitors copy the install command in one tap."
-      }
+      },
+      "addShort": "Add",
+      "back": "Back"
     },
     "preview": {
       "label": "Live preview",
       "open": "Open",
       "show": "Preview",
-      "close": "Close preview"
+      "close": "Close preview",
+      "region": "Live preview: {name}",
+      "regionHint": "View only. “Open” shows the full page."
     },
     "add": {
       "title": "Add to your page",
@@ -1391,11 +1400,11 @@
       }
     },
     "editor": {
-      "title": "Your page",
+      "title": "Page",
       "lead": "Top to bottom, as visitors see it. Tap a row to edit it.",
       "profileEmpty": "Add a photo and a short bio",
       "editProfile": "Edit profile",
-      "blocks": "Sections & blocks",
+      "blocks": "Content",
       "count": "{count, plural, one {# block} other {# blocks}}",
       "emptyTitle": "Your page is waiting",
       "emptyBody": "Paste your first link — a song, a video, your shop — and it appears on your page right away.",
@@ -1421,28 +1430,34 @@
       "addBelow": "Add below",
       "duplicated": "“{title}” duplicated",
       "undone": "Undone",
-      "redone": "Redone"
+      "redone": "Redone",
+      "reorderHint": "Drag a row by its handle to its new place.",
+      "gripTip": "Drag to move"
     },
     "profile": {
       "title": "Profile",
       "lead": "The top of your page: who you are in one glance.",
       "avatar": "Profile photo",
       "name": "Name",
-      "tagline": "One line about you (optional)",
+      "tagline": "One line about you",
       "taglineHint": "e.g. “DJ & producer · Berlin”.",
       "bio": "Short bio",
       "bioHint": "Two sentences is plenty.",
-      "location": "Location (optional)",
-      "hero": "Large photo (optional)",
-      "logo": "Logo (optional)",
+      "location": "Location",
+      "hero": "Header photo",
+      "logo": "Logo",
       "language": "Language of your page",
       "close": "Close",
       "cancel": "Cancel",
       "save": "Save profile",
       "saved": "Profile saved",
       "nameRequired": "Please enter the name visitors should see.",
-      "motion": "Moving picture (optional)",
-      "motionHint": "Link to a short clip (3–10 s, MP4, no sound). It loops silently in place of the photo; the photo stays as its poster."
+      "motion": "Moving header",
+      "motionHint": "MP4 link, 3–10 s, no sound. The header photo stays its poster.",
+      "more": "More for the header",
+      "logoHint": "Shows only in templates with a logo header.",
+      "motionInvalid": "Paste a direct link to an MP4 file.",
+      "saveShort": "Save"
     },
     "home": {
       "title": "Hi {name}",
@@ -1482,7 +1497,7 @@
             "hint": "Required in Germany for business pages (Impressum)."
           }
         },
-        "showDone": "{count} done",
+        "showDone": "Show done ({count})",
         "hideDone": "Hide done"
       },
       "stats": {
@@ -1499,7 +1514,31 @@
       "preparedBody": "The Linkyo team prepared it for you. Have a look and change anything you like – it's all yours.",
       "preparedView": "View my page",
       "preparedEdit": "Edit",
-      "preparedDismiss": "Dismiss"
+      "preparedDismiss": "Dismiss",
+      "leadProgress": "{done} of {total} steps done.",
+      "leadReady": "Your page is ready to share.",
+      "leadComplete": "All done. Share your link where your people are.",
+      "next": {
+        "eyebrow": "Next step",
+        "actions": {
+          "photo": "Choose a photo",
+          "bio": "Write your bio",
+          "links": "Add a link",
+          "socials": "Link your profiles",
+          "look": "Open Design",
+          "legal": "Fill in legal notice"
+        }
+      },
+      "open": {
+        "title": "Still to do"
+      },
+      "link": {
+        "readyTitle": "Your page is ready",
+        "readyBody": "Put the link in your Instagram or TikTok profile. That's where visitors tap it.",
+        "howTo": "How to add it to your profile",
+        "howToBody": "Open your profile in the app and tap “Edit profile”. Paste the link under “Links” or “Website”. Done: it now sits under your name.",
+        "reserved": "Your address is reserved and goes live at launch."
+      }
     },
     "shareImage": {
       "open": "Image for story & post",
@@ -1592,6 +1631,13 @@
         "navy": "Navy",
         "grape": "Grape",
         "rose": "Rose"
+      },
+      "customize": "Customize",
+      "tabsLabel": "What to customize",
+      "tabs": {
+        "color": "Color",
+        "fonts": "Font",
+        "buttons": "Buttons"
       }
     },
     "analytics": {
@@ -1626,7 +1672,8 @@
         "desktop": "Computer",
         "tablet": "Tablet"
       },
-      "privacy": "Linkyo counts visits without cookies and without storing IP addresses. Your visitors stay anonymous, and you see everything you need."
+      "privacy": "Linkyo counts visits without cookies and without storing IP addresses. Your visitors stay anonymous, and you see everything you need.",
+      "topInsight": "Tapped most: {title}"
     },
     "settings": {
       "title": "Settings",
@@ -1640,11 +1687,11 @@
       "emailSave": "Change email",
       "emailChanged": "Email changed",
       "legal": "Legal notice (Impressum)",
-      "legalHint": "In Germany, pages with a business purpose need a legal notice (§ 5 DDG). It's linked at the bottom of your page as “Imprint”.",
+      "legalHint": "In Germany, pages with a business purpose need a legal notice (§ 5 DDG).",
       "legalName": "Full name or company",
       "legalAddress": "Address for service",
       "legalEmail": "Contact email",
-      "legalPhone": "Phone (optional)",
+      "legalPhone": "Phone",
       "legalSave": "Save legal notice",
       "legalSaved": "Legal notice saved",
       "saveFailed": "Couldn't save. Please try again.",
@@ -1672,14 +1719,61 @@
       "importInvalid": "This file isn't a Linkyo page. Use a file from “Export my data”.",
       "undo": "Undo",
       "signIns": "Recent sign-ins",
-      "signInsHint": "To protect your account we keep your sign-ins for 30 days: IP address, rough place and device. Don't recognise one? Change your password.",
+      "signInsHint": "We keep your sign-ins for 30 days: IP address, rough place and device. Don't recognise one? Secure your email inbox, because whoever can open it can sign in.",
       "signInsEmpty": "No sign-ins recorded yet.",
       "thisDevice": "This device",
-      "failedSignIn": "Wrong password",
+      "failedSignIn": "Wrong code",
       "unknownPlace": "Place unknown",
       "emailConfirm": "Confirm the new address with the link we sent to {email}.",
-      "signInByCode": "You sign in with a code we email you each time, so there's no password to remember or to leak.",
-      "current": "Your page:"
+      "signInByCode": "You sign in with a code we send to this address. There is no password.",
+      "current": "Your page:",
+      "groups": {
+        "page": "Your page",
+        "app": "App",
+        "data": "Data"
+      },
+      "rows": {
+        "profile": "Profile",
+        "address": "Page address",
+        "legal": "Legal notice",
+        "pageLanguage": "Page language",
+        "account": "Account",
+        "appLanguage": "App language"
+      },
+      "footers": {
+        "pageLanguage": "For visitors: buttons, dates and notices on your page appear in this language.",
+        "app": "Just for you, in this browser.",
+        "data": "Export saves everything as a JSON file. An import replaces your page and can be undone right after."
+      },
+      "legalState": {
+        "complete": "Complete",
+        "incomplete": "Incomplete",
+        "missing": "Not added"
+      },
+      "panes": {
+        "account": "Account",
+        "address": "Page address",
+        "legal": "Legal notice"
+      },
+      "emailConfirmTitle": "Change your email?",
+      "emailConfirmBody": "We'll send a confirmation link to {new}. Until you open it, you keep signing in with {old}.",
+      "emailPending": "Waiting for confirmation: {email}",
+      "emailResend": "Send again",
+      "signInsAll": "Show all {count}",
+      "deleteHintReal": "Deletes your account, your page and all its data. This can't be undone.",
+      "addressTooShort": "At least 3 characters.",
+      "addressConfirmTitle": "Change your address?",
+      "addressConfirmBody": "linkyo.app/{old} will stop working, including on QR codes and stories you've already shared.",
+      "legalAddressHint": "Street, number, postcode and city. No PO box.",
+      "legalMissing": "Missing: {fields}",
+      "legalErrors": {
+        "name": "Enter your full name or company.",
+        "email": "This email address looks incomplete.",
+        "phone": "Only digits, spaces and + / ( ) -"
+      },
+      "legalDiscard": "Discard",
+      "legalUnsaved": "Not saved yet",
+      "demoNote": "Demo: your data stays in this browser."
     },
     "welcome": {
       "skip": "Skip for now",
@@ -2026,10 +2120,18 @@
     },
     "ownPage": {
       "label": "Page actions",
-      "back": "Dashboard",
+      "back": "Done",
       "edit": "Edit"
     },
-    "teamArea": "Team area"
+    "teamArea": "Team area",
+    "settingsButton": "Settings and account",
+    "settingsButtonInitials": "Settings and account, {initials}",
+    "back": "Back",
+    "crash": {
+      "title": "This view couldn't load",
+      "body": "Reload it. Anything already saved stays saved.",
+      "retry": "Reload"
+    }
   },
   "preview": {
     "title": "Preview for {name} · Linkyo",

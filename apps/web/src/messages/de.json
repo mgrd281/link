@@ -16,7 +16,8 @@
     "theme": {
       "label": "Darstellung",
       "light": "Hell",
-      "dark": "Dunkel"
+      "dark": "Dunkel",
+      "system": "Automatisch"
     },
     "notifications": "Mitteilungen ({hotkey})"
   },
@@ -1063,12 +1064,12 @@
   "app": {
     "meta": {
       "home": "Start",
-      "editor": "Deine Seite",
+      "editor": "Seite bearbeiten",
       "design": "Design",
       "analytics": "Statistik",
       "settings": "Einstellungen",
       "welcome": "Willkommen",
-      "preview": "Deine Seite"
+      "preview": "Vorschau"
     },
     "loading": "Dein Dashboard wird geladen …",
     "skip": "Zum Inhalt springen",
@@ -1120,7 +1121,8 @@
     "save": {
       "saved": "Gespeichert",
       "saving": "Speichert …",
-      "error": "Nicht gespeichert"
+      "error": "Nicht gespeichert",
+      "unsavedLegal": "Impressum nicht gespeichert"
     },
     "form": {
       "upload": "Hochladen",
@@ -1135,7 +1137,10 @@
         "type": "Das ist kein Bild. Wähle ein JPG, PNG oder WebP.",
         "size": "Das Bild ist größer als 25 MB. Wähle ein kleineres.",
         "decode": "Das Bild ließ sich nicht lesen. Probier eine andere Datei."
-      }
+      },
+      "uploadNamed": "{label} hochladen",
+      "replaceNamed": "{label} ersetzen",
+      "limit": "Höchstlänge erreicht."
     },
     "fields": {
       "title": "Titel",
@@ -1334,13 +1339,17 @@
         "live": "Zeigt, wenn du auf Twitch, YouTube oder Kick live bist.",
         "app": "Eine App aus deinen Videos: Besucher laden sie mit einem Tipp in ihrem eigenen Store.",
         "repo": "Ein Skill oder Repository von GitHub: Besucher kopieren den Installationsbefehl mit einem Tipp."
-      }
+      },
+      "addShort": "Hinzufügen",
+      "back": "Zurück"
     },
     "preview": {
       "label": "Live-Vorschau",
       "open": "Öffnen",
       "show": "Vorschau",
-      "close": "Vorschau schließen"
+      "close": "Vorschau schließen",
+      "region": "Live-Vorschau: {name}",
+      "regionHint": "Nur zum Ansehen. „Öffnen“ zeigt die Seite in voller Größe."
     },
     "add": {
       "title": "Zu deiner Seite hinzufügen",
@@ -1391,11 +1400,11 @@
       }
     },
     "editor": {
-      "title": "Deine Seite",
+      "title": "Seite",
       "lead": "Von oben nach unten, so wie Besucher sie sehen. Tipp auf eine Zeile, um sie zu bearbeiten.",
       "profileEmpty": "Füg ein Foto und eine kurze Bio hinzu",
       "editProfile": "Profil bearbeiten",
-      "blocks": "Abschnitte & Blöcke",
+      "blocks": "Inhalte",
       "count": "{count, plural, one {# Block} other {# Blöcke}}",
       "emptyTitle": "Deine Seite wartet",
       "emptyBody": "Füg deinen ersten Link ein – einen Song, ein Video, deinen Shop – und er erscheint sofort auf deiner Seite.",
@@ -1421,28 +1430,34 @@
       "addBelow": "Darunter einfügen",
       "duplicated": "„{title}“ dupliziert",
       "undone": "Rückgängig gemacht",
-      "redone": "Wiederhergestellt"
+      "redone": "Wiederhergestellt",
+      "reorderHint": "Zieh eine Zeile am Griff an ihren neuen Platz.",
+      "gripTip": "Ziehen zum Verschieben"
     },
     "profile": {
       "title": "Profil",
       "lead": "Der Kopf deiner Seite: wer du bist, auf einen Blick.",
       "avatar": "Profilfoto",
       "name": "Name",
-      "tagline": "Eine Zeile über dich (optional)",
+      "tagline": "Eine Zeile über dich",
       "taglineHint": "z. B. „DJ & Produzentin · Berlin“.",
       "bio": "Kurze Bio",
       "bioHint": "Zwei Sätze reichen.",
-      "location": "Ort (optional)",
-      "hero": "Großes Foto (optional)",
-      "logo": "Logo (optional)",
+      "location": "Ort",
+      "hero": "Kopfbild",
+      "logo": "Logo",
       "language": "Sprache deiner Seite",
       "close": "Schließen",
       "cancel": "Abbrechen",
       "save": "Profil speichern",
       "saved": "Profil gespeichert",
       "nameRequired": "Bitte gib den Namen ein, den Besucher sehen sollen.",
-      "motion": "Bewegtes Bild (optional)",
-      "motionHint": "Link zu einem kurzen Clip (3–10 Sek., MP4, ohne Ton). Er läuft stumm in Schleife statt des Fotos; das Foto bleibt die Vorschau."
+      "motion": "Bewegtes Kopfbild",
+      "motionHint": "MP4-Link, 3–10 Sek., ohne Ton. Das Kopfbild bleibt das Vorschaubild.",
+      "more": "Mehr für den Kopfbereich",
+      "logoHint": "Erscheint nur in Vorlagen mit Logo-Kopf.",
+      "motionInvalid": "Füg einen direkten Link zu einer MP4-Datei ein.",
+      "saveShort": "Speichern"
     },
     "home": {
       "title": "Hallo {name}",
@@ -1482,7 +1497,7 @@
             "hint": "In Deutschland Pflicht für geschäftliche Seiten."
           }
         },
-        "showDone": "{count} erledigt",
+        "showDone": "Erledigte anzeigen ({count})",
         "hideDone": "Erledigte ausblenden"
       },
       "stats": {
@@ -1499,7 +1514,31 @@
       "preparedBody": "Das Linkyo-Team hat sie für dich vorbereitet. Schau sie dir an und ändere, was du möchtest – alles gehört dir.",
       "preparedView": "Meine Seite ansehen",
       "preparedEdit": "Bearbeiten",
-      "preparedDismiss": "Schließen"
+      "preparedDismiss": "Schließen",
+      "leadProgress": "{done} von {total} Schritten erledigt.",
+      "leadReady": "Deine Seite ist bereit zum Teilen.",
+      "leadComplete": "Alles erledigt. Teile deinen Link dort, wo deine Leute sind.",
+      "next": {
+        "eyebrow": "Nächster Schritt",
+        "actions": {
+          "photo": "Foto wählen",
+          "bio": "Bio schreiben",
+          "links": "Link hinzufügen",
+          "socials": "Profile verlinken",
+          "look": "Design öffnen",
+          "legal": "Impressum ausfüllen"
+        }
+      },
+      "open": {
+        "title": "Noch offen"
+      },
+      "link": {
+        "readyTitle": "Deine Seite ist bereit",
+        "readyBody": "Setz den Link in dein Instagram- oder TikTok-Profil. Dort tippen Besucher ihn an.",
+        "howTo": "So kommt der Link in dein Profil",
+        "howToBody": "Öffne dein Profil in der App und tippe auf „Profil bearbeiten“. Füg den Link bei „Links“ oder „Website“ ein. Fertig: Er steht jetzt unter deinem Namen.",
+        "reserved": "Deine Adresse ist reserviert und geht mit dem Start online."
+      }
     },
     "shareImage": {
       "open": "Bild für Story & Post",
@@ -1592,6 +1631,13 @@
         "navy": "Marineblau",
         "grape": "Traube",
         "rose": "Pink"
+      },
+      "customize": "Anpassen",
+      "tabsLabel": "Was du anpassen willst",
+      "tabs": {
+        "color": "Farbe",
+        "fonts": "Schrift",
+        "buttons": "Buttons"
       }
     },
     "analytics": {
@@ -1626,7 +1672,8 @@
         "desktop": "Computer",
         "tablet": "Tablet"
       },
-      "privacy": "Linkyo zählt Besuche ohne Cookies und ohne IP-Adressen zu speichern. Deine Besucher bleiben anonym, und du siehst alles, was du brauchst."
+      "privacy": "Linkyo zählt Besuche ohne Cookies und ohne IP-Adressen zu speichern. Deine Besucher bleiben anonym, und du siehst alles, was du brauchst.",
+      "topInsight": "Am häufigsten angetippt: {title}"
     },
     "settings": {
       "title": "Einstellungen",
@@ -1640,11 +1687,11 @@
       "emailSave": "E-Mail ändern",
       "emailChanged": "E-Mail geändert",
       "legal": "Impressum",
-      "legalHint": "In Deutschland brauchen Seiten mit geschäftlichem Zweck ein Impressum (§ 5 DDG). Es wird unten auf deiner Seite als „Impressum“ verlinkt.",
+      "legalHint": "In Deutschland brauchen Seiten mit geschäftlichem Zweck ein Impressum (§ 5 DDG).",
       "legalName": "Vollständiger Name oder Firma",
       "legalAddress": "Ladungsfähige Anschrift",
       "legalEmail": "Kontakt-E-Mail",
-      "legalPhone": "Telefon (optional)",
+      "legalPhone": "Telefon",
       "legalSave": "Impressum speichern",
       "legalSaved": "Impressum gespeichert",
       "saveFailed": "Speichern ging nicht. Bitte versuch es noch einmal.",
@@ -1672,14 +1719,61 @@
       "importInvalid": "Diese Datei ist keine Linkyo-Seite. Nutze eine Datei aus „Meine Daten exportieren“.",
       "undo": "Rückgängig",
       "signIns": "Letzte Anmeldungen",
-      "signInsHint": "Zum Schutz deines Kontos speichern wir deine Anmeldungen 30 Tage: IP-Adresse, ungefährer Ort und Gerät. Etwas kommt dir unbekannt vor? Ändere dein Passwort.",
+      "signInsHint": "Wir speichern deine Anmeldungen 30 Tage: IP-Adresse, ungefährer Ort und Gerät. Kennst du eine nicht? Sichere dein E-Mail-Postfach, denn wer es öffnen kann, kann sich anmelden.",
       "signInsEmpty": "Noch keine Anmeldungen erfasst.",
       "thisDevice": "Dieses Gerät",
-      "failedSignIn": "Falsches Passwort",
+      "failedSignIn": "Falscher Code",
       "unknownPlace": "Ort unbekannt",
       "emailConfirm": "Bestätige die neue Adresse über den Link, den wir an {email} geschickt haben.",
-      "signInByCode": "Du meldest dich jedes Mal mit einem Code an, den wir dir per E-Mail schicken. Es gibt also kein Passwort, das du dir merken musst oder das verloren gehen kann.",
-      "current": "Deine Seite:"
+      "signInByCode": "Du meldest dich mit einem Code an, den wir an diese Adresse schicken. Ein Passwort gibt es nicht.",
+      "current": "Deine Seite:",
+      "groups": {
+        "page": "Deine Seite",
+        "app": "App",
+        "data": "Daten"
+      },
+      "rows": {
+        "profile": "Profil",
+        "address": "Seitenadresse",
+        "legal": "Impressum",
+        "pageLanguage": "Sprache der Seite",
+        "account": "Konto",
+        "appLanguage": "Sprache der App"
+      },
+      "footers": {
+        "pageLanguage": "Für Besucher: Knöpfe, Daten und Hinweise auf deiner Seite erscheinen in dieser Sprache.",
+        "app": "Gilt nur für dich, in diesem Browser.",
+        "data": "Export: alles als JSON-Datei. Ein Import ersetzt deine Seite und lässt sich gleich danach rückgängig machen."
+      },
+      "legalState": {
+        "complete": "Vollständig",
+        "incomplete": "Unvollständig",
+        "missing": "Nicht angelegt"
+      },
+      "panes": {
+        "account": "Konto",
+        "address": "Seitenadresse",
+        "legal": "Impressum"
+      },
+      "emailConfirmTitle": "E-Mail ändern?",
+      "emailConfirmBody": "Wir schicken einen Bestätigungslink an {new}. Bis du ihn öffnest, meldest du dich weiter mit {old} an.",
+      "emailPending": "Bestätigung ausstehend: {email}",
+      "emailResend": "Erneut senden",
+      "signInsAll": "Alle {count} anzeigen",
+      "deleteHintReal": "Löscht dein Konto, deine Seite und alle Daten. Das lässt sich nicht rückgängig machen.",
+      "addressTooShort": "Mindestens 3 Zeichen.",
+      "addressConfirmTitle": "Adresse ändern?",
+      "addressConfirmBody": "linkyo.app/{old} funktioniert danach nicht mehr, auch nicht auf QR-Codes und in Storys, die du schon geteilt hast.",
+      "legalAddressHint": "Straße, Hausnummer, PLZ und Ort. Kein Postfach.",
+      "legalMissing": "Es fehlt: {fields}",
+      "legalErrors": {
+        "name": "Gib deinen vollen Namen oder deine Firma ein.",
+        "email": "Diese E-Mail-Adresse sieht unvollständig aus.",
+        "phone": "Nur Ziffern, Leerzeichen und + / ( ) -"
+      },
+      "legalDiscard": "Verwerfen",
+      "legalUnsaved": "Nicht gespeichert",
+      "demoNote": "Demo: Deine Daten liegen nur in diesem Browser."
     },
     "welcome": {
       "skip": "Später",
@@ -2026,10 +2120,18 @@
     },
     "ownPage": {
       "label": "Seitenaktionen",
-      "back": "Dashboard",
+      "back": "Fertig",
       "edit": "Bearbeiten"
     },
-    "teamArea": "Teambereich"
+    "teamArea": "Teambereich",
+    "settingsButton": "Einstellungen und Konto",
+    "settingsButtonInitials": "Einstellungen und Konto, {initials}",
+    "back": "Zurück",
+    "crash": {
+      "title": "Diese Ansicht ließ sich nicht laden",
+      "body": "Lade sie neu. Was schon gespeichert ist, bleibt erhalten.",
+      "retry": "Neu laden"
+    }
   },
   "preview": {
     "title": "Vorschau für {name} · Linkyo",

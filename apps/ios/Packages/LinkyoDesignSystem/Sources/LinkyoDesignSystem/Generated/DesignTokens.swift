@@ -85,6 +85,8 @@ public enum LinkyoTokens {
         public static let content: CGFloat = 1120
         /// Live phone preview width.
         public static let preview: CGFloat = 390
+        /// Compact live phone preview (desk to xl).
+        public static let previewCompact: CGFloat = 320
         /// Max line length for long text.
         public static let prose: CGFloat = 640
         /// Menus and popovers (min width).
@@ -111,6 +113,7 @@ public enum LinkyoTokens {
         public static let h1 = TextStyle(size: 36, lineHeight: 1.15, weight: 700, tracking: -0.02)
         public static let h2 = TextStyle(size: 28, lineHeight: 1.2, weight: 700, tracking: -0.02)
         public static let h3 = TextStyle(size: 22, lineHeight: 1.3, weight: 600, tracking: -0.01)
+        public static let title = TextStyle(size: 18, lineHeight: 1.3, weight: 600, tracking: -0.01)
         public static let bodyLg = TextStyle(size: 18, lineHeight: 1.55, weight: 400, tracking: 0)
         public static let body = TextStyle(size: 16, lineHeight: 1.55, weight: 400, tracking: 0)
         public static let small = TextStyle(size: 14, lineHeight: 1.45, weight: 500, tracking: 0)
@@ -228,11 +231,13 @@ public extension Color {
         public static let canvasMuted = Color("Semantic/CanvasMuted", bundle: .module)
         public static let surface = Color("Semantic/Surface", bundle: .module)
         public static let surfaceElevated = Color("Semantic/SurfaceElevated", bundle: .module)
+        public static let group = Color("Semantic/Group", bundle: .module)
         public static let hover = Color("Semantic/Hover", bundle: .module)
         public static let pressed = Color("Semantic/Pressed", bundle: .module)
         public static let hoverInverse = Color("Semantic/HoverInverse", bundle: .module)
         public static let selected = Color("Semantic/Selected", bundle: .module)
         public static let selectedFg = Color("Semantic/SelectedFg", bundle: .module)
+        public static let controlKnob = Color("Semantic/ControlKnob", bundle: .module)
         public static let tinted = Color("Semantic/Tinted", bundle: .module)
         public static let tintedHover = Color("Semantic/TintedHover", bundle: .module)
         public static let tintedFg = Color("Semantic/TintedFg", bundle: .module)

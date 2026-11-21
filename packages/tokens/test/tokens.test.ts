@@ -25,7 +25,7 @@ function ratio(fg: string, bg: string): number {
 
 describe("product UI semantic colors (brand §4, WCAG 2.2 AA)", () => {
   for (const mode of modes) {
-    const backgrounds = [s.canvas[mode], s.canvasMuted[mode], s.surface[mode], s.surfaceElevated[mode]];
+    const backgrounds = [s.canvas[mode], s.canvasMuted[mode], s.surface[mode], s.surfaceElevated[mode], s.group[mode]];
 
     it(`${mode}: text roles reach 4.5:1 on every surface`, () => {
       for (const bg of backgrounds) {
