@@ -14,7 +14,7 @@ const ARABIC = /[؀-ۿݐ-ݿࢠ-ࣿ]/;
  * Up to two initials. An Arabic name gets one letter: Arabic letters join, so two initials side by
  * side read as a word ("سلمى رحّال" would show "سر", which means "secret").
  */
-function initialsOf(name: string): string {
+export function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/);
   const first = parts[0]?.charAt(0) ?? "";
   if (ARABIC.test(first)) return first;

@@ -1115,6 +1115,7 @@
     "logout": "Log out",
     "account": "Account",
     "accountMenu": "Account menu",
+    "accountMenuInitials": "Account menu, {initials}",
     "demo": "Demo",
     "save": {
       "saved": "Saved",

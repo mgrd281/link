@@ -2,7 +2,7 @@
 
 import { hasImage } from "@linkyo/blocks";
 import { tokens } from "@linkyo/tokens";
-import { Avatar, Badge, Button, cn, Icon, Logo, Spinner } from "@linkyo/ui";
+import { Avatar, Badge, Button, cn, Icon, initialsOf, Logo, Spinner } from "@linkyo/ui";
 import { ChartNoAxesColumn, Check, CircleAlert, Eye, FlaskConical, House, LayoutList, LogOut, Palette, Plus, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DropdownMenu } from "radix-ui";
@@ -165,6 +165,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { doc, account, setAddOpen } = useSite();
   const titleAway = useTitleScrolledAway(pathname);
   const activeKey = NAV.find((item) => isActive(pathname, item.href))?.key ?? "home";
+  const photo = hasImage(doc.profile.avatar);
 
   return (
     <div data-grouped className="group/app flex min-h-dvh bg-canvas text-fg max-lg:bg-canvas-muted">
@@ -250,13 +251,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             trigger={
               <button
                 type="button"
-                aria-label={t("accountMenu")}
+                // Without a photo the button shows the initials, so its name contains them too: a voice
+                // control user can say what they see (WCAG 2.5.3, label in name).
+                aria-label={photo ? t("accountMenu") : t("accountMenuInitials", { initials: initialsOf(doc.profile.displayName) })}
                 className="relative grid size-touch-target place-items-center justify-self-start rounded-full transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
               >
-                {/* The initials are a picture of the account, not its name (WCAG 2.5.3). */}
-                <span aria-hidden className="contents">
-                  <ProfileAvatar size="sm" />
-                </span>
+                <ProfileAvatar size="sm" />
               </button>
             }
           />

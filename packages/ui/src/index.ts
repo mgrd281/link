@@ -1,4 +1,4 @@
-export { Avatar, type AvatarProps } from "./avatar";
+export { Avatar, initialsOf, type AvatarProps } from "./avatar";
 export { Badge, type BadgeProps } from "./badge";
 export { Logo, LogoGlyph, LogoSymbol, LogoWordmark } from "./brand/logo";
 export { Button, buttonVariants, type ButtonProps } from "./button";

@@ -1115,6 +1115,7 @@
     "logout": "Abmelden",
     "account": "Konto",
     "accountMenu": "Kontomenü",
+    "accountMenuInitials": "Kontomenü, {initials}",
     "demo": "Demo",
     "save": {
       "saved": "Gespeichert",

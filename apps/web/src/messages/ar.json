@@ -1115,6 +1115,7 @@
     "logout": "تسجيل الخروج",
     "account": "الحساب",
     "accountMenu": "قائمة الحساب",
+    "accountMenuInitials": "قائمة الحساب، {initials}",
     "demo": "تجريبي",
     "save": {
       "saved": "تم الحفظ",
