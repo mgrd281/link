@@ -2,15 +2,16 @@
 
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Button, cn, Icon, IconButton } from "@linkyo/ui";
-import { Eye, X } from "lucide-react";
+import { Eye, Smartphone, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Dialog } from "radix-ui";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { Link } from "@/i18n/navigation";
 
 import { useSite } from "./site-context";
+import { DESK_QUERY, useMediaQuery } from "./use-media-query";
 
 /** How far down an element sits inside a scroller's content (layout positions, so transforms don't count). */
 function offsetWithin(element: HTMLElement, scroller: HTMLElement): number {
@@ -23,11 +24,18 @@ function offsetWithin(element: HTMLElement, scroller: HTMLElement): number {
   return top;
 }
 
-/** The creator's page, rendered by the real renderer at phone width (container queries do the rest). */
+/**
+ * The creator's page, rendered by the real renderer at phone width (container queries do the rest).
+ * It is a picture of the page, not a second app: the page inside is inert, so its links, players and
+ * headings stay out of the way (no navigating the dashboard away, no second h1). The frame itself
+ * can still be scrolled, with the keyboard too; "Open" shows the real page.
+ */
 export function PhonePreview({ className }: { className?: string }) {
+  const t = useTranslations("app.preview");
   const { previewPage, doc, editing } = useSite();
   const theme = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: previewPage.profile.locale === "ar" }), [doc.theme, previewPage.profile.locale]);
   const scroller = useRef<HTMLDivElement>(null);
+  const hintId = useId();
   // The block open in the edit sheet (a new one shows up once its draft has something to show).
   const editingId = editing ? (editing.mode === "edit" ? editing.id : editing.block.id) : null;
   // The block the preview last scrolled to, so typing in it does not pull the preview back each time.
@@ -53,7 +61,8 @@ export function PhonePreview({ className }: { className?: string }) {
     };
   }, [editingId, previewPage]);
   return (
-    <div className={cn("relative mx-auto w-full max-w-preview overflow-hidden rounded-xl border border-line-strong bg-ink p-1", className)}>
+    // Concentric: the frame's radius (28) is the screen's (20) plus its padding (8).
+    <div className={cn("relative mx-auto w-full max-w-preview overflow-hidden rounded-xl border border-line-strong bg-ink p-2", className)}>
       <div className="relative size-full overflow-hidden rounded-lg" style={{ transform: "translateZ(0)" }}>
         <div
           ref={scroller}
@@ -62,26 +71,70 @@ export function PhonePreview({ className }: { className?: string }) {
           className="absolute inset-0 overflow-y-auto overscroll-contain [&_[data-editing]]:rounded-creator-card [&_[data-editing]]:[--color-focus:var(--creator-accent-text)] [&_[data-editing]]:focus-ring"
           tabIndex={0}
           role="region"
-          aria-label={previewPage.profile.displayName}
+          aria-label={t("region", { name: previewPage.profile.displayName })}
+          aria-describedby={hintId}
         >
-          <PosterRenderer page={previewPage} theme={theme} preview />
+          <div inert>
+            <PosterRenderer page={previewPage} theme={theme} preview />
+          </div>
         </div>
       </div>
+      <p id={hintId} className="sr-only">
+        {t("regionHint")}
+      </p>
     </div>
   );
 }
 
-/** Extra-wide screens: the page stays visible next to whatever you edit. */
+/**
+ * Wide screens: the page stays in view next to whatever you edit. Compact (320 px) from the desk
+ * breakpoint, so a 13–14" laptop window sees it too; full width from xl. Mounted only where it shows,
+ * so smaller screens do not render the page twice. Its header shares the 64 px toolbar line with the
+ * sidebar logo and the screen's toolbar; the frame ends 16 px above the window's bottom.
+ */
 export function PreviewAside() {
   const t = useTranslations("app.preview");
   const { previewHref } = useSite();
+  const desk = useMediaQuery(DESK_QUERY);
+  if (!desk) return null;
   return (
-    <aside aria-label={t("label")} className="sticky top-0 hidden h-dvh w-preview shrink-0 box-content flex-col gap-3 border-s border-line bg-canvas-muted p-4 xl:flex">
+    <aside
+      data-preview-aside
+      aria-label={t("label")}
+      className="sticky top-0 hidden h-dvh shrink-0 flex-col gap-3 border-s border-line bg-canvas-muted px-4 pb-4 desk:flex desk:w-[calc(var(--container-preview-compact)+var(--spacing-8))] xl:w-[calc(var(--container-preview)+var(--spacing-8))]"
+    >
+      <div className="flex h-16 shrink-0 items-center justify-between gap-2">
+        <p className="text-small font-medium">{t("label")}</p>
+        <Link
+          href={previewHref}
+          className="inline-flex h-control-sm items-center gap-2 rounded-sm px-2 text-small font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
+        >
+          {t("open")}
+          {/* The page opens inside the dashboard: an eye, not the "leave the app" arrow. */}
+          <Icon icon={Eye} size="sm" />
+        </Link>
+      </div>
+      <PhonePreview className="min-h-0 flex-1 max-w-preview-compact xl:max-w-preview" />
+    </aside>
+  );
+}
+
+/**
+ * The team area's column (outside the dashboard shell): extra-wide screens only, as before. Its
+ * width includes the padding, so the frame ends inside the window instead of 32 px below it.
+ */
+export function PlainPreviewAside() {
+  const t = useTranslations("app.preview");
+  const { previewHref } = useSite();
+  return (
+    <aside
+      aria-label={t("label")}
+      className="sticky top-0 hidden h-dvh w-[calc(var(--container-preview)+var(--spacing-8))] shrink-0 flex-col gap-3 border-s border-line bg-canvas-muted p-4 xl:flex"
+    >
       <div className="flex items-center justify-between gap-2">
         <p className="text-small font-medium">{t("label")}</p>
         <Link href={previewHref} className="inline-flex h-control-sm items-center gap-2 rounded-sm px-2 text-small font-medium text-link hover:bg-hover focus-visible:focus-ring">
           {t("open")}
-          {/* The page opens inside the dashboard: an eye, not the "leave the app" arrow. */}
           <Icon icon={Eye} size="sm" />
         </Link>
       </div>
@@ -98,11 +151,11 @@ export function PreviewButton({ className, label }: { className?: string; label?
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         {label === "full" ? (
-          <Button icon={Eye} className={className}>
+          <Button icon={Smartphone} className={className}>
             {t("show")}
           </Button>
         ) : (
-          <IconButton icon={Eye} label={t("show")} className={className} />
+          <IconButton icon={Smartphone} label={t("show")} className={className} />
         )}
       </Dialog.Trigger>
       <Dialog.Portal>
