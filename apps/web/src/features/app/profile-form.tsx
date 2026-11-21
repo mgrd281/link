@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { Disclosure } from "./disclosure";
 import { ImageInput, SelectField, TextArea, TextInput, UrlInput } from "./form";
 import { PreviewButton } from "./preview";
+import { useShellChrome } from "./screen";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
 
@@ -196,6 +197,8 @@ export function ProfileSheet({ open, onOpenChange }: { open: boolean; onOpenChan
   const t = useTranslations("app.profile");
   const tEdit = useTranslations("app.edit");
   const form = useProfileDraft();
+  // In the dashboard the live preview shows beside it from the desk width; the team area's from xl.
+  const inShell = useShellChrome();
   const [discard, setDiscard] = useState(false);
   const [failedSaves, setFailedSaves] = useState(0);
   // After a save that needs fixes, the first field to fix takes focus once it shows its error.
@@ -224,7 +227,7 @@ export function ProfileSheet({ open, onOpenChange }: { open: boolean; onOpenChan
         description={t("lead")}
         closeLabel={t("close")}
         besidePreview
-        headerAction={<PreviewButton className="desk:hidden" />}
+        headerAction={<PreviewButton className={inShell ? "desk:hidden" : "xl:hidden"} />}
         // The navigation row has room for one short word; the button's name stays "Save profile".
         confirm={{ label: t("saveShort"), ariaLabel: t("save"), onConfirm: save }}
         cancel={{ label: t("cancel"), onCancel: requestClose }}

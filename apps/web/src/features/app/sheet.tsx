@@ -1,5 +1,6 @@
 "use client";
 
+import { tokens } from "@linkyo/tokens";
 import { Button, cn, IconButton } from "@linkyo/ui";
 import { ChevronLeft, X } from "lucide-react";
 import { Dialog } from "radix-ui";
@@ -8,6 +9,9 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, typ
 
 import { isRtl } from "@/i18n/routing";
 import { haptic } from "@/lib/haptics";
+
+/** Phones and small tablets, below the `lg` breakpoint token (in rem, as the generated CSS has it). */
+const BELOW_LG = `(width < ${tokens.breakpoint.lg / 16}rem)`;
 
 /** How far (share of the sheet's height) or how fast (px per ms) a downward drag must go to close it. */
 const DISMISS_SHARE = 0.25;
@@ -49,7 +53,7 @@ export function useDragToDismiss(onClose: () => void) {
     }
   };
   const onPointerDown = (event: PointerEvent<HTMLElement>) => {
-    if (event.button !== 0 || !window.matchMedia("(width < 64rem)").matches) return;
+    if (event.button !== 0 || !window.matchMedia(BELOW_LG).matches) return;
     if ((event.target as HTMLElement).closest("button, a, input, select, textarea")) return;
     drag.current = { pointer: event.pointerId, start: event.clientY, last: event.clientY, time: event.timeStamp, speed: 0, moving: false };
   };
