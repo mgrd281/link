@@ -1,11 +1,11 @@
 "use client";
 
 import { hasImage, type Block } from "@linkyo/blocks";
-import { Badge, Button, cn, Icon, IconButton, Menu, Switch } from "@linkyo/ui";
+import { Badge, Button, cn, Icon, IconButton, Menu, Switch, Tooltip } from "@linkyo/ui";
 import { ArrowDown, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, Heading, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
 import { SortableBlocks, blockIcon, useSortableRow } from "@/features/directions/editor/ui";
 import { thumbSizes } from "@/features/directions/editor/use-dashboard";
@@ -19,9 +19,10 @@ import { haptic } from "@/lib/haptics";
 import { blankBlock } from "./blocks";
 import { PreviewButton } from "./preview";
 import { ProfileSheet } from "./profile-form";
-import { Screen, UndoRedo } from "./screen";
+import { Screen, UndoRedo, useShellChrome } from "./screen";
 import { ProfileAvatar } from "./shell";
 import { useSite } from "./site-context";
+import { useFlip } from "./use-flip";
 
 /** ⌥↑ / ⌥↓ moves a row (brand §7: keyboard reordering). */
 const reorderKey = (onMove: (delta: number) => void) => (event: KeyboardEvent<HTMLElement>) => {
@@ -35,14 +36,17 @@ const reorderKey = (onMove: (delta: number) => void) => (event: KeyboardEvent<HT
  * The page, top to bottom, exactly as visitors see it: the profile, then sections and their blocks.
  * Tap a row to edit it, switch it off to hide it. Moving rows: drag the grip (with a mouse), ⌥↑/⌥↓,
  * the ⋯ menu, or "Reorder", which shows a grip on every row (the way iOS lists do it, so a drag never
- * gets in the way of a tap or a scroll).
+ * gets in the way of a tap or a scroll). Rows glide to their new place.
  *
- * On phones the rows read as iOS grouped lists (the `max-lg:group-data-[grouped]/app:` classes, set by
- * the app shell): one white group per section on the grey background, with inset separators.
+ * In the dashboard (the shell) the rows read as iOS grouped lists at every width: one group per
+ * section on the tinted ground, inset hairlines between rows, section titles as group headers. The
+ * team area shows the same editor with its own title, as outlined cards.
  */
 export function EditorScreen({ title, lead }: { title?: string; lead?: string } = {}) {
   const t = useTranslations("app.editor");
+  const tNav = useTranslations("app.nav");
   const tDash = useTranslations("dashboard");
+  const inShell = useShellChrome();
   const { doc, dispatch, edit, setAddOpen, label, announce, justAdded } = useSite();
   const [profileOpen, setProfileOpen] = useState(false);
   const [reorder, setReorder] = useState(false);
@@ -50,6 +54,18 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   if (reorder && doc.blocks.length < 2) setReorder(false);
   const arranging = reorder && doc.blocks.length > 1;
   const last = doc.blocks.length - 1;
+  const empty = doc.blocks.length === 0;
+
+  // A drop with the mouse is animated by the drag itself; every other move glides here.
+  const dropped = useRef(false);
+  useFlip(
+    doc.blocks.map((block) => block.id),
+    () => {
+      const was = dropped.current;
+      dropped.current = false;
+      return was;
+    },
+  );
 
   const sections = doc.blocks.map((block, index) => {
     const opensSection = block.type === "header" || selfTitle(block) !== null;
@@ -78,44 +94,57 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   };
   const addSection = () => edit({ mode: "create", block: blankBlock("header", { artist: "", newsletter: "" }) });
 
+  // The chevron already says "open": the words "Edit profile" are only for screen readers.
+  const profile = (
+    <button
+      type="button"
+      onClick={() => setProfileOpen(true)}
+      className={cn(
+        "group flex w-full min-w-0 items-center gap-4 rounded-lg p-4 text-start focus-visible:focus-ring",
+        inShell
+          ? "transition-colors duration-micro hover:bg-hover active:bg-pressed"
+          : "border border-line bg-surface transition-[border-color,scale] duration-micro hover:border-line-input active:scale-pressed motion-reduce:active:scale-none",
+      )}
+    >
+      <ProfileAvatar size="lg" />
+      <span className="grid min-w-0 flex-1 gap-0.5">
+        <span className="sr-only">{t("editProfile")}: </span>
+        {/* In their own direction (so a long Latin bio is cut at its end, also in Arabic), but aligned
+            with the interface: a Latin name in an Arabic row still hugs the photo. */}
+        <span dir="auto" className="truncate text-left text-body-lg font-semibold [[dir=rtl]_&]:text-right">
+          {doc.profile.displayName}
+        </span>
+        <span dir="auto" className="truncate text-left text-small text-fg-secondary [[dir=rtl]_&]:text-right">
+          {[doc.profile.tagline, doc.profile.bio].find((text) => text?.trim()) ?? t("profileEmpty")}
+        </span>
+      </span>
+      <Icon icon={ChevronRight} size="md" className="shrink-0 text-fg-tertiary rtl:-scale-x-100" />
+    </button>
+  );
+
   return (
     <Screen
       title={title ?? t("title")}
-      lead={lead ?? t("lead")}
+      lead={lead}
       preview
       actions={
         <>
           <UndoRedo />
-          <PreviewButton className="xl:hidden" />
+          {/* In the dashboard the page shows beside the list from the desk width, and phones have the
+              top bar's eye; the team area shows its own column from xl. */}
+          <PreviewButton className={inShell ? "hidden lg:inline-grid desk:hidden" : "xl:hidden"} />
         </>
       }
     >
-      {/* The chevron already says "open": the words "Edit profile" are only for screen readers. */}
-      <button
-        type="button"
-        onClick={() => setProfileOpen(true)}
-        className="group flex min-w-0 items-center gap-4 rounded-lg border border-line bg-surface p-4 text-start transition-[border-color,scale] duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none max-lg:group-data-[grouped]/app:border-transparent dark:max-lg:group-data-[grouped]/app:bg-surface-elevated"
-      >
-        <ProfileAvatar size="lg" />
-        <span className="grid min-w-0 flex-1 gap-0.5">
-          <span className="sr-only">{t("editProfile")}: </span>
-          <span dir="auto" className="truncate text-body-lg font-semibold [text-align:match-parent]">
-            {doc.profile.displayName}
-          </span>
-          <span dir="auto" className="truncate text-small text-fg-secondary [text-align:match-parent]">
-            {[doc.profile.tagline, doc.profile.bio].find((text) => text?.trim()) ?? t("profileEmpty")}
-          </span>
-        </span>
-        <Icon icon={ChevronRight} size="md" className="shrink-0 text-fg-tertiary rtl:-scale-x-100" />
-      </button>
+      {inShell ? <div className="rounded-lg bg-group lg:border lg:border-line">{profile}</div> : profile}
 
       <section aria-labelledby="blocks-title" className="grid grid-cols-1 gap-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {/* Focus lands here when the last row is deleted, so it is never lost to the top of the page. */}
-          <h2 id="blocks-title" tabIndex={-1} className="flex-1 text-body-lg font-semibold outline-none">
+          <h2 id="blocks-title" tabIndex={-1} className="flex-1 text-title outline-none rtl:tracking-normal">
             {t("blocks")}
           </h2>
-          <p className="text-small text-fg-secondary">{t("count", { count: doc.blocks.length })}</p>
+          {empty ? null : <p className="text-small text-fg-secondary">{t("count", { count: doc.blocks.length })}</p>}
           {/* "Reorder" and "Done" name the state themselves, as in iOS lists, so no pressed state on top. */}
           {doc.blocks.length > 1 ? (
             <Button variant="ghost" size="sm" onClick={() => setReorder(!arranging)}>
@@ -124,14 +153,14 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
           ) : null}
         </div>
 
-        {doc.blocks.length === 0 ? (
-          <div className="grid justify-items-center gap-4 rounded-xl border border-dashed border-line-strong p-8 text-center">
+        {empty ? (
+          <div className="grid justify-items-center gap-4 rounded-lg border border-dashed border-line-strong p-8 text-center">
             <span className="grid size-control-xl place-items-center rounded-full bg-selected text-selected-fg">
               <Icon icon={Sparkles} size="lg" />
             </span>
             <div className="grid grid-cols-1 gap-1">
-              <p className="text-body-lg font-semibold">{t("emptyTitle")}</p>
-              <p className="max-w-prose text-small text-fg-secondary">{t("emptyBody")}</p>
+              <p className="text-title rtl:tracking-normal">{t("emptyTitle")}</p>
+              <p className="max-w-prose text-small font-regular text-fg-secondary">{t("emptyBody")}</p>
             </div>
             <Button variant="primary" size="cta" icon={Plus} onClick={() => setAddOpen(true)}>
               {t("addFirst")}
@@ -140,9 +169,12 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
         ) : (
           <SortableBlocks
             blocks={doc.blocks}
-            onMove={(id, to) => dispatch({ type: "move", id, to })}
+            onMove={(id, to) => {
+              dropped.current = true;
+              dispatch({ type: "move", id, to });
+            }}
             label={label}
-            className="grid grid-cols-1 gap-2 max-lg:group-data-[grouped]/app:gap-0"
+            className={cn("relative grid grid-cols-1", !inShell && "gap-2")}
           >
             {(block, index) => {
               const row = rows[index];
@@ -152,6 +184,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
                   block={block}
                   label={label(block)}
                   index={index}
+                  inShell={inShell}
                   nested={row?.nested ?? false}
                   opensSection={row?.opensSection ?? false}
                   groupStart={row?.groupStart ?? true}
@@ -167,20 +200,26 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
           </SortableBlocks>
         )}
 
-        {/* Side by side where both labels fit; stacked on narrow phones. Out of the way while reordering. */}
-        {arranging ? null : (
+        {arranging ? (
+          <p className="text-small font-regular text-fg-secondary">{t("reorderHint")}</p>
+        ) : inShell ? (
+          // Adding content has its own door (the sidebar, the tab bar); a section is added here.
+          empty ? null : (
+            <Button variant="ghost" icon={Heading} className="justify-self-start" onClick={addSection}>
+              {t("addSection")}
+            </Button>
+          )
+        ) : (
+          // The team area has no Add elsewhere: both stay here, side by side where both labels fit.
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Button size="lg" variant="tinted" icon={Plus} onClick={() => setAddOpen(true)}>
-              {t("add")}
+              {tNav("add")}
             </Button>
             <Button size="lg" variant="ghost" icon={Heading} onClick={addSection}>
               {t("addSection")}
             </Button>
           </div>
         )}
-        {/* Keyboard shortcuts only where there is a keyboard and a mouse; touch gets the touch tip. */}
-        <p className="hidden text-caption text-fg-tertiary pointer-fine:block">{t("tips")}</p>
-        <p className="text-caption text-fg-tertiary pointer-fine:hidden">{t("tipsTouch")}</p>
       </section>
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </Screen>
@@ -230,10 +269,14 @@ function Thumb({ block }: { block: Block }) {
   );
 }
 
+/** Row radius in a grouped list: round only at the ends of a group (a section). */
+const groupRadius = (start: boolean, end: boolean) => (start && end ? "rounded-lg" : start ? "rounded-t-lg" : end ? "rounded-b-lg" : null);
+
 function BlockRow({
   block,
   label,
   index,
+  inShell,
   nested,
   opensSection,
   groupStart,
@@ -247,9 +290,11 @@ function BlockRow({
   block: Block;
   label: string;
   index: number;
+  /** In the dashboard: grouped rows. Outside it (the team area): outlined cards. */
+  inShell: boolean;
   nested: boolean;
   opensSection: boolean;
-  /** First and last row of its group (a section): round corners there on phones, a separator between. */
+  /** First and last row of its group (a section): round corners there, an inset hairline between. */
   groupStart: boolean;
   groupEnd: boolean;
   first: boolean;
@@ -271,6 +316,7 @@ function BlockRow({
   const scheduled = block.schedule?.from !== undefined || block.schedule?.until !== undefined;
   const onKey = reorderKey(onMove);
   const dim = !block.visible && "opacity-secondary";
+  const typeName = tTypes(block.type);
 
   // Show where a new block went, wherever it came from (the Add sheet, the edit sheet, an undone delete).
   // The sticky bars stay clear of it through the page's scroll padding.
@@ -290,26 +336,127 @@ function BlockRow({
     requestAnimationFrame(() => target?.focus());
   };
 
+  // Outside Reorder mode the grip is for the mouse only (keyboards have ⌥↑/⌥↓ on the row and the ⋯
+  // menu), so it is no extra tab stop. In the dashboard it sits in the row's start padding, so the
+  // thumbnails line up with the profile photo.
   const grip = (
+    <Tooltip content={t("gripTip")} shortcut="⌥↑ ⌥↓">
+      <button
+        type="button"
+        {...handleProps}
+        tabIndex={arranging ? 0 : -1}
+        onKeyDown={(event) => {
+          onKey(event);
+          if (!event.defaultPrevented) dndKeyDown(event);
+        }}
+        aria-label={t("drag", { title: label })}
+        className={cn(
+          "grid h-control-md shrink-0 cursor-grab touch-none place-items-center rounded-sm layer-raised focus-visible:focus-ring active:cursor-grabbing",
+          arranging
+            ? "relative w-10 text-fg-secondary"
+            : cn(
+                // Touch screens move rows in Reorder mode; with a mouse the grip shows on hover.
+                "text-fg-tertiary pointer-coarse:hidden pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:focus-visible:opacity-100",
+                inShell ? "absolute inset-y-0 start-0 my-auto w-4" : "relative w-6",
+              ),
+        )}
+      >
+        <Icon icon={GripVertical} size={arranging ? "md" : "sm"} />
+      </button>
+    </Tooltip>
+  );
+
+  // The edit button holds only the title, so its name ("Edit Book me (Link)") contains everything it
+  // shows (WCAG 2.5.3). It stretches over the whole row: tap anywhere but the switch and the ⋯ menu.
+  const editButton = (
     <button
       type="button"
-      {...handleProps}
-      onKeyDown={(event) => {
-        onKey(event);
-        if (!event.defaultPrevented) dndKeyDown(event);
-      }}
-      aria-label={t("drag", { title: label })}
+      data-row-edit
+      onClick={() => edit({ mode: "edit", id: block.id })}
+      onKeyDown={onKey}
+      aria-label={t("editItem", { title: label, type: typeName })}
+      aria-describedby={isHeader ? undefined : metaId}
       className={cn(
-        "grid h-control-md shrink-0 cursor-grab touch-none place-items-center rounded-sm focus-visible:focus-ring active:cursor-grabbing",
-        arranging
-          ? "w-10 text-fg-secondary"
-          : // Touch screens move rows in Reorder mode; with a mouse the grip shows on hover.
-            "w-6 text-fg-tertiary pointer-coarse:hidden pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:focus-visible:opacity-100",
+        "min-w-0 select-none rounded-[inherit] text-start focus-visible:outline-none",
+        "after:absolute after:inset-0 after:rounded-[inherit] after:transition-colors after:duration-micro",
+        "group-hover:after:bg-hover active:after:bg-pressed focus-visible:after:focus-field",
       )}
     >
-      <Icon icon={GripVertical} size={arranging ? "md" : "sm"} />
+      {/* Two lines before it is cut; isolated, so a Latin title in an Arabic row keeps its own order. */}
+      <span
+        className={cn(
+          "line-clamp-2 break-words text-start",
+          isHeader
+            ? inShell
+              ? // A section title reads as a group header. Hidden: a lighter grey, not a fainter one (contrast).
+                cn("text-small font-semibold", block.visible ? "text-fg-secondary" : "text-fg-tertiary")
+              : cn("text-body-lg font-semibold", dim)
+            : cn("text-body leading-snug", opensSection ? "font-semibold" : "font-medium", dim),
+        )}
+      >
+        <bdi>{label}</bdi>
+      </span>
     </button>
   );
+
+  const controls = arranging ? (
+    grip
+  ) : (
+    <>
+      <Switch
+        checked={block.visible}
+        onCheckedChange={() => {
+          haptic();
+          dispatch({ type: "toggle", id: block.id });
+        }}
+        label={t("visible", { title: label })}
+        className="layer-raised"
+      />
+      <Menu
+        trigger={<IconButton icon={MoreHorizontal} label={t("more", { title: label })} className="layer-raised" />}
+        items={[
+          { label: t("edit"), icon: Pencil, onSelect: () => edit({ mode: "edit", id: block.id }) },
+          { label: t("addBelow"), icon: Plus, onSelect: () => setAddOpen(true, index + 1) },
+          ...(first ? [] : [{ label: t("moveUp"), icon: ArrowUp, shortcut: "⌥↑", onSelect: () => onMove(-1) }]),
+          ...(last ? [] : [{ label: t("moveDown"), icon: ArrowDown, shortcut: "⌥↓", onSelect: () => onMove(1) }]),
+          {
+            label: t("duplicate"),
+            icon: CopyPlus,
+            onSelect: () => {
+              dispatch({ type: "duplicate", id: block.id });
+              announce(t("duplicated", { title: label }));
+            },
+          },
+          { label: t("delete"), icon: Trash2, destructive: true, onSelect: remove },
+        ]}
+      />
+    </>
+  );
+
+  if (isHeader) {
+    return (
+      <li
+        ref={rowRef}
+        style={rowStyle}
+        data-row={block.id}
+        className={cn(
+          "group relative flex min-w-0 items-center gap-3 transition-[opacity,scale,background-color] duration-standard ease-standard",
+          isDragging && "layer-raised scale-lift",
+          // A section title, not a box: a group header in the dashboard.
+          inShell ? "mt-6 rounded-sm ps-4 pe-2" : "mt-4 rounded-md py-1 pe-1",
+        )}
+      >
+        {arranging ? null : grip}
+        {inShell ? null : (
+          <span className={cn("grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg", dim)}>
+            <Icon icon={Heading} size="md" />
+          </span>
+        )}
+        <div className="grid min-w-0 flex-1 rounded-[inherit]">{editButton}</div>
+        {controls}
+      </li>
+    );
+  }
 
   return (
     <li
@@ -317,122 +464,57 @@ function BlockRow({
       style={rowStyle}
       data-row={block.id}
       className={cn(
-        "group relative flex min-w-0 items-center gap-2 transition-[opacity,scale,background-color] duration-standard ease-standard",
-        isHeader
-          ? // A section title, not a box. On phones it reads like an iOS group header.
-            "pt-4 pe-1 pb-1 max-lg:group-data-[grouped]/app:pt-6 max-lg:group-data-[grouped]/app:ps-1"
-          : cn(
-              "rounded-lg border p-2 pe-1 max-lg:group-data-[grouped]/app:ps-3",
-              isNew ? "bg-selected motion-safe:animate-pop-in" : "bg-surface dark:max-lg:group-data-[grouped]/app:bg-surface-elevated",
+        "group relative flex min-w-0 items-center gap-3 transition-[opacity,scale,background-color] duration-standard ease-standard",
+        inShell
+          ? cn(
+              "min-h-control-xl py-2 ps-4 pe-2",
               isDragging
-                ? "layer-raised scale-lift border-primary"
+                ? "layer-raised scale-lift rounded-lg border border-primary bg-group"
                 : cn(
-                    "border-line max-lg:group-data-[grouped]/app:border-transparent",
-                    // Round corners only at the ends of a group.
-                    groupStart && groupEnd
-                      ? null
-                      : groupStart
-                        ? "max-lg:group-data-[grouped]/app:rounded-b-none"
-                        : groupEnd
-                          ? "max-lg:group-data-[grouped]/app:rounded-t-none"
-                          : "max-lg:group-data-[grouped]/app:rounded-none",
-                    // Inset separator, starting at the text as in iOS lists.
-                    !groupStart &&
-                      "max-lg:group-data-[grouped]/app:before:absolute max-lg:group-data-[grouped]/app:before:start-16 max-lg:group-data-[grouped]/app:before:end-0 max-lg:group-data-[grouped]/app:before:top-0 max-lg:group-data-[grouped]/app:before:border-t max-lg:group-data-[grouped]/app:before:border-line",
+                    isNew ? "bg-selected motion-safe:animate-pop-in" : "bg-group",
+                    groupRadius(groupStart, groupEnd),
+                    // Phones set the group apart by its fill alone; wide screens add a hairline around it.
+                    "lg:border-x lg:border-line",
+                    groupStart && "lg:border-t",
+                    groupEnd && "lg:border-b",
+                    // Inset hairline between rows, starting at the text as in iOS lists.
+                    !groupStart && "before:absolute before:start-16 before:end-0 before:top-0 before:border-t before:border-line",
                   ),
-              nested && "ms-4 md:ms-6 max-lg:group-data-[grouped]/app:ms-0",
-              opensSection && "mt-3",
+            )
+          : cn(
+              "rounded-lg border p-2 pe-1",
+              isNew ? "bg-selected motion-safe:animate-pop-in" : "bg-surface",
+              isDragging ? "layer-raised scale-lift border-primary" : "border-line",
+              nested && "ms-4 md:ms-6",
             ),
+        opensSection && "mt-3",
       )}
     >
       {arranging ? null : grip}
-      <button
-        type="button"
-        data-row-edit
-        onClick={() => edit({ mode: "edit", id: block.id })}
-        onKeyDown={onKey}
-        aria-label={t("editItem", { title: label, type: tTypes(block.type) })}
-        aria-describedby={isHeader ? undefined : metaId}
-        className="flex min-w-0 flex-1 select-none items-center gap-3 rounded-md p-1 text-start transition-colors duration-micro hover:bg-hover focus-visible:focus-ring active:bg-pressed"
-      >
-        {isHeader ? (
-          <span className={cn("grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg max-lg:group-data-[grouped]/app:hidden", dim)}>
-            <Icon icon={Heading} size="md" />
-          </span>
-        ) : (
-          <Thumb block={block} />
-        )}
-        <span className="grid min-w-0 flex-1 gap-0.5">
-          {/* Two lines before it is cut, and in its own direction, so a Latin title in Arabic keeps its start. */}
-          <span
-            dir="auto"
-            className={cn(
-              "line-clamp-2 break-words [text-align:match-parent]",
-              isHeader
-                ? "text-body-lg font-semibold max-lg:group-data-[grouped]/app:text-small max-lg:group-data-[grouped]/app:text-fg-secondary"
-                : opensSection
-                  ? "text-body font-semibold"
-                  : "text-body font-medium",
-              // A hidden section title on phones is already secondary text: dim it no further (contrast).
-              isHeader ? !block.visible && "opacity-secondary max-lg:group-data-[grouped]/app:opacity-100 max-lg:group-data-[grouped]/app:text-fg-tertiary" : dim,
-            )}
-          >
-            {label}
-          </span>
-          {isHeader ? null : (
-            <span id={metaId} className="flex min-w-0 items-center gap-2 text-small text-fg-secondary">
-              {!block.visible ? <Badge size="sm">{t("hidden")}</Badge> : null}
-              {block.highlight ? (
-                <Badge tone="primary" size="sm">
-                  {t("featured")}
-                </Badge>
-              ) : null}
-              {scheduled ? <Icon icon={CalendarClock} size="sm" label={t("scheduled")} /> : null}
-              {tTypes(block.type) !== label ? <span className="shrink-0">{tTypes(block.type)}</span> : null}
-              {summary ? (
-                <>
-                  {tTypes(block.type) !== label ? <span aria-hidden>·</span> : null}
-                  <span dir="auto" className="truncate">
-                    {summary}
-                  </span>
-                </>
-              ) : null}
-            </span>
-          )}
+      <Thumb block={block} />
+      <div className="grid min-w-0 flex-1 gap-0.5 rounded-[inherit]">
+        {editButton}
+        {/* Not part of the button's name (it describes it): taps go through to the row. */}
+        <span id={metaId} className="pointer-events-none flex min-w-0 items-center gap-2 text-small text-fg-secondary">
+          {!block.visible ? <Badge size="sm">{t("hidden")}</Badge> : null}
+          {block.highlight ? (
+            <Badge tone="primary" size="sm">
+              {t("featured")}
+            </Badge>
+          ) : null}
+          {scheduled ? <Icon icon={CalendarClock} size="sm" label={t("scheduled")} /> : null}
+          {typeName !== label ? <span className="shrink-0">{typeName}</span> : null}
+          {summary ? (
+            <>
+              {typeName !== label ? <span aria-hidden>·</span> : null}
+              <span dir="auto" className="truncate">
+                {summary}
+              </span>
+            </>
+          ) : null}
         </span>
-      </button>
-      {arranging ? (
-        grip
-      ) : (
-        <>
-          <Switch
-            checked={block.visible}
-            onCheckedChange={() => {
-              haptic();
-              dispatch({ type: "toggle", id: block.id });
-            }}
-            label={t("visible", { title: label })}
-          />
-          <Menu
-            trigger={<IconButton icon={MoreHorizontal} label={t("more", { title: label })} />}
-            items={[
-              { label: t("edit"), icon: Pencil, onSelect: () => edit({ mode: "edit", id: block.id }) },
-              { label: t("addBelow"), icon: Plus, onSelect: () => setAddOpen(true, index + 1) },
-              ...(first ? [] : [{ label: t("moveUp"), icon: ArrowUp, shortcut: "⌥↑", onSelect: () => onMove(-1) }]),
-              ...(last ? [] : [{ label: t("moveDown"), icon: ArrowDown, shortcut: "⌥↓", onSelect: () => onMove(1) }]),
-              {
-                label: t("duplicate"),
-                icon: CopyPlus,
-                onSelect: () => {
-                  dispatch({ type: "duplicate", id: block.id });
-                  announce(t("duplicated", { title: label }));
-                },
-              },
-              { label: t("delete"), icon: Trash2, destructive: true, onSelect: remove },
-            ]}
-          />
-        </>
-      )}
+      </div>
+      {controls}
     </li>
   );
 }
