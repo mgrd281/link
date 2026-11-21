@@ -65,8 +65,11 @@ export function siteReducer(state: EditorState<SiteDoc>, action: SiteAction): Ed
   return editorReducer(state, action);
 }
 
-/** What the edit panel is working on: an existing block, or a new one that is added on save. */
-export type Editing = { mode: "edit"; id: string } | { mode: "create"; block: Block; index?: number | undefined } | null;
+/**
+ * What the edit panel is working on: an existing block, or a new one that is added on save. A new
+ * block picked in the Add sheet is filled in right there (its second step), not in the edit sheet.
+ */
+export type Editing = { mode: "edit"; id: string } | { mode: "create"; block: Block; index?: number | undefined; inAddSheet?: boolean } | null;
 
 export type SaveState = "saved" | "saving" | AuthError;
 
@@ -256,13 +259,14 @@ export function EditorProvider({
     };
   }, []);
 
-  // ⌘Z / Ctrl+Z undo, ⇧⌘Z / Ctrl+Y redo — everywhere except inside text fields and open panels (a
-  // panel that is sliding away no longer counts).
+  // ⌘Z / Ctrl+Z undo, ⇧⌘Z / Ctrl+Y redo — everywhere except inside text fields, open panels (a
+  // panel that is sliding away no longer counts) and confirmation dialogs (undoing behind "Delete?"
+  // would change what the question is about).
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target;
       if (target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
-      if (document.querySelector("[role=dialog]:not([data-state=closed])")) return;
+      if (document.querySelector("[role=dialog]:not([data-state=closed]), [role=alertdialog]")) return;
       const mod = event.metaKey || event.ctrlKey;
       if (mod && event.key.toLowerCase() === "z") {
         event.preventDefault();
@@ -350,16 +354,18 @@ export function EditorProvider({
     setDraft(null);
   }, []);
 
+  // Where a new block will go: the only thing the preview needs from the edit panel (opening or closing
+  // a panel does not redraw the page on its own).
+  const createIndex = editing?.mode === "create" ? editing.index : undefined;
   const previewPage = useMemo<Page>(() => {
     const profile = { ...(profileDraft ?? doc.profile), username: account.username };
     if (!draft) return { profile, blocks: doc.blocks };
     const exists = doc.blocks.some((block) => block.id === draft.id);
     if (exists) return { profile, blocks: doc.blocks.map((block) => (block.id === draft.id ? draft : block)) };
     const blocks = [...doc.blocks];
-    const index = editing?.mode === "create" ? (editing.index ?? blocks.length) : blocks.length;
-    blocks.splice(index, 0, draft);
+    blocks.splice(createIndex ?? blocks.length, 0, draft);
     return { profile, blocks };
-  }, [account.username, doc.blocks, doc.profile, draft, editing, profileDraft]);
+  }, [account.username, createIndex, doc.blocks, doc.profile, draft, profileDraft]);
 
   const value: SiteContextValue = {
     account,

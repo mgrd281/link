@@ -304,13 +304,17 @@ export function WelcomeScreen() {
                 profile={profile.profile}
                 onChange={profile.change}
                 errors={profile.errors}
+                onCheck={profile.check}
                 nameLabel={tKinds(`${kind ?? "other"}.name`)}
                 taglineHint={tKinds(`${kind ?? "other"}.taglineHint`)}
+                withLanguage
               />
               {/* The page address: the one claimed at sign-up, or one that follows the name. */}
               <TextField
                 id="welcome-address"
                 label={t("address.label")}
+                size="auto"
+                live
                 ltr
                 leading="linkyo.app/"
                 value={addressValue}

@@ -1,16 +1,18 @@
 "use client";
 
 import { detectLink, detectMany, type Block, type BlockType } from "@linkyo/blocks";
-import { Badge, Button, Icon, toast } from "@linkyo/ui";
-import { ClipboardPaste, ImagePlus, Link2 } from "lucide-react";
+import { Badge, Button, cn, ConfirmDialog, Icon, toast } from "@linkyo/ui";
+import { CircleAlert, ClipboardPaste, ImagePlus, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, useMemo, useState, useSyncExternalStore } from "react";
 
 import { blockIcon } from "@/features/directions/editor/ui";
 import { canReadClipboard, readText } from "@/lib/clipboard";
 
+import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { addGroups, blankBlock, blockFromLink, insertAt, newBlockId } from "./blocks";
 import { ImageError, pickFiles, prepareImage } from "./images";
+import { PreviewButton } from "./preview";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
 
@@ -18,16 +20,18 @@ import { useSite } from "./site-context";
 const never = () => () => undefined;
 
 /**
- * Add anything in one step: paste a link (we recognise the platform and make the right block), upload
- * photos, or pick a type from a few short groups, the first one fitted to the kind of page. Pasted
- * links and picked types land in the same place. Reachable from every screen (sidebar, tab bar, the
- * editor's buttons and its "Add below").
+ * Add anything from one sheet: paste a link (we recognise the platform and make the right block),
+ * upload photos, or pick a type from a few short groups, the first one fitted to the kind of page.
+ * A picked type opens its form right in this sheet (a second step with "‹ Back", as on iOS), so there
+ * is one sheet the whole time. Pasted links and picked types land in the same place. Reachable from
+ * every screen (sidebar, tab bar, the editor's buttons and its "Add below").
  */
 export function AddSheet() {
   const t = useTranslations("app.add");
+  const tEdit = useTranslations("app.edit");
   const tTypes = useTranslations("dashboard.types");
   const tFields = useTranslations("app.fields");
-  const { addOpen, setAddOpen, addIndex, addBlocks, edit, doc, site } = useSite();
+  const { addOpen, setAddOpen, addIndex, addBlocks, edit, editing, doc, site } = useSite();
   const inputId = useId();
   const [value, setValue] = useState("");
   const [error, setError] = useState(false);
@@ -37,11 +41,34 @@ export function AddSheet() {
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
   const groups = useMemo(() => addGroups(site.kind), [site.kind]);
 
+  // The second step: the block picked here, filled in right in this sheet.
+  const current = editing?.mode === "create" && editing.inAddSheet ? editing : null;
+  // While the sheet slides away it keeps showing the step it was closed on.
+  const [shown, setShown] = useState(current);
+  if (addOpen && shown !== current) setShown(current);
+  const step = addOpen ? current : shown;
+  const editor = useBlockEditor({ source: step?.block ?? null, creating: true, index: step?.index });
+  const [discard, setDiscard] = useState<"back" | "close" | null>(null);
+
   const close = () => {
     // Also forgets the place chosen with "Add below".
     setAddOpen(false);
     setValue("");
     setError(false);
+    if (current) edit(null);
+  };
+  // Leaving a form with changes asks first (closing, and going back to the types).
+  const requestClose = () => {
+    if (step && editor.dirty) setDiscard("close");
+    else close();
+  };
+  // Back to the types: what was pasted is still in the field.
+  const back = () => {
+    if (editor.dirty) setDiscard("back");
+    else edit(null);
+  };
+  const save = () => {
+    if (editor.save()) close();
   };
 
   const addText = (text: string) => {
@@ -70,9 +97,7 @@ export function AddSheet() {
   const pick = (type: BlockType) => {
     // The same place as a pasted link. A new section goes to the end: it starts a part of the page.
     const index = addIndex ?? (type === "header" ? undefined : insertAt(doc.blocks));
-    close();
-    // Let the add sheet hand focus back before the edit sheet opens.
-    requestAnimationFrame(() => edit({ mode: "create", block: blankBlock(type, { artist: doc.profile.displayName, newsletter: tFields("newsletterDefault") }), index }));
+    edit({ mode: "create", block: blankBlock(type, { artist: doc.profile.displayName, newsletter: tFields("newsletterDefault") }), index, inAddSheet: true });
   };
 
   const upload = async () => {
@@ -98,113 +123,164 @@ export function AddSheet() {
     }
   };
 
+  const type = step ? tTypes(step.block.type) : "";
   return (
-    <Sheet
-      open={addOpen}
-      onOpenChange={(open) => (open ? setAddOpen(true, addIndex) : close())}
-      title={t("title")}
-      description={t("lead")}
-      closeLabel={t("close")}
-      besidePreview
-    >
-      <div className="grid grid-cols-1 gap-6">
-        <form
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!value.trim()) return;
-            addText(value);
-          }}
-          className="grid grid-cols-1 gap-3"
-        >
-          <label htmlFor={inputId} className="text-small font-semibold">
-            {t("pasteLabel")}
-          </label>
-          <div className="flex items-center gap-2 rounded-lg border border-line-input bg-surface ps-4 pe-2 has-[input:focus-visible]:border-focus has-[input:focus-visible]:focus-field">
-            <Icon icon={Link2} size="md" className="shrink-0 text-fg-tertiary" />
-            <input
-              id={inputId}
-              value={value}
-              onChange={(event) => {
-                setValue(event.target.value);
-                setError(false);
-              }}
-              onPaste={(event) => {
-                const text = event.clipboardData.getData("text");
-                if (!value && detectMany(text).length > 0) {
-                  event.preventDefault();
-                  addText(text);
-                }
-              }}
-              dir="ltr"
-              inputMode="url"
-              autoComplete="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              placeholder={t("pastePlaceholder")}
-              aria-invalid={error || undefined}
-              aria-describedby={`${inputId}-hint`}
-              className="h-control-xl min-w-0 flex-1 bg-transparent text-body-lg outline-none placeholder:text-fg-tertiary"
-            />
-            {/* Empty field: paste in one tap. With text: add it. Without clipboard access: Add waits for text. */}
-            {!value.trim() && canPaste ? (
-              <Button type="button" variant="tinted" size="sm" icon={ClipboardPaste} onClick={() => void paste()}>
-                {t("paste")}
+    <>
+      <Sheet
+        open={addOpen}
+        onOpenChange={(open) => (open ? setAddOpen(true, addIndex) : requestClose())}
+        step={step ? "form" : "pick"}
+        detent="large"
+        title={step ? tEdit("addTitle", { type }) : t("title")}
+        description={step ? tEdit(`hints.${step.block.type}`) : t("lead")}
+        closeLabel={t("close")}
+        besidePreview
+        back={step ? { label: tEdit("back"), onBack: back } : undefined}
+        headerAction={step ? <PreviewButton className="desk:hidden" /> : undefined}
+        // The navigation row has room for one short word; the button's name stays "Add to page".
+        confirm={step ? { label: tEdit("addShort"), ariaLabel: tEdit("add"), onConfirm: save } : undefined}
+        footer={
+          step ? (
+            <>
+              <Button variant="ghost" onClick={requestClose}>
+                {tEdit("cancel")}
               </Button>
-            ) : (
-              <Button type="submit" variant="primary" size="sm" disabled={!value.trim()}>
-                {t("addButton")}
+              <Button variant="primary" onClick={save}>
+                {tEdit("add")}
               </Button>
-            )}
+            </>
+          ) : undefined
+        }
+      >
+        {step && editor.draft ? (
+          <BlockEditorFields editor={{ ...editor, draft: editor.draft }} creating onSave={save} />
+        ) : (
+          <div className="grid grid-cols-1 gap-6">
+            <form
+              noValidate
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!value.trim()) return;
+                addText(value);
+              }}
+              className="grid grid-cols-1 gap-3"
+            >
+              <label htmlFor={inputId} className="text-small font-semibold">
+                {t("pasteLabel")}
+              </label>
+              <div
+                className={cn(
+                  "flex items-center gap-2 rounded-md border ps-4 pe-2 transition-[border-color,background-color] duration-micro ease-standard has-[input:focus-visible]:focus-field",
+                  error
+                    ? "border-danger-strong bg-danger-subtle [--color-focus:var(--color-danger-strong)]"
+                    : "border-line-input bg-surface-elevated hover:border-fg-tertiary has-[input:focus-visible]:border-focus",
+                )}
+              >
+                <Icon icon={Link2} size="md" className="shrink-0 text-fg-tertiary" />
+                <input
+                  id={inputId}
+                  value={value}
+                  onChange={(event) => {
+                    setValue(event.target.value);
+                    setError(false);
+                  }}
+                  onPaste={(event) => {
+                    const text = event.clipboardData.getData("text");
+                    if (!value && detectMany(text).length > 0) {
+                      event.preventDefault();
+                      addText(text);
+                    }
+                  }}
+                  dir="ltr"
+                  inputMode="url"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder={t("pastePlaceholder")}
+                  aria-invalid={error || undefined}
+                  aria-describedby={`${inputId}-hint`}
+                  className="h-control-xl min-w-0 flex-1 bg-transparent text-body-lg outline-none placeholder:text-fg-tertiary"
+                />
+                {/* Empty field: paste in one tap. With text: add it. Without clipboard access: Add waits for text. */}
+                {!value.trim() && canPaste ? (
+                  <Button type="button" variant="tinted" size="sm" icon={ClipboardPaste} onClick={() => void paste()}>
+                    {t("paste")}
+                  </Button>
+                ) : (
+                  <Button type="submit" variant="primary" size="sm" disabled={!value.trim()}>
+                    {t("addButton")}
+                  </Button>
+                )}
+              </div>
+              {/* Read out when a platform is recognised; the error interrupts. */}
+              <p id={`${inputId}-hint`} aria-live="polite" className={error ? "text-small text-danger-strong" : "min-h-control-sm text-small text-fg-secondary"}>
+                {error ? (
+                  <span role="alert" className="flex items-start gap-2">
+                    <Icon icon={CircleAlert} size="sm" className="mt-0.5 shrink-0" />
+                    {t("invalid")}
+                  </span>
+                ) : detection ? (
+                  <Badge tone="primary">{t("detected", { type: tTypes(detection.type === "shorts" ? "link" : detection.type) })}</Badge>
+                ) : (
+                  t("pasteHint")
+                )}
+              </p>
+            </form>
+
+            <div className="grid grid-cols-1 gap-2">
+              <Button variant="tinted" size="lg" block icon={ImagePlus} loading={uploading} onClick={() => void upload()}>
+                {t("photos")}
+              </Button>
+              <p className="text-caption text-fg-secondary">{t("photosHint")}</p>
+            </div>
+
+            {groups.map((group) => (
+              <section key={group.key} aria-labelledby={`${inputId}-${group.key}`} className="grid grid-cols-1 gap-2">
+                <h3 id={`${inputId}-${group.key}`} className="text-small font-semibold text-fg-secondary">
+                  {t(`groups.${group.key}`)}
+                </h3>
+                <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {group.types.map((type) => (
+                    <li key={type} className="grid">
+                      {/* The name starts with the type ("Link Any website …"), then what it is for. */}
+                      <button
+                        type="button"
+                        data-type={type}
+                        onClick={() => pick(type)}
+                        className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3 text-start transition-[background-color,border-color,scale] duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed active:bg-pressed motion-reduce:active:scale-none"
+                      >
+                        <span className="grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg">
+                          <Icon icon={blockIcon[type]} size="md" />
+                        </span>
+                        <span className="grid min-w-0">
+                          <span className="text-small font-semibold">{tTypes(type)}</span>
+                          <span className="text-caption text-fg-secondary">{t(`desc.${type}`)}</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </div>
-          {/* Read out when a platform is recognised; the error interrupts. */}
-          <p id={`${inputId}-hint`} aria-live="polite" className={error ? "text-small text-danger-strong" : "min-h-control-sm text-small text-fg-secondary"}>
-            {error ? (
-              <span role="alert">{t("invalid")}</span>
-            ) : detection ? (
-              <Badge tone="primary">{t("detected", { type: tTypes(detection.type === "shorts" ? "link" : detection.type) })}</Badge>
-            ) : (
-              t("pasteHint")
-            )}
-          </p>
-        </form>
-
-        <div className="grid grid-cols-1 gap-2">
-          <Button variant="tinted" size="lg" block icon={ImagePlus} loading={uploading} onClick={() => void upload()}>
-            {t("photos")}
-          </Button>
-          <p className="text-caption text-fg-secondary">{t("photosHint")}</p>
-        </div>
-
-        {groups.map((group) => (
-          <section key={group.key} aria-labelledby={`${inputId}-${group.key}`} className="grid grid-cols-1 gap-2">
-            <h3 id={`${inputId}-${group.key}`} className="text-small font-semibold text-fg-secondary">
-              {t(`groups.${group.key}`)}
-            </h3>
-            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {group.types.map((type) => (
-                <li key={type} className="grid">
-                  {/* The name starts with the type ("Link Any website …"), then what it is for. */}
-                  <button
-                    type="button"
-                    data-type={type}
-                    onClick={() => pick(type)}
-                    className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3 text-start transition-[background-color,border-color,scale] duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed active:bg-pressed motion-reduce:active:scale-none"
-                  >
-                    <span className="grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg">
-                      <Icon icon={blockIcon[type]} size="md" />
-                    </span>
-                    <span className="grid min-w-0">
-                      <span className="text-small font-semibold">{tTypes(type)}</span>
-                      <span className="text-caption text-fg-secondary">{t(`desc.${type}`)}</span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-    </Sheet>
+        )}
+      </Sheet>
+      <ConfirmDialog
+        open={discard !== null}
+        onOpenChange={(open) => {
+          if (!open) setDiscard(null);
+        }}
+        title={tEdit("discardTitle")}
+        description={tEdit("discardBody")}
+        confirmLabel={tEdit("discard")}
+        cancelLabel={tEdit("keepEditing")}
+        onConfirm={() => {
+          const leaving = discard;
+          setDiscard(null);
+          if (leaving === "back") edit(null);
+          else close();
+        }}
+      />
+    </>
   );
 }
