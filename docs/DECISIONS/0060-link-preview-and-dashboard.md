@@ -113,4 +113,5 @@ use, icons, the experience and adding things to a page.
   - equal chip heights;
   - the phone header at 320 px.
 
-**Status.** Applied.
+**Status.** Applied. The filled fields and the phone bar described here are superseded by ADR 0061 (outlined
+fields; the avatar opens Settings, and Settings is no longer a gear in the bar).
