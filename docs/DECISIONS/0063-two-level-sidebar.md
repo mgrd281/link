@@ -83,9 +83,11 @@ phones.
   `documentElement.clientWidth` as the whole window (1024 … 1512) with `scrollbar-gutter: stable`, so
   `scrollWidth` is 15 px less than it, never more. h1 x is 288 open and 104 folded at every width (en).
 - **Arabic:** the rail's right edge equals the root box's right edge at every width (1009 … 1497).
-  The first rail tooltip opens to the left: its right edge is at x 1168, left of the icon (1175.5);
-  it reaches 3 px over the rail's own edge (1165), because the tooltip's offset (8 px) is smaller than
-  the icon's inset in the rail (10 px).
+  At 1244 × 800 on `/ar/app`, the first rail control (Add, "إضافة", x 1175.5–1219.5, its 20 px
+  glyph at 1187.5) opens its tooltip to the left when focused: the tooltip's right edge is at
+  x 1163.3, 12.2 px left of the control, 24.2 px left of the glyph and 1.7 px clear of the rail's own
+  left edge (1165), because the tooltip's offset (12 px) is now larger than the control's inset in the
+  rail (10.5 px).
 - **Targets:** all 10 rail controls 44 × 44 (Add, the five places, Settings, View my page, the folded
   status link, the toggle). Panel rows 40 px tall with a mouse and 44 px with `pointer: coarse`
   (Chromium media emulation).

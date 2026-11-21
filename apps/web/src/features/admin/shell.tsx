@@ -4,6 +4,7 @@ import { tokens } from "@linkyo/tokens";
 import { Avatar, Badge, cn, Icon, Logo } from "@linkyo/ui";
 import {
   ArrowLeftRight,
+  BadgeCheck,
   ChartColumn,
   CreditCard,
   Ellipsis,
@@ -29,7 +30,7 @@ import { useAdmin } from "./session";
 import { ROLES, type Permission, type Role } from "./types";
 
 interface NavItem {
-  key: "overview" | "customers" | "subscriptions" | "security" | "analytics" | "creators" | "team" | "activity";
+  key: "overview" | "customers" | "subscriptions" | "security" | "analytics" | "creators" | "referrals" | "team" | "activity";
   href: string;
   icon: LucideIcon;
   /** Shown only to roles with this permission. */
@@ -52,6 +53,8 @@ const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
     key: "teamWork",
     items: [
       { key: "creators", href: "/admin/creators", icon: Sparkles },
+      // The invite program: verification requests and held invites (ADR 0064).
+      { key: "referrals", href: "/admin/referrals", icon: BadgeCheck, permission: "customers.view" },
       { key: "team", href: "/admin/team", icon: ShieldCheck },
       { key: "activity", href: "/admin/activity", icon: History },
     ],
@@ -181,7 +184,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         {t("skip")}
       </a>
 
-      <aside className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col gap-6 border-e border-line bg-canvas-muted p-4 lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col gap-6 overflow-y-auto border-e border-line bg-canvas-muted p-4 lg:flex">
         <Link href="/admin" className="flex items-center gap-2 justify-self-start rounded-xs px-1 pt-1 focus-visible:focus-ring">
           <Logo className="h-6" title="Linkyo" />
           <Badge size="sm" tone="primary">

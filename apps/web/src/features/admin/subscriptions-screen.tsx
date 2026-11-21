@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, Badge, Icon, Segmented } from "@linkyo/ui";
-import { AlertTriangle, CalendarClock, CreditCard, Euro, Repeat, TrendingDown, UserRound } from "lucide-react";
+import { AlertTriangle, CalendarClock, CreditCard, Euro, Gift, Repeat, TrendingDown, UserRound } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -11,7 +11,7 @@ import { Link } from "@/i18n/navigation";
 
 import { ColumnChart, KpiTile } from "./charts";
 import { useCustomers } from "./customers/data";
-import { monthlyRevenue, PLAN_PRICE, SUBSCRIPTION_STATUSES, type SubscriptionStatus } from "./customers/model";
+import { hasProForLife, monthlyRevenue, PLAN_PRICE, SUBSCRIPTION_STATUSES, type SubscriptionStatus } from "./customers/model";
 import { kpis, mrrByMonth } from "./customers/stats";
 import { DemoNote, StatusBadges } from "./customers/ui";
 import { count, date, money, percent } from "./format";
@@ -36,6 +36,8 @@ export function SubscriptionsScreen() {
     [customers, filter],
   );
   const arpu = numbers.paying ? numbers.mrr / numbers.paying : 0;
+  // Rewards from the invite program: shown here so nobody adds them in, never part of the numbers above.
+  const proForLife = useMemo(() => customers.filter(hasProForLife).length, [customers]);
 
   return (
     <Screen title={t("title")} lead={t("lead")} wide>
@@ -47,6 +49,10 @@ export function SubscriptionsScreen() {
             <KpiTile icon={CalendarClock} label={t("trialing")} value={count(numbers.trialing, locale)} hint={t("trialingHint")} />
             <KpiTile icon={AlertTriangle} label={t("pastDue")} value={count(numbers.pastDue, locale)} hint={t("pastDueHint")} tone={numbers.pastDue ? "danger" : "neutral"} />
           </div>
+          <p className="-mt-2 flex items-center gap-2 text-small text-fg-secondary">
+            <Icon icon={Gift} size="sm" className="shrink-0" />
+            {t("proForLife", { count: count(proForLife, locale) })}
+          </p>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <Panel title={t("mrrTitle")} id="mrr-months-title">
@@ -97,13 +103,16 @@ export function SubscriptionsScreen() {
           </div>
 
           <Panel title={t("list")} id="list-title" action={<span className="text-small text-fg-secondary">{t("count", { count: paid.length })}</span>}>
-            <Segmented
-              label={t("filter")}
-              value={filter}
-              onValueChange={setFilter}
-              className="justify-self-start"
-              options={(["all", ...SUBSCRIPTION_STATUSES] as const).map((value) => ({ value, label: value === "all" ? tc("all") : tc(`subscription.${value}`) }))}
-            />
+            {/* Wider than a phone in German: the strip scrolls sideways inside the card, never the page. */}
+            <div className="-mx-4 -my-1 overflow-x-auto px-4 py-1 md:mx-0 md:px-0">
+              <Segmented
+                label={t("filter")}
+                value={filter}
+                onValueChange={setFilter}
+                className="whitespace-nowrap"
+                options={(["all", ...SUBSCRIPTION_STATUSES] as const).map((value) => ({ value, label: value === "all" ? tc("all") : tc(`subscription.${value}`) }))}
+              />
+            </div>
             {paid.length === 0 ? (
               <p className="flex items-center gap-2 text-small text-fg-secondary">
                 <Icon icon={CreditCard} size="sm" />

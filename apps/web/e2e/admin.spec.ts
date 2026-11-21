@@ -267,3 +267,208 @@ test.describe("customer console", () => {
     await expect(page.getByRole("button", { name: "Actions" })).toHaveCount(0);
   });
 });
+
+/**
+ * The invite program in the team area (ADR 0064): verification requests and held invites under
+ * Referrals, and each customer's Invites tab. Demo mode: every account lives in this browser.
+ */
+const DEMO_KEY = "linkyo.demo.v1";
+
+/** Signs out from the team area's account menu. */
+async function logOutOfTeam(page: Page) {
+  await page.getByRole("button", { name: /^Account/ }).locator("visible=true").first().click();
+  await page.getByRole("menuitem", { name: "Log out" }).click();
+  await page.waitForURL(/\/en\/login/);
+}
+
+/** Skips the welcome flow (if it is open), then signs out from the dashboard's settings. */
+async function skipAndLogOut(page: Page) {
+  if (page.url().includes("/app/welcome")) {
+    await page.getByRole("button", { name: "Skip for now" }).click();
+    await page.waitForURL("**/en/app");
+  }
+  await page.goto("/en/app/settings");
+  await page.getByRole("button", { name: "Log out" }).last().click();
+  await page.waitForURL("**/en/login?next=*");
+}
+
+/** Signs back in with the code the demo shows on screen. */
+async function logIn(page: Page, email: string) {
+  await page.goto("/en/login");
+  await page.waitForLoadState("networkidle");
+  await page.getByLabel("Email").fill(email);
+  await page.getByRole("button", { name: "Send code", exact: true }).click();
+  await enterDemoCode(page);
+  await page.waitForURL(/\/en\/app/);
+}
+
+/**
+ * A creator with three counted invites, the free verification review and an open request, written
+ * the way the demo store keeps them (as the Invite screen leaves them). Reload to show it.
+ */
+async function seedRequest(page: Page, username: string, name: string) {
+  await page.evaluate(
+    ([key, handle, displayName]) => {
+      const db = JSON.parse(localStorage.getItem(key) ?? "{}") as {
+        accounts: { id: string; email: string; username: string; createdAt: string }[];
+        sites: Record<string, unknown>;
+        referralCodes?: Record<string, string>;
+        referrals?: unknown[];
+        rewards?: Record<string, unknown>;
+        verifications?: Record<string, unknown[]>;
+      };
+      const now = new Date().toISOString();
+      const account = (user: string, shown: string) => {
+        const id = crypto.randomUUID();
+        db.accounts.push({ id, email: `${user}@example.com`, username: user, createdAt: now });
+        db.sites[id] = {
+          page: { profile: { username: user, displayName: shown, bio: "", avatar: { src: "", alt: "" }, verified: false, locale: "en" }, blocks: [] },
+          theme: {},
+          legal: { name: "", address: "", email: "", phone: "" },
+          onboarded: true,
+          updatedAt: now,
+        };
+        return id;
+      };
+      const creator = account(handle, displayName);
+      const alphabet = "23456789abcdefghjkmnpqrstuvwxyz";
+      const code = Array.from({ length: 8 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+      db.referralCodes = { ...db.referralCodes, [creator]: code };
+      db.referrals = [
+        ...(db.referrals ?? []),
+        ...[1, 2, 3].map((n) => ({ id: crypto.randomUUID(), inviterId: creator, inviteeId: account(`${handle}-friend${n}`, `Friend ${n}`), state: "qualified", at: now })),
+      ];
+      db.rewards = { ...db.rewards, [creator]: { verification_review: { at: now, source: "referrals" } } };
+      db.verifications = {
+        ...db.verifications,
+        [creator]: [{ id: crypto.randomUUID(), state: "requested", links: [`https://instagram.com/${handle}`], note: "The link is in my bio.", at: now }],
+      };
+      localStorage.setItem(key, JSON.stringify(db));
+    },
+    [DEMO_KEY, username, name] as const,
+  );
+}
+
+test.describe("referrals", () => {
+  test("a verification request shows under Referrals; approving it verifies the page", async ({ page }) => {
+    test.setTimeout(240_000);
+    const team = await owner(page);
+    await logOutOfTeam(page);
+
+    // A creator, and three friends who sign up with the creator's invite link (demo: one browser).
+    const creator = await signUp(page);
+    const code = await page.evaluate((key) => {
+      const db = JSON.parse(localStorage.getItem(key) ?? "{}") as { session: { accountId: string }; referralCodes?: Record<string, string> };
+      return db.referralCodes?.[db.session.accountId] ?? "";
+    }, DEMO_KEY);
+    expect(code).toMatch(/^[2-9a-hjkmnp-z]{8}$/);
+    await skipAndLogOut(page);
+    for (let friend = 1; friend <= 3; friend++) {
+      await page.goto(`/en/i/${code}`);
+      await page.waitForURL(`**/en/signup?ref=${code}`);
+      await page.waitForLoadState("networkidle");
+      await page.locator("#signup-email").fill(`friend${friend}-${unique()}@example.com`);
+      await page.locator("form button[type=submit]").click();
+      await enterDemoCode(page);
+      await page.waitForURL("**/en/app/welcome");
+      await skipAndLogOut(page);
+    }
+
+    // Three counted friends unlock the review: the creator asks for it on the Invite screen.
+    await logIn(page, creator.email);
+    await page.goto("/en/app/invite");
+    await page.getByRole("button", { name: "Request review" }).locator("visible=true").first().click();
+    const sheet = page.getByRole("dialog", { name: "Request verification" });
+    await sheet.getByLabel("Official profile", { exact: true }).fill(`https://instagram.com/${creator.name}`);
+    await sheet.getByRole("button", { name: "Send request" }).click();
+    await expect(sheet).toBeHidden();
+    await skipAndLogOut(page);
+
+    // The team finds it under Referrals and approves it.
+    await logIn(page, team.email);
+    await page.goto("/en/admin");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Hi");
+    await go(page, "Referrals");
+    await expect(page.getByRole("heading", { level: 1, name: "Referrals" })).toBeVisible();
+    const request = page.getByRole("article").filter({ hasText: `@${creator.name}` });
+    await expect(request).toContainText("3 invites");
+    await expect(request.getByRole("link", { name: `instagram.com/${creator.name}` })).toHaveAttribute("target", "_blank");
+    await request.getByRole("button", { name: "Approve (blue check)" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Approve (blue check)" }).click();
+    await expect(page.getByText("No open requests.")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Decided in the last 30 days" })).toContainText("Approved");
+
+    await go(page, "Activity");
+    await expect(page.getByText(new RegExp(`verified ${creator.name} \\(request\\)`))).toBeVisible();
+
+    // Three invites give the review, not Pro for life: no badge in the customers list.
+    await go(page, "Customers");
+    await page.getByLabel("Search").fill(creator.name);
+    await expect(page.locator("main a[href*='/admin/customers/']").locator("visible=true")).toHaveCount(1);
+    await expect(page.locator("main").getByText("Pro for life", { exact: true })).toHaveCount(0);
+
+    // The creator sees the blue check on the Invite screen.
+    await logOutOfTeam(page);
+    await logIn(page, creator.email);
+    await page.goto("/en/app/invite");
+    await expect(page.getByText("Verified. The blue check is on your page.")).toBeVisible();
+  });
+
+  test("Referrals has no accessibility violations: both panes, light and dark, en and ar, and the decline dialog", async ({ page }) => {
+    test.setTimeout(120_000);
+    await owner(page);
+    const username = `nora-${unique()}`;
+    await seedRequest(page, username, "Nora Vale");
+    for (const locale of ["en", "ar"] as const) {
+      for (const colorScheme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme });
+        await page.goto(`/${locale}/admin/referrals`);
+        await expect(page.getByRole("article").filter({ hasText: `@${username}` })).toBeVisible();
+        expect(await axe(page), `${locale} ${colorScheme}: requests`).toEqual([]);
+        await page.getByRole("radio", { name: locale === "ar" ? /^للتحقق/ : /^To check/ }).click();
+        await expect(page.getByText(locale === "ar" ? "لا شيء للتحقق منه." : "Nothing to check.")).toBeVisible();
+        expect(await axe(page), `${locale} ${colorScheme}: to check`).toEqual([]);
+      }
+    }
+
+    // Declining asks for a reason first (focus starts there), then lists the decision.
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto("/en/admin/referrals");
+    await page.getByRole("article").filter({ hasText: `@${username}` }).getByRole("button", { name: "Decline …" }).click();
+    const dialog = page.getByRole("alertdialog", { name: "Decline the request?" });
+    await expect(dialog.getByLabel("Reason")).toBeFocused();
+    expect(await axe(page), "decline dialog").toEqual([]);
+    await dialog.getByLabel("Reason").selectOption("identityUnclear");
+    await dialog.getByRole("button", { name: "Decline", exact: true }).click();
+    await expect(page.getByText("No open requests.")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Decided in the last 30 days" })).toContainText("Identity unclear");
+    await go(page, "Activity");
+    await expect(page.getByText(`declined ${username}'s verification`).first()).toBeVisible();
+  });
+
+  test("viewers see requests and invites but can't approve or remove anything", async ({ page, isMobile }) => {
+    await owner(page);
+    const username = `omar-${unique()}`;
+    await seedRequest(page, username, "Omar Fares");
+    await page.goto("/en/admin");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Hi");
+    await go(page, "Referrals");
+    const request = page.getByRole("article").filter({ hasText: `@${username}` });
+    await expect(request.getByRole("button", { name: "Approve (blue check)" })).toBeVisible();
+    await request.getByRole("link", { name: `@${username}` }).click();
+    await page.getByRole("radio", { name: "Invites" }).click();
+    await expect(page.getByRole("button", { name: "Remove", exact: true })).toHaveCount(3);
+    await expect(page.getByRole("button", { name: "Remove reward …" })).toHaveCount(1);
+
+    if (isMobile) await nav(page).getByRole("link", { name: "Overview" }).click();
+    await page.getByLabel("View as").locator("visible=true").selectOption("viewer");
+    await go(page, "Referrals");
+    await expect(request.getByText("Admins and owners can verify.")).toBeVisible();
+    await expect(request.getByRole("button")).toHaveCount(0);
+    await request.getByRole("link", { name: `@${username}` }).click();
+    await page.getByRole("radio", { name: "Invites" }).click();
+    await expect(page.getByRole("cell", { name: "Counts" })).toHaveCount(3);
+    await expect(page.getByRole("button", { name: "Remove", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /reward/ })).toHaveCount(0);
+  });
+});

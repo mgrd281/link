@@ -12,33 +12,43 @@ import {
   type MenuItem,
 } from "@linkyo/ui";
 import {
+  AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   Ban,
   BadgeCheck,
   CalendarPlus,
   CreditCard,
   ExternalLink,
+  Gift,
   LogOut,
   MoreHorizontal,
   ReceiptText,
+  RotateCcw,
   Trash2,
   UserCheck,
+  UserMinus,
   UserX,
+  type LucideIcon,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useMemo, useState, type ReactNode } from "react";
 
+import { TextArea } from "@/features/app/form";
 import { Panel, Screen } from "@/features/app/screen";
+import { referralTeam, useCustomerReferrals } from "@/features/referrals/team";
+import type { CustomerReferrals, ReferralState, RewardKind } from "@/features/referrals/types";
 import { Link, useRouter } from "@/i18n/navigation";
 
 import { useConsoleActions } from "./actions";
 import { sessionsOf, useCustomers } from "./customers/data";
-import { DAY, monthlyRevenue, PLAN_PRICE, riskFlags } from "./customers/model";
+import { DAY, hasProForLife, isPaying, monthlyRevenue, PLAN_PRICE, riskFlags, type Customer } from "./customers/model";
 import { DemoNote, DeviceLabel, PlanBadge, RiskBadges, StatusBadges } from "./customers/ui";
 import { count, country, date, dateTime, money, timeAgo } from "./format";
+import { bare, CustomerLink, ProfileLinks, SignalChips, useReasonLabel, WHY_MAX } from "./referrals-screen";
 import { useAdmin } from "./session";
 
-type Tab = "overview" | "billing" | "security" | "notes";
+type Tab = "overview" | "billing" | "security" | "notes" | "invites";
 type Pending =
   | { kind: "suspend" | "cancel" | "signoutAll" | "delete" }
   | { kind: "refund"; invoice: string }
@@ -214,7 +224,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const history = db.activity.filter(
     (event) =>
       event.target === customer.username &&
-      (event.action.startsWith("customer.") || event.action === "ip.block"),
+      (/^(customer|referral|reward|verification)\./.test(event.action) || event.action === "ip.block"),
   );
   const dialog = pending
     ? {
@@ -281,6 +291,11 @@ export function CustomerDetailScreen({ id }: { id: string }) {
       <div className="flex flex-wrap items-center gap-3">
         <Avatar name={customer.name} size="md" />
         <PlanBadge customer={customer} />
+        {hasProForLife(customer) ? (
+          <Badge size="sm" tone="outline">
+            {tc("proForLife")}
+          </Badge>
+        ) : null}
         <StatusBadges customer={customer} />
         {customer.verified ? (
           <Badge size="sm" tone="primary">
@@ -315,17 +330,27 @@ export function CustomerDetailScreen({ id }: { id: string }) {
         </div>
       </div>
 
-      <Segmented
-        label={t("tabs.label")}
-        value={tab}
-        onValueChange={setTab}
-        className="justify-self-start"
-        options={(["overview", "billing", "security", "notes"] as const)
-          .filter((key) =>
-            key === "billing" ? can("billing.view") : key === "security" ? can("security.view") : true,
-          )
-          .map((value) => ({ value, label: t(`tabs.${value}`) }))}
-      />
+      {/* Five tabs are wider than a phone: the strip scrolls sideways from edge to edge (the page never
+          does), with room around it for the focus ring. */}
+      <div className="-mx-4 -my-1 overflow-x-auto px-4 py-1 md:mx-0 md:px-0">
+        <Segmented
+          label={t("tabs.label")}
+          value={tab}
+          onValueChange={setTab}
+          className="whitespace-nowrap"
+          options={(["overview", "billing", "security", "notes", "invites"] as const)
+            .filter((key) =>
+              key === "billing"
+                ? can("billing.view")
+                : key === "security"
+                  ? can("security.view")
+                  : key === "invites"
+                    ? can("customers.view")
+                    : true,
+            )
+            .map((value) => ({ value, label: t(`tabs.${value}`) }))}
+        />
+      </div>
 
       {tab === "overview" ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -416,7 +441,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
             {sub.invoices.length === 0 ? (
               <p className="text-small text-fg-secondary">{t("noInvoices")}</p>
             ) : (
-              <div className="overflow-x-auto" role="region" aria-labelledby="invoices-title" tabIndex={0}>
+              <div className="relative overflow-x-auto" role="region" aria-labelledby="invoices-title" tabIndex={0}>
                 <table className="text-small w-full">
                   <thead className="text-caption text-fg-secondary">
                     <tr>
@@ -690,6 +715,9 @@ export function CustomerDetailScreen({ id }: { id: string }) {
         </div>
       ) : null}
 
+      {/* Mounted only while open: the invite program is loaded when someone looks at it. */}
+      {tab === "invites" ? <InvitesTab customer={customer} /> : null}
+
       <DemoNote />
 
       {dialog ? (
@@ -726,5 +754,374 @@ export function CustomerDetailScreen({ id }: { id: string }) {
         />
       ) : null}
     </Screen>
+  );
+}
+
+const REWARD_KINDS: readonly RewardKind[] = ["verification_review", "pro_for_life"];
+const STATE_TONE: Record<ReferralState, "success" | "warning" | "neutral" | "danger"> = {
+  pending: "neutral",
+  qualified: "success",
+  held: "warning",
+  rejected: "danger",
+  revoked: "neutral",
+};
+
+type Rewards = CustomerReferrals["rewards"];
+type Invited = CustomerReferrals["invited"][number];
+interface InviteAction {
+  next: "qualified" | "revoked";
+  label: string;
+  icon: LucideIcon;
+  destructive: boolean;
+}
+type InvitePending = { kind: "reward"; reward: RewardKind; granted: boolean } | { kind: "invite"; invite: Invited; action: InviteAction } | null;
+
+/** A sample customer has no program data in this browser: what the console knows is their rewards. */
+function rewardsOf(customer: Customer): Rewards {
+  const rewards: Rewards = {};
+  const { verificationReview, proForLife } = customer.rewards ?? {};
+  if (verificationReview)
+    rewards.verification_review = { at: verificationReview.at, source: verificationReview.source, revokedAt: verificationReview.revokedAt ?? null, reason: null };
+  if (proForLife) rewards.pro_for_life = { at: proForLife.at, source: proForLife.source, revokedAt: proForLife.revokedAt ?? null, reason: null };
+  return rewards;
+}
+
+/**
+ * The customer's invite program: their code and who invited them, their rewards (Pro for life needs
+ * billing.manage, the verification review customers.manage) and the accounts they invited. Mounted
+ * only while its tab is open, so the program is loaded only when someone looks at it.
+ */
+function InvitesTab({ customer }: { customer: Customer }) {
+  const t = useTranslations("admin.customer");
+  const tc = useTranslations("admin.customers");
+  const tr = useTranslations("admin.referrals");
+  const ts = useTranslations("admin.security.columns");
+  const tNav = useTranslations("admin.nav");
+  const tRetry = useTranslations("app.invite");
+  const locale = useLocale();
+  const { can, me } = useAdmin();
+  const program = useCustomerReferrals(customer.id);
+  const { status, data } = program;
+  const reasonLabel = useReasonLabel();
+  const [pending, setPending] = useState<InvitePending>(null);
+  const [why, setWhy] = useState("");
+  const rewardIds = useId();
+
+  if (status === "loading") {
+    return (
+      <p role="status" className="text-small text-fg-secondary">
+        {t("loading")}
+      </p>
+    );
+  }
+  if (status === "error") {
+    return (
+      <div role="alert" className="border-line bg-surface grid justify-items-start gap-3 rounded-xl border p-4">
+        <p className="text-body text-fg-secondary">{t("toast.failed")}</p>
+        <Button onClick={() => program.reload()}>{tRetry("retry")}</Button>
+      </div>
+    );
+  }
+
+  const rewards = data ? data.rewards : rewardsOf(customer);
+  const proForLife = rewards.pro_for_life;
+  const none = t("invites.none");
+  // Actions need the program's own data (a sample customer has none) and the right permission.
+  const mayReward = (kind: RewardKind) => data !== null && can(kind === "pro_for_life" ? "billing.manage" : "customers.manage");
+  const mayInvite = data !== null && can("customers.manage");
+  const invitedBy = data?.invitedBy ?? null;
+
+  const close = () => {
+    setPending(null);
+    setWhy("");
+  };
+  const report = (worked: boolean, message: string) =>
+    toast(worked ? { title: message, tone: "success" } : { title: t("toast.failed"), tone: "danger" });
+  const confirm = () => {
+    if (!pending) return;
+    const reason = why.trim();
+    const today = date(new Date().toISOString(), locale);
+    if (pending.kind === "reward") {
+      const { reward, granted } = pending;
+      // A reward given back keeps where it came from; one given by hand comes from the team.
+      const source = rewards[reward]?.source ?? "team";
+      void referralTeam
+        .setReward({ customerId: customer.id, kind: reward, granted, actor: me.email, target: customer.username, ...(reason ? { why: reason } : {}) })
+        .then((worked) =>
+          report(worked, granted ? t("invites.granted", { date: today, source: tr(`source.${source}`) }) : t("invites.removed", { date: today, reason })),
+        );
+    } else {
+      const { invite, action } = pending;
+      void referralTeam
+        .setReferral({ id: invite.id, next: action.next, actor: me.email, target: customer.username, ...(reason ? { why: reason } : {}) })
+        .then((worked) => report(worked, t(`invites.state.${action.next}`)));
+    }
+    close();
+  };
+
+  /** Held → count it or not; counted → remove; refused or removed → restore. Unconfirmed ones wait. */
+  const actionsFor = (invite: Invited): InviteAction[] => {
+    if (invite.state === "held")
+      return [
+        { next: "qualified", label: t("invites.release"), icon: UserCheck, destructive: false },
+        { next: "revoked", label: tr("held.reject"), icon: UserX, destructive: true },
+      ];
+    if (invite.state === "qualified") return [{ next: "revoked", label: t("invites.revokeInvite"), icon: UserMinus, destructive: true }];
+    if (invite.state === "rejected" || invite.state === "revoked") return [{ next: "qualified", label: t("invites.restore"), icon: RotateCcw, destructive: false }];
+    return [];
+  };
+
+  const rewardLabel = pending?.kind === "reward" ? bare(pending.granted ? t("invites.grant") : t("invites.revoke")) : "";
+
+  return (
+    <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Panel title={t("invites.title")} id="invites-title">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-0.5">
+              <dt className="text-caption text-fg-tertiary">{t("invites.code")}</dt>
+              <dd className="text-small min-w-0">
+                {data?.code ? (
+                  <span dir="ltr" className="font-mono">
+                    {data.code}
+                  </span>
+                ) : (
+                  none
+                )}
+              </dd>
+            </div>
+            <div className="grid min-w-0 gap-0.5">
+              <dt className="text-caption text-fg-tertiary">{t("invites.counted")}</dt>
+              <dd className="text-small min-w-0 tabular-nums">{data ? count(data.counted, locale) : none}</dd>
+            </div>
+            <div className="grid min-w-0 gap-0.5 sm:col-span-2">
+              <dt className="text-caption text-fg-tertiary">{t("invites.invitedBy")}</dt>
+              <dd className="text-small flex min-w-0 flex-wrap items-center gap-2">
+                {invitedBy ? (
+                  <>
+                    <CustomerLink id={invitedBy.id} username={invitedBy.username} />
+                    <Badge size="sm" tone={STATE_TONE[invitedBy.state]}>
+                      {t(`invites.state.${invitedBy.state}`)}
+                    </Badge>
+                    {invitedBy.reason ? <span className="text-caption text-fg-secondary">{reasonLabel(invitedBy.reason)}</span> : null}
+                    <SignalChips signals={invitedBy.signals} />
+                  </>
+                ) : (
+                  none
+                )}
+              </dd>
+            </div>
+          </dl>
+        </Panel>
+
+        <Panel title={t("invites.rewards")} id="rewards-title">
+          {proForLife && !proForLife.revokedAt && isPaying(customer) ? (
+            <p className="bg-warning-subtle text-small text-warning-strong flex items-start gap-2 rounded-md px-3 py-2">
+              <Icon icon={AlertTriangle} size="sm" className="mt-0.5 shrink-0" />
+              <span>{t("invites.paysAndPro")}</span>
+            </p>
+          ) : null}
+          <ul className="grid grid-cols-1 gap-2">
+            {REWARD_KINDS.map((kind) => {
+              const reward = rewards[kind];
+              const active = Boolean(reward && !reward.revokedAt);
+              const labelId = `${rewardIds}-${kind}`;
+              return (
+                <li key={kind} className="border-line flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+                  <span className="grid min-w-0 gap-0.5">
+                    <span id={labelId} className="text-small font-semibold">
+                      {tr(`kind.${kind}`)}
+                    </span>
+                    <span className="text-caption text-fg-secondary">
+                      {!reward
+                        ? none
+                        : reward.revokedAt
+                          ? t("invites.removed", { date: date(reward.revokedAt, locale), reason: reward.reason?.length ? reward.reason : none })
+                          : t("invites.granted", { date: date(reward.at, locale), source: tr(`source.${reward.source}`) })}
+                    </span>
+                  </span>
+                  {mayReward(kind) ? (
+                    <Button
+                      size="sm"
+                      variant={active ? "destructive" : "secondary"}
+                      icon={active ? Trash2 : Gift}
+                      aria-describedby={labelId}
+                      onClick={() => setPending({ kind: "reward", reward: kind, granted: !active })}
+                    >
+                      {active ? t("invites.revoke") : t("invites.grant")}
+                    </Button>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </Panel>
+      </div>
+
+      <Panel title={t("invites.list")} id="invited-title">
+        {!data || data.invited.length === 0 ? (
+          <p className="text-small text-fg-secondary">{none}</p>
+        ) : (
+          // `relative`: the column's screen-reader-only heading is positioned; without it, it would sit
+          // outside this scroller and widen the whole page on a phone.
+          <div className="relative overflow-x-auto" role="region" aria-labelledby="invited-title" tabIndex={0}>
+            <table className="min-w-prose text-small w-full">
+              <thead className="text-caption text-fg-secondary">
+                <tr>
+                  <th scope="col" className="py-2 pe-3 text-start font-medium">
+                    {tc("columns.customer")}
+                  </th>
+                  <th scope="col" className="py-2 pe-3 text-start font-medium">
+                    {t("invoice.status")}
+                  </th>
+                  <th scope="col" className="py-2 pe-3 text-start font-medium">
+                    {tr("verifications.reason")}
+                  </th>
+                  <th scope="col" className="py-2 pe-3 text-start font-medium">
+                    {ts("flags")}
+                  </th>
+                  <th scope="col" className="py-2 pe-3 text-start font-medium">
+                    {ts("when")}
+                  </th>
+                  {mayInvite ? (
+                    <th scope="col" className="py-2">
+                      <span className="sr-only">{t("invoice.actions")}</span>
+                    </th>
+                  ) : null}
+                </tr>
+              </thead>
+              <tbody>
+                {data.invited.map((invite) => (
+                  <tr key={invite.id} className="border-line border-t align-middle">
+                    <td className="py-2 pe-3">
+                      <span className="flex flex-wrap items-center gap-1">
+                        <CustomerLink id={invite.inviteeId} username={invite.username} />
+                        {invite.status === "suspended" ? (
+                          <Badge size="sm" tone="danger">
+                            {tc("suspended")}
+                          </Badge>
+                        ) : null}
+                      </span>
+                    </td>
+                    <td className="py-2 pe-3">
+                      <Badge size="sm" tone={STATE_TONE[invite.state]}>
+                        {t(`invites.state.${invite.state}`)}
+                      </Badge>
+                    </td>
+                    <td className="text-fg-secondary py-2 pe-3">{invite.reason ? reasonLabel(invite.reason) : none}</td>
+                    <td className="py-2 pe-3">
+                      <SignalChips signals={invite.signals} />
+                    </td>
+                    <td className="text-fg-secondary py-2 pe-3 whitespace-nowrap">{date(invite.at, locale)}</td>
+                    {mayInvite ? (
+                      <td className="py-2 text-end">
+                        <span className="flex flex-wrap justify-end gap-1">
+                          {actionsFor(invite).map((action) => (
+                            <Button
+                              key={action.next}
+                              size="sm"
+                              variant={action.destructive ? "destructive" : "ghost"}
+                              icon={action.icon}
+                              onClick={() => setPending({ kind: "invite", invite, action })}
+                            >
+                              {action.label}
+                            </Button>
+                          ))}
+                        </span>
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
+
+      {data?.verifications.length ? (
+        <Panel
+          title={t("invites.verifications")}
+          id="verifications-title"
+          action={
+            <Link
+              href="/admin/referrals"
+              className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-semibold transition-colors duration-micro hover:text-fg"
+            >
+              {tNav("referrals")}
+              <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+            </Link>
+          }
+        >
+          <ul className="grid grid-cols-1 gap-2">
+            {data.verifications.map((request) => (
+              <li key={request.id} className="border-line grid gap-2 rounded-md border p-3">
+                <span className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-small">{tr("verifications.requested", { date: date(request.at, locale) })}</span>
+                  <span className="flex flex-wrap items-center gap-2">
+                    {request.state === "declined" && request.declineReason ? (
+                      <span className="text-caption text-fg-secondary">{tr(`declineReasons.${request.declineReason}`)}</span>
+                    ) : null}
+                    <Badge size="sm" tone={request.state === "approved" ? "success" : request.state === "declined" ? "neutral" : "warning"}>
+                      {request.state === "approved"
+                        ? tr("verifications.approved")
+                        : request.state === "declined"
+                          ? tr("verifications.declined")
+                          : t("invites.state.held")}
+                    </Badge>
+                  </span>
+                </span>
+                <ProfileLinks links={request.links} />
+                {request.note ? (
+                  <p dir="auto" className="text-small text-fg-secondary break-words whitespace-pre-line">
+                    {request.note}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      ) : null}
+
+      {pending ? (
+        <ConfirmDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) close();
+          }}
+          title={pending.kind === "reward" ? `${rewardLabel}: ${tr(`kind.${pending.reward}`)}` : pending.action.label}
+          description={
+            pending.kind === "reward" && !pending.granted ? (
+              t("invites.revokeBody")
+            ) : pending.kind === "reward" ? (
+              <span>
+                <bdi>{customer.name}</bdi> · <span dir="ltr">@{customer.username}</span>
+              </span>
+            ) : (
+              <span className="inline-flex flex-wrap items-center gap-1">
+                <span dir="ltr">@{customer.username}</span>
+                <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+                <span dir="ltr">{pending.invite.username ? `@${pending.invite.username}` : none}</span>
+              </span>
+            )
+          }
+          confirmLabel={pending.kind === "reward" ? rewardLabel : pending.action.label}
+          cancelLabel={t("confirm.keep")}
+          destructive={pending.kind === "reward" ? !pending.granted : pending.action.destructive}
+          // A reward changes only with a reason for the log; for an invite the reason is optional.
+          confirmDisabled={pending.kind === "reward" && !why.trim()}
+          initialFocus="first-field"
+          onConfirm={confirm}
+        >
+          <TextArea
+            label={pending.kind === "reward" ? t("invites.why") : tr("held.why")}
+            value={why}
+            onValue={setWhy}
+            max={WHY_MAX}
+            rows={2}
+            required={pending.kind === "reward"}
+          />
+        </ConfirmDialog>
+      ) : null}
+    </div>
   );
 }

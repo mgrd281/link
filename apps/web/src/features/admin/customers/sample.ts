@@ -313,5 +313,22 @@ export function sampleCustomers(now: number, count = SAMPLE_SIZE): Customer[] {
       notes: [],
     });
   }
-  return customers.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  customers.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  // One free account that invited enough friends for both rewards, so the console shows Pro for life
+  // in the demo. Chosen after the random draws: every other sample stays exactly as it was.
+  const inviter = customers.find(
+    (customer) =>
+      customer.subscription.plan === "free" &&
+      customer.status === "active" &&
+      customer.usage.onboarded &&
+      now - Date.parse(customer.createdAt) > 60 * DAY,
+  );
+  if (inviter) {
+    const created = Date.parse(inviter.createdAt);
+    inviter.rewards = {
+      verificationReview: { at: new Date(created + 18 * DAY).toISOString(), source: "referrals" },
+      proForLife: { at: new Date(created + 41 * DAY).toISOString(), source: "referrals" },
+    };
+  }
+  return customers;
 }
