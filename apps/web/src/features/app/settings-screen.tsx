@@ -1,186 +1,87 @@
 "use client";
 
-import { Badge, Button, ConfirmDialog, Icon, TextField, toast } from "@linkyo/ui";
-import { CircleCheck, Download, KeyRound, Laptop, LogOut, Mail, Smartphone, Tablet, Trash2, Upload } from "lucide-react";
+import { ConfirmDialog, Icon, toast } from "@linkyo/ui";
+import {
+  Check,
+  CircleUserRound,
+  Download,
+  Languages,
+  Link2,
+  LogOut,
+  Scale,
+  ShieldCheck,
+  SunMoon,
+  Upload,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState, useSyncExternalStore, type SubmitEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { LocaleSwitch } from "@/components/locale-switch";
 import { ThemeSwitch } from "@/components/theme-switch";
-import { useUsernameStatus } from "@/features/account/auth/shared";
-import { STORAGE_KEY } from "@/features/account/local-store";
 import { accountStore } from "@/features/account/store";
-import type { AuthError, Legal, LoginEvent } from "@/features/account/types";
+import { useOnTeam } from "@/features/admin/live";
+import { usePathname, useRouter } from "@/i18n/navigation";
+import type { Locale } from "@/i18n/routing";
 
-import { TextArea, TextInput } from "./form";
 import { pickFiles } from "./images";
 import { parseImport, type ImportedSite } from "./import";
-import { ProfileFields, useProfileDraft } from "./profile-form";
-import { Panel, Screen } from "./screen";
+import { legalStatus } from "./legal";
+import { ListGroup, ListRow, PickerRow, SegmentedRow } from "./list";
+import { ProfileSheet } from "./profile-form";
+import { Screen } from "./screen";
+import { ProfileAvatar } from "./shell";
 import { useSite } from "./site-context";
 
-function ProfilePanel() {
-  const t = useTranslations("app.profile");
-  const form = useProfileDraft();
-  return (
-    <Panel title={t("title")} id="profile-title">
-      <ProfileFields profile={form.profile} onChange={form.change} errors={form.errors} />
-      {form.dirty ? (
-        <div className="sticky bottom-20 flex flex-wrap justify-end gap-2 rounded-lg border border-line bg-surface-elevated p-3 lg:bottom-4">
-          <Button variant="ghost" onClick={form.reset}>
-            {t("cancel")}
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => {
-              if (form.save(t("nameRequired"))) toast({ title: t("saved"), tone: "success" });
-            }}
-          >
-            {t("save")}
-          </Button>
-        </div>
-      ) : null}
-    </Panel>
-  );
+/** Each language in its own name and voice. */
+const LANGUAGES = [
+  { value: "de", label: "Deutsch", lang: "de" },
+  { value: "en", label: "English", lang: "en" },
+  { value: "ar", label: "العربية", lang: "ar" },
+] as const satisfies readonly { value: Locale; label: string; lang: string }[];
+
+/**
+ * Links and bookmarks to the sections of the old one-page Settings (the Home checklist, emails):
+ * a section that became a pane opens it; one that stayed here is scrolled to.
+ */
+const PANES: Record<string, string> = {
+  "#legal": "/app/settings/legal",
+  "#address-title": "/app/settings/address",
+  "#account-title": "/app/settings/account",
+  "#signins-title": "/app/settings/account#signins",
+};
+const GROUPS: Record<string, string> = { "#dashboard-title": "app", "#data-title": "data" };
+
+function useOldHashes(openProfile: () => void) {
+  const router = useRouter();
+  useEffect(() => {
+    const follow = () => {
+      const { hash } = window.location;
+      const pane = PANES[hash];
+      if (pane) {
+        router.replace(pane);
+        return;
+      }
+      const group = GROUPS[hash];
+      const profile = hash === "#profile-title";
+      if (!group && !profile) return;
+      // The address loses the old hash, so a reload or Back does not repeat this.
+      window.history.replaceState(
+        window.history.state,
+        "",
+        window.location.pathname + window.location.search,
+      );
+      if (profile) openProfile();
+      else document.getElementById(group ?? "")?.scrollIntoView({ block: "start" });
+    };
+    follow();
+    window.addEventListener("hashchange", follow);
+    return () => window.removeEventListener("hashchange", follow);
+  }, [router, openProfile]);
 }
 
-function AddressPanel() {
+/** Export and import: the page as a file, and a page back from such a file (undoable, the legal notice too). */
+function DataGroup() {
   const t = useTranslations("app.settings");
-  const tAuth = useTranslations("auth");
-  const { account } = useSite();
-  const [value, setValue] = useState(account.username);
-  const [error, setError] = useState<AuthError | null>(null);
-  const normalized = value.trim().toLowerCase();
-  const status = useUsernameStatus(normalized, account.username);
-  const submit = async (event: SubmitEvent) => {
-    event.preventDefault();
-    const result = await accountStore.changeUsername(normalized);
-    if (result.ok) toast({ title: t("addressChanged", { url: `linkyo.app/${normalized}` }), tone: "success" });
-    else setError(result.error);
-  };
-  return (
-    <Panel title={t("address")} id="address-title">
-      <form onSubmit={(event) => void submit(event)} noValidate className="grid grid-cols-1 gap-4">
-        {/* Where the page is now (the phone bar shows the screen's name, not the address). */}
-        <p className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-small text-fg-secondary">
-          {t("current")}
-          <bdi dir="ltr" className="min-w-0 truncate font-semibold text-fg">
-            linkyo.app/{account.username}
-          </bdi>
-        </p>
-        <TextField
-          label={t("addressLabel")}
-          ltr
-          leading="linkyo.app/"
-          value={value}
-          onChange={(event) => {
-            setValue(event.target.value.toLowerCase());
-            setError(null);
-          }}
-          autoCapitalize="none"
-          spellCheck={false}
-          maxLength={30}
-          error={error ? tAuth(`errors.${error}`) : status && status !== "ok" && status !== "checking" && normalized.length >= 3 ? tAuth(`errors.${status}`) : undefined}
-          hint={
-            status === "ok" ? (
-              <span className="flex items-center gap-2 text-success-strong">
-                <Icon icon={CircleCheck} size="sm" />
-                {tAuth("fields.usernameOk", { name: normalized })}
-              </span>
-            ) : (
-              t("addressHint")
-            )
-          }
-        />
-        {/* Like the legal notice: the save turns primary once there is something to save. */}
-        <Button type="submit" variant={status === "ok" ? "primary" : "secondary"} className="justify-self-start" disabled={status !== "ok"}>
-          {t("addressSave")}
-        </Button>
-      </form>
-    </Panel>
-  );
-}
-
-function AccountPanel() {
-  const t = useTranslations("app.settings");
-  const tAuth = useTranslations("auth");
-  const { account } = useSite();
-  const [email, setEmail] = useState(account.email);
-  const [emailError, setEmailError] = useState<AuthError | null>(null);
-  const emailChanged = email.trim().toLowerCase() !== account.email;
-
-  const saveEmail = async (event: SubmitEvent) => {
-    event.preventDefault();
-    const result = await accountStore.changeEmail(email);
-    if (result.ok) toast({ title: result.pending === "confirmEmail" ? t("emailConfirm", { email: email.trim() }) : t("emailChanged"), tone: "success" });
-    else setEmailError(result.error);
-  };
-  return (
-    <Panel title={t("account")} id="account-title">
-      <form onSubmit={(event) => void saveEmail(event)} noValidate className="grid grid-cols-1 gap-4">
-        <TextField
-          label={tAuth("fields.email")}
-          type="email"
-          ltr
-          icon={Mail}
-          value={email}
-          onChange={(event) => {
-            setEmail(event.target.value);
-            setEmailError(null);
-          }}
-          autoComplete="email"
-          error={emailError ? tAuth(`errors.${emailError}`) : undefined}
-        />
-        <Button type="submit" variant={emailChanged ? "primary" : "secondary"} className="justify-self-start" disabled={!emailChanged}>
-          {t("emailSave")}
-        </Button>
-      </form>
-      <p className="flex items-start gap-2 border-t border-line pt-4 text-small text-fg-secondary">
-        <Icon icon={KeyRound} size="sm" className="mt-0.5 shrink-0" />
-        {t("signInByCode")}
-      </p>
-    </Panel>
-  );
-}
-
-function LegalPanel() {
-  const t = useTranslations("app.settings");
-  const { site } = useSite();
-  const [legal, setLegal] = useState<Legal>(site.legal);
-  const dirty = JSON.stringify(legal) !== JSON.stringify(site.legal);
-  const set = (patch: Partial<Legal>) => setLegal((current) => ({ ...current, ...patch }));
-  return (
-    <Panel title={t("legal")} id="legal">
-      <p className="text-small text-fg-secondary">{t("legalHint")}</p>
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          const result = accountStore.updateSite((current) => ({ ...current, legal }));
-          toast(result.ok ? { title: t("legalSaved"), tone: "success" } : { title: t("saveFailed"), tone: "danger" });
-        }}
-        className="grid grid-cols-1 gap-4"
-      >
-        <TextInput label={t("legalName")} value={legal.name} onValue={(name) => set({ name })} autoComplete="name" maxLength={120} />
-        <TextArea label={t("legalAddress")} value={legal.address} onValue={(address) => set({ address })} max={300} rows={3} autoComplete="street-address" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <TextInput label={t("legalEmail")} type="email" ltr value={legal.email} onValue={(email) => set({ email })} autoComplete="email" />
-          <TextInput label={t("legalPhone")} type="tel" ltr value={legal.phone} onValue={(phone) => set({ phone })} autoComplete="tel" />
-        </div>
-        <Button type="submit" variant={dirty ? "primary" : "secondary"} className="justify-self-start" disabled={!dirty}>
-          {t("legalSave")}
-        </Button>
-      </form>
-    </Panel>
-  );
-}
-
-function DataPanel() {
-  const t = useTranslations("app.settings");
-  const tAuth = useTranslations("auth");
-  const { account, doc, dispatch } = useSite();
-  const [confirm, setConfirm] = useState(false);
-  const [typed, setTyped] = useState("");
+  const { account, site, doc, dispatch, flush } = useSite();
   const [incoming, setIncoming] = useState<ImportedSite | null>(null);
   const chooseImport = async () => {
     const [file] = await pickFiles({ accept: "application/json,.json" });
@@ -193,14 +94,32 @@ function DataPanel() {
     if (!incoming) return;
     dispatch({
       type: "replace",
-      doc: { ...doc, profile: { ...incoming.page.profile, username: account.username }, blocks: incoming.page.blocks, theme: incoming.theme },
+      doc: {
+        ...doc,
+        profile: { ...incoming.page.profile, username: account.username },
+        blocks: incoming.page.blocks,
+        theme: incoming.theme,
+      },
     });
     const { legal } = incoming;
+    const before = site.legal;
     if (legal) accountStore.updateSite((current) => ({ ...current, legal }));
     setIncoming(null);
-    toast({ title: t("imported"), tone: "success", action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) } });
+    toast({
+      title: t("imported"),
+      tone: "success",
+      action: {
+        label: t("undo"),
+        onAction: () => {
+          dispatch({ type: "undo" });
+          if (legal) accountStore.updateSite((current) => ({ ...current, legal: before }));
+        },
+      },
+    });
   };
   const exportData = async () => {
+    // A change still waiting for autosave goes into the file too.
+    flush();
     const blob = new Blob([await accountStore.exportData()], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -209,158 +128,137 @@ function DataPanel() {
     URL.revokeObjectURL(link.href);
   };
   return (
-    <Panel title={t("data")} id="data-title">
-      <div className="grid grid-cols-1 gap-2">
-        <p className="text-small text-fg-secondary">{t("exportHint")}</p>
-        <Button icon={Download} className="justify-self-start" onClick={() => void exportData()}>
-          {t("export")}
-        </Button>
-      </div>
-      <div className="grid grid-cols-1 gap-2 border-t border-line pt-4">
-        <p className="text-small text-fg-secondary">{t("importHint")}</p>
-        <Button icon={Upload} className="justify-self-start" onClick={() => void chooseImport()}>
-          {t("import")}
-        </Button>
-      </div>
+    <>
+      <ListGroup title={t("groups.data")} titleId="data" footer={t("footers.data")}>
+        <ListRow icon={Download} title={t("export")} accessory="none" onClick={() => void exportData()} />
+        <ListRow icon={Upload} title={t("import")} accessory="none" onClick={() => void chooseImport()} />
+      </ListGroup>
       <ConfirmDialog
         open={incoming !== null}
         onOpenChange={(open) => {
           if (!open) setIncoming(null);
         }}
         title={t("importTitle")}
-        description={t("importBody", { name: incoming?.page.profile.displayName ?? "", count: incoming?.page.blocks.length ?? 0 })}
+        description={t("importBody", {
+          name: incoming?.page.profile.displayName ?? "",
+          count: incoming?.page.blocks.length ?? 0,
+        })}
         confirmLabel={t("importConfirm")}
         cancelLabel={t("cancel")}
         destructive={false}
         onConfirm={applyImport}
       />
-      <div className="grid grid-cols-1 gap-2 border-t border-line pt-4">
-        <p className="text-small text-fg-secondary">{t("deleteHint")}</p>
-        <Button variant="destructive" icon={Trash2} className="justify-self-start" onClick={() => setConfirm(true)}>
-          {t("delete")}
-        </Button>
-      </div>
-      <ConfirmDialog
-        open={confirm}
-        onOpenChange={(open) => {
-          setConfirm(open);
-          setTyped("");
-        }}
-        title={t("deleteTitle")}
-        description={
-          <span className="grid grid-cols-1 gap-4">
-            <span>{t("deleteBody")}</span>
-            <TextField label={t("deleteType", { name: account.username })} ltr value={typed} onChange={(event) => setTyped(event.target.value)} autoCapitalize="none" spellCheck={false} />
-          </span>
-        }
-        confirmLabel={t("deleteConfirm")}
-        cancelLabel={t("cancel")}
-        confirmDisabled={typed.trim().toLowerCase() !== account.username}
-        onConfirm={() => {
-          void accountStore.deleteAccount().then((result) => {
-            if (result.ok) toast({ title: t("deleted") });
-            else toast({ title: tAuth(`errors.${result.error}`), tone: "danger" });
-          });
-        }}
-      />
-    </Panel>
-  );
-}
-
-const readAccounts = () => {
-  try {
-    return `${window.localStorage.getItem(STORAGE_KEY) ?? ""}|${window.localStorage.getItem("linkyo.device") ?? ""}`;
-  } catch {
-    return "";
-  }
-};
-const DEVICE_ICONS = { mobile: Smartphone, tablet: Tablet, desktop: Laptop } as const;
-
-/** The account's own sign-ins (30 days): where and with what. Transparency, and a way to spot strangers. */
-function SignInsPanel() {
-  const t = useTranslations("app.settings");
-  const locale = useLocale();
-  // Demo: the log lives next to the accounts in this browser, so it is read again when they change.
-  const raw = useSyncExternalStore((listener) => accountStore.subscribe(listener), readAccounts, () => "");
-  const [signIns, setSignIns] = useState<LoginEvent[]>([]);
-  useEffect(() => {
-    let live = true;
-    void accountStore.signIns().then((list) => {
-      if (live) setSignIns(list.slice(0, 8));
-    });
-    return () => {
-      live = false;
-    };
-  }, [raw]);
-  const thisDevice = raw.split("|")[1];
-  const place = (code: string | undefined, city: string | undefined) => {
-    const country = code ? (new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code) : "";
-    return [city, country].filter(Boolean).join(", ") || t("unknownPlace");
-  };
-  const when = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-  return (
-    <Panel title={t("signIns")} id="signins-title">
-      <p className="text-small text-fg-secondary">{t("signInsHint")}</p>
-      {signIns.length === 0 ? (
-        <p className="text-small text-fg-tertiary">{t("signInsEmpty")}</p>
-      ) : (
-        <ul className="grid grid-cols-1 gap-2">
-          {signIns.map((entry) => (
-            <li key={entry.id} className="flex items-start gap-3 rounded-md border border-line p-3">
-              <Icon icon={DEVICE_ICONS[entry.device.type]} size="md" className="mt-0.5 shrink-0 text-fg-tertiary" />
-              <span className="grid min-w-0 flex-1 gap-0.5">
-                <span className="flex flex-wrap items-center gap-2 text-small font-medium">
-                  {entry.device.os} · {entry.device.browser}
-                  {entry.deviceId === thisDevice ? (
-                    <Badge size="sm" tone="primary">
-                      {t("thisDevice")}
-                    </Badge>
-                  ) : null}
-                  {entry.result === "failed" ? (
-                    <Badge size="sm" tone="danger">
-                      {t("failedSignIn")}
-                    </Badge>
-                  ) : null}
-                </span>
-                <span className="text-caption text-fg-secondary">
-                  {place(entry.country, entry.city)} · <span dir="ltr">{entry.ip || "–"}</span> · {when.format(new Date(entry.at))}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
+    </>
   );
 }
 
 /**
- * Settings: profile, address, login, legal notice, the dashboard's own look, and your data. The page
- * sits beside it on wide screens, so name, bio and photos edited here show live, as in the Profile sheet.
+ * Settings, as a grouped list like iOS Settings: every row shows its current value, and what needs
+ * typing opens its own pane (address, legal notice, account) or the Profile sheet. Choices that
+ * apply at once (page language, appearance, app language) are changed right in their row. The page
+ * sits beside it on wide screens, so a new profile or page language shows live.
  */
 export function SettingsScreen() {
   const t = useTranslations("app.settings");
+  const tApp = useTranslations("app");
+  const locale = useLocale() as Locale;
+  const pathname = usePathname();
+  const router = useRouter();
+  const { account, site, doc, dispatch } = useSite();
+  const onTeam = useOnTeam(account.email);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const openProfile = useCallback(() => setProfileOpen(true), []);
+  useOldHashes(openProfile);
+
+  const legal = legalStatus(site.legal);
+
   return (
-    <Screen title={t("title")} lead={t("lead")} preview>
-      <ProfilePanel />
-      <AddressPanel />
-      <AccountPanel />
-      <SignInsPanel />
-      <LegalPanel />
-      <Panel title={t("dashboard")} id="dashboard-title">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-small">{t("theme")}</span>
-          <ThemeSwitch />
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-small">{t("language")}</span>
-          <LocaleSwitch />
-        </div>
-      </Panel>
-      <DataPanel />
-      <Button variant="ghost" icon={LogOut} className="justify-self-start" onClick={() => accountStore.logOut()}>
-        {t("logout")}
-      </Button>
+    <Screen title={t("title")} preview>
+      {/* One grouped list: the group headers already set the groups apart, so they sit closer than the cards of other screens. */}
+      <div className="grid grid-cols-1 gap-4">
+        <ListGroup title={t("groups.page")} titleId="page" footer={t("footers.pageLanguage")}>
+          <ListRow
+            leading={<ProfileAvatar size="sm" />}
+            title={t("rows.profile")}
+            subtitle={doc.profile.displayName}
+            subtitleDir="auto"
+            onClick={openProfile}
+          />
+          <ListRow
+            icon={Link2}
+            title={t("rows.address")}
+            subtitle={`linkyo.app/${account.username}`}
+            subtitleDir="ltr"
+            href="/app/settings/address"
+          />
+          <ListRow
+            icon={Scale}
+            title={t("rows.legal")}
+            value={
+              legal === "complete" ? (
+                <span className="inline-flex items-center gap-1">
+                  <Icon icon={Check} size="sm" className="text-success-strong" />
+                  {t("legalState.complete")}
+                </span>
+              ) : (
+                t(`legalState.${legal}`)
+              )
+            }
+            href="/app/settings/legal"
+          />
+          <PickerRow
+            icon={Languages}
+            label={t("rows.pageLanguage")}
+            value={doc.profile.locale}
+            options={LANGUAGES}
+            onValue={(next) => dispatch({ type: "profile", patch: { locale: next } })}
+          />
+        </ListGroup>
+
+        <ListGroup>
+          <ListRow
+            icon={CircleUserRound}
+            title={t("rows.account")}
+            subtitle={account.email}
+            subtitleDir="ltr"
+            href="/app/settings/account"
+          />
+          {onTeam ? <ListRow icon={ShieldCheck} title={tApp("teamArea")} href="/admin" /> : null}
+        </ListGroup>
+
+        <ListGroup title={t("groups.app")} titleId="app" footer={t("footers.app")}>
+          <SegmentedRow icon={SunMoon} label={t("theme")}>
+            <ThemeSwitch
+              withSystem
+              size="md"
+              label={t("theme")}
+              className="pointer-coarse:h-control-lg w-full *:flex-1 sm:w-auto sm:*:flex-none"
+            />
+          </SegmentedRow>
+          <PickerRow
+            icon={Languages}
+            label={t("rows.appLanguage")}
+            value={locale}
+            options={LANGUAGES}
+            onValue={(next) => router.replace(pathname, { locale: next })}
+          />
+        </ListGroup>
+
+        <DataGroup />
+
+        {/* Logging out is safe (nothing is lost), so it is a plain row, not a red one. Last "Log out" on the screen. */}
+        <ListGroup
+          footer={
+            accountStore.demo ? (
+              <span className="text-caption text-fg-tertiary">{t("demoNote")}</span>
+            ) : undefined
+          }
+        >
+          <ListRow icon={LogOut} title={t("logout")} accessory="none" onClick={() => accountStore.logOut()} />
+        </ListGroup>
+      </div>
+
+      <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </Screen>
   );
 }
