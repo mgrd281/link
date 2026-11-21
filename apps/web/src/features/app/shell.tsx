@@ -2,36 +2,37 @@
 
 import { hasImage } from "@linkyo/blocks";
 import { tokens } from "@linkyo/tokens";
-import { Avatar, Badge, Button, cn, Icon, initialsOf, Logo, Spinner } from "@linkyo/ui";
-import { ChartNoAxesColumn, Check, CircleAlert, Eye, FlaskConical, House, LayoutList, LogOut, Palette, Plus, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Avatar, Button, cn, Icon, initialsOf, Logo, Spinner } from "@linkyo/ui";
+import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, LayoutList, Palette, Plus, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DropdownMenu } from "radix-ui";
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from "react";
 
 import { haptic } from "@/lib/haptics";
 import { accountStore } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
-import { Link, usePathname } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 
 import { AddSheet } from "./add-sheet";
+import { useHasUnsavedDraft } from "./drafts";
 import { EditSheet } from "./edit-sheet";
+import { isSettingsPath, LAST_APP_PATH_KEY, ORIGIN_TAB_KEY, routeInfo, SETTINGS_HREF, TAB_HREF, TABS, type TabKey } from "./routes";
+import { BackLink, ShellBackContext, ShellChromeContext } from "./screen";
 import { useSite } from "./site-context";
+import { useScrolled } from "./use-scrolled";
 
-interface NavItem {
-  key: "home" | "page" | "design" | "analytics" | "settings";
-  href: string;
-  icon: LucideIcon;
-}
-
-export const NAV: NavItem[] = [
-  { key: "home", href: "/app", icon: House },
-  { key: "page", href: "/app/editor", icon: LayoutList },
-  { key: "design", href: "/app/design", icon: Palette },
-  { key: "analytics", href: "/app/analytics", icon: ChartNoAxesColumn },
-  { key: "settings", href: "/app/settings", icon: Settings },
+/** The four places; Settings sits apart (the sidebar's foot, the avatar on phones). */
+const NAV: readonly { key: TabKey; icon: LucideIcon }[] = [
+  { key: "home", icon: House },
+  { key: "page", icon: LayoutList },
+  { key: "design", icon: Palette },
+  { key: "analytics", icon: ChartNoAxesColumn },
 ];
 
-const isActive = (pathname: string, href: string) => (href === "/app" ? pathname === "/app" : pathname === href || pathname.startsWith(`${href}/`));
+/** Where the legal notice is edited (its unsaved draft links there). */
+const LEGAL_HREF = "/app/settings/legal";
+
+/** A click that opens a new tab or window, which leaves this page as it is. */
+const modified = (event: MouseEvent) => event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
 
 export function ProfileAvatar({ size = "md", className }: { size?: "sm" | "md" | "lg" | "xl"; className?: string }) {
   const { doc } = useSite();
@@ -39,90 +40,95 @@ export function ProfileAvatar({ size = "md", className }: { size?: "sm" | "md" |
   return <Avatar name={doc.profile.displayName} src={hasImage(avatar) ? avatar.src : undefined} size={size} className={className} />;
 }
 
+/** "Saving…" shows only once a save has taken this long: local saves finish sooner and never flash. */
+const SAVING_SETTLE = 1000;
+
+type ShownSave = "saved" | "saving" | "error" | "unsavedLegal";
+
 /**
- * "Saved" / "Saving…" / "Not saved", announced politely. The full form (sidebar) is always visible.
- * The compact form (phone top bar) shows only a spinner while saving and an alert icon on an error:
- * a lone green tick beside the avatar read as a "verified" badge, so "Saved" is for screen readers
- * only there. The status element stays mounted in every state, so each change is announced.
+ * What the save status says. An unsaved legal notice comes first (it is the only thing that waits
+ * for an explicit save), then an error, then a save that is taking a while; otherwise "Saved".
+ */
+function useShownSave(): ShownSave {
+  const { save, account } = useSite();
+  const unsavedLegal = useHasUnsavedDraft(account.id);
+  const state = save === "saved" ? "saved" : save === "saving" ? "saving" : "error";
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (state !== "saving") return;
+    const timer = window.setTimeout(() => setSlow(true), SAVING_SETTLE);
+    return () => {
+      window.clearTimeout(timer);
+      setSlow(false);
+    };
+  }, [state]);
+  if (unsavedLegal) return "unsavedLegal";
+  if (state === "error") return "error";
+  return state === "saving" && slow ? "saving" : "saved";
+}
+
+/**
+ * "Saved" / "Saving…" / "Not saved" / "Legal notice not saved", announced politely. The status
+ * element always holds the text it shows, so quick saves change nothing and nothing is read out.
+ * The sidebar form shows glyph and text. The compact form (phone top bar) shows a glyph only when
+ * there is something to see: a lone green tick beside the avatar read as a "verified" badge.
  */
 export function SaveStatus({ compact = false }: { compact?: boolean }) {
   const t = useTranslations("app.save");
-  const { save } = useSite();
-  const state = save === "saved" ? "saved" : save === "saving" ? "saving" : "error";
-  const quiet = compact && state === "saved";
-  return (
-    <p
-      role="status"
-      className={cn(
-        "text-small",
-        state === "error" ? "text-danger-strong" : "text-fg-secondary",
-        // In the top bar the icon sits in a 44 px slot, so it lines up with the buttons beside it.
-        !compact ? "inline-flex items-center gap-2" : quiet ? "sr-only" : "grid size-touch-target place-items-center",
-      )}
-    >
-      {quiet ? null : state === "saving" ? (
-        <Spinner className="size-icon-sm" />
-      ) : (
-        <Icon icon={state === "saved" ? Check : CircleAlert} size={compact ? "md" : "sm"} className={state === "saved" ? "text-success-strong" : undefined} />
-      )}
-      <span className={cn(compact && "sr-only")}>{t(state)}</span>
-    </p>
-  );
-}
+  const shown = useShownSave();
+  const text = t(shown);
+  const glyph =
+    shown === "saving" ? (
+      <Spinner className={compact ? "size-icon-md" : "size-icon-sm"} />
+    ) : (
+      <Icon
+        icon={shown === "saved" ? Check : shown === "error" ? CircleAlert : CircleDot}
+        size={compact ? "md" : "sm"}
+        className={shown === "saved" ? "text-success-strong" : shown === "error" ? "text-danger-strong" : undefined}
+      />
+    );
 
-function AccountMenu({ trigger, align = "end" }: { trigger: ReactNode; align?: "start" | "end" }) {
-  const t = useTranslations("app");
-  const { account } = useSite();
-  // Linkyo team members also see the way into the team area.
-  const onTeam = useOnTeam(account.email);
-  // Rows grow to a 48 px touch target on touch screens, like the shared Menu: on a phone this menu now
-  // opens from the avatar in the top bar.
-  const item = "flex h-control-md pointer-coarse:h-control-lg cursor-default items-center gap-3 rounded-sm px-3 text-small pointer-coarse:text-body outline-none data-highlighted:bg-hover";
+  if (compact) {
+    return (
+      // In the top bar the glyph sits in a 44 px slot, so it lines up with the buttons beside it.
+      <p role="status" className={shown === "saved" ? "sr-only" : "grid size-touch-target place-items-center"}>
+        {shown === "saved" ? (
+          text
+        ) : shown === "unsavedLegal" ? (
+          <Link
+            href={LEGAL_HREF}
+            className="grid size-touch-target place-items-center rounded-md text-fg transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
+          >
+            {glyph}
+            <span className="sr-only">{text}</span>
+          </Link>
+        ) : (
+          <>
+            {glyph}
+            <span className="sr-only">{text}</span>
+          </>
+        )}
+      </p>
+    );
+  }
+
+  const content = (
+    <>
+      {/* The glyph takes the 32 px slot of the nav icons, so the text starts where theirs does. */}
+      <span className="grid size-8 shrink-0 place-items-center">{glyph}</span>
+      <span className="truncate">{text}</span>
+    </>
+  );
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          align={align}
-          sideOffset={tokens.spacing["2"]}
-          collisionPadding={tokens.spacing["2"]}
-          className="layer-popover grid min-w-menu gap-0.5 rounded-md border border-line bg-surface-elevated p-1 text-fg motion-safe:animate-pop-in"
-        >
-          <DropdownMenu.Label className="grid grid-cols-1 gap-0.5 px-3 py-2">
-            <span className="text-small font-semibold">@{account.username}</span>
-            <span dir="ltr" className="truncate text-start text-caption text-fg-secondary">
-              {account.email}
-            </span>
-          </DropdownMenu.Label>
-          <DropdownMenu.Separator className="my-1 border-t border-line" />
-          <DropdownMenu.Item asChild className={item}>
-            <Link href="/app/settings">
-              <Icon icon={Settings} size="sm" />
-              {t("nav.settings")}
-            </Link>
-          </DropdownMenu.Item>
-          <DropdownMenu.Item asChild className={item}>
-            <Link href="/app/preview">
-              <Icon icon={Eye} size="sm" />
-              {t("viewPage")}
-            </Link>
-          </DropdownMenu.Item>
-          {onTeam ? (
-            <DropdownMenu.Item asChild className={item}>
-              <Link href="/admin">
-                <Icon icon={ShieldCheck} size="sm" />
-                {t("teamArea")}
-              </Link>
-            </DropdownMenu.Item>
-          ) : null}
-          <DropdownMenu.Separator className="my-1 border-t border-line" />
-          <DropdownMenu.Item className={item} onSelect={() => accountStore.logOut()}>
-            <Icon icon={LogOut} size="sm" />
-            {t("logout")}
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    <p role="status" className={cn("flex min-w-0 items-center", shown === "error" && "text-danger-strong")}>
+      {shown === "unsavedLegal" ? (
+        <Link href={LEGAL_HREF} className="flex min-w-0 items-center gap-3 rounded-sm font-medium text-fg transition-colors duration-micro hover:text-link focus-visible:focus-ring">
+          {content}
+        </Link>
+      ) : (
+        <span className="flex min-w-0 items-center gap-3">{content}</span>
+      )}
+    </p>
   );
 }
 
@@ -150,196 +156,410 @@ function useTitleScrolledAway(pathname: string) {
   return away;
 }
 
+/*
+ * Whether the last move came from the browser's history (Back, Forward, Safari's edge swipe) rather
+ * than from a tap in the app. Any click starts a new move; a popstate marks one from history.
+ */
+let lastMoveWasPop = false;
+
+function subscribeHistory(onChange: () => void) {
+  const onPop = () => {
+    lastMoveWasPop = true;
+    onChange();
+  };
+  const onPress = () => {
+    if (!lastMoveWasPop) return;
+    lastMoveWasPop = false;
+    onChange();
+  };
+  window.addEventListener("popstate", onPop);
+  document.addEventListener("click", onPress, true);
+  return () => {
+    window.removeEventListener("popstate", onPop);
+    document.removeEventListener("click", onPress, true);
+  };
+}
+
+const readLastMove = () => lastMoveWasPop;
+
+function readOriginTab(): TabKey {
+  try {
+    const stored = window.sessionStorage.getItem(ORIGIN_TAB_KEY);
+    return TABS.find((tab) => tab === stored) ?? "home";
+  } catch {
+    return "home";
+  }
+}
+
+function remember(key: string, value: string) {
+  try {
+    window.sessionStorage.setItem(key, value);
+  } catch {
+    // Storage is blocked (private mode, settings): the app works the same, it only forgets.
+  }
+}
+
 /**
- * The dashboard frame. Wide screens: a calm sidebar (profile, Add, five places, account). Phones:
- * an iOS-style top bar (account, the screen's name once its title scrolls away, save state, page,
- * Settings) and a bottom tab bar with a labelled Add in the middle, all within thumb reach.
+ * The dashboard frame, one structure on every width.
  *
- * `data-grouped` and `group/app` mark the grouped look on phones: a tinted canvas with borderless
- * white groups, as in iOS Settings. Screens opt in with `max-lg:group-data-[grouped]/app:` classes;
- * the admin shell has no such marker, so the admin screens that share `Panel` keep their outlines.
+ * - Wide screens: a white sidebar (logo, the page card that opens "View my page", Add, the four
+ *   places, then Team area, Settings and the save status at its foot).
+ * - Phones: an iOS-style top bar (avatar → Settings, or "‹ back" on pushed screens; the screen's name
+ *   once its title scrolls away; save state; the page) and a bottom tab bar with a labelled Add in
+ *   the middle, within thumb reach.
+ *
+ * `data-grouped` and `group/app` mark the grouped look: a tinted ground with white groups, as in iOS
+ * Settings. The team area has no such marker, so the screens it shares keep their outlined cards.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations("app");
   const pathname = usePathname();
-  const { doc, account, setAddOpen } = useSite();
+  const router = useRouter();
+  const { doc, account, setAddOpen, edit, previewHref } = useSite();
+  // Linkyo team members also see the way into the team area.
+  const onTeam = useOnTeam(account.email);
+  const info = routeInfo(pathname);
+  const inSettings = isSettingsPath(pathname);
   const titleAway = useTitleScrolledAway(pathname);
-  const activeKey = NAV.find((item) => isActive(pathname, item.href))?.key ?? "home";
+  const scrolled = useScrolled();
+  const lastMoveWasHistory = useSyncExternalStore(subscribeHistory, readLastMove, () => false);
+
+  // Bookkeeping for a new path, done while rendering so the new screen sees it on its first render:
+  // whether the user has moved inside the app (pushed panes animate only then) and how.
+  const [route, setRoute] = useState({ path: pathname, navigated: false, pop: false });
+  // The place just tapped shows as selected at once, before its screen has loaded.
+  const [pending, setPending] = useState<string | null>(null);
+  // The tab Settings was opened from: it stays marked under Settings, and "‹ back" names it.
+  const [origin, setOrigin] = useState<TabKey>(readOriginTab);
+  if (route.path !== pathname) {
+    setRoute({ path: pathname, navigated: true, pop: lastMoveWasHistory });
+    setPending(null);
+  }
+  if (info.tab && info.tab !== origin) setOrigin(info.tab);
+
+  useEffect(() => remember(LAST_APP_PATH_KEY, pathname), [pathname]);
+  useEffect(() => remember(ORIGIN_TAB_KEY, origin), [origin]);
+
+  // A route change closes the Add and edit sheets (Back, the edge swipe, any link): a sheet never
+  // stays open over another screen. Sheets that belong to a screen leave with it.
+  const shownPath = useRef(pathname);
+  useEffect(() => {
+    if (shownPath.current === pathname) return;
+    shownPath.current = pathname;
+    setAddOpen(false);
+    edit(null);
+  }, [pathname, setAddOpen, edit]);
+
+  // The paths visited in this tab, in step with the browser's history, so "‹ back" can go back
+  // through history (Safari's swipe and Back then agree) when the parent is the previous page.
+  const visited = useRef<{ paths: string[]; length: number }>({ paths: [], length: 0 });
+  useEffect(() => {
+    const { paths } = visited.current;
+    const length = window.history.length;
+    if (route.pop) {
+      if (paths.at(-2) === pathname) paths.pop();
+      else paths.push(pathname);
+    } else if (paths.length > 0 && length === visited.current.length) {
+      // The history did not grow: the page was replaced (a redirect), not added.
+      paths[paths.length - 1] = pathname;
+    } else {
+      paths.push(pathname);
+    }
+    visited.current.length = length;
+    if (paths.length > 50) paths.splice(0, paths.length - 50);
+  }, [pathname, route.pop]);
+  const goBack = useCallback(
+    (target: string) => {
+      if (visited.current.paths.at(-2) !== target) return false;
+      router.back();
+      return true;
+    },
+    [router],
+  );
+
+  // Each tab keeps its scroll position while you visit another tab and come back with the tab bar.
+  const scrollMemory = useRef(new Map<string, number>());
+  const restoreFor = useRef<string | null>(null);
+  const leave = useCallback(
+    (to: string | null) => {
+      scrollMemory.current.set(pathname, window.scrollY);
+      restoreFor.current = to;
+    },
+    [pathname],
+  );
+  useLayoutEffect(() => {
+    const target = restoreFor.current;
+    restoreFor.current = null;
+    const saved = scrollMemory.current.get(pathname);
+    if (target === pathname) window.scrollTo({ top: saved ?? 0, behavior: "instant" });
+    else if (route.pop && saved !== undefined) window.scrollTo({ top: saved, behavior: "instant" });
+    else scrollMemory.current.delete(pathname);
+  }, [pathname, route.pop]);
+
+  const chrome = useMemo(() => ({ navigated: route.navigated, pop: route.pop }), [route.navigated, route.pop]);
+
   const photo = hasImage(doc.profile.avatar);
+  const initials = initialsOf(doc.profile.displayName);
+  // Without a photo the avatar shows the initials, so its name contains them too: a voice control user
+  // can say what they see (WCAG 2.5.3). A name without letters shows a person glyph and no initials.
+  const avatarName = !photo && initials ? t("settingsButtonInitials", { initials }) : t("settingsButton");
+  const currentHref = inSettings ? SETTINGS_HREF : info.tab ? TAB_HREF[info.tab] : null;
+  const selectedHref = pending ?? currentHref;
+  const pendingTab = NAV.find((item) => TAB_HREF[item.key] === pending)?.key;
+  const selectedTab = pendingTab ?? info.tab ?? (inSettings ? origin : null);
+  const backTarget = info.parent === "origin" ? { href: TAB_HREF[origin], label: t(`nav.${origin}`) } : info.parent ? { href: info.parent, label: t("nav.settings") } : null;
 
   return (
-    <div data-grouped className="group/app flex min-h-dvh bg-canvas text-fg max-lg:bg-canvas-muted">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:layer-toast focus:rounded-sm focus:bg-surface-elevated focus:px-3 focus:py-2 focus:focus-ring"
-      >
-        {t("skip")}
-      </a>
-
-      <aside className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col gap-6 border-e border-line bg-canvas-muted p-4 lg:flex">
-        <Link href="/app" className="justify-self-start rounded-xs px-1 pt-1 focus-visible:focus-ring" aria-label={t("nav.home")}>
-          <Logo className="h-6" title="Linkyo" />
-        </Link>
-        <div className="flex min-w-0 items-center gap-3">
-          <ProfileAvatar />
-          <span className="grid min-w-0">
-            <span className="truncate text-small font-semibold">{doc.profile.displayName}</span>
-            <span dir="ltr" className="truncate text-start text-caption text-fg-tertiary">
-              linkyo.app/{account.username}
-            </span>
-          </span>
-        </div>
-        <Button variant="primary" size="lg" block icon={Plus} onClick={() => setAddOpen(true)}>
-          {t("nav.add")}
-        </Button>
-        <nav aria-label={t("nav.label")} className="grid grid-cols-1 gap-0.5">
-          {NAV.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              aria-current={isActive(pathname, item.href) ? "page" : undefined}
-              className="flex h-control-md items-center gap-3 rounded-sm px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring aria-[current=page]:bg-selected aria-[current=page]:text-fg"
-            >
-              <Icon icon={item.icon} size="sm" />
-              {t(`nav.${item.key}`)}
-            </Link>
-          ))}
-        </nav>
-        <div className="mt-auto grid gap-3">
-          <Link
-            href="/app/preview"
-            className="inline-flex h-control-md items-center gap-2 rounded-sm px-3 text-small font-medium text-link hover:bg-hover focus-visible:focus-ring"
+    <ShellChromeContext.Provider value={chrome}>
+      <ShellBackContext.Provider value={goBack}>
+        <div data-grouped className="group/app flex min-h-dvh bg-canvas-muted text-fg">
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:layer-toast focus:rounded-sm focus:bg-surface-elevated focus:px-3 focus:py-2 focus:focus-ring"
           >
-            <Icon icon={Eye} size="sm" />
-            {t("viewPage")}
-          </Link>
-          <div className="flex items-center justify-between gap-2 px-3">
-            <SaveStatus />
-            {accountStore.demo ? (
-              <Badge size="sm" tone="primary">
-                <Icon icon={FlaskConical} size="sm" />
-                {t("demo")}
-              </Badge>
-            ) : null}
-          </div>
-          <AccountMenu
-            trigger={
-              <button
-                type="button"
-                className="flex min-w-0 items-center gap-3 rounded-md border border-line bg-surface p-2 text-start hover:bg-surface-elevated focus-visible:focus-ring"
-              >
-                <ProfileAvatar size="sm" />
-                <span className="grid min-w-0 flex-1">
-                  <span className="truncate text-small font-medium">{t("account")}</span>
-                  <span dir="ltr" className="truncate text-start text-caption text-fg-tertiary">
-                    {account.email}
-                  </span>
+            {t("skip")}
+          </a>
+
+          {/* Wide screens. A plain box, not an <aside>: it holds the main navigation, which is named. */}
+          <div className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-e border-line bg-surface px-3 pb-3 lg:flex">
+            {/* The logo is a picture here, not a link: "Start" is the first row (one name, one place). */}
+            <div className="flex h-16 shrink-0 items-center ps-3">
+              <Logo className="h-6" title="Linkyo" />
+            </div>
+            <Link
+              href={previewHref}
+              className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-2 transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
+            >
+              <span className="sr-only">{t("viewPage")}: </span>
+              <ProfileAvatar size="sm" />
+              <span className="grid min-w-0">
+                <span className="truncate text-small font-semibold">
+                  <bdi>{doc.profile.displayName}</bdi>
                 </span>
-              </button>
-            }
-          />
-        </div>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Phones: one row like an iOS navigation bar. The avatar opens the account menu (which keeps
-            the team area and logout), the gear goes straight to Settings, and the eye opens the page
-            inside the app. The side columns share the width equally, so the name stays centred. */}
-        <header className="layer-sticky sticky top-0 grid h-16 grid-cols-[1fr_auto_1fr] items-center border-b border-line bg-canvas-muted px-2 lg:hidden">
-          <AccountMenu
-            align="start"
-            trigger={
-              <button
-                type="button"
-                // Without a photo the button shows the initials, so its name contains them too: a voice
-                // control user can say what they see (WCAG 2.5.3, label in name).
-                aria-label={photo ? t("accountMenu") : t("accountMenuInitials", { initials: initialsOf(doc.profile.displayName) })}
-                className="relative grid size-touch-target place-items-center justify-self-start rounded-full transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
-              >
-                <ProfileAvatar size="sm" />
-              </button>
-            }
-          />
-          {/* The h1 already names the screen for screen readers; this copy is only for the eyes. */}
-          <p aria-hidden className={cn("truncate text-body font-semibold transition-opacity duration-micro", titleAway ? "opacity-100" : "opacity-0")}>
-            {t(`nav.${activeKey}`)}
-          </p>
-          <div className="flex items-center justify-self-end">
-            <SaveStatus compact />
-            <Link
-              href="/app/preview"
-              aria-label={t("viewPage")}
-              className="grid size-touch-target place-items-center rounded-md transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
-            >
-              <Icon icon={Eye} size="md" />
-            </Link>
-            <Link
-              href="/app/settings"
-              aria-label={t("nav.settings")}
-              aria-current={isActive(pathname, "/app/settings") ? "page" : undefined}
-              className="grid size-touch-target place-items-center rounded-md transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring aria-[current=page]:text-link"
-            >
-              <Icon icon={Settings} size="md" />
-            </Link>
-          </div>
-        </header>
-        <main id="main" tabIndex={-1} className="min-w-0 flex-1 pb-[calc(var(--spacing-24)+env(safe-area-inset-bottom))] outline-none lg:pb-0">
-          {children}
-        </main>
-      </div>
-
-      <nav
-        data-tabbar
-        aria-label={t("nav.label")}
-        className="layer-sticky fixed inset-x-0 bottom-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
-      >
-        <ul className="mx-auto grid h-16 max-w-prose grid-cols-5">
-          {NAV.slice(0, 2).map((item) => (
-            <TabLink key={item.key} item={item} active={isActive(pathname, item.href)} label={t(`nav.${item.key}`)} />
-          ))}
-          {/* Add is a tab like the others: flat in the bar and labelled, so its meaning is plain. The
-              teal pill marks it as the main action without lifting it out of the bar. */}
-          <li className="grid">
-            <button
-              type="button"
-              onClick={() => {
-                haptic();
-                setAddOpen(true);
-              }}
-              className="group grid content-center justify-items-center gap-1 text-caption font-medium text-link focus-visible:focus-ring"
-            >
-              <span className="grid h-control-sm w-12 place-items-center rounded-full bg-primary text-primary-fg transition-[background-color,scale] duration-micro ease-spring group-hover:bg-primary-hover group-active:scale-pressed motion-reduce:group-active:scale-none">
-                <Icon icon={Plus} size="md" />
+                {/* An address reads left to right in every language; in Arabic it still hugs the avatar. */}
+                <span dir="ltr" className="truncate text-caption text-fg-tertiary rtl:text-right">
+                  linkyo.app/{account.username}
+                </span>
               </span>
+              <Icon icon={Eye} size="sm" className="text-fg-tertiary" />
+            </Link>
+            <Button variant="tinted" size="md" block icon={Plus} className="mt-2" onClick={() => setAddOpen(true)}>
               {t("nav.add")}
-            </button>
-          </li>
-          {NAV.slice(2, 4).map((item) => (
-            <TabLink key={item.key} item={item} active={isActive(pathname, item.href)} label={t(`nav.${item.key}`)} />
-          ))}
-        </ul>
-      </nav>
+            </Button>
+            <nav aria-label={t("nav.label")} className="mt-4 grid grid-cols-1 gap-0.5">
+              {NAV.map((item) => (
+                <NavRow
+                  key={item.key}
+                  href={TAB_HREF[item.key]}
+                  icon={item.icon}
+                  label={t(`nav.${item.key}`)}
+                  current={info.tab === item.key && !inSettings}
+                  selected={selectedHref === TAB_HREF[item.key]}
+                  onNavigate={setPending}
+                />
+              ))}
+            </nav>
+            <div className="mt-auto grid grid-cols-1 gap-0.5 border-t border-line pt-3">
+              {onTeam ? <NavRow href="/admin" icon={ShieldCheck} label={t("teamArea")} current={false} selected={pending === "/admin"} onNavigate={setPending} /> : null}
+              <NavRow href={SETTINGS_HREF} icon={Settings} label={t("nav.settings")} current={inSettings} selected={selectedHref === SETTINGS_HREF} onNavigate={setPending} />
+              <div className="flex h-control-sm min-w-0 items-center gap-1 px-3 text-caption text-fg-tertiary">
+                <SaveStatus />
+                {accountStore.demo ? <span className="shrink-0">· {t("demo")}</span> : null}
+              </div>
+            </div>
+          </div>
 
-      <AddSheet />
-      <EditSheet />
-    </div>
+          <div className="flex min-w-0 flex-1 flex-col">
+            {/* Phones: one row like an iOS navigation bar, on the solid ground; its hairline shows only
+                once content scrolls under it. The side columns share the width equally, so the name
+                stays centred. Safe areas are physical (pl/pr): they do not mirror in Arabic. */}
+            <header
+              data-scrolled={scrolled ? "" : undefined}
+              className="layer-sticky sticky top-0 grid h-16 grid-cols-[1fr_auto_1fr] items-center border-b border-transparent bg-canvas-muted pr-[max(var(--spacing-2),env(safe-area-inset-right))] pl-[max(var(--spacing-2),env(safe-area-inset-left))] transition-colors duration-micro data-[scrolled]:border-line short:static lg:hidden"
+            >
+              {backTarget ? (
+                <BackLink href={backTarget.href} label={backTarget.label} className="justify-self-start" />
+              ) : (
+                <Link
+                  href={SETTINGS_HREF}
+                  aria-label={avatarName}
+                  onClick={(event) => {
+                    if (!modified(event)) leave(null);
+                  }}
+                  className="grid size-touch-target place-items-center justify-self-start rounded-full transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
+                >
+                  <ProfileAvatar size="sm" />
+                </Link>
+              )}
+              {/* The h1 already names the screen for screen readers; this copy is only for the eyes. */}
+              <p aria-hidden className={cn("truncate text-body font-semibold transition-opacity duration-micro", titleAway ? "opacity-100" : "opacity-0")}>
+                {t(info.title)}
+              </p>
+              <div className="flex items-center justify-self-end">
+                <SaveStatus compact />
+                <Link
+                  href="/app/preview"
+                  aria-label={t("viewPage")}
+                  className="grid size-touch-target place-items-center rounded-md transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
+                >
+                  <Icon icon={Eye} size="md" />
+                </Link>
+              </div>
+            </header>
+            <main id="main" tabIndex={-1} className="min-w-0 flex-1 pb-[calc(var(--spacing-24)+env(safe-area-inset-bottom))] outline-none lg:pb-0">
+              {children}
+            </main>
+          </div>
+
+          <nav
+            data-tabbar
+            aria-label={t("nav.label")}
+            className="layer-sticky fixed inset-x-0 bottom-0 border-t border-line bg-surface pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] lg:hidden"
+          >
+            <ul className="mx-auto grid h-16 max-w-prose grid-cols-5">
+              {NAV.slice(0, 2).map((item) => (
+                <TabLink
+                  key={item.key}
+                  item={item}
+                  label={t(`nav.${item.key}`)}
+                  current={info.tab === item.key}
+                  origin={inSettings && origin === item.key}
+                  pending={pendingTab === item.key}
+                  selected={selectedTab === item.key}
+                  onLeave={(href) => {
+                    setPending(href);
+                    leave(href);
+                  }}
+                />
+              ))}
+              {/* Add is a tab like the others: flat in the bar and labelled, so its meaning is plain. The
+                  teal pill marks it as the main action without lifting it out of the bar. */}
+              <li className="grid">
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic();
+                    setAddOpen(true);
+                  }}
+                  className="group grid content-center justify-items-center gap-1 text-caption font-medium text-link focus-visible:focus-ring"
+                >
+                  <span className="grid h-control-sm w-12 place-items-center rounded-full bg-primary text-primary-fg transition-[background-color,scale] duration-spring ease-spring group-hover:bg-primary-hover group-active:scale-pressed group-active:duration-micro motion-reduce:group-active:scale-none">
+                    <Icon icon={Plus} size="md" />
+                  </span>
+                  {t("nav.add")}
+                </button>
+              </li>
+              {NAV.slice(2, 4).map((item) => (
+                <TabLink
+                  key={item.key}
+                  item={item}
+                  label={t(`nav.${item.key}`)}
+                  current={info.tab === item.key}
+                  origin={inSettings && origin === item.key}
+                  pending={pendingTab === item.key}
+                  selected={selectedTab === item.key}
+                  onLeave={(href) => {
+                    setPending(href);
+                    leave(href);
+                  }}
+                />
+              ))}
+            </ul>
+          </nav>
+
+          <AddSheet />
+          <EditSheet />
+        </div>
+      </ShellBackContext.Provider>
+    </ShellChromeContext.Provider>
   );
 }
 
-function TabLink({ item, active, label }: { item: NavItem; active: boolean; label: string }) {
+/**
+ * A sidebar row. `current` is the page you are on (announced); `selected` is what shows as chosen,
+ * which moves to a tapped row at once, before its screen has loaded.
+ */
+function NavRow({
+  href,
+  icon,
+  label,
+  current,
+  selected,
+  onNavigate,
+}: {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  current: boolean;
+  selected: boolean;
+  onNavigate: (href: string) => void;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={current ? "page" : undefined}
+      data-selected={selected ? "" : undefined}
+      onClick={(event) => {
+        if (!current && !modified(event)) onNavigate(href);
+      }}
+      className="flex h-control-md items-center gap-3 rounded-sm px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring data-[selected]:bg-selected data-[selected]:font-semibold data-[selected]:text-selected-fg forced-colors:aria-[current=page]:outline"
+    >
+      <span className="grid size-8 shrink-0 place-items-center">
+        <Icon icon={icon} size="sm" />
+      </span>
+      <span className="truncate">{label}</span>
+    </Link>
+  );
+}
+
+/**
+ * A tab. As on iOS, the chosen tab is marked by the tint alone (no pill behind it). Under Settings
+ * the tab it was opened from stays marked (`data-origin`), without claiming to be the current page.
+ * Tapping the current tab again scrolls its screen back to the top.
+ */
+function TabLink({
+  item,
+  label,
+  current,
+  origin,
+  pending,
+  selected,
+  onLeave,
+}: {
+  item: { key: TabKey; icon: LucideIcon };
+  label: string;
+  current: boolean;
+  origin: boolean;
+  pending: boolean;
+  selected: boolean;
+  onLeave: (href: string) => void;
+}) {
+  const href = TAB_HREF[item.key];
   return (
     <li className="grid">
       <Link
-        href={item.href}
-        aria-current={active ? "page" : undefined}
-        onClick={() => {
-          if (!active) haptic();
+        href={href}
+        // Each tab restores its own scroll position (see AppShell).
+        scroll={false}
+        aria-current={current ? "page" : undefined}
+        data-origin={origin ? "" : undefined}
+        data-pending={pending ? "" : undefined}
+        data-selected={selected ? "" : undefined}
+        onClick={(event) => {
+          if (modified(event)) return;
+          if (current) {
+            event.preventDefault();
+            const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+            return;
+          }
+          haptic();
+          onLeave(href);
         }}
-        className="group grid content-center justify-items-center gap-1 text-caption font-medium text-fg-secondary transition-colors duration-micro focus-visible:focus-ring aria-[current=page]:font-semibold aria-[current=page]:text-link"
+        className="group grid content-center justify-items-center gap-1 text-caption font-medium text-fg-secondary transition-colors duration-micro focus-visible:focus-ring data-[selected]:font-semibold data-[selected]:text-link"
       >
-        {/* As on iOS, the active tab is marked by the tint alone (no pill behind it); a press dips the
-            icon like a native tab. */}
-        <span className="grid h-control-sm w-12 place-items-center transition-[scale] duration-spring ease-spring group-active:scale-pressed motion-reduce:group-active:scale-none">
+        {/* A press dips the icon like a native tab: in fast, back out on the spring. */}
+        <span className="grid h-control-sm w-12 place-items-center transition-[scale] duration-spring ease-spring group-active:scale-pressed group-active:duration-micro motion-reduce:group-active:scale-none">
           <Icon icon={item.icon} size="lg" />
         </span>
         {label}
