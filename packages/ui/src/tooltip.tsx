@@ -20,16 +20,18 @@ export interface TooltipProps {
   side?: "top" | "right" | "bottom" | "left" | undefined;
   /** Keyboard shortcut shown after the label. */
   shortcut?: string | undefined;
+  /** Gap between the trigger and the tip, in px (a token value); defaults to spacing 2. */
+  sideOffset?: number | undefined;
 }
 
-export function Tooltip({ content, children, side = "top", shortcut }: TooltipProps) {
+export function Tooltip({ content, children, side = "top", shortcut, sideOffset = tokens.spacing["2"] }: TooltipProps) {
   return (
     <T.Root>
       <T.Trigger asChild>{children}</T.Trigger>
       <T.Portal>
         <T.Content
           side={side}
-          sideOffset={tokens.spacing["2"]}
+          sideOffset={sideOffset}
           collisionPadding={tokens.spacing["2"]}
           className={cn(
             "layer-tooltip flex items-center gap-2 rounded-sm bg-fg px-2 py-1 text-caption text-fg-inverse",

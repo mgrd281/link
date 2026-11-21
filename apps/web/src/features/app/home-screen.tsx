@@ -122,6 +122,7 @@ export function HomeScreen() {
             icon={Gift}
             title={tInvite("title")}
             subtitle={t("inviteSubtitle", { verify: REFERRAL_RULES.verificationAt, pro: REFERRAL_RULES.proForLifeAt })}
+            subtitleWrap
             href={INVITE_HREF}
           />
         </ListGroup>

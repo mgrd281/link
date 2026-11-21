@@ -266,9 +266,9 @@ test.describe("the section panel", () => {
     await expect(tip).toHaveText("الرئيسية");
     const tipBox = await page.locator("[data-radix-popper-content-wrapper]").first().boundingBox();
     const homeBox = await home.boundingBox();
-    // On the left of the icon (towards the content), never over it.
+    // On the left of the rail (towards the content), never over the icon or the rail's edge.
     expect((tipBox?.x ?? 0) + (tipBox?.width ?? 0)).toBeLessThanOrEqual(homeBox?.x ?? 0);
-    expect(tipBox?.x ?? 0).toBeLessThan(box?.x ?? 0);
+    expect((tipBox?.x ?? 0) + (tipBox?.width ?? 0)).toBeLessThanOrEqual(box?.x ?? 0);
   });
 
   test("a rail tooltip says what the panel title says", async ({ page }) => {

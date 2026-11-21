@@ -1,5 +1,6 @@
 "use client";
 
+import { tokens } from "@linkyo/tokens";
 import { cn, Icon, LogoSymbol, Tooltip } from "@linkyo/ui";
 import { ChartNoAxesColumn, Eye, Gift, House, LayoutList, Palette, PanelLeftClose, PanelLeftOpen, Plus, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -40,6 +41,8 @@ const PLACES: readonly { key: SectionKey; icon: LucideIcon }[] = [
 const TEAM_HREF = "/admin";
 
 /** Radix sides are physical: the rail is at the right edge in Arabic, so its tooltips open to the left. */
+/** A rail control sits 10 px inside the 64 px rail; 12 px puts its tip just outside the rail, never over its edge. */
+const RAIL_TIP_OFFSET = tokens.spacing["3"];
 const useTooltipSide = () => (isRtl(useLocale()) ? "left" : "right");
 
 /** A 44 px control of the rail (links, the fold toggle): quiet until hovered or chosen. */
@@ -85,7 +88,7 @@ function RailLink({
 }) {
   const side = useTooltipSide();
   return (
-    <Tooltip content={label} side={side}>
+    <Tooltip content={label} side={side} sideOffset={RAIL_TIP_OFFSET}>
       <Link
         href={href}
         aria-current={current}
@@ -112,7 +115,7 @@ function NavPanelToggle() {
   const side = useTooltipSide();
   const { open, toggle } = useNavPanel();
   return (
-    <Tooltip content={t("panel")} side={side}>
+    <Tooltip content={t("panel")} side={side} sideOffset={RAIL_TIP_OFFSET}>
       <button type="button" aria-label={t("panel")} aria-expanded={open} aria-controls="nav-panel" onClick={toggle} className={railControl}>
         <Icon icon={open ? PanelLeftClose : PanelLeftOpen} size="md" className="rtl:-scale-x-100" />
       </button>
@@ -154,7 +157,7 @@ export function NavRail({ pathname, pending, onNavigate, onTeam, status }: NavPr
       <div className="grid h-16 shrink-0 place-items-center text-fg">
         <LogoSymbol className="size-8" title="Linkyo" tone="mono" />
       </div>
-      <Tooltip content={t("nav.add")} side={side}>
+      <Tooltip content={t("nav.add")} side={side} sideOffset={RAIL_TIP_OFFSET}>
         <button
           type="button"
           aria-label={t("nav.add")}

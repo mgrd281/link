@@ -85,6 +85,8 @@ interface ListRowCommon {
   subtitle?: ReactNode;
   /** Wraps the subtitle in <bdi> with this direction (addresses and emails: "ltr"; names: "auto"). */
   subtitleDir?: "ltr" | "auto";
+  /** Lets a subtitle that is a sentence (not a value) wrap instead of being cut off on phones. */
+  subtitleWrap?: boolean;
   /** The current value, at the end of the row. */
   value?: ReactNode;
   /** "chevron", "none" or any element; defaults to a chevron when the row leads somewhere, nothing otherwise. */
@@ -104,7 +106,7 @@ export type ListRowProps = ListRowCommon &
  * as VoiceOver reads a Settings cell.
  */
 export function ListRow(props: ListRowProps) {
-  const { icon, leading, title, subtitle, subtitleDir, value, accessory, tone = "default", done = false, className } = props;
+  const { icon, leading, title, subtitle, subtitleDir, subtitleWrap = false, value, accessory, tone = "default", done = false, className } = props;
   const interactive = props.href !== undefined || props.onClick !== undefined;
   const end = accessory === undefined ? (interactive ? "chevron" : "none") : accessory;
 
@@ -114,7 +116,7 @@ export function ListRow(props: ListRowProps) {
       <span className="grid min-w-0 flex-1 gap-0.5">
         <span className={cn("text-body leading-snug", tone === "danger" && "text-danger-strong", done && "text-fg-secondary line-through")}>{title}</span>
         {subtitle ? (
-          <span className="truncate text-small font-regular text-fg-secondary">{subtitleDir ? <bdi dir={subtitleDir}>{subtitle}</bdi> : subtitle}</span>
+          <span className={cn(subtitleWrap ? "text-pretty" : "truncate", "text-small font-regular text-fg-secondary")}>{subtitleDir ? <bdi dir={subtitleDir}>{subtitle}</bdi> : subtitle}</span>
         ) : null}
       </span>
       {value ? <span className="min-w-0 shrink truncate text-small text-fg-secondary">{value}</span> : null}
