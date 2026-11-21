@@ -655,7 +655,7 @@
         "view": "View page",
         "viewNamed": "View page, {name}",
         "auto": "The page in front scrolls down by itself, then the next one comes: every 9 seconds, once through all nine, until you choose a page.",
-        "conceptNamed": "Concept · {name}",
+        "conceptTag": "Concept",
         "conceptNote": "Concept pages are unofficial: this is how a Linkyo page could look. We are not affiliated with the people shown."
       },
       "promises": "What you get"

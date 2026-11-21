@@ -20,7 +20,7 @@ export interface DeckPage {
    * than the screen scrolls by itself while the page is in front.
    */
   shot: StaticImageData;
-  /** An unofficial concept page of a well-known person: labelled as such instead of an address. */
+  /** An unofficial concept page of a well-known person: its address carries a "Concept" tag. */
   concept?: boolean;
 }
 
@@ -49,8 +49,8 @@ const subscribeReduced = (onChange: () => void) => {
 
 /**
  * The hero's pages as a carousel (WAI-ARIA tabbed carousel): nine pages, three in view, the one in
- * front shown whole. The chip above it is the link to the page: its address, or "Concept · name"
- * for the unofficial concept pages of well-known people (a note at the bottom says so too, ADR
+ * front shown whole. The chip above it is the link to the page: its address, plus a "Concept"
+ * tag on the unofficial concept pages of well-known people (a note at the bottom says so too, ADR
  * 0043). Under the pages a row of faces, one per page, like stories: a click on a face, or on a page
  * beside the front one, brings that page forward. The ring around the face of the page in front is
  * the deck's timer: it fills while that page's time runs. On phones the row scrolls and keeps the chosen
@@ -208,16 +208,24 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
 
                 {front ? (
                   <a href={page.href} className="absolute inset-0 rounded-xl focus-visible:focus-ring">
-                    {/* The chip above the phone is the visible link: "linkyo.app/name ↗" or "Concept · name ↗". */}
-                    <span className="mk-deck-chip absolute inset-x-0 bottom-full mx-auto mb-3 inline-flex h-control-md w-max items-center gap-2 rounded-full border border-line bg-surface-elevated ps-3 pe-1 text-small font-semibold whitespace-nowrap text-fg transition-[translate] duration-standard ease-standard group-hover:-translate-y-0.5 motion-reduce:group-hover:translate-y-0">
-                      <LogoSymbol className="size-4 text-primary" />
-                      {page.concept ? <span>{t("deck.conceptNamed", { name: page.name })}</span> : <span dir="ltr">linkyo.app/{page.slug}</span>}
-                      <span className="grid size-control-sm place-items-center rounded-full bg-primary text-primary-fg">
-                        <Icon
-                          icon={ArrowUpRight}
-                          size="sm"
-                          className="transition-transform duration-standard ease-standard group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
-                        />
+                    {/* The chip above the phone is the visible link: "linkyo.app/name ↗", with a "Concept" tag on concept pages. */}
+                    {/* Centred on the phone whatever its width (wider than the phone on small screens); the entrance
+                        animation moves the chip itself, so it never slides sideways. */}
+                    <span className="absolute bottom-full left-1/2 mb-3 w-max -translate-x-1/2">
+                      <span className="mk-deck-chip inline-flex h-control-md w-max items-center gap-2 rounded-full border border-line bg-surface-elevated ps-3 pe-1 text-small font-semibold whitespace-nowrap text-fg transition-[translate] duration-standard ease-standard group-hover:-translate-y-0.5 motion-reduce:group-hover:translate-y-0">
+                        <LogoSymbol className="size-4 text-primary" />
+                        <span dir="ltr">linkyo.app/{page.slug}</span>
+                        {/* A well-known person's page is never shown as theirs: the address carries a "Concept" tag (ADR 0020). */}
+                        {page.concept ? (
+                          <span className="rounded-full border border-line px-2 text-caption font-medium text-fg-secondary">{t("deck.conceptTag")}</span>
+                        ) : null}
+                        <span className="grid size-control-sm place-items-center rounded-full bg-primary text-primary-fg">
+                          <Icon
+                            icon={ArrowUpRight}
+                            size="sm"
+                            className="transition-transform duration-standard ease-standard group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
+                          />
+                        </span>
                       </span>
                     </span>
                     <span className="sr-only">{t("deck.viewNamed", { name: page.name })}</span>

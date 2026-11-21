@@ -115,10 +115,11 @@ test.describe("marketing home", () => {
     await expect(deck.locator('[role="tabpanel"] img')).toHaveCount(9);
 
     // The chip above the page in front is the link to it. Pages of well-known people are unofficial
-    // concept pages: the chip says so instead of showing an address, and so does a note below.
+    // concept pages: the chip shows the address with a "Concept" tag, and a note below says so too.
     const front = deck.getByRole("link", { name: /View page, Taylor Swift/ });
     await expect(front).toHaveAttribute("href", "/en/p/taylor-swift");
-    await expect(front).toContainText("Concept · Taylor Swift");
+    await expect(front).toContainText("linkyo.app/taylor-swift");
+    await expect(front).toContainText("Concept");
     await expect(deck.getByText("Concept pages are unofficial")).toBeVisible();
 
     // No moving line anywhere. The page in front is alive instead: its picture is taller than its
@@ -141,7 +142,7 @@ test.describe("marketing home", () => {
     // Choosing a face stops the deck for good: nothing scrolls or changes on its own any more.
     await deck.getByRole("tab", { name: "Elon Musk" }).click();
     await expect(deck.getByRole("link", { name: /View page, / })).toHaveAttribute("href", "/en/p/elon-musk");
-    await expect(deck.getByRole("link", { name: /View page, / })).toContainText("Concept · Elon Musk");
+    await expect(deck.getByRole("link", { name: /View page, / })).toContainText("linkyo.app/elon-musk");
     await expect
       .poll(() => deck.locator('[data-slot="front"] img').evaluate((picture: HTMLImageElement) => picture.complete && picture.naturalWidth > 0))
       .toBe(true);
