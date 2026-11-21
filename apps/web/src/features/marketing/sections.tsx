@@ -44,7 +44,7 @@ export function Trust() {
         {t("title")}
       </h2>
       {/* Phones: one grouped list (icon beside the words, hairlines between); wide screens: three cards. */}
-      <ul className="grid grid-cols-1 overflow-hidden rounded-xl bg-canvas-muted max-md:divide-y max-md:divide-line md:grid-cols-3 md:gap-4 md:overflow-visible md:rounded-none md:bg-transparent">
+      <ul className="grid grid-cols-1 overflow-clip rounded-xl bg-canvas-muted max-md:divide-y max-md:divide-line md:grid-cols-3 md:gap-4 md:overflow-visible md:rounded-none md:bg-transparent">
         {items.map((item, index) => (
           <li
             key={item.title}
@@ -148,7 +148,7 @@ export function Pricing() {
               </li>
             ))}
           </ul>
-          <Button asChild variant="primary" size="cta" className="group">
+          <Button asChild variant="primary" size="cta" className="group text-center whitespace-normal">
             <Link href="/signup">
               {t("free.cta")}
               <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />

@@ -217,7 +217,7 @@ export function NewsletterForm() {
       <div className="grid grid-cols-1 gap-2 @prose:grid-cols-[minmax(0,1fr)_auto]">
         <label
           htmlFor={id}
-          className="flex h-control-lg min-w-0 items-center gap-3 rounded-creator-button border border-creator-line-strong bg-creator-bg px-4 transition-colors duration-micro focus-within:border-creator-accent-text focus-within:focus-field"
+          className="flex h-control-lg min-w-0 items-center gap-3 rounded-creator-button border border-creator-line-strong bg-creator-bg px-4 transition-colors duration-micro focus-within:border-creator-accent-text focus-within:focus-field focus-within:outline-creator-accent-text"
         >
           <Icon icon={AtSign} size="md" className="shrink-0 text-creator-fg-muted" />
           <span className="sr-only">{t("emailLabel")}</span>

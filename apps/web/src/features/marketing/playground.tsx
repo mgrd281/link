@@ -551,6 +551,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         await wait(1500);
         setToast(null);
       } catch {
+        // A newer run took over ("Watch again" pressed in the moment after the end): it owns the state.
+        if (controller.current !== run) return;
         // Stopped by the visitor: what is there stays, and it is their turn.
         setCursor((current) => ({ ...current, visible: false }));
         setDemoFocus(null);
@@ -927,6 +929,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
               <div className="grid min-h-control-sm shrink-0">
                 <p
                   id={`${id}-link-hint`}
+                  aria-live="polite"
                   className={cn("col-start-1 row-start-1 flex min-h-control-sm items-center gap-2 px-4 text-small", error ? "text-danger-strong" : "text-link")}
                 >
                   {error === "invalid" ? (
@@ -951,6 +954,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                         key={example.id}
                         type="button"
                         onClick={() => {
+                          // At the limit the examples give way to the message: focus goes to the field it describes.
+                          if (items.length >= MAX_LINKS) linkTarget.current?.focus();
                           add(example.url);
                         }}
                         className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full border border-line bg-surface ps-2 pe-3 text-small font-medium text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none"

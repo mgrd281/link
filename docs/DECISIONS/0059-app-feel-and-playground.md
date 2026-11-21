@@ -92,5 +92,7 @@ deference, depth, consistency, fluidity) and without fabricated scores.
 - On the home page, template cards still open the full page instead of the preview sheet. Changing
   that changes navigation, so it gets its own change.
 - Chips in the gallery band (40 px) and in the search (32 px) still differ in height.
+- At 320 px (the smallest phones), the phone header is about 17 px too wide once the sign-up pill
+  shows. This was there before this change; it needs a narrower header on the smallest screens.
 
 **Status.** Applied.

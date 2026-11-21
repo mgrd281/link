@@ -51,7 +51,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
           size === "md" && "h-control-md px-3",
           size === "lg" && "h-control-lg px-4",
           size === "xl" && "h-control-xl px-4 text-body-lg",
-          error && "border-danger-strong focus-within:border-danger-strong focus-within:outline-danger-strong",
+          error && "border-danger-strong focus-within:border-danger-strong",
           disabled && "opacity-disabled",
         )}
       >

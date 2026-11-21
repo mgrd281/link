@@ -133,8 +133,11 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
       <div
         aria-live={rotating ? "off" : "polite"}
         onPointerDown={(event) => {
+          swiped.current = false;
           if (event.pointerType === "mouse") return;
           swipe.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
+        }}
+        onKeyDownCapture={() => {
           swiped.current = false;
         }}
         onPointerUp={(event) => {
@@ -158,7 +161,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
           event.preventDefault();
           event.stopPropagation();
         }}
-        className="mk-phone-in relative w-full touch-pan-y pt-16"
+        className="mk-phone-in relative w-full touch-pan-y touch-pinch-zoom pt-16"
       >
         <div className="relative mx-auto w-1/2 md:w-5/12 lg:mk-deck-fit">
           <div aria-hidden className="mk-deck-halo w-[260%] border border-line" />

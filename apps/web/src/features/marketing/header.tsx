@@ -50,7 +50,7 @@ export function MarketingHeader({ signupAfter, edge = true }: { signupAfter?: st
             </a>
           ))}
         </nav>
-        <div className="ms-auto flex items-center gap-2 sm:gap-1">
+        <div className="ms-auto flex items-center gap-1">
           {/* Phones: sign-up, once the hero's own has been passed. */}
           <HeaderSignup label={t("nav.startShort")} after={signupAfter} />
           {/* Find a person: a name, a profession, a place (Ctrl/⌘ K). */}
