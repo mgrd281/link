@@ -3,7 +3,7 @@
 import { hasImage } from "@linkyo/blocks";
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Button, cn, Segmented, toast } from "@linkyo/ui";
-import { Download, ImageDown, Share2 } from "lucide-react";
+import { Download, ImageDown, ImagePlus, Share } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
@@ -11,7 +11,10 @@ import { themeStyle } from "@/features/creator/theme";
 import { initials } from "@/features/directions/shared/creator-kit";
 import { resolveMedia } from "@/features/directions/shared/media";
 import { drawShareArt, loadFaces, SHARE_SIZES, type ShareFormat } from "@/features/share/story-card";
+import { haptic } from "@/lib/haptics";
 
+import { ProfileSheet } from "./profile-form";
+import { pageUrl, ShareToolRow } from "./share-tools";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
 
@@ -28,10 +31,11 @@ const loadImage = (src: string) =>
  * page's own template (colors, display face, black and white for Mono). Story 9:16 or post 4:5;
  * shared through the phone's share sheet (straight to Instagram) or downloaded.
  */
-export function ShareImageButton({ compact = false }: { compact?: boolean }) {
+export function ShareImageButton({ compact = false, appearance = "button" }: { compact?: boolean; appearance?: "button" | "row" }) {
   const t = useTranslations("app.shareImage");
   const { doc, account } = useSite();
   const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [format, setFormat] = useState<ShareFormat>("story");
   // The format whose picture is drawn (sharing waits for it).
   const [drawn, setDrawn] = useState<ShareFormat | null>(null);
@@ -102,11 +106,19 @@ export function ShareImageButton({ compact = false }: { compact?: boolean }) {
   };
 
   const share = async () => {
+    haptic();
     const data = await blob();
     if (!data) return;
     const file = new File([data], fileName, { type: "image/png" });
-    if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: address }).catch(() => undefined);
+    // The address rides along as the caption where the target takes one (WhatsApp Status, Messages).
+    // Where files and text cannot go together, the picture goes alone, so Instagram stays a target.
+    const withLink = { files: [file], title: address, text: pageUrl(account.username) };
+    const pictureOnly = { files: [file], title: address };
+    const canShare = typeof navigator.canShare === "function";
+    if (canShare && navigator.canShare(withLink)) {
+      await navigator.share(withLink).catch(() => undefined);
+    } else if (canShare && navigator.canShare(pictureOnly)) {
+      await navigator.share(pictureOnly).catch(() => undefined);
     } else {
       await download();
       toast({ title: t("downloaded"), tone: "success" });
@@ -114,12 +126,18 @@ export function ShareImageButton({ compact = false }: { compact?: boolean }) {
   };
 
   const size = SHARE_SIZES[format];
+  // Without a photo the picture is a monogram: say once that a photo makes it stronger, with the way there.
+  const photoless = !hasImage(profile.avatar) && !hasImage(profile.hero);
 
   return (
     <>
-      <Button icon={ImageDown} size={compact ? "md" : "lg"} onClick={() => setOpen(true)}>
-        {t("open")}
-      </Button>
+      {appearance === "row" ? (
+        <ShareToolRow icon={ImageDown} label={t("open")} onClick={() => setOpen(true)} />
+      ) : (
+        <Button icon={ImageDown} size={compact ? "md" : "lg"} onClick={() => setOpen(true)}>
+          {t("open")}
+        </Button>
+      )}
       <Sheet
         open={open}
         onOpenChange={setOpen}
@@ -128,10 +146,10 @@ export function ShareImageButton({ compact = false }: { compact?: boolean }) {
         closeLabel={t("close")}
         footer={
           <>
-            <Button icon={Download} disabled={!ready} onClick={() => void download()}>
+            <Button variant="tinted" icon={Download} disabled={!ready} onClick={() => void download()}>
               {t("download")}
             </Button>
-            <Button variant="primary" icon={Share2} disabled={!ready} onClick={() => void share()}>
+            <Button variant="primary" icon={Share} disabled={!ready} onClick={() => void share()}>
               {t("share")}
             </Button>
           </>
@@ -147,8 +165,27 @@ export function ShareImageButton({ compact = false }: { compact?: boolean }) {
               { value: "post", label: t("formats.post") },
             ]}
           />
-          {/* The canvas is the picture; its description is the figure's caption for screen readers. */}
-          <figure aria-label={t("preview", { name: profile.displayName, address })} className={cn("grid", format === "story" ? "w-3/5 max-w-menu" : "w-4/5 max-w-menu")}>
+          {photoless ? (
+            <div className="flex w-full items-center gap-3 rounded-lg bg-canvas-muted p-3 text-small text-fg">
+              <span className="min-w-0 flex-1">{t("photoNudge")}</span>
+              <Button
+                size="sm"
+                variant="tinted"
+                icon={ImagePlus}
+                className="ms-auto"
+                onClick={() => {
+                  // One sheet at a time: this one closes, and the profile opens on the next frame.
+                  setOpen(false);
+                  requestAnimationFrame(() => setProfileOpen(true));
+                }}
+              >
+                {t("addPhoto")}
+              </Button>
+            </div>
+          ) : null}
+          {/* The canvas is the picture; its description is the figure's caption for screen readers. A story
+              is drawn at half the sheet's width, so the whole picture sits above the footer on a phone. */}
+          <figure aria-label={t("preview", { name: profile.displayName, address })} className={cn("grid", format === "story" ? "w-1/2 max-w-menu" : "w-3/4 max-w-menu")}>
             <canvas ref={setCanvas} aria-hidden width={size.width} height={size.height} className="h-auto w-full rounded-lg border border-line" />
           </figure>
           <p className="max-w-prose text-center text-caption text-fg-tertiary">{t(`hints.${format}`, { address })}</p>
@@ -163,6 +200,7 @@ export function ShareImageButton({ compact = false }: { compact?: boolean }) {
           </span>
         </span>
       </Sheet>
+      <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </>
   );
 }

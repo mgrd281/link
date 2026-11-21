@@ -454,11 +454,12 @@ export function WelcomeScreen() {
                   <QrButton username={account.username} compact />
                 </div>
               </div>
+              {/* The pill of sign-up carries through to the end of the flow: one shape for its big buttons. */}
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Button variant="primary" size="xl" onClick={() => finish("/app/editor")}>
+                <Button variant="primary" size="cta" onClick={() => finish("/app/editor")}>
                   {t("toEditor")}
                 </Button>
-                <Button size="xl" onClick={() => finish("/app")}>
+                <Button variant="tinted" size="cta" onClick={() => finish("/app")}>
                   {t("toDashboard")}
                 </Button>
               </div>
@@ -474,7 +475,7 @@ export function WelcomeScreen() {
                   {t("back")}
                 </Button>
               ) : null}
-              <Button variant="primary" size="xl" className="ms-auto min-w-0 flex-1 sm:flex-none" onClick={() => void next()} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+              <Button variant="primary" size="cta" className="ms-auto min-w-0 flex-1 sm:flex-none" onClick={() => void next()} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
                 {step === "links" ? t("finish") : t("continue")}
               </Button>
             </div>

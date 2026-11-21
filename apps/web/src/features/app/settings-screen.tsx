@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Button, ConfirmDialog, Icon, TextField, toast } from "@linkyo/ui";
-import { AtSign, CircleCheck, Download, KeyRound, Laptop, LogOut, Smartphone, Tablet, Trash2, Upload } from "lucide-react";
+import { CircleCheck, Download, KeyRound, Laptop, LogOut, Mail, Smartphone, Tablet, Trash2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useSyncExternalStore, type SubmitEvent } from "react";
 
@@ -85,7 +85,8 @@ function AddressPanel() {
             )
           }
         />
-        <Button type="submit" className="justify-self-start" disabled={status !== "ok"}>
+        {/* Like the legal notice: the save turns primary once there is something to save. */}
+        <Button type="submit" variant={status === "ok" ? "primary" : "secondary"} className="justify-self-start" disabled={status !== "ok"}>
           {t("addressSave")}
         </Button>
       </form>
@@ -99,6 +100,7 @@ function AccountPanel() {
   const { account } = useSite();
   const [email, setEmail] = useState(account.email);
   const [emailError, setEmailError] = useState<AuthError | null>(null);
+  const emailChanged = email.trim().toLowerCase() !== account.email;
 
   const saveEmail = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -113,7 +115,7 @@ function AccountPanel() {
           label={tAuth("fields.email")}
           type="email"
           ltr
-          icon={AtSign}
+          icon={Mail}
           value={email}
           onChange={(event) => {
             setEmail(event.target.value);
@@ -122,7 +124,7 @@ function AccountPanel() {
           autoComplete="email"
           error={emailError ? tAuth(`errors.${emailError}`) : undefined}
         />
-        <Button type="submit" className="justify-self-start" disabled={email.trim().toLowerCase() === account.email}>
+        <Button type="submit" variant={emailChanged ? "primary" : "secondary"} className="justify-self-start" disabled={!emailChanged}>
           {t("emailSave")}
         </Button>
       </form>
@@ -325,11 +327,14 @@ function SignInsPanel() {
   );
 }
 
-/** Settings: profile, address, login, legal notice, the dashboard's own look, and your data. */
+/**
+ * Settings: profile, address, login, legal notice, the dashboard's own look, and your data. The page
+ * sits beside it on wide screens, so name, bio and photos edited here show live, as in the Profile sheet.
+ */
 export function SettingsScreen() {
   const t = useTranslations("app.settings");
   return (
-    <Screen title={t("title")} lead={t("lead")}>
+    <Screen title={t("title")} lead={t("lead")} preview>
       <ProfilePanel />
       <AddressPanel />
       <AccountPanel />
