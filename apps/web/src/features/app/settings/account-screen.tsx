@@ -3,7 +3,7 @@
 import { Badge, Button, cn, ConfirmDialog, Icon, toast } from "@linkyo/ui";
 import { Laptop, Mail, Smartphone, Tablet, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState, useSyncExternalStore, type SubmitEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type SubmitEvent } from "react";
 
 import { STORAGE_KEY } from "@/features/account/local-store";
 import { accountStore } from "@/features/account/store";
@@ -23,7 +23,8 @@ const isolate = (text: string) => `⁦${text}⁩`;
 function EmailGroup() {
   const t = useTranslations("app.settings");
   const tAuth = useTranslations("auth");
-  const { account } = useSite();
+  const { account, announce } = useSite();
+  const form = useRef<HTMLFormElement>(null);
   const [email, setEmail] = useState(account.email);
   const [error, setError] = useState<AuthError | null>(null);
   const [confirm, setConfirm] = useState(false);
@@ -32,8 +33,15 @@ function EmailGroup() {
   const [pending, setPending] = useState<string | null>(null);
   const next = email.trim();
   const changed = normalizeEmail(email) !== account.email;
+  // Cancel and Save go away once the field holds the address that signs in. Focus that came by
+  // keyboard goes back to the field, not to the top of the page; a tap moves nothing (on a phone, a
+  // focused field opens the keyboard).
+  const byKeyboard = () => document.activeElement?.matches(":focus-visible") === true;
+  const toField = () => form.current?.querySelector("input")?.focus();
 
   const change = async () => {
+    // Asked now, while focus is still on Save or on the dialog's button.
+    const keyboard = byKeyboard();
     setBusy(true);
     const result = await accountStore.changeEmail(next);
     setBusy(false);
@@ -41,10 +49,13 @@ function EmailGroup() {
       setError(result.error);
       return;
     }
+    if (keyboard) toField();
     if (result.pending === "confirmEmail") {
-      // The field shows the address that still signs in; the new one waits below it.
+      // The field shows the address that still signs in; the new one waits below it. The line below
+      // is read out through the dashboard's live region: one that arrives with its words often is not.
       setPending(next);
       setEmail(account.email);
+      announce(t("emailPending", { email: isolate(next) }));
       return;
     }
     toast({ title: t("emailChanged"), tone: "success" });
@@ -68,7 +79,7 @@ function EmailGroup() {
 
   return (
     <FieldGroup>
-      <form noValidate onSubmit={submit} className="grid grid-cols-1 gap-5">
+      <form ref={form} noValidate onSubmit={submit} className="grid grid-cols-1 gap-5">
         <TextInput
           label={tAuth("fields.email")}
           type="email"
@@ -85,7 +96,7 @@ function EmailGroup() {
         />
         {pending ? (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <p role="status" className="text-small text-fg-secondary min-w-0">
+            <p className="text-small text-fg-secondary min-w-0">
               {t("emailPending", { email: isolate(pending) })}
             </p>
             <Button variant="ghost" size="sm" onClick={() => void resend()}>
@@ -99,6 +110,7 @@ function EmailGroup() {
               variant="ghost"
               size="md"
               onClick={() => {
+                if (byKeyboard()) toField();
                 setEmail(account.email);
                 setError(null);
               }}

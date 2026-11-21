@@ -22,6 +22,7 @@ import { useOnTeam } from "@/features/admin/live";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 
+import { useLegalDraft } from "./drafts";
 import { pickFiles } from "./images";
 import { parseImport, type ImportedSite } from "./import";
 import { legalStatus } from "./legal";
@@ -29,7 +30,7 @@ import { ListGroup, ListRow, PickerRow, SegmentedRow } from "./list";
 import { ProfileSheet } from "./profile-form";
 import { Screen } from "./screen";
 import { ProfileAvatar } from "./shell";
-import { useSite } from "./site-context";
+import { useSite, type SiteDoc } from "./site-context";
 
 /** Each language in its own name and voice. */
 const LANGUAGES = [
@@ -81,7 +82,8 @@ function useOldHashes(openProfile: () => void) {
 /** Export and import: the page as a file, and a page back from such a file (undoable, the legal notice too). */
 function DataGroup() {
   const t = useTranslations("app.settings");
-  const { account, site, doc, dispatch, flush } = useSite();
+  const { account, site, doc, dispatch, flush, latest } = useSite();
+  const [legalDraft, setLegalDraft] = useLegalDraft(account.id);
   const [incoming, setIncoming] = useState<ImportedSite | null>(null);
   const chooseImport = async () => {
     const [file] = await pickFiles({ accept: "application/json,.json" });
@@ -92,18 +94,22 @@ function DataGroup() {
   };
   const applyImport = () => {
     if (!incoming) return;
-    dispatch({
-      type: "replace",
-      doc: {
-        ...doc,
-        profile: { ...incoming.page.profile, username: account.username },
-        blocks: incoming.page.blocks,
-        theme: incoming.theme,
-      },
-    });
+    const before = doc;
+    const imported: SiteDoc = {
+      ...doc,
+      profile: { ...incoming.page.profile, username: account.username },
+      blocks: incoming.page.blocks,
+      theme: incoming.theme,
+    };
+    dispatch({ type: "replace", doc: imported });
     const { legal } = incoming;
-    const before = site.legal;
-    if (legal) accountStore.updateSite((current) => ({ ...current, legal }));
+    const legalBefore = site.legal;
+    const draftBefore = legalDraft;
+    if (legal) {
+      accountStore.updateSite((current) => ({ ...current, legal }));
+      // Unsaved edits of the old notice would hide the imported one, and a Save would overwrite it.
+      setLegalDraft(null);
+    }
     setIncoming(null);
     toast({
       title: t("imported"),
@@ -111,8 +117,15 @@ function DataGroup() {
       action: {
         label: t("undo"),
         onAction: () => {
-          dispatch({ type: "undo" });
-          if (legal) accountStore.updateSite((current) => ({ ...current, legal: before }));
+          // Takes back the import only. After a later change (a page language picked meanwhile) a plain
+          // undo would take back that change instead, so nothing happens; ⌘Z still steps back through both.
+          const now = latest();
+          if (now !== imported && now !== before) return;
+          // ⌘Z may have taken the page back already; the legal notice is not in that history.
+          if (now === imported) dispatch({ type: "undo" });
+          if (!legal) return;
+          accountStore.updateSite((current) => ({ ...current, legal: legalBefore }));
+          if (draftBefore) setLegalDraft(draftBefore);
         },
       },
     });

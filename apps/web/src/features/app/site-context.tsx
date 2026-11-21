@@ -107,6 +107,11 @@ interface SiteContextValue {
   previewHref: string;
   /** Saves a change still waiting for autosave right away (before exporting, for example). */
   flush: () => void;
+  /**
+   * The document as it is now. `doc` is the one of the last render: a toast's Undo runs later, maybe
+   * after more changes or on another screen, and checks with this that its change is still the last.
+   */
+  latest: () => SiteDoc;
 }
 
 const SiteContext = createContext<SiteContextValue | null>(null);
@@ -259,13 +264,14 @@ export function EditorProvider({
     };
   }, []);
 
-  // ⌘Z / Ctrl+Z undo, ⇧⌘Z / Ctrl+Y redo — everywhere except inside text fields, open panels (a
-  // panel that is sliding away no longer counts) and confirmation dialogs (undoing behind "Delete?"
-  // would change what the question is about).
+  // ⌘Z / Ctrl+Z undo, ⇧⌘Z / Ctrl+Y redo — everywhere except inside text fields (they undo their own
+  // typing), open panels (a panel that is sliding away no longer counts) and confirmation dialogs
+  // (undoing behind "Delete?" would change what the question is about). A select has no undo of its
+  // own and keeps focus after a choice, so a page language just picked in Settings is undone at once.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target;
-      if (target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
+      if (target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA"].includes(target.tagName))) return;
       if (document.querySelector("[role=dialog]:not([data-state=closed]), [role=alertdialog]")) return;
       const mod = event.metaKey || event.ctrlKey;
       if (mod && event.key.toLowerCase() === "z") {
@@ -287,6 +293,7 @@ export function EditorProvider({
   useEffect(() => {
     docRef.current = doc;
   }, [doc]);
+  const latest = useCallback(() => docRef.current, []);
   const enrich = useCallback(
     (blocks: Block[]) => {
       for (const added of blocks) {
@@ -391,6 +398,7 @@ export function EditorProvider({
     label,
     previewHref,
     flush,
+    latest,
   };
   return (
     <SiteContext.Provider value={value}>

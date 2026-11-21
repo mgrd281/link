@@ -3,7 +3,7 @@
 import { Button, ConfirmDialog, Icon, toast } from "@linkyo/ui";
 import { CircleCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, type SubmitEvent } from "react";
+import { useRef, useState, type SubmitEvent } from "react";
 
 import { useUsernameStatus } from "@/features/account/auth/shared";
 import { accountStore } from "@/features/account/store";
@@ -34,8 +34,10 @@ export function AddressScreen() {
   const [error, setError] = useState<AuthError | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
-  // What would be saved: a dash still waiting for the next word is not part of it.
-  const next = toSlug(value, true);
+  const form = useRef<HTMLFormElement>(null);
+  // What would be saved: a dash still waiting for the next word is not part of it. The saved address
+  // stays as it is until it is edited (older ones may hold "--", which writing it out would merge).
+  const next = value === account.username ? value : toSlug(value, true);
   const status = useUsernameStatus(next, account.username);
   const changed = next !== account.username;
 
@@ -69,17 +71,25 @@ export function AddressScreen() {
     if (changed && status === "ok") setConfirm(true);
   };
   const change = async () => {
+    // "Change address" goes away with the change. Focus that came by keyboard (on the dialog's button)
+    // goes on from the field, not from the top of the page; a tap moves nothing (on a phone, a focused
+    // field opens the keyboard).
+    const keyboard = document.activeElement?.matches(":focus-visible") === true;
     setBusy(true);
     const result = await accountStore.changeUsername(next);
     setBusy(false);
-    if (result.ok) toast({ title: t("addressChanged", { url: `linkyo.app/${next}` }), tone: "success" });
-    else setError(result.error);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    if (keyboard) form.current?.querySelector("input")?.focus();
+    toast({ title: t("addressChanged", { url: `linkyo.app/${next}` }), tone: "success" });
   };
 
   return (
     <Screen title={t("panes.address")} back={{ href: "/app/settings", label: tApp("nav.settings") }} preview>
       <FieldGroup>
-        <form noValidate onSubmit={submit} className="grid grid-cols-1 gap-5">
+        <form ref={form} noValidate onSubmit={submit} className="grid grid-cols-1 gap-5">
           <TextInput
             label={t("addressLabel")}
             ltr
