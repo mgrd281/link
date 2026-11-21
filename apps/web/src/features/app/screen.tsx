@@ -47,7 +47,7 @@ export function BackLink({ href, label, variant = "bar", className }: { href: st
       }}
       className={cn(
         "inline-flex min-w-0 items-center gap-1 rounded-sm pe-2 text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring",
-        variant === "bar" ? "h-touch-target max-w-full text-body font-medium" : "h-control-sm shrink-0 text-small font-semibold",
+        variant === "bar" ? "h-touch-target max-w-full text-body font-semibold" : "h-control-sm shrink-0 text-small font-semibold",
         className,
       )}
     >

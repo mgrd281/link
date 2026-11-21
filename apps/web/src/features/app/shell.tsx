@@ -122,7 +122,7 @@ export function SaveStatus({ compact = false }: { compact?: boolean }) {
   return (
     <p role="status" className={cn("flex min-w-0 items-center", shown === "error" && "text-danger-strong")}>
       {shown === "unsavedLegal" ? (
-        <Link href={LEGAL_HREF} className="flex min-w-0 items-center gap-3 rounded-sm font-medium text-fg transition-colors duration-micro hover:text-link focus-visible:focus-ring">
+        <Link href={LEGAL_HREF} className="flex min-w-0 items-center gap-3 rounded-sm font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring">
           {content}
         </Link>
       ) : (
