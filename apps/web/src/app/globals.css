@@ -74,6 +74,13 @@
     }
   }
 
+  /* The team area's preview column (outside the dashboard shell) shows from xl only. */
+  :root:has([data-plain-preview-aside]) {
+    @variant xl {
+      --preview-column: calc(var(--container-preview) + var(--spacing-8));
+    }
+  }
+
   /* WCAG 2.4.11 (focus not obscured): on phones the dashboard has a sticky top bar (h-16) and a
      fixed tab bar, so a control reached with Tab or by a screen reader is scrolled clear of both,
      with a small gap at the top. The bottom matches the padding <main> keeps for the tab bar.
@@ -98,6 +105,11 @@
   html:has([data-sticky-preview]) {
     @variant max-lg {
       scroll-padding-top: calc(var(--spacing-16) + 30svh + var(--spacing-3) + var(--spacing-2));
+
+      /* Short screens: the bar scrolls away and the page sticks to the top instead. */
+      @variant short {
+        scroll-padding-top: calc(30svh + var(--spacing-3) + var(--spacing-2));
+      }
     }
 
     @variant lg {

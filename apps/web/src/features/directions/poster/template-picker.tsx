@@ -67,8 +67,9 @@ export function TemplatePicker({
   return (
     <fieldset data-still={still ? "" : undefined} className="grid min-w-0 gap-3">
       <legend className="sr-only">{t("template")}</legend>
-      {/* Still: the row runs to the edges of the dashboard panel around it (its p-4, lg:p-6), never past them. */}
-      <div ref={row} className={cn("overflow-x-auto pb-1", still ? "-mx-4 px-4 lg:-mx-6 lg:px-6" : "-mx-5 px-5 lg:mx-0 lg:overflow-visible lg:px-0")}>
+      {/* Still: the row runs to the edges of the dashboard panel around it (its p-4, lg:p-6), never past them.
+          A scroller clips what is outside it: pt-1 (taken back by -mt-1) and pb-1 keep the focus ring whole. */}
+      <div ref={row} className={cn("-mt-1 overflow-x-auto pt-1 pb-1", still ? "-mx-4 px-4 lg:-mx-6 lg:px-6" : "-mx-5 px-5 lg:mx-0 lg:overflow-visible lg:px-0")}>
         <div className={cn("grid auto-cols-[42%] grid-flow-col gap-3 sm:auto-cols-[28%]", !still && "lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3")}>
           {themes.map(({ id, theme }) => {
             const selected = id === value;

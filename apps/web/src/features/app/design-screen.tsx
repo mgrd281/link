@@ -235,8 +235,9 @@ export function DesignScreen() {
     >
       {inShell ? (
         desk ? null : (
-          // The page stays in sight while you change it: flush under the bar, on the solid ground.
-          <div data-sticky-preview className="sticky top-16 layer-raised -mx-4 bg-canvas-muted px-4 pb-3 md:-mx-8 md:px-8 desk:hidden">
+          // The page stays in sight while you change it: flush under the bar, on the solid ground. On short
+          // phone screens the bar scrolls away, so the page sticks to the top (no gap to see through).
+          <div data-sticky-preview className="sticky top-16 layer-raised -mx-4 bg-canvas-muted px-4 pb-3 max-lg:short:top-0 md:-mx-8 md:px-8 desk:hidden">
             <PhonePreview className="h-[30svh]" />
           </div>
         )
