@@ -5,6 +5,7 @@ import {
   Check,
   CircleUserRound,
   Download,
+  Gift,
   Languages,
   Link2,
   LogOut,
@@ -28,6 +29,7 @@ import { parseImport, type ImportedSite } from "./import";
 import { legalStatus } from "./legal";
 import { ListGroup, ListRow, PickerRow, SegmentedRow } from "./list";
 import { ProfileSheet } from "./profile-form";
+import { INVITE_HREF } from "./routes";
 import { Screen } from "./screen";
 import { ProfileAvatar } from "./shell";
 import { useSite, type SiteDoc } from "./site-context";
@@ -174,6 +176,7 @@ function DataGroup() {
 export function SettingsScreen() {
   const t = useTranslations("app.settings");
   const tApp = useTranslations("app");
+  const tInvite = useTranslations("app.invite");
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
@@ -237,6 +240,8 @@ export function SettingsScreen() {
             href="/app/settings/account"
           />
           {onTeam ? <ListRow icon={ShieldCheck} title={tApp("teamArea")} href="/admin" /> : null}
+          {/* Phones have no rail: Invite is always reachable from here (its back link says "‹ Settings"). */}
+          <ListRow icon={Gift} title={tInvite("title")} href={INVITE_HREF} className="lg:hidden" />
         </ListGroup>
 
         <ListGroup title={t("groups.app")} titleId="app" footer={t("footers.app")}>

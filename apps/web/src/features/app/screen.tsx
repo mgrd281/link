@@ -14,10 +14,18 @@ import { useScrolled } from "./use-scrolled";
 
 /**
  * Set by the dashboard shell (AppShell). `navigated`: the user has moved inside the app since it
- * loaded; `pop`: that last move came from the browser's history (Back, Safari's edge swipe).
- * Outside the shell (the team area) there is none, and screens keep their own simple header.
+ * loaded; `pop`: that last move came from the browser's history (Back, Safari's edge swipe);
+ * `fromNav`: it came from the chrome (the rail, the section panel, the tab bar), whose tapped item
+ * stays where it is and keeps focus. Outside the shell (the team area) there is none, and screens
+ * keep their own simple header.
  */
-export const ShellChromeContext = createContext<{ navigated: boolean; pop: boolean } | null>(null);
+export interface ShellChrome {
+  navigated: boolean;
+  pop: boolean;
+  fromNav: boolean;
+}
+
+export const ShellChromeContext = createContext<ShellChrome | null>(null);
 
 /** True inside the dashboard shell. */
 export function useShellChrome(): boolean {
@@ -92,7 +100,10 @@ export function Screen(props: ScreenProps) {
   return chrome ? <ShellScreen {...props} chrome={chrome} /> : <PlainScreen {...props} />;
 }
 
-/** Content and toolbar share the start edge: x = 288 on every wide screen, whatever the tab. */
+/**
+ * Content and toolbar share the start edge on every wide screen, whatever the place: x = 288 with the
+ * section panel open (rail 64 + panel 184 + 40), x = 104 with it folded (rail 64 + 40).
+ */
 const gutters =
   "pl-[max(var(--spacing-4),env(safe-area-inset-left))] pr-[max(var(--spacing-4),env(safe-area-inset-right))] md:pl-[max(var(--spacing-8),env(safe-area-inset-left))] md:pr-[max(var(--spacing-8),env(safe-area-inset-right))] lg:ps-10 lg:pe-8";
 
@@ -101,14 +112,15 @@ const gutters =
  * name). Wide screens: a sticky 64 px toolbar with the title and the screen's actions, on the solid
  * ground; its hairline appears only once content scrolls under it. One h1 either way.
  */
-function ShellScreen({ title, lead, actions, children, preview = false, wide = false, back, chrome }: ScreenProps & { chrome: { navigated: boolean; pop: boolean } }) {
+function ShellScreen({ title, lead, actions, children, preview = false, wide = false, back, chrome }: ScreenProps & { chrome: ShellChrome }) {
   const scrolled = useScrolled();
   const rtl = isRtl(useLocale());
   const heading = useRef<HTMLHeadingElement>(null);
-  // A pane opened from inside the app slides in from the reading direction and takes focus, as a
-  // pushed screen does on iOS. Moves through history skip both: Safari has already animated its
-  // snapshot, and a direct load has nothing to come from.
-  const [pushed] = useState(() => back !== undefined && chrome.navigated && !chrome.pop);
+  // A pane opened from inside the app (a Settings row) slides in from the reading direction and takes
+  // focus, as a pushed screen does on iOS. Moves through history skip both: Safari has already
+  // animated its snapshot, and a direct load has nothing to come from. So do moves from the chrome
+  // (the section panel's Account → Page address): the tapped item stays put and keeps focus.
+  const [pushed] = useState(() => back !== undefined && chrome.navigated && !chrome.pop && !chrome.fromNav);
   useEffect(() => {
     if (pushed) heading.current?.focus({ preventScroll: true });
   }, [pushed]);

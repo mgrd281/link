@@ -19,6 +19,8 @@ import { haptic } from "@/lib/haptics";
 import { blankBlock } from "./blocks";
 import { PreviewButton } from "./preview";
 import { ProfileSheet } from "./profile-form";
+import { rowAnchor } from "./jump";
+import { NAV_ANCHORS } from "./routes";
 import { Screen, UndoRedo, useShellChrome } from "./screen";
 import { ProfileAvatar } from "./shell";
 import { useSite } from "./site-context";
@@ -94,10 +96,12 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   };
   const addSection = () => edit({ mode: "create", block: blankBlock("header", { artist: "", newsletter: "" }) });
 
-  // The chevron already says "open": the words "Edit profile" are only for screen readers.
+  // The chevron already says "open": the words "Edit profile" are only for screen readers. The id is a
+  // jump target of the section panel ("Profile"): it takes focus, and Enter then opens the sheet.
   const profile = (
     <button
       type="button"
+      id={NAV_ANCHORS.pageProfile}
       onClick={() => setProfileOpen(true)}
       className={cn(
         "group flex w-full min-w-0 items-center gap-4 rounded-lg p-4 text-start focus-visible:focus-ring",
@@ -141,7 +145,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
       <section aria-labelledby="blocks-title" className="grid grid-cols-1 gap-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {/* Focus lands here when the last row is deleted, so it is never lost to the top of the page. */}
-          <h2 id="blocks-title" tabIndex={-1} className="flex-1 text-title outline-none rtl:tracking-normal">
+          <h2 id={NAV_ANCHORS.pageContent} tabIndex={-1} className="flex-1 text-title outline-none rtl:tracking-normal">
             {t("blocks")}
           </h2>
           {empty ? null : <p className="text-small text-fg-secondary">{t("count", { count: doc.blocks.length })}</p>}
@@ -371,6 +375,8 @@ function BlockRow({
   const editButton = (
     <button
       type="button"
+      // The section panel's page outline (a row per section) focuses this button.
+      id={rowAnchor(block.id)}
       data-row-edit
       onClick={() => edit({ mode: "edit", id: block.id })}
       onKeyDown={onKey}

@@ -6,6 +6,7 @@ import { useId } from "react";
 import { accountStore } from "@/features/account/store";
 
 import { Disclosure } from "../disclosure";
+import { NAV_ANCHORS } from "../routes";
 import { ShareImageButton } from "../share-image";
 import { CopyLinkButton, QrButton, ShareLinkButton } from "../share-tools";
 
@@ -23,9 +24,11 @@ export function LinkCard({ username, ready }: { username: string; ready: boolean
   const t = useTranslations("app.home");
   const titleId = useId();
   return (
-    <section aria-labelledby={titleId} className="grid grid-cols-1 gap-4 rounded-lg bg-group p-4 lg:border lg:border-line lg:p-6">
+    // While the page is being built the eyebrow names the card; once it is ready, the title does.
+    <section aria-labelledby={ready ? titleId : NAV_ANCHORS.homeLink} className="grid grid-cols-1 gap-4 rounded-lg bg-group p-4 lg:border lg:border-line lg:p-6">
       <div className="grid grid-cols-1 gap-1">
-        <p id={ready ? undefined : titleId} className="text-caption font-semibold text-fg-secondary">
+        {/* Always there: the section panel's "Your link" jumps here (focusable by script, no ring of its own). */}
+        <p id={NAV_ANCHORS.homeLink} tabIndex={-1} className="text-caption font-semibold text-fg-secondary outline-none">
           {t("yourLink")}
         </p>
         {ready ? (

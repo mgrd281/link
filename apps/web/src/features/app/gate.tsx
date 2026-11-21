@@ -1,7 +1,7 @@
 "use client";
 
-import { cn, Icon, Logo, LogoSymbol, Skeleton, Spinner } from "@linkyo/ui";
-import { ChartNoAxesColumn, House, LayoutList, Palette } from "lucide-react";
+import { cn, Icon, LogoSymbol, Skeleton, Spinner } from "@linkyo/ui";
+import { ChartNoAxesColumn, Eye, Gift, House, LayoutList, Palette, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, type ReactNode } from "react";
 
@@ -24,12 +24,17 @@ export function BrandSplash() {
   );
 }
 
+/** The rail's places, as in the shell (nav.tsx). */
 const SPLASH_NAV = [
   { key: "home", icon: House },
   { key: "page", icon: LayoutList },
   { key: "design", icon: Palette },
   { key: "analytics", icon: ChartNoAxesColumn },
+  { key: "invite", icon: Gift },
 ] as const;
+
+/** A 44 px slot of the rail with its icon, where the shell's control will be. */
+const railSlot = "grid size-touch-target place-items-center text-fg-secondary";
 
 /** The content column's start edge, as in `Screen`: the title and the groups appear right here. */
 const gutters =
@@ -37,9 +42,10 @@ const gutters =
 
 /**
  * Shown while the session is read (server render, hydration) or while redirecting: the dashboard's
- * own frame at every width (phone bars; or the sidebar, the toolbar and the live preview column) with
- * soft placeholders where the content goes, as native apps load. The real screen then fills in
- * where the eye already is, and the frame does not jump.
+ * own frame at every width (phone bars; or the rail, the section panel, the toolbar and the live
+ * preview column) with soft placeholders where the content goes, as native apps load. The real screen
+ * then fills in where the eye already is, and the frame does not jump. The panel folds by CSS alone
+ * (`nav-folded:`, from the pre-paint script), so a stored "folded" is right in the server HTML too.
  */
 export function AppSplash() {
   const t = useTranslations("app");
@@ -49,32 +55,49 @@ export function AppSplash() {
     <div data-grouped data-console="frame" className="flex min-h-dvh bg-canvas-muted" role="status">
       <span className="sr-only">{t("loading")}</span>
 
-      <div aria-hidden className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-e border-line bg-surface px-3 pb-3 lg:flex">
-        <div className="flex h-16 shrink-0 items-center ps-3">
-          <Logo className="h-6" tone="mono" />
-        </div>
-        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-3 py-2">
-          <Skeleton className="size-avatar-sm rounded-full" />
-          {/* The two text lines of the real card (20 + 16 px), so the rows below sit where they will. */}
-          <span className="grid">
-            <span className="flex h-5 items-center">
-              <Skeleton className="h-3 w-24" />
-            </span>
-            <span className="flex h-4 items-center">
-              <Skeleton className="h-2 w-32" />
-            </span>
-          </span>
-        </div>
-        <Skeleton className="mt-2 h-control-md rounded-md" />
-        <div className="mt-4 grid grid-cols-1 gap-0.5">
-          {SPLASH_NAV.map((item) => (
-            <div key={item.key} className="flex h-control-md items-center gap-3 px-3 text-small font-medium text-fg-secondary">
-              <span className="grid size-8 shrink-0 place-items-center">
-                <Icon icon={item.icon} size="sm" />
-              </span>
-              <span className="truncate">{t(`nav.${item.key}`)}</span>
+      <div aria-hidden className="sticky top-0 hidden h-dvh shrink-0 lg:flex">
+        {/* The rail: the symbol, Add, the places, Settings at the bottom, then the eye and the toggle. */}
+        <div className="flex w-nav-rail shrink-0 flex-col items-center border-e border-line bg-surface pb-3">
+          <div className="grid h-16 shrink-0 place-items-center text-fg">
+            <LogoSymbol className="size-8" tone="mono" />
+          </div>
+          <Skeleton className="size-touch-target shrink-0 rounded-full" />
+          <div className="mt-3 flex min-h-0 w-full flex-1 flex-col items-center overflow-hidden py-1">
+            <div className="grid gap-1">
+              {SPLASH_NAV.map((item) => (
+                <span key={item.key} className={railSlot}>
+                  <Icon icon={item.icon} size="md" />
+                </span>
+              ))}
             </div>
-          ))}
+            <div className="mt-auto grid gap-1 pt-3">
+              <span className={railSlot}>
+                <Icon icon={Settings} size="md" />
+              </span>
+            </div>
+          </div>
+          <div className="grid gap-1 pt-1">
+            <span className={railSlot}>
+              <Icon icon={Eye} size="md" />
+            </span>
+            <span className={railSlot}>
+              <Icon icon={PanelLeftClose} size="md" className="rtl:-scale-x-100 nav-folded:hidden" />
+              <Icon icon={PanelLeftOpen} size="md" className="hidden rtl:-scale-x-100 nav-folded:block" />
+            </span>
+          </div>
+        </div>
+        {/* The section panel: its title and three rows. */}
+        <div data-splash-panel className="flex w-nav-panel shrink-0 flex-col border-e border-line bg-surface nav-folded:hidden">
+          <div className="flex h-16 shrink-0 items-center px-5">
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <div className="grid gap-0.5 px-2 py-1">
+            {[0, 1, 2].map((row) => (
+              <div key={row} className="flex h-control-md items-center px-3">
+                <Skeleton className="h-3 w-24" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -92,7 +115,7 @@ export function AppSplash() {
         {/* The title: a large title on phones, the toolbar on wide screens. */}
         <div className={cn(gutters, "pt-6 lg:h-16 lg:pt-0")}>
           <div className="mx-auto flex max-w-prose lg:mx-0 lg:h-full lg:items-center">
-            <Skeleton className="h-8 w-1/2 lg:h-6 lg:w-32" />
+            <Skeleton data-splash-title className="h-8 w-1/2 lg:h-6 lg:w-32" />
           </div>
         </div>
         <div className={cn(gutters, "pt-4 lg:pt-2")}>

@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { Providers } from "@/components/providers";
 import { fontVariables } from "@/fonts";
 import { isRtl, routing } from "@/i18n/routing";
+import { navPanelInitScript } from "@/lib/nav-panel-script";
 import { siteUrl } from "@/lib/site-url";
 import { themeInitScript } from "@/lib/theme-script";
 
@@ -54,7 +55,8 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   return (
     <html lang={locale} dir={isRtl(locale) ? "rtl" : "ltr"} className={fontVariables} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {/* Before paint: the stored theme, and the dashboard's folded section panel (no layout shift). */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript + navPanelInitScript }} />
       </head>
       <body className="min-h-dvh bg-canvas text-fg">
         <NextIntlClientProvider>

@@ -4,6 +4,9 @@
 /* Scan shared packages for classes. */
 @source "../../../../packages/ui/src";
 
+/* The dashboard's section panel is folded: <html data-nav-panel="folded">, set before paint (ADR 0063). */
+@custom-variant nav-folded (&:where([data-nav-panel="folded"] *));
+
 @layer base {
   html {
     /* iOS Safari still needs the prefix to stop text inflation in landscape. */
@@ -40,8 +43,9 @@
   }
 
   /* Toasts clear the home indicator, and sit above the dashboard's bottom tab bar on phones. On wide
-     screens they are centred over the dashboard's content column: --toast-start skips the sidebar,
-     --toast-end the live preview (--preview-column, also used by side panels opened beside it). */
+     screens they are centred over the dashboard's content column: --toast-start skips the icon rail
+     and the section panel (only the rail while the panel is folded), --toast-end the live preview
+     (--preview-column, also used by side panels opened beside it). */
   :root {
     --toast-offset: 0;
     --toast-start: 0;
@@ -58,7 +62,13 @@
     }
 
     @variant lg {
-      --toast-start: var(--container-sidebar);
+      --toast-start: calc(var(--container-nav-rail) + var(--container-nav-panel));
+    }
+  }
+
+  :root[data-nav-panel="folded"]:has([data-tabbar]) {
+    @variant lg {
+      --toast-start: var(--container-nav-rail);
     }
   }
 
