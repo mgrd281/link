@@ -7,7 +7,6 @@ import { accountStore } from "@/features/account/store";
 import { overrides } from "@/features/admin/customers/overrides";
 import { refreshLive } from "@/features/admin/live";
 import { adminStore } from "@/features/admin/store";
-import type { ActivityEvent } from "@/features/admin/types";
 import { browserSupabase } from "@/lib/supabase/browser";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import type { Json } from "@/lib/supabase/database.types";
@@ -138,7 +137,7 @@ type ReferralAction =
   | "verification.decline";
 
 /** Demo: logs a team decision. The console's action list (features/admin/types.ts) names these from the console's own package on. */
-const record = (actor: string, action: ReferralAction, target: string) => adminStore.record(actor, action as unknown as ActivityEvent["action"], target);
+const record = (actor: string, action: ReferralAction, target: string) => adminStore.record(actor, action, target);
 
 /** Real accounts: the database decided; reload what the console shows. */
 async function done(call: PromiseLike<{ error: unknown }>): Promise<boolean> {

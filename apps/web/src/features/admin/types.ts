@@ -106,7 +106,18 @@ export interface ActivityEvent {
     | "customer.note"
     | "customer.delete"
     | "ip.block"
-    | "ip.unblock";
+    | "ip.unblock"
+    // The invite program (ADR 0064): the database writes the same names on real accounts.
+    | "referral.release"
+    | "referral.revoke"
+    | "referral.restore"
+    | "reward.verification"
+    | "reward.pro"
+    | "reward.revoke"
+    | "reward.restore"
+    | "verification.request"
+    | "verification.approve"
+    | "verification.decline";
   target: string;
 }
 

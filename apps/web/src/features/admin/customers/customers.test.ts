@@ -4,7 +4,7 @@ import { parseUserAgent } from "@/features/account/device";
 import type { LoginEvent } from "@/features/account/types";
 
 import { can, PERMISSIONS, ROLE_PERMISSIONS } from "../types";
-import { DAY, monthlyRevenue, PLAN_PRICE, riskFlags } from "./model";
+import { DAY, hasPro, isPaying, monthlyRevenue, PLAN_PRICE, riskFlags, withRewards, type Customer } from "./model";
 import { sampleCustomers } from "./sample";
 import { cohorts, funnel, kpis, mrrByMonth, signupsPerDay } from "./stats";
 
@@ -65,6 +65,70 @@ describe("revenue", () => {
     expect(as("past_due")).toBe(PLAN_PRICE.pro);
     expect(as("trialing")).toBe(0);
     expect(as("canceled")).toBe(0);
+  });
+});
+
+describe("Pro for life", () => {
+  const samples = sampleCustomers(NOW);
+  const free = samples.find((customer) => customer.subscription.plan === "free" && !customer.rewards);
+  if (!free) throw new Error("no free sample");
+  const proForLife = { at: new Date(NOW - 20 * DAY).toISOString(), source: "referrals" as const };
+  const rewarded: Customer = { ...free, rewards: { proForLife } };
+
+  it("never counts Pro for life as revenue", () => {
+    expect(monthlyRevenue(rewarded)).toBe(0);
+    expect(isPaying(rewarded)).toBe(false);
+    expect(hasPro(rewarded)).toBe(true);
+    expect(hasPro(free)).toBe(false);
+
+    const alone = kpis([rewarded], NOW, 30);
+    expect(alone.mrr).toBe(0);
+    expect(alone.paying).toBe(0);
+    expect(alone.conversion).toBe(kpis([free], NOW, 30).conversion);
+    for (const month of mrrByMonth([rewarded], NOW, 12)) expect(month.value).toBe(0);
+    expect(funnel([rewarded]).find((step) => step.key === "paid")?.value).toBe(0);
+
+    // Among every sample customer: MRR, ARR, paying, conversion and the MRR history are exactly
+    // what they are without the reward.
+    const others = samples.filter((customer) => customer.id !== free.id);
+    const without = [...others, free];
+    const withReward = [...others, rewarded];
+    const before = kpis(without, NOW, 30);
+    const after = kpis(withReward, NOW, 30);
+    expect(after.mrr).toBe(before.mrr);
+    expect(after.mrr * 12).toBe(before.mrr * 12);
+    expect(after.paying).toBe(before.paying);
+    expect(after.conversion).toBe(before.conversion);
+    expect(mrrByMonth(withReward, NOW, 12)).toEqual(mrrByMonth(without, NOW, 12));
+    expect(funnel(withReward)).toEqual(funnel(without));
+  });
+
+  it("comes from the team's reward rows, beside the subscription; a removed one gives no Pro", () => {
+    const [merged] = withRewards(
+      [free],
+      [
+        { customerId: free.id, username: free.username, kind: "pro_for_life", source: "referrals", at: proForLife.at, revokedAt: null, counted: 10 },
+        { customerId: "someone-else", username: "x", kind: "verification_review", source: "team", at: proForLife.at, revokedAt: null, counted: 3 },
+      ],
+    );
+    if (!merged) throw new Error("no customer");
+    expect(merged.rewards).toEqual({ proForLife });
+    expect(merged.subscription).toEqual(free.subscription);
+    expect(hasPro(merged)).toBe(true);
+    expect(monthlyRevenue(merged)).toBe(0);
+
+    const removed: Customer = { ...free, rewards: { proForLife: { ...proForLife, revokedAt: new Date(NOW).toISOString() } } };
+    expect(hasPro(removed)).toBe(false);
+    // Paid Pro is Pro as long as it runs; a canceled plan is not.
+    expect(hasPro({ ...free, subscription: { ...free.subscription, plan: "pro", status: "active" } })).toBe(true);
+    expect(hasPro({ ...free, subscription: { ...free.subscription, plan: "pro", status: "canceled" } })).toBe(false);
+  });
+
+  it("one sample customer has it, on the free plan", () => {
+    const holders = samples.filter((customer) => customer.rewards?.proForLife);
+    expect(holders).toHaveLength(1);
+    expect(holders[0]?.subscription.plan).toBe("free");
+    expect(holders[0]?.rewards?.proForLife?.source).toBe("referrals");
   });
 });
 

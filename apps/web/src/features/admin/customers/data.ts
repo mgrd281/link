@@ -6,11 +6,12 @@ import { deviceAccounts, STORAGE_KEY } from "@/features/account/local-store";
 import { accountStore } from "@/features/account/store";
 import type { LoginEvent } from "@/features/account/types";
 import { useNow } from "@/features/directions/poster/live";
+import { useReferralQueue } from "@/features/referrals/team";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { useLiveCustomers } from "../live";
 
-import type { Customer } from "./model";
+import { withRewards, type Customer } from "./model";
 import { useOverrides, type CustomerPatch } from "./overrides";
 import { sampleCustomers } from "./sample";
 
@@ -127,15 +128,19 @@ function useDemoCustomers() {
   const sample = useMemo(() => (minute === null ? [] : sampleCustomers(minute)), [minute]);
   const device = useDeviceCustomers();
   const db = useOverrides();
+  const { queue } = useReferralQueue();
   const customers = useMemo(
     () =>
-      [...device, ...sample]
-        .filter((customer) => !db.patches[customer.id]?.deleted)
-        .map((customer) => ({
-          ...applyPatch(customer, db.patches[customer.id]),
-          notes: db.notes[customer.id] ?? [],
-        })),
-    [device, sample, db],
+      withRewards(
+        [...device, ...sample]
+          .filter((customer) => !db.patches[customer.id]?.deleted)
+          .map((customer) => ({
+            ...applyPatch(customer, db.patches[customer.id]),
+            notes: db.notes[customer.id] ?? [],
+          })),
+        queue.rewards,
+      ),
+    [device, sample, db, queue.rewards],
   );
   return {
     ready: minute !== null,
@@ -149,10 +154,13 @@ function useDemoCustomers() {
 /** Real accounts: the team-only database view; a device counts as signed out once none of its sessions is open. */
 function useLiveCustomerData() {
   const live = useLiveCustomers();
+  const { queue } = useReferralQueue();
+  const customers = useMemo(() => withRewards(live.customers, queue.rewards), [live.customers, queue.rewards]);
   return {
     ...live,
+    customers,
     signedOut: (id: string) => {
-      const customer = live.customers.find((candidate) => candidate.id === id);
+      const customer = customers.find((candidate) => candidate.id === id);
       if (!customer) return [];
       const devices = new Set(customer.logins.filter((login) => login.result === "success").map((login) => login.deviceId));
       return [...devices].filter((device) => !customer.logins.some((login) => login.deviceId === device && login.active));

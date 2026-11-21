@@ -11,6 +11,7 @@ import {
   FilePen,
   FilePlus2,
   FileX2,
+  Gift,
   History,
   Languages,
   LogOut,
@@ -67,13 +68,26 @@ const ICONS: Record<ActivityEvent["action"], LucideIcon> = {
   "customer.delete": Trash2,
   "ip.block": Ban,
   "ip.unblock": ShieldOff,
+  "referral.release": UserPlus,
+  "referral.revoke": UserPlus,
+  "referral.restore": UserPlus,
+  "reward.verification": Gift,
+  "reward.pro": Gift,
+  "reward.revoke": Gift,
+  "reward.restore": Gift,
+  "verification.request": BadgeCheck,
+  "verification.approve": BadgeCheck,
+  "verification.decline": BadgeCheck,
 };
+
+/** About one customer (their account, money or invite program), not a page the team prepares. */
+export const isCustomerEvent = (action: ActivityEvent["action"]) => /^(customer|ip|referral|reward|verification)\./.test(action);
 
 type Filter = "all" | "customers" | "pages" | "team";
 const inFilter = (event: ActivityEvent, filter: Filter) => {
   if (filter === "all") return true;
   if (filter === "team") return event.action.startsWith("team.") || event.action.startsWith("member.");
-  if (filter === "customers") return event.action.startsWith("customer.") || event.action.startsWith("ip.");
+  if (filter === "customers") return isCustomerEvent(event.action);
   return event.action.startsWith("page.") || event.action.startsWith("invite.");
 };
 
