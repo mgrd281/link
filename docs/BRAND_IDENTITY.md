@@ -56,7 +56,7 @@ Not a template marketplace. Not cluttered. Not "techy". Not neon-gradient AI aes
 - **Symbol ("the Linkyo y")**: a Linkyo Teal tile (squircle, like an app icon) with a lowercase "y" cut out of it.
   - The long stroke ends in a soft hook. The short stroke stops just before it, leaving a hairline of teal: the link point where two paths meet.
   - Works at 16 px. Generated from geometry: `packages/tokens/brand/logo.mjs`.
-- **Tones**: brand (teal tile, the y shows the background) and mono (the tile in the surrounding text color: white on teal or photos, creator pages).
+- **Tones**: brand (teal tile, the y shows the background) and mono (the tile in the surrounding text color: white on teal or photos, creator pages, and the black-and-grey creator dashboard, §4.4).
 - **Lockups**: horizontal (tile a little taller than the word, centred beside it), stacked, symbol only (favicon). App icons show the white y on flat teal; the system draws the tile.
 - **Clear space**: a quarter of the tile on all sides.
 - **Minimum size**: symbol 16 px, wordmark 64 px wide.
@@ -84,7 +84,8 @@ All colors are defined as design tokens (CSS variables + Swift `Color` assets). 
 | `teal-800` | #003A40 | Pressed state |
 | `teal-100` | #D9EFF0 | Selected backgrounds, light teal panels (marketing illustrations, Pro card) |
 | `lime-400` (**Spark**) | #D4FF3A | Rare accent: "Live", badges, celebration moments. Max 5 % of any screen. |
-| `gray-50…950` | neutral scale, slight warm tint | Surfaces, borders, secondary text |
+| `gray-50…950` | neutral scale, slight warm tint | **Website only**: marketing surfaces and illustrations. Never in the dashboard |
+| `graphite-50…700` | #F5F5F7 … #47474C, cool neutral at the hue of ink and night (OKLCH 286°, chroma ≤ 0.0083) | The creator dashboard's greys: ground, selected and tinted fills, link hover ([ADR 0062](DECISIONS/0062-black-and-grey-dashboard.md), §4.4) |
 | `success` | #12B76A | Success |
 | `warning` | #E0A800 (text `warning-700` #735500, 6.9:1 on white) | Warnings. Gold, not orange: Linkyo's own interface uses no orange ([ADR 0053](DECISIONS/0053-audit-nov-2026.md)) |
 | `danger` | #F04438 | Destructive, errors |
@@ -101,6 +102,34 @@ The creator's page does **not** use Linkyo colors. It uses a generated theme:
 4. **Theme presets** (starting points, all editable): Midnight, Paper, Studio, Neon Night, Sunset, Forest, Mono, Bold Red, Ocean, Pastel, Concrete, Gold.
 5. **Background options**: solid, soft gradient (2–3 stops, generated from seed), image with auto scrim, video loop (muted, poster frame, respects reduced motion).
 6. Live preview updates in < 50 ms on every change.
+
+### 4.4 Dashboard palette (the creator dashboard is black and grey)
+The creator dashboard (`/app/*`, with its sheets, dialogs, menus, tooltips and toasts) is black and grey ([ADR 0062](DECISIONS/0062-black-and-grey-dashboard.md)). In a neutral room the creator's own colours are the only hue on screen. Teal stays at every door: the website, sign-up and log-in, creator pages, the team area, share pictures, the favicon and the app icons.
+
+The same semantic classes are used everywhere; inside the dashboard 12 roles and `link-hover` resolve to these values (the `console` and `consoleDark` values in `tokens.json`, scoped by `data-console`):
+
+| Role | Light dashboard | Dark dashboard |
+|---|---|---|
+| `canvas-muted` (the ground) | graphite 50 #F5F5F7 | night 50 #0F0F11 |
+| `selected` | graphite 100 #E8E8EB | graphite 50 at 10 % #F5F5F71A |
+| `selected-fg` | ink #0A0A0B | paper #F7F6F2 |
+| `tinted` | graphite 100 #E8E8EB | graphite 50 at 10 % #F5F5F71A |
+| `tinted-hover` | graphite 200 #DCDCDF | graphite 50 at 16 % #F5F5F729 |
+| `tinted-fg` | ink | paper |
+| `primary` | night 200 #1C1C1F | graphite 50 #F5F5F7 |
+| `primary-hover` | night 400 #303035 | graphite 200 #DCDCDF |
+| `primary-pressed` | ink #0A0A0B | graphite 300 #CDCDD1 |
+| `primary-fg` | white | ink |
+| `link` | ink (= body text) | paper (= body text) |
+| `link-hover` | graphite 600 #606065 | graphite 400 #A4A4A9 |
+| `focus` | ink | graphite 50 #F5F5F7 |
+
+Everything else is unchanged: canvas, surfaces and groups, lines, text alphas, success, warning, danger, Spark (still only for "Live"), scrim and skeleton.
+
+- **Links** in the dashboard are body coloured. A link there is a standalone control: bold, with an icon (chevron, arrow, eye or a status glyph), and it hovers to a lighter grey (`hover:text-link-hover`). There are no links inside running text.
+- **Logo**: `tone="mono"` in the dashboard (the sidebar, the loading frame and the welcome flow): tile and wordmark both take the text colour, ink on light and paper on dark. The y cut-out still shows the ground.
+- **Switch**: on, the knob takes `primary-fg` (white on the black track, ink on the white track in dark mode).
+- **Never** use palette (`teal-*`, `gray-*`, `graphite-*`, `night-*` …) or `tint-*` classes in the dashboard: they would not follow the palette. A unit test enforces it.
 
 ---
 

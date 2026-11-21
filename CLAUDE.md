@@ -21,10 +21,15 @@ The project skills in `.claude/skills/linkyo-*` hold the detailed how-tos.
   - Lint fails on any shadow.
 - **Tokens only.** No raw colors, sizes, fonts, z-index or durations in app code. Every value comes from
   `packages/tokens/tokens.json` (skill `linkyo-design-tokens`).
-- **Brand:** Linkyo Teal (`primary`, #00454C) on white pages and cards; teal 50 for soft fills.
+- **Brand:** Linkyo Teal (`primary`, #00454C) on white pages and cards; teal 50 for soft fills, on the website, sign-up,
+  creator pages and the team area. **The creator dashboard (`/app/*`, its sheets, dialogs, menus and toasts) is black and
+  grey** ([ADR 0062](docs/DECISIONS/0062-black-and-grey-dashboard.md)): the same semantic classes resolve to the console
+  palette through `data-console`. Never use palette or `tint-*` classes there. Links there are body-coloured, bold, carry
+  an icon and hover with `hover:text-link-hover`; no links inside running text.
 - **No underlines. Ever.** Links never get a line under them: not by default, not on hover, not on focus
   ([ADR 0041](docs/DECISIONS/0041-no-underlines.md)). A link is marked by color (`text-link`) and weight
-  (`font-semibold`), and changes color on hover (`hover:text-fg`; creator pages `hover:text-creator-fg`).
+  (`font-semibold`), and changes color on hover (`hover:text-fg`; in the dashboard `hover:text-link-hover`; creator pages
+  `hover:text-creator-fg`).
   Keyboard focus shows the focus ring. Lint fails on `underline`, `underline-offset-*` and `decoration-*`.
   A struck-through old price (`line-through`) is fine.
 - **Sticky bars sit flush under the header** (`top-16`; the header is `h-16`) on a solid background. No gap for content
