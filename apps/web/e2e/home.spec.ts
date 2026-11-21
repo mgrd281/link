@@ -320,6 +320,22 @@ test.describe("marketing home", () => {
     await expect(playground.getByRole("button", { name: "Watch again" })).toBeVisible();
   });
 
+  test("sharing shows the real thing: the page's own link preview in a chat, and its story picture", async ({ page }) => {
+    const tile = page.locator("article").filter({ has: page.getByRole("heading", { level: 3, name: "Share like a pro" }) });
+    await tile.scrollIntoViewIfNeeded();
+    // The very card a messenger fetches for the example page, in the visitor's language.
+    const card = tile.locator("img");
+    await expect(card).toHaveCount(1);
+    await expect(card).toHaveAttribute("src", /\/en\/p\/journalist\/opengraph-image/);
+    await expect.poll(() => card.evaluate((image: HTMLImageElement) => image.naturalWidth), { timeout: 15_000 }).toBe(1200);
+    // Under it, the words the messengers print: the page's name first.
+    await expect(tile).toContainText("Lea Hartmann · Example page for Journalist");
+    // The story picture, drawn by the dashboard's own code once it comes near the screen.
+    const story = tile.locator("canvas");
+    await expect(story).toHaveCount(1);
+    await expect(story).toHaveAttribute("data-drawn", "", { timeout: 15_000 });
+  });
+
   test("step 4: sample figures for everyone, counted up for the eye", async ({ page }) => {
     const figures = page.locator("#analytics dd .sr-only");
     await expect(figures).toHaveText(["12,480", "3,912", "31%"]);

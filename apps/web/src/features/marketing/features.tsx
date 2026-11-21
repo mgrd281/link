@@ -1,17 +1,20 @@
-import { creatorTokens } from "@linkyo/tokens";
+import type { Page } from "@linkyo/blocks";
+import { creatorTokens, tokens } from "@linkyo/tokens";
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Badge, cn, Icon } from "@linkyo/ui";
-import { Check, Link2, Sparkles } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
-import { EXAMPLES } from "@/features/examples/catalog";
+import { initials } from "@/features/directions/shared/creator-kit";
+import { resolveMedia } from "@/features/directions/shared/media";
+import { LOOKS } from "@/features/examples/looks";
+import { journalistAr, journalistDe, journalistEn } from "@/features/previews/journalist";
 
-import { phoneSizes } from "./assets";
 import { CountUp } from "./count-up";
-import { EXAMPLE_SHOTS, type ExampleShot } from "./examples";
 import { Playground, type LookOption } from "./playground";
+import { StoryPicture, type StoryArt } from "./story-picture";
 import { TRY_LOOKS } from "./try-looks";
 
 const SW = creatorTokens.swatches;
@@ -57,36 +60,90 @@ function Tile({
 }
 
 /**
- * Sharing: the page's link preview as it lands in a chat, upright, with the story picture in the
- * page's look leaning behind it.
+ * The example page the sharing tile shows: Lea Hartmann, the journalist. She is the one example with
+ * a page in all three languages, so the tile shows the real card and picture in de, en and ar.
+ */
+const SHARED: Partial<Record<string, Page>> = { de: journalistDe, en: journalistEn, ar: journalistAr };
+const SHARED_SLUG = "journalist";
+const SHARED_ADDRESS = `linkyo.app/${SHARED_SLUG}`;
+/** The link preview's pixel size: the cards are made at exactly the og aspect (1200 / 630). */
+const [OG_WIDTH = 0, OG_HEIGHT = 0] = tokens.aspect.og.split("/").map(Number);
+
+/**
+ * Sharing: what a friend sees when the page is sent to them, and what goes into a story. The chat
+ * holds the page's real link preview (the very image WhatsApp and iMessage fetch, in the visitor's
+ * language) under the words the messengers print (the page's title and line). With it, the real
+ * story picture, drawn by the dashboard's own code. The bubbles are Linkyo's colors, not any
+ * messenger's, and they mirror in Arabic (the reply on the left).
  */
 function SharePreview() {
   const t = useTranslations("marketing.features.share");
-  const slug: ExampleShot = "mara-vale";
-  const page = EXAMPLES[slug];
+  const tPreview = useTranslations("preview");
+  const tKinds = useTranslations("app.welcome.kinds");
+  const locale = useLocale();
+  const rtl = locale === "ar";
+  const { profile } = SHARED[locale] ?? journalistEn;
+  const name = profile.displayName;
+  // The same words as the page's og:title and og:description (app/[locale]/p/[slug]/page.tsx).
+  const title = tPreview("ogTitle.sample", { name, kind: tKinds("journalist.label") });
+  const description = profile.tagline ?? profile.bio;
+  // The page's own look (the gallery's "journalist" look, the same one its preview entry names).
+  const theme = resolveCreatorTheme(LOOKS.journalist.theme, { rtlScript: rtl });
+  const { palette } = theme;
+  // The same photo the dashboard's picture uses: the hero, else the avatar.
+  const source = profile.hero ?? profile.avatar;
+  const media = resolveMedia(source.src);
+  const art: StoryArt = {
+    name,
+    line: description,
+    address: SHARED_ADDRESS,
+    focal: source.focal,
+    colors: { bg: palette.bg, fg: palette.fg, muted: palette.fgMuted, accent: palette.accent, accentFg: palette.accentFg, surface: palette.surface2 },
+    upper: Boolean((theme.pairing.display as { uppercase?: boolean }).uppercase),
+    rtl,
+    grey: theme.layout.hero === "mono",
+    initials: initials(name),
+  };
   return (
-    <div className="relative mx-auto grid w-full max-w-preview grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-end gap-3 pt-2">
-      <div className="mk-pop grid gap-2">
+    // Phones: the chat, then the story picture under it. From tablets up the tile's picture column is
+    // only about 290px wide, too narrow for both side by side (the address would be cut off), so
+    // this wrapper steps aside (contents) and the tile's own two-column grid places them: the chat
+    // in the picture column over both rows, the story picture under the title and text.
+    <div className="mx-auto grid w-full max-w-preview gap-4 md:contents">
+      <div className="grid gap-2 md:row-span-2">
         <span className="justify-self-start rounded-full bg-surface px-2 py-0.5 text-caption font-semibold text-fg-secondary">{t("preview")}</span>
-        <div className="overflow-hidden rounded-xl rounded-ee-xs border border-line bg-surface-elevated">
-          <div className="relative aspect-og">
-            <Image src={EXAMPLE_SHOTS[slug]} alt="" fill sizes={phoneSizes.side} placeholder="blur" className="object-cover object-[50%_18%]" />
-          </div>
-          <div className="grid gap-0.5 p-3" dir="ltr">
-            <p className="truncate text-small font-semibold">{page?.profile.displayName}</p>
-            <p className="truncate text-caption text-fg-secondary">{page?.profile.tagline ?? page?.profile.bio}</p>
-            <p className="flex items-center gap-1 text-caption text-fg-tertiary">
-              <Icon icon={Link2} size="sm" />
-              linkyo.app/{slug}
-            </p>
+        <p className="me-10 justify-self-start rounded-xl rounded-es-xs border border-line bg-surface px-3 py-2 text-small">{t("chatIn")}</p>
+        <div className="mk-pop w-5/6 justify-self-end overflow-hidden rounded-xl rounded-ee-xs bg-primary text-primary-fg">
+          <p className="px-3 pt-2 text-small">
+            {t("chatOut")}{" "}
+            <span dir="ltr" className="font-semibold">
+              {SHARED_ADDRESS}
+            </span>
+          </p>
+          {/* The card as a messenger shows it: a picture, then the page's own words. Not a link here. */}
+          <div className="m-1 overflow-hidden rounded-lg bg-surface text-fg">
+            {/* The real link preview of the page (same origin, so nothing is loaded from elsewhere). */}
+            <Image src={`/${locale}/p/${SHARED_SLUG}/opengraph-image`} width={OG_WIDTH} height={OG_HEIGHT} unoptimized alt="" className="aspect-og w-full object-cover" />
+            <div className="grid gap-0.5 p-3">
+              <p dir="auto" className="truncate text-small font-semibold">
+                {title}
+              </p>
+              <p dir="auto" className="line-clamp-2 text-caption text-fg-secondary">
+                {description}
+              </p>
+              {/* Lines up with the words above it in either direction; the domain itself reads left to right. */}
+              <p className="text-caption text-fg-tertiary">
+                <span dir="ltr">linkyo.app</span>
+              </p>
+            </div>
           </div>
         </div>
+        <p className="justify-self-end text-caption text-fg-tertiary">{t("today")}</p>
       </div>
-      <div className="mk-fan grid gap-2 rotate-3 rtl:-rotate-3">
+      {/* Upright and whole: the picture as it is posted. It arrives just after the chat bubble. */}
+      <div className="mk-pop grid w-1/2 gap-2 justify-self-center md:justify-self-start" style={{ "--i": 1 } as CSSProperties}>
         <span className="justify-self-start rounded-full bg-surface px-2 py-0.5 text-caption font-semibold text-fg-secondary">{t("story")}</span>
-        <div className="relative aspect-short overflow-hidden rounded-lg border border-line">
-          <Image src={EXAMPLE_SHOTS[slug]} alt="" fill sizes={phoneSizes.side} placeholder="blur" className="object-cover object-top" />
-        </div>
+        <StoryPicture art={art} photo={typeof media === "string" ? media : media.src} faces={theme.cssVars} />
       </div>
     </div>
   );
