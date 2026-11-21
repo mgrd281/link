@@ -165,6 +165,57 @@ test("suspended accounts and blocked addresses cannot sign in", async ({ page })
   await admin().from("blocked_ips").delete().eq("ip", "127.0.0.1");
 });
 
+test("the page address changes only after a confirm that names the old one, and the server has it", async ({ page }) => {
+  const account = await profileOf(email);
+  const usernameOf = async () => (await admin().from("profiles").select("username").eq("id", account?.id ?? "").single()).data?.username;
+  await logIn(page, email);
+  await page.waitForURL("**/de/app");
+  await page.goto("/de/app/settings/address");
+  const field = page.getByLabel("Adresse", { exact: true });
+  // Typed as words, written as an address.
+  await field.fill(`${name} Neu`);
+  await expect(field).toHaveValue(`${name}-neu`);
+  await page.getByRole("button", { name: "Adresse ändern" }).click();
+  const dialog = page.getByRole("alertdialog", { name: "Adresse ändern?" });
+  await expect(dialog).toContainText(`linkyo.app/${name} funktioniert danach nicht mehr`);
+  await dialog.getByRole("button", { name: "Adresse ändern" }).click();
+  await expect(page.getByText(`Deine Seite ist jetzt unter linkyo.app/${name}-neu`).first()).toBeVisible();
+  await expect.poll(usernameOf).toBe(`${name}-neu`);
+
+  // And back, so the tests after this one find the account under its first address.
+  await field.fill(name);
+  await page.getByRole("button", { name: "Adresse ändern" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Adresse ändern" }).click();
+  await expect.poll(usernameOf).toBe(name);
+});
+
+test("a new email asks first, then waits for the link: signing in keeps the old one until then", async ({ page }) => {
+  const next = `next-${name}@example.com`;
+  await clearMail(page, next);
+  await logIn(page, email);
+  await page.waitForURL("**/de/app");
+  await page.goto("/de/app/settings/account");
+  const field = page.getByLabel("E-Mail", { exact: true });
+  await expect(field).toHaveValue(email);
+  await field.fill(next);
+  await page.getByRole("button", { name: "E-Mail ändern" }).click();
+  const dialog = page.getByRole("alertdialog", { name: "E-Mail ändern?" });
+  await expect(dialog).toContainText(next);
+  await dialog.getByRole("button", { name: "E-Mail ändern" }).click();
+  // The address sits in direction marks, so it reads correctly inside Arabic text too.
+  await expect(page.getByRole("status").filter({ hasText: next })).toContainText("Bestätigung ausstehend");
+  // The field shows the address that still signs in.
+  await expect(field).toHaveValue(email);
+  // The confirm link went to the new address (a link only, no sign-in code); the account keeps the old one.
+  await expect
+    .poll(async () => {
+      const search = await page.request.get(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${next}"`)}`);
+      return ((await search.json()) as { messages: MailSummary[] }).messages.length;
+    })
+    .toBeGreaterThan(0);
+  expect(await profileOf(email)).not.toBeNull();
+});
+
 test("deleting the account removes it from the server", async ({ page }) => {
   await logIn(page, email);
   await page.waitForURL("**/de/app");
@@ -179,6 +230,8 @@ test("deleting the account removes it from the server", async ({ page }) => {
 const stamp = Date.now().toString(36);
 const customerName = `cust-${stamp}`;
 const customerEmail = `${customerName}@example.com`;
+/** A new page's name is a first guess from its address: "cust-…" shows as "Cust …". */
+const customerShown = `Cust ${stamp.charAt(0).toUpperCase()}${stamp.slice(1)}`;
 const ownerEmail = `boss-${stamp}@example.com`;
 
 /** A confirmed account made directly in the database (the sign-up flow is covered above). */
@@ -217,7 +270,7 @@ test("the owner finds a customer, suspends them, writes a note and blocks an add
   await page.goto("/en/admin/customers");
   await page.getByLabel("Search").fill(customerName);
   await page.locator("main a[href*='/admin/customers/']").locator("visible=true").first().click();
-  await expect(page.getByRole("heading", { level: 1, name: customerName })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: customerShown })).toBeVisible();
   const customerId = (await profileOf(customerEmail))?.id ?? "";
 
   await page.getByRole("button", { name: "Actions" }).click();
@@ -233,7 +286,7 @@ test("the owner finds a customer, suspends them, writes a note and blocks an add
 
   // The customer's sign-in from the first test is in the security log, with its address.
   await page.goto("/en/admin/security");
-  const row = page.getByRole("row").filter({ hasText: customerName }).first();
+  const row = page.getByRole("row").filter({ hasText: customerShown }).first();
   await expect(row).toContainText("127.0.0.1");
   await row.getByRole("button", { name: "Block 127.0.0.1" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Block", exact: true }).click();
