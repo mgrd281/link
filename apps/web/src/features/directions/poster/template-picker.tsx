@@ -7,7 +7,7 @@ import { cn, Icon } from "@linkyo/ui";
 import { Check } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
 
@@ -29,15 +29,20 @@ const PICTURE: Partial<Record<HeroStyle, string>> = {
  * Template picker: eleven looks, each previewed with the creator's own photo and name in that
  * template's real colors and fonts (resolved by the theme engine, so every swatch is AA).
  * Native radio inputs: arrow keys move between templates, screen readers announce the choice.
+ * `still` (the dashboard's Design screen) stops the thumbnails' ambient loops, so nothing moves while
+ * the creator compares looks (the live preview shows the real motion), and keeps the phone's single
+ * scrolling row at every width.
  */
 export function TemplatePicker({
   value,
   profile,
   onChange,
+  still = false,
 }: {
   value: CreatorTemplateId | undefined;
   profile: Page["profile"];
   onChange: (template: CreatorTemplateId) => void;
+  still?: boolean;
 }) {
   const t = useTranslations("dashboard");
   const tTemplates = useTranslations("templates");
@@ -45,12 +50,26 @@ export function TemplatePicker({
   const themes = useMemo(() => TEMPLATE_IDS.map((id) => ({ id, theme: resolveCreatorTheme({ template: id }, { rtlScript }) })), [rtlScript]);
   const photo = hasImage(profile.avatar) ? profile.avatar : hasImage(profile.hero) ? profile.hero : null;
   const avatar = photo ? resolveMedia(photo.src) : null;
+  const row = useRef<HTMLDivElement>(null);
+  // A still picker is one row at every width, so the screen around it stays short. The chosen look is
+  // brought into the row's view once, before the first paint, without moving the page. scrollBy is
+  // relative, so this works the same in both reading directions.
+  useLayoutEffect(() => {
+    const box = row.current;
+    const chosen = still ? box?.querySelector("input:checked")?.closest("label") : null;
+    if (!box || !chosen) return;
+    const outer = box.getBoundingClientRect();
+    const card = chosen.getBoundingClientRect();
+    if (card.left >= outer.left && card.right <= outer.right) return;
+    box.scrollBy({ left: card.left + card.width / 2 - (outer.left + outer.width / 2) });
+  }, [still]);
 
   return (
-    <fieldset className="grid min-w-0 gap-3">
+    <fieldset data-still={still ? "" : undefined} className="grid min-w-0 gap-3">
       <legend className="sr-only">{t("template")}</legend>
-      <div className="-mx-5 overflow-x-auto px-5 pb-1 lg:mx-0 lg:overflow-visible lg:px-0">
-        <div className="grid auto-cols-[42%] grid-flow-col gap-3 sm:auto-cols-[28%] lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3">
+      {/* Still: the row runs to the edges of the dashboard panel around it (its p-4, lg:p-6), never past them. */}
+      <div ref={row} className={cn("overflow-x-auto pb-1", still ? "-mx-4 px-4 lg:-mx-6 lg:px-6" : "-mx-5 px-5 lg:mx-0 lg:overflow-visible lg:px-0")}>
+        <div className={cn("grid auto-cols-[42%] grid-flow-col gap-3 sm:auto-cols-[28%]", !still && "lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3")}>
           {themes.map(({ id, theme }) => {
             const selected = id === value;
             return (
