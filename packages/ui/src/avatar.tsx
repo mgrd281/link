@@ -1,3 +1,6 @@
+import { UserRound } from "lucide-react";
+
+import { Icon, type IconSize } from "./icon";
 import { cn } from "./lib/cn";
 
 const sizes = {
@@ -7,20 +10,40 @@ const sizes = {
   xl: "size-avatar-xl text-h2",
 } as const;
 
+/** The person glyph shown when a name has no letter to take initials from ("1", "🎧"). */
+const glyphSizes: Record<keyof typeof sizes, IconSize> = { sm: "sm", md: "md", lg: "lg", xl: "lg" };
+
 /** Arabic, Arabic Supplement and Arabic Extended-A. */
 const ARABIC = /[؀-ۿݐ-ݿࢠ-ࣿ]/;
+const LETTER = /^\p{L}/u;
+
+let segmenter: Intl.Segmenter | null | undefined;
+
+/** The first user-perceived character of a word: "É" even when written as E + a combining accent. */
+function firstGrapheme(word: string): string {
+  segmenter ??= typeof Intl.Segmenter === "function" ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : null;
+  if (!segmenter) return Array.from(word)[0] ?? "";
+  for (const { segment } of segmenter.segment(word)) return segment;
+  return "";
+}
 
 /**
- * Up to two initials. An Arabic name gets one letter: Arabic letters join, so two initials side by
- * side read as a word ("سلمى رحّال" would show "سر", which means "secret").
+ * Up to two initials, from the first two words that start with a letter; numbers, emoji and symbols
+ * are skipped, and a name without a letter has none (""), so the avatar shows a person glyph instead.
+ * An Arabic name gets one letter: Arabic letters join, so two initials side by side read as a word
+ * ("سلمى رحّال" would show "سر", which means "secret").
  */
 export function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.charAt(0) ?? "";
+  const letters = name
+    .trim()
+    .split(/\s+/)
+    .map(firstGrapheme)
+    .filter((first) => LETTER.test(first));
+  const first = letters[0] ?? "";
   if (ARABIC.test(first)) return first;
-  return parts
+  return letters
     .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
+    .map((letter) => letter.toUpperCase())
     .join("");
 }
 
@@ -31,7 +54,7 @@ export interface AvatarProps {
   className?: string | undefined;
 }
 
-/** Image avatar with initials fallback. Decorative when next to the visible name. */
+/** Image avatar with initials fallback (or a person glyph). Decorative when next to the visible name. */
 export function Avatar({ name, src, size = "md", className }: AvatarProps) {
   const initials = initialsOf(name);
   return (
@@ -42,7 +65,13 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
         className,
       )}
     >
-      {src ? <img src={src} alt="" referrerPolicy="no-referrer" className="size-full object-cover" /> : <span aria-hidden>{initials}</span>}
+      {src ? (
+        <img src={src} alt="" referrerPolicy="no-referrer" className="size-full object-cover" />
+      ) : initials ? (
+        <span aria-hidden>{initials}</span>
+      ) : (
+        <Icon icon={UserRound} size={glyphSizes[size]} />
+      )}
     </span>
   );
 }

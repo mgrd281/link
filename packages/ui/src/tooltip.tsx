@@ -37,7 +37,12 @@ export function Tooltip({ content, children, side = "top", shortcut }: TooltipPr
           )}
         >
           {content}
-          {shortcut ? <kbd className="font-sans text-caption opacity-secondary">{shortcut}</kbd> : null}
+          {/* Shortcuts read left to right in every language ("⌥↑", not "↑⌥" in Arabic). */}
+          {shortcut ? (
+            <kbd dir="ltr" className="font-sans text-caption opacity-secondary">
+              {shortcut}
+            </kbd>
+          ) : null}
         </T.Content>
       </T.Portal>
     </T.Root>

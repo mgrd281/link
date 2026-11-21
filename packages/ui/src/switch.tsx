@@ -27,7 +27,7 @@ export function Switch({ className, label, ...props }: SwitchProps) {
     >
       <S.Thumb
         className={cn(
-          "pointer-events-none block size-5 translate-x-0.5 rounded-full border border-line bg-surface-elevated",
+          "pointer-events-none block size-5 translate-x-0.5 rounded-full border border-line bg-control-knob",
           "transition-transform duration-standard ease-standard",
           "data-[state=checked]:translate-x-4 rtl:-translate-x-0.5 rtl:data-[state=checked]:-translate-x-4",
         )}

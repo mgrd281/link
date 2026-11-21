@@ -6,7 +6,7 @@ export function Spinner({ className, label }: { className?: string | undefined; 
     <svg
       viewBox="0 0 24 24"
       fill="none"
-      className={cn("size-icon-sm shrink-0 animate-spin motion-reduce:animate-pulse", className)}
+      className={cn("size-icon-sm shrink-0 animate-spin motion-reduce:animate-none", className)}
       role={label ? "status" : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}

@@ -52,6 +52,8 @@ export function Segmented<T extends string>({ value, onValueChange, options, lab
             // The input-strength border gives the selected segment 3:1 against the track (WCAG 1.4.11):
             // a white pill on the pale track alone is barely visible.
             "data-[state=on]:border-line-input data-[state=on]:bg-surface-elevated data-[state=on]:text-fg",
+            // Forced colours flatten fills and borders to one system colour: an outline keeps the choice visible.
+            "forced-colors:data-[state=on]:outline",
             size === "sm" ? "text-caption" : "text-small",
             option.iconOnly && "px-2",
           )}

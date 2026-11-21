@@ -16,11 +16,14 @@ export const buttonVariants = cva(
     "focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none",
     "disabled:pointer-events-none disabled:opacity-disabled aria-disabled:pointer-events-none aria-disabled:opacity-disabled",
     "data-loading:pointer-events-none",
+    // Forced colours (Windows High Contrast) draw a transparent border in the system colour, so a
+    // filled button keeps a visible edge there; normal rendering does not change.
+    "forced-colors:border forced-colors:border-transparent",
   ],
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-fg hover:-translate-y-0.5 hover:bg-primary-hover active:translate-y-0 active:bg-primary-pressed motion-reduce:hover:translate-y-0",
+        primary: "bg-primary text-primary-fg hover:bg-primary-hover active:bg-primary-pressed",
         secondary:
           "border border-line-strong bg-surface text-fg hover:bg-surface-elevated hover:border-line-input active:bg-pressed",
         /** The quiet partner of a primary action (as on iOS): a soft teal fill, never an outline. */
@@ -31,7 +34,8 @@ export const buttonVariants = cva(
         "destructive-solid": "bg-danger-fill text-danger-fill-fg hover:bg-danger-strong active:bg-danger-strong",
       },
       size: {
-        sm: "h-control-sm px-3 text-small",
+        /** 32 px to see, a 48 px tall target on touch screens (the hit area grows past the edges). */
+        sm: "h-control-sm rounded-sm px-3 text-small before:absolute before:inset-x-0 before:-inset-y-2 pointer-fine:before:hidden",
         md: "h-control-md px-4 text-small",
         lg: "h-control-lg px-5 text-body",
         xl: "h-control-xl px-6 text-body",
@@ -40,6 +44,10 @@ export const buttonVariants = cva(
       },
       block: { true: "w-full" },
     },
+    compoundVariants: [
+      // Only the website's lone call to action lifts on hover; buttons inside the product stay put.
+      { variant: "primary", size: "cta", class: "hover:-translate-y-0.5 active:translate-y-0 motion-reduce:hover:translate-y-0" },
+    ],
     defaultVariants: { variant: "secondary", size: "md" },
   },
 );

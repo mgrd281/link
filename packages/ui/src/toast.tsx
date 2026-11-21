@@ -17,7 +17,12 @@ export interface ToastInput {
 }
 interface ToastItem extends ToastInput {
   id: number;
+  /** False once dismissed: the toast fades out, then the item is purged. */
+  open: boolean;
 }
+
+/** How long a dismissed toast stays in the list: longer than its fade-out, so the fade is never cut. */
+const PURGE_AFTER = 1000;
 
 let items: ToastItem[] = [];
 let nextId = 1;
@@ -29,15 +34,27 @@ const emit = () => {
 /** Show a toast. Returns a function that dismisses it. */
 export function toast(input: ToastInput): () => void {
   const id = nextId++;
-  items = [...items.slice(-2), { ...input, id }];
+  // At most three on screen: the two newest open ones and this one. Closing ones finish their fade.
+  const keep = new Set(
+    items
+      .filter((item) => item.open)
+      .slice(-2)
+      .map((item) => item.id),
+  );
+  items = [...items.filter((item) => !item.open || keep.has(item.id)), { ...input, id, open: true }];
   emit();
   return () => {
     dismiss(id);
   };
 }
 function dismiss(id: number) {
-  items = items.filter((item) => item.id !== id);
+  if (!items.some((item) => item.id === id && item.open)) return;
+  items = items.map((item) => (item.id === id ? { ...item, open: false } : item));
   emit();
+  setTimeout(() => {
+    items = items.filter((item) => item.id !== id);
+    emit();
+  }, PURGE_AFTER);
 }
 const subscribe = (listener: () => void) => {
   listeners.add(listener);
@@ -51,6 +68,10 @@ const serverSnapshot = () => NONE;
 /**
  * `regionLabel` names the notification landmark for screen readers, in the page's language; "{hotkey}"
  * stands for the shortcut that jumps there (F8).
+ *
+ * The toasts sit over the content column: `--toast-start` and `--toast-end` (set in the app's
+ * stylesheet) keep them clear of the dashboard's sidebar and live preview, and they are centred in the
+ * space left, at most a prose column wide. `--toast-offset` lifts them above a bottom tab bar.
  */
 export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regionLabel?: string }) {
   const list = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
@@ -59,12 +80,14 @@ export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regio
       {list.map((item) => (
         <T.Root
           key={item.id}
+          open={item.open}
           onOpenChange={(open) => {
             if (!open) dismiss(item.id);
           }}
           className={cn(
             "pointer-events-auto flex w-full items-center gap-3 rounded-md bg-fg py-2 ps-4 pe-2 text-fg-inverse",
-            "motion-safe:animate-rise-in data-[swipe=move]:translate-y-(--radix-toast-swipe-move-y) data-[swipe=end]:hidden",
+            "motion-safe:animate-rise-in data-[state=closed]:motion-safe:animate-fade-out",
+            "data-[swipe=move]:translate-y-(--radix-toast-swipe-move-y) data-[swipe=end]:hidden",
           )}
         >
           {item.tone && item.tone !== "neutral" ? (
@@ -99,7 +122,10 @@ export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regio
           </T.Close>
         </T.Root>
       ))}
-      <T.Viewport {...(regionLabel ? { label: regionLabel } : {})} className="layer-toast fixed inset-x-0 bottom-(--toast-offset) mx-auto flex w-full max-w-prose flex-col gap-2 p-4 pb-[max(var(--spacing-4),var(--toast-inset,env(safe-area-inset-bottom)))] outline-none" />
+      <T.Viewport
+        {...(regionLabel ? { label: regionLabel } : {})}
+        className="layer-toast fixed start-(--toast-start) end-(--toast-end) bottom-(--toast-offset) mx-auto flex max-w-prose flex-col gap-2 p-4 pb-[max(var(--spacing-4),var(--toast-inset,env(safe-area-inset-bottom)))] outline-none"
+      />
     </T.Provider>
   );
 }
