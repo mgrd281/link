@@ -35,6 +35,7 @@ import {
   Images,
   Inbox,
   LayoutGrid,
+  LetterText,
   Link2,
   Mail,
   Minus,
@@ -59,7 +60,8 @@ export const blockIcon: Record<BlockType, LucideIcon> = {
   link: Link2,
   card: PanelsTopLeft,
   header: Heading,
-  text: FileText,
+  // Not FileText: that one stands for documents (PDF links, the media kit).
+  text: LetterText,
   divider: Minus,
   socials: AtSign,
   image: ImageIcon,
@@ -172,12 +174,14 @@ export function SortableBlocks({
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={onDragEnd}
+      // dnd-kit's own instructions and messages are English; these follow the page's language.
       accessibility={{
+        screenReaderInstructions: { draggable: t("dragInstructions") },
         announcements: {
           onDragStart: ({ active }) => nameOf(active.id),
           onDragOver: ({ active, over }) => (over ? t("reorderAnnounce", { title: nameOf(active.id), position: position(over.id) }) : ""),
           onDragEnd: ({ active, over }) => (over ? t("reorderAnnounce", { title: nameOf(active.id), position: position(over.id) }) : ""),
-          onDragCancel: () => "",
+          onDragCancel: ({ active }) => t("reorderCancel", { title: nameOf(active.id) }),
         },
       }}
     >
@@ -190,7 +194,9 @@ export function SortableBlocks({
 
 /** Sortable item: returns props for the row and its drag handle (lift 1.03 + e3 while dragging). */
 export function useSortableRow(id: string) {
-  const sortable = useSortable({ id });
+  const t = useTranslations("dashboard");
+  // The handle's role is read out ("sortable"), so it is translated like everything else.
+  const sortable = useSortable({ id, attributes: { roleDescription: t("sortableRole") } });
   const style: CSSProperties = {
     transform: CSS.Translate.toString(sortable.transform),
     transition: sortable.transition,
