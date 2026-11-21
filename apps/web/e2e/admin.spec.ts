@@ -252,7 +252,7 @@ test.describe("customer console", () => {
     await page.goto("/en/app/welcome");
     await page.getByRole("button", { name: "Skip for now" }).click();
     await page.waitForURL("**/en/app");
-    await page.goto("/en/app/settings");
+    await page.goto("/en/app/settings/account");
     await expect(page.getByRole("heading", { name: "Recent sign-ins" })).toBeVisible();
     await expect(page.getByText("This device").first()).toBeVisible();
   });

@@ -94,7 +94,7 @@ test("sign up with the code from the email, build the page; it is saved on the s
 
   await page.getByRole("button", { name: "Später" }).click();
   await page.waitForURL("**/de/app");
-  await page.goto("/de/app/settings");
+  await page.goto("/de/app/settings/legal");
   await page.getByLabel("Vollständiger Name oder Firma").fill("Rea Lund");
   await page.getByRole("button", { name: "Impressum speichern" }).click();
   await expect(page.getByText("Impressum gespeichert").first()).toBeVisible();
@@ -123,7 +123,7 @@ test("a wrong code is logged as failed; the right one signs in and is logged wit
   expect(log.slice(0, 2).map((entry) => entry.result)).toEqual(["success", "failed"]);
   expect(log[0]?.device_id).toMatch(/^dev_/);
   // The owner sees their own sign-ins.
-  await page.goto("/de/app/settings");
+  await page.goto("/de/app/settings/account");
   await expect(page.getByRole("heading", { name: "Letzte Anmeldungen" })).toBeVisible();
   await expect(page.getByText("Dieses Gerät").first()).toBeVisible();
 });
@@ -168,7 +168,7 @@ test("suspended accounts and blocked addresses cannot sign in", async ({ page })
 test("deleting the account removes it from the server", async ({ page }) => {
   await logIn(page, email);
   await page.waitForURL("**/de/app");
-  await page.goto("/de/app/settings");
+  await page.goto("/de/app/settings/account");
   await page.getByRole("button", { name: "Konto löschen" }).first().click();
   await page.getByLabel(`Gib ${name} zur Bestätigung ein`).fill(name);
   await page.getByRole("button", { name: "Endgültig löschen" }).click();

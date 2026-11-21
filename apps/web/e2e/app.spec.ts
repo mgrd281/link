@@ -261,12 +261,16 @@ test.describe("dashboard", () => {
       for (let step = 1; step <= 8; step++) await page.mouse.move(box.x + 8, box.y + 4 + (distance * step) / 8);
       await page.mouse.up();
     };
+    // Pull only once the sheet has come to rest: a pull during the slide-in measures a moving title.
+    const settled = () => expect.poll(() => sheet.evaluate((element) => element.getAnimations({ subtree: true }).filter((a) => a.playState === "running").length)).toBe(0);
     await addButton(page).click();
     await expect(sheet).toBeVisible();
+    await settled();
     // A short pull is not a decision: the sheet springs back and stays open.
     await pull(40);
     await expect(sheet).toBeVisible();
     await expect.poll(() => sheet.evaluate((element) => getComputedStyle(element).translate)).toMatch(/^(none|0px)$/);
+    await settled();
     // Pulled far enough, it slides away and the page is usable again.
     await pull(420);
     await expect(sheet).toBeHidden();
@@ -390,6 +394,8 @@ test.describe("dashboard", () => {
     await page.goto("/en/app/design");
     await page.getByText("Daylight", { exact: true }).click();
     await expect(page.getByText("Daylight applied").first()).toBeVisible();
+    // Button styles sit in the "Buttons" tab of "Customize".
+    await page.getByRole("tab", { name: "Buttons" }).click();
     await page.getByText("Outline", { exact: true }).click();
     await expect(page.getByRole("radio", { name: "Outline" })).toBeChecked();
     await page.getByRole("button", { name: "Reset to template" }).click();
@@ -398,18 +404,25 @@ test.describe("dashboard", () => {
 
   test("settings: address change and legal notice persist", async ({ page }) => {
     const { name } = await signedIn(page);
-    await page.goto("/en/app/settings");
+    // The address has its own pane; changing it is confirmed first, because the old one stops working.
+    await page.goto("/en/app/settings/address");
     const address = page.getByLabel("Address", { exact: true });
     await address.fill(`${name}-studio`);
     await expect(page.getByText(`linkyo.app/${name}-studio is available`)).toBeVisible();
     await page.getByRole("button", { name: "Change address" }).click();
+    const confirm = page.getByRole("alertdialog");
+    await expect(confirm.getByText(`linkyo.app/${name} will stop working`)).toBeVisible();
+    await confirm.getByRole("button", { name: "Change address" }).click();
     await expect(page.getByText(`Your page is now at linkyo.app/${name}-studio`).first()).toBeVisible();
+    await page.goto("/en/app/settings/legal");
     await page.getByLabel("Full name or company").fill("Mila Aurel");
     await page.getByLabel("Address for service").fill("Musterstraße 1, 10115 Berlin");
     await page.getByRole("button", { name: "Save legal notice" }).click();
     await expect(page.getByText("Legal notice saved").first()).toBeVisible();
     await page.reload();
     await expect(page.getByLabel("Full name or company")).toHaveValue("Mila Aurel");
+    // The list shows each setting's current value.
+    await page.goto("/en/app/settings");
     await expect(page.getByText(`linkyo.app/${name}-studio`).filter({ visible: true }).first()).toBeVisible();
   });
 
@@ -429,6 +442,67 @@ test.describe("dashboard", () => {
   });
 });
 
+test.describe("dashboard structure", () => {
+  /** The visible link to a place: the sidebar on wide screens, the tab bar on phones. */
+  const place = (page: Page, name: string) => page.getByRole("link", { name, exact: true }).locator("visible=true").first();
+
+  test("old links into settings land on the new panes", async ({ page }) => {
+    await signedIn(page);
+    await page.goto("/en/app/settings#legal");
+    await page.waitForURL("**/en/app/settings/legal");
+    await expect(page.getByLabel("Full name or company")).toBeVisible();
+  });
+
+  test("Back with the Add sheet open closes the sheet instead of leaving it over another screen", async ({ page }) => {
+    await signedIn(page);
+    await place(page, "Page").click();
+    await page.waitForURL("**/en/app/editor");
+    await addButton(page).click();
+    await expect(page.getByRole("dialog", { name: "Add to your page" })).toBeVisible();
+    await page.goBack();
+    await page.waitForURL(/\/en\/app$/);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    // The live preview beside it holds the creator page's own h1 (inert, so screen readers skip it).
+    await expect(page.getByRole("heading", { level: 1, name: /^Hi\b/ })).toBeVisible();
+  });
+
+  test("the Add sheet's form step goes back to the types and keeps what was typed", async ({ page }) => {
+    await signedIn(page);
+    await page.goto("/en/app/editor");
+    await addButton(page).click();
+    const sheet = page.getByRole("dialog");
+    await sheet.getByRole("textbox", { name: "Paste a link" }).fill("notes for later");
+    await sheet.locator('[data-type="link"]').click();
+    await expect(sheet.getByRole("heading", { name: "Add Link" })).toBeVisible();
+    await sheet.getByRole("button", { name: "Back" }).locator("visible=true").first().click();
+    await expect(sheet.getByRole("textbox", { name: "Paste a link" })).toHaveValue("notes for later");
+  });
+
+  test("the live preview is a picture: a click inside it stays in the dashboard", async ({ page, isMobile }) => {
+    test.skip(isMobile, "the preview column shows from 1200 px");
+    await signedIn(page);
+    await page.goto("/en/app/editor");
+    const preview = page.getByRole("complementary", { name: "Live preview" });
+    const picture = preview.locator("[inert]");
+    await expect(picture).toHaveCount(1);
+    const box = await picture.boundingBox();
+    if (!box) throw new Error("no preview");
+    for (const y of [0.2, 0.5, 0.8]) await page.mouse.click(box.x + box.width / 2, box.y + box.height * y);
+    await expect(page).toHaveURL(/\/en\/app\/editor$/);
+  });
+
+  test("with reduced motion nothing in the dashboard loops", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await signedIn(page);
+    for (const path of ["", "/editor", "/design", "/settings"]) {
+      await page.goto(`/en/app${path}`);
+      await page.locator("#main").waitFor();
+      const loops = await page.evaluate(() => document.getAnimations().filter((animation) => animation.effect?.getComputedTiming().iterations === Infinity).length);
+      expect(loops, `/en/app${path}`).toBe(0);
+    }
+  });
+});
+
 test.describe("accessibility", () => {
   for (const locale of ["en", "ar"] as const) {
     for (const scheme of ["light", "dark"] as const) {
@@ -438,7 +512,7 @@ test.describe("accessibility", () => {
         expect(await axe(page)).toEqual([]);
         await page.getByRole("button", { name: locale === "ar" ? "لاحقًا" : "Skip for now" }).click();
         await page.waitForURL(`**/${locale}/app`);
-        for (const path of ["", "/editor", "/design", "/analytics", "/settings", "/preview"]) {
+        for (const path of ["", "/editor", "/design", "/analytics", "/settings", "/settings/account", "/settings/address", "/settings/legal", "/preview"]) {
           await page.goto(`/${locale}/app${path}`);
           await page.locator("#main, .poster-scope").first().waitFor();
           expect(await axe(page), `/${locale}/app${path}`).toEqual([]);
