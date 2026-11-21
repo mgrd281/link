@@ -27,9 +27,9 @@ function StatTile({ label, value, change, previousLabel }: { label: string; valu
   const locale = useLocale();
   const up = (change ?? 0) >= 0;
   return (
-    <div className="grid min-w-0 content-start gap-1 rounded-lg border border-line bg-surface p-3 max-lg:group-data-[grouped]/app:border-transparent dark:max-lg:group-data-[grouped]/app:bg-surface-elevated">
+    <div className="grid min-w-0 content-start gap-1 rounded-lg border border-line bg-surface p-3 group-data-[grouped]/app:bg-group max-lg:group-data-[grouped]/app:border-transparent">
       <dt className="truncate text-caption text-fg-secondary">{label}</dt>
-      <dd className="text-h3 font-semibold tabular-nums">{value}</dd>
+      <dd className="text-h3 tabular-nums md:text-h2">{value}</dd>
       {change !== null ? (
         <dd className={cn("flex items-center gap-1 text-caption", up ? "text-success-strong" : "text-danger-strong")}>
           {/* The trend leans into the reading direction: up and to the end, also in Arabic. */}
@@ -221,19 +221,19 @@ export function AnalyticsScreen() {
   const prevCtr = stats.previous.views ? stats.previous.clicks / stats.previous.views : 0;
   const regions = useMemo(() => new Intl.DisplayNames([locale], { type: "region" }), [locale]);
   const previousLabel = t("vsPrevious", { days: range });
+  const top = stats.links[0];
 
   return (
     <Screen
       title={t("title")}
       wide
-      lead={
-        <span className="flex flex-wrap items-center gap-2">
-          <Badge size="sm">
-            {t("sample")}
-          </Badge>
-          {t("lead")}
-        </span>
+      // Said once, next to the title: every number on this screen is a sample until the page is live.
+      actions={
+        <Badge size="sm" tone="outline">
+          {t("sample")}
+        </Badge>
       }
+      lead={t("lead")}
     >
       <div className="flex flex-wrap items-center gap-3">
         {/* Full width on phones, like an iOS segmented control; its natural width from sm up. */}
@@ -241,7 +241,7 @@ export function AnalyticsScreen() {
           label={t("range")}
           value={range}
           onValueChange={setRange}
-          className="w-full *:flex-1 sm:w-auto sm:*:flex-none"
+          className="w-full *:flex-1 pointer-coarse:h-control-lg sm:w-auto sm:*:flex-none"
           options={(["7", "30", "90"] as const).map((value) => ({ value, label: t("days", { days: value }) }))}
         />
       </div>
@@ -258,6 +258,9 @@ export function AnalyticsScreen() {
             {previousLabel}
           </p>
         ) : null}
+        {/* The screen's question ("is my page working?") answered in one sentence, before the chart.
+            The title is isolated, so a Latin title in an Arabic sentence (or the other way) keeps its order. */}
+        {top && top.clicks > 0 ? <p className="text-small font-regular text-fg">{t("topInsight", { title: `\u2068${label(top.block)}\u2069` })}</p> : null}
       </div>
 
       <Panel title={t("viewsPerDay")} id="views-chart-title">
@@ -293,7 +296,8 @@ export function AnalyticsScreen() {
         </Panel>
       </div>
 
-      <p className="flex items-start gap-2 rounded-lg bg-canvas-muted p-4 text-small text-fg-secondary">
+      {/* A footnote on the ground, on the column's edge like the lead at the top (a box in the ground's own fill only indented it). */}
+      <p className="flex items-start gap-2 text-small font-regular text-fg-secondary">
         <Icon icon={Info} size="sm" className="mt-0.5 shrink-0" />
         {t("privacy")}
       </p>
