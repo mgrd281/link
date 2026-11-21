@@ -28,9 +28,10 @@ function offsetWithin(element: HTMLElement, scroller: HTMLElement): number {
  * The creator's page, rendered by the real renderer at phone width (container queries do the rest).
  * It is a picture of the page, not a second app: the page inside is inert, so its links, players and
  * headings stay out of the way (no navigating the dashboard away, no second h1). The frame itself
- * can still be scrolled, with the keyboard too; "Open" shows the real page.
+ * can still be scrolled, with the keyboard too. With `hint` (only where an "Open" link sits next to
+ * it), screen readers are told the frame is view only and "Open" shows the real page.
  */
-export function PhonePreview({ className }: { className?: string }) {
+export function PhonePreview({ className, hint = false }: { className?: string; hint?: boolean }) {
   const t = useTranslations("app.preview");
   const { previewPage, doc, editing } = useSite();
   const theme = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: previewPage.profile.locale === "ar" }), [doc.theme, previewPage.profile.locale]);
@@ -72,16 +73,18 @@ export function PhonePreview({ className }: { className?: string }) {
           tabIndex={0}
           role="region"
           aria-label={t("region", { name: previewPage.profile.displayName })}
-          aria-describedby={hintId}
+          aria-describedby={hint ? hintId : undefined}
         >
           <div inert>
             <PosterRenderer page={previewPage} theme={theme} preview />
           </div>
         </div>
       </div>
-      <p id={hintId} className="sr-only">
-        {t("regionHint")}
-      </p>
+      {hint ? (
+        <p id={hintId} className="sr-only">
+          {t("regionHint")}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -114,20 +117,22 @@ export function PreviewAside() {
           <Icon icon={Eye} size="sm" />
         </Link>
       </div>
-      <PhonePreview className="min-h-0 flex-1 max-w-preview-compact xl:max-w-preview" />
+      <PhonePreview hint className="min-h-0 flex-1 max-w-preview-compact xl:max-w-preview" />
     </aside>
   );
 }
 
 /**
  * The team area's column (outside the dashboard shell): extra-wide screens only, as before. Its
- * width includes the padding, so the frame ends inside the window instead of 32 px below it.
+ * width includes the padding, so the frame ends inside the window instead of 32 px below it. Its own
+ * marker (not data-preview-aside, which reserves the column from desk) keeps side panels clear of it.
  */
 export function PlainPreviewAside() {
   const t = useTranslations("app.preview");
   const { previewHref } = useSite();
   return (
     <aside
+      data-plain-preview-aside
       aria-label={t("label")}
       className="sticky top-0 hidden h-dvh w-[calc(var(--container-preview)+var(--spacing-8))] shrink-0 flex-col gap-3 border-s border-line bg-canvas-muted p-4 xl:flex"
     >
@@ -138,7 +143,7 @@ export function PlainPreviewAside() {
           <Icon icon={Eye} size="sm" />
         </Link>
       </div>
-      <PhonePreview className="min-h-0 flex-1" />
+      <PhonePreview hint className="min-h-0 flex-1" />
     </aside>
   );
 }

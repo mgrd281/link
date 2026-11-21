@@ -13,6 +13,7 @@ import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { addGroups, blankBlock, blockFromLink, insertAt, newBlockId } from "./blocks";
 import { ImageError, pickFiles, prepareImage } from "./images";
 import { PreviewButton } from "./preview";
+import { useShellChrome } from "./screen";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
 
@@ -32,6 +33,7 @@ export function AddSheet() {
   const tTypes = useTranslations("dashboard.types");
   const tFields = useTranslations("app.fields");
   const { addOpen, setAddOpen, addIndex, addBlocks, edit, editing, doc, site } = useSite();
+  const inShell = useShellChrome();
   const inputId = useId();
   const [value, setValue] = useState("");
   const [error, setError] = useState(false);
@@ -49,6 +51,8 @@ export function AddSheet() {
   const step = addOpen ? current : shown;
   const editor = useBlockEditor({ source: step?.block ?? null, creating: true, index: step?.index });
   const [discard, setDiscard] = useState<"back" | "close" | null>(null);
+  // The sheet can close without asking (Back to another screen closes it): its question goes with it.
+  if (!addOpen && discard !== null) setDiscard(null);
 
   const close = () => {
     // Also forgets the place chosen with "Add below".
@@ -136,7 +140,8 @@ export function AddSheet() {
         closeLabel={t("close")}
         besidePreview
         back={step ? { label: tEdit("back"), onBack: back } : undefined}
-        headerAction={step ? <PreviewButton className="desk:hidden" /> : undefined}
+        // Hidden where the page shows beside the sheet: from desk in the dashboard, from xl in the team area.
+        headerAction={step ? <PreviewButton className={inShell ? "desk:hidden" : "xl:hidden"} /> : undefined}
         // The navigation row has room for one short word; the button's name stays "Add to page".
         confirm={step ? { label: tEdit("addShort"), ariaLabel: tEdit("add"), onConfirm: save } : undefined}
         footer={

@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { PreviewButton } from "./preview";
+import { useShellChrome } from "./screen";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
 
@@ -34,6 +35,7 @@ function EditForm({ source, creating, index, onDone }: { source: Block; creating
   const t = useTranslations("app.edit");
   const tTypes = useTranslations("dashboard.types");
   const { removeBlock } = useSite();
+  const inShell = useShellChrome();
   const editor = useBlockEditor({ source, creating, index });
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const type = tTypes(source.type);
@@ -63,7 +65,8 @@ function EditForm({ source, creating, index, onDone }: { source: Block; creating
         description={t(`hints.${source.type}`)}
         closeLabel={t("close")}
         besidePreview
-        headerAction={<PreviewButton className="desk:hidden" />}
+        // Hidden where the page shows beside the sheet: from desk in the dashboard, from xl in the team area.
+        headerAction={<PreviewButton className={inShell ? "desk:hidden" : "xl:hidden"} />}
         // The navigation row has room for one short word; the button's name stays "Add to page".
         confirm={creating ? { label: t("addShort"), ariaLabel: t("add"), onConfirm: save } : { label: t("save"), onConfirm: save }}
         cancel={{ label: t("cancel"), onCancel: close }}

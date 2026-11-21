@@ -151,7 +151,7 @@ function ViewsChart({ days, label }: { days: DayStat[]; label: string }) {
         <summary className="flex h-control-md cursor-pointer items-center rounded-md px-3 text-small font-medium focus-visible:focus-ring">{t("table")}</summary>
         <div className="max-h-(--container-menu) overflow-y-auto border-t border-line" tabIndex={0} role="region" aria-label={t("table")}>
           <table className="w-full text-small">
-            <thead className="sticky top-0 bg-surface text-fg-secondary">
+            <thead className="sticky top-0 bg-surface text-fg-secondary group-data-[grouped]/app:bg-group">
               <tr>
                 <th scope="col" className="px-3 py-2 text-start font-medium">
                   {t("date")}

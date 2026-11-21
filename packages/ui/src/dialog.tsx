@@ -39,6 +39,9 @@ export function ConfirmDialog({
   initialFocus = "cancel",
 }: ConfirmDialogProps) {
   const content = useRef<HTMLDivElement>(null);
+  // Where focus was when the dialog opened. It opens from state, not from an AlertDialog.Trigger, so
+  // Radix has no trigger to give focus back to and would leave it on <body>.
+  const returnTo = useRef<HTMLElement | null>(null);
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Portal>
@@ -47,11 +50,22 @@ export function ConfirmDialog({
           ref={content}
           // Radix focuses Cancel unless this handler prevents it; a dialog that asks for typing starts in its field.
           onOpenAutoFocus={(event) => {
+            returnTo.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
             if (initialFocus !== "first-field") return;
             const field = content.current?.querySelector<HTMLElement>("input:not([type=hidden]):not(:disabled), textarea:not(:disabled), select:not(:disabled)");
             if (!field) return;
             event.preventDefault();
             field.focus({ preventScroll: true });
+          }}
+          // Back to the control that opened it, or to the field of a sheet that asked before discarding.
+          // Not when that control is gone or sits in a dialog that is closing (the sheet was discarded):
+          // then focus is left to the page and the closing sheet, which send it back where they opened from.
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            const element = returnTo.current;
+            returnTo.current = null;
+            if (!element || !element.isConnected || element === document.body || element.closest("[role=dialog][data-state=closed]")) return;
+            element.focus({ preventScroll: true });
           }}
           className="layer-modal fixed inset-x-4 top-1/2 mx-auto w-auto max-w-prose -translate-y-1/2 rounded-xl border border-line bg-surface-elevated p-6 text-fg motion-safe:animate-pop-in sm:inset-x-0 sm:w-full"
         >

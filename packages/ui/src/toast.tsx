@@ -86,7 +86,9 @@ export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regio
           }}
           className={cn(
             "pointer-events-auto flex w-full items-center gap-3 rounded-md bg-fg py-2 ps-4 pe-2 text-fg-inverse",
-            "motion-safe:animate-rise-in data-[state=closed]:motion-safe:animate-fade-out",
+            // A dismissed toast stays mounted while it fades: it takes no more clicks, so a double-click
+            // on Undo undoes once, not twice.
+            "motion-safe:animate-rise-in data-[state=closed]:pointer-events-none data-[state=closed]:motion-safe:animate-fade-out",
             "data-[swipe=move]:translate-y-(--radix-toast-swipe-move-y) data-[swipe=end]:hidden",
           )}
         >
