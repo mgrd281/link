@@ -79,18 +79,21 @@ export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regio
               <T.Description className="text-small opacity-secondary">{item.description}</T.Description>
             ) : null}
           </div>
+          {/* The teal focus ring all but disappears on the near-black toast, so Undo and close draw
+              theirs in the toast's own text color. Set on the two controls, not on the toast: the
+              toast itself takes focus too (F8), and its ring is drawn outside, on the page. */}
           {item.action ? (
             <T.Action
               altText={item.action.altText ?? item.action.label}
               onClick={item.action.onAction}
-              className="h-control-sm shrink-0 rounded-sm px-3 text-small font-semibold text-fg-inverse hover:bg-hover-inverse focus-visible:focus-ring"
+              className="h-control-sm shrink-0 rounded-sm px-3 text-small font-semibold text-fg-inverse [--color-focus:var(--color-fg-inverse)] hover:bg-hover-inverse focus-visible:focus-ring"
             >
               {item.action.label}
             </T.Action>
           ) : null}
           <T.Close
             aria-label={closeLabel}
-            className="grid size-control-sm shrink-0 place-items-center rounded-sm opacity-secondary hover:opacity-100 focus-visible:focus-ring"
+            className="grid size-control-sm shrink-0 place-items-center rounded-sm opacity-secondary [--color-focus:var(--color-fg-inverse)] hover:opacity-100 focus-visible:opacity-100 focus-visible:focus-ring"
           >
             <Icon icon={X} size="sm" />
           </T.Close>

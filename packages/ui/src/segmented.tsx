@@ -49,7 +49,9 @@ export function Segmented<T extends string>({ value, onValueChange, options, lab
             "inline-flex items-center justify-center gap-2 rounded-sm border border-transparent px-3 font-medium text-fg-secondary",
             "transition-[background-color,border-color,color] duration-micro ease-standard",
             "hover:text-fg focus-visible:focus-ring",
-            "data-[state=on]:border-line data-[state=on]:bg-surface-elevated data-[state=on]:text-fg",
+            // The input-strength border gives the selected segment 3:1 against the track (WCAG 1.4.11):
+            // a white pill on the pale track alone is barely visible.
+            "data-[state=on]:border-line-input data-[state=on]:bg-surface-elevated data-[state=on]:text-fg",
             size === "sm" ? "text-caption" : "text-small",
             option.iconOnly && "px-2",
           )}

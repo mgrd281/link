@@ -7,6 +7,23 @@ const sizes = {
   xl: "size-avatar-xl text-h2",
 } as const;
 
+/** Arabic, Arabic Supplement and Arabic Extended-A. */
+const ARABIC = /[؀-ۿݐ-ݿࢠ-ࣿ]/;
+
+/**
+ * Up to two initials. An Arabic name gets one letter: Arabic letters join, so two initials side by
+ * side read as a word ("سلمى رحّال" would show "سر", which means "secret").
+ */
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.charAt(0) ?? "";
+  if (ARABIC.test(first)) return first;
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
 export interface AvatarProps {
   name: string;
   src?: string | undefined;
@@ -16,11 +33,7 @@ export interface AvatarProps {
 
 /** Image avatar with initials fallback. Decorative when next to the visible name. */
 export function Avatar({ name, src, size = "md", className }: AvatarProps) {
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
+  const initials = initialsOf(name);
   return (
     <span
       className={cn(
