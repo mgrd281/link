@@ -27,7 +27,9 @@ export function Switch({ className, label, ...props }: SwitchProps) {
     >
       <S.Thumb
         className={cn(
-          "pointer-events-none block size-5 translate-x-0.5 rounded-full border border-line bg-control-knob",
+          // On, the knob takes the label colour of the primary fill: white on teal (the same as
+          // control-knob), and black on the white track of the dark dashboard (ADR 0062).
+          "pointer-events-none block size-5 translate-x-0.5 rounded-full border border-line bg-control-knob data-[state=checked]:bg-primary-fg",
           "transition-transform duration-standard ease-standard",
           "data-[state=checked]:translate-x-4 rtl:-translate-x-0.5 rtl:data-[state=checked]:-translate-x-4",
         )}
