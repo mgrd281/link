@@ -236,12 +236,13 @@ export function AnalyticsScreen() {
       lead={t("lead")}
     >
       <div className="flex flex-wrap items-center gap-3">
-        {/* Full width on phones, like an iOS segmented control; its natural width from sm up. */}
+        {/* Full width on phones, like an iOS segmented control; its natural width from sm up. It sits on
+            the tinted ground, so its track takes the next tint step to stay visible as a control. */}
         <Segmented<Range>
           label={t("range")}
           value={range}
           onValueChange={setRange}
-          className="w-full *:flex-1 pointer-coarse:h-control-lg sm:w-auto sm:*:flex-none"
+          className="w-full bg-tinted *:flex-1 pointer-coarse:h-control-lg sm:w-auto sm:*:flex-none"
           options={(["7", "30", "90"] as const).map((value) => ({ value, label: t("days", { days: value }) }))}
         />
       </div>
