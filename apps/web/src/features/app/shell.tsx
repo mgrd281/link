@@ -372,10 +372,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex min-w-0 flex-1 flex-col">
             {/* Phones: one row like an iOS navigation bar, on the solid ground; its hairline shows only
                 once content scrolls under it. The side columns share the width equally, so the name
-                stays centred. Safe areas are physical (pl/pr): they do not mirror in Arabic. */}
+                stays centred, but never shrink below their content: a long back label stays whole and
+                the title truncates instead. Safe areas are physical (pl/pr): they do not mirror in Arabic. */}
             <header
               data-scrolled={scrolled ? "" : undefined}
-              className="layer-sticky sticky top-0 grid h-16 grid-cols-[1fr_auto_1fr] items-center border-b border-transparent bg-canvas-muted pr-[max(var(--spacing-2),env(safe-area-inset-right))] pl-[max(var(--spacing-2),env(safe-area-inset-left))] transition-colors duration-micro data-[scrolled]:border-line short:static lg:hidden"
+              className="layer-sticky sticky top-0 grid h-16 grid-cols-[minmax(max-content,1fr)_minmax(0,auto)_minmax(max-content,1fr)] items-center border-b border-transparent bg-canvas-muted pr-[max(var(--spacing-2),env(safe-area-inset-right))] pl-[max(var(--spacing-2),env(safe-area-inset-left))] transition-colors duration-micro data-[scrolled]:border-line short:static lg:hidden"
             >
               {backTarget ? (
                 <BackLink href={backTarget.href} label={backTarget.label} className="justify-self-start" />
@@ -392,7 +393,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </Link>
               )}
               {/* The h1 already names the screen for screen readers; this copy is only for the eyes. */}
-              <p aria-hidden className={cn("truncate text-body font-semibold transition-opacity duration-micro", titleAway ? "opacity-100" : "opacity-0")}>
+              <p aria-hidden className={cn("min-w-0 truncate text-center text-body font-semibold transition-opacity duration-micro", titleAway ? "opacity-100" : "opacity-0")}>
                 {t(info.title)}
               </p>
               <div className="flex items-center justify-self-end">

@@ -1113,10 +1113,6 @@
       "add": "Add"
     },
     "viewPage": "View my page",
-    "logout": "Log out",
-    "account": "Account",
-    "accountMenu": "Account menu",
-    "accountMenuInitials": "Account menu, {initials}",
     "demo": "Demo",
     "save": {
       "saved": "Saved",
@@ -1401,7 +1397,6 @@
     },
     "editor": {
       "title": "Page",
-      "lead": "Top to bottom, as visitors see it. Tap a row to edit it.",
       "profileEmpty": "Add a photo and a short bio",
       "editProfile": "Edit profile",
       "blocks": "Content",
@@ -1409,10 +1404,7 @@
       "emptyTitle": "Your page is waiting",
       "emptyBody": "Paste your first link — a song, a video, your shop — and it appears on your page right away.",
       "addFirst": "Add your first link",
-      "add": "Add",
       "addSection": "Add section",
-      "tips": "Tip: drag rows to reorder, or focus the handle and press ⌥↑ / ⌥↓. ⌘Z undoes everything.",
-      "tipsTouch": "Tip: tap “Reorder” to move rows, or use the ⋯ menu.",
       "drag": "Move {title}",
       "editItem": "Edit {title} ({type})",
       "hidden": "Hidden",
@@ -1450,7 +1442,6 @@
       "close": "Close",
       "cancel": "Cancel",
       "save": "Save profile",
-      "saved": "Profile saved",
       "nameRequired": "Please enter the name visitors should see.",
       "motion": "Moving header",
       "motionHint": "MP4 link, 3–10 s, no sound. The header photo stays its poster.",
@@ -1461,16 +1452,12 @@
     },
     "home": {
       "title": "Hi {name}",
-      "lead": "Here's your page at a glance.",
       "yourLink": "Your link",
       "linkDemo": "Demo: this address goes live at launch. Until then your page is only in this browser.",
       "checklist": {
         "title": "Finish your page",
-        "doneTitle": "Your page is complete",
         "progress": "{done} of {total}",
-        "doneBody": "Everything's in place. Now share your link in your bio.",
         "isDone": "(done)",
-        "isOpen": "(to do)",
         "items": {
           "photo": {
             "title": "Add a photo",
@@ -1497,8 +1484,7 @@
             "hint": "Required in Germany for business pages (Impressum)."
           }
         },
-        "showDone": "Show done ({count})",
-        "hideDone": "Hide done"
+        "showDone": "Show done ({count})"
       },
       "stats": {
         "title": "Last 7 days",
@@ -1575,7 +1561,6 @@
     },
     "design": {
       "title": "Design",
-      "lead": "Start from a template, then make it yours. Text always stays readable.",
       "template": "Template",
       "applied": "{name} applied",
       "undo": "Undo",
@@ -1677,16 +1662,13 @@
     },
     "settings": {
       "title": "Settings",
-      "lead": "Your profile, login, legal notice and data.",
       "address": "Page address",
       "addressLabel": "Address",
       "addressHint": "If you change it, the old address stops working.",
       "addressSave": "Change address",
       "addressChanged": "Your page is now at {url}",
-      "account": "Login",
       "emailSave": "Change email",
       "emailChanged": "Email changed",
-      "legal": "Legal notice (Impressum)",
       "legalHint": "In Germany, pages with a business purpose need a legal notice (§ 5 DDG).",
       "legalName": "Full name or company",
       "legalAddress": "Address for service",
@@ -1695,11 +1677,7 @@
       "legalSave": "Save legal notice",
       "legalSaved": "Legal notice saved",
       "saveFailed": "Couldn't save. Please try again.",
-      "dashboard": "Dashboard",
       "theme": "Appearance",
-      "language": "Language",
-      "data": "Your data",
-      "exportHint": "Download everything as a file (JSON): profile, blocks, design, legal notice.",
       "export": "Export my data",
       "deleteHint": "Deletes your account and page in this browser. This can't be undone.",
       "delete": "Delete account",
@@ -1710,7 +1688,6 @@
       "cancel": "Cancel",
       "deleted": "Account deleted",
       "logout": "Log out",
-      "importHint": "Restore a page from an export file (JSON). Your address and login stay the same; you can undo it.",
       "import": "Import a page",
       "importTitle": "Replace your page?",
       "importBody": "“{name}” with {count, plural, one {# block} other {# blocks}} replaces your current profile, blocks and design. You can undo this.",
@@ -1725,8 +1702,7 @@
       "failedSignIn": "Wrong code",
       "unknownPlace": "Place unknown",
       "emailConfirm": "Confirm the new address with the link we sent to {email}.",
-      "signInByCode": "You sign in with a code we send to this address. There is no password.",
-      "current": "Your page:",
+      "signInByCode": "You sign in with a code we send to this address.",
       "groups": {
         "page": "Your page",
         "app": "App",

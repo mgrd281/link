@@ -1113,10 +1113,6 @@
       "add": "Hinzufügen"
     },
     "viewPage": "Meine Seite ansehen",
-    "logout": "Abmelden",
-    "account": "Konto",
-    "accountMenu": "Kontomenü",
-    "accountMenuInitials": "Kontomenü, {initials}",
     "demo": "Demo",
     "save": {
       "saved": "Gespeichert",
@@ -1401,7 +1397,6 @@
     },
     "editor": {
       "title": "Seite",
-      "lead": "Von oben nach unten, so wie Besucher sie sehen. Tipp auf eine Zeile, um sie zu bearbeiten.",
       "profileEmpty": "Füg ein Foto und eine kurze Bio hinzu",
       "editProfile": "Profil bearbeiten",
       "blocks": "Inhalte",
@@ -1409,10 +1404,7 @@
       "emptyTitle": "Deine Seite wartet",
       "emptyBody": "Füg deinen ersten Link ein – einen Song, ein Video, deinen Shop – und er erscheint sofort auf deiner Seite.",
       "addFirst": "Ersten Link hinzufügen",
-      "add": "Hinzufügen",
       "addSection": "Abschnitt hinzufügen",
-      "tips": "Tipp: Zeilen zum Sortieren ziehen, oder den Griff fokussieren und ⌥↑ / ⌥↓ drücken. ⌘Z macht alles rückgängig.",
-      "tipsTouch": "Tipp: Tippe auf „Ordnen“, um Zeilen zu verschieben, oder nutze das Menü ⋯.",
       "drag": "{title} verschieben",
       "editItem": "{title} bearbeiten ({type})",
       "hidden": "Versteckt",
@@ -1450,7 +1442,6 @@
       "close": "Schließen",
       "cancel": "Abbrechen",
       "save": "Profil speichern",
-      "saved": "Profil gespeichert",
       "nameRequired": "Bitte gib den Namen ein, den Besucher sehen sollen.",
       "motion": "Bewegtes Kopfbild",
       "motionHint": "MP4-Link, 3–10 Sek., ohne Ton. Das Kopfbild bleibt das Vorschaubild.",
@@ -1461,16 +1452,12 @@
     },
     "home": {
       "title": "Hallo {name}",
-      "lead": "Deine Seite auf einen Blick.",
       "yourLink": "Dein Link",
       "linkDemo": "Demo: Diese Adresse geht mit dem Start online. Bis dahin gibt es deine Seite nur in diesem Browser.",
       "checklist": {
         "title": "Mach deine Seite fertig",
-        "doneTitle": "Deine Seite ist komplett",
         "progress": "{done} von {total}",
-        "doneBody": "Alles da. Jetzt den Link in deine Bio setzen.",
         "isDone": "(erledigt)",
-        "isOpen": "(offen)",
         "items": {
           "photo": {
             "title": "Foto hinzufügen",
@@ -1497,8 +1484,7 @@
             "hint": "In Deutschland Pflicht für geschäftliche Seiten."
           }
         },
-        "showDone": "Erledigte anzeigen ({count})",
-        "hideDone": "Erledigte ausblenden"
+        "showDone": "Erledigte anzeigen ({count})"
       },
       "stats": {
         "title": "Letzte 7 Tage",
@@ -1575,7 +1561,6 @@
     },
     "design": {
       "title": "Design",
-      "lead": "Starte mit einer Vorlage und mach sie zu deiner. Text bleibt immer lesbar.",
       "template": "Vorlage",
       "applied": "{name} angewendet",
       "undo": "Rückgängig",
@@ -1677,16 +1662,13 @@
     },
     "settings": {
       "title": "Einstellungen",
-      "lead": "Profil, Login, Impressum und deine Daten.",
       "address": "Seitenadresse",
       "addressLabel": "Adresse",
       "addressHint": "Wenn du sie änderst, funktioniert die alte Adresse nicht mehr.",
       "addressSave": "Adresse ändern",
       "addressChanged": "Deine Seite ist jetzt unter {url}",
-      "account": "Login",
       "emailSave": "E-Mail ändern",
       "emailChanged": "E-Mail geändert",
-      "legal": "Impressum",
       "legalHint": "In Deutschland brauchen Seiten mit geschäftlichem Zweck ein Impressum (§ 5 DDG).",
       "legalName": "Vollständiger Name oder Firma",
       "legalAddress": "Ladungsfähige Anschrift",
@@ -1695,11 +1677,7 @@
       "legalSave": "Impressum speichern",
       "legalSaved": "Impressum gespeichert",
       "saveFailed": "Speichern ging nicht. Bitte versuch es noch einmal.",
-      "dashboard": "Dashboard",
       "theme": "Darstellung",
-      "language": "Sprache",
-      "data": "Deine Daten",
-      "exportHint": "Lade alles als Datei herunter (JSON): Profil, Blöcke, Design, Impressum.",
       "export": "Meine Daten exportieren",
       "deleteHint": "Löscht dein Konto und deine Seite in diesem Browser. Das lässt sich nicht rückgängig machen.",
       "delete": "Konto löschen",
@@ -1710,7 +1688,6 @@
       "cancel": "Abbrechen",
       "deleted": "Konto gelöscht",
       "logout": "Abmelden",
-      "importHint": "Stell eine Seite aus einer Export-Datei (JSON) wieder her. Adresse und Login bleiben gleich; du kannst es rückgängig machen.",
       "import": "Seite importieren",
       "importTitle": "Deine Seite ersetzen?",
       "importBody": "„{name}“ mit {count, plural, one {# Block} other {# Blöcken}} ersetzt dein aktuelles Profil, deine Blöcke und dein Design. Das lässt sich rückgängig machen.",
@@ -1725,8 +1702,7 @@
       "failedSignIn": "Falscher Code",
       "unknownPlace": "Ort unbekannt",
       "emailConfirm": "Bestätige die neue Adresse über den Link, den wir an {email} geschickt haben.",
-      "signInByCode": "Du meldest dich mit einem Code an, den wir an diese Adresse schicken. Ein Passwort gibt es nicht.",
-      "current": "Deine Seite:",
+      "signInByCode": "Du meldest dich mit einem Code an, den wir an diese Adresse schicken.",
       "groups": {
         "page": "Deine Seite",
         "app": "App",
