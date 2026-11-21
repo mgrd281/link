@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Linkyo — Phase 0",
-    "description": "Ein Link. Alles, was du erschaffst. Designsystem und Designrichtungen."
+    "title": "Linkyo",
+    "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: elf Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
   },
   "common": {
     "close": "Schließen",
@@ -571,7 +571,10 @@
     "featured": "Hervorgehoben",
     "template": "Vorlage",
     "templateHint": "Gleicher Inhalt, neuer Look. Farben und Schriften kannst du danach weiter anpassen.",
-    "templateApplied": "Vorlage „{name}“ angewendet"
+    "templateApplied": "Vorlage „{name}“ angewendet",
+    "dragInstructions": "Zum Aufnehmen die Leertaste drücken, dann mit den Pfeiltasten verschieben. Leertaste legt ab, Escape bricht ab.",
+    "reorderCancel": "Verschieben von {title} abgebrochen.",
+    "sortableRole": "verschiebbar"
   },
   "templates": {
     "nocturne": {
@@ -896,10 +899,10 @@
       },
       "share": {
         "title": "Teilen wie ein Profi",
-        "body": "In WhatsApp, iMessage und LinkedIn zeigt dein Link dein Foto und deinen Namen. Bilder für Story und Feed: ein Tipp.",
+        "body": "In WhatsApp, iMessage und LinkedIn zeigt dein Link dein Foto und deinen Namen. Bilder für Story und Feed mit einem Fingertipp.",
         "story": "Story",
         "preview": "Link-Vorschau",
-        "chatIn": "Wo finde ich deine neue Single?",
+        "chatIn": "Wo kann ich deine Artikel lesen?",
         "chatOut": "Hier, alles an einem Ort:",
         "today": "Heute"
       },
@@ -1295,7 +1298,8 @@
       "repoKinds": {
         "skill": "Skill (mit SKILL.md)",
         "repo": "Repository"
-      }
+      },
+      "moreOptions": "Mehr Optionen"
     },
     "edit": {
       "addTitle": "{type} hinzufügen",
@@ -1351,7 +1355,7 @@
       "desc": {
         "link": "Beliebige Website",
         "card": "Große Karte mit Bild",
-        "header": "Neuer Abschnitt",
+        "header": "Überschrift für einen Teil",
         "text": "Ein Absatz",
         "divider": "Ruhige Linie",
         "socials": "Profil-Icons",
@@ -1374,6 +1378,15 @@
         "type": "Das ist kein Bild. Wähle ein JPG, PNG oder WebP.",
         "size": "Das Bild ist größer als 25 MB. Wähle ein kleineres.",
         "decode": "Das Bild ließ sich nicht lesen. Probier eine andere Datei."
+      },
+      "paste": "Einfügen",
+      "groups": {
+        "suggested": "Für dich",
+        "popular": "Beliebt",
+        "links": "Links & Kontakt",
+        "media": "Fotos, Videos & Musik",
+        "sell": "Verkaufen & Termine",
+        "layout": "Text & Aufbau"
       }
     },
     "editor": {
@@ -1389,7 +1402,7 @@
       "add": "Hinzufügen",
       "addSection": "Abschnitt hinzufügen",
       "tips": "Tipp: Zeilen zum Sortieren ziehen, oder den Griff fokussieren und ⌥↑ / ⌥↓ drücken. ⌘Z macht alles rückgängig.",
-      "tipsTouch": "Tipp: Zieh eine Zeile am Griff an ihren Platz, oder nutze das Menü ⋯.",
+      "tipsTouch": "Tipp: Tippe auf „Ordnen“, um Zeilen zu verschieben, oder nutze das Menü ⋯.",
       "drag": "{title} verschieben",
       "editItem": "{title} bearbeiten ({type})",
       "hidden": "Versteckt",
@@ -1401,7 +1414,13 @@
       "moveUp": "Nach oben",
       "moveDown": "Nach unten",
       "duplicate": "Duplizieren",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "reorder": "Ordnen",
+      "reorderDone": "Fertig",
+      "addBelow": "Darunter einfügen",
+      "duplicated": "„{title}“ dupliziert",
+      "undone": "Rückgängig gemacht",
+      "redone": "Wiederhergestellt"
     },
     "profile": {
       "title": "Profil",
@@ -1455,14 +1474,16 @@
             "hint": "Instagram, TikTok, YouTube …"
           },
           "look": {
-            "title": "Look wählen",
+            "title": "Design wählen",
             "hint": "Eine Vorlage oder deine eigene Farbe."
           },
           "legal": {
             "title": "Impressum hinzufügen",
             "hint": "In Deutschland Pflicht für geschäftliche Seiten."
           }
-        }
+        },
+        "showDone": "{count} erledigt",
+        "hideDone": "Erledigte ausblenden"
       },
       "stats": {
         "title": "Letzte 7 Tage",
@@ -1490,7 +1511,7 @@
     "shareImage": {
       "open": "Bild für Story & Post",
       "title": "Dein Bild zum Teilen",
-      "lead": "Foto, Name und Link in den Farben deiner Seite. Poste es als Story oder Beitrag, damit mehr Leute deine Seite finden.",
+      "lead": "Foto, Name und Link in deinem Look.",
       "format": "Format",
       "formats": {
         "story": "Story · 9:16",
@@ -1504,7 +1525,9 @@
       "download": "Herunterladen",
       "share": "Teilen",
       "downloaded": "Bild gespeichert",
-      "close": "Schließen"
+      "close": "Schließen",
+      "photoNudge": "Mit Foto wirkt dein Bild stärker.",
+      "addPhoto": "Foto hinzufügen"
     },
     "share": {
       "copy": "Link kopieren",
@@ -1561,7 +1584,23 @@
         "pill": "Rund"
       },
       "resetDone": "Zurück zum Look der Vorlage",
-      "resetAll": "Auf Vorlage zurücksetzen"
+      "resetAll": "Auf Vorlage zurücksetzen",
+      "templateColor": "Farbe der Vorlage",
+      "colorSelected": "Gewählt: {name}",
+      "swatches": {
+        "ink": "Schwarz",
+        "wine": "Weinrot",
+        "poppy": "Mohnrot",
+        "clay": "Terrakotta",
+        "saffron": "Safran",
+        "mint": "Mint",
+        "pine": "Tannengrün",
+        "teal": "Petrol",
+        "sky": "Himmelblau",
+        "navy": "Marineblau",
+        "grape": "Traube",
+        "rose": "Pink"
+      }
     },
     "analytics": {
       "title": "Statistik",
@@ -2022,7 +2061,12 @@
     "conceptNote": "So könnte die Seite von {name} auf Linkyo aussehen. Das ist nicht die offizielle Seite und nicht mit {name} verbunden; alle Links führen zu den offiziellen Kanälen.",
     "photoCredit": "Bildnachweis: {credit}",
     "language": "Sprache",
-    "languageMenu": "Sprache wählen"
+    "languageMenu": "Sprache wählen",
+    "ogTitle": {
+      "sample": "{name} · Beispielseite für {kind}",
+      "concept": "{name} · Konzept auf Linkyo",
+      "prepared": "{name} auf Linkyo"
+    }
   },
   "admin": {
     "meta": {

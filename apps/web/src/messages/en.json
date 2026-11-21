@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Linkyo — Phase 0",
-    "description": "One link. Everything you create. Design system and design directions."
+    "title": "Linkyo",
+    "description": "The creator page that looks premium in five minutes: eleven templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
   },
   "common": {
     "close": "Close",
@@ -571,7 +571,10 @@
     "featured": "Featured",
     "template": "Template",
     "templateHint": "Same content, a new look. Your colors and fonts can still be changed afterwards.",
-    "templateApplied": "Template “{name}” applied"
+    "templateApplied": "Template “{name}” applied",
+    "dragInstructions": "To pick up an item, press Space, then move it with the arrow keys. Space drops it, Escape cancels.",
+    "reorderCancel": "Moving {title} cancelled.",
+    "sortableRole": "sortable"
   },
   "templates": {
     "nocturne": {
@@ -899,7 +902,7 @@
         "body": "In WhatsApp, iMessage and LinkedIn your link shows your photo and name. Story and feed pictures: one tap.",
         "story": "Story",
         "preview": "Link preview",
-        "chatIn": "Where can I find your new single?",
+        "chatIn": "Where can I read your pieces?",
         "chatOut": "Here – everything in one place:",
         "today": "Today"
       },
@@ -1295,7 +1298,8 @@
       "repoKinds": {
         "skill": "Skill (with a SKILL.md)",
         "repo": "Repository"
-      }
+      },
+      "moreOptions": "More options"
     },
     "edit": {
       "addTitle": "Add {type}",
@@ -1351,7 +1355,7 @@
       "desc": {
         "link": "Any website",
         "card": "Big card with image",
-        "header": "New section",
+        "header": "A heading for part of your page",
         "text": "A paragraph",
         "divider": "A quiet line",
         "socials": "Profile icons",
@@ -1374,6 +1378,15 @@
         "type": "That file isn't an image. Choose a JPG, PNG or WebP.",
         "size": "That image is over 25 MB. Choose a smaller one.",
         "decode": "This image couldn't be read. Try another file."
+      },
+      "paste": "Paste",
+      "groups": {
+        "suggested": "For you",
+        "popular": "Popular",
+        "links": "Links & contact",
+        "media": "Photos, video & music",
+        "sell": "Sell & events",
+        "layout": "Text & layout"
       }
     },
     "editor": {
@@ -1389,7 +1402,7 @@
       "add": "Add",
       "addSection": "Add section",
       "tips": "Tip: drag rows to reorder, or focus the handle and press ⌥↑ / ⌥↓. ⌘Z undoes everything.",
-      "tipsTouch": "Tip: drag a row by its handle, or use the ⋯ menu.",
+      "tipsTouch": "Tip: tap “Reorder” to move rows, or use the ⋯ menu.",
       "drag": "Move {title}",
       "editItem": "Edit {title} ({type})",
       "hidden": "Hidden",
@@ -1401,7 +1414,13 @@
       "moveUp": "Move up",
       "moveDown": "Move down",
       "duplicate": "Duplicate",
-      "delete": "Delete"
+      "delete": "Delete",
+      "reorder": "Reorder",
+      "reorderDone": "Done",
+      "addBelow": "Add below",
+      "duplicated": "“{title}” duplicated",
+      "undone": "Undone",
+      "redone": "Redone"
     },
     "profile": {
       "title": "Profile",
@@ -1455,14 +1474,16 @@
             "hint": "Instagram, TikTok, YouTube…"
           },
           "look": {
-            "title": "Choose your look",
+            "title": "Choose your design",
             "hint": "Pick a template or your own color."
           },
           "legal": {
             "title": "Add your legal notice",
             "hint": "Required in Germany for business pages (Impressum)."
           }
-        }
+        },
+        "showDone": "{count} done",
+        "hideDone": "Hide done"
       },
       "stats": {
         "title": "Last 7 days",
@@ -1490,7 +1511,7 @@
     "shareImage": {
       "open": "Image for story & post",
       "title": "Your image to share",
-      "lead": "Photo, name and link in your page's colors. Post it as a story or in your feed so more people find your page.",
+      "lead": "Photo, name and link in your page's look.",
       "format": "Format",
       "formats": {
         "story": "Story · 9:16",
@@ -1504,7 +1525,9 @@
       "download": "Download",
       "share": "Share",
       "downloaded": "Image saved",
-      "close": "Close"
+      "close": "Close",
+      "photoNudge": "Your image works better with a photo.",
+      "addPhoto": "Add photo"
     },
     "share": {
       "copy": "Copy link",
@@ -1561,7 +1584,23 @@
         "pill": "Round"
       },
       "resetDone": "Back to the template's look",
-      "resetAll": "Reset to template"
+      "resetAll": "Reset to template",
+      "templateColor": "Template color",
+      "colorSelected": "Selected: {name}",
+      "swatches": {
+        "ink": "Black",
+        "wine": "Wine",
+        "poppy": "Poppy red",
+        "clay": "Clay",
+        "saffron": "Saffron",
+        "mint": "Mint",
+        "pine": "Pine",
+        "teal": "Teal",
+        "sky": "Sky blue",
+        "navy": "Navy",
+        "grape": "Grape",
+        "rose": "Rose"
+      }
     },
     "analytics": {
       "title": "Stats",
@@ -2022,7 +2061,12 @@
     "conceptNote": "This is how {name}'s page could look on Linkyo. It is not the official page and not affiliated with {name}; every link goes to the official channels.",
     "photoCredit": "Photo credits: {credit}",
     "language": "Language",
-    "languageMenu": "Choose a language"
+    "languageMenu": "Choose a language",
+    "ogTitle": {
+      "sample": "{name} · Example page for {kind}",
+      "concept": "{name} · Concept on Linkyo",
+      "prepared": "{name} on Linkyo"
+    }
   },
   "admin": {
     "meta": {
