@@ -23,8 +23,8 @@ import {
   RotateCcw,
   ShoppingBag,
   Smartphone,
+  Square,
   Ticket,
-  UserRound,
   Video,
   X,
   type LucideIcon,
@@ -32,7 +32,7 @@ import {
 import dynamic from "next/dynamic";
 import Image, { type StaticImageData } from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type SyntheticEvent } from "react";
 
 import { saveTryDraft } from "@/features/account/try-draft";
 import { suggestUsername } from "@/features/account/username";
@@ -47,14 +47,17 @@ import type { TryItem, TryPageInput } from "./try-page";
 import type { Reveal } from "./try-phone";
 import { EXAMPLES, PERSONA, SAMPLE_FACTS, sampleOf } from "./try-samples";
 
-/** The phone with the real page: its own chunk (renderer, pictures, theme engine), loaded when needed. */
-const TryPhone = dynamic(() => import("./try-phone").then((module) => module.TryPhone), { ssr: false, loading: () => <PhoneFrame /> });
+/** The phone's size: cut off by the stage's lower edge below lg, whole beside the controls on wide screens. */
+const PHONE = "max-lg:mk-play-crop lg:mk-play-phone";
 
-/** The phone's frame while its page loads: the same size, so nothing moves when it arrives. */
-function PhoneFrame({ className }: { className?: string }) {
+/** The phone with the real page: its own chunk (renderer, pictures, theme engine), loaded when needed. */
+const TryPhone = dynamic(() => import("./try-phone").then((module) => module.TryPhone), { ssr: false, loading: () => <PhoneFrame crop className={PHONE} /> });
+
+/** The phone's frame while its page loads: the same size and cut, so nothing moves when it arrives. */
+function PhoneFrame({ crop = false, className }: { crop?: boolean; className?: string }) {
   return (
-    <div aria-hidden className={cn("relative rounded-xl border border-line-strong bg-ink p-2", className)}>
-      <div className="aspect-phone rounded-lg bg-night-200" />
+    <div aria-hidden className={cn("relative rounded-xl border border-teal-700 bg-ink p-2", crop && "max-lg:h-full max-lg:rounded-b-none max-lg:border-b-0 max-lg:pb-0", className)}>
+      <div className={cn("aspect-phone rounded-lg bg-night-200", crop && "max-lg:aspect-auto max-lg:h-full max-lg:rounded-b-none")} />
     </div>
   );
 }
@@ -74,11 +77,7 @@ export interface LookOption {
 }
 
 type Tab = "name" | "links" | "look";
-const TABS: { id: Tab; icon: LucideIcon }[] = [
-  { id: "name", icon: UserRound },
-  { id: "links", icon: Link2 },
-  { id: "look", icon: Palette },
-];
+const TABS: { id: Tab }[] = [{ id: "name" }, { id: "links" }, { id: "look" }];
 
 const TYPE_ICONS: Record<string, LucideIcon> = { music: Music2, video: Video, shorts: Clapperboard, events: Ticket, product: ShoppingBag, live: Radio, image: ImageIcon, app: Smartphone, repo: FolderGit2 };
 const KNOWN = new Set(["music", "video", "shorts", "events", "product", "live", "image", "card", "link", "app", "repo"]);
@@ -129,7 +128,7 @@ function BlockIcon({ item }: { item: Added }) {
 function ItemThumb({ item }: { item: Added }) {
   const picture = item.sample === "necklace" || item.sample === "perfume" || item.sample === "youtube" ? SAMPLE_FACTS[item.sample].picture : null;
   return (
-    <span aria-hidden className="relative grid size-control-md shrink-0 place-items-center overflow-hidden rounded-sm bg-canvas-muted text-fg">
+    <span aria-hidden className="relative grid size-6 shrink-0 place-items-center overflow-hidden rounded-full bg-surface text-fg lg:size-control-md lg:rounded-sm lg:bg-canvas-muted">
       {picture ? <Image src={picture} alt="" fill sizes={mediaSizes.thumb} className="object-cover" /> : <BlockIcon item={item} />}
     </span>
   );
@@ -243,6 +242,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   const root = useRef<HTMLDivElement>(null);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const radios = useRef<(HTMLButtonElement | null)[]>([]);
+  const strip = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLUListElement>(null);
   const interacted = useRef(false);
   const controller = useRef<AbortController | null>(null);
   // What the demo's cursor goes to.
@@ -344,6 +345,18 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     };
   }, []);
 
+  // A new link shows at the end of the list: the row of tokens on phones scrolls to it (the page never moves).
+  const count = items.length;
+  const lastCount = useRef(count);
+  useEffect(() => {
+    const element = list.current;
+    const grew = count > lastCount.current;
+    lastCount.current = count;
+    if (!element || !grew) return;
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    element.scrollTo({ left: rtl ? -element.scrollWidth : element.scrollWidth, top: element.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+  }, [count, rtl]);
+
   /** Songs and videos the visitor pasted get their real title and cover, as in the app. */
   const enrich = (item: Added) => {
     if (item.sample || item.social) return;
@@ -415,6 +428,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     setAccent(null);
     setTab("name");
     setToast(null);
+    strip.current?.scrollTo({ left: 0 });
     show("top");
   };
 
@@ -564,7 +578,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
           if (!interacted.current) playRef.current();
         }, 600);
       },
-      { threshold: 0.4 },
+      { threshold: 0.75 },
     );
     observer.observe(element);
     return () => {
@@ -574,8 +588,9 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     };
   }, []);
 
-  /** The visitor took over: the demo stops where it is. */
-  const takeOver = () => {
+  /** The visitor took over: the demo stops where it is (its own button stops or replays it itself). */
+  const takeOver = (event: SyntheticEvent) => {
+    if (event.target instanceof Element && event.target.closest("[data-demo-button]")) return;
     interacted.current = true;
     controller.current?.abort();
   };
@@ -648,56 +663,82 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     "aria-labelledby": tabId(entry),
     inert: tab !== entry,
     // All panels share one cell and fill it, so switching tabs never changes the card's height.
-    className: cn("col-start-1 row-start-1 flex min-h-0 flex-col gap-3 transition-opacity duration-standard ease-standard motion-reduce:transition-none", tab === entry ? "opacity-100" : "invisible opacity-0"),
+    className: cn(
+      "col-start-1 row-start-1 flex min-h-0 flex-col gap-2 transition-opacity duration-standard ease-standard motion-reduce:transition-none lg:gap-3",
+      tab === entry ? "opacity-100" : "invisible opacity-0",
+    ),
   });
-  const field =
-    "h-control-lg w-full min-w-0 rounded-full border border-transparent bg-canvas-muted px-4 text-body text-fg outline-none transition-colors duration-micro placeholder:text-fg-tertiary focus-visible:border-link focus-visible:focus-ring";
+  // Fields sit in one soft group, their label inside, as in an app's settings; focus shows as the
+  // same calm teal frame as every field on the site (never a ring around a frame).
+  const FIELD =
+    "h-control-xl w-full min-w-0 border border-transparent bg-transparent px-4 pt-5 text-body text-fg outline-hidden transition-[border-color,background-color] duration-micro ease-standard placeholder:text-fg-tertiary hover:border-line-strong focus-visible:border-focus focus-visible:bg-surface focus-visible:focus-field";
+  const FIELD_ON = "border-focus bg-surface focus-field";
+  const FIELD_LABEL = "pointer-events-none absolute start-4 top-2 text-caption font-semibold text-fg-secondary transition-colors duration-micro group-focus-within/field:text-link";
   const lookCard = (selected: boolean) =>
     cn(
-      "grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-1 rounded-lg border-emphasis p-1 text-start transition-[border-color,scale] duration-standard ease-standard active:scale-pressed motion-reduce:transition-none",
+      "grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-1 rounded-lg border-emphasis p-1 text-start transition-[border-color,scale] duration-standard ease-standard active:scale-pressed motion-reduce:transition-none motion-reduce:active:scale-none",
       selected ? "border-link" : "border-transparent hover:border-line-strong",
     );
   const remove = (key: string) => {
     setItems((current) => current.filter((candidate) => candidate.key !== key));
     setError(null);
   };
+  // What the link field says: an error, the limit, or what it recognised (a profile by its platform).
+  const draftProfile = detection ? socialProfile(draft.trim(), ICON_PROFILES) : undefined;
+  const showExamples = !draft.trim() && error === null;
+  const demoLabel = demo === "running" ? t("demo.stop") : demo === "done" ? t("demo.replay") : t("demo.play");
 
   return (
     <div
       ref={root}
-      onPointerDownCapture={takeOver}
+      onPointerDownCapture={(event) => {
+        // A finger scrolling past the card is not taking over; a tap is (it ends in a click).
+        if (event.pointerType !== "touch") takeOver(event);
+      }}
+      onClickCapture={takeOver}
       onFocusCapture={takeOver}
       onKeyDownCapture={takeOver}
       className="relative mx-auto grid w-full max-w-prose grid-cols-1 overflow-hidden rounded-xl border border-line bg-surface lg:mk-play lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-1"
     >
-      {/* The stage, in deep Linkyo teal: the phone with the page, above the controls on phones (its
-          lower part out of view; it scrolls to each change) and beside them, whole, on wide screens,
-          where the card is as tall as the screen allows. */}
-      <div className="relative isolate grid justify-items-center overflow-hidden border-b border-line bg-teal-900 max-lg:aspect-portrait max-lg:pt-8 lg:order-last lg:items-center lg:border-s lg:border-b-0 lg:py-10">
-        <div aria-hidden className="mk-deck-halo w-[140%] border border-teal-800" />
-        <div aria-hidden className="mk-deck-halo w-[95%] bg-teal-800" />
-        {/* Watch the demo (again): a quiet round button in the stage's corner, not while it plays. */}
-        {demo === "running" ? null : (
-          <button
-            type="button"
-            onClick={play}
-            aria-label={demo === "done" ? t("demo.replay") : t("demo.play")}
-            title={demo === "done" ? t("demo.replay") : t("demo.play")}
-            className="absolute end-2 top-2 layer-raised grid size-control-md place-items-center rounded-full border border-teal-700 bg-teal-800 text-teal-50 transition-[background-color,scale] duration-micro hover:bg-teal-700 focus-visible:focus-ring active:scale-pressed motion-safe:animate-fade-in lg:end-3 lg:top-3 lg:size-touch-target"
-          >
-            <Icon icon={demo === "done" ? RotateCcw : Play} size="sm" className="rtl:-scale-x-100" />
-          </button>
-        )}
+      {/* The stage, flat Linkyo teal. Phones and tablets: short, the phone rising from its lower edge,
+          so stage, controls and "Keep this page" fit one screen. Wide screens: beside the controls,
+          the whole phone on one soft disc. */}
+      <div className="relative isolate grid justify-items-center overflow-hidden bg-teal-900 max-lg:mk-play-stage max-lg:pt-3 lg:order-last lg:items-center lg:py-10">
+        <div aria-hidden className="mk-deck-halo w-[95%] bg-teal-800 max-lg:hidden" />
+        {/* Watch, stop or watch again: one quiet round button in the stage's corner (WCAG 2.2.2). */}
+        <button
+          type="button"
+          data-demo-button=""
+          onClick={() => {
+            interacted.current = true;
+            if (demo === "running") controller.current?.abort();
+            else play();
+          }}
+          className="absolute end-2 top-2 layer-raised grid size-touch-target place-items-center rounded-full border border-teal-700 bg-teal-800 text-teal-50 transition-[background-color,scale] duration-micro hover:bg-teal-700 focus-visible:focus-ring focus-visible:outline-teal-50 active:scale-pressed motion-reduce:active:scale-none lg:end-3 lg:top-3"
+        >
+          <Icon
+            key={demo}
+            icon={demo === "running" ? Square : demo === "done" ? RotateCcw : Play}
+            size="sm"
+            className={cn("motion-safe:animate-fade-in", demo === "running" ? "fill-current" : "rtl:-scale-x-100")}
+          />
+          <span className="sr-only">{demoLabel}</span>
+        </button>
         {near ? (
-          <TryPhone input={phoneInput} config={config} rtl={rtl} label={t("preview.label")} reveal={reveal} toast={toast} className="w-sidebar max-lg:self-start lg:mk-play-phone" />
+          <TryPhone input={phoneInput} config={config} rtl={rtl} label={t("preview.label")} reveal={reveal} toast={toast} crop className={PHONE} />
         ) : (
-          <PhoneFrame className="w-sidebar max-lg:self-start lg:mk-play-phone" />
+          <PhoneFrame crop className={PHONE} />
         )}
       </div>
 
-      {/* The editor: three tabs, each a full panel (nothing jumps between them), and "Keep this page". */}
-      <div className="flex min-h-0 flex-col gap-4 p-4 sm:p-6 lg:p-8">
-        <div role="tablist" aria-label={t("tabs.label")} className="grid shrink-0 grid-cols-3 gap-1 rounded-full bg-canvas-muted p-1">
+      {/* The editor: a segmented control, one panel of fixed height (nothing jumps), and "Keep this page". */}
+      <div className="flex min-h-0 flex-col gap-2 px-4 pt-3 pb-3 sm:gap-3 sm:p-6 lg:gap-4 lg:p-8">
+        <div
+          role="tablist"
+          aria-label={t("tabs.label")}
+          className="mk-play-tabs grid h-touch-target shrink-0 grid-cols-3 rounded-full bg-canvas-muted"
+          style={{ "--i": TABS.findIndex((entry) => entry.id === tab) } as CSSProperties}
+        >
           {TABS.map((entry, index) => {
             const selected = tab === entry.id;
             return (
@@ -717,34 +758,30 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 }}
                 onKeyDown={onTabKey}
                 className={cn(
-                  "inline-flex h-control-md min-w-0 items-center justify-center gap-2 rounded-full border text-small font-semibold transition-colors duration-micro focus-visible:focus-ring",
-                  selected ? "border-line bg-surface-elevated text-fg" : "border-transparent text-fg-secondary hover:text-fg",
+                  "inline-flex h-full min-w-0 items-center justify-center rounded-full px-2 text-small font-semibold transition-colors duration-micro focus-visible:focus-ring",
+                  selected ? "text-fg forced-colors:border" : "text-fg-secondary hover:text-fg",
                 )}
               >
-                <Icon icon={entry.icon} size="sm" />
                 <span className="truncate">{t(`tabs.${entry.id}`)}</span>
-                {entry.id === "links" && items.length > 0 ? (
-                  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary text-caption text-primary-fg tabular-nums">{items.length}</span>
-                ) : null}
               </button>
             );
           })}
         </div>
 
-        {/* One column no wider than the card (the examples' row scrolls inside it on phones). */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-1">
-          {/* Profile: the photo large on a quiet stage, then the name, the line and the address. */}
-          <div {...panel("name")}>
-            <div className="grid min-h-0 flex-1 place-content-center justify-items-center gap-3 rounded-lg bg-canvas-muted p-4">
-              <div className="relative">
+        <div className="grid grid-cols-1 grid-rows-1 max-lg:mk-play-panel lg:min-h-0 lg:flex-1">
+          {/* Profile: the photo beside one group of two fields, then the address (centred in the tall desktop panel). */}
+          <div {...panel("name")} className={cn(panel("name").className, "lg:justify-center")}>
+            <div className="flex items-start gap-3 lg:gap-4">
+              <div className="relative shrink-0">
                 <button
                   ref={photoTarget}
                   type="button"
                   onClick={() => void pickPhoto()}
                   aria-label={photo?.own ? t("photo.change") : t("photo.add")}
+                  aria-describedby={`${id}-photo-hint`}
                   className={cn(
-                    "relative grid size-avatar-xl place-items-center overflow-hidden rounded-full transition-[border-color,background-color,scale] duration-micro focus-visible:focus-ring active:scale-pressed lg:size-avatar-2xl",
-                    photo ? "border border-line" : "border border-dashed border-line-strong bg-surface text-fg-secondary hover:border-link hover:text-link",
+                    "relative grid size-avatar-xl shrink-0 place-items-center overflow-hidden rounded-full transition-[background-color,color,scale] duration-micro focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none lg:size-avatar-2xl",
+                    photo ? "border border-line" : "bg-canvas-muted text-fg-secondary hover:bg-tinted hover:text-tinted-fg",
                   )}
                 >
                   {photo ? (
@@ -767,76 +804,79 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   </button>
                 ) : null}
               </div>
-              <p aria-live="polite" className={cn("text-center text-caption text-pretty", photoError ? "text-danger-strong" : "text-fg-secondary")}>
-                {photoError ?? t("photo.hint")}
-              </p>
+              <div className="grid min-w-0 flex-1 rounded-lg bg-canvas-muted">
+                <div className="group/field relative">
+                  <label htmlFor={`${id}-name`} className={cn(FIELD_LABEL, demoFocus === "name" && "text-link")}>
+                    {t("name.label")}
+                  </label>
+                  <input
+                    ref={nameTarget}
+                    id={`${id}-name`}
+                    value={name}
+                    onChange={(event) => {
+                      setName(event.target.value.slice(0, 60));
+                      setOwn((current) => ({ ...current, name: true }));
+                      show("top");
+                    }}
+                    onFocus={(event) => {
+                      if (event.currentTarget.value === PERSONA.name) event.currentTarget.select();
+                    }}
+                    maxLength={60}
+                    autoComplete="name"
+                    placeholder={t("name.placeholder")}
+                    aria-describedby={`${id}-name-hint`}
+                    className={cn(FIELD, "rounded-t-lg", demoFocus === "name" && FIELD_ON)}
+                  />
+                </div>
+                <span aria-hidden className="ms-4 border-t border-line" />
+                <div className="group/field relative">
+                  <label htmlFor={`${id}-tagline`} className={cn(FIELD_LABEL, demoFocus === "tagline" && "text-link")}>
+                    {t("tagline.label")}
+                  </label>
+                  <input
+                    ref={taglineTarget}
+                    id={`${id}-tagline`}
+                    value={tagline}
+                    onChange={(event) => {
+                      setTagline(event.target.value.slice(0, 80));
+                      setOwn((current) => ({ ...current, tagline: true }));
+                      show("top");
+                    }}
+                    onFocus={(event) => {
+                      if (event.currentTarget.value === personaTagline) event.currentTarget.select();
+                    }}
+                    maxLength={80}
+                    placeholder={t("tagline.placeholder")}
+                    className={cn(FIELD, "rounded-b-lg", demoFocus === "tagline" && FIELD_ON)}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="grid shrink-0 grid-cols-1 gap-1">
-              <label htmlFor={`${id}-name`} className="px-1 text-small font-semibold">
-                {t("name.label")}
-              </label>
-              <input
-                ref={nameTarget}
-                id={`${id}-name`}
-                value={name}
-                onChange={(event) => {
-                  setName(event.target.value.slice(0, 60));
-                  setOwn((current) => ({ ...current, name: true }));
-                  show("top");
-                }}
-                onFocus={(event) => {
-                  if (event.currentTarget.value === PERSONA.name) event.currentTarget.select();
-                }}
-                maxLength={60}
-                autoComplete="name"
-                placeholder={t("name.placeholder")}
-                aria-describedby={`${id}-name-hint`}
-                className={cn(field, demoFocus === "name" && "border-link focus-ring")}
-              />
-            </div>
-            <div className="grid shrink-0 grid-cols-1 gap-1">
-              <label htmlFor={`${id}-tagline`} className="px-1 text-small font-semibold">
-                {t("tagline.label")}
-              </label>
-              <input
-                ref={taglineTarget}
-                id={`${id}-tagline`}
-                value={tagline}
-                onChange={(event) => {
-                  setTagline(event.target.value.slice(0, 80));
-                  setOwn((current) => ({ ...current, tagline: true }));
-                  show("top");
-                }}
-                onFocus={(event) => {
-                  if (event.currentTarget.value === personaTagline) event.currentTarget.select();
-                }}
-                maxLength={80}
-                placeholder={t("tagline.placeholder")}
-                className={cn(field, demoFocus === "tagline" && "border-link focus-ring")}
-              />
-            </div>
-            <p id={`${id}-name-hint`} className="flex min-w-0 shrink-0 items-center gap-2 px-1 text-small text-fg-secondary">
+            <p id={`${id}-name-hint`} className="flex min-w-0 shrink-0 items-center gap-2 px-1 text-caption text-fg-secondary">
               <Icon icon={Link2} size="sm" className="shrink-0" />
               <span className="truncate">{t("name.address", { address: `linkyo.app/${address || "…"}` })}</span>
             </p>
+            <p id={`${id}-photo-hint`} aria-live="polite" className={cn("-mt-1 px-1 text-caption text-pretty", photoError ? "text-danger-strong" : "text-fg-secondary")}>
+              {photoError ?? t("photo.hint")}
+            </p>
           </div>
 
-          {/* Links: paste or pick an example; below, what is on the page, each with its picture and detail. */}
+          {/* Links: paste one (or pick an example); below, what is on the page. */}
           <div {...panel("links")}>
             <form
               onSubmit={(event) => {
                 event.preventDefault();
                 add(draft);
               }}
-              className="grid shrink-0 grid-cols-1 gap-1"
+              className="grid shrink-0 grid-cols-1 gap-2"
             >
               <label htmlFor={`${id}-link`} className="sr-only">
                 {tPaste("label")}
               </label>
               <div
                 className={cn(
-                  "flex h-control-lg items-center gap-2 rounded-full border border-transparent bg-canvas-muted ps-4 pe-1 transition-colors duration-micro has-[input:focus-visible]:border-link has-[input:focus-visible]:focus-ring",
-                  demoFocus === "link" && "border-link focus-ring",
+                  "flex h-control-lg items-center gap-2 rounded-lg border border-transparent bg-canvas-muted ps-4 pe-1 transition-[border-color,background-color] duration-micro ease-standard hover:border-line-strong has-[input:focus-visible]:border-focus has-[input:focus-visible]:bg-surface has-[input:focus-visible]:focus-field",
+                  demoFocus === "link" && FIELD_ON,
                 )}
               >
                 <Icon icon={Link2} size="md" className="shrink-0 text-fg-tertiary" />
@@ -859,7 +899,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                       add(text);
                     }
                   }}
-                  dir="ltr"
+                  // An address reads left to right; the empty field's hint follows the page's language.
+                  dir={draft ? "ltr" : undefined}
                   inputMode="url"
                   autoComplete="off"
                   autoCapitalize="none"
@@ -867,63 +908,86 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   placeholder={tPaste("placeholder")}
                   aria-invalid={error === "invalid" || undefined}
                   aria-describedby={`${id}-link-hint`}
-                  className="h-full min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-fg-tertiary"
+                  className="h-full min-w-0 flex-1 bg-transparent text-body outline-hidden placeholder:text-fg-tertiary"
                 />
+                {/* Quiet until there is a link to add; then the one filled button in the panel. */}
                 <button
                   ref={addTarget}
                   type="submit"
                   aria-label={tPaste("add")}
-                  className="grid size-control-md shrink-0 place-items-center rounded-full bg-primary text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+                  className={cn(
+                    "grid size-control-md shrink-0 place-items-center rounded-full transition-[background-color,color,scale] duration-micro focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none",
+                    detection ? "bg-primary text-primary-fg hover:bg-primary-hover" : "bg-tinted text-tinted-fg hover:bg-tinted-hover",
+                  )}
                 >
                   <Icon icon={Plus} size="md" />
                 </button>
               </div>
-              <p id={`${id}-link-hint`} className={cn("flex min-h-6 items-center gap-2 px-4 text-small", error ? "text-danger-strong" : "text-link")}>
-                {error === "invalid" ? (
-                  tPaste("invalid")
-                ) : error === "limit" ? (
-                  t("limit")
-                ) : detection ? (
-                  <span key={detection.type} className="inline-flex items-center gap-2 font-semibold motion-safe:animate-fade-in">
-                    <Icon icon={CircleCheck} size="sm" />
-                    {tPaste("detected", { type: typeLabel(typeKey(detection)) })}
-                  </span>
-                ) : null}
-              </p>
-            </form>
-            {/* One row on phones (it scrolls sideways), so the demo's links never make the card taller. */}
-            <div role="group" aria-label={tPaste("examples")} className="mk-no-scrollbar -mx-1 flex shrink-0 gap-2 overflow-x-auto px-1 lg:flex-wrap">
-              {EXAMPLES.filter((example) => example.chip).map((example) => (
-                <button
-                  key={example.id}
-                  type="button"
-                  onClick={() => {
-                    add(example.url);
-                  }}
-                  className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full border border-line bg-surface ps-2 pe-3 text-small font-medium text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed"
+              {/* One slot: the examples while the field is empty, else what the field says. */}
+              <div className="grid min-h-control-sm shrink-0">
+                <p
+                  id={`${id}-link-hint`}
+                  className={cn("col-start-1 row-start-1 flex min-h-control-sm items-center gap-2 px-4 text-small", error ? "text-danger-strong" : "text-link")}
                 >
-                  {example.icon ? <PlatformIcon icon={example.icon} size="sm" /> : <Icon icon={ShoppingBag} size="sm" />}
-                  {example.label}
-                </button>
-              ))}
-            </div>
-            <section aria-labelledby={`${id}-added`} className="flex min-h-0 flex-1 flex-col rounded-lg border border-line">
-              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-2">
-                <h3 id={`${id}-added`} className="text-caption font-semibold tracking-wide text-fg-secondary uppercase">
+                  {error === "invalid" ? (
+                    tPaste("invalid")
+                  ) : error === "limit" ? (
+                    t("limit")
+                  ) : detection ? (
+                    <span key={detection.type} className="inline-flex items-center gap-2 font-semibold motion-safe:animate-fade-in">
+                      <Icon icon={CircleCheck} size="sm" />
+                      {tPaste("detected", { type: draftProfile ? platformName(draftProfile.platform) : typeLabel(typeKey(detection)) })}
+                    </span>
+                  ) : null}
+                </p>
+                {showExamples ? (
+                  <div
+                    role="group"
+                    aria-label={tPaste("examples")}
+                    className="mk-no-scrollbar col-start-1 row-start-1 -mx-4 -my-1 flex gap-2 overflow-x-auto px-4 py-1 motion-safe:animate-fade-in sm:-mx-6 sm:px-6 lg:m-0 lg:flex-wrap lg:overflow-visible lg:p-0"
+                  >
+                    {EXAMPLES.filter((example) => example.chip).map((example) => (
+                      <button
+                        key={example.id}
+                        type="button"
+                        onClick={() => {
+                          add(example.url);
+                        }}
+                        className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full border border-line bg-surface ps-2 pe-3 text-small font-medium text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none"
+                      >
+                        {example.icon ? <PlatformIcon icon={example.icon} size="sm" /> : <Icon icon={ShoppingBag} size="sm" />}
+                        {example.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </form>
+            {/* On your page: a row of tinted tokens on phones, a plain list on wide screens. */}
+            <section aria-labelledby={`${id}-added`} className="flex min-h-0 flex-1 flex-col gap-1">
+              <div className="flex shrink-0 items-baseline justify-between gap-3 px-1 text-caption text-fg-secondary">
+                <h3 id={`${id}-added`} className="font-semibold">
                   {t("added")}
                 </h3>
-                <span className="text-caption font-semibold text-fg-secondary tabular-nums">{t("count", { count: items.length, max: MAX_LINKS })}</span>
+                <span className="font-semibold tabular-nums">{t("count", { count: items.length, max: MAX_LINKS })}</span>
               </div>
               {items.length > 0 ? (
-                <ul aria-label={t("added")} className="grid min-h-0 flex-1 content-start gap-1 overflow-y-auto p-2">
+                <ul
+                  ref={list}
+                  aria-label={t("added")}
+                  className="mk-no-scrollbar -mx-4 -my-1 flex gap-2 overflow-x-auto px-4 py-1 sm:-mx-6 sm:px-6 lg:m-0 lg:grid lg:min-h-0 lg:flex-1 lg:content-start lg:gap-1 lg:overflow-x-hidden lg:overflow-y-auto lg:p-1"
+                >
                   {items.map((item) => {
                     const about = describe(item);
                     return (
-                      <li key={item.key} className="flex min-h-control-lg items-center gap-3 rounded-md ps-1 motion-safe:animate-fade-in">
+                      <li
+                        key={item.key}
+                        className="flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-tinted ps-1 text-tinted-fg motion-safe:animate-pop-in lg:h-auto lg:min-h-control-lg lg:gap-3 lg:rounded-none lg:bg-transparent lg:ps-0 lg:text-fg"
+                      >
                         <ItemThumb item={item} />
-                        <span className="grid min-w-0 flex-1">
-                          <span className="truncate text-small font-semibold text-fg">{about.title}</span>
-                          <span className="truncate text-caption text-fg-secondary">
+                        <span className="grid min-w-0 lg:flex-1">
+                          <span className="max-w-32 truncate text-small font-semibold lg:max-w-none">{about.title}</span>
+                          <span className="truncate text-caption text-fg-secondary max-lg:hidden">
                             <bdi>{about.detail}</bdi>
                           </span>
                         </span>
@@ -933,7 +997,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                             remove(item.key);
                           }}
                           aria-label={tPaste("remove", { title: about.title })}
-                          className="grid size-touch-target shrink-0 place-items-center rounded-full text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring"
+                          className="grid size-control-sm shrink-0 place-items-center rounded-full transition-colors duration-micro hover:bg-tinted-hover focus-visible:focus-ring lg:size-touch-target lg:text-fg-secondary lg:hover:bg-hover lg:hover:text-fg"
                         >
                           <Icon icon={X} size="sm" />
                         </button>
@@ -942,21 +1006,19 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   })}
                 </ul>
               ) : (
-                <p className="grid flex-1 place-content-center justify-items-center gap-2 p-6 text-center text-small text-fg-secondary">
-                  <span aria-hidden className="grid size-control-lg place-items-center rounded-full bg-canvas-muted">
-                    <Icon icon={Link2} size="md" />
-                  </span>
-                  {t("editor.empty")}
-                </p>
+                <p className="flex h-control-sm shrink-0 items-center px-1 text-small text-fg-tertiary lg:h-auto lg:py-2">{t("editor.empty")}</p>
               )}
             </section>
           </div>
 
-          {/* Look: every look as a little page in its own colors, type and buttons, and any color. */}
+          {/* Look: every look as a little page in its own colors, type and buttons, and any color.
+              Phones: one row that scrolls sideways; wide screens: a grid that fills the panel. */}
           <div {...panel("look")}>
-            {/* Wide screens: the cards fill the panel. Phones: they keep a page's proportions. */}
-            <div className="grid min-h-0 flex-1 grid-cols-3 grid-rows-2 gap-2 max-lg:flex-none">
-              <div role="radiogroup" aria-label={tLook("choose")} className="col-span-full row-span-full grid grid-cols-3 grid-rows-2 gap-2">
+            <div
+              ref={strip}
+              className="mk-no-scrollbar -mx-4 flex shrink-0 snap-x snap-mandatory scroll-px-4 gap-2 overflow-x-auto px-4 py-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:m-0 lg:grid lg:min-h-0 lg:flex-1 lg:snap-none lg:grid-cols-3 lg:grid-rows-2 lg:overflow-visible lg:p-0"
+            >
+              <div role="radiogroup" aria-label={tLook("choose")} className="flex shrink-0 gap-2 lg:col-span-full lg:row-span-full lg:grid lg:grid-cols-3 lg:grid-rows-2">
                 {looks.map((option, index) => {
                   const selected = !accent && index === lookIndex;
                   return (
@@ -974,7 +1036,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                         chooseLook(index);
                       }}
                       onKeyDown={onLookKey}
-                      className={cn(lookCard(selected), "focus-visible:focus-ring")}
+                      className={cn(lookCard(selected), "w-24 shrink-0 snap-start focus-visible:focus-ring lg:w-auto")}
                     >
                       <span className="relative grid min-h-0">
                         <LookPreview vars={option.vars} button={option.button} hero={option.hero} photo={previewPhoto} name={previewName} />
@@ -986,7 +1048,9 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 })}
               </div>
               {/* Any color, on the look that is showing (in the free cell after the five looks). */}
-              <label className={cn(lookCard(accent !== null), "relative col-start-3 row-start-2 cursor-pointer has-[input:focus-visible]:focus-ring")}>
+              <label
+                className={cn(lookCard(accent !== null), "relative w-24 shrink-0 cursor-pointer snap-start has-[input:focus-visible]:focus-ring lg:col-start-3 lg:row-start-2 lg:w-auto")}
+              >
                 <input
                   type="color"
                   aria-label={tLook("custom")}
@@ -999,7 +1063,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   {accent && customVars ? (
                     <LookPreview vars={customVars} button={base.button} hero={base.hero} photo={previewPhoto} name={previewName} />
                   ) : (
-                    <span className="grid place-items-center rounded-md border border-dashed border-line-strong bg-canvas-muted text-fg-secondary max-lg:aspect-portrait">
+                    <span className="grid place-items-center rounded-md border border-line bg-canvas-muted text-fg-secondary max-lg:aspect-portrait">
                       <Icon icon={Palette} size="lg" />
                     </span>
                   )}
@@ -1008,21 +1072,21 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 <span className="pointer-events-none truncate px-1 text-small font-semibold text-fg max-sm:text-caption">{tLook("custom")}</span>
               </label>
             </div>
-            <p aria-live="polite" className="shrink-0 text-small text-pretty">
+            <p aria-live="polite" className="shrink-0 text-small text-pretty max-lg:sr-only">
               <span className="font-semibold text-fg">{look.name}</span>
               <span className="text-fg-secondary"> · {look.description}</span>
             </p>
           </div>
         </div>
 
-        <div className="grid shrink-0 gap-2 border-t border-line pt-4">
+        <div className="grid shrink-0 gap-1">
           <Link
             ref={ctaTarget}
             href={signup}
             onClick={keep}
             className={cn(
-              "group inline-flex h-control-xl items-center justify-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed",
-              demoFocus === "cta" && "bg-primary-hover focus-ring",
+              "group inline-flex h-control-lg items-center justify-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed active:bg-primary-pressed motion-reduce:active:scale-none lg:h-control-xl",
+              demoFocus === "cta" && "scale-lift bg-primary-hover",
             )}
           >
             {t("cta")}
@@ -1031,7 +1095,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
           <p className="text-center text-caption text-fg-secondary">{t("ctaHint")}</p>
         </div>
       </div>
-      {/* The demo's cursor: it moves to each control and taps it. Decoration only. */}
+      {/* The demo's pointer: it moves to each control and taps it (a fingertip on touch screens). Decoration only. */}
       <div
         aria-hidden
         className={cn(
@@ -1041,7 +1105,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         style={{ translate: `${cursor.x}px ${cursor.y}px` }}
       >
         {cursor.tap > 0 ? <span key={cursor.tap} className="mk-tap absolute -top-4 -left-4 size-8 rounded-full bg-primary" /> : null}
-        <Icon icon={MousePointer2} size="lg" className="relative fill-ink text-white" />
+        <span className="absolute -top-3 -left-3 hidden size-6 rounded-full border-emphasis border-surface bg-scrim pointer-coarse:block" />
+        <Icon icon={MousePointer2} size="lg" className="relative fill-ink text-white pointer-coarse:hidden" />
       </div>
       <p role="status" className="sr-only">
         {announcement}

@@ -1,5 +1,6 @@
 "use client";
 
+import { tokens } from "@linkyo/tokens";
 import { cn, Icon, LogoSymbol } from "@linkyo/ui";
 import { ArrowUpRight } from "lucide-react";
 import Image, { type StaticImageData } from "next/image";
@@ -71,6 +72,9 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
   const [warm, setWarm] = useState(false);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const row = useRef<HTMLDivElement | null>(null);
+  // A finger swiping across the phones turns the deck, as in an app (the page still scrolls up and down).
+  const swipe = useRef<{ x: number; y: number; id: number } | null>(null);
+  const swiped = useRef(false);
   const reduced = useSyncExternalStore(subscribeReduced, () => window.matchMedia(reducedQuery).matches, () => false);
   const count = pages.length;
   const rotating = !chosen && !reduced && turns < count * ROUNDS;
@@ -126,7 +130,36 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
       className="mx-auto grid w-full max-w-creator grid-cols-1 justify-items-center gap-6 md:gap-8"
     >
       {/* Room above the phones for the address; the phones share the front phone's box. */}
-      <div aria-live={rotating ? "off" : "polite"} className="mk-phone-in relative w-full pt-16">
+      <div
+        aria-live={rotating ? "off" : "polite"}
+        onPointerDown={(event) => {
+          if (event.pointerType === "mouse") return;
+          swipe.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
+          swiped.current = false;
+        }}
+        onPointerUp={(event) => {
+          const start = swipe.current;
+          swipe.current = null;
+          if (start?.id !== event.pointerId) return;
+          const dx = event.clientX - start.x;
+          // At least a finger's width, and more sideways than down: otherwise it was a tap or a scroll.
+          if (Math.abs(dx) < tokens.size.touchTarget || Math.abs(dx) < Math.abs(event.clientY - start.y)) return;
+          const rtl = getComputedStyle(event.currentTarget).direction === "rtl";
+          swiped.current = true;
+          choose(active + (dx < 0 ? 1 : -1) * (rtl ? -1 : 1));
+        }}
+        onPointerCancel={() => {
+          swipe.current = null;
+        }}
+        // A swipe is not a tap: the page in front does not open.
+        onClickCapture={(event) => {
+          if (!swiped.current) return;
+          swiped.current = false;
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        className="mk-phone-in relative w-full touch-pan-y pt-16"
+      >
         <div className="relative mx-auto w-1/2 md:w-5/12 lg:mk-deck-fit">
           <div aria-hidden className="mk-deck-halo w-[260%] border border-line" />
           <div aria-hidden className="mk-deck-halo w-[215%] bg-tint-teal" />
@@ -232,7 +265,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                 choose(index);
               }}
               onKeyDown={onTabKey}
-              className="group relative size-touch-target shrink-0 rounded-full p-1 focus-visible:focus-ring"
+              className="group relative size-touch-target shrink-0 rounded-full p-1 transition-[scale] duration-micro focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none"
             >
               {/* The ring: a quiet track on every face. On the page in front it fills while the page's
                   time runs (the same clock as the page's scroll); once the deck has stopped it is full. */}

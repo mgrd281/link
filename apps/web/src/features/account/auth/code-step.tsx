@@ -175,7 +175,7 @@ export function CodeStep({
           error={fieldError}
           describedBy={["auth-lead", demoCode ? `${id}-demo` : null].filter(Boolean).join(" ")}
         />
-        <Button type="submit" variant="primary" size="xl" block loading={busy} trailing={<Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover/button:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/button:-translate-x-0.5" />}>
+        <Button type="submit" variant="primary" size="cta" block loading={busy} trailing={<Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover/button:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/button:-translate-x-0.5" />}>
           {t(intent === "signUp" ? "code.submit" : "code.submitLogin")}
         </Button>
         <div className="flex flex-wrap items-center justify-between gap-3 text-small">

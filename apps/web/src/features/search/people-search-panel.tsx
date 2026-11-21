@@ -67,7 +67,7 @@ function Marked({ text, query }: { text: string; query: string }) {
   if (at < text.length) pieces.push({ text: text.slice(at), hit: false });
   return pieces.map((piece, index) =>
     piece.hit ? (
-      <mark key={index} className="rounded-xs bg-tint-lime text-fg">
+      <mark key={index} className="rounded-xs bg-selected text-selected-fg">
         {piece.text}
       </mark>
     ) : (

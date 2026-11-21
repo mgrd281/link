@@ -1,4 +1,4 @@
-import { Logo } from "@linkyo/ui";
+import { cn, Logo } from "@linkyo/ui";
 import { useLocale, useTranslations } from "next-intl";
 
 import { LocaleSwitch } from "@/components/locale-switch";
@@ -13,7 +13,7 @@ import { MobileMenu, type MenuItem } from "./mobile-menu";
  * Linkyo Teal. On phones: logo, search and menu; sign-up joins them once the hero's own sign-up has
  * been passed (`signupAfter`, the id of that block).
  */
-export function MarketingHeader({ signupAfter }: { signupAfter?: string } = {}) {
+export function MarketingHeader({ signupAfter, edge = true }: { signupAfter?: string; /** A hairline under the bar once content scrolls beneath it (off where a band below draws its own). */ edge?: boolean } = {}) {
   const t = useTranslations("marketing");
   const common = useTranslations("common");
   const locale = useLocale();
@@ -27,7 +27,8 @@ export function MarketingHeader({ signupAfter }: { signupAfter?: string } = {}) 
   const cta = { href: `/${locale}/signup`, label: t("nav.start") };
   const login = { href: `/${locale}/login`, label: t("nav.login") };
   return (
-    <header className="layer-sticky sticky top-0 bg-canvas">
+    <header className={cn("layer-sticky sticky top-0 bg-canvas", edge && "mk-stuck-band")}>
+      {edge ? <span aria-hidden className="mk-stuck-edge pointer-events-none absolute inset-x-0 bottom-0 border-b border-transparent" /> : null}
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:rounded-sm focus:bg-surface-elevated focus:px-3 focus:py-2 focus:focus-ring"
@@ -49,7 +50,7 @@ export function MarketingHeader({ signupAfter }: { signupAfter?: string } = {}) 
             </a>
           ))}
         </nav>
-        <div className="ms-auto flex items-center gap-1">
+        <div className="ms-auto flex items-center gap-2 sm:gap-1">
           {/* Phones: sign-up, once the hero's own has been passed. */}
           <HeaderSignup label={t("nav.startShort")} after={signupAfter} />
           {/* Find a person: a name, a profession, a place (Ctrl/⌘ K). */}

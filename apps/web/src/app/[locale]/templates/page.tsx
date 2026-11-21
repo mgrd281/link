@@ -134,7 +134,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
 
   return (
     <>
-      <MarketingHeader />
+      <MarketingHeader edge={false} />
       <main id="main" className="mx-auto grid max-w-content grid-cols-1 gap-16 px-5 pt-12 md:px-10">
         <ExampleGallery
           items={items}
@@ -199,7 +199,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
           </div>
           <Link
             href="/signup"
-            className="relative inline-flex h-control-lg items-center justify-center gap-2 justify-self-start rounded-full bg-primary-fg px-6 text-body font-semibold text-primary transition-transform duration-micro hover:-translate-y-0.5 focus-visible:focus-ring active:scale-pressed md:justify-self-end"
+            className="relative inline-flex h-control-xl w-full items-center justify-center gap-2 rounded-full bg-primary-fg px-6 text-body font-semibold text-primary transition-transform duration-micro hover:-translate-y-0.5 focus-visible:focus-ring active:scale-pressed motion-reduce:hover:translate-y-0 sm:w-auto sm:justify-self-start md:h-control-lg md:justify-self-end"
           >
             {t("ctaButton")}
             <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />

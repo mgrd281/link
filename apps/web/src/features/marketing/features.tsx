@@ -214,9 +214,9 @@ export function TryIt() {
     };
   });
   return (
-    <section id="try" aria-labelledby="try-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-16 md:px-10 md:py-24">
-      <header className="mk-reveal mx-auto grid max-w-prose justify-items-center gap-4 text-center">
-        <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary">
+    <section id="try" aria-labelledby="try-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-12 md:px-10 md:py-24">
+      <header className="mk-reveal grid max-w-prose gap-4 md:mx-auto md:justify-items-center md:text-center">
+        <p className="inline-flex items-center justify-self-start md:justify-self-center gap-2 rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary">
           <span className="grid size-6 place-items-center rounded-full bg-selected text-selected-fg">
             <Icon icon={Sparkles} size="sm" />
           </span>
@@ -249,8 +249,8 @@ export function Features() {
   const swatches = READABLE.map((accent) => resolveCreatorTheme({ accent, mode: "vivid" }).cssVars);
   const points = t.raw("analytics.points") as string[];
   return (
-    <section id="features" aria-labelledby="features-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-16 md:px-10 md:py-24">
-      <header className="mk-reveal mx-auto grid max-w-prose justify-items-center text-center">
+    <section id="features" aria-labelledby="features-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-12 md:px-10 md:py-24">
+      <header className="mk-reveal grid max-w-prose md:mx-auto md:justify-items-center md:text-center">
         <h2 id="features-title" className="text-h2 tracking-tight text-balance md:text-h1">
           <span className="block text-fg-tertiary">{t("more.title1")}</span>
           <span className="block">{t("more.title2")}</span>

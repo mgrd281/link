@@ -190,8 +190,8 @@ test.describe("marketing home", () => {
     // Her own look: Nocturne, black and gold.
     await expect(playground.getByRole("radio", { name: "Nocturne" })).toHaveAttribute("aria-checked", "true", { timeout: 5_000 });
     await expect(playground.getByRole("tab", { name: "Look" })).toHaveAttribute("aria-selected", "true");
-    // The phone says the page is live; one quiet button plays it again. No step bar, no extra buttons.
-    await expect(preview).toContainText("Your page is live", { timeout: 8_000 });
+    // The phone says it is the visitor's turn (nothing is online yet); one quiet button plays it again.
+    await expect(preview).toContainText("Done. Your turn!", { timeout: 8_000 });
     await expect(playground.getByRole("button", { name: "Watch again" })).toBeVisible({ timeout: 8_000 });
     await expect(playground.getByRole("button", { name: /Start empty|Clear/ })).toHaveCount(0);
     expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
@@ -204,9 +204,10 @@ test.describe("marketing home", () => {
     const playground = page.locator("#try");
     await playground.getByLabel("Your name").fill("Lea");
     await playground.getByRole("button", { name: "Watch", exact: true }).click();
-    // It starts from an empty page; the button steps aside while it plays.
+    // It starts from an empty page; while it plays, the same button stops it (WCAG 2.2.2).
     await expect(playground.getByLabel("Your name")).toHaveValue("");
     await expect(playground.getByRole("button", { name: /^Watch/ })).toHaveCount(0);
+    await expect(playground.getByRole("button", { name: "Stop demo" })).toBeVisible();
     await expect(playground.getByLabel("Your name")).toHaveValue("Lou Ferreira", { timeout: 8_000 });
     // A touch stops it where it is, and it can be watched again.
     await playground.getByRole("tab", { name: "Look" }).click();

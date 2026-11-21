@@ -1,4 +1,4 @@
-import { Badge, cn, Icon, LogoGlyph } from "@linkyo/ui";
+import { Badge, Button, cn, Icon, LogoGlyph } from "@linkyo/ui";
 import { ArrowRight, ChartColumn, Check, EyeOff, Gift, Globe, Mail, Plus, Server, ShieldCheck, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
@@ -15,7 +15,7 @@ import { order } from "./hero";
 
 function SectionHeader({ id, title, lead, center = false }: { id: string; title: string; lead?: string; center?: boolean }) {
   return (
-    <header className={cn("mk-reveal grid gap-4", center ? "mx-auto max-w-prose justify-items-center text-center" : "max-w-prose")}>
+    <header className={cn("mk-reveal grid gap-4", center ? "max-w-prose md:mx-auto md:justify-items-center md:text-center" : "max-w-prose")}>
       <h2 id={id} className="text-h2 tracking-tight text-balance md:text-h1">
         {title}
       </h2>
@@ -39,19 +39,19 @@ export function Trust() {
   const t = useTranslations("marketing.trust");
   const items = t.raw("items") as { title: string; body: string }[];
   return (
-    <Shell labelledBy="trust-title" className="w-full pb-16 md:pb-24">
+    <Shell labelledBy="trust-title" className="w-full pb-12 md:pb-24">
       <h2 id="trust-title" className="sr-only">
         {t("title")}
       </h2>
-      {/* Phones: compact rows (icon beside the words); wide screens: three cards side by side. */}
-      <ul className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+      {/* Phones: one grouped list (icon beside the words, hairlines between); wide screens: three cards. */}
+      <ul className="grid grid-cols-1 overflow-hidden rounded-xl bg-canvas-muted max-md:divide-y max-md:divide-line md:grid-cols-3 md:gap-4 md:overflow-visible md:rounded-none md:bg-transparent">
         {items.map((item, index) => (
           <li
             key={item.title}
-            className="mk-reveal grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-1 rounded-xl bg-canvas-muted p-5 md:grid-cols-1 md:content-start md:gap-4 md:p-8"
+            className="mk-reveal grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-1 p-5 md:grid-cols-1 md:content-start md:gap-4 md:rounded-xl md:bg-canvas-muted md:p-8"
             style={order(index)}
           >
-            <span aria-hidden className="row-span-2 grid size-control-md place-items-center rounded-full bg-primary text-primary-fg md:row-span-1">
+            <span aria-hidden className="row-span-2 grid size-control-md place-items-center rounded-full bg-tinted text-tinted-fg md:row-span-1">
               <Icon icon={TRUST_ICONS[index] ?? Check} size="md" />
             </span>
             <h3 className="text-body-lg font-semibold text-balance md:text-h3">{item.title}</h3>
@@ -75,7 +75,7 @@ export function Templates() {
   const t = useTranslations("marketing.templates");
   const tExamples = useTranslations("examples");
   return (
-    <section id="templates" aria-labelledby="templates-title" className="scroll-mt-24 overflow-clip py-16 md:py-24">
+    <section id="templates" aria-labelledby="templates-title" className="scroll-mt-24 overflow-clip py-12 md:py-24">
       <div className="mx-auto max-w-content px-5 md:px-10">
         <SectionHeader id="templates-title" title={t("title")} lead={t("lead")} center />
       </div>
@@ -86,7 +86,7 @@ export function Templates() {
               <a
                 href={pageHref(slug)}
                 aria-label={t("open", { name: nameOf(slug) })}
-                className="group block overflow-hidden rounded-xl border border-line bg-surface transition-[translate] duration-standard ease-standard hover:-translate-y-1 focus-visible:focus-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className="group block overflow-hidden rounded-xl border border-line bg-surface transition-[translate,scale] duration-standard ease-standard hover:-translate-y-1 focus-visible:focus-ring active:scale-pressed active:duration-micro motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-none"
               >
                 <span className="relative block aspect-short">
                   <Image
@@ -103,14 +103,13 @@ export function Templates() {
           ))}
         </ul>
       </div>
-      <div className="mt-10 flex justify-center px-5">
-        <Link
-          href="/templates"
-          className="inline-flex h-control-lg items-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,translate,scale] duration-micro hover:-translate-y-0.5 hover:bg-primary-hover focus-visible:focus-ring active:translate-y-0 active:scale-pressed motion-reduce:hover:translate-y-0"
-        >
-          {tExamples("seeAll", { count: Object.keys(LOOKS).length + Object.keys(PEOPLE_LOOKS).length })}
-          <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
-        </Link>
+      <div className="mt-10 grid px-5 sm:flex sm:justify-center">
+        <Button asChild variant="primary" size="cta" className="group">
+          <Link href="/templates">
+            {tExamples("seeAll", { count: Object.keys(LOOKS).length + Object.keys(PEOPLE_LOOKS).length })}
+            <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+          </Link>
+        </Button>
       </div>
     </section>
   );
@@ -127,7 +126,7 @@ export function Pricing() {
   const free = t.raw("free.features") as string[];
   const pro = t.raw("pro.features") as string[];
   return (
-    <Shell id="pricing" labelledBy="pricing-title" className="grid w-full grid-cols-1 gap-10 py-16 md:gap-12 md:py-24">
+    <Shell id="pricing" labelledBy="pricing-title" className="grid w-full grid-cols-1 gap-10 py-12 md:gap-12 md:py-24">
       <SectionHeader id="pricing-title" title={t("title")} lead={t("lead")} center />
       <div className="mx-auto grid w-full max-w-content gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <article className="mk-reveal grid content-start gap-6 rounded-xl border border-line bg-surface-elevated p-6 md:p-10">
@@ -149,13 +148,12 @@ export function Pricing() {
               </li>
             ))}
           </ul>
-          <Link
-            href="/signup"
-            className="group inline-flex h-control-xl items-center justify-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
-          >
-            {t("free.cta")}
-            <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
-          </Link>
+          <Button asChild variant="primary" size="cta" className="group">
+            <Link href="/signup">
+              {t("free.cta")}
+              <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+            </Link>
+          </Button>
         </article>
         <article className="mk-reveal grid content-start gap-5 rounded-xl bg-canvas-muted p-6 md:p-10">
           <header className="grid gap-1">
@@ -167,12 +165,11 @@ export function Pricing() {
             </h3>
             <p className="text-body text-fg-secondary">{t("pro.lead")}</p>
           </header>
-          <ul className="grid gap-2">
+          {/* One grouped list, as in an app's settings: rows with hairlines, not separate buttons. */}
+          <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface">
             {pro.map((feature, index) => (
-              <li key={feature} className="flex min-h-12 items-center gap-3 rounded-lg bg-surface px-3 py-2 text-body">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-canvas-muted text-fg-secondary">
-                  <Icon icon={PRO_ICONS[index] ?? Plus} size="sm" />
-                </span>
+              <li key={feature} className="flex min-h-12 items-center gap-3 px-4 py-2 text-body">
+                <Icon icon={PRO_ICONS[index] ?? Plus} size="md" className="shrink-0 text-fg-secondary" />
                 {feature}
               </li>
             ))}
@@ -191,7 +188,7 @@ export function Faq() {
   const t = useTranslations("marketing.faq");
   const items = t.raw("items") as { q: string; a: string }[];
   return (
-    <Shell id="faq" labelledBy="faq-title" className="grid grid-cols-1 gap-8 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
+    <Shell id="faq" labelledBy="faq-title" className="grid grid-cols-1 gap-8 py-12 md:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
       <header className="mk-reveal grid content-start gap-3 lg:sticky lg:top-24 lg:self-start">
         <h2 id="faq-title" className="text-h2 tracking-tight text-balance md:text-h1">
           {t("title")}
@@ -201,7 +198,7 @@ export function Faq() {
       <div className="divide-y divide-line border-y border-line">
         {items.map((item) => (
           <details key={item.q} className="group mk-faq">
-            <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-md py-4 text-body-lg font-semibold text-balance outline-none focus-visible:focus-ring [&::-webkit-details-marker]:hidden">
+            <summary className="-mx-3 flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-md px-3 py-4 text-body-lg font-semibold text-balance outline-none transition-colors duration-micro focus-visible:focus-ring active:bg-pressed [&::-webkit-details-marker]:hidden">
               {item.q}
               <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-canvas-muted text-fg-secondary transition-[rotate,background-color,color] duration-standard ease-standard group-open:rotate-45 group-open:bg-primary group-open:text-primary-fg motion-reduce:transition-none">
                 <Icon icon={Plus} size="sm" />

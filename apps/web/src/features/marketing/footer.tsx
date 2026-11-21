@@ -4,8 +4,9 @@ import { useTranslations } from "next-intl";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { Link } from "@/i18n/navigation";
 
-// Each link is a 28 px row (comfortable for a finger), the rows 32 px apart as before.
-const linkClass = "inline-flex items-center self-start rounded-xs py-1 text-small text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring";
+// Phones: each link is a 44 px row, as in an app's list, and gives way under the finger; wide screens: compact.
+const linkClass =
+  "-mx-3 inline-flex min-h-touch-target items-center self-start rounded-md px-3 text-body text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed md:min-h-0 md:py-1 md:text-small";
 const groupTitle = "mb-2 text-caption font-semibold text-fg";
 
 /**
@@ -16,7 +17,7 @@ const groupTitle = "mb-2 text-caption font-semibold text-fg";
 export function MarketingFooter() {
   const t = useTranslations("marketing.footer");
   return (
-    <footer className="mx-auto grid max-w-content gap-10 px-5 pt-16 pb-10 md:px-10 md:pt-24">
+    <footer className="mx-auto grid max-w-content gap-10 px-5 pt-12 pb-10 md:px-10 md:pt-24">
       <div className="grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-16">
         <div className="grid content-start gap-3">
           <Logo className="h-8" title="Linkyo" />
@@ -55,7 +56,7 @@ export function MarketingFooter() {
           </nav>
         </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-line pt-6 text-caption text-fg-secondary">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-line pt-6 text-small text-fg-secondary md:text-caption">
         <div className="grid gap-2">
           <p className="flex flex-wrap gap-x-3 gap-y-1">
             <span>{t("rights")}</span>
@@ -69,7 +70,7 @@ export function MarketingFooter() {
             <span>{t("terms")}</span>
           </p>
         </div>
-        <ThemeSwitch />
+        <ThemeSwitch size="md" />
       </div>
     </footer>
   );

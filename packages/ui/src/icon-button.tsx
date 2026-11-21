@@ -23,6 +23,8 @@ const iconButtonVariants = cva(
       variant: {
         ghost: "hover:bg-hover active:bg-pressed data-[state=on]:bg-selected",
         secondary: "border border-line-strong bg-surface hover:bg-surface-elevated active:bg-pressed",
+        /** A soft teal fill, as on iOS: quiet controls next to content (a sheet's close, previous, next). */
+        tinted: "bg-tinted text-tinted-fg hover:bg-tinted-hover active:bg-tinted-hover",
         primary: "bg-primary text-primary-fg hover:bg-primary-hover active:bg-primary-pressed",
       },
       size: {

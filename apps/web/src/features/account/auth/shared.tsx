@@ -60,7 +60,7 @@ export function SocialButtons({ emailField }: { emailField: string }) {
           setAsked(true);
           document.getElementById(emailField)?.focus();
         }}
-        className="flex h-control-lg items-center justify-center gap-3 rounded-lg bg-canvas-muted px-4 text-body font-medium text-fg transition-colors duration-micro hover:bg-hover focus-visible:focus-ring active:scale-pressed"
+        className="flex h-control-xl items-center justify-center gap-3 rounded-full bg-canvas-muted px-6 text-body font-semibold text-fg transition-[background-color,scale] duration-micro hover:bg-hover focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none"
       >
         <Image src="/brands/google.svg" alt="" width={MARK} height={MARK} unoptimized className="size-5" />
         {t("social.google")}

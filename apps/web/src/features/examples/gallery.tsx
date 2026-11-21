@@ -492,7 +492,7 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
     <IconButton
       icon={paused ? Play : Pause}
       label={playLabel}
-      variant="secondary"
+      variant="tinted"
       data-keep-glide=""
       onClick={() => {
         ended.current = false;
@@ -614,7 +614,7 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
             </span>
             <p className="text-h3">{t("empty.title")}</p>
             <p className="max-w-prose text-small text-fg-secondary">{t("empty.text")}</p>
-            <Button variant="secondary" onClick={reset} className="rounded-full">
+            <Button variant="tinted" size="lg" onClick={reset} className="rounded-full font-semibold">
               {t("empty.reset")}
             </Button>
           </div>
@@ -681,14 +681,14 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
                 <div {...previewHandle} className="grid touch-none gap-2 pt-2 lg:hidden">
                   <span aria-hidden className="mx-auto h-1 w-10 rounded-full bg-line-strong" />
                   <div className="flex items-center gap-2">
-                    <Dialog.Title className="min-w-0 flex-1 truncate rounded-full border border-line bg-surface-elevated px-3 py-1 text-small font-semibold text-fg">
+                    <Dialog.Title className="min-w-0 flex-1 truncate text-body-lg font-semibold text-fg">
                       {current.name}
                     </Dialog.Title>
                     {playButton()}
-                    <IconButton icon={ChevronLeft} label={t("prev")} variant="secondary" data-keep-glide="" onClick={() => step(-1)} className="rounded-full rtl:-scale-x-100" />
-                    <IconButton icon={ChevronRight} label={t("next")} variant="secondary" data-keep-glide="" onClick={() => step(1)} className="rounded-full rtl:-scale-x-100" />
+                    <IconButton icon={ChevronLeft} label={t("prev")} variant="tinted" data-keep-glide="" onClick={() => step(-1)} className="rounded-full rtl:-scale-x-100" />
+                    <IconButton icon={ChevronRight} label={t("next")} variant="tinted" data-keep-glide="" onClick={() => step(1)} className="rounded-full rtl:-scale-x-100" />
                     <Dialog.Close asChild>
-                      <IconButton icon={X} label={t("close")} variant="secondary" className="rounded-full" />
+                      <IconButton icon={X} label={t("close")} variant="tinted" className="rounded-full" />
                     </Dialog.Close>
                   </div>
                 </div>
@@ -730,12 +730,12 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
                     <Icon icon={ExternalLink} size="sm" />
                   </a>
                   <div className="hidden items-center justify-between gap-2 border-t border-line pt-4 lg:flex">
-                    <IconButton icon={ChevronLeft} label={t("prev")} variant="secondary" data-keep-glide="" onClick={() => step(-1)} className="rounded-full rtl:-scale-x-100" />
+                    <IconButton icon={ChevronLeft} label={t("prev")} variant="tinted" data-keep-glide="" onClick={() => step(-1)} className="rounded-full rtl:-scale-x-100" />
                     <span className="flex items-center gap-2">
                       <span className="text-caption text-fg-secondary tabular-nums">{t("position", { index: position + 1, total: deck.length })}</span>
                       {playButton()}
                     </span>
-                    <IconButton icon={ChevronRight} label={t("next")} variant="secondary" data-keep-glide="" onClick={() => step(1)} className="rounded-full rtl:-scale-x-100" />
+                    <IconButton icon={ChevronRight} label={t("next")} variant="tinted" data-keep-glide="" onClick={() => step(1)} className="rounded-full rtl:-scale-x-100" />
                   </div>
                   <p className="hidden text-center text-caption text-fg-tertiary lg:pointer-fine:block">{t("keys")}</p>
                 </div>

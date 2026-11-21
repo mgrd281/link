@@ -957,7 +957,8 @@
       },
       "demo": {
         "replay": "Nochmal ansehen",
-        "live": "Deine Seite ist online",
+        "live": "Fertig. Jetzt du!",
+        "stop": "Demo stoppen",
         "play": "Ansehen"
       },
       "editor": {

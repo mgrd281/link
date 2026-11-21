@@ -95,7 +95,7 @@ export function LoginForm() {
           required
           error={error === "invalidEmail" ? t("errors.invalidEmail") : undefined}
         />
-        <Button type="submit" variant="primary" size="xl" block loading={busy || leaving}>
+        <Button type="submit" variant="primary" size="cta" block loading={busy || leaving}>
           {t("login.submit")}
         </Button>
       </form>
@@ -103,7 +103,7 @@ export function LoginForm() {
       <SocialButtons emailField="login-email" />
       <p className="text-center text-small text-fg-secondary">
         {t("login.noAccount")}{" "}
-        <Link href="/signup" className="font-semibold text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
+        <Link href="/signup" className="-mx-2 inline-flex min-h-touch-target items-center rounded-full px-2 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed">
           {t("login.signup")}
         </Link>
       </p>

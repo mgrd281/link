@@ -51,7 +51,7 @@ export function MobileMenu({
         type="button"
         popoverTarget="mk-menu"
         aria-label={labels.menu}
-        className="grid size-control-md place-items-center rounded-full text-fg transition-[background-color,scale] duration-micro hover:bg-hover focus-visible:focus-ring active:scale-pressed lg:hidden"
+        className="relative grid size-control-md place-items-center rounded-full text-fg transition-[background-color,scale] duration-micro before:absolute before:inset-0 hover:bg-hover focus-visible:focus-ring active:scale-pressed active:bg-pressed pointer-coarse:before:-inset-0.5 lg:hidden"
       >
         <Icon icon={Menu} size="md" />
       </button>
@@ -109,14 +109,14 @@ export function MobileMenu({
           </div>
 
           <div style={{ "--i": items.length + 1 } as CSSProperties} className="mk-menu-row mk-safe-bottom mt-auto grid gap-4 pt-10">
-            <Button asChild variant="primary" size="xl" block trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+            <Button asChild variant="primary" size="cta" block trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
               <a href={cta.href} onClick={close}>
                 {cta.label}
               </a>
             </Button>
             <p className="pb-6 text-center text-small text-fg-secondary">
               {labels.haveAccount}{" "}
-              <a href={login.href} onClick={close} className="rounded-xs font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring">
+              <a href={login.href} onClick={close} className="-mx-2 inline-flex min-h-touch-target items-center rounded-full px-2 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed">
                 {login.label}
               </a>
             </p>

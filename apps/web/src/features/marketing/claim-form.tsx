@@ -61,7 +61,7 @@ export function ClaimForm({ id, className, tone = "default" }: { id: string; cla
             className="h-control-lg min-w-0 flex-1 bg-transparent text-body-lg font-medium text-fg outline-none placeholder:text-fg-tertiary"
           />
         </div>
-        <Button type="submit" variant="primary" size="lg" className={cn("rounded-lg", tone === "brand" && "bg-primary-fg text-primary hover:bg-primary-fg active:bg-primary-fg")} trailing={<Icon icon={ArrowRight} size="md" className={ARROW} />}>
+        <Button type="submit" variant="primary" size="cta" className={cn("sm:h-control-lg", tone === "brand" && "bg-primary-fg text-primary hover:bg-primary-fg active:bg-primary-fg")} trailing={<Icon icon={ArrowRight} size="md" className={ARROW} />}>
           {t("cta")}
         </Button>
       </div>

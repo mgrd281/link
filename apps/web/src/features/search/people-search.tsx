@@ -107,7 +107,7 @@ export function PeopleSearch() {
         aria-label={t("open")}
         aria-haspopup="dialog"
         aria-keyshortcuts="Control+K Meta+K"
-        className="inline-flex size-control-md shrink-0 items-center justify-center gap-2 rounded-full text-fg transition-[background-color,border-color,color,scale] duration-micro hover:bg-hover focus-visible:focus-ring data-quiet-focus:focus-visible:outline-none active:scale-pressed xl:w-auto xl:border xl:border-line xl:bg-surface xl:ps-3 xl:pe-2 xl:text-fg-secondary xl:hover:border-line-strong xl:hover:bg-surface xl:hover:text-fg"
+        className="relative inline-flex size-control-md shrink-0 items-center justify-center gap-2 rounded-full text-fg transition-[background-color,border-color,color,scale] duration-micro before:absolute before:inset-0 pointer-coarse:before:-inset-0.5 hover:bg-hover active:bg-pressed focus-visible:focus-ring data-quiet-focus:focus-visible:outline-none active:scale-pressed xl:w-auto xl:bg-canvas-muted xl:ps-3 xl:pe-2 xl:text-fg-secondary xl:hover:bg-tinted xl:hover:text-tinted-fg"
       >
         <Icon icon={Search} size="md" />
         <span className="hidden text-small font-medium xl:inline">{t("openShort")}</span>

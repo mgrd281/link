@@ -46,7 +46,7 @@ export function HeaderSignup({ label, after }: { label: string; after?: string |
       data-header-signup
       data-shown={shown || undefined}
       className={cn(
-        "inline-flex h-control-sm items-center rounded-full bg-primary px-3 text-small font-semibold text-primary-fg transition-[background-color,opacity,scale,visibility] duration-standard ease-standard hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none md:hidden",
+        "relative inline-flex h-control-sm items-center rounded-full bg-primary px-3 text-small font-semibold before:absolute before:inset-x-0 before:-inset-y-2 text-primary-fg transition-[background-color,opacity,scale,visibility] duration-standard ease-standard hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none md:hidden",
         shown ? "visible opacity-100" : "invisible scale-pressed opacity-0",
       )}
     >

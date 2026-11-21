@@ -251,7 +251,7 @@ export function SignupForm() {
           required
           error={errors.email ? t(`errors.${errors.email}`) : undefined}
         />
-        <Button type="submit" variant="primary" size="xl" block loading={busy || leaving}>
+        <Button type="submit" variant="primary" size="cta" block loading={busy || leaving}>
           {t("signup.submit")}
         </Button>
         <p className="text-caption text-pretty text-fg-secondary">{t("signup.terms")}</p>
@@ -261,7 +261,7 @@ export function SignupForm() {
       {invite ? <p className="-mt-3 text-caption text-fg-secondary">{t("signup.preparedGoogle")}</p> : null}
       <p className="text-center text-small text-fg-secondary">
         {t("signup.haveAccount")}{" "}
-        <Link href="/login" className="font-semibold text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
+        <Link href="/login" className="-mx-2 inline-flex min-h-touch-target items-center rounded-full px-2 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed">
           {t("signup.login")}
         </Link>
       </p>

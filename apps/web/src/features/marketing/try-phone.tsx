@@ -40,6 +40,7 @@ export function TryPhone({
   label,
   reveal,
   toast,
+  crop = false,
   className,
 }: {
   input: TryPageInput;
@@ -49,6 +50,8 @@ export function TryPhone({
   reveal: Reveal;
   /** A short message dropping in over the page, like a phone's notification ("Your page is live"). */
   toast?: string | null;
+  /** Below lg: the phone rises from the stage's lower edge, its screen cut off there (see mk-play-crop). */
+  crop?: boolean;
   className?: string;
 }) {
   const screen = useRef<HTMLDivElement>(null);
@@ -136,8 +139,13 @@ export function TryPhone({
 
   const address = `linkyo.app/${page.profile.username}`;
   return (
-    <div className={cn("relative rounded-xl border border-line-strong bg-ink p-2", className)}>
-      <div ref={screen} data-try-preview className="relative aspect-phone overflow-hidden rounded-lg bg-creator-bg" style={themeStyle(theme)}>
+    <div className={cn("relative rounded-xl border border-teal-700 bg-ink p-2", crop && "max-lg:h-full max-lg:rounded-b-none max-lg:border-b-0 max-lg:pb-0", className)}>
+      <div
+        ref={screen}
+        data-try-preview
+        className={cn("relative aspect-phone overflow-hidden rounded-lg bg-creator-bg", crop && "max-lg:aspect-auto max-lg:h-full max-lg:rounded-b-none")}
+        style={themeStyle(theme)}
+      >
         <div
           ref={inner}
           className={cn(
@@ -185,7 +193,7 @@ export function TryPhone({
               <span className="truncate">{toast}</span>
             </p>
           ) : null}
-          <span aria-hidden className="pointer-events-none absolute bottom-2 left-1/2 h-1 w-32 -translate-x-1/2 rounded-full bg-creator-fg opacity-secondary" />
+          <span aria-hidden className={cn("pointer-events-none absolute bottom-2 left-1/2 h-1 w-32 -translate-x-1/2 rounded-full bg-creator-fg opacity-secondary", crop && "max-lg:hidden")} />
         </div>
       </div>
     </div>

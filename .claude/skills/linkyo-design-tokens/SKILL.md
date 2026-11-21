@@ -28,6 +28,15 @@ reports unknown classes.
   anywhere (ADR 0041); the lint rule rejects them and Stylelint allows only `text-decoration: none`
   or `line-through` (old prices). Links: `text-link font-semibold` with `hover:text-fg` and a
   `transition-colors`; on creator pages `hover:text-creator-fg`; keyboard focus shows `focus-ring`.
+- **Buttons and focus that feel like an app (ADR 0059):**
+  - The quiet partner of a primary action is `variant="tinted"` (`bg-tinted text-tinted-fg`, a soft
+    teal fill), on `Button` and `IconButton`; not a white outlined button.
+  - A lone primary action on the website (sign up, keep this page, see all) is `size="cta"` (56 px
+    pill, semibold); on phones, pairs are equal and full width, stacked.
+  - Text fields show focus with `focus-field` (the 2 px teal inside the field's edge) together with
+    `border-focus`, never `focus-ring` around a framed field. Buttons and links keep `focus-ring`.
+  - Grow a small control's tap area on touch with `before:absolute before:inset-0
+    pointer-coarse:before:-inset-0.5` (and `relative`), as `IconButton` does.
 - **Sticky bars sit flush under the header** (`sticky top-16`: the header is `h-16`) on a solid
   `bg-canvas` band, so no content shows between them.
 - **No raw colors, lengths or fonts** in `apps/web` or `packages/ui`. That rules out `#hex`, `rgb()`,

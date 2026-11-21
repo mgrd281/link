@@ -35,6 +35,8 @@ export const buttonVariants = cva(
         md: "h-control-md px-4 text-small",
         lg: "h-control-lg px-5 text-body",
         xl: "h-control-xl px-6 text-body",
+        /** A lone primary action on the website (sign-up, keep this page, see all): one shape everywhere. */
+        cta: "h-control-xl rounded-full px-6 text-body font-semibold",
       },
       block: { true: "w-full" },
     },
@@ -59,7 +61,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   { className, variant, size, block, icon, loading = false, asChild = false, trailing, children, disabled, ...props },
   ref,
 ) {
-  const iconSize = size === "lg" || size === "xl" ? "md" : "sm";
+  const iconSize = size === "lg" || size === "xl" || size === "cta" ? "md" : "sm";
   const leading = icon ? (
     loading ? (
       <Spinner className={iconSize === "md" ? "size-icon-md" : "size-icon-sm"} />
