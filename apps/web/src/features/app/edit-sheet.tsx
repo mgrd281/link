@@ -1,12 +1,10 @@
 "use client";
 
 import type { Block } from "@linkyo/blocks";
-import { Button, ConfirmDialog, Icon } from "@linkyo/ui";
+import { Button, ConfirmDialog } from "@linkyo/ui";
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-
-import { blockIcon } from "@/features/directions/editor/ui";
 
 import { BlockForm } from "./block-form";
 import { PreviewButton } from "./preview";
@@ -62,6 +60,11 @@ function EditForm({ source, creating, onDone }: { source: Block; creating: boole
     else onDone();
   };
 
+  const remove = () => {
+    onDone();
+    removeBlock(source);
+  };
+
   return (
     <>
       <Sheet
@@ -74,18 +77,12 @@ function EditForm({ source, creating, onDone }: { source: Block; creating: boole
         closeLabel={t("close")}
         besidePreview
         headerAction={<PreviewButton className="xl:hidden" />}
+        confirm={{ label: creating ? t("add") : t("save"), onConfirm: save }}
+        cancel={{ label: t("cancel"), onCancel: close }}
         footer={
           <>
             {!creating ? (
-              <Button
-                variant="destructive"
-                icon={Trash2}
-                className="me-auto"
-                onClick={() => {
-                  onDone();
-                  removeBlock(source);
-                }}
-              >
+              <Button variant="destructive" icon={Trash2} className="me-auto" onClick={remove}>
                 {t("delete")}
               </Button>
             ) : null}
@@ -106,16 +103,18 @@ function EditForm({ source, creating, onDone }: { source: Block; creating: boole
           }}
           className="grid grid-cols-1 gap-6"
         >
-          <p className="flex items-center gap-2 text-caption font-medium text-fg-secondary">
-            <Icon icon={blockIcon[source.type]} size="sm" />
-            {type}
-          </p>
           {errors && Object.keys(errors).length > 0 ? (
             <p role="alert" className="rounded-md border border-danger-strong bg-danger-subtle p-3 text-small">
               {t("fixErrors", { count: Object.keys(errors).length })}
             </p>
           ) : null}
-          <BlockForm block={draft} onChange={change} errors={errors ?? {}} />
+          <BlockForm block={draft} onChange={change} errors={errors ?? {}} creating={creating} />
+          {/* Phones: Delete sits at the end of the form, a thumb's reach away from Save (as in iOS Contacts). */}
+          {!creating ? (
+            <Button variant="destructive" size="lg" block icon={Trash2} className="lg:hidden" onClick={remove}>
+              {t("delete")}
+            </Button>
+          ) : null}
           {/* Enter in a single-line field saves. */}
           <button type="submit" hidden aria-hidden tabIndex={-1} />
         </form>

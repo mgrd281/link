@@ -33,6 +33,11 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
   const hintId = `${inputId}-hint`;
   const errorId = `${inputId}-error`;
   const describedBy = [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(" ") || undefined;
+  // Free text runs in its own direction: a German name on an Arabic page reads left to right, with its
+  // full stop at the end. An empty field follows the page (placeholder and caret on the page's side).
+  // Left-to-right boxes, and dates, times and numbers (the browser lays those out), keep their direction.
+  const freeText = props.type === undefined || props.type === "text" || props.type === "search";
+  const textDir = !ltr && freeText && typeof props.value === "string" && props.value ? "auto" : undefined;
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
@@ -63,7 +68,8 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
           disabled={disabled}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className="h-full min-w-0 flex-1 bg-transparent text-inherit outline-none placeholder:text-fg-tertiary disabled:cursor-not-allowed"
+          dir={textDir}
+          className="h-full min-w-0 flex-1 bg-transparent text-start text-inherit outline-none placeholder:text-fg-tertiary disabled:cursor-not-allowed"
           {...props}
         />
         {trailing}

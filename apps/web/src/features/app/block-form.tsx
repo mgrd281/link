@@ -6,6 +6,7 @@ import {
   detectLink,
   LINK_ICONS,
   NO_IMAGE,
+  normalizeUrl,
   PLATFORMS,
   VIDEO_PLAYBACK,
   type AppPricing,
@@ -17,13 +18,13 @@ import {
   type VideoPlayback,
 } from "@linkyo/blocks";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import { platformName } from "@/features/directions/shared/creator-kit";
 import { STORE_NAMES } from "@/features/directions/shared/stores";
 
 import { FormSection, ImageInput, Repeater, SelectField, SwitchRow, TextArea, TextInput, UrlInput } from "./form";
-import { installCommand } from "./metadata";
+import { fetchLinkMetadata, installCommand } from "./metadata";
 import type { FieldErrors } from "./validate";
 
 const noImage = { src: NO_IMAGE, alt: "" };
@@ -61,6 +62,47 @@ const fromLocalInput = (value: string) => (value ? new Date(value).toISOString()
 
 const LIVE_PLATFORMS = ["tiktok", "instagram", "youtube", "twitch", "kick"] as const;
 
+/** How long the address has to stay unchanged before it names the link (typing is not finished before). */
+const TITLE_DELAY = 600;
+
+/**
+ * A new link names itself: once its address has stayed put for a moment and the title is still empty,
+ * the title becomes the site's name ("milaaurel.com"), and then the page's real title when our server
+ * knows it (songs, videos, apps). A title the creator typed is never replaced; one we filled in follows
+ * a corrected address.
+ */
+function useLinkTitle(block: Block, onChange: (block: Block) => void, creating: boolean) {
+  // The latest block and callback, for the timer and the answer that arrive after this render.
+  const latest = useRef({ block, onChange });
+  useEffect(() => {
+    latest.current = { block, onChange };
+  });
+  // The title this hook filled in last, so it can tell it apart from one the creator typed.
+  const filled = useRef<string | null>(null);
+  const url = creating && block.type === "link" ? block.url : null;
+  useEffect(() => {
+    if (url === null) return;
+    const timer = window.setTimeout(() => {
+      const current = latest.current.block;
+      if (current.type !== "link" || (current.title.trim() && current.title !== filled.current)) return;
+      const address = normalizeUrl(current.url);
+      if (!address || !/^https?:$/.test(address.protocol)) return;
+      const site = address.hostname.replace(/^www\./, "");
+      filled.current = site;
+      if (current.title !== site) latest.current.onChange({ ...current, title: site });
+      // Our server only knows titles for platforms it recognises (it answers nothing for other sites).
+      if (!detectLink(address.toString())?.platform) return;
+      void fetchLinkMetadata(address.toString()).then((meta) => {
+        const now = latest.current.block;
+        if (!meta?.title || now.type !== "link" || now.title !== site) return;
+        filled.current = meta.title;
+        latest.current.onChange({ ...now, title: meta.title });
+      });
+    }, TITLE_DELAY);
+    return () => window.clearTimeout(timer);
+  }, [url]);
+}
+
 /** Today (+days) at hh:00 in the creator's own time, as an ISO timestamp. */
 const atHour = (days: number, hour: number) => {
   const date = new Date();
@@ -73,9 +115,10 @@ const atHour = (days: number, hour: number) => {
  * The edit form for a block. One column, labels above fields, errors under the field that needs
  * attention. Every change is a draft that the live preview shows immediately.
  */
-export function BlockForm({ block, onChange, errors }: { block: Block; onChange: (block: Block) => void; errors: FieldErrors }) {
+export function BlockForm({ block, onChange, errors, creating = false }: { block: Block; onChange: (block: Block) => void; errors: FieldErrors; creating?: boolean }) {
   const t = useTranslations("app.fields");
   const tErr = useTranslations("app.errors");
+  useLinkTitle(block, onChange, creating);
   const err = (path: string) => (errors[path] ? tErr(errors[path]) : undefined);
   const set = <B extends Block>(current: B, patch: Partial<B>) => onChange({ ...current, ...patch });
 
@@ -90,21 +133,25 @@ export function BlockForm({ block, onChange, errors }: { block: Block; onChange:
   let fields: ReactNode;
   switch (block.type) {
     case "link":
+      // People arrive with the address, not a title: the address comes first (and fills in the title),
+      // and what most links never need waits behind "More options".
       fields = (
         <>
-          <TextInput label={t("title")} value={block.title} onValue={(title) => set(block, { title })} maxLength={120} error={err("title")} />
           <UrlInput label={t("url")} value={block.url} onValue={(url) => set(block, { url })} error={err("url")} />
-          <TextInput label={t("subtitle")} hint={t("subtitleHint")} value={block.subtitle ?? ""} onValue={(subtitle) => set(block, { subtitle: subtitle || undefined })} maxLength={80} />
-          <SelectField<LinkIcon | "auto">
-            label={t("icon")}
-            value={block.icon ?? "auto"}
-            onValue={(icon) => onChange(icon === "auto" ? { ...block, icon: undefined } : { ...block, icon })}
-            options={[{ value: "auto", label: t("iconAuto") }, ...LINK_ICONS.map((icon) => ({ value: icon, label: t(`icons.${icon}`) }))]}
-          />
-          <ImageInput label={t("thumbnail")} kind="thumb" image={block.thumbnail} onImage={(thumbnail) => onChange(thumbnail ? { ...block, thumbnail } : { ...block, thumbnail: undefined })} withAlt={false} />
-          <TextInput label={t("badge")} hint={t("badgeHint")} value={block.badge ?? ""} onValue={(badge) => set(block, { badge: badge || undefined })} maxLength={16} />
+          <TextInput label={t("title")} value={block.title} onValue={(title) => set(block, { title })} maxLength={120} error={err("title")} />
           {featured(block)}
-          {affiliate(block)}
+          <Disclosure summary={t("moreOptions")}>
+            <TextInput label={t("subtitle")} hint={t("subtitleHint")} value={block.subtitle ?? ""} onValue={(subtitle) => set(block, { subtitle: subtitle || undefined })} maxLength={80} />
+            <SelectField<LinkIcon | "auto">
+              label={t("icon")}
+              value={block.icon ?? "auto"}
+              onValue={(icon) => onChange(icon === "auto" ? { ...block, icon: undefined } : { ...block, icon })}
+              options={[{ value: "auto", label: t("iconAuto") }, ...LINK_ICONS.map((icon) => ({ value: icon, label: t(`icons.${icon}`) }))]}
+            />
+            <ImageInput label={t("thumbnail")} kind="thumb" image={block.thumbnail} onImage={(thumbnail) => onChange(thumbnail ? { ...block, thumbnail } : { ...block, thumbnail: undefined })} withAlt={false} />
+            <TextInput label={t("badge")} hint={t("badgeHint")} value={block.badge ?? ""} onValue={(badge) => set(block, { badge: badge || undefined })} maxLength={16} />
+            {affiliate(block)}
+          </Disclosure>
         </>
       );
       break;
@@ -519,26 +566,33 @@ export function BlockForm({ block, onChange, errors }: { block: Block; onChange:
   return (
     <div className="grid grid-cols-1 gap-6">
       {fields}
-      <details className="group rounded-md border border-line bg-surface">
-        <summary className="flex h-control-lg cursor-pointer items-center justify-between rounded-md px-3 text-small font-medium focus-visible:focus-ring">{t("schedule")}</summary>
-        <div className="grid grid-cols-1 gap-4 border-t border-line p-3">
-          <p className="text-small text-fg-secondary">{t("scheduleHint")}</p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TextInput
-              label={t("showFrom")}
-              type="datetime-local"
-              value={toLocalInput(block.schedule?.from)}
-              onValue={(value) => onChange({ ...block, schedule: { ...block.schedule, from: fromLocalInput(value) } })}
-            />
-            <TextInput
-              label={t("showUntil")}
-              type="datetime-local"
-              value={toLocalInput(block.schedule?.until)}
-              onValue={(value) => onChange({ ...block, schedule: { ...block.schedule, until: fromLocalInput(value) } })}
-            />
-          </div>
+      <Disclosure summary={t("schedule")}>
+        <p className="text-small text-fg-secondary">{t("scheduleHint")}</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <TextInput
+            label={t("showFrom")}
+            type="datetime-local"
+            value={toLocalInput(block.schedule?.from)}
+            onValue={(value) => onChange({ ...block, schedule: { ...block.schedule, from: fromLocalInput(value) } })}
+          />
+          <TextInput
+            label={t("showUntil")}
+            type="datetime-local"
+            value={toLocalInput(block.schedule?.until)}
+            onValue={(value) => onChange({ ...block, schedule: { ...block.schedule, until: fromLocalInput(value) } })}
+          />
         </div>
-      </details>
+      </Disclosure>
     </div>
+  );
+}
+
+/** Settings most blocks never need, folded away under a one-line summary (the schedule, a link's extras). */
+function Disclosure({ summary, children }: { summary: string; children: ReactNode }) {
+  return (
+    <details className="group rounded-md border border-line bg-surface">
+      <summary className="flex h-control-lg cursor-pointer items-center justify-between rounded-md px-3 text-small font-medium focus-visible:focus-ring">{summary}</summary>
+      <div className="grid grid-cols-1 gap-4 border-t border-line p-3">{children}</div>
+    </details>
   );
 }

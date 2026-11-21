@@ -30,16 +30,22 @@ export function FormSection({ title, description, children, className }: { title
 
 type TextProps = Omit<TextFieldProps, "value" | "onChange"> & { value: string; onValue: (value: string) => void };
 
-export function TextInput({ value, onValue, ...props }: TextProps) {
-  return <TextField {...props} value={value} onChange={(event) => onValue(event.target.value)} />;
+/**
+ * Dashboard fields are filled and 48 px tall, as on iOS and in sign-up: a thumb-sized target with a
+ * soft fill instead of a dark frame. Callers can still ask for another look.
+ */
+export function TextInput({ value, onValue, variant = "filled", size = "lg", ...props }: TextProps) {
+  return <TextField {...props} variant={variant} size={size} value={value} onChange={(event) => onValue(event.target.value)} />;
 }
 
 /** URLs: typed with or without https://, cleaned up when the field is left. */
-export function UrlInput({ value, onValue, ...props }: TextProps) {
+export function UrlInput({ value, onValue, variant = "filled", size = "lg", ...props }: TextProps) {
   return (
     <TextField
       icon={Link2}
       {...props}
+      variant={variant}
+      size={size}
       ltr
       type="url"
       inputMode="url"
@@ -87,9 +93,13 @@ export function TextArea({
         onChange={(event) => onValue(event.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={error || hint ? `${id}-hint` : undefined}
+        // Text runs in its own direction (a German bio on an Arabic page reads left to right); an empty
+        // field follows the page, so the placeholder and the caret start on the page's side.
+        dir={value ? "auto" : undefined}
         className={cn(
-          "min-h-control-xl resize-y rounded-md border border-line-input bg-surface-elevated px-3 py-2 text-body text-fg outline-none transition-[border-color] duration-micro",
-          "hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-field placeholder:text-fg-tertiary",
+          // Filled like the text fields above it (see TextInput).
+          "min-h-control-xl resize-y rounded-lg border border-transparent bg-canvas-muted px-4 py-3 text-start text-body text-fg outline-none transition-[border-color,background-color] duration-micro ease-standard",
+          "hover:border-line-input focus-visible:border-focus focus-visible:bg-surface-elevated focus-visible:focus-field placeholder:text-fg-tertiary",
           error && "border-danger-strong",
         )}
         {...props}
@@ -126,7 +136,7 @@ export function SelectField<T extends string>({
         id={id}
         value={value}
         onChange={(event) => onValue(event.target.value as T)}
-        className="h-control-md rounded-md border border-line-input bg-surface-elevated px-3 text-body text-fg outline-none hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-field"
+        className="h-control-lg rounded-lg border border-transparent bg-canvas-muted px-4 text-body text-fg outline-none transition-[border-color,background-color] duration-micro ease-standard hover:border-line-input focus-visible:border-focus focus-visible:bg-surface-elevated focus-visible:focus-field"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -206,21 +216,31 @@ export function ImageInput({
     }
   };
   const resolved = present ? resolveMedia(image.src) : null;
+  const labelId = useId();
   return (
     <div className="grid grid-cols-1 gap-3">
-      <p className="text-small text-fg">{label}</p>
+      <p id={labelId} className="text-small text-fg">
+        {label}
+      </p>
       <div className="flex items-center gap-4">
-        <span
+        {/* The picture itself is the big target, as in iOS Contacts' "Add Photo"; the button beside it says what a tap does. */}
+        <button
+          type="button"
+          onClick={() => void choose()}
+          aria-label={present ? t("replace") : t("upload")}
+          aria-describedby={labelId}
+          disabled={busy}
           className={cn(
             "relative grid shrink-0 place-items-center overflow-hidden border border-line bg-canvas-muted text-fg-tertiary",
+            "transition-[background-color,scale] duration-micro ease-standard hover:bg-hover active:scale-pressed motion-reduce:active:scale-none focus-visible:focus-ring disabled:pointer-events-none",
             shape === "round" ? "size-avatar-xl rounded-full" : shape === "wide" ? "aspect-video w-32 rounded-md" : "size-avatar-xl rounded-md",
             error && "border-danger-strong",
           )}
         >
           {resolved ? <Image src={resolved} alt="" fill sizes="10vw" className={kind === "logo" ? "object-contain p-2" : "object-cover"} {...remoteImageProps(resolved)} /> : <Icon icon={ImagePlus} size="lg" />}
-        </span>
+        </button>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" icon={ImagePlus} loading={busy} onClick={() => void choose()}>
+          <Button variant="tinted" size="sm" icon={ImagePlus} loading={busy} onClick={() => void choose()}>
             {present ? t("replace") : t("upload")}
           </Button>
           {present ? (

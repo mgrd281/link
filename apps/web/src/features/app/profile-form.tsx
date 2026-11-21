@@ -113,6 +113,9 @@ export function ProfileSheet({ open, onOpenChange }: { open: boolean; onOpenChan
     form.reset();
     onOpenChange(false);
   };
+  const save = () => {
+    if (form.save(t("nameRequired"))) onOpenChange(false);
+  };
   return (
     <Sheet
       open={open}
@@ -122,17 +125,14 @@ export function ProfileSheet({ open, onOpenChange }: { open: boolean; onOpenChan
       closeLabel={t("close")}
       besidePreview
       headerAction={<PreviewButton className="xl:hidden" />}
+      confirm={{ label: t("save"), onConfirm: save }}
+      cancel={{ label: t("cancel"), onCancel: close }}
       footer={
         <>
           <Button variant="ghost" onClick={close}>
             {t("cancel")}
           </Button>
-          <Button
-            variant="primary"
-            onClick={() => {
-              if (form.save(t("nameRequired"))) onOpenChange(false);
-            }}
-          >
+          <Button variant="primary" onClick={save}>
             {t("save")}
           </Button>
         </>
