@@ -84,13 +84,16 @@ export function CopyLinkButton({ username }: { username: string }) {
   );
 }
 
-/** The one primary action on Home: hand the address to the phone's share sheet (iOS includes Copy there). */
-export function ShareLinkButton({ username, className }: { username: string; className?: string }) {
+/**
+ * Hands the address to the phone's share sheet (iOS includes Copy there). Home's one primary once the
+ * page is ready; while it is still being built, the next step is the primary and this one is tinted.
+ */
+export function ShareLinkButton({ username, className, variant = "primary" }: { username: string; className?: string; variant?: "primary" | "tinted" }) {
   const t = useTranslations("app.share");
   const { share } = useShareLink(username);
   return (
     <Button
-      variant="primary"
+      variant={variant}
       size="lg"
       block
       icon={Share}
@@ -106,15 +109,16 @@ export function ShareLinkButton({ username, className }: { username: string; cla
 }
 
 /**
- * A list row that opens a share tool, as in an iOS settings list: a small tinted icon square, the
- * label, and a chevron that points into the reading direction.
+ * A list row that opens a share tool, with the dashboard's row anatomy (as in Settings): a 32 px
+ * tinted icon tile, the label, and a chevron that points into the reading direction. Focus is drawn
+ * inside the row, so a list that runs to its card's edges never clips it.
  */
 export function ShareToolRow({ icon, label, onClick }: { icon: LucideIcon; label: string; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex h-control-xl w-full items-center gap-3 rounded-md px-1 text-start text-body font-medium transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
+      className="flex min-h-control-lg w-full items-center gap-4 px-4 py-2 text-start text-body leading-snug transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-field lg:pointer-fine:min-h-touch-target"
     >
       <span className="grid size-control-sm shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg">
         <Icon icon={icon} size="sm" />

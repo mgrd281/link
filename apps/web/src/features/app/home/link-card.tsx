@@ -1,0 +1,68 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useId } from "react";
+
+import { accountStore } from "@/features/account/store";
+
+import { Disclosure } from "../disclosure";
+import { ShareImageButton } from "../share-image";
+import { CopyLinkButton, QrButton, ShareLinkButton } from "../share-tools";
+
+/** The inset hairline of the dashboard's rows (as `ListRow` draws it): from the text to the end. */
+const rowSeparator =
+  "relative not-first:before:absolute not-first:before:start-16 not-first:before:end-0 not-first:before:top-0 not-first:before:border-t not-first:before:border-line";
+
+/**
+ * Where the page lives and how to hand it out. While the page is still being built, sharing is the
+ * quiet (tinted) action; once it is ready, the card says so, "Share" becomes the screen's one primary,
+ * and a short how-to explains where the link goes. The reach line never promises a public page
+ * before there is one.
+ */
+export function LinkCard({ username, ready }: { username: string; ready: boolean }) {
+  const t = useTranslations("app.home");
+  const titleId = useId();
+  return (
+    <section aria-labelledby={titleId} className="grid grid-cols-1 gap-4 rounded-lg bg-group p-4 lg:border lg:border-line lg:p-6">
+      <div className="grid grid-cols-1 gap-1">
+        <p id={ready ? undefined : titleId} className="text-caption font-semibold text-fg-secondary">
+          {t("yourLink")}
+        </p>
+        {ready ? (
+          <>
+            <h2 id={titleId} className="text-title rtl:tracking-normal">
+              {t("link.readyTitle")}
+            </h2>
+            <p className="text-small font-regular text-fg-secondary">{t("link.readyBody")}</p>
+          </>
+        ) : null}
+      </div>
+      <div className="grid grid-cols-1 gap-1">
+        <div className="flex items-center gap-2">
+          {/* An address reads left to right in every language; in Arabic it still hugs the start (right). */}
+          <p dir="ltr" className="min-w-0 flex-1 truncate text-start text-h3 font-semibold rtl:text-right">
+            linkyo.app/<span className="text-link">{username}</span>
+          </p>
+          <CopyLinkButton username={username} />
+        </div>
+        <p className="text-small font-regular text-fg-secondary">{accountStore.demo ? t("linkDemo") : t("link.reserved")}</p>
+      </div>
+      <ShareLinkButton username={username} variant={ready ? "primary" : "tinted"} />
+      {ready ? (
+        <Disclosure summary={t("link.howTo")}>
+          <p className="pt-1 text-small font-regular text-fg-secondary">{t("link.howToBody")}</p>
+        </Disclosure>
+      ) : null}
+      {/* The rows run to the card's edges on phones; their icons line up with the content above, and
+          the hairline between them starts at the text, as in every list of the dashboard. */}
+      <ul className="-mx-4">
+        <li className={rowSeparator}>
+          <QrButton username={username} appearance="row" />
+        </li>
+        <li className={rowSeparator}>
+          <ShareImageButton appearance="row" />
+        </li>
+      </ul>
+    </section>
+  );
+}
