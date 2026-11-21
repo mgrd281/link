@@ -4,6 +4,8 @@ import { Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
+import { initials } from "@/features/share/story-card";
+
 import { resolveMedia } from "./media";
 import { mediaSizes, PlatformGlyph, platformName } from "./platforms";
 import { PrivacySettingsLink } from "./privacy";
@@ -64,15 +66,9 @@ export function MediaImage({
   );
 }
 
-/** Up to two initials, for creators without a photo. */
-export function initials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  const letters = words.length > 1 ? [words[0], words.at(-1)] : [words[0]];
-  return letters
-    .map((word) => Array.from(word ?? "")[0] ?? "")
-    .join("")
-    .toLocaleUpperCase();
-}
+// Up to two initials, one for an Arabic name, for creators without a photo. Defined with the story
+// picture, free of React and next/image, so the link preview cards drawn on the server share the rule.
+export { initials };
 
 /** A creator's initials on their accent color. Fills its (relative, sized) box. */
 export function Monogram({ name, className }: { name: string; className?: string | undefined }) {

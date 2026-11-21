@@ -29,11 +29,71 @@ export interface ShareArt {
   initials: string;
 }
 
+/**
+ * Where a story's text must end. Instagram lays its reply bar and link stickers over roughly the
+ * bottom 250 px of a 1080 × 1920 story (Meta asks to keep about 14 % at the top and the bottom free),
+ * so the address pill, the one thing to remember, ends above this line.
+ */
+export const STORY_SAFE_BOTTOM = 1670;
+/** The quiet "linkyo" at the foot is left out rather than drawn under the reply bar: the pill already says linkyo.app. */
+const STORY_FOOT_LIMIT = 1660;
+
+// The story stack sits higher than the post's: the photo band ends at 1120 so name, line and pill
+// all fit above STORY_SAFE_BOTTOM; the top 250 px hold nothing but the photo (or the monogram).
 const LAYOUT: Record<ShareFormat, { photo: number; name: number; minName: number; nameY: number; line: number; pillY: number; footY: number }> = {
-  story: { photo: 1240, name: 168, minName: 84, nameY: 1300, line: 44, pillY: 1640, footY: 1840 },
+  story: { photo: 1120, name: 160, minName: 84, nameY: 1190, line: 44, pillY: 1450, footY: 1560 },
   post: { photo: 820, name: 132, minName: 72, nameY: 900, line: 38, pillY: 1170, footY: 1290 },
 };
 const SIDE = 80;
+
+const ARABIC_LETTER = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/;
+
+/**
+ * Up to two initials, for creators without a photo. An Arabic name gets one letter: Arabic letters
+ * join, so two initials side by side read as a word of their own ("سلمى رحّال" would become "سر",
+ * "secret"). It lives here, free of React, so the server-drawn link preview card can use it too.
+ */
+export function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const first = Array.from(words[0] ?? "")[0] ?? "";
+  if (ARABIC_LETTER.test(first)) return first;
+  const letters = words.length > 1 ? [words[0], words.at(-1)] : [words[0]];
+  return letters
+    .map((word) => Array.from(word ?? "")[0] ?? "")
+    .join("")
+    .toLocaleUpperCase();
+}
+
+/** Where the text under the name goes: baselines of the line about them, the pill, and the foot (null: left out). */
+export interface StoryStack {
+  lineYs: number[];
+  pillY: number;
+  pillHeight: number;
+  footY: number | null;
+}
+
+/**
+ * The vertical stack under the photo, kept pure so it can be tested without a canvas. `descent` is how
+ * far the name's last line reaches below its baseline (measured with the name's font): Arabic letters
+ * and a "g" or "y" reach deep, and the first line about them starts below them instead of on them.
+ */
+export function storyStack(format: ShareFormat, { nameLines, nameSize, lineCount, descent }: { nameLines: number; nameSize: number; lineCount: number; descent: number }): StoryStack {
+  const layout = LAYOUT[format];
+  const deep = Number.isFinite(descent) ? Math.max(0, descent) : 0;
+  let y = layout.nameY + (Math.max(1, nameLines) - 1) * nameSize * 0.98;
+  const lineYs: number[] = [];
+  for (let index = 0; index < lineCount; index += 1) {
+    y += index === 0 ? Math.max(layout.line * 1.45, deep + layout.line * 0.9) : layout.line * 1.45;
+    lineYs.push(y + layout.line * 0.4);
+  }
+  const pillHeight = Math.round(layout.line * 2.3);
+  const pillY = Math.max(layout.pillY, y + layout.line * 2.2);
+  if (format === "post") return { lineYs, pillY, pillHeight, footY: layout.footY };
+  // A long name or line pushes the pill down; the foot follows it, and is left out once it would sit
+  // in the zone Instagram covers.
+  const footY = Math.max(layout.footY, pillY + pillHeight / 2 + layout.line * 1.6);
+  return { lineYs, pillY, pillHeight, footY: footY > STORY_FOOT_LIMIT ? null : footY };
+}
 
 /** Splits text into at most `max` lines that fit `width`; the last one ends with "…" if cut. */
 function wrap(context: CanvasRenderingContext2D, text: string, width: number, max: number): string[] {
@@ -115,25 +175,21 @@ export function drawShareArt(canvas: HTMLCanvasElement, format: ShareFormat, art
   context.fillStyle = colors.fg;
   const nameLines = wrap(context, name, width - 2 * SIDE, 2);
   nameLines.forEach((text, index) => context.fillText(text, width / 2, layout.nameY + index * size * 0.98));
-  let y = layout.nameY + (nameLines.length - 1) * size * 0.98;
+  // Measured while the name's font is still set: how deep its last line reaches below the baseline.
+  const descent = context.measureText(nameLines.at(-1) ?? "").actualBoundingBoxDescent;
 
   // One line about them.
-  if (art.line) {
-    context.font = `400 ${layout.line}px ${art.body}`;
-    context.fillStyle = colors.muted;
-    for (const text of wrap(context, art.line, width - 2 * SIDE - 40, 2)) {
-      y += layout.line * 1.45;
-      context.fillText(text, width / 2, y + layout.line * 0.4);
-    }
-  }
+  context.font = `400 ${layout.line}px ${art.body}`;
+  const lines = art.line ? wrap(context, art.line, width - 2 * SIDE - 40, 2) : [];
+  const { lineYs, pillY, pillHeight, footY } = storyStack(format, { nameLines: nameLines.length, nameSize: size, lineCount: lines.length, descent });
+  context.fillStyle = colors.muted;
+  lineYs.forEach((lineY, index) => context.fillText(lines[index] ?? "", width / 2, lineY));
 
   // The address on an accent pill: the one thing to remember.
   context.direction = "ltr";
   context.font = `600 ${Math.round(layout.line * 1.05)}px ${art.body}`;
   const label = art.address;
-  const pillHeight = Math.round(layout.line * 2.3);
   const pillWidth = Math.min(width - 2 * SIDE, context.measureText(label).width + pillHeight * 1.1);
-  const pillY = Math.max(layout.pillY, y + layout.line * 2.2);
   context.fillStyle = colors.accent;
   context.beginPath();
   context.roundRect((width - pillWidth) / 2, pillY - pillHeight / 2, pillWidth, pillHeight, pillHeight / 2);
@@ -142,10 +198,11 @@ export function drawShareArt(canvas: HTMLCanvasElement, format: ShareFormat, art
   context.textBaseline = "middle";
   context.fillText(label, width / 2, pillY + 2);
 
-  // A quiet credit at the foot.
+  // A quiet credit at the foot, where there is room for it.
+  if (footY === null) return;
   context.font = `700 ${Math.round(layout.line * 0.72)}px ${art.body}`;
   context.fillStyle = colors.muted;
-  context.fillText("linkyo", width / 2, layout.footY);
+  context.fillText("linkyo", width / 2, footY);
 }
 
 /** The page's faces load on use: load them before drawing (the canvas would fall back silently). */
