@@ -287,3 +287,10 @@ full suites.
 | Review fixes: real-account e2e | 13 of 13: the invite test now goes through the UI (the inviter's `/de/app/invite` shows "Zählt", the owner removes it in the customer's Invites tab, the inviter's screen shows "Zählt nicht"), plus a new one (a sign-up code someone else asked for with their code: the owner signs in from the sign-in page and the pending invite is gone). By hand: the emailed sign-up link carries `&ref=<code>` and settles the invite through `/api/auth/confirm` (`qualified`, `emailLink: true`) |
 | Review fixes: demo e2e | `referral-signup`, `invite-app`, `admin`, `app` on desktop and phone: 124 passed, 2 skipped by design, 0 failed |
 | `/api/auth/verify`, median of 10 local runs, without → with the settle call | first sign-in of an invited account: 45 ms → 65 ms and 70 ms (two runs), +20 to +25 ms; sign-in of an account nobody invited: 29 ms → 39 ms and 50 ms, +10 to +21 ms. Below the 50 ms budget |
+
+**Final integration run (2026-11-22, all of v6 merged: ADRs 0062–0064 plus the review fixes).**
+- Unit: web 210, tokens 52, config 79, blocks 41.
+- Playwright, production build in demo mode, desktop + phone + review: 670 passed, 35 skipped by design, 0 failed.
+- Real accounts against the local stack (`E2E_SUPABASE=1`): 13 of 13. pgTAP: 278 (access 76, referrals 202). `db:lint`: 0 issues.
+- An independent review (5 reviewers, each finding checked by a skeptic) confirmed 9 findings, 0 critical; all 9 are fixed
+  and covered by the numbers above. 3 more were refuted.

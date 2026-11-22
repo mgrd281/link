@@ -121,3 +121,10 @@ phones.
 **Status.** Accepted.
 
 [ADR 0064]: README.md
+
+**Final integration run (2026-11-22, all of v6 merged: ADRs 0062–0064 plus the review fixes).**
+- Unit: web 210, tokens 52, config 79, blocks 41.
+- Playwright, production build in demo mode, desktop + phone + review: 670 passed, 35 skipped by design, 0 failed.
+- Real accounts against the local stack (`E2E_SUPABASE=1`): 13 of 13. pgTAP: 278 (access 76, referrals 202). `db:lint`: 0 issues.
+- An independent review (5 reviewers, each finding checked by a skeptic) confirmed 9 findings, 0 critical; all 9 are fixed
+  and covered by the numbers above. 3 more were refuted.
