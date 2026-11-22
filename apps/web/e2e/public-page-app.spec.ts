@@ -233,8 +233,8 @@ test.describe("public creator page in a demo build", () => {
     const internal = await page.goto("/u/mila");
     expect(internal?.status()).toBe(404);
     const bare = await page.goto("/mila");
-    // As before: next-intl adds the language, and an unknown first segment is the 404 page.
+    // As before: next-intl adds the language (the browser's), and an unknown first segment is the 404 page.
     expect(bare?.status()).toBe(404);
-    expect(page.url()).toMatch(/\/de\/mila$/);
+    expect(page.url()).toMatch(/\/(de|en|ar)\/mila$/);
   });
 });
