@@ -156,7 +156,8 @@ export function AppGate({ children }: { children: ReactNode }) {
   const snapshot = useAccount();
   const router = useRouter();
   const pathname = usePathname();
-  const needsWelcome = snapshot.status === "signedIn" && !snapshot.site.onboarded && pathname !== "/app/welcome";
+  // Building with AI is part of the welcome (its draft comes back to the welcome's "you" step).
+  const needsWelcome = snapshot.status === "signedIn" && !snapshot.site.onboarded && pathname !== "/app/welcome" && pathname !== "/app/build";
 
   useEffect(() => {
     if (snapshot.status === "signedOut") router.replace(`/login?next=${encodeURIComponent(pathname)}`);

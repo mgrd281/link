@@ -20,6 +20,9 @@ import { describe, expect, it } from "vitest";
 
 const SRC = path.resolve(import.meta.dirname, "../..");
 const APP = "features/app";
+/** The AI builder's views sit in the dashboard too (the homepage replay's recordings aside). */
+const AI = "features/ai";
+const AI_EXCEPT = "features/ai/recordings/";
 
 /** Rule 3 allowances: a phone bezel and a QR code drawn on paper, which must look the same everywhere. */
 const PALETTE_ALLOWED: Record<string, readonly string[]> = {
@@ -227,10 +230,12 @@ describe("the guards themselves catch what they guard", () => {
 
 describe("console guard (ADR 0062)", () => {
   const app = sources(APP, true);
+  const ai = sources(AI, true).filter((source) => !source.file.startsWith(AI_EXCEPT));
   const renderer = RENDERER_DIRS.flatMap((dir) => sources(dir, false)).filter((source) => !RENDERER_EXCEPTIONS.has(source.file));
 
   it("scans the dashboard and the page renderer", () => {
     expect(app.map((source) => source.file)).toEqual(expect.arrayContaining(["features/app/shell.tsx", "features/app/home/link-card.tsx"]));
+    expect(ai.map((source) => source.file)).toEqual(expect.arrayContaining(["features/ai/run-view.tsx", "features/ai/build-screen.tsx"]));
     expect(renderer.map((source) => source.file)).toEqual(expect.arrayContaining(["features/directions/poster/renderer.tsx", "features/directions/shared/creator-kit.tsx"]));
     // The allowances are still needed (otherwise drop them).
     for (const [file, allowed] of Object.entries(PALETTE_ALLOWED)) {
@@ -241,15 +246,15 @@ describe("console guard (ADR 0062)", () => {
   });
 
   it("1. no link inside running text: t.rich() never maps a tag to <Link> or <a>", () => {
-    expect(app.flatMap(richLinks)).toEqual([]);
+    expect([...app, ...ai].flatMap(richLinks)).toEqual([]);
   });
 
   it('2. links hover with "hover:text-link-hover", never "hover:text-fg"', () => {
     expect(app.flatMap(linkHoverToFg)).toEqual([]);
   });
 
-  it("3. no palette or tint colours under features/app", () => {
-    expect(app.flatMap(paletteClasses)).toEqual([]);
+  it("3. no palette or tint colours under features/app and features/ai", () => {
+    expect([...app, ...ai].flatMap(paletteClasses)).toEqual([]);
   });
 
   it("4. no data-theme under features/app", () => {

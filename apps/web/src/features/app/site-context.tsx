@@ -59,8 +59,15 @@ export function siteReducer(state: EditorState<SiteDoc>, action: SiteAction): Ed
     return { ...state, past: [...state.past, state.present].slice(-HISTORY_LIMIT), present: action.doc, future: [], selectedId: null };
   }
   if (action.type === "profile") {
-    const present = { ...state.present, profile: { ...state.present.profile, ...action.patch } };
+    // Which texts came from an AI draft stays as it is: an edit keeps it listed (the text started as
+    // AI output); only applying a new draft or proposal (`replace`) changes the list.
+    const { aiFields: _kept, ...patch } = action.patch;
+    const present = { ...state.present, profile: { ...state.present.profile, ...patch } };
     return { ...state, past: [...state.past, state.present].slice(-HISTORY_LIMIT), present, future: [] };
+  }
+  if (action.type === "update" && state.present.blocks.find((block) => block.id === action.id)?.origin === "ai") {
+    // A block the AI wrote becomes "ai-edited" once its owner changes it (its provenance stays known).
+    return editorReducer(state, { ...action, patch: { ...action.patch, origin: "ai-edited" } });
   }
   return editorReducer(state, action);
 }

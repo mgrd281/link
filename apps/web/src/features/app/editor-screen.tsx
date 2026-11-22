@@ -2,11 +2,12 @@
 
 import { hasImage, type Block } from "@linkyo/blocks";
 import { Badge, Button, cn, Icon, IconButton, Menu, Switch, Tooltip } from "@linkyo/ui";
-import { ArrowDown, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, Heading, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, Heading, LayoutList, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
+import { useAiQuota } from "@/features/ai/quota";
 import { SortableBlocks, blockIcon, useSortableRow } from "@/features/directions/editor/ui";
 import { thumbSizes } from "@/features/directions/editor/use-dashboard";
 import { blockSummary } from "@/features/directions/editor/use-editor";
@@ -14,6 +15,7 @@ import { selfTitle } from "@/features/directions/poster/sections";
 import { PlatformGlyph, platformName } from "@/features/directions/shared/creator-kit";
 import { LinkIconGlyph, linkGlyph } from "@/features/directions/shared/link-icons";
 import { remoteImageProps, resolveMedia } from "@/features/directions/shared/media";
+import { Link } from "@/i18n/navigation";
 import { haptic } from "@/lib/haptics";
 
 import { blankBlock } from "./blocks";
@@ -49,7 +51,9 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   const tNav = useTranslations("app.nav");
   const tDash = useTranslations("dashboard");
   const inShell = useShellChrome();
-  const { doc, dispatch, edit, setAddOpen, label, announce, justAdded } = useSite();
+  const { doc, dispatch, edit, setAddOpen, label, announce, justAdded, account } = useSite();
+  // Rebuilding with AI: the owner's own page only (not the team area), while the AI is on for them.
+  const ai = useAiQuota({ account: account.id });
   const [profileOpen, setProfileOpen] = useState(false);
   const [reorder, setReorder] = useState(false);
   // Reordering needs two rows; when fewer are left, the list goes back to normal (and stays there).
@@ -134,6 +138,11 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
       actions={
         <>
           <UndoRedo />
+          {inShell && ai.enabled ? (
+            <Button asChild variant="ghost" icon={Sparkles}>
+              <Link href="/app/build?mode=rebuild">{t("withAi")}</Link>
+            </Button>
+          ) : null}
           {/* In the dashboard the page shows beside the list from the desk width, and phones have the
               top bar's eye; the team area shows its own column from xl. */}
           <PreviewButton className={inShell ? "hidden lg:inline-grid desk:hidden" : "xl:hidden"} />
@@ -160,7 +169,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
         {empty ? (
           <div className="grid justify-items-center gap-4 rounded-lg border border-dashed border-line-strong p-8 text-center">
             <span className="grid size-control-xl place-items-center rounded-full bg-selected text-selected-fg">
-              <Icon icon={Sparkles} size="lg" />
+              <Icon icon={LayoutList} size="lg" />
             </span>
             <div className="grid grid-cols-1 gap-1">
               <p className="text-title rtl:tracking-normal">{t("emptyTitle")}</p>
@@ -503,6 +512,13 @@ function BlockRow({
         {/* Not part of the button's name (it describes it): taps go through to the row. */}
         <span id={metaId} className="pointer-events-none flex min-w-0 items-center gap-2 text-small text-fg-secondary">
           {!block.visible ? <Badge size="sm">{t("hidden")}</Badge> : null}
+          {/* Written by the AI and not edited since (an edit makes it the owner's: "ai-edited"). */}
+          {block.origin === "ai" ? (
+            <Badge size="sm">
+              <Icon icon={Sparkles} size="sm" />
+              {t("aiTag")}
+            </Badge>
+          ) : null}
           {block.highlight ? (
             <Badge tone="primary" size="sm">
               {t("featured")}
