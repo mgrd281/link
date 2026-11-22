@@ -177,7 +177,7 @@ test.describe("accounts", () => {
     // Only link-in-bio services are read; anything else is explained (no request leaves for it).
     await box.getByLabel("Your current link page").fill("example.com/mila");
     await box.getByRole("button", { name: "Import" }).click();
-    await expect(box.getByText("Paste the address of a Linktree, Beacons")).toBeVisible();
+    await expect(box.getByText("Paste the address of a Beacons, bio.link")).toBeVisible();
     expect(await axe(page)).toEqual([]);
   });
 
