@@ -2,19 +2,23 @@ import type { Page } from "@linkyo/blocks";
 import { creatorTokens, tokens } from "@linkyo/tokens";
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Badge, cn, Icon } from "@linkyo/ui";
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
+import { RECORDINGS, type RecordingLocale } from "@/features/ai/recordings";
 import { initials } from "@/features/directions/shared/creator-kit";
 import { resolveMedia } from "@/features/directions/shared/media";
 import { LOOKS } from "@/features/examples/looks";
 import { journalistAr, journalistDe, journalistEn } from "@/features/previews/journalist";
+import { aiTryPublic } from "@/lib/flags";
+import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { phoneSizes } from "./assets";
 import { CountUp } from "./count-up";
-import { Playground, type LookOption } from "./playground";
+import { Playground, TryEyebrow, type LookOption } from "./playground";
 import { StoryPicture, type StoryArt } from "./story-picture";
 import { TRY_LOOKS } from "./try-looks";
 
@@ -27,6 +31,7 @@ const SW = creatorTokens.swatches;
 function Tile({
   id,
   title,
+  badge,
   body,
   extra,
   wide = false,
@@ -35,6 +40,8 @@ function Tile({
 }: {
   id?: string;
   title: string;
+  /** A short note beside the title ("In the works"). */
+  badge?: ReactNode;
   body: string;
   extra?: ReactNode;
   wide?: boolean;
@@ -51,7 +58,14 @@ function Tile({
       )}
     >
       <div className="grid max-w-prose content-start gap-2">
-        <h3 className="text-h3 text-balance">{title}</h3>
+        {badge ? (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h3 className="text-h3 text-balance">{title}</h3>
+            {badge}
+          </div>
+        ) : (
+          <h3 className="text-h3 text-balance">{title}</h3>
+        )}
         <p className="text-body text-pretty text-fg-secondary">{body}</p>
         {extra}
       </div>
@@ -66,7 +80,7 @@ function Tile({
  */
 const SHARED: Partial<Record<string, Page>> = { de: journalistDe, en: journalistEn, ar: journalistAr };
 const SHARED_SLUG = "journalist";
-const SHARED_ADDRESS = `linkyo.app/${SHARED_SLUG}`;
+const SHARED_ADDRESS = pageAddress(SHARED_SLUG);
 /** The link preview's pixel size: the cards are made at exactly the og aspect (1200 / 630). */
 const [OG_WIDTH = 0, OG_HEIGHT = 0] = tokens.aspect.og.split("/").map(Number);
 
@@ -134,7 +148,7 @@ function SharePreview() {
               </p>
               {/* Lines up with the words above it in either direction; the domain itself reads left to right. */}
               <p className="text-caption text-fg-tertiary">
-                <span dir="ltr">linkyo.app</span>
+                <span dir="ltr">{CREATOR_DOMAIN}</span>
               </p>
             </div>
           </div>
@@ -252,12 +266,17 @@ function AnalyticsCard() {
 /**
  * Try it: build a page right here, before signing up (ADR 0051). A title that invites, then the
  * playground: name, links and look in three tabs with the page growing beside them.
+ *
+ * The AI tab joins them only when it is switched on (NEXT_PUBLIC_AI_TRY) and a real recording of the
+ * AI exists in this language, so a visitor never watches test data or an unlabelled run. Phase 1 has
+ * no recording (features/ai/recordings), so the tab does not show.
  */
 export function TryIt() {
   const t = useTranslations("marketing");
   const names = useTranslations("templates");
   const locale = useLocale();
   const rtl = locale === "ar";
+  const aiTab = aiTryPublic && RECORDINGS[locale as RecordingLocale]?.kind === "real";
   const [head, ...tail]: LookOption[] = TRY_LOOKS.map(({ id, config }) => {
     const template = config.template ?? "nocturne";
     const theme = resolveCreatorTheme(config, { rtlScript: rtl });
@@ -274,21 +293,16 @@ export function TryIt() {
   return (
     <section id="try" aria-labelledby="try-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-12 md:px-10 md:py-24">
       <header className="mk-reveal grid max-w-prose gap-4 md:mx-auto md:justify-items-center md:text-center">
-        <p className="inline-flex items-center justify-self-start md:justify-self-center gap-2 rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary">
-          <span className="grid size-6 place-items-center rounded-full bg-selected text-selected-fg">
-            <Icon icon={Sparkles} size="sm" />
-          </span>
-          {t("try.eyebrow")}
-        </p>
+        <TryEyebrow ai={aiTab}>{aiTab ? t("try.ai.eyebrow") : t("try.eyebrow")}</TryEyebrow>
         <h2 id="try-title" className="text-h2 tracking-tight text-balance md:text-h1">
           <span className="block">{t("try.title1")}</span>
           <span className="block text-link">{t("try.title2")}</span>
         </h2>
-        <p className="text-body-lg text-pretty text-fg-secondary">{t("try.lead")}</p>
+        <p className="text-body-lg text-pretty text-fg-secondary">{aiTab ? t("try.ai.lead") : t("try.lead")}</p>
       </header>
       {head ? (
         <div className="mt-10 md:mt-12">
-          <Playground looks={[head, ...tail]} rtl={rtl} />
+          <Playground looks={[head, ...tail]} rtl={rtl} ai={aiTab} />
         </div>
       ) : null}
     </section>
@@ -330,6 +344,14 @@ export function Features() {
           id="analytics"
           wide
           title={t("analytics.title")}
+          // Real accounts have no analytics yet: the title says so (the demo keeps its sample numbers).
+          badge={
+            supabaseEnabled ? (
+              <Badge tone="outline" size="sm">
+                {t("real.analyticsBadge")}
+              </Badge>
+            ) : null
+          }
           body={t("analytics.lead")}
           extra={
             <ul className="mt-2 grid gap-2">
