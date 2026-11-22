@@ -64,6 +64,122 @@ jobs:
           path: apps/web/playwright-report
           retention-days: 7
 
+  database:
+    name: Database (migrations · pgTAP · plpgsql_check · generated types)
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Start the local Supabase stack (Postgres, Auth, REST, Storage, Mailpit)
+        run: pnpm db:start
+      - name: Apply every migration from scratch
+        run: pnpm db:reset
+      - name: pgTAP (row-level security, functions, jobs)
+        run: pnpm db:test
+      - name: plpgsql_check
+        run: pnpm db:lint
+      - name: Generated database types are up to date
+        run: pnpm db:types && git diff --exit-code -- apps/web/src/lib/supabase/database.types.ts
+
+  real-e2e:
+    name: E2E with real accounts (local Supabase, local AI and Stripe mocks)
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Start the local Supabase stack
+        run: pnpm db:start
+      # The local stack's keys are the CLI's fixed development keys (db:start prints them), not
+      # secrets; they are not masked, because Actions drops a step output that holds a masked value.
+      - name: Local Supabase address and keys
+        id: supabase
+        run: |
+          npx -y supabase@2.122.1 status -o env > "$RUNNER_TEMP/supabase.env"
+          value() { grep "^$1=" "$RUNNER_TEMP/supabase.env" | cut -d= -f2- | tr -d '"'; }
+          echo "NEXT_PUBLIC_SUPABASE_URL=$(value API_URL)" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(value PUBLISHABLE_KEY)" >> "$GITHUB_ENV"
+          echo "secret_key=$(value SECRET_KEY)" >> "$GITHUB_OUTPUT"
+      # NEXT_PUBLIC_CREATOR_DOMAIN stays unset: supabase.spec.ts reads linkyo.app/<name>.
+      - name: Build with real accounts and payments in test mode
+        run: pnpm --filter @linkyo/web... build
+        env:
+          NEXT_PUBLIC_PAYMENTS: test
+      - run: pnpm --filter @linkyo/web exec playwright install --with-deps chromium
+      - run: mkdir -p apps/web/.mail
+      # Each invocation starts its own `next start` (CI is set, so no server is reused).
+      - name: Sign-up and sign-in by e-mail code (AI off)
+        run: pnpm --filter @linkyo/web exec playwright test supabase.spec.ts --project desktop
+        env:
+          E2E_SUPABASE: 1
+          SUPABASE_SECRET_KEY: ${{ steps.supabase.outputs.secret_key }}
+      # --pass-with-no-tests: the @real and @global specs arrive with later work packages of v7 phase 1.
+      - name: Real-mode suite (AI, payments and e-mail against the local mocks)
+        run: >-
+          pnpm --filter @linkyo/web exec playwright test --grep @real --grep-invert @global
+          --project desktop --project mobile --pass-with-no-tests
+        env:
+          E2E_SUPABASE: 1
+          E2E_MOCKS: 1
+          SUPABASE_SECRET_KEY: ${{ steps.supabase.outputs.secret_key }}
+          AI_ENABLED: 1
+          ANTHROPIC_API_KEY: sk-ant-local-test
+          ANTHROPIC_BASE_URL: http://127.0.0.1:54399
+          MOCK_ANTHROPIC_PORT: 54399
+          AI_IP_SALT_SECRET: local-test
+          AI_ENRICH_OFF: 1
+          STRIPE_SECRET_KEY: sk_test_local
+          STRIPE_WEBHOOK_SECRET: whsec_local_test
+          STRIPE_API_HOST: 127.0.0.1
+          STRIPE_API_PORT: 54398
+          STRIPE_API_PROTOCOL: http
+          MOCK_STRIPE_PORT: 54398
+          EMAIL_TRANSPORT: capture
+          EMAIL_CAPTURE_DIR: ${{ github.workspace }}/apps/web/.mail
+          MAINTENANCE_SECRET: local-maint
+          # The demo team code's hash (public in the repo): with Supabase on, an unset hash fails closed.
+          LINKYO_ADMIN_CODE_SHA256: 5db53b740697a0a500b76249b4913043ed9a9460c143dab9e3881ba5ab6a89bd
+      - name: Tests that change global state (the AI switch), one worker
+        run: pnpm --filter @linkyo/web exec playwright test --grep @global --workers=1 --project desktop --pass-with-no-tests
+        env:
+          E2E_SUPABASE: 1
+          E2E_MOCKS: 1
+          SUPABASE_SECRET_KEY: ${{ steps.supabase.outputs.secret_key }}
+          AI_ENABLED: 1
+          ANTHROPIC_API_KEY: sk-ant-local-test
+          ANTHROPIC_BASE_URL: http://127.0.0.1:54399
+          MOCK_ANTHROPIC_PORT: 54399
+          AI_IP_SALT_SECRET: local-test
+          AI_ENRICH_OFF: 1
+          STRIPE_SECRET_KEY: sk_test_local
+          STRIPE_WEBHOOK_SECRET: whsec_local_test
+          STRIPE_API_HOST: 127.0.0.1
+          STRIPE_API_PORT: 54398
+          STRIPE_API_PROTOCOL: http
+          MOCK_STRIPE_PORT: 54398
+          EMAIL_TRANSPORT: capture
+          EMAIL_CAPTURE_DIR: ${{ github.workspace }}/apps/web/.mail
+          MAINTENANCE_SECRET: local-maint
+          # The demo team code's hash (public in the repo): with Supabase on, an unset hash fails closed.
+          LINKYO_ADMIN_CODE_SHA256: 5db53b740697a0a500b76249b4913043ed9a9460c143dab9e3881ba5ab6a89bd
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-real
+          path: apps/web/playwright-report
+          retention-days: 7
+
   lighthouse:
     name: Lighthouse (creator pages)
     needs: quality

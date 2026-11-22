@@ -5,6 +5,222 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      ai_budget_days: {
+        Row: {
+          day: string;
+          runs: number;
+          spent_micros: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          day: string;
+          runs?: number;
+          spent_micros?: number;
+        };
+        Update: {
+          day?: string;
+          runs?: number;
+          spent_micros?: number;
+        };
+        Relationships: [];
+      };
+      ai_runs: {
+        Row: {
+          actor_id: string | null;
+          applied_at: string | null;
+          blocks: number | null;
+          cache_read_tokens: number | null;
+          cache_write_tokens: number | null;
+          calls: number;
+          cost_micros: number | null;
+          counted: boolean;
+          created_at: string;
+          dropped: number | null;
+          effort: string | null;
+          error_code: string | null;
+          finished_at: string | null;
+          fixed: number | null;
+          id: string;
+          input_tokens: number | null;
+          ip_hash: string | null;
+          model: string | null;
+          ms_model: number | null;
+          ms_sources: number | null;
+          ms_total: number | null;
+          order_id: string | null;
+          output_tokens: number | null;
+          profile_id: string;
+          progress: NonNullable<Json>;
+          prompt_version: string;
+          reserved_micros: number;
+          result: Json | null;
+          route: Database["public"]["Enums"]["ai_route"];
+          schema_version: string;
+          served_by: string | null;
+          sources: number | null;
+          status: Database["public"]["Enums"]["ai_run_status"];
+          stop_reason: string | null;
+          stop_requested_at: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          actor_id?: string | null;
+          applied_at?: string | null;
+          blocks?: number | null;
+          cache_read_tokens?: number | null;
+          cache_write_tokens?: number | null;
+          calls?: number;
+          cost_micros?: number | null;
+          counted?: boolean;
+          created_at?: string;
+          dropped?: number | null;
+          effort?: string | null;
+          error_code?: string | null;
+          finished_at?: string | null;
+          fixed?: number | null;
+          id?: string;
+          input_tokens?: number | null;
+          ip_hash?: string | null;
+          model?: string | null;
+          ms_model?: number | null;
+          ms_sources?: number | null;
+          ms_total?: number | null;
+          order_id?: string | null;
+          output_tokens?: number | null;
+          profile_id: string;
+          progress?: NonNullable<Json>;
+          prompt_version: string;
+          reserved_micros: number;
+          result?: Json | null;
+          route: Database["public"]["Enums"]["ai_route"];
+          schema_version: string;
+          served_by?: string | null;
+          sources?: number | null;
+          status?: Database["public"]["Enums"]["ai_run_status"];
+          stop_reason?: string | null;
+          stop_requested_at?: string | null;
+        };
+        Update: {
+          actor_id?: string | null;
+          applied_at?: string | null;
+          blocks?: number | null;
+          cache_read_tokens?: number | null;
+          cache_write_tokens?: number | null;
+          calls?: number;
+          cost_micros?: number | null;
+          counted?: boolean;
+          created_at?: string;
+          dropped?: number | null;
+          effort?: string | null;
+          error_code?: string | null;
+          finished_at?: string | null;
+          fixed?: number | null;
+          id?: string;
+          input_tokens?: number | null;
+          ip_hash?: string | null;
+          model?: string | null;
+          ms_model?: number | null;
+          ms_sources?: number | null;
+          ms_total?: number | null;
+          order_id?: string | null;
+          output_tokens?: number | null;
+          profile_id?: string;
+          progress?: NonNullable<Json>;
+          prompt_version?: string;
+          reserved_micros?: number;
+          result?: Json | null;
+          route?: Database["public"]["Enums"]["ai_route"];
+          schema_version?: string;
+          served_by?: string | null;
+          sources?: number | null;
+          status?: Database["public"]["Enums"]["ai_run_status"];
+          stop_reason?: string | null;
+          stop_requested_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_runs_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_runs_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ai_settings: {
+        Row: {
+          account_concurrency: number;
+          daily_budget_micros: number;
+          enabled: boolean;
+          free_drafts: number;
+          global_concurrency: number;
+          id: boolean;
+          ip_runs_per_day: number;
+          pro_drafts_per_month: number;
+          uncounted_failures_per_day: number;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          account_concurrency?: number;
+          daily_budget_micros?: number;
+          enabled?: boolean;
+          free_drafts?: number;
+          global_concurrency?: number;
+          id?: boolean;
+          ip_runs_per_day?: number;
+          pro_drafts_per_month?: number;
+          uncounted_failures_per_day?: number;
+          updated_at?: string;
+        };
+        Update: {
+          account_concurrency?: number;
+          daily_budget_micros?: number;
+          enabled?: boolean;
+          free_drafts?: number;
+          global_concurrency?: number;
+          id?: boolean;
+          ip_runs_per_day?: number;
+          pro_drafts_per_month?: number;
+          uncounted_failures_per_day?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_usage: {
+        Row: {
+          counted: number;
+          month: string;
+          profile_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          counted?: number;
+          month: string;
+          profile_id: string;
+        };
+        Update: {
+          counted?: number;
+          month?: string;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_log: {
         Row: {
           action: string;
@@ -61,6 +277,136 @@ export type Database = {
         };
         Relationships: [];
       };
+      cancellations: {
+        Row: {
+          account_email: string;
+          confirmation_email: string;
+          contract: string;
+          decision: string | null;
+          effective_at: string | null;
+          entitlement_id: string | null;
+          handled_at: string | null;
+          handled_by: string | null;
+          id: string;
+          kind: string;
+          matched: boolean;
+          name: string;
+          note: string | null;
+          profile_id: string | null;
+          reason: string | null;
+          receipt_sent_at: string | null;
+          received_at: string;
+          suspect: boolean;
+          wanted_date: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          account_email: string;
+          confirmation_email: string;
+          contract: string;
+          decision?: string | null;
+          effective_at?: string | null;
+          entitlement_id?: string | null;
+          handled_at?: string | null;
+          handled_by?: string | null;
+          id?: string;
+          kind: string;
+          matched?: boolean;
+          name: string;
+          note?: string | null;
+          profile_id?: string | null;
+          reason?: string | null;
+          receipt_sent_at?: string | null;
+          received_at?: string;
+          suspect?: boolean;
+          wanted_date?: string | null;
+        };
+        Update: {
+          account_email?: string;
+          confirmation_email?: string;
+          contract?: string;
+          decision?: string | null;
+          effective_at?: string | null;
+          entitlement_id?: string | null;
+          handled_at?: string | null;
+          handled_by?: string | null;
+          id?: string;
+          kind?: string;
+          matched?: boolean;
+          name?: string;
+          note?: string | null;
+          profile_id?: string | null;
+          reason?: string | null;
+          receipt_sent_at?: string | null;
+          received_at?: string;
+          suspect?: boolean;
+          wanted_date?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cancellations_entitlement_id_fkey";
+            columns: ["entitlement_id"];
+            isOneToOne: false;
+            referencedRelation: "entitlements";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cancellations_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      checkout_intents: {
+        Row: {
+          consent_at: string | null;
+          created_at: string;
+          early_start: boolean;
+          early_start_text: string | null;
+          locale: string;
+          product: string;
+          profile_id: string;
+          promised_due_at: string | null;
+          session_id: string;
+          start_after: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          consent_at?: string | null;
+          created_at?: string;
+          early_start?: boolean;
+          early_start_text?: string | null;
+          locale: string;
+          product: string;
+          profile_id: string;
+          promised_due_at?: string | null;
+          session_id: string;
+          start_after?: string | null;
+        };
+        Update: {
+          consent_at?: string | null;
+          created_at?: string;
+          early_start?: boolean;
+          early_start_text?: string | null;
+          locale?: string;
+          product?: string;
+          profile_id?: string;
+          promised_due_at?: string | null;
+          session_id?: string;
+          start_after?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "checkout_intents_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       customer_notes: {
         Row: {
           at: string;
@@ -110,32 +456,273 @@ export type Database = {
         };
         Relationships: [];
       };
+      entitlements: {
+        Row: {
+          cancel_at: string | null;
+          cancel_at_period_end: boolean;
+          confirmation_sent_at: string | null;
+          created_at: string;
+          current_period_end: string | null;
+          id: string;
+          product: string;
+          profile_id: string;
+          source: string;
+          starts_at: string;
+          status: Database["public"]["Enums"]["entitlement_status"];
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cancel_at?: string | null;
+          cancel_at_period_end?: boolean;
+          confirmation_sent_at?: string | null;
+          created_at?: string;
+          current_period_end?: string | null;
+          id?: string;
+          product: string;
+          profile_id: string;
+          source: string;
+          starts_at?: string;
+          status?: Database["public"]["Enums"]["entitlement_status"];
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          cancel_at?: string | null;
+          cancel_at_period_end?: boolean;
+          confirmation_sent_at?: string | null;
+          created_at?: string;
+          current_period_end?: string | null;
+          id?: string;
+          product?: string;
+          profile_id?: string;
+          source?: string;
+          starts_at?: string;
+          status?: Database["public"]["Enums"]["entitlement_status"];
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "entitlements_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      form_limits: {
+        Row: {
+          at: string;
+          form: string;
+          ip_hash: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          at?: string;
+          form: string;
+          ip_hash: string;
+        };
+        Update: {
+          at?: string;
+          form?: string;
+          ip_hash?: string;
+        };
+        Relationships: [];
+      };
       invoices: {
         Row: {
           amount_cents: number;
           at: string;
           id: string;
+          payment_intent: string | null;
           profile_id: string;
           status: string;
+          subscription: string | null;
         };
         ComputedFields: never;
         Insert: {
           amount_cents: number;
           at?: string;
           id: string;
+          payment_intent?: string | null;
           profile_id: string;
           status: string;
+          subscription?: string | null;
         };
         Update: {
           amount_cents?: number;
           at?: string;
           id?: string;
+          payment_intent?: string | null;
           profile_id?: string;
           status?: string;
+          subscription?: string | null;
         };
         Relationships: [
           {
             foreignKeyName: "invoices_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      order_events: {
+        Row: {
+          actor: string | null;
+          at: string;
+          details: NonNullable<Json>;
+          id: number;
+          kind: string;
+          order_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          actor?: string | null;
+          at?: string;
+          details?: NonNullable<Json>;
+          id?: never;
+          kind: string;
+          order_id: string;
+        };
+        Update: {
+          actor?: string | null;
+          at?: string;
+          details?: NonNullable<Json>;
+          id?: never;
+          kind?: string;
+          order_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "order_events_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      orders: {
+        Row: {
+          amount_cents: number;
+          assignee: string | null;
+          briefed_at: string | null;
+          briefing: Json | null;
+          completed_at: string | null;
+          confirmation_sent_at: string | null;
+          created_at: string;
+          currency: string;
+          customer_email: string;
+          customer_name: string | null;
+          delivered_at: string | null;
+          due_at: string | null;
+          early_start: boolean;
+          early_start_text: string | null;
+          id: string;
+          locale: string;
+          number: string;
+          ordered_at: string;
+          package: Database["public"]["Enums"]["order_package"];
+          profile_id: string | null;
+          promised_due_at: string;
+          refund_kind: string | null;
+          refunded_at: string | null;
+          revision_due_at: string | null;
+          revisions_allowed: number;
+          revisions_used: number;
+          start_after: string;
+          status: Database["public"]["Enums"]["order_status"];
+          stripe_payment_intent: string | null;
+          stripe_session_id: string;
+          updated_at: string;
+          vat_mode: string;
+          withdrawal_pending: boolean;
+          withdrawn_at: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount_cents: number;
+          assignee?: string | null;
+          briefed_at?: string | null;
+          briefing?: Json | null;
+          completed_at?: string | null;
+          confirmation_sent_at?: string | null;
+          created_at?: string;
+          currency?: string;
+          customer_email: string;
+          customer_name?: string | null;
+          delivered_at?: string | null;
+          due_at?: string | null;
+          early_start: boolean;
+          early_start_text?: string | null;
+          id?: string;
+          locale: string;
+          number?: string;
+          ordered_at?: string;
+          package: Database["public"]["Enums"]["order_package"];
+          profile_id?: string | null;
+          promised_due_at: string;
+          refund_kind?: string | null;
+          refunded_at?: string | null;
+          revision_due_at?: string | null;
+          revisions_allowed: number;
+          revisions_used?: number;
+          start_after: string;
+          status?: Database["public"]["Enums"]["order_status"];
+          stripe_payment_intent?: string | null;
+          stripe_session_id: string;
+          updated_at?: string;
+          vat_mode: string;
+          withdrawal_pending?: boolean;
+          withdrawn_at?: string | null;
+        };
+        Update: {
+          amount_cents?: number;
+          assignee?: string | null;
+          briefed_at?: string | null;
+          briefing?: Json | null;
+          completed_at?: string | null;
+          confirmation_sent_at?: string | null;
+          created_at?: string;
+          currency?: string;
+          customer_email?: string;
+          customer_name?: string | null;
+          delivered_at?: string | null;
+          due_at?: string | null;
+          early_start?: boolean;
+          early_start_text?: string | null;
+          id?: string;
+          locale?: string;
+          number?: string;
+          ordered_at?: string;
+          package?: Database["public"]["Enums"]["order_package"];
+          profile_id?: string | null;
+          promised_due_at?: string;
+          refund_kind?: string | null;
+          refunded_at?: string | null;
+          revision_due_at?: string | null;
+          revisions_allowed?: number;
+          revisions_used?: number;
+          start_after?: string;
+          status?: Database["public"]["Enums"]["order_status"];
+          stripe_payment_intent?: string | null;
+          stripe_session_id?: string;
+          updated_at?: string;
+          vat_mode?: string;
+          withdrawal_pending?: boolean;
+          withdrawn_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "orders_profile_id_fkey";
             columns: ["profile_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -309,6 +896,25 @@ export type Database = {
         };
         Relationships: [];
       };
+      service_settings: {
+        Row: {
+          daily_capacity: number;
+          id: boolean;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          daily_capacity?: number;
+          id?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          daily_capacity?: number;
+          id?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       sign_ins: {
         Row: {
           at: string;
@@ -353,6 +959,82 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sign_ins_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      site_proposals: {
+        Row: {
+          applied_at: string | null;
+          created_at: string;
+          created_by: string | null;
+          delivered_at: string | null;
+          extras: Json | null;
+          id: string;
+          kind: string | null;
+          message: string | null;
+          order_id: string;
+          page: NonNullable<Json>;
+          profile_id: string | null;
+          request: string | null;
+          round: number;
+          status: Database["public"]["Enums"]["proposal_status"];
+          story_paths: string[];
+          theme: NonNullable<Json>;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          applied_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          delivered_at?: string | null;
+          extras?: Json | null;
+          id?: string;
+          kind?: string | null;
+          message?: string | null;
+          order_id: string;
+          page: NonNullable<Json>;
+          profile_id?: string | null;
+          request?: string | null;
+          round?: number;
+          status?: Database["public"]["Enums"]["proposal_status"];
+          story_paths?: string[];
+          theme: NonNullable<Json>;
+          updated_at?: string;
+        };
+        Update: {
+          applied_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          delivered_at?: string | null;
+          extras?: Json | null;
+          id?: string;
+          kind?: string | null;
+          message?: string | null;
+          order_id?: string;
+          page?: NonNullable<Json>;
+          profile_id?: string | null;
+          request?: string | null;
+          round?: number;
+          status?: Database["public"]["Enums"]["proposal_status"];
+          story_paths?: string[];
+          theme?: NonNullable<Json>;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "site_proposals_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "site_proposals_profile_id_fkey";
             columns: ["profile_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -431,6 +1113,56 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      storage_purge: {
+        Row: {
+          attempts: number;
+          bucket: string;
+          due_at: string;
+          id: number;
+          last_error: string | null;
+          prefix: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          attempts?: number;
+          bucket: string;
+          due_at?: string;
+          id?: never;
+          last_error?: string | null;
+          prefix: string;
+        };
+        Update: {
+          attempts?: number;
+          bucket?: string;
+          due_at?: string;
+          id?: never;
+          last_error?: string | null;
+          prefix?: string;
+        };
+        Relationships: [];
+      };
+      stripe_events: {
+        Row: {
+          id: string;
+          processed_at: string | null;
+          received_at: string;
+          type: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          id: string;
+          processed_at?: string | null;
+          received_at?: string;
+          type: string;
+        };
+        Update: {
+          id?: string;
+          processed_at?: string | null;
+          received_at?: string;
+          type?: string;
+        };
+        Relationships: [];
       };
       subscriptions: {
         Row: {
@@ -541,6 +1273,86 @@ export type Database = {
           },
         ];
       };
+      withdrawals: {
+        Row: {
+          contract: string;
+          decision: string | null;
+          email: string;
+          entitlement_id: string | null;
+          handled_at: string | null;
+          handled_by: string | null;
+          id: string;
+          matched: boolean;
+          name: string;
+          note: string | null;
+          order_id: string | null;
+          profile_id: string | null;
+          receipt_sent_at: string | null;
+          received_at: string;
+          refund_cents: number | null;
+          suspect: boolean;
+        };
+        ComputedFields: never;
+        Insert: {
+          contract: string;
+          decision?: string | null;
+          email: string;
+          entitlement_id?: string | null;
+          handled_at?: string | null;
+          handled_by?: string | null;
+          id?: string;
+          matched?: boolean;
+          name: string;
+          note?: string | null;
+          order_id?: string | null;
+          profile_id?: string | null;
+          receipt_sent_at?: string | null;
+          received_at?: string;
+          refund_cents?: number | null;
+          suspect?: boolean;
+        };
+        Update: {
+          contract?: string;
+          decision?: string | null;
+          email?: string;
+          entitlement_id?: string | null;
+          handled_at?: string | null;
+          handled_by?: string | null;
+          id?: string;
+          matched?: boolean;
+          name?: string;
+          note?: string | null;
+          order_id?: string | null;
+          profile_id?: string | null;
+          receipt_sent_at?: string | null;
+          received_at?: string;
+          refund_cents?: number | null;
+          suspect?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "withdrawals_entitlement_id_fkey";
+            columns: ["entitlement_id"];
+            isOneToOne: false;
+            referencedRelation: "entitlements";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "withdrawals_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "withdrawals_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -552,19 +1364,48 @@ export type Database = {
         Returns: undefined;
       };
       admin_add_note: { Args: { body: string; customer: string }; Returns: Json };
+      admin_ai_status: { Args: Record<PropertyKey, never>; Returns: Json };
+      admin_assign_order: { Args: { member?: string; target: string }; Returns: undefined };
       admin_block_ip: { Args: { address: unknown; why: string }; Returns: undefined };
       admin_blocked_ips: { Args: Record<PropertyKey, never>; Returns: Json };
+      admin_contract_requests: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_customer_referrals: { Args: { customer: string }; Returns: Json };
       admin_customers: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_delete_customer: { Args: { customer: string }; Returns: undefined };
+      admin_deliver_proposal: { Args: { proposal: string }; Returns: Json };
+      admin_mark_contract_handled: {
+        Args: { kind: string; note?: string; target: string };
+        Returns: undefined;
+      };
       admin_me: { Args: Record<PropertyKey, never>; Returns: Json };
+      admin_order: { Args: { target: string }; Returns: Json };
+      admin_order_refund_target: { Args: { target: string }; Returns: Json };
+      admin_orders: { Args: { scope?: string }; Returns: Json };
       admin_referral_queue: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_refund_invoice: { Args: { invoice: string }; Returns: undefined };
       admin_remove_member: { Args: { member: string }; Returns: undefined };
+      admin_resolve_cancellation: { Args: { decision: string; note: string; target: string }; Returns: Json };
+      admin_resolve_withdrawal: {
+        Args: { decision: string; note?: string; refund_cents?: number; target: string };
+        Returns: Json;
+      };
       admin_review_verification: {
         Args: { decision: string; reason?: string; request: string };
         Returns: undefined;
       };
+      admin_save_proposal: {
+        Args: {
+          extras?: Json;
+          kind?: string;
+          message?: string;
+          page: Json;
+          stories?: string[];
+          target: string;
+          theme: Json;
+        };
+        Returns: string;
+      };
+      admin_set_ai_enabled: { Args: { enabled: boolean }; Returns: undefined };
       admin_set_referral: {
         Args: { next_state: Database["public"]["Enums"]["referral_state"]; referral: string; why?: string };
         Returns: undefined;
@@ -602,27 +1443,143 @@ export type Database = {
       admin_sign_out_device: { Args: { customer: string; device: string }; Returns: number };
       admin_team: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_unblock_ip: { Args: { address: unknown }; Returns: undefined };
+      ai_allowance: { Args: { account: string }; Returns: Json };
+      ai_cleanup: { Args: Record<PropertyKey, never>; Returns: number };
+      ai_disable: { Args: { reason: string }; Returns: undefined };
+      ai_mark_applied: { Args: { run: string }; Returns: undefined };
+      ai_record_progress: { Args: { progress: Json; run: string }; Returns: undefined };
+      ai_request_stop: { Args: { run: string }; Returns: string };
+      ai_reserve_run: {
+        Args: {
+          account: string;
+          actor?: string;
+          ip_hash: string;
+          prompt_version: string;
+          route: Database["public"]["Enums"]["ai_route"];
+          schema_version: string;
+          target_order?: string;
+          worst_micros: number;
+        };
+        Returns: Json;
+      };
+      ai_settle_run: {
+        Args: {
+          cost: number;
+          details: Json;
+          draft?: Json;
+          is_counted: boolean;
+          next_status: Database["public"]["Enums"]["ai_run_status"];
+          run: string;
+        };
+        Returns: undefined;
+      };
+      ai_stop_requested: { Args: { run: string }; Returns: boolean };
       audit: {
         Args: { action: string; details?: Json; target: string; target_id: string };
         Returns: undefined;
       };
+      berlin_midnight: { Args: { day: string }; Returns: string };
+      berlin_month: { Args: Record<PropertyKey, never>; Returns: string };
+      berlin_today: { Args: Record<PropertyKey, never>; Returns: string };
+      block_is_public: { Args: { at: string; block: Json }; Returns: boolean };
       change_username: { Args: { candidate: string }; Returns: string };
+      confirm_cancellation: {
+        Args: { decision: string; effective?: string; target: string };
+        Returns: undefined;
+      };
       customer_label: { Args: { customer: string }; Returns: string };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
       email_identity: { Args: { address: string }; Returns: string };
+      form_suspect: { Args: { form: string; ip_hash: string; recipient: string }; Returns: boolean };
       grant_referral_rewards: { Args: { inviter: string }; Returns: undefined };
       has_permission: { Args: { wanted: string }; Returns: boolean };
+      has_pro: { Args: { account: string }; Returns: boolean };
       is_active: { Args: { account: string }; Returns: boolean };
       is_ip_blocked: { Args: { address: unknown }; Returns: boolean };
       make_owner: { Args: { owner_email: string }; Returns: undefined };
+      mark_confirmation_sent: { Args: { target: string }; Returns: undefined };
+      mark_pro_confirmation_sent: { Args: { subscription: string }; Returns: boolean };
+      mark_proposal_applied: { Args: { proposal: string }; Returns: string };
+      mark_receipt_sent: { Args: { kind: string; target: string }; Returns: undefined };
+      mirror_pro_subscription: {
+        Args: {
+          account: string;
+          next: Database["public"]["Enums"]["entitlement_status"];
+          period_end: string;
+        };
+        Returns: undefined;
+      };
+      my_ai_quota: { Args: Record<PropertyKey, never>; Returns: Json };
+      my_order: { Args: { target: string }; Returns: Json };
+      my_orders: { Args: Record<PropertyKey, never>; Returns: Json };
+      my_proposals: { Args: Record<PropertyKey, never>; Returns: Json };
       my_referrals: { Args: Record<PropertyKey, never>; Returns: Json };
       my_team_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["team_role"] };
       my_verification_requests: { Args: Record<PropertyKey, never>; Returns: Json };
       new_referral_code: { Args: Record<PropertyKey, never>; Returns: string };
+      order_event: { Args: { details?: Json; kind: string; target: string }; Returns: undefined };
+      page_has_ai: { Args: { page: Json }; Returns: boolean };
+      proposal_kit_complete: { Args: { extras: Json; story_paths: string[] }; Returns: boolean };
       public_page: { Args: { handle: string }; Returns: Json };
+      purge_form_limits: { Args: Record<PropertyKey, never>; Returns: number };
       purge_old_sign_ins: { Args: Record<PropertyKey, never>; Returns: number };
       purge_unconfirmed_accounts: { Args: Record<PropertyKey, never>; Returns: number };
       recent_failures: { Args: { email: string }; Returns: number };
+      record_cancellation: {
+        Args: {
+          account_email: string;
+          confirmation_email: string;
+          contract: string;
+          ip_hash: string;
+          kind: string;
+          name: string;
+          reason?: string;
+          wanted?: string;
+        };
+        Returns: Json;
+      };
+      record_checkout_consent: {
+        Args: {
+          account: string;
+          consent_text: string;
+          early: boolean;
+          promised_due: string;
+          session: string;
+          start_after: string;
+        };
+        Returns: string;
+      };
+      record_checkout_intent: {
+        Args: { account: string; locale: string; product: string; session: string };
+        Returns: undefined;
+      };
+      record_invoice: {
+        Args: {
+          account: string;
+          amount: number;
+          id: string;
+          payment_intent?: string;
+          state: string;
+          subscription: string;
+        };
+        Returns: undefined;
+      };
+      record_refund: { Args: { amount?: number; kind?: string; payment_intent: string }; Returns: string };
+      record_revision: {
+        Args: { account: string; due: string; message: string; proposal: string };
+        Returns: string;
+      };
+      record_service_order: {
+        Args: {
+          amount: number;
+          email: string;
+          name?: string;
+          payment_intent: string;
+          session: string;
+          vat?: string;
+        };
+        Returns: Json;
+      };
       record_sign_in: {
         Args: {
           city?: string;
@@ -637,19 +1594,68 @@ export type Database = {
         };
         Returns: undefined;
       };
+      record_withdrawal: {
+        Args: { contract: string; email: string; ip_hash: string; name: string };
+        Returns: Json;
+      };
       referral_count: { Args: { inviter: string }; Returns: number };
       referral_inviter: { Args: { code: string }; Returns: Json };
       referral_rule: { Args: { name: string }; Returns: number };
       request_verification: { Args: { links: string[]; note?: string }; Returns: string };
       require_permission: { Args: { wanted: string }; Returns: undefined };
       same_network: { Args: { a: unknown; b: unknown }; Returns: boolean };
+      service_capacity: { Args: Record<PropertyKey, never>; Returns: number };
+      service_load: {
+        Args: { days: number; exclude?: string; from_day: string };
+        Returns: {
+          booked: number;
+          day: string;
+        }[];
+      };
+      service_maintenance: { Args: Record<PropertyKey, never>; Returns: Json };
+      set_order_briefing: {
+        Args: { account: string; briefing: Json; due: string; target: string };
+        Returns: string;
+      };
       settle_pending_referrals: { Args: Record<PropertyKey, never>; Returns: number };
       settle_referral: { Args: { invitee: string; ref?: string }; Returns: string };
+      update_pro_subscription: {
+        Args: { next: Database["public"]["Enums"]["entitlement_status"]; subscription: string };
+        Returns: undefined;
+      };
+      upsert_pro_subscription: {
+        Args: {
+          account: string;
+          cancel_at?: string;
+          cancel_at_end: boolean;
+          customer: string;
+          next: Database["public"]["Enums"]["entitlement_status"];
+          period_end: string;
+          subscription: string;
+        };
+        Returns: string;
+      };
       username_status: { Args: { candidate: string }; Returns: string };
+      voluntary_refund_available: { Args: { target: string }; Returns: boolean };
     };
     Enums: {
       account_status: "active" | "suspended";
+      ai_route: "welcome" | "dashboard" | "team";
+      ai_run_status: "running" | "succeeded" | "stopped" | "failed" | "refused";
+      entitlement_status: "active" | "past_due" | "canceled" | "refunded";
+      order_package: "start" | "premium";
+      order_status:
+        | "paid"
+        | "awaiting_briefing"
+        | "queued"
+        | "in_progress"
+        | "delivered"
+        | "revision_requested"
+        | "completed"
+        | "refunded"
+        | "withdrawn";
       plan: "free" | "pro";
+      proposal_status: "draft" | "delivered" | "applied" | "superseded";
       referral_state: "pending" | "qualified" | "held" | "rejected" | "revoked";
       reward_kind: "verification_review" | "pro_for_life";
       subscription_status: "active" | "trialing" | "past_due" | "canceled";
@@ -766,7 +1772,23 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["active", "suspended"],
+      ai_route: ["welcome", "dashboard", "team"],
+      ai_run_status: ["running", "succeeded", "stopped", "failed", "refused"],
+      entitlement_status: ["active", "past_due", "canceled", "refunded"],
+      order_package: ["start", "premium"],
+      order_status: [
+        "paid",
+        "awaiting_briefing",
+        "queued",
+        "in_progress",
+        "delivered",
+        "revision_requested",
+        "completed",
+        "refunded",
+        "withdrawn",
+      ],
       plan: ["free", "pro"],
+      proposal_status: ["draft", "delivered", "applied", "superseded"],
       referral_state: ["pending", "qualified", "held", "rejected", "revoked"],
       reward_kind: ["verification_review", "pro_for_life"],
       subscription_status: ["active", "trialing", "past_due", "canceled"],

@@ -20,7 +20,7 @@
     "format:check": "prettier --check .",
     "tokens": "pnpm --filter @linkyo/tokens build",
     "prepare": "lefthook install || true",
-    "db:start": "npx -y supabase@2.122.1 start -x studio,imgproxy,vector,logflare,edge-runtime,realtime,storage-api,postgres-meta,supavisor",
+    "db:start": "npx -y supabase@2.122.1 start -x studio,imgproxy,vector,logflare,edge-runtime,realtime,postgres-meta,supavisor",
     "db:stop": "npx -y supabase@2.122.1 stop",
     "db:reset": "npx -y supabase@2.122.1 db reset",
     "db:test": "npx -y supabase@2.122.1 test db",
