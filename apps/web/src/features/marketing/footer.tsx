@@ -2,6 +2,7 @@ import { Logo } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 
 import { ThemeSwitch } from "@/components/theme-switch";
+import { LegalLinks } from "@/features/legal/legal-links";
 import { Link } from "@/i18n/navigation";
 
 // Phones: each link is a 44 px row, as in an app's list, and gives way under the finger; wide screens: compact.
@@ -11,8 +12,8 @@ const groupTitle = "mb-2 text-caption font-semibold text-fg";
 
 /**
  * The footer: the logo and its line, two short groups side by side, then one quiet band with the
- * rights, the legal pages and the light/dark switch. The legal pages are named but not links yet:
- * they arrive with the company details.
+ * rights, the legal pages and the light/dark switch. The legal pages become links with the company
+ * details (or in a payments test build); until then they are named only (LegalLinks).
  */
 export function MarketingFooter() {
   const t = useTranslations("marketing.footer");
@@ -62,13 +63,8 @@ export function MarketingFooter() {
             <span>{t("rights")}</span>
             <span>{t("made")}</span>
           </p>
-          {/* The legal pages, named; they become links with the company details. */}
-          <p className="flex flex-wrap gap-x-3 gap-y-1 text-fg-tertiary">
-            <span className="sr-only">{t("legal")}:</span>
-            <span>{t("imprint")}</span>
-            <span>{t("privacy")}</span>
-            <span>{t("terms")}</span>
-          </p>
+          {/* The legal pages: named, or links once the company details are in. */}
+          <LegalLinks />
         </div>
         <ThemeSwitch size="md" />
       </div>

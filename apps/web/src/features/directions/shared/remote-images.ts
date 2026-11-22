@@ -20,7 +20,31 @@ export const PROXIED_IMAGE_HOSTS = [
   "is5-ssl.mzstatic.com",
 ] as const;
 
+/** Where public page pictures live in Supabase Storage (the `media` bucket). */
+export const STORAGE_MEDIA_PATH = "/storage/v1/object/public/media/";
+
+const LOOPBACK = new Set(["127.0.0.1", "localhost"]);
+
+/**
+ * A picture a creator uploaded to our own Storage (the public `media` bucket of this deployment's
+ * Supabase project). It goes through our optimizer too, so visitors never contact the Storage host.
+ * https only, except the local stack (http on a loopback address) outside Vercel.
+ */
+export function isStorageImage(src: string, env: { supabaseUrl?: string | undefined; vercel?: string | undefined } = {}): boolean {
+  const base = env.supabaseUrl ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  if (!base || !src.startsWith(`${base.replace(/\/$/, "")}${STORAGE_MEDIA_PATH}`)) return false;
+  try {
+    const url = new URL(src);
+    if (url.protocol === "https:") return true;
+    const vercel = "vercel" in env ? env.vercel : process.env.VERCEL;
+    return url.protocol === "http:" && LOOPBACK.has(url.hostname) && !vercel;
+  } catch {
+    return false;
+  }
+}
+
 export function isProxiedImage(src: string): boolean {
+  if (isStorageImage(src)) return true;
   if (!src.startsWith("https://")) return false;
   try {
     return (PROXIED_IMAGE_HOSTS as readonly string[]).includes(new URL(src).hostname);

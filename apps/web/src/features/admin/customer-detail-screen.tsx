@@ -39,6 +39,8 @@ import { Panel, Screen } from "@/features/app/screen";
 import { referralTeam, useCustomerReferrals } from "@/features/referrals/team";
 import type { CustomerReferrals, ReferralState, RewardKind } from "@/features/referrals/types";
 import { Link, useRouter } from "@/i18n/navigation";
+import { pageAddress } from "@/lib/page-url";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { useConsoleActions } from "./actions";
 import { sessionsOf, useCustomers } from "./customers/data";
@@ -276,7 +278,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
       lead={
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span dir="ltr">{customer.email}</span>
-          <span dir="ltr">linkyo.app/{customer.username}</span>
+          <span dir="ltr">{pageAddress(customer.username)}</span>
         </span>
       }
       wide
@@ -435,7 +437,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                 [t("facts.canceled"), sub.canceledAt ? date(sub.canceledAt, locale) : "–"],
               ]}
             />
-            <p className="text-caption text-fg-tertiary">{t("billingNote")}</p>
+            {/* "Demo: no money moves" is true only in the demo. */}
+            {supabaseEnabled ? null : <p className="text-caption text-fg-tertiary">{t("billingNote")}</p>}
           </Panel>
           <Panel title={t("invoices")} id="invoices-title">
             {sub.invoices.length === 0 ? (

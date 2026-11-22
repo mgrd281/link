@@ -1,4 +1,4 @@
-import { hasImage, type BlockOf, type Page } from "@linkyo/blocks";
+import { hasImage, type AiProfileField, type BlockOf, type Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
 import { PAIRING_IDS, type ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
@@ -13,6 +13,9 @@ import { ShareButton } from "./share";
 import { displayStyle } from "./styles";
 
 type Profile = Page["profile"];
+
+/** `data-ai-generated` on a profile text an AI draft wrote (AI Act Art. 50(2)); nothing otherwise. */
+const aiText = (profile: Profile, field: AiProfileField) => (profile.aiFields?.includes(field) ? { "data-ai-generated": "true" } : {});
 
 /**
  * Average advance per character of each display face, measured on real names (em per character).
@@ -40,6 +43,7 @@ function Name({ profile, isRtl, theme, compact = false }: { profile: Profile; is
         isRtl ? "leading-tight" : "leading-none",
       )}
       style={{ ...displayStyle, "--name-fit": `calc((${room}) / ${ems.toFixed(2)})` } as CSSProperties}
+      {...aiText(profile, "displayName")}
     >
       {profile.displayName}
       {profile.verified ? (
@@ -150,7 +154,7 @@ export function PosterHero({
         </div>
       )}
       {profile.tagline ? (
-        <p className={cn("text-small font-semibold tracking-wide text-balance uppercase", rise(1).className)} style={rise(1).style}>
+        <p className={cn("text-small font-semibold tracking-wide text-balance uppercase", rise(1).className)} style={rise(1).style} {...aiText(profile, "tagline")}>
           {profile.tagline}
           {treatment === "frame" ? (
             <span aria-hidden className="poster-caret ms-1 text-creator-accent-text">
@@ -161,7 +165,7 @@ export function PosterHero({
       ) : null}
       {profile.stats?.length ? <Stats stats={profile.stats} /> : null}
       {profile.bio ? (
-        <p className={cn("max-w-prose text-body-lg text-balance text-creator-fg-muted", rise(2).className)} style={rise(2).style}>
+        <p className={cn("max-w-prose text-body-lg text-balance text-creator-fg-muted", rise(2).className)} style={rise(2).style} {...aiText(profile, "bio")}>
           {profile.bio}
         </p>
       ) : null}
@@ -291,7 +295,9 @@ export function PosterBar({ profile }: { profile: Profile }) {
         <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-small">
           {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
         </span>
-        <p className="min-w-0 flex-1 truncate text-body font-semibold">{profile.displayName}</p>
+        <p className="min-w-0 flex-1 truncate text-body font-semibold" {...aiText(profile, "displayName")}>
+          {profile.displayName}
+        </p>
         <ShareButton title={profile.displayName} />
       </div>
     </div>

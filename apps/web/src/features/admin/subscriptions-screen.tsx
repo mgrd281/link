@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 
 import { Panel, Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { ColumnChart, KpiTile } from "./charts";
 import { useCustomers } from "./customers/data";
@@ -170,7 +171,8 @@ export function SubscriptionsScreen() {
               </div>
             )}
           </Panel>
-          <p className="text-caption text-fg-tertiary">{t("note")}</p>
+          {/* The cost-model price and "Stripe takes over at launch" describe the demo only. */}
+          {supabaseEnabled ? null : <p className="text-caption text-fg-tertiary">{t("note")}</p>}
           <DemoNote />
         </>
       ) : null}

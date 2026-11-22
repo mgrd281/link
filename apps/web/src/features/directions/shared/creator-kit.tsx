@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import { initials } from "@/features/share/story-card";
+import { creatorOrigin } from "@/lib/page-url";
 
 import { resolveMedia } from "./media";
 import { mediaSizes, PlatformGlyph, platformName } from "./platforms";
@@ -101,6 +102,16 @@ export function useCreatorFormat(locale: string) {
 }
 
 /**
+ * Where a public page's footer links lead: the creator's own imprint on the page (only once they
+ * filled it in), Linkyo's privacy notice for creator pages, and the place to report content (DSA).
+ */
+export interface CreatorFooterLinks {
+  imprint?: string | undefined;
+  privacy: string;
+  report: string;
+}
+
+/**
  * Sticky-free footer: subtle "Made with Linkyo" (removable in Pro) + legal links (DSA "Report"). Pages
  * with embedded players also link to the privacy settings (there are no tracking cookies to manage).
  */
@@ -109,14 +120,21 @@ export function CreatorFooter({
   credit = true,
   privacy = false,
   trademarks = false,
+  links,
 }: {
-  className?: string;
+  className?: string | undefined;
   credit?: boolean;
   privacy?: boolean;
   /** The page shows the official App Store and Google Play badges: credit the marks, as Apple and Google ask. */
   trademarks?: boolean;
+  /** Public pages: real destinations. Without them (examples, previews) the links are in-page anchors. */
+  links?: CreatorFooterLinks | undefined;
 }) {
   const t = useTranslations("creator");
+  const targets = (["imprint", "privacy", "report"] as const).flatMap((key) => {
+    const href = links ? links[key] : `#${key}`;
+    return href ? [{ key, href }] : [];
+  });
   return (
     <footer
       className={cn(
@@ -126,7 +144,7 @@ export function CreatorFooter({
     >
       {credit ? (
         <a
-          href="https://linkyo.app"
+          href={creatorOrigin()}
           className="h-control-sm border-creator-line text-creator-fg duration-micro hover:border-creator-line-strong focus-visible:focus-ring inline-flex items-center gap-2 rounded-full border px-3 font-medium transition-colors"
         >
           <LogoSymbol tone="mono" className="size-icon-sm" />
@@ -134,10 +152,10 @@ export function CreatorFooter({
         </a>
       ) : null}
       <nav aria-label={t("menu")} className="flex flex-wrap justify-center gap-x-1">
-        {(["imprint", "privacy", "report"] as const).map((key) => (
+        {targets.map(({ key, href }) => (
           <a
             key={key}
-            href={`#${key}`}
+            href={href}
             className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2"
           >
             {t(key)}

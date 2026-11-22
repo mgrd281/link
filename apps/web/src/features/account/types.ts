@@ -77,6 +77,11 @@ export type AccountSnapshot =
       site: Site;
       /** Real accounts: whether the last change reached the server ("error": it will retry). */
       sync?: "saving" | "saved" | "error" | undefined;
+      /**
+       * Real accounts: why the last save failed for good, so no retry helps ("tooLarge": the page is
+       * over the database's size limit). The next change tries again.
+       */
+      syncError?: "tooLarge" | undefined;
     };
 
 export type AuthError =

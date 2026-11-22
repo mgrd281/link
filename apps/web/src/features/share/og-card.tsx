@@ -7,7 +7,7 @@ import { creatorTokens } from "@linkyo/tokens";
 import { PAIRING_IDS, type ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { ImageResponse } from "next/og";
 
-import { PROXIED_IMAGE_HOSTS } from "@/features/directions/shared/remote-images";
+import { isProxiedImage, isStorageImage, PROXIED_IMAGE_HOSTS } from "@/features/directions/shared/remote-images";
 
 import { initials } from "./story-card";
 
@@ -58,15 +58,15 @@ function sniff(bytes: Uint8Array): "image/jpeg" | "image/png" | null {
 }
 
 /**
- * A creator's photo on a platform, fetched once when the card is drawn (at build time) and embedded,
- * so whoever opens the card never contacts the platform. Only allowlisted hosts, no redirects (they
- * could lead off the list), JPEG or PNG up to 1.5 MB, five seconds at most: anything else, or any
- * error, gives no photo, and the card shows the initials instead.
+ * A creator's photo on a platform or in our own Storage, fetched once when the card is drawn and
+ * embedded, so whoever opens the card never contacts the platform. Only allowlisted hosts (and our
+ * public media bucket), no redirects (they could lead off the list), JPEG or PNG up to 1.5 MB, five
+ * seconds at most: anything else, or any error, gives no photo, and the card shows the initials instead.
  */
 async function remotePicture(src: string): Promise<string | null> {
   try {
     const url = new URL(src);
-    if (url.protocol !== "https:" || !PHOTO_HOSTS.has(url.hostname)) return null;
+    if (!isProxiedImage(src) && !(url.protocol === "https:" && PHOTO_HOSTS.has(url.hostname))) return null;
     const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(5000), headers: { accept: "image/jpeg,image/png" } });
     const type = response.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
     const length = Number(response.headers.get("content-length") ?? 0);
@@ -83,9 +83,12 @@ async function remotePicture(src: string): Promise<string | null> {
   }
 }
 
-/** A photo as a data URL: a sample picture ("sample:<key>") from the bundled assets, or an allowlisted platform picture. */
+/**
+ * A photo as a data URL: a sample picture ("sample:<key>") from the bundled assets, an allowlisted
+ * platform picture, or one the creator uploaded to our Storage.
+ */
 async function pictureData(src: string): Promise<string | null> {
-  if (src.startsWith("https:")) return remotePicture(src);
+  if (src.startsWith("https:") || isStorageImage(src)) return remotePicture(src);
   if (!src.startsWith("sample:")) return null;
   const key = src.slice("sample:".length);
   const candidates = [

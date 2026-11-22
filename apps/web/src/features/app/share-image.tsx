@@ -12,9 +12,10 @@ import { initials } from "@/features/directions/shared/creator-kit";
 import { resolveMedia } from "@/features/directions/shared/media";
 import { drawShareArt, loadFaces, SHARE_SIZES, type ShareFormat } from "@/features/share/story-card";
 import { haptic } from "@/lib/haptics";
+import { pageAddress, pageUrl } from "@/lib/page-url";
 
 import { ProfileSheet } from "./profile-form";
-import { pageUrl, ShareToolRow } from "./share-tools";
+import { ShareToolRow } from "./share-tools";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
 
@@ -46,7 +47,7 @@ export function ShareImageButton({ compact = false, appearance = "button" }: { c
   const { profile } = doc;
   const rtl = profile.locale === "ar";
   const theme = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: rtl }), [doc.theme, rtl]);
-  const address = `linkyo.app/${account.username}`;
+  const address = pageAddress(account.username);
   const fileName = `linkyo-${account.username}-${format}.png`;
 
   useEffect(() => {

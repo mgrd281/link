@@ -8,6 +8,7 @@ import { useRef, useState, type SubmitEvent } from "react";
 import { useUsernameStatus } from "@/features/account/auth/shared";
 import { accountStore } from "@/features/account/store";
 import type { AuthError } from "@/features/account/types";
+import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 
 import { TextInput } from "../form";
 import { FieldGroup, FormActions } from "../list";
@@ -83,7 +84,7 @@ export function AddressScreen() {
       return;
     }
     if (keyboard) form.current?.querySelector("input")?.focus();
-    toast({ title: t("addressChanged", { url: `linkyo.app/${next}` }), tone: "success" });
+    toast({ title: t("addressChanged", { url: pageAddress(next) }), tone: "success" });
   };
 
   return (
@@ -93,7 +94,7 @@ export function AddressScreen() {
           <TextInput
             label={t("addressLabel")}
             ltr
-            leading="linkyo.app/"
+            leading={`${CREATOR_DOMAIN}/`}
             value={value}
             onValue={(typed) => {
               setValue(toSlug(typed).slice(0, MAX));
