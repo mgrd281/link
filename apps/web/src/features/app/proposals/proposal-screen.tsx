@@ -304,6 +304,7 @@ export function ProposalScreen({ proposalId }: { proposalId: string }) {
           draft={draft}
           before={{ page: { profile: doc.profile, blocks: doc.blocks }, theme: doc.theme }}
           onChange={setEdited}
+          aiLook={aiAssisted}
           chip={
             <DraftChip>
               <Icon icon={aiAssisted ? Sparkles : PenTool} size="sm" />

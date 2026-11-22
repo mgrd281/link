@@ -85,6 +85,7 @@ export function DraftReview({
   below,
   onChange,
   headingRef,
+  aiLook = true,
 }: {
   kind: "ai" | "proposal";
   draft: ReviewDraft;
@@ -103,6 +104,8 @@ export function DraftReview({
   onChange?: ((draft: { page: Page; theme: CreatorThemeConfig }) => void) | undefined;
   /** The heading ("Your draft"): focus moves there when a run ends while focus is still on Stop. */
   headingRef?: Ref<HTMLHeadingElement> | undefined;
+  /** Whether the AI chose the draft's look; a team proposal without AI content says nothing about AI. */
+  aiLook?: boolean;
 }) {
   const t = useTranslations("app.ai.review");
   const tAi = useTranslations("ai.run");
@@ -176,7 +179,7 @@ export function DraftReview({
         </ul>
       </fieldset>
 
-      <OtherLooks draft={draft.theme} value={look} onChange={(next) => change(excluded, next)} rtl={rtl} />
+      <OtherLooks draft={draft.theme} value={look} onChange={(next) => change(excluded, next)} rtl={rtl} aiPick={aiLook} />
 
       {sources && sources.length > 0 ? (
         <section className="grid grid-cols-1 gap-3">

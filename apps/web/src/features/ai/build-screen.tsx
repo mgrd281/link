@@ -245,7 +245,8 @@ export function BuildScreen() {
       accountStore.updateSite((current) => ({ ...current, kind }));
     }
     const runId = state.result?.runId ?? state.stopped?.runId;
-    if (runId && supabaseEnabled) void browserSupabase().rpc("ai_mark_applied", { run: runId });
+    // A Supabase query runs only once it is awaited or then-ed; fire and forget, but send it.
+    if (runId && supabaseEnabled) void browserSupabase().rpc("ai_mark_applied", { run: runId }).then(() => undefined);
     if (welcome) {
       rememberAppliedDraft({ before, applied });
       router.push("/app/welcome?from=ai");

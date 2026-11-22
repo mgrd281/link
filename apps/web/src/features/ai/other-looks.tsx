@@ -40,13 +40,26 @@ function Swatches({ theme, rtl }: { theme: CreatorThemeConfig; rtl: boolean }) {
  * The AI's look and three others as radio cards (native radios: arrow keys move, screen readers say
  * the choice). Picking one re-themes the phone at once.
  */
-export function OtherLooks({ draft, value, onChange, rtl }: { draft: CreatorThemeConfig; value: CreatorThemeConfig | null; onChange: (theme: CreatorThemeConfig | null) => void; rtl: boolean }) {
+export function OtherLooks({
+  draft,
+  value,
+  onChange,
+  rtl,
+  aiPick = true,
+}: {
+  draft: CreatorThemeConfig;
+  value: CreatorThemeConfig | null;
+  onChange: (theme: CreatorThemeConfig | null) => void;
+  rtl: boolean;
+  /** False when the AI did not choose the draft's look (a team proposal without AI content): no "AI's choice" label. */
+  aiPick?: boolean;
+}) {
   const t = useTranslations("app.ai.review");
   const name = useId();
   const looks = useMemo(() => otherLooks(draft), [draft]);
   const chosen = value?.template ?? null;
   const options = [
-    { key: "ai", theme: draft, label: templateLabel(draft), detail: t("lookCurrent"), selected: value === null },
+    { key: "ai", theme: draft, label: templateLabel(draft), detail: aiPick ? t("lookCurrent") : null, selected: value === null },
     ...looks.map((look) => ({ key: look.id, theme: look.theme, label: creatorTokens.templates[look.id].label, detail: null, selected: chosen === look.id })),
   ];
   return (
