@@ -23,10 +23,17 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /(a11y|app|admin|templates|stars|search|try-phone|referral-signup)\.spec/ },
     { name: "review", testMatch: /review\.spec/, use: { ...devices["Desktop Chrome"] } },
   ],
-  webServer: {
-    command: `pnpm exec next start -p ${PORT}`,
-    url: `http://localhost:${PORT}/en`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: `pnpm exec next start -p ${PORT}`,
+      url: `http://localhost:${PORT}/en`,
+      // Never test a server another worktree started: reuse only when a developer asks for it.
+      reuseExistingServer: process.env.PW_REUSE_SERVER === "1",
+      timeout: 120_000,
+    },
+    // Real-mode runs (E2E_MOCKS=1) also start the local mock APIs (e2e/mocks/server.mjs).
+    ...(process.env.E2E_MOCKS === "1"
+      ? [{ command: "node e2e/mocks/server.mjs", url: `http://127.0.0.1:${process.env.MOCK_ANTHROPIC_PORT ?? "54399"}/health`, reuseExistingServer: false }]
+      : []),
+  ],
 });

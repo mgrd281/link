@@ -1,0 +1,1366 @@
+{
+  "calls": [
+    {
+      "events": [
+        {
+          "delayMs": 5,
+          "event": "message_start",
+          "data": {
+            "type": "message_start",
+            "message": {
+              "id": "msg_mock_max_1",
+              "type": "message",
+              "role": "assistant",
+              "model": "claude-opus-5-5",
+              "content": [],
+              "stop_reason": null,
+              "stop_sequence": null,
+              "stop_details": null,
+              "usage": {
+                "input_tokens": 812,
+                "cache_creation_input_tokens": 0,
+                "cache_read_input_tokens": 3605,
+                "output_tokens": 1
+              }
+            }
+          }
+        },
+        {
+          "delayMs": 20,
+          "event": "content_block_start",
+          "data": {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {
+              "type": "thinking",
+              "thinking": "",
+              "signature": ""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {
+              "type": "signature_delta",
+              "signature": "mock-signature"
+            }
+          }
+        },
+        {
+          "delayMs": 5,
+          "event": "content_block_stop",
+          "data": {
+            "type": "content_block_stop",
+            "index": 0
+          }
+        },
+        {
+          "delayMs": 200,
+          "event": "content_block_start",
+          "data": {
+            "type": "content_block_start",
+            "index": 1,
+            "content_block": {
+              "type": "text",
+              "text": ""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "{\"kind\":\"m"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "usic\",\"theme\":{\"te"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "mplate\":\"nocturne\","
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"accent\":\"photo_vib"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "rant\",\"pa"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "iring\":"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"template\",\"but"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "tonShape\":\"t"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "emplate\",\"bu"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ttonStyle\":\"tem"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "plate\"},\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "profil"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "e\":{\"displayName"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\":\"Lio V"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ance\",\"taglin"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "e\":\"DJ "
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "und Producer aus B"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "erlin\",\"bio\":\"I"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ch mache elektr"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "onische Musik u"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "nd lege in Clu"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "bs auf.\",\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "locatio"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "n\":\"Ber"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "lin\"},\"b"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "locks\":[{"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"type\":"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"socials\",\"refs"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\":[\"L1"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\",\"L2\"]},"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "{\"type\":\"rich\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ",\"ref\":\"L3\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ",\"highligh"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "t\":true,\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ad\":false},{\"type"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\":\"rich\",\"ref\":\"L4\","
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"highlight\":false"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ",\"ad\":false},"
+            }
+          }
+        },
+        {
+          "delayMs": 5,
+          "event": "content_block_stop",
+          "data": {
+            "type": "content_block_stop",
+            "index": 1
+          }
+        },
+        {
+          "delayMs": 5,
+          "event": "message_delta",
+          "data": {
+            "type": "message_delta",
+            "delta": {
+              "stop_reason": "max_tokens",
+              "stop_sequence": null,
+              "stop_details": null
+            },
+            "usage": {
+              "input_tokens": 812,
+              "cache_creation_input_tokens": 0,
+              "cache_read_input_tokens": 3605,
+              "output_tokens": 2911
+            }
+          }
+        },
+        {
+          "delayMs": 2,
+          "event": "message_stop",
+          "data": {
+            "type": "message_stop"
+          }
+        }
+      ]
+    },
+    {
+      "events": [
+        {
+          "delayMs": 5,
+          "event": "message_start",
+          "data": {
+            "type": "message_start",
+            "message": {
+              "id": "msg_mock_max_2",
+              "type": "message",
+              "role": "assistant",
+              "model": "claude-opus-5-5",
+              "content": [],
+              "stop_reason": null,
+              "stop_sequence": null,
+              "stop_details": null,
+              "usage": {
+                "input_tokens": 812,
+                "cache_creation_input_tokens": 0,
+                "cache_read_input_tokens": 3605,
+                "output_tokens": 1
+              }
+            }
+          }
+        },
+        {
+          "delayMs": 20,
+          "event": "content_block_start",
+          "data": {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {
+              "type": "thinking",
+              "thinking": "",
+              "signature": ""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {
+              "type": "signature_delta",
+              "signature": "mock-signature"
+            }
+          }
+        },
+        {
+          "delayMs": 5,
+          "event": "content_block_stop",
+          "data": {
+            "type": "content_block_stop",
+            "index": 0
+          }
+        },
+        {
+          "delayMs": 200,
+          "event": "content_block_start",
+          "data": {
+            "type": "content_block_start",
+            "index": 1,
+            "content_block": {
+              "type": "text",
+              "text": ""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "{\"kind\":\"music\",\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "theme\":{\"t"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "emplate\":\"nocturne\","
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"accent\":\"ph"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "oto_vibrant\",\"pai"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ring\":\"template"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\",\"buttonShap"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "e\":\"template\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ",\"buttonSt"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "yle\":\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "templat"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "e\"},\"profile\":{\"disp"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "layName\":\"Lio Van"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ce\",\"tagline\":\"DJ un"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "d Prod"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ucer aus Be"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "rlin\",\"bio"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\":\"Ich mache elek"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "tronische Mu"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "sik und lege in Clu"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "bs auf"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ".\",\"location\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ":\"Berlin"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"},\"blocks\":[{\"typ"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "e\":\"social"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "s\",\"refs\":[\"L1\",\"L"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "2\"]},{\"type\":\"ri"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ch\",\"ref\":\"L3\",\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "highlig"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ht\":tr"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ue,\"ad\":fal"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "se},{\"type\":\"ric"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "h\",\"re"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "f\":\"L4\",\"highlight\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ":false,\"ad\":false"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "},{\"type\":\"lin"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "k\",\"ref\":\"L5\",\"tit"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "le\":\"Bookin"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "g anfrag"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "en\",\"subtitle\":\"\",\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "icon\":\"calend"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ar\",\"highlight\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ":false,\"ad\":fals"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "e}],\"notes\":[{\"to"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "pic\":\"l"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ook\",\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "text\":\"Noctu"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "rne mit d"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "em Ora"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "nge aus deinem"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": " Foto passt z"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "u Clubnächten.\"},{\""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "topic\":\"mi"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ssing\",\"text\":"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"Füg ein Press"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "efoto hinzu, dann wi"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "rkt der Kopf der Sei"
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "te stärker.\"}]}"
+            }
+          }
+        },
+        {
+          "delayMs": 5,
+          "event": "content_block_stop",
+          "data": {
+            "type": "content_block_stop",
+            "index": 1
+          }
+        },
+        {
+          "delayMs": 5,
+          "event": "message_delta",
+          "data": {
+            "type": "message_delta",
+            "delta": {
+              "stop_reason": "end_turn",
+              "stop_sequence": null,
+              "stop_details": null
+            },
+            "usage": {
+              "input_tokens": 812,
+              "cache_creation_input_tokens": 0,
+              "cache_read_input_tokens": 3605,
+              "output_tokens": 2911
+            }
+          }
+        },
+        {
+          "delayMs": 2,
+          "event": "message_stop",
+          "data": {
+            "type": "message_stop"
+          }
+        }
+      ]
+    }
+  ]
+}

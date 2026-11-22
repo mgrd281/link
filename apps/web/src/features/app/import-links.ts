@@ -6,9 +6,11 @@ import type { SocialPlatform } from "./kinds";
  * /api/import-links, which only ever asks the hosts below (no other address can be fetched).
  */
 
-/** Link-in-bio services we import from. Subdomain hosts (name.carrd.co) are listed by their base. */
+/**
+ * Link-in-bio services we import from. Subdomain hosts (name.carrd.co) are listed by their base.
+ * Every fetch goes through the SSRF-safe fetcher and honours the service's robots.txt.
+ */
 export const IMPORT_HOSTS = [
-  "linktr.ee",
   "beacons.ai",
   "bio.link",
   "lnk.bio",
@@ -28,20 +30,45 @@ export const IMPORT_HOSTS = [
 ] as const;
 const SUBDOMAIN_HOSTS = ["carrd.co", "komi.io"] as const;
 
-/** The page to import from, or null when it is not one of the services above (or has no name). */
-export function importTarget(input: string): URL | null {
+/**
+ * Services whose rules forbid reading their pages with a script (Linktree: its robots.txt and terms).
+ * We never fetch them: people paste their links instead.
+ */
+export const PASTE_ONLY_HOSTS = ["linktr.ee"] as const;
+
+/** The address as a URL plus its bare host (no "www."), or null when it is not an address. */
+function parseAddress(input: string): { url: URL; host: string } | null {
   const text = input.trim();
   if (!text || text.length > 300) return null;
-  let url: URL;
   try {
-    url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+    const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+    return { url, host: url.hostname.toLowerCase().replace(/^www\./, "") };
   } catch {
     return null;
   }
-  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+}
+
+/** The paste-only service an address belongs to ("linktr.ee"), or null. */
+export function pasteOnlyHost(input: string): string | null {
+  const host = parseAddress(input)?.host;
+  if (!host) return null;
+  return PASTE_ONLY_HOSTS.find((base) => host === base || host.endsWith(`.${base}`)) ?? null;
+}
+
+/** Is this host one of the services we import from (never a paste-only one)? */
+export function isImportHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^www\./, "");
   const listed = (IMPORT_HOSTS as readonly string[]).includes(host);
-  const sub = SUBDOMAIN_HOSTS.some((base) => host.endsWith(`.${base}`) && host.split(".").length === base.split(".").length + 1);
-  if (!listed && !sub) return null;
+  return listed || SUBDOMAIN_HOSTS.some((base) => host.endsWith(`.${base}`) && host.split(".").length === base.split(".").length + 1);
+}
+
+/** The page to import from, or null when it is not one of the services above (or has no name). */
+export function importTarget(input: string): URL | null {
+  const parsed = parseAddress(input);
+  if (!parsed) return null;
+  const { url, host } = parsed;
+  const listed = (IMPORT_HOSTS as readonly string[]).includes(host);
+  if (!isImportHost(host)) return null;
   if (listed && url.pathname.replace(/\/+$/, "") === "") return null;
   url.protocol = "https:";
   url.hostname = host;

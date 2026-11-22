@@ -1,0 +1,853 @@
+{
+  "calls": [
+    {
+      "events": [
+        {
+          "delayMs": 5,
+          "event": "message_start",
+          "data": {
+            "type": "message_start",
+            "message": {
+              "id": "msg_mock_slow",
+              "type": "message",
+              "role": "assistant",
+              "model": "claude-opus-5-5",
+              "content": [],
+              "stop_reason": null,
+              "stop_sequence": null,
+              "stop_details": null,
+              "usage": {
+                "input_tokens": 812,
+                "cache_creation_input_tokens": 0,
+                "cache_read_input_tokens": 3605,
+                "output_tokens": 1
+              }
+            }
+          }
+        },
+        {
+          "delayMs": 20,
+          "event": "content_block_start",
+          "data": {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {
+              "type": "thinking",
+              "thinking": "",
+              "signature": ""
+            }
+          }
+        },
+        {
+          "delayMs": 10,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {
+              "type": "signature_delta",
+              "signature": "mock-signature"
+            }
+          }
+        },
+        {
+          "delayMs": 5,
+          "event": "content_block_stop",
+          "data": {
+            "type": "content_block_stop",
+            "index": 0
+          }
+        },
+        {
+          "delayMs": 20000,
+          "event": "content_block_start",
+          "data": {
+            "type": "content_block_start",
+            "index": 1,
+            "content_block": {
+              "type": "text",
+              "text": ""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "{\"kind\":"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"music\",\"theme\":"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "{\"template\":\"noc"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "turne\",\"accent\":\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "photo_vibrant\",\"p"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "airing\":\"templat"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "e\",\"buttonShape\":\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "template\",\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "buttonStyle\":\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "template\"},"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"profile\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ":{\"displayName\":\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "Lio Vance\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ",\"tagline\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ":\"DJ und"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": " Producer"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": " aus Berlin\",\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "bio\":\"Ich mac"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "he elekt"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ronische Musi"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "k und lege in Clu"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "bs auf.\","
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"location\":\"Berlin"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"},\"blo"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "cks\":[{"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"type\":\"socials\","
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"refs\":[\"L1\",\"L2\"]}"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ",{\"type\":\"rich\","
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"ref\":\"L"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "3\",\"highl"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ight\":true,\"a"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "d\":false}"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ",{\"type\":\"r"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ich\",\"ref\":\"L4\",\"hi"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ghlight\":false,\"ad\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ":false"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "},{\"type\":\"lin"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "k\",\"ref\":"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"L5\",\"title\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": ":\"Booking an"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "fragen\",\"subtitle\":\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\",\"ico"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "n\":\"calendar\","
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"highlight\":"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "false,"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "\"ad\":false}"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "],\"not"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "es\":[{\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "topic\":\"look\",\"te"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "xt\":\"Nocturn"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "e mit dem Or"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "ange aus deinem Foto"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": " passt zu Clubnächt"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "en.\"},{\""
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "topic\":\"missin"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "g\",\"text\":\"Füg e"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "in Pressefoto "
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "hinzu, da"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "nn wirkt der Kopf"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": " der Seite"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": " stärke"
+            }
+          }
+        },
+        {
+          "delayMs": 30,
+          "event": "content_block_delta",
+          "data": {
+            "type": "content_block_delta",
+            "index": 1,
+            "delta": {
+              "type": "text_delta",
+              "text": "r.\"}]}"
+            }
+          }
+        },
+        {
+          "delayMs": 5,
+          "event": "content_block_stop",
+          "data": {
+            "type": "content_block_stop",
+            "index": 1
+          }
+        },
+        {
+          "delayMs": 5,
+          "event": "message_delta",
+          "data": {
+            "type": "message_delta",
+            "delta": {
+              "stop_reason": "end_turn",
+              "stop_sequence": null,
+              "stop_details": null
+            },
+            "usage": {
+              "input_tokens": 812,
+              "cache_creation_input_tokens": 0,
+              "cache_read_input_tokens": 3605,
+              "output_tokens": 2911
+            }
+          }
+        },
+        {
+          "delayMs": 2,
+          "event": "message_stop",
+          "data": {
+            "type": "message_stop"
+          }
+        }
+      ]
+    }
+  ]
+}
