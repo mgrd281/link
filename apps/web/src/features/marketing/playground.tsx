@@ -15,6 +15,7 @@ import {
   Image as ImageIcon,
   Link2,
   MousePointer2,
+  MousePointerClick,
   Music2,
   Palette,
   Play,
@@ -23,6 +24,7 @@ import {
   RotateCcw,
   ShoppingBag,
   Smartphone,
+  Sparkles,
   Square,
   Ticket,
   Video,
@@ -32,16 +34,18 @@ import {
 import dynamic from "next/dynamic";
 import Image, { type StaticImageData } from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type SyntheticEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type SyntheticEvent } from "react";
 
 import { saveTryDraft } from "@/features/account/try-draft";
 import { suggestUsername } from "@/features/account/username";
+import type { RunState } from "@/features/ai/run-reducer";
 import { ImageError, pickFiles, prepareImage } from "@/features/app/images";
 import { socialProfile } from "@/features/app/import-links";
 import type { SocialPlatform } from "@/features/app/kinds";
 import { mediaSizes, PlatformGlyph, platformName } from "@/features/directions/shared/platforms";
 import { STORE_NAMES } from "@/features/directions/shared/stores";
 import { Link } from "@/i18n/navigation";
+import { pageAddress } from "@/lib/page-url";
 
 import type { TryItem, TryPageInput } from "./try-page";
 import type { Reveal } from "./try-phone";
@@ -52,6 +56,25 @@ const PHONE = "max-lg:mk-play-crop lg:mk-play-phone";
 
 /** The phone with the real page: its own chunk (renderer, pictures, theme engine), loaded when needed. */
 const TryPhone = dynamic(() => import("./try-phone").then((module) => module.TryPhone), { ssr: false, loading: () => <PhoneFrame crop className={PHONE} /> });
+
+/** The AI tab (only with a real recording, see TryIt): the run view and its controls, their own chunk, loaded like the phone. */
+const TryAiPanel = dynamic(() => import("./try-ai-panel").then((module) => module.TryAiPanel), { ssr: false });
+const TryAiPlayStage = dynamic(() => import("./try-ai-panel").then((module) => module.TryAiPlayStage), { ssr: false });
+
+/**
+ * The section's eyebrow: "No sign-up needed" with a pointer; once the AI tab is on, "New: pages with
+ * AI" with the AI mark (Sparkles means AI and nothing else on the website).
+ */
+export function TryEyebrow({ ai, children }: { ai: boolean; children: ReactNode }) {
+  return (
+    <p className="inline-flex items-center justify-self-start md:justify-self-center gap-2 rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary">
+      <span className="grid size-6 place-items-center rounded-full bg-selected text-selected-fg">
+        <Icon icon={ai ? Sparkles : MousePointerClick} size="sm" />
+      </span>
+      {children}
+    </p>
+  );
+}
 
 /** The phone's frame while its page loads: the same size and cut, so nothing moves when it arrives. */
 function PhoneFrame({ crop = false, className }: { crop?: boolean; className?: string }) {
@@ -76,8 +99,10 @@ export interface LookOption {
   hero: HeroStyle;
 }
 
-type Tab = "name" | "links" | "look";
-const TABS: { id: Tab }[] = [{ id: "name" }, { id: "links" }, { id: "look" }];
+type Tab = "ai" | "name" | "links" | "look";
+const TABS: readonly Tab[] = ["name", "links", "look"];
+/** With the AI tab (a real recording exists): AI first and selected. */
+const AI_TABS: readonly Tab[] = ["ai", "name", "links", "look"];
 
 const TYPE_ICONS: Record<string, LucideIcon> = { music: Music2, video: Video, shorts: Clapperboard, events: Ticket, product: ShoppingBag, live: Radio, image: ImageIcon, app: Smartphone, repo: FolderGit2 };
 const KNOWN = new Set(["music", "video", "shorts", "events", "product", "live", "image", "card", "link", "app", "repo"]);
@@ -86,6 +111,8 @@ const ICON_PROFILES: readonly SocialPlatform[] = ["instagram", "tiktok", "x", "t
 const MAX_LINKS = 6;
 /** A look starts the playground; the persona's own look ends the demo. */
 const FIRST_LOOK = "mono";
+/** The block the demo ends on: the first piece from the shop (the persona's items are keyed by their place). */
+const SHOP_BLOCK = `persona-${String(PERSONA.links.indexOf("necklace"))}`;
 
 /**
  * A link as the controls keep it. A social profile (social) becomes an icon under the name; an
@@ -227,11 +254,20 @@ function Chosen() {
  *
  * The first time it scrolls into view it introduces Lou Ferreira, the designer from the template gallery: the
  * portrait, the name and the line typed, Instagram and two pieces from the shop pasted, and the
- * black-and-gold look picked. It runs once and stops for good at the visitor's first touch; what it typed is selected
- * on focus, so typing replaces it. "Keep this page" goes to sign-up with what the visitor made
+ * black-and-gold look picked, ending on the first piece from the shop. It runs once and stops for good at the
+ * visitor's first touch; what it typed is selected on focus, so typing replaces it. Until it plays or
+ * the visitor takes over, the phone already shows her finished page, marked "Example page" on the stage,
+ * while the controls stay empty. "Keep this page" goes to sign-up with what the visitor made
  * themselves (name, line, photo, links; try-draft.ts) and the look on screen. The persona stays here.
+ *
+ * Nothing the demo does is announced: only the visitor's own additions and errors are, through the one
+ * status line at the end. In the DOM the controls come first and the stage second (it shows on top on
+ * phones), so Tab goes tabs → fields → button → the demo's own button.
+ *
+ * `ai` (a real recording exists, TryIt decides) adds the AI tab, first and selected: the recording
+ * plays on the stage and its controls take the panel (try-ai-panel.tsx). Off in phase 1.
  */
-export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]]; rtl: boolean }) {
+export function Playground({ looks, rtl, ai = false }: { looks: [LookOption, ...LookOption[]]; rtl: boolean; ai?: boolean }) {
   const t = useTranslations("marketing.try");
   const tPaste = useTranslations("marketing.paste");
   const tLook = useTranslations("marketing.features.look");
@@ -255,7 +291,12 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   const ctaTarget = useRef<HTMLAnchorElement>(null);
   const frame = useRef(0);
   const personaTagline = t("persona.tagline");
-  const [tab, setTab] = useState<Tab>("name");
+  const tabList = ai ? AI_TABS : TABS;
+  const [tab, setTab] = useState<Tab>(ai ? "ai" : "name");
+  // The recorded AI run on the stage, for the AI tab's one-line progress.
+  const [aiRun, setAiRun] = useState<RunState | null>(null);
+  // Until the demo plays or the visitor takes over, the phone shows the persona's finished page.
+  const [sample, setSample] = useState(true);
   const [name, setName] = useState("");
   const [tagline, setTagline] = useState("");
   // What is the visitor's own (and not the persona's): only that goes to sign-up.
@@ -291,10 +332,30 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   const displayName = name.trim() || t("preview.name");
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
 
+  const texts = useMemo(() => ({ video: t("samples.video"), necklace: t("samples.necklace"), perfume: t("samples.perfume") }), [t]);
   // What the phone builds the page from (see try-page.ts).
   const phoneInput = useMemo<TryPageInput>(
-    () => ({ id, displayName, address, tagline, photo, items, locale, labels, texts: { video: t("samples.video"), necklace: t("samples.necklace"), perfume: t("samples.perfume") } }),
-    [id, displayName, address, tagline, photo, items, locale, labels, t],
+    () => ({ id, displayName, address, tagline, photo, items, locale, labels, texts }),
+    [id, displayName, address, tagline, photo, items, locale, labels, texts],
+  );
+  // The persona's finished page (her photo, name, line, Instagram and two pieces from the shop): the
+  // first thing the phone shows, before anything is changed.
+  const sampleInput = useMemo<TryPageInput>(
+    () => ({
+      id,
+      displayName: PERSONA.name,
+      address: suggestUsername(PERSONA.name),
+      tagline: personaTagline,
+      photo: PERSONA.photo,
+      items: PERSONA.links.flatMap((sample, index) => {
+        const found = detectLink(EXAMPLES.find((example) => example.id === sample)?.url ?? "");
+        return found ? [toAdded(found, `persona-${String(index)}`)] : [];
+      }),
+      locale,
+      labels,
+      texts,
+    }),
+    [id, personaTagline, locale, labels, texts],
   );
   /** What a row in "On your page" says: the block's title, then its price, handle, length or source. */
   const describe = (item: Added): { title: string; detail: string } => {
@@ -367,20 +428,33 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     );
   };
 
-  const add = (text: string) => {
+  /**
+   * Says something to screen readers through the one status line: only what the visitor did
+   * themselves (an addition, an error), never what the demo does.
+   */
+  const announce = (text: string) => {
+    if (interacted.current) setAnnouncement(text);
+  };
+
+  /** `example`: an example's chip (always a link); at the limit the field it describes takes the focus and says why. */
+  const add = (text: string, example = false) => {
     const found = text.trim() ? detectLink(text.trim()) : null;
     if (!found) {
       setError("invalid");
+      announce(tPaste("invalid"));
       return;
     }
     if (items.length >= MAX_LINKS) {
       setError("limit");
+      // A chip gives way to the message: focus goes to the field, whose description now says it.
+      if (example) requestAnimationFrame(() => linkTarget.current?.focus());
+      else announce(t("limit"));
       return;
     }
     const item = toAdded(found, `${id}-${Date.now().toString(36)}-${items.length}`);
     setItems((current) => [...current, item].slice(0, MAX_LINKS));
     enrich(item);
-    setAnnouncement(tPaste("added", { type: itemLabel(item) }));
+    announce(tPaste("added", { type: itemLabel(item) }));
     setDraft("");
     setError(null);
     // A profile shows under the name; anything else is the newest block, at the end.
@@ -396,7 +470,9 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       setPhotoError(null);
       show("top");
     } catch (problem) {
-      setPhotoError(tForm(`imageErrors.${problem instanceof ImageError ? problem.reason : "decode"}`));
+      const message = tForm(`imageErrors.${problem instanceof ImageError ? problem.reason : "decode"}`);
+      setPhotoError(message);
+      announce(message);
     }
   };
 
@@ -417,6 +493,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
 
   /** Everything back to an empty page. */
   const reset = () => {
+    setSample(false);
     setPhoto(null);
     setName("");
     setTagline("");
@@ -432,8 +509,9 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     show("top");
   };
 
-  /** The persona's finished page at once (reduced motion). */
+  /** The persona's finished page at once (reduced motion), showing the first piece from the shop. */
   const finish = () => {
+    setSample(false);
     setPhoto({ ...PERSONA.photo, own: false });
     setName(PERSONA.name);
     setTagline(personaTagline);
@@ -442,6 +520,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
     setAccent(null);
     setTab("look");
     setDemo("done");
+    show({ block: SHOP_BLOCK });
   };
 
   const pointAt = (element: Element | null | undefined) => {
@@ -537,7 +616,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
         await wait(550);
         tap();
         setLookIndex(personaLook);
-        show("top");
+        // The payoff in view: the first piece from the shop, not the portrait.
+        show({ block: SHOP_BLOCK });
         await wait(900);
 
         setToast(t("demo.live"));
@@ -569,7 +649,8 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
   });
   useEffect(() => {
     const element = root.current;
-    if (!element) return;
+    // With the AI tab, the recording plays on the stage instead (it starts by itself in view).
+    if (!element || ai) return;
     let timer = 0;
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -588,28 +669,32 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       window.clearTimeout(timer);
       controller.current?.abort();
     };
-  }, []);
+  }, [ai]);
 
-  /** The visitor took over: the demo stops where it is (its own button stops or replays it itself). */
+  /**
+   * The visitor took over: the demo stops where it is (its own button stops or replays it itself),
+   * and the phone shows their own page from now on, no longer the persona's example.
+   */
   const takeOver = (event: SyntheticEvent) => {
     if (event.target instanceof Element && event.target.closest("[data-demo-button]")) return;
     interacted.current = true;
     controller.current?.abort();
+    setSample(false);
   };
 
   const showTab = (index: number, focus = false) => {
-    const next = TABS[(index + TABS.length) % TABS.length];
+    const next = tabList[(index + tabList.length) % tabList.length];
     if (!next) return;
-    setTab(next.id);
-    if (focus) tabs.current[TABS.indexOf(next)]?.focus();
+    setTab(next);
+    if (focus) tabs.current[tabList.indexOf(next)]?.focus();
   };
   const onTabKey = (event: KeyboardEvent<HTMLButtonElement>) => {
     const reversed = getComputedStyle(event.currentTarget).direction === "rtl";
-    const current = TABS.findIndex((entry) => entry.id === tab);
+    const current = tabList.indexOf(tab);
     const step = { ArrowRight: reversed ? -1 : 1, ArrowLeft: reversed ? 1 : -1 }[event.key];
     if (step !== undefined) showTab(current + step, true);
     else if (event.key === "Home") showTab(0, true);
-    else if (event.key === "End") showTab(TABS.length - 1, true);
+    else if (event.key === "End") showTab(tabList.length - 1, true);
     else return;
     event.preventDefault();
   };
@@ -656,6 +741,17 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       theme: config,
     });
   };
+  /** The AI tab's button: what was built in the other tabs comes along, with the link for the AI. */
+  const keepAi = (aiLink: string) => {
+    saveTryDraft({
+      name: ownName,
+      links: items.filter((item) => !item.sample).map((item) => item.url),
+      ...(own.tagline && tagline.trim() ? { tagline: tagline.trim() } : {}),
+      ...(photo?.own ? { photo: { src: photo.src, tone: photo.tone } } : {}),
+      aiLink,
+    });
+  };
+  const aiShown = ai && tab === "ai";
 
   const tabId = (entry: Tab) => `${id}-tab-${entry}`;
   const panelId = (entry: Tab) => `${id}-panel-${entry}`;
@@ -702,77 +798,71 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
       onKeyDownCapture={takeOver}
       className="relative mx-auto grid w-full max-w-prose grid-cols-1 overflow-hidden rounded-xl border border-line bg-surface lg:mk-play lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-1"
     >
-      {/* The stage, flat Linkyo teal. Phones and tablets: short, the phone rising from its lower edge,
-          so stage, controls and "Keep this page" fit one screen. Wide screens: beside the controls,
-          the whole phone on one soft disc. */}
-      <div className="relative isolate grid justify-items-center overflow-hidden bg-teal-900 max-lg:mk-play-stage max-lg:pt-3 lg:order-last lg:items-center lg:py-10">
-        <div aria-hidden className="mk-deck-halo w-[95%] bg-teal-800 max-lg:hidden" />
-        {/* Watch, stop or watch again: one quiet round button in the stage's corner (WCAG 2.2.2). */}
-        <button
-          type="button"
-          data-demo-button=""
-          onClick={() => {
-            interacted.current = true;
-            if (demo === "running") controller.current?.abort();
-            else play();
-          }}
-          className="absolute end-2 top-2 layer-raised grid size-touch-target place-items-center rounded-full border border-teal-700 bg-teal-800 text-teal-50 transition-[background-color,scale] duration-micro hover:bg-teal-700 focus-visible:focus-ring focus-visible:outline-teal-50 active:scale-pressed motion-reduce:active:scale-none lg:end-3 lg:top-3"
-        >
-          <Icon
-            key={demo}
-            icon={demo === "running" ? Square : demo === "done" ? RotateCcw : Play}
-            size="sm"
-            className={cn("motion-safe:animate-fade-in", demo === "running" ? "fill-current" : "rtl:-scale-x-100")}
-          />
-          <span className="sr-only">{demoLabel}</span>
-        </button>
-        {near ? (
-          <TryPhone input={phoneInput} config={config} rtl={rtl} label={t("preview.label")} reveal={reveal} toast={toast} crop className={PHONE} />
-        ) : (
-          <PhoneFrame crop className={PHONE} />
-        )}
-      </div>
-
-      {/* The editor: a segmented control, one panel of fixed height (nothing jumps), and "Keep this page". */}
+      {/* The editor first in reading and Tab order: a segmented control, one panel of fixed height
+          (nothing jumps), and "Keep this page". */}
       <div className="flex min-h-0 flex-col gap-2 px-4 pt-3 pb-3 sm:gap-3 sm:p-6 lg:gap-4 lg:p-8">
         <div
           role="tablist"
           aria-label={t("tabs.label")}
-          className="mk-play-tabs grid h-touch-target shrink-0 grid-cols-3 rounded-full bg-canvas-muted"
-          style={{ "--i": TABS.findIndex((entry) => entry.id === tab) } as CSSProperties}
+          className={cn(
+            "mk-play-tabs grid h-touch-target shrink-0 rounded-full bg-canvas-muted",
+            // Four segments with the AI tab: the gliding thumb is a quarter wide (less its inset on both sides).
+            ai ? "grid-cols-4 before:w-[calc(25%-var(--spacing-1))]" : "grid-cols-3",
+          )}
+          style={{ "--i": tabList.indexOf(tab) } as CSSProperties}
         >
-          {TABS.map((entry, index) => {
-            const selected = tab === entry.id;
+          {tabList.map((entry, index) => {
+            const selected = tab === entry;
             return (
               <button
-                key={entry.id}
+                key={entry}
                 ref={(node) => {
                   tabs.current[index] = node;
                 }}
-                id={tabId(entry.id)}
+                id={tabId(entry)}
                 type="button"
                 role="tab"
                 aria-selected={selected}
-                aria-controls={panelId(entry.id)}
+                aria-controls={panelId(entry)}
                 tabIndex={selected ? 0 : -1}
                 onClick={() => {
-                  setTab(entry.id);
+                  setTab(entry);
                 }}
                 onKeyDown={onTabKey}
                 className={cn(
-                  "inline-flex h-full min-w-0 items-center justify-center rounded-full px-2 text-small font-semibold transition-colors duration-micro focus-visible:focus-ring",
+                  "inline-flex h-full min-w-0 items-center justify-center gap-1 rounded-full px-2 text-small font-semibold transition-colors duration-micro focus-visible:focus-ring",
                   selected ? "text-fg forced-colors:border" : "text-fg-secondary hover:text-fg",
                 )}
               >
-                <span className="truncate">{t(`tabs.${entry.id}`)}</span>
+                {entry === "ai" ? (
+                  <>
+                    <Icon icon={Sparkles} size="sm" className="shrink-0" />
+                    {/* Arabic's long word gives way to "AI" on narrow phones; the full name stays in the tab's name. */}
+                    <span className={cn("truncate", rtl && "max-sm:hidden")}>{t("ai.tab")}</span>
+                    {rtl ? (
+                      <>
+                        <span className="truncate sm:hidden">{t("ai.tabShort")}</span>
+                        <span className="sr-only sm:hidden">{t("ai.tabLabel")}</span>
+                      </>
+                    ) : null}
+                  </>
+                ) : (
+                  <span className="truncate">{t(`tabs.${entry}`)}</span>
+                )}
               </button>
             );
           })}
         </div>
 
         <div className="grid grid-cols-1 grid-rows-1 max-lg:mk-play-panel lg:min-h-0 lg:flex-1">
-          {/* Profile: the photo beside one group of two fields, then the address (centred in the tall desktop panel). */}
-          <div {...panel("name")} className={cn(panel("name").className, "lg:justify-center")}>
+          {ai ? (
+            // AI: the visitor's link and the recording in one line (with "All steps"), and its own button.
+            <div {...panel("ai")} className={cn(panel("ai").className, "overflow-y-auto")}>
+              <TryAiPanel state={aiRun} source="recording" onKeep={keepAi} />
+            </div>
+          ) : null}
+          {/* Profile: the photo beside one group of two fields, then the address, from the top of the panel. */}
+          <div {...panel("name")} className={cn(panel("name").className, "lg:justify-start")}>
             <div className="flex items-start gap-3 lg:gap-4">
               <div className="relative shrink-0">
                 <button
@@ -856,9 +946,10 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
             </div>
             <p id={`${id}-name-hint`} className="flex min-w-0 shrink-0 items-center gap-2 px-1 text-caption text-fg-secondary">
               <Icon icon={Link2} size="sm" className="shrink-0" />
-              <span className="truncate">{t("name.address", { address: `linkyo.app/${address || "…"}` })}</span>
+              <span className="truncate">{t("name.address", { address: pageAddress(address || "…") })}</span>
             </p>
-            <p id={`${id}-photo-hint`} aria-live="polite" className={cn("-mt-1 px-1 text-caption text-pretty", photoError ? "text-danger-strong" : "text-fg-secondary")}>
+            {/* The photo button's description (an error is also said once through the status line). */}
+            <p id={`${id}-photo-hint`} className={cn("-mt-1 px-1 text-caption text-pretty", photoError ? "text-danger-strong" : "text-fg-secondary")}>
               {photoError ?? t("photo.hint")}
             </p>
           </div>
@@ -925,11 +1016,12 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                   <Icon icon={Plus} size="md" />
                 </button>
               </div>
-              {/* One slot: the examples while the field is empty, else what the field says. */}
+              {/* One slot: the examples while the field is empty, else what the field says (the field's
+                  description, not a live region: the demo types here too; the visitor's own additions
+                  and errors are said through the status line). */}
               <div className="grid min-h-control-sm shrink-0">
                 <p
                   id={`${id}-link-hint`}
-                  aria-live="polite"
                   className={cn("col-start-1 row-start-1 flex min-h-control-sm items-center gap-2 px-4 text-small", error ? "text-danger-strong" : "text-link")}
                 >
                   {error === "invalid" ? (
@@ -954,9 +1046,7 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                         key={example.id}
                         type="button"
                         onClick={() => {
-                          // At the limit the examples give way to the message: focus goes to the field it describes.
-                          if (items.length >= MAX_LINKS) linkTarget.current?.focus();
-                          add(example.url);
+                          add(example.url, true);
                         }}
                         className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full border border-line bg-surface ps-2 pe-3 text-small font-medium text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none"
                       >
@@ -980,18 +1070,20 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 <ul
                   ref={list}
                   aria-label={t("added")}
-                  className="mk-no-scrollbar -mx-4 -my-1 flex gap-2 overflow-x-auto px-4 py-1 sm:-mx-6 sm:px-6 lg:m-0 lg:grid lg:min-h-0 lg:flex-1 lg:content-start lg:gap-1 lg:overflow-x-hidden lg:overflow-y-auto lg:p-1"
+                  // Phones: one row of whole titles that scrolls sideways, starting inside the card's padding;
+                  // a chip brought into view (its remove button focused) keeps the same air at the edges.
+                  className="mk-no-scrollbar -mx-4 -my-1 flex scroll-px-4 gap-2 overflow-x-auto px-4 py-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:m-0 lg:grid lg:min-h-0 lg:flex-1 lg:content-start lg:gap-1 lg:overflow-x-hidden lg:overflow-y-auto lg:p-1"
                 >
                   {items.map((item) => {
                     const about = describe(item);
                     return (
                       <li
                         key={item.key}
-                        className="flex h-control-sm shrink-0 items-center gap-2 rounded-full bg-tinted ps-1 text-tinted-fg motion-safe:animate-pop-in lg:h-auto lg:min-h-control-lg lg:gap-3 lg:rounded-none lg:bg-transparent lg:ps-0 lg:text-fg"
+                        className="flex h-control-sm max-w-full shrink-0 items-center gap-2 rounded-full bg-tinted ps-1 text-tinted-fg motion-safe:animate-pop-in lg:h-auto lg:min-h-control-lg lg:gap-3 lg:rounded-none lg:bg-transparent lg:ps-0 lg:text-fg"
                       >
                         <ItemThumb item={item} />
                         <span className="grid min-w-0 lg:flex-1">
-                          <span className="max-w-32 truncate text-small font-semibold lg:max-w-none">{about.title}</span>
+                          <span className="truncate text-small font-semibold">{about.title}</span>
                           <span className="truncate text-caption text-fg-secondary max-lg:hidden">
                             <bdi>{about.detail}</bdi>
                           </span>
@@ -1077,14 +1169,16 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
                 <span className="pointer-events-none truncate px-1 text-small font-semibold text-fg max-sm:text-caption">{tLook("custom")}</span>
               </label>
             </div>
-            <p aria-live="polite" className="shrink-0 text-small text-pretty max-lg:sr-only">
+            {/* What the look is: read with the panel, not announced (the demo picks a look too). */}
+            <p className="shrink-0 text-small text-pretty max-lg:sr-only">
               <span className="font-semibold text-fg">{look.name}</span>
               <span className="text-fg-secondary"> · {look.description}</span>
             </p>
           </div>
         </div>
 
-        <div className="grid shrink-0 gap-1">
+        {/* One primary button per tab: the AI tab has its own ("Build it with AI, free") in its panel. */}
+        <div className={cn("grid shrink-0 gap-1", aiShown && "hidden")}>
           <Link
             ref={ctaTarget}
             href={signup}
@@ -1099,6 +1193,58 @@ export function Playground({ looks, rtl }: { looks: [LookOption, ...LookOption[]
           </Link>
           <p className="text-center text-caption text-fg-secondary">{t("ctaHint")}</p>
         </div>
+      </div>
+
+      {/* The stage, flat Linkyo teal, after the controls in the DOM. Phones and tablets: on top, short,
+          the phone rising from its lower edge, so stage, controls and "Keep this page" fit one screen.
+          Wide screens: beside the controls, the whole phone on one soft disc. */}
+      <div className="relative isolate grid justify-items-center overflow-hidden bg-teal-900 max-lg:order-first max-lg:mk-play-stage max-lg:pt-3 lg:items-center lg:py-10">
+        <div aria-hidden className="mk-deck-halo w-[95%] bg-teal-800 max-lg:hidden" />
+        {aiShown ? (
+          // The AI tab: the recorded run on the run view (its own chip says it is a recording, its own button plays it).
+          <div className="absolute inset-0 overflow-y-auto bg-canvas">
+            <TryAiPlayStage onState={setAiRun} />
+          </div>
+        ) : (
+          <>
+            {/* Until anything changes, the phone shows the persona's finished page: said here, outside the page. */}
+            {sample ? (
+              <p className="absolute start-2 top-2 layer-raised inline-flex h-control-sm items-center rounded-full border border-teal-700 bg-teal-800 px-3 text-caption font-semibold text-teal-50 lg:start-3 lg:top-3">
+                {t("sample")}
+              </p>
+            ) : null}
+            {/* Watch, stop or watch again: one quiet round button in the stage's corner (WCAG 2.2.2). */}
+            <button
+              type="button"
+              data-demo-button=""
+              onClick={() => {
+                interacted.current = true;
+                if (demo === "running") controller.current?.abort();
+                else play();
+              }}
+              className="absolute end-2 top-2 layer-raised grid size-touch-target place-items-center rounded-full border border-teal-700 bg-teal-800 text-teal-50 transition-[background-color,scale] duration-micro hover:bg-teal-700 focus-visible:focus-ring focus-visible:outline-teal-50 active:scale-pressed motion-reduce:active:scale-none lg:end-3 lg:top-3"
+            >
+              {/* Media controls keep their direction in Arabic: play points right, replay turns one way. */}
+              <Icon key={demo} icon={demo === "running" ? Square : demo === "done" ? RotateCcw : Play} size="sm" className={cn("motion-safe:animate-fade-in", demo === "running" && "fill-current")} />
+              <span className="sr-only">{demoLabel}</span>
+            </button>
+            {near ? (
+              <TryPhone
+                input={sample ? sampleInput : phoneInput}
+                config={sample ? (looks[personaLook] ?? base).config : config}
+                rtl={rtl}
+                label={t("preview.label")}
+                reveal={reveal}
+                toast={toast}
+                sample={sample}
+                crop
+                className={PHONE}
+              />
+            ) : (
+              <PhoneFrame crop className={PHONE} />
+            )}
+          </>
+        )}
       </div>
       {/* The demo's pointer: it moves to each control and taps it (a fingertip on touch screens). Decoration only. */}
       <div

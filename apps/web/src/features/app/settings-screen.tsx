@@ -5,13 +5,18 @@ import {
   Check,
   CircleUserRound,
   Download,
+  FileText,
+  FileX,
   Gift,
   Languages,
   Link2,
+  LockKeyhole,
   LogOut,
+  Receipt,
   Scale,
   ShieldCheck,
   SunMoon,
+  Undo2,
   Upload,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -20,8 +25,12 @@ import { useCallback, useEffect, useState } from "react";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { accountStore } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
+import { legalLinksVisible } from "@/features/legal/company";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
+import { paymentsEnabled } from "@/lib/flags";
+import { pageAddress } from "@/lib/page-url";
+import { browserSupabase } from "@/lib/supabase/browser";
 
 import { useLegalDraft } from "./drafts";
 import { pickFiles } from "./images";
@@ -167,6 +176,47 @@ function DataGroup() {
   );
 }
 
+/** The account's newest page-service order, for the Settings row (null while none exists). */
+function useNewestOrder(): string | null {
+  const [id, setId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!paymentsEnabled) return;
+    let cancelled = false;
+    void browserSupabase()
+      .rpc("my_orders")
+      .then(({ data }) => {
+        const first: unknown = Array.isArray(data) ? data[0] : null;
+        const newest = first && typeof first === "object" && "id" in first && typeof first.id === "string" ? first.id : null;
+        if (!cancelled) setId(newest);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return id;
+}
+
+/**
+ * Contracts and legal: the newest order, "Vertrag widerrufen" and "Verträge hier kündigen" where
+ * contracts can be made (payments on), and Linkyo's legal pages once they are linked anywhere
+ * (`legalLinksVisible`). Withdrawal and cancellation also work signed out (the footer says so).
+ */
+function ContractsGroup() {
+  const t = useTranslations("app.settings");
+  const newestOrder = useNewestOrder();
+  if (!paymentsEnabled && !legalLinksVisible) return null;
+  return (
+    <ListGroup title={t("groups.contracts")} titleId="contracts" footer={paymentsEnabled ? t("footers.contracts") : undefined}>
+      {paymentsEnabled && newestOrder ? <ListRow icon={Receipt} title={t("rows.orders")} href={`/app/orders/${newestOrder}`} /> : null}
+      {paymentsEnabled ? <ListRow icon={Undo2} title={t("rows.withdraw")} href="/widerruf" /> : null}
+      {paymentsEnabled ? <ListRow icon={FileX} title={t("rows.cancel")} href="/kuendigen" /> : null}
+      {legalLinksVisible ? <ListRow icon={Scale} title={t("rows.imprint")} href="/impressum" /> : null}
+      {legalLinksVisible ? <ListRow icon={LockKeyhole} title={t("rows.privacy")} href="/datenschutz" /> : null}
+      {legalLinksVisible ? <ListRow icon={FileText} title={t("rows.terms")} href="/agb" /> : null}
+    </ListGroup>
+  );
+}
+
 /**
  * Settings, as a grouped list like iOS Settings: every row shows its current value, and what needs
  * typing opens its own pane (address, legal notice, account) or the Profile sheet. Choices that
@@ -203,7 +253,7 @@ export function SettingsScreen() {
           <ListRow
             icon={Link2}
             title={t("rows.address")}
-            subtitle={`linkyo.app/${account.username}`}
+            subtitle={pageAddress(account.username)}
             subtitleDir="ltr"
             href="/app/settings/address"
           />
@@ -263,6 +313,8 @@ export function SettingsScreen() {
         </ListGroup>
 
         <DataGroup />
+
+        <ContractsGroup />
 
         {/* Logging out is safe (nothing is lost), so it is a plain row, not a red one. Last "Log out" on the screen. */}
         <ListGroup

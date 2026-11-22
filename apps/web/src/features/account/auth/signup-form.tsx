@@ -4,13 +4,15 @@ import { isTemplate } from "@linkyo/tokens/creator";
 import { Button, Icon, TextField } from "@linkyo/ui";
 import { CircleCheck, Gift, Link2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState, type SubmitEvent } from "react";
+import { useEffect, useState, type ReactNode, type SubmitEvent } from "react";
 import { z } from "zod";
 
 import { isKind, STARTERS } from "@/features/app/kinds";
 import { findLook } from "@/features/examples/looks";
+import { legalLinksVisible } from "@/features/legal/company";
 import { isReferralCode } from "@/features/referrals/rules";
 import { Link } from "@/i18n/navigation";
+import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 
 import { accountStore } from "../store";
 import { readTryDraft } from "../try-draft";
@@ -18,6 +20,7 @@ import type { AuthError, CodeRequest, SignUpInput } from "../types";
 import { newProvisionalUsername } from "../username";
 import { AuthHeading } from "./auth-shell";
 import { CodeStep } from "./code-step";
+import { DraftThumbnail } from "./draft-thumbnail";
 import { FormError, OrDivider } from "./fields";
 import { SocialButtons, useLeaveWhenSignedIn, useSearchParam, useUsernameStatus } from "./shared";
 
@@ -65,6 +68,20 @@ const locales = ["de", "en", "ar"] as const;
 const focusLater = (id: string) => window.setTimeout(() => document.getElementById(id)?.focus(), 0);
 /** Stands in for a name while a message is formatted (messages take plain values). */
 const NAME_SLOT = "\u0000";
+
+/**
+ * A legal page named in the consent sentence: a link once the legal pages are published (the company
+ * data is in, or a payments test build), else the plain words, as in the footer (LegalLinks). A plain
+ * link, not the router's: nothing is fetched ahead for a page that is rarely opened.
+ */
+function LegalWord({ href, locale, children }: { href: "/agb" | "/datenschutz"; locale: string; children: ReactNode }) {
+  if (!legalLinksVisible) return <>{children}</>;
+  return (
+    <a href={`/${locale}${href}`} className="rounded-xs font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring">
+      {children}
+    </a>
+  );
+}
 
 /** A message around a name, the name in <bdi> so it keeps its own direction (an Arabic name in English text, and back). */
 function WithName({ message, name }: { message: (slot: string) => string; name: string }) {
@@ -226,6 +243,8 @@ export function SignupForm() {
   return (
     <>
       {invite ? <AuthHeading title={t("signup.preparedTitle")} lead={t("signup.preparedLead")} /> : <AuthHeading title={t("signup.title")} lead={look ? t("signup.fromTemplate") : t("signup.lead")} />}
+      {/* The page built in "Try it", in sight while signing up (only when there is one). */}
+      {invite ? null : <DraftThumbnail />}
       <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-4">
         <FormError message={banner ? t(`errors.${banner}`) : null} />
         {username && !showField ? (
@@ -233,7 +252,7 @@ export function SignupForm() {
           <div className="flex min-h-control-lg items-center gap-3 rounded-lg border border-line px-4 text-small">
             <Icon icon={status === "ok" ? CircleCheck : Link2} size="sm" className={status === "ok" ? "shrink-0 text-success-strong" : "shrink-0 text-fg-tertiary"} />
             <span className="min-w-0 flex-1 truncate text-start text-fg">
-              {locked ? t("fields.usernameReserved", { name: username }) : status === "ok" ? t("fields.usernameOk", { name: username }) : `linkyo.app/${username}`}
+              {locked ? t("fields.usernameReserved", { name: username }) : status === "ok" ? t("fields.usernameOk", { name: username }) : pageAddress(username)}
             </span>
             {locked ? null : (
               <button
@@ -256,7 +275,7 @@ export function SignupForm() {
             variant="filled"
             size="xl"
             ltr
-            leading="linkyo.app/"
+            leading={`${CREATOR_DOMAIN}/`}
             value={username}
             onChange={(event) => {
               setTyped(event.target.value.toLowerCase());
@@ -310,7 +329,21 @@ export function SignupForm() {
         <Button type="submit" variant="primary" size="cta" block loading={busy || leaving}>
           {t("signup.submit")}
         </Button>
-        <p className="text-caption text-pretty text-fg-secondary">{t("signup.terms")}</p>
+        {/* The terms and the privacy policy as links in the sentence (<terms>…</terms>, <privacy>…</privacy> in the message). */}
+        <p className="text-caption text-pretty text-fg-secondary">
+          {t.rich("signup.terms", {
+            terms: (chunks) => (
+              <LegalWord href="/agb" locale={locale}>
+                {chunks}
+              </LegalWord>
+            ),
+            privacy: (chunks) => (
+              <LegalWord href="/datenschutz" locale={locale}>
+                {chunks}
+              </LegalWord>
+            ),
+          })}
+        </p>
         {inviter ? (
           // What the inviter will see of them: the page name, never the email (GDPR, ADR 0064).
           <p className="text-caption text-pretty text-fg-secondary">

@@ -3,7 +3,7 @@
 import type { Block, Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
 import { Badge, Button, cn, Icon, IconButton, Kbd, Logo, Menu, Switch, toast } from "@linkyo/ui";
-import { ArrowDown, ArrowUp, Copy, Eye, GripVertical, Heading, MoreHorizontal, Plus, Share2, Sparkles, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Eye, Gem, GripVertical, Heading, MoreHorizontal, Plus, Share2, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
@@ -63,7 +63,7 @@ export function PosterDashboard({ initial, profile, pageHref }: { initial: Edito
         <SidebarNav />
         <div className="mt-auto grid gap-3 rounded-lg border border-line bg-surface p-4">
           <p className="text-small font-semibold">{t("plan")}</p>
-          <Button size="sm" icon={Sparkles} block>
+          <Button size="sm" icon={Gem} block>
             {t("upgrade")}
           </Button>
         </div>

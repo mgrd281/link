@@ -7,17 +7,30 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
+import { pageAddress } from "@/lib/page-url";
 
 import { buildTryPage, type TryPageInput } from "./try-page";
 
 /**
  * Where the phone should scroll to after a change: the top for the name and photo (the page's photo
- * softens as it scrolls away, so it is shown unscrolled) or the newest block.
+ * softens as it scrolls away, so it is shown unscrolled), the newest block, or one block by its id
+ * (the demo ends on the first piece from the shop, the point of the persona).
  */
 export interface Reveal {
-  to: "top" | "end";
+  to: "top" | "end" | { block: string };
   /** Changes with every request, so the same place can be asked for twice. */
   at: number;
+}
+
+/** How far down an element sits inside a scroller's content (layout positions, so the scale does not count). */
+function offsetWithin(element: HTMLElement, scroller: HTMLElement): number {
+  let top = 0;
+  let node: HTMLElement | null = element;
+  while (node && node !== scroller && scroller.contains(node)) {
+    top += node.offsetTop;
+    node = node.offsetParent instanceof HTMLElement ? node.offsetParent : null;
+  }
+  return top;
 }
 
 /**
@@ -40,6 +53,7 @@ export function TryPhone({
   label,
   reveal,
   toast,
+  sample = false,
   crop = false,
   className,
 }: {
@@ -50,6 +64,8 @@ export function TryPhone({
   reveal: Reveal;
   /** A short message dropping in over the page, like a phone's notification ("Your page is live"). */
   toast?: string | null;
+  /** It shows the persona's example page, not the visitor's (marked `data-try-sample` instead of `data-try-preview`). */
+  sample?: boolean;
   /** Below lg: the phone rises from the stage's lower edge, its screen cut off there (see mk-play-crop). */
   crop?: boolean;
   className?: string;
@@ -82,7 +98,14 @@ export function TryPhone({
     if (!element || reveal.at === 0) return;
     const frame = requestAnimationFrame(() => {
       const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      element.scrollTo({ top: reveal.to === "top" ? 0 : element.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+      const { to } = reveal;
+      let top = to === "top" ? 0 : element.scrollHeight;
+      if (typeof to === "object") {
+        const block = element.querySelector<HTMLElement>(`[data-block-ids~="${CSS.escape(to.block)}"]`);
+        // The block's top a little below the address bar, so its picture and title are both in view.
+        top = block ? Math.max(0, offsetWithin(block, element) - element.clientHeight / 12) : 0;
+      }
+      element.scrollTo({ top, behavior: smooth ? "smooth" : "auto" });
     });
     return () => {
       cancelAnimationFrame(frame);
@@ -137,12 +160,13 @@ export function TryPhone({
     };
   }, [scale]);
 
-  const address = `linkyo.app/${page.profile.username}`;
+  const address = pageAddress(page.profile.username);
   return (
     <div className={cn("relative rounded-xl border border-teal-700 bg-ink p-2", crop && "max-lg:h-full max-lg:rounded-b-none max-lg:border-b-0 max-lg:pb-0", className)}>
       <div
         ref={screen}
-        data-try-preview
+        data-try-preview={sample ? undefined : ""}
+        data-try-sample={sample ? "" : undefined}
         className={cn("relative aspect-phone overflow-hidden rounded-lg bg-creator-bg", crop && "max-lg:aspect-auto max-lg:h-full max-lg:rounded-b-none")}
         style={themeStyle(theme)}
       >
