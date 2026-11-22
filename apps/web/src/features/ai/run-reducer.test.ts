@@ -233,3 +233,14 @@ describe("runReducer with every fixture's events", () => {
     expect(state.steps.read).toMatchObject({ state: "done", counts: { links: 3, profiles: 1 } });
   });
 });
+
+describe("shownState", () => {
+  it("shows the step a live run waits on as working, and keeps the real state otherwise", async () => {
+    const { initialRunState, shownState } = await import("./run-reducer");
+    const base = initialRunState();
+    const live = { ...base, phase: "running" as const, steps: { ...base.steps, read: { state: "done" as const } } };
+    expect(shownState(live, "details")).toBe("running");
+    expect(shownState(live, "check")).toBe("pending");
+    expect(shownState({ ...live, phase: "review" as const }, "details")).toBe("pending");
+  });
+});

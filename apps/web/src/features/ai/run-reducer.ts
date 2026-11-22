@@ -255,6 +255,16 @@ export function currentStep(state: RunState): AiStepId | null {
   return AI_STEPS.find((key) => state.steps[key].state === "running") ?? AI_STEPS.find((key) => state.steps[key].state === "pending") ?? null;
 }
 
+/**
+ * The state a step shows. While a run is live, the step it waits on is working, even before the
+ * server's "started" event arrives (between "look" done and the first block, for instance): showing
+ * it as pending would make a working run look stalled. Data attributes and the log keep the real state.
+ */
+export function shownState(state: RunState, step: AiStepId): StepState["state"] {
+  const real = state.steps[step].state;
+  return real === "pending" && isLive(state) && currentStep(state) === step ? "running" : real;
+}
+
 /** A step's duration in ms (the server's measure, else the browser's), or null while unknown. */
 export function stepDuration(step: StepState, now: number): number | null {
   if (step.ms !== undefined) return step.ms;

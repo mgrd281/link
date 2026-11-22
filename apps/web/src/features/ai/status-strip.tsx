@@ -4,7 +4,7 @@ import { cn } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 
 import { AI_STEPS } from "./events";
-import { currentStep, runElapsed, stepsFinished, type RunState } from "./run-reducer";
+import { currentStep, runElapsed, shownState, stepsFinished, type RunState } from "./run-reducer";
 import { formatClock, StepGlyph, useStepText } from "./timeline";
 
 /**
@@ -26,7 +26,7 @@ export function StatusStrip({ state, now, sticky = true }: { state: RunState; no
     <div data-status-strip className={cn("border-b border-line bg-canvas", sticky && "sticky top-16 layer-sticky")}>
       <div className="mx-auto grid max-w-content gap-2 px-4 py-2 md:px-8">
         <div className="flex min-h-control-sm items-center gap-3">
-          {step && state.phase !== "stopped" && state.phase !== "error" ? <StepGlyph status={stopping ? "running" : state.steps[step].state} /> : null}
+          {step && state.phase !== "stopped" && state.phase !== "error" ? <StepGlyph status={stopping ? "running" : shownState(state, step)} /> : null}
           <p className="min-w-0 flex-1 truncate text-small font-semibold">{label}</p>
           <p aria-hidden className="shrink-0 text-small text-fg-secondary tabular-nums" dir="ltr">
             {formatClock(runElapsed(state, now))}

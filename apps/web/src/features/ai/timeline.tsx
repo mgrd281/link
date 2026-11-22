@@ -8,7 +8,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { AI_STEPS } from "./events";
-import { stepDuration, type AiStepId, type RunNote, type RunPhoto, type RunSource, type RunState, type StepState, type StepStatus } from "./run-reducer";
+import { shownState, stepDuration, type AiStepId, type RunNote, type RunPhoto, type RunSource, type RunState, type StepState, type StepStatus } from "./run-reducer";
 import { sourceStatusLine } from "./source-lines";
 
 /**
@@ -206,12 +206,13 @@ function StepRow({ step, index, state, now, last }: { step: AiStepId; index: num
   const entry: StepState = state.steps[step];
   const ms = entry.state === "pending" ? null : stepDuration(entry, now);
   const line = detail(step, state, now);
+  const shown = shownState(state, step);
   return (
     <li data-step={step} data-state={entry.state} className={cn("flex min-h-touch-target items-start gap-3 px-4 py-3", !last && "border-b border-line")}>
-      <StepGlyph status={entry.state} />
+      <StepGlyph status={shown} />
       <div className="grid min-w-0 flex-1 gap-1">
         <div className="flex items-baseline gap-3">
-          <p className={cn("min-w-0 flex-1 text-body font-semibold", entry.state === "pending" && "text-fg-secondary")}>
+          <p className={cn("min-w-0 flex-1 text-body font-semibold", shown === "pending" && "text-fg-secondary")}>
             <span className="sr-only">{`${String(index + 1)}. `}</span>
             {name(step)}
           </p>

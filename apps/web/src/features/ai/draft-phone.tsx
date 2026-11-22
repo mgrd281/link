@@ -173,7 +173,8 @@ export function DraftPhone({
             )}
             style={scale === null ? undefined : { scale, height: `${100 / scale}%` }}
           >
-            <div inert aria-hidden className="min-h-full">
+            {/* A grid, so the page fills the phone even while it is short (its own background, no gap below). */}
+            <div inert aria-hidden className="grid min-h-full">
               <PosterRenderer page={page} theme={resolved} preview />
             </div>
           </div>
