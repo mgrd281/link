@@ -7,6 +7,8 @@ import Image, { type StaticImageData } from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 
+import { pageAddress } from "@/lib/page-url";
+
 import { faceSize, phoneSizes } from "./assets";
 
 export interface DeckPage {
@@ -214,7 +216,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                     <span className="absolute bottom-full left-1/2 mb-3 w-max -translate-x-1/2">
                       <span className="mk-deck-chip inline-flex h-control-md w-max items-center gap-2 rounded-full border border-line bg-surface-elevated ps-3 pe-1 text-small font-semibold whitespace-nowrap text-fg transition-[translate] duration-standard ease-standard group-hover:-translate-y-0.5 motion-reduce:group-hover:translate-y-0">
                         <LogoSymbol className="size-4 text-primary" />
-                        <span dir="ltr">linkyo.app/{page.slug}</span>
+                        <span dir="ltr">{pageAddress(page.slug)}</span>
                         {/* A well-known person's page is never shown as theirs: the address carries a "Concept" tag (ADR 0020). */}
                         {page.concept ? (
                           <span className="rounded-full border border-line px-2 text-caption font-medium text-fg-secondary">{t("deck.conceptTag")}</span>

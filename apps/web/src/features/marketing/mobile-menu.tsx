@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Icon, Logo } from "@linkyo/ui";
-import { ArrowRight, ChevronRight, CircleHelp, LayoutTemplate, Menu, Sparkles, Tag, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, ChevronRight, CircleHelp, LayoutGrid, LayoutTemplate, Menu, Tag, X, type LucideIcon } from "lucide-react";
 import type { CSSProperties, MouseEvent } from "react";
 
 import { LocaleSwitch } from "@/components/locale-switch";
@@ -17,7 +17,7 @@ export interface MenuItem extends NavItem {
   hint: string;
 }
 
-const ICONS: Record<MenuItem["key"], LucideIcon> = { features: Sparkles, templates: LayoutTemplate, pricing: Tag, faq: CircleHelp };
+const ICONS: Record<MenuItem["key"], LucideIcon> = { features: LayoutGrid, templates: LayoutTemplate, pricing: Tag, faq: CircleHelp };
 
 /**
  * The menu on phones and tablets, a full screen like an app's (native Popover API: light dismiss,

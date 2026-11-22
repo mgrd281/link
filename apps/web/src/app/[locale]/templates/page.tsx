@@ -1,6 +1,6 @@
 import { resolveCreatorTheme, TEMPLATE_IDS } from "@linkyo/tokens/creator";
 import { Button, Icon, LogoGlyph } from "@linkyo/ui";
-import { ArrowDown, ArrowRight, Info, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowRight, Info, LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -152,7 +152,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
             <header className="mk-settle grid content-center gap-6">
               <p className="inline-flex items-center gap-2 justify-self-start rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary">
                 <span className="grid size-6 place-items-center rounded-full bg-selected text-selected-fg">
-                  <Icon icon={Sparkles} size="sm" />
+                  <Icon icon={LayoutTemplate} size="sm" />
                 </span>
                 {t("eyebrow")}
               </p>

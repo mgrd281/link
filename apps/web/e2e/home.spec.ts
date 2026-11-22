@@ -297,7 +297,7 @@ test.describe("marketing home", () => {
     await expect(looks.getByRole("radio", { name: "Bloom" })).toBeFocused();
     // Any color: the theme engine makes a whole, readable page of it.
     await playground.getByLabel("Your color").fill("#ff7a00");
-    await expect(playground.getByRole("tabpanel", { name: "Look" }).locator("[aria-live]")).toContainText("Your color");
+    await expect(playground.getByRole("tabpanel", { name: "Look" }).locator("p", { hasText: "Your color" })).toContainText("Your color");
     // Your color goes onto the look that was showing (Bloom, picked with the arrow key), not onto another.
     await expect(playground.getByRole("link", { name: "Keep this page" })).toHaveAttribute("href", /template=bloom&accent=ff7a00$/);
     await expect(looks.getByRole("radio", { checked: true })).toHaveCount(0);
