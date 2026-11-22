@@ -6,7 +6,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./ai-plan": "./src/ai-plan.ts",
     "./detect": "./src/detect.ts",
+    "./kinds": "./src/kinds.ts",
     "./rules": "./src/rules.ts"
   },
   "scripts": {
@@ -15,6 +17,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@linkyo/tokens": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {
