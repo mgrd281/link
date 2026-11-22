@@ -1,12 +1,15 @@
 import { Badge, Button, cn, Icon, LogoGlyph } from "@linkyo/ui";
-import { ArrowRight, ChartColumn, Check, EyeOff, Gift, Globe, Mail, Plus, Server, ShieldCheck, ShoppingBag } from "lucide-react";
+import { ArrowRight, CalendarClock, ChartColumn, Check, EyeOff, Gift, Globe, Mail, PenTool, Plus, Server, ShieldCheck, ShoppingBag } from "lucide-react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { EXAMPLES } from "@/features/examples/catalog";
 import { LOOKS, PEOPLE_LOOKS } from "@/features/examples/looks";
+import { formatEuro, PRICES } from "@/features/payments/prices";
 import { Link } from "@/i18n/navigation";
+import { paymentsEnabled } from "@/lib/flags";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { phoneSizes } from "./assets";
 import { ClaimForm } from "./claim-form";
@@ -37,7 +40,9 @@ const TRUST_ICONS = [Server, ShieldCheck, Gift] as const;
 /** Three plain promises on soft cards, each with its icon in Linkyo Teal. */
 export function Trust() {
   const t = useTranslations("marketing.trust");
-  const items = t.raw("items") as { title: string; body: string }[];
+  const real = useTranslations("marketing.real");
+  // With real accounts nothing is counted yet: the "free for good" promise names no analytics.
+  const items = (t.raw("items") as { title: string; body: string }[]).map((item, index) => (supabaseEnabled && index === 2 ? { ...item, body: real("trustFree") } : item));
   return (
     <Shell labelledBy="trust-title" className="w-full pb-12 md:pb-24">
       <h2 id="trust-title" className="sr-only">
@@ -117,17 +122,23 @@ export function Templates() {
 
 const PRO_ICONS = [Globe, ShoppingBag, Mail, ChartColumn, EyeOff] as const;
 
+/** The Free card's analytics line (index in `free.features`), qualified while nothing is counted yet. */
+const FREE_ANALYTICS = 3;
+
 /**
  * Two plans. Free is the offer: the price, everything in it, one button. Pro is what comes later,
- * quieter, as a list of what it will add (no button: there is nothing to buy yet).
+ * quieter, as a list of what it will add (no button: there is nothing to buy yet). Where Pro can be
+ * bought (payments on), the Pro card names only what ships (AI drafts), the planned features as
+ * planned, its price and terms, and leads to its checkout; the page service is one quiet line below.
  */
 export function Pricing() {
   const t = useTranslations("marketing.pricing");
-  const free = t.raw("free.features") as string[];
+  const real = useTranslations("marketing.real");
+  const free = (t.raw("free.features") as string[]).map((feature, index) => (supabaseEnabled && index === FREE_ANALYTICS ? real("freeAnalytics") : feature));
   const pro = t.raw("pro.features") as string[];
   return (
     <Shell id="pricing" labelledBy="pricing-title" className="grid w-full grid-cols-1 gap-10 py-12 md:gap-12 md:py-24">
-      <SectionHeader id="pricing-title" title={t("title")} lead={t("lead")} center />
+      <SectionHeader id="pricing-title" title={t("title")} lead={paymentsEnabled ? t("leadPaid") : t("lead")} center />
       <div className="mx-auto grid w-full max-w-content gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <article className="mk-reveal grid content-start gap-6 rounded-xl border border-line bg-surface-elevated p-6 md:p-10">
           <header className="grid gap-1">
@@ -155,28 +166,78 @@ export function Pricing() {
             </Link>
           </Button>
         </article>
-        <article className="mk-reveal grid content-start gap-5 rounded-xl bg-canvas-muted p-6 md:p-10">
-          <header className="grid gap-1">
-            <h3 className="flex items-center gap-3 text-h3">
-              {t("pro.name")}
-              <Badge tone="primary" dot>
-                {t("pro.badge")}
-              </Badge>
-            </h3>
-            <p className="text-body text-fg-secondary">{t("pro.lead")}</p>
-          </header>
-          {/* One grouped list, as in an app's settings: rows with hairlines, not separate buttons. */}
-          <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface">
-            {pro.map((feature, index) => (
-              <li key={feature} className="flex min-h-12 items-center gap-3 px-4 py-2 text-body">
-                <Icon icon={PRO_ICONS[index] ?? Plus} size="md" className="shrink-0 text-fg-secondary" />
-                {feature}
-              </li>
-            ))}
-          </ul>
-        </article>
+        {paymentsEnabled ? (
+          <ProLive />
+        ) : (
+          <article className="mk-reveal grid content-start gap-5 rounded-xl bg-canvas-muted p-6 md:p-10">
+            <header className="grid gap-1">
+              <h3 className="flex items-center gap-3 text-h3">
+                {t("pro.name")}
+                <Badge tone="primary" dot>
+                  {t("pro.badge")}
+                </Badge>
+              </h3>
+              <p className="text-body text-fg-secondary">{t("pro.lead")}</p>
+            </header>
+            {/* One grouped list, as in an app's settings: rows with hairlines, not separate buttons. */}
+            <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface">
+              {pro.map((feature, index) => (
+                <li key={feature} className="flex min-h-12 items-center gap-3 px-4 py-2 text-body">
+                  <Icon icon={PRO_ICONS[index] ?? Plus} size="md" className="shrink-0 text-fg-secondary" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </article>
+        )}
       </div>
     </Shell>
+  );
+}
+
+/** Pro as it can be bought: the monthly price, what ships, what is planned, the terms and its checkout. */
+function ProLive() {
+  const t = useTranslations("marketing.pricing");
+  const locale = useLocale() as "de" | "en" | "ar";
+  const features = t.raw("proLive.features") as string[];
+  return (
+    <article className="mk-reveal grid content-start gap-5 rounded-xl bg-canvas-muted p-6 md:p-10">
+      <header className="grid gap-1">
+        <h3 className="text-h3">{t("pro.name")}</h3>
+        <p className="text-body text-fg-secondary">{t("pro.lead")}</p>
+      </header>
+      <p className="flex flex-wrap items-baseline gap-x-2">
+        <span className="text-display-sm font-extrabold tracking-display tabular-nums">{formatEuro(PRICES["pro-monthly"].amountCents, locale)}</span>
+        <span className="text-body font-medium text-fg-secondary">{t("proLive.per")}</span>
+        <span className="text-small text-fg-secondary">{t("proLive.vat")}</span>
+      </p>
+      <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface">
+        {features.map((feature) => (
+          <li key={feature} className="flex min-h-12 items-center gap-3 px-4 py-2 text-body">
+            <Icon icon={Check} size="md" className="shrink-0 text-fg-secondary" />
+            {feature}
+          </li>
+        ))}
+      </ul>
+      <p className="flex items-start gap-2 text-small text-fg-secondary">
+        <Icon icon={CalendarClock} size="sm" className="mt-0.5 shrink-0" />
+        {t("proLive.planned")}
+      </p>
+      <p className="text-small text-fg-secondary">{t("proLive.terms")}</p>
+      <Button asChild variant="primary" size="cta" className="group text-center whitespace-normal">
+        <Link href="/checkout/pro">
+          {t("proLive.cta")}
+          <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+        </Link>
+      </Button>
+      <Link
+        href="/service"
+        className="inline-flex min-h-touch-target items-center gap-2 self-start rounded-sm text-small font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
+      >
+        <Icon icon={PenTool} size="sm" />
+        {t("proLive.service", { price: formatEuro(PRICES["service-start"].amountCents, locale) })}
+      </Link>
+    </article>
   );
 }
 
@@ -186,7 +247,10 @@ export function Pricing() {
  */
 export function Faq() {
   const t = useTranslations("marketing.faq");
-  const items = t.raw("items") as { q: string; a: string }[];
+  const real = useTranslations("marketing.real");
+  // With real accounts the first answer names no analytics yet (and, with payments, what Pro holds).
+  const first = paymentsEnabled ? real("faqFreePaid") : real("faqFree");
+  const items = (t.raw("items") as { q: string; a: string }[]).map((item, index) => (supabaseEnabled && index === 0 ? { ...item, a: first } : item));
   return (
     <Shell id="faq" labelledBy="faq-title" className="grid grid-cols-1 gap-8 py-12 md:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
       <header className="mk-reveal grid content-start gap-3 lg:sticky lg:top-24 lg:self-start">
