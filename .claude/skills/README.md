@@ -10,13 +10,15 @@ Claude Code loads these skills automatically in this repository. They come in tw
 | `linkyo-example-page` | New or improved fictional example pages in /templates (photos, clips, buttons) |
 | `linkyo-concept-page` | Pages for well-known people: sources, licenses, one language per page |
 | `linkyo-page-kind` | New page kinds in the welcome flow ("What describes you best?") |
-| `linkyo-qa-release` | Verify, commit, push and check a change live |
+| `linkyo-qa-release` | Verify, commit, push and check a change live; per-worktree ports, the three real-mode e2e invocations, container notes |
 | `linkyo-ux-audit` | Screenshot the whole journey on phone and desktop, review against known pitfalls, fix, re-check |
 | `linkyo-share-images` | Link preview cards (Satori) and story/post pictures (canvas): fonts, Arabic, build rules |
-| `linkyo-link-metadata` | Real titles and pictures for pasted links: oEmbed route, image proxy, adding a platform |
+| `linkyo-link-metadata` | Real titles and pictures for pasted links: oEmbed route, image proxy, adding a platform; websites only through the Node safe fetcher |
 | `linkyo-poster-template` | New Poster templates and layout options (hero, headings, social icons), from a reference |
 | `linkyo-media-assets` | Licensed photos and clips, original cover art with bundled OFL fonts, CREDITS.md and media.ts |
-| `linkyo-supabase` | Real accounts and the database: migrations with RLS, team functions, pgTAP, generated types, the local stack, real-account e2e |
+| `linkyo-supabase` | Real accounts and the database: migrations with RLS, team functions, pgTAP, generated types, the local stack (with Storage), files deleted only through the Storage API, real-account e2e |
+| `linkyo-ai-builder` | The AI page builder: run pipeline, SSE events, PagePlan v1, limits and quota, the Claude call, provenance, the local mock; adding a source, changing the prompt, re-recording |
+| `linkyo-payments` | Selling under German law: service packages and Pro, the § 312j checkout, statutory labels, webhook, `/widerruf`, `/kuendigen`, contract e-mails; testing without any Stripe account |
 
 ## Vendored skills (open source, with their licenses)
 
