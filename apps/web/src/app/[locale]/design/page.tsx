@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { use } from "react";
 
 import { SiteHeader } from "@/components/site-header";
+import { AiRunSection } from "@/features/design-system/ai-run-specimen";
 import { ButtonSection, ControlsSection, StatesSection } from "@/features/design-system/components-showcase";
 import { CreatorThemesSection } from "@/features/design-system/creator-playground";
 import { BrandSection, ColorSection, LayoutSection, TypeSection } from "@/features/design-system/foundations";
@@ -29,6 +30,9 @@ export default function DesignPage({ params }: { params: Promise<{ locale: strin
   const { locale } = use(params);
   setRequestLocale(locale);
   const t = useTranslations("design");
+  const tAi = useTranslations("marketing.try.ai");
+  // The AI run (the "Try it" AI tab with test data) comes after the numbered sections.
+  const aiIndex = String(SECTIONS.length + 1).padStart(2, "0");
   const stats = [
     { value: countLeaves(tokens).toLocaleString(locale), label: t("stats.tokens") },
     { value: "18", label: t("stats.components") },
@@ -52,6 +56,13 @@ export default function DesignPage({ params }: { params: Promise<{ locale: strin
                 {t(`${id}.title`)}
               </a>
             ))}
+            <a
+              href="#ai-run"
+              className="flex items-center gap-3 rounded-sm px-2 py-1 text-small text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring"
+            >
+              <span className="font-mono text-caption text-fg-tertiary">{aiIndex}</span>
+              {tAi("tabLabel")}
+            </a>
           </nav>
         </aside>
         <main id="main" className="min-w-0 flex-1 pb-24">
@@ -77,6 +88,7 @@ export default function DesignPage({ params }: { params: Promise<{ locale: strin
           <ControlsSection />
           <StatesSection />
           <CreatorThemesSection />
+          <AiRunSection index={aiIndex} />
         </main>
       </div>
     </>
