@@ -45,7 +45,11 @@ function BlockRow({ block, checked, onToggle }: { block: Block; checked: boolean
           <Icon icon={blockIcon[block.type]} size="sm" />
         </span>
         <span className="grid min-w-0 flex-1 gap-0.5">
-          <bdi className="truncate text-body font-medium">{title}</bdi>
+          {/* The line keeps the page's direction (an Arabic list stays right-aligned); the bdi only
+              isolates the title's own order ("Eventim" on an Arabic page). */}
+          <span className="truncate text-body font-medium">
+            <bdi>{title}</bdi>
+          </span>
           <span className="flex min-w-0 gap-2 text-small text-fg-secondary">
             {type !== title ? <span className="shrink-0">{type}</span> : null}
             {summary ? (
