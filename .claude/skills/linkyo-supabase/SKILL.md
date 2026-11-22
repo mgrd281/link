@@ -12,8 +12,12 @@ them the demo store runs. Both must keep working (ADR 0030).
 
 | What | Where |
 |---|---|
-| Schema, RLS, functions | `supabase/migrations/*.sql`: core (profiles, sites, history, public_page), security (sign_ins, blocked_ips, retention), team (roles, audit, billing, notes, `admin_*` functions), referrals (the invite program, ADR 0064: codes, `referrals`, `rewards`, `verification_requests`, `settle_referral`, hourly cron) |
-| DB tests (pgTAP) | `supabase/tests/access.test.sql`, run as customer, visitor, server, owner and viewer; `supabase/tests/referrals.test.sql` (codes, sign-up attribution, the abuse checks, counting, rewards, verification, team writes, privacy) |
+| Schema, RLS, functions | `supabase/migrations/*.sql`: core (profiles, sites, history, public_page), security (sign_ins, blocked_ips, retention), team (roles, audit, billing, notes, `admin_*` functions), referrals (the invite program, ADR 0064: codes, `referrals`, `rewards`, `verification_requests`, `settle_referral`, hourly cron); v7: `public_pages` (`block_is_public`, the filtered `public_page`, reserved names), `media` (Storage buckets `media`/`briefing`/`deliverables`, their policies, `storage_purge`), `billing` (entitlements, orders, proposals, checkout intents, Stripe events, withdrawals, cancellations, `has_pro`, two daily jobs; ADR 0066), `ai` (settings, runs, budget, usage, `ai_reserve_run`/`ai_settle_run`, 5-minute cleanup; ADR 0065) |
+| DB tests (pgTAP) | `supabase/tests/access.test.sql`, run as customer, visitor, server, owner and viewer; `supabase/tests/referrals.test.sql` (codes, sign-up attribution, the abuse checks, counting, rewards, verification, team writes, privacy); one file per v7 migration: `public_pages.test.sql`, `media.test.sql`, `billing.test.sql`, `ai.test.sql` |
+| Storage (v7, ADR 0067) | `features/app/media-upload.ts` (`uploadToBucket`, `storePreparedImage`), `features/account/media-migrate.ts` (data URLs → Storage on save), `lib/server/storage-purge.ts` (`removePrefix`, `drainStoragePurge`), `app/api/maintenance/storage-purge`, `app/api/account/delete`, `app/api/admin/customers/[id]/delete` |
+| Server helpers (v7) | `lib/server/user.ts` (`requireUser`: RPCs as the user, so SQL enforces team permissions), `lib/server/ip-hash.ts` (daily-salted HMAC) |
+| Public pages (v7) | `features/creator/public-page.ts`, `app/u/[username]/*`, `lib/creator-path.ts`, `proxy.ts` |
+| Real-mode e2e helpers | `apps/web/e2e/real.ts` (per-test IP and mock tag, `createRealAccount`, `signIn` without e-mail, `grantPro`, `addTeamMember`, `readCapturedMail`, `setAiEnabled`) |
 | Email templates | `supabase/templates/{confirmation,magic_link,email_change}.html` (de/en/ar by `.Data.locale`; the first two carry the 6-digit `{{ .Token }}` and the one-click link), wired in `supabase/config.toml` |
 | Clients | `apps/web/src/lib/supabase/{config,browser,server,json}.ts`, `database.types.ts` (generated) |
 | Server routes | `app/api/auth/code` (sends the code; checks sign-ups), `app/api/auth/verify` (code → session, security log, first page), `app/api/auth/confirm` (the emailed link) + `features/account/server/{auth,first-site}.ts` |
@@ -85,22 +89,51 @@ them the demo store runs. Both must keep working (ADR 0030).
   Never trust page JSON for them.
 - **The secret key only in server routes** (`serviceSupabase()`), never `NEXT_PUBLIC_`.
 - **Optional function arguments get `default null`**, so generated types make them optional.
-- **Not deployed yet?** Migrations may still be edited in place. Once production has them, add
-  a new migration instead.
+- **Production has the migrations now.** The real project (Central EU, Frankfurt) got all eight
+  migrations through the Management API on 2026-11-22. **Never edit a migration in place any
+  more**: every change is a new migration. The project is not connected to Vercel yet (Auth e-mails
+  need custom SMTP, which needs a domain; `docs/SUPABASE_SETUP.md`). Never run anything against the
+  hosted project without the founder's go-ahead.
+- **Files are deleted only through the Storage API.** SQL never deletes from `storage.objects`;
+  queue a folder or object in `public.storage_purge` (service only) and let
+  `/api/maintenance/storage-purge` (bearer `MAINTENANCE_SECRET`) or the account-deletion routes
+  remove it with `removePrefix`. Paths always start with the owner's account id
+  (`media/<uid>/…`, `briefing/<uid>/<order>/…`, `deliverables/<customer>/<order>/…`), which is what
+  the policies check.
+- **Service-only tables** (`storage_purge`, `stripe_events`, `checkout_intents`, `ai_settings`,
+  `ai_budget_days`, `ai_usage`, `form_limits`, `service_settings`) have RLS on, no policy and
+  `revoke all` from `authenticated` and `anon`. Billing and AI tables revoke insert, update and
+  delete from everyone but the service role: writes go through functions.
+- **Mirrored numbers:** `ai_settings` ↔ `features/ai/limits.ts`, `RESERVED_USERNAMES` ↔ the
+  `reserved_usernames` inserts, `referral_rule()` ↔ `features/referrals/rules.ts`. Each pair has a
+  test that reads the migrations; change both sides together.
+- **"Today" and "this month" are Europe/Berlin** (`(now() at time zone 'Europe/Berlin')::date`).
 
 ## Workflow
 
 ```bash
-pnpm db:start        # local stack (Docker): Postgres, Auth, REST, Mailpit on :54324
+pnpm db:start        # local stack (Docker): Postgres, Auth, REST, Storage, Mailpit on :54324
 pnpm db:reset        # apply migrations from scratch
 pnpm db:test         # pgTAP
 pnpm db:lint         # plpgsql_check (catches ambiguous names before they crash at runtime)
 pnpm db:types        # regenerate apps/web/src/lib/supabase/database.types.ts
 ```
 
+- **Storage now runs locally:** `db:start` no longer excludes `storage-api` (the bucket policies and
+  uploads need it). `next.config.ts` allows the local `127.0.0.1:54321` Storage URL through
+  `/_next/image` (`dangerouslyAllowLocalIP` only for a loopback Supabase URL).
+- **Raised local Auth rate limits:** `supabase/config.toml` sets `sign_in_sign_ups = 1000` and
+  `token_verifications = 1000` under `[auth.rate_limit]`, because the real-mode suites sign in far
+  more than 30 accounts per 5 minutes from one address. The hosted project keeps its dashboard
+  limits.
+- Only one local stack runs per machine: when several worktrees work in parallel, only one of them
+  may run `db:*` commands at a time.
+
 Real-account e2e: build and start the app with the local keys printed by `db:start`, then run
 `E2E_SUPABASE=1 SUPABASE_SECRET_KEY=… pnpm exec playwright test e2e/supabase.spec.ts --project desktop`.
-Afterwards rebuild without the keys before running the regular (demo) suite.
+The v7 real-mode suites (`@real`, `@global`) need more variables and the mocks: see the
+`linkyo-qa-release` skill. Afterwards rebuild without the keys before running the regular (demo)
+suite.
 
 In cloud sessions Docker may need starting first (`dockerd &`). Images come from
 public.ecr.aws.

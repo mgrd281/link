@@ -10,14 +10,34 @@ example "344 passed"), never "should work".
 
 ## Verify (apps/web)
 
+From the repo root, then in `apps/web`:
+
 ```bash
+export PORT=3100 MOCK_ANTHROPIC_PORT=54399 MOCK_STRIPE_PORT=54398   # one set per worktree (below)
+unset PW_REUSE_SERVER ANTHROPIC_BASE_URL                             # container notes (below)
+pnpm lint && pnpm typecheck && pnpm test                             # lint includes the token guard
+pnpm --filter @linkyo/blocks test && pnpm --filter @linkyo/tokens test
 cd apps/web
-npx tsc --noEmit -p .
-npx eslint src e2e
-npx vitest run
-pkill -f next-server; pkill -f "next start"; npx next build
+fuser -k "$PORT/tcp"; npx next build                                 # stop only your own server
+grep -rE "sk-ant-|api\.anthropic\.com|sk_test_|whsec_" .next/static && echo "SECRET IN BUNDLE"
 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --project desktop --project mobile --trace off --reporter=line
 ```
+
+- **Ports per worktree.** `PORT` (the app, default 3100), `MOCK_ANTHROPIC_PORT` (default 54399) and
+  `MOCK_STRIPE_PORT` (default 54398) are read by `playwright.config.ts` and the mocks; nothing else
+  hard-codes a port. When several worktrees test at once, give each its own set (for example work
+  package N: `3100+N`, `55100+N`, `55200+N`).
+- **Never test someone else's server.** `reuseExistingServer` is true only with `PW_REUSE_SERVER=1`;
+  leave it unset in every gate and in CI (a developer may set it by hand while iterating).
+
+### Container notes
+
+- **Stop servers by port, not by name:** `fuser -k "$PORT/tcp"` (or `lsof -ti tcp:$PORT | xargs -r
+  kill`). Never `pkill -f next-server` or `pkill -f "next start"`: it kills other worktrees' servers.
+- **`unset ANTHROPIC_BASE_URL`** before building, starting or testing: agent containers set it for
+  their own use, and the app refuses any base URL that is not Anthropic's host or a local mock
+  (`features/ai/server/config.ts`). Real-mode runs set it to the mock explicitly.
+- Clean up afterwards: `rm -rf apps/web/.next apps/web/test-results apps/web/.mail`.
 
 - **Packages:**
   - `pnpm --filter @linkyo/blocks test`;
@@ -31,17 +51,52 @@ PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --project desktop
 
 ## Database changes (supabase/)
 
-When migrations, the account store or the console's data layer changed, also run `pnpm db:reset`,
-`pnpm db:test` and `pnpm db:lint`. Then run the real-account e2e (`e2e/supabase.spec.ts`; see the
-`linkyo-supabase` skill). Then rebuild **without** Supabase keys and run the regular suite: the
-demo must keep working too.
+When migrations, the account store, the console's data layer, AI, payments, e-mail or public pages
+changed, also run the database and the real-mode suites (only one worktree at a time may use the
+local stack):
+
+```bash
+pnpm db:start && pnpm db:reset && pnpm db:test && pnpm db:lint
+cd apps/web && fuser -k "$PORT/tcp"
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<local> \
+  NEXT_PUBLIC_PAYMENTS=test npx next build              # keep NEXT_PUBLIC_CREATOR_DOMAIN unset
+mkdir -p .mail
+
+# 1. sign-up and sign-in by e-mail code, AI off (Mailpit)
+E2E_SUPABASE=1 SUPABASE_SECRET_KEY=<local> npx playwright test supabase.spec.ts --project desktop
+
+# 2. and 3. need every real-mode variable and start the mocks (E2E_MOCKS=1)
+REAL="E2E_SUPABASE=1 E2E_MOCKS=1 SUPABASE_SECRET_KEY=<local> AI_ENABLED=1 ANTHROPIC_API_KEY=sk-ant-local-test \
+  ANTHROPIC_BASE_URL=http://127.0.0.1:$MOCK_ANTHROPIC_PORT AI_IP_SALT_SECRET=local-test AI_ENRICH_OFF=1 \
+  STRIPE_SECRET_KEY=sk_test_local STRIPE_WEBHOOK_SECRET=whsec_local_test STRIPE_API_HOST=127.0.0.1 \
+  STRIPE_API_PORT=$MOCK_STRIPE_PORT STRIPE_API_PROTOCOL=http EMAIL_TRANSPORT=capture EMAIL_CAPTURE_DIR=$PWD/.mail \
+  MAINTENANCE_SECRET=local-maint LINKYO_ADMIN_CODE_SHA256=<sha256 of a local-only team code>"
+env $REAL npx playwright test --grep @real --grep-invert @global --project desktop --project mobile
+env $REAL npx playwright test --grep @global --workers=1 --project desktop   # global state: the AI switch
+```
+
+- `<local>` keys come from `db:start` (or `npx supabase status -o env`); they are the CLI's fixed
+  development keys. The team-code hash is of a local-only code (CI uses `linkyo-team-local-e2e`),
+  never the demo code's: with real accounts the demo code must fail.
+- `@real` specs import `test` from `e2e/real.ts` (a per-test `x-forwarded-for` and mock tag);
+  `@global` tests change shared state and run alone with one worker. Use `--workers=2` if the machine
+  swaps.
+- All test values above are dummies: the app only ever talks to the local mocks, and no e-mail leaves
+  the machine (`EMAIL_TRANSPORT=capture` writes JSON files to `.mail`).
+- Then stop your server, rebuild **without** the Supabase variables and run the regular suite: the
+  demo must keep working too. CI runs the same three invocations in the `real-e2e` job.
 
 ## Product rules to keep
 
 - **Privacy:**
   - no third-party requests before consent;
   - players are click-to-load (YouTube privacy mode);
-  - our own media is self-hosted.
+  - our own media is self-hosted (Storage pictures through `/_next/image`);
+  - Stripe.js only on `/checkout/*`; no secret in `.next/static` (the grep above);
+  - the AI provider gets no photos, and e-mail addresses and phone numbers are removed first.
+- **No real outbound call in tests:** no request to `api.anthropic.com`, `api.stripe.com`,
+  `js.stripe.com`, `api.scaleway.com` or a platform oEmbed host (e2e stubs `**/api/link-metadata**`,
+  `AI_ENRICH_OFF=1`).
 - **Languages:** de, en and ar for every user-facing text, in `src/messages/*.json`.
 - **Accessibility:** WCAG 2.2 AA. Moving content can be paused, and reduced motion is respected.
 - **Decisions:** big decisions get an ADR in `docs/DECISIONS/` plus a row in its `README.md`.

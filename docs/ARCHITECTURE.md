@@ -1,6 +1,7 @@
 # Linkyo — Architecture
 
-> Status: Phase 0 (foundations). Sections marked **(Phase n)** describe the plan, not shipped code.
+> Status: Phase 0 (foundations) plus v7 phase 1 (AI builder, selling flows and going live, all in test mode).
+> Sections marked **(Phase n)**, "planned" or "later" describe the plan, not shipped code.
 > Decisions with trade-offs live in [`DECISIONS/`](DECISIONS/).
 
 ## 1. System overview
@@ -12,22 +13,34 @@
                       │                                              │
 ┌─────────────────────▼──────────────────────────────────────────────▼──────────────────────┐
 │ Vercel (Next.js 16, functions in fra1)                                                      │
-│  • proxy.ts: locale routing, host → creator rewrite (Phase 1)                               │
+│  • proxy.ts: locale routing; /<username> → app/u/[username] (own root layout, ISR 60 s)     │
 │  • Public creator pages: static/ISR HTML, zero-runtime renderer, tiny islands (ADR 0008)    │
 │  • Dashboard + marketing: App Router, Server Components, Server Actions, next-intl          │
+│  • AI builder (ADR 0065): /api/ai/runs (Node, SSE) → safe fetcher → Claude API (one call)   │
+│  • Payments (ADR 0066): /checkout/* (Stripe elements), /api/stripe/webhook, /widerruf,      │
+│    /kuendigen; e-mail through one EmailSender (Scaleway TEM; capture file in tests)         │
+│  • /api/maintenance/storage-purge: deletes queued Storage files (ADR 0067)                  │
 │  • /api/beacon: cookie-free analytics ingest → Supabase                                     │
 └──────────────┬───────────────────────────────────────────────────────────┬─────────────────┘
                │ supabase-js (RLS)                                          │ supabase-swift
 ┌──────────────▼────────────────────────────────────────────────────────────▼────────────────┐
 │ Supabase · eu-central-1 (Frankfurt)                                                          │
-│  Postgres + RLS · Auth (magic link, Google, Apple, passkeys) · Storage (media, variants)      │
-│  Edge Functions (metadata fetch, image variants, feeds, webhooks) · Realtime (live preview)  │
-│  pg_cron + Queues (feed refresh, rollups, cleanup) · Vault (encrypted OAuth tokens)          │
+│  Postgres + RLS · Auth (6-digit e-mail code) · Storage (media, briefing, deliverables)       │
+│  AI limits and run log (ai_settings, ai_runs, ai_usage) · orders, entitlements, contracts    │
+│  pg_cron (6 jobs: sign-ins, unconfirmed, referrals, form limits, service, AI cleanup)        │
+│  Later: Edge Functions (image variants, feeds) · Realtime (live preview) · Vault (OAuth)      │
 └──────────────┬──────────────────────────────────────────────────────────────────────────────┘
                │
-   Mux (video, HLS) · Scaleway TEM (email, Paris) · Stripe · App Store Server API · APNs
-   Platform APIs: YouTube RSS/Data API, Twitch EventSub, RSS, Apple MusicKit, oEmbed (keyless)
+   Anthropic Claude API (AI builder, USA: text only, no photos, contacts redacted; server only)
+   Stripe (Payment Element on /checkout/* only, webhook) · Scaleway TEM (email, Paris)
+   Mux (video, HLS) · App Store Server API · APNs
+   Platform APIs: YouTube Data API, Twitch EventSub, RSS, Apple MusicKit, oEmbed (keyless)
 ```
+
+Phase 1 of v7 runs all of this in **test mode**: the AI and Stripe calls go only to local mocks, no
+e-mail leaves the machine, and the live demo deployment has no Supabase keys, so none of the boxes
+above the database is switched on there ([ADR 0065](DECISIONS/0065-ai-page-builder.md),
+[ADR 0066](DECISIONS/0066-selling-in-germany.md), [ADR 0067](DECISIONS/0067-going-live.md)).
 
 Data stays in the EU wherever a provider offers it (Supabase, Vercel functions, Sentry, PostHog, Scaleway).
 US processors (Vercel CDN edge, Mux, Stripe, Apple) are covered by DPAs + SCCs/DPF and listed in the privacy policy
@@ -71,7 +84,7 @@ link/                                   pnpm workspaces + Turborepo, TypeScript 
 
 | Surface | Strategy |
 |---|---|
-| **Public creator page** | Pre-rendered HTML per creator (ISR, on-demand revalidation on publish), served from the CDN; host-based routing (`username.linkyo.app`, custom domains via the Vercel Domains API). Phase 1 moves the renderer to a **zero-runtime pipeline** (HTML + CSS + ~3 KB vanilla islands for click-to-load embeds, newsletter, beacon) to meet the 70 KB JS budget — measured Phase 0 App Router baseline is 205 KB ([ADR 0008](DECISIONS/0008-public-page-rendering.md)). |
+| **Public creator page** | **As built (v7, [ADR 0067](DECISIONS/0067-going-live.md)):** `linkyo.app/<username>`; with real accounts on, `proxy.ts` rewrites the one-segment path to `app/u/[username]` (skipping next-intl, so no cookie and no locale prefix; reserved names and locales never match), a second root layout whose `<html lang dir>` is the page's own language. The page is ISR with `revalidate = 60`; `public_page()` and the route both filter blocks (hidden, scheduled, newsletter); canonical `pageUrl()`; AI content marked with `ai-generated` meta and `data-ai-generated`. Pictures from Storage go through `/_next/image`. **Planned:** on-demand revalidation on publish; host-based routing (`username.linkyo.app`, custom domains via the Vercel Domains API). Phase 1 moves the renderer to a **zero-runtime pipeline** (HTML + CSS + ~3 KB vanilla islands for click-to-load embeds, newsletter, beacon) to meet the 70 KB JS budget — measured Phase 0 App Router baseline is 205 KB ([ADR 0008](DECISIONS/0008-public-page-rendering.md)). |
 | **Live preview** | The *same* renderer components rendered inside the dashboard at 390 px. Container queries (`@container`) make layout respond to the preview width, not the viewport; React state makes updates synchronous (< 50 ms, no network). iOS uses a WKWebView of the real renderer for the preview sheet (Phase 2). |
 | **Dashboard / marketing** | Next.js App Router, Server Components by default; client islands for the editor. |
 | **SEO** | Server-rendered HTML, per-page/article OG images (`next/og`), JSON-LD (Person / MusicGroup / Organization), sitemap per creator. Phase 0 pages are `noindex` on purpose. |
@@ -92,15 +105,42 @@ All tables: `id uuid pk`, `created_at`, `updated_at`; **RLS enabled in the same 
 | `products`, `subscribers`, `form_messages` | … | Subscribers: double opt-in, export + delete per creator. Inbox for forms/bookings. |
 | `page_views`, `block_clicks` | `profile_id`, `day`, `visitor_hash`, `referrer_host`, `country`, `device` | **Cookie-free**: hash = SHA-256(daily salt ‖ IP ‖ UA ‖ profile), salt rotated and discarded daily (no persistent ID). Raw rows 30 days (partitioned), then daily rollups. Insert only via the beacon function. |
 | `media_kits`, `legal_docs` | … | Generated Impressum/Datenschutz from the legal wizard. |
-| `entitlements` | `profile_id`, `source` (stripe/app_store), `product`, `status`, `expires_at` | Single entitlement table fed by Stripe webhooks and App Store Server Notifications v2. |
+| `entitlements` | **As built (v7):** `profile_id`, `product` (`'pro'`), `source` (`stripe` \| `team`; App Store later), `status` (`active`, `past_due`, `canceled`, `refunded`), `starts_at`, `current_period_end`, `cancel_at_period_end`, `cancel_at` (a scheduled end later than the period end), `stripe_customer_id`, `stripe_subscription_id` (unique), `confirmation_sent_at` | Owner selects own rows; team with `billing.view`. Written only by service functions from the Stripe webhook (`upsert_pro_subscription`, one row per subscription from its current state; `refunded` is final), mirrored into `subscriptions`. `has_pro()` = an active Stripe entitlement in its period, a "Pro für immer" reward, or team-set Pro without a Stripe entitlement. |
 | `reports`, `audit_log`, `reserved_usernames` | … | DSA notice-and-action, admin audit trail, brand/offensive username blocklist. |
+
+**Added in v7 phase 1** ([ADR 0065](DECISIONS/0065-ai-page-builder.md), [ADR 0066](DECISIONS/0066-selling-in-germany.md),
+[ADR 0067](DECISIONS/0067-going-live.md)). Pages still live as one JSON document in `sites.page` (no `blocks` table yet);
+blocks carry `origin` and the profile `aiFields`. Every table below has RLS on, and customers and the team cannot
+insert, update or delete any of them directly: all writes go through `security definer` functions (service-only for the
+webhook, the forms and the AI pipeline; owner and team functions check the caller inside).
+
+| Table | Key columns | Read access (RLS) |
+|---|---|---|
+| `orders` | `number` (`LNK-YYYY-NNNNNN`), `profile_id`, `customer_email`, `package` (`start` \| `premium`), `status` (paid → awaiting_briefing/queued → in_progress → delivered → revision_requested → completed; refunded, withdrawn), `amount_cents`, `vat_mode`, `early_start` + `early_start_text`, `start_after`, `promised_due_at`, `briefing`, `due_at`, `assignee`, `revisions_allowed`/`_used`, `withdrawal_pending`, `refund_kind`, Stripe ids | owner; team `customers.view` |
+| `order_events` | `order_id`, `at`, `actor`, `kind`, `details` | team `customers.view` |
+| `site_proposals` | `order_id`, `round`, `status` (draft, delivered, applied, superseded), `page`, `theme`, `message`, `request`, `extras` (Premium kit), `story_paths` | owner once delivered; team `customers.view`. Never written to `sites`: only the customer's Apply changes the page |
+| `checkout_intents` | `session_id`, `profile_id`, `product`, early-start consent and the promised dates | none (functions only) |
+| `stripe_events` | `id`, `type`, `received_at`, `processed_at` | none (webhook idempotency) |
+| `withdrawals`, `cancellations` | the declaration as typed, `received_at`, `matched`, `suspect`, `decision`, `handled_*` | team `billing.view` |
+| `form_limits`, `service_settings` | per-IP-hash form counts (1 day); daily capacity | none |
+| `invoices` (existing) | adds `subscription`, `payment_intent` (no longer top-level on a Stripe invoice since basil) | unchanged |
+| `ai_settings` | the kill switch and every limit (budget, drafts, IP, concurrency, failures) | none |
+| `ai_runs` | `profile_id` (the team member for a team run), `order_id`, `route`, `status`, `counted`, tokens and cost, `progress`, `result` (7 days) | owner selects a column list without `ip_hash`, actor, money or tokens |
+| `ai_budget_days`, `ai_usage` | daily spend and runs; monthly counted drafts per account (kept after the run log is deleted) | none |
+| `storage_purge` | `bucket`, `prefix`, `due_at`, `attempts`, `last_error` | none (service client only; drained through the Storage API) |
+
+Storage buckets: `media` (public), `briefing` and `deliverables` (private), with owner-folder policies on
+`storage.objects` and team read (`pages.edit`) where the service needs it.
 
 ## 5. Key flows
 
-- **Universal Add (≤ 1 paste):** `detectLink()` (pure, < 1 ms, `@linkyo/blocks`) creates the right block optimistically → Edge Function `link-metadata` fetches OpenGraph/oEmbed (SSRF-safe: https only, public IPs only after DNS resolution, 3 s timeout, 1 MB cap) → patches the block. Bulk paste = one block per URL.
+- **Universal Add (≤ 1 paste):** `detectLink()` (pure, < 1 ms, `@linkyo/blocks`) creates the right block optimistically → `/api/link-metadata` asks the platform's keyless oEmbed (fixed hosts only, never the pasted address; logic in `lib/link-metadata.ts`) → patches the block. Bulk paste = one block per URL.
+- **Reading a website (AI builder and importer, v7):** a **Node route, not an Edge Function**. `features/ai/server/safe-fetch.ts`: https on port 443 only, every resolved address public unicast (IPv6 by allow-list), **connect-time pinning** (the socket's `lookup` answers only the validated address, so DNS rebinding cannot swap it), each redirect re-validated (≤ 3), robots.txt honoured per host (agent `LinkyoImport`), body streamed and cut at 1 MB, 3 s connect / 8 s total, no pictures downloaded. `/api/import-links` uses the same fetcher; Linktree is paste-only.
+- **AI page builder (v7, [ADR 0065](DECISIONS/0065-ai-page-builder.md)):** `/app/build` → `POST /api/ai/runs` (SSE) → `ai_reserve_run` (once) → read sources → enrich media links → one streamed Claude call with structured output (PagePlan v1) → blocks streamed to the phone as their JSON closes → checks and at most one repair call → `ai_settle_run` → review → the owner's Apply (one undoable step). The team runs the same pipeline for a Start order and saves a proposal.
+- **Selling (v7, [ADR 0066](DECISIONS/0066-selling-in-germany.md)):** `/service` → `/checkout/service|pro` (Stripe Payment Element; § 312j summary above "Zahlungspflichtig bestellen"; consent route fixes early start and the due date) → `/api/stripe/webhook` (idempotent by `processed_at`) → order + confirmation e-mail → briefing → team queue → proposal → customer review. `/widerruf` and `/kuendigen` record every declaration; refunds and contract ends are team actions.
 - **Music smart links:** own resolver (Apple MusicKit search by ISRC/UPC + Deezer public API + Spotify oEmbed/embeds) instead of Odesli, which is owned by Linktree ([ADR 0009](DECISIONS/0009-music-smart-links.md)).
 - **Media:** direct upload to Storage (signed URL) → variants (AVIF/WebP, 3 widths, focal-point crop, thumbhash) → CDN. Video: Mux direct upload, HLS, poster frame, captions prompt.
-- **Feeds:** `pg_cron` enqueues due connections into Supabase Queues; Edge workers batch ~50 per invocation; YouTube via channel RSS (no quota), Twitch via EventSub webhooks.
+- **Feeds (later phase):** `pg_cron` enqueues due connections into Supabase Queues; workers batch ~50 per invocation; **YouTube via the Data API** (an API key; the channel RSS is not used), Twitch via EventSub webhooks. In v7 phase 1 the AI builder only links a YouTube channel.
 - **Team area (`/admin`):** the Linkyo team prepares pages for top creators in the same editor creators use, with roles → permissions (owner, admin, editor, viewer), invites stored only as SHA-256, a verified badge, Draft → Ready → publish, and an activity log ([ADR 0016](DECISIONS/0016-team-area.md)). Phase 0 keeps team data in the browser and publishes via `scripts/prepare-page.mjs --add`; Phase 1 moves it to Supabase with RLS mirroring the permission table.
 - **Realtime:** dashboard ↔ iOS edits sync through Supabase Realtime (postgres changes on `blocks`), last-writer-wins per field with `updated_at` guards; iOS queues offline edits (SwiftData) and replays them.
 
