@@ -1743,7 +1743,7 @@
       "topInsight": "Tapped most: {title}",
       "empty": {
         "title": "Stats are coming soon",
-        "body": "We're building cookie-free counting. Until then we show no made-up numbers."
+        "body": "Until then we show no made-up numbers here."
       },
       "leadReal": "We're building counting without cookies and without a consent banner."
     },

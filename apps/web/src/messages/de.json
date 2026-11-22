@@ -1743,7 +1743,7 @@
       "topInsight": "Am häufigsten angetippt: {title}",
       "empty": {
         "title": "Zahlen kommen bald",
-        "body": "Wir bauen gerade eine Zählung ohne Cookies. Bis dahin zeigen wir keine erfundenen Zahlen."
+        "body": "Bis dahin zeigen wir hier keine erfundenen Zahlen."
       },
       "leadReal": "Wir bauen gerade eine Zählung ohne Cookies und ohne Einwilligungsbanner."
     },

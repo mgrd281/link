@@ -29,7 +29,8 @@ export function normalizeUrl(input: string): URL | null {
       return null;
     }
   }
-  if (/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(raw)) return new URL(`mailto:${raw}`);
+  // An address with a path ("tiktok.com/@name.x") is a link, never an e-mail.
+  if (!raw.includes("/") && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(raw)) return new URL(`mailto:${raw}`);
   if (/^\+?[\d\s()/-]{7,}$/.test(raw)) return new URL(`tel:${raw.replace(/[^\d+]/g, "")}`);
   try {
     const url = new URL(/^[a-z][a-z\d+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);

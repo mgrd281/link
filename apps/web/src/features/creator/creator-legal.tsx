@@ -31,9 +31,10 @@ export async function CreatorLegal({ legal, theme, locale }: { legal: Legal; the
         </h2>
         <address className="grid gap-1 not-italic">
           {lines.map((line, index) => (
-            // Addresses, e-mails and numbers keep their own direction inside an Arabic page.
-            <span key={index} dir="auto">
-              {line}
+            // Each line aligns with the page (right in Arabic); <bdi> keeps an address, e-mail or number in
+            // its own order inside it.
+            <span key={index}>
+              <bdi>{line}</bdi>
             </span>
           ))}
         </address>

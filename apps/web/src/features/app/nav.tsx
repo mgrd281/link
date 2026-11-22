@@ -19,6 +19,7 @@ import { jumpTo, rowAnchor, selectDesignTab } from "./jump";
 import { useNavPanel } from "./nav-state";
 import { DESIGN_TABS, designTabFrom, isReturnPath, NAV_ANCHORS, routeInfo, SECTION_HREF, SETTINGS_HREF, type DesignTab, type SectionKey } from "./routes";
 import { useSite } from "./site-context";
+import { statsSource } from "./stats";
 
 /*
  * The wide-screen navigation (lg and up, ADR 0063): a 64 px icon rail with the places, and beside it
@@ -248,6 +249,8 @@ function usePanelItems(section: SectionKey): PanelItem[] {
         ...DESIGN_TABS.map((tab): PanelItem => ({ kind: "tab", key: tab, label: t(`design.tabs.${tab}`), tab })),
       ];
     case "analytics":
+      // Real accounts see an empty state (no counting yet), so its parts have nothing to point at.
+      if (statsSource() === "none") return [];
       return [
         anchor(NAV_ANCHORS.statsViews, t("analytics.viewsPerDay")),
         anchor(NAV_ANCHORS.statsLinks, t("analytics.topLinks")),

@@ -43,6 +43,10 @@ describe("detectLink", () => {
 
   it("strips tracking parameters and upgrades to https", () => {
     expect(normalizeUrl("http://example.com/a?utm_source=ig&x=1&fbclid=2")?.toString()).toBe("https://example.com/a?x=1");
+    // A profile address with "@" and a dot in the handle is a link, not an e-mail.
+    expect(normalizeUrl("https://www.tiktok.com/@lio.vance")?.toString()).toBe("https://www.tiktok.com/@lio.vance");
+    expect(normalizeUrl("tiktok.com/@name.x")?.protocol).toBe("https:");
+    expect(normalizeUrl("hello@milaaurel.com")?.protocol).toBe("mailto:");
   });
 
   it("rejects things that are not links", () => {
