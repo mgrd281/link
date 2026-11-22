@@ -2,13 +2,20 @@ import { z } from "zod";
 
 import { deviceBody, fail, isBlocked, json, recordSignIn, sessionIdOf } from "@/features/account/server/auth";
 import { ensureFirstSite } from "@/features/account/server/first-site";
-import { settleReferral } from "@/features/account/server/referrals";
+import { cleanRef, settleReferral } from "@/features/account/server/referrals";
 import { normalizeEmail } from "@/features/account/username";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { anonServerSupabase, serviceSupabase } from "@/lib/supabase/server";
 import { requestPlace } from "@/lib/request-context";
 
-const body = z.object({ email: z.string().max(254), code: z.string().max(12) }).and(deviceBody);
+const body = z
+  .object({
+    email: z.string().max(254),
+    code: z.string().max(12),
+    // A sign-up from an invite link: the code this browser came with (checked against the stored one).
+    signUp: z.object({ ref: z.string().max(16).optional() }).optional(),
+  })
+  .and(deviceBody);
 
 /** After this many wrong codes within 15 minutes, an address waits (guessing). */
 const MAX_FAILURES = 8;
@@ -48,7 +55,7 @@ export async function POST(request: Request) {
   }
   await ensureFirstSite(service, data.user);
   await recordSignIn(service, { email, result: "success", place, device: input, sessionId: sessionIdOf(data.session.access_token) });
-  // A new account from an invite link: the checks need the sign-in just logged.
-  await settleReferral(service, data.user.id);
+  // A new account from an invite link: the checks need the sign-in just logged, and this browser's code.
+  await settleReferral(service, data.user.id, cleanRef(input.signUp?.ref));
   return json({ ok: true, session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } });
 }

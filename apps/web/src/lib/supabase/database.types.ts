@@ -187,6 +187,8 @@ export type Database = {
           id: string;
           invitee_id: string | null;
           inviter_id: string;
+          mailbox_hash: string | null;
+          network: unknown;
           reason: string | null;
           settled_at: string | null;
           signals: NonNullable<Json>;
@@ -199,6 +201,8 @@ export type Database = {
           id?: string;
           invitee_id?: string | null;
           inviter_id: string;
+          mailbox_hash?: string | null;
+          network?: unknown;
           reason?: string | null;
           settled_at?: string | null;
           signals?: NonNullable<Json>;
@@ -210,6 +214,8 @@ export type Database = {
           id?: string;
           invitee_id?: string | null;
           inviter_id?: string;
+          mailbox_hash?: string | null;
+          network?: unknown;
           reason?: string | null;
           settled_at?: string | null;
           signals?: NonNullable<Json>;
@@ -638,7 +644,7 @@ export type Database = {
       require_permission: { Args: { wanted: string }; Returns: undefined };
       same_network: { Args: { a: unknown; b: unknown }; Returns: boolean };
       settle_pending_referrals: { Args: Record<PropertyKey, never>; Returns: number };
-      settle_referral: { Args: { invitee: string }; Returns: string };
+      settle_referral: { Args: { invitee: string; ref?: string }; Returns: string };
       username_status: { Args: { candidate: string }; Returns: string };
     };
     Enums: {

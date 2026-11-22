@@ -368,24 +368,61 @@ test("a friend who signs up through an invite link in another browser counts; th
   const { data: referral } = await admin().from("referrals").select("id, inviter_id, state, reason, signals").eq("invitee_id", friendId).single();
   expect(referral).toMatchObject({ inviter_id: inviterId, state: "qualified", reason: null, signals: { sameNetwork: false, emailLink: false } });
 
-  // The inviter sees one counted friend, without their email.
+  // The inviter sees one counted friend, without their email: in the database's answer and on the Invite screen.
   const asInviter = asAccount(inviterSeen);
   const { data: overview, error } = await asInviter.rpc("my_referrals");
   expect(error).toBeNull();
   expect(overview).toMatchObject({ code, counted: 1, invited: [{ status: "counted", deleted: false, name: null }] });
   expect(JSON.stringify(overview)).not.toContain(friendEmail);
+  // Browser A is still in the welcome flow: the inviter skips it first.
+  if (page.url().includes("/app/welcome")) {
+    await page.getByRole("button", { name: "Skip for now" }).click();
+    await page.waitForURL("**/en/app");
+  }
+  const invited = page.locator("#main").getByRole("region", { name: "Von dir eingeladen" });
+  await page.goto("/de/app/invite");
+  await expect(invited.getByRole("listitem")).toHaveCount(1);
+  await expect(invited.getByText("Zählt", { exact: true })).toBeVisible();
+  await expect(invited).not.toContainText(friendEmail);
 
-  // The owner (made by the console test above) removes it as fraud; the inviter's count drops.
-  // The console screen for this comes with the team-console package; here the same database call.
+  // The owner (made by the console test above) removes it as fraud in the customer's Invites tab.
   const ownerPage = await (await browser.newContext()).newPage();
-  const ownerSeen = databaseCredentials(ownerPage);
   await logInEn(ownerPage, ownerEmail);
-  await expect.poll(() => ownerSeen.token).not.toBe("");
-  const { error: removeError } = await asAccount(ownerSeen).rpc("admin_set_referral", { referral: referral?.id ?? "", next_state: "revoked", why: "e2e" });
-  expect(removeError).toBeNull();
+  await ownerPage.goto("/en/admin/customers");
+  await ownerPage.getByLabel("Search").fill(inviterName);
+  await ownerPage.locator("main a[href*='/admin/customers/']").locator("visible=true").first().click();
+  await ownerPage.getByRole("radio", { name: "Invites" }).click();
+  const row = ownerPage.locator("#main").getByRole("row").filter({ hasText: "Counts" });
+  await expect(row).toHaveCount(1);
+  await row.getByRole("button", { name: "Remove", exact: true }).click();
+  await ownerPage.getByRole("alertdialog").getByRole("button", { name: "Remove", exact: true }).click();
+  await expect(ownerPage.locator("#main").getByRole("row").filter({ hasText: "Removed" })).toHaveCount(1);
   await ownerPage.context().close();
+
+  // The inviter's count drops, on the screen and in the database; the activity log names the owner.
+  await page.reload();
+  await expect(invited.getByText("Zählt nicht", { exact: true })).toBeVisible();
+  await expect(invited.getByText("Zählt", { exact: true })).toHaveCount(0);
   const { data: after } = await asInviter.rpc("my_referrals");
   expect(after).toMatchObject({ counted: 0, invited: [{ status: "notCounted" }] });
   const { data: logged } = await admin().from("audit_log").select("action, actor").eq("target_id", inviterId).eq("action", "referral.revoke");
   expect(logged).toEqual([{ action: "referral.revoke", actor: ownerEmail }]);
+});
+
+test("a sign-up someone else asked for with their invite code doesn't count when the owner of the address signs in", async ({ page }) => {
+  const attackerId = await account(`att-${stamp}@example.com`, `att-${stamp}`);
+  const code = (await admin().from("profiles").select("referral_code").eq("id", attackerId).single()).data?.referral_code ?? "";
+  const victimEmail = `vic-${stamp}@example.com`;
+  // Someone asks for a sign-up code for this address with their own invite code (the account is made unconfirmed).
+  await clearMail(page, victimEmail);
+  const asked = await page.request.post("/api/auth/code", { data: { email: victimEmail, locale: "en", signUp: { username: `vic-${stamp}`, ref: code } } });
+  expect(await asked.json()).toEqual({ ok: true, pending: "code" });
+  const victimId = (await profileOf(victimEmail))?.id ?? "";
+  expect((await admin().from("referrals").select("state").eq("invitee_id", victimId).single()).data?.state).toBe("pending");
+
+  // The owner of the address signs in from the sign-in page, without that invite link: the invite is dropped.
+  await logInEn(page, victimEmail);
+  await expect.poll(async () => (await admin().from("referrals").select("id").eq("invitee_id", victimId)).data?.length).toBe(0);
+  const { data: attackerLog } = await admin().from("audit_log").select("action").eq("target_id", attackerId);
+  expect(attackerLog ?? []).toEqual([]);
 });

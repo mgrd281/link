@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { parseUserAgent } from "@/features/account/device";
 import { recordSignIn, safePath, sessionIdOf } from "@/features/account/server/auth";
 import { ensureFirstSite } from "@/features/account/server/first-site";
-import { settleReferral } from "@/features/account/server/referrals";
+import { cleanRef, settleReferral } from "@/features/account/server/referrals";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { cookieServerSupabase, serviceSupabase } from "@/lib/supabase/server";
 import { requestPlace } from "@/lib/request-context";
@@ -43,8 +43,9 @@ export async function GET(request: NextRequest) {
       device: { device: parseUserAgent(request.headers.get("user-agent") ?? ""), deviceId: "dev_email_link" },
       sessionId: data.session ? sessionIdOf(data.session.access_token) : null,
     });
-    // A new account from an invite link, confirmed by the emailed link instead of the code.
-    await settleReferral(service, data.user.id);
+    // A new account from an invite link, confirmed by the emailed link instead of the code: the link
+    // carries the code of the sign-up that asked for it (`ref`, see /api/auth/code).
+    await settleReferral(service, data.user.id, cleanRef(url.searchParams.get("ref")));
   }
   return back(safePath(url.searchParams.get("next"), `/${locale}/app`));
 }

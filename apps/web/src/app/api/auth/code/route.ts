@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 import { deviceBody, fail, isBlocked, json } from "@/features/account/server/auth";
+import { cleanRef } from "@/features/account/server/referrals";
 import { startSchema } from "@/features/account/server/first-site";
 import { localUsernameStatus, normalizeEmail, normalizeUsername } from "@/features/account/username";
 import { findPrepared } from "@/features/previews/claim";
-import { isReferralCode } from "@/features/referrals/rules";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { anonServerSupabase, serviceSupabase } from "@/lib/supabase/server";
 import { requestPlace } from "@/lib/request-context";
@@ -53,13 +53,14 @@ export async function POST(request: Request) {
 
     // An invite link's code: a malformed one is dropped and never fails the sign-up. The database
     // attributes the account only if the code belongs to someone (handle_new_user).
-    const ref = input.signUp.ref && isReferralCode(input.signUp.ref.toLowerCase()) ? input.signUp.ref.toLowerCase() : undefined;
+    const ref = cleanRef(input.signUp.ref);
     const { error } = await auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: true,
         data: { username, locale: input.locale, invite: input.signUp.invite, start: input.signUp.start, ref },
-        emailRedirectTo: `${origin}/api/auth/confirm?next=/${input.locale}/app/welcome`,
+        // The emailed link carries the code too: the invite settles only where it was asked for.
+        emailRedirectTo: `${origin}/api/auth/confirm?next=/${input.locale}/app/welcome${ref ? `&ref=${ref}` : ""}`,
       },
     });
     if (error) {

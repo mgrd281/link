@@ -80,8 +80,8 @@ function WithName({ message, name }: { message: (slot: string) => string; name: 
 
 /**
  * Who invited this visitor (an invite link, `?ref=<code>`): the inviter's public page name, `name: null`
- * when their page isn't public yet, `null` for a code nobody has (then nothing shows and nothing is
- * sent). `undefined` while the answer is on its way.
+ * when their page isn't public yet, `null` for a code nobody has (then nothing shows). `undefined`
+ * while the answer is on its way. Only for the line: the code itself is sent either way.
  */
 function useInviter(ref: string): { name: string | null } | null | undefined {
   const [answer, setAnswer] = useState<{ ref: string; inviter: { name: string | null } | null } | null>(null);
@@ -188,8 +188,9 @@ export function SignupForm() {
         invite: invite || undefined,
         // From the playground the whole look waits in the draft (page color, type, buttons); the address has its template and accent.
         start: kind ? { kind, theme: look ? look.theme : tried ? (readTryDraft()?.theme ?? tried) : STARTERS[kind].theme, displayName: displayName || undefined } : undefined,
-        // Only a code that belongs to someone; an unknown one is never sent.
-        ref: inviter ? ref : undefined,
+        // Any well-formed code, even while the inviter lookup is on its way or failed: the server keeps
+        // it only if it belongs to someone. The lookup only decides the "invited by" line.
+        ref: isReferralCode(ref) ? ref : undefined,
       },
     };
     const result = await accountStore.requestCode(codeRequest);

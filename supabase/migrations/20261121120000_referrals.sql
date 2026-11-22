@@ -20,18 +20,25 @@ $$;
 
 -- ── Codes ───────────────────────────────────────────────────────────────────────────────────
 -- 8 symbols without 0/1/i/l/o, made once by the database; never chosen or changed by the customer.
+-- Uniform: a byte of 248 or more (the largest multiple of 31 under 256) is drawn again, as newReferralCode() does.
 create function public.new_referral_code() returns text
 language plpgsql volatile set search_path = '' as $$
 declare
   alphabet constant text := '23456789abcdefghjkmnpqrstuvwxyz';
   bytes bytea;
+  drawn integer;
   candidate text;
 begin
   loop
-    bytes := extensions.gen_random_bytes(8);
     candidate := '';
-    for i in 0..7 loop
-      candidate := candidate || substr(alphabet, 1 + get_byte(bytes, i) % 31, 1);
+    while char_length(candidate) < 8 loop
+      bytes := extensions.gen_random_bytes(16);
+      for i in 0..15 loop
+        drawn := get_byte(bytes, i);
+        continue when drawn >= 248;
+        candidate := candidate || substr(alphabet, 1 + drawn % 31, 1);
+        exit when char_length(candidate) = 8;
+      end loop;
     end loop;
     exit when not exists (select 1 from public.profiles where referral_code = candidate);
   end loop;
@@ -106,9 +113,16 @@ create table public.referrals (
   invitee_id uuid unique references public.profiles (id) on delete set null,
   state public.referral_state not null default 'pending',
   reason text constraint reason_known check (reason is null or reason in (
-    'self', 'sameDevice', 'disposable', 'inviteeSuspended', 'noSignals', 'sameNetwork', 'cluster', 'team')),
+    'self', 'repeat', 'sameDevice', 'disposable', 'inviteeSuspended', 'noSignals', 'sameNetwork', 'cluster', 'team')),
   -- What the checks saw, as yes/no only (no IPs, no device IDs): sameNetwork, sameSignature, cluster, disposable, emailLink.
   signals jsonb not null default '{}'::jsonb,
+  -- Set when settled, so the checks still work after the invited account is deleted (its sign-ins go with it):
+  -- the mailbox as sha256 hex of email_identity() (never the address), kept as long as the row, so one
+  -- mailbox counts once per inviter ('repeat');
+  mailbox_hash text constraint mailbox_hash_format check (mailbox_hash ~ '^[0-9a-f]{64}$'),
+  -- and the opening sign-in's network (the IPv4 address or the IPv6 /64, as sign_ins keeps it), for the
+  -- cluster check; cleared by the hourly job once older than cluster_days.
+  network inet,
   created_at timestamptz not null default now(),
   settled_at timestamptz,
   decided_by uuid references auth.users (id) on delete set null,
@@ -121,11 +135,12 @@ alter table public.referrals enable row level security;
 -- No policies: functions only. Inviters must not see invitee IDs, reasons or signals.
 revoke all on public.referrals from authenticated, anon;
 
--- An invite that never counted is forgotten with the invited account; a counted one keeps the count.
+-- An invite that never counted is forgotten with the invited account; a counted one keeps the count, but
+-- only if the account was active: a suspended one wasn't counting, and deleting it must not count it again.
 create function public.referrals_forget() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
-  delete from public.referrals where invitee_id = old.id and state <> 'qualified';
+  delete from public.referrals where invitee_id = old.id and (state <> 'qualified' or old.status <> 'active');
   return old;
 end;
 $$;
@@ -152,6 +167,9 @@ create policy "owners read their rewards" on public.rewards
 create policy "team reads rewards" on public.rewards
   for select to authenticated using (public.has_permission('customers.view'));
 revoke insert, update, delete on public.rewards from authenticated, anon;
+-- Who removed a reward and why is the team's (admin_customer_referrals); customers read the rest.
+revoke select on public.rewards from authenticated, anon;
+grant select (profile_id, kind, source, granted_at, revoked_at) on public.rewards to authenticated;
 
 -- ── Verification requests (functions only) ──────────────────────────────────────────────────
 -- No "in review" claim step: the team is small (ADR 0064, what is not built).
@@ -256,16 +274,22 @@ $$;
 -- ── Settling an invite (server only) ────────────────────────────────────────────────────────
 /**
  * Decides an invite once the invited person has confirmed their email. Our server calls it right
- * after writing the sign-in log (/api/auth/verify, /api/auth/confirm); the hourly job settles what is
- * left. Returns the new state, 'pending' (not confirmed yet) or 'none'.
+ * after writing the sign-in log (/api/auth/verify, /api/auth/confirm), with the invite code the
+ * confirming browser carries (`ref`): the code is stored when the account is made, by whoever asked
+ * for it first, so only the browser that confirms the mailbox may keep it. Without the same code the
+ * invite is dropped. Returns the new state, 'pending' (not confirmed yet), 'dropped' or 'none'.
  */
-create function public.settle_referral(invitee uuid) returns text
+create function public.settle_referral(invitee uuid, ref text default null) returns text
 language plpgsql security definer set search_path = '' as $$
 declare
   found_referral public.referrals;
   invitee_email text;
   inviter_email text;
+  inviter_code text;
+  mailbox text;
   opening public.sign_ins;
+  opening_network inet;
+  seen_before boolean;
   same_device boolean := false;
   same_net boolean := false;
   same_signature boolean := false;
@@ -283,26 +307,36 @@ begin
   if invitee_email is null then
     return 'pending';
   end if;
-  select u.email into inviter_email from auth.users u where u.id = found_referral.inviter_id;
+  select u.email, p.referral_code into inviter_email, inviter_code
+  from auth.users u join public.profiles p on p.id = u.id where u.id = found_referral.inviter_id;
+  if lower(trim(coalesce(settle_referral.ref, ''))) is distinct from inviter_code then
+    -- Confirmed without the link's code (another browser, the sign-in form, someone else's sign-up).
+    delete from public.referrals where id = found_referral.id;
+    return 'dropped';
+  end if;
+  mailbox := encode(extensions.digest(public.email_identity(invitee_email), 'sha256'), 'hex');
+  seen_before := exists (
+    select 1 from public.referrals x
+    where x.inviter_id = found_referral.inviter_id and x.id <> found_referral.id and x.mailbox_hash = mailbox);
 
   select * into opening from public.sign_ins s
   where s.profile_id = found_referral.invitee_id and s.result = 'success' order by s.at limit 1;
   if opening.id is not null then
+    -- One household: the IPv4 address or the IPv6 /64 (what same_network() compares).
+    opening_network := case family(opening.ip) when 4 then set_masklen(opening.ip, 32) else network(set_masklen(opening.ip, 64)) end;
     same_device := opening.device_id not in ('dev_unknown', 'dev_email_link') and exists (
       select 1 from public.sign_ins s where s.profile_id = found_referral.inviter_id and s.device_id = opening.device_id);
     same_net := exists (
       select 1 from public.sign_ins s where s.profile_id = found_referral.inviter_id and public.same_network(opening.ip, s.ip));
     same_signature := opening.signature is not null and exists (
       select 1 from public.sign_ins s where s.profile_id = found_referral.inviter_id and s.signature = opening.signature);
+    -- From the rows, not the sign-in log: a deleted invitee's sign-ins are gone, its network is not.
     in_cluster := (
       select count(*) from public.referrals x
-      join lateral (
-        select s.ip from public.sign_ins s where s.profile_id = x.invitee_id and s.result = 'success' order by s.at limit 1
-      ) first_ip on true
       where x.inviter_id = found_referral.inviter_id and x.id <> found_referral.id
         and x.state in ('qualified', 'held')
         and x.settled_at > now() - make_interval(days => public.referral_rule('cluster_days'))
-        and public.same_network(opening.ip, first_ip.ip)
+        and public.same_network(opening.ip, x.network)
     ) >= public.referral_rule('cluster_size') - 1;
   end if;
   throwaway := exists (
@@ -311,6 +345,7 @@ begin
        or split_part(lower(invitee_email), '@', 2) like '%.' || d.domain::text);
 
   if public.email_identity(invitee_email) = public.email_identity(inviter_email) then verdict := 'rejected'; why := 'self';
+  elsif seen_before then verdict := 'rejected'; why := 'repeat';
   elsif same_device then verdict := 'rejected'; why := 'sameDevice';
   elsif throwaway then verdict := 'rejected'; why := 'disposable';
   elsif not public.is_active(found_referral.invitee_id) then verdict := 'rejected'; why := 'inviteeSuspended';
@@ -321,7 +356,7 @@ begin
   end if;
 
   update public.referrals set
-    state = verdict, reason = why, settled_at = now(),
+    state = verdict, reason = why, settled_at = now(), mailbox_hash = mailbox, network = opening_network,
     signals = jsonb_build_object('sameNetwork', same_net, 'sameSignature', same_signature, 'cluster', in_cluster,
       'disposable', throwaway, 'emailLink', coalesce(opening.device_id = 'dev_email_link', false))
   where id = found_referral.id;
@@ -332,7 +367,11 @@ begin
 end;
 $$;
 
-/** Hourly: invites the routes missed, and rewards waiting on an inviter who is active again. */
+/**
+ * Hourly: drops invites confirmed without the routes settling them (no browser showed the link's code,
+ * the same rule as settle_referral), clears networks older than cluster_days, and gives rewards waiting
+ * on an inviter who is active again. Returns how many invites it dropped.
+ */
 create function public.settle_pending_referrals() returns integer
 language plpgsql security definer set search_path = '' as $$
 declare
@@ -346,6 +385,8 @@ begin
     perform public.settle_referral(waiting);
     settled := settled + 1;
   end loop;
+  update public.referrals set network = null
+  where network is not null and settled_at < now() - make_interval(days => public.referral_rule('cluster_days'));
   -- Only inviters who could be owed something: active, with a counted invite, and missing a reward.
   for waiting in
     select distinct r.inviter_id from public.referrals r
@@ -657,9 +698,9 @@ $$;
 -- settle_referral by our server.
 revoke execute on function public.new_referral_code(), public.email_identity(text), public.same_network(inet, inet),
   public.referrals_forget(), public.referral_count(uuid), public.grant_referral_rewards(uuid),
-  public.settle_referral(uuid), public.settle_pending_referrals()
+  public.settle_referral(uuid, text), public.settle_pending_referrals()
   from public, anon, authenticated;
-grant execute on function public.settle_referral(uuid) to service_role;
+grant execute on function public.settle_referral(uuid, text) to service_role;
 revoke execute on function public.my_referrals(), public.my_verification_requests(), public.request_verification(text[], text),
   public.admin_customer_referrals(uuid), public.admin_referral_queue(),
   public.admin_set_referral(uuid, public.referral_state, text),
