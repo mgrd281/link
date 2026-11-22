@@ -3,11 +3,12 @@
 import { Button, Icon } from "@linkyo/ui";
 import { CircleAlert, CircleCheck, Import } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import type { FoundLink } from "./import-links";
 
-type ImportError = "unsupported" | "notFound" | "empty" | "failed";
+/** `paste`: a service that forbids reading (Linktree); `robots`: the page asks programs not to read it. */
+type ImportError = "unsupported" | "notFound" | "empty" | "failed" | "paste" | "robots";
 type State = { kind: "idle" } | { kind: "busy" } | { kind: "done"; profiles: number; links: number } | { kind: "error"; error: ImportError };
 
 /** Reads another link-in-bio page through our server and hands its links over. */
@@ -37,12 +38,22 @@ export function useImport({ onLinks }: { onLinks: (links: FoundLink[]) => { prof
 
 /**
  * "Coming from Linktree & co.?": one paste brings the profiles and links over; they land in the
- * fields below, where they can be checked before the page is made.
+ * fields below, where they can be checked before the page is made. A Linktree address is never read
+ * (Linktree forbids it): the box says so and `onPasteOnly` lets the screen take the person to the
+ * field where they paste their links.
  */
-export function ImportBox({ importer }: { importer: ReturnType<typeof useImport> }) {
+export function ImportBox({ importer, onPasteOnly }: { importer: ReturnType<typeof useImport>; onPasteOnly?: () => void }) {
   const t = useTranslations("app.welcome.import");
   const id = useId();
   const { url, setUrl, state, run } = importer;
+  const pasteOnly = useRef(onPasteOnly);
+  useEffect(() => {
+    pasteOnly.current = onPasteOnly;
+  });
+  // Once per answer (a new state object), not on every render of the screen around it.
+  useEffect(() => {
+    if (state.kind === "error" && state.error === "paste") pasteOnly.current?.();
+  }, [state]);
   return (
     <section aria-labelledby={`${id}-title`} className="grid grid-cols-1 gap-3 rounded-xl bg-canvas-muted p-4">
       <div className="flex items-start gap-3">
@@ -78,7 +89,7 @@ export function ImportBox({ importer }: { importer: ReturnType<typeof useImport>
           spellCheck={false}
           placeholder={t("placeholder")}
           aria-describedby={`${id}-status`}
-          className="h-control-lg min-w-0 flex-1 rounded-md border border-line-input bg-surface-elevated px-3 text-body outline-none placeholder:text-fg-tertiary focus-visible:border-focus focus-visible:focus-ring"
+          className="h-control-lg min-w-0 rounded-md border border-line-input bg-surface-elevated px-3 text-body outline-none placeholder:text-fg-tertiary focus-visible:border-focus focus-visible:focus-ring sm:flex-1"
         />
         <Button type="button" variant="primary" size="lg" loading={state.kind === "busy"} onClick={() => void run()}>
           {t("button")}

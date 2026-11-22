@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { extractLinks, importTarget, sortImported } from "./import-links";
+import { POST } from "@/app/api/import-links/route";
+import { safeFetch } from "@/features/ai/server/safe-fetch";
+
+import { extractLinks, importTarget, isImportHost, pasteOnlyHost, sortImported } from "./import-links";
+
+vi.mock("@/features/ai/server/safe-fetch", () => ({ safeFetch: vi.fn() }));
 
 const page = new URL("https://linktr.ee/mila");
 
@@ -9,8 +14,9 @@ const nextData = (pageProps: unknown) =>
 
 describe("importTarget", () => {
   it("takes link-in-bio pages with a name, with or without https", () => {
-    expect(importTarget("linktr.ee/mila")?.href).toBe("https://linktr.ee/mila");
-    expect(importTarget("https://www.linktr.ee/mila")?.href).toBe("https://linktr.ee/mila");
+    expect(importTarget("linktr.ee/mila")).toBeNull();
+    expect(importTarget("https://www.linktr.ee/mila")).toBeNull();
+    expect(pasteOnlyHost("linktr.ee/mila")).toBe("linktr.ee");
     expect(importTarget("http://beacons.ai/mila")?.href).toBe("https://beacons.ai/mila");
     expect(importTarget("mila.carrd.co")?.href).toBe("https://mila.carrd.co/");
   });
@@ -93,5 +99,44 @@ describe("sortImported", () => {
         "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC",
       ],
     });
+  });
+});
+
+describe("/api/import-links", () => {
+  const ask = (url: string) => POST(new Request("http://localhost/api/import-links", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url }) }));
+  const fetchMock = vi.mocked(safeFetch);
+
+  afterEach(() => {
+    fetchMock.mockReset();
+  });
+
+  it("never reads Linktree: it asks for the links to be pasted", async () => {
+    expect(await (await ask("https://linktr.ee/mila")).json()).toEqual({ ok: false, error: "paste" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("reads through the safe fetcher, only import hosts, honouring robots.txt", async () => {
+    fetchMock.mockResolvedValue({ ok: false, reason: "robots" });
+    expect(await (await ask("beacons.ai/mila")).json()).toEqual({ ok: false, error: "robots" });
+    expect(fetchMock).toHaveBeenCalledWith("https://beacons.ai/mila", { accept: "text/html", allowHost: isImportHost, robots: true });
+  });
+
+  it("reads links against the final address after redirects", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      url: "https://bio.link/mila",
+      status: 200,
+      contentType: "text/html",
+      body: '<a href="https://bio.link/other">Another bio.link page</a><a href="https://shop.example.com/">Shop</a>',
+    });
+    expect(await (await ask("beacons.ai/mila")).json()).toEqual({ ok: true, links: [{ url: "https://shop.example.com/", title: "Shop" }] });
+  });
+
+  it("answers calmly when the page is too large, missing or not a link-in-bio service", async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, reason: "tooLarge", status: 200 });
+    expect(await (await ask("beacons.ai/mila")).json()).toEqual({ ok: false, error: "failed" });
+    fetchMock.mockResolvedValueOnce({ ok: false, reason: "notFound", status: 404 });
+    expect(await (await ask("beacons.ai/mila")).json()).toEqual({ ok: false, error: "notFound" });
+    expect(await (await ask("https://example.com/mila")).json()).toEqual({ ok: false, error: "unsupported" });
   });
 });
