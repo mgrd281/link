@@ -25,8 +25,8 @@ describe("live payments gate", () => {
     expect(() => assertLiveReady({ payments: "live", legalReady: true, reviewed: "1" })).not.toThrow();
   });
 
-  it("today's company data is still placeholders", () => {
-    expect(legalReady).toBe(false);
-    expect(Object.values(COMPANY).every((value) => value.startsWith("[") && value.endsWith("]"))).toBe(true);
+  it("the company data is complete: no placeholder is left", () => {
+    expect(legalReady).toBe(true);
+    expect(Object.values(COMPANY).some((value) => value.includes("["))).toBe(false);
   });
 });

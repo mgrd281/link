@@ -7,13 +7,13 @@ import { paymentsMode } from "../../lib/flags";
  * payments build fails (live-guard.ts).
  */
 export const COMPANY = {
-  name: "[Name oder Firma]",
-  representative: "[Vertretungsberechtigte Person]",
-  address: "[Straße Nr., PLZ Ort]",
-  email: "[E-Mail-Adresse]",
-  phone: "[Telefonnummer]",
-  register: "[Registergericht und Nummer, falls vorhanden]",
-  vatId: "[USt-IdNr., falls vorhanden]",
+  name: "Karina Khrystych",
+  representative: "Karina Khrystych (Inhaberin)",
+  address: "Havighorster Redder 51, 22115 Hamburg, Deutschland",
+  email: "mgrdegh@gmx.de",
+  phone: "+49 163 7072446",
+  register: "Kein Eintrag im Handelsregister; angemeldetes Gewerbe in Hamburg.",
+  vatId: "DE452578048",
 };
 
 /** True once no placeholder is left. */
