@@ -55,8 +55,8 @@ export function sixDigits(): string {
 
 /**
  * One invite in the demo (ADR 0064). Entering the on-screen code is the demo's email confirmation, so
- * an invite is settled at sign-up: it counts, or it is a self-invite. The device and network checks
- * can't apply when every demo account lives in one browser.
+ * an invite is settled at sign-up: it counts, or it is a self-invite or a mailbox this inviter already
+ * had. The device and network checks can't apply when every demo account lives in one browser.
  */
 interface DemoReferral {
   id: string;
@@ -64,7 +64,9 @@ interface DemoReferral {
   /** Null: the invited account was deleted after it counted. */
   inviteeId: string | null;
   state: "qualified" | "rejected" | "revoked";
-  reason?: "self" | "team" | undefined;
+  reason?: "self" | "repeat" | "team" | undefined;
+  /** The invited mailbox (emailIdentity), kept after the account is deleted, as SQL keeps its hash. */
+  mailbox?: string | undefined;
   at: string;
 }
 
@@ -302,7 +304,9 @@ export class LocalAccountStore implements AccountStore {
 
   /**
    * A new account that came through someone's invite link (`ref`): it counts at once (the code was
-   * entered), unless it is the inviter's own mailbox. Rewards reached are given right away.
+   * entered), unless it is the inviter's own mailbox, or a mailbox that already signed up through this
+   * inviter's link (also one whose account was deleted since: SQL's 'repeat'). Rewards reached are
+   * given right away.
    */
   private attribute(db: Db, account: StoredAccount, ref: string | undefined): Db {
     const code = ref?.trim().toLowerCase() ?? "";
@@ -310,18 +314,27 @@ export class LocalAccountStore implements AccountStore {
     const inviterId = Object.entries(db.referralCodes ?? {}).find(([id, owned]) => owned === code && id !== account.id)?.[0];
     const inviter = inviterId ? db.accounts.find((candidate) => candidate.id === inviterId) : undefined;
     if (!inviter) return db;
-    const self = emailIdentity(inviter.email) === emailIdentity(account.email);
+    const mailbox = emailIdentity(account.email);
+    // Invites from before the mailbox was kept: the invited account's address, while it exists.
+    const mailboxOf = (entry: DemoReferral) => entry.mailbox ?? emailIdentity(db.accounts.find((candidate) => candidate.id === entry.inviteeId)?.email ?? "");
+    const reason =
+      emailIdentity(inviter.email) === mailbox
+        ? ("self" as const)
+        : (db.referrals ?? []).some((entry) => entry.inviterId === inviter.id && mailboxOf(entry) === mailbox)
+          ? ("repeat" as const)
+          : null;
     const at = now();
     const referral: DemoReferral = {
       id: crypto.randomUUID(),
       inviterId: inviter.id,
       inviteeId: account.id,
-      state: self ? "rejected" : "qualified",
-      ...(self ? { reason: "self" as const } : {}),
+      state: reason ? "rejected" : "qualified",
+      ...(reason ? { reason } : {}),
+      mailbox,
       at,
     };
     const next = { ...db, referrals: [...(db.referrals ?? []), referral] };
-    return self ? next : withRewards(next, inviter.id, at);
+    return reason ? next : withRewards(next, inviter.id, at);
   }
 
   logOut(): void {
@@ -599,11 +612,14 @@ export class LocalAccountStore implements AccountStore {
     };
   }
 
-  /** Approve (the page gets the blue check) or decline (with a reason) an open request. */
+  /**
+   * Approve (the page gets the blue check) or decline (with a reason) an open request. Nobody reviews
+   * their own: the demo's signed-in account is the reviewer (SQL: linkyo:notYourself).
+   */
   teamReview(requestId: string, decision: "approve" | "decline", reason?: DeclineReason): boolean {
     const db = this.db();
     const owner = Object.entries(db.verifications ?? {}).find(([, requests]) => requests.some((request) => request.id === requestId && request.state === "requested"))?.[0];
-    if (!owner) return false;
+    if (!owner || owner === this.currentId(db)) return false;
     if (decision === "decline" && !(reason && DECLINE_REASONS.includes(reason))) return false;
     const decidedAt = now();
     const requests = (db.verifications?.[owner] ?? []).map((request) =>
@@ -620,7 +636,10 @@ export class LocalAccountStore implements AccountStore {
     const db = this.db();
     const found = (db.referrals ?? []).find((entry) => entry.id === id);
     if (!found) return null;
-    const changed: DemoReferral = next === "revoked" ? { ...found, state: "revoked", reason: "team" } : { id: found.id, inviterId: found.inviterId, inviteeId: found.inviteeId, state: "qualified", at: found.at };
+    const changed: DemoReferral =
+      next === "revoked"
+        ? { ...found, state: "revoked", reason: "team" }
+        : { id: found.id, inviterId: found.inviterId, inviteeId: found.inviteeId, state: "qualified", mailbox: found.mailbox, at: found.at };
     const updated = { ...db, referrals: (db.referrals ?? []).map((entry) => (entry.id === id ? changed : entry)) };
     return this.write(next === "qualified" ? withRewards(updated, found.inviterId, now()) : updated).ok ? found.state : null;
   }

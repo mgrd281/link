@@ -286,8 +286,11 @@ describe("LocalAccountStore: the invite program (demo)", () => {
     expect(await store.requestVerification({ links })).toEqual({ ok: false, error: "alreadyOpen" });
     const request = store.teamQueue().verifications[0];
     expect(request).toMatchObject({ customerId: ana, username: "ana-lund", links, note: "My only account", state: "requested", invites: 3 });
+    // Someone else on the team decides (here a friend's account stands in for a team member).
+    await signInAs(store, "f1@example.com");
     expect(store.teamReview(request?.id ?? "", "decline")).toBe(false);
     expect(store.teamReview(request?.id ?? "", "decline", "identityUnclear")).toBe(true);
+    await signInAs(store, "ana@example.com");
     expect(await store.requestVerification({ links })).toEqual({ ok: false, error: "tooSoon" });
     const verification = (await store.referrals())?.verification;
     expect(verification).toMatchObject({ state: "declined", declineReason: "identityUnclear" });
@@ -301,12 +304,56 @@ describe("LocalAccountStore: the invite program (demo)", () => {
     await signInAs(store, "ana@example.com");
     expect(await store.requestVerification({ links: ["https://instagram.com/ana"] })).toEqual({ ok: true });
     const request = store.teamQueue().verifications[0];
+    await signInAs(store, "f1@example.com");
     expect(store.teamReview(request?.id ?? "", "approve")).toBe(true);
+    await signInAs(store, "ana@example.com");
     const snapshot = store.getSnapshot();
     expect(snapshot.status === "signedIn" && snapshot.site.page.profile.verified).toBe(true);
     expect(store.teamReview(request?.id ?? "", "approve")).toBe(false);
     expect(await store.requestVerification({ links: ["https://instagram.com/ana"] })).toEqual({ ok: false, error: "alreadyVerified" });
     expect(store.teamCustomer(ana)?.verifications).toEqual([expect.objectContaining({ state: "approved" })]);
+  });
+
+  it("never lets the signed-in account review its own request (as SQL's linkyo:notYourself)", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    for (let n = 1; n <= 3; n += 1) await join(store, `f${String(n)}@example.com`, `friend-${String(n)}`, stored(storage).referralCodes?.[ana]);
+    await signInAs(store, "ana@example.com");
+    expect(await store.requestVerification({ links: ["https://instagram.com/ana"] })).toEqual({ ok: true });
+    const request = store.teamQueue().verifications[0]?.id ?? "";
+    expect(store.teamReview(request, "approve")).toBe(false);
+    expect(store.teamReview(request, "decline", "other")).toBe(false);
+    expect(store.teamQueue().verifications).toEqual([expect.objectContaining({ id: request, state: "requested" })]);
+    const snapshot = store.getSnapshot();
+    expect(snapshot.status === "signedIn" && snapshot.site.page.profile.verified).toBe(false);
+    // Another account can.
+    await signInAs(store, "f1@example.com");
+    expect(store.teamReview(request, "approve")).toBe(true);
+  });
+
+  it("counts one mailbox once per inviter, also after its account was deleted (repeat)", async () => {
+    const { storage, store } = setUp();
+    const ana = await join(store, "ana@example.com", "ana-lund");
+    const code = stored(storage).referralCodes?.[ana];
+    await join(store, "Bea.Friend@gmail.com", "bea-one", code);
+    expect(await store.deleteAccount()).toEqual({ ok: true });
+    // The same Gmail mailbox (dots and a +tag don't make it another one), through the same link.
+    await join(store, "beafriend+again@googlemail.com", "bea-two", code);
+    expect(stored(storage).referrals).toEqual([
+      expect.objectContaining({ inviteeId: null, state: "qualified" }),
+      expect.objectContaining({ inviterId: ana, state: "rejected", reason: "repeat" }),
+    ]);
+    expect(store.teamCustomer(ana)?.counted).toBe(1);
+    expect(store.teamCustomer(ana)?.invited).toEqual(
+      expect.arrayContaining([expect.objectContaining({ state: "rejected", reason: "repeat" }), expect.objectContaining({ state: "qualified", inviteeId: null })]),
+    );
+    // While an earlier account of that mailbox still exists, another alias is a repeat as well.
+    await join(store, "bea.friend+third@gmail.com", "bea-three", code);
+    expect(store.teamCustomer(ana)?.counted).toBe(1);
+    // Per inviter: someone else's link still counts that mailbox.
+    const cid = await join(store, "cid@example.com", "cid-lund");
+    await join(store, "b.e.a.friend@gmail.com", "bea-four", stored(storage).referralCodes?.[cid]);
+    expect(store.teamCustomer(cid)).toMatchObject({ counted: 1, invited: [{ state: "qualified", reason: null }] });
   });
 
   it("lets the demo team remove and restore an invite or a reward; a removed reward is not given again", async () => {
