@@ -91,6 +91,8 @@ describe("the database mirrors the rules", () => {
   it("makes codes from the same alphabet and checks them with the same pattern", () => {
     expect(sqlBody("new_referral_code()")).toContain(`alphabet constant text := '${REFERRAL_ALPHABET}'`);
     expect(sqlBody("new_referral_code()")).toContain(`% ${String(REFERRAL_ALPHABET.length)}, 1)`);
+    // Unbiased as newReferralCode(): bytes at or above the largest multiple of 31 under 256 are drawn again.
+    expect(sqlBody("new_referral_code()")).toContain(`continue when drawn >= ${String(Math.floor(256 / REFERRAL_ALPHABET.length) * REFERRAL_ALPHABET.length)};`);
     // The column constraint and the sign-up trigger.
     const patterns = [...MIGRATION.matchAll(/~ '(\^\[[^']+\]\{8\}\$)'/g)].map((match) => match[1]);
     expect(patterns).toHaveLength(2);
