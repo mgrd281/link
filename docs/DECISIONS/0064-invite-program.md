@@ -50,11 +50,22 @@ or the serving origin, so links work on today's deployment and switch with one v
 **Sign-up.** The sign-up keeps exactly one field ([ADR 0039](0039-signup-one-field.md)). For a
 known code it shows one quiet line, "Invited by <name>" (the inviter's page name, only once their
 page is set up) or "You were invited to Linkyo", and under the terms what the inviter will see
-("your page name, never your email"). An unknown code shows nothing and is not sent.
-`/api/auth/code` drops a malformed `ref` silently; `handle_new_user` (replaced in this migration
+("your page name, never your email"). An unknown code shows nothing. Any well-formed code is sent,
+even while the lookup is on its way or after it failed (otherwise a quick tap on a slow phone lost
+the attribution for good); the database ignores a code nobody has.
+`/api/auth/code` drops a malformed `ref` silently and puts the code in the user metadata and in the
+emailed link (`/api/auth/confirm?…&ref=<code>`); `handle_new_user` (replaced in this migration
 with its body unchanged plus one block) writes a `pending` referral for a **new** account only, so
 existing accounts are never attributed and nothing can attach an inviter later. One inviter per
 account (`referrals.invitee_id` is unique).
+
+**The confirming browser must carry the same code.** The metadata comes from whoever first asked
+for a sign-up code for an address, not necessarily its owner, and GoTrue keeps it when the owner
+asks later. So an invite settles only when the browser that confirms the mailbox shows the pending
+row's code: the code step sends `signUp.ref` to `/api/auth/verify`, the emailed link carries `ref`
+to `/api/auth/confirm`, and `settle_referral(invitee, ref)` compares it with the inviter's code. A
+missing or different code drops the pending row (no error, the sign-in goes on). The prepared-page
+`?invite=` flow is not affected.
 
 ### 2. States and checks
 
@@ -70,23 +81,31 @@ account (`referrals.invitee_id` is unique).
 
 The checks run on the server in `public.settle_referral()`, right after the invited person's first
 sign-in has been logged: `/api/auth/verify` and `/api/auth/confirm` (not for an email change) call
-`settleReferral()` after `recordSignIn`. It never throws and never fails a sign-in; the hourly
-`linkyo-settle-referrals` job settles anything the routes missed. The inviter never learns which
-check fired.
+`settleReferral()` after `recordSignIn`, with the browser's code (§1). It never throws and never
+fails a sign-in. The hourly `linkyo-settle-referrals` job applies the same rule to anything the
+routes missed: a row still pending 15 minutes after the email was confirmed was confirmed without
+the code reaching our server, so it is dropped. The inviter never learns which check fired.
 
 | Check | Outcome |
 |---|---|
 | Same mailbox (`email_identity`: lower case, `+tag` dropped, Gmail dots dropped) | `rejected` / `self` |
+| The same mailbox already has a referral of this inviter, also one whose account was deleted since (`mailbox_hash`) | `rejected` / `repeat` |
 | The invitee's first device id (`linkyo.device`) appears in the inviter's sign-ins (not `dev_unknown`, not `dev_email_link`) | `rejected` / `sameDevice` |
 | Throwaway domain or a subdomain of one (`disposable_domains`, 48 seeded) | `rejected` / `disposable` |
 | Invitee suspended | `rejected` / `inviteeSuspended` |
 | No sign-in log (confirmed around our routes, e.g. GoTrue with the publishable key) | `held` / `noSignals` |
 | Same network (IPv4 equal, IPv6 same /64) **and** same browser signature | `held` / `sameNetwork` |
-| The 3rd or later settled invite of one inviter from one network within 7 days | `held` / `cluster` |
+| The 3rd or later settled invite of one inviter from one network within 7 days (`network` of the earlier rows) | `held` / `cluster` |
 
 The same network **alone never holds** (shared flats, offices, mobile carriers), and a hold is not a
-rejection. Loopback (no IP known, local development) is never compared. Only yes/no `signals` are
-stored on the referral, never an IP or device id.
+rejection. Loopback (no IP known, local development) is never compared. The team sees yes/no
+`signals`, never an IP or device id. Two values stay on the row so that deleting an invited account
+does not reset the checks (its sign-ins are deleted with it):
+- `mailbox_hash`: sha256 hex of `email_identity(email)`, never the address. Kept as long as the row,
+  so one mailbox counts once per inviter, however often its account is deleted and made again.
+- `network`: the opening sign-in's IPv4 address or IPv6 /64 (as `sign_ins` keeps the IP), for the
+  cluster check. The hourly job clears it once the invite was settled more than `cluster_days` (7)
+  ago, the only window the check reads.
 
 ### 3. Rewards
 
@@ -119,7 +138,7 @@ No new permission; `role_permissions` is unchanged.
 | Read the queue or a customer's Invites tab | `customers.view` |
 | Count / remove / restore an invite; give or remove the verification review | `customers.manage` |
 | Give or remove Pro for life | `billing.manage` |
-| Approve or decline a verification request | `creators.verify` (nobody reviews their own request) |
+| Approve or decline a verification request | `creators.verify` (nobody reviews their own request: `linkyo:notYourself`; the demo's `teamReview` refuses the signed-in account's own request too) |
 
 Audit actions: `referral.release`, `referral.revoke`, `referral.restore`, `reward.verification`,
 `reward.pro` (actor "system"), `reward.revoke`, `reward.restore`, `verification.request` (actor:
@@ -128,13 +147,17 @@ the customer), `verification.approve`, `verification.decline`.
 Customers read the program only through functions (`my_referrals`, `my_verification_requests`,
 `referral_inviter`, `request_verification`); `referrals` and `verification_requests` have no
 policies and no grants for `anon` or `authenticated`. Visitors may call `referral_inviter` only.
+`rewards` keeps its owner policy, but customers may select only `profile_id, kind, source,
+granted_at, revoked_at`: who removed a reward (`revoked_by`) and the team's reason
+(`revoke_reason`) are read through `admin_customer_referrals` only.
 
 ### 6. Demo mode
 
 Every demo account lives in one browser, so a demo invite works only by signing out, opening the
 link in the same browser and making a second account. Entering the on-screen code is the demo's
-email confirmation, so the invite is settled at once: it counts, or it is a self-invite
-(`emailIdentity`). The device and network checks can't apply. `LocalAccountStore` keeps codes,
+email confirmation, so the invite is settled at once: it counts, or it is a self-invite or a
+repeat (`emailIdentity`; the demo keeps the mailbox on the invite, also after the invited account
+is deleted). The device and network checks can't apply. `LocalAccountStore` keeps codes,
 referrals, rewards and verification requests next to the accounts and offers the team methods the
 demo console uses (`teamQueue`, `teamCustomer`, `teamReview`, `teamSetReferral`, `teamSetReward`).
 The Invite screen's `demoNote` says all this.
@@ -144,12 +167,20 @@ The Invite screen's `demoNote` says all this.
 Before it counted, deleting the invited account deletes the referral. After it counted, the row
 stays with `invitee_id = null`, shown as "Deleted account" without a name: the inviter did the
 work, rewards are one-off, deleting a fake changes nothing for a farmer, and what remains no longer
-identifies anyone. Deleting the inviter deletes their referrals, rewards and requests.
+identifies anyone, except as a hash of the mailbox that keeps the same mailbox from counting twice
+for this inviter (§2). A **suspended** invited account was not counting, so deleting it deletes its
+referral too (`referrals_forget`); otherwise deleting a fake the team had suspended would make it
+count again and could trigger a reward. Deleting the inviter deletes their referrals, rewards and
+requests.
 
 ### 8. Privacy (GDPR)
 
 - The invitee is told at sign-up what the inviter will see. The inviter sees page names and
-  states, never an email. Only yes/no signals are stored, no extra IPs or fingerprints.
+  states, never an email. The checks store yes/no signals, a sha256 hash of the normalised mailbox
+  (for as long as the referral exists) and the opening sign-in's network (IPv4 address or IPv6 /64,
+  cleared after 7 days by the hourly job). No device ids or fingerprints. Neither value is shown to
+  the inviter or the team, and neither is in the export (they are abuse-prevention data about
+  the invited account, not the inviter's).
 - The data export (Art. 15/20) contains the program: own code, counts, rewards, all own
   verification requests (`my_verification_requests`), who invited the account, and the invited
   people as `{ status, at }` **without names** (other people's data).
@@ -166,8 +197,10 @@ identifies anyone. Deleting the inviter deletes their referrals, rewards and req
    invited person); rewards; verification requests (up to 3 profile links and a note).
 3. **Abuse checks (automated):** at the first sign-in, data from the existing 30-day security log is
    compared between inviter and invited account (IP address or network, the random device id, the
-   browser signature), and the email addresses (normalised mailbox, throwaway domain list). Only the
-   result is stored, as yes/no flags.
+   browser signature), and the email addresses (normalised mailbox, throwaway domain list). The
+   result is stored as yes/no flags; in addition, a hash of the normalised mailbox (so one mailbox
+   counts once per inviter) and the network of the first sign-in (IP address or IPv6 /64, deleted
+   after 7 days).
 4. **No solely automated decision with legal or similarly significant effect (Art. 22):** the check
    only decides whether an invite counts towards a voluntary reward; doubtful cases are reviewed by
    a person; anyone can ask for a human review of any decision.
@@ -178,8 +211,9 @@ identifies anyone. Deleting the inviter deletes their referrals, rewards and req
 7. **Recipients:** the inviter sees only page names and states; the Linkyo team sees more for review,
    including the yes/no flags; processors as for accounts (Supabase in Frankfurt, Vercel).
 8. **Retention:** referral records exist while the inviter's account exists; an invited account
-   deleted after it counted leaves an anonymous count, one that never counted leaves nothing;
-   sign-in data stays at 30 days; verification requests go with the account.
+   deleted after it counted leaves a count with only the mailbox hash, one that never counted (or
+   was suspended) leaves nothing; the stored network is deleted 7 days after the invite was
+   settled; sign-in data stays at 30 days; verification requests go with the account.
 9. **Rights:** the export as above; erasure by deleting the account.
 
 Draft paragraph (de), from the design, without the page credit that is not built:
@@ -191,12 +225,15 @@ Draft paragraph (de), from the design, without the page credit that is not built
 >
 > Um Missbrauch zu verhindern, vergleichen wir bei der ersten Anmeldung automatisch Daten aus dem
 > 30-Tage-Sicherheitsprotokoll (IP-Adresse, Geräte-ID, Browser-Signatur) und die E-Mail-Adresse
-> beider Konten. Gespeichert wird nur das Ergebnis als Ja/Nein-Merkmal. Zweifelsfälle prüft ein
+> beider Konten. Gespeichert werden das Ergebnis als Ja/Nein-Merkmal, ein Hashwert des Postfachs
+> (damit ein Postfach pro einladender Person nur einmal zählt) und für 7 Tage das Netz der ersten
+> Anmeldung (IP-Adresse bzw. IPv6-Präfix). Zweifelsfälle prüft ein
 > Mensch; jede Entscheidung kannst du von uns überprüfen lassen. Der Code steht nur in der Adresse;
 > vor der Registrierung speichern wir nichts auf deinem Gerät.
 >
 > Die Daten bestehen, solange das einladende Konto besteht. Wird ein eingeladenes Konto gelöscht,
-> entfernen wir die Verknüpfung zur Person; ein anonymer Zähler bleibt. Anfragen zur Verifizierung
+> entfernen wir die Verknüpfung zur Person; es bleiben ein Zähler und der Hashwert des Postfachs.
+> Anfragen zur Verifizierung
 > (Profil-Links, Notiz) löschen wir mit dem Konto.
 
 The English version is the same text translated; `/ar` follows the policy's general Arabic version.
@@ -244,4 +281,9 @@ full suites.
 | Sign-up with a known code | one textbox; the invited line 48 px tall (at 393 × 852 at y 243); no horizontal scroll at 393 and 1244 px in de, en and ar, light and dark; axe 0 violations in en and ar, light and dark |
 | Demo e2e | `referral-signup.spec.ts` 9 of 9; with `app.spec.ts` and `admin.spec.ts` on desktop and phone, 95 passed, 2 skipped by design (a phone-only and a desktop-only test) |
 | Real-account e2e (`E2E_SUPABASE=1`, local stack) | 12 of 12: the 11 existing tests and the new one (a friend in a second browser counts, `my_referrals()` for the inviter says 1, the owner removes it with `admin_set_referral`, the count drops to 0 and the log has `referral.revoke`) |
+| **Review fixes** (repeat mailbox, network on the row, suspended-then-deleted, rewards column grant, ref must match, ref sent before the lookup answers, own review in the demo, unbiased SQL codes): pgTAP | 278 assertions pass: `access.test.sql` 76, `referrals.test.sql` 202 (35 new: 2,000 codes on the alphabet and all 31 symbols drawn; a pending row confirmed without or with another code is dropped, the hourly job drops what no browser confirmed; a repeat mailbox after deletion is `rejected` / `repeat` and counts for another inviter; the cluster still holds after the first two invitees were deleted; IPv6 kept as /64, IPv4 as the address, cleared after 7 days; a suspended then deleted invitee doesn't count and gives no reward; a customer cannot select `revoke_reason`, `revoked_by` or `*` from `rewards`). One assertion changed meaning: the hourly job now drops a pending row the routes missed instead of settling it. The visitor's `rewards` read now fails with 42501 instead of returning no rows |
+| Review fixes: `db:lint`, `db:types` | 0 issues; no diff on the second run |
+| Review fixes: unit (`pnpm test --force`) | web 210 in 32 files (the demo store 23, 2 new: repeat and own review; the rules test 9, its SQL mirror also checks the redraw at 248), tokens 52, config 79, blocks 41 |
+| Review fixes: real-account e2e | 13 of 13: the invite test now goes through the UI (the inviter's `/de/app/invite` shows "Zählt", the owner removes it in the customer's Invites tab, the inviter's screen shows "Zählt nicht"), plus a new one (a sign-up code someone else asked for with their code: the owner signs in from the sign-in page and the pending invite is gone). By hand: the emailed sign-up link carries `&ref=<code>` and settles the invite through `/api/auth/confirm` (`qualified`, `emailLink: true`) |
+| Review fixes: demo e2e | `referral-signup`, `invite-app`, `admin`, `app` on desktop and phone: 124 passed, 2 skipped by design, 0 failed |
 | `/api/auth/verify`, median of 10 local runs, without → with the settle call | first sign-in of an invited account: 45 ms → 65 ms and 70 ms (two runs), +20 to +25 ms; sign-in of an account nobody invited: 29 ms → 39 ms and 50 ms, +10 to +21 ms. Below the 50 ms budget |

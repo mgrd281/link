@@ -39,13 +39,25 @@ them the demo store runs. Both must keep working (ADR 0030).
   `invites.manage`, ADR 0015). Never mix them: `findPrepared()` reads `invite`, `handle_new_user`
   reads `ref`.
 - **Sign-up:** `/i/<code>` → 307 to `/<locale>/signup?ref=<code>` (no cookie). The sign-up page
-  looks the inviter up (`referral_inviter`) and sends `ref` only for a known code;
-  `/api/auth/code` drops a malformed one and puts it in the user metadata; `handle_new_user`
-  writes a `pending` referral for a new account only.
-- **Settling:** after `recordSignIn` in `/api/auth/verify` and in `/api/auth/confirm` (not for an
-  email change), `settleReferral()` (`features/account/server/referrals.ts`) calls
-  `settle_referral(invitee)`. It never throws and never fails a sign-in; the hourly
-  `linkyo-settle-referrals` job settles what the routes missed.
+  sends any well-formed `ref` (the `referral_inviter` lookup only shows the "invited by" line);
+  `/api/auth/code` drops a malformed one, puts it in the user metadata and in the emailed link
+  (`/api/auth/confirm?…&ref=`); `handle_new_user` writes a `pending` referral for a new account only.
+- **Settling:** after `recordSignIn` in `/api/auth/verify` (the code step sends `signUp.ref`) and in
+  `/api/auth/confirm` (the link's `ref`; not for an email change), `settleReferral(service, id, ref)`
+  (`features/account/server/referrals.ts`) calls `settle_referral(invitee, ref)`. **The confirming
+  browser must carry the pending row's code**: without it, or with another one, the row is dropped
+  (`'dropped'`), so nobody attaches their code to someone else's address by asking for its sign-up
+  code first. It never throws and never fails a sign-in; the hourly `linkyo-settle-referrals` job
+  drops pending rows confirmed over 15 minutes ago (no browser showed the code), clears
+  `referrals.network` after `cluster_days` and gives rewards owed to inviters active again.
+- **Checks** (`settle_referral`, in order): `self` (same `email_identity`), `repeat` (the same
+  mailbox already has a row of this inviter: `referrals.mailbox_hash`, sha256 hex of
+  `email_identity`, kept after the invitee is deleted), `sameDevice`, `disposable`,
+  `inviteeSuspended` → rejected; `noSignals`, `sameNetwork` (network **and** signature), `cluster`
+  (3rd from one network within 7 days, read from `referrals.network`, not the deleted invitees'
+  sign-ins) → held. A suspended invitee that is deleted takes its row along (`referrals_forget`).
+- **`rewards`**: customers may select only `profile_id, kind, source, granted_at, revoked_at`;
+  `revoked_by` and `revoke_reason` are the team's (via `admin_customer_referrals`).
 - **Rewards are not subscriptions.** `grant_referral_rewards()` writes `rewards` at
   `referral_rule('verification_at')` and `('pro_for_life_at')`. Nothing in the program writes
   `subscriptions` or `invoices`. A removed reward is never given again automatically.
@@ -55,7 +67,7 @@ them the demo store runs. Both must keep working (ADR 0030).
   `referral_inviter`, `request_verification`); the team through `admin_customer_referrals`,
   `admin_referral_queue`, `admin_set_referral`, `admin_set_reward`, `admin_review_verification`
   (`features/referrals/team.ts`). Both stores implement the same contract; the demo applies the
-  self check only.
+  self and repeat checks only, and its `teamReview` refuses the signed-in account's own request.
 
 ## Rules
 
