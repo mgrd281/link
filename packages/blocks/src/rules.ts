@@ -11,11 +11,19 @@ export const USERNAME_MAX = 30;
 
 export const isUsernameFormat = (value: string): boolean => value.length >= USERNAME_MIN && value.length <= USERNAME_MAX && USERNAME_PATTERN.test(value);
 
-/** Names we never hand out as page addresses: product routes and words people could be misled by. */
+/**
+ * Names we never hand out as page addresses: product routes and words people could be misled by.
+ * The database has the same list (public.reserved_usernames, filled by supabase/migrations);
+ * apps/web/src/features/account/reserved.test.ts compares the two.
+ */
 export const RESERVED_USERNAMES = new Set([
   "about", "admin", "api", "app", "ar", "auth", "billing", "blog", "de", "design", "directions", "en", "forgot",
   "help", "imprint", "impressum", "legal", "linkyo", "login", "logout", "official", "preview", "pricing", "privacy",
   "report", "security", "settings", "signup", "status", "support", "terms", "welcome", "www",
+  // v7: every first-level route, files at the root and the selling flows.
+  "account", "agb", "ai", "build", "checkout", "dashboard", "datenschutz", "kontakt", "kuendigen", "manifest", "media",
+  "orders", "pro", "robots", "reset-password", "service", "services", "sitemap", "studio", "team", "templates",
+  "widerruf", "widerrufsbelehrung",
 ]);
 
 /**
