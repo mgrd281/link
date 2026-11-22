@@ -1,5 +1,6 @@
 "use client";
 
+import { accessToken } from "@/lib/supabase/access-token";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { browserSupabase } from "@/lib/supabase/browser";
 
@@ -130,7 +131,18 @@ export function useConsoleActions() {
         record("customer.delete", customer.username);
         return true;
       }
-      return ok(supabase().rpc("admin_delete_customer", { customer: customer.id }));
+      // Our server deletes the account as this team member (the database checks the permission),
+      // then removes the customer's files from Storage.
+      const token = await accessToken();
+      if (!token) return false;
+      try {
+        const response = await fetch(`/api/admin/customers/${encodeURIComponent(customer.id)}/delete`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+        if (!response.ok) return false;
+      } catch {
+        return false;
+      }
+      await refreshLive();
+      return true;
     },
 
     /** Real accounts: the person must have signed up already ("notFound" otherwise). */

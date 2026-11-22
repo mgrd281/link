@@ -9,7 +9,7 @@ import { useId, useState, type ReactNode, type TextareaHTMLAttributes } from "re
 
 import { remoteImageProps, resolveMedia } from "@/features/directions/shared/media";
 
-import { ImageError, pickFiles, prepareImage, type ImageKind } from "./images";
+import { ImageError, pickFiles, prepareAndStore, type ImageKind } from "./images";
 
 import { haptic } from "@/lib/haptics";
 
@@ -250,7 +250,7 @@ export function ImageInput({
     if (!file) return;
     setBusy(true);
     try {
-      const prepared = await prepareImage(file, kind);
+      const prepared = await prepareAndStore(file, kind);
       setProblem(null);
       onImage({ src: prepared.src, alt: image?.alt ?? "", tone: prepared.tone });
     } catch (reason) {

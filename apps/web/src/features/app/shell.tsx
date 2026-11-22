@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { haptic } from "@/lib/haptics";
+import { useAccount } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 
@@ -46,15 +47,18 @@ export function ProfileAvatar({ size = "md", className }: { size?: "sm" | "md" |
 /** "Saving…" shows only once a save has taken this long: local saves finish sooner and never flash. */
 const SAVING_SETTLE = 1000;
 
-type ShownSave = "saved" | "saving" | "error" | "unsavedLegal";
+type ShownSave = "saved" | "saving" | "error" | "tooLarge" | "unsavedLegal";
 
 /**
  * What the save status says. An unsaved legal notice comes first (it is the only thing that waits
- * for an explicit save), then an error, then a save that is taking a while; otherwise "Saved".
+ * for an explicit save), then an error (a page too large to save says so: retrying cannot help),
+ * then a save that is taking a while; otherwise "Saved".
  */
 function useShownSave(): ShownSave {
   const { save, account } = useSite();
   const unsavedLegal = useHasUnsavedDraft(account.id);
+  const snapshot = useAccount();
+  const tooLarge = snapshot.status === "signedIn" && snapshot.syncError === "tooLarge";
   const state = save === "saved" ? "saved" : save === "saving" ? "saving" : "error";
   const [slow, setSlow] = useState(false);
   useEffect(() => {
@@ -66,7 +70,7 @@ function useShownSave(): ShownSave {
     };
   }, [state]);
   if (unsavedLegal) return "unsavedLegal";
-  if (state === "error") return "error";
+  if (state === "error") return tooLarge ? "tooLarge" : "error";
   return state === "saving" && slow ? "saving" : "saved";
 }
 
@@ -86,14 +90,15 @@ export function SaveStatus({ layout }: { layout: "compact" | "panel" }) {
   const shown = useShownSave();
   const text = t(shown);
   const compact = layout === "compact";
+  const failed = shown === "error" || shown === "tooLarge";
   const glyph =
     shown === "saving" ? (
       <Spinner className={compact ? "size-icon-md" : "size-icon-sm"} />
     ) : (
       <Icon
-        icon={shown === "saved" ? Check : shown === "error" ? CircleAlert : CircleDot}
+        icon={shown === "saved" ? Check : failed ? CircleAlert : CircleDot}
         size={compact ? "md" : "sm"}
-        className={shown === "saved" ? "text-success-strong" : shown === "error" ? "text-danger-strong" : undefined}
+        className={shown === "saved" ? "text-success-strong" : failed ? "text-danger-strong" : undefined}
       />
     );
 
@@ -130,7 +135,7 @@ export function SaveStatus({ layout }: { layout: "compact" | "panel" }) {
     </>
   );
   return (
-    <p role="status" className={cn("flex min-w-0 items-start", shown === "error" && "text-danger-strong")}>
+    <p role="status" className={cn("flex min-w-0 items-start", failed && "text-danger-strong")}>
       {shown === "unsavedLegal" ? (
         <Link href={LEGAL_HREF} className="flex min-w-0 items-start gap-2 rounded-sm font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring">
           {content}

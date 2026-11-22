@@ -1,7 +1,8 @@
 /**
  * Images picked in the dashboard are resized in the browser before they are stored, so pages stay
  * fast and the demo storage (a few MB) lasts. Photos become JPEG; logos keep transparency (WebP/PNG).
- * Real accounts upload the original to Supabase Storage (EU) and the image CDN serves sizes.
+ * Real accounts upload the resized picture to Supabase Storage (EU, media-upload.ts) and keep its
+ * address; our image optimizer serves the sizes.
  */
 
 export const IMAGE_SIDE = { avatar: 512, photo: 1080, logo: 640, thumb: 480 } as const;
@@ -17,7 +18,7 @@ export interface PreparedImage {
 const MAX_INPUT_BYTES = 25 * 1024 * 1024;
 
 export class ImageError extends Error {
-  constructor(readonly reason: "type" | "size" | "decode") {
+  constructor(readonly reason: "type" | "size" | "decode" | "upload") {
     super(reason);
   }
 }
@@ -61,6 +62,21 @@ export async function prepareImage(file: File, kind: ImageKind): Promise<Prepare
   const keepAlpha = kind === "logo" || file.type === "image/png" || file.type === "image/svg+xml" || file.type === "image/webp";
   const src = keepAlpha ? canvas.toDataURL("image/webp", 0.9) : canvas.toDataURL("image/jpeg", 0.82);
   return { src, tone, width, height };
+}
+
+/**
+ * Resizes a picked picture and keeps it where the account keeps pictures: Storage for real accounts,
+ * the page itself in the demo. A failed upload is an `ImageError("upload")`.
+ */
+export async function prepareAndStore(file: File, kind: ImageKind): Promise<PreparedImage> {
+  const prepared = await prepareImage(file, kind);
+  try {
+    // Loaded on first use: the website's playground resizes pictures too, without any account code.
+    const { storePreparedImage } = await import("./media-upload");
+    return await storePreparedImage(prepared);
+  } catch {
+    throw new ImageError("upload");
+  }
 }
 
 /** Lets someone pick files without a visible input (the trigger is a real button). */

@@ -4,11 +4,13 @@ import type { Page } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 
+import { uploadDataUrl } from "@/features/app/media-upload";
 import type { ReferralOverview, VerificationResult } from "@/features/referrals/types";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 import type { Database, Tables } from "@/lib/supabase/database.types";
 import { fromJson, toJson } from "@/lib/supabase/json";
 
+import { hasDataUrls, migrateDataUrls, replaceSources } from "./media-migrate";
 import { starterSite } from "./site-builders";
 import type {
   Account,
@@ -98,6 +100,9 @@ function toLoginEvent(row: SignInRow): LoginEvent {
 const origin = () => window.location.origin;
 const localeOf = (site: Site | null) => site?.page.profile.locale ?? "de";
 
+/** The database refused the page for its size (`sites.site_size`): retrying the same page cannot help. */
+const tooLarge = (error: { code?: string; message?: string }) => error.code === "23514" && (error.message ?? "").includes("site_size");
+
 export class SupabaseAccountStore implements AccountStore {
   readonly demo = false;
   private snapshot: AccountSnapshot = LOADING;
@@ -109,6 +114,8 @@ export class SupabaseAccountStore implements AccountStore {
   private retries = 0;
   private dirty = false;
   private token: string | null = null;
+  /** Pictures moved from data URLs to Storage in this session (data URL → address): never uploaded twice. */
+  private readonly uploaded = new Map<string, string>();
 
   constructor(
     private readonly client: () => Client,
@@ -277,7 +284,9 @@ export class SupabaseAccountStore implements AccountStore {
     const next = update(current);
     if (next === current) return { ok: true };
     this.dirty = true;
-    this.set({ ...this.snapshot, site: { ...next, updatedAt: new Date().toISOString() }, sync: "saving" });
+    // A change is a new attempt: a page that was too large may fit now.
+    const { syncError: _previous, ...rest } = this.snapshot;
+    this.set({ ...rest, site: { ...next, updatedAt: new Date().toISOString() }, sync: "saving" });
     this.schedule(SAVE_DELAY);
     return { ok: true };
   }
@@ -347,9 +356,14 @@ export class SupabaseAccountStore implements AccountStore {
     if (snapshot.status !== "signedIn" || !this.dirty) return;
     this.dirty = false;
     const run = async () => {
+      // Pictures still inside the page (imported from the demo, the "Try it" photo) go to Storage first;
+      // one that fails to upload stays as it is and is tried again on the next save.
+      const site = hasDataUrls(snapshot.site.page)
+        ? { ...snapshot.site, page: await migrateDataUrls(snapshot.site.page, (dataUrl) => uploadDataUrl(dataUrl), { uploaded: this.uploaded }) }
+        : snapshot.site;
       const { data, error } = await this.client()
         .from("sites")
-        .update(toRow(snapshot.site))
+        .update(toRow(site))
         .eq("profile_id", snapshot.account.id)
         .select("page, updated_at")
         .single();
@@ -357,6 +371,12 @@ export class SupabaseAccountStore implements AccountStore {
       if (now.status !== "signedIn" || now.account.id !== snapshot.account.id) return;
       if (error) {
         this.dirty = true;
+        if (tooLarge(error)) {
+          // No retry loop: the page stays too large until it changes (the next change saves again).
+          this.retries = 0;
+          this.set({ ...now, sync: "error", syncError: "tooLarge" });
+          return;
+        }
         const delay = RETRY_DELAYS[Math.min(this.retries, RETRY_DELAYS.length - 1)] ?? 30_000;
         this.retries += 1;
         this.set({ ...now, sync: "error" });
@@ -364,10 +384,13 @@ export class SupabaseAccountStore implements AccountStore {
         return;
       }
       this.retries = 0;
-      // The server owns the badge and the address on the page (sites_guard); keep its word.
+      // The server owns the badge and the address on the page (sites_guard); keep its word. Pictures
+      // that went to Storage keep their new address here too.
       const saved = fromJson<Page>(data.page).profile;
-      const profile = { ...now.site.page.profile, verified: saved.verified, username: saved.username };
-      this.set({ ...now, site: { ...now.site, page: { ...now.site.page, profile } }, sync: this.dirty ? "saving" : "saved" });
+      const page = this.uploaded.size > 0 ? replaceSources(now.site.page, this.uploaded) : now.site.page;
+      const profile = { ...page.profile, verified: saved.verified, username: saved.username };
+      const { syncError: _resolved, ...rest } = now;
+      this.set({ ...rest, site: { ...now.site, page: { ...page, profile } }, sync: this.dirty ? "saving" : "saved" });
     };
     this.saving = run().finally(() => {
       this.saving = null;
@@ -419,8 +442,15 @@ export class SupabaseAccountStore implements AccountStore {
   async deleteAccount(): Promise<Result> {
     await this.flush();
     const supabase = this.client();
-    const { error } = await supabase.rpc("delete_my_account");
-    if (error) return { ok: false, error: "serverError" };
+    const token = (await supabase.auth.getSession()).data.session?.access_token ?? this.token;
+    if (!token) return { ok: false, error: "serverError" };
+    // Our server deletes the account as the user, then removes every file of it from Storage (GDPR Art. 17).
+    try {
+      const response = await fetch("/api/account/delete", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) return { ok: false, error: "serverError" };
+    } catch {
+      return { ok: false, error: "serverError" };
+    }
     await supabase.auth.signOut({ scope: "local" });
     return { ok: true };
   }
