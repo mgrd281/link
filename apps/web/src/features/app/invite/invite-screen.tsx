@@ -9,6 +9,7 @@ import { accountStore } from "@/features/account/store";
 import { PRO_AVAILABLE, REFERRAL_RULES, remaining } from "@/features/referrals/rules";
 import type { DeclineReason, ReferralOverview } from "@/features/referrals/types";
 import { useReferrals } from "@/features/referrals/use-referrals";
+import { paymentsEnabled } from "@/lib/flags";
 
 import { Disclosure } from "../disclosure";
 import { ListGroup } from "../list";
@@ -268,7 +269,8 @@ function Rules() {
         <li>{t("rules.notCounted")}</li>
         <li>{t("rules.deleted")}</li>
         <li>{t("rules.verify", { count: REFERRAL_RULES.verificationAt })}</li>
-        <li>{t("rules.pro", { count: REFERRAL_RULES.proForLifeAt })}</li>
+        {/* Where Pro can be bought, it exists: the reward line says what it includes. */}
+        <li>{t(paymentsEnabled ? "rules.proLive" : "rules.pro", { count: REFERRAL_RULES.proForLifeAt })}</li>
       </ol>
       <Disclosure summary={t("rules.terms")}>
         <div className="grid gap-2 pt-1 text-small font-regular text-fg-secondary">
