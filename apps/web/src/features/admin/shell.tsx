@@ -10,12 +10,13 @@ import {
   Ellipsis,
   Eye,
   History,
+  Inbox,
   LayoutDashboard,
   LayoutList,
   LogOut,
   ShieldAlert,
+  PenTool,
   ShieldCheck,
-  Sparkles,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -25,12 +26,13 @@ import { useId, type ReactNode } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { Link, usePathname } from "@/i18n/navigation";
+import { paymentsEnabled } from "@/lib/flags";
 
 import { useAdmin } from "./session";
 import { ROLES, type Permission, type Role } from "./types";
 
 interface NavItem {
-  key: "overview" | "customers" | "subscriptions" | "security" | "analytics" | "creators" | "referrals" | "team" | "activity";
+  key: "overview" | "customers" | "orders" | "subscriptions" | "security" | "analytics" | "creators" | "referrals" | "team" | "activity";
   href: string;
   icon: LucideIcon;
   /** Shown only to roles with this permission. */
@@ -44,6 +46,8 @@ const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
     items: [
       { key: "overview", href: "/admin", icon: LayoutDashboard },
       { key: "customers", href: "/admin/customers", icon: UsersRound, permission: "customers.view" },
+      // Page-service orders exist only where contracts can be made (NEXT_PUBLIC_PAYMENTS).
+      ...(paymentsEnabled ? [{ key: "orders" as const, href: "/admin/orders", icon: Inbox, permission: "customers.view" as const }] : []),
       { key: "subscriptions", href: "/admin/subscriptions", icon: CreditCard, permission: "billing.view" },
       { key: "security", href: "/admin/security", icon: ShieldAlert, permission: "security.view" },
       { key: "analytics", href: "/admin/analytics", icon: ChartColumn, permission: "analytics.view" },
@@ -52,7 +56,7 @@ const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
   {
     key: "teamWork",
     items: [
-      { key: "creators", href: "/admin/creators", icon: Sparkles },
+      { key: "creators", href: "/admin/creators", icon: PenTool },
       // The invite program: verification requests and held invites (ADR 0064).
       { key: "referrals", href: "/admin/referrals", icon: BadgeCheck, permission: "customers.view" },
       { key: "team", href: "/admin/team", icon: ShieldCheck },
@@ -249,8 +253,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <RoleBadge role={role} />
           <AccountMenu
             trigger={
-              <button type="button" aria-label={t("accountMenu")} className="grid size-touch-target place-items-center rounded-md hover:bg-hover focus-visible:focus-ring">
+              // The name comes from hidden text, not aria-label: the avatar's initials are visible
+              // content an aria-label would not contain (WCAG 2.5.3).
+              <button type="button" className="grid size-touch-target place-items-center rounded-md hover:bg-hover focus-visible:focus-ring">
                 <Avatar name={me.name} size="sm" />
+                <span className="sr-only">{t("accountMenu")}</span>
               </button>
             }
           />
