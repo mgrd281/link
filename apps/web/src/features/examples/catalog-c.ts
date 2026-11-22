@@ -92,8 +92,8 @@ export const CATALOG_C: Record<string, Page> = {
     ],
   ),
 
-  "rihana-store": examplePage(
-    "rihana-store",
+  "oud-boutique": examplePage(
+    "oud-boutique",
     "ar",
     {
       name: "متجر ريحانة",

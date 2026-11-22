@@ -41,3 +41,13 @@ describe("describeStart", () => {
     expect(describeStart(start, null, "de").label).toMatch(/21:00$/);
   });
 });
+
+describe("renamed addresses", () => {
+  it("sends the old Arabic perfume shop address to its new one, which exists", async () => {
+    const { PREVIEW_ALIASES } = await import("./registry");
+    const { EXAMPLES } = await import("../examples/catalog");
+    expect(PREVIEW_ALIASES["rihana-store"]).toBe("oud-boutique");
+    expect(EXAMPLES["oud-boutique"]).toBeDefined();
+    expect(EXAMPLES["rihana-store"]).toBeUndefined();
+  });
+});

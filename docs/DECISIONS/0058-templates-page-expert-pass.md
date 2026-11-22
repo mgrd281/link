@@ -112,6 +112,8 @@ level on phone and desktop. They also asked for the best possible photos on the 
   The other matches were long-dead namesakes, very common names or only similar names. The address
   of the Arabic perfume shop, `rihana-store`, reads like Rihanna, who sells perfume too; its shown
   name, متجر ريحانة, is fine. Changing that address needs a redirect and is left for a decision.
+  **Decided 2026-11-22 (founder):** the address is now `oud-boutique`; `/p/rihana-store` redirects (308) to it
+  through `PREVIEW_ALIASES`. The shown name stays.
 - **Skills.** 17 more open-source skills were vendored. Each was read in full twice, and every
   change is marked. See `.claude/skills/README.md`.
 

@@ -86,7 +86,7 @@ export const LOOKS = {
   "felix-deals": { kind: "affiliate", category: "online", locale: "de", theme: { template: "daylight", accent: SW.signal, pairing: "modern", buttonStyle: "shadow", buttonShape: "pill" } },
   "maya-finds": { kind: "affiliate", category: "online", locale: "en", theme: { template: "atelier", accent: SW.rose, pairing: "elegant", mode: "light", buttonShape: "pill" } },
   "nordlicht-sneaker": { kind: "store", category: "online", locale: "de", theme: { template: "nocturne", accent: SW.lemon, pairing: "bold", buttonStyle: "filled", buttonShape: "square" } },
-  "rihana-store": { kind: "store", category: "online", locale: "ar", theme: { template: "atelier", accent: SW["gold-leaf"], mode: "dark", buttonShape: "pill" } },
+  "oud-boutique": { kind: "store", category: "online", locale: "ar", theme: { template: "atelier", accent: SW["gold-leaf"], mode: "dark", buttonShape: "pill" } },
   "hanna-berger": { kind: "marketing", category: "online", locale: "de", theme: { template: "daylight", accent: SW.grape, pairing: "modern", buttonStyle: "soft", buttonShape: "pill" } },
   brightfunnel: { kind: "marketing", category: "online", locale: "en", theme: { template: "pulse", accent: SW.tangerine, pairing: "bold", buttonStyle: "shadow" } },
   "excel-ahmed": { kind: "coach", category: "online", locale: "ar", theme: { template: "daylight", accent: SW.leaf, buttonStyle: "filled" } },
