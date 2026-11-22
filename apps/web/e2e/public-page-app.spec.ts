@@ -166,8 +166,6 @@ test.describe("public creator page @real", () => {
   });
 
   test("real-mode Home shows no sample numbers @real", async ({ page }) => {
-    // Home's "This week" switches to statsSource() with WP4 (home-screen.tsx belongs to WP4).
-    test.fixme(true, "Enable once WP4's home-screen.tsx uses statsSource().");
     const { email } = await publicAccount("pub-home", "en");
     await signIn(page, email, "/en/app");
     await page.waitForURL("**/en/app");

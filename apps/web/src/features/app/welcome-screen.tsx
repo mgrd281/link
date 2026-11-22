@@ -1,7 +1,7 @@
 "use client";
 
 import { detectMany } from "@linkyo/blocks";
-import { Button, cn, Icon, Logo, TextField } from "@linkyo/ui";
+import { Badge, Button, cn, Icon, Logo, Skeleton, TextField, toast } from "@linkyo/ui";
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,7 +12,9 @@ import {
   CodeXml,
   DraftingCompass,
   Feather,
+  Footprints,
   GraduationCap,
+  Lightbulb,
   Megaphone,
   Mic,
   Music,
@@ -21,6 +23,7 @@ import {
   PartyPopper,
   Presentation,
   Scale,
+  Shapes,
   ShoppingBag,
   Smartphone,
   Sparkles,
@@ -28,6 +31,7 @@ import {
   Warehouse,
   type LucideIcon,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
@@ -36,9 +40,12 @@ import { useUsernameStatus } from "@/features/account/auth/shared";
 import { accountStore } from "@/features/account/store";
 import type { AuthError } from "@/features/account/types";
 import { isProvisionalUsername, nameFromUsername, suggestUsername } from "@/features/account/username";
+import { useAiQuota } from "@/features/ai/quota";
+import { takeAppliedDraft } from "@/features/ai/use-ai-run";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
 import { PlatformGlyph } from "@/features/directions/shared/creator-kit";
 import { useRouter } from "@/i18n/navigation";
+import { CREATOR_DOMAIN } from "@/lib/page-url";
 
 import { SwitchRow, TextArea, TextInput } from "./form";
 import { ImportBox, useImport } from "./import-box";
@@ -70,7 +77,7 @@ const KIND_ICONS: Partial<Record<CreatorKind, LucideIcon>> = {
   student: GraduationCap,
   warehouse: Warehouse,
   music: Music,
-  other: Sparkles,
+  other: Shapes,
 };
 
 function KindIcon({ kind }: { kind: CreatorKind }): ReactNode {
@@ -105,8 +112,22 @@ export function WelcomeScreen() {
   const tKinds = useTranslations("app.welcome.kinds");
   const tFields = useTranslations("app.welcome.fields");
   const tBlocks = useTranslations("app.welcome.blocks");
-  const { doc, dispatch, account, site, enrich } = useSite();
-  const [step, setStep] = useState<Step>("kind");
+  const tApp = useTranslations("app");
+  const tAi = useTranslations("app.ai");
+  const { doc, dispatch, account, site, enrich, latest } = useSite();
+  const params = useSearchParams();
+  // Back from an AI draft that was used: only the "you" step is left (name and address).
+  const fromAi = params.get("from") === "ai";
+  // "Continue without AI" lands here: straight into the five steps.
+  const manual = params.get("manual") === "1";
+  const ai = useAiQuota({ account: account.id });
+  // Step 0, "How do you want to start?": only while the AI is on for this account.
+  const [started, setStarted] = useState(false);
+  const [start, setStart] = useState<"ai" | "manual">("ai");
+  const asking = !fromAi && !manual && !started;
+  const showStart = asking && ai.enabled;
+  const waitingForAi = asking && ai.status === "loading";
+  const [step, setStep] = useState<Step>(fromAi ? "you" : "kind");
   const profile = useProfileDraft();
   const tAuth = useTranslations("auth");
   const [address, setAddress] = useState<string | null>(null);
@@ -149,13 +170,19 @@ export function WelcomeScreen() {
   useEffect(() => {
     if (!tried) return;
     clearTryDraft();
+    // An AI draft that was just used already has its look and words.
+    if (fromAi) return;
     if (tried.theme) dispatch({ type: "theme", theme: tried.theme });
     const patch = {
       ...(tried.photo ? { avatar: { src: tried.photo.src, alt: "", tone: tried.photo.tone } } : {}),
       ...(tried.tagline ? { tagline: tried.tagline } : {}),
     };
     if (Object.keys(patch).length > 0) dispatch({ type: "profile", patch });
-  }, [tried, dispatch]);
+  }, [tried, dispatch, fromAi]);
+  // A link typed into the homepage's AI field skips the choice: the build screen starts from it.
+  useEffect(() => {
+    if (asking && ai.enabled && tried?.aiLink) router.replace(`/app/build?link=${encodeURIComponent(tried.aiLink)}`);
+  }, [asking, ai.enabled, tried, router]);
   // Moving between steps puts focus on the new step's title (after it is on screen).
   const [moved, setMoved] = useState(false);
   useEffect(() => {
@@ -191,6 +218,21 @@ export function WelcomeScreen() {
           document.getElementById("welcome-address")?.focus();
           return;
         }
+      }
+      if (fromAi) {
+        // The draft's page goes public now, under the address just picked; Undo brings back the page
+        // as it was before the draft (one step, or the whole page after more changes).
+        const handoff = takeAppliedDraft();
+        finish("/app");
+        toast({
+          title: tAi("applied"),
+          tone: "success",
+          action: {
+            label: tApp("undo"),
+            onAction: () => dispatch(handoff && latest() !== handoff.applied ? { type: "replace", doc: handoff.before } : { type: "undo" }),
+          },
+        });
+        return;
       }
     }
     if (step === "links") {
@@ -249,6 +291,53 @@ export function WelcomeScreen() {
         </header>
 
         <main id="main" className="mx-auto grid w-full max-w-prose flex-1 grid-cols-1 content-start gap-8 px-5 pt-8 pb-32 md:px-10">
+          {showStart ? (
+            // Step 0: with AI from the owner's links, or the five steps by hand.
+            <fieldset className="grid min-w-0 grid-cols-1 gap-6">
+              <legend className="sr-only">{t("start.label")}</legend>
+              <h1 id="welcome-step" tabIndex={-1} className="text-h1 tracking-tight outline-none rtl:tracking-normal">
+                {t("start.title")}
+              </h1>
+              <div className="grid grid-cols-1 gap-3">
+                {(["ai", "manual"] as const).map((option) => (
+                  <label
+                    key={option}
+                    className={cn(
+                      "relative flex min-w-0 cursor-pointer items-start gap-4 rounded-lg border p-4 transition-colors duration-micro has-[:focus-visible]:focus-ring hover:bg-hover sm:p-5",
+                      start === option ? "border-focus bg-selected" : "border-line bg-surface",
+                    )}
+                  >
+                    <input type="radio" name="welcome-start" value={option} checked={start === option} onChange={() => setStart(option)} className="sr-only" />
+                    <span className={cn("grid size-control-lg shrink-0 place-items-center rounded-md", start === option ? "bg-surface-elevated text-selected-fg" : "bg-canvas-muted text-fg")}>
+                      <Icon icon={option === "ai" ? Sparkles : Footprints} size="md" />
+                    </span>
+                    <span className="grid min-w-0 flex-1 gap-1">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="text-body-lg font-semibold">{t(`start.${option}.title`)}</span>
+                        {option === "ai" ? <Badge size="sm">{t("start.ai.badge")}</Badge> : null}
+                      </span>
+                      <span className="text-small text-fg-secondary">{t(`start.${option}.body`)}</span>
+                      {option === "ai" && ai.quota?.plan === "free" && ai.quota.left > 0 ? (
+                        <span className="flex items-center gap-1 text-small font-medium">
+                          <Icon icon={Check} size="sm" />
+                          {t("start.ai.free")}
+                        </span>
+                      ) : null}
+                    </span>
+                    {start === option ? <Icon icon={Check} size="md" className="shrink-0 text-link" /> : null}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : waitingForAi ? (
+            <div aria-hidden className="grid grid-cols-1 gap-3">
+              <Skeleton className="h-10 w-2/3 rounded-md" />
+              <Skeleton className="h-24 rounded-lg" />
+              <Skeleton className="h-24 rounded-lg" />
+            </div>
+          ) : (
+            <>
+          {fromAi ? null : (
           <ol aria-label={t("progress")} className="grid grid-cols-5 gap-2">
             {STEPS.map((key, i) => (
               <li key={key} className="grid grid-cols-1 gap-2">
@@ -260,9 +349,17 @@ export function WelcomeScreen() {
               </li>
             ))}
           </ol>
+          )}
 
           <div className="grid grid-cols-1 gap-2">
-            <p className="text-small font-medium text-fg-secondary">{t("stepOf", { n: index + 1, total: STEPS.length })}</p>
+            {fromAi ? (
+              <p className="flex items-start gap-2 text-small font-medium">
+                <Icon icon={Sparkles} size="sm" className="mt-0.5 shrink-0" />
+                {t("fromAi.lead")}
+              </p>
+            ) : (
+              <p className="text-small font-medium text-fg-secondary">{t("stepOf", { n: index + 1, total: STEPS.length })}</p>
+            )}
             <h1 id="welcome-step" tabIndex={-1} className="text-h1 tracking-tight outline-none">
               {t(`steps.${step}.title`, { name: doc.profile.displayName })}
             </h1>
@@ -317,7 +414,7 @@ export function WelcomeScreen() {
                 size="auto"
                 live
                 ltr
-                leading="linkyo.app/"
+                leading={`${CREATOR_DOMAIN}/`}
                 value={addressValue}
                 onChange={(event) => {
                   setAddress(event.target.value.toLowerCase());
@@ -346,7 +443,7 @@ export function WelcomeScreen() {
               <TemplatePicker value={doc.theme.template} profile={doc.profile} onChange={(template) => dispatch({ type: "theme", theme: { template } })} />
               {kind && doc.theme.template === STARTERS[kind].theme.template ? (
                 <p className="flex items-center gap-2 text-small font-medium text-link">
-                  <Icon icon={Sparkles} size="sm" />
+                  <Icon icon={Lightbulb} size="sm" />
                   {t("lookSuggested", { kind: tKinds(`${kind}.label`) })}
                 </p>
               ) : null}
@@ -355,7 +452,7 @@ export function WelcomeScreen() {
 
           {step === "links" ? (
             <div className="grid grid-cols-1 gap-6">
-              <ImportBox importer={importer} />
+              <ImportBox importer={importer} onPasteOnly={() => document.querySelector<HTMLElement>("#welcome-links textarea")?.focus()} />
               <fieldset className="grid min-w-0 grid-cols-1 gap-3">
                 <legend className="mb-3 text-body font-semibold">{t("socials")}</legend>
                 {starter.socials.map((platform) => (
@@ -422,7 +519,8 @@ export function WelcomeScreen() {
                   })}
                 </fieldset>
               ) : null}
-              <div className="grid grid-cols-1 gap-2">
+              {/* The links field: Linktree's "paste your links" answer brings focus here. */}
+              <div id="welcome-links" className="grid grid-cols-1 gap-2">
                 <TextArea
                   label={tKinds(`${kind ?? "other"}.links`)}
                   hint={tKinds(`${kind ?? "other"}.linksHint`)}
@@ -454,7 +552,7 @@ export function WelcomeScreen() {
                   <Icon icon={PartyPopper} size="lg" />
                 </span>
                 <p dir="ltr" className="text-h3 font-semibold">
-                  <span className="text-fg-secondary">linkyo.app/</span>
+                  <span className="text-fg-secondary">{CREATOR_DOMAIN}/</span>
                   {account.username}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -473,18 +571,38 @@ export function WelcomeScreen() {
               </div>
             </div>
           ) : null}
+            </>
+          )}
         </main>
 
-        {step !== "done" ? (
+        {step !== "done" && !waitingForAi ? (
           <footer className="layer-sticky sticky bottom-0 border-t border-line bg-canvas px-5 pt-3 pb-[max(var(--spacing-3),env(safe-area-inset-bottom))] md:px-10">
             <div className="mx-auto flex max-w-prose items-center gap-2">
-              {index > 0 ? (
+              {index > 0 && !showStart && !fromAi ? (
                 <Button variant="ghost" size="lg" icon={ArrowLeft} onClick={back} className="[&_svg]:rtl:-scale-x-100">
                   {t("back")}
                 </Button>
               ) : null}
-              <Button variant="primary" size="cta" className="ms-auto min-w-0 flex-1 sm:flex-none" onClick={() => void next()} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
-                {step === "links" ? t("finish") : t("continue")}
+              <Button
+                variant="primary"
+                size="cta"
+                className="ms-auto min-w-0 flex-1 sm:flex-none"
+                onClick={() => {
+                  if (!showStart) {
+                    void next();
+                    return;
+                  }
+                  if (start === "ai") {
+                    router.push("/app/build?from=welcome");
+                    return;
+                  }
+                  // The five steps, from the first; focus goes to its title.
+                  setStarted(true);
+                  setMoved(true);
+                }}
+                trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}
+              >
+                {showStart ? t("start.continue") : fromAi ? t("fromAi.finish") : step === "links" ? t("finish") : t("continue")}
               </Button>
             </div>
           </footer>

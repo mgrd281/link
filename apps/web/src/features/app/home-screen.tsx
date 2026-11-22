@@ -1,11 +1,12 @@
 "use client";
 
 import { Badge, Icon } from "@linkyo/ui";
-import { ArrowRight, AtSign, Gift, ImagePlus, Palette, Plus, Scale, Sparkles, TextQuote, X } from "lucide-react";
+import { ArrowRight, AtSign, ChartNoAxesColumn, Gift, HandHeart, ImagePlus, Palette, Plus, Scale, TextQuote, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type CSSProperties } from "react";
 
 import { accountStore } from "@/features/account/store";
+import { AiHomeCard } from "@/features/ai/home-card";
 import { REFERRAL_RULES } from "@/features/referrals/rules";
 import { Link, useRouter } from "@/i18n/navigation";
 
@@ -13,12 +14,14 @@ import { blankBlock } from "./blocks";
 import { LinkCard } from "./home/link-card";
 import { NextStep, TaskRow, type HomeTask } from "./home/next-step";
 import { homeProgress, homeTasksDone } from "./home/progress";
+import { ProposalCard } from "./home/proposal-card";
 import { ListGroup, ListRow } from "./list";
 import { ProfileSheet } from "./profile-form";
 import { INVITE_HREF, NAV_ANCHORS } from "./routes";
 import { sampleStats, totals } from "./sample-stats";
 import { Panel, Screen } from "./screen";
 import { useSite } from "./site-context";
+import { statsSource } from "./stats";
 
 /**
  * Home answers one question: what is my next step to get visitors? While the page is being built,
@@ -65,7 +68,7 @@ export function HomeScreen() {
         <section aria-labelledby="prepared-title" className="relative grid gap-3 overflow-hidden rounded-lg bg-primary p-5 text-primary-fg [--color-focus:var(--color-primary-fg)]">
           <div className="flex items-start gap-3">
             <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-primary-fg text-primary">
-              <Icon icon={Sparkles} size="md" />
+              <Icon icon={HandHeart} size="md" />
             </span>
             <div className="grid min-w-0 flex-1 gap-1">
               <h2 id="prepared-title" className="text-body-lg font-semibold">
@@ -100,8 +103,12 @@ export function HomeScreen() {
         </section>
       ) : null}
 
+      {/* Real accounts with the page service: a proposal from the team comes first. */}
+      <ProposalCard />
+      {ready ? null : <AiHomeCard ready={false} />}
       {ready ? null : <NextStep tasks={tasks} />}
       <LinkCard username={account.username} ready={ready} />
+      {ready ? <AiHomeCard ready /> : null}
       {ready && !complete ? (
         <ListGroup
           title={t("open.title")}
@@ -133,8 +140,32 @@ export function HomeScreen() {
   );
 }
 
-/** The last seven days at a glance (sample data until real stats arrive), with the way to the full view. */
+/**
+ * The last seven days at a glance, with the way to the full view. The demo shows labelled sample
+ * numbers; real accounts are not counted yet, so they see that, and no invented numbers.
+ */
 function WeekStats() {
+  return statsSource() === "sample" ? <SampleWeekStats /> : <WeekStatsEmpty />;
+}
+
+function WeekStatsEmpty() {
+  const t = useTranslations("app.home");
+  return (
+    <Panel title={t("stats.title")} id={NAV_ANCHORS.homeWeek}>
+      <div className="flex items-start gap-4">
+        <span className="grid size-control-lg shrink-0 place-items-center rounded-full bg-selected text-selected-fg">
+          <Icon icon={ChartNoAxesColumn} size="md" />
+        </span>
+        <div className="grid min-w-0 gap-1">
+          <p className="text-body font-semibold">{t("stats.empty.title")}</p>
+          <p className="text-small font-regular text-fg-secondary">{t("stats.empty.body")}</p>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function SampleWeekStats() {
   const t = useTranslations("app.home");
   const locale = useLocale();
   const { doc, account } = useSite();

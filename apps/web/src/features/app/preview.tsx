@@ -5,7 +5,7 @@ import { Button, cn, Icon, IconButton } from "@linkyo/ui";
 import { Eye, Smartphone, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Dialog } from "radix-ui";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { Link } from "@/i18n/navigation";
@@ -22,6 +22,21 @@ function offsetWithin(element: HTMLElement, scroller: HTMLElement): number {
     node = node.offsetParent instanceof HTMLElement ? node.offsetParent : null;
   }
   return top;
+}
+
+/**
+ * A phone around a creator's page: a dark bezel (the same everywhere, so the page's own colours
+ * stand out) and a rounded screen. Concentric: the frame's radius (28) is the screen's (20) plus its
+ * padding (8). The size comes from `className` (a width cap by default); the screen fills the frame.
+ */
+export function PhoneFrame({ children, className }: { children: ReactNode; className?: string | undefined }) {
+  return (
+    <div className={cn("relative mx-auto w-full max-w-preview overflow-hidden rounded-xl border border-line-strong bg-ink p-2", className)}>
+      <div className="relative size-full overflow-hidden rounded-lg" style={{ transform: "translateZ(0)" }}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -62,22 +77,19 @@ export function PhonePreview({ className, hint = false }: { className?: string; 
     };
   }, [editingId, previewPage]);
   return (
-    // Concentric: the frame's radius (28) is the screen's (20) plus its padding (8).
-    <div className={cn("relative mx-auto w-full max-w-preview overflow-hidden rounded-xl border border-line-strong bg-ink p-2", className)}>
-      <div className="relative size-full overflow-hidden rounded-lg" style={{ transform: "translateZ(0)" }}>
-        <div
-          ref={scroller}
-          // The edited block gets an outline (never a shadow) in the page's own accent, which the theme
-          // engine keeps readable on the page's background, dark or light.
-          className="absolute inset-0 overflow-y-auto overscroll-contain [&_[data-editing]]:rounded-creator-card [&_[data-editing]]:[--color-focus:var(--creator-accent-text)] [&_[data-editing]]:focus-ring"
-          tabIndex={0}
-          role="region"
-          aria-label={t("region", { name: previewPage.profile.displayName })}
-          aria-describedby={hint ? hintId : undefined}
-        >
-          <div inert>
-            <PosterRenderer page={previewPage} theme={theme} preview />
-          </div>
+    <PhoneFrame className={className}>
+      <div
+        ref={scroller}
+        // The edited block gets an outline (never a shadow) in the page's own accent, which the theme
+        // engine keeps readable on the page's background, dark or light.
+        className="absolute inset-0 overflow-y-auto overscroll-contain [&_[data-editing]]:rounded-creator-card [&_[data-editing]]:[--color-focus:var(--creator-accent-text)] [&_[data-editing]]:focus-ring"
+        tabIndex={0}
+        role="region"
+        aria-label={t("region", { name: previewPage.profile.displayName })}
+        aria-describedby={hint ? hintId : undefined}
+      >
+        <div inert>
+          <PosterRenderer page={previewPage} theme={theme} preview />
         </div>
       </div>
       {hint ? (
@@ -85,7 +97,7 @@ export function PhonePreview({ className, hint = false }: { className?: string; 
           {t("regionHint")}
         </p>
       ) : null}
-    </div>
+    </PhoneFrame>
   );
 }
 
