@@ -45,6 +45,10 @@ The project skills in `.claude/skills/linkyo-*` hold the detailed how-tos.
 
 - Creator pages set no cookies and load nothing from third parties by default (GDPR).
 - Secrets never reach the client.
+- The AI provider gets no photos; e-mail addresses and phone numbers are removed from every text before it is sent; the
+  AI never publishes.
+- Stripe.js loads only on `/checkout/*`.
+- Files in Storage are deleted only through the Storage API (`storage_purge`).
 
 ## Before saying a change is done
 
