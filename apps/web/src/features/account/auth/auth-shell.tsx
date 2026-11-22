@@ -2,14 +2,15 @@ import { Logo } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { LegalLinks } from "@/features/legal/legal-links";
 import { Link } from "@/i18n/navigation";
 
 import { AuthWall } from "./auth-wall";
 
 /**
  * Sign-up and sign-in share one frame: the logo, the form on white, and on wide screens a tilted
- * wall of example pages, so people see what they are about to make. Nothing else: language and
- * light/dark live on the homepage (the language comes along in the address).
+ * wall of example pages, so people see what they are about to make. Nothing else but the legal pages
+ * at the foot: language and light/dark live on the homepage (the language comes along in the address).
  */
 export function AuthShell({ children }: { children: ReactNode }) {
   const t = useTranslations("auth");
@@ -30,6 +31,10 @@ export function AuthShell({ children }: { children: ReactNode }) {
         <main id="main" className="grid flex-1 place-items-center py-12">
           <div className="grid w-full max-w-creator grid-cols-1 gap-6">{children}</div>
         </main>
+        {/* The legal pages, as at the foot of the website (named, or links once the company details are in). */}
+        <footer className="text-small text-fg-secondary md:text-caption">
+          <LegalLinks />
+        </footer>
       </div>
       <AuthWall />
     </div>
