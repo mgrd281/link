@@ -18,6 +18,8 @@ test-results/
 blob-report/
 .lighthouseci/
 apps/web/e2e/.artifacts/
+# E-mails captured by tests (EMAIL_TRANSPORT=capture)
+apps/web/.mail/
 
 # env
 .env

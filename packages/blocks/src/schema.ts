@@ -100,6 +100,14 @@ const image = z.object({
 /** Paid or commission links must be labelled as advertising (DE: UWG § 5a, MStV § 22). */
 const affiliate = z.boolean().optional();
 
+/**
+ * Where a block came from: written by the AI ("ai"), written by the AI and then changed by the owner
+ * ("ai-edited"), or made by a person ("human"). Absent means human, so every older page stays valid.
+ * Feeds the machine-readable marking of AI content on public pages (AI Act Art. 50(2)).
+ */
+export const BLOCK_ORIGINS = ["ai", "ai-edited", "human"] as const;
+export type BlockOrigin = (typeof BLOCK_ORIGINS)[number];
+
 const base = z.object({
   id: z.string().min(1),
   visible: z.boolean().default(true),
@@ -107,6 +115,7 @@ const base = z.object({
     .object({ from: z.iso.datetime().optional(), until: z.iso.datetime().optional() })
     .optional(),
   highlight: z.boolean().default(false),
+  origin: z.enum(BLOCK_ORIGINS).optional(),
 });
 
 export const blockSchema = z.discriminatedUnion("type", [
@@ -267,6 +276,14 @@ export type Block = z.infer<typeof blockSchema>;
 export type BlockType = Block["type"];
 export type BlockOf<T extends BlockType> = Extract<Block, { type: T }>;
 
+/**
+ * Profile texts an applied AI draft or proposal wrote. A field stays listed after the owner edits it
+ * (the text started as AI output, like "ai-edited" blocks); only the next applied AI draft or
+ * proposal replaces the list. Absent means a person wrote them.
+ */
+export const AI_PROFILE_FIELDS = ["displayName", "tagline", "bio"] as const;
+export type AiProfileField = (typeof AI_PROFILE_FIELDS)[number];
+
 export const profileSchema = z.object({
   username: z.string().min(USERNAME_MIN).max(USERNAME_MAX).regex(USERNAME_PATTERN, "lowercase letters, numbers and dashes"),
   displayName: z.string().min(1).max(60),
@@ -290,6 +307,7 @@ export const profileSchema = z.object({
     .optional(),
   verified: z.boolean().default(false),
   locale: z.enum(["de", "en", "ar"]),
+  aiFields: z.array(z.enum(AI_PROFILE_FIELDS)).max(3).optional(),
 });
 export type Profile = z.infer<typeof profileSchema>;
 
@@ -303,4 +321,12 @@ export function isBlockActive(block: Block, now: Date = new Date()): boolean {
   const from = block.schedule?.from ? new Date(block.schedule.from) : null;
   const until = block.schedule?.until ? new Date(block.schedule.until) : null;
   return (!from || from <= now) && (!until || until > now);
+}
+
+/**
+ * True when the page carries AI-written content: a block from an AI draft (edited or not) or profile
+ * text an AI draft wrote. Used for the public page's marking and for how a proposal names its maker.
+ */
+export function hasAiContent(page: Page): boolean {
+  return (page.profile.aiFields?.length ?? 0) > 0 || page.blocks.some((block) => block.origin === "ai" || block.origin === "ai-edited");
 }

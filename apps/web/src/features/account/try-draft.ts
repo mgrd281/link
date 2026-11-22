@@ -15,6 +15,8 @@ export interface TryDraft {
   photo?: { src: string; tone: "light" | "dark" };
   /** The whole look on screen: template, accent, page color, type, buttons. */
   theme?: CreatorThemeConfig;
+  /** A website or link page typed into the homepage's AI tab: the AI build starts from it after sign-up. */
+  aiLink?: string;
 }
 
 const KEY = "linkyo.try";
@@ -45,11 +47,30 @@ function readPhoto(value: unknown): TryDraft["photo"] {
   return { src, tone: tone === "light" ? "light" : "dark" };
 }
 
+const MAX_AI_LINK = 300;
+/** A bare host, optionally with a path ("lio-vance.de", "beacons.ai/lio"). */
+const BARE_HOST = /^[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i;
+
+/** A link for the AI build: http(s) or a bare host, at most 300 characters; anything else is dropped. */
+function readAiLink(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const link = value.trim();
+  if (!link || link.length > MAX_AI_LINK) return undefined;
+  return /^https?:\/\/\S+$/i.test(link) || BARE_HOST.test(link) ? link : undefined;
+}
+
 export function saveTryDraft(draft: TryDraft): void {
   try {
     sessionStorage.setItem(
       KEY,
-      JSON.stringify({ name: draft.name.slice(0, 60), links: draft.links.slice(0, MAX_LINKS), tagline: draft.tagline?.slice(0, 80), photo: readPhoto(draft.photo), theme: readTheme(draft.theme) }),
+      JSON.stringify({
+        name: draft.name.slice(0, 60),
+        links: draft.links.slice(0, MAX_LINKS),
+        tagline: draft.tagline?.slice(0, 80),
+        photo: readPhoto(draft.photo),
+        theme: readTheme(draft.theme),
+        aiLink: readAiLink(draft.aiLink),
+      }),
     );
   } catch {
     // Storage can be off (private mode): the links are then simply added in the welcome flow.
@@ -62,13 +83,21 @@ export function readTryDraft(): TryDraft | null {
   try {
     const raw: unknown = JSON.parse(sessionStorage.getItem(KEY) ?? "null");
     if (!raw || typeof raw !== "object") return null;
-    const { name, links, tagline, photo, theme } = raw as Record<string, unknown>;
+    const { name, links, tagline, photo, theme, aiLink } = raw as Record<string, unknown>;
     if (typeof name !== "string" || !Array.isArray(links)) return null;
     const urls = links.filter((link): link is string => typeof link === "string" && link.length <= 2048).slice(0, MAX_LINKS);
     const picture = readPhoto(photo);
     const look = readTheme(theme);
     const line = typeof tagline === "string" ? tagline.trim().slice(0, 80) : "";
-    return { name: name.slice(0, 60), links: urls, ...(line ? { tagline: line } : {}), ...(picture ? { photo: picture } : {}), ...(look ? { theme: look } : {}) };
+    const ai = readAiLink(aiLink);
+    return {
+      name: name.slice(0, 60),
+      links: urls,
+      ...(line ? { tagline: line } : {}),
+      ...(picture ? { photo: picture } : {}),
+      ...(look ? { theme: look } : {}),
+      ...(ai ? { aiLink: ai } : {}),
+    };
   } catch {
     return null;
   }

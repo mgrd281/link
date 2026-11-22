@@ -39,4 +39,15 @@ describe("try draft", () => {
     sessionStorage.setItem("linkyo.try", JSON.stringify({ name: "", links: [], theme: { template: "mono", accent: "red;x", pairing: "<b>", tint: 7 } }));
     expect(readTryDraft()).toEqual({ name: "", links: [], theme: { template: "mono" } });
   });
+
+  it("keeps the link for the AI build only when it is a web address or a bare host", () => {
+    saveTryDraft({ name: "", links: [], aiLink: "  https://lio-vance.de  " });
+    expect(readTryDraft()).toEqual({ name: "", links: [], aiLink: "https://lio-vance.de" });
+    saveTryDraft({ name: "", links: [], aiLink: "beacons.ai/lio" });
+    expect(readTryDraft()?.aiLink).toBe("beacons.ai/lio");
+    for (const aiLink of ["javascript:alert(1)", "data:text/html,hi", "not a link", `https://example.com/${"x".repeat(300)}`, ""]) {
+      sessionStorage.setItem("linkyo.try", JSON.stringify({ name: "", links: [], aiLink }));
+      expect(readTryDraft(), aiLink).toEqual({ name: "", links: [] });
+    }
+  });
 });

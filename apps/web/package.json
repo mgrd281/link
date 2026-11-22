@@ -14,6 +14,7 @@
     "review": "REVIEW=1 playwright test --project review"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "catalog:",
     "@dnd-kit/core": "catalog:",
     "@dnd-kit/sortable": "catalog:",
     "@dnd-kit/utilities": "catalog:",
@@ -42,6 +43,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "simple-icons": "catalog:",
+    "stripe": "catalog:",
     "tailwind-merge": "catalog:",
     "uqr": "0.1.3",
     "zod": "catalog:"

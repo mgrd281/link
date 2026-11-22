@@ -395,7 +395,13 @@
       "appstore": "Download on the App Store",
       "googleplay": "Get it on Google Play"
     },
-    "trademarks": "Apple, the Apple logo and App Store are trademarks of Apple Inc., registered in the U.S. and other countries. Google Play and the Google Play logo are trademarks of Google LLC."
+    "trademarks": "Apple, the Apple logo and App Store are trademarks of Apple Inc., registered in the U.S. and other countries. Google Play and the Google Play logo are trademarks of Google LLC.",
+    "notFound": {
+      "title": "This page doesn't exist",
+      "body": "Check the address. Maybe the name is still free.",
+      "cta": "Create your own page"
+    },
+    "legalTitle": "Legal notice"
   },
   "directions": {
     "title": "Directions",
@@ -799,6 +805,19 @@
         ],
         "cta": "Notify me later",
         "lead": "For everyone who wants to sell and grow."
+      },
+      "leadPaid": "Free stays free for good. No card, no notice period.",
+      "proLive": {
+        "per": "a month",
+        "vat": "incl. VAT",
+        "features": [
+          "AI drafts for your page: up to 5 a month",
+          "Everything in Free"
+        ],
+        "planned": "Planned: own domain, selling, email list",
+        "terms": "Cancel any time; Pro ends at the end of the paid month.",
+        "cta": "Order Pro",
+        "service": "Rather have it designed? Page service from {price}"
       }
     },
     "faq": {
@@ -968,7 +987,22 @@
       "editor": {
         "empty": "Your links appear here"
       },
-      "count": "{count} of {max}"
+      "count": "{count} of {max}",
+      "sample": "Example page",
+      "ai": {
+        "tab": "AI",
+        "tabShort": "AI",
+        "tabLabel": "Build with AI",
+        "eyebrow": "New: pages with AI",
+        "lead": "Watch a recording of the AI turning a website into a page. Then add your links and one sentence about you: your first draft is free.",
+        "field": "Your link",
+        "placeholder": "Website or link page …",
+        "cta": "Build it with AI, free",
+        "hint": "First draft free · just your email",
+        "empty": "Add a link first.",
+        "slot": "Recording · step {current} of {total}: {name}",
+        "all": "All steps"
+      }
     },
     "more": {
       "title1": "Everything you need.",
@@ -981,6 +1015,14 @@
         "title": "Every color readable",
         "body": "Pick any color: text and buttons stay easy to read, checked against WCAG AA."
       }
+    },
+    "real": {
+      "metaDescription": "The creator page that looks premium in five minutes: eleven templates, music, shows and a shop. Free to start, data stored in Frankfurt.",
+      "analyticsBadge": "In the works",
+      "freeAnalytics": "Cookie-free analytics (in the works)",
+      "faqFree": "Yes. Templates, unlimited links and sections stay free; cookie-free analytics is in the works. Nothing that is free today becomes paid.",
+      "faqFreePaid": "Yes. Templates, unlimited links and sections stay free. Pro includes AI drafts; your own domain, selling and an email list are planned. Nothing that is free today becomes paid.",
+      "trustFree": "Templates and unlimited links stay free. No credit card, no notice period."
     }
   },
   "auth": {
@@ -1042,7 +1084,11 @@
       "invitedBy": "Invited by {name}",
       "invited": "You were invited to Linkyo",
       "invitedNote": "{name} will see your page name in their invite list, never your email.",
-      "invitedNoteAnon": "The person who invited you will see your page name, never your email."
+      "invitedNoteAnon": "The person who invited you will see your page name, never your email.",
+      "draft": {
+        "title": "Your page is coming along",
+        "caption": "What you built in \"Try it\" comes along."
+      }
     },
     "login": {
       "title": "Welcome back",
@@ -1074,7 +1120,10 @@
       "invite": "Invite friends",
       "settings": "Settings",
       "welcome": "Welcome",
-      "preview": "Preview"
+      "preview": "Preview",
+      "build": "Build with AI",
+      "order": "Page service",
+      "proposal": "Page proposal"
     },
     "loading": "Loading your dashboard…",
     "skip": "Skip to content",
@@ -1128,7 +1177,8 @@
       "saved": "Saved",
       "saving": "Saving…",
       "error": "Not saved",
-      "unsavedLegal": "Legal notice not saved"
+      "unsavedLegal": "Legal notice not saved",
+      "tooLarge": "Not saved: your page is too large. Remove a few large pictures."
     },
     "form": {
       "upload": "Upload",
@@ -1142,7 +1192,8 @@
       "imageErrors": {
         "type": "That file isn't an image. Choose a JPG, PNG or WebP.",
         "size": "That image is over 25 MB. Choose a smaller one.",
-        "decode": "This image couldn't be read. Try another file."
+        "decode": "This image couldn't be read. Try another file.",
+        "upload": "The picture couldn't be uploaded. Please try again."
       },
       "uploadNamed": "Upload {label}",
       "replaceNamed": "Replace {label}",
@@ -1393,7 +1444,8 @@
       "imageErrors": {
         "type": "That file isn't an image. Choose a JPG, PNG or WebP.",
         "size": "That image is over 25 MB. Choose a smaller one.",
-        "decode": "This image couldn't be read. Try another file."
+        "decode": "This image couldn't be read. Try another file.",
+        "upload": "The picture couldn't be uploaded. Please try again."
       },
       "paste": "Paste",
       "groups": {
@@ -1434,7 +1486,9 @@
       "undone": "Undone",
       "redone": "Redone",
       "reorderHint": "Drag a row by its handle to its new place.",
-      "gripTip": "Drag to move"
+      "gripTip": "Drag to move",
+      "withAi": "With AI",
+      "aiTag": "Drafted by AI"
     },
     "profile": {
       "title": "Profile",
@@ -1504,7 +1558,11 @@
         "ctr": "Click rate",
         "chartLabel": "Views per day, last 7 days",
         "dayLabel": "{day}: {views} views",
-        "more": "All stats"
+        "more": "All stats",
+        "empty": {
+          "title": "Stats are coming soon",
+          "body": "We're building cookie-free counting. Until then we show no made-up numbers."
+        }
       },
       "preparedTitle": "Welcome, {name}! Your page is ready.",
       "preparedBody": "The Linkyo team prepared it for you. Have a look and change anything you like – it's all yours.",
@@ -1533,9 +1591,22 @@
         "readyBody": "Put the link in your Instagram or TikTok profile. That's where visitors tap it.",
         "howTo": "How to add it to your profile",
         "howToBody": "Open your profile in the app and tap “Edit profile”. Paste the link under “Links” or “Website”. Done: it now sits under your name.",
-        "reserved": "Your address is reserved and goes live at launch."
+        "reserved": "Your address is reserved and goes live at launch.",
+        "live": "Your page is public. Changes show up after about a minute."
       },
-      "inviteSubtitle": "{verify, plural, one {# friend} other {# friends}}: free verification review · {pro, plural, one {# friend} other {# friends}}: Pro for life"
+      "inviteSubtitle": "{verify, plural, one {# friend} other {# friends}}: free verification review · {pro, plural, one {# friend} other {# friends}}: Pro for life",
+      "ai": {
+        "title": "Let the AI build your page",
+        "body": "From your links and one sentence about you. You see every step and decide at the end.",
+        "cta": "Build with AI",
+        "rebuild": "Rebuild with AI"
+      },
+      "proposal": {
+        "title": "Your page proposal is here",
+        "bodyTeam": "Our team designed your page. Have a look and decide.",
+        "bodyAi": "Our AI drafted your page, and our team checked and refined it. Have a look and decide.",
+        "cta": "View proposal"
+      }
     },
     "shareImage": {
       "open": "Image for story & post",
@@ -1669,7 +1740,12 @@
         "tablet": "Tablet"
       },
       "privacy": "Linkyo counts visits without cookies and without storing IP addresses. Your visitors stay anonymous, and you see everything you need.",
-      "topInsight": "Tapped most: {title}"
+      "topInsight": "Tapped most: {title}",
+      "empty": {
+        "title": "Stats are coming soon",
+        "body": "We're building cookie-free counting. Until then we show no made-up numbers."
+      },
+      "leadReal": "We're building counting without cookies and without a consent banner."
     },
     "invite": {
       "title": "Invite friends",
@@ -1731,7 +1807,8 @@
         "deleted": "If someone you invited deletes their account later, they still count.",
         "verify": "{count, plural, one {# friend} other {# friends}}: a free verification review. Our team checks that the page is really yours, then gives it the blue check.",
         "pro": "{count, plural, one {# friend} other {# friends}}: Pro for life. Every Pro feature, no subscription, no card. Pro isn't out yet: it's yours the day it launches.",
-        "terms": "Program terms"
+        "terms": "Program terms",
+        "proLive": "{count, plural, one {# friend} other {# friends}}: Pro for life. Every Pro feature, no subscription, no card. Pro is here: it includes up to 5 AI drafts a month."
       },
       "terms": {
         "personal": "Rewards are personal, can't be transferred and have no cash value. Pro for life lasts as long as your account exists and we offer Pro.",
@@ -1814,7 +1891,8 @@
       "groups": {
         "page": "Your page",
         "app": "App",
-        "data": "Data"
+        "data": "Data",
+        "contracts": "Contracts and legal"
       },
       "rows": {
         "profile": "Profile",
@@ -1822,12 +1900,19 @@
         "legal": "Legal notice",
         "pageLanguage": "Page language",
         "account": "Account",
-        "appLanguage": "App language"
+        "appLanguage": "App language",
+        "orders": "My orders",
+        "withdraw": "Withdraw from contract",
+        "cancel": "Cancel contracts here",
+        "imprint": "Imprint",
+        "privacy": "Privacy",
+        "terms": "Terms"
       },
       "footers": {
         "pageLanguage": "For visitors: buttons, dates and notices on your page appear in this language.",
         "app": "Just for you, in this browser.",
-        "data": "Export saves everything as a JSON file. An import replaces your page and can be undone right after."
+        "data": "Export saves everything as a JSON file. An import replaces your page and can be undone right after.",
+        "contracts": "Withdrawal and cancellation also work without signing in."
       },
       "legalState": {
         "complete": "Complete",
@@ -2185,21 +2270,42 @@
         "title": "Coming from Linktree, Beacons & co.?",
         "lead": "Paste your current page. We bring your profiles and links over, and you check them below.",
         "label": "Your current link page",
-        "placeholder": "linktr.ee/yourname",
+        "placeholder": "beacons.ai/yourname",
         "button": "Import",
-        "hint": "Works with Linktree, Beacons, bio.link, lnk.bio, Carrd and similar pages.",
+        "hint": "Works with Beacons, bio.link, lnk.bio, Carrd and similar pages that allow reading.",
         "done": "{profiles, plural, =0 {No profiles} one {# profile} other {# profiles}} and {links, plural, =0 {no links} one {# link} other {# links}} brought over. Check them below.",
         "errors": {
-          "unsupported": "Paste the address of a Linktree, Beacons, bio.link, lnk.bio or Carrd page, e.g. linktr.ee/yourname.",
+          "unsupported": "Paste the address of a Beacons, bio.link, lnk.bio or Carrd page, e.g. beacons.ai/yourname.",
           "notFound": "We couldn't find that page. Check the address.",
           "empty": "That page has no public links we could read. Paste your links below instead.",
-          "failed": "We couldn't read that page right now. Paste your links below instead."
+          "failed": "We couldn't read that page right now. Paste your links below instead.",
+          "paste": "Linktree doesn't allow automatic reading. Open your Linktree page, copy your links and paste them below.",
+          "robots": "This page asks programs not to read it. Paste your links below instead."
         }
       },
       "address": {
         "label": "Your address",
         "hint": "This is how people find your page. You can change it later in Settings.",
         "yours": "linkyo.app/{name} is yours"
+      },
+      "start": {
+        "label": "How to start",
+        "title": "How do you want to start?",
+        "ai": {
+          "title": "Build it with AI from your links",
+          "body": "You add your links and one sentence about you. The AI drafts, you decide.",
+          "badge": "Recommended",
+          "free": "Your first draft is free"
+        },
+        "manual": {
+          "title": "Step by step yourself",
+          "body": "Five short steps with a template and a preview."
+        },
+        "continue": "Continue"
+      },
+      "fromAi": {
+        "lead": "Your draft is in. Now choose your page's name and address.",
+        "finish": "Finish my page"
       }
     },
     "ownPage": {
@@ -2215,6 +2321,188 @@
       "title": "This view couldn't load",
       "body": "Reload it. Anything already saved stays saved.",
       "retry": "Reload"
+    },
+    "ai": {
+      "header": {
+        "title": "Build with AI",
+        "label": "AI assistant",
+        "close": "Close"
+      },
+      "intro": "An AI works for you here. It makes suggestions; you decide what goes on your page.",
+      "entry": {
+        "title": "Let Linkyo draft your page",
+        "lead": "Add your website or your current link page and tell us in one sentence what you do. You see every step and decide at the end."
+      },
+      "input": {
+        "sources": {
+          "label": "Your links",
+          "hint": "Website, link page, TikTok, Instagram, YouTube … up to 5.",
+          "placeholder": "your-website.com",
+          "add": "Add",
+          "remove": "Remove {source}",
+          "limit": "Five sources are enough for the draft.",
+          "invalid": "That doesn't look like an address. Paste the whole link."
+        },
+        "paste": {
+          "label": "Paste links (optional)",
+          "hint": "One link per line, up to 40."
+        },
+        "about": {
+          "label": "What do you do, and what should visitors do?",
+          "hint": "One sentence is enough. Without a readable source we need it.",
+          "required": "Tell us in one sentence what you do.",
+          "count": "{count} of 600 characters"
+        },
+        "name": {
+          "label": "Your name on the page (optional)"
+        },
+        "photo": {
+          "label": "Photo for the colors (optional)",
+          "hint": "The AI never sees your photo. We only take its colors, and it becomes your profile picture if you use the draft.",
+          "add": "Choose a photo",
+          "change": "Another photo",
+          "remove": "Remove photo"
+        },
+        "language": {
+          "label": "Page language"
+        },
+        "own": "Use only profiles that are yours.",
+        "privacy": "To make the draft, we send what you entered and the texts and links we found to our AI provider, Anthropic (USA). We never send photos, and we remove email addresses and phone numbers first."
+      },
+      "platform": {
+        "website": "Website: we read its title, description and links if the site allows it.",
+        "linkinbio": "Link page: we take over your links if the page allows it.",
+        "linktree": "Linktree doesn't allow automatic reading. Copy your links from there and paste them below.",
+        "tiktok": "TikTok: only your display name. You add the bio and photo.",
+        "instagram": "Instagram shares no profile data. We take your @name; you add the photo and bio.",
+        "youtube": "YouTube: we link your channel.",
+        "x": "X: the link only.",
+        "other": "We take over the link."
+      },
+      "quota": {
+        "free": "Your first AI draft is free.",
+        "left": "{count, plural, =0 {No AI drafts left this month} one {1 AI draft left this month} other {# AI drafts left this month}}",
+        "used": "You've used your free AI draft.",
+        "resets": "New drafts from {date}."
+      },
+      "start": "Create draft",
+      "continueWithout": "Continue without AI",
+      "unavailable": "AI drafts need a real account. You can build your page yourself.",
+      "review": {
+        "title": "Your draft",
+        "summary": "Built in {seconds} s · {blocks, plural, one {# block} other {# blocks}} · {fixed, plural, =0 {no fixes} one {1 fix} other {# fixes}}",
+        "expires": "Saved as a draft until {date}.",
+        "blocks": "Blocks",
+        "blocksHint": "Untick what shouldn't go on the page.",
+        "keepBlock": "Keep {title}",
+        "looks": "Other looks",
+        "looksHint": "Without AI, instantly.",
+        "lookCurrent": "The AI's choice",
+        "before": "Before",
+        "after": "Draft",
+        "compare": "Compare",
+        "notes": "Why like this?",
+        "topics": {
+          "look": "Look",
+          "order": "Order",
+          "copy": "Copy",
+          "missing": "What's missing"
+        },
+        "read": "What we read",
+        "disclosure": "Made with AI. Check everything before you publish."
+      },
+      "actions": {
+        "apply": "Use this page",
+        "applyHint": "This replaces your current page. You can undo it.",
+        "again": "New draft",
+        "againLeft": "New draft · {count} left",
+        "discard": "Discard",
+        "retry": "Try again",
+        "useAsIs": "Use as is"
+      },
+      "applied": "Draft applied.",
+      "discarded": "Draft discarded.",
+      "pro": {
+        "title": "AI drafts are part of Pro",
+        "body": "With Pro at {price} a month you get up to {count} AI drafts a month.",
+        "get": "Get Pro",
+        "soon": "Pro is coming soon",
+        "later": "Not now"
+      },
+      "service": "Rather have our team design it? From {price}",
+      "errors": {
+        "title": "No draft",
+        "quotaFree": "You've used your free AI draft. More drafts are part of Pro.",
+        "quotaPro": "You've used all {count} AI drafts for this month. New ones from {date}.",
+        "busy": "It's busy right now. Try again in a minute. Nothing was used up.",
+        "budget": "No more AI drafts are possible today. Try again tomorrow. Nothing was used up.",
+        "limit": "Many drafts were already made from your network today. Try again tomorrow. Nothing was used up.",
+        "failures": "It didn't work several times today. Try again tomorrow. Nothing was used up.",
+        "refused": "We can't draft a page from this information. You can build it yourself.",
+        "nothing": "We found nothing at that address. Check it, or tell us more about yourself.",
+        "timeout": "That took too long. Nothing was used up. Please try again.",
+        "invalid": "The draft didn't pass our checks. Nothing was used up.",
+        "offline": "Connection lost. We keep building in the background and show you the result as soon as it's there.",
+        "disabled": "AI drafts are switched off right now. You can build your page yourself.",
+        "server": "Something went wrong. Nothing was used up. Please try again."
+      }
+    },
+    "orders": {
+      "title": "Your page service",
+      "number": "Order {number}",
+      "due": "Ready by {date}, {time}",
+      "back": "To the dashboard",
+      "proposals": "Proposals",
+      "viewProposal": "View proposal",
+      "briefing": {
+        "title": "Briefing",
+        "lead": "Give us everything that should go on your page. The clock for the ready date starts once you send it.",
+        "links": "Your links",
+        "linksHint": "One link per line.",
+        "photos": "Photos",
+        "photosHint": "Up to 10 photos, at most 10 MB each.",
+        "addPhotos": "Add photos",
+        "removePhoto": "Remove photo",
+        "wishes": "Your wishes",
+        "wishesHint": "Style, colors, what should come first.",
+        "language": "Page language",
+        "submit": "Send briefing",
+        "privacy": "For the first draft we send your links and wishes to our AI provider, Anthropic (USA), but not your photos. We remove email addresses and phone numbers first.",
+        "sent": "Thank you! Ready by {date}, {time}.",
+        "locked": "The briefing is sent. After delivery you send changes as a revision round."
+      }
+    },
+    "proposals": {
+      "title": "Your page proposal",
+      "chipTeam": "Proposal · designed by our team",
+      "chipAi": "Proposal · AI draft, checked and refined by our team",
+      "message": "Message from the team",
+      "apply": "Use this proposal",
+      "applyHint": "This replaces your current page. You can undo it.",
+      "applied": "Proposal applied.",
+      "revise": "Request changes",
+      "reviseLeft": "{count, plural, =0 {No revision rounds left} one {1 revision round left} other {# revision rounds left}}",
+      "reviseUntil": "until {date}",
+      "reviseLabel": "What should we change?",
+      "reviseHint": "Put all your requests in one message.",
+      "reviseSend": "Send changes",
+      "reviseSent": "Thank you! We deliver the changes by {date}, {time}.",
+      "reviseNone": "All revision rounds are used.",
+      "reviseExpired": "The 14 days for changes are over.",
+      "later": "Look later",
+      "refund": "Don't like it? Write to {email} within 14 days of delivery and you get the full price back. Once per account. Your statutory rights are not affected.",
+      "kit": {
+        "title": "Marketing kit",
+        "lead": "For your profiles: two bio texts, a 4-week posting plan and 3 story pictures in your page's design.",
+        "bioInstagram": "Instagram bio",
+        "bioTiktok": "TikTok bio",
+        "copy": "Copy {label}",
+        "copied": "Copied.",
+        "plan": "Posting plan",
+        "week": "Week {week}",
+        "stories": "Story pictures",
+        "download": "Download story picture {n}"
+      }
     }
   },
   "preview": {
@@ -2303,7 +2591,8 @@
       "groups": {
         "business": "Business",
         "teamWork": "Team work"
-      }
+      },
+      "orders": "Orders"
     },
     "roles": {
       "owner": {
@@ -3078,6 +3367,120 @@
       "languages": "Languages",
       "browsers": "Browsers",
       "other": "Other"
+    },
+    "orders": {
+      "title": "Orders",
+      "lead": "Page-service orders by ready date.",
+      "tabs": {
+        "orders": "Orders",
+        "contracts": "Withdrawals & cancellations"
+      },
+      "filters": {
+        "open": "Open",
+        "mine": "Mine",
+        "delivered": "Delivered",
+        "all": "All"
+      },
+      "cols": {
+        "number": "Number",
+        "package": "Package",
+        "customer": "Account",
+        "status": "Status",
+        "due": "Due",
+        "assignee": "Assignee"
+      },
+      "unassigned": "Nobody",
+      "sla": {
+        "ok": "in {time}",
+        "soon": "due soon: in {time}",
+        "overdue": "overdue by {time}"
+      },
+      "empty": "No orders in this view.",
+      "withdrawalPending": "Withdrawal received",
+      "detail": {
+        "briefing": "Briefing",
+        "noBriefing": "No briefing yet.",
+        "links": "Links",
+        "photos": "Photos",
+        "wishes": "Wishes",
+        "language": "Page language",
+        "timeline": "Timeline",
+        "proposals": "Proposals",
+        "round": "Round {round}",
+        "revisions": "Revision rounds: {used} of {allowed}",
+        "request": "Change request",
+        "withdrawalLock": "A withdrawal came in for this order. Work pauses until it is decided under \"Withdrawals & cancellations\"."
+      },
+      "actions": {
+        "assign": "Assign to me",
+        "ai": "Create a draft with AI",
+        "edit": "Edit proposal",
+        "deliver": "Deliver proposal",
+        "refund": "Refund",
+        "refundConfirm": "Refund {price} for {number}? This goes through Stripe and can't be undone.",
+        "refundVoluntaryUsed": "Note: this account has already used the voluntary money-back promise.",
+        "handled": "Mark as handled",
+        "resume": "Undo cancellation",
+        "acceptWithdrawal": "Accept withdrawal and refund",
+        "rejectWithdrawal": "Reject withdrawal",
+        "refundAmount": "Refund amount",
+        "refundAmountHint": "Full price. Only if the account asked for an immediate start and we already did work, deduct the value of that work (§ 357a BGB) and give the reason in the note.",
+        "endNow": "End now",
+        "rejectCancellation": "Reject cancellation",
+        "note": "Reason or note",
+        "noteRequired": "Please give a reason.",
+        "resumeNote": "The account's request, quoted from the account's email address"
+      },
+      "editor": {
+        "title": "Proposal for {customer}",
+        "note": "This proposal never changes the live page. Only the account itself can apply it.",
+        "message": "Message to the account (optional)",
+        "locked": "This proposal is delivered. Editing opens again once the account requests changes."
+      },
+      "delivered": "Proposal delivered. The account gets an email.",
+      "refunded": "Refund started.",
+      "events": {
+        "paid": "Paid",
+        "confirmation_sent": "Confirmation sent",
+        "briefed": "Briefing received",
+        "assigned": "Assigned",
+        "proposal_saved": "Proposal saved",
+        "proposal_delivered": "Proposal delivered",
+        "revision_requested": "Changes requested",
+        "proposal_applied": "Proposal applied",
+        "refunded": "Refunded",
+        "withdrawal_received": "Withdrawal received",
+        "withdrawal_accepted": "Withdrawal accepted",
+        "withdrawal_rejected": "Withdrawal rejected",
+        "completed": "Completed",
+        "note": "Note"
+      },
+      "contracts": {
+        "withdrawal": "Withdrawal",
+        "cancellation": "Cancellation",
+        "matched": "Matched",
+        "unmatched": "Not matched",
+        "handled": "Handled",
+        "received": "Received on {date} at {time}",
+        "suspect": "No email receipt sent (many requests): please check",
+        "refundDue": "Refund due by {date}",
+        "empty": "No open requests."
+      },
+      "kit": {
+        "title": "Marketing kit",
+        "bioInstagram": "Instagram bio (up to 150 characters)",
+        "bioTiktok": "TikTok bio (up to 80 characters)",
+        "plan": "4-week posting plan",
+        "week": "Week {week}",
+        "stories": "Story pictures (3)",
+        "addStory": "Upload story picture",
+        "removeStory": "Remove story picture {n}",
+        "incomplete": "Premium still needs the marketing kit: two bios, 4 plan weeks, 3 story pictures."
+      },
+      "ai": {
+        "label": "AI drafts",
+        "today": "Today: {runs} runs · {spent}"
+      }
     }
   },
   "examples": {
@@ -3203,6 +3606,366 @@
     "keys": {
       "move": "Select",
       "open": "Open"
+    }
+  },
+  "ai": {
+    "run": {
+      "steps": {
+        "read": {
+          "name": "Reading your links",
+          "done": "{links, plural, =0 {No links} one {# link} other {# links}}, {profiles, plural, =0 {no profiles} one {# profile} other {# profiles}}"
+        },
+        "details": {
+          "name": "Fetching titles and pictures",
+          "done": "{count, plural, =0 {No songs, videos or apps} one {# song, video or app} other {# songs, videos or apps}}",
+          "skip": "Skipped"
+        },
+        "colors": {
+          "name": "Colors from your photo",
+          "skip": "No photo: the template's colors"
+        },
+        "plan": {
+          "name": "The AI is planning your page",
+          "done": "Planned in {seconds} s"
+        },
+        "look": {
+          "name": "Choosing the look",
+          "done": "{template} · {accent}"
+        },
+        "write": {
+          "name": "Writing blocks",
+          "done": "{count, plural, one {# block} other {# blocks}}"
+        },
+        "check": {
+          "name": "Checking",
+          "done": "Every link from your sources{fixed, plural, =0 {} one { · 1 text shortened} other { · # texts shortened}}{dropped, plural, =0 {} one { · 1 block removed} other { · # blocks removed}}"
+        }
+      },
+      "accent": {
+        "template": "the template's color",
+        "photo": "color from your photo",
+        "swatch": "a chosen color"
+      },
+      "state": {
+        "pending": "Pending",
+        "running": "Running",
+        "done": "Done",
+        "skipped": "Skipped",
+        "failed": "Failed"
+      },
+      "progress": "Step {current} of {total}",
+      "elapsed": "Elapsed time",
+      "phone": "Your draft on a phone",
+      "draftChip": "Draft · made with AI",
+      "recordingChip": "Recording · a real AI run with a made-up example person, {date}",
+      "fixtureChip": "Test data · not a real recording",
+      "shortened": "Wait shortened (actual: {seconds} s)",
+      "sheet": {
+        "steps": "Steps",
+        "read": "What we read",
+        "why": "Why this",
+        "all": "All steps"
+      },
+      "source": {
+        "read": "read",
+        "handleOnly": "link only",
+        "robots": "The website asks programs not to read it. Skipped.",
+        "paste": "Linktree doesn't allow automatic reading. Paste your links.",
+        "failed": "{source} didn't respond, so we're building without it.",
+        "notFound": "{source}: not found",
+        "tooLarge": "{source}: too large to read",
+        "blocked": "{source}: can't be reached"
+      },
+      "stop": "Stop",
+      "stopping": "Stopping …",
+      "stopped": "Stopped. {count, plural, =0 {No blocks yet.} one {1 block is ready.} other {# blocks are ready.}}",
+      "stopCounts": "Stopping keeps the finished blocks. Once there are blocks, the run counts as 1 draft.",
+      "notCounted": "This one doesn't count.",
+      "announce": {
+        "stepStart": "Step {current} of {total}: {name}.",
+        "stillPlanning": "Still planning, {seconds} seconds.",
+        "ready": "Draft ready: {blocks, plural, one {# block} other {# blocks}}, look {template}. Check it, then use it or start again."
+      },
+      "play": "Play",
+      "replay": "Play again",
+      "stopReplay": "Stop playback"
+    }
+  },
+  "orders": {
+    "package": {
+      "start": "Start",
+      "premium": "Premium"
+    },
+    "status": {
+      "paid": "Paid",
+      "awaiting_briefing": "Briefing missing",
+      "queued": "Queued",
+      "in_progress": "In progress",
+      "delivered": "Proposal delivered",
+      "revision_requested": "Changes requested",
+      "completed": "Completed",
+      "refunded": "Refunded",
+      "withdrawn": "Withdrawn"
+    }
+  },
+  "legal": {
+    "label": "Legal",
+    "nav": {
+      "imprint": "Imprint",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "cancellationPolicy": "Right of withdrawal",
+      "withdraw": "Withdraw from contract",
+      "cancel": "Cancel contracts here"
+    },
+    "titles": {
+      "imprint": "Imprint",
+      "privacy": "Privacy policy",
+      "terms": "Terms and conditions",
+      "cancellationPolicy": "Right of withdrawal"
+    },
+    "draft": "Draft: a lawyer reviews this text before launch. Details in square brackets are still missing.",
+    "german": "We currently make contracts in German only. This is the German text.",
+    "testMode": "Test mode: no real money moves.",
+    "print": "Save as PDF",
+    "errors": {
+      "required": "Please fill in this field.",
+      "email": "Please enter a valid email address.",
+      "server": "That didn't work. Please try again."
+    },
+    "withdraw": {
+      "title": "Withdraw from contract",
+      "lead": "You can withdraw here from a contract you made with us online, within the withdrawal period. You don't need to give a reason.",
+      "name": "Your name",
+      "contract": "Order number or contract",
+      "contractHint": "e.g. LNK-2026-000123 or \"Linkyo Pro\"",
+      "contractPro": "Linkyo Pro",
+      "contractOrder": "Page service {package} · {number}",
+      "email": "Email for the confirmation",
+      "next": "Continue",
+      "back": "Back",
+      "review": "Please check your withdrawal: {name} withdraws from the contract {contract}. The confirmation goes to {email}.",
+      "confirm": "Confirm withdrawal",
+      "done": "We received your withdrawal on {date} at {time}.",
+      "doneMailed": "We sent the confirmation to {email}.",
+      "doneHeld": "We'll email the confirmation once we've checked the request. Save this page as your record.",
+      "nextSteps": "We process your withdrawal and refund payments due to you within 14 days to your original payment method."
+    },
+    "cancel": {
+      "title": "Cancellation",
+      "kind": "Type of cancellation",
+      "kindOrdinary": "Ordinary cancellation",
+      "kindExtraordinary": "Extraordinary cancellation",
+      "reason": "Reason for the extraordinary cancellation",
+      "name": "Your name",
+      "accountEmail": "Your account's email address",
+      "contract": "Which contract?",
+      "contractPro": "Linkyo Pro (monthly)",
+      "when": "Cancel as of",
+      "whenNext": "the earliest possible date",
+      "whenDate": "a specific date",
+      "date": "Date",
+      "confirmationEmail": "Email for the confirmation",
+      "submit": "Cancel now",
+      "done": "We received your cancellation on {date} at {time}.",
+      "doneOrdinary": "If there is a Pro contract under this account address, it ends at the end of the current paid month. We send the exact date to the account's email address.",
+      "doneOrdinaryDate": "If there is a Pro contract under this account address, it ends at the end of the paid month that includes {date}. We send the exact date to the account's email address.",
+      "doneExtraordinary": "You declared an extraordinary cancellation with immediate effect. We are reviewing it; if there is a Pro contract under this account address, we send our decision to the account's email address.",
+      "doneMailed": "A confirmation is on its way to {email}.",
+      "doneHeld": "We'll email the confirmation once we've checked the request. Save this page as your record.",
+      "doneSave": "You can save or print this page."
+    }
+  },
+  "service": {
+    "meta": {
+      "title": "Page service: we design your page",
+      "description": "Start for {start} or Premium for {premium}. Order and brief us Mon–Fri by noon, and it's ready the next working day."
+    },
+    "title": "We design your page.",
+    "lead": "You send us your links and photos. We turn them into a finished Linkyo page in your style.",
+    "once": "one-off",
+    "start": {
+      "who": "Our AI drafts it; a person from our team checks and refines it.",
+      "features": [
+        "A finished page with your links, photos and colors",
+        "Copy for your headline and bio",
+        "Ready the next working day (Mon–Fri) by 6 pm*",
+        "1 revision round included"
+      ],
+      "cta": "Order Start"
+    },
+    "premium": {
+      "who": "A person from our team designs your page.",
+      "features": [
+        "Everything in Start",
+        "Sections for music, videos, shop or dates",
+        "Marketing kit: bio copy for Instagram and TikTok, 3 story pictures in your page's design, a 4-week posting plan",
+        "Ready the next working day (Mon–Fri) by 6 pm*",
+        "3 revision rounds included"
+      ],
+      "cta": "Order Premium"
+    },
+    "refund": {
+      "title": "Don't like it? Money back.",
+      "body": "Write to us within 14 days of delivery and you get the full price back, no reason needed. Once per account. Your page stays.",
+      "link": "How this works"
+    },
+    "delivery": "* If you order Monday to Friday by noon and your briefing is complete. Otherwise one working day later. Working days are Monday to Friday, except nationwide public holidays in Germany. If a day is fully booked, the date moves. You see the exact date before you order.",
+    "vat": {
+      "standard19": "Prices incl. 19% VAT.",
+      "kleinunternehmer": "No VAT shown (small business under § 19 UStG)."
+    },
+    "payments": "Pay by card, Apple Pay, Google Pay or PayPal.",
+    "rights": "Your statutory rights (withdrawal, warranty) apply in addition and are not affected.",
+    "conditions": {
+      "title": "Conditions",
+      "revisions": "Changes: Start includes 1, Premium 3 revision rounds within 14 days of delivery. A round is one message with all your requests about copy, order, colors and photos from your upload. We deliver each round within 2 working days (Mon–Fri). A completely new concept is not a revision round.",
+      "refund": "Money back: write to {email} within 14 days of delivery. We refund the full price to your payment method within 14 days. Your page stays. Once per account.",
+      "who": "Who designs: for Start our AI drafts and a person from our team checks and refines; for Premium a person from our team designs."
+    },
+    "signIn": "To order you need a free Linkyo account, so the finished page lands right in it."
+  },
+  "checkout": {
+    "title": "Your order",
+    "service": {
+      "line": "Page service {package} · one-off"
+    },
+    "pro": {
+      "line": "Linkyo Pro · monthly",
+      "price": "{price} a month ({vat}) · first charge today, then monthly on day {day}{short, select, yes { (on the last day in shorter months)} other {}}",
+      "term": "Term: 1 month, renewing by 1 month each time. Cancel any time; Pro ends at the end of the paid month. This also works without signing in, under \"Cancel contracts here\".",
+      "includes": "Includes: AI drafts for your page, up to {count} a month."
+    },
+    "features": "What's included",
+    "total": "Total price",
+    "vat": {
+      "standard19": "incl. {vat} VAT",
+      "kleinunternehmer": "No VAT shown (small business under § 19 UStG)"
+    },
+    "noExtras": "No other costs.",
+    "due": "Ready by {date}, {time}, if your briefing is complete by {briefingBy}.",
+    "dueLate": "Without an immediate start we begin on {start}. Ready by {date}, {time}.",
+    "dueChanged": "The ready date just changed: {date}, {time}. Check it, then place your order.",
+    "methods": {
+      "service": "Payment methods: card, Apple Pay, Google Pay, PayPal",
+      "pro": "Payment methods: card, Apple Pay, Google Pay, PayPal, SEPA direct debit"
+    },
+    "payment": "Payment method",
+    "notSetUp": {
+      "title": "Payment in test mode not set up yet",
+      "body": "The payment field appears here once the Stripe test account is connected. Until then you can't order."
+    },
+    "loadFailed": "The payment field couldn't load. Reload the page.",
+    "early": {
+      "label": "Please start right away. I expressly request that Linkyo begins the design before the withdrawal period ends. I know that my right of withdrawal ends once Linkyo has fully performed the order. If I withdraw before that, I pay for the part of the service provided until then.",
+      "without": "Without the tick we start only after the withdrawal period, on {date}; your ready date moves accordingly."
+    },
+    "warranty": "The statutory warranty rights for digital content and services apply.",
+    "terms": "Our <terms>terms</terms> apply. About withdrawal: <policy>right of withdrawal</policy> · <privacy>privacy</privacy>",
+    "submit": "Order with obligation to pay",
+    "submitting": "Placing order …",
+    "signIn": {
+      "title": "Sign in first",
+      "body": "Your order lands in your Linkyo account.",
+      "login": "Sign in",
+      "signup": "Sign up for free"
+    },
+    "alreadyPro": {
+      "title": "You already have Pro",
+      "body": "Your account already has Pro, for example as a subscription or as Pro for life. A second subscription would add nothing.",
+      "cta": "To the dashboard"
+    },
+    "germanOnly": {
+      "title": "Ordering is in German only for now",
+      "body": "The order, the contract and the legal texts are only available in German at the moment. You can continue your order in German.",
+      "cta": "Continue in German"
+    },
+    "done": {
+      "title": "Thank you, your order is in.",
+      "line": "Order number {number} · Page service {package} · {price}",
+      "due": "Ready by {date}, {time}. We sent you everything by email.",
+      "next": "Next step: fill in the briefing (links, photos, wishes). The clock starts once it is complete.",
+      "briefing": "Fill in the briefing",
+      "pending": "We're confirming your payment …",
+      "pro": "Thank you, Pro is active. The confirmation comes by email."
+    }
+  },
+  "email": {
+    "common": {
+      "greeting": "Hi {name},",
+      "greetingNoName": "Hi,",
+      "signature": "Your Linkyo team",
+      "testMode": "TEST MODE – no real payment.",
+      "footer": "Linkyo · {address} · {email}"
+    },
+    "order": {
+      "subject": "Your Linkyo order: page service {package} ({number})",
+      "intro": "Thank you for your order. Here is everything important at a glance.",
+      "who": "Who we are",
+      "what": "What you ordered",
+      "total": "Total price: {price} ({vat})",
+      "method": "Payment method: {method}",
+      "at": "Ordered on {date} at {time}",
+      "due": "Ready by {date}, {time}, if your briefing is complete by {briefingBy}.",
+      "earlyYes": "You asked us to start before the withdrawal period ends and confirmed that your right of withdrawal ends on full performance. Your wording at checkout:",
+      "earlyNo": "You didn't choose an immediate start. We begin on {date}.",
+      "promise": "Our promise",
+      "warranty": "The statutory warranty for digital content and digital services applies.",
+      "withdrawal": "Right of withdrawal and model withdrawal form",
+      "withdrawButton": "Withdraw from contract",
+      "terms": "Our terms",
+      "invoice": "The invoice comes in a separate email.",
+      "next": "Next step: fill in your briefing.",
+      "briefingButton": "Fill in the briefing"
+    },
+    "pro": {
+      "subject": "Your Linkyo order: Linkyo Pro",
+      "intro": "Thank you! Linkyo Pro is active.",
+      "billing": "{price} a month ({vat}). Next charge on {date}.",
+      "term": "Term 1 month, renewing monthly. Cancel any time; Pro ends at the end of the paid month.",
+      "cancel": "Cancel contracts here"
+    },
+    "withdrawal": {
+      "subject": "Receipt: your withdrawal of {date}, {time}",
+      "body": "We received your withdrawal on {date} at {time}.",
+      "content": "Content of your declaration: {name} withdraws from the contract {contract}. Confirmation to: {email}.",
+      "next": "We process your withdrawal and refund payments due to you within 14 days to your original payment method."
+    },
+    "cancellation": {
+      "subject": "Cancellation confirmation of {date}, {time}",
+      "body": "We received your cancellation on {date} at {time}.",
+      "content": "Content: {kind}, contract {contract}, requested {when}. Name: {name}. Account: {accountEmail}.",
+      "endsRule": "If there is a Pro contract under this account address, it ends at the end of the current paid month. We send the exact date to the account's email address.",
+      "endsRuleDate": "If there is a Pro contract under this account address, it ends at the end of the paid month that includes {date}. We send the exact date to the account's email address.",
+      "extraordinary": "You declared an extraordinary cancellation with immediate effect. We are reviewing it; if there is a Pro contract under this account address, we send our decision to the account's email address.",
+      "confirmSubject": "Your Linkyo Pro cancellation ({date})",
+      "ends": "Linkyo Pro ends on {date}.",
+      "extraordinaryReview": "You declared an extraordinary cancellation. We're reviewing it and will write to you with our decision.",
+      "notYou": "You didn't cancel? Reply to this email and we'll undo the cancellation."
+    },
+    "proposal": {
+      "subject": "Your page proposal is here ({number})",
+      "bodyTeam": "Our team designed your page. Have a look, apply it with one click or request changes.",
+      "bodyAi": "Our AI drafted your page, and our team checked and refined it. Have a look, apply it with one click or request changes.",
+      "rounds": "{count, plural, =0 {No revision rounds left.} one {1 revision round left until {date}.} other {# revision rounds left until {date}.}}",
+      "kit": "Your marketing kit (two bio texts, a 4-week posting plan, 3 story pictures) is with the proposal.",
+      "button": "View proposal"
+    },
+    "revision": {
+      "subject": "We have your change requests ({number})",
+      "body": "We deliver the changes by {date}, {time}."
+    },
+    "refund": {
+      "subject": "Refund for {number}",
+      "body": "We refunded {price}. Depending on your bank it takes a few days until you see the money."
+    },
+    "decision": {
+      "subject": "Your request of {date}: our decision",
+      "withdrawalAccepted": "We accepted your withdrawal from {contract} and refunded {price}. Depending on your bank it takes a few days until you see the money.",
+      "withdrawalRejected": "We can't accept your withdrawal from {contract}. Reason: {note}",
+      "cancellationEnded": "We accepted your extraordinary cancellation. Linkyo Pro ends with immediate effect on {date}.",
+      "cancellationRejected": "We can't accept your extraordinary cancellation. Reason: {note} You can cancel ordinarily at any time under \"Cancel contracts here\"; Pro then ends at the end of the paid month.",
+      "resumed": "As you asked, we undid your cancellation. Linkyo Pro continues; next charge on {date}."
     }
   }
 }

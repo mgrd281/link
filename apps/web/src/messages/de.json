@@ -395,7 +395,13 @@
       "appstore": "Laden im App Store",
       "googleplay": "Jetzt bei Google Play"
     },
-    "trademarks": "Apple, das Apple Logo und App Store sind Marken der Apple Inc., eingetragen in den USA und weiteren Ländern. Google Play und das Google Play-Logo sind Marken der Google LLC."
+    "trademarks": "Apple, das Apple Logo und App Store sind Marken der Apple Inc., eingetragen in den USA und weiteren Ländern. Google Play und das Google Play-Logo sind Marken der Google LLC.",
+    "notFound": {
+      "title": "Diese Seite gibt es nicht",
+      "body": "Prüf die Adresse. Vielleicht ist der Name noch frei.",
+      "cta": "Eigene Seite erstellen"
+    },
+    "legalTitle": "Impressum"
   },
   "directions": {
     "title": "Richtungen",
@@ -799,6 +805,19 @@
         ],
         "cta": "Später benachrichtigen",
         "lead": "Für alle, die verkaufen und wachsen wollen."
+      },
+      "leadPaid": "Free bleibt dauerhaft kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist.",
+      "proLive": {
+        "per": "pro Monat",
+        "vat": "inkl. MwSt.",
+        "features": [
+          "KI-Entwürfe für deine Seite: bis zu 5 im Monat",
+          "Alles aus Free"
+        ],
+        "planned": "Geplant: eigene Domain, Verkauf, E-Mail-Liste",
+        "terms": "Jederzeit kündbar; Pro endet am Ende des bezahlten Monats.",
+        "cta": "Pro bestellen",
+        "service": "Lieber gestalten lassen? Seitenservice ab {price}"
       }
     },
     "faq": {
@@ -968,7 +987,22 @@
       "editor": {
         "empty": "Deine Links erscheinen hier"
       },
-      "count": "{count} von {max}"
+      "count": "{count} von {max}",
+      "sample": "Beispielseite",
+      "ai": {
+        "tab": "KI",
+        "tabShort": "KI",
+        "tabLabel": "Mit KI bauen",
+        "eyebrow": "Neu: Seiten mit KI",
+        "lead": "Sieh in einer Aufzeichnung, wie die KI aus einer Website eine Seite baut. Dann gib deine Links und einen Satz über dich ein: Der erste Entwurf ist kostenlos.",
+        "field": "Dein Link",
+        "placeholder": "Website oder Link-Seite …",
+        "cta": "Mit KI bauen – kostenlos",
+        "hint": "Erster Entwurf kostenlos · nur deine E-Mail",
+        "empty": "Füge zuerst einen Link ein.",
+        "slot": "Aufzeichnung · Schritt {current} von {total}: {name}",
+        "all": "Alle Schritte"
+      }
     },
     "more": {
       "title1": "Alles, was du brauchst.",
@@ -981,6 +1015,14 @@
         "title": "Jede Farbe lesbar",
         "body": "Wähl irgendeine Farbe: Text und Buttons bleiben gut lesbar, geprüft nach WCAG AA."
       }
+    },
+    "real": {
+      "metaDescription": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: elf Vorlagen, Musik, Shows und Shop. Kostenlos starten, Daten in Frankfurt.",
+      "analyticsBadge": "In Arbeit",
+      "freeAnalytics": "Analytics ohne Cookies (in Arbeit)",
+      "faqFree": "Ja. Vorlagen, unbegrenzte Links und Abschnitte bleiben kostenlos; Analytics ohne Cookies ist in Arbeit. Nichts, was heute gratis ist, wird kostenpflichtig.",
+      "faqFreePaid": "Ja. Vorlagen, unbegrenzte Links und Abschnitte bleiben kostenlos. Pro enthält KI-Entwürfe; eigene Domain, Verkauf und E-Mail-Liste sind geplant. Nichts, was heute gratis ist, wird kostenpflichtig.",
+      "trustFree": "Vorlagen und unbegrenzte Links bleiben kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist."
     }
   },
   "auth": {
@@ -1042,7 +1084,11 @@
       "invitedBy": "Eingeladen von {name}",
       "invited": "Du wurdest zu Linkyo eingeladen",
       "invitedNote": "{name} sieht deinen Seitennamen in der Einladungsliste, nie deine E-Mail.",
-      "invitedNoteAnon": "Wer dich eingeladen hat, sieht deinen Seitennamen, nie deine E-Mail."
+      "invitedNoteAnon": "Wer dich eingeladen hat, sieht deinen Seitennamen, nie deine E-Mail.",
+      "draft": {
+        "title": "Deine Seite wartet auf dich",
+        "caption": "Was du bei „Probier's aus“ gebaut hast, kommt mit."
+      }
     },
     "login": {
       "title": "Willkommen zurück",
@@ -1074,7 +1120,10 @@
       "invite": "Freund:innen einladen",
       "settings": "Einstellungen",
       "welcome": "Willkommen",
-      "preview": "Vorschau"
+      "preview": "Vorschau",
+      "build": "Mit KI bauen",
+      "order": "Seitenservice",
+      "proposal": "Seitenvorschlag"
     },
     "loading": "Dein Dashboard wird geladen …",
     "skip": "Zum Inhalt springen",
@@ -1128,7 +1177,8 @@
       "saved": "Gespeichert",
       "saving": "Speichert …",
       "error": "Nicht gespeichert",
-      "unsavedLegal": "Impressum nicht gespeichert"
+      "unsavedLegal": "Impressum nicht gespeichert",
+      "tooLarge": "Nicht gespeichert: Deine Seite ist zu groß. Entferne ein paar große Bilder."
     },
     "form": {
       "upload": "Hochladen",
@@ -1142,7 +1192,8 @@
       "imageErrors": {
         "type": "Das ist kein Bild. Wähle ein JPG, PNG oder WebP.",
         "size": "Das Bild ist größer als 25 MB. Wähle ein kleineres.",
-        "decode": "Das Bild ließ sich nicht lesen. Probier eine andere Datei."
+        "decode": "Das Bild ließ sich nicht lesen. Probier eine andere Datei.",
+        "upload": "Das Bild konnte nicht hochgeladen werden. Versuch es noch mal."
       },
       "uploadNamed": "{label} hochladen",
       "replaceNamed": "{label} ersetzen",
@@ -1393,7 +1444,8 @@
       "imageErrors": {
         "type": "Das ist kein Bild. Wähle ein JPG, PNG oder WebP.",
         "size": "Das Bild ist größer als 25 MB. Wähle ein kleineres.",
-        "decode": "Das Bild ließ sich nicht lesen. Probier eine andere Datei."
+        "decode": "Das Bild ließ sich nicht lesen. Probier eine andere Datei.",
+        "upload": "Das Bild konnte nicht hochgeladen werden. Versuch es noch mal."
       },
       "paste": "Einfügen",
       "groups": {
@@ -1434,7 +1486,9 @@
       "undone": "Rückgängig gemacht",
       "redone": "Wiederhergestellt",
       "reorderHint": "Zieh eine Zeile am Griff an ihren neuen Platz.",
-      "gripTip": "Ziehen zum Verschieben"
+      "gripTip": "Ziehen zum Verschieben",
+      "withAi": "Mit KI",
+      "aiTag": "Von KI entworfen"
     },
     "profile": {
       "title": "Profil",
@@ -1504,7 +1558,11 @@
         "ctr": "Klickrate",
         "chartLabel": "Aufrufe pro Tag, letzte 7 Tage",
         "dayLabel": "{day}: {views} Aufrufe",
-        "more": "Alle Zahlen"
+        "more": "Alle Zahlen",
+        "empty": {
+          "title": "Zahlen kommen bald",
+          "body": "Wir bauen gerade eine Zählung ohne Cookies. Bis dahin zeigen wir keine erfundenen Zahlen."
+        }
       },
       "preparedTitle": "Willkommen, {name}! Deine Seite ist fertig.",
       "preparedBody": "Das Linkyo-Team hat sie für dich vorbereitet. Schau sie dir an und ändere, was du möchtest – alles gehört dir.",
@@ -1533,9 +1591,22 @@
         "readyBody": "Setz den Link in dein Instagram- oder TikTok-Profil. Dort tippen Besucher ihn an.",
         "howTo": "So kommt der Link in dein Profil",
         "howToBody": "Öffne dein Profil in der App und tippe auf „Profil bearbeiten“. Füg den Link bei „Links“ oder „Website“ ein. Fertig: Er steht jetzt unter deinem Namen.",
-        "reserved": "Deine Adresse ist reserviert und geht mit dem Start online."
+        "reserved": "Deine Adresse ist reserviert und geht mit dem Start online.",
+        "live": "Deine Seite ist öffentlich. Änderungen siehst du nach etwa einer Minute."
       },
-      "inviteSubtitle": "{verify, plural, one {# Person} other {# Personen}}: kostenlose Verifizierung · {pro, plural, one {# Person} other {# Personen}}: Pro für immer"
+      "inviteSubtitle": "{verify, plural, one {# Person} other {# Personen}}: kostenlose Verifizierung · {pro, plural, one {# Person} other {# Personen}}: Pro für immer",
+      "ai": {
+        "title": "Lass die KI deine Seite bauen",
+        "body": "Aus deinen Links und einem Satz über dich. Du siehst jeden Schritt und entscheidest am Ende.",
+        "cta": "Mit KI bauen",
+        "rebuild": "Mit KI neu bauen"
+      },
+      "proposal": {
+        "title": "Dein Seitenvorschlag ist da",
+        "bodyTeam": "Unser Team hat deine Seite gestaltet. Schau sie dir an und entscheide.",
+        "bodyAi": "Unsere KI hat deine Seite entworfen, unser Team hat sie geprüft und verfeinert. Schau sie dir an und entscheide.",
+        "cta": "Vorschlag ansehen"
+      }
     },
     "shareImage": {
       "open": "Bild für Story & Post",
@@ -1669,7 +1740,12 @@
         "tablet": "Tablet"
       },
       "privacy": "Linkyo zählt Besuche ohne Cookies und ohne IP-Adressen zu speichern. Deine Besucher bleiben anonym, und du siehst alles, was du brauchst.",
-      "topInsight": "Am häufigsten angetippt: {title}"
+      "topInsight": "Am häufigsten angetippt: {title}",
+      "empty": {
+        "title": "Zahlen kommen bald",
+        "body": "Wir bauen gerade eine Zählung ohne Cookies. Bis dahin zeigen wir keine erfundenen Zahlen."
+      },
+      "leadReal": "Wir bauen gerade eine Zählung ohne Cookies und ohne Einwilligungsbanner."
     },
     "invite": {
       "title": "Freund:innen einladen",
@@ -1731,7 +1807,8 @@
         "deleted": "Löscht jemand, den du eingeladen hast, später das Konto, zählt die Person weiter.",
         "verify": "{count, plural, one {# Person} other {# Personen}}: eine kostenlose Verifizierung. Unser Team prüft, ob die Seite wirklich dir gehört, und vergibt dann den blauen Haken.",
         "pro": "{count, plural, one {# Person} other {# Personen}}: Pro für immer. Alle Pro-Funktionen, ohne Abo, ohne Karte. Pro gibt es noch nicht: Es gehört dir ab dem Tag, an dem es startet.",
-        "terms": "Teilnahmebedingungen"
+        "terms": "Teilnahmebedingungen",
+        "proLive": "{count, plural, one {# Person} other {# Personen}}: Pro für immer. Alle Pro-Funktionen, ohne Abo, ohne Karte. Pro gibt es jetzt: Dazu gehören bis zu 5 KI-Entwürfe im Monat."
       },
       "terms": {
         "personal": "Belohnungen sind persönlich, nicht übertragbar und nicht in Geld einlösbar. Pro für immer gilt, solange dein Konto besteht und wir Pro anbieten.",
@@ -1814,7 +1891,8 @@
       "groups": {
         "page": "Deine Seite",
         "app": "App",
-        "data": "Daten"
+        "data": "Daten",
+        "contracts": "Verträge und Rechtliches"
       },
       "rows": {
         "profile": "Profil",
@@ -1822,12 +1900,19 @@
         "legal": "Impressum",
         "pageLanguage": "Sprache der Seite",
         "account": "Konto",
-        "appLanguage": "Sprache der App"
+        "appLanguage": "Sprache der App",
+        "orders": "Meine Bestellungen",
+        "withdraw": "Vertrag widerrufen",
+        "cancel": "Verträge hier kündigen",
+        "imprint": "Impressum",
+        "privacy": "Datenschutz",
+        "terms": "AGB"
       },
       "footers": {
         "pageLanguage": "Für Besucher: Knöpfe, Daten und Hinweise auf deiner Seite erscheinen in dieser Sprache.",
         "app": "Gilt nur für dich, in diesem Browser.",
-        "data": "Export: alles als JSON-Datei. Ein Import ersetzt deine Seite und lässt sich gleich danach rückgängig machen."
+        "data": "Export: alles als JSON-Datei. Ein Import ersetzt deine Seite und lässt sich gleich danach rückgängig machen.",
+        "contracts": "Widerruf und Kündigung gehen auch ohne Anmeldung."
       },
       "legalState": {
         "complete": "Vollständig",
@@ -2185,21 +2270,42 @@
         "title": "Du kommst von Linktree, Beacons & Co.?",
         "lead": "Füge deine bisherige Seite ein. Wir übernehmen deine Profile und Links, du prüfst sie unten.",
         "label": "Deine bisherige Link-Seite",
-        "placeholder": "linktr.ee/deinname",
+        "placeholder": "beacons.ai/deinname",
         "button": "Übernehmen",
-        "hint": "Klappt mit Linktree, Beacons, bio.link, lnk.bio, Carrd und ähnlichen Seiten.",
+        "hint": "Klappt mit Beacons, bio.link, lnk.bio, Carrd und ähnlichen Seiten, wenn sie das Auslesen erlauben.",
         "done": "{profiles, plural, =0 {Keine Profile} one {# Profil} other {# Profile}} und {links, plural, =0 {keine Links} one {# Link} other {# Links}} übernommen. Prüfe sie unten.",
         "errors": {
-          "unsupported": "Füge die Adresse einer Linktree-, Beacons-, bio.link-, lnk.bio- oder Carrd-Seite ein, z. B. linktr.ee/deinname.",
+          "unsupported": "Füge die Adresse einer Beacons-, bio.link-, lnk.bio- oder Carrd-Seite ein, z. B. beacons.ai/deinname.",
           "notFound": "Diese Seite haben wir nicht gefunden. Prüfe die Adresse.",
           "empty": "Auf dieser Seite gibt es keine öffentlichen Links, die wir lesen können. Füge deine Links unten ein.",
-          "failed": "Wir können diese Seite gerade nicht lesen. Füge deine Links unten ein."
+          "failed": "Wir können diese Seite gerade nicht lesen. Füge deine Links unten ein.",
+          "paste": "Linktree erlaubt kein automatisches Auslesen. Öffne deine Linktree-Seite, kopiere deine Links und füge sie unten ein.",
+          "robots": "Diese Seite bittet Programme, sie nicht auszulesen. Füge deine Links unten ein."
         }
       },
       "address": {
         "label": "Deine Adresse",
         "hint": "So finden andere deine Seite. Du kannst sie später in den Einstellungen ändern.",
         "yours": "linkyo.app/{name} gehört dir"
+      },
+      "start": {
+        "label": "Wie du anfangen willst",
+        "title": "Wie möchtest du anfangen?",
+        "ai": {
+          "title": "Mit KI aus deinen Links bauen",
+          "body": "Du gibst deine Links und einen Satz über dich. Die KI entwirft, du entscheidest.",
+          "badge": "Empfohlen",
+          "free": "Dein erster Entwurf ist kostenlos"
+        },
+        "manual": {
+          "title": "Schritt für Schritt selbst",
+          "body": "Fünf kurze Schritte mit Vorlage und Vorschau."
+        },
+        "continue": "Weiter"
+      },
+      "fromAi": {
+        "lead": "Dein Entwurf ist übernommen. Wähle jetzt den Namen und die Adresse deiner Seite.",
+        "finish": "Seite fertigstellen"
       }
     },
     "ownPage": {
@@ -2215,6 +2321,188 @@
       "title": "Diese Ansicht ließ sich nicht laden",
       "body": "Lade sie neu. Was schon gespeichert ist, bleibt erhalten.",
       "retry": "Neu laden"
+    },
+    "ai": {
+      "header": {
+        "title": "Mit KI bauen",
+        "label": "KI-Assistent",
+        "close": "Schließen"
+      },
+      "intro": "Hier arbeitet eine KI für dich. Sie macht Vorschläge; du entscheidest, was auf deine Seite kommt.",
+      "entry": {
+        "title": "Lass Linkyo deine Seite entwerfen",
+        "lead": "Gib deine Website oder deine bisherige Link-Seite an und sag in einem Satz, was du machst. Du siehst jeden Schritt und entscheidest am Ende."
+      },
+      "input": {
+        "sources": {
+          "label": "Deine Links",
+          "hint": "Website, Link-Seite, TikTok, Instagram, YouTube … bis zu 5.",
+          "placeholder": "deine-website.de",
+          "add": "Hinzufügen",
+          "remove": "{source} entfernen",
+          "limit": "Fünf Quellen reichen für den Entwurf.",
+          "invalid": "Das sieht nicht nach einer Adresse aus. Füg den ganzen Link ein."
+        },
+        "paste": {
+          "label": "Links einfügen (optional)",
+          "hint": "Ein Link pro Zeile, bis zu 40."
+        },
+        "about": {
+          "label": "Was machst du, und was sollen Besucher tun?",
+          "hint": "Ein Satz reicht. Ohne lesbare Quelle brauchen wir ihn.",
+          "required": "Erzähl uns in einem Satz, was du machst.",
+          "count": "{count} von 600 Zeichen"
+        },
+        "name": {
+          "label": "Dein Name auf der Seite (optional)"
+        },
+        "photo": {
+          "label": "Foto für die Farben (optional)",
+          "hint": "Die KI sieht dein Foto nicht. Wir nehmen nur seine Farben, und es wird dein Profilbild, wenn du den Entwurf übernimmst.",
+          "add": "Foto wählen",
+          "change": "Anderes Foto",
+          "remove": "Foto entfernen"
+        },
+        "language": {
+          "label": "Sprache der Seite"
+        },
+        "own": "Nutze nur Profile, die dir gehören.",
+        "privacy": "Für den Entwurf senden wir deine Angaben sowie die gefundenen Texte und Links an unseren KI-Anbieter Anthropic (USA). Fotos senden wir nie; E-Mail-Adressen und Telefonnummern entfernen wir vorher."
+      },
+      "platform": {
+        "website": "Website: Wir lesen Titel, Beschreibung und Links, wenn die Seite es erlaubt.",
+        "linkinbio": "Link-Seite: Wir übernehmen deine Links, wenn die Seite es erlaubt.",
+        "linktree": "Linktree erlaubt kein automatisches Lesen. Kopier deine Links von dort und füg sie unten ein.",
+        "tiktok": "TikTok: nur dein Anzeigename. Bio und Foto ergänzt du.",
+        "instagram": "Instagram gibt keine Profildaten frei. Wir übernehmen deinen @Namen – Foto und Bio ergänzt du.",
+        "youtube": "YouTube: Wir verlinken deinen Kanal.",
+        "x": "X: nur der Link.",
+        "other": "Wir übernehmen den Link."
+      },
+      "quota": {
+        "free": "Dein erster KI-Entwurf ist kostenlos.",
+        "left": "{count, plural, =0 {Keine KI-Entwürfe mehr diesen Monat} one {Noch 1 KI-Entwurf diesen Monat} other {Noch # KI-Entwürfe diesen Monat}}",
+        "used": "Deinen kostenlosen KI-Entwurf hast du genutzt.",
+        "resets": "Neue Entwürfe ab {date}."
+      },
+      "start": "Entwurf erstellen",
+      "continueWithout": "Ohne KI weiter",
+      "unavailable": "KI-Entwürfe gibt es nur mit echten Konten. Du kannst deine Seite selbst bauen.",
+      "review": {
+        "title": "Dein Entwurf",
+        "summary": "In {seconds} s gebaut · {blocks, plural, one {# Block} other {# Blöcke}} · {fixed, plural, =0 {keine Korrektur} one {1 Korrektur} other {# Korrekturen}}",
+        "expires": "Als Entwurf gespeichert bis {date}.",
+        "blocks": "Blöcke",
+        "blocksHint": "Nimm weg, was nicht auf die Seite soll.",
+        "keepBlock": "{title} behalten",
+        "looks": "Andere Looks",
+        "looksHint": "Ohne KI, sofort.",
+        "lookCurrent": "Vorschlag der KI",
+        "before": "Vorher",
+        "after": "Entwurf",
+        "compare": "Vergleichen",
+        "notes": "Warum so?",
+        "topics": {
+          "look": "Look",
+          "order": "Reihenfolge",
+          "copy": "Texte",
+          "missing": "Was fehlt"
+        },
+        "read": "Gelesen",
+        "disclosure": "Mit KI erstellt. Prüf alles, bevor du veröffentlichst."
+      },
+      "actions": {
+        "apply": "Diese Seite übernehmen",
+        "applyHint": "Ersetzt deine aktuelle Seite. Du kannst es rückgängig machen.",
+        "again": "Neuer Entwurf",
+        "againLeft": "Neuer Entwurf · {count} übrig",
+        "discard": "Verwerfen",
+        "retry": "Nochmal versuchen",
+        "useAsIs": "So übernehmen"
+      },
+      "applied": "Entwurf übernommen.",
+      "discarded": "Entwurf verworfen.",
+      "pro": {
+        "title": "KI-Entwürfe gehören zu Pro",
+        "body": "Mit Pro für {price} im Monat bekommst du bis zu {count} KI-Entwürfe im Monat.",
+        "get": "Pro holen",
+        "soon": "Pro kommt bald",
+        "later": "Nicht jetzt"
+      },
+      "service": "Lieber von unserem Team gestalten lassen? Ab {price}",
+      "errors": {
+        "title": "Kein Entwurf",
+        "quotaFree": "Deinen kostenlosen KI-Entwurf hast du genutzt. Weitere Entwürfe gehören zu Pro.",
+        "quotaPro": "Du hast alle {count} KI-Entwürfe für diesen Monat genutzt. Neue gibt es ab {date}.",
+        "busy": "Gerade ist viel los. Versuch es in einer Minute noch mal. Es wurde nichts abgezogen.",
+        "budget": "Heute sind keine KI-Entwürfe mehr möglich. Morgen geht es wieder. Es wurde nichts abgezogen.",
+        "limit": "Über dein Netzwerk wurden heute schon viele Entwürfe erstellt. Versuch es morgen wieder. Es wurde nichts abgezogen.",
+        "failures": "Heute hat es mehrmals nicht geklappt. Versuch es morgen wieder. Es wurde nichts abgezogen.",
+        "refused": "Aus diesen Angaben können wir keinen Entwurf machen. Du kannst die Seite selbst bauen.",
+        "nothing": "Unter dieser Adresse haben wir nichts gefunden. Prüf sie oder erzähl uns mehr über dich.",
+        "timeout": "Das hat zu lange gedauert. Es wurde nichts abgezogen. Versuch es noch mal.",
+        "invalid": "Der Entwurf hat unsere Prüfung nicht bestanden. Es wurde nichts abgezogen.",
+        "offline": "Verbindung unterbrochen. Wir bauen im Hintergrund weiter und zeigen dir das Ergebnis, sobald es da ist.",
+        "disabled": "KI-Entwürfe sind gerade abgeschaltet. Du kannst deine Seite selbst bauen.",
+        "server": "Etwas ist schiefgegangen. Es wurde nichts abgezogen. Versuch es noch mal."
+      }
+    },
+    "orders": {
+      "title": "Dein Seitenservice",
+      "number": "Bestellung {number}",
+      "due": "Fertig bis {date}, {time} Uhr",
+      "back": "Zum Dashboard",
+      "proposals": "Vorschläge",
+      "viewProposal": "Vorschlag ansehen",
+      "briefing": {
+        "title": "Briefing",
+        "lead": "Gib uns alles, was auf deine Seite soll. Die Uhr für den Fertig-Termin läuft, sobald du absendest.",
+        "links": "Deine Links",
+        "linksHint": "Ein Link pro Zeile.",
+        "photos": "Fotos",
+        "photosHint": "Bis zu 10 Fotos, je höchstens 10 MB.",
+        "addPhotos": "Fotos hinzufügen",
+        "removePhoto": "Foto entfernen",
+        "wishes": "Deine Wünsche",
+        "wishesHint": "Stil, Farben, was zuerst kommen soll.",
+        "language": "Sprache der Seite",
+        "submit": "Briefing absenden",
+        "privacy": "Für den ersten Entwurf senden wir deine Links und Wünsche an unseren KI-Anbieter Anthropic (USA); Fotos nicht. E-Mail-Adressen und Telefonnummern entfernen wir vorher.",
+        "sent": "Danke! Fertig bis {date}, {time} Uhr.",
+        "locked": "Das Briefing ist abgeschickt. Änderungen schreibst du uns nach der Übergabe als Änderungsrunde."
+      }
+    },
+    "proposals": {
+      "title": "Dein Seitenvorschlag",
+      "chipTeam": "Vorschlag · von unserem Team gestaltet",
+      "chipAi": "Vorschlag · KI-Entwurf, von unserem Team geprüft und verfeinert",
+      "message": "Nachricht vom Team",
+      "apply": "Diesen Vorschlag übernehmen",
+      "applyHint": "Ersetzt deine aktuelle Seite. Du kannst es rückgängig machen.",
+      "applied": "Vorschlag übernommen.",
+      "revise": "Änderungen anfragen",
+      "reviseLeft": "{count, plural, =0 {Keine Änderungsrunde mehr} one {Noch 1 Änderungsrunde} other {Noch # Änderungsrunden}}",
+      "reviseUntil": "bis {date}",
+      "reviseLabel": "Was sollen wir ändern?",
+      "reviseHint": "Schreib alle Wünsche in eine Nachricht.",
+      "reviseSend": "Änderungen senden",
+      "reviseSent": "Danke! Wir liefern die Änderungen bis {date}, {time} Uhr.",
+      "reviseNone": "Alle Änderungsrunden sind genutzt.",
+      "reviseExpired": "Die 14 Tage für Änderungen sind vorbei.",
+      "later": "Später ansehen",
+      "refund": "Gefällt er dir nicht? Schreib uns bis 14 Tage nach der Übergabe an {email}, und du bekommst den vollen Preis zurück. Einmal pro Konto. Deine gesetzlichen Rechte bleiben unberührt.",
+      "kit": {
+        "title": "Marketing-Paket",
+        "lead": "Für deine Profile: zwei Bio-Texte, ein Posting-Plan für 4 Wochen und 3 Story-Bilder im Design deiner Seite.",
+        "bioInstagram": "Bio für Instagram",
+        "bioTiktok": "Bio für TikTok",
+        "copy": "{label} kopieren",
+        "copied": "Kopiert.",
+        "plan": "Posting-Plan",
+        "week": "Woche {week}",
+        "stories": "Story-Bilder",
+        "download": "Story-Bild {n} herunterladen"
+      }
     }
   },
   "preview": {
@@ -2303,7 +2591,8 @@
       "groups": {
         "business": "Geschäft",
         "teamWork": "Team-Arbeit"
-      }
+      },
+      "orders": "Aufträge"
     },
     "roles": {
       "owner": {
@@ -3078,6 +3367,120 @@
       "languages": "Sprachen",
       "browsers": "Browser",
       "other": "Andere"
+    },
+    "orders": {
+      "title": "Aufträge",
+      "lead": "Seitenservice-Bestellungen nach Fertig-Termin.",
+      "tabs": {
+        "orders": "Aufträge",
+        "contracts": "Widerrufe & Kündigungen"
+      },
+      "filters": {
+        "open": "Offen",
+        "mine": "Meine",
+        "delivered": "Geliefert",
+        "all": "Alle"
+      },
+      "cols": {
+        "number": "Nummer",
+        "package": "Paket",
+        "customer": "Konto",
+        "status": "Status",
+        "due": "Fertig bis",
+        "assignee": "Zuständig"
+      },
+      "unassigned": "Niemand",
+      "sla": {
+        "ok": "in {time}",
+        "soon": "bald fällig: in {time}",
+        "overdue": "überfällig seit {time}"
+      },
+      "empty": "Keine Aufträge in dieser Ansicht.",
+      "withdrawalPending": "Widerruf eingegangen",
+      "detail": {
+        "briefing": "Briefing",
+        "noBriefing": "Noch kein Briefing.",
+        "links": "Links",
+        "photos": "Fotos",
+        "wishes": "Wünsche",
+        "language": "Sprache der Seite",
+        "timeline": "Verlauf",
+        "proposals": "Vorschläge",
+        "round": "Runde {round}",
+        "revisions": "Änderungsrunden: {used} von {allowed}",
+        "request": "Änderungswunsch",
+        "withdrawalLock": "Für diesen Auftrag ist ein Widerruf eingegangen. Bis er unter „Widerrufe & Kündigungen“ entschieden ist, ruht die Arbeit."
+      },
+      "actions": {
+        "assign": "Mir zuweisen",
+        "ai": "Entwurf mit KI erstellen",
+        "edit": "Vorschlag bearbeiten",
+        "deliver": "Vorschlag übergeben",
+        "refund": "Erstatten",
+        "refundConfirm": "{price} für {number} erstatten? Das läuft über Stripe und lässt sich nicht zurücknehmen.",
+        "refundVoluntaryUsed": "Hinweis: Dieses Konto hat das freiwillige Geld-zurück-Versprechen schon genutzt.",
+        "handled": "Als erledigt markieren",
+        "resume": "Kündigung zurücknehmen",
+        "acceptWithdrawal": "Widerruf annehmen und erstatten",
+        "rejectWithdrawal": "Widerruf ablehnen",
+        "refundAmount": "Erstattungsbetrag",
+        "refundAmountHint": "Voller Preis. Nur wenn das Konto einen Sofortstart verlangt hat und wir schon gearbeitet haben, ziehen wir den Wert der erbrachten Leistung ab (§ 357a BGB) und nennen den Grund in der Notiz.",
+        "endNow": "Sofort beenden",
+        "rejectCancellation": "Kündigung ablehnen",
+        "note": "Begründung oder Notiz",
+        "noteRequired": "Bitte gib eine Begründung an.",
+        "resumeNote": "Anfrage des Kontos, aus dessen E-Mail-Adresse zitiert"
+      },
+      "editor": {
+        "title": "Vorschlag für {customer}",
+        "note": "Dieser Vorschlag ändert die veröffentlichte Seite nicht. Übernehmen kann ihn nur das Konto selbst.",
+        "message": "Nachricht an das Konto (optional)",
+        "locked": "Dieser Vorschlag ist übergeben. Bearbeiten geht erst wieder, wenn das Konto Änderungen anfragt."
+      },
+      "delivered": "Vorschlag übergeben. Das Konto bekommt eine E-Mail.",
+      "refunded": "Erstattung veranlasst.",
+      "events": {
+        "paid": "Bezahlt",
+        "confirmation_sent": "Bestätigung verschickt",
+        "briefed": "Briefing erhalten",
+        "assigned": "Zugewiesen",
+        "proposal_saved": "Vorschlag gespeichert",
+        "proposal_delivered": "Vorschlag übergeben",
+        "revision_requested": "Änderungen angefragt",
+        "proposal_applied": "Vorschlag übernommen",
+        "refunded": "Erstattet",
+        "withdrawal_received": "Widerruf eingegangen",
+        "withdrawal_accepted": "Widerruf angenommen",
+        "withdrawal_rejected": "Widerruf abgelehnt",
+        "completed": "Abgeschlossen",
+        "note": "Notiz"
+      },
+      "contracts": {
+        "withdrawal": "Widerruf",
+        "cancellation": "Kündigung",
+        "matched": "Zugeordnet",
+        "unmatched": "Nicht zugeordnet",
+        "handled": "Erledigt",
+        "received": "Eingegangen am {date} um {time}",
+        "suspect": "Ohne E-Mail-Bestätigung (viele Anfragen): bitte prüfen",
+        "refundDue": "Erstattung fällig bis {date}",
+        "empty": "Keine offenen Anfragen."
+      },
+      "kit": {
+        "title": "Marketing-Paket",
+        "bioInstagram": "Bio für Instagram (bis 150 Zeichen)",
+        "bioTiktok": "Bio für TikTok (bis 80 Zeichen)",
+        "plan": "Posting-Plan für 4 Wochen",
+        "week": "Woche {week}",
+        "stories": "Story-Bilder (3)",
+        "addStory": "Story-Bild hochladen",
+        "removeStory": "Story-Bild {n} entfernen",
+        "incomplete": "Für Premium fehlt noch das Marketing-Paket: zwei Bios, 4 Wochen Plan, 3 Story-Bilder."
+      },
+      "ai": {
+        "label": "KI-Entwürfe",
+        "today": "Heute: {runs} Läufe · {spent}"
+      }
     }
   },
   "examples": {
@@ -3203,6 +3606,366 @@
     "keys": {
       "move": "Auswählen",
       "open": "Öffnen"
+    }
+  },
+  "ai": {
+    "run": {
+      "steps": {
+        "read": {
+          "name": "Links lesen",
+          "done": "{links, plural, =0 {Keine Links} one {# Link} other {# Links}}, {profiles, plural, =0 {keine Profile} one {# Profil} other {# Profile}}"
+        },
+        "details": {
+          "name": "Titel und Bilder holen",
+          "done": "{count, plural, =0 {Keine Songs, Videos oder Apps} one {# Song, Video oder App} other {# Songs, Videos oder Apps}}",
+          "skip": "Übersprungen"
+        },
+        "colors": {
+          "name": "Farben aus deinem Foto",
+          "skip": "Kein Foto: Farben der Vorlage"
+        },
+        "plan": {
+          "name": "Die KI plant deine Seite",
+          "done": "In {seconds} s geplant"
+        },
+        "look": {
+          "name": "Look wählen",
+          "done": "{template} · {accent}"
+        },
+        "write": {
+          "name": "Blöcke schreiben",
+          "done": "{count, plural, one {# Block} other {# Blöcke}}"
+        },
+        "check": {
+          "name": "Prüfen",
+          "done": "Alle Links aus deinen Quellen{fixed, plural, =0 {} one { · 1 Text gekürzt} other { · # Texte gekürzt}}{dropped, plural, =0 {} one { · 1 Block entfernt} other { · # Blöcke entfernt}}"
+        }
+      },
+      "accent": {
+        "template": "Farbe der Vorlage",
+        "photo": "Farbe aus deinem Foto",
+        "swatch": "eigene Farbe"
+      },
+      "state": {
+        "pending": "Ausstehend",
+        "running": "Läuft",
+        "done": "Fertig",
+        "skipped": "Übersprungen",
+        "failed": "Fehlgeschlagen"
+      },
+      "progress": "Schritt {current} von {total}",
+      "elapsed": "Vergangene Zeit",
+      "phone": "Dein Entwurf im Handy",
+      "draftChip": "Entwurf · mit KI erstellt",
+      "recordingChip": "Aufzeichnung · echter KI-Lauf mit einer erfundenen Beispielperson, {date}",
+      "fixtureChip": "Testdaten · keine echte Aufzeichnung",
+      "shortened": "Wartezeit gekürzt (echt: {seconds} s)",
+      "sheet": {
+        "steps": "Schritte",
+        "read": "Gelesen",
+        "why": "Warum so",
+        "all": "Alle Schritte"
+      },
+      "source": {
+        "read": "gelesen",
+        "handleOnly": "nur der Link",
+        "robots": "Die Website bittet Programme, sie nicht zu lesen. Übersprungen.",
+        "paste": "Linktree erlaubt kein automatisches Lesen. Füg deine Links ein.",
+        "failed": "{source} hat nicht geantwortet – wir bauen ohne.",
+        "notFound": "{source}: nicht gefunden",
+        "tooLarge": "{source}: zu groß zum Lesen",
+        "blocked": "{source}: nicht erreichbar"
+      },
+      "stop": "Stoppen",
+      "stopping": "Wird gestoppt …",
+      "stopped": "Gestoppt. {count, plural, =0 {Noch keine Blöcke.} one {1 Block ist schon da.} other {# Blöcke sind schon da.}}",
+      "stopCounts": "Stoppen behält die fertigen Blöcke. Sobald Blöcke da sind, zählt der Lauf als 1 Entwurf.",
+      "notCounted": "Nicht gezählt.",
+      "announce": {
+        "stepStart": "Schritt {current} von {total}: {name}.",
+        "stillPlanning": "Die KI plant noch, {seconds} Sekunden.",
+        "ready": "Entwurf fertig: {blocks, plural, one {# Block} other {# Blöcke}}, Look {template}. Prüf ihn, dann übernimm ihn oder fang neu an."
+      },
+      "play": "Abspielen",
+      "replay": "Nochmal abspielen",
+      "stopReplay": "Wiedergabe stoppen"
+    }
+  },
+  "orders": {
+    "package": {
+      "start": "Start",
+      "premium": "Premium"
+    },
+    "status": {
+      "paid": "Bezahlt",
+      "awaiting_briefing": "Briefing fehlt",
+      "queued": "In der Warteschlange",
+      "in_progress": "In Arbeit",
+      "delivered": "Vorschlag geliefert",
+      "revision_requested": "Änderungen angefragt",
+      "completed": "Abgeschlossen",
+      "refunded": "Erstattet",
+      "withdrawn": "Widerrufen"
+    }
+  },
+  "legal": {
+    "label": "Rechtliches",
+    "nav": {
+      "imprint": "Impressum",
+      "privacy": "Datenschutz",
+      "terms": "AGB",
+      "cancellationPolicy": "Widerrufsbelehrung",
+      "withdraw": "Vertrag widerrufen",
+      "cancel": "Verträge hier kündigen"
+    },
+    "titles": {
+      "imprint": "Impressum",
+      "privacy": "Datenschutzerklärung",
+      "terms": "Allgemeine Geschäftsbedingungen",
+      "cancellationPolicy": "Widerrufsbelehrung"
+    },
+    "draft": "Entwurf: Dieser Text wird vor dem Start anwaltlich geprüft. Angaben in eckigen Klammern fehlen noch.",
+    "german": "Verträge schließen wir derzeit nur auf Deutsch. Hier steht der deutsche Text.",
+    "testMode": "Testmodus: Es wird kein echtes Geld bewegt.",
+    "print": "Als PDF speichern",
+    "errors": {
+      "required": "Bitte füll dieses Feld aus.",
+      "email": "Bitte gib eine gültige E-Mail-Adresse ein.",
+      "server": "Das hat nicht geklappt. Versuch es noch mal."
+    },
+    "withdraw": {
+      "title": "Vertrag widerrufen",
+      "lead": "Du kannst einen Vertrag, den du bei uns online geschlossen hast, innerhalb der Widerrufsfrist hier widerrufen. Einen Grund musst du nicht nennen.",
+      "name": "Dein Name",
+      "contract": "Bestellnummer oder Vertrag",
+      "contractHint": "z. B. LNK-2026-000123 oder „Linkyo Pro“",
+      "contractPro": "Linkyo Pro",
+      "contractOrder": "Seitenservice {package} · {number}",
+      "email": "E-Mail für die Bestätigung",
+      "next": "Weiter",
+      "back": "Zurück",
+      "review": "Bitte prüfe deinen Widerruf: {name} widerruft den Vertrag {contract}. Die Bestätigung geht an {email}.",
+      "confirm": "Widerruf bestätigen",
+      "done": "Dein Widerruf ist bei uns eingegangen am {date} um {time} Uhr.",
+      "doneMailed": "Wir haben dir die Bestätigung an {email} geschickt.",
+      "doneHeld": "Die Bestätigung per E-Mail schicken wir, sobald wir die Anfrage geprüft haben. Speichere diese Seite als Nachweis.",
+      "nextSteps": "Wir bearbeiten deinen Widerruf und erstatten Zahlungen innerhalb von 14 Tagen auf dein ursprüngliches Zahlungsmittel, soweit sie dir zustehen."
+    },
+    "cancel": {
+      "title": "Kündigung",
+      "kind": "Art der Kündigung",
+      "kindOrdinary": "Ordentliche Kündigung",
+      "kindExtraordinary": "Außerordentliche Kündigung",
+      "reason": "Grund der außerordentlichen Kündigung",
+      "name": "Dein Name",
+      "accountEmail": "E-Mail-Adresse deines Kontos",
+      "contract": "Welcher Vertrag?",
+      "contractPro": "Linkyo Pro (monatlich)",
+      "when": "Kündigen zum",
+      "whenNext": "zum nächstmöglichen Zeitpunkt",
+      "whenDate": "zu einem bestimmten Datum",
+      "date": "Datum",
+      "confirmationEmail": "E-Mail für die Kündigungsbestätigung",
+      "submit": "Jetzt kündigen",
+      "done": "Deine Kündigung ist am {date} um {time} Uhr eingegangen.",
+      "doneOrdinary": "Besteht unter dieser Konto-Adresse ein Pro-Vertrag, endet er zum Ende des laufenden bezahlten Monats. Das genaue Datum schicken wir an die E-Mail-Adresse des Kontos.",
+      "doneOrdinaryDate": "Besteht unter dieser Konto-Adresse ein Pro-Vertrag, endet er zum Ende des bezahlten Monats, in den der {date} fällt. Das genaue Datum schicken wir an die E-Mail-Adresse des Kontos.",
+      "doneExtraordinary": "Du hast eine außerordentliche Kündigung mit sofortiger Wirkung erklärt. Wir prüfen sie; besteht unter dieser Konto-Adresse ein Pro-Vertrag, schicken wir unsere Entscheidung an die E-Mail-Adresse des Kontos.",
+      "doneMailed": "Eine Bestätigung ist an {email} unterwegs.",
+      "doneHeld": "Die Bestätigung per E-Mail schicken wir, sobald wir die Anfrage geprüft haben. Speichere diese Seite als Nachweis.",
+      "doneSave": "Du kannst diese Seite speichern oder drucken."
+    }
+  },
+  "service": {
+    "meta": {
+      "title": "Seitenservice: Wir gestalten deine Seite",
+      "description": "Start für {start} oder Premium für {premium}. Bei Bestellung und Briefing Mo–Fr bis 12 Uhr fertig am nächsten Arbeitstag."
+    },
+    "title": "Wir gestalten deine Seite.",
+    "lead": "Du schickst uns deine Links und Fotos. Wir machen daraus eine fertige Linkyo-Seite in deinem Stil.",
+    "once": "einmalig",
+    "start": {
+      "who": "Unsere KI entwirft, ein Mensch aus unserem Team prüft und verfeinert.",
+      "features": [
+        "Fertige Seite mit deinen Links, Fotos und Farben",
+        "Texte für Überschrift und Bio",
+        "Fertig am nächsten Arbeitstag (Mo–Fr) bis 18 Uhr*",
+        "1 Änderungsrunde inklusive"
+      ],
+      "cta": "Start bestellen"
+    },
+    "premium": {
+      "who": "Ein Mensch aus unserem Team gestaltet deine Seite.",
+      "features": [
+        "Alles aus Start",
+        "Abschnitte für Musik, Videos, Shop oder Termine",
+        "Marketing-Paket: Bio-Text für Instagram und TikTok, 3 Story-Bilder im Design deiner Seite, ein Posting-Plan für 4 Wochen",
+        "Fertig am nächsten Arbeitstag (Mo–Fr) bis 18 Uhr*",
+        "3 Änderungsrunden inklusive"
+      ],
+      "cta": "Premium bestellen"
+    },
+    "refund": {
+      "title": "Gefällt sie dir nicht? Geld zurück.",
+      "body": "Schreib uns bis 14 Tage nach der Übergabe, und du bekommst den vollen Preis zurück, ohne Begründung. Einmal pro Konto. Deine Seite bleibt bestehen.",
+      "link": "So funktioniert das"
+    },
+    "delivery": "* Wenn du Montag bis Freitag bis 12 Uhr bestellst und dein Briefing vollständig ist. Sonst einen Arbeitstag später. Arbeitstage sind Montag bis Freitag, außer an bundesweiten Feiertagen. Ist ein Tag ausgebucht, verschiebt sich der Termin. Den genauen Termin siehst du vor dem Bestellen.",
+    "vat": {
+      "standard19": "Preise inkl. 19 % MwSt.",
+      "kleinunternehmer": "Kein Umsatzsteuerausweis (Kleinunternehmer nach § 19 UStG)."
+    },
+    "payments": "Zahlen mit Karte, Apple Pay, Google Pay oder PayPal.",
+    "rights": "Deine gesetzlichen Rechte (Widerruf, Gewährleistung) gelten zusätzlich und bleiben unberührt.",
+    "conditions": {
+      "title": "Bedingungen",
+      "revisions": "Änderungen: Start enthält 1, Premium 3 Änderungsrunden innerhalb von 14 Tagen nach der Übergabe. Eine Runde ist eine Nachricht mit allen Wünschen zu Texten, Reihenfolge, Farben und Fotos aus deinem Upload. Wir liefern jede Runde in 2 Arbeitstagen (Mo–Fr). Ein komplett neues Konzept ist keine Änderungsrunde.",
+      "refund": "Geld zurück: Schreib uns innerhalb von 14 Tagen nach der Übergabe an {email}. Wir erstatten den vollen Preis innerhalb von 14 Tagen auf dein Zahlungsmittel. Deine Seite bleibt bestehen. Gilt einmal pro Konto.",
+      "who": "Wer gestaltet: Bei Start entwirft unsere KI, ein Mensch aus unserem Team prüft und verfeinert. Bei Premium gestaltet ein Mensch aus unserem Team."
+    },
+    "signIn": "Für die Bestellung brauchst du ein kostenloses Linkyo-Konto, damit die fertige Seite direkt darin landet."
+  },
+  "checkout": {
+    "title": "Deine Bestellung",
+    "service": {
+      "line": "Seitenservice {package} · einmalig"
+    },
+    "pro": {
+      "line": "Linkyo Pro · monatlich",
+      "price": "{price} pro Monat ({vat}) · erste Abbuchung heute, dann monatlich am {day}.{short, select, yes { (in kürzeren Monaten am Monatsletzten)} other {}}",
+      "term": "Laufzeit: 1 Monat, verlängert sich jeweils um 1 Monat. Kündigen jederzeit zum Ende des bezahlten Monats, auch ohne Anmeldung unter „Verträge hier kündigen“.",
+      "includes": "Enthält: KI-Entwürfe für deine Seite, bis zu {count} im Monat."
+    },
+    "features": "Das ist enthalten",
+    "total": "Gesamtpreis",
+    "vat": {
+      "standard19": "inkl. {vat} MwSt.",
+      "kleinunternehmer": "Kein Umsatzsteuerausweis (Kleinunternehmer nach § 19 UStG)"
+    },
+    "noExtras": "Keine weiteren Kosten.",
+    "due": "Fertig bis {date}, {time} Uhr, wenn dein Briefing bis {briefingBy} vollständig ist.",
+    "dueLate": "Ohne Sofortstart beginnen wir am {start}. Fertig bis {date}, {time} Uhr.",
+    "dueChanged": "Der Fertig-Termin hat sich gerade geändert: {date}, {time} Uhr. Prüf ihn und bestell dann.",
+    "methods": {
+      "service": "Zahlungsarten: Karte, Apple Pay, Google Pay, PayPal",
+      "pro": "Zahlungsarten: Karte, Apple Pay, Google Pay, PayPal, SEPA-Lastschrift"
+    },
+    "payment": "Zahlungsart",
+    "notSetUp": {
+      "title": "Zahlung im Testmodus noch nicht eingerichtet",
+      "body": "Hier erscheint das Zahlungsfeld, sobald der Stripe-Testzugang verbunden ist. Bis dahin kannst du nicht bestellen."
+    },
+    "loadFailed": "Das Zahlungsfeld konnte nicht geladen werden. Lade die Seite neu.",
+    "early": {
+      "label": "Bitte fangt sofort an. Ich verlange ausdrücklich, dass Linkyo vor Ablauf der Widerrufsfrist mit der Gestaltung beginnt. Mir ist bekannt, dass mein Widerrufsrecht erlischt, sobald Linkyo den Auftrag vollständig erfüllt hat. Widerrufe ich vorher, zahle ich den Anteil der bis dahin erbrachten Leistung.",
+      "without": "Ohne Haken starten wir erst nach Ablauf der Widerrufsfrist am {date}; dein Fertig-Termin verschiebt sich entsprechend."
+    },
+    "warranty": "Es gelten die gesetzlichen Gewährleistungsrechte für digitale Inhalte und Dienstleistungen.",
+    "terms": "Es gelten unsere <terms>AGB</terms>. Hinweise zum Widerruf: <policy>Widerrufsbelehrung</policy> · <privacy>Datenschutz</privacy>",
+    "submit": "Zahlungspflichtig bestellen",
+    "submitting": "Wird bestellt …",
+    "signIn": {
+      "title": "Melde dich zuerst an",
+      "body": "Deine Bestellung landet in deinem Linkyo-Konto.",
+      "login": "Anmelden",
+      "signup": "Kostenlos registrieren"
+    },
+    "alreadyPro": {
+      "title": "Du hast Pro bereits",
+      "body": "Dein Konto hat Pro schon, zum Beispiel als Abo oder als „Pro für immer“. Ein zweites Abo brächte dir nichts dazu.",
+      "cta": "Zum Dashboard"
+    },
+    "germanOnly": {
+      "title": "Bestellung derzeit nur auf Deutsch",
+      "body": "Bestellung, Vertrag und Rechtstexte gibt es zurzeit nur auf Deutsch. Du kannst auf Deutsch weiter bestellen.",
+      "cta": "Auf Deutsch weiter"
+    },
+    "done": {
+      "title": "Danke, deine Bestellung ist da.",
+      "line": "Bestellnummer {number} · Seitenservice {package} · {price}",
+      "due": "Fertig bis {date}, {time} Uhr. Wir haben dir alles per E-Mail geschickt.",
+      "next": "Nächster Schritt: Briefing ausfüllen (Links, Fotos, Wünsche). Die Uhr läuft, sobald es vollständig ist.",
+      "briefing": "Briefing ausfüllen",
+      "pending": "Wir bestätigen deine Zahlung gerade …",
+      "pro": "Danke, Pro ist aktiv. Die Bestätigung kommt per E-Mail."
+    }
+  },
+  "email": {
+    "common": {
+      "greeting": "Hallo {name},",
+      "greetingNoName": "Hallo,",
+      "signature": "Dein Linkyo-Team",
+      "testMode": "TESTMODUS – keine echte Zahlung.",
+      "footer": "Linkyo · {address} · {email}"
+    },
+    "order": {
+      "subject": "Deine Bestellung bei Linkyo: Seitenservice {package} ({number})",
+      "intro": "Danke für deine Bestellung. Hier ist alles Wichtige auf einen Blick.",
+      "who": "Wer wir sind",
+      "what": "Was du bestellt hast",
+      "total": "Gesamtpreis: {price} ({vat})",
+      "method": "Zahlungsart: {method}",
+      "at": "Bestellt am {date} um {time} Uhr",
+      "due": "Fertig bis {date}, {time} Uhr, wenn dein Briefing bis {briefingBy} vollständig ist.",
+      "earlyYes": "Du hast verlangt, dass wir vor Ablauf der Widerrufsfrist beginnen, und bestätigt, dass dein Widerrufsrecht mit vollständiger Erfüllung erlischt. Dein Text bei der Bestellung:",
+      "earlyNo": "Du hast keinen Sofortstart gewählt. Wir beginnen am {date}.",
+      "promise": "Unser Versprechen",
+      "warranty": "Für digitale Inhalte und digitale Dienstleistungen gilt die gesetzliche Gewährleistung.",
+      "withdrawal": "Widerrufsbelehrung und Muster-Widerrufsformular",
+      "withdrawButton": "Vertrag widerrufen",
+      "terms": "Unsere AGB",
+      "invoice": "Die Rechnung kommt in einer eigenen E-Mail.",
+      "next": "Nächster Schritt: Füll dein Briefing aus.",
+      "briefingButton": "Briefing ausfüllen"
+    },
+    "pro": {
+      "subject": "Deine Bestellung bei Linkyo: Linkyo Pro",
+      "intro": "Danke! Linkyo Pro ist aktiv.",
+      "billing": "{price} pro Monat ({vat}). Nächste Abbuchung am {date}.",
+      "term": "Laufzeit 1 Monat, verlängert sich jeweils um 1 Monat, jederzeit zum Ende des bezahlten Monats kündbar.",
+      "cancel": "Verträge hier kündigen"
+    },
+    "withdrawal": {
+      "subject": "Eingangsbestätigung: dein Widerruf vom {date}, {time} Uhr",
+      "body": "Wir haben deinen Widerruf erhalten am {date} um {time} Uhr.",
+      "content": "Inhalt deiner Erklärung: {name} widerruft den Vertrag {contract}. Bestätigung an: {email}.",
+      "next": "Wir bearbeiten deinen Widerruf und erstatten Zahlungen innerhalb von 14 Tagen auf dein ursprüngliches Zahlungsmittel, soweit sie dir zustehen."
+    },
+    "cancellation": {
+      "subject": "Kündigungsbestätigung vom {date}, {time} Uhr",
+      "body": "Wir haben deine Kündigung erhalten am {date} um {time} Uhr.",
+      "content": "Inhalt: {kind}, Vertrag {contract}, gewünscht {when}. Name: {name}. Konto: {accountEmail}.",
+      "endsRule": "Besteht unter dieser Konto-Adresse ein Pro-Vertrag, endet er zum Ende des laufenden bezahlten Monats. Das genaue Datum schicken wir an die E-Mail-Adresse des Kontos.",
+      "endsRuleDate": "Besteht unter dieser Konto-Adresse ein Pro-Vertrag, endet er zum Ende des bezahlten Monats, in den der {date} fällt. Das genaue Datum schicken wir an die E-Mail-Adresse des Kontos.",
+      "extraordinary": "Du hast eine außerordentliche Kündigung mit sofortiger Wirkung erklärt. Wir prüfen sie; besteht unter dieser Konto-Adresse ein Pro-Vertrag, schicken wir unsere Entscheidung an die E-Mail-Adresse des Kontos.",
+      "confirmSubject": "Deine Kündigung von Linkyo Pro ({date})",
+      "ends": "Linkyo Pro endet am {date}.",
+      "extraordinaryReview": "Du hast eine außerordentliche Kündigung erklärt. Wir prüfen sie und schreiben dir unsere Entscheidung.",
+      "notYou": "Du hast nicht gekündigt? Antworte auf diese E-Mail, dann nehmen wir die Kündigung zurück."
+    },
+    "proposal": {
+      "subject": "Dein Seitenvorschlag ist da ({number})",
+      "bodyTeam": "Unser Team hat deine Seite gestaltet. Schau sie dir an, übernimm sie mit einem Klick oder frag Änderungen an.",
+      "bodyAi": "Unsere KI hat deine Seite entworfen, unser Team hat sie geprüft und verfeinert. Schau sie dir an, übernimm sie mit einem Klick oder frag Änderungen an.",
+      "rounds": "{count, plural, =0 {Keine Änderungsrunde mehr.} one {Noch 1 Änderungsrunde bis {date}.} other {Noch # Änderungsrunden bis {date}.}}",
+      "kit": "Dein Marketing-Paket (zwei Bio-Texte, Posting-Plan für 4 Wochen, 3 Story-Bilder) findest du beim Vorschlag.",
+      "button": "Vorschlag ansehen"
+    },
+    "revision": {
+      "subject": "Wir haben deine Änderungswünsche ({number})",
+      "body": "Wir liefern die Änderungen bis {date}, {time} Uhr."
+    },
+    "refund": {
+      "subject": "Erstattung für {number}",
+      "body": "Wir haben {price} erstattet. Je nach Bank dauert es ein paar Tage, bis du das Geld siehst."
+    },
+    "decision": {
+      "subject": "Deine Anfrage vom {date}: unsere Entscheidung",
+      "withdrawalAccepted": "Wir haben deinen Widerruf für {contract} angenommen und {price} erstattet. Je nach Bank dauert es ein paar Tage, bis du das Geld siehst.",
+      "withdrawalRejected": "Wir können deinen Widerruf für {contract} nicht annehmen. Grund: {note}",
+      "cancellationEnded": "Wir haben deine außerordentliche Kündigung angenommen. Linkyo Pro endet mit sofortiger Wirkung am {date}.",
+      "cancellationRejected": "Wir können deine außerordentliche Kündigung nicht annehmen. Grund: {note} Ordentlich kündigen kannst du jederzeit unter „Verträge hier kündigen“; Pro endet dann am Ende des bezahlten Monats.",
+      "resumed": "Wie von dir gewünscht, haben wir deine Kündigung zurückgenommen. Linkyo Pro läuft weiter; nächste Abbuchung am {date}."
     }
   }
 }

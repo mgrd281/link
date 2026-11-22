@@ -1,41 +1,12 @@
-import { detectMany, type Block, type BlockOf, type LinkIcon, type Platform } from "@linkyo/blocks";
+import { detectMany, type Block, type BlockOf, type CreatorKind, type LinkIcon, type Platform } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import { blockFromLink, newBlockId } from "./blocks";
 
-/**
- * What kind of page someone is making. Asked first in the welcome flow: it picks a fitting template
- * and decides which few questions come next (a shop is asked for its address and opening hours, a
- * TikToker for their handle and whether they go live). Everything stays editable afterwards.
- */
-export const KINDS = [
-  "tiktok",
-  "instagram",
-  "youtube",
-  "apps",
-  "streamer",
-  "podcast",
-  "music",
-  "affiliate",
-  "store",
-  "marketing",
-  "shop",
-  "business",
-  "coach",
-  "developer",
-  "designer",
-  "writer",
-  "journalist",
-  "engineer",
-  "lawyer",
-  "student",
-  "warehouse",
-  "other",
-] as const;
-export type CreatorKind = (typeof KINDS)[number];
-
-export const isKind = (value: unknown): value is CreatorKind => typeof value === "string" && (KINDS as readonly string[]).includes(value);
+// What kind of page someone is making: the list moved to @linkyo/blocks (the AI page plan offers the
+// same kinds); re-exported here so every importer keeps working.
+export { KINDS, isKind, type CreatorKind } from "@linkyo/blocks";
 
 /** Profiles asked for in the welcome flow, with what goes in front of the handle. */
 export const SOCIAL_PREFIX = {
