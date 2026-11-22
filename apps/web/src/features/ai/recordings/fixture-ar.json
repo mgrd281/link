@@ -1,0 +1,305 @@
+{
+  "kind": "fixture",
+  "locale": "ar",
+  "recordedAt": "2026-11-22T10:00:00.000Z",
+  "planShortenedFromMs": null,
+  "events": [
+    {
+      "at": 0,
+      "event": {
+        "type": "run",
+        "id": "fixture-ar",
+        "plan": "free",
+        "left": 0
+      }
+    },
+    {
+      "at": 300,
+      "event": {
+        "type": "step",
+        "key": "read",
+        "state": "start"
+      }
+    },
+    {
+      "at": 1300,
+      "event": {
+        "type": "source",
+        "id": "S1",
+        "kind": "website",
+        "label": "sara-coaching.example",
+        "status": "read",
+        "counts": {
+          "links": 2,
+          "profiles": 1
+        }
+      }
+    },
+    {
+      "at": 1500,
+      "event": {
+        "type": "step",
+        "key": "read",
+        "state": "done",
+        "ms": 1200,
+        "counts": {
+          "links": 5,
+          "profiles": 2
+        }
+      }
+    },
+    {
+      "at": 1550,
+      "event": {
+        "type": "step",
+        "key": "details",
+        "state": "skip"
+      }
+    },
+    {
+      "at": 1600,
+      "event": {
+        "type": "step",
+        "key": "colors",
+        "state": "skip"
+      }
+    },
+    {
+      "at": 1650,
+      "event": {
+        "type": "step",
+        "key": "plan",
+        "state": "start"
+      }
+    },
+    {
+      "at": 31200,
+      "event": {
+        "type": "step",
+        "key": "plan",
+        "state": "done",
+        "ms": 29550
+      }
+    },
+    {
+      "at": 31250,
+      "event": {
+        "type": "step",
+        "key": "look",
+        "state": "start"
+      }
+    },
+    {
+      "at": 31900,
+      "event": {
+        "type": "look",
+        "kind": "coach",
+        "theme": {
+          "template": "bloom",
+          "buttonShape": "pill"
+        }
+      }
+    },
+    {
+      "at": 31900,
+      "event": {
+        "type": "step",
+        "key": "look",
+        "state": "done"
+      }
+    },
+    {
+      "at": 32700,
+      "event": {
+        "type": "profile",
+        "profile": {
+          "displayName": "سارة",
+          "tagline": "مدربة حياة للبدايات الجديدة",
+          "bio": "أساعدك على \"خطوة أولى\" واضحة نحو هدفك."
+        }
+      }
+    },
+    {
+      "at": 33200,
+      "event": {
+        "type": "step",
+        "key": "write",
+        "state": "start"
+      }
+    },
+    {
+      "at": 33400,
+      "event": {
+        "type": "block",
+        "index": 0,
+        "block": {
+          "id": "socials-mws9ewc7-b",
+          "visible": true,
+          "highlight": false,
+          "origin": "ai",
+          "type": "socials",
+          "items": [
+            {
+              "platform": "instagram",
+              "url": "https://instagram.com/sara_coaching_example"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "at": 34300,
+      "event": {
+        "type": "block",
+        "index": 1,
+        "block": {
+          "id": "link-mws9ewc7-c",
+          "visible": true,
+          "highlight": true,
+          "origin": "ai",
+          "type": "link",
+          "title": "احجز جلستك الأولى",
+          "url": "https://sara-coaching.example/booking",
+          "icon": "calendar"
+        }
+      }
+    },
+    {
+      "at": 35200,
+      "event": {
+        "type": "block",
+        "index": 2,
+        "block": {
+          "id": "text-mws9ewc7-d",
+          "visible": true,
+          "highlight": false,
+          "origin": "ai",
+          "type": "text",
+          "text": "جلسات فردية عبر الإنترنت بلغة واضحة وهادئة."
+        }
+      }
+    },
+    {
+      "at": 35900,
+      "event": {
+        "type": "notes",
+        "notes": [
+          {
+            "topic": "look",
+            "text": "Bloom بألوان هادئة وأزرار مستديرة يناسب جلسات التدريب."
+          },
+          {
+            "topic": "order",
+            "text": "حجز الجلسة الأولى في الأعلى لأنه أهم خطوة لزوّارك."
+          },
+          {
+            "topic": "missing",
+            "text": "أضف صورة شخصية لتبدو الصفحة أقرب إلى زوّارك."
+          }
+        ]
+      }
+    },
+    {
+      "at": 36000,
+      "event": {
+        "type": "step",
+        "key": "write",
+        "state": "done",
+        "counts": {
+          "blocks": 3
+        }
+      }
+    },
+    {
+      "at": 36050,
+      "event": {
+        "type": "step",
+        "key": "check",
+        "state": "start"
+      }
+    },
+    {
+      "at": 36600,
+      "event": {
+        "type": "step",
+        "key": "check",
+        "state": "done",
+        "ms": 550,
+        "counts": {
+          "fixed": 0,
+          "dropped": 0
+        }
+      }
+    },
+    {
+      "at": 36700,
+      "event": {
+        "type": "done",
+        "runId": "fixture-ar",
+        "page": {
+          "profile": {
+            "username": "sara-coaching",
+            "displayName": "سارة",
+            "bio": "أساعدك على \"خطوة أولى\" واضحة نحو هدفك.",
+            "avatar": {
+              "src": "none:",
+              "alt": ""
+            },
+            "tagline": "مدربة حياة للبدايات الجديدة",
+            "verified": false,
+            "locale": "ar",
+            "aiFields": [
+              "displayName",
+              "tagline",
+              "bio"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "socials-mws9ewc7-b",
+              "visible": true,
+              "highlight": false,
+              "origin": "ai",
+              "type": "socials",
+              "items": [
+                {
+                  "platform": "instagram",
+                  "url": "https://instagram.com/sara_coaching_example"
+                }
+              ]
+            },
+            {
+              "id": "link-mws9ewc7-c",
+              "visible": true,
+              "highlight": true,
+              "origin": "ai",
+              "type": "link",
+              "title": "احجز جلستك الأولى",
+              "url": "https://sara-coaching.example/booking",
+              "icon": "calendar"
+            },
+            {
+              "id": "text-mws9ewc7-d",
+              "visible": true,
+              "highlight": false,
+              "origin": "ai",
+              "type": "text",
+              "text": "جلسات فردية عبر الإنترنت بلغة واضحة وهادئة."
+            }
+          ]
+        },
+        "theme": {
+          "template": "bloom",
+          "buttonShape": "pill"
+        },
+        "kind": "coach",
+        "fixed": 0,
+        "dropped": 0,
+        "fallback": false,
+        "counted": true,
+        "expiresAt": "2026-11-29T10:00:00.000Z",
+        "ms": 36700
+      }
+    }
+  ]
+}

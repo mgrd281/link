@@ -1,0 +1,364 @@
+{
+  "kind": "fixture",
+  "locale": "de",
+  "recordedAt": "2026-11-22T10:00:00.000Z",
+  "planShortenedFromMs": null,
+  "events": [
+    {
+      "at": 0,
+      "event": {
+        "type": "run",
+        "id": "fixture-de",
+        "plan": "free",
+        "left": 0
+      }
+    },
+    {
+      "at": 300,
+      "event": {
+        "type": "step",
+        "key": "read",
+        "state": "start"
+      }
+    },
+    {
+      "at": 1400,
+      "event": {
+        "type": "source",
+        "id": "S1",
+        "kind": "website",
+        "label": "lio-vance.de",
+        "status": "read",
+        "counts": {
+          "links": 5,
+          "profiles": 2
+        }
+      }
+    },
+    {
+      "at": 1650,
+      "event": {
+        "type": "step",
+        "key": "read",
+        "state": "done",
+        "ms": 1350,
+        "counts": {
+          "links": 5,
+          "profiles": 2
+        }
+      }
+    },
+    {
+      "at": 1700,
+      "event": {
+        "type": "step",
+        "key": "details",
+        "state": "skip"
+      }
+    },
+    {
+      "at": 1750,
+      "event": {
+        "type": "step",
+        "key": "colors",
+        "state": "skip"
+      }
+    },
+    {
+      "at": 1800,
+      "event": {
+        "type": "step",
+        "key": "plan",
+        "state": "start"
+      }
+    },
+    {
+      "at": 37900,
+      "event": {
+        "type": "step",
+        "key": "plan",
+        "state": "done",
+        "ms": 36100
+      }
+    },
+    {
+      "at": 37950,
+      "event": {
+        "type": "step",
+        "key": "look",
+        "state": "start"
+      }
+    },
+    {
+      "at": 38600,
+      "event": {
+        "type": "look",
+        "kind": "music",
+        "theme": {
+          "template": "nocturne"
+        }
+      }
+    },
+    {
+      "at": 38600,
+      "event": {
+        "type": "step",
+        "key": "look",
+        "state": "done"
+      }
+    },
+    {
+      "at": 39300,
+      "event": {
+        "type": "profile",
+        "profile": {
+          "displayName": "Lio Vance",
+          "tagline": "DJ und Producer aus Berlin",
+          "bio": "Ich mache elektronische Musik und lege in Clubs auf.",
+          "location": "Berlin"
+        }
+      }
+    },
+    {
+      "at": 39800,
+      "event": {
+        "type": "step",
+        "key": "write",
+        "state": "start"
+      }
+    },
+    {
+      "at": 40000,
+      "event": {
+        "type": "block",
+        "index": 0,
+        "block": {
+          "id": "socials-mws9euoz-4",
+          "visible": true,
+          "highlight": false,
+          "origin": "ai",
+          "type": "socials",
+          "items": [
+            {
+              "platform": "instagram",
+              "url": "https://instagram.com/lio.vance"
+            },
+            {
+              "platform": "soundcloud",
+              "url": "https://soundcloud.com/lio-vance"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "at": 40900,
+      "event": {
+        "type": "block",
+        "index": 1,
+        "block": {
+          "id": "music-mws9euoz-5",
+          "visible": true,
+          "highlight": true,
+          "origin": "ai",
+          "type": "music",
+          "title": "Musik",
+          "artist": "Lio Vance",
+          "kind": "single",
+          "cover": {
+            "src": "none:",
+            "alt": ""
+          },
+          "links": [
+            {
+              "platform": "spotify",
+              "url": "https://open.spotify.com/album/4aawyAB9vmqN3uQ7FjRGTy"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "at": 41700,
+      "event": {
+        "type": "block",
+        "index": 2,
+        "block": {
+          "id": "link-mws9euoz-6",
+          "visible": true,
+          "highlight": false,
+          "origin": "ai",
+          "type": "link",
+          "title": "Eventim",
+          "url": "https://www.eventim.de/artist/lio-vance/",
+          "icon": "ticket"
+        }
+      }
+    },
+    {
+      "at": 42400,
+      "event": {
+        "type": "block",
+        "index": 3,
+        "block": {
+          "id": "link-mws9euoz-7",
+          "visible": true,
+          "highlight": false,
+          "origin": "ai",
+          "type": "link",
+          "title": "Booking anfragen",
+          "url": "https://lio-vance.de/booking",
+          "icon": "calendar"
+        }
+      }
+    },
+    {
+      "at": 43100,
+      "event": {
+        "type": "notes",
+        "notes": [
+          {
+            "topic": "look",
+            "text": "Nocturne ist dunkel wie ein Club bei Nacht – passend zu deinen Sets."
+          },
+          {
+            "topic": "order",
+            "text": "Deine Musik steht oben, Tickets und Booking direkt darunter."
+          },
+          {
+            "topic": "missing",
+            "text": "Füg ein Pressefoto hinzu, dann wirkt der Kopf der Seite stärker."
+          }
+        ]
+      }
+    },
+    {
+      "at": 43200,
+      "event": {
+        "type": "step",
+        "key": "write",
+        "state": "done",
+        "counts": {
+          "blocks": 4
+        }
+      }
+    },
+    {
+      "at": 43250,
+      "event": {
+        "type": "step",
+        "key": "check",
+        "state": "start"
+      }
+    },
+    {
+      "at": 43900,
+      "event": {
+        "type": "step",
+        "key": "check",
+        "state": "done",
+        "ms": 650,
+        "counts": {
+          "fixed": 0,
+          "dropped": 0
+        }
+      }
+    },
+    {
+      "at": 44000,
+      "event": {
+        "type": "done",
+        "runId": "fixture-de",
+        "page": {
+          "profile": {
+            "username": "lio-vance",
+            "displayName": "Lio Vance",
+            "bio": "Ich mache elektronische Musik und lege in Clubs auf.",
+            "location": "Berlin",
+            "avatar": {
+              "src": "none:",
+              "alt": ""
+            },
+            "tagline": "DJ und Producer aus Berlin",
+            "verified": false,
+            "locale": "de",
+            "aiFields": [
+              "displayName",
+              "tagline",
+              "bio"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "socials-mws9euoz-4",
+              "visible": true,
+              "highlight": false,
+              "origin": "ai",
+              "type": "socials",
+              "items": [
+                {
+                  "platform": "instagram",
+                  "url": "https://instagram.com/lio.vance"
+                },
+                {
+                  "platform": "soundcloud",
+                  "url": "https://soundcloud.com/lio-vance"
+                }
+              ]
+            },
+            {
+              "id": "music-mws9euoz-5",
+              "visible": true,
+              "highlight": true,
+              "origin": "ai",
+              "type": "music",
+              "title": "Musik",
+              "artist": "Lio Vance",
+              "kind": "single",
+              "cover": {
+                "src": "none:",
+                "alt": ""
+              },
+              "links": [
+                {
+                  "platform": "spotify",
+                  "url": "https://open.spotify.com/album/4aawyAB9vmqN3uQ7FjRGTy"
+                }
+              ]
+            },
+            {
+              "id": "link-mws9euoz-6",
+              "visible": true,
+              "highlight": false,
+              "origin": "ai",
+              "type": "link",
+              "title": "Eventim",
+              "url": "https://www.eventim.de/artist/lio-vance/",
+              "icon": "ticket"
+            },
+            {
+              "id": "link-mws9euoz-7",
+              "visible": true,
+              "highlight": false,
+              "origin": "ai",
+              "type": "link",
+              "title": "Booking anfragen",
+              "url": "https://lio-vance.de/booking",
+              "icon": "calendar"
+            }
+          ]
+        },
+        "theme": {
+          "template": "nocturne"
+        },
+        "kind": "music",
+        "fixed": 0,
+        "dropped": 0,
+        "fallback": false,
+        "counted": true,
+        "expiresAt": "2026-11-29T10:00:00.000Z",
+        "ms": 44000
+      }
+    }
+  ]
+}
