@@ -117,7 +117,20 @@ export interface ActivityEvent {
     | "reward.restore"
     | "verification.request"
     | "verification.approve"
-    | "verification.decline";
+    | "verification.decline"
+    // Orders, contracts and the AI switch (v7, ADR 0065/0066): written only by the database.
+    | "order.assign"
+    | "order.proposal"
+    | "order.deliver"
+    | "withdrawal.accepted"
+    | "withdrawal.rejected"
+    | "withdrawal.handled"
+    | "cancellation.ended"
+    | "cancellation.rejected"
+    | "cancellation.resumed"
+    | "cancellation.handled"
+    | "ai.enabled"
+    | "ai.disabled";
   target: string;
 }
 

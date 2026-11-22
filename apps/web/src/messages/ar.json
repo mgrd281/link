@@ -2991,7 +2991,19 @@
         "reward_restore": "منح {actor} مكافأة لـ {target}",
         "verification_request": "طلب {target} التوثيق",
         "verification_approve": "وثّق {actor} صفحة {target} بناءً على طلب",
-        "verification_decline": "رفض {actor} توثيق {target}"
+        "verification_decline": "رفض {actor} توثيق {target}",
+        "order_assign": "تولّى {actor} الطلب {target}",
+        "order_proposal": "حفظ {actor} اقتراحًا للطلب {target}",
+        "order_deliver": "سلّم {actor} الاقتراح للطلب {target}",
+        "withdrawal_accepted": "قبل {actor} طلب الانسحاب لـ{target}",
+        "withdrawal_rejected": "رفض {actor} طلب الانسحاب لـ{target}",
+        "withdrawal_handled": "علّم {actor} طلب انسحاب كمُنجز",
+        "cancellation_ended": "أنهى {actor} العقد {target}",
+        "cancellation_rejected": "رفض {actor} الإلغاء لـ{target}",
+        "cancellation_resumed": "تراجع {actor} عن الإلغاء لـ{target}",
+        "cancellation_handled": "علّم {actor} طلب إلغاء كمُنجز",
+        "ai_enabled": "بدّل {actor} حالة ميزات الذكاء الاصطناعي",
+        "ai_disabled": "أُوقفت ميزات الذكاء الاصطناعي تلقائياً"
       }
     },
     "preview": {

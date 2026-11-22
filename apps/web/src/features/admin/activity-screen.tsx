@@ -17,10 +17,14 @@ import {
   LogOut,
   Mail,
   NotebookPen,
+  Power,
+  PowerOff,
   ReceiptText,
+  Send,
   ShieldCheck,
   ShieldOff,
   Trash2,
+  Undo2,
   UserCheck,
   UserMinus,
   UserPlus,
@@ -78,10 +82,25 @@ const ICONS: Record<ActivityEvent["action"], LucideIcon> = {
   "verification.request": BadgeCheck,
   "verification.approve": BadgeCheck,
   "verification.decline": BadgeCheck,
+  "order.assign": UserCheck,
+  "order.proposal": FilePen,
+  "order.deliver": Send,
+  "withdrawal.accepted": Undo2,
+  "withdrawal.rejected": Undo2,
+  "withdrawal.handled": CircleCheck,
+  "cancellation.ended": FileX2,
+  "cancellation.rejected": FileX2,
+  "cancellation.resumed": CircleCheck,
+  "cancellation.handled": CircleCheck,
+  "ai.enabled": Power,
+  "ai.disabled": PowerOff,
 };
 
+/** Real accounts read actions straight from the database, which may know names this build does not. */
+const iconFor = (action: string): LucideIcon => (ICONS as Partial<Record<string, LucideIcon>>)[action] ?? History;
+
 /** About one customer (their account, money or invite program), not a page the team prepares. */
-export const isCustomerEvent = (action: ActivityEvent["action"]) => /^(customer|ip|referral|reward|verification)\./.test(action);
+export const isCustomerEvent = (action: ActivityEvent["action"]) => /^(customer|ip|referral|reward|verification|order|withdrawal|cancellation)\./.test(action);
 
 type Filter = "all" | "customers" | "pages" | "team";
 const inFilter = (event: ActivityEvent, filter: Filter) => {
@@ -97,15 +116,20 @@ export function ActivityList({ events, now }: { events: ActivityEvent[]; now: nu
   const locale = useLocale();
   const { db } = useAdmin();
   const who = (email: string) => db.members.find((member) => member.email === email)?.name ?? email;
+  // The database may write an action this build has no sentence for yet: show its raw name, never crash.
+  const describe = (event: ActivityEvent) => {
+    const key = `actions.${event.action.replace(".", "_")}`;
+    return t.has(key) ? t(key, { actor: who(event.actor), target: event.target }) : `${who(event.actor)} · ${event.action} · ${event.target}`;
+  };
   return (
     <ol className="grid grid-cols-1 gap-1">
       {events.map((event) => (
         <li key={event.id} className="flex min-w-0 items-start gap-3 rounded-md px-1 py-2">
           <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-canvas-muted text-fg-secondary">
-            <Icon icon={ICONS[event.action]} size="sm" />
+            <Icon icon={iconFor(event.action)} size="sm" />
           </span>
           <span className="grid min-w-0 flex-1 gap-0.5">
-            <span className="text-small">{t(`actions.${event.action.replace(".", "_")}`, { actor: who(event.actor), target: event.target })}</span>
+            <span className="text-small">{describe(event)}</span>
             <time dateTime={event.at} className="text-caption text-fg-tertiary">
               {now === null ? "" : timeAgo(event.at, now, locale)}
             </time>

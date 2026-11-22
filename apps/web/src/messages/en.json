@@ -2991,7 +2991,19 @@
         "reward_restore": "{actor} gave {target} a reward",
         "verification_request": "{target} asked for verification",
         "verification_approve": "{actor} verified {target} (request)",
-        "verification_decline": "{actor} declined {target}'s verification"
+        "verification_decline": "{actor} declined {target}'s verification",
+        "order_assign": "{actor} took on the order {target}",
+        "order_proposal": "{actor} saved a proposal for {target}",
+        "order_deliver": "{actor} delivered the proposal for {target}",
+        "withdrawal_accepted": "{actor} accepted the withdrawal for {target}",
+        "withdrawal_rejected": "{actor} declined the withdrawal for {target}",
+        "withdrawal_handled": "{actor} marked a withdrawal as handled",
+        "cancellation_ended": "{actor} ended the contract {target}",
+        "cancellation_rejected": "{actor} declined the cancellation for {target}",
+        "cancellation_resumed": "{actor} withdrew the cancellation for {target}",
+        "cancellation_handled": "{actor} marked a cancellation as handled",
+        "ai_enabled": "{actor} switched the AI features",
+        "ai_disabled": "The AI features were switched off automatically"
       }
     },
     "preview": {

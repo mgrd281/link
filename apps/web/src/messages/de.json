@@ -2991,7 +2991,19 @@
         "reward_restore": "{actor} hat {target} eine Belohnung gegeben",
         "verification_request": "{target} hat eine Verifizierung angefragt",
         "verification_approve": "{actor} hat {target} auf Anfrage verifiziert",
-        "verification_decline": "{actor} hat die Verifizierung von {target} abgelehnt"
+        "verification_decline": "{actor} hat die Verifizierung von {target} abgelehnt",
+        "order_assign": "{actor} hat den Auftrag {target} übernommen",
+        "order_proposal": "{actor} hat einen Vorschlag für {target} gespeichert",
+        "order_deliver": "{actor} hat den Vorschlag für {target} übergeben",
+        "withdrawal_accepted": "{actor} hat den Widerruf zu {target} angenommen",
+        "withdrawal_rejected": "{actor} hat den Widerruf zu {target} abgelehnt",
+        "withdrawal_handled": "{actor} hat einen Widerruf als erledigt markiert",
+        "cancellation_ended": "{actor} hat den Vertrag {target} beendet",
+        "cancellation_rejected": "{actor} hat die Kündigung zu {target} abgelehnt",
+        "cancellation_resumed": "{actor} hat die Kündigung zu {target} zurückgenommen",
+        "cancellation_handled": "{actor} hat eine Kündigung als erledigt markiert",
+        "ai_enabled": "{actor} hat die KI-Funktionen umgeschaltet",
+        "ai_disabled": "Die KI-Funktionen wurden automatisch abgeschaltet"
       }
     },
     "preview": {
