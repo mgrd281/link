@@ -5,6 +5,7 @@ import { ArrowRight, BadgeCheck, ExternalLink, Lock, SearchCheck, UserCheck, Use
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 
+import { useAccount } from "@/features/account/store";
 import { SelectField, TextArea } from "@/features/app/form";
 import { Panel, Screen } from "@/features/app/screen";
 import { REFERRAL_RULES } from "@/features/referrals/rules";
@@ -108,11 +109,14 @@ function Empty({ icon, text }: { icon: LucideIcon; text: string }) {
 function VerificationCard({
   request,
   canVerify,
+  own,
   onApprove,
   onDecline,
 }: {
   request: QueueVerification;
   canVerify: boolean;
+  /** The reviewer's own request: someone else on the team decides it (the database refuses it too). */
+  own: boolean;
   onApprove: () => void;
   onDecline: () => void;
 }) {
@@ -153,7 +157,7 @@ function VerificationCard({
         <p className="text-caption text-fg-tertiary">{t("links")}</p>
         <ProfileLinks links={request.links} />
       </div>
-      {canVerify ? (
+      {canVerify && !own ? (
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" icon={BadgeCheck} onClick={onApprove} aria-describedby={headingId}>
             {t("approve")}
@@ -165,7 +169,7 @@ function VerificationCard({
       ) : (
         <p className="flex items-center gap-2 text-small text-fg-secondary">
           <Icon icon={Lock} size="sm" className="shrink-0" />
-          {tCreator("locked")}
+          {own ? t("ownRequest") : tCreator("locked")}
         </p>
       )}
     </article>
@@ -251,6 +255,8 @@ export function ReferralsScreen() {
   const tCustomer = useTranslations("admin.customer");
   const tRetry = useTranslations("app.invite");
   const { can, me } = useAdmin();
+  const account = useAccount();
+  const selfId = account.status === "signedIn" ? account.account.id : null;
   const referrals = useReferralQueue();
   const { status, queue } = referrals;
   const reasonLabel = useReasonLabel();
@@ -379,6 +385,7 @@ export function ReferralsScreen() {
                   key={request.id}
                   request={request}
                   canVerify={can("creators.verify")}
+                  own={selfId !== null && request.customerId === selfId}
                   onApprove={() => setPending({ kind: "approve", request })}
                   onDecline={() => setPending({ kind: "decline", request })}
                 />

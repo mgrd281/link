@@ -9,6 +9,7 @@ import { useEffect, useMemo, type MouseEvent, type ReactNode } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { selfTitle } from "@/features/directions/poster/sections";
+import { useReferrals } from "@/features/referrals/use-referrals";
 import { Link } from "@/i18n/navigation";
 import { isRtl } from "@/i18n/routing";
 import { haptic } from "@/lib/haptics";
@@ -219,6 +220,9 @@ function usePanelItems(section: SectionKey): PanelItem[] {
   const t = useTranslations("app");
   const { doc, site, label } = useSite();
   const progress = section === "home" ? homeProgress(doc, site) : null;
+  // The Invite screen leaves its people list out when the program could not be loaded; so does the panel.
+  const referrals = useReferrals(section === "invite");
+  const peopleShown = !(referrals.status === "error" || (referrals.status === "ready" && !referrals.data));
   // The page's outline: its sections, as the editor groups them (headers and blocks with their own title).
   const outline = useMemo(
     () => doc.blocks.filter((block) => block.type === "header" || selfTitle(block) !== null).map((block) => anchor(rowAnchor(block.id), label(block), { own: true })),
@@ -256,7 +260,7 @@ function usePanelItems(section: SectionKey): PanelItem[] {
       return [
         anchor(NAV_ANCHORS.inviteLink, t("invite.link.eyebrow")),
         anchor(NAV_ANCHORS.inviteRewards, t("invite.rewards.title")),
-        anchor(NAV_ANCHORS.invitePeople, t("invite.people.title")),
+        ...(peopleShown ? [anchor(NAV_ANCHORS.invitePeople, t("invite.people.title"))] : []),
         anchor(NAV_ANCHORS.inviteRules, t("invite.rules.title")),
       ];
     case "settings":
@@ -369,7 +373,13 @@ export function SectionPanel({ pathname, pending, onNavigate, status }: NavProps
   // there, jump to it without the smooth scroll, then drop the hash so a reload starts at the top.
   // Only the panel's own ids count; Settings' old #legal-style links are handled there.
   useEffect(() => {
-    const id = decodeURIComponent(window.location.hash.slice(1));
+    // A hand-typed or truncated hash ("#%E0") must not take the dashboard down.
+    let id: string;
+    try {
+      id = decodeURIComponent(window.location.hash.slice(1));
+    } catch {
+      return;
+    }
     if (!isJumpId(id)) return;
     const target = document.getElementById(id);
     if (target) jumpTo(target, { instant: true });

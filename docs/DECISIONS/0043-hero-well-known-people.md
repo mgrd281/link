@@ -23,6 +23,10 @@ management can demand removal and a licence fee.
 **What keeps it honest.**
 - **Chip.** The chip above a concept page reads "Konzept · Taylor Swift", never an address. An address would
   suggest she has a page.
+  - **Amended 2026-11-21 (founder's decision):** the chip now shows the page address, like a real link
+    (`linkyo.app/taylor-swift ↗`), with a small "Konzept" tag inside the same chip. The page's own
+    "Konzept · name" badge, the note under the tabs and the concept page itself are unchanged, so the
+    label is still read before and after the click.
 - **Picture.** The picture itself shows the page's own "Konzept · name" badge.
 - **Note.** A note under the tabs says: "Concept pages are unofficial: this is how a Linkyo page could look. We are
   not affiliated with the people shown."
@@ -37,7 +41,7 @@ management can demand removal and a licence fee.
 (for instance `lou-ferreira` and `noah-sarkis`). The note disappears by itself.
 
 **Status.** Applied. Tests:
-- the chip says "Concept · Taylor Swift" and links to the concept page in the visitor's language;
+- the chip shows "linkyo.app/taylor-swift" with a "Concept" tag and links to the concept page in the visitor's language;
 - the note is shown;
 - our own example shows its address;
 - the deck's clock, tabs and Arabic mirroring as in 0042.

@@ -17,16 +17,18 @@ export interface ReferralsState {
 
 /**
  * The signed-in creator's invite program. It loads on mount and again whenever the account changes
- * (another sign-in, a change in another tab), and on `reload()`.
+ * (another sign-in, a change in another tab), and on `reload()`. With `enabled` false it loads
+ * nothing and stays "loading" (a caller that needs it only on one screen, like the sidebar panel).
  */
-export function useReferrals(): ReferralsState {
+export function useReferrals(enabled = true): ReferralsState {
   const [state, setState] = useState<Pick<ReferralsState, "status" | "data">>({ status: "loading", data: null });
   const [version, setVersion] = useState(0);
   const reload = useCallback(() => setVersion((current) => current + 1), []);
 
-  useEffect(() => accountStore.subscribe(reload), [reload]);
+  useEffect(() => (enabled ? accountStore.subscribe(reload) : undefined), [enabled, reload]);
 
   useEffect(() => {
+    if (!enabled) return;
     let live = true;
     accountStore.referrals().then(
       (data) => {
@@ -39,7 +41,7 @@ export function useReferrals(): ReferralsState {
     return () => {
       live = false;
     };
-  }, [version]);
+  }, [enabled, version]);
 
   return { ...state, reload };
 }
