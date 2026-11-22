@@ -8,10 +8,12 @@ import { encode } from "uqr";
 
 import { copyText } from "@/lib/clipboard";
 import { haptic } from "@/lib/haptics";
+import { pageAddress, pageUrl } from "@/lib/page-url";
 
 import { Sheet } from "./sheet";
 
-export const pageUrl = (username: string) => `https://linkyo.app/${username}`;
+/** Links, QR codes and sharing use the one page address helper (lib/page-url.ts). */
+export { pageUrl };
 
 /** ISO/IEC 18004 asks for four modules of quiet zone, so a code printed on a colored flyer still scans. */
 const QR_BORDER = 4;
@@ -45,7 +47,7 @@ function useShareLink(username: string) {
     toast({ title: ok ? t("copied") : t("copyFailed"), tone: ok ? "success" : "danger" });
   };
   const share = () => {
-    if (typeof navigator.share === "function") void navigator.share({ title: `linkyo.app/${username}`, url }).catch(() => undefined);
+    if (typeof navigator.share === "function") void navigator.share({ title: pageAddress(username), url }).catch(() => undefined);
     else void copy();
   };
   return { copy, share };
@@ -145,7 +147,7 @@ export function QrButton({ compact = false, appearance = "button", ...target }: 
   const { url, address, fileName } =
     target.username === undefined
       ? target
-      : { url: pageUrl(target.username), address: `linkyo.app/${target.username}`, fileName: `linkyo-${target.username}-qr.png` };
+      : { url: pageUrl(target.username), address: pageAddress(target.username), fileName: `linkyo-${target.username}-qr.png` };
 
   const show = () => {
     setCanShare(typeof navigator.share === "function");

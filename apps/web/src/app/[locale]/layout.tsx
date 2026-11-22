@@ -10,6 +10,7 @@ import { fontVariables } from "@/fonts";
 import { isRtl, routing } from "@/i18n/routing";
 import { navPanelInitScript } from "@/lib/nav-panel-script";
 import { siteUrl } from "@/lib/site-url";
+import { supabaseEnabled } from "@/lib/supabase/config";
 import { themeInitScript } from "@/lib/theme-script";
 
 import "../globals.css";
@@ -21,10 +22,12 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "meta" });
+  // With real accounts nothing is counted yet: the description promises no analytics.
+  const description = supabaseEnabled ? (await getTranslations({ locale, namespace: "marketing.real" }))("metaDescription") : t("description");
   return {
     metadataBase: siteUrl(),
     title: { default: t("title"), template: `%s · Linkyo` },
-    description: t("description"),
+    description,
     // The home-screen icon: the symbol on teal, full bleed (iOS rounds the corners itself).
     icons: { icon: "/favicon.svg", apple: { url: "/apple-icon.png", sizes: "180x180", type: "image/png" } },
     // Added to the home screen it opens like an app: full screen, its own name, the system's status bar.

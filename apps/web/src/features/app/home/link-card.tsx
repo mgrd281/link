@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useId } from "react";
 
 import { accountStore } from "@/features/account/store";
+import { CREATOR_DOMAIN } from "@/lib/page-url";
 
 import { Disclosure } from "../disclosure";
 import { NAV_ANCHORS } from "../routes";
@@ -18,7 +19,7 @@ const rowSeparator =
  * Where the page lives and how to hand it out. While the page is still being built, sharing is the
  * quiet (tinted) action; once it is ready, the card says so, "Share" becomes the screen's one primary,
  * and a short how-to explains where the link goes. The reach line never promises a public page
- * before there is one.
+ * before there is one: the demo says the page lives in this browser, a real account that it is public.
  */
 export function LinkCard({ username, ready }: { username: string; ready: boolean }) {
   const t = useTranslations("app.home");
@@ -44,12 +45,13 @@ export function LinkCard({ username, ready }: { username: string; ready: boolean
         <div className="flex items-center gap-2">
           {/* An address reads left to right in every language; in Arabic it still hugs the start (right). */}
           <p dir="ltr" className="min-w-0 flex-1 truncate text-start text-h3 font-semibold rtl:text-right">
-            <span className="text-fg-secondary">linkyo.app/</span>
+            <span className="text-fg-secondary">{CREATOR_DOMAIN}/</span>
             {username}
           </p>
           <CopyLinkButton username={username} />
         </div>
-        <p className="text-small font-regular text-fg-secondary">{accountStore.demo ? t("linkDemo") : t("link.reserved")}</p>
+        {/* The demo keeps everything in this browser; a real account's page is public at this address. */}
+        <p className="text-small font-regular text-fg-secondary">{accountStore.demo ? t("linkDemo") : t("link.live")}</p>
       </div>
       <ShareLinkButton username={username} variant={ready ? "primary" : "tinted"} />
       {ready ? (

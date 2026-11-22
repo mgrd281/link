@@ -2,7 +2,7 @@
 
 import { hasImage, profileSchema, RESERVED_USERNAMES } from "@linkyo/blocks";
 import { Avatar, Badge, Button, Icon, Segmented, Skeleton, TextField } from "@linkyo/ui";
-import { BadgeCheck, ChevronRight, Mail, Plus, Search, Sparkles } from "lucide-react";
+import { BadgeCheck, ChevronRight, Mail, PenTool, Plus, Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type SubmitEvent } from "react";
 import { z } from "zod";
@@ -13,6 +13,7 @@ import { Sheet } from "@/features/app/sheet";
 import { useNow } from "@/features/directions/poster/live";
 import { resolveMedia } from "@/features/directions/shared/media";
 import { Link, useRouter } from "@/i18n/navigation";
+import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 
 import { useCreatorRows, usePublished, type CreatorRow } from "./data";
 import { timeAgo } from "./format";
@@ -56,7 +57,7 @@ function Row({ row, now }: { row: CreatorRow; now: number | null }) {
           </span>
           <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-small text-fg-secondary">
             <span dir="ltr" className="truncate">
-              linkyo.app/{row.username}
+              {pageAddress(row.username)}
             </span>
             <span className="inline-flex items-center gap-1">
               <Icon icon={Mail} size="sm" />
@@ -140,7 +141,7 @@ export function CreatorsScreen() {
       ) : visible.length === 0 ? (
         <div className="grid justify-items-center gap-4 rounded-xl border border-dashed border-line-strong p-8 text-center">
           <span className="grid size-control-xl place-items-center rounded-full bg-selected text-selected-fg">
-            <Icon icon={Sparkles} size="lg" />
+            <Icon icon={PenTool} size="lg" />
           </span>
           <div className="grid grid-cols-1 gap-1">
             <p className="text-body-lg font-semibold">{rows.length === 0 ? t("emptyTitle") : t("noMatch")}</p>
@@ -252,7 +253,7 @@ function NewPageSheet({ open, onOpenChange, taken, defaultLocale }: { open: bool
           id="new-username"
           label={t("username")}
           ltr
-          leading="linkyo.app/"
+          leading={`${CREATOR_DOMAIN}/`}
           value={username}
           onChange={(event) => setUsername(clean(event.target.value).slice(0, 30))}
           autoCapitalize="none"

@@ -1,13 +1,14 @@
 "use client";
 
 import { Badge, cn, Icon, Segmented } from "@linkyo/ui";
-import { ArrowDownRight, ArrowUpRight, Info } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, ChartNoAxesColumn, Info } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type CSSProperties, type KeyboardEvent } from "react";
 
 import { sampleStats, totals, type DayStat } from "./sample-stats";
 import { Panel, Screen } from "./screen";
 import { useSite } from "./site-context";
+import { statsSource } from "./stats";
 
 type Range = "7" | "30" | "90";
 
@@ -205,10 +206,38 @@ function BarList({ items }: { items: { key: string; label: string; value: string
 }
 
 /**
+ * Real accounts: nothing is counted yet, so nothing is shown as if it were. One calm card says so
+ * (the counter without cookies is in the works); the footnote about how Linkyo counts waits for it.
+ */
+function AnalyticsEmpty() {
+  const t = useTranslations("app.analytics");
+  return (
+    <Screen title={t("title")} wide lead={t("leadReal")}>
+      <Panel>
+        <div className="grid justify-items-center gap-4 py-6 text-center">
+          <span className="grid size-control-xl place-items-center rounded-full bg-selected text-selected-fg">
+            <Icon icon={ChartNoAxesColumn} size="lg" />
+          </span>
+          <div className="grid grid-cols-1 gap-1">
+            <h2 className="text-title rtl:tracking-normal">{t("empty.title")}</h2>
+            <p className="max-w-prose text-small font-regular text-fg-secondary">{t("empty.body")}</p>
+          </div>
+        </div>
+      </Panel>
+    </Screen>
+  );
+}
+
+/**
  * Analytics: one range filter above everything, stat tiles, the daily chart, then where clicks go
- * and where visitors come from. Demo numbers are labelled as samples on every view.
+ * and where visitors come from. Demo numbers are labelled as samples on every view; real accounts
+ * see an empty state until counting exists (statsSource).
  */
 export function AnalyticsScreen() {
+  return statsSource() === "sample" ? <SampleAnalytics /> : <AnalyticsEmpty />;
+}
+
+function SampleAnalytics() {
   const t = useTranslations("app.analytics");
   const locale = useLocale();
   const { account, doc, label } = useSite();

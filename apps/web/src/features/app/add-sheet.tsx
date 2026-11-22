@@ -6,12 +6,13 @@ import { CircleAlert, ClipboardPaste, ImagePlus, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, useMemo, useState, useSyncExternalStore } from "react";
 
+import { accountStore } from "@/features/account/store";
 import { blockIcon } from "@/features/directions/editor/ui";
 import { canReadClipboard, readText } from "@/lib/clipboard";
 
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { addGroups, blankBlock, blockFromLink, insertAt, newBlockId } from "./blocks";
-import { ImageError, pickFiles, prepareImage } from "./images";
+import { ImageError, pickFiles, prepareAndStore } from "./images";
 import { PreviewButton } from "./preview";
 import { useShellChrome } from "./screen";
 import { Sheet } from "./sheet";
@@ -41,7 +42,14 @@ export function AddSheet() {
   const canPaste = useSyncExternalStore(never, canReadClipboard, () => false);
   const detection = useMemo(() => (value.trim() ? detectLink(value.trim()) : null), [value]);
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
-  const groups = useMemo(() => addGroups(site.kind), [site.kind]);
+  // Real accounts have no newsletter backend yet: the block is not offered (public pages drop it too).
+  const groups = useMemo(
+    () =>
+      addGroups(site.kind)
+        .map((group) => (accountStore.demo ? group : { ...group, types: group.types.filter((candidate) => candidate !== "newsletter") }))
+        .filter((group) => group.types.length > 0),
+    [site.kind],
+  );
 
   // The second step: the block picked here, filled in right in this sheet.
   const current = editing?.mode === "create" && editing.inAddSheet ? editing : null;
@@ -109,7 +117,7 @@ export function AddSheet() {
     if (files.length === 0) return;
     setUploading(true);
     try {
-      const images = await Promise.all(files.slice(0, 24).map((file) => prepareImage(file, "photo")));
+      const images = await Promise.all(files.slice(0, 24).map((file) => prepareAndStore(file, "photo")));
       const base = { visible: true, highlight: false };
       const first = images[0];
       const block: Block | null =

@@ -5,6 +5,8 @@ import { tokens } from "@linkyo/tokens";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 
+import { pageAddress } from "@/lib/page-url";
+
 import type { EditorDoc } from "./state";
 import { blockTitle, useAddBar, useEditor, useFileDrop } from "./use-editor";
 
@@ -46,7 +48,7 @@ export function useDashboard(initial: EditorDoc, profile: Page["profile"]) {
 
   const label = useCallback((block: Block) => blockTitle(block, (type) => tTypes(type)), [tTypes]);
   const page: Page = { profile, blocks: doc.blocks };
-  const url = `linkyo.app/${profile.username}`;
+  const url = pageAddress(profile.username);
 
   const focusAdd = useCallback(() => addRef.current?.focus(), [addRef]);
   return { editor, doc, dispatch, add, addRef, focusAdd, addBlocks, dragging, previewOpen, setPreviewOpen, label, page, url };

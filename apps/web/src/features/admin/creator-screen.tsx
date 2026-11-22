@@ -20,6 +20,7 @@ import { EditorProvider, useSite, type SiteDoc } from "@/features/app/site-conte
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { Link, useRouter } from "@/i18n/navigation";
 import { copyText } from "@/lib/clipboard";
+import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 
 import { StatusBadge } from "./creators-screen";
 import { usePublished, type PublishedPage } from "./data";
@@ -261,7 +262,7 @@ function DraftEditor({ draft, server }: { draft: PreparedDraft; server: Publishe
                   {t("liveVersion")}
                 </Badge>
               ) : null}
-              <span dir="ltr">linkyo.app/{draft.username}</span>
+              <span dir="ltr">{pageAddress(draft.username)}</span>
             </p>
           </div>
           {locales.length > 1 ? (
@@ -518,7 +519,7 @@ function IdentityPanel({ draft, locale }: { draft: PreparedDraft; locale: Locale
           id="identity-username"
           label={tCreate("username")}
           ltr
-          leading="linkyo.app/"
+          leading={`${CREATOR_DOMAIN}/`}
           value={username}
           onChange={(event) => setUsername(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30))}
           autoCapitalize="none"

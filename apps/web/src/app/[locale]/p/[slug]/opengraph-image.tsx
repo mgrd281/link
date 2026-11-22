@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
 import { OG_SIZE, ogCard } from "@/features/share/og-card";
+import { pageAddress } from "@/lib/page-url";
 
 /** The link preview of a page: its photo, name and address in its own template. */
 export const size = OG_SIZE;
@@ -30,5 +31,5 @@ export default async function Image({ params }: { params: Promise<{ locale: stri
       : "";
   const badge = sample ? t("sampleBadge", { kind }) : found.preview.concept ? t("conceptBadge", { name }) : undefined;
   const theme = resolveCreatorTheme(found.preview.theme, { rtlScript: locale === "ar" });
-  return ogCard({ page: found.page, theme, address: `linkyo.app/${slug}`, badge });
+  return ogCard({ page: found.page, theme, address: pageAddress(slug), badge });
 }
