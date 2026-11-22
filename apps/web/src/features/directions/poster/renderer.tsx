@@ -7,7 +7,7 @@ import { useId, type ReactNode } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
 
-import { CreatorFooter, MediaImage, mediaSizes } from "../shared/creator-kit";
+import { CreatorFooter, MediaImage, mediaSizes, type CreatorFooterLinks } from "../shared/creator-kit";
 import { PrivacyNotice } from "../shared/privacy";
 import { externalProviders } from "../shared/providers";
 import {
@@ -43,6 +43,7 @@ export function PosterRenderer({
   preview = false,
   overlay,
   dock,
+  footerLinks,
 }: {
   page: Page;
   theme: ResolvedCreatorTheme;
@@ -51,6 +52,8 @@ export function PosterRenderer({
   overlay?: ReactNode;
   /** A bar pinned to the bottom that slides in once the hero has scrolled away. */
   dock?: ReactNode;
+  /** Public pages: where the footer's imprint, privacy and report links lead. */
+  footerLinks?: CreatorFooterLinks | undefined;
 }) {
   const { profile } = page;
   const blocks = page.blocks.filter((block) => isBlockActive(block));
@@ -119,6 +122,7 @@ export function PosterRenderer({
               reveal={layout.motion === "reveal"}
               // The dashboard's preview finds the block being edited by these ids (a section by its title block).
               blockIds={preview && section.id !== "top" ? section.id : undefined}
+              ai={isAiBlock(blocks.find((block) => block.id === section.id))}
             >
               {section.items.map((item) => (
                 <PosterItemView
@@ -137,7 +141,13 @@ export function PosterRenderer({
           ))}
         </Main>
         {/* With a Linkyo bar at the bottom, the footer drops its own Linkyo credit (one is enough). */}
-        <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} credit={!dock} privacy={providers.length > 0} trademarks={featured !== undefined} />
+        <CreatorFooter
+          className={cn("px-creator-gutter", dock ? "pb-24" : undefined)}
+          credit={!dock}
+          privacy={providers.length > 0}
+          trademarks={featured !== undefined}
+          links={footerLinks}
+        />
         {dock}
         {/* Over everything, including the claim bar, until the visitor has decided. */}
         {providers.length > 0 ? <PrivacyNotice providers={providers} /> : null}
@@ -147,6 +157,12 @@ export function PosterRenderer({
 }
 
 const itemKey = (item: PosterItem): string => (item.kind === "block" ? item.block.id : `${item.kind}-${item.blocks[0]?.id ?? ""}`);
+
+/** Written by an AI draft, edited afterwards or not (machine-readable marking, AI Act Art. 50(2)). */
+const isAiBlock = (block: Block | undefined): boolean => block?.origin === "ai" || block?.origin === "ai-edited";
+
+/** `data-ai-generated` on an element that shows AI-written content; nothing otherwise. */
+const aiMark = (ai: boolean) => (ai ? { "data-ai-generated": "true" } : {});
 
 /**
  * A titled section (or an untitled run of blocks). Titles follow the template: numbered ("01" in the
@@ -159,6 +175,7 @@ function PosterSection({
   number,
   reveal,
   blockIds,
+  ai,
   children,
 }: {
   title: string | null;
@@ -166,6 +183,8 @@ function PosterSection({
   number: number;
   reveal: boolean;
   blockIds?: string | undefined;
+  /** The title comes from an AI-written block. */
+  ai: boolean;
   children: ReactNode;
 }) {
   const id = useId();
@@ -178,7 +197,7 @@ function PosterSection({
   const heading = sectionTitle(headings);
   return (
     <section aria-labelledby={id} data-block-ids={blockIds} className={cn("grid min-w-0 grid-cols-1 gap-3", reveal && "poster-reveal")}>
-      <h2 id={id} className={heading.className} style={heading.style}>
+      <h2 id={id} className={heading.className} style={heading.style} {...aiMark(ai)}>
         {headings === "numbered" ? (
           <span aria-hidden className="text-creator-accent-text tabular-nums">
             {String(number).padStart(2, "0")}
@@ -209,14 +228,24 @@ interface ItemProps {
 /**
  * One item of a section. In the dashboard's preview it is wrapped in a box that names the blocks it
  * shows, so the preview can scroll to (and outline) the block being edited; the page itself renders
- * the item as it is.
+ * the item as it is. AI-written content is marked `data-ai-generated` (on a box that takes no room).
  */
 function PosterItemView({ preview, ...props }: ItemProps & { preview: boolean }) {
-  if (!preview) return <PosterItemBody {...props} />;
   const { item } = props;
-  const ids = item.kind === "block" ? [item.block.id] : item.blocks.map((block) => block.id);
+  const blocks: readonly Block[] = item.kind === "block" ? [item.block] : item.blocks;
+  // A grouped item (a run of rows, videos, products or apps) is marked when any of its blocks is.
+  const ai = blocks.some(isAiBlock);
+  if (!preview) {
+    return ai ? (
+      <div className="contents" {...aiMark(ai)}>
+        <PosterItemBody {...props} />
+      </div>
+    ) : (
+      <PosterItemBody {...props} />
+    );
+  }
   return (
-    <div data-block-ids={ids.join(" ")} className="min-w-0">
+    <div data-block-ids={blocks.map((block) => block.id).join(" ")} className="min-w-0" {...aiMark(ai)}>
       <PosterItemBody {...props} />
     </div>
   );
