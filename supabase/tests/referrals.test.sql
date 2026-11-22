@@ -42,9 +42,12 @@ language sql as $$
   select pg_temp.uid(handle), 'success', ip, device, sig;
 $$;
 
+/** Our server, after the invited person confirmed in the browser that carries the link's code. */
 create function pg_temp.settle(handle text) returns text
 language sql as $$
-  select public.settle_referral(pg_temp.uid(handle));
+  select public.settle_referral(pg_temp.uid(handle), (
+    select p.referral_code from public.referrals r join public.profiles p on p.id = r.inviter_id
+    where r.invitee_id = pg_temp.uid(handle)));
 $$;
 
 create function pg_temp.referral(handle text) returns public.referrals
@@ -93,6 +96,11 @@ select is((select count(distinct referral_code)::int from public.profiles), (sel
 select col_not_null('public', 'profiles', 'referral_code', 'no account is without a code');
 select col_has_default('public', 'profiles', 'referral_code', 'the database makes the code');
 select matches(public.new_referral_code(), '^[2-9a-hjkmnp-z]{8}$', 'the generator uses only the 31 symbols');
+select is((select count(*)::int from generate_series(1, 2000) where public.new_referral_code() !~ '^[2-9a-hjkmnp-z]{8}$'), 0,
+  '2,000 new codes all match the alphabet');
+select is((select count(distinct substr(c.code, i, 1))::int
+  from (select public.new_referral_code() as code from generate_series(1, 300)) c, generate_series(1, 8) as i), 31,
+  'and every one of the 31 symbols is drawn (bytes of 248 and more are drawn again)');
 
 select pg_temp.act_as('ana');
 set local role authenticated;
@@ -146,7 +154,7 @@ select is(public.referral_inviter(pg_temp.code('ana')), '{"name": "Ana Lund"}'::
 select throws_ok($$ select public.my_referrals() $$, '42501', null, 'but nothing else of the program');
 select throws_ok($$ select public.request_verification('{https://example.com/a}') $$, '42501', null, 'cannot ask for a review');
 select throws_ok($$ select public.admin_referral_queue() $$, '42501', null, 'nor open the team''s queue');
-select is_empty($$ select 1 from public.rewards $$, 'and read no rewards');
+select throws_ok($$ select 1 from public.rewards $$, '42501', null, 'and read no rewards');
 reset role;
 select pg_temp.as_server();
 
@@ -232,6 +240,21 @@ select pg_temp.seen('eml', '198.51.100.27', 'dev_email_link', null);
 select is(pg_temp.settle('eml'), 'qualified', 'the emailed link is not "the same browser"');
 select is((pg_temp.referral('eml')).signals ->> 'emailLink', 'true', 'it is noted as confirmed by link');
 
+-- The code is kept when the account is made, by whoever asked first; only the browser that confirms may keep it.
+select pg_temp.person('rex', 'rex@example.com');
+select pg_temp.seen('rex', '203.0.113.40', 'dev_rex', 'sig_rex');
+select pg_temp.person('pre', 'pre@example.org', pg_temp.code('rex'));
+select pg_temp.seen('pre', '198.51.103.1', 'dev_pre', 'sig_pre');
+select is(public.settle_referral(pg_temp.uid('pre')), 'dropped', 'confirmed in a browser without the link''s code: dropped');
+select is((pg_temp.referral('pre')).id, null, 'so nothing ties that account to the inviter');
+select pg_temp.person('oth', 'oth@example.org', pg_temp.code('rex'));
+select pg_temp.seen('oth', '198.51.103.2', 'dev_oth', 'sig_oth');
+select is(public.settle_referral(pg_temp.uid('oth'), pg_temp.code('ana')), 'dropped', 'with another inviter''s code too');
+select pg_temp.person('cap', 'cap@example.org', pg_temp.code('rex'));
+select pg_temp.seen('cap', '198.51.103.3', 'dev_cap', 'sig_cap');
+select is(public.settle_referral(pg_temp.uid('cap'), upper(pg_temp.code('rex'))), 'qualified', 'the same code settles it');
+select ok(has_function_privilege('service_role', 'public.settle_referral(uuid, text)', 'execute'), 'our server passes the code it was given');
+
 select pg_temp.seen('lou', '127.0.0.1', 'dev_lou', 'sig_lo');
 select pg_temp.person('loe', 'loe@example.org', pg_temp.code('lou'));
 select pg_temp.seen('loe', '127.0.0.1', 'dev_loe', 'sig_lo');
@@ -312,12 +335,12 @@ select is(pg_temp.settle('sam2'), 'qualified', 'all of them');
 select is(pg_temp.settle('sam3'), 'qualified', 'up to the third');
 select is_empty(format($$ select 1 from public.rewards where profile_id = %L $$, pg_temp.uid('sam')), 'but give no reward');
 update public.profiles set status = 'active' where id = pg_temp.uid('sam');
--- One invite the routes missed: confirmed an hour ago and still pending.
+-- One invite the routes missed: confirmed an hour ago and still pending, so no browser showed the code.
 select pg_temp.person('old', 'old@example.net', pg_temp.code('sam'));
 update auth.users set email_confirmed_at = now() - interval '1 hour' where id = pg_temp.uid('old');
 select pg_temp.seen('old', '198.51.102.9', 'dev_old', 'sig_old');
-select is(public.settle_pending_referrals(), 1, 'the hourly job settles what the routes missed');
-select is((pg_temp.referral('old')).state::text, 'qualified', 'by the same checks');
+select is(public.settle_pending_referrals(), 1, 'the hourly job handles what the routes missed');
+select is((pg_temp.referral('old')).id, null, 'by the same rule: confirmed without the link''s code, it is dropped');
 select is((select kind::text from public.rewards where profile_id = pg_temp.uid('sam')), 'verification_review',
   'and gives the reward once the inviter is active again');
 select isnt((select jobid from cron.job where jobname = 'linkyo-settle-referrals'), null, 'every hour');
@@ -455,6 +478,14 @@ select throws_ok(format($$ select public.admin_set_reward(%L, 'verification_revi
 select is(public.admin_customer_referrals(pg_temp.uid('ana')) #>> '{rewards,verification_review,reason}', 'abuse', 'with the reason');
 select is(public.admin_customer_referrals(pg_temp.uid('ana1')) #>> '{invitedBy,username}', 'ana', 'an invited customer shows who invited them');
 reset role;
+select pg_temp.act_as('ana');
+set local role authenticated;
+select throws_ok($$ select revoke_reason from public.rewards $$, '42501', null, 'the customer cannot read the team''s reason');
+select throws_ok($$ select revoked_by from public.rewards $$, '42501', null, 'nor who removed the reward');
+select throws_ok($$ select * from public.rewards $$, '42501', null, 'nor every column at once');
+select is((select count(*)::int from public.rewards where kind = 'verification_review' and revoked_at is not null), 1,
+  'but sees their rewards and that one was removed');
+reset role;
 select is((select array_agg(action order by id) from public.audit_log where action like 'referral.%'),
   array['referral.revoke', 'referral.restore', 'referral.release'], 'every team decision is in the activity log');
 select pg_temp.as_server();
@@ -512,6 +543,72 @@ select is_empty($$ select 1 from public.referrals where inviter_id = pg_temp.uid
   'deleting the inviter deletes their invites');
 select is((select count(*)::int from public.verification_requests where profile_id = pg_temp.uid('ivy')), 0,
   'and their verification requests');
+
+-- ── 10. Deleting doesn't reset the checks ───────────────────────────────────────────────────
+-- One mailbox counts once per inviter, also after its account is deleted.
+select pg_temp.person('rep', 'Rep.Eat@gmail.com', pg_temp.code('rex'));
+select pg_temp.seen('rep', '198.51.103.4', 'dev_rep', 'sig_rep');
+select is(pg_temp.settle('rep'), 'qualified', 'a friend counts');
+select is((pg_temp.referral('rep')).mailbox_hash, encode(extensions.digest('repeat@gmail.com', 'sha256'), 'hex'),
+  'the invite keeps a hash of the mailbox, never the address');
+select set_config('test.rep', (pg_temp.referral('rep')).id::text, true);
+delete from auth.users where id = pg_temp.uid('rep');
+select is(public.referral_count(pg_temp.uid('rex')), 2, 'and still counts once the account is deleted');
+select isnt((select mailbox_hash from public.referrals where id = current_setting('test.rep')::uuid), null, 'the hash stays with it');
+select pg_temp.person('rep2', 'r.e.peat+2@googlemail.com', pg_temp.code('rex'));
+select pg_temp.seen('rep2', '198.51.103.5', 'dev_rep2', 'sig_rep2');
+select is(pg_temp.settle('rep2'), 'rejected', 'the same mailbox signing up again through the same link does not count again');
+select is((pg_temp.referral('rep2')).reason, 'repeat', 'reason: repeat');
+select is(public.referral_count(pg_temp.uid('rex')), 2, 'the count stays');
+
+-- The network stays on the invite: deleting earlier sign-ups from one network doesn't escape the cluster check.
+do $$
+begin
+  for n in 1..3 loop
+    perform pg_temp.person('cn' || n, 'cn' || n || '@example.org', pg_temp.code('rex'));
+    perform pg_temp.seen('cn' || n, ('2001:db8:5:1::' || n || '0')::inet, 'dev_cn' || n, 'sig_cn' || n);
+  end loop;
+end;
+$$;
+select is(pg_temp.settle('cn1'), 'qualified', 'a friend from one network counts');
+select is((pg_temp.referral('cn1')).network, '2001:db8:5:1::/64'::inet, 'the invite keeps the network (IPv6: the /64)');
+delete from auth.users where id = pg_temp.uid('cn1');
+select is(pg_temp.settle('cn2'), 'qualified', 'a second from that network counts');
+delete from auth.users where id = pg_temp.uid('cn2');
+select is(pg_temp.settle('cn3'), 'held', 'the third is still held after the first two deleted their accounts');
+select is((pg_temp.referral('cn3')).reason, 'cluster', 'reason: cluster');
+select is((pg_temp.referral('cap')).network, '198.51.103.3/32'::inet, 'IPv4: the address');
+update public.referrals set settled_at = now() - interval '8 days' where id = (pg_temp.referral('cap')).id;
+select pg_temp.as_server();
+select public.settle_pending_referrals();
+select is((pg_temp.referral('cap')).network, null, 'the hourly job clears a network after 7 days');
+select isnt((pg_temp.referral('cn3')).network, null, 'and keeps the recent ones');
+
+-- A suspended friend who is then deleted doesn't count again and gives no reward.
+select pg_temp.person('zoe', 'zoe@example.com');
+do $$
+begin
+  for n in 1..3 loop
+    perform pg_temp.person('zo' || n, 'zo' || n || '@example.net', pg_temp.code('zoe'));
+    perform pg_temp.seen('zo' || n, ('198.51.104.' || n)::inet, 'dev_zo' || n, 'sig_zo' || n);
+  end loop;
+end;
+$$;
+select is(pg_temp.settle('zo1'), 'qualified', 'a friend counts');
+update public.profiles set status = 'suspended' where id = pg_temp.uid('zo1');
+select is(pg_temp.settle('zo2'), 'qualified', 'a second one');
+select is(pg_temp.settle('zo3'), 'qualified', 'a third one');
+select is(public.referral_count(pg_temp.uid('zoe')), 2, 'while the first is suspended, two count');
+select is_empty(format($$ select 1 from public.rewards where profile_id = %L $$, pg_temp.uid('zoe')), 'and there is no reward yet');
+delete from auth.users where id = pg_temp.uid('zo1');
+select is(public.referral_count(pg_temp.uid('zoe')), 2, 'deleting the suspended friend doesn''t make it count again');
+select is((select count(*)::int from public.referrals where inviter_id = pg_temp.uid('zoe')), 2, 'its invite goes with the account');
+select public.settle_pending_referrals();
+select is_empty(format($$ select 1 from public.rewards where profile_id = %L $$, pg_temp.uid('zoe')), 'and the hourly job gives no reward');
+-- Per inviter: the mailbox Rex already had still counts for someone else.
+select pg_temp.person('rep3', 'repeat@gmail.com', pg_temp.code('zoe'));
+select pg_temp.seen('rep3', '198.51.104.9', 'dev_rep3', 'sig_rep3');
+select is(pg_temp.settle('rep3'), 'qualified', 'one mailbox counts once for each inviter');
 
 select * from finish();
 rollback;
