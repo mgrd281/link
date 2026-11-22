@@ -7,6 +7,8 @@ dist/
 .next/
 out/
 build/
+# …but not the app's /app/build route folder (Next.js routes are source, not build output).
+!apps/web/src/app/**/build/
 *.tsbuildinfo
 .turbo/
 packages/tokens/src/generated/
