@@ -14,7 +14,7 @@ export type DeclineReason = "profileNotLinked" | "identityUnclear" | "impersonat
 /** The stored state of one invite (`public.referral_state`). */
 export type ReferralState = "pending" | "qualified" | "held" | "rejected" | "revoked";
 
-export type ReferralReason = "self" | "sameDevice" | "disposable" | "inviteeSuspended" | "noSignals" | "sameNetwork" | "cluster" | "team";
+export type ReferralReason = "self" | "sameDevice" | "disposable" | "inviteeSuspended" | "noSignals" | "sameNetwork" | "cluster" | "repeat" | "team";
 
 /** Yes/no signals of the abuse checks; no addresses or fingerprints are kept. */
 export type ReferralSignals = Partial<Record<"sameNetwork" | "sameSignature" | "cluster" | "disposable" | "emailLink", boolean>>;

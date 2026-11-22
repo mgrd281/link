@@ -2555,6 +2555,7 @@
         "held": "للتحقق ({count})"
       },
       "verifications": {
+        "ownRequest": "يراجع شخص آخر في الفريق طلبك الخاص.",
         "empty": "لا طلبات مفتوحة.",
         "requested": "طُلب في {date}",
         "invites": "{count, plural, zero {لا دعوات} one {دعوة واحدة} two {دعوتان} few {# دعوات} many {# دعوة} other {# دعوة}}",
@@ -2592,6 +2593,7 @@
         "noSignals": "أُكّد دون سجل الدخول الخاص بنا",
         "sameNetwork": "نفس الشبكة ونفس بصمة المتصفح",
         "cluster": "عدة تسجيلات من شبكة واحدة خلال {days, plural, one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+        "repeat": "سبقت دعوة عنوان البريد هذا",
         "team": "أزالها الفريق"
       },
       "declineReasons": {

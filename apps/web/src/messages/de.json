@@ -2555,6 +2555,7 @@
         "held": "Zu prüfen ({count})"
       },
       "verifications": {
+        "ownRequest": "Eine andere Person im Team prüft deine eigene Anfrage.",
         "empty": "Keine offenen Anfragen.",
         "requested": "Angefragt {date}",
         "invites": "{count, plural, one {# Einladung} other {# Einladungen}}",
@@ -2592,6 +2593,7 @@
         "noSignals": "Ohne unser Anmeldeprotokoll bestätigt",
         "sameNetwork": "Gleiches Netz und gleiche Browser-Signatur",
         "cluster": "Mehrere Anmeldungen aus einem Netz in {days, plural, one {# Tag} other {# Tagen}}",
+        "repeat": "Dieselbe E-Mail-Adresse wurde schon einmal eingeladen",
         "team": "Vom Team entfernt"
       },
       "declineReasons": {

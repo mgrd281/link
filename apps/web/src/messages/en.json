@@ -2555,6 +2555,7 @@
         "held": "To check ({count})"
       },
       "verifications": {
+        "ownRequest": "Someone else on the team reviews your own request.",
         "empty": "No open requests.",
         "requested": "Requested {date}",
         "invites": "{count, plural, one {# invite} other {# invites}}",
@@ -2592,6 +2593,7 @@
         "noSignals": "Confirmed without our sign-in log",
         "sameNetwork": "Same network and browser signature",
         "cluster": "Several sign-ups from one network within {days, plural, one {# day} other {# days}}",
+        "repeat": "This email address was invited before",
         "team": "Removed by the team"
       },
       "declineReasons": {
