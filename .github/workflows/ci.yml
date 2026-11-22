@@ -148,8 +148,9 @@ jobs:
           EMAIL_TRANSPORT: capture
           EMAIL_CAPTURE_DIR: ${{ github.workspace }}/apps/web/.mail
           MAINTENANCE_SECRET: local-maint
-          # The demo team code's hash (public in the repo): with Supabase on, an unset hash fails closed.
-          LINKYO_ADMIN_CODE_SHA256: 5db53b740697a0a500b76249b4913043ed9a9460c143dab9e3881ba5ab6a89bd
+          # SHA-256 of the local-only code "linkyo-team-local-e2e", never the demo code's: with Supabase on
+          # the demo code must fail (public-page-app.spec.ts), and an unset hash fails closed.
+          LINKYO_ADMIN_CODE_SHA256: 58ebb52192bc8c2c46eefe1977a34d0d0e79065d90214bd2328316fbf1a3a5d6
       - name: Tests that change global state (the AI switch), one worker
         run: pnpm --filter @linkyo/web exec playwright test --grep @global --workers=1 --project desktop --pass-with-no-tests
         env:
@@ -171,8 +172,9 @@ jobs:
           EMAIL_TRANSPORT: capture
           EMAIL_CAPTURE_DIR: ${{ github.workspace }}/apps/web/.mail
           MAINTENANCE_SECRET: local-maint
-          # The demo team code's hash (public in the repo): with Supabase on, an unset hash fails closed.
-          LINKYO_ADMIN_CODE_SHA256: 5db53b740697a0a500b76249b4913043ed9a9460c143dab9e3881ba5ab6a89bd
+          # SHA-256 of the local-only code "linkyo-team-local-e2e", never the demo code's: with Supabase on
+          # the demo code must fail (public-page-app.spec.ts), and an unset hash fails closed.
+          LINKYO_ADMIN_CODE_SHA256: 58ebb52192bc8c2c46eefe1977a34d0d0e79065d90214bd2328316fbf1a3a5d6
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
