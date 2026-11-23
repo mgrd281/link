@@ -58,7 +58,9 @@ test.describe("the AI switch @real @global", () => {
     await expect(page.getByRole("link", { name: de.app.editor.withAi })).toHaveCount(0);
 
     await page.goto("/de/app/build");
-    await expect(page.getByText(de.app.ai.unavailable)).toBeVisible({ timeout: 20_000 });
+    // A real account is told that the AI is switched off, not that it "needs a real account" (the demo's sentence).
+    await expect(page.getByText(de.app.ai.errors.disabled)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(de.app.ai.unavailable)).toHaveCount(0);
     await expect(page.getByRole("link", { name: de.app.ai.continueWithout })).toBeVisible();
     await expect(page.getByRole("button", { name: de.app.ai.start })).toHaveCount(0);
   });
