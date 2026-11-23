@@ -11,7 +11,7 @@ import { blockIcon } from "@/features/directions/editor/ui";
 import { canReadClipboard, readText } from "@/lib/clipboard";
 
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
-import { addGroups, blankBlock, blockFromLink, insertAt, newBlockId } from "./blocks";
+import { ADD_GROUPS, addGroups, blankBlock, blockFromLink, insertAt, newBlockId } from "./blocks";
 import { ImageError, pickFiles, prepareAndStore } from "./images";
 import { useMediaOwner } from "./media-owner";
 import { PreviewButton } from "./preview";
@@ -29,6 +29,9 @@ const never = () => () => undefined;
  * is one sheet the whole time. Pasted links and picked types land in the same place. Reachable from
  * every screen (sidebar, tab bar, the editor's buttons and its "Add below").
  */
+/** Types whose edit form does not exist yet. The editor work package empties this list. */
+const UNFINISHED: ReadonlySet<BlockType> = new Set(ADD_GROUPS.portfolio);
+
 export function AddSheet() {
   const t = useTranslations("app.add");
   const tEdit = useTranslations("app.edit");
@@ -44,9 +47,11 @@ export function AddSheet() {
   const detection = useMemo(() => (value.trim() ? detectLink(value.trim()) : null), [value]);
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
   // Real accounts have no newsletter backend yet: the block is not offered (public pages drop it too).
+  // The portfolio blocks have no fields yet, so the sheet offers none of them until they do.
   const groups = useMemo(
     () =>
       addGroups(site.kind)
+        .map((group) => ({ ...group, types: group.types.filter((candidate) => !UNFINISHED.has(candidate)) }))
         .map((group) => (accountStore.demo ? group : { ...group, types: group.types.filter((candidate) => candidate !== "newsletter") }))
         .filter((group) => group.types.length > 0),
     [site.kind],
@@ -256,7 +261,7 @@ export function AddSheet() {
                 </h3>
                 <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {group.types.map((type) => (
-                    <li key={type} className="grid">
+                    <li key={type} className="grid min-w-0">
                       {/* The name starts with the type ("Link Any website …"), then what it is for. */}
                       <button
                         type="button"
@@ -268,7 +273,7 @@ export function AddSheet() {
                           <Icon icon={blockIcon[type]} size="md" />
                         </span>
                         <span className="grid min-w-0">
-                          <span className="text-small font-semibold">{tTypes(type)}</span>
+                          <span className="text-small font-semibold break-words hyphens-auto">{tTypes(type)}</span>
                           <span className="text-caption text-fg-secondary">{t(`desc.${type}`)}</span>
                         </span>
                       </button>
