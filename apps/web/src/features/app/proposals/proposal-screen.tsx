@@ -16,11 +16,14 @@ import { useRouter } from "@/i18n/navigation";
 import { copyText } from "@/lib/clipboard";
 import { accessToken } from "@/lib/supabase/access-token";
 import { browserSupabase } from "@/lib/supabase/browser";
+import { isStale, useSignedUrls } from "@/lib/supabase/signed";
 
 import { TextArea } from "../form";
 import { Sheet } from "../sheet";
 import { useSite, type SiteDoc } from "../site-context";
 import { useScrolled } from "../use-scrolled";
+
+import { isFinalRefusal, proposalView } from "./proposal-state";
 
 interface Kit {
   bioInstagram: string;
@@ -43,8 +46,12 @@ interface Proposal {
 interface OrderFacts {
   package: "start" | "premium";
   status: string;
+  /** A withdrawal is being checked: the order rests. */
+  withdrawalPending: boolean;
   revisionsLeft: number;
   reviseUntil: Date | null;
+  /** When requested changes arrive (while the order is "revision_requested"). */
+  revisionDueAt: Date | null;
   voluntaryRefundAvailable: boolean;
   aiAssisted: boolean | null;
 }
@@ -88,8 +95,10 @@ async function loadProposal(id: string): Promise<{ proposal: Proposal; order: Or
     order: {
       package: order.package === "premium" ? "premium" : "start",
       status: str(order.status),
+      withdrawalPending: order.withdrawalPending === true,
       revisionsLeft: Math.max(allowed - used, 0),
       reviseUntil: typeof order.reviseUntil === "string" ? new Date(order.reviseUntil) : null,
+      revisionDueAt: typeof order.revisionDueAt === "string" ? new Date(order.revisionDueAt) : null,
       voluntaryRefundAvailable: order.voluntaryRefundAvailable === true,
       aiAssisted: listed ? listed.aiAssisted === true : null,
     },
@@ -99,18 +108,18 @@ async function loadProposal(id: string): Promise<{ proposal: Proposal; order: Or
 /** Premium's marketing kit beside the review: two bios to copy, the four weeks, three pictures to download. */
 function KitAside({ kit, stories }: { kit: Kit | null; stories: string[] }) {
   const t = useTranslations("app.proposals.kit");
-  const [links, setLinks] = useState<Map<string, string>>(new Map());
-  const key = stories.join("|");
-  useEffect(() => {
-    if (!key) return;
-    void browserSupabase()
-      .storage.from("deliverables")
-      .createSignedUrls(key.split("|"), 600, { download: true })
-      .then(({ data }) => setLinks(new Map((data ?? []).flatMap((entry) => (entry.path && entry.signedUrl ? [[entry.path, entry.signedUrl] as const] : [])))));
-  }, [key]);
+  // Signed for ten minutes, signed again while the review stays open (people compare and copy first).
+  const links = useSignedUrls("deliverables", stories, { download: true });
   const copy = async (text: string) => {
     if (await copyText(text)) toast({ title: t("copied"), tone: "success" });
   };
+  /** Signs now and starts the download: no address yet (signing failed), or one that may have run out. */
+  const downloadFresh = async (path: string) => {
+    const url = (await links.sign()).get(path);
+    if (url) window.location.assign(url);
+    else toast({ title: t("downloadFailed"), tone: "danger" });
+  };
+  const storyLink = "inline-flex min-h-touch-target items-center gap-2 rounded-sm text-start text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring";
   const bios = kit
     ? [
         { label: t("bioInstagram"), text: kit.bioInstagram },
@@ -155,15 +164,29 @@ function KitAside({ kit, stories }: { kit: Kit | null; stories: string[] }) {
           <ul className="grid gap-1">
             {stories.map((path, index) => (
               <li key={path}>
-                <a
-                  href={links.get(path) ?? "#"}
-                  download
-                  aria-disabled={links.get(path) ? undefined : true}
-                  className="inline-flex min-h-touch-target items-center gap-2 rounded-sm text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
-                >
-                  <Icon icon={Download} size="sm" />
-                  {t("download", { n: index + 1 })}
-                </a>
+                {links.fresh.get(path) ? (
+                  <a
+                    href={links.fresh.get(path)}
+                    download
+                    className={storyLink}
+                    onClick={(event) => {
+                      // The tab slept past its timer: this address may have run out. Sign again instead of
+                      // sending the customer to Storage's error page.
+                      if (!isStale(links.signedAt, Date.now())) return;
+                      event.preventDefault();
+                      void downloadFresh(path);
+                    }}
+                  >
+                    <Icon icon={Download} size="sm" />
+                    {t("download", { n: index + 1 })}
+                  </a>
+                ) : (
+                  // No address yet: a button that asks for one (never a link to "#", which would save this page).
+                  <button type="button" className={storyLink} onClick={() => void downloadFresh(path)}>
+                    <Icon icon={Download} size="sm" />
+                    {t("download", { n: index + 1 })}
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -236,8 +259,11 @@ export function ProposalScreen({ proposalId }: { proposalId: string }) {
   const aiAssisted = order.aiAssisted ?? hasAiContent(proposal.page);
   const draft: ReviewDraft = { page: { ...proposal.page, profile: { ...proposal.page.profile, username: account.username } }, theme: proposal.theme, kind: proposal.kind };
   const expired = order.reviseUntil !== null && now > order.reviseUntil.getTime();
-  const reviseBlocked = order.revisionsLeft <= 0 ? "none" : expired ? "expired" : null;
-  const reviseOpenNow = order.status === "delivered" && proposal.status === "delivered" && reviseBlocked === null && sent === null;
+  const view = proposalView(
+    { orderStatus: order.status, withdrawalPending: order.withdrawalPending, proposalStatus: proposal.status, revisionsLeft: order.revisionsLeft, reviseUntil: order.reviseUntil },
+    now,
+  );
+  const reviseOpenNow = view.revise === "open" && sent === null;
 
   const apply = () => {
     if (applying) return;
@@ -275,11 +301,24 @@ export function ProposalScreen({ proposalId }: { proposalId: string }) {
         body: JSON.stringify({ message: text }),
       });
       const data = obj(await response.json().catch(() => ({})));
-      if (!response.ok || typeof data.dueAt !== "string") throw new Error(str(data.error) || "server");
-      setSent(new Date(data.dueAt));
+      if (!response.ok || typeof data.dueAt !== "string") {
+        const code = str(data.error) || "server";
+        if (!isFinalRefusal(code)) throw new Error(code);
+        // Refused for good (a withdrawal came in, the rounds or the 14 days ran out, changes are already
+        // being made): "try again" would be wrong. Read the facts again; the screen then says which.
+        toast({ title: t("reviseRefused"), tone: "danger" });
+        setReviseOpen(false);
+        const fresh = await loadProposal(proposal.id).catch(() => null);
+        if (fresh) setLoaded(fresh);
+        return;
+      }
+      const due = new Date(data.dueAt);
+      setSent(due);
       setReviseOpen(false);
       // One round less; the next one opens when the changed proposal arrives.
-      setLoaded((current) => (current ? { ...current, order: { ...current.order, revisionsLeft: Math.max(current.order.revisionsLeft - 1, 0), status: "revision_requested" } } : current));
+      setLoaded((current) =>
+        current ? { ...current, order: { ...current.order, revisionsLeft: Math.max(current.order.revisionsLeft - 1, 0), status: "revision_requested", revisionDueAt: due } } : current,
+      );
     } catch {
       toast({ title: tLegal("server"), tone: "danger" });
     } finally {
@@ -330,12 +369,14 @@ export function ProposalScreen({ proposalId }: { proposalId: string }) {
             </>
           }
           aside={order.package === "premium" ? <KitAside kit={proposal.kit} stories={proposal.stories} /> : undefined}
-          above={<p className="text-small text-fg-secondary">{t("applyHint")}</p>}
+          above={view.canApply ? <p className="text-small text-fg-secondary">{t("applyHint")}</p> : undefined}
           actions={
             <div className="mx-auto grid max-w-prose grid-cols-1 gap-2 lg:mx-0">
-              <Button variant="primary" size="cta" className="w-full" loading={applying} onClick={apply}>
-                {t("apply")}
-              </Button>
+              {view.canApply ? (
+                <Button variant="primary" size="cta" className="w-full" loading={applying} onClick={apply}>
+                  {t("apply")}
+                </Button>
+              ) : null}
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="tinted" size="lg" className="min-w-0 px-3 text-small" disabled={!reviseOpenNow} onClick={() => setReviseOpen(true)}>
                   {t("revise")}
@@ -351,10 +392,28 @@ export function ProposalScreen({ proposalId }: { proposalId: string }) {
                   </p>
                   {roundsLine()}
                 </>
-              ) : reviseBlocked ? (
-                <p className="text-small text-fg-secondary">{reviseBlocked === "none" ? t("reviseNone") : t("reviseExpired")}</p>
-              ) : (
+              ) : view.revise === "open" ? (
                 roundsLine()
+              ) : (
+                // Why the button is off, in words: never a dead button next to "1 round left".
+                <>
+                  <p data-revise-state={view.revise} className="text-small text-fg-secondary">
+                    {view.revise === "none"
+                      ? t("reviseNone")
+                      : view.revise === "expired"
+                        ? t("reviseExpired")
+                        : view.revise === "busy"
+                          ? order.revisionDueAt
+                            ? t("reviseBusyUntil", { date: longDate(order.revisionDueAt, locale), time: clockTime(order.revisionDueAt, locale) })
+                            : t("reviseBusy")
+                          : view.revise === "paused"
+                            ? t("revisePaused")
+                            : view.revise === "superseded"
+                              ? t("reviseSuperseded")
+                              : t("ended")}
+                  </p>
+                  {view.roundsLine ? roundsLine() : null}
+                </>
               )}
             </div>
           }

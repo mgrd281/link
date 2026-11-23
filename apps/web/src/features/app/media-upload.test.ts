@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { dataUrlToBlob, mediaObjectPath, publicMediaUrl, storePreparedImage, uploadDataUrl, uploadOptions, type MediaDeps } from "./media-upload";
+import { dataUrlToBlob, mediaDepsFor, mediaObjectPath, publicMediaUrl, storePreparedImage, uploadDataUrl, uploadOptions, type MediaDeps } from "./media-upload";
 
 const UID = "6f1c2f3e-1111-4222-8333-944445555666";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -48,6 +48,22 @@ describe("page pictures in Storage", () => {
     expect(blob?.size).toBe(4);
     expect(type).toBe("image/jpeg");
     expect(url).toBe(`https://cdn/${path ?? ""}`);
+  });
+
+  it("the team's proposal editor uploads into the customer's folder, not the team member's", async () => {
+    const CUSTOMER = "0c0c0c0c-2222-4333-8444-555566667777";
+    const upload = vi.fn<MediaDeps["upload"]>(() => Promise.resolve());
+    // The signed-in session is the team member's (UID); the proposal names the customer as the owner.
+    const session: MediaDeps = { enabled: true, userId: () => Promise.resolve(UID), upload, publicUrl: (path) => `https://cdn/${path}` };
+    const prepared = { src: JPEG, tone: "dark" as const, width: 10, height: 10 };
+    const stored = await storePreparedImage(prepared, mediaDepsFor(CUSTOMER, session));
+    const [bucket, path] = upload.mock.calls[0] ?? [];
+    expect(bucket).toBe("media");
+    expect(path).toMatch(new RegExp(`^${CUSTOMER}/\\d{4}/[0-9a-f-]{36}\\.jpg$`));
+    expect(path).not.toContain(UID);
+    // The address kept in the proposal's page is the customer's object: purged with that account.
+    expect(stored.src).toBe(`https://cdn/${path ?? ""}`);
+    expect(mediaDepsFor(CUSTOMER, { ...session, enabled: false }).enabled).toBe(false);
   });
 
   it("keeps the data URL in the demo and fails without a session", async () => {

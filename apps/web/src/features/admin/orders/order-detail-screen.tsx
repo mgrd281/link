@@ -3,7 +3,7 @@
 import { Badge, Button, ConfirmDialog, Icon, Skeleton, toast } from "@linkyo/ui";
 import { ArrowLeft, CircleAlert, ExternalLink, Pencil, PenTool, Send, Sparkles, Undo2, UserPlus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { isLive } from "@/features/ai/run-reducer";
 import { AiRunView } from "@/features/ai/run-view";
@@ -13,20 +13,19 @@ import { clockTime, shortDate, type EmailLocale } from "@/features/email/templat
 import { formatEuro } from "@/features/payments/prices";
 import { Link } from "@/i18n/navigation";
 import { browserSupabase } from "@/lib/supabase/browser";
+import { useSignedUrls } from "@/lib/supabase/signed";
 
 import { useAdmin } from "../session";
 
 import { SlaBadge } from "./contracts-panel";
-import { ApiError, assignToMe, deliverProposal, kitComplete, loadOrder, refundOrder, signedUrls, type OrderEvent, type TeamOrder, type TeamProposal } from "./orders-data";
+import { LoadFailed, useLoad } from "./load";
+import { aiStart, currentDraft, orderLocked, refundState } from "./order-rules";
+import { ApiError, assignToMe, deliverProposal, kitComplete, loadOrder, refundOrder, type OrderEvent, type TeamOrder } from "./orders-data";
 import { PackageBadge, StatusBadge, useMinuteClock, WithdrawalBadge } from "./orders-screen";
 import { partialRefund } from "./team-words";
 
-/** The draft of the current round (round = revisions used), if there is one. */
-export function currentDraft(order: TeamOrder): TeamProposal | null {
-  return order.proposals.find((proposal) => proposal.round === order.revisionsUsed && proposal.status === "draft") ?? null;
-}
+export { currentDraft } from "./order-rules";
 
-const CLOSED = new Set(["refunded", "withdrawn"]);
 const consoleLink = "inline-flex min-h-touch-target items-center gap-2 rounded-sm text-small font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring";
 
 function When({ at }: { at: string }) {
@@ -42,13 +41,9 @@ function When({ at }: { at: string }) {
 function Briefing({ order }: { order: TeamOrder }) {
   const t = useTranslations("admin.orders.detail");
   const tLocales = useTranslations("admin.locales");
-  const [photos, setPhotos] = useState<Map<string, string>>(new Map());
   const paths = order.briefing?.photos ?? [];
-  const key = paths.join("|");
-  useEffect(() => {
-    if (!key) return;
-    void signedUrls("briefing", key.split("|")).then(setPhotos);
-  }, [key]);
+  // The thumbnails keep their first address; the full-size links are signed again while the screen is open.
+  const photos = useSignedUrls("briefing", paths);
   if (!order.briefing) {
     return (
       <Panel title={t("briefing")}>
@@ -89,10 +84,10 @@ function Briefing({ order }: { order: TeamOrder }) {
               <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                 {paths.map((path, index) => (
                   <li key={path} className="aspect-square overflow-hidden rounded-md border border-line bg-canvas-muted">
-                    {photos.get(path) ? (
-                      <a href={photos.get(path)} target="_blank" rel="noreferrer" className="block size-full focus-visible:focus-ring">
+                    {photos.first.get(path) ? (
+                      <a href={photos.fresh.get(path) ?? photos.first.get(path)} target="_blank" rel="noreferrer" className="block size-full focus-visible:focus-ring">
                         {/* eslint-disable-next-line @next/next/no-img-element -- a signed address of a private picture (10 minutes) */}
-                        <img src={photos.get(path)} alt={`${t("photos")} ${String(index + 1)}`} className="size-full object-cover" />
+                        <img src={photos.first.get(path)} alt={`${t("photos")} ${String(index + 1)}`} className="size-full object-cover" />
                       </a>
                     ) : null}
                   </li>
@@ -164,7 +159,9 @@ function Timeline({ order }: { order: TeamOrder }) {
               {event.actor ? (
                 <>
                   {" · "}
-                  <span dir="ltr">{event.actor}</span>
+                  <span dir="ltr" data-event-actor>
+                    {event.actor}
+                  </span>
                 </>
               ) : null}
             </span>
@@ -191,14 +188,15 @@ function RefundButton({ order, onDone }: { order: TeamOrder; onDone: () => void 
   const refund = async () => {
     setBusy(true);
     try {
-      await refundOrder(order.id);
-      toast({ title: t("refunded"), tone: "success" });
-      onDone();
-    } catch {
-      toast({ title: tErrors("server"), tone: "danger" });
+      const answer = await refundOrder(order.id);
+      toast(answer.mailed === false ? { title: t("mailFailed"), tone: "danger" } : { title: t("refunded"), tone: "success" });
+    } catch (error) {
+      // "locked": a withdrawal arrived, or someone else refunded it, while this screen was open.
+      toast({ title: error instanceof ApiError && error.code === "locked" ? t("changed") : tErrors("server"), tone: "danger" });
     } finally {
       setBusy(false);
       setOpen(false);
+      onDone();
     }
   };
   return (
@@ -231,39 +229,22 @@ function RefundButton({ order, onDone }: { order: TeamOrder; onDone: () => void 
 /**
  * One order for the team (`/admin/orders/<id>`): briefing, proposals and timeline, and the actions —
  * assign, an AI draft for Start (the team's own run, saved as the round's proposal), edit, deliver
- * and refund. A withdrawal waiting for a decision stops the work. Nothing here changes the customer's
- * page: only the customer applies a proposal.
+ * and refund. A withdrawal waiting for a decision stops the work, the refund included: it is decided
+ * in the contracts tab. Nothing here changes the customer's page: only the customer applies a proposal.
  */
 export function OrderDetailScreen({ orderId }: { orderId: string }) {
   const t = useTranslations("admin.orders");
   const tAiErrors = useTranslations("app.ai.errors");
   const tErrors = useTranslations("legal.errors");
   const tCommon = useTranslations("common");
+  const tKeep = useTranslations("admin.customer.confirm");
   const locale = useLocale() as EmailLocale;
   const { can, me } = useAdmin();
   const now = useMinuteClock();
-  const [order, setOrder] = useState<TeamOrder | null | undefined>(undefined);
+  const { state: loaded, reload, refresh } = useLoad(() => loadOrder(orderId), orderId);
   const [busy, setBusy] = useState<"assign" | "deliver" | null>(null);
+  const [confirmAi, setConfirmAi] = useState(false);
   const { state, start, stop, reset } = useAiRun({ endpoint: `/api/admin/orders/${orderId}/ai` });
-
-  const load = useCallback(async () => {
-    try {
-      setOrder(await loadOrder(orderId));
-    } catch {
-      setOrder(null);
-    }
-  }, [orderId]);
-  useEffect(() => {
-    let cancelled = false;
-    void loadOrder(orderId)
-      .catch(() => null)
-      .then((next) => {
-        if (!cancelled) setOrder(next);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId]);
 
   // The team's draft is saved as the round's proposal before `done` arrives: say so, and read the
   // order again (the run view gives way to the proposals list).
@@ -271,14 +252,10 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
   useEffect(() => {
     if (!savedRun) return;
     toast({ title: t("events.proposal_saved"), tone: "success" });
-    void loadOrder(orderId)
-      .catch(() => null)
-      .then((next) => {
-        if (next) setOrder(next);
-      });
-  }, [savedRun, orderId, t]);
+    void refresh();
+  }, [savedRun, refresh, t]);
 
-  if (order === undefined) {
+  if (loaded.status === "loading") {
     return (
       <div className="mx-auto grid max-w-content gap-4 px-4 pt-6 md:px-8" aria-hidden>
         <Skeleton className="h-16 rounded-lg" />
@@ -286,6 +263,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
       </div>
     );
   }
+  const order = loaded.status === "ready" ? loaded.data : null;
   if (order === null) {
     return (
       <div className="mx-auto grid max-w-content gap-4 px-4 pt-6 md:px-8">
@@ -293,25 +271,29 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
           <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
           {t("title")}
         </Link>
-        <p className="text-small text-fg-secondary">{t("empty")}</p>
+        {/* An order that could not be read is not "no such order". */}
+        {loaded.status === "failed" ? <LoadFailed onRetry={reload} /> : <p className="text-small text-fg-secondary">{t("empty")}</p>}
       </div>
     );
   }
 
   const editor = can("pages.edit");
-  const locked = order.withdrawalPending || CLOSED.has(order.status);
+  const locked = orderLocked(order);
   const draft = currentDraft(order);
   const incomplete = order.package === "premium" && draft !== null && !kitComplete(draft.extras, draft.storyPaths);
   const mine = order.assignee?.label.toLowerCase() === me.email.toLowerCase();
   const running = isLive(state);
   const due = order.revisionDueAt ?? order.dueAt ?? order.promisedDueAt;
   const open = !["delivered", "completed", "refunded", "withdrawn"].includes(order.status);
+  const ai = aiStart(order);
+  const refund = can("billing.manage") ? refundState(order) : "closed";
+  const startAi = () => start({ pageLocale: order.briefing?.pageLocale ?? order.locale });
 
   const assign = async () => {
     setBusy("assign");
     try {
       await assignToMe(order.id);
-      await load();
+      await refresh();
     } catch {
       toast({ title: tErrors("server"), tone: "danger" });
     } finally {
@@ -322,9 +304,10 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
     if (!draft) return;
     setBusy("deliver");
     try {
-      await deliverProposal(order.id, draft.id);
-      toast({ title: t("delivered"), tone: "success" });
-      await load();
+      const answer = await deliverProposal(order.id, draft.id);
+      // The route says whether the e-mail went out; never promise one that did not.
+      toast(answer.mailed === false ? { title: t("deliveredNoMail"), tone: "danger" } : { title: t("delivered"), tone: "success" });
+      await refresh();
     } catch (error) {
       toast({ title: error instanceof ApiError && error.code === "incomplete" ? t("kit.incomplete") : tErrors("server"), tone: "danger" });
     } finally {
@@ -364,7 +347,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
         </p>
       ) : null}
 
-      {editor || can("billing.manage") ? (
+      {editor || refund !== "closed" ? (
         <div data-order-actions className="flex flex-wrap gap-2">
           {editor ? (
             <>
@@ -373,11 +356,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
                 {t("actions.assign")}
               </Button>
               {order.package === "start" ? (
-                <Button
-                  variant="secondary"
-                  disabled={locked || running || !order.briefing || (draft === null && order.proposals.some((proposal) => proposal.round === order.revisionsUsed))}
-                  onClick={() => start({ pageLocale: order.briefing?.pageLocale ?? order.locale })}
-                >
+                <Button variant="secondary" disabled={running || ai === "blocked"} onClick={() => (ai === "confirm" ? setConfirmAi(true) : startAi())}>
                   <Icon icon={Sparkles} size="sm" />
                   {t("actions.ai")}
                 </Button>
@@ -401,10 +380,37 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
               </Button>
             </>
           ) : null}
-          {can("billing.manage") && !CLOSED.has(order.status) ? <RefundButton order={order} onDone={() => void load()} /> : null}
+          {refund === "open" ? (
+            <RefundButton order={order} onDone={() => void refresh()} />
+          ) : refund === "withdrawal" ? (
+            // The refund of a withdrawal is decided in the contracts tab; from here it would be booked as the voluntary money-back.
+            <Button variant="secondary" disabled aria-describedby="refund-locked">
+              <Icon icon={Undo2} size="sm" />
+              {t("actions.refund")}
+            </Button>
+          ) : null}
         </div>
       ) : null}
+      {refund === "withdrawal" ? (
+        <p id="refund-locked" data-refund-locked className="text-small text-fg-secondary">
+          {t("actions.refundLocked")}
+        </p>
+      ) : null}
       {incomplete ? <p className="text-small text-fg-secondary">{t("kit.incomplete")}</p> : null}
+      {confirmAi ? (
+        <ConfirmDialog
+          open
+          onOpenChange={setConfirmAi}
+          title={t("actions.aiReplaceTitle")}
+          description={t("actions.aiReplaceBody")}
+          confirmLabel={t("actions.ai")}
+          cancelLabel={tKeep("keep")}
+          onConfirm={() => {
+            setConfirmAi(false);
+            startAi();
+          }}
+        />
+      ) : null}
 
       {state.phase !== "input" && state.phase !== "review" ? (
         <section className="grid gap-3 rounded-lg border border-line bg-surface">

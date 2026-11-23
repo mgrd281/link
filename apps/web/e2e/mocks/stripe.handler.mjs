@@ -13,9 +13,12 @@
 //   GET    /v1/subscriptions/:id       the subscription (registered with POST /__subscriptions/:id, or a
 //                                      fresh active one renewing in 30 days)
 //   POST   /v1/subscriptions/:id       cancel_at_period_end, cancel_at ("" unsets), proration_behavior
-//   DELETE /v1/subscriptions/:id       cancels now (prorate / invoice_now in the query)
+//   DELETE /v1/subscriptions/:id       cancels now (prorate / invoice_now in the query); a second cancel is
+//                                      refused with 404 resource_missing, as Stripe does
 //   GET    /v1/invoices/:id            the invoice; `payments` only with expand[]=payments
-//   POST   /v1/refunds                 a succeeded refund for payment_intent (and amount)
+//   POST   /v1/refunds                 a succeeded refund for payment_intent (and amount); the same
+//                                      Idempotency-Key answers the same refund again
+//   POST   /__refund_failures/:pi      the next `count` refunds of that payment intent fail (JSON: { count })
 //   POST   /__subscriptions/:id        registers a subscription's state (JSON body). `billing_cycle_anchor`
 //                                      defaults to the period end: the same day of the month and time, as
 //                                      on a monthly subscription that never met a shorter month. Register
@@ -29,6 +32,10 @@ export const port = Number(process.env.MOCK_STRIPE_PORT ?? 54398);
 export const requests = [];
 
 const subscriptions = new Map();
+/** Refunds by idempotency key. */
+const refunds = new Map();
+/** How many of the next refunds of a payment intent fail (POST /__refund_failures/:pi). */
+const refundFailures = new Map();
 const invoices = new Map();
 
 const DAY = 86_400;
@@ -209,6 +216,12 @@ export async function handle(req, res) {
     json(res, 200, { count: list.length, requests: list.map(({ method: m, path: p, query, body }) => ({ method: m, path: p, query, body })) });
     return;
   }
+  const failing = /^\/__refund_failures\/([\w-]+)$/.exec(url.pathname);
+  if (failing && req.method === "POST") {
+    refundFailures.set(failing[1], Number((text ? JSON.parse(text) : {}).count ?? 1));
+    json(res, 200, { ok: true });
+    return;
+  }
   const register = /^\/__(subscriptions|invoices)\/([\w-]+)$/.exec(url.pathname);
   if (register && req.method === "POST") {
     const data = text ? JSON.parse(text) : {};
@@ -258,6 +271,13 @@ export async function handle(req, res) {
         return;
       }
     } else if (req.method === "DELETE") {
+      if (state.status === "canceled") {
+        // Stripe answers a cancel of an already canceled subscription like an unknown one.
+        json(res, 404, {
+          error: { type: "invalid_request_error", code: "resource_missing", param: "id", message: `No such subscription: '${subscriptionId}'` },
+        });
+        return;
+      }
       state.status = "canceled";
       state.canceled_at = now();
       state.cancel_at_period_end = false;
@@ -280,14 +300,24 @@ export async function handle(req, res) {
       invalid(res, "mock: payment_intent is required", "payment_intent");
       return;
     }
-    json(res, 200, {
+    const failuresLeft = refundFailures.get(body.payment_intent) ?? 0;
+    if (failuresLeft > 0) {
+      refundFailures.set(body.payment_intent, failuresLeft - 1);
+      json(res, 400, { error: { type: "invalid_request_error", code: "balance_insufficient", message: "mock: insufficient funds in the Stripe balance to refund this amount" } });
+      return;
+    }
+    // The same idempotency key answers the same refund again (Stripe keeps keys for 24 hours).
+    const key = typeof req.headers["idempotency-key"] === "string" ? req.headers["idempotency-key"] : null;
+    const refund = (key && refunds.get(key)) || {
       id: id("re"),
       object: "refund",
       status: "succeeded",
       payment_intent: body.payment_intent,
       amount: body.amount ? Number(body.amount) : null,
       currency: "eur",
-    });
+    };
+    if (key) refunds.set(key, refund);
+    json(res, 200, refund);
     return;
   }
 

@@ -5,7 +5,7 @@ import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
 import { contractDecision, type ContractDecision } from "./contract-decision";
-import { proposalDelivered } from "./proposal-delivered";
+import { proposalDelivered, revisionOffer } from "./proposal-delivered";
 import { refundIssued } from "./refund-issued";
 import { emailTranslator } from "./render";
 import { revisionReceived } from "./revision-received";
@@ -13,6 +13,8 @@ import { revisionReceived } from "./revision-received";
 const t = emailTranslator("de", de);
 const SITE = "https://linkyo.app";
 const reviseUntil = new Date("2026-12-07T17:00:00Z");
+/** When these e-mails are written: inside the 14 days. */
+const now = new Date("2026-11-23T10:00:00Z");
 
 const delivered = (overrides: Partial<Parameters<typeof proposalDelivered>[0]> = {}) =>
   proposalDelivered(
@@ -24,6 +26,7 @@ const delivered = (overrides: Partial<Parameters<typeof proposalDelivered>[0]> =
       hasKit: false,
       revisionsLeft: 1,
       reviseUntil,
+      now,
       proposalId: "11111111-2222-3333-4444-555555555555",
       site: SITE,
       ...overrides,
@@ -61,6 +64,39 @@ describe("proposal delivered", () => {
     expect(delivered({ revisionsLeft: 0 }).text).toContain("Keine Änderungsrunde mehr.");
   });
 
+  it("a late round, delivered after the 14 days, promises no rounds 'until' a day that has passed", () => {
+    // First delivery on 23 Nov, changes asked for on the last day, delivered two working days later.
+    const late = new Date("2026-12-09T16:00:00Z");
+    expect(revisionOffer({ revisionsLeft: 2, reviseUntil, now: late })).toBe("expired");
+    expect(revisionOffer({ revisionsLeft: 2, reviseUntil, now })).toBe("open");
+    expect(revisionOffer({ revisionsLeft: 0, reviseUntil, now })).toBe("none");
+    const mail = delivered({ aiAssisted: false, hasKit: true, revisionsLeft: 2, now: late });
+    for (const body of [mail.text, mail.html]) {
+      expect(body).toContain("Die 14 Tage für Änderungen sind vorbei.");
+      expect(body).not.toContain("Änderungsrunden bis");
+      expect(body).not.toContain("7. Dezember");
+      // Nothing to request any more: the e-mail does not invite to.
+      expect(body).not.toContain("frag Änderungen an");
+      expect(body).toContain("Unser Team hat deine Seite gestaltet. Schau sie dir an und übernimm sie mit einem Klick.");
+    }
+    expect(delivered({ now: late }).text).toContain("Unsere KI hat deine Seite entworfen, unser Team hat sie geprüft und verfeinert. Schau sie dir an und übernimm sie mit einem Klick.");
+    const english = proposalDelivered({ ...baseData(), locale: "en", now: late }, emailTranslator("en", en));
+    expect(english.text).toContain("The 14 days for changes are over.");
+    expect(english.text).not.toMatch(/request changes|until/);
+    const arabic = proposalDelivered({ ...baseData(), locale: "ar", now: late }, emailTranslator("ar", ar));
+    expect(arabic.text).toContain(ar.email.proposal.roundsExpired);
+    expect(arabic.text).not.toContain("اطلب تعديلات");
+  });
+
+  it("with every round used it does not invite to request changes either", () => {
+    const mail = delivered({ revisionsLeft: 0 });
+    expect(mail.text).toContain("Keine Änderungsrunde mehr.");
+    expect(mail.text).not.toContain("frag Änderungen an");
+    const arabic = proposalDelivered({ ...baseData(), locale: "ar", revisionsLeft: 0 }, emailTranslator("ar", ar));
+    expect(arabic.text).not.toMatch(/: ?0/);
+    expect(arabic.text).not.toContain("اطلب تعديلات");
+  });
+
   it("renders in English and Arabic (right to left)", () => {
     const english = proposalDelivered({ ...baseData(), locale: "en" }, emailTranslator("en", en));
     expect(english.subject).toBe("Your page proposal is here (LNK-2026-000123)");
@@ -72,7 +108,7 @@ describe("proposal delivered", () => {
 });
 
 function baseData() {
-  return { to: "mila@example.com", number: "LNK-2026-000123", aiAssisted: true, hasKit: false, revisionsLeft: 1, reviseUntil, proposalId: "p1", site: SITE };
+  return { to: "mila@example.com", number: "LNK-2026-000123", aiAssisted: true, hasKit: false, revisionsLeft: 1, reviseUntil, now, proposalId: "p1", site: SITE };
 }
 
 describe("revision received", () => {

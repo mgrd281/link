@@ -3,7 +3,7 @@
 import { Badge, Button, ConfirmDialog, Icon, Skeleton, TextField, toast } from "@linkyo/ui";
 import { AlarmClock, CircleAlert, CircleCheck, FileX2, Inbox, ShieldAlert, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { TextArea } from "@/features/app/form";
 import { clockTime, shortDate, type EmailLocale } from "@/features/email/templates/render";
@@ -11,8 +11,12 @@ import { formatEuro } from "@/features/payments/prices";
 
 import { useAdmin } from "../session";
 
+import { actionsFor, contractEnded, NOTE_REQUIRED, parseCents, refundOpen, routeAction, type ContractAction } from "./contract-rules";
+import { LoadFailed, useLoad } from "./load";
 import { ApiError, decideContract, loadContracts, type ContractRequest } from "./orders-data";
 import { slaChip } from "./sla";
+
+export { actionsFor, parseCents } from "./contract-rules";
 
 /** A deadline as a chip with words (and a tone as the second signal): queue, detail and this panel. */
 export function SlaBadge({ due, now }: { due: string; now: Date }) {
@@ -26,38 +30,12 @@ export function SlaBadge({ due, now }: { due: string; now: Date }) {
   );
 }
 
-type Action = "handled" | "acceptWithdrawal" | "rejectWithdrawal" | "endNow" | "rejectCancellation" | "resume";
-
-/** Decisions that need a reason (the route and SQL refuse them without one). */
-const NOTE_REQUIRED: ReadonlySet<Action> = new Set(["rejectWithdrawal", "endNow", "rejectCancellation", "resume"]);
-
-/** What the team can decide for this request, by case (plan §1.7). */
-export function actionsFor(item: ContractRequest): Action[] {
-  if (item.handledAt) return [];
-  if (!item.matched) return ["handled"];
-  const decisions: Action[] =
-    item.kind === "withdrawal"
-      ? item.decision === null && (item.order || item.entitlement)
-        ? ["acceptWithdrawal", "rejectWithdrawal"]
-        : []
-      : item.decision === "scheduled"
-        ? ["resume"]
-        : item.decision === null && item.cancellationKind === "extraordinary"
-          ? ["endNow", "rejectCancellation"]
-          : [];
-  return item.suspect ? [...decisions, "handled"] : decisions.length > 0 ? decisions : ["handled"];
-}
-
-/** Euros typed by the team ("24,99" or "24.99") in cents; null when it is not an amount. */
-export function parseCents(text: string): number | null {
-  const clean = text.trim().replace(/\s|€/g, "").replace(",", ".");
-  if (!/^\d+(\.\d{1,2})?$/.test(clean)) return null;
-  return Math.round(Number(clean) * 100);
-}
-
 const centsText = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
 
-function Decide({ item, action, onDone, onClose }: { item: ContractRequest; action: Action; onDone: () => void; onClose: () => void }) {
+/** Decisions that move money or end a contract at once. */
+const WEIGHTY: ReadonlySet<ContractAction> = new Set(["acceptWithdrawal", "finishWithdrawal", "endNow"]);
+
+function Decide({ item, action, onDone, onClose }: { item: ContractRequest; action: ContractAction; onDone: () => void; onClose: () => void }) {
   const t = useTranslations("admin.orders");
   const tKeep = useTranslations("admin.customer.confirm");
   const tErrors = useTranslations("legal.errors");
@@ -65,22 +43,28 @@ function Decide({ item, action, onDone, onClose }: { item: ContractRequest; acti
   const [note, setNote] = useState("");
   const [amount, setAmount] = useState(orderAmount !== null ? centsText(orderAmount) : "");
   const [busy, setBusy] = useState(false);
-  const cents = orderAmount !== null && action === "acceptWithdrawal" ? parseCents(amount) : null;
+  // The amount is set once, with the decision; finishing a refund sends the amount on record.
+  const asksAmount = orderAmount !== null && action === "acceptWithdrawal";
+  const cents = asksAmount ? parseCents(amount) : null;
   const amountInvalid = orderAmount !== null && action === "acceptWithdrawal" && (cents === null || cents > orderAmount);
   const needsNote = NOTE_REQUIRED.has(action);
   const noteMissing = needsNote && note.trim() === "";
+  const hint = action === "finishWithdrawal" ? t("actions.finishWithdrawalHint") : action === "schedule" ? t("actions.scheduleHint") : null;
 
   const confirm = async () => {
     setBusy(true);
     try {
-      await decideContract(item.kind, item.id, { action, ...(note.trim() ? { note: note.trim() } : {}), ...(cents !== null ? { refundCents: cents } : {}) });
-      toast({ title: action === "acceptWithdrawal" ? t("refunded") : t("contracts.handled"), tone: "success" });
-      onDone();
+      const answer = await decideContract(item.kind, item.id, { action: routeAction(action), ...(note.trim() ? { note: note.trim() } : {}), ...(cents !== null ? { refundCents: cents } : {}) });
+      if (answer.mailed === false) toast({ title: t("mailFailed"), tone: "danger" });
+      else toast({ title: WEIGHTY.has(action) && item.kind === "withdrawal" ? t("refunded") : t("contracts.handled"), tone: "success" });
     } catch (error) {
-      toast({ title: error instanceof ApiError && error.code === "noteRequired" ? t("actions.noteRequired") : tErrors("server"), tone: "danger" });
-      onClose();
+      const code = error instanceof ApiError ? error.code : "server";
+      toast({ title: code === "noteRequired" ? t("actions.noteRequired") : code === "locked" ? t("changed") : tErrors("server"), tone: "danger" });
     } finally {
       setBusy(false);
+      // Also after a failure: a decision may be on record although its Stripe step failed, and the
+      // list must show what can be done now (finish the refund), not what could be done before.
+      onDone();
     }
   };
 
@@ -92,16 +76,21 @@ function Decide({ item, action, onDone, onClose }: { item: ContractRequest; acti
         if (!open) onClose();
       }}
       title={t(`actions.${action}`)}
-      description={<bdi dir="ltr">{subject}</bdi>}
+      description={
+        <span className="grid gap-2">
+          <bdi dir="ltr">{subject}</bdi>
+          {hint ? <span>{hint}</span> : null}
+        </span>
+      }
       confirmLabel={t(`actions.${action}`)}
       cancelLabel={tKeep("keep")}
-      destructive={action === "acceptWithdrawal" || action === "endNow"}
+      destructive={WEIGHTY.has(action)}
       loading={busy}
       confirmDisabled={noteMissing || amountInvalid}
       initialFocus="first-field"
       onConfirm={() => void confirm()}
     >
-      {orderAmount !== null && action === "acceptWithdrawal" ? (
+      {asksAmount ? (
         <TextField
           label={t("actions.refundAmount")}
           hint={t("actions.refundAmountHint")}
@@ -131,10 +120,12 @@ function Item({ item, now, onChanged }: { item: ContractRequest; now: Date; onCh
   const tStatus = useTranslations("orders.status");
   const locale = useLocale() as EmailLocale;
   const { can } = useAdmin();
-  const [pending, setPending] = useState<Action | null>(null);
+  const [pending, setPending] = useState<ContractAction | null>(null);
   const received = new Date(item.receivedAt);
   const actions = can("billing.manage") ? actionsFor(item) : [];
   const contract = item.kind === "withdrawal" ? (item.order ? item.order.number : item.entitlement ? "Linkyo Pro" : item.contract) : "Linkyo Pro";
+  const open = refundOpen(item);
+  const ended = item.kind === "withdrawal" && !item.handledAt && item.decision === null && item.matched && contractEnded(item);
 
   return (
     <li data-contract={item.kind} data-contract-id={item.id} className="grid gap-3 rounded-lg border border-line bg-surface p-4">
@@ -152,6 +143,12 @@ function Item({ item, now, onChanged }: { item: ContractRequest; now: Date; onCh
             {t("contracts.handled")}
           </Badge>
         ) : null}
+        {open ? (
+          <Badge size="sm" tone="danger" data-refund-open>
+            <Icon icon={CircleAlert} size="sm" />
+            {t("contracts.refundOpen")}
+          </Badge>
+        ) : null}
         {item.kind === "withdrawal" && item.order ? <Badge size="sm">{tStatus(item.order.status)}</Badge> : null}
       </div>
       <p className="text-small text-fg-secondary">{t("contracts.received", { date: shortDate(received, locale), time: clockTime(received, locale) })}</p>
@@ -161,7 +158,12 @@ function Item({ item, now, onChanged }: { item: ContractRequest; now: Date; onCh
           {t("contracts.suspect")}
         </p>
       ) : null}
-      {item.kind === "withdrawal" && !item.handledAt && item.matched ? (
+      {ended ? (
+        <p data-contract-ended className="text-small text-fg-secondary">
+          {t("contracts.contractEnded")}
+        </p>
+      ) : item.kind === "withdrawal" && !item.handledAt && item.matched ? (
+        // Shown until the refund is on record: an accepted withdrawal still has its 14 days to meet.
         <p className="flex flex-wrap items-center gap-2 text-small">
           <span data-refund-due>{t("contracts.refundDue", { date: shortDate(new Date(item.refundDueAt), locale) })}</span>
           <SlaBadge due={item.refundDueAt} now={now} />
@@ -171,7 +173,9 @@ function Item({ item, now, onChanged }: { item: ContractRequest; now: Date; onCh
         <dt className="text-fg-secondary">{t("cols.number")}</dt>
         <dd className="min-w-0 font-medium">
           <bdi>{contract}</bdi>
-          {item.kind === "withdrawal" && item.order ? <span className="text-fg-secondary"> · {formatEuro(item.order.amountCents, locale)}</span> : null}
+          {item.kind === "withdrawal" && item.order ? (
+            <span className="text-fg-secondary"> · {formatEuro(open && item.refundCents !== null ? item.refundCents : item.order.amountCents, locale)}</span>
+          ) : null}
         </dd>
         <dt className="text-fg-secondary">{t("cols.customer")}</dt>
         <dd className="flex min-w-0 items-center gap-1">
@@ -204,7 +208,8 @@ function Item({ item, now, onChanged }: { item: ContractRequest; now: Date; onCh
             <Button
               key={action}
               size="sm"
-              variant={action === "acceptWithdrawal" || action === "endNow" ? "primary" : action === "handled" ? "ghost" : "secondary"}
+              data-contract-action={action}
+              variant={WEIGHTY.has(action) || action === "schedule" ? "primary" : action === "handled" ? "ghost" : "secondary"}
               onClick={() => setPending(action)}
             >
               {t(`actions.${action}`)}
@@ -230,32 +235,23 @@ function Item({ item, now, onChanged }: { item: ContractRequest; now: Date; onCh
 /**
  * Withdrawals and cancellations (the second tab of the orders screen): unhandled first, each with
  * when it arrived, whether it matched an account, a held receipt, and for withdrawals the 14-day
- * refund deadline as an SLA chip. Decisions open a confirm dialog; most need a reason.
+ * refund deadline as an SLA chip. Decisions open a confirm dialog; most need a reason. A list that
+ * could not be loaded says so (it is never shown as "no open requests").
  */
 export function ContractsPanel({ now }: { now: Date }) {
   const t = useTranslations("admin.orders.contracts");
-  const [items, setItems] = useState<ContractRequest[] | null>(null);
   // Each decision reads the list again.
-  const [version, setVersion] = useState(0);
-  useEffect(() => {
-    let cancelled = false;
-    void loadContracts()
-      .catch(() => [])
-      .then((list) => {
-        if (!cancelled) setItems(list);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [version]);
+  const { state, reload, refresh } = useLoad(loadContracts, "contracts");
 
-  if (items === null) {
+  if (state.status === "loading") {
     return (
       <div className="grid gap-3" aria-hidden>
         <Skeleton className="h-32 rounded-lg" />
       </div>
     );
   }
+  if (state.status === "failed") return <LoadFailed onRetry={reload} />;
+  const items = state.data;
   if (items.length === 0) {
     return (
       <p className="flex items-center gap-2 rounded-lg border border-line bg-surface p-4 text-small text-fg-secondary">
@@ -267,7 +263,7 @@ export function ContractsPanel({ now }: { now: Date }) {
   return (
     <ul data-contracts className="grid gap-3">
       {items.map((item) => (
-        <Item key={`${item.kind}:${item.id}`} item={item} now={now} onChanged={() => setVersion((current) => current + 1)} />
+        <Item key={`${item.kind}:${item.id}`} item={item} now={now} onChanged={() => void refresh()} />
       ))}
     </ul>
   );

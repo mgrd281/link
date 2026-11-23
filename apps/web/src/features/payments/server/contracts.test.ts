@@ -15,6 +15,8 @@ import {
   submitCancellation,
   submitWithdrawal,
   withdrawalFormSchema,
+  withdrawalRefundKey,
+  withdrawalStep,
   type CancellationForm,
   type CancellationRecord,
   type ContractsDb,
@@ -65,7 +67,7 @@ function setup(
     },
     invoicePaymentIntent: () => Promise.resolve(null),
     refund: (input) => {
-      calls.stripe.push(`refund ${input.paymentIntentId} ${String(input.amountCents ?? "full")}`);
+      calls.stripe.push(`refund ${input.paymentIntentId} ${String(input.amountCents ?? "full")}${input.key ? ` key=${input.key}` : ""}`);
       return Promise.resolve({ refundId: "re_1", status: "succeeded" });
     },
     cancelAtPeriodEnd: (id) => {
@@ -376,5 +378,74 @@ describe("team decisions", () => {
       { id: "c-2", decision: "resumed", effective: null },
       { id: "c-3", decision: "rejected", effective: null },
     ]);
+  });
+});
+
+describe("team decisions: what is on record decides what happens", () => {
+  const OPEN = { orderStatus: "queued", entitlementStatus: null };
+
+  it("an undecided withdrawal is decided; an accepted one without its refund on record is finished", () => {
+    expect(withdrawalStep({ decision: null, handledAt: null }, OPEN)).toBe("decide");
+    // Accepted, but Stripe refused the refund: the request is still open and can be carried out again.
+    expect(withdrawalStep({ decision: "accepted", handledAt: null }, OPEN)).toBe("finish");
+    expect(withdrawalStep({ decision: "accepted", handledAt: null }, { orderStatus: null, entitlementStatus: "canceled" })).toBe("finish");
+  });
+
+  it("nothing is refunded for a contract that already ended, or for a finished request", () => {
+    // A second declaration for an order whose withdrawal was already paid out.
+    expect(withdrawalStep({ decision: null, handledAt: null }, { orderStatus: "withdrawn", entitlementStatus: null })).toBe("settled");
+    expect(withdrawalStep({ decision: null, handledAt: null }, { orderStatus: "refunded", entitlementStatus: null })).toBe("settled");
+    expect(withdrawalStep({ decision: null, handledAt: null }, { orderStatus: null, entitlementStatus: "refunded" })).toBe("settled");
+    // A stale panel accepting the same request again, a day later.
+    expect(withdrawalStep({ decision: "accepted", handledAt: "2026-11-24T10:00:00Z" }, { orderStatus: "withdrawn", entitlementStatus: null })).toBe("settled");
+    expect(withdrawalStep({ decision: "accepted", handledAt: null }, { orderStatus: "withdrawn", entitlementStatus: null })).toBe("settled");
+    expect(withdrawalStep({ decision: "rejected", handledAt: "2026-11-24T10:00:00Z" }, OPEN)).toBe("settled");
+  });
+
+  it("a withdrawal's refund carries the withdrawal's own key, whatever the amount", async () => {
+    const { calls, deps } = setup();
+    const key = withdrawalRefundKey("9d2c7a54-0000-4000-8000-000000000001");
+    expect(key).toBe("contract-9d2c7a54-0000-4000-8000-000000000001-refund");
+    await resolveWithdrawal({ kind: "order", paymentIntent: "pi_1", refundCents: 3900, key }, deps);
+    await resolveWithdrawal({ kind: "pro", subscription: "sub_1", paymentIntent: "pi_inv", key }, deps);
+    expect(calls.stripe.filter((line) => line.startsWith("refund"))).toEqual([`refund pi_1 3900 key=${key}`, `refund pi_inv full key=${key}`]);
+  });
+
+  it("no refund from the order while a withdrawal waits", () => {
+    expect(orderRefundable({ status: "delivered", refundKind: null, withdrawalPending: true })).toBe(false);
+    expect(orderRefundable({ status: "queued", refundKind: null, withdrawalPending: true })).toBe(false);
+    expect(orderRefundable({ status: "delivered", refundKind: null, withdrawalPending: false })).toBe(true);
+  });
+
+  it("carries out an ordinary cancellation that was held: at the period end, confirmed as scheduled", async () => {
+    const { calls, deps } = setup();
+    const now = () => new Date("2026-11-25T10:00:00Z");
+    const outcome = await resolveCancellation("schedule", { id: "c-9", subscription: "sub_1", wantedDate: null, periodEnd: PERIOD_END }, { ...deps, now });
+    expect(calls.stripe).toEqual(["cancelAtPeriodEnd sub_1"]);
+    expect(calls.confirmed).toEqual([{ id: "c-9", decision: "scheduled", effective: PERIOD_END }]);
+    expect(outcome).toEqual({ endsAt: new Date(PERIOD_END), nextChargeAt: null });
+  });
+
+  it("for a later wanted date it ends with the period that contains the date", async () => {
+    const { calls, deps } = setup();
+    const now = () => new Date("2026-11-25T10:00:00Z");
+    const wanted = "2027-02-10";
+    const expected = periodEndContaining(new Date(PERIOD_END), wanted, new Date(PERIOD_END));
+    const outcome = await resolveCancellation("schedule", { id: "c-9", subscription: "sub_1", wantedDate: wanted, periodEnd: PERIOD_END }, { ...deps, now });
+    expect(calls.stripe.at(-1)).toBe(`cancelAt sub_1 ${expected.toISOString()}`);
+    expect(outcome.endsAt).toEqual(expected);
+    expect(calls.confirmed.at(-1)).toEqual({ id: "c-9", decision: "scheduled", effective: expected.toISOString() });
+  });
+
+  it("when the stored period has passed meanwhile, it asks Stripe for the current one", async () => {
+    const { calls, deps } = setup();
+    const now = () => new Date("2027-02-03T10:00:00Z");
+    await resolveCancellation("schedule", { id: "c-9", subscription: "sub_1", wantedDate: null, periodEnd: PERIOD_END }, { ...deps, now });
+    expect(calls.stripe).toEqual(["retrieve sub_1", "cancelAtPeriodEnd sub_1"]);
+  });
+
+  it("without a subscription there is nothing to schedule", async () => {
+    const { deps } = setup();
+    await expect(resolveCancellation("schedule", { id: "c-9", subscription: null }, deps)).rejects.toThrow("linkyo:notFound");
   });
 });

@@ -13,6 +13,7 @@ import { canReadClipboard, readText } from "@/lib/clipboard";
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { addGroups, blankBlock, blockFromLink, insertAt, newBlockId } from "./blocks";
 import { ImageError, pickFiles, prepareAndStore } from "./images";
+import { useMediaOwner } from "./media-owner";
 import { PreviewButton } from "./preview";
 import { useShellChrome } from "./screen";
 import { Sheet } from "./sheet";
@@ -112,12 +113,13 @@ export function AddSheet() {
     edit({ mode: "create", block: blankBlock(type, { artist: doc.profile.displayName, newsletter: tFields("newsletterDefault") }), index, inAddSheet: true });
   };
 
+  const owner = useMediaOwner();
   const upload = async () => {
     const files = await pickFiles({ multiple: true });
     if (files.length === 0) return;
     setUploading(true);
     try {
-      const images = await Promise.all(files.slice(0, 24).map((file) => prepareAndStore(file, "photo")));
+      const images = await Promise.all(files.slice(0, 24).map((file) => prepareAndStore(file, "photo", owner)));
       const base = { visible: true, highlight: false };
       const first = images[0];
       const block: Block | null =

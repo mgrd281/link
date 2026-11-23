@@ -66,14 +66,15 @@ export async function prepareImage(file: File, kind: ImageKind): Promise<Prepare
 
 /**
  * Resizes a picked picture and keeps it where the account keeps pictures: Storage for real accounts,
- * the page itself in the demo. A failed upload is an `ImageError("upload")`.
+ * the page itself in the demo. A failed upload is an `ImageError("upload")`. `owner` names another
+ * account's media folder (`useMediaOwner`: the team's proposal editor stores under the customer).
  */
-export async function prepareAndStore(file: File, kind: ImageKind): Promise<PreparedImage> {
+export async function prepareAndStore(file: File, kind: ImageKind, owner?: string | null): Promise<PreparedImage> {
   const prepared = await prepareImage(file, kind);
   try {
     // Loaded on first use: the website's playground resizes pictures too, without any account code.
-    const { storePreparedImage } = await import("./media-upload");
-    return await storePreparedImage(prepared);
+    const { mediaDepsFor, storePreparedImage } = await import("./media-upload");
+    return await (owner ? storePreparedImage(prepared, mediaDepsFor(owner)) : storePreparedImage(prepared));
   } catch {
     throw new ImageError("upload");
   }

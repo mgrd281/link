@@ -10,6 +10,7 @@ import { useId, useState, type ReactNode, type TextareaHTMLAttributes } from "re
 import { remoteImageProps, resolveMedia } from "@/features/directions/shared/media";
 
 import { ImageError, pickFiles, prepareAndStore, type ImageKind } from "./images";
+import { useMediaOwner } from "./media-owner";
 
 import { haptic } from "@/lib/haptics";
 
@@ -245,12 +246,13 @@ export function ImageInput({
   // A picture that could not be used (wrong type, too big): said under the field, where it was chosen.
   const [problem, setProblem] = useState<ImageError["reason"] | "decode" | null>(null);
   const present = hasImage(image);
+  const owner = useMediaOwner();
   const choose = async () => {
     const [file] = await pickFiles();
     if (!file) return;
     setBusy(true);
     try {
-      const prepared = await prepareAndStore(file, kind);
+      const prepared = await prepareAndStore(file, kind, owner);
       setProblem(null);
       onImage({ src: prepared.src, alt: image?.alt ?? "", tone: prepared.tone });
     } catch (reason) {

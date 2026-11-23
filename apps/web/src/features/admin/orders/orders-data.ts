@@ -6,6 +6,7 @@ import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { accessToken } from "@/lib/supabase/access-token";
 import { browserSupabase } from "@/lib/supabase/browser";
 import type { Json } from "@/lib/supabase/database.types";
+import { signPaths, type PrivateBucket } from "@/lib/supabase/signed";
 
 /**
  * The team console's orders, proposals and contract requests on real data: reads go through the
@@ -101,6 +102,9 @@ export type ContractRequest =
       matched: boolean;
       suspect: boolean;
       decision: "accepted" | "rejected" | null;
+      /** What the team set to refund with its decision (an order's withdrawal). */
+      refundCents: number | null;
+      /** Set once nothing is left to do: for an accepted withdrawal, when its refund is on record. */
       handledAt: string | null;
       note: string | null;
       refundDueAt: string;
@@ -263,6 +267,7 @@ export function readContracts(value: Json | null): ContractRequest[] {
           matched: row.matched === true,
           suspect: row.suspect === true,
           decision: row.decision === "accepted" || row.decision === "rejected" ? row.decision : null,
+          refundCents: typeof row.refundCents === "number" ? row.refundCents : null,
           handledAt: str(row.handledAt),
           note: str(row.note),
           refundDueAt: str(row.refundDueAt) ?? "",
@@ -354,11 +359,15 @@ export async function loadAiStatus(): Promise<AiStatus> {
 }
 
 /** Signed addresses (10 minutes) of private pictures: briefing photos, story pictures. */
-export async function signedUrls(bucket: "briefing" | "deliverables", paths: readonly string[]): Promise<Map<string, string>> {
-  if (paths.length === 0) return new Map();
-  const { data, error } = await browserSupabase().storage.from(bucket).createSignedUrls([...paths], 600);
-  if (error) return new Map();
-  return new Map(data.flatMap((entry) => (entry.path && entry.signedUrl ? [[entry.path, entry.signedUrl] as const] : [])));
+export const signedUrls = (bucket: PrivateBucket, paths: readonly string[]): Promise<Map<string, string>> => signPaths(bucket, paths);
+
+/**
+ * Deletes a story picture that was taken out of a draft (the team's own right on the bucket). The
+ * caller checks first that no other proposal of the order still lists it (`storyRemovable`).
+ */
+export async function removeStoryFile(path: string): Promise<void> {
+  const { error } = await browserSupabase().storage.from("deliverables").remove([path]);
+  if (error) throw new Error(error.message);
 }
 
 // ─── Actions ────────────────────────────────────────────────────────────────────────────────

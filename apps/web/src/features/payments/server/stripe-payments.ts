@@ -159,15 +159,16 @@ export class StripePayments implements Payments {
   }
 
   /**
-   * One refund per payment intent and amount: the idempotency key is derived from both, so a retried
-   * request (a double click, a route that runs again after a failure) never refunds twice. Stripe
-   * keeps keys for 24 hours.
+   * One refund per decision: the idempotency key is the caller's (`key`, e.g. one per withdrawal), or
+   * derived from the payment intent and the amount, so a retried request (a double click, a route that
+   * runs again after a failure) never refunds twice. Stripe keeps keys for 24 hours; after that only
+   * our own records stop a repeat (the routes check them before they call this).
    */
-  async refund(input: { paymentIntentId: string; amountCents?: number }): Promise<{ refundId: string; status: string }> {
+  async refund(input: { paymentIntentId: string; amountCents?: number; key?: string }): Promise<{ refundId: string; status: string }> {
     const amount = input.amountCents === undefined ? "full" : String(input.amountCents);
     const refund = await this.stripe.refunds.create(
       { payment_intent: input.paymentIntentId, ...(input.amountCents === undefined ? {} : { amount: input.amountCents }) },
-      { idempotencyKey: `linkyo-refund-${input.paymentIntentId}-${amount}` },
+      { idempotencyKey: input.key ?? `linkyo-refund-${input.paymentIntentId}-${amount}` },
     );
     return { refundId: refund.id, status: refund.status ?? "pending" };
   }
@@ -187,7 +188,14 @@ export class StripePayments implements Payments {
     return subscriptionState(await this.stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: false, cancel_at: "" }));
   }
 
+  /**
+   * Ends the subscription now. Asked again when a later step of a team decision failed (or after
+   * Stripe ended it itself), it answers the ended subscription: Stripe refuses to cancel a canceled
+   * subscription ("No such subscription"), and that refusal would block every retry for good.
+   */
   async cancelNow(subscriptionId: string): Promise<SubscriptionState> {
+    const current = await this.stripe.subscriptions.retrieve(subscriptionId);
+    if (current.status === "canceled") return subscriptionState(current);
     return subscriptionState(await this.stripe.subscriptions.cancel(subscriptionId, { prorate: false, invoice_now: false }));
   }
 

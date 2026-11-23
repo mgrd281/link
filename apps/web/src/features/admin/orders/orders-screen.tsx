@@ -13,6 +13,7 @@ import { useAdmin } from "../session";
 
 import { AiSwitch } from "./ai-switch";
 import { ContractsPanel, SlaBadge } from "./contracts-panel";
+import { LoadFailed, useLoad } from "./load";
 import { loadQueue, type OrderPackage, type OrderScope, type OrderStatus, type QueueOrder } from "./orders-data";
 
 const SCOPES: readonly OrderScope[] = ["open", "mine", "delivered", "all"];
@@ -81,20 +82,9 @@ function Customer({ order }: { order: QueueOrder }) {
 
 function Queue({ scope, now }: { scope: OrderScope; now: Date }) {
   const t = useTranslations("admin.orders");
-  const [orders, setOrders] = useState<QueueOrder[] | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    void loadQueue(scope)
-      .catch(() => [])
-      .then((list) => {
-        if (!cancelled) setOrders(list);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [scope]);
+  const { state, reload } = useLoad(() => loadQueue(scope), scope);
 
-  if (orders === null) {
+  if (state.status === "loading") {
     return (
       <div className="grid gap-3" aria-hidden>
         <Skeleton className="h-20 rounded-lg" />
@@ -102,6 +92,9 @@ function Queue({ scope, now }: { scope: OrderScope; now: Date }) {
       </div>
     );
   }
+  // Not "no orders in this view": orders near their date may be waiting behind a failed request.
+  if (state.status === "failed") return <LoadFailed onRetry={reload} />;
+  const orders = state.data;
   if (orders.length === 0) {
     return (
       <p className="flex items-center gap-2 rounded-lg border border-line bg-surface p-4 text-small text-fg-secondary">

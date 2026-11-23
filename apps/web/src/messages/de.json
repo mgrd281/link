@@ -2511,8 +2511,15 @@
         "plan": "Posting-Plan",
         "week": "Woche {week}",
         "stories": "Story-Bilder",
-        "download": "Story-Bild {n} herunterladen"
-      }
+        "download": "Story-Bild {n} herunterladen",
+        "downloadFailed": "Der Download hat nicht geklappt. Versuch es noch mal."
+      },
+      "reviseBusy": "Wir arbeiten an deinen Änderungen.",
+      "reviseBusyUntil": "Wir arbeiten an deinen Änderungen und liefern sie bis {date}, {time} Uhr.",
+      "revisePaused": "Dein Widerruf wird gerade geprüft. Bis dahin ruht der Auftrag.",
+      "reviseSuperseded": "Es gibt einen neueren Vorschlag. Änderungen fragst du dort an.",
+      "ended": "Dieser Auftrag ist beendet. Der Vorschlag lässt sich nicht mehr übernehmen oder ändern.",
+      "reviseRefused": "Das geht gerade nicht. Wir haben den Stand neu geladen."
     }
   },
   "preview": {
@@ -3013,7 +3020,9 @@
         "cancellation_resumed": "{actor} hat die Kündigung zu {target} zurückgenommen",
         "cancellation_handled": "{actor} hat eine Kündigung als erledigt markiert",
         "ai_enabled": "{actor} hat die KI-Funktionen umgeschaltet",
-        "ai_disabled": "Die KI-Funktionen wurden automatisch abgeschaltet"
+        "ai_disabled": "Die KI-Funktionen wurden automatisch abgeschaltet",
+        "order_refund": "{actor} hat für {target} eine Erstattung angewiesen",
+        "cancellation_scheduled": "{actor} hat die Kündigung zu {target} ausgeführt"
       }
     },
     "preview": {
@@ -3456,7 +3465,14 @@
         "rejectCancellation": "Kündigung ablehnen",
         "note": "Begründung oder Notiz",
         "noteRequired": "Bitte gib eine Begründung an.",
-        "resumeNote": "Anfrage des Kontos, aus dessen E-Mail-Adresse zitiert"
+        "resumeNote": "Anfrage des Kontos, aus dessen E-Mail-Adresse zitiert",
+        "finishWithdrawal": "Erstattung abschließen",
+        "finishWithdrawalHint": "Der Widerruf ist angenommen, die Erstattung ging aber noch nicht durch. Wir senden sie noch einmal an Stripe. Doppelt erstattet wird nichts.",
+        "schedule": "Kündigung ausführen",
+        "scheduleHint": "Pro endet zum Ende des bezahlten Zeitraums oder zum gewünschten späteren Datum. Das Konto bekommt die Bestätigung mit dem Enddatum.",
+        "aiReplaceTitle": "Gespeicherten Entwurf ersetzen?",
+        "aiReplaceBody": "Für diese Runde gibt es schon einen Entwurf. Ein neuer KI-Entwurf ersetzt seine Seite und sein Design. Das lässt sich nicht rückgängig machen.",
+        "refundLocked": "Für diesen Auftrag wartet ein Widerruf. Die Erstattung entscheidest du unter „Widerrufe & Kündigungen“."
       },
       "editor": {
         "title": "Vorschlag für {customer}",
@@ -3483,7 +3499,8 @@
         "withdrawal_accepted": "Widerruf angenommen",
         "withdrawal_rejected": "Widerruf abgelehnt",
         "completed": "Abgeschlossen",
-        "note": "Notiz"
+        "note": "Notiz",
+        "refund_requested": "Erstattung angewiesen"
       },
       "contracts": {
         "withdrawal": "Widerruf",
@@ -3494,7 +3511,9 @@
         "received": "Eingegangen am {date} um {time}",
         "suspect": "Ohne E-Mail-Bestätigung (viele Anfragen): bitte prüfen",
         "refundDue": "Erstattung fällig bis {date}",
-        "empty": "Keine offenen Anfragen."
+        "empty": "Keine offenen Anfragen.",
+        "refundOpen": "Erstattung offen",
+        "contractEnded": "Der Vertrag ist schon beendet oder erstattet. Hier ist nichts mehr zu entscheiden."
       },
       "kit": {
         "title": "Marketing-Paket",
@@ -3510,7 +3529,10 @@
       "ai": {
         "label": "KI-Entwürfe",
         "today": "Heute: {runs} Läufe · {spent}"
-      }
+      },
+      "deliveredNoMail": "Vorschlag übergeben, aber die E-Mail ging nicht raus. Bitte benachrichtige das Konto selbst.",
+      "mailFailed": "Erledigt, aber die E-Mail ging nicht raus. Bitte benachrichtige das Konto selbst.",
+      "changed": "Das wurde inzwischen schon entschieden. Die Liste ist jetzt aktuell."
     }
   },
   "examples": {
@@ -3982,7 +4004,10 @@
       "bodyAi": "Unsere KI hat deine Seite entworfen, unser Team hat sie geprüft und verfeinert. Schau sie dir an, übernimm sie mit einem Klick oder frag Änderungen an.",
       "rounds": "{count, plural, =0 {Keine Änderungsrunde mehr.} one {Noch 1 Änderungsrunde bis {date}.} other {Noch # Änderungsrunden bis {date}.}}",
       "kit": "Dein Marketing-Paket (zwei Bio-Texte, Posting-Plan für 4 Wochen, 3 Story-Bilder) findest du beim Vorschlag.",
-      "button": "Vorschlag ansehen"
+      "button": "Vorschlag ansehen",
+      "bodyTeamFinal": "Unser Team hat deine Seite gestaltet. Schau sie dir an und übernimm sie mit einem Klick.",
+      "bodyAiFinal": "Unsere KI hat deine Seite entworfen, unser Team hat sie geprüft und verfeinert. Schau sie dir an und übernimm sie mit einem Klick.",
+      "roundsExpired": "Die 14 Tage für Änderungen sind vorbei."
     },
     "revision": {
       "subject": "Wir haben deine Änderungswünsche ({number})",

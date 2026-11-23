@@ -31,13 +31,14 @@ export interface Payments {
   retrieveSubscription(subscriptionId: string): Promise<SubscriptionState>;
   /** From the invoice's payments (an invoice has no top-level payment_intent since basil). */
   invoicePaymentIntent(invoiceId: string): Promise<string | null>;
-  refund(input: { paymentIntentId: string; amountCents?: number }): Promise<{ refundId: string; status: string }>;
+  /** `key`: the idempotency key of this decision (one per withdrawal); without it, one per payment and amount. */
+  refund(input: { paymentIntentId: string; amountCents?: number; key?: string }): Promise<{ refundId: string; status: string }>;
   cancelAtPeriodEnd(subscriptionId: string): Promise<SubscriptionState>;
   /** Stripe cancel_at, proration_behavior "none". */
   cancelAt(subscriptionId: string, at: Date): Promise<SubscriptionState>;
   /** Clears cancel_at_period_end and cancel_at. */
   resume(subscriptionId: string): Promise<SubscriptionState>;
-  /** subscriptions.cancel, no proration, no invoice_now. */
+  /** subscriptions.cancel, no proration, no invoice_now; an already ended subscription is answered as it is. */
   cancelNow(subscriptionId: string): Promise<SubscriptionState>;
   /** Throws WebhookSignatureError when the signature does not match the raw body. */
   verifyWebhook(rawBody: string, signature: string | null): PaymentsEvent;

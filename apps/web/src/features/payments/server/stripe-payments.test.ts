@@ -153,7 +153,36 @@ describe("subscriptions", () => {
   });
 });
 
+describe("ending a subscription again", () => {
+  it("answers the ended subscription instead of Stripe's refusal (a retry after a later step failed)", async () => {
+    await register("subscriptions", "sub_twice", { status: "active" });
+    expect((await payments.cancelNow("sub_twice")).status).toBe("canceled");
+    // Stripe answers a second cancel with "No such subscription": the refund that failed after the
+    // first attempt could then never be retried.
+    const again = await payments.cancelNow("sub_twice");
+    expect(again.status).toBe("canceled");
+    expect(recorded().filter((entry) => entry.method === "DELETE" && entry.path === "/v1/subscriptions/sub_twice")).toHaveLength(1);
+  });
+
+  it("also when Stripe ended it itself before the team's decision", async () => {
+    await register("subscriptions", "sub_gone", { status: "canceled" });
+    expect((await payments.cancelNow("sub_gone")).status).toBe("canceled");
+    expect(recorded().some((entry) => entry.method === "DELETE")).toBe(false);
+  });
+});
+
 describe("invoices and refunds", () => {
+  it("a decision's own key makes one refund of it, whatever amount a second request names", async () => {
+    const first = await payments.refund({ paymentIntentId: "pi_k", amountCents: 3900, key: "contract-w1-refund" });
+    const again = await payments.refund({ paymentIntentId: "pi_k", amountCents: 3900, key: "contract-w1-refund" });
+    expect(again.refundId).toBe(first.refundId);
+    const headers = (requests as { path: string; headers: Record<string, string> }[]).filter((entry) => entry.path === "/v1/refunds").map((entry) => entry.headers["idempotency-key"]);
+    expect(headers).toEqual(["contract-w1-refund", "contract-w1-refund"]);
+    // Without a key of its own, the key still comes from the payment and the amount.
+    await payments.refund({ paymentIntentId: "pi_k2", amountCents: 100 });
+    expect((requests as { headers: Record<string, string> }[]).at(-1)?.headers["idempotency-key"]).toBe("linkyo-refund-pi_k2-100");
+  });
+
   it("reads an invoice's payment intent from its payments", async () => {
     await register("invoices", "in_unit", { subscription: "sub_unit", profileId: "p-3", paymentIntent: "pi_from_payments", amount: 800 });
     expect(await payments.invoicePaymentIntent("in_unit")).toBe("pi_from_payments");

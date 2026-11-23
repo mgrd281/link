@@ -13,10 +13,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LOCALES: readonly EmailLocale[] = ["de", "en", "ar"];
 
 /**
- * The voluntary money-back (or any full refund the team decides): `admin_order_refund_target` as the
- * team member (SQL checks `billing.manage`), the refund at Stripe (idempotent: the key is derived
- * from the payment and the amount, so a double click never refunds twice), `record_refund` with kind
- * `voluntary`, then the "refund issued" e-mail.
+ * The voluntary money-back (or any full refund the team decides): `admin_refund_order` as the team
+ * member (SQL checks `billing.manage`, writes who decided it into the activity log and the order's
+ * timeline, and refuses while a withdrawal waits: that refund is decided in the contracts tab and
+ * would be booked here as the once-per-account money-back), the refund at Stripe (idempotent: the
+ * key is derived from the payment and the amount, so a double click never refunds twice),
+ * `record_refund` with kind `voluntary`, then the "refund issued" e-mail.
  *
  * Stripe's `charge.refunded` may reach the webhook before or after the record here; either way the
  * order ends as `voluntary` (`record_refund` lets this kind replace the webhook's "goodwill"). When
@@ -31,10 +33,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   if (!UUID.test(id)) return json({ ok: false, error: "notFound" }, 404);
 
-  const target = await signedIn.db.rpc("admin_order_refund_target", { target: id });
+  // The decision, recorded as the member before any money moves.
+  const target = await signedIn.db.rpc("admin_refund_order", { target: id });
   if (target.error) {
     if (target.error.message.includes("linkyo:forbidden")) return json({ ok: false, error: "forbidden" }, 403);
     if (target.error.message.includes("linkyo:notFound")) return json({ ok: false, error: "notFound" }, 404);
+    if (target.error.message.includes("linkyo:locked")) return json({ ok: false, error: "locked" }, 409);
     return json({ ok: false, error: "server" }, 500);
   }
   const refundTarget = (target.data ?? {}) as Record<string, unknown>;
@@ -43,10 +47,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!paymentIntent || amountCents <= 0) return json({ ok: false, error: "noPayment" }, 409);
 
   const db = serviceSupabase();
-  const order = await db.from("orders").select("number, locale, status, refund_kind, customer_email, customer_name, profile_id").eq("id", id).maybeSingle();
+  const order = await db.from("orders").select("number, locale, status, refund_kind, withdrawal_pending, customer_email, customer_name, profile_id").eq("id", id).maybeSingle();
   const row = order.data;
   if (order.error || !row) return json({ ok: false, error: "server" }, 500);
-  if (!orderRefundable({ status: row.status, refundKind: row.refund_kind })) return json({ ok: false, error: "locked" }, 409);
+  // The second line behind SQL's own check.
+  if (!orderRefundable({ status: row.status, refundKind: row.refund_kind, withdrawalPending: row.withdrawal_pending })) return json({ ok: false, error: "locked" }, 409);
 
   try {
     await resolveOrderRefund({ paymentIntent, amountCents }, { db: supabaseContractsDb(db), payments: () => getPayments() });

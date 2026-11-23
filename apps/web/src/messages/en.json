@@ -2511,8 +2511,15 @@
         "plan": "Posting plan",
         "week": "Week {week}",
         "stories": "Story pictures",
-        "download": "Download story picture {n}"
-      }
+        "download": "Download story picture {n}",
+        "downloadFailed": "The download didn't work. Please try again."
+      },
+      "reviseBusy": "We are working on your changes.",
+      "reviseBusyUntil": "We are working on your changes and deliver them by {date}, {time}.",
+      "revisePaused": "Your withdrawal is being checked. The order is paused until then.",
+      "reviseSuperseded": "There is a newer proposal. Request changes there.",
+      "ended": "This order has ended. The proposal can no longer be used or changed.",
+      "reviseRefused": "That isn't possible right now. We have reloaded the current state."
     }
   },
   "preview": {
@@ -3013,7 +3020,9 @@
         "cancellation_resumed": "{actor} withdrew the cancellation for {target}",
         "cancellation_handled": "{actor} marked a cancellation as handled",
         "ai_enabled": "{actor} switched the AI features",
-        "ai_disabled": "The AI features were switched off automatically"
+        "ai_disabled": "The AI features were switched off automatically",
+        "order_refund": "{actor} ordered a refund for {target}",
+        "cancellation_scheduled": "{actor} carried out the cancellation for {target}"
       }
     },
     "preview": {
@@ -3456,7 +3465,14 @@
         "rejectCancellation": "Reject cancellation",
         "note": "Reason or note",
         "noteRequired": "Please give a reason.",
-        "resumeNote": "The account's request, quoted from the account's email address"
+        "resumeNote": "The account's request, quoted from the account's email address",
+        "finishWithdrawal": "Finish the refund",
+        "finishWithdrawalHint": "The withdrawal is accepted, but the refund has not gone through yet. We send it to Stripe again. Nothing is refunded twice.",
+        "schedule": "Carry out the cancellation",
+        "scheduleHint": "Pro ends at the end of the paid period, or on the later date that was asked for. The account gets the confirmation with the end date.",
+        "aiReplaceTitle": "Replace the saved draft?",
+        "aiReplaceBody": "This round already has a draft. A new AI draft replaces its page and its look. This can't be undone.",
+        "refundLocked": "A withdrawal is waiting for this order. Decide the refund under \"Withdrawals & cancellations\"."
       },
       "editor": {
         "title": "Proposal for {customer}",
@@ -3483,7 +3499,8 @@
         "withdrawal_accepted": "Withdrawal accepted",
         "withdrawal_rejected": "Withdrawal rejected",
         "completed": "Completed",
-        "note": "Note"
+        "note": "Note",
+        "refund_requested": "Refund ordered"
       },
       "contracts": {
         "withdrawal": "Withdrawal",
@@ -3494,7 +3511,9 @@
         "received": "Received on {date} at {time}",
         "suspect": "No email receipt sent (many requests): please check",
         "refundDue": "Refund due by {date}",
-        "empty": "No open requests."
+        "empty": "No open requests.",
+        "refundOpen": "Refund open",
+        "contractEnded": "The contract has already ended or been refunded. Nothing is left to decide here."
       },
       "kit": {
         "title": "Marketing kit",
@@ -3510,7 +3529,10 @@
       "ai": {
         "label": "AI drafts",
         "today": "Today: {runs} runs · {spent}"
-      }
+      },
+      "deliveredNoMail": "Proposal delivered, but the email was not sent. Please tell the account yourself.",
+      "mailFailed": "Done, but the email was not sent. Please tell the account yourself.",
+      "changed": "This has been decided in the meantime. The list is up to date now."
     }
   },
   "examples": {
@@ -3982,7 +4004,10 @@
       "bodyAi": "Our AI drafted your page, and our team checked and refined it. Have a look, apply it with one click or request changes.",
       "rounds": "{count, plural, =0 {No revision rounds left.} one {1 revision round left until {date}.} other {# revision rounds left until {date}.}}",
       "kit": "Your marketing kit (two bio texts, a 4-week posting plan, 3 story pictures) is with the proposal.",
-      "button": "View proposal"
+      "button": "View proposal",
+      "bodyTeamFinal": "Our team designed your page. Have a look and apply it with one click.",
+      "bodyAiFinal": "Our AI drafted your page, and our team checked and refined it. Have a look and apply it with one click.",
+      "roundsExpired": "The 14 days for changes are over."
     },
     "revision": {
       "subject": "We have your change requests ({number})",

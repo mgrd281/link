@@ -12,6 +12,7 @@ import { EditSheet } from "@/features/app/edit-sheet";
 import { EditorScreen } from "@/features/app/editor-screen";
 import { TextArea } from "@/features/app/form";
 import { pickFiles } from "@/features/app/images";
+import { MediaOwnerProvider } from "@/features/app/media-owner";
 import { uploadToBucket } from "@/features/app/media-upload";
 import { PhonePreview } from "@/features/app/preview";
 import { Panel, Screen } from "@/features/app/screen";
@@ -20,8 +21,9 @@ import { Link, useRouter } from "@/i18n/navigation";
 
 import { useAdmin } from "../session";
 
-import { currentDraft } from "./order-detail-screen";
-import { ApiError, deliverProposal, kitComplete, loadOrder, saveProposal, signedUrls, type Kit, type TeamOrder } from "./orders-data";
+import { LoadFailed, settle } from "./load";
+import { currentDraft, storyRemovable, withIdea, withKit, withMessage, withoutStory, withStory, type MetaChange, type ProposalMeta } from "./order-rules";
+import { ApiError, deliverProposal, kitComplete, loadOrder, removeStoryFile, saveProposal, signedUrls, type Kit, type TeamOrder } from "./orders-data";
 import { teamEditorMessages } from "./team-words";
 
 const EMPTY_LEGAL = { name: "", address: "", email: "", phone: "" };
@@ -50,19 +52,7 @@ function startingPoint(order: TeamOrder): { page: Page; theme: Site["theme"]; ki
 }
 
 /** The kit's fields: two bios, the four weeks and the three story pictures (Premium only). */
-function KitFields({
-  order,
-  kit,
-  stories,
-  onKit,
-  onStories,
-}: {
-  order: TeamOrder;
-  kit: Kit;
-  stories: string[];
-  onKit: (kit: Kit) => void;
-  onStories: (stories: string[]) => void;
-}) {
+function KitFields({ order, kit, stories, change }: { order: TeamOrder; kit: Kit; stories: string[]; change: (update: MetaChange) => void }) {
   const t = useTranslations("admin.orders.kit");
   const tErrors = useTranslations("legal.errors");
   const storiesId = useId();
@@ -81,7 +71,8 @@ function KitFields({
     try {
       const path = `${order.customer.id}/${order.id}/${crypto.randomUUID()}.${STORY_TYPES[file.type] ?? "jpg"}`;
       await uploadToBucket("deliverables", path, file, file.type);
-      onStories([...stories, path]);
+      // Added to what is on screen now: the fields stay editable while the picture uploads.
+      change(withStory(path));
     } catch {
       toast({ title: tErrors("server"), tone: "danger" });
     } finally {
@@ -89,10 +80,18 @@ function KitFields({
     }
   };
 
+  const remove = (path: string) => {
+    change(withoutStory(path));
+    // The file goes, too (a picture uploaded by mistake must not stay in the customer's folder),
+    // unless a delivered round still lists it. A failed delete leaves an unlisted file behind, which
+    // the customer cannot read; it is purged with the account.
+    if (storyRemovable(order, path)) void removeStoryFile(path).catch(() => undefined);
+  };
+
   return (
     <Panel title={t("title")}>
-      <TextField label={t("bioInstagram")} value={kit.bioInstagram} maxLength={150} onChange={(event) => onKit({ ...kit, bioInstagram: event.target.value })} />
-      <TextField label={t("bioTiktok")} value={kit.bioTiktok} maxLength={80} onChange={(event) => onKit({ ...kit, bioTiktok: event.target.value })} />
+      <TextField label={t("bioInstagram")} value={kit.bioInstagram} maxLength={150} onChange={(event) => change(withKit({ bioInstagram: event.target.value }))} />
+      <TextField label={t("bioTiktok")} value={kit.bioTiktok} maxLength={80} onChange={(event) => change(withKit({ bioTiktok: event.target.value }))} />
       <fieldset className="grid gap-3">
         <legend className="mb-2 text-small font-semibold">{t("plan")}</legend>
         {kit.postingPlan.map((entry) => (
@@ -103,7 +102,7 @@ function KitFields({
             max={280}
             rows={2}
             live={false}
-            onValue={(idea) => onKit({ ...kit, postingPlan: kit.postingPlan.map((item) => (item.week === entry.week ? { ...item, idea } : item)) })}
+            onValue={(idea) => change(withIdea(entry.week, idea))}
           />
         ))}
       </fieldset>
@@ -125,7 +124,7 @@ function KitFields({
                   variant="secondary"
                   label={t("removeStory", { n: index + 1 })}
                   className="absolute end-1 top-1"
-                  onClick={() => onStories(stories.filter((item) => item !== path))}
+                  onClick={() => remove(path)}
                 />
               </li>
             ))}
@@ -158,8 +157,8 @@ function ProposalTools({
 }: {
   order: TeamOrder;
   readOnly: boolean;
-  meta: { message: string; kit: Kit; stories: string[] };
-  onMeta: (meta: { message: string; kit: Kit; stories: string[] }) => void;
+  meta: ProposalMeta;
+  onMeta: (update: MetaChange) => void;
   persist: (doc: SiteDoc) => void;
   settled: () => Promise<string | null>;
 }) {
@@ -173,8 +172,8 @@ function ProposalTools({
 
   // The message and the kit save a moment after the last keystroke, with the page as it is now.
   const timer = useRef<number | null>(null);
-  const change = (next: { message: string; kit: Kit; stories: string[] }) => {
-    onMeta(next);
+  const change = (update: MetaChange) => {
+    onMeta(update);
     if (timer.current !== null) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => {
       timer.current = null;
@@ -192,8 +191,9 @@ function ProposalTools({
       persist(latest());
       const proposalId = await settled();
       if (!proposalId) throw new Error("not saved");
-      await deliverProposal(order.id, proposalId);
-      toast({ title: t("delivered"), tone: "success" });
+      const answer = await deliverProposal(order.id, proposalId);
+      // The route says whether the e-mail went out; never promise one that did not.
+      toast(answer.mailed === false ? { title: t("deliveredNoMail"), tone: "danger" } : { title: t("delivered"), tone: "success" });
       router.push(`/admin/orders/${order.id}`);
     } catch (error) {
       toast({ title: error instanceof ApiError && error.code === "incomplete" ? t("kit.incomplete") : tErrors("server"), tone: "danger" });
@@ -206,9 +206,9 @@ function ProposalTools({
       {readOnly ? null : (
         <>
           <Panel>
-            <TextArea label={t("editor.message")} value={meta.message} max={2000} rows={4} onValue={(message) => change({ ...meta, message })} />
+            <TextArea label={t("editor.message")} value={meta.message} max={2000} rows={4} onValue={(message) => change(withMessage(message))} />
           </Panel>
-          {premium ? <KitFields order={order} kit={meta.kit} stories={meta.stories} onKit={(kit) => change({ ...meta, kit })} onStories={(stories) => change({ ...meta, stories })} /> : null}
+          {premium ? <KitFields order={order} kit={meta.kit} stories={meta.stories} change={change} /> : null}
           <div data-proposal-deliver className="grid gap-2">
             <Button variant="primary" size="cta" disabled={!complete} loading={busy} onClick={() => void deliver()} aria-describedby={complete ? undefined : "kit-incomplete"}>
               <Icon icon={Send} size="sm" />
@@ -252,21 +252,24 @@ export function ProposalEditorScreen({ orderId }: { orderId: string }) {
   const tErrors = useTranslations("legal.errors");
   const { can } = useAdmin();
   const [order, setOrder] = useState<TeamOrder | null | undefined>(undefined);
-  const [meta, setMeta] = useState<{ message: string; kit: Kit; stories: string[] } | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [meta, setMeta] = useState<ProposalMeta | null>(null);
   useEffect(() => {
     let cancelled = false;
-    void loadOrder(orderId)
-      .catch(() => null)
-      .then((next) => {
-        if (cancelled) return;
-        const from = next ? startingPoint(next) : null;
-        if (from) setMeta({ message: from.message, kit: from.kit ?? emptyKit(), stories: from.stories });
-        setOrder(next);
-      });
+    void settle(() => loadOrder(orderId)).then((loaded) => {
+      if (cancelled) return;
+      const next = loaded.status === "ready" ? loaded.data : null;
+      const from = next ? startingPoint(next) : null;
+      if (from) setMeta({ message: from.message, kit: from.kit ?? emptyKit(), stories: from.stories });
+      setFailed(loaded.status === "failed");
+      setOrder(next);
+    });
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [orderId, attempt]);
+  const changeMeta = useCallback((update: MetaChange) => setMeta((current) => (current ? update(current) : current)), []);
 
   const start = useMemo(() => (order ? startingPoint(order) : null), [order]);
 
@@ -322,7 +325,16 @@ export function ProposalEditorScreen({ orderId }: { orderId: string }) {
           <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
           {t("title")}
         </Link>
-        <p className="text-small text-fg-secondary">{t("empty")}</p>
+        {failed ? (
+          <LoadFailed
+            onRetry={() => {
+              setOrder(undefined);
+              setAttempt((current) => current + 1);
+            }}
+          />
+        ) : (
+          <p className="text-small text-fg-secondary">{t("empty")}</p>
+        )}
       </div>
     );
   }
@@ -358,15 +370,16 @@ export function ProposalEditorScreen({ orderId }: { orderId: string }) {
           <PhonePreview className="aspect-short" />
         </Screen>
       ) : (
-        <>
+        // Pictures added here are the customer's: they go into the customer's media folder, not the team member's.
+        <MediaOwnerProvider value={order.customer.id}>
           <TeamEditorWords>
             <EditorScreen title={t("actions.edit")} />
           </TeamEditorWords>
           <AddSheet />
           <EditSheet />
-        </>
+        </MediaOwnerProvider>
       )}
-      <ProposalTools order={order} readOnly={readOnly} meta={meta} onMeta={setMeta} persist={save} settled={() => pending.current} />
+      <ProposalTools order={order} readOnly={readOnly} meta={meta} onMeta={changeMeta} persist={save} settled={() => pending.current} />
     </EditorProvider>
   );
 }

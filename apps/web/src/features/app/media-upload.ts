@@ -74,6 +74,14 @@ const browserDeps: MediaDeps = {
   publicUrl: (objectPath) => publicMediaUrl(objectPath),
 };
 
+/**
+ * Uploads into another account's media folder: the team's proposal editor stores a customer's
+ * pictures under the customer's id (the Storage policy allows it for a customer with an open order).
+ */
+export function mediaDepsFor(owner: string, deps: MediaDeps = browserDeps): MediaDeps {
+  return { ...deps, userId: () => Promise.resolve(owner) };
+}
+
 /** Uploads a picture given as a data URL to the account's media folder and answers its public address. */
 export async function uploadDataUrl(dataUrl: string, deps: MediaDeps = browserDeps): Promise<string> {
   const file = dataUrlToBlob(dataUrl);

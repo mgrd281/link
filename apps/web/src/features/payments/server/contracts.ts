@@ -200,7 +200,11 @@ export async function submitWithdrawal(form: WithdrawalForm, ipHash: string, dep
  * (31 Jan → 28 Feb → 31 Mar), so the period end alone would put the next boundary days too early
  * (28 Mar), and Stripe would end Pro before the paid period is over.
  */
-export async function processCancellation(record: CancellationRecord, form: CancellationForm, deps: Pick<ContractsDeps, "db" | "payments">): Promise<{ endsAt: Date | null }> {
+export async function processCancellation(
+  record: Pick<CancellationRecord, "id" | "matched" | "suspect" | "subscription" | "periodEnd">,
+  form: Pick<CancellationForm, "kind" | "wantedDate">,
+  deps: Pick<ContractsDeps, "db" | "payments">,
+): Promise<{ endsAt: Date | null }> {
   if (record.suspect || !record.matched || !record.subscription || form.kind === "extraordinary") return { endsAt: null };
   const payments = deps.payments();
   let periodEnd = record.periodEnd ? new Date(record.periodEnd) : new Date((await payments.retrieveSubscription(record.subscription)).periodEnd);
@@ -307,15 +311,17 @@ async function recordRefundSurely(deps: TeamDeps, paymentIntent: string, kind: "
 }
 
 /**
- * May the console refund this order (again)? Not once it is withdrawn or refunded under a kind the
- * team chose. An order Stripe's report marked "goodwill" stays open for one case: the console's own
+ * May the console refund this order (again)? Not while a withdrawal waits (that refund is the
+ * withdrawal's, decided in the contracts panel; here it would be booked as the voluntary money-back
+ * and leave the order stuck between "refunded" and "withdrawal pending"), and not once it is
+ * withdrawn or refunded under a kind the team chose. An order Stripe's report marked "goodwill" stays open for one case: the console's own
  * refund went through at Stripe but could not be recorded, the webhook recorded it without a kind,
  * and the team sends the refund again. Stripe answers that repeat with the same refund (idempotency
  * key) and only then is the kind corrected; a refund that was really made in the Stripe dashboard
  * makes Stripe refuse, and nothing changes.
  */
-export function orderRefundable(order: { status: string; refundKind: string | null }): boolean {
-  if (order.status === "withdrawn") return false;
+export function orderRefundable(order: { status: string; refundKind: string | null; withdrawalPending?: boolean }): boolean {
+  if (order.withdrawalPending || order.status === "withdrawn") return false;
   return order.status !== "refunded" || order.refundKind === "goodwill";
 }
 
@@ -329,39 +335,70 @@ export async function resolveOrderRefund(target: { paymentIntent: string; amount
 }
 
 /**
+ * What accepting a withdrawal still has to do, from what is on record:
+ * - `decide`: nothing was decided yet (SQL then refuses a contract that already ended);
+ * - `finish`: the team accepted it, but the refund is not on record: Stripe or the bookkeeping failed
+ *   after the decision. The same decision is carried out again, with the amount stored with it;
+ * - `settled`: nothing is left. The contract already ended (the order is withdrawn or refunded, the
+ *   Pro contract reversed) or the request is finished. No Stripe call, no second e-mail: a second
+ *   declaration for the same order must never pay the customer twice.
+ */
+export function withdrawalStep(
+  withdrawal: { decision: string | null; handledAt: string | null },
+  contract: { orderStatus: string | null; entitlementStatus: string | null },
+): "decide" | "finish" | "settled" {
+  if (withdrawal.handledAt !== null) return "settled";
+  const ended = contract.orderStatus === "withdrawn" || contract.orderStatus === "refunded" || (contract.orderStatus === null && contract.entitlementStatus === "refunded");
+  if (ended) return "settled";
+  if (withdrawal.decision === null) return "decide";
+  return withdrawal.decision === "accepted" ? "finish" : "settled";
+}
+
+/** One refund per withdrawal at Stripe, however often its decision is carried out again. */
+export const withdrawalRefundKey = (withdrawalId: string): string => `contract-${withdrawalId}-refund`;
+
+/**
  * The Stripe and bookkeeping side of an accepted withdrawal (after `admin_resolve_withdrawal`):
  * - a service order: refund the amount the team set (none for 0) and record it as a withdrawal (the
  *   order becomes `withdrawn`);
  * - Pro: end the subscription at once, refund the latest paid invoice in full (D6), mark the
  *   entitlement refunded and record the refund.
- * Each Stripe step is idempotent (refunds carry a key derived from the payment and amount).
+ * Every step can run again after a failure: ending an ended subscription is fine (`cancelNow`), and
+ * the refund carries the withdrawal's own idempotency key (`key`), so it is made once.
  */
 export async function resolveWithdrawal(
-  target: { kind: "order"; paymentIntent: string | null; refundCents: number } | { kind: "pro"; subscription: string; paymentIntent: string | null },
+  target: ({ kind: "order"; paymentIntent: string | null; refundCents: number } | { kind: "pro"; subscription: string; paymentIntent: string | null }) & { key?: string },
   deps: TeamDeps,
 ): Promise<{ refunded: boolean }> {
   const payments = deps.payments();
+  const key = target.key ? { key: target.key } : {};
   if (target.kind === "order") {
     if (!target.paymentIntent || target.refundCents <= 0) return { refunded: false };
-    await payments.refund({ paymentIntentId: target.paymentIntent, amountCents: target.refundCents });
+    await payments.refund({ paymentIntentId: target.paymentIntent, amountCents: target.refundCents, ...key });
     await recordRefundSurely(deps, target.paymentIntent, "withdrawal", target.refundCents);
     return { refunded: true };
   }
   await payments.cancelNow(target.subscription);
-  if (target.paymentIntent) await payments.refund({ paymentIntentId: target.paymentIntent });
+  if (target.paymentIntent) await payments.refund({ paymentIntentId: target.paymentIntent, ...key });
   await deps.db.updateProSubscription(target.subscription, "refunded");
   if (target.paymentIntent) await recordRefundSurely(deps, target.paymentIntent, "withdrawal", null);
   return { refunded: Boolean(target.paymentIntent) };
 }
 
 /**
- * The Stripe side of a team decision on a cancellation (after `admin_resolve_cancellation`): end now
- * (an accepted extraordinary cancellation), resume (the holder asked from the account's address), or
- * reject (no Stripe call). Answers the resulting end date (null when Pro goes on).
+ * The Stripe side of a team decision on a cancellation (after `admin_resolve_cancellation`): carry
+ * out an ordinary one (`schedule`), end now (an accepted extraordinary cancellation), resume (the
+ * holder asked from the account's address), or reject (no Stripe call). Answers the resulting end
+ * date (null when Pro goes on).
+ *
+ * `schedule` is for an ordinary cancellation the form did not carry out: a suspect one the team has
+ * checked, or one Stripe did not take when it arrived. It follows the same rule as the form
+ * (`processCancellation`: the period end, or the end of the period containing the wanted date). A
+ * stored period end that has passed meanwhile is read again from Stripe.
  */
 export async function resolveCancellation(
-  action: "endNow" | "resume" | "rejectCancellation",
-  target: { id: string; subscription: string | null },
+  action: "schedule" | "endNow" | "resume" | "rejectCancellation",
+  target: { id: string; subscription: string | null; wantedDate?: string | null; periodEnd?: string | null },
   deps: TeamDeps & { now?: () => Date },
 ): Promise<{ endsAt: Date | null; nextChargeAt: Date | null }> {
   if (action === "rejectCancellation") {
@@ -369,6 +406,17 @@ export async function resolveCancellation(
     return { endsAt: null, nextChargeAt: null };
   }
   if (!target.subscription) throw new Error("linkyo:notFound");
+  if (action === "schedule") {
+    const now = (deps.now ?? (() => new Date()))();
+    const stored = target.periodEnd ? new Date(target.periodEnd) : null;
+    const periodEnd = stored && stored.getTime() > now.getTime() ? stored.toISOString() : null;
+    const { endsAt } = await processCancellation(
+      { id: target.id, matched: true, suspect: false, subscription: target.subscription, periodEnd },
+      { kind: "ordinary", wantedDate: target.wantedDate ?? null },
+      deps,
+    );
+    return { endsAt, nextChargeAt: null };
+  }
   const payments = deps.payments();
   if (action === "endNow") {
     await payments.cancelNow(target.subscription);
