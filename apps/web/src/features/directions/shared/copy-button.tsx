@@ -7,8 +7,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { haptic } from "@/lib/haptics";
 
-/** How long the check mark stays before the copy icon returns. */
-const CONFIRM_MS = 1800;
+/** How long the check mark stays before the copy icon returns (every copy confirmation on a creator page). */
+export const CONFIRM_MS = 1800;
 
 /**
  * Copies a short text in one tap (an install command, a promo code). The icon turns into a check

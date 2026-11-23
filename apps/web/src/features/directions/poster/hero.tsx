@@ -127,7 +127,7 @@ function Stats({ stats, start = false }: { stats: NonNullable<Profile["stats"]>;
 }
 
 /** The owner's availability in their own words: a still dot in the accent and the text, which carries the meaning. */
-function StatusLine({ text }: { text: string }) {
+export function StatusLine({ text }: { text: string }) {
   return (
     <p className="inline-flex min-w-0 items-center gap-2 text-small font-medium">
       <span aria-hidden className="size-dot shrink-0 rounded-full bg-creator-accent" />
@@ -139,7 +139,7 @@ function StatusLine({ text }: { text: string }) {
 }
 
 /** A CV is called a PDF only when its address says so. */
-function isPdf(url: string): boolean {
+export function isPdf(url: string): boolean {
   try {
     return new URL(url).pathname.toLowerCase().endsWith(".pdf");
   } catch {
@@ -523,11 +523,18 @@ export function PosterHero({
  * Compact bar that slides in once the hero has scrolled away: avatar, name, share; on a page with a
  * contact block also its primary action, as a small filled button before the share button.
  * Driven by the hero's view timeline; browsers without scroll-driven animations never show it.
+ * `solid`: on the page's own ground instead of glass, where a solid bar sits right above it (Laufbahn's
+ * section index), so nothing shows through the top of the screen.
  */
-export function PosterBar({ profile, primary }: { profile: Profile; primary?: Primary | null | undefined }) {
+export function PosterBar({ profile, primary, solid = false }: { profile: Profile; primary?: Primary | null | undefined; solid?: boolean }) {
   return (
     <div className="pointer-events-none sticky top-0 layer-sticky h-0">
-      <div className="poster-bar pointer-events-auto flex h-control-xl items-center gap-3 border-b border-creator-line bg-creator-glass ps-creator-gutter pe-2 backdrop-blur-glass">
+      <div
+        className={cn(
+          "poster-bar pointer-events-auto flex h-control-xl items-center gap-3 border-b border-creator-line ps-creator-gutter pe-2",
+          solid ? "bg-creator-bg" : "bg-creator-glass backdrop-blur-glass",
+        )}
+      >
         <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-small">
           {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
         </span>

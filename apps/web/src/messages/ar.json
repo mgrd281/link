@@ -329,6 +329,7 @@
     "report": "إبلاغ",
     "share": "شارك الصفحة",
     "shareCopied": "تم نسخ الرابط.",
+    "shareFailed": "تعذّر نسخ الرابط.",
     "socialLabel": "{platform}",
     "menu": "المزيد",
     "upcoming": "القادم",
@@ -467,7 +468,12 @@
       "jump": "تابع القراءة",
       "jumpTo": "تابع القراءة: {title}",
       "ongoing": "حتى الآن",
-      "readingTime": "مدة القراءة: {minutes, plural, one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}"
+      "readingTime": "مدة القراءة: {minutes, plural, one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
+      "share": "مشاركة",
+      "readLetter": "اقرأ الخطاب",
+      "readLetterWhole": "اقرأ الخطاب كاملاً",
+      "readMore": "اقرأ المزيد",
+      "readLess": "عرض أقل"
     }
   },
   "directions": {

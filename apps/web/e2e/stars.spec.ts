@@ -77,9 +77,12 @@ test("a page prepared from a person's own application letter reads as his own pa
   const clip = page.locator("video").first();
   await expect(clip).toHaveAttribute("src", "/media/motion/sevag-lagerdienst.mp4");
   expect(await clip.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
-  // The letter keeps its paragraphs: seven of them, the signature with its line break.
+  // The letter keeps its paragraphs: seven of them, the signature with its line break. On phones the
+  // last five wait behind "Ganzes Anschreiben lesen".
   const letter = page.getByRole("region", { name: "Anschreiben" });
   await expect(letter.getByText(/^Sehr geehrter Herr Vitt,$/)).toHaveCSS("white-space", "pre-line");
+  const more = letter.getByText("Ganzes Anschreiben lesen");
+  if (await more.isVisible()) await more.click();
   const paragraphs = letter.locator("p.whitespace-pre-line");
   await expect(paragraphs).toHaveCount(7);
   await expect(paragraphs.last()).toHaveText("Mit freundlichen Grüßen\nSevag Ghazarian", { useInnerText: true });

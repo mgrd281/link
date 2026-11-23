@@ -28,8 +28,9 @@ import {
 import { AppFeature, AppList, RepoCard } from "./apps";
 import { EventTabs } from "./events";
 import { PosterBar, PosterHero } from "./hero";
-import { indexScope, LaufbahnAbout, LaufbahnSkills, LaufbahnText, LaufbahnTimeline, SignpostIndex, SignpostSection, signposts as signpostsOf } from "./laufbahn";
-import { BleedHero } from "./laufbahn-hero";
+import { LaufbahnAbout, LaufbahnSkills, LaufbahnText, LaufbahnTimeline, SignpostIndex, SignpostSection, signposts as signpostsOf } from "./laufbahn";
+import { isLetter } from "./laufbahn-content";
+import { BleedHero, type Lead } from "./laufbahn-hero";
 import { AboutSection, BrandNames, ContactBand, QuotesSection, TimelineSection, ToolsSection } from "./portfolio-sections";
 import { ProjectPage } from "./project-page";
 import { ProjectPlate, ProjectsGroup } from "./projects";
@@ -161,9 +162,18 @@ export function PosterRenderer({
   const signposted = layout.headings === "signpost";
   const signposts = signposted ? signpostsOf(sections, profile.locale) : [];
   const firstSign = signposts[0];
-  // "Read on" leads to the first section when that is titled, else to the start of the content (an
-  // untitled run, a live card or a release first, is never skipped).
-  const jump = !firstSign ? undefined : sections[0]?.id === firstSign.id ? { href: `#${firstSign.anchor}`, title: firstSign.title } : { href: `#${CONTENT_ID}` };
+  // Without a contact block the bleed hero's first action leads to the cover letter when the page has
+  // one, else to the first section when that is titled, else to the start of the content (an untitled
+  // run, a live card or a release first, is never skipped).
+  const letter = signposted ? letterOf(sections, profile.locale) : undefined;
+  const letterSign = letter ? signposts.find((sign) => sign.id === letter.section) : undefined;
+  const heroLead: Lead | undefined = letterSign
+    ? { href: `#${letterSign.anchor}`, kind: "letter" }
+    : !firstSign
+      ? undefined
+      : sections[0]?.id === firstSign.id
+        ? { href: `#${firstSign.anchor}`, kind: "section", title: firstSign.title }
+        : { href: `#${CONTENT_ID}`, kind: "content" };
   const portfolio: PortfolioContext = {
     theme,
     locale: profile.locale,
@@ -216,7 +226,7 @@ export function PosterRenderer({
         }
       >
         {overlay ? <div className="pointer-events-none absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12 *:pointer-events-auto">{overlay}</div> : null}
-        <PosterBar profile={profile} primary={primary} />
+        <PosterBar profile={profile} primary={primary} solid={signposted} />
         {layout.hero === "bleed" ? (
           <BleedHero
             profile={profile}
@@ -227,7 +237,7 @@ export function PosterRenderer({
             contact={contact}
             primary={primary}
             now={now}
-            jump={jump}
+            lead={heroLead}
             banner={overlay !== undefined && overlay !== null}
           />
         ) : (
@@ -267,11 +277,11 @@ export function PosterRenderer({
           <Main
             id={CONTENT_ID}
             className="grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:mx-auto @prose:max-w-prose @prose:px-0 @work:max-w-none @work:grid-cols-12 @work:gap-x-6 @work:pt-24"
-            style={indexScope(signposts)}
           >
             {signposts.length > 1 ? <SignpostIndex entries={signposts} /> : null}
-            {/* Beside the index in the last eight columns; without an index in the first eight, under the hero's words. */}
-            <div className={cn("grid min-w-0 grid-cols-1 gap-12 @work:col-span-8 @work:gap-16", signposts.length > 1 ? "@work:col-start-5" : "@work:col-start-1")}>
+            {/* Beside the index in the last eight columns; without an index in the first eight, under the hero's words.
+                Under a sticky index (phones) whatever is focused or jumped to stops below it (lb-under-index). */}
+            <div className={cn("relative grid min-w-0 grid-cols-1 gap-12 @work:col-span-8 @work:gap-16", signposts.length > 1 ? "lb-under-index @work:col-start-5" : "@work:col-start-1")}>
               {sections.map((section) => {
                 // Skills and experience rise in tile by tile and step by step; the rest section by section
                 // (then the tiles and steps inside do not rise a second time).
@@ -294,13 +304,16 @@ export function PosterRenderer({
                         nested={section.title !== null}
                         gallery={layout.gallery}
                         featured={featured}
-                        portfolio={reveal === "self" ? portfolio : { ...portfolio, revealItems: false }}
+                        portfolio={{ ...portfolio, section: { title: section.title, letter: letter?.block }, ...(reveal === "self" ? {} : { revealItems: false }) }}
                         preview={preview}
                       />
                     ))}
                   </SignpostSection>
                 );
               })}
+              {/* The end of the content: once it is on screen, the index marks the last section. Out of the
+                  grid's flow (absolute), so it adds no gap under the last section. */}
+              <div data-lb-end aria-hidden className="absolute inset-x-0 bottom-0 h-px" />
             </div>
           </Main>
         ) : (
@@ -497,6 +510,20 @@ interface PortfolioContext {
   wide: boolean;
   /** Signposted templates: false when the whole section rises in, so its tiles and steps do not rise again. */
   revealItems?: boolean;
+  /** Signposted templates: the section's title (a note's icon comes from it) and the page's cover letter block. */
+  section?: { title: string | null; letter: string | undefined };
+}
+
+/** The page's cover letter (signposted templates): the first titled section whose text is a letter, and that text block. */
+function letterOf(sections: readonly Section[], locale: Profile["locale"]): { section: string; block: string } | undefined {
+  for (const section of sections) {
+    for (const item of section.items) {
+      if (section.title !== null && item.kind === "block" && item.block.type === "text" && isLetter(section.title, item.block.text, locale)) {
+        return { section: section.id, block: item.block.id };
+      }
+    }
+  }
+  return undefined;
 }
 
 interface ItemProps {
@@ -593,10 +620,12 @@ function PosterBlock({
   const signposted = portfolio.theme.layout.headings === "signpost";
   const reveal = portfolio.theme.layout.motion === "reveal" && portfolio.revealItems !== false;
   if (signposted) {
-    if (block.type === "about") return <LaufbahnAbout block={block} />;
-    if (block.type === "tools") return <LaufbahnSkills block={block} reveal={reveal} />;
+    if (block.type === "about") return <LaufbahnAbout block={block} locale={portfolio.locale} />;
+    if (block.type === "tools") return <LaufbahnSkills block={block} locale={portfolio.locale} reveal={reveal} />;
     if (block.type === "timeline") return <LaufbahnTimeline block={block} locale={portfolio.locale} reveal={reveal} />;
-    if (block.type === "text") return <LaufbahnText text={block.text} />;
+    if (block.type === "text") {
+      return <LaufbahnText text={block.text} title={portfolio.section?.title ?? null} letter={portfolio.section?.letter === block.id} locale={portfolio.locale} />;
+    }
   }
   switch (block.type) {
     case "music":

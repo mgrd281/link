@@ -13,6 +13,7 @@ import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
 import { signpostLetter, signposts } from "./laufbahn";
+import { splitLead } from "./laufbahn-content";
 import { PosterRenderer } from "./renderer";
 import { portfolioSample } from "./sample";
 
@@ -39,7 +40,8 @@ const render = (page: Page, config: CreatorThemeConfig = { template: "laufbahn" 
   );
 
 /** The text a visitor reads, without tags (entities decoded where the page has them). */
-const text = (markup: string): string => markup.replace(/<[^>]+>/g, "").replaceAll("&amp;", "&").replaceAll("&quot;", '"').replaceAll("&#x27;", "'");
+const text = (markup: string): string =>
+  markup.replace(/<[^>]+>/g, "").replaceAll("&amp;", "&").replaceAll("&quot;", '"').replaceAll("&#x27;", "'").replaceAll("­", "");
 const count = (markup: string, pattern: RegExp): number => markup.match(pattern)?.length ?? 0;
 
 const sevagTheme = PREVIEWS[SEVAG_SLUG]?.theme ?? {};
@@ -80,7 +82,7 @@ describe("signpost letters", () => {
       ["C", "Drei"],
     ]);
     expect(entries.map((entry) => entry.anchor)).toEqual(["section-about", "section-a-b", "section-a-b-3"]);
-    expect(new Set(entries.map((entry) => entry.timeline)).size).toBe(3);
+    expect(new Set(entries.map((entry) => entry.anchor)).size).toBe(3);
   });
 });
 
@@ -98,7 +100,8 @@ describe("Sevag's application page on Laufbahn", () => {
     for (const fact of [profile.displayName.split(" ")[0], profile.tagline, profile.bio, ...(profile.stats ?? []).flatMap((stat) => [stat.value, stat.label])]) expect(words).toContain(fact);
     for (const block of sevagDe.blocks) {
       if (block.type === "about") {
-        for (const part of block.text.split("\n\n")) expect(words).toContain(part);
+        // A long first paragraph leads with its first sentence; the rest of it follows the facts (splitLead drops nothing).
+        for (const part of block.text.split("\n\n").flatMap((paragraph) => splitLead(paragraph))) if (part) expect(words).toContain(part);
         for (const fact of block.facts ?? []) expect(words).toContain(`${fact.label}${fact.value}`);
       }
       if (block.type === "tools") for (const item of block.items) expect(words).toContain(item);
@@ -141,29 +144,71 @@ describe("Sevag's application page on Laufbahn", () => {
     // Each section's title is its h2, the letter beside it is decoration.
     const headings = [...sevag.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map((match) => text(match[1] ?? ""));
     expect(headings).toEqual(titles);
-    expect(count(sevag, /<span aria-hidden="true" class="grid size-control-lg/g)).toBe(5);
+    expect(count(sevag, /<span aria-hidden="true" class="grid size-control-md shrink-0 place-items-center rounded-xs bg-creator-accent/g)).toBe(5);
   });
 
-  it("without a contact block: no promoted action, and 'Weiterlesen' leads to the first section", () => {
-    expect(sevag).not.toContain("data-hero-actions");
+  it("without a contact block: the hero leads to his cover letter, with 'Teilen' beside it", () => {
+    // Nothing is promoted in the compact bar (it has no contact action to repeat).
     expect(sevag).not.toContain("data-bar-action");
-    const jump = /<a href="#section-about"[^>]*>[\s\S]*?<\/a>/.exec(sevag)?.[0] ?? "";
-    expect(text(jump)).toBe("Weiterlesen");
-    expect(jump).toContain(`aria-label="Weiterlesen: Über mich"`);
-    // Alone, it stays a secondary action: outlined, never filled with the accent.
-    expect(jump).toContain("border-creator-line-strong");
-    expect(jump).not.toContain("bg-creator-accent");
+    const actions = /<div data-hero-actions[\s\S]*?<\/button>/.exec(sevag)?.[0] ?? "";
+    const lead = /<a href="#section-letter-title"[^>]*>[\s\S]*?<\/a>/.exec(actions)?.[0] ?? "";
+    expect(text(lead)).toBe("Anschreiben lesen");
+    // One filled button (the first action) and the outlined share button, both 48 px with the page's button radius.
+    expect(lead).toMatch(/bg-creator-accent[^"]*text-creator-accent-fg/);
+    const share = /<button[^>]*>[\s\S]*?<\/button>/.exec(actions)?.[0] ?? "";
+    // Its visible label is its name, and stays "Teilen" while the address is copied (WCAG 2.5.3).
+    expect(share).not.toContain("aria-label");
+    expect(text(share)).toBe("Teilen");
+    expect(share).toContain("border-creator-line-strong");
+    for (const control of [lead, share]) expect(control).toMatch(/min-h-control-lg[^"]*rounded-creator-button|rounded-creator-button[^"]*min-h-control-lg/);
+    expect(count(/<header[\s\S]*?<\/header>/.exec(sevag)?.[0] ?? "", /<a [^>]*bg-creator-accent/g)).toBe(1);
+    // A polite live region announces the copied link where the page has no share sheet.
+    expect(sevag).toMatch(/<span role="status" class="sr-only"><\/span>/);
   });
 
-  it("sets the letter as a reading column of paragraphs, with its reading time", () => {
+  it("sets the letter as a reading tile with its reading time: two paragraphs, then the rest behind a native disclosure", () => {
     const letter = sevagDe.blocks.find((block): block is BlockOf<"text"> => block.type === "text" && block.id === "letter");
     const paragraphs = letter?.text.split("\n\n") ?? [];
     expect(paragraphs).toHaveLength(7);
     expect(sevag).toContain("1 Min. Lesezeit");
     // The signature keeps its line break.
     expect(sevag).toMatch(/whitespace-pre-line[^"]*">Mit freundlichen Grüßen\nSevag Ghazarian<\/p>/);
-    // The short text about toning is a lead, not a tile.
+    const section = /<section id="section-letter-title"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
+    const [before, details] = section.split("<details");
+    expect(count(before ?? "", /<p dir="auto"/g)).toBe(2);
+    expect(details).toMatch(/^ class="lb-more /);
+    // Its label says what opens ("Weniger anzeigen" shows once it is open).
+    expect(text(/<summary[\s\S]*?<\/summary>/.exec(details ?? "")?.[0] ?? "")).toBe("Ganzes Anschreiben lesenWeniger anzeigen");
+    expect(count(details ?? "", /<p dir="auto"/g)).toBe(5);
+    // The short text about toning is a note (a callout with its icon), not a reading tile.
     expect(count(sevag, /Lesezeit/g)).toBe(1);
+    const toning = /<section id="section-toning-title"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
+    expect(toning).toContain("lb-soft");
+    expect(toning).toContain("lucide-paint-bucket");
+    expect(toning).not.toContain("<details");
+  });
+
+  it("gives every skill an icon, lets the first lead and closes the last row, and never numbers them", () => {
+    const skills = /<section id="section-skills"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
+    const tiles = [...skills.matchAll(/<li class="([^"]*)"[^>]*>([\s\S]*?)<\/li>/g)];
+    expect(tiles).toHaveLength(12);
+    for (const [, , inner] of tiles) expect(inner).toMatch(/<span aria-hidden="true" class="lb-soft [^"]*"><svg[^>]*class="lucide lucide-/);
+    // Phones: the lead across, then pairs, the labels that cannot share a row across (one line each).
+    const across = tiles.map(([, classes]) => (classes?.split(" ").includes("col-span-2") ? "across" : "half"));
+    expect(across).toEqual(["across", "half", "half", "across", "across", "half", "half", "across", "half", "half", "half", "half"]);
+    // Every tile lies flat (the icon beside the label) at one height.
+    for (const [, classes] of tiles) expect(classes).toMatch(/\bflex\b[^"]*\bmin-h-control-xl\b[^"]*\bitems-center\b/);
+    expect(skills).not.toMatch(/>0\d</);
+    expect(skills).not.toContain("hyphens-auto");
+    expect(skills).toContain("hyphens-manual");
+    // German compounds may break only at their joints.
+    expect(skills).toContain("Flurförder­zeug­schein");
+  });
+
+  it("sets the facts as a two-by-two sheet and the timeline's licence on its node", () => {
+    expect(sevag).toMatch(/<dl class="grid min-w-0 grid-cols-2 gap-px/);
+    const timeline = /<section id="section-path"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
+    expect([...timeline.matchAll(/class="lucide lucide-([a-z-]+)/g)].map((match) => match[1])).toEqual(["id-card", "briefcase"]);
   });
 
   it("is flat and unlined: no shadow, no underline", () => {
@@ -175,14 +220,12 @@ describe("the same page once a contact block is added (fixture only)", () => {
   const withContact: Page = { ...sevagDe, blocks: [...sevagDe.blocks, contact] };
   const markup = render(withContact, sevagTheme);
 
-  it("puts the contact block's primary action first in the hero and 'Weiterlesen' beside its CV link, quietly", () => {
-    const row = /<div data-hero-actions[\s\S]*?<\/div><\/div>/.exec(markup)?.[0] ?? "";
-    expect(text(row)).toBe("Ab sofort verfügbarGespräch vereinbarenLebenslauf (PDF)Weiterlesen");
+  it("puts the contact block's primary action first in the hero, 'Teilen' beside it and the CV below, quietly", () => {
+    const row = /<div data-hero-actions[\s\S]*?Lebenslauf \(PDF\)<\/span><\/a>/.exec(markup)?.[0] ?? "";
+    expect(text(row)).toBe("Ab sofort verfügbarGespräch vereinbarenTeilenLebenslauf (PDF)");
     expect(row).toContain('href="mailto:bewerbung@example.com"');
-    // "Weiterlesen" is a text action in the CV link's row, not a second button.
-    const jump = /<a href="#section-about"[^>]*>/.exec(row)?.[0] ?? "";
-    expect(jump).toContain("min-h-touch-target");
-    expect(jump).not.toMatch(/border-creator-line-strong|bg-creator-accent/);
+    // The letter is no longer the first action: the contact block's is.
+    expect(row).not.toContain('href="#section-letter-title"');
     // Exactly one filled button in the hero.
     const hero = /<header[\s\S]*?<\/header>/.exec(markup)?.[0] ?? "";
     expect(count(hero, /<a [^>]*bg-creator-accent/g)).toBe(1);
@@ -220,7 +263,7 @@ describe("other blocks in the signposted frame", () => {
   it("changes nothing for any other template", () => {
     for (const template of ["nocturne", "werkbogen", "tiefdruck", "studio"] as const) {
       const markup = render(sevagDe, { template });
-      expect(markup, template).not.toMatch(/lb-(?:plate|scrim|veil|name|ground|section|spy|step|reveal|zoom)/);
+      expect(markup, template).not.toMatch(/lb-(?:plate|scrim|veil|name|ground|section|index|fade|soft|more|step|reveal|zoom)/);
       expect(markup, template).not.toContain('aria-label="Abschnitte"');
     }
   });
@@ -233,7 +276,7 @@ describe("Arabic pages", () => {
   it("are right to left, lettered in the abjad order, with the Arabic word for 'until now'", () => {
     expect(markup).toContain('<div lang="ar" dir="rtl"');
     const nav = /<nav aria-label="الأقسام"[\s\S]*?<\/nav>/.exec(markup)?.[0] ?? "";
-    expect([...nav.matchAll(/class="lb-spy-sign[^"]*"[^>]*>([^<]+)</g)].map((match) => match[1])).toEqual(["أ", "ب", "ج", "د", "ه", "و"]);
+    expect([...nav.matchAll(/<span aria-hidden="true" class="grid size-control-sm[^"]*"[^>]*>([^<]+)</g)].map((match) => match[1])).toEqual(["أ", "ب", "ج", "د", "ه", "و"]);
     expect(markup).toContain("حتى الآن");
   });
 
@@ -279,7 +322,7 @@ describe("a page whose first blocks have no title", () => {
 });
 
 describe("motion", () => {
-  const tiles = (markup: string) => [.../<ol class="grid min-w-0 grid-cols-2[\s\S]*?<\/ol>/.exec(markup)?.[0].matchAll(/<li class="([^"]*)"/g) ?? []].map((match) => match[1] ?? "");
+  const tiles = (markup: string) => [.../<ul class="grid min-w-0 grid-cols-2[\s\S]*?<\/ul>/.exec(markup)?.[0].matchAll(/<li class="([^"]*)"/g) ?? []].map((match) => match[1] ?? "");
 
   it("skills in a section of their own rise in tile by tile", () => {
     expect(tiles(sevag).length).toBe(12);
@@ -295,7 +338,7 @@ describe("motion", () => {
     const markup = render({ ...sevagDe, blocks });
     expect(tiles(markup)).toHaveLength(2);
     expect(tiles(markup).some((tile) => tile.includes("lb-reveal"))).toBe(false);
-    expect(markup).toMatch(/<div class="grid min-w-0 grid-cols-1 gap-4 lb-reveal">/);
+    expect(markup).toMatch(/<div class="grid min-w-0 grid-cols-1 gap-6 lb-reveal">/);
   });
 });
 

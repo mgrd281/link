@@ -12,8 +12,8 @@ baseline review stays byte-equal).
 
 | Key | Value | What it does |
 |---|---|---|
-| `hero` | `bleed` | Phones and tablets: the picture from edge to edge, about three quarters of the small viewport tall (`clamp(24rem, 72svh, 160cqi)`, so a phone preview in the dashboard keeps a phone's proportions), a veil of ink at the secondary opacity tied to the words (not to the picture's height, so they keep AA on a landscape phone or at 200 % zoom), the role line as a quiet dark-glass chip with the portrait or the initials, the name in white set as large as its longest word allows and never taller than 12svh. When the picture is the portrait itself, it rides high in a square on phones and fades into an ink ground, so the words stand below the face. Below it on the page: the sentence, the numbers in a row between hairlines (tabular figures), then the actions: the contact block's primary action when there is one, with "Weiterlesen" as a quiet text action beside its CV link (one filled button in the hero); alone, "Weiterlesen" is an outlined button. It leads to the first section, or to the start of the content when the page opens with untitled blocks. Without any picture an accent field carries the initials. The wide canvas: one twelve-column composition, the words on the first five columns (a two-word name on two lines), the picture as a tall rounded plate on the last six. |
-| `headings` | `signpost` | Every titled section is announced by a square signpost with a bold letter in the display face, like the signs over a warehouse's aisles (A, B, C …; Arabic pages in the abjad order أ ب ج د ه و ز ح ط ي). The same signposts form the page's section index: a row of chips to swipe under the hero on phones (a chip reached with Tab scrolls fully into the row), chips that wrap in the reading column on tablets, a sticky list in the first three columns on the wide canvas that marks the section being read (the first one at the top of the page). Without an index (one titled section or none) the sections take the first eight columns, under the hero's words. |
+| `hero` | `bleed` | Phones and tablets: the picture from edge to edge, about three quarters of the small viewport tall (`clamp(24rem, 72svh, 160cqi)`, so a phone preview in the dashboard keeps a phone's proportions), a veil of ink at the secondary opacity tied to the words (not to the picture's height, so they keep AA on a landscape phone or at 200 % zoom), the role line as a quiet dark-glass chip with the portrait or the initials, the name in white set as large as its longest word allows and never taller than 12svh. When the picture is the portrait itself, it rides high in a square on phones and fades into an ink ground, so the words stand below the face. Below it on the page: the sentence, the numbers in a row between hairlines (tabular figures), then two buttons (see "Round 2"): the page's first action, filled, and "Teilen", outlined. Without any picture an accent field carries the initials. The wide canvas: one twelve-column composition, the words on the first five columns (a two-word name on two lines), the picture as a tall rounded plate on the last six. |
+| `headings` | `signpost` | Every titled section is announced by a square signpost with a bold letter in the display face, like the signs over a warehouse's aisles (A, B, C …; Arabic pages in the abjad order أ ب ج د ه و ز ح ط ي). The same signposts form the page's section index: a sticky row of chips on phones, chips that wrap in the reading column on tablets, a sticky list in the first three columns on the wide canvas; each marks the section being read (see "Round 2"). Without an index (one titled section or none) the sections take the first eight columns, under the hero's words. |
 
 The rest of the template is tokens: Inter for both faces (`classic`), a cobalt accent (#1E50C8) on a
 very light cool canvas (#F5F6F7), soft rounded buttons, `motion: "reveal"`, the wide canvas, the
@@ -29,28 +29,23 @@ gallery grid, plain social icons, 700 for Arabic names.
   takes eight columns beside the sticky index. One sticky column instead of a sticky title per
   section and a separate index: the index *is* the title column, so titles are not repeated beside
   each other and there is one navigation landmark.
-- **Own renderers for four blocks; the rest reused.** About: the first paragraph as a large lead,
-  the facts as a definition grid, the rest in a reading measure. Skills (`tools`): flat tiles in two
-  columns (three on the canvas) with their place in the list; hover gives a stronger hairline and a
-  fill step. Experience (`timeline`): a vertical rail with a node per step, years in tabular figures
-  and "heute / now / حتى الآن" for a step still going on. Text: paragraphs split at blank lines;
-  a long text (three paragraphs or 600 characters) such as a cover letter is set on a flat tile with
-  a hairline, under a quiet label with its reading time. Links, music, videos, products, projects
+- **Own renderers for four blocks; the rest reused.** About, skills (`tools`), experience
+  (`timeline`) and text, as described under "Round 2" below. Links, music, videos, products, projects
   (with their layouts and pages), quotes, clients, the contact band and everything else keep the
   renderer they have in every template.
 - **Motion, CSS only.** The hero's lines rise in once (`poster-rise`); the title rows, contents,
   tiles and steps rise within the first 8 rem of entering the screen (`lb-reveal`, a view timeline,
   movement only: nothing rests faded at the fold of a large screen; a section that rises as a whole
   does not let its tiles rise again); the picture eases in a little as the hero scrolls away (`lb-zoom`);
-  the timeline's rail fills with the accent as its steps scroll by (`lb-fill`); the index marks the
-  section being read through named view timelines (`lb-spy`, a registered `--lb-here`). All of it is
+  the timeline's rail fills with the accent as its steps scroll by (`lb-fill`). All of it is
   behind `@supports (animation-timeline: view())`, and everything that moves is off with
   `prefers-reduced-motion`: the rail is then drawn in full and every section is simply there. No
-  scroll hijacking and no new dependency; the only script is the index row's focus handler.
+  scroll hijacking and no new dependency; the only scripts are the section index (below) and the
+  share button.
 - **Accessibility.** One h1, one h2 per section (the letters are decoration), the index a `<nav>` of
   plain anchor links. A Laufbahn page gives the document a scroll padding for its fixed chrome (the
   compact bar, a dock), so anything focused or jumped to stops below the bar (WCAG 2.4.11); it is
-  scoped with `:root:has(.lb-section)`, so other templates scroll as before. "Weiterlesen" names its
+  scoped with `:root:has(.lb-section)`, so other templates scroll as before. "Read on" names its
   destination for screen readers, white text only over the veil (at least about 6 : 1 on any picture)
   or the chip's dark glass, figures such as "40+" isolated left to right on Arabic pages. Arabic pages are mirrored by
   logical properties only and never tracked or set in capitals.
@@ -60,12 +55,110 @@ gallery grid, plain social icons, 700 for Arabic names.
   the LCP picture (the stored file caps it).
 - **Sevag's page** now uses Laufbahn in `navy`, the blue of the pallet racks in his picture. Every
   fact of the page stays and none is added. It has no contact block (no phone number or e-mail is
-  known yet); the hero's one action is then the outlined "Weiterlesen". The case with a contact block is covered
-  by a test fixture, not on his page.
+  known yet); the hero's first action is then "Anschreiben lesen", beside "Teilen". The case with a
+  contact block is covered by a test fixture, not on his page.
 - **Everywhere templates are counted or listed:** tokens (and the generated files), the picker card
   (the picture from edge to edge with the name in white at its foot, and a lettered signpost), `templates.laufbahn.description` and every "thirteen templates"
   sentence (now fourteen) in de/en/ar, the AI catalogue (`core-v3`, `plan-v3`: one more template and
   nothing else), the team console's count. No example page was added: no test or screen requires one
   per template.
+
+## Round 2: phone first (the founder's review)
+
+On a 390 px phone the first version had twelve identical tall skill tiles numbered 01 to 12 with
+words hyphenated by the browser ("Kommissionie-rung"), one lone button, an index that was cut at
+the edge and not sticky, a lead of eight large lines, short sections that read like leftovers, a
+1,700-character letter as one long scroll and almost no icons. Everything below is template-level:
+every Laufbahn page gets it, and every other template renders exactly as before.
+
+- **Icons from the owner's words** (`laufbahn-content.ts`, unit-tested in de/en/ar with positive
+  and negative cases). A curated map of about forty rules, most specific first, one lucide set at one
+  stroke: German compounds are read by their head (a "Seitenschubstapler" is a forklift, a
+  "Staplerschein" a licence), English by whole words and their usual forms, Arabic after its
+  proclitics and short vowels are set aside ("والفريق" is the team). Each rule lists the look-alikes it
+  must never take ("Schlager", "Kugellager", "Versicherung", "Gutschein", "Bewerbung" for advertising,
+  "gefahren" for hazards, "Photovoltaik" for cameras, "Fahrzeugpflege" for nursing, "Jahresabschluss"
+  for degrees, "Absprachen" for languages, "Hochstapler" for forklifts, an English "lager",
+  "إفريقيا"). A language named by its name ("Englisch", "Arabic", "عربي") counts only when the text
+  says nothing else but a level ("Englisch (C1)", "Arabic (native)", "اللغة العربية"), so "Italian
+  cooking" or "طبخ عربي" is cooking. "القيادة" alone is leadership, not driving; "ورشة" alone is a
+  garage, only "ورش العمل" are workshops. A page reads its own language's patterns and English. Neutral
+  icon where nothing fits: a check (skills) or a light bulb (notes).
+- **Skills, a bento of flat tiles.** Two columns on phones, three from tablets on; the first skill
+  leads across from five skills on. Every tile lies flat: the icon in a soft accent square (`lb-soft`:
+  the accent at the pressed opacity over the surface) beside the label (body size, semibold), both
+  centred in a row of one height (56 px; 60 px for a label of two lines). No automatic hyphenation
+  (`hyphens: manual`, `text-wrap: balance`): long German compounds get soft hyphens at their joints only
+  ("Flurförder|zeug|schein", "Versand|dokumente", "Kommissio|nierung"). A label shares a phone's row
+  only when it fits beside its icon in at most two lines on a 390 px phone and no piece of it is wider
+  than the room beside the icon on a 360 px phone (`fitsBeside`); otherwise it takes the whole row,
+  where it is one line. So that half tiles still pair up, the next half tile may move up past at most
+  two such rows (`pairUp`; the first tile never moves, no tile moves more than two places, and the DOM
+  follows the same order, so a screen reader reads what the eye scans). On a screen narrower than
+  360 px a label whose piece does not fit beside its icon wraps under it rather than break a word
+  (flex-wrap on a `min-content` basis). From tablets on, a last row of one tile after a row of three
+  is set as one and two, then two and one. `break-words` stays as the last resort. No numbers.
+  Measured on Sevag's twelve skills at 390 × 844 (and the same at 360 × 780): the grid is 518 px, the
+  section 615 px, against 678 px and 783 px in round 1. (Round 2's first draft gave 681 px and 723 px at
+  360; the "about 900 px" once quoted for round 1 was wrong.) The brief's "well under 600 px" holds for
+  the grid, not for the section with its title: twelve labels of up to 25 characters at body size take
+  eight rows of two columns, and the only ways under that (smaller labels, 8 px around a two-line label,
+  no lead tile) were judged worse.
+- **Hero buttons.** The page's first action, filled: the contact block's primary action; without one,
+  "Anschreiben lesen / Read the letter / اقرأ الخطاب" when the page has a cover letter (a long text
+  under a title that names a letter in the page's language — an English "brief" is not one — or one
+  that opens with a salutation and closes with a greeting), else "Weiterlesen / Read on" to the first
+  section. Beside it "Teilen / Share / مشاركة", outlined: the native share sheet; where there is none, or
+  the browser refuses it, the address is copied, the icon turns into a check for as long as every copy
+  button's confirmation and a polite live region says "Link kopiert." (or that it could not be copied).
+  A visitor who closes the share sheet has decided: nothing is copied, nothing is said. The label stays
+  "Teilen", which is also the button's name (WCAG 2.5.3). 48 px, the template's button radius, scale on
+  press, the focus ring; side by side when both fit (they do at 360 px), else stacked at full width.
+  They stand before the numbers, so on a phone they are on the first screen (390 × 844: 739–787 px;
+  360 × 780: 693–741 px). With a contact block its status line stands above and its CV link below.
+- **Section index on phones.** Sticky flush under the compact bar once the hero has passed, one row of
+  44 px chips (52 px with its band), a hairline under it only while it is stuck (a scroll-state query).
+  The bar above it is solid on Laufbahn pages too (the page's ground, no glass), so nothing shows
+  through the top of the screen. Where scroll-driven animations are missing, the bar never shows, so
+  the index sticks to the top edge instead. On short screens (`short`, as every sticky bar) it stands
+  in the flow. A tiny client component marks the section being read with `aria-current` (an
+  IntersectionObserver on a thin band at 35 % of the screen, the last section once the end of the
+  content is on screen; nothing is marked before it runs, so without the script no chip claims to be
+  current), keeps that chip and a chip reached with Tab whole in the row (scrolling the row only) and
+  fades the row's edges, as wide as its padding, only while more chips lie beyond them (no mask
+  otherwise, so no focus ring is clipped). The same marking replaces the wide canvas's scroll-driven
+  spy. The content under the index has a scroll margin of the index's band (`lb-under-index`, keyed to
+  the same container width as the index's stickiness), so a heading jumped to or focused stops below it
+  (2.4.11). The stuck chips themselves sit inside the band the document keeps clear for the bar; a
+  negative scroll margin as deep as that band exempts them, so moving along them with Tab or Shift+Tab
+  scrolls the row, never the page. Anchor jumps glide unless reduced motion is asked for.
+- **About.** The lead at the title size on phones (18 px at the body's line height), h3 from tablets,
+  h2 on the wide canvas. A first paragraph longer than 180 characters leads with its first full
+  sentence (`splitLead`: never after an abbreviation, a single letter or an ordinal), and the rest of
+  it opens the body: four lines at 390 px, five at 360 px for Sevag. The facts as a two-by-two sheet of
+  cells between hairlines (a value that cannot fit half the sheet takes the row; each cell's column
+  can shrink, so with WCAG 1.4.12 text spacing at 320 px a value breaks inside its cell).
+- **Text sections by length.** Under 320 characters: a callout (surface tile, hairline, an icon in a
+  soft accent square chosen from the section's title by the same map: "Neu für mich: das Tönen" gets a
+  paint bucket). Over 900 characters: a reading tile with its reading time; on phones and tablets the
+  first two paragraphs, then a native `<details>` ("Ganzes Anschreiben lesen", "Weiterlesen" when it is
+  not a letter, "Weniger anzeigen" once open) whose button stays where it was pressed while the rest
+  unfolds below it, keyboard and screen readers included, no script; the opened text unfolds briefly
+  unless reduced motion is asked for. On the wide canvas, and whenever the visitor arrives at the
+  section by its address (the hero's "Anschreiben lesen", the index: `.lb-section:target`), the
+  disclosure's content is shown (`::details-content`) and its button is not. Both rules sit inside
+  `@supports selector(::details-content)`: a browser without it keeps the button everywhere, so the
+  text is never hidden without a way to it.
+- **Timeline.** A 32 px icon node per step: a briefcase, or the licence or certificate the role names
+  (via the map); filled while the step is still going on; the years level with the node's centre.
+- **Rhythm.** On phones 48 between sections, 32 under a section's hairline, 24 between a title and
+  its content and between the parts of a content, 16 between paragraphs, 8 between tiles. Signposts
+  are 40 px on phones, 48 from tablets on; titles h2 (h1 on the wide canvas). No gap under the last
+  section (the end-of-content marker is out of the grid's flow).
+- **Not done.** On phones the compact bar and the stuck index together keep 108 px at the top; folding
+  the index into the bar would give back 52 px, but the bar carries the contact action on pages that
+  have one, so it stays. The icon map ships in the shared renderer chunk (about 12 KB gzip on pages
+  that preview creator pages in the browser); loading the signposted renderers lazily there is left for
+  a later change.
 
 **Status.** Accepted.

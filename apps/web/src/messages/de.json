@@ -329,6 +329,7 @@
     "report": "Melden",
     "share": "Seite teilen",
     "shareCopied": "Link kopiert.",
+    "shareFailed": "Der Link konnte nicht kopiert werden.",
     "socialLabel": "{platform}",
     "menu": "Mehr",
     "upcoming": "Demnächst",
@@ -467,7 +468,12 @@
       "jump": "Weiterlesen",
       "jumpTo": "Weiterlesen: {title}",
       "ongoing": "heute",
-      "readingTime": "{minutes} Min. Lesezeit"
+      "readingTime": "{minutes} Min. Lesezeit",
+      "share": "Teilen",
+      "readLetter": "Anschreiben lesen",
+      "readLetterWhole": "Ganzes Anschreiben lesen",
+      "readMore": "Weiterlesen",
+      "readLess": "Weniger anzeigen"
     }
   },
   "directions": {

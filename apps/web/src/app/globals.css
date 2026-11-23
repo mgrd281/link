@@ -536,24 +536,18 @@
   }
 }
 
+/* The rest of a long read, opened: it settles from just above its place. */
+@keyframes lb-unfold {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--spacing-2) * -1);
+  }
+}
+
 /* A section or tile rising into place: movement only, so nothing ever rests faded at the fold. */
 @keyframes lb-rise {
   from {
     translate: 0 var(--spacing-6);
-  }
-}
-
-/* The section being read, as a number the index's signs and titles mix their colors with (1 or 0). */
-@property --lb-here {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 1;
-}
-
-@keyframes lb-here {
-  from,
-  to {
-    --lb-here: 1;
   }
 }
 
@@ -634,55 +628,164 @@
   }
 }
 
-/* A signposted section: its view timeline (named per section in the markup) covers the thin band at
-   30 % of the screen, so exactly one section is "being read" at a time. */
+/* A signposted section (the page's scroll padding below keys on it). */
 @utility lb-section {
-  view-timeline-axis: block;
-  view-timeline-inset: 30% 69%;
+  position: relative;
 }
 
 /* A Laufbahn page keeps what is focused or jumped to clear of its fixed chrome: the compact bar at the
-   top (control-xl) and a preview's or example's dock at the bottom. Sections, the hero's last row of
-   links and anything reached by Tab or by an anchor stop below the bar, never under it (WCAG 2.4.11).
-   Scoped to pages that have a signposted section, so every other template scrolls as before. */
+   top (control-xl) and a preview's or example's dock at the bottom (on phones the sticky section index
+   adds its own band through lb-under-index). Sections, the hero's last row of links and anything
+   reached by Tab or by an anchor stop below them, never under them (WCAG 2.4.11). Scoped to pages that
+   have a signposted section, so every other template scrolls as before. Jumps glide unless the visitor
+   prefers less motion. */
 :root:has(.lb-section) {
   scroll-padding-block: calc(var(--spacing-control-xl) + var(--spacing-4)) calc(var(--spacing-control-xl) + var(--spacing-8));
+
+  @media (prefers-reduced-motion: no-preference) {
+    scroll-behavior: smooth;
+  }
 }
 
 /* stylelint-disable nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
 
-/* The index on the wide canvas: --lb-here is 1 while the link's section (--lb-t) is being read, else 0.
-   The first entry also holds 1 before its section reaches the reading band (backwards fill), so at the
-   top of the page the index shows where reading starts instead of looking switched off. */
-@utility lb-spy {
-  @supports (animation-timeline: view()) and (timeline-scope: --lb) {
-    --lb-here: 0;
+/* The section index on phones: it sticks flush under the compact bar (which slides in as the hero
+   leaves), on the page's solid ground. Where the bar never shows (no scroll-driven animations), it
+   sticks to the top edge instead, so no gap opens above it. It is a scroll-state container, so its
+   hairline (lb-index-edge) shows only while it is stuck. Stuck, its chips sit inside the band the
+   document keeps clear for the bar (its scroll padding), where the browser would scroll the page on
+   every Tab to "reveal" them, in vain: a negative scroll margin as deep as that band exempts them, so
+   moving along the chips scrolls the row only, never the page. From tablet widths on, and on short
+   screens (a phone held sideways, 400 % zoom: sticky bars scroll away there), it stands in the flow. */
+@utility lb-index {
+  position: sticky;
+  inset-block-start: var(--spacing-control-xl);
+  container-type: scroll-state;
 
-    animation: lb-here linear none;
-    animation-timeline: var(--lb-t);
-    animation-range: cover 0% cover 100%;
+  & a {
+    scroll-margin-block-start: calc((var(--spacing-control-xl) + var(--spacing-4)) * -1);
+  }
 
-    li:first-child > & {
-      animation-fill-mode: backwards;
+  @supports not (animation-timeline: view()) {
+    inset-block-start: 0;
+  }
+
+  @variant @prose {
+    position: static;
+
+    & a {
+      scroll-margin-block-start: 0;
+    }
+  }
+
+  @variant short {
+    position: static;
+
+    & a {
+      scroll-margin-block-start: 0;
     }
   }
 }
 
-/* stylelint-enable nesting-selector-no-missing-scoping-root */
+/* The content beside or under the section index. Where the index sticks (phones, not short screens:
+   the same conditions as lb-index), whatever is focused or jumped to in it stops below the index as
+   well as the bar (WCAG 2.4.11): a scroll margin of the index's band (a 44 px chip and 4 px above and
+   below it) on top of the document's scroll padding for the bar. */
+@utility lb-under-index {
+  & :where(*) {
+    scroll-margin-block-start: calc(var(--spacing-touch-target) + var(--spacing-2));
+  }
 
-@utility lb-spy-sign {
-  background-color: color-mix(in oklab, var(--creator-accent) calc(var(--lb-here) * 100%), var(--creator-surface-2));
-  color: color-mix(in oklab, var(--creator-accent-fg) calc(var(--lb-here) * 100%), var(--creator-fg-muted));
+  @variant @prose {
+    & :where(*) {
+      scroll-margin-block-start: 0;
+    }
+  }
+
+  @variant short {
+    & :where(*) {
+      scroll-margin-block-start: 0;
+    }
+  }
 }
 
-@utility lb-spy-label {
-  color: color-mix(in oklab, var(--creator-fg) calc(var(--lb-here) * 100%), var(--creator-fg-muted));
+@utility lb-index-edge {
+  border-block-end: var(--border-width-hairline) solid transparent;
+  transition: border-color var(--duration-standard) var(--ease-standard);
+
+  @container scroll-state(stuck: top) {
+    border-block-end-color: var(--creator-line);
+  }
 }
 
-/* stylelint-disable nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
+/* A row that scrolls sideways fades at an edge only while more of it lies beyond that edge (the index
+   sets data-fade-start / data-fade-end); logical, so an Arabic row fades on the mirrored sides. The
+   fade is as wide as the row's padding (the gutter), so it veils the cut neighbour, never the chip
+   snapped beside it. No mask at all while nothing lies beyond (tablets, the wide canvas): a mask clips
+   whatever is drawn outside the row, a chip's focus ring included. */
+@utility lb-fade {
+  --lb-fade-start: 0%;
+  --lb-fade-end: 0%;
 
-/* One step of the timeline: a node at the reading start and, to the next step, a rail in the line color
-   with the accent drawn over it as the step scrolls through the screen. */
+  &:is([data-fade-start], [data-fade-end]) {
+    mask-image: linear-gradient(to right, transparent, var(--color-ink) var(--lb-fade-start), var(--color-ink) calc(100% - var(--lb-fade-end)), transparent);
+  }
+
+  &:is([data-fade-start], [data-fade-end]):dir(rtl) {
+    mask-image: linear-gradient(to left, transparent, var(--color-ink) var(--lb-fade-start), var(--color-ink) calc(100% - var(--lb-fade-end)), transparent);
+  }
+
+  &[data-fade-start] {
+    --lb-fade-start: var(--spacing-creator-gutter);
+  }
+
+  &[data-fade-end] {
+    --lb-fade-end: var(--spacing-creator-gutter);
+  }
+}
+
+/* A soft square in the accent behind an icon (skills, notes): the accent at the pressed opacity over the surface. */
+@utility lb-soft {
+  background-color: color-mix(in oklab, var(--creator-accent) calc(var(--opacity-pressed) * 100%), var(--creator-surface));
+}
+
+/* A long read's disclosure: closed on phones and tablets (the button under the first paragraphs; it
+   stays where it was pressed and the text unfolds below it). Shown whole, without its button, on the
+   wide canvas and whenever the visitor arrives at its section by the section's address (the hero's
+   "Read the letter", the index): a button that promises the letter opens it. Only where CSS can show a
+   closed disclosure's content (::details-content); elsewhere the button stays everywhere, so the text
+   is never hidden without a way to it. Opened, the new text unfolds from just above its place, so the
+   eye sees what was added (not with reduced motion). */
+@utility lb-more {
+  @media (prefers-reduced-motion: no-preference) {
+    &[open] > div {
+      animation: lb-unfold var(--duration-standard) var(--ease-standard);
+    }
+  }
+
+  @supports selector(::details-content) {
+    :where(.lb-section:target) &::details-content {
+      content-visibility: visible;
+    }
+
+    :where(.lb-section:target) & > summary {
+      display: none;
+    }
+
+    @variant @work {
+      &::details-content {
+        content-visibility: visible;
+      }
+
+      & > summary {
+        display: none;
+      }
+    }
+  }
+}
+
+/* One step of the timeline: an icon node at the reading start and, to the next step, a rail in the
+   line color through the nodes' centres, with the accent drawn over it as the step scrolls through. */
 @utility lb-step {
   position: relative;
   view-timeline: --lb-step block;
@@ -690,8 +793,8 @@
   &:not(:last-child)::before,
   &:not(:last-child)::after {
     position: absolute;
-    inset-block: calc(var(--spacing-1) + var(--spacing-3)) calc(var(--spacing-1) * -1);
-    inset-inline-start: calc(var(--spacing-3) / 2 - var(--border-width-hairline));
+    inset-block: calc(var(--spacing-control-sm) + var(--spacing-1)) var(--spacing-1);
+    inset-inline-start: calc(var(--spacing-control-sm) / 2 - var(--border-width-hairline));
     inline-size: calc(var(--border-width-hairline) * 2);
     content: "";
   }
