@@ -47,9 +47,10 @@ export interface Preview {
    */
   bare?: boolean;
   /**
-   * Motion-library clips (keys) the page takes turns with: every visit (a refresh too) opens with the
-   * next one, its first frame as the header picture (features/previews/rotation.ts). The page keeps
-   * its own clip everywhere else (the link preview card, a claim).
+   * Motion-library clips (keys) the page takes turns with, its own first: a first visit opens with the
+   * first, and every refresh with the next (the page names it in its address, `?clip=<key>`), each with
+   * its first frame as the header picture (features/previews/rotation.ts). The page keeps its own clip
+   * everywhere else (the link preview card, a claim).
    */
   motionRotation?: readonly string[];
   /** The preview shows example states (live now, the verified look) that are not carried over. */

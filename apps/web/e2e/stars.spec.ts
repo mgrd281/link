@@ -73,8 +73,9 @@ test("a page prepared from a person's own application letter reads as his own pa
   const [nameBox, roleBox] = [await name.boundingBox(), await role.boundingBox()];
   expect(nameBox && roleBox && roleBox.y >= nameBox.y + nameBox.height - 1).toBe(true);
   expect(await name.evaluate((h1) => Math.round(h1.getBoundingClientRect().height / parseFloat(getComputedStyle(h1).lineHeight)))).toBe(1);
-  // The motion graphic comes from our own origin (one of his four library clips, a different one on
-  // every visit), its own first frame is the still, and it stays still for reduced motion.
+  // The motion graphic comes from our own origin (one of his four library clips: his own on a first
+  // visit, the next on every refresh, see below), its own first frame is the still, and it stays
+  // still for reduced motion.
   const clip = page.locator("video").first();
   const src = (await clip.getAttribute("src")) ?? "";
   expect(src).toMatch(/^\/media\/motion\/(palette-packen|barcode-scannen|lagerarbeit|ware-scannen)\.mp4$/);
@@ -94,17 +95,40 @@ test("a page prepared from a person's own application letter reads as his own pa
   expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
 });
 
-test("his page opens with the next of his clips on every refresh, each with its own still", async ({ request }) => {
-  const seen: string[] = [];
-  for (let visit = 0; visit < 6; visit += 1) {
-    const html = await (await request.get("/de/p/sevag-ghazarian-2131af")).text();
-    const key = /\/media\/motion\/([a-z-]+)\.mp4/.exec(html)?.[1] ?? "";
-    expect(["palette-packen", "barcode-scannen", "lagerarbeit", "ware-scannen"]).toContain(key);
+const ROTATION = ["palette-packen", "barcode-scannen", "lagerarbeit", "ware-scannen"];
+
+test("his page shows the clip its address names, each with its own still; a first visit shows his own", async ({ request }) => {
+  const clipOf = (html: string) => /\/media\/motion\/([a-z-]+)\.mp4/.exec(html)?.[1] ?? "";
+  // A first visit (and a link preview, a shared link) without a clip in the address: his own clip.
+  expect(clipOf(await (await request.get("/de/p/sevag-ghazarian-2131af")).text())).toBe("palette-packen");
+  for (const key of [...ROTATION, "not-a-clip"]) {
+    const html = await (await request.get(`/de/p/sevag-ghazarian-2131af?clip=${key}`)).text();
+    const shown = key === "not-a-clip" ? "palette-packen" : key;
+    expect(clipOf(html)).toBe(shown);
     // The still is that clip's own first frame, never another one's.
-    expect(html).toContain(`ex-motion-${key}`);
-    for (const other of ["palette-packen", "barcode-scannen", "lagerarbeit", "ware-scannen"].filter((name) => name !== key)) expect(html).not.toContain(`ex-motion-${other}`);
-    seen.push(key);
+    expect(html).toContain(`ex-motion-${shown}`);
+    for (const other of ROTATION.filter((name) => name !== shown)) expect(html).not.toContain(`ex-motion-${other}`);
   }
-  // Rendered per visit: more than one clip over six visits (other tests may visit in between).
-  expect(new Set(seen).size).toBeGreaterThan(1);
+});
+
+test("every refresh of his page shows the next of his four clips, and the address keeps its section", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/de/p/sevag-ghazarian-2131af");
+  const clip = page.locator("video").first();
+  // Once loaded, the page names the next clip in its own address; a refresh asks for it.
+  for (let visit = 0; visit < ROTATION.length + 1; visit += 1) {
+    const shown = ROTATION[visit % ROTATION.length] ?? "";
+    const next = ROTATION[(visit + 1) % ROTATION.length] ?? "";
+    await expect(clip).toHaveAttribute("src", `/media/motion/${shown}.mp4`);
+    await expect(page).toHaveURL(new RegExp(`\\?clip=${next}$`));
+    await page.reload();
+  }
+  // A section chosen in the page stays where it is across a refresh; only the clip moves on.
+  await page.goto("/de/p/sevag-ghazarian-2131af#section-letter-title");
+  await expect(page).toHaveURL(/\?clip=barcode-scannen#section-letter-title$/);
+  await page.reload();
+  await expect(clip).toHaveAttribute("src", "/media/motion/barcode-scannen.mp4");
+  await expect(page).toHaveURL(/\?clip=lagerarbeit#section-letter-title$/);
+  // The back button does not gain a step from it.
+  expect(await page.evaluate(() => history.length)).toBeLessThanOrEqual(3);
 });

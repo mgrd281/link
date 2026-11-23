@@ -201,15 +201,19 @@ feels like a real app. Everything is template-level again, and every other templ
   `packSpans`, `factSpans`) went with the tiles that needed them. The facts are the same kind of list,
   the label small and quiet above its value. `break-words` stays as the last resort for a word wider
   than the phone.
-- **A different clip on every visit (prepared previews).** A preview may name a rotation of library
-  clips (`motionRotation`). Sevag's takes turns with the four warehouse clips: Palette packen, Barcode
-  scannen, Lagerarbeit and Ware scannen. Only that page renders per request (`connection()`); the
-  other prepared previews stay prerendered. A counter in the server module, starting at a random
-  clip, gives every render the next clip, so on one server instance a refresh never repeats the clip
-  before it (several instances each keep their own count). Each clip brings its own first frame as the
-  still and its own description in the page's language. No cookie, no storage, nothing about the
-  visitor is kept. Everything outside the page itself (its link preview card, the dashboard, a claimed
-  page) keeps the page's own clip, the one its owner picks in the motion picker.
+- **A different clip on every refresh (prepared previews).** A preview may name a rotation of library
+  clips (`motionRotation`). Sevag's takes turns with the four warehouse clips: Palette packen (his own,
+  shown on a first visit and in every link preview), Barcode scannen, Lagerarbeit and Ware scannen.
+  Once the page has loaded it names the next clip in its own address (`?clip=<key>`, replacing the
+  history entry, the hash kept), and the server shows the clip the address names, so a refresh brings
+  exactly the next one, in order, whichever server copy answers. Only the address changes: no cookie,
+  no storage, nothing about the visitor is read, and the share button shares the address without it.
+  Only that page reads the address, so it alone renders per visit; the other prepared previews stay
+  prerendered. Each clip brings its own first frame as the still and its own description in the
+  page's language. Everything outside the page itself (the dashboard, a claimed page) keeps the page's
+  own clip, the one its owner picks in the motion picker. A first version kept the count in the
+  server's memory instead: on Vercel, where several copies answer, 7 of 19 refreshes in a row showed
+  the clip before again.
 - **Not done.** The sheet closes by tap, Escape or its button, not by dragging it down: a drag would
   need a gesture script for little gain. With a native modal dialog, Tab may step from its last row
   to the browser's own controls (the page behind stays inert).

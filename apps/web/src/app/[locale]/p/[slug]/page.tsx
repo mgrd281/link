@@ -1,19 +1,21 @@
 import { colorSchemeOf, resolveCreatorTheme } from "@linkyo/tokens/creator";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { previewChrome, sampleLabel } from "@/features/previews/preview-chrome";
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
-import { nextInRotation } from "@/features/previews/rotation";
+import { rotationTurn, withRotationClip } from "@/features/previews/rotation";
+import { RotationAddress } from "@/features/previews/rotation-address";
+import { ROTATION_PARAM } from "@/features/previews/rotation-param";
 
 /** The page's language as Open Graph names it (language_TERRITORY). */
 const OG_LOCALES: Record<string, string> = { de: "de_DE", en: "en_US", ar: "ar_AR" };
 
 interface Props {
   params: Promise<{ locale: string; slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export function generateStaticParams() {
@@ -67,7 +69,7 @@ export async function generateViewport({ params }: Props): Promise<Viewport> {
  * A creator page prepared for one person, clearly labelled as a private preview, or an example page
  * for a kind of creator (a fictional person), labelled as an example.
  */
-export default async function PreviewRoute({ params }: Props) {
+export default async function PreviewRoute({ params, searchParams }: Props) {
   const { locale, slug } = await params;
   const found = previewPage(slug, locale);
   if (!found) notFound();
@@ -75,16 +77,19 @@ export default async function PreviewRoute({ params }: Props) {
   const theme = resolveCreatorTheme(found.preview.theme, { rtlScript: locale === "ar" });
   // Linkyo's label (with the photographers' credit on a portfolio) and dock: features/previews/preview-chrome.tsx.
   const chrome = await previewChrome({ preview: found.preview, page: found.page, slug, locale, theme });
-  // A page that takes turns with clips (Sevag's) is rendered for every visit, so a refresh brings the
-  // next clip; every other preview stays a cached page.
+  // A page that takes turns with clips (Sevag's) shows the clip its address names and names the next
+  // one there once it has loaded, so a refresh brings the next clip (features/previews/rotation.ts).
+  // Only such a page reads the address, so it alone is rendered per visit; every other preview stays
+  // a prerendered page.
   const rotation = found.preview.motionRotation;
-  if (rotation?.length) await connection();
-  const page = rotation?.length ? nextInRotation(found.page, rotation) : found.page;
+  const turn = rotation?.length ? rotationTurn(rotation, (await searchParams)[ROTATION_PARAM]) : null;
+  const page = turn ? withRotationClip(found.page, turn.clip) : found.page;
   return (
     <>
       <style>{`html,body{background-color:${theme.palette.bg}}`}</style>
       {chrome.above}
       <PosterRenderer page={page} theme={theme} overlay={chrome.overlay} dock={chrome.dock} projectBase={`/${locale}/p/${slug}`} />
+      {turn ? <RotationAddress next={turn.next.key} /> : null}
     </>
   );
 }
