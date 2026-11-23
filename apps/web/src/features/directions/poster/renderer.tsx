@@ -513,13 +513,14 @@ function PosterBlock({
       // Partners with logos are tiles; clients without any logo are a list of names.
       return block.items.some((item) => hasImage(item.logo)) ? <BrandGrid block={block} /> : <BrandNames block={block} />;
     case "about":
-      return <AboutSection block={block} wide={portfolio.wide} />;
+      // Werkbogen (marker titles) sets the lead in its display face; Tiefdruck and the others in the body face.
+      return <AboutSection block={block} wide={portfolio.wide} lead={portfolio.theme.layout.headings === "marker" ? "display" : "body"} />;
     case "tools":
       return <ToolsSection block={block} />;
     case "timeline":
       return <TimelineSection block={block} locale={portfolio.locale} />;
     case "quotes":
-      return <QuotesSection block={block} ownerName={portfolio.ownerName} projects={portfolio.projects} base={portfolio.base} wide={portfolio.wide} />;
+      return <QuotesSection block={block} ownerName={portfolio.ownerName} projects={portfolio.projects} base={portfolio.base} suffix={portfolio.suffix} wide={portfolio.wide} />;
     case "contact":
       return <ContactBand block={block} now={portfolio.now} wide={portfolio.wide} />;
     case "newsletter":

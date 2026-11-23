@@ -114,6 +114,22 @@ describe("about", () => {
     expect(body).not.toContain("font-creator-display");
   });
 
+  it("the page passes its template's lead face and the sample route's query on to the sections", () => {
+    const quoteBlock = quotes([quote("M. R.", { project: "project-1" })]);
+    const page: Page = {
+      profile: { username: "jorinde", displayName: "Jorinde Ahlfeld", bio: "", avatar: { src: "none:", alt: "" }, verified: false, locale: "de" },
+      blocks: [project("project-1", "kueche", "Küche in Nussbaum"), about, quoteBlock],
+    };
+    const render = (template: "werkbogen" | "tiefdruck") =>
+      html(createElement(PosterRenderer, { page, theme: resolveCreatorTheme({ template }), projectBase: "/de/directions/poster/work", projectSuffix: `?chrome=0&template=${template}` }));
+    const lead = (markup: string) => /<p[^>]*class="([^"]*)"[^>]*>Der erste Absatz/.exec(markup)?.[1] ?? "";
+    expect(lead(render("werkbogen"))).toContain("font-creator-display");
+    expect(lead(render("tiefdruck"))).not.toContain("font-creator-display");
+    expect(lead(render("tiefdruck"))).toContain("text-body-lg");
+    // The quote's project link keeps the query, like every card of the page.
+    expect(render("tiefdruck")).toMatch(/<figcaption[^>]*>(?:(?!<\/figcaption>).)*href="\/de\/directions\/poster\/work\/kueche\?chrome=0&amp;template=tiefdruck"/);
+  });
+
   it("keeps the phone layout at every width on templates with the narrow column", () => {
     const narrow = html(createElement(AboutSection, { block: about, wide: false }));
     const wide = html(createElement(AboutSection, { block: about, wide: true }));
@@ -160,6 +176,13 @@ describe("timeline", () => {
     expect(markup).toMatch(/<p[^>]*>Eine Schule<\/p>/);
   });
 
+  it("links an address without an organisation by its host", () => {
+    const block: BlockOf<"timeline"> = { ...timeline, items: [{ role: "Freelance", years: { from: 2020 }, url: "https://www.example.com/studio" }] };
+    const markup = html(createElement(TimelineSection, { block, locale: "de" }));
+    expect([...markup.matchAll(/<a href="([^"]*)"/g)].map((match) => match[1])).toEqual(["https://www.example.com/studio"]);
+    expect(markup).toMatch(/<a href="https:\/\/www\.example\.com\/studio"[^>]*><bdi dir="ltr"[^>]*>example\.com<\/bdi>/);
+  });
+
   it("says “until now” in the page's language, with Latin digits", () => {
     const markup = html(createElement(TimelineSection, { block: timeline, locale: "ar" }), "ar");
     // Every range runs in the page's direction, so "2015–2021" and "2021–now" both start on the start side.
@@ -201,6 +224,9 @@ describe("quotes", () => {
     expect([...markup.matchAll(/<a href="([^"]*)"/g)].map((match) => match[1])).toEqual(["/de/p/jorinde-ahlfeld/kueche"]);
     // The link says where it leads: the words on screen, then the project's title for those who cannot see the quote above.
     expect(text(/<a href="\/de\/p\/jorinde-ahlfeld\/kueche".*?<\/a>/.exec(markup)?.[0] ?? "")).toBe("Zum Projekt: Küche in Nussbaum");
+    // A figure's caption is its first or last child (HTML): the link sits inside the caption, at its end.
+    expect(count(markup, /<\/figcaption><\/figure>/g)).toBe(count(markup, /<figure\b/g));
+    expect(markup).toMatch(/<figcaption[^>]*>(?:(?!<\/figcaption>).)*<a href="\/de\/p\/jorinde-ahlfeld\/kueche"/);
     // The sample route carries its query on every project address.
     const sample = html(createElement(QuotesSection, { block, ownerName: "J", projects, base: "/de/directions/poster/work", suffix: "?chrome=0&template=tiefdruck", wide: true }));
     expect(sample).toContain('href="/de/directions/poster/work/kueche?chrome=0&amp;template=tiefdruck"');
@@ -254,6 +280,8 @@ describe("clients", () => {
     expect(count(markup, /font-creator-display/g)).toBe(3);
     expect(markup).not.toContain("<img");
     expect([...markup.matchAll(/<a href="([^"]*)"/g)].map((match) => match[1])).toEqual(["https://example.com/stiftungen"]);
+    // 22 px type at leading 1.1 plus 10 px above and below: a 44 px target that does not make its row taller.
+    expect(markup).toMatch(/<li[^>]*text-h3 leading-tight[^>]*><a href="https:\/\/example\.com\/stiftungen" class="-my-2\.5 [^"]*\bpy-2\.5\b/);
   });
 
   it("the page shows names when no client has a logo and tiles as soon as one has", () => {
@@ -287,8 +315,19 @@ describe("contact band", () => {
     expect(action?.label).toBe("Projekt anfragen");
     const link = /<a href="mailto:werkstatt@example\.com"[^>]*>.*?<\/a>/.exec(markup)?.[0] ?? "";
     expect(text(link)).toBe(action?.label);
-    expect(link).toContain("h-control-xl");
+    expect(link).toContain("min-h-control-xl");
     expect(markup).not.toContain("<button");
+    // A long label (the schema allows 40 characters) wraps; the page's one primary action is never cut.
+    expect(link).not.toContain("truncate");
+  });
+
+  it("reads title, text, status, then the primary action", () => {
+    const markup = render();
+    const at = (needle: string) => markup.indexOf(needle);
+    expect(at("<h2")).toBeGreaterThan(-1);
+    expect(at("Das erste Gespräch kostet nichts.")).toBeGreaterThan(at("<h2"));
+    expect(at("Frei ab März 2027")).toBeGreaterThan(at("Das erste Gespräch kostet nichts."));
+    expect(at('<a href="mailto:werkstatt@example.com"')).toBeGreaterThan(at("Frei ab März 2027"));
   });
 
   it("puts the closing line in a heading and labels the band with it", () => {
@@ -311,6 +350,11 @@ describe("contact band", () => {
       "tel:+49300000000",
       "https://example.com/jorinde/lebenslauf.pdf",
     ]);
+  });
+
+  it("prints only the address of an e-mail link that carries a subject", () => {
+    const markup = render({ ...contact, links: [{ kind: "email", url: "mailto:hallo@example.com?subject=Anfrage%20Shooting" }] });
+    expect([...markup.matchAll(/<bdi dir="ltr"[^>]*>([^<]*)<\/bdi>/g)].map((match) => match[1])).toEqual(["hallo@example.com"]);
   });
 
   it("says “(PDF)” only when the CV's address ends in .pdf, and keeps the owner's own label", () => {
@@ -337,6 +381,27 @@ describe("contact band", () => {
     expect(render(contact, NOW, "ar")).toMatch(/<h3[^>]*>كيف نعمل معًا<\/h3>/);
     const { steps: _steps, ...plain } = contact;
     expect(render(plain)).not.toContain("<ol");
+  });
+});
+
+/**
+ * Classes that name a physical side (plan 1.4: none in new files). Every token of every class
+ * attribute is read, its variants (`md:`, `@work:`) and a leading minus taken off.
+ */
+const PHYSICAL = /^(?:left-|right-|pl-|pr-|ml-|mr-|text-left$|text-right$)/;
+const physicalClasses = (markup: string): string[] =>
+  [...markup.matchAll(/class="([^"]*)"/g)]
+    .flatMap((match) => (match[1] ?? "").split(/\s+/))
+    .filter((token) => PHYSICAL.test(token.slice(token.lastIndexOf(":") + 1).replace(/^-/, "")));
+
+describe("the physical-direction guard", () => {
+  it("finds a physical class wherever it stands in the attribute", () => {
+    expect(physicalClasses('<div class="pl-4 grid">')).toEqual(["pl-4"]);
+    expect(physicalClasses('<ul class="-ml-5 flex">')).toEqual(["-ml-5"]);
+    expect(physicalClasses('<ul class="flex -mr-5">')).toEqual(["-mr-5"]);
+    expect(physicalClasses('<p class="text-left">')).toEqual(["text-left"]);
+    expect(physicalClasses('<div class="grid md:pl-4">')).toEqual(["md:pl-4"]);
+    expect(physicalClasses('<div class="ps-4 -ms-5 text-start start-0 text-left-ish">')).toEqual([]);
   });
 });
 
@@ -373,7 +438,7 @@ describe("the four portfolio examples", () => {
     expect(sections.length).toBeGreaterThanOrEqual(3);
     for (const section of sections) {
       expect(section).not.toMatch(/<form\b|<iframe\b/);
-      expect(section).not.toMatch(/class="[^"]*(?:^|[\s:"])(?:left-|right-|pl-|pr-|ml-|mr-|text-left|text-right)/);
+      expect(physicalClasses(section)).toEqual([]);
     }
     // One line about who chose the quotes per quotes section, and the page's primary action in the band.
     const quotesBlocks = page.blocks.filter((block) => block.type === "quotes").length;

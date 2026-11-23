@@ -212,6 +212,12 @@ describe("linkDestination", () => {
     expect(linkDestination("mailto:booking@milaaurel.com")).toBe("booking@milaaurel.com");
     expect(linkDestination("tel:+4930123")).toBe("+4930123");
   });
+
+  it("shows the address alone when a mailto link carries a subject", () => {
+    expect(linkDestination("mailto:hallo@example.com?subject=Anfrage%20Shooting")).toBe("hallo@example.com");
+    expect(linkDestination("mailto:j%C3%B6rg@example.com")).toBe("jörg@example.com");
+    expect(linkDestination("mailto:broken%E0@example.com")).toBe("broken%E0@example.com");
+  });
 });
 
 describe("featuredApp", () => {

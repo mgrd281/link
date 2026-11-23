@@ -128,6 +128,12 @@ export function TimelineSection({ block, locale }: { block: BlockOf<"timeline">;
               ) : (
                 <p dir="auto" className={cn(pageSide, "text-body text-creator-fg-muted")}>{item.org}</p>
               )
+            ) : item.url ? (
+              // An address without an organisation still leads somewhere: its host is the link text.
+              <a href={item.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-1", textLink)}>
+                <bdi dir="ltr" className="truncate">{linkDestination(item.url)}</bdi>
+                <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+              </a>
             ) : null}
             {item.note ? <p dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>{item.note}</p> : null}
           </div>
@@ -161,30 +167,33 @@ function QuoteFigure({ item, alone, wide, project }: { item: Quote; alone: boole
           {item.text}
         </p>
       </blockquote>
-      <figcaption className="flex min-w-0 items-center gap-3">
-        {hasImage(item.photo) ? (
-          <span className="relative size-avatar-md shrink-0 overflow-hidden rounded-full bg-creator-surface-2">
-            {/* The name stands beside the picture. */}
-            <MediaImage src={item.photo.src} focal={item.photo.focal} alt="" sizes={mediaSizes.thumb} />
-          </span>
-        ) : null}
-        <span className="grid min-w-0 gap-0.5">
-          <span dir="auto" className={cn(pageSide, "text-small font-semibold")}>{item.name}</span>
-          <span dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>{item.role}</span>
-        </span>
-      </figcaption>
-      {project ? (
-        <a href={project.href} className={cn("inline-flex min-h-touch-target items-center gap-1 text-small", textLink)}>
-          <span>
-            {t("portfolio.seeProject")}
-            <span className="sr-only">
-              {": "}
-              <bdi>{project.title}</bdi>
+      {/* A figure's caption is its first or last child, so the project link sits inside it. */}
+      <figcaption className="grid min-w-0 justify-items-start gap-3">
+        <span className="flex min-w-0 items-center gap-3">
+          {hasImage(item.photo) ? (
+            <span className="relative size-avatar-md shrink-0 overflow-hidden rounded-full bg-creator-surface-2">
+              {/* The name stands beside the picture. */}
+              <MediaImage src={item.photo.src} focal={item.photo.focal} alt="" sizes={mediaSizes.thumb} />
             </span>
+          ) : null}
+          <span className="grid min-w-0 gap-0.5">
+            <span dir="auto" className={cn(pageSide, "text-small font-semibold")}>{item.name}</span>
+            <span dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>{item.role}</span>
           </span>
-          <Icon icon={ArrowRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
-        </a>
-      ) : null}
+        </span>
+        {project ? (
+          <a href={project.href} className={cn("inline-flex min-h-touch-target items-center gap-1 text-small", textLink)}>
+            <span>
+              {t("portfolio.seeProject")}
+              <span className="sr-only">
+                {": "}
+                <bdi>{project.title}</bdi>
+              </span>
+            </span>
+            <Icon icon={ArrowRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+          </a>
+        ) : null}
+      </figcaption>
     </figure>
   );
 }
@@ -280,6 +289,13 @@ export function ContactBand({ block, now, wide }: { block: BlockOf<"contact">; n
   };
   return (
     <section aria-labelledby={id} className={cn("grid grid-cols-1 justify-items-start gap-6 rounded-creator-card bg-creator-surface-2 p-6 @prose:p-10", wide && "@work:p-12")}>
+      <div className="grid max-w-prose gap-3">
+        <h2 id={id} dir="auto" className={cn(pageSide, "font-creator-display text-h1 leading-tight text-balance break-words", wide && "@work:text-display-sm")} style={displayStyle}>
+          {block.title}
+        </h2>
+        {block.text ? <p dir="auto" className={cn(pageSide, "text-body-lg text-creator-fg-muted")}>{block.text}</p> : null}
+      </div>
+      {/* Title, text, then the status (plan 1.4.9): whoever lands on the heading still meets it. */}
       {status ? (
         <p className="flex items-center gap-2 text-small">
           {/* The text carries the meaning; the dot only marks the line. */}
@@ -287,15 +303,10 @@ export function ContactBand({ block, now, wide }: { block: BlockOf<"contact">; n
           <span dir="auto">{status}</span>
         </p>
       ) : null}
-      <div className="grid max-w-prose gap-3">
-        <h2 id={id} dir="auto" className={cn(pageSide, "font-creator-display text-h1 leading-tight text-balance break-words", wide && "@work:text-display-sm")} style={displayStyle}>
-          {block.title}
-        </h2>
-        {block.text ? <p dir="auto" className={cn(pageSide, "text-body-lg text-creator-fg-muted")}>{block.text}</p> : null}
-      </div>
-      <a href={block.primary.url} className={cn("inline-flex h-control-xl w-full min-w-0 items-center justify-center gap-2 rounded-creator-button bg-creator-accent px-6 text-body font-semibold text-creator-accent-fg @prose:w-auto", pressable)}>
+      <a href={block.primary.url} className={cn("inline-flex min-h-control-xl w-full min-w-0 items-center justify-center gap-2 rounded-creator-button bg-creator-accent px-6 py-3 text-center text-body font-semibold text-creator-accent-fg @prose:w-auto", pressable)}>
         {block.primary.icon ? <LinkIconGlyph icon={block.primary.icon} size="sm" className="shrink-0" /> : null}
-        <span dir="auto" className="truncate">{block.primary.label}</span>
+        {/* The page's one primary action is never cut: a long label wraps. */}
+        <span dir="auto" className="min-w-0 text-balance break-words">{block.primary.label}</span>
       </a>
       {links.length > 0 ? (
         <ul className="grid w-full grid-cols-1 gap-x-8 @prose:flex @prose:flex-wrap">
@@ -356,8 +367,9 @@ export function BrandNames({ block }: { block: BlockOf<"brands"> }): ReactNode {
           // runs in its own direction (a Latin name on an Arabic page keeps its punctuation in place).
           <li key={item.name} className={cn("min-w-0 border-s border-creator-line px-5 py-2 font-creator-display text-h3 leading-tight break-words", ownDirection)} style={displayStyle}>
             {item.url ? (
-              // The link is as tall as its row (a comfortable target) without making the row taller.
-              <a href={item.url} className={cn("-my-2 inline-block rounded-xs py-2 text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring", ownDirection)}>
+              // The link reaches the 44 px target (22 px type at 1.1 plus 2 x 10 px) while its margin box
+              // keeps the row's height, so rows do not grow.
+              <a href={item.url} className={cn("-my-2.5 inline-block rounded-xs py-2.5 text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring", ownDirection)}>
                 {item.name}
               </a>
             ) : (

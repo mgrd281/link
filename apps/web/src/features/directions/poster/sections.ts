@@ -112,8 +112,16 @@ export function groupSections(blocks: readonly Block[], featured?: string): Post
 
 /** Where a link leads, shown under its title so visitors know before they tap. */
 export function linkDestination(url: string): string {
-  if (url.startsWith("mailto:")) return url.slice("mailto:".length);
-  if (url.startsWith("tel:")) return url.slice("tel:".length);
+  // The address only: a mailto query (`?subject=…`) is part of the link, not of what visitors read.
+  const scheme = ["mailto:", "tel:"].find((prefix) => url.startsWith(prefix));
+  if (scheme) {
+    const raw = url.slice(scheme.length).split("?")[0] ?? "";
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  }
   try {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {
