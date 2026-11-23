@@ -158,6 +158,18 @@ describe("import", () => {
     expect(parseImport(JSON.stringify({ page, theme: {} }))?.page.blocks).toHaveLength(1);
   });
 
+  it("keeps the owner's work layout, the one layout choice stored in the theme, and drops an unknown one", async () => {
+    const { parseImport } = await import("./import");
+    const { resolveCreatorTheme } = await import("@linkyo/tokens/creator");
+    const imported = (theme: Record<string, unknown>) => parseImport(JSON.stringify({ site: { page, theme } }))?.theme ?? {};
+    expect(imported({ template: "tiefdruck", projects: "bento", buttonShape: "pill" })).toEqual({ template: "tiefdruck", projects: "bento", buttonShape: "pill" });
+    expect(imported({ template: "tiefdruck", projects: "masonry" })).toEqual({ template: "tiefdruck" });
+    expect(imported({ projects: 3 })).toEqual({});
+    // What comes back resolves to the layout the owner chose, not to the template's own.
+    expect(resolveCreatorTheme(imported({ template: "tiefdruck", projects: "bento" })).layout.projects).toBe("bento");
+    expect(resolveCreatorTheme({ template: "tiefdruck" }).layout.projects).toBe("list");
+  });
+
   it("refuses anything that isn't a valid page", async () => {
     const { parseImport } = await import("./import");
     expect(parseImport("not json")).toBeNull();

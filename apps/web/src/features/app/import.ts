@@ -1,5 +1,5 @@
 import { pageSchema, type Page } from "@linkyo/blocks";
-import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
+import { isProjectsStyle, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import type { Legal } from "@/features/account/types";
 
@@ -37,6 +37,9 @@ export function parseImport(text: string): ImportedSite | null {
       if (typeof value === "string" && value.length <= 40) theme[key] = value;
     }
     if (typeof site.theme.tint === "number" && site.theme.tint >= 0 && site.theme.tint <= 1) theme.tint = site.theme.tint;
+    // The owner's work layout is the one layout choice a theme stores. Only a known value is kept
+    // (the list above checks length alone), so an export comes back as it went out.
+    if (isProjectsStyle(site.theme.projects)) theme.projects = site.theme.projects;
   }
 
   const legal = isRecord(site.legal)
