@@ -3405,7 +3405,12 @@
       "sla": {
         "ok": "in {time}",
         "soon": "due soon: in {time}",
-        "overdue": "overdue by {time}"
+        "overdue": "overdue by {time}",
+        "time": {
+          "day": "{count, plural, one {# day} other {# days}}",
+          "hour": "{count, plural, other {# hr}}",
+          "minute": "{count, plural, other {# min}}"
+        }
       },
       "empty": "No orders in this view.",
       "withdrawalPending": "Withdrawal received",
@@ -3447,7 +3452,9 @@
         "title": "Proposal for {customer}",
         "note": "This proposal never changes the live page. Only the account itself can apply it.",
         "message": "Message to the account (optional)",
-        "locked": "This proposal is delivered. Editing opens again once the account requests changes."
+        "locked": "This proposal is delivered. Editing opens again once the account requests changes.",
+        "emptyTitle": "Nothing in this proposal yet",
+        "emptyBody": "Add the first link from the briefing, such as a song, a video or the shop. The account sees the proposal only after you deliver it."
       },
       "delivered": "Proposal delivered. The account gets an email.",
       "refunded": "Refund started.",
@@ -3461,6 +3468,7 @@
         "revision_requested": "Changes requested",
         "proposal_applied": "Proposal applied",
         "refunded": "Refunded",
+        "refunded_partial": "Partly refunded: {amount}",
         "withdrawal_received": "Withdrawal received",
         "withdrawal_accepted": "Withdrawal accepted",
         "withdrawal_rejected": "Withdrawal rejected",

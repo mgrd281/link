@@ -76,5 +76,54 @@ reset role;
 
 select is((select count(*)::int from public.reserved_usernames), 56, 'the 33 first names and the 23 of v7 are reserved');
 
+-- ── 5–6. The legal notice reaches visitors only when it is complete ─────────────────────────
+-- Every new page is seeded with the sign-up e-mail in its notice; the form saves unfinished entries.
+update public.sites set legal = '{"name":"","address":"","email":"pia@example.com","phone":""}'
+  where profile_id = 'a1000000-0000-4000-8000-000000000001';
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select is(public.public_page('pia') -> 'legal', '{}'::jsonb,
+  'a notice that only holds the seeded sign-up e-mail is not handed out');
+select ok(public.public_page('pia')::text not like '%pia@example.com%', 'the private address appears nowhere in the answer');
+reset role;
+update public.sites set legal = '{"name":"Pia Sommer","address":"Hafenstraße 1, 20457 Hamburg","email":"","phone":"+49 40 123456"}'
+  where profile_id = 'a1000000-0000-4000-8000-000000000001';
+set local role anon;
+select is(public.public_page('pia') -> 'legal', '{}'::jsonb,
+  'a half-filled notice (name, home address and phone, no e-mail yet) stays private');
+select ok(public.public_page('pia')::text not like '%Hafenstraße%' and public.public_page('pia')::text not like '%123456%',
+  'neither the address nor the phone number leaks');
+reset role;
+update public.sites set legal = '{"name":"Pia Sommer","address":"Hafenstraße 1","email":"pia at example.com","phone":""}'
+  where profile_id = 'a1000000-0000-4000-8000-000000000001';
+set local role anon;
+select is(public.public_page('pia') -> 'legal', '{}'::jsonb, 'an e-mail that cannot be right does not complete it');
+reset role;
+update public.sites set legal = '{"name":" P ","address":"Hafenstraße 1","email":"kontakt@pia.example","phone":""}'
+  where profile_id = 'a1000000-0000-4000-8000-000000000001';
+set local role anon;
+select is(public.public_page('pia') -> 'legal', '{}'::jsonb, 'nor does a one-letter name');
+reset role;
+update public.sites set legal = '{"name":"Pia Sommer","address":"   ","email":"kontakt@pia.example","phone":""}'
+  where profile_id = 'a1000000-0000-4000-8000-000000000001';
+set local role anon;
+select is(public.public_page('pia') -> 'legal', '{}'::jsonb, 'or an address of spaces');
+reset role;
+update public.sites set legal = '{"name":" Pia Sommer ","address":"Hafenstraße 1, 20457 Hamburg","email":" kontakt@pia.example ","phone":""}'
+  where profile_id = 'a1000000-0000-4000-8000-000000000001';
+set local role anon;
+select is(public.public_page('pia') -> 'legal',
+  '{"name":" Pia Sommer ","address":"Hafenstraße 1, 20457 Hamburg","email":" kontakt@pia.example ","phone":""}'::jsonb,
+  'a complete notice (name, address, valid e-mail) is public, as saved');
+select is(
+  (select array_agg(k order by k) from jsonb_object_keys(public.public_page('pia')) k),
+  array['legal', 'page', 'theme', 'updatedAt'], 'and the answer keeps its shape');
+select throws_ok($$ select public.legal_is_complete('{}'::jsonb) $$, '42501', null,
+  'visitors cannot call the completeness check directly');
+select lives_ok($$ select public.public_page('pia') $$, 'visitors may still read public pages');
+reset role;
+select is(public.legal_is_complete('[]'::jsonb), false, 'a notice that is not an object is never complete');
+select is(public.legal_is_complete(null), false, 'neither is a missing one');
+
 select * from finish();
 rollback;

@@ -17,8 +17,9 @@ import { browserSupabase } from "@/lib/supabase/browser";
 import { useAdmin } from "../session";
 
 import { SlaBadge } from "./contracts-panel";
-import { ApiError, assignToMe, deliverProposal, kitComplete, loadOrder, refundOrder, signedUrls, type TeamOrder, type TeamProposal } from "./orders-data";
+import { ApiError, assignToMe, deliverProposal, kitComplete, loadOrder, refundOrder, signedUrls, type OrderEvent, type TeamOrder, type TeamProposal } from "./orders-data";
 import { PackageBadge, StatusBadge, useMinuteClock, WithdrawalBadge } from "./orders-screen";
+import { partialRefund } from "./team-words";
 
 /** The draft of the current round (round = revisions used), if there is one. */
 export function currentDraft(order: TeamOrder): TeamProposal | null {
@@ -146,12 +147,18 @@ function Proposals({ order }: { order: TeamOrder }) {
 
 function Timeline({ order }: { order: TeamOrder }) {
   const t = useTranslations("admin.orders");
+  const locale = useLocale() as EmailLocale;
+  const label = (event: OrderEvent) => {
+    const partial = partialRefund(event);
+    if (partial) return t("events.refunded_partial", { amount: formatEuro(partial.amountCents, locale) });
+    return t.has(`events.${event.kind}`) ? t(`events.${event.kind}`) : event.kind;
+  };
   return (
     <Panel title={t("detail.timeline")}>
       <ol className="grid gap-3">
         {order.events.map((event) => (
-          <li key={event.id} className="grid gap-0.5 border-s border-line-strong ps-3 text-small">
-            <span className="font-medium">{t.has(`events.${event.kind}`) ? t(`events.${event.kind}`) : event.kind}</span>
+          <li key={event.id} data-event={event.kind} className="grid gap-0.5 border-s border-line-strong ps-3 text-small">
+            <span className="font-medium">{label(event)}</span>
             <span className="text-caption text-fg-secondary">
               <When at={event.at} />
               {event.actor ? (

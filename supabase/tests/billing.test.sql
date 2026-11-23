@@ -7,7 +7,7 @@ select no_plan();
 
 -- People: Ana (Start), Mia (Premium) and Kai (two orders) buy the service; Ben is another customer;
 -- Cara builds pages (editor), Dan is a viewer, Olga owns the team; Pete, Quin, Rita, Stan, Vic, Wes and
--- Xia test Pro; Zoe deletes her account.
+-- Xia test Pro; Zoe deletes her account; Yara withdraws from Pro and Finn's refunds arrive out of order.
 insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, raw_app_meta_data, created_at, updated_at, email_confirmed_at) values
   ('b3000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ana@example.com', '{"username":"ana"}', '{}', now(), now(), now()),
   ('b3000000-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ben@example.com', '{"username":"ben"}', '{}', now(), now(), now()),
@@ -23,7 +23,9 @@ insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, r
   ('b3000000-0000-4000-8000-000000000012', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'vic@example.com', '{"username":"vic"}', '{}', now(), now(), now()),
   ('b3000000-0000-4000-8000-000000000013', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'wes@example.com', '{"username":"wes"}', '{}', now(), now(), now()),
   ('b3000000-0000-4000-8000-000000000014', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'xia@example.com', '{"username":"xia"}', '{}', now(), now(), now()),
-  ('b3000000-0000-4000-8000-000000000015', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'zoe@example.com', '{"username":"zoe"}', '{}', now(), now(), now());
+  ('b3000000-0000-4000-8000-000000000015', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'zoe@example.com', '{"username":"zoe"}', '{}', now(), now(), now()),
+  ('b3000000-0000-4000-8000-000000000016', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'yara@example.com', '{"username":"yara"}', '{}', now(), now(), now()),
+  ('b3000000-0000-4000-8000-000000000017', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'finn@example.com', '{"username":"finn"}', '{}', now(), now(), now());
 insert into public.sites (profile_id, onboarded, theme, page) values
   ('b3000000-0000-4000-8000-000000000001', true, '{"template":"nocturne"}', '{"profile":{"displayName":"Ana"},"blocks":[{"id":"a","type":"link","title":"Shop","url":"https://example.com"}]}'),
   ('b3000000-0000-4000-8000-000000000006', true, '{"template":"daylight"}', '{"profile":{"displayName":"Mia"},"blocks":[]}');
@@ -291,7 +293,15 @@ select public.upsert_pro_subscription('b3000000-0000-4000-8000-000000000012', 'c
   now() + interval '30 days', false);
 select is((select plan::text || '/' || coalesce(status::text, 'null') from public.subscriptions
   where profile_id = 'b3000000-0000-4000-8000-000000000012'), 'free/null', 'a canceled one mirrors as free');
+select ok(not public.has_pro('b3000000-0000-4000-8000-000000000012'), 'and ends Pro');
+-- The team gives Pro by hand afterwards (admin_set_subscription writes public.subscriptions).
+update public.subscriptions set plan = 'pro', status = 'active' where profile_id = 'b3000000-0000-4000-8000-000000000012';
+select ok(public.has_pro('b3000000-0000-4000-8000-000000000012'),
+  'Pro the team sets by hand counts once the Stripe subscription is canceled');
 select public.update_pro_subscription('sub_vic', 'refunded');
+select ok(not public.has_pro('b3000000-0000-4000-8000-000000000012'), 'a refund mirrors as free again');
+update public.subscriptions set plan = 'pro', status = 'active' where profile_id = 'b3000000-0000-4000-8000-000000000012';
+select ok(public.has_pro('b3000000-0000-4000-8000-000000000012'), 'and Pro by hand counts after a refunded one, too');
 select public.upsert_pro_subscription('b3000000-0000-4000-8000-000000000012', 'cus_vic', 'sub_vic', 'active',
   now() + interval '60 days', false);
 select is((select status::text from public.entitlements where stripe_subscription_id = 'sub_vic'), 'refunded',
@@ -354,10 +364,24 @@ select throws_ok($$ select public.record_refund('pi_k2', 'gift') $$, 'P0001', 'l
 select public.upsert_pro_subscription('b3000000-0000-4000-8000-000000000014', 'cus_xia', 'sub_xia', 'active',
   now() + interval '30 days', false);
 select public.record_invoice('in_xia', 'b3000000-0000-4000-8000-000000000014', 'sub_xia', 800, 'paid', 'pi_in_xia');
-select is(public.record_refund('pi_in_xia'), 'ok', 'a Pro invoice is found by its payment');
+select is(public.record_refund('pi_in_xia', 'goodwill', 100), 'ok', 'a Pro invoice is found by its payment');
+select is((select status from public.invoices where id = 'in_xia'), 'paid', 'a partial goodwill refund leaves the invoice paid');
+select is((select status::text from public.entitlements where stripe_subscription_id = 'sub_xia'), 'active',
+  'and Pro as it is');
+select is(public.record_refund('pi_in_xia', 'goodwill', 800), 'ok', 'a whole month is refunded in the Stripe dashboard');
 select is((select status from public.invoices where id = 'in_xia'), 'refunded', 'the invoice is refunded');
+select is((select status::text from public.entitlements where stripe_subscription_id = 'sub_xia'), 'active',
+  'but a goodwill refund never ends the contract (Stripe keeps billing it)');
+select ok(public.has_pro('b3000000-0000-4000-8000-000000000014'), 'the customer keeps Pro');
+select is((select plan::text || '/' || status::text from public.subscriptions where profile_id = 'b3000000-0000-4000-8000-000000000014'),
+  'pro/active', 'and the console still shows it');
+select public.record_invoice('in_xia_2', 'b3000000-0000-4000-8000-000000000014', 'sub_xia', 800, 'paid', 'pi_in_xia_2');
+select is(public.record_refund('pi_in_xia_2'), 'ok', 'a voluntary refund of an invoice');
+select is((select status::text from public.entitlements where stripe_subscription_id = 'sub_xia'), 'active',
+  'does not end the contract either');
+select is(public.record_refund('pi_in_xia', 'withdrawal'), 'ok', 'only a withdrawal reverses it');
 select is((select status::text from public.entitlements where stripe_subscription_id = 'sub_xia'), 'refunded',
-  'and so is its entitlement');
+  'the entitlement is refunded');
 select ok(not public.has_pro('b3000000-0000-4000-8000-000000000014'), 'which ends Pro');
 select public.record_invoice('in_xia', 'b3000000-0000-4000-8000-000000000014', 'sub_xia', 800, 'paid');
 select is((select status || '/' || payment_intent from public.invoices where id = 'in_xia'), 'refunded/pi_in_xia',
@@ -524,6 +548,106 @@ reset role;
 select is((select note from public.withdrawals where email = 'flood11@example.com'), 'Spam', 'with the note');
 select is((select count(*)::int from public.audit_log where at = now() and action in ('withdrawal.rejected',
   'withdrawal.accepted', 'cancellation.resumed', 'withdrawal.handled')), 4, 'every decision is in the activity log');
+
+-- ── 18. Refunds: partial amounts, and Stripe's report arriving before the console's ─────────
+insert into public.orders (profile_id, customer_email, package, status, locale, amount_cents, vat_mode, early_start,
+    start_after, promised_due_at, due_at, revisions_allowed, stripe_session_id, stripe_payment_intent,
+    confirmation_sent_at, briefing, delivered_at) values
+  ('b3000000-0000-4000-8000-000000000017', 'finn@example.com', 'premium', 'delivered', 'de', 7999, 'standard19', true,
+    now(), now(), now(), 3, 'cs_f1', 'pi_f1', now(), '{}', now() - interval '1 day'),
+  ('b3000000-0000-4000-8000-000000000017', 'finn@example.com', 'start', 'delivered', 'de', 2499, 'standard19', true,
+    now(), now(), now(), 1, 'cs_f2', 'pi_f2', now(), '{}', now() - interval '1 day'),
+  ('b3000000-0000-4000-8000-000000000017', 'finn@example.com', 'start', 'queued', 'de', 2499, 'standard19', true,
+    now(), now(), now(), 1, 'cs_f3', 'pi_f3', now(), '{}', null),
+  ('b3000000-0000-4000-8000-000000000017', 'finn@example.com', 'start', 'queued', 'de', 2499, 'standard19', true,
+    now(), now(), now(), 1, 'cs_f4', 'pi_f4', now(), '{}', null);
+
+-- A partial goodwill refund (5 of 79.99 EUR in the Stripe dashboard) does not end the order.
+select is(public.record_refund('pi_f1', 'goodwill', 500), 'ok', 'a partial refund is recorded');
+select is((select status::text || '/' || coalesce(refund_kind, 'none') || '/' || (refunded_at is null)
+  from public.orders where stripe_session_id = 'cs_f1'), 'delivered/none/true', 'the order goes on as it was');
+select ok(public.voluntary_refund_available((select id from public.orders where stripe_session_id = 'cs_f1')),
+  'and keeps its money-back promise');
+select is((select details from public.order_events e join public.orders o on o.id = e.order_id
+  where o.stripe_session_id = 'cs_f1' and e.kind = 'refunded'), '{"amount":500,"kind":"goodwill","partial":true}'::jsonb,
+  'the timeline notes it as partial');
+select is(public.record_refund('pi_f1', 'goodwill', 500), 'ok', 'the same report again (a redelivered event)');
+select is((select count(*)::int from public.order_events e join public.orders o on o.id = e.order_id
+  where o.stripe_session_id = 'cs_f1' and e.kind = 'refunded'), 1, 'is noted once');
+select is(public.record_refund('pi_f1', 'goodwill', 7999), 'ok', 'Stripe reports the sum: once it is the whole amount');
+select is((select status::text || '/' || refund_kind from public.orders where stripe_session_id = 'cs_f1'),
+  'refunded/goodwill', 'the order is refunded');
+
+-- The console's own call arrives after the webhook's: the kind the team chose wins.
+select is(public.record_refund('pi_f1', 'voluntary', 7999), 'ok', 'the console records the money-back after the webhook');
+select is((select status::text || '/' || refund_kind from public.orders where stripe_session_id = 'cs_f1'),
+  'refunded/voluntary', 'the refund is the voluntary one');
+select is((select array_agg(e.details ->> 'kind' order by e.id) from public.order_events e join public.orders o on o.id = e.order_id
+  where o.stripe_session_id = 'cs_f1' and e.kind = 'refunded' and e.details ->> 'partial' is null), array['voluntary'],
+  'with one timeline entry that names it');
+select is(public.record_refund('pi_f1', 'goodwill', 7999), 'ok', 'a late report from Stripe');
+select is((select refund_kind from public.orders where stripe_session_id = 'cs_f1'), 'voluntary', 'never downgrades it');
+select ok(not public.voluntary_refund_available((select id from public.orders where stripe_session_id = 'cs_f2')),
+  'so the once-per-account money-back is used up for the next order');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select is(public.admin_order_refund_target((select id from public.orders where stripe_session_id = 'cs_f2')) -> 'voluntaryUsed',
+  'true'::jsonb, 'and the team is told so');
+reset role;
+
+-- An accepted withdrawal (the team keeps a share): Stripe's report comes first, without a kind.
+select set_config('test.w3', public.record_withdrawal('Finn', 'finn@example.com',
+  (select number from public.orders where stripe_session_id = 'cs_f3'), 'ip-finn') ->> 'id', true);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select is(public.admin_resolve_withdrawal(current_setting('test.w3')::uuid, 'accepted', null, 1000) ->> 'paymentIntent', 'pi_f3',
+  'the team accepts a withdrawal and refunds 10 of 24.99 EUR');
+reset role;
+select is((select withdrawal_pending from public.orders where stripe_session_id = 'cs_f3'), true, 'the order waits for the refund');
+select is(public.record_refund('pi_f3', 'goodwill', 1000), 'ok', 'the webhook reports the refund before the console does');
+select is((select status::text || '/' || refund_kind || '/' || (withdrawn_at is not null) || '/' || withdrawal_pending
+  from public.orders where stripe_session_id = 'cs_f3'), 'withdrawn/withdrawal/true/false',
+  'it is that withdrawal''s refund: the order is withdrawn and waits no longer');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select ok(not exists (select 1 from jsonb_array_elements(public.admin_orders('open')) o
+  where o ->> 'id' = (select id::text from public.orders where stripe_session_id = 'cs_f3')), 'and leaves the open queue');
+reset role;
+select is(public.record_refund('pi_f3', 'withdrawal', 1000), 'ok', 'the console''s own call afterwards');
+select is((select count(*)::int from public.order_events e join public.orders o on o.id = e.order_id
+  where o.stripe_session_id = 'cs_f3' and e.kind = 'refunded'), 1, 'changes nothing: one refund, one entry');
+
+-- A full dashboard refund while a withdrawal is still undecided, then the console's withdrawal.
+select set_config('test.w4', public.record_withdrawal('Finn', 'finn@example.com',
+  (select number from public.orders where stripe_session_id = 'cs_f4'), 'ip-finn') ->> 'id', true);
+select is(public.record_refund('pi_f4', 'goodwill', 2499), 'ok', 'a full refund from the Stripe dashboard');
+select is((select status::text || '/' || refund_kind || '/' || withdrawal_pending from public.orders where stripe_session_id = 'cs_f4'),
+  'refunded/goodwill/false', 'a refunded order never stays "withdrawal pending"');
+select is(public.record_refund('pi_f4', 'withdrawal', 2499), 'ok', 'recorded as the withdrawal afterwards');
+select is((select status::text || '/' || refund_kind || '/' || (withdrawn_at is not null) from public.orders where stripe_session_id = 'cs_f4'),
+  'withdrawn/withdrawal/true', 'the order ends as withdrawn');
+
+-- Pro: the refund of an accepted withdrawal, reported by Stripe first, reverses the contract.
+select public.upsert_pro_subscription('b3000000-0000-4000-8000-000000000016', 'cus_yara', 'sub_yara', 'active',
+  now() + interval '30 days', false);
+select public.record_invoice('in_yara', 'b3000000-0000-4000-8000-000000000016', 'sub_yara', 800, 'paid', 'pi_in_yara');
+select set_config('test.w5', public.record_withdrawal('Yara', 'yara@example.com', 'Linkyo Pro', 'ip-yara') ->> 'id', true);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select is(public.admin_resolve_withdrawal(current_setting('test.w5')::uuid, 'accepted') ->> 'subscription', 'sub_yara',
+  'the team accepts a Pro withdrawal');
+select throws_ok($$ select public.record_refund('pi_in_yara', 'goodwill', 800) $$, '42501', null,
+  'the team cannot record refunds itself (server only)');
+reset role;
+select is(public.record_refund('pi_in_yara', 'goodwill', 800), 'ok', 'Stripe reports the refund');
+select is((select i.status || '/' || e.status::text from public.invoices i
+  join public.entitlements e on e.stripe_subscription_id = i.subscription where i.id = 'in_yara'), 'refunded/refunded',
+  'the invoice and the entitlement are refunded');
+select ok(not public.has_pro('b3000000-0000-4000-8000-000000000016'), 'and Pro ended');
+set local role anon;
+select throws_ok($$ select public.has_pro('b3000000-0000-4000-8000-000000000016') $$, '42501', null,
+  'visitors cannot ask who has Pro');
+reset role;
 
 -- ── 16. Retention ───────────────────────────────────────────────────────────────────────────
 insert into public.orders (profile_id, customer_email, package, status, locale, amount_cents, vat_mode, early_start,

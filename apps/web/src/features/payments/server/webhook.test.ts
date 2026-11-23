@@ -5,9 +5,10 @@ import { emailTranslator } from "@/features/email/templates/render";
 import type { EmailMessage } from "@/features/email/types";
 import de from "@/messages/de.json";
 
-import { WebhookSignatureError, type PaymentsEvent, type SubscriptionState } from "../types";
+import { WebhookSignatureError, type PaymentsEvent } from "../types";
 
 import { StripePayments } from "./stripe-payments";
+import type { SubscriptionRead } from "./subscription";
 import { handleStripeEvent, type EntitlementStatus, type OrderForEmail, type WebhookDeps, type WebhookStore } from "./webhook";
 
 /**
@@ -107,15 +108,15 @@ function harness() {
       invoices.set(input.id, { account: input.account, subscription: input.subscription, state: current?.state === "refunded" ? "refunded" : input.state, paymentIntent: current?.paymentIntent ?? input.paymentIntent });
       return Promise.resolve();
     },
-    refundKind: (paymentIntent) => Promise.resolve(paymentIntent === "pi_console" ? "voluntary" : null),
-    recordRefund: (paymentIntent, kind) => {
-      log.push(`refund ${paymentIntent} ${kind}`);
+    recordRefund: (paymentIntent, kind, amount) => {
+      log.push(`refund ${paymentIntent} ${kind} ${String(amount)}`);
       return Promise.resolve("ok");
     },
     accountEmail: () => Promise.resolve("account@example.com"),
   };
 
-  const subscription = (overrides: Partial<SubscriptionState> = {}): SubscriptionState => ({
+  // The subscription as Stripe has it right now (what `retrieveSubscription` answers); tests change it.
+  let atStripe: SubscriptionRead = {
     id: "sub_1",
     status: "active",
     periodEnd: "2026-12-23T09:15:00.000Z",
@@ -123,13 +124,16 @@ function harness() {
     cancelAt: null,
     customerId: "cus_1",
     profileId: "p-2",
-    ...overrides,
-  });
+  };
+  const reads: string[] = [];
 
   const deps: WebhookDeps = {
     store,
     payments: {
-      retrieveSubscription: () => Promise.resolve(subscription()),
+      retrieveSubscription: (id) => {
+        reads.push(id);
+        return Promise.resolve({ ...atStripe, id });
+      },
       invoicePaymentIntent: (id) => Promise.resolve(`pi_${id}`),
     },
     send: (message) => {
@@ -154,6 +158,11 @@ function harness() {
     invoices,
     mails,
     deps,
+    reads,
+    /** Changes the subscription at Stripe (the next read sees it). */
+    stripeNow: (change: Partial<SubscriptionRead>) => {
+      atStripe = { ...atStripe, ...change };
+    },
     failNextSends: (count: number) => {
       failSends = count;
     },
@@ -172,15 +181,16 @@ const paidSession = (session = "cs_paid") => ({
   metadata: { profile_id: "p-1", product: "service-start", locale: "de" },
 });
 
-const subscriptionObject = (status = "active") => ({
+/** A subscription as an event carries it: a snapshot from when Stripe made the event. */
+const subscriptionObject = (status = "active", periodEnd = "2026-12-23T09:15:00Z", metadata: Record<string, string> = { profile_id: "p-2", locale: "de" }) => ({
   id: "sub_1",
   object: "subscription",
   status,
   customer: "cus_1",
   cancel_at_period_end: false,
   cancel_at: null,
-  metadata: { profile_id: "p-2", locale: "de" },
-  items: { object: "list", data: [{ id: "si_1", current_period_end: Math.floor(Date.parse("2026-12-23T09:15:00Z") / 1000) }] },
+  metadata,
+  items: { object: "list", data: [{ id: "si_1", current_period_end: Math.floor(Date.parse(periodEnd) / 1000) }] },
 });
 
 const invoiceObject = {
@@ -294,20 +304,83 @@ describe("Pro, in any order of events", () => {
 
   it("customer.subscription.deleted cancels; an incomplete subscription grants nothing yet", async () => {
     const h = harness();
+    h.stripeNow({ status: "incomplete" });
     expect((await handleStripeEvent(signed("evt_i", "customer.subscription.created", subscriptionObject("incomplete")), h.deps)).result).toBe("ignored: incomplete");
     expect(h.entitlements.size).toBe(0);
+    h.stripeNow({ status: "active" });
     await handleStripeEvent(signed("evt_a", "customer.subscription.updated", subscriptionObject("active")), h.deps);
     await handleStripeEvent(signed("evt_d", "customer.subscription.deleted", subscriptionObject("active")), h.deps);
     expect(h.entitlements.get("sub_1")?.status).toBe("canceled");
   });
+
+  it("a redelivered customer.subscription.updated never brings back a cancelled Pro", async () => {
+    const h = harness();
+    await handleStripeEvent(signed("evt_c", "customer.subscription.created", subscriptionObject()), h.deps);
+    expect(h.entitlements.get("sub_1")?.status).toBe("active");
+    // The team ends the subscription at once (an accepted extraordinary cancellation).
+    h.stripeNow({ status: "canceled" });
+    await handleStripeEvent(signed("evt_d", "customer.subscription.deleted", subscriptionObject("canceled")), h.deps);
+    expect(h.entitlements.get("sub_1")?.status).toBe("canceled");
+    // Stripe now redelivers an older event that failed once: its snapshot still says "active until 23 Dec".
+    expect(await handleStripeEvent(signed("evt_stale", "customer.subscription.updated", subscriptionObject("active")), h.deps)).toEqual({ status: 200, result: "pro canceled" });
+    expect(h.entitlements.get("sub_1")?.status).toBe("canceled");
+    expect(h.reads).toContain("sub_1");
+  });
+
+  it("a stale customer.subscription.updated after a renewal keeps the current period end", async () => {
+    const h = harness();
+    h.stripeNow({ periodEnd: "2027-01-23T09:15:00.000Z" });
+    await handleStripeEvent(signed("evt_renewed", "customer.subscription.updated", subscriptionObject("active", "2027-01-23T09:15:00Z")), h.deps);
+    await handleStripeEvent(signed("evt_old", "customer.subscription.updated", subscriptionObject("active", "2026-12-23T09:15:00Z")), h.deps);
+    expect(h.entitlements.get("sub_1")).toMatchObject({ status: "active", periodEnd: "2027-01-23T09:15:00.000Z" });
+  });
+
+  it("reads Stripe's own status word: unpaid is past due, a paused or unknown one changes nothing", async () => {
+    const h = harness();
+    await handleStripeEvent(signed("evt_c", "customer.subscription.created", subscriptionObject()), h.deps);
+    h.stripeNow({ status: "other", stripeStatus: "unpaid" });
+    expect((await handleStripeEvent(signed("evt_u1", "customer.subscription.updated", subscriptionObject("active")), h.deps)).result).toBe("pro past_due");
+    expect(h.entitlements.get("sub_1")?.status).toBe("past_due");
+    h.stripeNow({ status: "other", stripeStatus: "paused" });
+    expect((await handleStripeEvent(signed("evt_u2", "customer.subscription.updated", subscriptionObject("active")), h.deps)).result).toBe("ignored: paused");
+    expect(h.entitlements.get("sub_1")?.status).toBe("past_due");
+  });
+
+  it("names the account from the event when the subscription at Stripe carries no profile", async () => {
+    const h = harness();
+    h.stripeNow({ profileId: null });
+    await handleStripeEvent(signed("evt_c", "customer.subscription.created", subscriptionObject("active", "2026-12-23T09:15:00Z", { profile_id: "p-9" })), h.deps);
+    expect(h.entitlements.get("sub_1")?.profile).toBe("p-9");
+    const none = harness();
+    none.stripeNow({ profileId: null });
+    expect((await handleStripeEvent(signed("evt_n", "customer.subscription.created", subscriptionObject("active", "2026-12-23T09:15:00Z", {})), none.deps)).result).toBe("ignored: no profile_id");
+  });
+
+  it("a subscription that cannot be read leaves the event unprocessed (500), so Stripe delivers it again", async () => {
+    const h = harness();
+    const failing: WebhookDeps = { ...h.deps, payments: { ...h.deps.payments, retrieveSubscription: () => Promise.reject(new Error("stripe down")) } };
+    const event = signed("evt_down", "customer.subscription.updated", subscriptionObject());
+    expect((await handleStripeEvent(event, failing)).status).toBe(500);
+    expect(h.entitlements.size).toBe(0);
+    expect(await handleStripeEvent(event, h.deps)).toEqual({ status: 200, result: "pro active" });
+  });
 });
 
 describe("refunds and other events", () => {
-  it("charge.refunded keeps a console refund's kind and calls a dashboard refund goodwill", async () => {
+  it("charge.refunded reports every refund without a kind and with the sum so far; record_refund decides what it means", async () => {
     const h = harness();
+    // Whether the console recorded its refund before this event or will do so after it, the webhook
+    // never claims a kind: "goodwill" neither overwrites the console's kind nor blocks it.
     await handleStripeEvent(signed("evt_r1", "charge.refunded", { id: "ch_1", object: "charge", payment_intent: "pi_console", amount_refunded: 2499 }), h.deps);
     await handleStripeEvent(signed("evt_r2", "charge.refunded", { id: "ch_2", object: "charge", payment_intent: "pi_dashboard", amount_refunded: 500 }), h.deps);
-    expect(h.log).toEqual(["refund pi_console voluntary", "refund pi_dashboard goodwill"]);
+    expect(h.log).toEqual(["refund pi_console goodwill 2499", "refund pi_dashboard goodwill 500"]);
+    expect("refundKind" in h.deps.store).toBe(false);
+  });
+
+  it("a charge.refunded without a payment intent is ignored", async () => {
+    const h = harness();
+    expect(await handleStripeEvent(signed("evt_r3", "charge.refunded", { id: "ch_3", object: "charge", amount_refunded: 100 }), h.deps)).toEqual({ status: 200, result: "ignored: no payment intent" });
+    expect(h.log).toEqual([]);
   });
 
   it("acknowledges events it does not handle", async () => {

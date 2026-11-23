@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { contractDecision, type ContractDecision } from "@/features/email/templates/contract-decision";
 import type { EmailLocale } from "@/features/email/templates/render";
-import { resolveCancellation, resolveWithdrawal } from "@/features/payments/server/contracts";
+import { RefundNotRecorded, resolveCancellation, resolveWithdrawal } from "@/features/payments/server/contracts";
 import { contractsDeps, json, paymentsOff, readJson, siteOrigin, testMode } from "@/features/payments/server/get-payments";
 import { PaymentsNotConfigured } from "@/features/payments/types";
 import { requireUser } from "@/lib/server/user";
@@ -141,6 +141,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ kin
   } catch (error) {
     if (error instanceof PaymentsNotConfigured) return json({ ok: false, error: "notConfigured" }, 503);
     if (error instanceof Error && error.message.includes("linkyo:notFound")) return json({ ok: false, error: "notFound" }, 404);
+    if (error instanceof RefundNotRecorded) {
+      // Stripe refunded, the database did not take it: accepting the same withdrawal again finishes it.
+      console.error(JSON.stringify({ evt: "contract_refund_unrecorded", action }));
+      return json({ ok: false, error: "server" }, 500);
+    }
     console.error(JSON.stringify({ evt: "contract_decision_failed", action, error: error instanceof Error ? error.name : "unknown" }));
     return json({ ok: false, error: "stripe" }, 502);
   }

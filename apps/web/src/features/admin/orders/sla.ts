@@ -20,18 +20,27 @@ export function slaState(due: Date, now: Date): SlaState {
   return left <= SOON_MS ? "soon" : "ok";
 }
 
+export type SlaUnit = "day" | "hour" | "minute";
+
 /**
- * A short, rounded duration in the locale's words: "2 Tage", "3 Std.", "25 Min." (Western digits in
- * every language). Days from two days on, hours from one hour on, otherwise minutes (at least one).
+ * A short, rounded-down duration: days from two days on, hours from one hour on, otherwise minutes
+ * (at least one).
  */
-export function slaDuration(ms: number, locale: string): string {
+export function slaAmount(ms: number): { count: number; unit: SlaUnit } {
   const abs = Math.abs(ms);
-  const [value, unit] = abs >= 2 * DAY ? [Math.floor(abs / DAY), "day"] : abs >= HOUR ? [Math.floor(abs / HOUR), "hour"] : [Math.max(1, Math.floor(abs / MINUTE)), "minute"];
-  return new Intl.NumberFormat(locale, { style: "unit", unit, unitDisplay: unit === "day" ? "long" : "short", numberingSystem: "latn" }).format(value);
+  if (abs >= 2 * DAY) return { count: Math.floor(abs / DAY), unit: "day" };
+  if (abs >= HOUR) return { count: Math.floor(abs / HOUR), unit: "hour" };
+  return { count: Math.max(1, Math.floor(abs / MINUTE)), unit: "minute" };
 }
 
-/** The words of `admin.orders.sla.*`: a translator over that namespace. */
-export type SlaT = (key: "ok" | "soon" | "overdue", values: { time: string }) => string;
+/**
+ * The words of `admin.orders.sla.*`: a translator over that namespace. `time.<unit>` is the duration
+ * as it reads inside the three sentences, after their preposition, as an ICU plural in each
+ * language. `Intl.NumberFormat`'s unit style cannot write it: it only knows the base form ("3 Tage",
+ * Arabic "يومان"), while German needs the dative here ("seit 3 Tagen", "in 1 Tag") and Arabic the
+ * genitive with its dual and plural classes ("منذ يومين", "منذ 3 أيام", "منذ 11 يومًا").
+ */
+export type SlaT = (key: SlaState | `time.${SlaUnit}`, values: { time: string } | { count: number }) => string;
 
 export interface SlaChip {
   state: SlaState;
@@ -41,10 +50,11 @@ export interface SlaChip {
 
 const TONE: Record<SlaState, SlaChip["tone"]> = { ok: "neutral", soon: "warning", overdue: "danger" };
 
-/** The chip for a deadline: its state, its tone and its text ("in 3 Std.", "überfällig seit 2 Tage"). */
-export function slaChip(due: Date, now: Date, locale: string, t: SlaT): SlaChip {
+/** The chip for a deadline: its state, its tone and its text ("in 3 Std.", "überfällig seit 2 Tagen"). */
+export function slaChip(due: Date, now: Date, t: SlaT): SlaChip {
   const state = slaState(due, now);
-  return { state, tone: TONE[state], text: t(state, { time: slaDuration(due.getTime() - now.getTime(), locale) }) };
+  const { count, unit } = slaAmount(due.getTime() - now.getTime());
+  return { state, tone: TONE[state], text: t(state, { time: t(`time.${unit}`, { count }) }) };
 }
 
 /** The refund deadline of a withdrawal: 14 days after it arrived. */

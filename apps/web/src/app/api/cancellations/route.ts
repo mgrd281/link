@@ -1,7 +1,5 @@
 import { cancellationFormSchema, submitCancellation } from "@/features/payments/server/contracts";
-import { contractsDeps, json, paymentsOff, readJson } from "@/features/payments/server/get-payments";
-import { ipForLog, requestPlace } from "@/lib/request-context";
-import { ipHash } from "@/lib/server/ip-hash";
+import { contractsDeps, formIpHash, json, paymentsOff, readJson } from "@/features/payments/server/get-payments";
 
 export const runtime = "nodejs";
 
@@ -15,6 +13,6 @@ export async function POST(request: Request) {
   if (off) return off;
   const parsed = cancellationFormSchema.safeParse(await readJson(request));
   if (!parsed.success) return json({ ok: false, error: "invalid", fields: parsed.error.issues.map((issue) => issue.path.join(".")) }, 400);
-  const answer = await submitCancellation(parsed.data, ipHash(ipForLog(requestPlace(request.headers))), contractsDeps());
+  const answer = await submitCancellation(parsed.data, formIpHash(request), contractsDeps());
   return json(answer);
 }

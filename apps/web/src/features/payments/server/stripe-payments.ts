@@ -5,6 +5,8 @@ import type { Locale } from "@/i18n/routing";
 import { PRICES, type PriceId } from "../prices";
 import { PaymentsNotConfigured, WebhookSignatureError, type CheckoutSession, type Payments, type PaymentsEvent, type SubscriptionState } from "../types";
 
+import type { StripeSubscription } from "./subscription";
+
 /**
  * The only file that talks to Stripe (the static guard enforces it). Every field it reads or writes
  * follows the API version stripe 23.2.0 pins (2026-11-18.endive, later than 2025-03-31.basil):
@@ -64,14 +66,16 @@ const idOf = (value: string | { id: string } | null | undefined): string | null 
 const STATUSES = new Set(["active", "past_due", "canceled", "incomplete"]);
 
 /** A subscription as the app sees it; the period end comes from its first item. */
-export function subscriptionState(subscription: Stripe.Subscription): SubscriptionState {
+export function subscriptionState(subscription: Stripe.Subscription): StripeSubscription {
   const item = subscription.items.data[0];
   const status = STATUSES.has(subscription.status) ? (subscription.status as SubscriptionState["status"]) : "other";
   const profileId = subscription.metadata.profile_id;
   return {
     id: subscription.id,
     status,
+    stripeStatus: subscription.status,
     periodEnd: iso(item?.current_period_end) ?? new Date(0).toISOString(),
+    billingAnchor: iso(subscription.billing_cycle_anchor),
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
     cancelAt: iso(subscription.cancel_at),
     customerId: idOf(subscription.customer) ?? "",
@@ -143,7 +147,7 @@ export class StripePayments implements Payments {
     return this.session(session);
   }
 
-  async retrieveSubscription(subscriptionId: string): Promise<SubscriptionState> {
+  async retrieveSubscription(subscriptionId: string): Promise<StripeSubscription> {
     return subscriptionState(await this.stripe.subscriptions.retrieve(subscriptionId));
   }
 

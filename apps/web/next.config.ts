@@ -7,8 +7,14 @@ import { assertLiveReady } from "./src/features/legal/live-guard";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
-// A build that would take real money with placeholder legal texts fails here (features/legal/live-guard.ts).
-assertLiveReady({ payments: process.env.NEXT_PUBLIC_PAYMENTS, legalReady, reviewed: process.env.LEGAL_REVIEWED });
+// A build that would take real money with placeholder legal texts, or without a transport that really
+// sends the contract e-mails, fails here (features/legal/live-guard.ts).
+assertLiveReady({
+  payments: process.env.NEXT_PUBLIC_PAYMENTS,
+  legalReady,
+  reviewed: process.env.LEGAL_REVIEWED,
+  emailTransport: process.env.EMAIL_TRANSPORT,
+});
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
