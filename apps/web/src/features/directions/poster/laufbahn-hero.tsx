@@ -6,7 +6,7 @@ import { ArrowDown, BadgeCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
-import { initials, MediaImage, mediaSizes, Monogram } from "../shared/creator-kit";
+import { initials, MediaImage, mediaSizes } from "../shared/creator-kit";
 import { HeroMotion } from "../shared/motion";
 import { aiText, GLYPH_WIDTH, HeroActions, Socials } from "./hero";
 import { HeroLive } from "./live";
@@ -148,7 +148,7 @@ export function BleedHero({
   const isRtl = profile.locale === "ar";
   const picture = hasImage(profile.hero) ? profile.hero : hasImage(profile.avatar) ? profile.avatar : null;
   // Beside the role line: the portrait when the large picture shows something else (a place, a
-  // workshop), or the initials while there is no portrait yet. Nothing when the picture is the portrait.
+  // workshop). Nothing when there is no portrait, or when the picture is the portrait.
   const face = hasImage(profile.hero) ? (hasImage(profile.avatar) ? profile.avatar : null) : undefined;
   // The picture is the portrait: on phones it rides high so that the words below never cover the face.
   const portrait = picture !== null && face === undefined;
@@ -192,35 +192,25 @@ export function BleedHero({
         )}
       >
         {live ? <HeroLive block={live} /> : null}
-        {profile.tagline || face !== undefined ? (
-          <p
-            className={cn(
-              "inline-flex max-w-full min-w-0 items-center gap-2 rounded-xl border py-1 text-small font-medium",
-              // Over the picture: dark glass and white text; on the page (the wide canvas, or no picture): a surface with a hairline.
-              picture ? "lb-chip text-white" : "border-creator-line bg-creator-surface text-creator-fg",
-              "@work:border-creator-line @work:bg-creator-surface @work:text-creator-fg @work:backdrop-blur-none",
-              // The start hugs the portrait or the initials; without them the text keeps the same room on both sides.
-              face !== undefined ? "ps-1" : "ps-4",
-              profile.tagline ? "pe-4" : "pe-1",
-              rise(0).className,
-            )}
-            style={rise(0).style}
-          >
-            {face !== undefined ? (
+        {/* The name, then the role right under it as a quiet line: name and role read as one unit. */}
+        <div className={cn("w-full min-w-0", rise(0).className)} style={rise(0).style}>
+          <BleedName profile={profile} theme={theme} isRtl={isRtl} />
+        </div>
+        {profile.tagline || face ? (
+          <p className={cn("-mt-1 flex max-w-full min-w-0 items-center gap-3 text-body font-medium @work:text-body-lg @work:font-regular @work:text-creator-fg-muted", rise(1).className)} style={rise(1).style}>
+            {/* A portrait beside the role only when the large picture shows something else; never initials. */}
+            {face ? (
               <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full">
-                {face ? <MediaImage src={face.src} focal={face.focal} alt={face.alt} sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
+                <MediaImage src={face.src} focal={face.focal} alt={face.alt} sizes={mediaSizes.thumb} />
               </span>
             ) : null}
             {profile.tagline ? (
-              <span dir="auto" className={cn(pageSide, "min-w-0 py-1 text-pretty break-words")} {...aiText(profile, "tagline")}>
+              <span dir="auto" className={cn(pageSide, "min-w-0 text-pretty break-words")} {...aiText(profile, "tagline")}>
                 {profile.tagline}
               </span>
             ) : null}
           </p>
         ) : null}
-        <div className={cn("w-full min-w-0", rise(1).className)} style={rise(1).style}>
-          <BleedName profile={profile} theme={theme} isRtl={isRtl} />
-        </div>
       </div>
 
       {/* Under the picture: the sentence, the numbers and the actions; under the name on the wide canvas. */}

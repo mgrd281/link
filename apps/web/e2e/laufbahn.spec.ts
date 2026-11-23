@@ -118,7 +118,7 @@ test.describe("Laufbahn", () => {
     await expect(page.getByRole("heading", { level: 2, name: "Über mich" })).toBeInViewport();
   });
 
-  test("phones: the picture runs edge to edge, the index is a row of chips under the hero, the Linkyo bar still comes in", async ({ browser }) => {
+  test("phones: the picture runs edge to edge, the index is a row of chips under the hero, and his own page has no Linkyo bar", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const plate = await page.locator("[data-hero-plate]").boundingBox();
@@ -149,7 +149,8 @@ test.describe("Laufbahn", () => {
     await expect(link).toBeInViewport({ ratio: 1 });
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { level: 2, name: "Anschreiben" })).toBeInViewport();
-    await expect(page.locator("[data-shown]")).toHaveCount(1);
+    // Sevag's page is shown as his own (bare): no Linkyo bar comes in.
+    await expect(page.locator("[data-shown]")).toHaveCount(0);
     expect(await axe(page)).toEqual([]);
     await page.context().close();
   });
@@ -262,7 +263,8 @@ test.describe("Laufbahn", () => {
         await context.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
         const page = await context.newPage();
         await page.goto(url);
-        if (url === SEVAG) expect(await underBadge(page)).toEqual([]);
+        // His own page carries no Linkyo badge at all; the sample has none either.
+        if (url === SEVAG) expect(await underBadge(page)).toEqual(["no badge"]);
         // Large text: at least 3 : 1 on every pixel behind it (the veil gives about 6 : 1 even on white).
         expect(await wordsContrast(page), `${url} at ${String(viewport.width)}x${String(viewport.height)}`).toBeGreaterThanOrEqual(4.5);
         await context.close();

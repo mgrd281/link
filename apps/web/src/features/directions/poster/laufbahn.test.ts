@@ -110,11 +110,12 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(count(sevag, /2021–heute|2018–heute/g)).toBe(2);
   });
 
-  it("names him in one heading, on one line, and shows his initials while there is no portrait", () => {
+  it("names him in one heading, on one line, with his role right under it and no initials in the hero", () => {
     expect(count(sevag, /<h1/g)).toBe(1);
     expect(sevag).toMatch(/<h1[^>]*><bdi dir="auto">Sevag Ghazarian<\/bdi><\/h1>/);
-    // The initials beside the role line (no portrait yet) and in the compact bar.
-    expect(count(sevag, />SG</g)).toBeGreaterThanOrEqual(2);
+    // The role follows the name as a plain line (no chip); the initials only in the compact bar.
+    expect(sevag).toMatch(/<\/h1><\/div><p class="[^"]*text-body[^"]*"[^>]*><span dir="auto"[^>]*>Lagerist · Staplerfahrer mit Flurförderzeugschein<\/span><\/p>/);
+    expect(sevag).not.toContain("lb-chip");
     // The forklift illustration is the large picture, with its description.
     expect(sevag).toContain('alt="Illustration: Ein Staplerfahrer hebt eine Palette mit Kartons in ein Hochregal"');
   });
@@ -304,7 +305,7 @@ describe("a portrait as the only picture (no separate hero picture)", () => {
   it("rides high in a square on phones and fades into an ink ground, so the words stand below the face", () => {
     expect(markup).toMatch(/data-hero-plate="true" class="[^"]*lb-ground @work:bg-creator-surface-2/);
     expect(markup).toContain("absolute inset-x-0 top-0 aspect-square mask-b-from-60% mask-b-to-100% @work:inset-0 @work:aspect-auto @work:mask-none");
-    // Without a portrait beside it, the role line keeps the same room on both sides.
-    expect(markup).toMatch(/<p class="inline-flex [^"]*ps-4 pe-4/);
+    // The role line follows the name, with no portrait or initials beside it.
+    expect(markup).toMatch(/<\/h1><\/div><p class="[^"]*text-body[^"]*"[^>]*><span dir="auto"/);
   });
 });

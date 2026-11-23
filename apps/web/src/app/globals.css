@@ -611,14 +611,6 @@
   background-color: var(--color-ink);
 }
 
-/* The role line over the picture: dark glass with a white hairline, so its small white text keeps AA
-   on any picture (with the scrim under it, at least two thirds ink behind the text). */
-@utility lb-chip {
-  border-color: color-mix(in oklab, var(--color-white) 24%, transparent);
-  background-color: color-mix(in oklab, var(--color-ink) 40%, transparent);
-  backdrop-filter: blur(var(--blur-glass));
-}
-
 /* The picture eases in a little as the hero scrolls away. */
 @utility lb-zoom {
   @supports (animation-timeline: view()) {

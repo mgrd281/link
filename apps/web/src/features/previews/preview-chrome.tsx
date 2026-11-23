@@ -54,6 +54,8 @@ export async function previewChrome({
   /** What follows "/p/<slug>" in the language menu's links (a project page's "/<project>"). */
   path?: string | undefined;
 }): Promise<PreviewChrome> {
+  // The person's own page (an application page sent to an employer): no Linkyo label, no Linkyo bar.
+  if (preview.bare) return { overlay: undefined, above: null, badge: null, dock: null };
   const t = await getTranslations({ locale, namespace: "preview" });
   const name = preview.name[locale as "de" | "en" | "ar"] ?? page.profile.displayName;
   const sample = preview.sample;

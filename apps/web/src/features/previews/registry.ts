@@ -41,6 +41,11 @@ export interface Preview {
    * their public channels: the preview's note says so.
    */
   fromOwner?: boolean;
+  /**
+   * Shown as the person's own page: no Linkyo label over it and no Linkyo bar under it (the founder's
+   * choice for an application page that goes to an employer). Still unlisted and not indexed.
+   */
+  bare?: boolean;
   /** The preview shows example states (live now, the verified look) that are not carried over. */
   examples?: boolean;
   /**
@@ -126,6 +131,7 @@ function sevagPreview(): Preview {
     ...(own.invite?.length ? { invite: { emailSha256: own.invite.map(emailHash) } } : {}),
     verified: true,
     fromOwner: true,
+    bare: true,
   };
 }
 

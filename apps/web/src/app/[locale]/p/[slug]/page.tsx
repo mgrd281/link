@@ -35,14 +35,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const name = profile.displayName;
   // WhatsApp, iMessage and LinkedIn print og:title and og:description under the card: the person's
   // name comes first, and examples and concepts still say what they are.
-  const ogTitle = sample ? t("ogTitle.sample", { name, kind: label }) : found.preview.concept ? t("ogTitle.concept", { name }) : t("ogTitle.prepared", { name });
+  // A page shown as the person's own (bare) is titled like one: the name, then the role.
+  const own = found.preview.bare ? [name, profile.tagline?.trim()].filter(Boolean).join(" · ") : null;
+  const ogTitle = own ?? (sample ? t("ogTitle.sample", { name, kind: label }) : found.preview.concept ? t("ogTitle.concept", { name }) : t("ogTitle.prepared", { name }));
   // Their own line (tagline, else bio); without one the site's description stays.
   const line = [profile.tagline, profile.bio].map((text) => text?.trim() ?? "").find(Boolean) ?? "";
   const description = line.length > 160 ? `${line.slice(0, 159).trimEnd()}…` : line;
   const said = description ? { description } : {};
   return {
     title: {
-      absolute: sample ? t("sampleTitle", { kind: label }) : found.preview.concept ? t("conceptTitle", { name }) : t("title", { name }),
+      absolute: own ?? (sample ? t("sampleTitle", { kind: label }) : found.preview.concept ? t("conceptTitle", { name }) : t("title", { name })),
     },
     ...said,
     openGraph: { title: ogTitle, ...said, type: "profile", siteName: "Linkyo", locale: OG_LOCALES[locale] ?? "en_US" },
