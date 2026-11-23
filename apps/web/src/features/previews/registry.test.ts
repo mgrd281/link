@@ -63,8 +63,8 @@ describe("Sevag's application page", () => {
     expect(found?.preview.fromOwner).toBe(true);
     // No e-mail yet: nobody can take the page over, and his address stays free for him.
     expect(found?.preview.invite).toBeUndefined();
-    expect(found?.page.profile.hero?.src).toBe(`/prepared/${SEVAG_SLUG}/stapler-noir.jpg`);
+    expect(found?.page.profile.hero?.src).toBe(`/prepared/${SEVAG_SLUG}/schubmast.jpg`);
     // The motion graphic is served from our own origin, like every sample clip (no third party).
-    expect(found?.page.profile.motion?.src).toBe("sample:motion-sevag-stapler-noir");
+    expect(found?.page.profile.motion?.src).toBe("sample:motion-sevag-schubmast");
   });
 });

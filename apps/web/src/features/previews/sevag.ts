@@ -5,11 +5,11 @@ import { NO_IMAGE, type BlockOf, type Page } from "@linkyo/blocks";
  * (Lagerist / Töner, Sales Center Lörrach). Every fact on it comes from that letter; nothing is
  * added. No photo of him yet: his initials stand in.
  *
- * Picture and moving picture: Linkyo's own illustration, drawn for this page (no stock material):
- * a forklift driver lifts a pallet of boxes into a high rack at night, a blue check confirms it, the
- * truck backs out and returns with the next pallet. In black, graphite and silver, like the page. A
- * 10 s seamless loop (public/media/motion/sevag-stapler-noir.mp4, source in
- * .claude/skills/linkyo-media-assets/scripts/forklift-scene-noir.html); the picture is its first frame, so nothing jumps when it starts, and
+ * Picture and moving picture: Linkyo's own illustration, drawn for this page (no stock material): the
+ * driver of a reach truck (his Schubmaststapler) scans a pallet's label, lifts it, reaches it into a
+ * high rack, a check confirms it, the truck backs out and returns with the next pallet. In black,
+ * graphite and silver. A 12 s seamless loop (public/media/motion/sevag-schubmast.mp4, source in
+ * .claude/skills/linkyo-media-assets/scripts/reach-truck-scene.html); the picture is its first frame, so nothing jumps when it starts, and
  * visitors who prefer less motion keep the still. No text in it.
  *
  * Not listed anywhere, not indexed, removed on request.
@@ -37,12 +37,12 @@ export const sevagDe: Page = {
     bio: "Sorgfältig und zuverlässig im Lager. Sicherheit, Ordnung und Sauberkeit sind mir wichtig.",
     avatar: { src: NO_IMAGE, alt: "" },
     hero: {
-      src: `/prepared/${SEVAG_SLUG}/stapler-noir.jpg`,
-      alt: "Illustration: Ein Staplerfahrer hebt eine Palette mit Kartons in ein Hochregal",
+      src: `/prepared/${SEVAG_SLUG}/schubmast.jpg`,
+      alt: "Illustration: Ein Schubmaststapler-Fahrer scannt eine Palette und hebt sie in ein Hochregal",
       w: 1080,
       h: 1350,
     },
-    motion: { src: "sample:motion-sevag-stapler-noir" },
+    motion: { src: "sample:motion-sevag-schubmast" },
     stats: [
       { value: "seit 2018", label: "in der Logistik" },
       { value: "seit 2021", label: "Staplerschein" },

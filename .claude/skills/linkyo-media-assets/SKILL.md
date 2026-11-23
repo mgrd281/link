@@ -52,7 +52,7 @@ from cover import cover_crop, lift_backdrop, tint, vignette, spaced, font, conta
 ## Original illustrated motion graphics
 
 For a person's work that no licensed clip shows (a forklift driver, a nurse, a cook), draw the scene
-ourselves: `scripts/forklift-scene.html` (and its black-and-grey variant `forklift-scene-noir.html`) is the model — flat SVG drawn from scratch, a pure
+ourselves: `scripts/forklift-scene.html` (its black-and-grey variant `forklift-scene-noir.html`, and `reach-truck-scene.html`: a reach truck that scans a label and reaches into the rack, with phone-safe camera framing) is the model — flat SVG drawn from scratch, a pure
 `render(t)` function (camera keyframes, parallax layers, a floor reflection, a seamless loop whose
 last frame equals the first), no text. Render every frame with
 `node scripts/render-scene.cjs <frames_dir> 30 10 <scene.html>` (run from `apps/web` so Playwright

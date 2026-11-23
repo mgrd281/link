@@ -116,8 +116,8 @@ describe("Sevag's application page on Laufbahn", () => {
     // The role follows the name as a plain line (no chip); the initials only in the compact bar.
     expect(sevag).toMatch(/<\/h1><\/div><p class="[^"]*text-body[^"]*"[^>]*><span dir="auto"[^>]*>Lagerist · Staplerfahrer mit Flurförderzeugschein<\/span><\/p>/);
     expect(sevag).not.toContain("lb-chip");
-    // The forklift illustration is the large picture, with its description.
-    expect(sevag).toContain('alt="Illustration: Ein Staplerfahrer hebt eine Palette mit Kartons in ein Hochregal"');
+    // The reach-truck illustration is the large picture, with its description.
+    expect(sevag).toContain('alt="Illustration: Ein Schubmaststapler-Fahrer scannt eine Palette und hebt sie in ein Hochregal"');
   });
 
   it("asks for the picture as wide as it is drawn: a 4:5 picture covers the tall plate", () => {
