@@ -52,11 +52,11 @@
     <filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
     <filter id="beam" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="3"/></filter>
     <clipPath id="frame"><rect width="1080" height="1350"/></clipPath>
-    <clipPath id="floorClip"><rect x="-300" y="1003" width="1680" height="700"/></clipPath>
+    <clipPath id="floorClip"><rect x="-300" y="1003" width="3200" height="700"/></clipPath>
     <linearGradient id="fadeGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </linearGradient>
-    <mask id="fadeDown" maskUnits="userSpaceOnUse" x="-300" y="1000" width="1680" height="360"><rect x="-300" y="1000" width="1680" height="300" fill="url(#fadeGrad)"/></mask>
+    <mask id="fadeDown" maskUnits="userSpaceOnUse" x="-300" y="1000" width="3200" height="360"><rect x="-300" y="1000" width="3200" height="300" fill="url(#fadeGrad)"/></mask>
     <!-- One load: a pallet with four wrapped boxes and a barcode label (origin: pallet's bottom-left). -->
     <g id="load">
       <rect x="0" y="-26" width="220" height="26" rx="4" fill="#3a3b3f"/>
@@ -85,8 +85,8 @@
 
   <g clip-path="url(#frame)">
    <g id="cam">
-    <rect x="-300" y="-300" width="1680" height="1950" fill="url(#sky)"/>
-    <g id="far"><rect x="-200" y="80" width="1500" height="10" fill="#161618"/><g id="farRacks" opacity="0.9"></g></g>
+    <rect x="-300" y="-300" width="3200" height="1950" fill="url(#sky)"/>
+    <g id="far"><rect x="-200" y="80" width="3000" height="10" fill="#161618"/><g id="farRacks" opacity="0.9"></g></g>
     <g id="lights">
       <polygon points="190,96 290,96 420,1000 60,1000" fill="url(#cone)"/>
       <polygon points="610,96 710,96 850,1000 470,1000" fill="url(#cone)"/>
@@ -94,9 +94,12 @@
       <rect x="616" y="84" width="88" height="12" rx="6" fill="#f4f4f6"/>
       <rect x="180" y="74" width="120" height="12" rx="4" fill="#2a2a2e"/>
       <rect x="600" y="74" width="120" height="12" rx="4" fill="#2a2a2e"/>
+      <polygon points="1360,96 1460,96 1600,1000 1220,1000" fill="url(#cone)"/>
+      <rect x="1366" y="84" width="88" height="12" rx="6" fill="#f4f4f6"/>
+      <rect x="1350" y="74" width="120" height="12" rx="4" fill="#2a2a2e"/>
     </g>
-    <rect x="-300" y="1000" width="1680" height="650" fill="url(#floor)"/>
-    <rect x="-300" y="1000" width="1680" height="3" fill="#3a3a3e"/>
+    <rect x="-300" y="1000" width="3200" height="650" fill="url(#floor)"/>
+    <rect x="-300" y="1000" width="3200" height="3" fill="#3a3a3e"/>
     <g clip-path="url(#floorClip)" mask="url(#fadeDown)" opacity="0.16"><use href="#world" transform="translate(0 2000) scale(1 -1)"/></g>
     <g id="lane" fill="#7c7e84" opacity="0.85"></g>
     <g id="dust" fill="#f2f2f3"></g>
@@ -115,6 +118,35 @@
       <rect x="802" y="764" width="38" height="12" rx="2" fill="#0c0c0d"/><rect x="806" y="767" width="18" height="6" rx="1" fill="#ededef"/>
       <use href="#load" x="830" y="1000"/>
       <use href="#load" x="830" y="520"/>
+    </g>
+    <g id="dock">
+      <rect x="1690" y="540" width="1200" height="40" fill="#1c1c1f"/>
+      <!-- The trailer's interior: ribbed walls, its floor at dock height. -->
+      <rect x="1772" y="580" width="1100" height="370" fill="#111113"/>
+      <g fill="#18181a"><rect x="1840" y="580" width="10" height="370"/><rect x="1960" y="580" width="10" height="370"/><rect x="2080" y="580" width="10" height="370"/><rect x="2200" y="580" width="10" height="370"/><rect x="2320" y="580" width="10" height="370"/><rect x="2440" y="580" width="10" height="370"/></g>
+      <rect x="1772" y="950" width="1100" height="14" fill="#3a3b3f"/>
+      <rect x="1772" y="964" width="1100" height="36" fill="#0c0c0d"/>
+      <use href="#load" x="2060" y="950"/>
+      <use href="#load" x="2300" y="950"/>
+      <use id="trailerLoad" href="#load" x="1814" y="950"/>
+      <!-- The door frame and the opened doors. -->
+      <rect x="1748" y="560" width="26" height="440" fill="#3a3b40"/>
+      <rect x="1748" y="560" width="400" height="22" fill="#3a3b40"/>
+      <rect x="1716" y="586" width="30" height="360" rx="3" fill="#2b2c30"/>
+      <g stroke="#3d3e43" stroke-width="3"><line x1="1722" y1="600" x2="1722" y2="930"/><line x1="1740" y1="600" x2="1740" y2="930"/></g>
+      <!-- The trailer's rear: roof lip, the rear frame's lights and its underride bar, so it reads as a truck. -->
+      <rect x="1748" y="548" width="1150" height="12" rx="3" fill="#2b2c30"/>
+      <rect x="1776" y="590" width="8" height="350" fill="#2b2c30"/>
+      <rect x="1752" y="884" width="16" height="26" rx="3" fill="#121214"/><rect x="1755" y="888" width="10" height="8" rx="2" fill="#ededef"/><rect x="1755" y="899" width="10" height="6" rx="2" fill="#7c7e84"/>
+      <rect x="1752" y="600" width="16" height="10" rx="3" fill="#ededef" opacity="0.8"/>
+      <rect x="1748" y="966" width="160" height="10" rx="3" fill="#4a4c52"/>
+      <rect x="1760" y="976" width="10" height="24" fill="#3a3b40"/><rect x="1890" y="976" width="10" height="24" fill="#3a3b40"/>
+      <!-- Dock bumper with hazard stripes, and the dock light. -->
+      <rect x="1700" y="950" width="72" height="50" fill="#121214"/>
+      <g fill="#7c7e84"><path d="M1704 1000 L1722 950 L1734 950 L1716 1000 Z"/><path d="M1728 1000 L1746 950 L1758 950 L1740 1000 Z"/><path d="M1752 1000 L1770 950 L1772 950 L1772 960 L1764 1000 Z"/></g>
+      <rect x="1690" y="640" width="18" height="12" rx="3" fill="#121214"/>
+      <circle cx="1699" cy="660" r="5" fill="#ededef"/>
+      <circle cx="1699" cy="660" r="26" fill="url(#glow)" opacity="0.5"/>
     </g>
     <use id="moving" href="#load" x="0" y="0"/>
 
@@ -213,7 +245,7 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const NS = "http://www.w3.org/2000/svg";
-const T = 12;
+const T = 18;
 const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
 const ease = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
 const out = (x) => { x = clamp(x); return 1 - Math.pow(1 - x, 3); };
@@ -224,7 +256,7 @@ const back = (x) => { x = clamp(x); const c = 2.70158; return 1 + c * Math.pow(x
 (() => {
   const g = $("farRacks");
   const add = (tag, attrs, parent = g) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
-  for (let i = -1; i < 8; i++) {
+  for (let i = -1; i < 13; i++) {
     const x = i * 230 + 30;
     add("rect", { x, y: 300, width: 12, height: 700, fill: "#1c1c1f" });
     add("rect", { x: x + 150, y: 300, width: 12, height: 700, fill: "#1c1c1f" });
@@ -236,7 +268,7 @@ const back = (x) => { x = clamp(x); const c = 2.70158; return 1 + c * Math.pow(x
     }
   }
   const lane = $("lane");
-  for (let i = -3; i < 16; i++) add("rect", { x: i * 110, y: 1074, width: 64, height: 8, rx: 4 }, lane);
+  for (let i = -3; i < 28; i++) add("rect", { x: i * 110, y: 1074, width: 64, height: 8, rx: 4 }, lane);
   const dust = $("dust");
   for (let i = 0; i < 34; i++) {
     const cone = i % 2 ? [240, 640] : [660, 640];
@@ -247,15 +279,18 @@ const back = (x) => { x = clamp(x); const c = 2.70158; return 1 + c * Math.pow(x
 
 /*
  * Timeline (s): 0-0.6 hold · 0.6-2.2 scan the label · 2.2-4.2 lift to level 2 · 4.2-5.4 reach in ·
- * 5.4-5.8 set down · 5.7-7.0 check · 5.9-7.1 reach back · 7.1-8.3 forks down · 7.6-9.2 the stored
- * pallet flows out the back · 8.3-9.7 reverse out of frame · 9.8-12 return with the next pallet.
+ * 5.4-5.8 set down · 5.7-7.0 check · 5.9-7.1 reach back · 7.1-8.3 forks down · 8.3-10.8 drive to the
+ * loading dock (the camera tracks) · 10.8-11.8 reach into the trailer · 11.8-12.2 pick the pallet up ·
+ * 12.2-13.2 reach back with it · 13.4-16.6 reverse to the rack · 16.6-18 settle where it started.
+ * The stored pallet leaves the rack while the camera is at the dock (the rack is out of view).
  */
-const LIFT = 200, SET = 24, REACH = 272, OUT = -860;
+const LIFT = 200, SET = 24, REACH = 272, DOCK = 960, DEEP = 330, PICK = 16;
 function truckX(t) {
   if (t < 8.3) return 0;
-  if (t < 9.7) return OUT * inn(seg(t, 8.3, 9.7));
-  if (t < 9.8) return OUT;
-  return OUT * (1 - out(seg(t, 9.8, 12)));
+  if (t < 10.8) return DOCK * ease(seg(t, 8.3, 10.8));
+  if (t < 13.4) return DOCK;
+  if (t < 16.6) return DOCK * (1 - ease(seg(t, 13.4, 16.6)));
+  return 0;
 }
 function lift(t) {
   if (t < 2.2) return 0;
@@ -264,17 +299,24 @@ function lift(t) {
   if (t < 5.8) return LIFT - SET * ease(seg(t, 5.4, 5.8));
   if (t < 7.1) return LIFT - SET;
   if (t < 8.3) return (LIFT - SET) * (1 - ease(seg(t, 7.1, 8.3)));
-  return 0;
+  if (t < 11.8) return 0;
+  if (t < 12.2) return PICK * ease(seg(t, 11.8, 12.2));
+  if (t < 16.6) return PICK;
+  return PICK * (1 - ease(seg(t, 16.6, 17.4)));
 }
 function reach(t) {
   if (t < 4.2) return 0;
   if (t < 5.4) return REACH * ease(seg(t, 4.2, 5.4));
   if (t < 5.9) return REACH;
   if (t < 7.1) return REACH * (1 - ease(seg(t, 5.9, 7.1)));
+  if (t < 10.8) return 0;
+  if (t < 11.8) return DEEP * ease(seg(t, 10.8, 11.8));
+  if (t < 12.2) return DEEP;
+  if (t < 13.2) return DEEP * (1 - ease(seg(t, 12.2, 13.2)));
   return 0;
 }
-// Camera keyframes [t, focusX, focusY, zoom]: phone-safe framing, a lean-in for the scan and the check.
-const K = [[0, 545, 800, 1.04], [0.6, 545, 800, 1.04], [2.2, 585, 830, 1.12], [4.2, 640, 720, 1.08], [5.9, 790, 700, 1.14], [7.1, 690, 760, 1.08], [9.0, 560, 800, 1.0], [9.8, 530, 800, 1.0], [12, 545, 800, 1.04]];
+// Camera keyframes [t, focusX, focusY, zoom]: phone-safe framing; a tracking shot to the dock and back.
+const K = [[0, 545, 800, 1.04], [0.6, 545, 800, 1.04], [2.2, 585, 830, 1.12], [4.2, 640, 720, 1.08], [5.9, 790, 700, 1.14], [7.1, 690, 760, 1.08], [8.3, 600, 800, 1.02], [10.8, 1580, 800, 1.0], [12.2, 1700, 840, 1.08], [13.4, 1580, 800, 1.0], [16.6, 560, 800, 1.02], [17.4, 545, 800, 1.04], [18, 545, 800, 1.04]];
 function camera(t) {
   let k = 0; while (k < K.length - 2 && t > K[k + 1][0]) k++;
   const [t0, x0, y0, z0] = K[k], [t1, x1, y1, z1] = K[k + 1];
@@ -304,10 +346,10 @@ function render(t) {
   const forkTop = 950 - l;
   const onForks = { x: 524 + r + x, y: forkTop + bob };
   if (t < 5.6) { m.setAttribute("x", onForks.x); m.setAttribute("y", Math.min(onForks.y, t > 5.4 ? 760 : onForks.y)); m.setAttribute("opacity", 1); }
-  else if (t < 7.6) { m.setAttribute("x", 524 + REACH); m.setAttribute("y", 760); m.setAttribute("opacity", 1); }
-  else if (t < 9.2) { m.setAttribute("x", 524 + REACH + ease(seg(t, 7.6, 9.2)) * 420); m.setAttribute("y", 760); m.setAttribute("opacity", 1); }
-  else if (t < 9.8) { m.setAttribute("opacity", 0); }
+  else if (t < 11) { m.setAttribute("x", 524 + REACH); m.setAttribute("y", 760); m.setAttribute("opacity", 1); }
+  else if (t < 11.8) { m.setAttribute("opacity", 0); }
   else { m.setAttribute("x", onForks.x); m.setAttribute("y", onForks.y); m.setAttribute("opacity", 1); }
+  $("trailerLoad").setAttribute("opacity", t >= 11.8 ? 0 : 1);
   // Scan: from the scanner on the front post (truck coords 468,696) to the label (load x+128..198, y-90..-50).
   const scanOn = seg(t, 0.75, 0.95) * (1 - seg(t, 2.0, 2.2));
   const sweep = ease(seg(t, 0.95, 1.9));

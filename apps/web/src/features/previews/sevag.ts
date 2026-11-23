@@ -7,8 +7,9 @@ import { NO_IMAGE, type BlockOf, type Page } from "@linkyo/blocks";
  *
  * Picture and moving picture: Linkyo's own illustration, drawn for this page (no stock material): the
  * driver of a reach truck (his Schubmaststapler) scans a pallet's label, lifts it, reaches it into a
- * high rack, a check confirms it, the truck backs out and returns with the next pallet. In black,
- * graphite and silver. A 12 s seamless loop (public/media/motion/sevag-schubmast.mp4, source in
+ * high rack, a check confirms it; then the camera follows him to the loading dock, where he reaches
+ * into a truck's trailer for the next pallet (unloading) and brings it back to the rack. In black,
+ * graphite and silver. An 18 s seamless loop (public/media/motion/sevag-lagerdienst.mp4, source in
  * .claude/skills/linkyo-media-assets/scripts/reach-truck-scene.html); the picture is its first frame, so nothing jumps when it starts, and
  * visitors who prefer less motion keep the still. No text in it.
  *
@@ -42,7 +43,7 @@ export const sevagDe: Page = {
       w: 1080,
       h: 1350,
     },
-    motion: { src: "sample:motion-sevag-schubmast" },
+    motion: { src: "sample:motion-sevag-lagerdienst" },
     stats: [
       { value: "seit 2018", label: "in der Logistik" },
       { value: "seit 2021", label: "Staplerschein" },
