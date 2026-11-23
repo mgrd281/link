@@ -101,6 +101,39 @@ Notes for using them:
 - `supabase-postgres-best-practices` has more known slips that were listed but not edited: `ALTER SYSTEM` is not available on hosted Supabase, and `SET LOCAL` is per transaction. `linkyo-supabase` wins.
 - `copywriting`: sentence case for buttons (German nouns keep their capitals), real deadlines only, and other brands' names or logos only with permission.
 
+### Motion skills added on 23 November 2026 (each file read in full once; no second independent check yet)
+
+| Skill | Source (commit) | License | Use it for |
+|---|---|---|---|
+| `review-animations` | [emilkowalski/skills](https://github.com/emilkowalski/skills) `64eb3de`, `skills/review-animations` | MIT (LICENSE) | A strict review of motion code with a Block or Approve verdict; runs only when called as `/review-animations` |
+| `find-animation-opportunities` | emilkowalski/skills `64eb3de` | MIT (LICENSE) | Where motion would help, and where it must not (read-only) |
+| `remove-animations` | emilkowalski/skills `64eb3de` | MIT (LICENSE) | Taking out motion that slows the product down, without breaking what waited for it |
+| `gestures` | emilkowalski/skills `64eb3de` | MIT (LICENSE) | Drag, swipe and sheet interactions that follow the finger |
+| `animation-performance` | emilkowalski/skills `64eb3de` | MIT (LICENSE) | Finding why an animation drops frames |
+| `animation-vocabulary` | emilkowalski/skills `64eb3de` | MIT (LICENSE) | The right name for a motion effect |
+| `explainer-default` | [Barty-Bart/motion-graphics](https://github.com/Barty-Bart/motion-graphics) `3d83d98`, `skills/explainer-default` | MIT (LICENSE) | A calm 45–90 s product demo rendered to MP4 with our Playwright and ffmpeg (set `LINKYO_ROOT` to the checkout) |
+| `explainer-engaging` | Barty-Bart/motion-graphics `3d83d98` | MIT (LICENSE) | A 10–30 s one-take product story |
+| `explainer-high-energy` | Barty-Bart/motion-graphics `3d83d98` | MIT (LICENSE) | A 12–20 s beat-locked promo |
+| `motion-effects` | [charlie947/motion-graphics-skills](https://github.com/charlie947/motion-graphics-skills) `229022e`, `skills/motion-effects` | MIT (LICENSE) | 16 short looping UI-motion recipes for marketing clips |
+| `reel-export` | charlie947/motion-graphics-skills `229022e` | MIT (LICENSE) | A 9:16 Reel or TikTok file with safe zones and an ffprobe check |
+
+Each folder has a `SOURCE.md` (repository, commit, what was checked). Each `SKILL.md` starts with a "Linkyo note" that names where it disagrees with `CLAUDE.md`, and changed or removed text is marked `<!-- Linkyo change: … -->`. In short:
+
+- The "Initial Response" sections that told the agent to say nothing else until asked are gone.
+- Tokens instead of raw values; no shadows, glows or underlines; Radix transform origins; RTL.
+- No Vaul, HyperFrames or Playwright installs. Brand, fonts and copy come from this repo.
+- Emil Kowalski's skills hand off to `motion-design`, `motion` and `review-animations` here, because his `animate`, `choreograph` and `improve-animations` were left out. The earlier note that his other skills prefer shadows still holds for `apple-design` and his README.
+
+Checked in the same round and left out:
+
+- **From the repositories above:**
+  - Emil Kowalski: `animate` and `choreograph` (duplicate `motion-design`), `improve-animations` (subagent plans in worktrees, writes `plans/`), `emil-design-eng` (repeats the installed ones), `apple-design` (translucent bars, deeper shadows, system fonts) and `animate-expo` (React Native).
+  - charlie947: `brand-intake` (writes a standing rule into `CLAUDE.md`), `apple-launch-film` (rebuilds Apple's Mac interface), the prompt writers for the paid Claude Motion service, `vox-explainer`, `title-sequence-3d`, and the launch, newsletter, chart, milestone, showdown and cover skills, which the explainers cover or which are out of scope.
+  - Barty-Bart: `motion-broll`, `object-separation` and `sound-effects` (run-time installs, model and audio downloads).
+- **No open-source licence:** `mattypark/Motion-graphics-skill` ("All rights reserved"; its manifest names another author's repository).
+- **Re-hosted bundle:** `jdjf39/video-creator-skills`. It holds copies of `cinetic`, `motion-director` and `motionmaxxing`, a `reel-editor` with a compiled macOS binary, a `watch-video` that downloads from YouTube and TikTok, and an installer that deletes skill folders and runs `npx skills add`.
+- **Lists, not skills:** `charetterat/awesome-agent-motion-skills` and `frankxai/awesome-motion-design-agent-skills`. Also `claudemotion.design`, a catalogue for a paid service whose setup runs `npx claudemotion@latest`; it says it is not affiliated with Anthropic.
+
 ### Earlier vendored skills: corrections
 
 - `vercel-labs/agent-skills` has no LICENSE file. MIT is declared in its README and in the SKILL.md front matter, so the "MIT (LICENSE)" rows above for `vercel-react-best-practices`, `vercel-composition-patterns`, `vercel-react-view-transitions` and `web-design-guidelines` should read "MIT, declared in README and SKILL.md". The LICENSE files next to them carry the standard MIT text.

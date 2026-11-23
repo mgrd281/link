@@ -49,6 +49,16 @@ from cover import cover_crop, lift_backdrop, tint, vignette, spaced, font, conta
 - Release covers are square, 1000 px. Wide announcement banners are 1200 × 675 (shown 16:9 by
   highlighted cards).
 
+## Original illustrated motion graphics
+
+For a person's work that no licensed clip shows (a forklift driver, a nurse, a cook), draw the scene
+ourselves: `scripts/forklift-scene.html` is the model — flat SVG drawn from scratch, a pure
+`render(t)` function (camera keyframes, parallax layers, a floor reflection, a seamless loop whose
+last frame equals the first), no text. Render every frame with
+`node scripts/render-scene.cjs <frames_dir> 30 10 <scene.html>` (run from `apps/web` so Playwright
+resolves), then encode as below (`-crf 26` suits flat illustration, about 0.7 MB). Frame 0 is the
+hero picture. Never show a real person's face in an illustration of a real customer.
+
 ## Original motion graphics from a photo
 
 When no licensed clip fits (most Mixkit warehouse and logistics clips are "Restricted", personal use

@@ -3,15 +3,14 @@ import { NO_IMAGE, type Page } from "@linkyo/blocks";
 /**
  * A page prepared for Sevag Ghazarian, from the application letter he gave the Linkyo team
  * (Lagerist / Töner, Sales Center Lörrach). Every fact on it comes from that letter; nothing is
- * added. No photo of him yet: his initials stand in, and the large picture is a placeholder of a
- * warehouse until he sends his own.
+ * added. No photo of him yet: his initials stand in.
  *
- * Picture: "A large empty warehouse" by Krisana Nakajo, Unsplash License
- * (https://unsplash.com/photos/a-large-empty-warehouse-CeRq-JzKGi4), cropped 4:5 and graded.
- * Moving picture (public/media/motion/sevag-lager.mp4): Linkyo's own motion graphic on that photo,
- * a 7 s loop — a slow camera move into the aisle, a scan beam across the racks, corner marks that
- * lock onto the aisle signs J and K. No text in it. Its first frame is the picture above, so nothing
- * jumps when it starts; visitors who prefer less motion keep the still.
+ * Picture and moving picture: Linkyo's own illustration, drawn for this page (no stock material):
+ * a forklift driver lifts a pallet of boxes into a high rack at night, a blue check confirms it, the
+ * truck backs out and returns with the next pallet. A 10 s seamless loop
+ * (public/media/motion/sevag-stapler.mp4, source in .claude/skills/linkyo-media-assets/scripts/
+ * forklift-scene.html); the picture is its first frame, so nothing jumps when it starts, and
+ * visitors who prefer less motion keep the still. No text in it.
  *
  * Not listed anywhere, not indexed, removed on request.
  */
@@ -38,12 +37,12 @@ export const sevagDe: Page = {
     bio: "Sorgfältig und zuverlässig im Lager. Sicherheit, Ordnung und Sauberkeit sind mir wichtig.",
     avatar: { src: NO_IMAGE, alt: "" },
     hero: {
-      src: `/prepared/${SEVAG_SLUG}/lager.jpg`,
-      alt: "Eine helle Lagerhalle mit Palettenregalen, die Gänge mit J und K beschriftet",
+      src: `/prepared/${SEVAG_SLUG}/stapler.jpg`,
+      alt: "Illustration: Ein Staplerfahrer hebt eine Palette mit Kartons in ein Hochregal",
       w: 1080,
       h: 1350,
     },
-    motion: { src: "sample:motion-sevag-lager" },
+    motion: { src: "sample:motion-sevag-stapler" },
     stats: [
       { value: "seit 2018", label: "in der Logistik" },
       { value: "seit 2021", label: "Staplerschein" },
