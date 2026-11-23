@@ -358,6 +358,46 @@ test.describe("project pages @real", () => {
     expect(ld).not.toContain(name);
   });
 
+  test("a client name typed in the editor before Confidential is switched on is stored nowhere and shown nowhere @real", async ({ page }) => {
+    const name = "Reederei Kaiserkai";
+    const owner = await publicAccount("prj-sheet", "en", {}, [project("p1", "harbour-system", "Harbour system")]);
+    await signIn(page, owner.email, "/en/app/editor");
+    await page.waitForURL("**/en/app/editor");
+    // The project sheet, as an owner fills it in: the client's name first, then the switch.
+    await page.locator("[data-row]").filter({ hasText: "Harbour system" }).locator("[data-row-edit]").click();
+    const sheet = page.getByRole("dialog", { name: "Edit Project" });
+    await sheet.locator('[data-group="forRole"]').click();
+    await sheet.getByRole("textbox", { name: "Who it was for", exact: true }).fill(name);
+    await sheet.getByRole("switch", { name: "Confidential, no name" }).click();
+    await sheet.getByRole("button", { name: "Save", exact: true }).locator("visible=true").first().click();
+    await expect(sheet).toBeHidden();
+    // Stored: confidential, and no name in the row at all.
+    await expect
+      .poll(async () => JSON.stringify((await service().from("sites").select("page").eq("profile_id", owner.id).single()).data?.page ?? null), { timeout: 20_000 })
+      .toContain('"confidential":true');
+    const { data: row } = await service().from("sites").select("page").eq("profile_id", owner.id).single();
+    expect(JSON.stringify(row)).not.toContain(name);
+    // Nowhere a visitor or a program reads: the RPC, the HTML and RSC payload of both pages, the JSON-LD, the preview.
+    const { data: answer } = await service().rpc("public_page", { handle: owner.username });
+    expect(JSON.stringify(answer)).toContain("Harbour system");
+    expect(JSON.stringify(answer)).not.toContain(name);
+    for (const path of [`/${owner.username}`, `/${owner.username}/harbour-system`]) {
+      const { status, html, rsc } = await served(page, path);
+      expect(status, path).toBe(200);
+      expect(html, path).not.toContain(name);
+      expect(rsc, path).not.toContain(name);
+    }
+    const { html } = await served(page, `/${owner.username}/harbour-system`);
+    expect(html).toContain("Confidential client");
+    const ld = /<script type="application\/ld\+json">([^<]*)<\/script>/.exec(html)?.[1] ?? "";
+    expect(ld).toContain("Harbour system");
+    expect(ld).not.toContain(name);
+    const card = await page.request.get(`/u/${owner.username}/harbour-system/opengraph-image`);
+    expect(card.status()).toBe(200);
+    expect(card.headers()["content-type"]).toBe("image/png");
+    expect((await card.body()).toString("latin1")).not.toContain(name);
+  });
+
   test("has its canonical address on the creator domain and a link preview image @real", async ({ page }) => {
     const { username } = await publicAccount("prj-og", "en", {}, [project("p1", "harbour-light", "Harbour light", { results: [{ value: "9 → 3", label: "weeks to wait" }] })]);
     await page.goto(`/${username}/harbour-light`);
@@ -400,11 +440,12 @@ test.describe("project pages @real", () => {
     expect(await visit(owner.username)).toEqual(gone);
 
     // The control: the same deletion behind the app's back (no route that drops the cached copies)
-    // leaves the old project page and its preview up. That is what the routes above prevent.
+    // leaves the old project page and its earlier address's redirect up. That is what the routes above
+    // prevent. (The link preview is drawn on every request, a dynamic route: it is gone either way.)
     const other = await publicAccount("prj-stale", "de", {}, [project("p1", "werkhalle", "Werkhalle", { was: ["halle-alt"] })]);
     expect(await visit(other.username)).toEqual(shown);
     expect((await service().auth.admin.deleteUser(other.id)).error).toBeNull();
-    expect(await visit(other.username)).toEqual(shown);
+    expect(await visit(other.username)).toEqual({ ...shown, preview: 404 });
   });
 });
 

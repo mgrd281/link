@@ -76,7 +76,9 @@ export function ReachInput({
   };
 
   const invalid = touched && state.typed.trim() !== "" && reachUrl(state.way, state.typed) === null;
-  const urlError = invalid ? tErrors(state.way === "email" ? "invalidEmail" : state.way === "calendar" ? "url" : "invalid") : errors.url;
+  // A WhatsApp number that opens no chat: the error keeps the hint's words (the country code), which it replaces.
+  const wayError = state.way === "whatsapp" ? `${tErrors("invalid")} ${tPlatforms("whatsapp")}` : tErrors(state.way === "email" ? "invalidEmail" : state.way === "calendar" ? "url" : "invalid");
+  const urlError = invalid ? wayError : errors.url;
 
   return (
     <div className="grid grid-cols-1 gap-4">
