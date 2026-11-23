@@ -1,5 +1,5 @@
 import type { BlockOf } from "@linkyo/blocks";
-import { NO_IMAGE } from "@linkyo/blocks/rules";
+import { hasImage } from "@linkyo/blocks/rules";
 import type { CreatorButtonStyle } from "@linkyo/tokens";
 import { cn, Icon, PlatformIcon } from "@linkyo/ui";
 import { ArrowUpRight, ChevronDown, Eye, Mail } from "lucide-react";
@@ -9,7 +9,7 @@ import { siYoutubeshorts } from "simple-icons";
 
 import { linkStyleClasses } from "@/features/creator/link-button";
 
-import { MediaImage, mediaSizes, PlatformGlyph, platformName, useCreatorFormat } from "../shared/creator-kit";
+import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName, useCreatorFormat } from "../shared/creator-kit";
 import { ClickToLoad, NewsletterForm } from "../shared/islands";
 import { linkGlyph, LinkIconGlyph } from "../shared/link-icons";
 import { providerOf } from "../shared/providers";
@@ -340,8 +340,13 @@ export function BrandGrid({ block }: { block: BlockOf<"brands"> }) {
         const body = (
           <>
             <span className="relative block aspect-square overflow-hidden rounded-creator-card">
-              {/* An item without a logo shows the calm "no picture" tile; a block without any logo is a list of names instead. */}
-              <MediaImage src={item.logo?.src ?? NO_IMAGE} alt="" sizes={wide ? mediaSizes.half : mediaSizes.third} />
+              {/* A client without a logo among clients with one: its initials on a fill step, never a "missing picture" sign
+                  (a public page drops logos kept on other hosts). A block without any logo is a list of names instead. */}
+              {hasImage(item.logo) ? (
+                <MediaImage src={item.logo.src} alt="" sizes={wide ? mediaSizes.half : mediaSizes.third} />
+              ) : (
+                <Monogram name={item.name} className="bg-creator-surface-2 text-h2 text-creator-fg-muted" />
+              )}
             </span>
             <span className={cn("grid gap-0.5", wide ? "px-1 pt-2" : "px-0.5 pt-2")}>
               <span dir="auto" className={cn(pageSide, "line-clamp-2 leading-snug font-semibold", wide ? "text-body" : "text-small")}>{item.name}</span>
