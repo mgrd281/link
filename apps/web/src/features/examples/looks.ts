@@ -21,9 +21,21 @@ export interface Look {
   category: Category;
   locale: "de" | "en" | "ar";
   theme: CreatorThemeConfig;
+  /**
+   * Who took the page's photographs. A portfolio shows pictures as the person's own work, so an
+   * example page names the photographers in its "Example" note (assets/examples/CREDITS.md has the
+   * licences).
+   */
+  credit?: string;
 }
 
 export const LOOKS = {
+  // Portfolios on the two portfolio templates: a photographer, an engineer, a coach and a carpenter.
+  "ronja-feldkamp": { kind: "photographer", category: "local", locale: "de", theme: { template: "werkbogen" }, credit: "Paul Einerhand, Metin Ozer, Bob van Aubel, Declan Sun, Peyman Shojaei (Unsplash)" },
+  "tobin-achterberg": { kind: "developer", category: "tech", locale: "en", theme: { template: "tiefdruck" }, credit: "Vitaly Gariev (Unsplash)" },
+  "naya-aldabbas": { kind: "coach", category: "careers", locale: "ar", theme: { template: "werkbogen", accent: SW.oxblood }, credit: "Lisa Marie Theck (Unsplash)" },
+  // Brass, not an orange: the page's one accent on a warm black ground. The owner chose the grid over the template's list.
+  "jorinde-ahlfeld": { kind: "freelancer", category: "local", locale: "de", theme: { template: "tiefdruck", accent: SW.brass, projects: "bento" }, credit: "Caroline Badran, Josh Davies, Bailey Alexander, mahdi chaghari (Unsplash)" },
   // Apps and skills (ADR 0055): an app explainer and a skills author, first in the gallery.
   "merve-aksoy": { kind: "apps", category: "tech", locale: "de", theme: { template: "aura", accent: SW.sky } },
   "arjun-mehta": { kind: "developer", category: "tech", locale: "en", theme: { template: "folio", accent: SW["ink-blue"] } },
@@ -124,6 +136,7 @@ export type LookId = keyof typeof LOOKS;
 export const GALLERY_LEAD: readonly LookId[] = [
   "lou-ferreira", "juno-kade", "salma-rahhal", "fenja-roth", "kai-moreno", "layal-mansour", "lenz", "nico-hale",
   "yazan-khoury", "tomas-reyes", "rina-vex", "dana-issa", "merve-aksoy", "arjun-mehta", "mira-sol", "jonas-ek",
+  "ronja-feldkamp",
 ];
 
 /** Pages of well-known people, those creators know best first. */
