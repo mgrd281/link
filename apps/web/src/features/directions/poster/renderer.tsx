@@ -1,4 +1,5 @@
 import { hasImage, isBlockActive, type Block, type BlockOf, type Page, type Profile } from "@linkyo/blocks";
+import { coverMode, primaryAction } from "@linkyo/blocks/project";
 import type { CreatorButtonStyle } from "@linkyo/tokens";
 import type { CreatorLayout, HeadingStyle, ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn } from "@linkyo/ui";
@@ -29,8 +30,8 @@ import { EventTabs } from "./events";
 import { PosterBar, PosterHero } from "./hero";
 import { AboutSection, BrandNames, ContactBand, QuotesSection, TimelineSection, ToolsSection } from "./portfolio-sections";
 import { ProjectPage } from "./project-page";
-import { ProjectsGroup } from "./projects";
-import { featuredApp, groupSections, type PosterItem } from "./sections";
+import { ProjectPlate, ProjectsGroup } from "./projects";
+import { featuredApp, groupSections, type PosterItem, type PosterSection as Section } from "./sections";
 import { cardSurface, pageSide, pressable, railFrame, sectionTitle, type HeadingTag } from "./styles";
 
 /**
@@ -40,6 +41,10 @@ import { cardSurface, pageSide, pressable, railFrame, sectionTitle, type Heading
  * rows that turn into two-row rails when long, month tabs for dates, a two-up shop, partner tiles,
  * video rails, photos in a rail (or a two-column grid for portfolios). A portfolio adds runs of
  * projects and its own sections; with `openProject` the renderer shows that project's page instead.
+ *
+ * Templates with the wide canvas (`layout.canvas`) leave the narrow column from desktop widths on:
+ * work, pictures, about, quotes, clients and the contact band take the whole canvas; everything
+ * else is read in a column beside its section title. Phones and every other template are unchanged.
  */
 export function PosterRenderer({
   page,
@@ -99,7 +104,7 @@ export function PosterRenderer({
   const live = lives.find((block) => block.isLive) ?? lives.find((block) => block.startsAt !== undefined);
   // One app on the page shows the official store badges; the trademarks are credited in the footer.
   const featured = featuredApp(blocks);
-  const sections = groupSections(blocks, featured);
+  const grouped = groupSections(blocks, featured);
   const isRtl = profile.locale === "ar";
   const photo = profile.hero ?? profile.avatar;
   const surface = cardSurface[theme.buttonStyle];
@@ -110,12 +115,32 @@ export function PosterRenderer({
   // Pages with embedded players get a privacy notice in the creator's colors (not inside the dashboard preview).
   const providers = preview ? [] : externalProviders(blocks);
   const { layout } = theme;
-  // The blurred portrait behind the column suits photo-led heroes; the others bring their own backdrop.
-  const ambient = hasImage(photo) && layout.backdrop === "none" && layout.hero !== "halo" && layout.hero !== "inset" && layout.hero !== "frame";
+  // The blurred portrait behind the column suits photo-led heroes; the others bring their own backdrop,
+  // and the two portfolio heroes stand on the plain page.
+  const ambient =
+    hasImage(photo) && layout.backdrop === "none" && layout.hero !== "halo" && layout.hero !== "inset" && layout.hero !== "frame" && layout.hero !== "plate" && layout.hero !== "statement";
+  const wide = layout.canvas === "wide";
+  // The page's one primary action comes from its contact block and from nowhere else.
+  const primary = primaryAction(blocks, now);
+  const contact = primary ? blocks.find((block): block is BlockOf<"contact"> => block.type === "contact") : undefined;
+  // What the portfolio's blocks need to know about their page.
+  const runs = grouped.flatMap((section) => section.items).filter((item) => item.kind === "projects");
+  // The plate hero opens with the first project of the first run when that has a picture (and the
+  // owner set no hero picture of their own): the run below then starts at its second project.
+  const firstRun = runs[0];
+  const first = firstRun?.blocks[0];
+  const lead = layout.hero === "plate" && !hasImage(profile.hero) && first && coverMode(first) === "picture" ? first : undefined;
+  // A run that only held the plate's project has nothing left to show; neither has a section that only held that run.
+  const sections =
+    lead && firstRun?.blocks.length === 1
+      ? grouped.flatMap((section): Section[] => {
+          if (!section.items.includes(firstRun)) return [section];
+          const items = section.items.filter((item) => item !== firstRun);
+          return items.length > 0 ? [{ ...section, items }] : [];
+        })
+      : grouped;
   // Numbered titles count the titled sections: 01, 02 …
   const titled = sections.filter((section) => section.title !== null);
-  // What the portfolio's blocks need to know about their page.
-  const runs = sections.flatMap((section) => section.items).filter((item) => item.kind === "projects");
   const portfolio: PortfolioContext = {
     theme,
     locale: profile.locale,
@@ -123,11 +148,12 @@ export function PosterRenderer({
     projects: blocks.filter((block): block is BlockOf<"project"> => block.type === "project"),
     quotes: blocks.filter((block): block is BlockOf<"quotes"> => block.type === "quotes"),
     runs,
+    lead,
     base: projectBase,
     suffix: projectSuffix,
     onOpen: onOpenProject,
     now,
-    wide: layout.canvas === "wide",
+    wide,
   };
 
   return (
@@ -135,7 +161,9 @@ export function PosterRenderer({
       lang={profile.locale}
       dir={isRtl ? "rtl" : "ltr"}
       style={themeStyle(theme)}
-      className={cn("poster-scope @container relative isolate overflow-clip bg-creator-bg font-creator-body text-creator-fg", preview ? "min-h-full" : "min-h-dvh")}
+      // The focus ring takes the page's accent text colour (AA on the page's own background, also on
+      // dark templates); Linkyo's own chrome inside (`data-theme`) keeps its ring.
+      className={cn("poster-scope @container relative isolate overflow-clip bg-creator-bg font-creator-body text-creator-fg [--color-focus:var(--creator-accent-text)]", preview ? "min-h-full" : "min-h-dvh")}
     >
       {/* Wide screens: the portrait becomes a soft ambient glow behind the column. Decorative. */}
       {ambient ? (
@@ -155,15 +183,40 @@ export function PosterRenderer({
       {/* Signal: a fine grid that fades out down the first screen. Decorative. */}
       {layout.backdrop === "grid" ? <div aria-hidden className="poster-grid pointer-events-none absolute inset-x-0 top-0 h-dvh mask-b-from-20% mask-b-to-100%" /> : null}
 
-      <div className="relative mx-auto max-w-creator @prose:pt-10">
+      {/* The wide canvas: from desktop widths the column grows to layout.work, keeping a gutter beside it. */}
+      <div className={cn("relative mx-auto max-w-creator @prose:pt-10", wide && "@work:box-content @work:max-w-work @work:px-creator-gutter")}>
         {overlay ? <div className="pointer-events-none absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12 *:pointer-events-auto">{overlay}</div> : null}
-        <PosterBar profile={profile} />
-        <PosterHero profile={profile} socials={socials} live={live} theme={theme} preview={preview} />
+        <PosterBar profile={profile} primary={primary} />
+        <PosterHero
+          profile={profile}
+          socials={socials}
+          live={live}
+          theme={theme}
+          preview={preview}
+          contact={contact}
+          primary={primary}
+          now={now}
+          plate={
+            lead && firstRun ? (
+              <ProjectPlate
+                project={lead}
+                total={firstRun.blocks.length}
+                theme={theme}
+                locale={profile.locale}
+                quotes={portfolio.quotes}
+                base={projectBase}
+                suffix={projectSuffix}
+                onOpen={onOpenProject}
+                priority={!preview}
+              />
+            ) : undefined
+          }
+        />
         {/* Marks the end of the hero: the Linkyo bar slides in once this has scrolled up. */}
         <div data-poster-sentinel aria-hidden />
 
         {/* A preview sits inside the dashboard, which already has the page's one <main>. */}
-        <Main className="grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:px-0">
+        <Main className={wide ? "grid grid-cols-1 gap-16 px-creator-gutter pt-12 @prose:gap-20 @prose:px-0 @work:gap-24 @work:pt-20" : "grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:px-0"}>
           {sections.map((section) => (
             <PosterSection
               key={section.id}
@@ -172,8 +225,12 @@ export function PosterRenderer({
               number={titled.indexOf(section) + 1}
               reveal={layout.motion === "reveal"}
               // The dashboard's preview finds the block being edited by these ids (a section by its title block).
-              blockIds={preview && section.id !== "top" ? section.id : undefined}
+              blockIds={preview && section.title !== null ? section.id : undefined}
               ai={isAiBlock(blocks.find((block) => block.id === section.id))}
+              wide={wide}
+              span={section.span}
+              // A section of work says how many projects it holds, the hero plate's project included.
+              projects={section.items.reduce((count, item) => (item.kind === "projects" ? count + item.blocks.length : count), 0)}
             >
               {section.items.map((item) => (
                 <PosterItemView
@@ -220,6 +277,12 @@ const aiMark = (ai: boolean) => (ai ? { "data-ai-generated": "true" } : {});
  * A titled section (or an untitled run of blocks). Titles follow the template: numbered ("01" in the
  * accent, then the title in caps), ruled (the title, then a hairline to the end of the line), or
  * monospace ("//" in the accent). With motion "reveal" the section rises in as it scrolls into view.
+ *
+ * Portfolio titles: a small numbered caption under a hairline that crosses the section, with the
+ * number of projects at the inline end (marker), or the display face set large after a small number
+ * (headline). On the wide canvas a section is a grid: "wide" sections put their content under the
+ * title on all twelve columns, "text" sections put the title in the first four and the content in
+ * the reading column beside it. The split is a grid, so reading, tab and source order never change.
  */
 function PosterSection({
   title,
@@ -228,6 +291,9 @@ function PosterSection({
   reveal,
   blockIds,
   ai,
+  wide,
+  span,
+  projects,
   children,
 }: {
   title: string | null;
@@ -237,9 +303,66 @@ function PosterSection({
   blockIds?: string | undefined;
   /** The title comes from an AI-written block. */
   ai: boolean;
+  /** The template uses the wide canvas. */
+  wide: boolean;
+  span: Section["span"];
+  /** How many projects the section holds (0 for a section without work). */
+  projects: number;
   children: ReactNode;
 }) {
   const id = useId();
+  const t = useTranslations("creator");
+  if (wide) {
+    const beside = span === "text";
+    const heading = sectionTitle(headings);
+    const marker = headings === "marker";
+    const count = String(number).padStart(2, "0");
+    const Box = title === null ? "div" : "section";
+    return (
+      <Box
+        aria-labelledby={title === null ? undefined : id}
+        data-block-ids={blockIds}
+        className={cn(
+          "grid min-w-0 grid-cols-1 gap-4 @prose:gap-6",
+          beside && "@work:grid-cols-12 @work:gap-x-6",
+          title !== null && marker && "border-t border-creator-line pt-3",
+          reveal && "poster-reveal",
+        )}
+      >
+        {title === null ? null : marker ? (
+          <div className={cn("flex min-w-0 items-baseline justify-between gap-4", beside && "@work:col-span-4")}>
+            <h2 id={id} className={heading.className} style={heading.style} {...aiMark(ai)}>
+              <span aria-hidden className="text-creator-accent-text tabular-nums">
+                {count}
+              </span>
+              <span dir="auto" className={cn(pageSide, "min-w-0 text-balance break-words")}>
+                {title}
+              </span>
+            </h2>
+            {projects > 0 ? <p className="shrink-0 text-small text-creator-fg-muted tabular-nums">{t("portfolio.projectCount", { count: projects })}</p> : null}
+          </div>
+        ) : (
+          <h2 id={id} className={cn(heading.className, beside && "@work:col-span-4")} style={heading.style} {...aiMark(ai)}>
+            {headings === "headline" || headings === "numbered" ? (
+              // The number is a small figure in the body face, whatever the title's own face.
+              <span aria-hidden className={cn("text-creator-accent-text tabular-nums", headings === "headline" && "font-creator-body text-small font-semibold tracking-normal")}>
+                {count}
+              </span>
+            ) : headings === "mono" ? (
+              <span aria-hidden className="text-creator-accent-text">
+                {"//"}
+              </span>
+            ) : null}
+            <span dir="auto" className={cn(pageSide, "min-w-0")}>
+              {title}
+            </span>
+            {headings === "rule" ? <span aria-hidden className="h-px min-w-6 flex-1 bg-creator-line-strong" /> : null}
+          </h2>
+        )}
+        <div className={cn("grid min-w-0 grid-cols-1 gap-3", beside && "@work:col-span-8 @work:col-start-5 @work:max-w-creator")}>{children}</div>
+      </Box>
+    );
+  }
   if (title === null)
     return (
       <div data-block-ids={blockIds} className={cn("grid min-w-0 grid-cols-1 gap-3", reveal && "poster-reveal")}>
@@ -276,6 +399,8 @@ interface PortfolioContext {
   quotes: BlockOf<"quotes">[];
   /** The page's runs of projects, in page order. */
   runs: PosterItem[];
+  /** The project the hero plate shows; its run starts at the second project. */
+  lead: BlockOf<"project"> | undefined;
   base: string | undefined;
   suffix: string;
   onOpen: ((id: string) => void) | undefined;
@@ -321,21 +446,26 @@ function PosterItemView({ preview, ...props }: ItemProps & { preview: boolean })
 }
 
 function PosterItemBody({ item, linkStyle, surface, label, nested, gallery, featured, portfolio }: ItemProps) {
+  const t = useTranslations("creator");
   switch (item.kind) {
     case "projects":
       return (
-        <ProjectsGroup
-          blocks={item.blocks}
-          groupIndex={Math.max(0, portfolio.runs.indexOf(item))}
-          leadTaken={false}
-          theme={portfolio.theme}
-          locale={portfolio.locale}
-          quotes={portfolio.quotes}
-          base={portfolio.base}
-          suffix={portfolio.suffix}
-          onOpen={portfolio.onOpen}
-          numbered={portfolio.theme.layout.headings === "marker" || portfolio.theme.layout.headings === "headline"}
-        />
+        <>
+          {/* A run of work under no title still has its place in the page's outline. */}
+          {nested ? null : <h2 className="sr-only">{t("portfolio.work")}</h2>}
+          <ProjectsGroup
+            blocks={item.blocks}
+            groupIndex={Math.max(0, portfolio.runs.indexOf(item))}
+            leadTaken={portfolio.lead !== undefined && item.blocks[0] === portfolio.lead}
+            theme={portfolio.theme}
+            locale={portfolio.locale}
+            quotes={portfolio.quotes}
+            base={portfolio.base}
+            suffix={portfolio.suffix}
+            onOpen={portfolio.onOpen}
+            numbered={portfolio.theme.layout.headings === "marker" || portfolio.theme.layout.headings === "headline"}
+          />
+        </>
       );
     case "videos":
       return item.blocks.length > 1 ? <VideoRail videos={item.blocks} /> : <VideoFeature video={item.blocks[0]} />;
@@ -385,13 +515,14 @@ function PosterBlock({
       // Partners with logos are tiles; clients without any logo are a list of names.
       return block.items.some((item) => hasImage(item.logo)) ? <BrandGrid block={block} /> : <BrandNames block={block} />;
     case "about":
-      return <AboutSection block={block} wide={portfolio.wide} />;
+      // Werkbogen (marker titles) sets the lead in its display face; Tiefdruck and the others in the body face.
+      return <AboutSection block={block} wide={portfolio.wide} lead={portfolio.theme.layout.headings === "marker" ? "display" : "body"} />;
     case "tools":
       return <ToolsSection block={block} />;
     case "timeline":
       return <TimelineSection block={block} locale={portfolio.locale} />;
     case "quotes":
-      return <QuotesSection block={block} ownerName={portfolio.ownerName} projects={portfolio.projects} base={portfolio.base} wide={portfolio.wide} />;
+      return <QuotesSection block={block} ownerName={portfolio.ownerName} projects={portfolio.projects} base={portfolio.base} suffix={portfolio.suffix} wide={portfolio.wide} />;
     case "contact":
       return <ContactBand block={block} now={portfolio.now} wide={portfolio.wide} />;
     case "newsletter":
@@ -400,10 +531,14 @@ function PosterBlock({
       // Portfolios: the work in two columns, tall and square pictures alternating like a contact sheet.
       if (gallery === "grid") {
         return (
-          <ul aria-label={block.title ?? t("gallery")} className="columns-2 gap-2">
+          // On the wide canvas the sheet has four columns.
+          <ul aria-label={block.title ?? t("gallery")} className={cn("columns-2 gap-2", portfolio.wide && "@work:columns-4 @work:gap-4")}>
             {block.images.map((image, index) => (
-              <li key={image.src} className={cn("relative mb-2 break-inside-avoid overflow-hidden rounded-creator-card", index % 3 === 0 ? "aspect-portrait" : "aspect-square")}>
-                <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={mediaSizes.half} />
+              <li
+                key={image.src}
+                className={cn("relative mb-2 break-inside-avoid overflow-hidden rounded-creator-card", portfolio.wide && "@work:mb-4", index % 3 === 0 ? "aspect-portrait" : "aspect-square")}
+              >
+                <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={portfolio.wide ? mediaSizes.workQuarter : mediaSizes.half} />
               </li>
             ))}
           </ul>

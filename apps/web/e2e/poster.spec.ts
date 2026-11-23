@@ -28,13 +28,14 @@ test.describe("poster creator page", () => {
   });
 
   test("every template renders the same content structure", async ({ page }) => {
-    // Numbered and monospace titles add a decorative "01" or "//" (hidden from screen readers).
+    // Numbered, marker and headline titles add a decorative "01", monospace titles a "//" (all hidden
+    // from screen readers); the number may stand on a line of its own before the title.
     const headings = async (template: string) => {
       await page.goto(`/en/directions/poster?chrome=0&template=${template}`);
-      return (await page.getByRole("heading", { level: 2 }).allInnerTexts()).map((text) => text.replace(/^(\d{2}|\/\/)\s*/, "").trim().toLowerCase());
+      return (await page.getByRole("heading", { level: 2 }).allInnerTexts()).map((text) => text.replace(/^\s*(\d{2}|\/\/)\s*/, "").trim().toLowerCase());
     };
     const reference = await headings("nocturne");
-    for (const template of ["daylight", "marquee", "pulse", "atelier", "mono", "studio", "aura", "folio", "signal", "bloom"]) {
+    for (const template of ["daylight", "marquee", "pulse", "atelier", "mono", "studio", "aura", "folio", "signal", "bloom", "werkbogen", "tiefdruck"]) {
       expect(await headings(template), template).toEqual(reference);
     }
   });

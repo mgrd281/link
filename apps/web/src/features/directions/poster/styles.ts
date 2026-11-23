@@ -39,13 +39,21 @@ export const pressable = cn(
 );
 
 /**
- * Section titles per template: the display face; the body face in title case or in caps; or, for the
- * newer templates, small caps after a number, before a rule, or after "//" (the renderer adds those).
+ * Section titles per template: the display face; the body face in title case or in caps; for the
+ * newer templates small caps after a number, before a rule, or after "//"; for portfolios a small
+ * numbered caption under a hairline (marker) or the display face set large after a small number
+ * (headline). The renderer adds the number, the rule and the "//".
+ * Arabic has no capitals and takes no letter-spacing (it would pull the joined letters apart), so
+ * the caps styles drop both wherever the title runs right to left.
  */
 export function sectionTitle(style: HeadingStyle): { className: string; style?: CSSProperties } {
   if (style === "display") return { className: "font-creator-display text-h2 leading-tight", style: displayStyle };
   if (style === "numbered" || style === "rule" || style === "mono") {
-    return { className: "flex items-center gap-3 font-creator-body text-small leading-tight font-bold tracking-wide uppercase" };
+    return { className: "flex items-center gap-3 font-creator-body text-small leading-tight font-bold tracking-wide uppercase rtl:tracking-normal rtl:normal-case" };
+  }
+  if (style === "marker") return { className: "flex min-w-0 items-baseline gap-3 font-creator-body text-small leading-snug font-semibold" };
+  if (style === "headline") {
+    return { className: "flex min-w-0 items-baseline gap-3 font-creator-display text-h1 leading-tight text-balance break-words hyphens-auto @work:text-display-sm rtl:leading-snug", style: displayStyle };
   }
   return { className: cn("font-creator-body text-h3 leading-tight font-bold tracking-tight", style === "sans-upper" && "uppercase") };
 }
