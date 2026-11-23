@@ -23,10 +23,13 @@ const PICTURE: Partial<Record<HeroStyle, string>> = {
   inset: "inset-x-2 top-2 h-1/2 rounded-sm",
   frame: "top-4 left-1/2 aspect-square w-1/2 -translate-x-1/2 rounded-xs border-emphasis border-creator-accent",
   arch: "top-3 left-1/2 h-1/2 w-3/5 -translate-x-1/2 rounded-t-full rounded-b-xs",
+  // Werkbogen: a plate from edge to edge under a quiet top line. Tiefdruck: no large picture, a small round portrait.
+  plate: "inset-x-0 top-4 h-2/5",
+  statement: "start-3 top-3 size-8 rounded-full",
 };
 
 /**
- * Template picker: eleven looks, each previewed with the creator's own photo and name in that
+ * Template picker: thirteen looks, each previewed with the creator's own photo and name in that
  * template's real colors and fonts (resolved by the theme engine, so every swatch is AA).
  * Native radio inputs: arrow keys move between templates, screen readers announce the choice.
  * `still` (the dashboard's Design screen) stops the thumbnails' ambient loops, so nothing moves while
@@ -70,7 +73,7 @@ export function TemplatePicker({
       {/* Still: the row runs to the edges of the dashboard panel around it (its p-4, lg:p-6), never past them.
           A scroller clips what is outside it: pt-1 (taken back by -mt-1) and pb-1 keep the focus ring whole. */}
       <div ref={row} className={cn("-mt-1 overflow-x-auto pt-1 pb-1", still ? "-mx-4 px-4 lg:-mx-6 lg:px-6" : "-mx-5 px-5 lg:mx-0 lg:overflow-visible lg:px-0")}>
-        <div className={cn("grid auto-cols-[42%] grid-flow-col gap-3 sm:auto-cols-[28%]", !still && "lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3")}>
+        <div className={cn("grid auto-cols-[42%] grid-flow-col gap-3 sm:auto-cols-[28%]", !still && "lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-4")}>
           {themes.map(({ id, theme }) => {
             const selected = id === value;
             return (
@@ -117,7 +120,8 @@ export function TemplatePicker({
                       )}
                     </span>
                   </span>
-                  <span className="relative truncate font-creator-display text-body leading-none" style={displayStyle}>
+                  {/* Tiefdruck sets the name large: its card does too. */}
+                  <span className={cn("relative truncate font-creator-display leading-none", theme.layout.hero === "statement" ? "text-h3" : "text-body")} style={displayStyle}>
                     {profile.displayName}
                   </span>
                   <span className="relative grid gap-1">

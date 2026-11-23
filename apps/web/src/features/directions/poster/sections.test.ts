@@ -97,16 +97,47 @@ describe("portfolio blocks", () => {
     ]);
   });
 
-  it("lets a titled about, tools, timeline or quotes block open its own section; contact never does", () => {
+  it("lets a titled about, tools, timeline or quotes block open its own section", () => {
     expect(shape([header("h", "Work"), project("a"), about("About me"), tools("Tech stack"), timeline, quotes, contact])).toEqual([
       ["Work", ["projects:a"]],
       ["About me", ["about"]],
       ["Tech stack", ["tools"]],
       ["Experience", ["timeline"]],
-      ["What clients say", ["quotes", "contact"]],
+      ["What clients say", ["quotes"]],
+      [null, ["contact"]],
     ]);
     // Without a title of their own they stay in the section they stand in.
     expect(shape([header("h", "Work"), project("a"), about(), tools()])).toEqual([["Work", ["projects:a", "about", "tools"]]]);
+  });
+
+  it("gives the contact band a section of its own, without a title, wherever it stands", () => {
+    // Never an item under the title before it: the band runs across the canvas under its own line.
+    expect(shape([header("h", "Work"), project("a"), contact])).toEqual([
+      ["Work", ["projects:a"]],
+      [null, ["contact"]],
+    ]);
+    expect(shape([quotes, contact])).toEqual([
+      ["What clients say", ["quotes"]],
+      [null, ["contact"]],
+    ]);
+    // At the top of a page, and with plain blocks around it: what follows starts a run of its own.
+    expect(shape([link("x"), contact, link("y"), link("z")])).toEqual([
+      [null, ["x"]],
+      [null, ["contact"]],
+      [null, ["y", "z"]],
+    ]);
+    expect(shape([contact, project("a")])).toEqual([
+      [null, ["contact"]],
+      [null, ["projects:a"]],
+    ]);
+    // A header straight before it keeps its (empty) section; the band still stands alone.
+    expect(shape([header("h", "Contact"), contact, header("h2", "More"), link("x")])).toEqual([
+      ["Contact", []],
+      [null, ["contact"]],
+      ["More", ["x"]],
+    ]);
+    const ids = groupSections([link("x"), contact, link("y")]).map((section) => section.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("keeps a project that follows a self-titled block in that block's section, as a run", () => {
@@ -122,12 +153,32 @@ describe("portfolio blocks", () => {
     expect(shape(suggestBlockOrder(coach, "coach"))).toEqual([
       ["About me", ["about", "cv-pdf"]],
       ["Work", ["projects:a"]],
-      ["What clients say", ["quotes", "review-site", "contact"]],
+      ["What clients say", ["quotes", "review-site"]],
+      [null, ["contact"]],
     ]);
   });
 
-  it("gives every section the text span until the wide canvas computes it", () => {
-    for (const section of groupSections([link("x"), header("h", "Work"), project("a"), about("About me"), contact])) expect(section.span, section.id).toBe("text");
+  it("spans the wide canvas with work, pictures, about, quotes, clients and contact; everything else reads beside its title", () => {
+    const gallery: Block = { ...base, id: "gallery", type: "gallery", title: "Pictures", images: [{ src: "sample:gallery-1", alt: "" }] };
+    const brands: Block = { ...base, id: "clients", type: "brands", title: "Clients", columns: 3, items: [{ name: "A bakery" }] };
+    const span = (blocks: Block[]) => groupSections(blocks).map((section) => [section.title, section.span]);
+    expect(span([link("x"), header("h", "Work"), project("a"), about("About me"), tools("Tech stack"), timeline, quotes, brands, gallery, header("l", "Links"), link("y"), video("v"), contact])).toEqual([
+      [null, "text"],
+      ["Work", "wide"],
+      ["About me", "wide"],
+      ["Tech stack", "text"],
+      ["Experience", "text"],
+      ["What clients say", "wide"],
+      ["Clients", "wide"],
+      ["Pictures", "wide"],
+      ["Links", "text"],
+      [null, "wide"],
+    ]);
+    // Any wide item makes its section wide: a link under the same title does not change that.
+    expect(span([header("h", "Work"), link("x"), project("a"), link("y")])).toEqual([["Work", "wide"]]);
+    expect(span([link("x"), project("a")])).toEqual([[null, "wide"]]);
+    // A freshly added title without blocks is a text section.
+    expect(span([header("h", "New")])).toEqual([["New", "text"]]);
   });
 });
 

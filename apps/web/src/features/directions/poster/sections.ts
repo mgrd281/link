@@ -45,18 +45,42 @@ export interface PosterSection {
 // (`suggestBlockOrder`), so the two can never read a page differently.
 export { selfTitle };
 
+/**
+ * Blocks whose content takes the whole width of the wide canvas: the work, pictures in a grid, the
+ * about section with its portrait, quotes, clients and the contact band. Everything else is read in
+ * the column beside its title.
+ */
+const WIDE_BLOCKS: ReadonlySet<Block["type"]> = new Set<Block["type"]>(["gallery", "about", "quotes", "brands", "contact"]);
+
+const itemSpan = (item: PosterItem): PosterSection["span"] => (item.kind === "projects" || (item.kind === "block" && WIDE_BLOCKS.has(item.block.type)) ? "wide" : "text");
+
 export function groupSections(blocks: readonly Block[], featured?: string): PosterSection[] {
   const sections: PosterSection[] = [{ id: "top", title: null, items: [], span: "text" }];
+  // The contact band stands alone: whatever follows it starts a new run of its own.
+  let closed = false;
   for (const block of blocks) {
     if (block.type === "socials") continue; // rendered in the hero
     if (block.type === "header") {
       sections.push({ id: block.id, title: block.title, items: [], span: "text" });
+      closed = false;
       continue;
     }
     const ownTitle = selfTitle(block);
     if (ownTitle) {
       sections.push({ id: block.id, title: ownTitle, items: [{ kind: "block", block }], span: "text" });
+      closed = false;
       continue;
+    }
+    // The contact band runs across the canvas under its own line: always a section of its own,
+    // never an item under the title before it.
+    if (block.type === "contact") {
+      sections.push({ id: block.id, title: null, items: [{ kind: "block", block }], span: "text" });
+      closed = true;
+      continue;
+    }
+    if (closed) {
+      sections.push({ id: `after-${block.id}`, title: null, items: [], span: "text" });
+      closed = false;
     }
     const current = sections.at(-1);
     if (!current) continue;
@@ -81,7 +105,9 @@ export function groupSections(blocks: readonly Block[], featured?: string): Post
     }
   }
   // An empty titled section still renders its title (the creator just added it); an empty top does not.
-  return sections.filter((section) => section.items.length > 0 || section.title !== null);
+  return sections
+    .filter((section) => section.items.length > 0 || section.title !== null)
+    .map((section) => (section.items.some((item) => itemSpan(item) === "wide") ? { ...section, span: "wide" } : section));
 }
 
 /** Where a link leads, shown under its title so visitors know before they tap. */
