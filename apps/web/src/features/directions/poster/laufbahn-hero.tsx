@@ -66,16 +66,15 @@ function lineEms(line: string, pairing: string): number {
 }
 
 /**
- * The name, as large as its longest line allows: a name of two words stands on two lines (one word
- * each), any other name wraps where it must. Never smaller than a headline and never larger than the
- * largest display size; over the picture also never taller than an eighth of the screen (lb-name).
+ * The name on one line, as large as that line allows: never smaller than a headline and never larger
+ * than the largest display size; over the picture also never taller than an eighth of the screen
+ * (lb-name). A name too long for one line at headline size wraps where it must (balanced). The width
+ * is estimated a little generously, so a fitted name never breaks by a hair.
  */
 function BleedName({ profile, theme, isRtl }: { profile: Profile; theme: ResolvedCreatorTheme; isRtl: boolean }) {
   const t = useTranslations("creator");
   const pairing = PAIRING_IDS.find((id) => creatorTokens.pairings[id] === theme.pairing) ?? "classic";
-  const words = profile.displayName.trim().split(/\s+/u);
-  const lines = words.length === 2 ? words : [profile.displayName];
-  const ems = Math.max(...lines.map((line) => lineEms(line, pairing))).toFixed(2);
+  const ems = (lineEms(profile.displayName.trim(), pairing) * 1.04).toFixed(2);
   const badge = profile.verified ? " - var(--spacing-icon-lg) - var(--spacing-2)" : "";
   const fit = { "--name-fit": `calc((${NARROW}${badge}) / ${ems})`, "--name-fit-work": `calc((${WORDS}${badge}) / ${ems})` } as CSSProperties;
   const verified = profile.verified ? (
@@ -94,23 +93,9 @@ function BleedName({ profile, theme, isRtl }: { profile: Profile; theme: Resolve
       style={{ ...displayStyle, ...fit }}
       {...aiText(profile, "displayName")}
     >
-      {/* Each line runs in its own direction (a Latin name on an Arabic page, and the reverse). */}
-      {lines.length === 2 ? (
-        <>
-          <span className="block">
-            <bdi dir="auto">{lines[0]}</bdi>
-          </span>{" "}
-          <span className="block">
-            <bdi dir="auto">{lines[1]}</bdi>
-            {verified}
-          </span>
-        </>
-      ) : (
-        <>
-          <bdi dir="auto">{profile.displayName}</bdi>
-          {verified}
-        </>
-      )}
+      {/* The name runs in its own direction (a Latin name on an Arabic page, and the reverse). */}
+      <bdi dir="auto">{profile.displayName}</bdi>
+      {verified}
     </h1>
   );
 }

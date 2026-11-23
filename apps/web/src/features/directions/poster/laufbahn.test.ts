@@ -85,11 +85,11 @@ describe("signpost letters", () => {
 });
 
 describe("Sevag's application page on Laufbahn", () => {
-  it("uses the template in black and grey: dark, ink lifted to a light grey, untinted greys", () => {
-    expect(sevagTheme).toEqual({ template: "laufbahn", mode: "dark", accent: creatorTokens.swatches.ink, tint: 0 });
+  it("uses the template in black and grey, easy on the eyes: a soft light grey ground and black buttons", () => {
+    expect(sevagTheme).toEqual({ template: "laufbahn", mode: "light", accent: creatorTokens.swatches.ink, tint: 0 });
     const theme = resolveCreatorTheme(sevagTheme);
     expect(theme.layout.hero).toBe("bleed");
-    expect({ mode: theme.palette.mode, bg: theme.palette.bg, accent: theme.palette.accent, accentFg: theme.palette.accentFg }).toEqual({ mode: "dark", bg: "#101010", accent: "#E8E8E8", accentFg: "#0F0F0F" });
+    expect({ mode: theme.palette.mode, bg: theme.palette.bg, accent: theme.palette.accent, accentFg: theme.palette.accentFg }).toEqual({ mode: "light", bg: "#F6F6F6", accent: "#111111", accentFg: "#FFFFFF" });
   });
 
   it("keeps every fact of the page and adds none", () => {
@@ -110,9 +110,9 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(count(sevag, /2021–heute|2018–heute/g)).toBe(2);
   });
 
-  it("names him in one heading, on two lines, and shows his initials while there is no portrait", () => {
+  it("names him in one heading, on one line, and shows his initials while there is no portrait", () => {
     expect(count(sevag, /<h1/g)).toBe(1);
-    expect(sevag).toMatch(/<h1[^>]*><span class="block"><bdi dir="auto">Sevag<\/bdi><\/span> <span class="block"><bdi dir="auto">Ghazarian<\/bdi>/);
+    expect(sevag).toMatch(/<h1[^>]*><bdi dir="auto">Sevag Ghazarian<\/bdi><\/h1>/);
     // The initials beside the role line (no portrait yet) and in the compact bar.
     expect(count(sevag, />SG</g)).toBeGreaterThanOrEqual(2);
     // The forklift illustration is the large picture, with its description.
