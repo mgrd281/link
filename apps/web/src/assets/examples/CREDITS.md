@@ -212,4 +212,65 @@ picture are original Linkyo designs: the apps and the skills are fictional.
 | ex9-app-pixelnote.png | Original Linkyo icon | – | Original artwork |
 | ex9-skill-video.jpg | Original Linkyo design (JetBrains Mono, Instrument Sans; OFL) | – | Original artwork |
 
+## Portfolio examples (ex-pf-*)
+
+Pictures for the four portfolio examples (Ronja Feldkamp, Jorinde Ahlfeld, Tobin Achterberg, Naya Al-Dabbas).
+Photos from the Unsplash CDN's free library, each license checked on the photo's own page on 2026-11-23, none
+from Unsplash+. All were resized (2240 px on the long side for the nine that run full width, 1600 px for the
+rest) and saved as JPEG; other changes are named per file. Small lettering that named a brand was retouched.
+On a portfolio the pictures stand for the person's own work, so each project's cover and pictures come from
+one photographer, who is named in the page's credit:
+
+| Example | Project | Files | Photographer |
+|---|---|---|---|
+| Ronja Feldkamp | Portrait | ex-pf-ronja-01 | Peyman Shojaei |
+| Ronja Feldkamp | Hafenlicht (cover 02, pictures 03 to 13) | ex-pf-ronja-02 to -13 | Paul Einerhand |
+| Ronja Feldkamp | Die Schneiderinnen (cover 14, pictures 15 and 16) | ex-pf-ronja-14 to -16 | Metin Ozer |
+| Ronja Feldkamp | Werkhalle 4 (cover) | ex-pf-ronja-17 | Bob van Aubel |
+| Ronja Feldkamp | Stadtbad (cover 18, pictures 19 and 20) | ex-pf-ronja-18 to -20 | Declan Sun |
+| Jorinde Ahlfeld | Portrait | ex-pf-jorinde-01 | mahdi chaghari |
+| Jorinde Ahlfeld | Kitchen (cover 02, pictures 03 and 04) | ex-pf-jorinde-02 to -04 | Caroline Badran |
+| Jorinde Ahlfeld | Shelf wall (cover 05, pictures 06 and 07) | ex-pf-jorinde-05 to -07 | Josh Davies |
+| Jorinde Ahlfeld | Chairs (cover 08, pictures 09 and 10) | ex-pf-jorinde-08 to -10 | Bailey Alexander |
+| Tobin Achterberg | Avatar | ex-pf-tobin-01 | Vitaly Gariev |
+| Tobin Achterberg | Two interface drawings | ex-pf-tobin-02, -03 | Original Linkyo artwork |
+| Naya Al-Dabbas | Avatar | ex-pf-naya-01 | Lisa Marie Theck |
+
+| File | Photographer / source | Photo page | License |
+|---|---|---|---|
+| ex-pf-jorinde-01.jpg | mahdi chaghari | https://unsplash.com/photos/woman-sanding-wood-with-power-tool-in-workshop-7kfbZixwOZ8 | Unsplash License |
+| ex-pf-jorinde-02.jpg | Caroline Badran (lettering on the stand mixer retouched) | https://unsplash.com/photos/modern-kitchen-with-island-and-bar-stools-BaKdrhCvn0E | Unsplash License |
+| ex-pf-jorinde-03.jpg | Caroline Badran | https://unsplash.com/photos/woman-opening-a-glass-cabinet-filled-with-glassware-9zuIchwgNUk | Unsplash License |
+| ex-pf-jorinde-04.jpg | Caroline Badran | https://unsplash.com/photos/modern-dining-room-with-kitchen-and-scenic-view-7VSkY7mEwUk | Unsplash License |
+| ex-pf-jorinde-05.jpg | Josh Davies | https://unsplash.com/photos/a-modern-light-wood-wall-unit-with-shelves-and-cabinets-gNB_zp_NdDE | Unsplash License |
+| ex-pf-jorinde-06.jpg | Josh Davies | https://unsplash.com/photos/light-wood-shelving-unit-and-cabinet-with-an-open-drawer-RdPAE4ywBKQ | Unsplash License |
+| ex-pf-jorinde-07.jpg | Josh Davies | https://unsplash.com/photos/empty-light-wooden-shelf-on-a-cream-wall-Er2gvVJ8EiQ | Unsplash License |
+| ex-pf-jorinde-08.jpg | Bailey Alexander | https://unsplash.com/photos/a-man-working-on-a-chair-in-a-workshop-DAd_Wn6Mj78 | Unsplash License |
+| ex-pf-jorinde-09.jpg | Bailey Alexander | https://unsplash.com/photos/a-close-up-of-a-wooden-object-on-a-table-NbdUuX9p2Kw | Unsplash License |
+| ex-pf-jorinde-10.jpg | Bailey Alexander | https://unsplash.com/photos/a-knife-and-some-wood-shavings-on-a-table-Zw_3GoPXzI4 | Unsplash License |
+| ex-pf-naya-01.jpg | Lisa Marie Theck (cropped square) | https://unsplash.com/photos/a-woman-in-a-headscarf-smiles-at-the-camera-6awpFbYse3o | Unsplash License |
+| ex-pf-ronja-01.jpg | Peyman Shojaei (lettering on the camera retouched) | https://unsplash.com/photos/woman-looking-through-a-camera-viewfinder-AnlwDY2COY4 | Unsplash License |
+| ex-pf-ronja-02.jpg | Paul Einerhand (a sticker on a bin and lettering on a jacket retouched) | https://unsplash.com/photos/people-in-boat-on-water-during-daytime-QEV0iyd09MY | Unsplash License |
+| ex-pf-ronja-03.jpg | Paul Einerhand | https://unsplash.com/photos/black-and-brown-boat-on-dock-during-daytime-GCWX2zdk4lY | Unsplash License |
+| ex-pf-ronja-04.jpg | Paul Einerhand | https://unsplash.com/photos/man-in-yellow-jacket-and-yellow-pants-standing-on-boat-dock-during-daytime-qLIglFCcAeo | Unsplash License |
+| ex-pf-ronja-05.jpg | Paul Einerhand | https://unsplash.com/photos/person-pulling-rope-on-fishing-boat-hPCgiFAKAVI | Unsplash License |
+| ex-pf-ronja-06.jpg | Paul Einerhand | https://unsplash.com/photos/green-and-brown-boat-on-sea-under-blue-sky-during-daytime-eysa6RORvl0 | Unsplash License |
+| ex-pf-ronja-07.jpg | Paul Einerhand (cropped square, without the crates in front) | https://unsplash.com/photos/man-in-blue-dress-shirt-and-blue-denim-jeans-standing-near-brown-wooden-table-VgUqjioq_gI | Unsplash License |
+| ex-pf-ronja-08.jpg | Paul Einerhand | https://unsplash.com/photos/blue-and-white-boat-on-blue-and-white-boat-C1axJzJss1w | Unsplash License |
+| ex-pf-ronja-09.jpg | Paul Einerhand | https://unsplash.com/photos/person-in-orange-gear-handling-chains-WoXj1Eyaf38 | Unsplash License |
+| ex-pf-ronja-10.jpg | Paul Einerhand | https://unsplash.com/photos/man-in-yellow-robe-on-white-boat-during-daytime-I2a7LAuVJpg | Unsplash License |
+| ex-pf-ronja-11.jpg | Paul Einerhand (cropped square) | https://unsplash.com/photos/white-and-brown-sea-shells-b0Wu-mtj1bw | Unsplash License |
+| ex-pf-ronja-12.jpg | Paul Einerhand | https://unsplash.com/photos/person-holding-gray-fish-in-a-room-hlUM0Tc-jNw | Unsplash License |
+| ex-pf-ronja-13.jpg | Paul Einerhand | https://unsplash.com/photos/a-white-and-blue-boat-in-the-middle-of-the-ocean-FkvrkPQ_8bA | Unsplash License |
+| ex-pf-ronja-14.jpg | Metin Ozer (label on a tub retouched) | https://unsplash.com/photos/woman-working-on-a-large-paper-with-scissors-and-tools-fPmQNx7cf0E | Unsplash License |
+| ex-pf-ronja-15.jpg | Metin Ozer (lettering on a dress form retouched) | https://unsplash.com/photos/woman-working-at-a-sewing-table-with-mannequins-T0us7gjVQdU | Unsplash License |
+| ex-pf-ronja-16.jpg | Metin Ozer | https://unsplash.com/photos/a-person-drawing-on-a-clothing-pattern-SjnR2gN5lwU | Unsplash License |
+| ex-pf-ronja-17.jpg | Bob van Aubel | https://unsplash.com/photos/a-man-standing-in-front-of-a-window-with-his-arms-crossed-kovTgF5fro4 | Unsplash License |
+| ex-pf-ronja-18.jpg | Declan Sun (cropped, without the sign on the right) | https://unsplash.com/photos/a-large-swimming-pool-inside-of-a-building-xs-7xoo6cQ0 | Unsplash License |
+| ex-pf-ronja-19.jpg | Declan Sun | https://unsplash.com/photos/ornate-blue-and-brown-tiled-archway-with-a-turquoise-pool-YeaEMMW5G-g | Unsplash License |
+| ex-pf-ronja-20.jpg | Declan Sun | https://unsplash.com/photos/a-swimming-pool-with-a-tiled-floor-and-blue-water-GBLZAb0Rcvw | Unsplash License |
+| ex-pf-tobin-01.jpg | Vitaly Gariev (cropped square) | https://unsplash.com/photos/man-with-beard-in-office-workspace-7RateQdRpPs | Unsplash License |
+| ex-pf-tobin-02.jpg | Original Linkyo drawing of a dashboard, made with Pillow (Work Sans, DM Mono; OFL) | – | Original artwork |
+| ex-pf-tobin-03.jpg | Original Linkyo drawing of a chart gallery, made with Pillow (Work Sans, DM Mono; OFL) | – | Original artwork |
+
 Unsplash License: https://unsplash.com/license
