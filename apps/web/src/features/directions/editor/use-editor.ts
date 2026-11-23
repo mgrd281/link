@@ -81,6 +81,7 @@ export function blockTitle(block: Block, typeLabel: (type: BlockType) => string)
     case "shorts":
     case "brands":
       return block.title ?? typeLabel(block.type);
+    case "about": case "tools": case "timeline": case "quotes": return block.title ?? typeLabel(block.type);
     default:
       return block.title;
   }

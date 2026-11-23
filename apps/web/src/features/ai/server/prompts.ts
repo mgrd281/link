@@ -13,7 +13,7 @@ import { promptSources, redactContacts, stableStringify, type SourceBundle } fro
  * Changing any text here is a new prompt version: bump PROMPT_VERSION.
  */
 
-export const PROMPT_VERSION = "core-v1";
+export const PROMPT_VERSION = "core-v2";
 
 export const SYSTEM_CORE_V1 = `You design pages for Linkyo, a link-in-bio service. A page has a profile (name, a one-line tagline, a short bio) and a list of blocks that visitors see from top to bottom on a phone. You receive what Linkyo's servers collected about one person or business, and you return one page plan as JSON that matches the schema.
 
@@ -58,7 +58,7 @@ Notes
 /* eslint-disable linkyo/no-raw-design-values -- text for the model, not styling: the catalogue names each
    colour swatch with its token value, and the example gives the photo colours the browser would measure. */
 export const CATALOGUE_V1 = `Catalogue v1
-Kinds: tiktok (TikTok creator), instagram (Instagram creator), youtube (YouTuber), apps (shows apps in videos), streamer (live streams), podcast, music (artist or band), affiliate (recommends products), store (online shop), marketing (marketer or agency), shop (local shop with an address), business (company or service), coach, developer, designer, writer, journalist, engineer, lawyer, student, warehouse (logistics or trade job), other.
+Kinds: tiktok (TikTok creator), instagram (Instagram creator), youtube (YouTuber), apps (shows apps in videos), streamer (live streams), podcast, music (artist or band), affiliate (recommends products), store (online shop), marketing (marketer or agency), shop (local shop with an address), business (company or service), coach, developer, designer, photographer, writer, journalist, engineer, lawyer, freelancer, student, warehouse (logistics or trade job), other.
 Templates (id: look; page mode):
 - atelier: Warm gallery paper, a serif name, crisp corners and titles in capitals. Mode light.
 - aura: Soft light: colors drift slowly behind frosted cards, the portrait wears a halo. Mode light.
@@ -71,6 +71,8 @@ Templates (id: look; page mode):
 - pulse: The whole page in your color, the photo toned to match. Mode vivid.
 - signal: After dark for streamers and makers: a fine grid, a framed picture, monospace details. Mode dark.
 - studio: Cinematic: a full-height portrait, the name set low and large, numbered sections. Mode dark.
+- tiefdruck: Dark and bold: huge type, projects as a numbered list, one electric blue. Mode dark.
+- werkbogen: Calm and editorial: the work opens the page, a serif name, numbered captions, plenty of white space. Mode light.
 Pairings (id: display face / body face):
 - bold: Bricolage Grotesque / Inter
 - classic: Inter / Inter

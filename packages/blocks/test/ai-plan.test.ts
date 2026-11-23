@@ -39,7 +39,7 @@ const EXAMPLE_ANSWER = {
 
 describe("PagePlan v1", () => {
   it("sends a stable schema (snapshot)", () => {
-    expect(PAGE_PLAN_VERSION).toBe("plan-v1");
+    expect(PAGE_PLAN_VERSION).toBe("plan-v2");
     expect(PAGE_PLAN_JSON_SCHEMA).toMatchSnapshot();
   });
 
@@ -85,6 +85,13 @@ describe("PagePlan v1", () => {
     expect(theme.buttonShape.options).toEqual(["template", ...BUTTON_SHAPES]);
     expect(theme.buttonStyle.options).toEqual(["template", ...BUTTON_STYLES]);
     expect(pagePlanSchema.shape.kind.options).toEqual([...KINDS]);
+    // plan-v2: two more kinds and two more templates, and nothing else (no new block type).
+    expect(KINDS).toHaveLength(24);
+    expect(KINDS).toEqual(expect.arrayContaining(["photographer", "freelancer"]));
+    expect(TEMPLATE_IDS).toHaveLength(13);
+    expect(TEMPLATE_IDS.slice(-2)).toEqual(["werkbogen", "tiefdruck"]);
+    const blockTypes = all.flatMap((node) => ((node.properties as Node | undefined)?.type as Node | undefined)?.const ?? []);
+    expect(blockTypes).toEqual(["header", "link", "rich", "text", "socials", "newsletter"]);
     const link = all.find((node) => (node.properties as Node | undefined)?.icon);
     expect(((link?.properties as Node).icon as Node).enum).toEqual(["auto", ...LINK_ICONS]);
   });

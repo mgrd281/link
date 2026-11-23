@@ -14,18 +14,52 @@ const noImage = { src: NO_IMAGE, alt: "" };
 const soon = () => new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
 
 /** Every type the Add sheet offers, most used first. */
-export const ADDABLE: BlockType[] = ["link", "header", "socials", "music", "video", "events", "product", "app", "repo", "image", "gallery", "card", "text", "shorts", "brands", "newsletter", "live", "divider"];
+export const ADDABLE: BlockType[] = [
+  "link",
+  "header",
+  "socials",
+  "music",
+  "video",
+  "events",
+  "product",
+  "app",
+  "repo",
+  "project",
+  "about",
+  "tools",
+  "timeline",
+  "quotes",
+  "contact",
+  "image",
+  "gallery",
+  "card",
+  "text",
+  "shorts",
+  "brands",
+  "newsletter",
+  "live",
+  "divider",
+];
 
 /**
- * The Add sheet's groups, so 18 types read as four short lists instead of one wall of tiles. Every
+ * The Add sheet's groups, so 24 types read as five short lists instead of one wall of tiles. Every
  * addable type sits in exactly one group (checked in blocks.test.ts).
  */
 export const ADD_GROUPS = {
   links: ["link", "card", "socials", "newsletter"],
   media: ["music", "video", "shorts", "image", "gallery", "live"],
   sell: ["product", "events", "app", "repo", "brands"],
+  portfolio: ["project", "about", "tools", "timeline", "quotes", "contact"],
   layout: ["header", "text", "divider"],
 } as const satisfies Record<string, readonly BlockType[]>;
+
+/**
+ * Entries of a group that are no type of their own: a block of an existing type, started for one
+ * purpose. "Clients" is a `brands` block that begins as a list of names (the Add sheet files
+ * `brands` itself under "Sell & events" as partners with logos). Listed after the group's types.
+ */
+export const ADD_PRESETS = { portfolio: ["clients"] } as const satisfies Partial<Record<keyof typeof ADD_GROUPS, readonly string[]>>;
+export type AddPreset = (typeof ADD_PRESETS)[keyof typeof ADD_PRESETS][number];
 
 /** The first group when we don't know what the page is for. */
 export const POPULAR: BlockType[] = ["link", "socials", "music", "video"];
@@ -44,14 +78,17 @@ export const SUGGESTED: Partial<Record<CreatorKind, BlockType[]>> = {
   shop: ["product", "link", "events", "socials"],
   business: ["link", "events", "image", "socials"],
   marketing: ["link", "card", "newsletter", "socials"],
-  coach: ["events", "link", "newsletter", "socials"],
-  developer: ["repo", "app", "link", "socials"],
-  engineer: ["repo", "link", "card", "socials"],
-  designer: ["gallery", "image", "link", "socials"],
-  writer: ["link", "card", "newsletter", "socials"],
-  journalist: ["link", "card", "newsletter", "socials"],
-  lawyer: ["link", "text", "card", "socials"],
-  student: ["link", "image", "text", "socials"],
+  // Pages that show work: the project first, the one way to get in touch last.
+  designer: ["project", "gallery", "quotes", "contact"],
+  photographer: ["project", "gallery", "quotes", "contact"],
+  developer: ["project", "repo", "tools", "contact"],
+  engineer: ["project", "repo", "tools", "contact"],
+  freelancer: ["project", "about", "quotes", "contact"],
+  writer: ["project", "about", "quotes", "contact"],
+  journalist: ["project", "about", "quotes", "contact"],
+  coach: ["project", "about", "quotes", "contact"],
+  lawyer: ["project", "about", "quotes", "contact"],
+  student: ["project", "about", "quotes", "contact"],
   warehouse: ["product", "link", "text", "socials"],
 };
 
@@ -116,7 +153,29 @@ export function blankBlock(type: BlockType, defaults: { artist: string; newslett
       return { ...base, type, title: "", icon: noImage, stores: [{ store: "appstore", url: "" }] };
     case "repo":
       return { ...base, type, title: "", url: "", owner: "", repo: "", kind: "skill" };
+    case "project":
+      // The address is made from the title when the project is first saved (`slugFor`).
+      return { ...base, type, slug: "", title: "", summary: "" };
+    case "about":
+      return { ...base, type, text: "" };
+    case "tools":
+      return { ...base, type, items: [] };
+    case "timeline":
+      return { ...base, type, items: [{ role: "", years: { from: new Date().getFullYear() } }] };
+    case "quotes":
+      // No empty item: a quote exists only once its owner's permission is confirmed.
+      return { ...base, type, items: [] };
+    case "contact":
+      return { ...base, type, title: "", primary: { label: "", url: "" } };
   }
+}
+
+/** The block a preset entry of the Add sheet starts with. Clients: a list of names, no logo asked for. */
+export function presetBlock(preset: AddPreset, defaults: { clients: string }): Block {
+  const presets: Record<AddPreset, () => Block> = {
+    clients: () => ({ id: newBlockId("brands"), visible: true, highlight: false, type: "brands", title: defaults.clients, columns: 3, items: [{ name: "" }] }),
+  };
+  return presets[preset]();
 }
 
 /** Replace any sample picture with "no image yet" (a creator's page never shows sample media). */

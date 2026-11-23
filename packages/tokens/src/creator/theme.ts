@@ -24,20 +24,24 @@ export interface CreatorThemeConfig {
   buttonStyle?: CreatorButtonStyle | undefined;
   buttonShape?: CreatorButtonShape | undefined;
   background?: BackgroundKind | undefined;
+  /** How a run of projects is laid out. The owner's choice; absent means the template decides. */
+  projects?: ProjectsStyle | undefined;
 }
 
 /**
  * Section titles: the display face, the body face in title case, the body face set in caps, small
- * caps with the section's number ("01"), a title followed by a hairline rule, or monospace caps.
+ * caps with the section's number ("01"), a title followed by a hairline rule, monospace caps, a small
+ * numbered caption in the margin (marker), or the display face set very large with its number (headline).
  */
-export type HeadingStyle = "display" | "sans" | "sans-upper" | "numbered" | "rule" | "mono";
+export type HeadingStyle = "display" | "sans" | "sans-upper" | "numbered" | "rule" | "mono" | "marker" | "headline";
 /**
  * Hero treatment: the portrait, a logo over a blurred photo, the portrait toned into the page color,
  * the portrait in black and white, a full-height cinema still with the name set low (cinema), a round
  * portrait with a halo (halo), a framed picture with the name on the left (inset), a square picture in
- * corner marks (frame), or the portrait in an arch (arch).
+ * corner marks (frame), the portrait in an arch (arch), the first piece of work as a large plate under a
+ * quiet name (plate), or the name set as large as the screen allows (statement).
  */
-export type HeroStyle = "portrait" | "logo" | "duotone" | "mono" | "cinema" | "halo" | "inset" | "frame" | "arch";
+export type HeroStyle = "portrait" | "logo" | "duotone" | "mono" | "cinema" | "halo" | "inset" | "frame" | "arch" | "plate" | "statement";
 /** Social profiles under the name: round tiles, or bare glyphs for quiet, editorial looks. */
 export type SocialStyle = "tiles" | "plain";
 /** Behind the page: nothing, the page's colors drifting slowly (aurora), or a fine grid. */
@@ -46,6 +50,15 @@ export type BackdropStyle = "none" | "aurora" | "grid";
 export type GalleryStyle = "rail" | "grid";
 /** Sections stay put (calm) or rise in as they scroll into view (reveal); never with reduced motion. */
 export type MotionStyle = "calm" | "reveal";
+/**
+ * A run of projects: a grid with one large tile (bento), a numbered list, a sideways row (rail), or
+ * chosen from the content (auto). The first layout key an owner may set (`CreatorThemeConfig.projects`).
+ */
+export type ProjectsStyle = "auto" | "bento" | "list" | "rail";
+export const PROJECTS_STYLES = ["auto", "bento", "list", "rail"] as const satisfies readonly ProjectsStyle[];
+export const isProjectsStyle = (value: unknown): value is ProjectsStyle => typeof value === "string" && (PROJECTS_STYLES as readonly string[]).includes(value);
+/** The page column: the narrow creator column, or the wide canvas from desktop widths (layout.work). */
+export type CanvasStyle = "column" | "wide";
 
 export interface CreatorLayout {
   headings: HeadingStyle;
@@ -54,6 +67,8 @@ export interface CreatorLayout {
   backdrop: BackdropStyle;
   gallery: GalleryStyle;
   motion: MotionStyle;
+  projects: ProjectsStyle;
+  canvas: CanvasStyle;
 }
 
 export interface ResolvedCreatorTheme {
@@ -71,7 +86,16 @@ export interface ResolvedCreatorTheme {
 
 export const PRESET_IDS = Object.keys(creatorTokens.presets) as CreatorPresetId[];
 export const TEMPLATE_IDS = Object.keys(creatorTokens.templates) as CreatorTemplateId[];
-export const DEFAULT_LAYOUT: CreatorLayout = { headings: "display", hero: "portrait", socials: "tiles", backdrop: "none", gallery: "rail", motion: "calm" };
+export const DEFAULT_LAYOUT: CreatorLayout = {
+  headings: "display",
+  hero: "portrait",
+  socials: "tiles",
+  backdrop: "none",
+  gallery: "rail",
+  motion: "calm",
+  projects: "auto",
+  canvas: "column",
+};
 export const PAIRING_IDS = Object.keys(creatorTokens.pairings) as CreatorPairingId[];
 export const BUTTON_STYLES = creatorTokens.buttonStyles;
 export const BUTTON_SHAPES = Object.keys(creatorTokens.buttonShapes) as CreatorButtonShape[];
@@ -94,6 +118,10 @@ interface TemplateDefaults {
   backdrop?: BackdropStyle | undefined;
   gallery?: GalleryStyle | undefined;
   motion?: MotionStyle | undefined;
+  projects?: ProjectsStyle | undefined;
+  canvas?: CanvasStyle | undefined;
+  /** Weight of the display face on Arabic pages (the Arabic pairing has one family). Default 700. */
+  arabicDisplayWeight?: 400 | 700 | undefined;
 }
 
 /** What a preset or template contributes before the creator's own choices. */
@@ -148,6 +176,9 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     backdrop: t.backdrop ?? DEFAULT_LAYOUT.backdrop,
     gallery: t.gallery ?? DEFAULT_LAYOUT.gallery,
     motion: t.motion ?? DEFAULT_LAYOUT.motion,
+    // The one layout key an owner may set; an unknown stored value falls back to the template.
+    projects: (isProjectsStyle(config.projects) ? config.projects : undefined) ?? t.projects ?? DEFAULT_LAYOUT.projects,
+    canvas: t.canvas ?? DEFAULT_LAYOUT.canvas,
   };
   const background = config.background ?? preset.background;
 
@@ -157,6 +188,9 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     tracking: string;
     uppercase?: boolean;
   };
+  // Arabic pages share one pairing, so a template says how heavy its name is there: the calm and
+  // the bold look stay different in Arabic too.
+  const displayWeight = options.rtlScript ? (t.arabicDisplayWeight ?? display.weight) : display.weight;
 
   const cssVars: ResolvedCreatorTheme["cssVars"] = {
     "--creator-bg": palette.bg,
@@ -176,7 +210,7 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     "--creator-glow-2": palette.gradient[2],
     "--creator-font-display": display.stack,
     "--creator-font-body": pairing.body.stack,
-    "--creator-display-weight": String(display.weight),
+    "--creator-display-weight": String(displayWeight),
     "--creator-display-tracking": display.tracking,
     "--creator-display-transform": display.uppercase ? "uppercase" : "none",
     "--creator-radius-button": `${creatorTokens.buttonShapes[buttonShape]}px`,

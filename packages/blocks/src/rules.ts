@@ -32,3 +32,27 @@ export const RESERVED_USERNAMES = new Set([
  */
 export const NO_IMAGE = "none:";
 export const hasImage = (image: { src: string } | undefined | null): image is { src: string } => !!image && image.src !== NO_IMAGE && image.src.length > 0;
+
+/**
+ * A project's address part: /<username>/<slug>. 2–48 lowercase letters, numbers and single dashes.
+ * Made by code from the title (`slugFor`, ./project), unique on its page, never a reserved word.
+ */
+export const PROJECT_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const PROJECT_SLUG_MIN = 2;
+export const PROJECT_SLUG_MAX = 48;
+/** A page holds at most this many projects (a quality cap, the same for every plan). */
+export const MAX_PROJECTS = 24;
+/** A run of projects shows this many; the rest sits under "Show all projects". */
+export const FEATURED_PROJECTS = 6;
+/**
+ * Words a project address never takes: routes that exist or may come under a creator's name, and
+ * words visitors could be misled by. `opengraph-image` must stay: it is a static sibling of the
+ * project segment (apps/web/src/app/u/[username]/opengraph-image.tsx).
+ */
+export const RESERVED_PROJECT_SLUGS = new Set([
+  "p", "w", "work", "projects", "projekte", "about", "contact", "kontakt", "cv", "services", "leistungen", "links",
+  "shop", "feed", "rss", "og", "opengraph-image", "edit", "new", "admin", "api", "media", "imprint", "impressum",
+  "privacy", "datenschutz", "legal", "report", "melden",
+]);
+export const isProjectSlug = (value: string): boolean =>
+  value.length >= PROJECT_SLUG_MIN && value.length <= PROJECT_SLUG_MAX && PROJECT_SLUG.test(value) && !RESERVED_PROJECT_SLUGS.has(value);

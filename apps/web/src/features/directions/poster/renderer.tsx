@@ -1,4 +1,4 @@
-import { hasImage, isBlockActive, type Block, type BlockOf, type Page } from "@linkyo/blocks";
+import { hasImage, isBlockActive, type Block, type BlockOf, type Page, type Profile } from "@linkyo/blocks";
 import type { CreatorButtonStyle } from "@linkyo/tokens";
 import type { CreatorLayout, HeadingStyle, ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn } from "@linkyo/ui";
@@ -27,6 +27,9 @@ import {
 import { AppFeature, AppList, RepoCard } from "./apps";
 import { EventTabs } from "./events";
 import { PosterBar, PosterHero } from "./hero";
+import { AboutSection, BrandNames, ContactBand, QuotesSection, TimelineSection, ToolsSection } from "./portfolio-sections";
+import { ProjectPage } from "./project-page";
+import { ProjectsGroup } from "./projects";
 import { featuredApp, groupSections, type PosterItem } from "./sections";
 import { cardSurface, pageSide, pressable, railFrame, sectionTitle, type HeadingTag } from "./styles";
 
@@ -35,7 +38,8 @@ import { cardSurface, pageSide, pressable, railFrame, sectionTitle, type Heading
  * A template chooses the look (colors, fonts, hero treatment, section titles, backdrop, motion); the
  * layout stays the same: a hero that fades away on scroll, then titled sections of flat cards — media
  * rows that turn into two-row rails when long, month tabs for dates, a two-up shop, partner tiles,
- * video rails, photos in a rail (or a two-column grid for portfolios).
+ * video rails, photos in a rail (or a two-column grid for portfolios). A portfolio adds runs of
+ * projects and its own sections; with `openProject` the renderer shows that project's page instead.
  */
 export function PosterRenderer({
   page,
@@ -44,6 +48,10 @@ export function PosterRenderer({
   overlay,
   dock,
   footerLinks,
+  projectBase,
+  projectSuffix = "",
+  openProject,
+  onOpenProject,
 }: {
   page: Page;
   theme: ResolvedCreatorTheme;
@@ -54,9 +62,37 @@ export function PosterRenderer({
   dock?: ReactNode;
   /** Public pages: where the footer's imprint, privacy and report links lead. */
   footerLinks?: CreatorFooterLinks | undefined;
+  /** Where project pages live: "/<username>" on public pages, "/<locale>/p/<slug>" on examples. Absent in previews. */
+  projectBase?: string | undefined;
+  /** Appended to every project address (the sample route's "?chrome=0&template=…"). Default "". */
+  projectSuffix?: string | undefined;
+  /** Show this project's page instead of the portfolio (dashboard preview, AI draft phone). */
+  openProject?: { id: string; onBack: () => void } | undefined;
+  /** Previews without a router: a tap on a card that has a project page. */
+  onOpenProject?: ((id: string) => void) | undefined;
 }) {
   const { profile } = page;
-  const blocks = page.blocks.filter((block) => isBlockActive(block));
+  const now = new Date();
+  const blocks = page.blocks.filter((block) => isBlockActive(block, now));
+  // A project opened in place: its page stands where the portfolio stood, with the way back as a button.
+  const opened = openProject ? blocks.find((block): block is BlockOf<"project"> => block.type === "project" && block.id === openProject.id) : undefined;
+  if (openProject && opened) {
+    return (
+      <ProjectPage
+        page={page}
+        theme={theme}
+        project={opened}
+        base={projectBase}
+        suffix={projectSuffix}
+        onBack={openProject.onBack}
+        onOpenProject={onOpenProject}
+        footerLinks={footerLinks}
+        preview={preview}
+        overlay={overlay}
+        dock={dock}
+      />
+    );
+  }
   const socials = blocks.find((block): block is BlockOf<"socials"> => block.type === "socials");
   // Live now beats a planned live; either one gets a pill in the hero.
   const lives = blocks.filter((block): block is BlockOf<"live"> => block.type === "live");
@@ -78,6 +114,21 @@ export function PosterRenderer({
   const ambient = hasImage(photo) && layout.backdrop === "none" && layout.hero !== "halo" && layout.hero !== "inset" && layout.hero !== "frame";
   // Numbered titles count the titled sections: 01, 02 …
   const titled = sections.filter((section) => section.title !== null);
+  // What the portfolio's blocks need to know about their page.
+  const runs = sections.flatMap((section) => section.items).filter((item) => item.kind === "projects");
+  const portfolio: PortfolioContext = {
+    theme,
+    locale: profile.locale,
+    ownerName: profile.displayName,
+    projects: blocks.filter((block): block is BlockOf<"project"> => block.type === "project"),
+    quotes: blocks.filter((block): block is BlockOf<"quotes"> => block.type === "quotes"),
+    runs,
+    base: projectBase,
+    suffix: projectSuffix,
+    onOpen: onOpenProject,
+    now,
+    wide: layout.canvas === "wide",
+  };
 
   return (
     <div
@@ -134,6 +185,7 @@ export function PosterRenderer({
                   nested={section.title !== null}
                   gallery={layout.gallery}
                   featured={featured}
+                  portfolio={portfolio}
                   preview={preview}
                 />
               ))}
@@ -215,6 +267,22 @@ function PosterSection({
   );
 }
 
+/** What a portfolio's blocks need from their page: its projects and quotes, where project pages live, the canvas. */
+interface PortfolioContext {
+  theme: ResolvedCreatorTheme;
+  locale: Profile["locale"];
+  ownerName: string;
+  projects: BlockOf<"project">[];
+  quotes: BlockOf<"quotes">[];
+  /** The page's runs of projects, in page order. */
+  runs: PosterItem[];
+  base: string | undefined;
+  suffix: string;
+  onOpen: ((id: string) => void) | undefined;
+  now: Date;
+  wide: boolean;
+}
+
 interface ItemProps {
   item: PosterItem;
   linkStyle: CreatorButtonStyle;
@@ -223,6 +291,7 @@ interface ItemProps {
   nested: boolean;
   gallery: CreatorLayout["gallery"];
   featured: string | undefined;
+  portfolio: PortfolioContext;
 }
 
 /**
@@ -251,8 +320,23 @@ function PosterItemView({ preview, ...props }: ItemProps & { preview: boolean })
   );
 }
 
-function PosterItemBody({ item, linkStyle, surface, label, nested, gallery, featured }: ItemProps) {
+function PosterItemBody({ item, linkStyle, surface, label, nested, gallery, featured, portfolio }: ItemProps) {
   switch (item.kind) {
+    case "projects":
+      return (
+        <ProjectsGroup
+          blocks={item.blocks}
+          groupIndex={Math.max(0, portfolio.runs.indexOf(item))}
+          leadTaken={false}
+          theme={portfolio.theme}
+          locale={portfolio.locale}
+          quotes={portfolio.quotes}
+          base={portfolio.base}
+          suffix={portfolio.suffix}
+          onOpen={portfolio.onOpen}
+          numbered={portfolio.theme.layout.headings === "marker" || portfolio.theme.layout.headings === "headline"}
+        />
+      );
     case "videos":
       return item.blocks.length > 1 ? <VideoRail videos={item.blocks} /> : <VideoFeature video={item.blocks[0]} />;
     case "products":
@@ -262,7 +346,7 @@ function PosterItemBody({ item, linkStyle, surface, label, nested, gallery, feat
     case "rows":
       return <RowGroup blocks={item.blocks} surface={surface} label={label} />;
     case "block":
-      return <PosterBlock block={item.block} linkStyle={linkStyle} surface={surface} heading={nested ? "h3" : "h2"} gallery={gallery} featured={featured} />;
+      return <PosterBlock block={item.block} linkStyle={linkStyle} surface={surface} heading={nested ? "h3" : "h2"} gallery={gallery} featured={featured} portfolio={portfolio} />;
   }
 }
 
@@ -273,6 +357,7 @@ function PosterBlock({
   heading,
   gallery,
   featured,
+  portfolio,
 }: {
   block: Block;
   linkStyle: CreatorButtonStyle;
@@ -280,6 +365,7 @@ function PosterBlock({
   heading: HeadingTag;
   gallery: CreatorLayout["gallery"];
   featured?: string | undefined;
+  portfolio: PortfolioContext;
 }) {
   const t = useTranslations("creator");
   switch (block.type) {
@@ -296,7 +382,18 @@ function PosterBlock({
     case "shorts":
       return <ShortsRail block={block} />;
     case "brands":
-      return <BrandGrid block={block} />;
+      // Partners with logos are tiles; clients without any logo are a list of names.
+      return block.items.some((item) => hasImage(item.logo)) ? <BrandGrid block={block} /> : <BrandNames block={block} />;
+    case "about":
+      return <AboutSection block={block} wide={portfolio.wide} />;
+    case "tools":
+      return <ToolsSection block={block} />;
+    case "timeline":
+      return <TimelineSection block={block} locale={portfolio.locale} />;
+    case "quotes":
+      return <QuotesSection block={block} ownerName={portfolio.ownerName} projects={portfolio.projects} base={portfolio.base} wide={portfolio.wide} />;
+    case "contact":
+      return <ContactBand block={block} now={portfolio.now} wide={portfolio.wide} />;
     case "newsletter":
       return <NewsletterCard block={block} surface={surface} heading={heading} />;
     case "gallery":
@@ -350,6 +447,8 @@ function PosterBlock({
       return block.id === featured ? <AppFeature block={block} surface={surface} heading={heading} /> : <AppList apps={[block]} surface={surface} heading={heading} />;
     case "repo":
       return <RepoCard block={block} surface={surface} heading={heading} />;
+    // Projects never arrive one by one: `groupSections` gathers every run (see PosterItemBody).
+    case "project":
     case "header":
     case "socials":
       return null;

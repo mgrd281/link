@@ -60,8 +60,68 @@ export const STARTERS: Record<CreatorKind, Starter> = {
   coach: { theme: { template: "daylight", pairing: "elegant" }, socials: ["instagram", "linkedin", "youtube"], fields: ["booking", "newsletter", "email"], logoFirst: false },
   developer: { theme: { template: "nocturne", pairing: "tech", buttonStyle: "outline" }, socials: ["github", "linkedin", "x"], fields: ["website", "cv", "email"], logoFirst: false },
   designer: { theme: { template: "atelier", pairing: "editorial" }, socials: ["instagram", "linkedin", "threads"], fields: ["website", "booking", "email"], logoFirst: false },
+  // Portfolio kinds start on Werkbogen: the work opens the page.
+  photographer: { theme: { template: "werkbogen" }, socials: ["instagram", "linkedin", "youtube"], fields: ["website", "booking", "email"], logoFirst: false },
+  freelancer: { theme: { template: "werkbogen" }, socials: ["linkedin", "instagram", "whatsapp"], fields: ["website", "booking", "email"], logoFirst: false },
   other: { theme: { template: "nocturne" }, socials: ["instagram", "tiktok", "youtube"], fields: [], logoFirst: false },
 };
+
+/** Kinds whose page is a portfolio: the welcome flow asks them for their work and one way to reach them. */
+export const PORTFOLIO_KINDS = ["designer", "photographer", "developer", "engineer", "freelancer"] as const satisfies readonly CreatorKind[];
+export const isPortfolioKind = (kind: CreatorKind | undefined): boolean => kind !== undefined && (PORTFOLIO_KINDS as readonly CreatorKind[]).includes(kind);
+
+/** A default section title: a message key under `app.portfolio` ("titles.work.designer"). */
+export type TitleKey<Section extends string, Variant extends string> = `titles.${Section}.${Variant}`;
+export interface TitleKeys {
+  work: TitleKey<"work", "default" | "designer" | "developer" | "writer" | "coach" | "lawyer">;
+  tools: TitleKey<"tools", "default" | "designer" | "developer" | "lawyer" | "writer">;
+  quotes: TitleKey<"quotes", "default" | "developer">;
+  timeline: TitleKey<"timeline", "default">;
+  about: TitleKey<"about", "default">;
+  clients: TitleKey<"clients", "default">;
+}
+
+const WORK_TITLES: Partial<Record<CreatorKind, TitleKeys["work"]>> = {
+  designer: "titles.work.designer",
+  photographer: "titles.work.designer",
+  developer: "titles.work.developer",
+  engineer: "titles.work.developer",
+  student: "titles.work.developer",
+  writer: "titles.work.writer",
+  journalist: "titles.work.writer",
+  coach: "titles.work.coach",
+  lawyer: "titles.work.lawyer",
+};
+const TOOLS_TITLES: Partial<Record<CreatorKind, TitleKeys["tools"]>> = {
+  designer: "titles.tools.designer",
+  photographer: "titles.tools.designer",
+  developer: "titles.tools.developer",
+  engineer: "titles.tools.developer",
+  lawyer: "titles.tools.lawyer",
+  writer: "titles.tools.writer",
+  journalist: "titles.tools.writer",
+};
+const QUOTES_TITLES: Partial<Record<CreatorKind, TitleKeys["quotes"]>> = {
+  developer: "titles.quotes.developer",
+  engineer: "titles.quotes.developer",
+};
+
+/**
+ * The default section titles of a kind's page, as message keys under `app.portfolio`: a designer
+ * shows "Work", a developer "Projects", a coach "Client stories". Prefilled into a section's title
+ * (or the header before the first project) and always editable. The one place that maps a kind to
+ * its titles: the welcome flow and the AI builder both read it.
+ */
+export function titleKeys(kind: CreatorKind | undefined): TitleKeys {
+  return {
+    work: (kind && WORK_TITLES[kind]) ?? "titles.work.default",
+    tools: (kind && TOOLS_TITLES[kind]) ?? "titles.tools.default",
+    quotes: (kind && QUOTES_TITLES[kind]) ?? "titles.quotes.default",
+    timeline: "titles.timeline.default",
+    about: "titles.about.default",
+    clients: "titles.clients.default",
+  };
+}
 
 /** A handle, @handle, phone number or full link → the profile URL. */
 export function socialUrl(platform: SocialPlatform, value: string): string | null {

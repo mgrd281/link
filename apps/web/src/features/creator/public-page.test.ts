@@ -68,6 +68,29 @@ describe("what visitors see", () => {
     expect(parseLegal(undefined)).toEqual({ name: "", address: "", email: "", phone: "" });
   });
 
+  it("keeps the owner's work layout when the engine knows it", () => {
+    for (const projects of ["auto", "bento", "list", "rail"] as const) expect(parseTheme({ template: "tiefdruck", projects })).toEqual({ template: "tiefdruck", projects });
+    expect(parseTheme({ template: "werkbogen", projects: "masonry" })).toEqual({ template: "werkbogen" });
+    expect(parseTheme({ projects: 3 })).toEqual({});
+    expect(parseTheme({ projects: null, canvas: "wide", headings: "marker" })).toEqual({});
+    expect(toPublicPage({ page: page([]), theme: { template: "werkbogen", projects: "rail", canvas: "column" } }, NOW)?.theme).toEqual({ template: "werkbogen", projects: "rail" });
+  });
+
+  it("never shows a confidential client's name", () => {
+    const project = (extra: Partial<Extract<Block, { type: "project" }>>): Block => ({ id: "p", type: "project", slug: "kraftwerk", title: "Kraftwerk", summary: "A control room.", visible: true, highlight: false, ...extra });
+    // A block that carries both cannot be saved through the schema; if one reaches the filter, the name goes.
+    const [confidential, open, flagOnly] = filterPublic(page([project({ confidential: true, client: "Stadtwerke Beispiel" }), project({ id: "o", slug: "open", client: "Bäckerei Beispiel" }), project({ id: "f", slug: "flag", confidential: true })]), NOW).blocks;
+    expect(confidential).toEqual(project({ confidential: true }));
+    expect(confidential && "client" in confidential).toBe(false);
+    expect(open?.type === "project" && open.client).toBe("Bäckerei Beispiel");
+    expect(flagOnly).toEqual(project({ id: "f", slug: "flag", confidential: true }));
+    // Read from the database, such a block does not parse at all: it fails closed.
+    const answer = { page: { ...page([]), blocks: [project({ confidential: true, client: "Stadtwerke Beispiel" }), project({ id: "o", slug: "open", client: "Bäckerei Beispiel" })] } };
+    const found = toPublicPage(answer, NOW);
+    expect(found?.page.blocks.map((block) => block.id)).toEqual(["o"]);
+    expect(JSON.stringify(found)).not.toContain("Stadtwerke");
+  });
+
   it("finds nothing in a demo build (no database to ask)", async () => {
     await expect(loadPublicPage("mila")).resolves.toBeNull();
   });
@@ -114,7 +137,7 @@ describe("nothing from another origin (GDPR)", () => {
     expect(found?.page.profile.logo?.src).toBe("none:");
     const [gallery, brands, video] = found?.page.blocks ?? [];
     expect(gallery?.type === "gallery" ? gallery.images.map((image) => image.src) : null).toEqual([OWN, "none:", "sample:gallery-1"]);
-    expect(brands?.type === "brands" ? brands.items[0]?.logo.src : null).toBe("none:");
+    expect(brands?.type === "brands" ? brands.items[0]?.logo?.src : null).toBe("none:");
     expect(video?.type === "video" ? video.poster.src : null).toBe("https://i.ytimg.com/vi/x/hqdefault.jpg");
     // Nothing a browser would fetch from another host is left anywhere in the page.
     expect(JSON.stringify(found?.page)).not.toContain("tracker.example");

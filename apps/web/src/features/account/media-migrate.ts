@@ -48,10 +48,32 @@ export function mapSources(page: Page, map: (src: string) => string): Page {
       case "events":
         return { ...block, items: block.items.map((item) => (item.image ? { ...item, image: image(item.image) } : item)) };
       case "brands":
-        return { ...block, items: block.items.map((item) => ({ ...item, logo: image(item.logo) })) };
+        return { ...block, items: block.items.map((item) => (item.logo ? { ...item, logo: image(item.logo) } : item)) };
       case "app":
         return { ...block, icon: image(block.icon) };
-      default:
+      case "project": {
+        const next = { ...block };
+        if (block.cover) next.cover = image(block.cover);
+        if (block.pictures) next.pictures = block.pictures.map((picture) => ({ ...picture, image: image(picture.image) }));
+        return next;
+      }
+      case "about":
+        return block.portrait ? { ...block, portrait: image(block.portrait) } : block;
+      case "quotes":
+        return { ...block, items: block.items.map((item) => (item.photo ? { ...item, photo: image(item.photo) } : item)) };
+      // No `default`: a new block type must be listed here, with or without pictures, or this
+      // function does not compile. A picture-bearing block skipped in silence would keep its data
+      // URL in the page for good.
+      case "header":
+      case "text":
+      case "divider":
+      case "socials":
+      case "newsletter":
+      case "repo":
+      case "live":
+      case "tools":
+      case "timeline":
+      case "contact":
         return block;
     }
   });

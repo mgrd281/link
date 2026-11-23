@@ -328,6 +328,13 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
           ))}
         </ul>
       );
+    // Portfolio blocks belong to the Poster direction; this one shows nothing for them.
+    case "project":
+    case "about":
+    case "tools":
+    case "timeline":
+    case "quotes":
+    case "contact":
     case "socials":
       return null;
   }

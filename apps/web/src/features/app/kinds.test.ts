@@ -1,7 +1,7 @@
 import { blockSchema, type Block } from "@linkyo/blocks";
 import { describe, expect, it } from "vitest";
 
-import { KINDS, socialUrl, STARTERS, starterBlocks, type StarterInput } from "./kinds";
+import { isPortfolioKind, KINDS, PORTFOLIO_KINDS, socialUrl, STARTERS, starterBlocks, titleKeys, type CreatorKind, type StarterInput } from "./kinds";
 
 const labels = {
   directions: (address: string) => `Directions: ${address}`,
@@ -22,6 +22,34 @@ const labels = {
 const build = (input: Partial<StarterInput> & Pick<StarterInput, "kind">): Block[] =>
   starterBlocks({ handles: {}, values: {}, switches: {}, links: "", ...input }, labels);
 
+/** The default section titles by kind: the kind, then the variant of its work, tools and quotes title. */
+const TITLES: [CreatorKind, string, string, string][] = [
+  ["designer", "designer", "designer", "default"],
+  ["photographer", "designer", "designer", "default"],
+  ["developer", "developer", "developer", "developer"],
+  ["engineer", "developer", "developer", "developer"],
+  ["student", "developer", "default", "default"],
+  ["writer", "writer", "writer", "default"],
+  ["journalist", "writer", "writer", "default"],
+  ["coach", "coach", "default", "default"],
+  ["lawyer", "lawyer", "lawyer", "default"],
+  ["freelancer", "default", "default", "default"],
+  ["tiktok", "default", "default", "default"],
+  ["instagram", "default", "default", "default"],
+  ["youtube", "default", "default", "default"],
+  ["apps", "default", "default", "default"],
+  ["streamer", "default", "default", "default"],
+  ["podcast", "default", "default", "default"],
+  ["music", "default", "default", "default"],
+  ["affiliate", "default", "default", "default"],
+  ["store", "default", "default", "default"],
+  ["marketing", "default", "default", "default"],
+  ["shop", "default", "default", "default"],
+  ["business", "default", "default", "default"],
+  ["warehouse", "default", "default", "default"],
+  ["other", "default", "default", "default"],
+];
+
 describe("page kinds in the welcome flow", () => {
   it("gives every kind a template and its own first questions", () => {
     const templates = new Set(KINDS.map((kind) => STARTERS[kind].theme.template));
@@ -32,6 +60,53 @@ describe("page kinds in the welcome flow", () => {
     expect(STARTERS.journalist.socials).toContain("linkedin");
     expect(STARTERS.lawyer.fields).toEqual(["booking", "phone", "email", "address"]);
     expect(STARTERS.student.fields).toContain("cv");
+  });
+
+  it("photographers and freelancers start on Werkbogen; designers and developers keep their looks", () => {
+    expect(KINDS).toHaveLength(24);
+    expect(KINDS.indexOf("photographer")).toBe(KINDS.indexOf("designer") + 1);
+    expect(KINDS.indexOf("freelancer")).toBe(KINDS.indexOf("student") - 1);
+    expect(STARTERS.photographer).toEqual({ theme: { template: "werkbogen" }, socials: ["instagram", "linkedin", "youtube"], fields: ["website", "booking", "email"], logoFirst: false });
+    expect(STARTERS.freelancer).toEqual({ theme: { template: "werkbogen" }, socials: ["linkedin", "instagram", "whatsapp"], fields: ["website", "booking", "email"], logoFirst: false });
+    expect(STARTERS.designer.theme).toEqual({ template: "atelier", pairing: "editorial" });
+    expect(STARTERS.designer.fields).toEqual(["website", "booking", "email"]);
+    expect(STARTERS.developer.theme).toEqual({ template: "nocturne", pairing: "tech", buttonStyle: "outline" });
+    expect(STARTERS.developer.fields).toEqual(["website", "cv", "email"]);
+    expect(STARTERS.engineer.fields).toEqual(["website", "cv", "email"]);
+    expect(PORTFOLIO_KINDS).toEqual(["designer", "photographer", "developer", "engineer", "freelancer"]);
+    expect(KINDS.filter((kind) => isPortfolioKind(kind))).toHaveLength(5);
+    expect(isPortfolioKind(undefined)).toBe(false);
+    // Until the welcome flow asks for work, the new kinds answer today's questions: all valid blocks.
+    for (const kind of ["photographer", "freelancer"] as const) {
+      const blocks = build({ kind, handles: { instagram: "ronja.feldkamp", linkedin: "ronja-feldkamp" }, values: { website: "example.com", booking: "example.com/termin", email: "hallo@example.com" } });
+      expect(blocks.map((block) => block.type), kind).toEqual(["socials", "link", "link", "link"]);
+      for (const block of blocks) expect(blockSchema.safeParse(block).success, block.type).toBe(true);
+    }
+  });
+
+  it.each(TITLES)("section titles of %s: work.%s, tools.%s, quotes.%s", (kind, work, tools, quotes) => {
+    expect(titleKeys(kind)).toEqual({
+      work: `titles.work.${work}`,
+      tools: `titles.tools.${tools}`,
+      quotes: `titles.quotes.${quotes}`,
+      timeline: "titles.timeline.default",
+      about: "titles.about.default",
+      clients: "titles.clients.default",
+    });
+  });
+
+  it("section titles: the table above names every kind, every key is a message in all three languages", async () => {
+    expect(titleKeys(undefined).work).toBe("titles.work.default");
+    expect(TITLES.map(([kind]) => kind).sort()).toEqual([...KINDS].sort());
+    for (const locale of ["de", "en", "ar"]) {
+      const messages = ((await import(`../../messages/${locale}.json`)) as { default: { app: { portfolio: { titles: Record<string, Record<string, string>> } } } }).default.app.portfolio.titles;
+      for (const kind of KINDS) {
+        for (const key of Object.values<string>({ ...titleKeys(kind) })) {
+          const [, section = "", variant = ""] = key.split(".");
+          expect(messages[section]?.[variant], `${locale} ${key}`).toEqual(expect.any(String));
+        }
+      }
+    }
   });
 
   it("a shop gets directions, a call button and opening hours — all valid blocks", () => {

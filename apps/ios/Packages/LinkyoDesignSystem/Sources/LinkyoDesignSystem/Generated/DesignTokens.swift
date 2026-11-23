@@ -87,6 +87,8 @@ public enum LinkyoTokens {
         public static let navPanel: CGFloat = 184
         /// Dashboard content (max width).
         public static let content: CGFloat = 1120
+        /// The wide canvas of creator pages (portfolio templates and every project page). Own name, same value as content.
+        public static let work: CGFloat = 1120
         /// Live phone preview width.
         public static let preview: CGFloat = 390
         /// Compact live phone preview (desk to xl).

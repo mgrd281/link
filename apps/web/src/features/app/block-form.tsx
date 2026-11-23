@@ -567,6 +567,25 @@ export function BlockForm({ block, onChange, errors, creating = false }: { block
         </>
       );
       break;
+    // The portfolio blocks get their forms with the editor work package; until then no fields.
+    case "project":
+      fields = null;
+      break;
+    case "about":
+      fields = null;
+      break;
+    case "tools":
+      fields = null;
+      break;
+    case "timeline":
+      fields = null;
+      break;
+    case "quotes":
+      fields = null;
+      break;
+    case "contact":
+      fields = null;
+      break;
   }
 
   return (
