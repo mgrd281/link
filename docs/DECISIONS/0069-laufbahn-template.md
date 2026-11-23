@@ -76,55 +76,89 @@ every Laufbahn page gets it, and every other template renders exactly as before.
   stroke: German compounds are read by their head (a "Seitenschubstapler" is a forklift, a
   "Staplerschein" a licence), English by whole words and their usual forms, Arabic after its
   proclitics and short vowels are set aside ("والفريق" is the team). Each rule lists the look-alikes it
-  must never take ("Schlager", "Kugellager", "Versicherung", "Gutschein", an English "lager",
-  "إفريقيا"). A page reads its own language's patterns and English. Neutral icon where nothing fits: a
-  check (skills) or a light bulb (notes).
-- **Skills, a bento.** Two columns on phones, three from tablets on; the first skill leads as a wide
-  tile from five skills on, and the last row is always closed (the last tile widens), order never
-  changes. A tile has its icon in a soft accent square (`lb-soft`: the accent at the pressed opacity
-  over the surface) and the label at body size, semibold; a tile alone in its row lies flat, a pair
-  stands (icon above, label at the foot), rows at equal height. No automatic hyphenation
-  (`hyphens: manual`, `text-wrap: balance`): long German compounds get soft hyphens at their joints
-  only ("Flurförder|zeug|schein", "Versand|dokumente", "Kommissio|nierung"), and a label whose widest
-  piece would still not fit half a 360 px phone's row takes the whole row; `break-words` stays as the
-  last resort. No numbers. Measured on Sevag's twelve skills at 390 px: the grid is about 680 px (it was
-  about 900). A two-column layout with the icon beside the label would be about 500 px, but at that
-  width four of his compounds and three labels break into stubs of two or three lines; the standing
-  tiles break two words, both at a joint, and read calmer, so they won.
+  must never take ("Schlager", "Kugellager", "Versicherung", "Gutschein", "Bewerbung" for advertising,
+  "gefahren" for hazards, "Photovoltaik" for cameras, "Fahrzeugpflege" for nursing, "Jahresabschluss"
+  for degrees, "Absprachen" for languages, "Hochstapler" for forklifts, an English "lager",
+  "إفريقيا"). A language named by its name ("Englisch", "Arabic", "عربي") counts only when the text
+  says nothing else but a level ("Englisch (C1)", "Arabic (native)", "اللغة العربية"), so "Italian
+  cooking" or "طبخ عربي" is cooking. "القيادة" alone is leadership, not driving; "ورشة" alone is a
+  garage, only "ورش العمل" are workshops. A page reads its own language's patterns and English. Neutral
+  icon where nothing fits: a check (skills) or a light bulb (notes).
+- **Skills, a bento of flat tiles.** Two columns on phones, three from tablets on; the first skill
+  leads across from five skills on. Every tile lies flat: the icon in a soft accent square (`lb-soft`:
+  the accent at the pressed opacity over the surface) beside the label (body size, semibold), both
+  centred in a row of one height (56 px; 60 px for a label of two lines). No automatic hyphenation
+  (`hyphens: manual`, `text-wrap: balance`): long German compounds get soft hyphens at their joints only
+  ("Flurförder|zeug|schein", "Versand|dokumente", "Kommissio|nierung"). A label shares a phone's row
+  only when it fits beside its icon in at most two lines on a 390 px phone and no piece of it is wider
+  than the room beside the icon on a 360 px phone (`fitsBeside`); otherwise it takes the whole row,
+  where it is one line. So that half tiles still pair up, the next half tile may move up past at most
+  two such rows (`pairUp`; the first tile never moves, no tile moves more than two places, and the DOM
+  follows the same order, so a screen reader reads what the eye scans). On a screen narrower than
+  360 px a label whose piece does not fit beside its icon wraps under it rather than break a word
+  (flex-wrap on a `min-content` basis). From tablets on, a last row of one tile after a row of three
+  is set as one and two, then two and one. `break-words` stays as the last resort. No numbers.
+  Measured on Sevag's twelve skills at 390 × 844 (and the same at 360 × 780): the grid is 518 px, the
+  section 615 px, against 678 px and 783 px in round 1. (Round 2's first draft gave 681 px and 723 px at
+  360; the "about 900 px" once quoted for round 1 was wrong.) The brief's "well under 600 px" holds for
+  the grid, not for the section with its title: twelve labels of up to 25 characters at body size take
+  eight rows of two columns, and the only ways under that (smaller labels, 8 px around a two-line label,
+  no lead tile) were judged worse.
 - **Hero buttons.** The page's first action, filled: the contact block's primary action; without one,
   "Anschreiben lesen / Read the letter / اقرأ الخطاب" when the page has a cover letter (a long text
-  under a title that names a letter, or one that opens with a salutation and closes with a greeting),
-  else "Weiterlesen / Read on" to the first section. Beside it "Teilen / Share / مشاركة", outlined: the
-  native share sheet, otherwise the address is copied, the label reads "Kopiert" for a moment and a
-  polite live region says "Link kopiert." (the existing share hook, no third-party code). 48 px, the
-  template's button radius, scale on press, the focus ring; side by side when both fit (they do at
-  360 px), else stacked at full width. With a contact block its status line stands above and its CV
-  link below.
-- **Section index on phones.** Sticky flush under the compact bar once the hero has passed, on the
-  page's solid ground, one row of 44 px chips (52 px with its band), a hairline under it only while it
-  is stuck (a scroll-state query). Where scroll-driven animations are missing, the bar never shows, so
-  the index sticks to the top edge instead. A tiny client component marks the section being read with
-  `aria-current` (an IntersectionObserver on a thin band at 35 % of the screen, the last section once
-  the end of the content is on screen), keeps that chip and a chip reached with Tab whole in the row
-  (scrolling the row only) and fades the row's edges only while more chips lie beyond them. Without the
-  script the chips are plain anchors. The same marking replaces the wide canvas's scroll-driven spy.
-  The document's scroll padding grows by the index on phones, so a heading jumped to or focused stops
-  below it (2.4.11). Anchor jumps glide unless reduced motion is asked for.
-- **About.** The lead at the title size on phones (18 px, about six lines for Sevag), h3 from tablets,
-  h2 on the wide canvas; the rest as body; the facts as a two-by-two sheet of cells between hairlines
-  (a value that cannot fit half the sheet takes the row).
+  under a title that names a letter in the page's language — an English "brief" is not one — or one
+  that opens with a salutation and closes with a greeting), else "Weiterlesen / Read on" to the first
+  section. Beside it "Teilen / Share / مشاركة", outlined: the native share sheet; where there is none, or
+  the browser refuses it, the address is copied, the icon turns into a check for as long as every copy
+  button's confirmation and a polite live region says "Link kopiert." (or that it could not be copied).
+  A visitor who closes the share sheet has decided: nothing is copied, nothing is said. The label stays
+  "Teilen", which is also the button's name (WCAG 2.5.3). 48 px, the template's button radius, scale on
+  press, the focus ring; side by side when both fit (they do at 360 px), else stacked at full width.
+  They stand before the numbers, so on a phone they are on the first screen (390 × 844: 739–787 px;
+  360 × 780: 693–741 px). With a contact block its status line stands above and its CV link below.
+- **Section index on phones.** Sticky flush under the compact bar once the hero has passed, one row of
+  44 px chips (52 px with its band), a hairline under it only while it is stuck (a scroll-state query).
+  The bar above it is solid on Laufbahn pages too (the page's ground, no glass), so nothing shows
+  through the top of the screen. Where scroll-driven animations are missing, the bar never shows, so
+  the index sticks to the top edge instead. On short screens (`short`, as every sticky bar) it stands
+  in the flow. A tiny client component marks the section being read with `aria-current` (an
+  IntersectionObserver on a thin band at 35 % of the screen, the last section once the end of the
+  content is on screen; nothing is marked before it runs, so without the script no chip claims to be
+  current), keeps that chip and a chip reached with Tab whole in the row (scrolling the row only) and
+  fades the row's edges, as wide as its padding, only while more chips lie beyond them (no mask
+  otherwise, so no focus ring is clipped). The same marking replaces the wide canvas's scroll-driven
+  spy. The content under the index has a scroll margin of the index's band (`lb-under-index`, keyed to
+  the same container width as the index's stickiness), so a heading jumped to or focused stops below it
+  (2.4.11). The stuck chips themselves sit inside the band the document keeps clear for the bar; a
+  negative scroll margin as deep as that band exempts them, so moving along them with Tab or Shift+Tab
+  scrolls the row, never the page. Anchor jumps glide unless reduced motion is asked for.
+- **About.** The lead at the title size on phones (18 px at the body's line height), h3 from tablets,
+  h2 on the wide canvas. A first paragraph longer than 180 characters leads with its first full
+  sentence (`splitLead`: never after an abbreviation, a single letter or an ordinal), and the rest of
+  it opens the body: four lines at 390 px, five at 360 px for Sevag. The facts as a two-by-two sheet of
+  cells between hairlines (a value that cannot fit half the sheet takes the row; each cell's column
+  can shrink, so with WCAG 1.4.12 text spacing at 320 px a value breaks inside its cell).
 - **Text sections by length.** Under 320 characters: a callout (surface tile, hairline, an icon in a
   soft accent square chosen from the section's title by the same map: "Neu für mich: das Tönen" gets a
   paint bucket). Over 900 characters: a reading tile with its reading time; on phones and tablets the
-  first two paragraphs, then a native `<details>` whose button follows the text it opens ("Ganzes
-  Anschreiben lesen", "Weiterlesen" when it is not a letter, "Weniger anzeigen" once open), keyboard and
-  screen readers included, no script; the opened text unfolds briefly unless reduced motion is asked
-  for. On the wide canvas the disclosure's content is always shown (`::details-content`) and its button
-  is not.
+  first two paragraphs, then a native `<details>` ("Ganzes Anschreiben lesen", "Weiterlesen" when it is
+  not a letter, "Weniger anzeigen" once open) whose button stays where it was pressed while the rest
+  unfolds below it, keyboard and screen readers included, no script; the opened text unfolds briefly
+  unless reduced motion is asked for. On the wide canvas, and whenever the visitor arrives at the
+  section by its address (the hero's "Anschreiben lesen", the index: `.lb-section:target`), the
+  disclosure's content is shown (`::details-content`) and its button is not. Both rules sit inside
+  `@supports selector(::details-content)`: a browser without it keeps the button everywhere, so the
+  text is never hidden without a way to it.
 - **Timeline.** A 32 px icon node per step: a briefcase, or the licence or certificate the role names
   (via the map); filled while the step is still going on; the years level with the node's centre.
 - **Rhythm.** On phones 48 between sections, 32 under a section's hairline, 24 between a title and
   its content and between the parts of a content, 16 between paragraphs, 8 between tiles. Signposts
-  are 40 px on phones, 48 from tablets on; titles h2 (h1 on the wide canvas).
+  are 40 px on phones, 48 from tablets on; titles h2 (h1 on the wide canvas). No gap under the last
+  section (the end-of-content marker is out of the grid's flow).
+- **Not done.** On phones the compact bar and the stuck index together keep 108 px at the top; folding
+  the index into the bar would give back 52 px, but the bar carries the contact action on pages that
+  have one, so it stays. The icon map ships in the shared renderer chunk (about 12 KB gzip on pages
+  that preview creator pages in the browser); loading the signposted renderers lazily there is left for
+  a later change.
 
 **Status.** Accepted.
