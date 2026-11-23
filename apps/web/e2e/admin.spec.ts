@@ -437,6 +437,10 @@ test.describe("referrals", () => {
     await page.getByRole("article").filter({ hasText: `@${username}` }).getByRole("button", { name: "Decline …" }).click();
     const dialog = page.getByRole("alertdialog", { name: "Decline the request?" });
     await expect(dialog.getByLabel("Reason")).toBeFocused();
+    // The dialog fades in; axe measures contrast mid-fade otherwise (a flake under load, not a real issue).
+    await expect
+      .poll(() => dialog.evaluate((element) => element.getAnimations({ subtree: true }).filter((a) => a.playState === "running").length))
+      .toBe(0);
     expect(await axe(page), "decline dialog").toEqual([]);
     await dialog.getByLabel("Reason").selectOption("identityUnclear");
     await dialog.getByRole("button", { name: "Decline", exact: true }).click();
