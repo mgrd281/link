@@ -91,7 +91,7 @@ export const pagePlanSchema = z
   })
   .strict();
 export type PagePlan = z.infer<typeof pagePlanSchema>;
-export const PAGE_PLAN_VERSION = "plan-v1";
+export const PAGE_PLAN_VERSION = "plan-v2";
 
 type JsonObject = Record<string, unknown>;
 

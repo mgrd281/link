@@ -1,5 +1,6 @@
 export * from "./detect";
 export * from "./kinds";
+export * from "./project";
 export * from "./rules";
 export * from "./schema";
 // The AI page plan is imported on its own (`@linkyo/blocks/ai-plan`): it pulls in the design tokens

@@ -9,6 +9,7 @@
     "./ai-plan": "./src/ai-plan.ts",
     "./detect": "./src/detect.ts",
     "./kinds": "./src/kinds.ts",
+    "./project": "./src/project.ts",
     "./rules": "./src/rules.ts"
   },
   "scripts": {

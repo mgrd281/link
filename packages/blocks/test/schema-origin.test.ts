@@ -33,4 +33,14 @@ describe("block provenance", () => {
     expect(hasAiContent(page([{ ...link, visible: true, highlight: false, origin: "human" }], []))).toBe(false);
     expect(hasAiContent(page([{ ...link, visible: true, highlight: false }]))).toBe(false);
   });
+
+  it("an AI-written project counts like any other block", () => {
+    const project = { id: "p1", type: "project" as const, slug: "tidewatch", title: "Tidewatch", summary: "A tide table sailors can read at a glance." };
+    for (const origin of ["ai", "ai-edited", "human"]) expect(blockSchema.safeParse({ ...project, origin }).success, origin).toBe(true);
+    const page = (origin?: "ai" | "ai-edited" | "human"): Page => pageSchema.parse({ profile, blocks: [{ ...project, ...(origin ? { origin } : {}) }] });
+    expect(hasAiContent(page("ai"))).toBe(true);
+    expect(hasAiContent(page("ai-edited"))).toBe(true);
+    expect(hasAiContent(page("human"))).toBe(false);
+    expect(hasAiContent(page())).toBe(false);
+  });
 });
