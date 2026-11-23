@@ -118,10 +118,11 @@ const HAND_MADE: Record<string, Preview> = {
     examples: true,
   },
   // An application page from the letter Sevag gave the team; a placeholder warehouse picture until he sends his own.
+  // Laufbahn in navy, the blue of the picture's pallet racks.
   [SEVAG_SLUG]: {
     name: { de: "Sevag Ghazarian" },
     username: "sevag-ghazarian",
-    theme: { template: "werkbogen", accent: creatorTokens.swatches["ink-blue"] },
+    theme: { template: "laufbahn", accent: creatorTokens.swatches.navy },
     pages: { de: sevagDe },
     fromOwner: true,
   },

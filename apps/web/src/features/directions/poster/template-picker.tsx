@@ -26,10 +26,12 @@ const PICTURE: Partial<Record<HeroStyle, string>> = {
   // Werkbogen: a plate from edge to edge under a quiet top line. Tiefdruck: no large picture, a small round portrait.
   plate: "inset-x-0 top-4 h-2/5",
   statement: "start-3 top-3 size-8 rounded-full",
+  // Laufbahn: the picture from edge to edge, cut straight above the name.
+  bleed: "inset-x-0 top-0 h-1/2",
 };
 
 /**
- * Template picker: thirteen looks, each previewed with the creator's own photo and name in that
+ * Template picker: fourteen looks, each previewed with the creator's own photo and name in that
  * template's real colors and fonts (resolved by the theme engine, so every swatch is AA).
  * Native radio inputs: arrow keys move between templates, screen readers announce the choice.
  * `still` (the dashboard's Design screen) stops the thumbnails' ambient loops, so nothing moves while

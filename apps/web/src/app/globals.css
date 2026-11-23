@@ -496,6 +496,150 @@
   border: var(--border-width-focus) solid var(--creator-accent);
 }
 
+/*
+ * Laufbahn (ADR 0069): the picture from edge to edge on phones, signposted sections, a timeline whose
+ * rail fills as it is read. Transform and opacity only (nothing shifts the layout), all of it off with
+ * prefers-reduced-motion, and absent where scroll-driven animations are not supported: there the page
+ * is complete as it stands (the rail drawn in full, every section visible).
+ */
+@keyframes lb-zoom {
+  to {
+    scale: 1.08;
+  }
+}
+
+@keyframes lb-fill {
+  from {
+    scale: 1 0;
+  }
+}
+
+/* The section being read, as a number the index's signs and titles mix their colors with (1 or 0). */
+@property --lb-here {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@keyframes lb-here {
+  from,
+  to {
+    --lb-here: 1;
+  }
+}
+
+/* The picture on phones: about three quarters of the small viewport, never taller than 1.6 times the
+   page's width (a phone preview in the dashboard), never too short for the name it carries. */
+@utility lb-plate {
+  height: clamp(var(--spacing-32) * 3, 72svh, 160cqi);
+}
+
+/* Ink at the secondary opacity under the name, easing out above it: at least 48 % ink over the lower
+   45 % of the picture (where the role line and the name stand), so white large text passes AA even
+   on a white picture; the upper part of the picture stays clear. */
+@utility lb-scrim {
+  --lb-ink: color-mix(in oklab, var(--color-ink) calc(var(--opacity-secondary) * 100%), transparent);
+
+  background: linear-gradient(to top, var(--lb-ink) 0%, color-mix(in oklab, var(--lb-ink) 75%, transparent) 45%, transparent 80%);
+}
+
+/* The role line over the picture: dark glass with a white hairline, so its small white text keeps AA
+   on any picture (with the scrim under it, at least two thirds ink behind the text). */
+@utility lb-chip {
+  border-color: color-mix(in oklab, var(--color-white) 24%, transparent);
+  background-color: color-mix(in oklab, var(--color-ink) 40%, transparent);
+  backdrop-filter: blur(var(--blur-glass));
+}
+
+/* The picture eases in a little as the hero scrolls away. */
+@utility lb-zoom {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: lb-zoom linear both;
+      animation-timeline: --poster-hero;
+      animation-range: exit 0% exit 100%;
+    }
+  }
+}
+
+/* Sections and tiles rise in once, within the first 8 rem of entering the screen, whatever their height. */
+@utility lb-reveal {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: poster-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry var(--spacing-32);
+    }
+  }
+}
+
+/* A signposted section: anchored clear of the compact bar; its view timeline (named per section in the
+   markup) covers the thin band at 30 % of the screen, so exactly one section is "being read" at a time. */
+@utility lb-section {
+  scroll-margin-block-start: calc(var(--spacing-16) + var(--spacing-4));
+  view-timeline-axis: block;
+  view-timeline-inset: 30% 69%;
+}
+
+/* The index on the wide canvas: --lb-here is 1 while the link's section (--lb-t) is being read, else 0. */
+@utility lb-spy {
+  @supports (animation-timeline: view()) and (timeline-scope: --lb) {
+    --lb-here: 0;
+
+    animation: lb-here linear none;
+    animation-timeline: var(--lb-t);
+    animation-range: cover 0% cover 100%;
+  }
+}
+
+@utility lb-spy-sign {
+  background-color: color-mix(in oklab, var(--creator-accent) calc(var(--lb-here) * 100%), var(--creator-surface-2));
+  color: color-mix(in oklab, var(--creator-accent-fg) calc(var(--lb-here) * 100%), var(--creator-fg-muted));
+}
+
+@utility lb-spy-label {
+  color: color-mix(in oklab, var(--creator-fg) calc(var(--lb-here) * 100%), var(--creator-fg-muted));
+}
+
+/* stylelint-disable nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
+
+/* One step of the timeline: a node at the reading start and, to the next step, a rail in the line color
+   with the accent drawn over it as the step scrolls through the screen. */
+@utility lb-step {
+  position: relative;
+  view-timeline: --lb-step block;
+
+  &:not(:last-child)::before,
+  &:not(:last-child)::after {
+    position: absolute;
+    inset-block: calc(var(--spacing-1) + var(--spacing-3)) calc(var(--spacing-1) * -1);
+    inset-inline-start: calc(var(--spacing-3) / 2 - var(--border-width-hairline));
+    inline-size: calc(var(--border-width-hairline) * 2);
+    content: "";
+  }
+
+  &:not(:last-child)::before {
+    background-color: var(--creator-line);
+  }
+
+  &:not(:last-child)::after {
+    background-color: var(--creator-accent);
+    transform-origin: top;
+  }
+
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      &:not(:last-child)::after {
+        animation: lb-fill linear both;
+        animation-timeline: --lb-step;
+        animation-range: entry 40% cover 55%;
+      }
+    }
+  }
+}
+
+/* stylelint-enable nesting-selector-no-missing-scoping-root */
+
 /* stylelint-enable no-invalid-position-declaration */
 
 /* A still template picker (the dashboard's Design screen): the thumbnails keep their look, without

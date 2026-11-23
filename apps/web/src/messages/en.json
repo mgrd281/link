@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Linkyo",
-    "description": "The creator page that looks premium in five minutes: thirteen templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
+    "description": "The creator page that looks premium in five minutes: fourteen templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
   },
   "common": {
     "close": "Close",
@@ -461,6 +461,13 @@
       "projectMissing": "This project no longer exists.",
       "toPage": "To the page",
       "plateLink": "Project 1 of {total}: {title}"
+    },
+    "laufbahn": {
+      "index": "Sections",
+      "jump": "Read on",
+    "jumpTo": "Read on: {title}",
+      "ongoing": "now",
+      "readingTime": "{minutes} min read"
     }
   },
   "directions": {
@@ -518,10 +525,10 @@
     "earlier": "Earlier directions",
     "poster": {
       "name": "Poster",
-      "tagline": "Thirteen templates. Clear sections. Your photo first.",
+      "tagline": "Fourteen templates. Clear sections. Your photo first.",
       "description": "Built from the pages you sent: a full-width portrait or your logo, the name set like a gig poster, then titled sections — releases, shows with month tabs, mixes in a two-row rail, a two-up shop, partner tiles and videos. Pick a template, the content stays. The dashboard edits the page section by section.",
       "traits": [
-        "Thirteen templates, from Nocturne to Tiefdruck",
+        "Fourteen templates, from Nocturne to Laufbahn",
         "Every color pair passes WCAG AA in every template",
         "Zero cookies, videos load only after a tap, ads are labelled"
       ],
@@ -688,12 +695,15 @@
     },
     "tiefdruck": {
       "description": "Dark and bold: huge type, projects as a numbered list, one electric blue."
+    },
+    "laufbahn": {
+      "description": "For applications and CVs: a large picture, a lettered signpost for every section, a timeline that fills as you read."
     }
   },
   "marketing": {
     "meta": {
       "title": "Linkyo — One link. Everything you create.",
-      "description": "The creator page that looks premium in five minutes: thirteen templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
+      "description": "The creator page that looks premium in five minutes: fourteen templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
     },
     "nav": {
       "features": "Features",
@@ -1090,7 +1100,7 @@
       }
     },
     "real": {
-      "metaDescription": "The creator page that looks premium in five minutes: thirteen templates, music, shows and a shop. Free to start, data stored in Frankfurt.",
+      "metaDescription": "The creator page that looks premium in five minutes: fourteen templates, music, shows and a shop. Free to start, data stored in Frankfurt.",
       "analyticsBadge": "In the works",
       "freeAnalytics": "Cookie-free analytics (in the works)",
       "faqFree": "Yes. Templates, unlimited links and sections stay free; cookie-free analytics is in the works. Nothing that is free today becomes paid.",
@@ -2074,7 +2084,7 @@
         "look": {
           "short": "Look",
           "title": "Pick a look",
-          "lead": "Thirteen templates, all with your photo and name. Try them — the preview changes instantly."
+          "lead": "Fourteen templates, all with your photo and name. Try them — the preview changes instantly."
         },
         "links": {
           "short": "Links",

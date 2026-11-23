@@ -52,8 +52,8 @@ afterEach(() => {
 });
 
 describe("the list of old templates", () => {
-  it("is every template but the two portfolio templates", () => {
-    expect([...OLD_TEMPLATES, "werkbogen", "tiefdruck"].sort()).toEqual([...TEMPLATE_IDS].sort());
+  it("is every template but the two portfolio templates and Laufbahn", () => {
+    expect([...OLD_TEMPLATES, "werkbogen", "tiefdruck", "laufbahn"].sort()).toEqual([...TEMPLATE_IDS].sort());
   });
 });
 
@@ -162,7 +162,7 @@ describe("a page without a contact block", () => {
     expect(markup).not.toContain("@work:");
   });
 
-  it.each(["werkbogen", "tiefdruck"] as const)("%s: the same holds on the portfolio templates", (template) => {
+  it.each(["werkbogen", "tiefdruck", "laufbahn"] as const)("%s: the same holds on the portfolio templates and on Laufbahn", (template) => {
     const markup = html(template, blocks);
     expect(heroRow(markup)).toBeNull();
     expect(barButton(markup)).toBeNull();

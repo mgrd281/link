@@ -6,11 +6,14 @@ import { describe, expect, it } from "vitest";
 import { contrastRatio, hexToOklch, oklchToHex, parseHex, toHex } from "../src/creator/color";
 import { auditPalette, generatePalette, type ThemeMode } from "../src/creator/palette";
 import { DEFAULT_LAYOUT, PRESET_IDS, PROJECTS_STYLES, resolveCreatorTheme, shuffleCreatorTheme, TEMPLATE_IDS, type CreatorLayout } from "../src/creator/theme";
-import { tokens } from "../src/generated/tokens";
+import { creatorTokens, tokens } from "../src/generated/tokens";
 
 /** The two portfolio templates (v8); every other template is "old" and must keep its layout. */
 const PORTFOLIO_TEMPLATES = ["werkbogen", "tiefdruck"] as const;
-const OLD_TEMPLATES = TEMPLATE_IDS.filter((id) => !(PORTFOLIO_TEMPLATES as readonly string[]).includes(id));
+/** Templates added after the portfolio: Laufbahn, for applications and CVs (ADR 0069). */
+const LATER_TEMPLATES = ["laufbahn"] as const;
+const NEW_TEMPLATES = [...PORTFOLIO_TEMPLATES, ...LATER_TEMPLATES] as const;
+const OLD_TEMPLATES = TEMPLATE_IDS.filter((id) => !(NEW_TEMPLATES as readonly string[]).includes(id));
 
 /** Deterministic PRNG (mulberry32) so failures are reproducible. */
 function rng(seed: number) {
@@ -169,7 +172,7 @@ describe("presets", () => {
   });
 
   it("Werkbogen and Tiefdruck: the layouts, and palettes that pass the audit", () => {
-    expect(TEMPLATE_IDS).toHaveLength(13);
+    expect(TEMPLATE_IDS).toHaveLength(14);
     expect(OLD_TEMPLATES).toHaveLength(11);
     expect(resolveCreatorTheme({ template: "werkbogen" }).layout).toEqual({ headings: "marker", hero: "plate", socials: "plain", backdrop: "none", gallery: "grid", motion: "calm", projects: "auto", canvas: "wide" });
     expect(resolveCreatorTheme({ template: "tiefdruck" }).layout).toEqual({ headings: "headline", hero: "statement", socials: "plain", backdrop: "none", gallery: "grid", motion: "reveal", projects: "list", canvas: "wide" });
@@ -210,9 +213,9 @@ describe("presets", () => {
     });
   });
 
-  it("each portfolio template differs from every other template in at least three layout keys", () => {
+  it("each portfolio template (and every later one) differs from every other template in at least three layout keys", () => {
     const keys = Object.keys(DEFAULT_LAYOUT) as (keyof CreatorLayout)[];
-    for (const template of PORTFOLIO_TEMPLATES) {
+    for (const template of NEW_TEMPLATES) {
       const mine = resolveCreatorTheme({ template }).layout;
       for (const other of TEMPLATE_IDS.filter((id) => id !== template)) {
         const theirs = resolveCreatorTheme({ template: other }).layout;
@@ -237,13 +240,48 @@ describe("presets", () => {
       expect(resolveCreatorTheme({ template }).layout.projects, template).toBe("auto");
     }
     expect(resolveCreatorTheme({ preset: "midnight" }).layout.canvas).toBe("column");
-    for (const template of PORTFOLIO_TEMPLATES) expect(resolveCreatorTheme({ template }).layout.canvas, template).toBe("wide");
+    for (const template of NEW_TEMPLATES) expect(resolveCreatorTheme({ template }).layout.canvas, template).toBe("wide");
+  });
+
+  it("Laufbahn: signposts and the bleed hero, a light palette that passes the audit, and Sevag's navy", () => {
+    expect(TEMPLATE_IDS.at(-1)).toBe("laufbahn");
+    expect(resolveCreatorTheme({ template: "laufbahn" }).layout).toEqual({ headings: "signpost", hero: "bleed", socials: "plain", backdrop: "none", gallery: "grid", motion: "reveal", projects: "auto", canvas: "wide" });
+    // The new layout values belong to Laufbahn alone: every other template renders as before.
+    for (const template of TEMPLATE_IDS.filter((id) => id !== "laufbahn")) {
+      const { layout } = resolveCreatorTheme({ template });
+      expect(layout.headings, template).not.toBe("signpost");
+      expect(layout.hero, template).not.toBe("bleed");
+    }
+    // Inter for both faces (classic), so the hierarchy is size and weight alone; 700 on Arabic pages too.
+    expect(resolveCreatorTheme({ template: "laufbahn" }).pairing.id).toBe("classic");
+    expect(resolveCreatorTheme({ template: "laufbahn" }, { rtlScript: true }).cssVars["--creator-display-weight"]).toBe("700");
+    for (const accent of [undefined, creatorTokens.swatches.navy]) {
+      for (const rtlScript of [false, true]) {
+        const palette = resolveCreatorTheme({ template: "laufbahn", ...(accent ? { accent } : {}) }, { rtlScript }).palette;
+        expect(auditPalette(palette).filter((check) => !check.pass), `${accent ?? "template"} ${rtlScript ? "rtl" : "ltr"}`).toEqual([]);
+      }
+    }
+    const laufbahn = resolveCreatorTheme({ template: "laufbahn" }).palette;
+    expect({ mode: laufbahn.mode, bg: laufbahn.bg, surface: laufbahn.surface, surface2: laufbahn.surface2, fg: laufbahn.fg, fgMuted: laufbahn.fgMuted, accent: laufbahn.accent, accentFg: laufbahn.accentFg, accentText: laufbahn.accentText, line: laufbahn.line, lineStrong: laufbahn.lineStrong }).toEqual({
+      mode: "light",
+      bg: "#F5F6F7",
+      surface: "#FCFCFD",
+      surface2: "#E8E9EB",
+      fg: "#161617",
+      fgMuted: "#5A5B5C",
+      accent: "#1E50C8",
+      accentFg: "#FFFFFF",
+      accentText: "#1E50C8",
+      line: "#D8D9DA",
+      lineStrong: "#8E8E8F",
+    });
   });
 
   it("Arabic pages: the display weight is 400 on Werkbogen and 700 everywhere else", () => {
     const weight = (template: (typeof TEMPLATE_IDS)[number] | undefined, rtlScript: boolean) => resolveCreatorTheme(template ? { template } : {}, { rtlScript }).cssVars["--creator-display-weight"];
     expect(weight("werkbogen", true)).toBe("400");
     expect(weight("tiefdruck", true)).toBe("700");
+    expect(weight("laufbahn", true)).toBe("700");
     for (const template of OLD_TEMPLATES) expect(weight(template, true), template).toBe("700");
     expect(weight(undefined, true)).toBe("700");
     // Left to right nothing changes: the weight is the pairing's.
