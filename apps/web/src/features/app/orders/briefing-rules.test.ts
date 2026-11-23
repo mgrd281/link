@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { briefingLinks, briefingProblem, choosePhotos, MAX_LINKS, MAX_PHOTO_BYTES, MAX_PHOTOS } from "./briefing-rules";
+import { briefingLinks, briefingProblem, briefingSchema, choosePhotos, MAX_LINKS, MAX_PHOTO_BYTES, MAX_PHOTOS } from "./briefing-rules";
 
 const photo = (name: string, type = "image/jpeg", size = 1000) => ({ name, type, size });
 
@@ -41,5 +41,26 @@ describe("what a briefing may hold", () => {
     expect(chosen.skipped).toBe(3);
     expect(choosePhotos(picked, MAX_PHOTOS)).toEqual({ kept: [], skipped: 4 });
     expect(choosePhotos([], 0)).toEqual({ kept: [], skipped: 0 });
+  });
+});
+
+describe("the briefing route's own check", () => {
+  const sent = (overrides: Record<string, unknown> = {}) => briefingSchema.safeParse({ links: ["https://a.example"], photos: [], wishes: "Hell und ruhig.", pageLocale: "de", ...overrides });
+
+  it("refuses an empty briefing, also one sent past the form", () => {
+    expect(sent({ links: [], wishes: "" }).success).toBe(false);
+    expect(sent({ links: [], wishes: "   \n " }).success).toBe(false);
+    // Photos alone tell the team nothing about what the page is for.
+    expect(sent({ links: [], wishes: "", photos: ["u/o/a.jpg"] }).success).toBe(false);
+  });
+
+  it("takes a link or a wish, within the form's limits", () => {
+    expect(sent({ wishes: "" }).success).toBe(true);
+    expect(sent({ links: [] }).success).toBe(true);
+    const links = (count: number) => Array.from({ length: count }, (_, index) => `https://example.com/${String(index)}`);
+    expect(sent({ links: links(MAX_LINKS) }).success).toBe(true);
+    expect(sent({ links: links(MAX_LINKS + 1) }).success).toBe(false);
+    expect(sent({ photos: Array.from({ length: MAX_PHOTOS + 1 }, (_, index) => `u/o/${String(index)}.jpg`) }).success).toBe(false);
+    expect(sent({ pageLocale: "fr" }).success).toBe(false);
   });
 });

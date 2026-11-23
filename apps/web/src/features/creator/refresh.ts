@@ -1,3 +1,4 @@
+import type { Result } from "@/features/account/types";
 import { accessToken } from "@/lib/supabase/access-token";
 
 /** What `refreshPublicPage` needs from its surroundings (the browser's own in the app, stubs in tests). */
@@ -29,4 +30,21 @@ export async function refreshPublicPage(previous: string, deps: RefreshDeps = br
   } catch {
     return false;
   }
+}
+
+/**
+ * Changes the page's address and, when that worked, tells the server at once (the old address then
+ * stops answering now, not after its cached page was shown once more). Every screen that changes an
+ * address goes through here: Settings and the welcome flow. `change` is the account store's
+ * `changeUsername`.
+ */
+export async function changeAddress(
+  next: string,
+  previous: string,
+  change: (next: string) => Promise<Result>,
+  refresh: (previous: string) => Promise<unknown> = refreshPublicPage,
+): Promise<Result> {
+  const result = await change(next);
+  if (result.ok && previous !== "" && previous !== next) void refresh(previous);
+  return result;
 }

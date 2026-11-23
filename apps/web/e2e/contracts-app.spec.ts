@@ -219,7 +219,8 @@ test.describe("withdrawal and cancellation @real", () => {
     const done = await cancel(page, { name: "Lea Later", account: later.email, confirmation: later.email, date: wantedDay });
     expect(done.text).toContain(`in den der ${day(wanted)} fällt`);
     await expect.poll(async () => (await stripeCalls(later.subscription)).filter((call) => call.method === "POST").length).toBe(1);
-    const body = (await stripeCalls(later.subscription))[0]?.body ?? {};
+    // The app first reads the subscription (its period end and billing anchor), then schedules the end.
+    const body = (await stripeCalls(later.subscription)).find((call) => call.method === "POST")?.body ?? {};
     expect(body.proration_behavior).toBe("none");
     expect(Number(body.cancel_at) * 1000).toBeGreaterThan(wanted.getTime() - 24 * 3600 * 1000);
     const { data } = await service().from("entitlements").select("cancel_at, cancel_at_period_end").eq("stripe_subscription_id", later.subscription).single();

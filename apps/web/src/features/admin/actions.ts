@@ -4,6 +4,7 @@ import { accessToken } from "@/lib/supabase/access-token";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { browserSupabase } from "@/lib/supabase/browser";
 
+import { sendCustomerStatus } from "./customer-status";
 import type { AccountStatus, Customer } from "./customers/model";
 import { overrides, type CustomerPatch } from "./customers/overrides";
 import { refreshLive } from "./live";
@@ -74,7 +75,11 @@ export function useConsoleActions() {
         record(next === "suspended" ? "customer.suspend" : "customer.unsuspend", customer.username);
         return true;
       }
-      return ok(supabase().rpc("admin_set_status", { customer: customer.id, next }));
+      // Through our server, which runs the team function as this member and then drops the cached
+      // public page: a suspended page must not be served from the cache once more.
+      if (!(await sendCustomerStatus(customer.id, next))) return false;
+      await refreshLive();
+      return true;
     },
 
     async verified(customer: Customer, value: boolean): Promise<boolean> {

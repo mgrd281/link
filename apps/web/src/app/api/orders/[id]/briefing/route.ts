@@ -1,5 +1,4 @@
-import { z } from "zod";
-
+import { briefingSchema } from "@/features/app/orders/briefing-rules";
 import { dueOnBriefing } from "@/features/payments/delivery";
 import { json, paymentsOff, readJson, serviceBooking } from "@/features/payments/server/get-payments";
 import { requireUser } from "@/lib/server/user";
@@ -10,18 +9,12 @@ export const runtime = "nodejs";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const body = z.object({
-  links: z.array(z.string().trim().min(1).max(500)).max(20),
-  photos: z.array(z.string().min(1).max(300)).max(10),
-  wishes: z.string().trim().max(2000),
-  pageLocale: z.enum(["de", "en", "ar"]),
-});
-
 /**
  * The customer's briefing. On time (by 12:00 of the working day before the promised date) it keeps
  * the promised date, the one the order confirmation named, even when that day has filled up since;
  * a late briefing gets the next free working day, without counting the order itself. Photos must lie
- * in the account's own folder of this order in the private `briefing` bucket.
+ * in the account's own folder of this order in the private `briefing` bucket. A briefing with neither
+ * a link nor a wish is refused (400), as in the form: once sent it is locked.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const off = paymentsOff();
@@ -30,7 +23,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (signedIn instanceof Response) return signedIn;
   const { id } = await params;
   if (!UUID.test(id)) return json({ ok: false, error: "notFound" }, 404);
-  const parsed = body.safeParse(await readJson(request));
+  // The form's own rules, checked again: an empty briefing (neither a link nor a wish) is refused.
+  const parsed = briefingSchema.safeParse(await readJson(request));
   if (!parsed.success) return json({ ok: false, error: "invalid" }, 400);
   const folder = `${signedIn.user.id}/${id}/`;
   if (parsed.data.photos.some((path) => !path.startsWith(folder) || path.includes(".."))) return json({ ok: false, error: "invalid" }, 400);

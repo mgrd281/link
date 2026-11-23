@@ -49,6 +49,8 @@ import { CREATOR_DOMAIN } from "@/lib/page-url";
 
 import { SwitchRow, TextArea, TextInput } from "./form";
 import { ImportBox, useImport } from "./import-box";
+import { changeAddress } from "@/features/creator/refresh";
+
 import { sortImported } from "./import-links";
 import { isKind, KINDS, SOCIAL_PREFIX, STARTERS, starterBlocks, type CreatorKind, type SocialPlatform, type StarterField } from "./kinds";
 import { PhonePreview, PreviewButton } from "./preview";
@@ -212,7 +214,8 @@ export function WelcomeScreen() {
       }
       if (!profile.save(t("nameRequired"))) return;
       if (addressValue && addressValue !== account.username) {
-        const result = await accountStore.changeUsername(addressValue);
+        // Like the address screen in Settings: the cached page at the old address is dropped at once.
+        const result = await changeAddress(addressValue, account.username, (value) => accountStore.changeUsername(value));
         if (!result.ok) {
           setAddressError(result.error);
           document.getElementById("welcome-address")?.focus();

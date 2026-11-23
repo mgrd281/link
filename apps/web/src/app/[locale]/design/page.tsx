@@ -30,7 +30,6 @@ export default function DesignPage({ params }: { params: Promise<{ locale: strin
   const { locale } = use(params);
   setRequestLocale(locale);
   const t = useTranslations("design");
-  const tAi = useTranslations("marketing.try.ai");
   // The AI run (the "Try it" AI tab with test data) comes after the numbered sections.
   const aiIndex = String(SECTIONS.length + 1).padStart(2, "0");
   const stats = [
@@ -61,7 +60,7 @@ export default function DesignPage({ params }: { params: Promise<{ locale: strin
               className="flex items-center gap-3 rounded-sm px-2 py-1 text-small text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring"
             >
               <span className="font-mono text-caption text-fg-tertiary">{aiIndex}</span>
-              {tAi("tabLabel")}
+              {t("aiRun.title")}
             </a>
           </nav>
         </aside>

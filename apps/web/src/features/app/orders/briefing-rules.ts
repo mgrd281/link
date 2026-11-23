@@ -5,6 +5,8 @@
  * is counted and named on screen. The route (`/api/orders/<id>/briefing`) has the same limits.
  */
 
+import { z } from "zod";
+
 /** File types the `briefing` bucket accepts, with their extension. */
 export const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic" };
 export const MAX_PHOTOS = 10;
@@ -41,3 +43,17 @@ export function choosePhotos<T extends { type: string; size: number }>(picked: r
   const kept = fitting.slice(0, Math.max(0, MAX_PHOTOS - alreadyAdded));
   return { kept, skipped: picked.length - kept.length };
 }
+
+/**
+ * The briefing as the route takes it: the same limits, and the same refusal of an empty one (neither
+ * a link nor a wish) as the form. The form is not the only way to reach the route, and a sent
+ * briefing is locked for good.
+ */
+export const briefingSchema = z
+  .object({
+    links: z.array(z.string().trim().min(1).max(500)).max(MAX_LINKS),
+    photos: z.array(z.string().min(1).max(300)).max(MAX_PHOTOS),
+    wishes: z.string().trim().max(2000),
+    pageLocale: z.enum(["de", "en", "ar"]),
+  })
+  .refine((value) => value.links.length > 0 || value.wishes.length > 0);

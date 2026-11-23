@@ -1,3 +1,4 @@
+import { scanPage, stripCode, stripTags } from "@/features/ai/server/html-scan";
 import type { SocialPlatform } from "./kinds";
 
 /**
@@ -94,9 +95,13 @@ const JUNK = /\/(privacy|terms|cookie|legal|imprint|impressum|signup|sign-up|reg
 const STORES = /(apps\.apple\.com|play\.google\.com)\//i;
 const MAX_LINKS = 40;
 
+/** Longer addresses are not links anyone put on a page; they are left out before any pattern sees them. */
+const URL_MAX = 2048;
+
+// Tags are taken out by the linear scanner: a pattern like /<[^>]+>/ looks again from every "<" of a
+// page made of "<<<<…" and blocks the server.
 const decode = (text: string) =>
-  text
-    .replace(/<[^>]+>/g, " ")
+  stripTags(text)
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&#39;|&#x27;/g, "'")
@@ -106,11 +111,26 @@ const decode = (text: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-/** Links in a link-in-bio page: from its embedded page data when there is some, else its anchors. */
+/** The address without its scheme, "www." and trailing slashes, lower-cased: two spellings of one link. */
+const linkKey = (url: string): string => {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === "/") end -= 1;
+  return url
+    .slice(0, end)
+    .replace(/^https?:\/\/(www\.)?/, "")
+    .toLowerCase();
+};
+
+/**
+ * Links in a link-in-bio page: from its embedded page data when there is some, else its anchors.
+ * The page is someone else's HTML: it is read with the linear scanner (`html-scan.ts`: comments and
+ * code removed, every search only forward), never with patterns that look again from each opener;
+ * a megabyte of `<a <a <a …` would otherwise hold the server for minutes.
+ */
 export function extractLinks(html: string, page: URL): FoundLink[] {
   const found: FoundLink[] = [];
   const add = (url: unknown, title: unknown) => {
-    if (typeof url !== "string") return;
+    if (typeof url !== "string" || url.length > URL_MAX) return;
     let parsed: URL;
     try {
       parsed = new URL(url, page);
@@ -121,30 +141,33 @@ export function extractLinks(html: string, page: URL): FoundLink[] {
     const host = parsed.hostname.replace(/^www\./, "");
     // The service's own pages (its home, sign-up, other profiles) are not the creator's links.
     if (host === page.hostname || host.endsWith(`.${page.hostname}`) || JUNK.test(parsed.pathname) || STORES.test(parsed.href)) return;
+    if (parsed.href.length > URL_MAX) return;
     found.push({ url: parsed.href, title: typeof title === "string" ? decode(title).slice(0, 120) : "" });
   };
 
   // Next.js pages (Linktree and others) carry their links as JSON.
-  const data = /<script id="__NEXT_DATA__" type="application\/json"[^>]*>([\s\S]*?)<\/script>/.exec(html)?.[1];
+  const scan = scanPage(stripCode(html));
+  const data = scan.nextData;
   if (data) {
     try {
       const props = (JSON.parse(data) as { props?: { pageProps?: Record<string, unknown> } }).props?.pageProps ?? {};
       for (const key of ["links", "pinnedLinks", "socialLinks"]) {
         const list = props[key];
-        if (Array.isArray(list)) for (const item of list as { url?: unknown; title?: unknown; type?: unknown }[]) add(item.url, item.title ?? item.type);
+        if (!Array.isArray(list)) continue;
+        for (const item of list as ({ url?: unknown; title?: unknown; type?: unknown } | null)[]) if (item && typeof item === "object") add(item.url, item.title ?? item.type);
       }
     } catch {
       // Not the JSON we know: fall back to the anchors.
     }
   }
   if (!found.length) {
-    for (const match of html.matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) add(decode(match[1] ?? ""), match[2]);
+    for (const anchor of scan.anchors) add(decode(anchor.href), anchor.inner);
   }
 
   const seen = new Set<string>();
   return found
     .filter((link) => {
-      const key = link.url.replace(/\/+$/, "").replace(/^https?:\/\/(www\.)?/, "").toLowerCase();
+      const key = linkKey(link.url);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;

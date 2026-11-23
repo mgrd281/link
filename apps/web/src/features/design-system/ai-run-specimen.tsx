@@ -16,11 +16,12 @@ import { Section } from "./section";
  * (/design is not indexed); the homepage shows it only with a real recording.
  */
 export function AiRunSection({ index }: { index: string }) {
-  const t = useTranslations("marketing.try.ai");
+  // The section's own words ("an AI run, shown with test data"), not the homepage's offer.
+  const t = useTranslations("design.aiRun");
   const locale = useLocale() as RecordingLocale;
   const recording = FIXTURES[locale] ?? FIXTURES.de;
   return (
-    <Section id="ai-run" index={index} title={t("tabLabel")} description={t("lead")}>
+    <Section id="ai-run" index={index} title={t("title")} description={t("description")}>
       {recording ? <Specimen recording={recording} /> : null}
     </Section>
   );

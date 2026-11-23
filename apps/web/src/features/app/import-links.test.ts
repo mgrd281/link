@@ -140,3 +140,38 @@ describe("/api/import-links", () => {
     expect(await (await ask("https://example.com/mila")).json()).toEqual({ ok: false, error: "unsupported" });
   });
 });
+
+// The importer reads pages of the listed services, which anyone can fill: a megabyte made of openers
+// that never close took the old patterns minutes (they looked again from every opener).
+describe("extractLinks on a hostile page of 1 MiB", () => {
+  const MiB = 1024 * 1024;
+  const fill = (piece: string, length = MiB) => piece.repeat(Math.ceil(length / piece.length)).slice(0, length);
+  const timed = (html: string) => {
+    const started = performance.now();
+    const links = extractLinks(html, page);
+    expect(performance.now() - started).toBeLessThan(200);
+    return links;
+  };
+
+  it.each([
+    ["anchor openers that never close", "<a "],
+    ["anchors with an address and no end", '<a href="https://a.example/x">'],
+    ["angle brackets", "<"],
+    ["script openers", '<script id="__NEXT_DATA__" type="application/json">'],
+    ["comment openers", "<!--"],
+  ])("made of %s is read in well under 200 ms", (_name, piece) => {
+    timed(fill(piece));
+  });
+
+  it("with one anchor text or one address as long as the page", () => {
+    // Brackets that never close are text; the title is cut to its 120 characters.
+    expect(timed(`<a href="https://a.example/">${fill("<")}</a>`)).toEqual([{ url: "https://a.example/", title: "<".repeat(120) }]);
+    // An address of a megabyte is no link: left out, and the next one is still found.
+    expect(timed(`<a href="https://a.example/${fill("/", MiB - 200)}">x</a><a href="https://b.example/">B</a>`)).toEqual([{ url: "https://b.example/", title: "B" }]);
+  });
+
+  it("does not read links inside comments or code", () => {
+    const html = '<!-- <a href="https://hidden.example/">no</a> --><script>var a = \'<a href="https://code.example/">no</a>\';</script><a href="https://shown.example/">Yes</a>';
+    expect(extractLinks(html, page)).toEqual([{ url: "https://shown.example/", title: "Yes" }]);
+  });
+});
