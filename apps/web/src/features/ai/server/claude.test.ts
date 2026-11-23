@@ -103,13 +103,15 @@ describe("Claude client", { timeout: 20_000 }, () => {
     await expect(client.beta.messages.stream({ ...planRequest({ effort: "medium", maxTokens: 1_000, content: turn("de-music", "guard2") }), temperature: 1 }).finalMessage()).rejects.toBeInstanceOf(Anthropic.BadRequestError);
   });
 
-  it("joins the text around a fallback block and prices the answer by the model that served it", async () => {
+  it("joins the text around a fallback block and prices both attempts, each by its own model", async () => {
     useMock();
     const result = await createPlanCaller().call({ effort: "medium", maxTokens: 16_000, content: turn("fallback", "fallback"), signal: new AbortController().signal });
     expect(result.fallback).toBe(true);
     expect(result.model).toBe("claude-opus-5");
     expect(pagePlanSchema.safeParse(JSON.parse(result.text)).success).toBe(true);
-    expect(result.costMicros).toBe(Math.ceil(812 * 5 + 3605 * 0.5 + 2911 * 25));
+    // The declined attempt (812 in, 3,605 cached, 900 out) and the fallback's (812 in, 2,011 out).
+    expect(result.costMicros).toBe(Math.ceil(812 * 4 + 3605 * 0.2 + 900 * 20 + (812 * 5 + 2011 * 25)));
+    expect(result.usage).toEqual({ input: 1624, cacheRead: 3605, cacheWrite: 0, output: 2911 });
   });
 
   it("reports a refusal as its stop reason", async () => {
@@ -143,7 +145,41 @@ describe("Claude client", { timeout: 20_000 }, () => {
     setTimeout(() => {
       controller.abort();
     }, 200);
-    await expect(createPlanCaller().call({ effort: "medium", maxTokens: 16_000, content: turn("slow", "abort"), signal: controller.signal })).rejects.toMatchObject({ code: "aborted" });
+    // The stream had begun: what its first event said about the input comes with the error.
+    await expect(createPlanCaller().call({ effort: "medium", maxTokens: 16_000, content: turn("slow", "abort"), signal: controller.signal })).rejects.toMatchObject({
+      code: "aborted",
+      cutOff: { input: 812, cacheRead: 3605, cacheWrite: 0, attempts: 1 },
+    });
+  });
+
+  it("an abort before the answer begins carries no usage", async () => {
+    useMock();
+    const controller = new AbortController();
+    controller.abort();
+    await expect(createPlanCaller().call({ effort: "medium", maxTokens: 16_000, content: turn("slow", "abort-first"), signal: controller.signal })).rejects.toMatchObject({ code: "aborted", cutOff: null });
+  });
+
+  it("counts the attempts of a cut-off stream: one more after a fallback block", async () => {
+    useMock();
+    const controller = new AbortController();
+    let text = "";
+    const cut = createPlanCaller()
+      .call({
+        effort: "medium",
+        maxTokens: 16_000,
+        content: turn("fallback", "abort-fallback"),
+        signal: controller.signal,
+        onText: (delta) => {
+          // The notes come after the fixture's fallback block, in the second model's half of the plan.
+          text += delta;
+          if (text.includes('"notes"')) controller.abort();
+        },
+      })
+      .then(
+        () => null,
+        (error: unknown) => error,
+      );
+    expect(await cut).toMatchObject({ code: "aborted", cutOff: { input: 812, cacheRead: 3605, attempts: 2 } });
   });
 
   it("refuses to create a client for a base URL that is not Anthropic's (a local mock only off Vercel)", () => {

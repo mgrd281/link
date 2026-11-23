@@ -167,4 +167,61 @@ describe("DraftReview", () => {
     expect(markup).toContain("CHIP");
     expect(markup).not.toContain(de.app.ai.review.compare);
   });
+
+  const review = (kind: "ai" | "proposal", summary?: ReactNode) => {
+    const state = done();
+    return html(
+      createElement(DraftReview, {
+        kind,
+        draft: { page: page(state), theme: { template: "nocturne" }, kind: "music" },
+        before: null,
+        summary,
+        chip: createElement("p", null, "CHIP"),
+        actions: createElement("button", { type: "button" }, "APPLY"),
+      }),
+    );
+  };
+
+  // ux-2: the owner checks the draft in the phone before using it; a mouse was the only way to scroll it.
+  it("lets the owner scroll the draft in its phone by touch and keyboard: a scrolling region that is a tab stop", () => {
+    const scroller = /<div[^>]*data-draft-scroller="true"[^>]*>/.exec(review("ai"))?.[0] ?? "";
+    expect(scroller).toContain('tabindex="0"');
+    expect(scroller).toContain('role="region"');
+    expect(scroller).toContain(`aria-label="${de.ai.run.phone}"`);
+    expect(scroller).toContain("overflow-y-auto");
+    expect(scroller).not.toContain("overflow-hidden");
+    // Its focus is shown by a ring over the page, inside the screen's edge.
+    expect(review("ai")).toMatch(/<span aria-hidden="true" data-draft-focus="true" class="[^"]*peer-focus-visible:block/);
+    // The page itself stays a picture.
+    expect(review("ai")).toMatch(/<div inert="" aria-hidden="true"/);
+  });
+
+  it("keeps the phone of a running draft as it was: it follows the run, and is no tab stop", () => {
+    const markup = render({});
+    expect(markup).not.toContain("data-draft-scroller");
+    expect(markup).not.toContain("data-draft-focus");
+    const phone = /<div[^>]*data-draft-phone="true"[^>]*>/.exec(markup)?.[0] ?? "";
+    expect(phone).toContain('role="region"');
+    expect(phone).toContain(`aria-label="${de.ai.run.phone}"`);
+    expect(phone).not.toContain("tabindex");
+    expect(markup).toMatch(/class="[^"]*cursor-grab[^"]*overflow-hidden/);
+  });
+
+  // A proposal's screen shows "Dein Seitenvorschlag" in its bar; on a phone the review said it again right below.
+  it("shows a proposal's title once on a phone: its own heading is for screen readers there, and still names the section", () => {
+    const markup = review("proposal", createElement("p", null, "SUMMARY"));
+    const heading = /<h2[^>]*>/.exec(markup)?.[0] ?? "";
+    expect(markup).toContain(`${heading}${de.app.proposals.title}</h2>`);
+    expect(heading).toContain("max-lg:sr-only");
+    const id = /id="([^"]+)"/.exec(heading)?.[1] ?? "none";
+    expect(markup).toContain(`<section aria-labelledby="${id}" data-review-title="proposal"`);
+    expect(markup.split(de.app.proposals.title)).toHaveLength(2);
+    // With nothing under it, the whole section takes no room on a phone.
+    expect(/<section[^>]*data-review-title="proposal"[^>]*>/.exec(markup)?.[0]).toContain("max-lg:has-[[data-review-summary]:empty]:sr-only");
+    expect(/<section[^>]*data-review-title="proposal"[^>]*>/.exec(review("proposal"))?.[0]).toContain("max-lg:sr-only");
+    // An AI draft's heading ("Dein Entwurf") is not in its screen's bar: it stays visible.
+    const ai = review("ai", createElement("p", null, "SUMMARY"));
+    expect(/<h2[^>]*>/.exec(ai)?.[0]).not.toContain("sr-only");
+    expect(/<section[^>]*data-review-title="ai"[^>]*>/.exec(ai)?.[0]).not.toContain("sr-only");
+  });
 });

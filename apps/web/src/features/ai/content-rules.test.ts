@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { arabicShare, checkFreeText, factsFrom, languageWarning, numbersIn } from "./content-rules";
+import { arabicShare, checkFreeText, factsFrom, languageWarning, numbersIn, replacePhones } from "./content-rules";
 
 const facts = factsFrom(["DJ & Producer. Berlin. Tour 2027, Tickets ab 24,99 €", "lio-vance.de", "Nachtstrom EP", "[E-Mail] [Telefon]"]);
 
@@ -28,6 +28,16 @@ describe("content rules", () => {
     expect(checkFreeText("Schreib an lio@example.com.", facts)).toMatchObject({ text: "Schreib an.", changed: true, invented: false });
     expect(checkFreeText("Ruf an: +49 170 1234567", facts)).toMatchObject({ text: "Ruf an:", changed: true, invented: false });
     expect(checkFreeText("Kontakt: [E-Mail]", facts)).toMatchObject({ text: "Kontakt:", changed: true });
+  });
+
+  // ai-2: the answer is checked with the same definition of a phone number as the text we send.
+  it("removes phone numbers however their digits are separated, and keeps dates and year ranges", () => {
+    const told = factsFrom(["Tel. [Telefon]", "Tour 2019 – 2024, Release am 22.11.2026, 10:00 – 18:00 Uhr"]);
+    for (const number of ["0621 - 12 34 56", "040 / 12 34 56", "+49 (0) 151 – 234 567 89", "٠١٢٣ ٤٥٦ ٧٨٩٠"]) {
+      expect(checkFreeText(`Ruf an: ${number}`, told), number).toMatchObject({ text: "Ruf an:", changed: true, invented: false });
+    }
+    expect(checkFreeText("Tour 2019 – 2024, Release am 22.11.2026, 10:00 – 18:00 Uhr", told)).toEqual({ text: "Tour 2019 – 2024, Release am 22.11.2026, 10:00 – 18:00 Uhr", changed: false, invented: false });
+    expect(replacePhones("a 0621 - 12 34 56 b 2019/2020 c", () => "#")).toBe("a # b 2019/2020 c");
   });
 
   it("does not take abbreviations for addresses", () => {

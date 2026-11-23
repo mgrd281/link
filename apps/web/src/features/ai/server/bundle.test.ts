@@ -119,4 +119,48 @@ describe("what the model sees", () => {
     expect(redactContacts("Ruf an: 030 1234 5678")).toBe("Ruf an: [Telefon]");
     expect(redactContacts("Mail: a.b@c.de")).toBe("Mail: [E-Mail]");
   });
+
+  // ai-2: a separator with a space on both sides is three characters; these reached the model in full or in part.
+  it.each([
+    ["Tel. 0621 - 12 34 56", "Tel. [Telefon]"],
+    ["Tel 040 / 12 34 56", "Tel [Telefon]"],
+    ["0621 - 123456", "[Telefon]"],
+    ["+49 (0)621 / 12 34 56", "[Telefon]"],
+    ["040 – 12 34 56", "[Telefon]"],
+    ["+49 (0) 151 - 234 567 89", "[Telefon]"],
+    ["Tel: 030 – 1234567", "Tel: [Telefon]"],
+    ["Friseur Yilmaz, Tel. 040 / 12 34 56, Mo–Fr", "Friseur Yilmaz, Tel. [Telefon], Mo–Fr"],
+    ["Ruf an: 0621 - 12 34 56", "Ruf an: [Telefon]"],
+    ["Fon 0621\u00a0/\u00a012\u00a034\u00a056", "Fon [Telefon]"],
+    ["0621‑123456 oder 0621 — 12 34 56", "[Telefon] oder [Telefon]"],
+    ["(0621) 12 34 56-0", "[Telefon]"],
+    ["+1 (555) 123-4567", "[Telefon]"],
+    ["0621/12.34.56", "[Telefon]"],
+    ["هاتف: ٠١٢٣ ٤٥٦ ٧٨٩٠", "هاتف: [Telefon]"],
+    ["تلفن ۰۲۱ - ۱۲۳۴ ۵۶۷۸", "تلفن [Telefon]"],
+  ])("replaces the phone number in %j", (text, redacted) => {
+    expect(redactContacts(text)).toBe(redacted);
+    // No digit of the number is left in what the model is given.
+    expect(redactContacts(text)).not.toMatch(/[0-9\u0660-\u0669\u06f0-\u06f9]/);
+  });
+
+  it.each([
+    "ab 24,99 € und 3 Stück, 12 Songs",
+    "Seit 2019, 3 Alben, 120 Shows",
+    "5 - 7 Tage, 10 % Rabatt",
+    "Tour 2019 – 2024, dann 2025/2026",
+    "Saison 2023-2024",
+    "Am 22.11.2026 von 10:00 – 18:00 Uhr",
+    "Release 2026-11-22, live am 3.5.26",
+    "On 11/22/2026 at 20:00",
+    "Mo–Fr 9 - 17 Uhr, Sa 10 - 14 Uhr",
+    "100 % Bio · 250 g · 12 Stück",
+  ])("leaves %j as it is", (text) => {
+    expect(redactContacts(text)).toBe(text);
+  });
+
+  it("puts every date back where it was, also next to a phone number", () => {
+    expect(redactContacts("22.11.2026: 0621 - 12 34 56, 23.11.2026: 0621 / 65 43 21")).toBe("22.11.2026: [Telefon], 23.11.2026: [Telefon]");
+    expect(redactContacts("stray \ue002 mark, 2019 – 2024, 040 / 12 34 56")).toBe("stray  mark, 2019 – 2024, [Telefon]");
+  });
 });

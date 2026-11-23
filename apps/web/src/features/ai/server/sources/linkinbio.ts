@@ -1,7 +1,7 @@
-import { extractLinks, importTarget, isImportHost } from "@/features/app/import-links";
+import { importTarget, isImportHost } from "@/features/app/import-links";
 
 import type { SourceResult } from "../bundle";
-import { readPage } from "../html";
+import { pageLinks, readPage } from "../html";
 import { safeFetch } from "../safe-fetch";
 
 import type { ClassifiedSource } from "./classify";
@@ -20,6 +20,6 @@ export async function readLinkInBio(source: ClassifiedSource, options: SourceRea
   if (!result.ok) return { ...base, ...failureStatus(result.reason), links: [] };
   const final = new URL(result.url);
   const page = readPage(result.body, final);
-  const links = extractLinks(result.body, final).filter((link) => /^(https:|mailto:)/i.test(link.url));
+  const links = pageLinks(result.body, final).filter((link) => /^(https:|mailto:)/i.test(link.url));
   return { ...base, status: "read", links, profile: { siteTitle: page.title, bio: page.description } };
 }

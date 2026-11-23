@@ -8,7 +8,7 @@ import { handle } from "../../../../e2e/mocks/anthropic.handler.mjs";
 import type { AiRunEvent } from "../events";
 import type { PipelineInput } from "../request";
 
-import { createPlanCaller, type PlanCall, type PlanCaller } from "./claude";
+import { ClaudeCallError, createPlanCaller, type PlanCall, type PlanCaller } from "./claude";
 import type { LimitsClient, ReserveResult } from "./limits-client";
 import { runPipeline, type PipelineDeps, type SourceReader } from "./pipeline";
 import { createSseSink } from "./sse";
@@ -220,6 +220,55 @@ describe("AI pipeline", { timeout: 20_000 }, () => {
     expect(await promise).toEqual({ status: "stopped", runId: "run-1", counted: false });
     expect(events.at(-1)).toEqual({ type: "stopped", runId: "run-1", page: null, theme: null, kind: null, counted: false });
     expect(limits.settleCalls).toEqual([expect.objectContaining({ status: "stopped", counted: false, draft: null })]);
+  });
+
+  // ai-1: 18 such stops (525,000 micro-dollars each, the call's cap) used up the $10 day for everyone.
+  it("a stop books what the call can have cost by then, not the call's cap", async () => {
+    const limits = fakeLimits();
+    limits.stop = true;
+    const { promise } = run("slow", "p-stop-cost", { limits });
+    expect(await promise).toMatchObject({ status: "stopped", counted: false });
+    const cost = limits.settleCalls[0]?.costMicros ?? Number.NaN;
+    // Stopped within a second of the call: its input (812 + 3,605 cached, or the estimate if the answer had not begun) and a second of output at most.
+    expect(cost).toBeGreaterThan(0);
+    expect(cost).toBeLessThanOrEqual(20_000 * 6.25 + 300 * 25);
+    expect(cost).toBeLessThan(525_000 / 4);
+  });
+
+  it("a stopped call: the input its stream reported and the output of the seconds it ran, to the micro-dollar", async () => {
+    let clock = 1_700_000_000_000;
+    const limits = fakeLimits();
+    const events: AiRunEvent[] = [];
+    // A stream that reports its input, runs two seconds and is then cut off by the stop.
+    const claude: PlanCaller = {
+      call: (call) =>
+        new Promise((_resolve, reject) => {
+          call.signal.addEventListener("abort", () => {
+            clock += 2_000;
+            reject(new ClaudeCallError("aborted", false, "APIUserAbortError", { input: 812, cacheRead: 3_605, cacheWrite: 0, attempts: 1 }));
+          });
+          limits.stop = true;
+        }),
+    };
+    const outcome = await runPipeline(
+      { input: input("slow", "p-stop-exact"), account: "user-1", ipHash: "hash-1", owner: { username: "lio-vance" } },
+      { emit: (event) => events.push(event), limits, claude, sources: noSources, enrich: null, stopPollMs: 5, log: vi.fn(), now: () => clock },
+    );
+    expect(outcome).toEqual({ status: "stopped", runId: "run-1", counted: false });
+    expect(limits.settleCalls).toHaveLength(1);
+    expect(limits.settleCalls[0]?.costMicros).toBe(Math.ceil(812 * 5 + 3_605 * 0.5 + 2 * 300 * 25));
+    expect(limits.settleCalls[0]?.details).toMatchObject({ calls: 1, input_tokens: 812, cache_read_tokens: 3_605, output_tokens: 0, ms_model: 2_000 });
+  });
+
+  it("a connection time-out still books the call's worst case (a retry may have run unseen)", async () => {
+    const limits = fakeLimits();
+    const claude: PlanCaller = { call: () => Promise.reject(new ClaudeCallError("timeout", false, "APIConnectionTimeoutError")) };
+    const outcome = await runPipeline(
+      { input: input("slow", "p-timeout-cost"), account: "user-1", ipHash: "hash-1", owner: { username: "lio-vance" } },
+      { emit: () => undefined, limits, claude, sources: noSources, enrich: null, stopPollMs: 25, log: vi.fn() },
+    );
+    expect(outcome).toMatchObject({ status: "failed", code: "timeout", counted: false });
+    expect(limits.settleCalls[0]?.costMicros).toBe(16_000 * 25 + 20_000 * 6.25);
   });
 
   it("a stop after the first block keeps that block and counts", async () => {

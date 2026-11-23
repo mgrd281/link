@@ -417,6 +417,10 @@ test("a sign-up someone else asked for with their invite code doesn't count when
   await clearMail(page, victimEmail);
   const asked = await page.request.post("/api/auth/code", { data: { email: victimEmail, locale: "en", signUp: { username: `vic-${stamp}`, ref: code } } });
   expect(await asked.json()).toEqual({ ok: true, pending: "code" });
+  // That e-mail is delivered a moment after the answer. Wait until it is there: signing in below
+  // empties the inbox first, and a sign-up e-mail arriving after that would be read as the sign-in
+  // code (the newest e-mail is the one whose code is typed), which the second request has replaced.
+  await mail(page, victimEmail);
   const victimId = (await profileOf(victimEmail))?.id ?? "";
   expect((await admin().from("referrals").select("state").eq("invitee_id", victimId).single()).data?.state).toBe("pending");
 

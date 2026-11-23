@@ -28,6 +28,51 @@ function countLiveMutations(scope: string) {
   }).observe(document, { subtree: true, childList: true, characterData: true });
 }
 
+/** What the replay showed at one moment: its status, the run's phase, the step of the progress bar, and its chip. */
+interface ReplayMoment {
+  status: string;
+  phase: string;
+  step: string;
+  /** The chip is on screen (it has a box and is not hidden). */
+  chipShown: boolean;
+  chipSource: string;
+  chipText: string;
+}
+
+/**
+ * Keeps, from page load, every state the replay in `scope` goes through (`window.__replay`). The
+ * page writes it down itself at each change, so nothing depends on how often this test gets to look:
+ * a run of ten seconds has steps that last 50 ms, and a test that samples it between other work
+ * misses steps (or the whole run) whenever the machine is busy.
+ */
+function recordReplay(scope: string) {
+  const moments: ReplayMoment[] = [];
+  (window as unknown as { __replay: ReplayMoment[] }).__replay = moments;
+  let last = "";
+  const read = () => {
+    const root = document.querySelector(scope);
+    const stage = root?.querySelector("[data-ai-replay]");
+    if (!root || !stage) return;
+    const chip = root.querySelector("[data-run-source]");
+    const box = chip?.getBoundingClientRect();
+    const moment: ReplayMoment = {
+      status: stage.getAttribute("data-ai-replay") ?? "",
+      phase: root.querySelector("[data-ai-run]")?.getAttribute("data-phase") ?? "",
+      step: root.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow") ?? "",
+      chipShown: Boolean(chip && box && box.width > 0 && box.height > 0 && getComputedStyle(chip).visibility === "visible"),
+      chipSource: chip?.getAttribute("data-run-source") ?? "",
+      chipText: (chip?.textContent ?? "").replace(/\s+/g, " ").trim(),
+    };
+    const key = JSON.stringify(moment);
+    if (key === last) return;
+    last = key;
+    moments.push(moment);
+  };
+  new MutationObserver(read).observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
+}
+
+const replayMoments = (page: Page, from = 0) => page.evaluate((start) => (window as unknown as { __replay: ReplayMoment[] }).__replay.slice(start), from);
+
 async function openSpecimen(page: Page, locale: (typeof LOCALES)[number]) {
   await page.goto(`/${locale}/design#ai-run`);
   const section = page.locator("#ai-run");
@@ -38,40 +83,37 @@ async function openSpecimen(page: Page, locale: (typeof LOCALES)[number]) {
 for (const locale of LOCALES) {
   test(`AI run specimen (${locale}): test data, labelled at every step, plays silently and plays again`, async ({ page }) => {
     await page.addInitScript(countLiveMutations, "#ai-run");
+    await page.addInitScript(recordReplay, "#ai-run");
     const section = await openSpecimen(page, locale);
     const stage = section.locator("[data-ai-replay]");
+    const run = section.locator("[data-ai-run]");
     const chip = section.locator("[data-run-source]");
     const progress = section.getByRole("progressbar");
-    // It plays by itself once in view.
-    await expect(stage).toHaveAttribute("data-ai-replay", "playing", { timeout: 10_000 });
-    const steps = new Set<string>();
-    while ((await stage.getAttribute("data-ai-replay")) === "playing") {
-      await expect(chip).toBeVisible();
-      await expect(chip).toHaveAttribute("data-run-source", "fixture");
-      await expect(chip).toHaveText(CHIP[locale]);
-      steps.add((await progress.getAttribute("aria-valuenow")) ?? "");
-      await page.waitForTimeout(200);
-    }
-    await expect(stage).toHaveAttribute("data-ai-replay", "done");
+    // It plays by itself once in view, to its end (about ten seconds; the page keeps the record).
+    await expect(stage).toHaveAttribute("data-ai-replay", "done", { timeout: 40_000 });
     await expect(chip).toHaveText(CHIP[locale]);
-    await expect(section.locator("[data-ai-run]")).toHaveAttribute("data-phase", "review");
+    await expect(run).toHaveAttribute("data-phase", "review");
     await expect(progress).toHaveAttribute("aria-valuenow", "7");
-    // The chip was there while the run went through its steps (several values of the progress bar).
-    expect(steps.size).toBeGreaterThanOrEqual(3);
+    const first = await replayMoments(page);
+    const playing = first.filter((moment) => moment.status === "playing");
+    expect(playing.length).toBeGreaterThan(0);
+    // The chip was there, saying what this is, at every moment of the run …
+    for (const moment of playing) expect(moment).toMatchObject({ chipShown: true, chipSource: "fixture", chipText: CHIP[locale] });
+    // … while the run went through its steps (several values of the progress bar).
+    expect(new Set(playing.map((moment) => moment.step)).size).toBeGreaterThanOrEqual(3);
     // The real planning wait was cut, and the run view says so with the real figure.
-    await expect(section.locator("[data-ai-run]")).toContainText(SHORTENED[locale]);
+    await expect(run).toContainText(SHORTENED[locale]);
     // Nothing was said to screen readers, and the replay has no live region at all.
     expect(await page.evaluate(() => (window as unknown as { __liveMutations: number }).__liveMutations)).toBe(0);
     expect(
       await section.locator('[aria-live], [role="status"], [role="log"], [role="alert"]').evaluateAll((regions) => regions.filter((region) => !region.closest('[aria-hidden="true"], [inert]')).length),
     ).toBe(0);
-    // One button plays it again; the same button stops it.
+    // One button plays it again (the run is running again, by the page's own record); the same button stops it.
     await section.getByRole("button", { name: REPLAY[locale], exact: true }).click();
-    await expect(stage).toHaveAttribute("data-ai-replay", "playing");
-    await expect(section.locator("[data-ai-run]")).toHaveAttribute("data-phase", "running");
+    await expect.poll(async () => (await replayMoments(page, first.length)).some((moment) => moment.status === "playing" && moment.phase === "running")).toBe(true);
     await stage.getByRole("button").first().click();
     await expect(stage).toHaveAttribute("data-ai-replay", "done");
-    await expect(section.locator("[data-ai-run]")).toHaveAttribute("data-phase", "review");
+    await expect(run).toHaveAttribute("data-phase", "review");
   });
 
   test(`AI run specimen (${locale}): with reduced motion, the finished run and a Play button`, async ({ page }) => {

@@ -53,6 +53,9 @@ function offsetWithin(element: HTMLElement, scroller: HTMLElement): number {
   return top;
 }
 
+/** The page in the phone: 390 px wide, scaled from its top start corner to the frame's width. */
+const SCROLLER = "absolute start-0 top-0 w-preview origin-top-left cursor-grab active:cursor-grabbing rtl:origin-top-right";
+
 /**
  * The draft on a phone, drawn by the real page renderer at a real phone's width (390 px) and scaled
  * to the frame. The only place with colour on the build screen: the creator's own page. While the
@@ -60,8 +63,11 @@ function offsetWithin(element: HTMLElement, scroller: HTMLElement): number {
  * it arrives and the phone follows the newest one.
  *
  * It is a picture, not a second app: the page inside is inert and hidden from screen readers (the
- * review's block list says the same in words), and the phone is no tab stop. A mouse can still drag
- * or wheel through it; that scrolls the page in the phone, never the screen around it.
+ * review's block list says the same in words). While a run works the phone moves by itself and is
+ * no tab stop; a mouse can still drag or wheel through it. With `scrollable` (the review, where the
+ * owner checks the draft before using it) the page in the phone scrolls like any page: by touch, by
+ * wheel, and with the keyboard once the phone has focus (a ring inside the screen's edge shows it).
+ * At the draft's top and bottom the screen around it scrolls on, so a thumb is never stuck in it.
  */
 export function DraftPhone({
   page,
@@ -69,6 +75,7 @@ export function DraftPhone({
   label,
   busy,
   followId = null,
+  scrollable = false,
   className,
 }: {
   page: Page;
@@ -79,6 +86,8 @@ export function DraftPhone({
   busy: boolean;
   /** The newest block: the phone scrolls to it when it changes. */
   followId?: string | null;
+  /** The owner scrolls the page in the phone themselves (touch, wheel, keyboard): the phone is a tab stop. */
+  scrollable?: boolean;
   className?: string | undefined;
 }) {
   const rtl = page.profile.locale === "ar";
@@ -119,7 +128,7 @@ export function DraftPhone({
   }, [followId, page]);
 
   // A mouse drags or wheels the page in the phone (it moves under the pointer; the page is scaled,
-  // the pointer is not). Touch and the keyboard use the screen around it.
+  // the pointer is not). Touch and the keyboard scroll it natively where it is `scrollable`.
   useEffect(() => {
     const element = scroller.current;
     if (!element) return;
@@ -156,28 +165,37 @@ export function DraftPhone({
     };
   }, [scale]);
 
+  const fit = scale === null ? undefined : { scale, height: `${100 / scale}%` };
+  const content = (
+    // A grid, so the page fills the phone even while it is short (its own background, no gap below).
+    <div inert aria-hidden className="grid min-h-full">
+      <PosterRenderer page={page} theme={resolved} preview />
+    </div>
+  );
+
   return (
-    <div role="region" aria-label={label} aria-busy={busy} data-draft-phone className={cn("min-h-0", className)}>
+    // The name sits on what takes focus: the scroller where the phone scrolls, else the phone as a whole.
+    <div role={scrollable ? undefined : "region"} aria-label={scrollable ? undefined : label} aria-busy={scrollable ? undefined : busy} data-draft-phone className={cn("min-h-0", className)}>
       <PhoneFrame className="aspect-phone h-full w-auto max-w-full">
         <div
           ref={screen}
           className="absolute inset-0 bg-creator-bg text-creator-fg transition-colors duration-slow ease-standard motion-reduce:transition-none"
           style={themeStyle(resolved)}
         >
-          <div
-            ref={scroller}
-            className={cn(
-              "absolute start-0 top-0 w-preview origin-top-left cursor-grab overflow-hidden active:cursor-grabbing rtl:origin-top-right",
-              scale === null && "invisible",
-              busy && "motion-safe:[&_[data-block-ids]]:animate-rise-in",
-            )}
-            style={scale === null ? undefined : { scale, height: `${100 / scale}%` }}
-          >
-            {/* A grid, so the page fills the phone even while it is short (its own background, no gap below). */}
-            <div inert aria-hidden className="grid min-h-full">
-              <PosterRenderer page={page} theme={resolved} preview />
+          {scrollable ? (
+            <div ref={scroller} role="region" aria-label={label} aria-busy={busy} tabIndex={0} data-draft-scroller className={cn(SCROLLER, "peer overflow-y-auto focus-visible:outline-none", scale === null && "invisible")} style={fit}>
+              {content}
             </div>
-          </div>
+          ) : (
+            <div ref={scroller} className={cn(SCROLLER, "overflow-hidden", scale === null && "invisible", busy && "motion-safe:[&_[data-block-ids]]:animate-rise-in")} style={fit}>
+              {content}
+            </div>
+          )}
+          {/* Keyboard focus on the page in the phone: a ring inside the screen's edge, over the page,
+              in the page's own accent (which the theme engine keeps readable on its background). */}
+          {scrollable ? (
+            <span aria-hidden data-draft-focus className="pointer-events-none absolute inset-0 hidden rounded-lg [--color-focus:var(--creator-accent-text)] focus-field peer-focus-visible:block" />
+          ) : null}
         </div>
       </PhoneFrame>
     </div>

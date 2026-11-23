@@ -22,7 +22,10 @@ import { createRobots, ROBOTS_MAX_BYTES, type Robots } from "./robots";
  *   a second DNS answer can never be used;
  * - redirects are followed by hand, at most 3, each checked from the top again (and against the
  *   caller's `allowHost` and robots.txt);
- * - 3 s to connect, 8 s in all, HTML only, and the decoded body is streamed and cut at 1 MiB.
+ * - 3 s to connect and 8 s in all: one clock for the whole call, every name lookup, every redirect
+ *   and every robots.txt on the way included (a lookup is one 2 s try, asked of the DNS servers
+ *   directly and cancelled when the time is up);
+ * - HTML only, and the decoded body is streamed and cut at 1 MiB.
  * No cookies, no credentials; an honest user agent with a contact address.
  */
 
@@ -52,7 +55,8 @@ export interface ResolvedAddress {
 }
 
 export interface FetcherConfig {
-  resolve: (host: string) => Promise<ResolvedAddress[]>;
+  /** Every address of a host name. `signal` aborts when the fetch's time is up. */
+  resolve: (host: string, signal: AbortSignal) => Promise<ResolvedAddress[]>;
   protocol: "https:" | "http:";
   /** Tests only: the port of the local test server. */
   port?: number;
@@ -67,16 +71,45 @@ export interface FetcherConfig {
   now?: () => number;
 }
 
-const resolveWithDns = async (host: string): Promise<ResolvedAddress[]> => {
-  const answers = await dns.lookup(host, { all: true, order: "verbatim" });
-  return answers.map(({ address, family }) => ({ address, family: family === 6 ? 6 : 4 }));
-};
+export const DNS_TIMEOUT_MS = 2_000;
+
+/**
+ * Every A and AAAA record of a name, asked of the DNS servers directly: one try of `timeoutMs` per
+ * server, cancelled when the fetch's time is up. `dns.lookup` (getaddrinfo) has no time limit, cannot
+ * be cancelled, and holds one of the four threads that all lookups and all decompression in the
+ * process share while a slow name server makes it wait.
+ *
+ * IPv4 answers come first: the connection goes to the first address, and IPv4 works wherever the
+ * server runs. One family failing is fine as long as the other answers (only checked addresses are
+ * ever connected to). `servers` is for tests.
+ */
+export function createDnsResolve(options: { timeoutMs?: number; servers?: string[] } = {}): FetcherConfig["resolve"] {
+  return async (host, signal) => {
+    const resolver = new dns.Resolver({ timeout: options.timeoutMs ?? DNS_TIMEOUT_MS, tries: 1 });
+    if (options.servers) resolver.setServers(options.servers);
+    const cancel = () => {
+      resolver.cancel();
+    };
+    signal.addEventListener("abort", cancel, { once: true });
+    try {
+      const [v4, v6] = await Promise.allSettled([resolver.resolve4(host), resolver.resolve6(host)]);
+      const addresses: ResolvedAddress[] = [
+        ...(v4.status === "fulfilled" ? v4.value.map((address) => ({ address, family: 4 as const })) : []),
+        ...(v6.status === "fulfilled" ? v6.value.map((address) => ({ address, family: 6 as const })) : []),
+      ];
+      if (addresses.length === 0 && v4.status === "rejected") throw v4.reason;
+      return addresses;
+    } finally {
+      signal.removeEventListener("abort", cancel);
+    }
+  };
+}
 
 export const MAX_BYTES = 1_048_576;
 
 /** Production settings. Tests pass their own (`createSafeFetcher`); nothing here is a test switch. */
 export const DEFAULTS: Readonly<FetcherConfig> = Object.freeze({
-  resolve: resolveWithDns,
+  resolve: createDnsResolve(),
   protocol: "https:",
   connectTimeoutMs: 3_000,
   totalTimeoutMs: 8_000,
@@ -212,6 +245,29 @@ const decoderFor = (charset: string | undefined) => {
 };
 
 class FetchTimeout extends Error {}
+
+/** `work`, or a `FetchTimeout` as soon as the fetch's time is up (whatever `work` goes on to do). */
+const beforeTimeout = <T>(work: Promise<T>, signal: AbortSignal): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const expire = () => {
+      reject(new FetchTimeout());
+    };
+    if (signal.aborted) {
+      expire();
+      return;
+    }
+    signal.addEventListener("abort", expire, { once: true });
+    work.then(resolve, reject).finally(() => {
+      signal.removeEventListener("abort", expire);
+    });
+  });
+
+/** A name lookup that ran out of time (its own 2 s, or the fetch's): not the same as a name that does not exist. */
+const lookupTimedOut = (error: unknown): boolean => {
+  if (error instanceof FetchTimeout) return true;
+  const code = error instanceof Error && "code" in error ? error.code : undefined;
+  return code === "ETIMEOUT" || code === "ECANCELLED";
+};
 
 function request(url: URL, address: ResolvedAddress, port: number, config: FetcherConfig, options: SafeFetchOptions, signal: AbortSignal): Promise<Hop> {
   return new Promise<Hop>((resolve) => {
@@ -356,7 +412,7 @@ export function createSafeFetcher(overrides: Partial<FetcherConfig> = {}): SafeF
   const expectedPort = config.port ?? (config.protocol === "https:" ? 443 : 80);
 
   /** Checks one address from the top: the URL, the name, every address it resolves to. */
-  async function check(raw: string): Promise<Checked> {
+  async function check(raw: string, signal: AbortSignal): Promise<Checked> {
     if (raw.length > 2048) return { ok: false, reason: "blocked" };
     let url: URL;
     try {
@@ -374,9 +430,9 @@ export function createSafeFetcher(overrides: Partial<FetcherConfig> = {}): SafeF
     url.hash = "";
     let addresses: ResolvedAddress[];
     try {
-      addresses = await config.resolve(host);
-    } catch {
-      return { ok: false, reason: "notFound" };
+      addresses = await beforeTimeout(config.resolve(host, signal), signal);
+    } catch (error) {
+      return { ok: false, reason: lookupTimedOut(error) ? "timeout" : "notFound" };
     }
     if (addresses.length === 0) return { ok: false, reason: "notFound" };
     const allowed = (ip: string) => isPublicAddress(ip) || (config.allowLoopbackForTests === true && isLoopbackAddress(ip));
@@ -386,29 +442,24 @@ export function createSafeFetcher(overrides: Partial<FetcherConfig> = {}): SafeF
     return { ok: true, url, host, address, port };
   }
 
-  let robots: Robots | null = null;
-
-  const fetcher: SafeFetch = async (raw, options) => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      controller.abort();
-    }, config.totalTimeoutMs);
+  /** One fetch under the caller's clock: `signal` aborts when the whole call's time is up. */
+  async function run(raw: string, options: SafeFetchOptions, signal: AbortSignal): Promise<SafeFetchResult> {
+    /** Read through a function: the signal aborts while this call awaits. */
+    const expired = () => signal.aborted;
     try {
       let next = raw;
       for (let redirects = 0; ; redirects += 1) {
-        const checked = await check(next);
+        if (expired()) return { ok: false, reason: "timeout" };
+        const checked = await check(next, signal);
         if (!checked.ok) return { ok: false, reason: checked.reason };
         if (options.allowHost && !options.allowHost(checked.host)) return { ok: false, reason: "blocked" };
         if (options.robots) {
-          robots ??= createRobots({
-            fetchText: (address) => fetcher(address, { accept: "text/plain", maxBytes: ROBOTS_MAX_BYTES, ...(options.locale ? { locale: options.locale } : {}) }),
-            ...(config.now ? { now: config.now } : {}),
-            ...(config.robotsTtlMs ? { ttlMs: config.robotsTtlMs } : {}),
-          });
-          if (!(await robots.allowed(checked.url))) return { ok: false, reason: "robots" };
+          // robots.txt is read on this call's clock: it gets no time of its own.
+          const robotsText = (address: string) => run(address, { accept: "text/plain", maxBytes: ROBOTS_MAX_BYTES, ...(options.locale ? { locale: options.locale } : {}) }, signal);
+          if (!(await robots.allowed(checked.url, robotsText))) return { ok: false, reason: expired() ? "timeout" : "robots" };
         }
-        if (controller.signal.aborted) return { ok: false, reason: "timeout" };
-        const hop = await request(checked.url, checked.address, checked.port, config, options, controller.signal);
+        if (expired()) return { ok: false, reason: "timeout" };
+        const hop = await request(checked.url, checked.address, checked.port, config, options, signal);
         if (hop.kind === "done") return hop.result;
         if (redirects >= config.maxRedirects) return { ok: false, reason: "failed" };
         try {
@@ -418,11 +469,27 @@ export function createSafeFetcher(overrides: Partial<FetcherConfig> = {}): SafeF
         }
       }
     } catch {
-      return { ok: false, reason: controller.signal.aborted ? "timeout" : "failed" };
+      return { ok: false, reason: expired() ? "timeout" : "failed" };
+    }
+  }
+
+  const fetcher: SafeFetch = async (raw, options) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+    }, config.totalTimeoutMs);
+    try {
+      return await run(raw, options, controller.signal);
     } finally {
       clearTimeout(timer);
     }
   };
+
+  const robots: Robots = createRobots({
+    fetchText: (address) => fetcher(address, { accept: "text/plain", maxBytes: ROBOTS_MAX_BYTES }),
+    ...(config.now ? { now: config.now } : {}),
+    ...(config.robotsTtlMs ? { ttlMs: config.robotsTtlMs } : {}),
+  });
   return fetcher;
 }
 
