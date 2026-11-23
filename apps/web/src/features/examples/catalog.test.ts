@@ -136,6 +136,13 @@ describe("example gallery", () => {
     expect(addressLike({ type: "future", items: [{ href: "https://elsewhere.test/x" }] })).toEqual(["https://elsewhere.test/x"]);
   });
 
+  it("each portfolio page writes to one mailbox, from the icon row and from its main button alike", () => {
+    for (const slug of PORTFOLIOS) {
+      const mail = new Set(example(slug).blocks.flatMap(urls).filter((url) => url.startsWith("mailto:")));
+      expect(mail.size, `${slug}: ${[...mail].join(", ")}`).toBeLessThanOrEqual(1);
+    }
+  });
+
   it("no two examples share the same look", () => {
     const looks = Object.values(LOOKS).map((look) => JSON.stringify(look.theme));
     expect(new Set(looks).size).toBe(looks.length);

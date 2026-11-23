@@ -89,8 +89,13 @@ describe("a page with a contact block", () => {
   it("shows the availability line with a still dot, in the hero only", () => {
     for (const template of ["werkbogen", "tiefdruck", "nocturne"] as const) {
       const markup = html(template, [contact({ status: "Frei ab März 2027" })]);
-      expect(markup.split("Frei ab März 2027"), template).toHaveLength(2);
-      expect(markup.split(STATUS_DOT), template).toHaveLength(2);
+      // The hero ends at the sentinel; below it the contact band repeats the status where the block
+      // stands (plan 1.4.9). The bar never carries it.
+      const [hero = "", body = ""] = markup.split("data-poster-sentinel");
+      expect(hero.split("Frei ab März 2027"), template).toHaveLength(2);
+      expect(hero.split(STATUS_DOT), template).toHaveLength(2);
+      expect(body.split("Frei ab März 2027"), template).toHaveLength(2);
+      expect(words(barButton(markup)), template).not.toContain("Frei ab März 2027");
       expect(markup, template).not.toContain("animate-pulse");
     }
     // Werkbogen prints it in the row above the button; Tiefdruck beside the portrait, not in the row.

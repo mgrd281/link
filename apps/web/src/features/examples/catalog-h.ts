@@ -29,7 +29,7 @@ export const CATALOG_H: Record<string, Page> = {
       portraitOnly: true,
     },
     (h) => {
-      const hafenlicht = h.project("Hafenlicht", "Eine Woche an Bord eines Nordseekutters: vom Auslaufen vor Tagesanbruch bis zur Auktionshalle.", {
+      const hafenlicht = h.project("Hafenlicht", "Eine Woche mit Nordseefischern: vom Auslaufen vor Tagesanbruch bis zur Auktionshalle.", {
         slug: "hafenlicht",
         role: "Freie Arbeit · Fotografie und Text",
         year: { from: 2025 },
@@ -41,20 +41,20 @@ export const CATALOG_H: Record<string, Page> = {
         ],
         story: {
           about:
-            "Eine Woche lang bin ich auf einem Kutter mitgefahren: Auslaufen vor Sonnenaufgang, mehrere Hols am Tag, nachts Netze flicken. Mich hat interessiert, wie eine Besatzung arbeitet, die kaum noch spricht, weil jeder Handgriff sitzt.",
+            "Eine Woche lang bin ich auf Kuttern mitgefahren: Auslaufen vor Sonnenaufgang, mehrere Hols am Tag, nachts Netze flicken. Mich hat interessiert, wie eine Besatzung arbeitet, die kaum noch spricht, weil jeder Handgriff sitzt.",
           solution:
             "Ich habe mit einer Kamera und zwei Festbrennweiten gearbeitet, ohne Blitz und ohne etwas zu stellen. Die ersten zwei Tage habe ich fast nur zugesehen. Fotografiert habe ich erst, als ich niemandem mehr im Weg stand.",
           result: "Entstanden sind 64 Bilder, zwölf davon zeige ich hier. Die ganze Serie hing im Herbst 2025 in einer Ausstellung über Arbeit an der Küste.",
         },
         pictures: [
           { key: "ex-pf-ronja-03", alt: "Ein Kutter liegt in der Dämmerung am Steg, das Wasser ist spiegelglatt", caption: "Kurz vor fünf. Der Kutter liegt noch fest." },
-          { key: "ex-pf-ronja-02", alt: "Zwei Fischer in Arbeitskleidung gehen über den nassen Kai an den festgemachten Kuttern entlang", caption: "Auf dem Weg an Bord. Geredet wird um diese Zeit wenig." },
+          { key: "ex-pf-ronja-02", alt: "Zwei Fischer in Arbeitskleidung gehen über den nassen Kai an den festgemachten Kuttern entlang", caption: "Auf dem Weg an Bord. Geredet wird wenig." },
           { key: "ex-pf-ronja-13", alt: "Blick über das Deck zur Brücke des Kutters, dahinter graue See und Möwen", caption: "Zwei Stunden draußen. Ab hier bestimmt die See den Takt." },
           { key: "ex-pf-ronja-05", alt: "Ein Fischer steht zwischen Netzen und gelben Auslegern an Deck, Gischt spritzt über die Bordwand", caption: "Das Geschirr geht zu Wasser." },
           { key: "ex-pf-ronja-09", alt: "Ein Fischer in Ölzeug greift von hinten gesehen in schwere Ketten, neben ihm hängt das Netz", caption: "Ketten, Schäkel, Handgriffe, die niemand mehr erklärt." },
-          { key: "ex-pf-ronja-04", alt: "Ein Fischer in gelbem Ölzeug steht an der Reling, vor ihm hängt ein voller, tropfender Netzsack an Ketten über dem Wasser", caption: "Der erste Hol kommt hoch." },
+          { key: "ex-pf-ronja-04", alt: "Ein Fischer in gelbem Ölzeug steht an der Reling, vor ihm hängt ein voller, tropfender Fangkorb aus Kettengeflecht an Ketten über dem Wasser", caption: "Der erste Hol kommt hoch." },
           { key: "ex-pf-ronja-10", alt: "Ein Fischer sitzt in gelbem Ölzeug an der Bordwand und bedient eine Steuerung, über dem Wasser hängen zwei Fangkörbe", caption: "An der Winde: ein Auge am Korb, eins auf der Welle." },
-          { key: "ex-pf-ronja-08", alt: "Drei Männer knien nachts unter aufgehängten Netzen auf blauem Netzwerk und flicken Maschen", caption: "Netze flicken unter Deckslicht, bevor es wieder hinausgeht." },
+          { key: "ex-pf-ronja-08", alt: "Unter aufgehängten Netzen knien nachts zwei Männer auf blauem Netzwerk und flicken Maschen, ein dritter in gelber Ölhose steht dahinter", caption: "Netze flicken unter Deckslicht, bevor es wieder hinausgeht." },
           { key: "ex-pf-ronja-11", alt: "Silbrige Fische liegen mit Eis in einer gelben Kiste", caption: "Der Fang, sortiert und auf Eis." },
           { key: "ex-pf-ronja-07", alt: "Ein Mann in blauer Arbeitskleidung geht auf ein offenes Hallentor zu, durch das tiefes Sonnenlicht fällt", caption: "Zurück im Hafen. Durch das Tor fällt das erste Licht in die Halle." },
           { key: "ex-pf-ronja-12", alt: "Eine Hand hält einen Fisch in die Kamera, dahinter eine Halle voller blauer Kisten unter Neonlicht", caption: "Auktionshalle. Ein Blick, ein Griff, dann geht alles schnell." },
@@ -88,7 +88,7 @@ export const CATALOG_H: Record<string, Page> = {
           ["2", "Tage vor Ort"],
         ],
         story: {
-          problem: "Der Betrieb suchte Auszubildende und wollte zeigen, wer in den Hallen wirklich arbeitet. Gestellte Szenen mit Helm und Klemmbrett gab es schon genug.",
+          problem: "Der Betrieb suchte Auszubildende und wollte zeigen, wer in den Hallen wirklich arbeitet. Gestellte Werbebilder gab es schon genug.",
           solution: "Ich habe an zwei Tagen 31 Mitarbeitende fotografiert, jeweils an ihrem Platz und in höchstens zehn Minuten. Wer nicht wollte, musste nicht.",
           result: "Die Porträts hängen heute in der Kantine und stehen auf der Karriereseite des Betriebs.",
         },
@@ -132,19 +132,19 @@ export const CATALOG_H: Record<string, Page> = {
           {
             text: "Ronja war zwei Tage bei uns in der Halle, und nach einer Stunde hat niemand mehr auf die Kamera geachtet. Auf den Bildern sehen unsere Leute so aus, wie wir sie kennen.",
             name: "S. T.",
-            role: "Leiterin Kommunikation, Auftraggeberin von „Werkhalle 4“",
+            role: "Leiterin Kommunikation in einem Restaurierungsbetrieb",
             project: werkhalle,
           },
         ]),
         h.contact(
           "Erzählen Sie mir von Ihrem Vorhaben.",
-          { label: "Shooting anfragen", box: "hallo", icon: "mail" },
+          { label: "Shooting anfragen", box: "hello", icon: "mail" },
           {
             text: "Ob Reportage oder Porträts Ihres Teams: Ich antworte innerhalb von zwei Werktagen.",
             status: "Frei ab März 2027",
             statusUntil: "2027-02-28",
             links: [{ kind: "phone" }, { kind: "cv", path: "vita.pdf", label: "Vita (PDF)" }],
-            steps: ["Ein kurzes Gespräch am Telefon", "Angebot mit festem Preis", "Fototermin, Auswahl nach einer Woche"],
+            steps: ["Ein kurzes Gespräch am Telefon", "Angebot zum Festpreis", "Fototermin, Bildauswahl innerhalb einer Woche"],
           },
         ),
       ];
@@ -165,7 +165,7 @@ export const CATALOG_H: Record<string, Page> = {
       portraitOnly: true,
       stats: [
         ["11", "years in frontend"],
-        ["2.9k", "GitHub stars"],
+        ["3.6k", "GitHub stars"],
         ["3", "teams a year"],
       ],
     },
@@ -192,14 +192,14 @@ export const CATALOG_H: Record<string, Page> = {
           lang: "ts",
           text: [
             'import { chart, stack, rollingMean } from "plotweft";',
-            'import { orders } from "./orders";',
+            'import { orders, totals } from "./orders";',
             "",
             "// One row per month and channel: { month, channel, count }",
             'const bars = stack(orders, { x: "month", y: "count", by: "channel" });',
             "",
             'chart("#orders", {',
             '  title: "Orders by channel",',
-            '  marks: [bars, rollingMean(orders, { x: "month", y: "count", window: 3 })],',
+            '  marks: [bars, rollingMean(totals, { x: "month", y: "count", window: 3 })],',
             '  y: { ticks: 4, format: "~s" },',
             '  legend: "top",',
             "});",
@@ -215,12 +215,12 @@ export const CATALOG_H: Record<string, Page> = {
         results: [
           ["3×", "faster to first chart"],
           ["4.1 → 1.2 s", "load time at p75"],
-          ["−38 %", "tickets about slowness"],
+          ["−38%", "tickets about slowness"],
         ],
         story: {
           problem: "Dispatchers keep this dashboard open all day. It loaded every shipment of the last 90 days up front, so the first chart took more than four seconds and every filter froze the page.",
           solution: "I split the page into a summary that streams first and tables that load as they scroll into view, moved filtering to the server and replaced three chart libraries with one.",
-          result: "The first chart now shows after 1.2 seconds at the 75th percentile. In the quarter after launch, tickets about a slow or frozen dashboard fell by 38 %.",
+          result: "The first chart now shows after 1.2 seconds at the 75th percentile. In the quarter after launch, tickets about a slow or frozen dashboard fell by 38%.",
         },
       });
       const onCall = h.project("A console for the on-call team", "Requests, latency and the slowest endpoints on one screen, readable at 3 a.m.", {
@@ -407,7 +407,7 @@ export const CATALOG_H: Record<string, Page> = {
       ],
     },
     (h) => {
-      const kueche = h.project("Küche in Nussbaum", "Eine offene Küche mit Insel: Nussbaumfurnier, greige Fronten und eine Vitrinenwand für das Glas.", {
+      const kueche = h.project("Küche in Nussbaum", "Eine offene Küche mit Insel: Nussbaumfurnier, greige Fronten und eine Vitrinenwand für die Gläser.", {
         slug: "kueche-in-nussbaum",
         client: "Eine Familie mit drei Kindern",
         role: "Entwurf, Bau und Einbau",
@@ -420,7 +420,7 @@ export const CATALOG_H: Record<string, Page> = {
         ],
         story: {
           problem: "Küche, Essplatz und Wohnraum sollten ein Raum werden, ohne dass es nach Küche aussieht. Dazu kamen mehr als zweihundert Gläser, die bis dahin in Kartons standen.",
-          solution: "Die Geräte verschwinden in einer Wand aus greigen Hochschränken. Davor steht die Insel in Nussbaum, an der gekocht und gefrühstückt wird. Für die Gläser habe ich eine Vitrinenwand mit Lichtleisten gebaut.",
+          solution: "Backöfen und Kühlschrank sind in eine Wand aus greigen Hochschränken eingebaut. Davor steht die Insel in Nussbaum, an der gekocht und gefrühstückt wird. Für die Gläser habe ich eine Vitrinenwand mit Lichtleisten gebaut.",
           result: "Nach neun Wochen in der Werkstatt und fünf Tagen Einbau war die Küche fertig. Der Esstisch in Nussbaum kam ein halbes Jahr später dazu.",
         },
         pictures: [
@@ -480,8 +480,8 @@ export const CATALOG_H: Record<string, Page> = {
           },
         ),
         h.quotes("Kundenstimmen", [
-          { text: "Wir kochen seit einem Jahr jeden Tag in dieser Küche, und nichts klemmt, nichts wackelt. Die Kinder wissen bis heute nicht, wo der Kühlschrank aufhört und der Schrank anfängt.", name: "M. R.", role: "Bauherrin der Küche in Nussbaum", project: kueche },
-          { text: "Das Regal hing nach einem Tag an der Wand. Und bevor die drei gegangen sind, war auch der Staub weg.", name: "T. und J. K.", role: "Regalwand in Birke", project: regal },
+          { text: "Wir kochen seit einem Jahr jeden Tag in dieser Küche, und nichts klemmt, nichts wackelt. Die Kinder wissen bis heute nicht, wo der Kühlschrank aufhört und der Schrank anfängt.", name: "M. R.", role: "Auftraggeberin der Küche in Nussbaum", project: kueche },
+          { text: "Das Regal hing nach einem Tag an der Wand. Und bevor die drei gegangen sind, war auch der Staub weg.", name: "T. und J. K.", role: "Auftraggeber der Regalwand in Birke", project: regal },
         ]),
         h.tools("Werkstoffe & Verfahren", ["Nussbaum", "Eiche", "Esche", "Birke Multiplex", "Furnier", "Linoleum", "Hartwachsöl", "Zapfenverbindung", "Schwalbenschwanz"]),
         h.timeline("Werdegang", [
@@ -491,7 +491,7 @@ export const CATALOG_H: Record<string, Page> = {
         ]),
         h.contact(
           "Erzählen Sie mir von Ihrem Raum.",
-          { label: "Projekt anfragen", box: "werkstatt", icon: "mail" },
+          { label: "Projekt anfragen", box: "hello", icon: "mail" },
           {
             text: "Das erste Gespräch bei Ihnen vor Ort kostet nichts.",
             status: "Neue Aufträge ab Februar 2027",

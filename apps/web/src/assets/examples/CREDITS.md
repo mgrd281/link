@@ -224,10 +224,10 @@ one photographer, who is named in the page's credit:
 | Example | Project | Files | Photographer |
 |---|---|---|---|
 | Ronja Feldkamp | Portrait | ex-pf-ronja-01 | Peyman Shojaei |
-| Ronja Feldkamp | Hafenlicht (cover 02, pictures 03 to 13) | ex-pf-ronja-02 to -13 | Paul Einerhand |
+| Ronja Feldkamp | Hafenlicht (cover 06, pictures 02 to 05 and 07 to 13) | ex-pf-ronja-02 to -13 | Paul Einerhand |
 | Ronja Feldkamp | Die Schneiderinnen (cover 14, pictures 15 and 16) | ex-pf-ronja-14 to -16 | Metin Ozer |
 | Ronja Feldkamp | Werkhalle 4 (cover) | ex-pf-ronja-17 | Bob van Aubel |
-| Ronja Feldkamp | Stadtbad (cover 18, pictures 19 and 20) | ex-pf-ronja-18 to -20 | Declan Sun |
+| Ronja Feldkamp | Beckenrand (cover 18, pictures 19 and 20) | ex-pf-ronja-18 to -20 | Declan Sun |
 | Jorinde Ahlfeld | Portrait | ex-pf-jorinde-01 | mahdi chaghari |
 | Jorinde Ahlfeld | Kitchen (cover 02, pictures 03 and 04) | ex-pf-jorinde-02 to -04 | Caroline Badran |
 | Jorinde Ahlfeld | Shelf wall (cover 05, pictures 06 and 07) | ex-pf-jorinde-05 to -07 | Josh Davies |
