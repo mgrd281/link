@@ -6,6 +6,8 @@ const fs = require('fs');
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 1080, height: 1350 } });
   await p.goto('file://' + require('path').resolve(process.argv[5] ?? __dirname + '/forklift-scene.html'));
+  // Text in a scene (the pallet scene's EAN digits) waits for its font, so no frame shows a fallback.
+  await p.evaluate(async () => { await document.fonts.load('15px "DM Mono"'); await document.fonts.ready; });
   const n = Number(fps) * Number(seconds);
   for (let i = 0; i < n; i++) {
     await p.evaluate((t) => window.render(t), i / Number(fps));

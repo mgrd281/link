@@ -57,13 +57,13 @@ export const MOTION_LIBRARY: readonly MotionClip[] = [
     poster: "sample:ex-motion-palette-packen",
     w: 1080,
     h: 1350,
-    seconds: 20,
+    seconds: 22,
     topic: "warehouse",
     kind: "illustration",
     alt: {
-      de: "Illustration: Ein Lagerist scannt jeden Karton mit dem Handscanner, packt die Palette und sichert sie mit Stretchfolie",
-      en: "Illustration: a warehouse worker scans each carton with a handheld scanner, builds the pallet and secures it with stretch film",
-      ar: "رسم توضيحي: عامل مستودع يمسح كل كرتونة بالماسح اليدوي ويجهّز المنصة ويؤمّنها بغلاف النايلون",
+      de: "Illustration: Ein Lagerist scannt jeden Karton mit dem Handscanner, die EAN erscheint; er packt die Palette und sichert sie mit Stretchfolie",
+      en: "Illustration: a warehouse worker scans each carton with a handheld scanner and its EAN comes up; he builds the pallet and secures it with stretch film",
+      ar: "رسم توضيحي: عامل مستودع يمسح كل كرتونة بالماسح اليدوي فيظهر رقم EAN، ثم يجهّز المنصة ويؤمّنها بغلاف النايلون",
     },
   },
   {

@@ -4,16 +4,19 @@
 <meta charset="utf-8">
 <!--
   Linkyo original motion graphic "Palette packen": order picking and load securing. A warehouse worker
-  raises his handheld scanner and scans each carton's label in the rack (the beam sweeps the label, a
-  check pops and the pick list on the rack ticks the line off), lowers it to his side, carries
+  raises his handheld scanner and scans each carton's label in the rack: the beam sweeps the barcode, a
+  card above the carton types out the EAN it read and confirms it, the scanner's screen shows a check
+  and the pick list on the rack ticks the line off. He lowers the scanner to his side, carries
   it to a pallet and builds the order in two layers; then he wraps the pallet in stretch film, two laps,
   and a check confirms it. A colleague's pallet jack takes the pallet away and brings an empty one.
   Black, graphite and silver. Drawn from scratch in SVG; render(t) is a pure function of time, so the
-  frames are exact and the 20.4 s loop is seamless. It starts on the wrapped pallet (START), which makes
+  frames are exact and the 22.2 s loop is seamless. The only text is the EAN-13 numbers, all from the
+  in-store range (prefix 20, valid check digits), so none belongs to a real company or product. It starts on the wrapped pallet (START), which makes
   the best still. No text, no brands. The action stays inside the centre
   of the frame, which phones show.
 -->
 <style>
+  @font-face { font-family: "DM Mono"; src: url("../fonts/DMMono-Regular.ttf"); }
   html, body { margin: 0; background: #0a0a0b; }
   svg { display: block; width: 1080px; height: 1350px; }
 </style>
@@ -74,12 +77,18 @@
       <rect x="0" y="14" width="40" height="30" fill="#6f7177"/><rect x="166" y="14" width="40" height="30" fill="#6f7177"/><rect x="332" y="14" width="40" height="30" fill="#6f7177"/>
       <rect x="0" y="44" width="372" height="12" rx="2" fill="#7d7f85"/>
     </g>
-    <!-- A handheld scanner: origin at the hand on its grip, pointing along +x; the window lights up while it scans. -->
+    <!-- A handheld scanner, side view: origin at the hand on its grip, pointing along +x. A rubber grip,
+         a trigger, a silver body with a dark nose and its scan window, a status light on top and a small
+         screen at the back, tilted towards the worker. -->
     <g id="gun">
-      <rect x="-12" y="0" width="23" height="44" rx="8" fill="#55575d" transform="rotate(-14)"/>
-      <rect x="-11" y="-22" width="86" height="30" rx="11" fill="#e4e5e8"/>
-      <rect x="-5" y="-22" width="74" height="7" rx="3.5" fill="#ffffff"/>
-      <rect x="-11" y="2" width="86" height="6" rx="3" fill="#a7a9ae"/>
+      <path d="M-14 -4 L10 -4 L4 42 Q3 50 -5 50 L-15 50 Q-23 50 -22 42 Z" fill="#3a3b40"/>
+      <g stroke="#2b2c30" stroke-width="2.5" stroke-linecap="round"><path d="M-16 14 L4 14"/><path d="M-17 24 L3 24"/><path d="M-18 34 L2 34"/></g>
+      <path d="M14 4 Q24 8 20 22 L14 22 Q17 12 10 7 Z" fill="#2b2c30"/>
+      <path d="M-20 -14 Q-20 -27 -7 -28 L58 -31 Q70 -32 76 -26 L84 -16 L84 2 L78 8 Q74 10 68 10 L-8 8 Q-20 8 -20 -4 Z" fill="#e4e5e8"/>
+      <path d="M-14 -24 Q-6 -28 8 -28 L58 -30 Q66 -30 70 -27" stroke="#ffffff" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M-18 2 Q-14 8 -6 8 L68 10" stroke="#a7a9ae" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M70 -28 L80 -18 L80 6 L72 10 Z" fill="#2b2c30"/>
+      <g transform="rotate(-16 2 -27)"><rect x="-14" y="-44" width="34" height="18" rx="4" fill="#121214"/><rect x="-11" y="-41" width="28" height="12" rx="2" fill="#1f2023"/></g>
     </g>
     <g id="chk">
       <circle r="40" fill="#ffffff" opacity="0.16" filter="url(#soft)"/>
@@ -150,7 +159,14 @@
           <line id="scanCore" stroke="#ffffff" stroke-width="3"/>
           <circle id="scanDot" r="22" fill="url(#glow)"/>
         </g>
-        <use id="pickCheck" href="#chk" opacity="0"/>
+        <!-- The EAN the scanner read, typed out on a card above the carton, then confirmed. -->
+        <g id="eanCard" opacity="0">
+          <rect x="486" y="582" width="300" height="60" rx="20" fill="#ededef"/>
+          <circle cx="518" cy="612" r="18" fill="#111113"/>
+          <g id="eanBars" fill="#ededef"><rect x="508" y="602" width="3" height="20"/><rect x="514" y="602" width="4" height="20"/><rect x="521" y="602" width="2" height="20"/><rect x="526" y="602" width="3" height="20"/></g>
+          <path id="eanCheck" d="M508.5 612.5 L515 619 L527.5 605.5" stroke="#ededef" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0"/>
+          <text id="eanText" x="548" y="621" font-family="DM Mono, DejaVu Sans Mono, monospace" font-size="24" fill="#111113" letter-spacing="0.2"></text>
+        </g>
       </g>
 
       <!-- The worker: helmet, reflective vest, a handheld scanner. Moved between the layers. -->
@@ -180,7 +196,7 @@
           <rect x="-16" y="-40" width="32" height="80" rx="6" fill="url(#rollG)"/>
           <rect x="-6" y="-46" width="12" height="8" rx="3" fill="#4a4c52"/><rect x="-6" y="38" width="12" height="8" rx="3" fill="#4a4c52"/>
         </g>
-        <g id="scanner"><use href="#gun"/><rect id="gunTip" x="69" y="-19" width="10" height="24" rx="4" fill="#2b2c30"/></g>
+        <g id="scanner"><use href="#gun"/><rect id="gunTip" x="80" y="-17" width="6" height="22" rx="3" fill="#2b2c30"/><circle id="gunLed" cx="34" cy="-30" r="3.5" fill="#4a4c52"/><g id="gunScreen" transform="rotate(-16 2 -27)" opacity="0"><path d="M-3 -35 L0 -32 L6 -38" stroke="#ffffff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="9" y="-37" width="6" height="2.4" rx="1.2" fill="#9a9ca2"/><rect x="9" y="-33" width="4" height="2.4" rx="1.2" fill="#6b6d73"/></g></g>
         <circle id="handL" r="15" fill="#b98262"/>
         <circle id="handR" r="15" fill="#b98262"/>
 
@@ -192,10 +208,12 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const NS = "http://www.w3.org/2000/svg";
-const C = 2.4, PICKS = 6, W0 = PICKS * C, T = W0 + 6, PICK = 420, ROLL_X = 500;
+const C = 2.7, PICKS = 6, W0 = PICKS * C, T = W0 + 6, PICK = 420, ROLL_X = 500;
 /** The scanner hangs at his side pointing down; raised, it aims from AIM at the slot carton's label. */
 const HOLSTER_ANGLE = 118, AIM = { x: 346, y: 742 }, LABEL = { x: 231, y: 810 };
 const AIM_ANGLE = (Math.atan2(LABEL.y - AIM.y, LABEL.x - AIM.x) * 180) / Math.PI;
+/** One EAN-13 per carton, from the in-store range (prefix 20), check digits valid. */
+const EANS = ["2 004387 152602", "2 015927 304818", "2 026841 590379", "2 037158 260947", "2 049263 715083", "2 053816 472903"];
 const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
 const ease = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
 const seg = (t, a, b) => clamp((t - a) / (b - a));
@@ -239,10 +257,10 @@ const SLOT = (k) => ({ x: 582 + (k % 3) * 122, b: k < 3 ? 1024 : 936 });
 function walk(t) {
   if (t < W0) {
     const k = Math.floor(t / C), p = t - k * C, sc = SLOT(k).x + 62;
-    if (p < 0.8) return PICK;
-    if (p < 1.55) return lerp(PICK, sc, ease(seg(p, 0.8, 1.55)));
-    if (p < 1.9) return sc;
-    return lerp(sc, PICK, ease(seg(p, 1.9, 2.4)));
+    if (p < 0.96) return PICK;
+    if (p < 1.68) return lerp(PICK, sc, ease(seg(p, 0.96, 1.68)));
+    if (p < 2.05) return sc;
+    return lerp(sc, PICK, ease(seg(p, 2.05, 2.7)));
   }
   const u = t - W0;
   if (u < 0.3) return lerp(PICK, ROLL_X, ease(seg(u, 0, 0.22)));
@@ -269,55 +287,56 @@ function draw(t) {
   let gunInHand = true, gunAngle = HOLSTER_ANGLE;
 
   // The pick list: line k is ticked once carton k is scanned; a new list comes in after the pallet leaves.
-  const ticked = (k) => (t >= k * C + 0.38 && t < W0 + 4.6 ? 1 : 0);
-  let placedCount = 0;
+  const ticked = (k) => (t >= k * C + 0.56 && t < W0 + 4.6 ? 1 : 0);
+  let placedCount = 0, ean = null;
 
   if (t < W0) {
     const k = Math.floor(t / C), p = t - k * C, s = SLOT(k);
-    placedCount = k + (p >= 1.8 ? 1 : 0);
+    placedCount = k + (p >= 1.9 ? 1 : 0);
+    ean = { text: EANS[k], p };
     const r = rest(0);
     const pickL = { x: 196, y: 816 }, pickR = { x: 328, y: 816 };
-    // 1. Raise the scanner and aim it at the label; 2. scan; 3. lower it again.
+    // 1. Raise the scanner and aim it at the label; 2. scan, the EAN comes up; 3. lower it again.
     if (p < 0.14) {
       const e = ease(seg(p, 0, 0.14));
       hands = { L: mix(r.L, AIM, e), R: r.R };
       gunAngle = lerp(HOLSTER_ANGLE, AIM_ANGLE, e);
-    } else if (p < 0.42) {
+    } else if (p < 0.62) {
       hands = { L: AIM, R: r.R };
       gunAngle = AIM_ANGLE + 3 * Math.sin(Math.PI * seg(p, 0.16, 0.4));
-    } else if (p < 0.54) {
-      const e = ease(seg(p, 0.42, 0.54));
+    } else if (p < 0.74) {
+      const e = ease(seg(p, 0.62, 0.74));
       hands = { L: mix(AIM, r.L, e), R: r.R };
       gunAngle = lerp(AIM_ANGLE, HOLSTER_ANGLE, e);
-    } else if (p < 0.68) {
+    } else if (p < 0.86) {
       // 4. Both hands to the carton; the scanner stays at his side.
-      const e = ease(seg(p, 0.54, 0.68));
+      const e = ease(seg(p, 0.74, 0.86));
       hands = { L: mix(r.L, pickL, e), R: mix(r.R, pickR, e) };
     }
-    gunInHand = p < 0.54 || p >= 2.38;
+    gunInHand = p < 0.74 || p >= 2.68;
     scanOn = seg(p, 0.16, 0.19) * (1 - seg(p, 0.36, 0.41));
     sweep = ease(seg(p, 0.18, 0.36));
     // 5. Lift, carry to the slot, set down.
-    if (p >= 0.68 && p < 1.8) {
-      if (p < 0.8) { const e = ease(seg(p, 0.68, 0.8)); held = { x: lerp(200, PICK - 62, e), b: lerp(860, 828, e) }; }
-      else if (p < 1.55) held = { x: wx - 62, b: 828 };
-      else held = { x: s.x, b: lerp(828, s.b, ease(seg(p, 1.55, 1.8))) };
+    if (p >= 0.86 && p < 1.9) {
+      if (p < 0.96) { const e = ease(seg(p, 0.86, 0.96)); held = { x: lerp(200, PICK - 62, e), b: lerp(860, 828, e) }; }
+      else if (p < 1.68) held = { x: wx - 62, b: 828 };
+      else held = { x: s.x, b: lerp(828, s.b, ease(seg(p, 1.68, 1.9))) };
       hands = { L: { x: held.x - 4, y: held.b - 44 }, R: { x: held.x + 128, y: held.b - 44 } };
     }
-    dip = (k < 3 ? 26 : 10) * Math.sin(Math.PI * seg(p, 1.48, 1.95));
-    if (p >= 1.8 && p < 1.95) {
-      const e = ease(seg(p, 1.8, 1.95)), r2 = rest(dip);
+    dip = (k < 3 ? 26 : 10) * Math.sin(Math.PI * seg(p, 1.6, 2.08));
+    if (p >= 1.9 && p < 2.05) {
+      const e = ease(seg(p, 1.9, 2.05)), r2 = rest(dip);
       hands = { L: mix({ x: s.x - 4, y: s.b - 44 }, r2.L, e), R: mix({ x: s.x + 128, y: s.b - 44 }, r2.R, e) };
     }
     // The slot: its carton is lifted out, then the next one rolls forward.
-    const gone = p >= 0.68 && p < 0.82;
-    const comeIn = seg(p, 0.82, 1.22);
-    const slotScale = p >= 0.82 && p < 1.22 ? lerp(0.86, 1, ease(comeIn)) : 1;
+    const gone = p >= 0.86 && p < 0.98;
+    const comeIn = seg(p, 0.98, 1.38);
+    const slotScale = p >= 0.98 && p < 1.38 ? lerp(0.86, 1, ease(comeIn)) : 1;
     $("slot").setAttribute("opacity", gone ? 0 : 1);
     $("slot").setAttribute("transform", `translate(262 860) scale(${slotScale}) translate(-262 -860)`);
-    $("slotShade").setAttribute("opacity", p >= 0.82 && p < 1.22 ? 0.7 * (1 - ease(comeIn)) : 0);
-    // He watches the label while he scans, then glances at the pick list.
-    look = p < 0.45 ? -12 * Math.sin(Math.PI * seg(p, 0, 0.45)) : p < 0.7 ? 6 * Math.sin(Math.PI * seg(p, 0.42, 0.7)) : 0;
+    $("slotShade").setAttribute("opacity", p >= 0.98 && p < 1.38 ? 0.7 * (1 - ease(comeIn)) : 0);
+    // He watches the label while he scans, then glances at the number that came up.
+    look = p < 0.45 ? -12 * Math.sin(Math.PI * seg(p, 0, 0.45)) : p < 0.95 ? 8 * Math.sin(Math.PI * seg(p, 0.45, 0.95)) : 0;
   } else {
     placedCount = 6;
     $("slot").setAttribute("opacity", 1);
@@ -393,11 +412,23 @@ function draw(t) {
     for (const id of ["scanLine", "scanCore"]) { const e = $(id); e.setAttribute("x1", lx - 4); e.setAttribute("x2", lx + 50); e.setAttribute("y1", sy); e.setAttribute("y2", sy); }
     $("scanDot").setAttribute("cx", tip.x); $("scanDot").setAttribute("cy", tip.y);
   }
-  // A check pops above the scanned carton and fades.
-  const pc = t < W0 ? t % C : 9;
-  const pcOn = seg(pc, 0.38, 0.48) * (1 - seg(pc, 1.0, 1.3));
-  $("pickCheck").setAttribute("opacity", pcOn);
-  $("pickCheck").setAttribute("transform", `translate(231 ${742 - 16 * seg(pc, 0.38, 0.75)}) scale(${0.6 + 0.4 * back(seg(pc, 0.38, 0.56))})`);
+  // The scanner: its light flashes on a good read, its screen shows a check.
+  const pp = t < W0 ? t % C : 9;
+  const good = seg(pp, 0.56, 0.59) * (1 - seg(pp, 0.68, 0.78));
+  $("gunLed").setAttribute("fill", good > 0.5 ? "#ffffff" : scanOn > 0.1 ? "#9a9ca2" : "#4a4c52");
+  $("gunScreen").setAttribute("opacity", seg(pp, 0.56, 0.6) * (1 - seg(pp, 0.7, 0.76)));
+  // The EAN card: it pops up as the beam reads, types the number out, then confirms it.
+  const card = ean ? seg(ean.p, 0.3, 0.38) * (1 - seg(ean.p, 1.0, 1.12)) : 0;
+  $("eanCard").setAttribute("opacity", card);
+  if (ean) {
+    const pop = 0.86 + 0.14 * back(seg(ean.p, 0.3, 0.42));
+    $("eanCard").setAttribute("transform", `translate(486 612) scale(${pop}) translate(-486 -612)`);
+    const shown = Math.round(ean.text.length * seg(ean.p, 0.34, 0.56));
+    $("eanText").textContent = ean.text.slice(0, shown);
+    const ok = seg(ean.p, 0.56, 0.62);
+    $("eanCheck").setAttribute("opacity", ok);
+    $("eanBars").setAttribute("opacity", 1 - ok);
+  }
 
   // The pick list.
   const reset = seg(t, W0 + 4.6, W0 + 4.85), refill = seg(t, W0 + 4.85, W0 + 5.2);
@@ -407,10 +438,10 @@ function draw(t) {
     $("bar" + r).setAttribute("fill", on ? "#7d7f85" : r === Math.min(placedCount, 5) && t < W0 ? "#c9cacf" : "#4a4c52");
     $("row" + r).setAttribute("opacity", t >= W0 + 4.6 ? (t < W0 + 4.85 ? 1 - reset : refill) : 1);
   }
-  const last = (PICKS - 1) * C + 1.8;
+  const last = (PICKS - 1) * C + 1.9;
   const done = t >= last && t < W0 + 4.6 ? seg(t, last, last + 0.15) * (1 - seg(t, W0 + 0.2, W0 + 0.5)) : 0;
   $("termOk").setAttribute("opacity", done);
-  $("termGlow").setAttribute("opacity", 0.4 * seg(t % C, 0.38, 0.42) * (1 - seg(t % C, 0.42, 0.8)) * (t < W0 ? 1 : 0) + 0.2 * done);
+  $("termGlow").setAttribute("opacity", 0.4 * seg(t % C, 0.56, 0.6) * (1 - seg(t % C, 0.6, 0.96)) * (t < W0 ? 1 : 0) + 0.2 * done);
 
   // The pallet: cartons as placed; once out of sight it comes back empty.
   for (let k = 0; k < 6; k++) $("placed" + k).setAttribute("opacity", k < placedCount && t < W0 + 4.6 ? 1 : 0);
@@ -435,9 +466,9 @@ function draw(t) {
   // Gentle periodic camera drift (seamless over the loop), phone-safe around x 600.
   const a = (t / T) * Math.PI * 2;
   const zoom = 1.1 + 0.025 * Math.sin(a);
-  const cx = 600 + 26 * Math.sin(a), cy = 790 + 12 * Math.cos(a);
+  const cx = 572 + 14 * Math.sin(a), cy = 790 + 12 * Math.cos(a);
   $("cam").setAttribute("transform", `translate(${540 - cx * zoom} ${700 - cy * zoom}) scale(${zoom})`);
-  $("far").setAttribute("transform", `translate(${(cx - 600) * 0.4} 0)`);
+  $("far").setAttribute("transform", `translate(${(cx - 572) * 0.4} 0)`);
   const dust = $("dust").children;
   for (let i = 0; i < dust.length; i++) { const d = dust[i], ph = i * 2.399; d.setAttribute("cx", Number(d.dataset.x) + Math.sin(a + ph) * 16); d.setAttribute("cy", Number(d.dataset.y) + Math.cos(a * (i % 2 ? 1 : 2) + ph) * 22); d.setAttribute("opacity", 0.12 + 0.18 * (Math.sin(a * 2 + ph) + 1) / 2); }
 }

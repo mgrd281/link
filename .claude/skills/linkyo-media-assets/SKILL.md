@@ -73,10 +73,12 @@ Original loops that fit more than one person go into Linkyo's motion library
 (`apps/web/src/features/creator/motion-library.ts`): today "Barcode scannen" (real footage, Tiger Lily
 on Pexels: two takes of a hand scanner on a wrapped pallet, cropped 4:5 without the face, joined with
 dissolves where no scanner is in frame, 5.7 s), "Lagerarbeit" (`reach-truck-scene.html`),
-"Palette packen" (`pallet-scene.html`: the worker raises a handheld scanner and scans each carton's
-label, the pick list ticks it off, he carries it to the pallet, then two laps of stretch film and a
-pallet jack that swaps the pallet; 20.4 s, starting on the wrapped pallet so the still shows the
-result; the scanner is silver so it reads against the dark jacket) and "Scannen von Waren" (`scan-conveyor-scene.html`). The
+"Palette packen" (`pallet-scene.html`: the worker raises a pistol-grip scanner (silver body, rubber
+grip, trigger, a screen at the back) and scans each carton's label; a card beside his head types out
+the EAN-13 it read and confirms it (in-store numbers, prefix 20, valid check digits; DM Mono at 24 px
+so phones can read it), the pick list ticks it off; he carries it to the pallet, then two laps of
+stretch film and a pallet jack that swaps the pallet; 22.2 s, starting on the wrapped pallet).
+`render-scene.cjs` waits for fonts before the first frame and "Scannen von Waren" (`scan-conveyor-scene.html`). The
 dashboard's profile sheet ("Bewegtes
 Kopfbild") shows them as tiles: still, name, length, and a button that plays the clip in its tile.
 Choosing one sets `profile.motion` to `sample:motion-<key>` and the header picture to the clip's
