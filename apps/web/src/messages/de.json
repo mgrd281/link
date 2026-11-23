@@ -1624,6 +1624,17 @@
       "nameRequired": "Bitte gib den Namen ein, den Besucher sehen sollen.",
       "motion": "Bewegtes Kopfbild",
       "motionHint": "MP4-Link, 3–10 Sek., ohne Ton. Das Kopfbild bleibt das Vorschaubild.",
+      "motionLead": "Läuft ohne Ton oben auf deiner Seite. Wer weniger Bewegung möchte, sieht das Standbild.",
+      "motionNone": "Ohne",
+      "motionOwn": "Eigener Link",
+      "motionOwnUrl": "Link zur MP4-Datei",
+      "motionSeconds": "{seconds} Sek.",
+      "motionWatch": "{name} ansehen",
+      "motionStop": "{name} anhalten",
+      "motionClips": {
+        "lagerarbeit": "Lagerarbeit",
+        "ware-scannen": "Scannen von Waren"
+      },
       "more": "Mehr für den Kopfbereich",
       "logoHint": "Erscheint nur in Vorlagen mit Logo-Kopf.",
       "motionInvalid": "Füg einen direkten Link zu einer MP4-Datei ein.",

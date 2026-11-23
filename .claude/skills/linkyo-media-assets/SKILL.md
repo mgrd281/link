@@ -59,6 +59,24 @@ last frame equals the first), no text. Render every frame with
 resolves), then encode as below (`-crf 26` suits flat illustration, about 0.7 MB). Frame 0 is the
 hero picture. Never show a real person's face in an illustration of a real customer.
 
+## The motion library: clips every creator can choose
+
+Original loops that fit more than one person go into Linkyo's motion library
+(`apps/web/src/features/creator/motion-library.ts`). The dashboard's profile sheet ("Bewegtes
+Kopfbild") shows them as tiles: still, name, length, and a button that plays the clip in its tile.
+Choosing one sets `profile.motion` to `sample:motion-<key>` and the header picture to the clip's
+first frame. These are the only clips a live creator page plays: `withoutThirdParties` drops every
+other address (an own MP4 link shows in the editor's preview only). To add a clip:
+
+1. Render and encode it as above. Put `<key>.mp4` in `apps/web/public/media/motion/` and frame 0, as
+   `ex-motion-<key>.jpg` (1080 × 1350), in `apps/web/src/assets/examples/`.
+2. Register the still in `features/examples/media.ts` by hand (an import plus an `exampleMedia`
+   entry), and add a credits row ("Linkyo original illustration").
+3. Add an entry to `MOTION_LIBRARY`: key, poster, `w`/`h`, seconds, topic, and `alt` in de, en and ar.
+4. Add the tile name to `app.profile.motionClips.<key>` in `src/messages/{de,en,ar}.json`.
+5. `motion-library.test.ts` checks the file, the still, its size and the lookups;
+   `e2e/motion-picker-app.spec.ts` covers the picker.
+
 ## Original motion graphics from a photo
 
 When no licensed clip fits (most Mixkit warehouse and logistics clips are "Restricted", personal use

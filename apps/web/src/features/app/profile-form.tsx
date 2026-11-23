@@ -5,8 +5,11 @@ import { Button, ConfirmDialog } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
+import { libraryClip } from "@/features/creator/motion-library";
+
 import { Disclosure } from "./disclosure";
-import { ImageInput, SelectField, TextArea, TextInput, UrlInput } from "./form";
+import { ImageInput, SelectField, TextArea, TextInput } from "./form";
+import { MotionPicker } from "./motion-picker";
 import { PreviewButton } from "./preview";
 import { useShellChrome } from "./screen";
 import { Sheet } from "./sheet";
@@ -37,7 +40,8 @@ const validName = (name: string) => profileSchema.shape.displayName.safeParse(na
 
 /**
  * Name, line, bio, photo: the top of the page. What only some templates show (location, header photo,
- * moving header, logo) waits behind "More for the header", open when one of them is set. Changes show
+ * moving header, picked from Linkyo's clips or an own link, logo) waits behind "More for the header",
+ * open when one of them is set. Changes show
  * in the preview while typing. The page's language is asked only where it is not a setting of its own
  * (the welcome flow).
  */
@@ -99,14 +103,7 @@ export function ProfileFields({
             image={profile.hero}
             onImage={(image) => onChange(image ? { ...profile, hero: { ...image, alt: profile.displayName } } : { ...profile, hero: undefined })}
           />
-          <UrlInput
-            label={t("motion")}
-            hint={t("motionHint")}
-            value={profile.motion?.src ?? ""}
-            onValue={(src) => onChange(src.trim() ? { ...profile, motion: { src: src.trim() } } : { ...profile, motion: undefined })}
-            onBlur={() => onCheck?.("motion")}
-            error={errors.motion}
-          />
+          <MotionPicker profile={profile} onChange={onChange} onCheck={() => onCheck?.("motion")} error={errors.motion} />
           <ImageInput
             label={t("logo")}
             kind="logo"
@@ -133,9 +130,10 @@ export function useProfileDraft() {
   // A form that goes away unsaved (its screen closed) leaves nothing behind in the preview.
   useEffect(() => () => setProfileDraft(null), [setProfileDraft]);
   // Only a new moving-header link is checked: one saved earlier plays on the page today (any https
-  // link does) and never blocks another edit, such as a bio typed from Home.
+  // link does) and never blocks another edit, such as a bio typed from Home. A clip from Linkyo's
+  // library is always fine.
   const motionInvalid = (src: string | undefined) =>
-    src !== doc.profile.motion?.src && !isMotionUrl(src ?? "");
+    src !== doc.profile.motion?.src && !libraryClip(src) && !isMotionUrl(src ?? "");
   const errors: ProfileErrors = {
     ...(nameMessage && !validName(profile.displayName) ? { displayName: nameMessage } : {}),
     ...(motionChecked && motionInvalid(profile.motion?.src) ? { motion: t("motionInvalid") } : {}),

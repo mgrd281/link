@@ -8,15 +8,44 @@
 export interface MotionClip {
   /** "sample:motion-<key>" plays /media/motion/<key>.mp4. */
   key: string;
-  /** The first frame, a sample picture ("sample:ex-motion-<key>"), 4 : 5. */
+  /** The first frame, a sample picture ("sample:ex-motion-<key>"). */
   poster: string;
+  /** The first frame's size in px (every clip is 4 : 5, 1080 × 1350). */
+  w: number;
+  h: number;
   seconds: number;
   topic: "warehouse";
+  /** What the still shows, in each page language (it becomes the header picture's description). */
+  alt: Readonly<Record<"de" | "en" | "ar", string>>;
 }
 
 export const MOTION_LIBRARY: readonly MotionClip[] = [
-  { key: "lagerarbeit", poster: "sample:ex-motion-lagerarbeit", seconds: 18, topic: "warehouse" },
-  { key: "ware-scannen", poster: "sample:ex-motion-ware-scannen", seconds: 8, topic: "warehouse" },
+  {
+    key: "lagerarbeit",
+    poster: "sample:ex-motion-lagerarbeit",
+    w: 1080,
+    h: 1350,
+    seconds: 18,
+    topic: "warehouse",
+    alt: {
+      de: "Illustration: Ein Schubmaststapler-Fahrer scannt eine Palette und hebt sie in ein Hochregal",
+      en: "Illustration: a reach-truck driver scans a pallet and lifts it into a high rack",
+      ar: "رسم توضيحي: سائق رافعة شوكية يمسح منصة بضائع ويرفعها إلى رف عالٍ",
+    },
+  },
+  {
+    key: "ware-scannen",
+    poster: "sample:ex-motion-ware-scannen",
+    w: 1080,
+    h: 1350,
+    seconds: 8,
+    topic: "warehouse",
+    alt: {
+      de: "Illustration: Ein Lagerist scannt Kartons auf einem Rollenband, das Terminal bestätigt jeden Scan",
+      en: "Illustration: a warehouse worker scans cartons on a roller conveyor; the terminal confirms each scan",
+      ar: "رسم توضيحي: عامل مستودع يمسح الكراتين على سير بكرات، والجهاز يؤكد كل عملية مسح",
+    },
+  },
 ];
 
 const PREFIX = "sample:motion-";
@@ -30,3 +59,6 @@ export function libraryClip(src: string | undefined): MotionClip | undefined {
   const key = src.slice(PREFIX.length);
   return MOTION_LIBRARY.find((clip) => clip.key === key);
 }
+
+/** The library clip whose still a header picture is, if it is one. */
+export const posterClip = (src: string | undefined): MotionClip | undefined => MOTION_LIBRARY.find((clip) => clip.poster === src);

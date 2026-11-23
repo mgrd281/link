@@ -277,7 +277,9 @@ test.describe("settings: values saved before", () => {
     expect((await storedSite(page)).page.profile.motion).toEqual({ src: "https://cdn.example.com/hero.m4v" });
 
     await profileRow(page).click();
-    await sheet.getByLabel("Moving header").fill("https://cdn.example.com/other.m4v");
+    // A link saved earlier comes back as "Own link", with its field.
+    await expect(sheet.getByRole("radio", { name: "Own link" })).toBeChecked();
+    await sheet.getByLabel("Link to the MP4 file").fill("https://cdn.example.com/other.m4v");
     await save.click();
     await expect(sheet.getByText("Paste a direct link to an MP4 file.")).toBeVisible();
     await expect(sheet).toBeVisible();

@@ -1624,6 +1624,17 @@
       "nameRequired": "يرجى إدخال الاسم الذي سيراه الزوار.",
       "motion": "واجهة متحركة",
       "motionHint": "رابط MP4 مدته 3–10 ثوانٍ بلا صوت، وتبقى صورة الواجهة غلافًا له.",
+      "motionLead": "تعمل بلا صوت في أعلى صفحتك، ومن يفضّل حركة أقل يرى الصورة الثابتة.",
+      "motionNone": "بدون",
+      "motionOwn": "رابط خاص",
+      "motionOwnUrl": "رابط ملف MP4",
+      "motionSeconds": "{seconds, plural, one {ثانية واحدة} two {ثانيتان} few {# ثوانٍ} many {# ثانية} other {# ثانية}}",
+      "motionWatch": "شاهد {name}",
+      "motionStop": "أوقف {name}",
+      "motionClips": {
+        "lagerarbeit": "عمل المستودع",
+        "ware-scannen": "مسح البضائع"
+      },
       "more": "المزيد لأعلى الصفحة",
       "logoHint": "يظهر فقط في القوالب التي تعرض الشعار أعلى الصفحة.",
       "motionInvalid": "الصق رابطًا مباشرًا لملف MP4.",

@@ -1624,6 +1624,17 @@
       "nameRequired": "Please enter the name visitors should see.",
       "motion": "Moving header",
       "motionHint": "MP4 link, 3–10 s, no sound. The header photo stays its poster.",
+      "motionLead": "Plays without sound at the top of your page. Visitors who prefer less motion see the still.",
+      "motionNone": "None",
+      "motionOwn": "Own link",
+      "motionOwnUrl": "Link to the MP4 file",
+      "motionSeconds": "{seconds} s",
+      "motionWatch": "Watch {name}",
+      "motionStop": "Stop {name}",
+      "motionClips": {
+        "lagerarbeit": "Warehouse work",
+        "ware-scannen": "Scanning goods"
+      },
       "more": "More for the header",
       "logoHint": "Shows only in templates with a logo header.",
       "motionInvalid": "Paste a direct link to an MP4 file.",
