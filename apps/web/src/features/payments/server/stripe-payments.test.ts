@@ -107,22 +107,30 @@ describe("checkout sessions", () => {
 
 describe("subscriptions", () => {
   const periodEnd = Math.floor(Date.UTC(2027, 0, 31, 9, 30) / 1000);
+  const anchor = Math.floor(Date.UTC(2026, 9, 31, 9, 30) / 1000);
 
   beforeEach(async () => {
-    await register("subscriptions", "sub_unit", { current_period_end: periodEnd, customer: "cus_unit", metadata: { profile_id: "p-3" } });
+    await register("subscriptions", "sub_unit", { current_period_end: periodEnd, billing_cycle_anchor: anchor, customer: "cus_unit", metadata: { profile_id: "p-3" } });
   });
 
-  it("reads the period end from the first item (the mock sends none on the subscription)", async () => {
+  it("reads the period end from the first item (the mock sends none on the subscription), and the billing cycle anchor", async () => {
     const state = await payments.retrieveSubscription("sub_unit");
     expect(state).toEqual({
       id: "sub_unit",
       status: "active",
+      stripeStatus: "active",
       periodEnd: new Date(periodEnd * 1000).toISOString(),
+      billingAnchor: new Date(anchor * 1000).toISOString(),
       cancelAtPeriodEnd: false,
       cancelAt: null,
       customerId: "cus_unit",
       profileId: "p-3",
     });
+  });
+
+  it("keeps Stripe's own status word beside the folded one", async () => {
+    await register("subscriptions", "sub_unpaid", { status: "unpaid" });
+    expect(await payments.retrieveSubscription("sub_unpaid")).toMatchObject({ status: "other", stripeStatus: "unpaid" });
   });
 
   it("cancels at the period end, at a later date (no proration), resumes and cancels now", async () => {

@@ -7,8 +7,9 @@ import { withdrawalReceipt } from "@/features/email/templates/withdrawal-receipt
 import type { EmailMessage } from "@/features/email/types";
 import type { Db } from "@/lib/supabase/server";
 
-import { periodEndContaining } from "../delivery";
-import type { Payments } from "../types";
+import { berlinDay, periodEndContaining } from "../delivery";
+
+import type { ServerPayments } from "./subscription";
 
 /**
  * The statutory contract forms and what follows them (plan §0.3 #7, §1.6.1). Rules that never bend:
@@ -149,7 +150,7 @@ export async function loadEmailTranslator(target: EmailLocale): Promise<EmailT> 
 export interface ContractsDeps {
   db: ContractsDb;
   /** Throws PaymentsNotConfigured when Stripe is not set up (only called for a matched, normal request). */
-  payments: () => Payments;
+  payments: () => ServerPayments;
   send: (message: EmailMessage) => Promise<unknown>;
   translator: (locale: EmailLocale) => Promise<EmailT>;
   /** One content-free line per problem (never an address or a name). */
@@ -193,12 +194,25 @@ export async function submitWithdrawal(form: WithdrawalForm, ipHash: string, dep
  * date on or before the period end: at the period end. Ordinary with a later date: at the end of the
  * billing period containing that date (Stripe `cancel_at`). Extraordinary, unmatched or suspect: no
  * Stripe call (the team decides). Answers when Pro ends, or null.
+ *
+ * A later date needs the subscription as Stripe has it: its period end, and its billing cycle anchor.
+ * A subscription that started on the 29th to the 31st ends a short month on that month's last day
+ * (31 Jan → 28 Feb → 31 Mar), so the period end alone would put the next boundary days too early
+ * (28 Mar), and Stripe would end Pro before the paid period is over.
  */
 export async function processCancellation(record: CancellationRecord, form: CancellationForm, deps: Pick<ContractsDeps, "db" | "payments">): Promise<{ endsAt: Date | null }> {
   if (record.suspect || !record.matched || !record.subscription || form.kind === "extraordinary") return { endsAt: null };
   const payments = deps.payments();
-  const periodEnd = record.periodEnd ? new Date(record.periodEnd) : new Date((await payments.retrieveSubscription(record.subscription)).periodEnd);
-  const target = form.wantedDate ? periodEndContaining(periodEnd, form.wantedDate) : periodEnd;
+  let periodEnd = record.periodEnd ? new Date(record.periodEnd) : new Date((await payments.retrieveSubscription(record.subscription)).periodEnd);
+  let target = periodEnd;
+  if (form.wantedDate && form.wantedDate > berlinDay(periodEnd)) {
+    const state = await payments.retrieveSubscription(record.subscription);
+    const current = new Date(state.periodEnd);
+    // `new Date(0)` stands for "no period end on the subscription": keep the one we stored.
+    if (current.getTime() > 0) periodEnd = current;
+    const anchor = state.billingAnchor ? new Date(state.billingAnchor) : periodEnd;
+    target = periodEndContaining(periodEnd, form.wantedDate, Number.isNaN(anchor.getTime()) ? periodEnd : anchor);
+  }
   if (target.getTime() === periodEnd.getTime()) {
     const state = await payments.cancelAtPeriodEnd(record.subscription);
     const endsAt = new Date(state.periodEnd);
@@ -260,7 +274,59 @@ export async function submitCancellation(form: CancellationForm, ipHash: string,
 
 // ─── Team decisions (the contracts panel's route, plan §1.7) ────────────────────────────────
 
-type TeamDeps = Pick<ContractsDeps, "db" | "payments">;
+type TeamDeps = Pick<ContractsDeps, "db" | "payments"> & {
+  /** Waits between the attempts to record a refund (tests pass a no-op). */
+  pause?: (ms: number) => Promise<void>;
+};
+
+const RECORD_ATTEMPTS = 3;
+
+/** Stripe made the refund, but it could not be written to the database: the same action must be sent again. */
+export class RefundNotRecorded extends Error {
+  override name = "RefundNotRecorded";
+}
+
+/**
+ * Records a refund Stripe already made. The money has moved, so a database hiccup must not lose the
+ * kind the team chose: three attempts, a moment apart. `record_refund` is idempotent, and when
+ * Stripe's `charge.refunded` got there first it replaces that event's "goodwill" with this kind. If
+ * every attempt fails, `RefundNotRecorded` goes to the route (500); the same action can be sent
+ * again, since the refund at Stripe is idempotent, too.
+ */
+async function recordRefundSurely(deps: TeamDeps, paymentIntent: string, kind: "voluntary" | "withdrawal", amount: number | null): Promise<void> {
+  const pause = deps.pause ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await deps.db.recordRefund(paymentIntent, kind, amount);
+      return;
+    } catch (error) {
+      if (attempt >= RECORD_ATTEMPTS) throw new RefundNotRecorded(error instanceof Error ? error.message : String(error));
+      await pause(attempt * 250);
+    }
+  }
+}
+
+/**
+ * May the console refund this order (again)? Not once it is withdrawn or refunded under a kind the
+ * team chose. An order Stripe's report marked "goodwill" stays open for one case: the console's own
+ * refund went through at Stripe but could not be recorded, the webhook recorded it without a kind,
+ * and the team sends the refund again. Stripe answers that repeat with the same refund (idempotency
+ * key) and only then is the kind corrected; a refund that was really made in the Stripe dashboard
+ * makes Stripe refuse, and nothing changes.
+ */
+export function orderRefundable(order: { status: string; refundKind: string | null }): boolean {
+  if (order.status === "withdrawn") return false;
+  return order.status !== "refunded" || order.refundKind === "goodwill";
+}
+
+/**
+ * The voluntary money-back of a service order (after `admin_order_refund_target`): the full refund at
+ * Stripe, then the record with kind `voluntary`, which uses up the once-per-account promise.
+ */
+export async function resolveOrderRefund(target: { paymentIntent: string; amountCents: number }, deps: TeamDeps): Promise<void> {
+  await deps.payments().refund({ paymentIntentId: target.paymentIntent, amountCents: target.amountCents });
+  await recordRefundSurely(deps, target.paymentIntent, "voluntary", target.amountCents);
+}
 
 /**
  * The Stripe and bookkeeping side of an accepted withdrawal (after `admin_resolve_withdrawal`):
@@ -278,13 +344,13 @@ export async function resolveWithdrawal(
   if (target.kind === "order") {
     if (!target.paymentIntent || target.refundCents <= 0) return { refunded: false };
     await payments.refund({ paymentIntentId: target.paymentIntent, amountCents: target.refundCents });
-    await deps.db.recordRefund(target.paymentIntent, "withdrawal", target.refundCents);
+    await recordRefundSurely(deps, target.paymentIntent, "withdrawal", target.refundCents);
     return { refunded: true };
   }
   await payments.cancelNow(target.subscription);
   if (target.paymentIntent) await payments.refund({ paymentIntentId: target.paymentIntent });
   await deps.db.updateProSubscription(target.subscription, "refunded");
-  if (target.paymentIntent) await deps.db.recordRefund(target.paymentIntent, "withdrawal", null);
+  if (target.paymentIntent) await recordRefundSurely(deps, target.paymentIntent, "withdrawal", null);
   return { refunded: Boolean(target.paymentIntent) };
 }
 

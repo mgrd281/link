@@ -5,7 +5,9 @@ import type { EmailMessage } from "@/features/email/types";
 import type { Db } from "@/lib/supabase/server";
 
 import { PRICES, VAT_MODE, type VatMode } from "../prices";
-import type { Payments, PaymentsEvent, SubscriptionState } from "../types";
+import type { PaymentsEvent } from "../types";
+
+import type { ServerPayments, StripeSubscription, SubscriptionRead } from "./subscription";
 
 /**
  * Stripe webhooks (plan §1.6.1). Idempotency is "processed", not "received": an event counts as a
@@ -15,10 +17,17 @@ import type { Payments, PaymentsEvent, SubscriptionState } from "../types";
  * - a paid service order is created once per Checkout Session; its confirmation e-mail goes out
  *   while `confirmation_sent_at` is empty, and only after it went out does the order join the team's
  *   queue (`mark_confirmation_sent`, § 312f BGB);
- * - Pro's state always comes from the subscription's current state (`upsert_pro_subscription`),
- *   so the order of `customer.subscription.*`, `invoice.*` and `checkout.session.*` does not matter;
- *   a refunded entitlement stays refunded;
- * - invoices carry their account in the subscription's metadata; refunds are recorded once.
+ * - Pro's state comes from the subscription as Stripe has it **now**, read again for every
+ *   `customer.subscription.created` / `.updated` and for a subscription checkout
+ *   (`retrieveSubscription`), never from the snapshot inside the event: Stripe does not deliver in
+ *   order and redelivers a failed event up to days later, so a stale snapshot would bring back a
+ *   cancelled Pro or an old period end. `customer.subscription.deleted` is final at Stripe, so it is
+ *   applied as it comes. A refunded entitlement stays refunded;
+ * - invoices carry their account in the subscription's metadata;
+ * - a refund Stripe reports (`charge.refunded`) carries no kind and the sum refunded so far.
+ *   `record_refund` works out the rest: the refund of a withdrawal the team accepted ends the
+ *   contract, any other full refund marks the order or invoice refunded, a partial one is only noted,
+ *   and the kind the console records (before or after this event) is the one that stays.
  */
 
 export type EntitlementStatus = "active" | "past_due" | "canceled";
@@ -52,15 +61,13 @@ export interface WebhookStore {
   proConfirmationPending(subscription: string): Promise<boolean>;
   markProConfirmationSent(subscription: string): Promise<boolean>;
   recordInvoice(input: { id: string; account: string; subscription: string; amount: number; state: "paid" | "failed"; paymentIntent: string | null }): Promise<void>;
-  /** The kind of a refund already recorded for this payment (a console refund), or null. */
-  refundKind(paymentIntent: string): Promise<"voluntary" | "withdrawal" | "goodwill" | null>;
   recordRefund(paymentIntent: string, kind: "voluntary" | "withdrawal" | "goodwill", amount: number | null): Promise<string>;
   accountEmail(profileId: string): Promise<string | null>;
 }
 
 export interface WebhookDeps {
   store: WebhookStore;
-  payments: Pick<Payments, "retrieveSubscription" | "invoicePaymentIntent">;
+  payments: Pick<ServerPayments, "retrieveSubscription" | "invoicePaymentIntent">;
   send: (message: EmailMessage) => Promise<unknown>;
   translator: (locale: EmailLocale) => Promise<EmailT>;
   /** The website's origin for links in e-mails. */
@@ -84,13 +91,15 @@ const isoFrom = (seconds: number | null): string | null => (seconds === null ? n
 const asLocale = (value: unknown): EmailLocale => (value === "en" || value === "ar" ? value : "de");
 
 /** A subscription object from an event or a read, as the app sees it (period end from the first item). */
-export function subscriptionFromObject(subscription: Obj): SubscriptionState {
+export function subscriptionFromObject(subscription: Obj): StripeSubscription {
   const item = obj((obj(subscription.items).data as unknown[] | undefined)?.[0]);
   const status = str(subscription.status) ?? "other";
   return {
     id: str(subscription.id) ?? "",
     status: status === "active" || status === "past_due" || status === "canceled" || status === "incomplete" ? status : "other",
+    stripeStatus: status,
     periodEnd: isoFrom(num(item.current_period_end)) ?? new Date(0).toISOString(),
+    billingAnchor: isoFrom(num(subscription.billing_cycle_anchor)),
     cancelAtPeriodEnd: subscription.cancel_at_period_end === true,
     cancelAt: isoFrom(num(subscription.cancel_at)),
     customerId: idOf(subscription.customer) ?? "",
@@ -106,7 +115,7 @@ function entitlementStatus(status: string): EntitlementStatus | null {
   return null;
 }
 
-async function applySubscription(state: SubscriptionState, stripeStatus: string, deps: WebhookDeps, fallbackProfile: string | null): Promise<{ applied: boolean; reason: string }> {
+async function applySubscription(state: SubscriptionRead, stripeStatus: string, deps: WebhookDeps, fallbackProfile: string | null): Promise<{ applied: boolean; reason: string }> {
   const next = entitlementStatus(stripeStatus);
   const account = state.profileId ?? fallbackProfile;
   if (!next) return { applied: false, reason: `ignored: ${stripeStatus}` };
@@ -228,9 +237,17 @@ async function dispatch(event: PaymentsEvent, deps: WebhookDeps): Promise<string
       return serviceOrderPaid(object, deps);
     }
     case "customer.subscription.created":
-    case "customer.subscription.updated":
+    case "customer.subscription.updated": {
+      // The event holds the subscription as it was when Stripe made it, and events arrive late and
+      // out of order. What counts is the subscription now.
+      const subscriptionId = str(object.id);
+      if (!subscriptionId) return "ignored: no subscription id";
+      const state = await deps.payments.retrieveSubscription(subscriptionId);
+      return (await applySubscription(state, state.stripeStatus ?? state.status, deps, str(obj(object.metadata).profile_id))).reason;
+    }
     case "customer.subscription.deleted":
-      return (await applySubscription(subscriptionFromObject(object), event.type === "customer.subscription.deleted" ? "canceled" : (str(object.status) ?? "other"), deps, null)).reason;
+      // Final at Stripe: nothing later can undo it.
+      return (await applySubscription(subscriptionFromObject(object), "canceled", deps, null)).reason;
     case "invoice.paid":
       return invoiceEvent(object, "paid", deps);
     case "invoice.payment_failed":
@@ -238,9 +255,11 @@ async function dispatch(event: PaymentsEvent, deps: WebhookDeps): Promise<string
     case "charge.refunded": {
       const paymentIntent = idOf(object.payment_intent);
       if (!paymentIntent) return "ignored: no payment intent";
-      // A refund from our console was recorded with its kind already; one made in the Stripe dashboard is goodwill.
-      const kind = (await deps.store.refundKind(paymentIntent)) ?? "goodwill";
-      const result = await deps.store.recordRefund(paymentIntent, kind, num(object.amount_refunded));
+      // Stripe names no kind, and this event may arrive before or after the console recorded its own
+      // refund. "goodwill" is the weakest kind: record_refund reads it as the withdrawal's refund when
+      // the team accepted one, never overwrites a kind the console wrote, and lets the console's later
+      // call replace it. `amount_refunded` is the sum so far; a partial refund ends nothing.
+      const result = await deps.store.recordRefund(paymentIntent, "goodwill", num(object.amount_refunded));
       return `refund ${result}`;
     }
     default:
@@ -361,11 +380,6 @@ export function supabaseWebhookStore(db: Db): WebhookStore {
         }),
         "record_invoice",
       );
-    },
-    async refundKind(paymentIntent) {
-      const row = await run(db.from("orders").select("refund_kind").eq("stripe_payment_intent", paymentIntent).maybeSingle(), "orders refund kind");
-      const kind = row?.refund_kind;
-      return kind === "voluntary" || kind === "withdrawal" || kind === "goodwill" ? kind : null;
     },
     async recordRefund(paymentIntent, kind, amount) {
       return (await run(db.rpc("record_refund", { payment_intent: paymentIntent, kind, ...(amount === null ? {} : { amount }) }), "record_refund")) ?? "notFound";

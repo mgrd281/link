@@ -16,7 +16,10 @@
 //   DELETE /v1/subscriptions/:id       cancels now (prorate / invoice_now in the query)
 //   GET    /v1/invoices/:id            the invoice; `payments` only with expand[]=payments
 //   POST   /v1/refunds                 a succeeded refund for payment_intent (and amount)
-//   POST   /__subscriptions/:id        registers a subscription's state (JSON body)
+//   POST   /__subscriptions/:id        registers a subscription's state (JSON body). `billing_cycle_anchor`
+//                                      defaults to the period end: the same day of the month and time, as
+//                                      on a monthly subscription that never met a shorter month. Register
+//                                      it to test one that did (anchor on the 31st, period end 28 Feb).
 //   POST   /__invoices/:id             registers an invoice (JSON: { subscription, profileId, paymentIntent, amount })
 //   GET    /__requests?method=&path=&profile=&prefix=   recorded requests (each test filters by its own ids)
 
@@ -135,7 +138,7 @@ function subscriptionObject(subscriptionId) {
     cancel_at_period_end: state.cancel_at_period_end,
     cancel_at: state.cancel_at,
     canceled_at: state.canceled_at,
-    billing_cycle_anchor: state.current_period_start,
+    billing_cycle_anchor: state.billing_cycle_anchor ?? state.current_period_end,
     created: state.created,
     items: {
       object: "list",

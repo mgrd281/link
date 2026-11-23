@@ -5,11 +5,12 @@ import type { EmailMessage } from "@/features/email/types";
 import de from "@/messages/de.json";
 
 import { periodEndContaining } from "../delivery";
-import type { Payments, SubscriptionState } from "../types";
-
 import {
   cancellationFormSchema,
+  orderRefundable,
+  RefundNotRecorded,
   resolveCancellation,
+  resolveOrderRefund,
   resolveWithdrawal,
   submitCancellation,
   submitWithdrawal,
@@ -19,6 +20,7 @@ import {
   type ContractsDb,
   type ContractsDeps,
 } from "./contracts";
+import type { ServerPayments, SubscriptionRead } from "./subscription";
 
 const PERIOD_END = "2027-01-31T09:30:00.000Z";
 const RECEIVED = "2026-11-22T13:32:00.000Z";
@@ -31,9 +33,19 @@ interface Calls {
   mails: EmailMessage[];
 }
 
-function setup(record: Partial<CancellationRecord> = {}, withdrawal: { matched?: boolean; suspect?: boolean; accountEmail?: string | null } = {}) {
+/**
+ * `atStripe` is the subscription as Stripe has it (period end, billing cycle anchor) where it differs
+ * from the stand-in's default; `recordFailures` makes that many `record_refund` calls fail first.
+ */
+function setup(
+  record: Partial<CancellationRecord> = {},
+  withdrawal: { matched?: boolean; suspect?: boolean; accountEmail?: string | null } = {},
+  atStripe: Partial<SubscriptionRead> = {},
+  recordFailures = 0,
+) {
   const calls: Calls = { stripe: [], confirmed: [], receipts: [], refunds: [], mails: [] };
-  const state = (overrides: Partial<SubscriptionState> = {}): SubscriptionState => ({
+  let failures = recordFailures;
+  const state = (overrides: Partial<SubscriptionRead> = {}): SubscriptionRead => ({
     id: "sub_1",
     status: "active",
     periodEnd: PERIOD_END,
@@ -41,9 +53,10 @@ function setup(record: Partial<CancellationRecord> = {}, withdrawal: { matched?:
     cancelAt: null,
     customerId: "cus_1",
     profileId: "p-1",
+    ...atStripe,
     ...overrides,
   });
-  const payments: Payments = {
+  const payments: ServerPayments = {
     createServiceCheckout: () => Promise.reject(new Error("unused")),
     createProCheckout: () => Promise.reject(new Error("unused")),
     retrieveSubscription: (id) => {
@@ -99,6 +112,11 @@ function setup(record: Partial<CancellationRecord> = {}, withdrawal: { matched?:
       return Promise.resolve();
     },
     recordRefund: (paymentIntent, kind, amount) => {
+      if (failures > 0) {
+        failures -= 1;
+        calls.stripe.push("record failed");
+        return Promise.reject(new Error("record_refund: connection lost"));
+      }
       calls.refunds.push({ paymentIntent, kind, amount });
       return Promise.resolve("ok");
     },
@@ -151,10 +169,43 @@ describe("cancellation: kind × date", () => {
     await submitCancellation(form({ wantedDate: "2027-03-20" }), "ip", deps);
     const end = periodEndContaining(new Date(PERIOD_END), "2027-03-20").toISOString();
     expect(end).toBe("2027-03-31T09:30:00.000Z");
-    expect(calls.stripe).toEqual([`cancelAt sub_1 ${end}`]);
+    // A later date is worked out from the subscription as Stripe has it.
+    expect(calls.stripe).toEqual(["retrieve sub_1", `cancelAt sub_1 ${end}`]);
     expect(calls.confirmed).toEqual([{ id: "c-1", decision: "scheduled", effective: end }]);
     const confirmation = calls.mails.find((mail) => mail.tag === "cancellation-confirmation");
     expect(confirmation?.text).toContain("Linkyo Pro endet am Mittwoch, 31. März 2027.");
+  });
+
+  it("a subscription anchored on the 31st: a date in March ends on 31 March, not on 28 March", async () => {
+    // Bought on 31 January, so the current period ends on 28 February and the next one on 31 March.
+    const february = "2027-02-28T10:00:00.000Z";
+    const { calls, deps } = setup({ periodEnd: february }, {}, { periodEnd: february, billingAnchor: "2027-01-31T10:00:00.000Z" });
+    await submitCancellation(form({ wantedDate: "2027-03-15" }), "ip", deps);
+    expect(calls.stripe).toEqual(["retrieve sub_1", "cancelAt sub_1 2027-03-31T10:00:00.000Z"]);
+    expect(calls.confirmed).toEqual([{ id: "c-1", decision: "scheduled", effective: "2027-03-31T10:00:00.000Z" }]);
+    const confirmation = calls.mails.find((mail) => mail.tag === "cancellation-confirmation");
+    expect(confirmation?.text).toContain("Linkyo Pro endet am Mittwoch, 31. März 2027.");
+    expect(confirmation?.text).not.toContain("28. März");
+  });
+
+  it("anchored on the 30th: February ends on the 28th, the periods after it on the 30th again", async () => {
+    const february = "2027-02-28T08:00:00.000Z";
+    const { calls, deps } = setup({ periodEnd: february }, {}, { periodEnd: february, billingAnchor: "2026-11-30T08:00:00.000Z" });
+    await submitCancellation(form({ wantedDate: "2027-04-29" }), "ip", deps);
+    expect(calls.stripe).toEqual(["retrieve sub_1", "cancelAt sub_1 2027-04-30T08:00:00.000Z"]);
+  });
+
+  it("uses Stripe's current period end when the stored one is behind (a renewal we did not hear of)", async () => {
+    // Stored: 31 January. At Stripe the subscription already renewed to 28 February.
+    const { calls, deps } = setup({}, {}, { periodEnd: "2027-02-28T09:30:00.000Z", billingAnchor: "2026-12-31T09:30:00.000Z" });
+    await submitCancellation(form({ wantedDate: "2027-02-15" }), "ip", deps);
+    expect(calls.stripe).toEqual(["retrieve sub_1", "cancelAtPeriodEnd sub_1"]);
+  });
+
+  it("a stand-in without an anchor still gets a boundary (from the period end)", async () => {
+    const { calls, deps } = setup({ periodEnd: "2027-02-15T09:30:00.000Z" }, {}, { periodEnd: "2027-02-15T09:30:00.000Z" });
+    await submitCancellation(form({ wantedDate: "2027-03-01" }), "ip", deps);
+    expect(calls.stripe).toEqual(["retrieve sub_1", "cancelAt sub_1 2027-03-15T09:30:00.000Z"]);
   });
 
   it("extraordinary: no Stripe call and no decision (the team reviews it)", async () => {
@@ -258,6 +309,59 @@ describe("team decisions", () => {
     await resolveWithdrawal({ kind: "pro", subscription: "sub_1", paymentIntent: "pi_inv" }, deps);
     expect(calls.stripe).toEqual(["cancelNow sub_1", "refund pi_inv full", "entitlement sub_1 refunded"]);
     expect(calls.refunds).toEqual([{ paymentIntent: "pi_inv", kind: "withdrawal", amount: null }]);
+  });
+
+  it("the voluntary money-back refunds the whole amount and records it as voluntary", async () => {
+    const { calls, deps } = setup();
+    await resolveOrderRefund({ paymentIntent: "pi_2", amountCents: 7999 }, deps);
+    expect(calls.stripe).toEqual(["refund pi_2 7999"]);
+    expect(calls.refunds).toEqual([{ paymentIntent: "pi_2", kind: "voluntary", amount: 7999 }]);
+  });
+
+  it("a refund Stripe made is recorded even when the database fails at first (the kind is not lost)", async () => {
+    const pauses: number[] = [];
+    const pause = (ms: number) => {
+      pauses.push(ms);
+      return Promise.resolve();
+    };
+    const order = setup({}, {}, {}, 2);
+    await resolveOrderRefund({ paymentIntent: "pi_2", amountCents: 2499 }, { ...order.deps, pause });
+    // One refund at Stripe; the record is tried again until it is written.
+    expect(order.calls.stripe).toEqual(["refund pi_2 2499", "record failed", "record failed"]);
+    expect(order.calls.refunds).toEqual([{ paymentIntent: "pi_2", kind: "voluntary", amount: 2499 }]);
+    expect(pauses).toEqual([250, 500]);
+
+    const withdrawal = setup({}, {}, {}, 1);
+    await resolveWithdrawal({ kind: "order", paymentIntent: "pi_1", refundCents: 1800 }, { ...withdrawal.deps, pause });
+    expect(withdrawal.calls.refunds).toEqual([{ paymentIntent: "pi_1", kind: "withdrawal", amount: 1800 }]);
+  });
+
+  it("when the record keeps failing, the route learns that Stripe refunded but nothing was written", async () => {
+    const { calls, deps } = setup({}, {}, {}, 3);
+    await expect(resolveOrderRefund({ paymentIntent: "pi_2", amountCents: 2499 }, { ...deps, pause: () => Promise.resolve() })).rejects.toBeInstanceOf(RefundNotRecorded);
+    expect(calls.stripe.filter((line) => line.startsWith("refund"))).toEqual(["refund pi_2 2499"]);
+    expect(calls.refunds).toEqual([]);
+    // Sending the same refund again finishes it: Stripe repeats nothing (idempotency key), the record is written.
+    await resolveOrderRefund({ paymentIntent: "pi_2", amountCents: 2499 }, deps);
+    expect(calls.refunds).toEqual([{ paymentIntent: "pi_2", kind: "voluntary", amount: 2499 }]);
+  });
+
+  it("a Stripe failure is not a recording failure", async () => {
+    const { calls, deps } = setup();
+    const failing = { ...deps, payments: () => ({ ...deps.payments(), refund: () => Promise.reject(new Error("card network down")) }) };
+    await expect(resolveOrderRefund({ paymentIntent: "pi_2", amountCents: 2499 }, failing)).rejects.toThrow("card network down");
+    expect(calls.refunds).toEqual([]);
+  });
+
+  it("an order can be refunded until the team's own refund is on record", () => {
+    expect(orderRefundable({ status: "delivered", refundKind: null })).toBe(true);
+    expect(orderRefundable({ status: "completed", refundKind: null })).toBe(true);
+    // Stripe's report came first (no kind yet): the console's refund may still be finished.
+    expect(orderRefundable({ status: "refunded", refundKind: "goodwill" })).toBe(true);
+    expect(orderRefundable({ status: "refunded", refundKind: "voluntary" })).toBe(false);
+    expect(orderRefundable({ status: "refunded", refundKind: "withdrawal" })).toBe(false);
+    expect(orderRefundable({ status: "withdrawn", refundKind: "withdrawal" })).toBe(false);
+    expect(orderRefundable({ status: "withdrawn", refundKind: null })).toBe(false);
   });
 
   it("ends, resumes or rejects a cancellation", async () => {
