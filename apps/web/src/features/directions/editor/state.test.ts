@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { detectLink, pageSchema, type Block } from "@linkyo/blocks";
+import { detectLink, MAX_PROJECTS, pageSchema, type Block } from "@linkyo/blocks";
 
 import { blockFromDetection, editorReducer, initialEditorState } from "./state";
 
@@ -59,6 +59,18 @@ describe("editor reducer", () => {
       const third = again.present.blocks[1];
       expect(third?.type === "project" ? third.slug : null).toBe("harbour-light-3");
       expect(pageSchema.safeParse({ profile, blocks: again.present.blocks }).success).toBe(true);
+    });
+
+    it("does not copy a project on a page that holds MAX_PROJECTS already: the page stays valid", () => {
+      const projects = Array.from({ length: MAX_PROJECTS }, (_, i) => ({ ...project, id: `p${String(i)}`, slug: `projekt-${String(i + 1)}`, was: undefined }));
+      const full = initialEditorState({ blocks: [...projects, contact] as Block[], sizes: {}, theme: { template: "werkbogen" } });
+      expect(pageSchema.safeParse({ profile, blocks: full.present.blocks }).success).toBe(true);
+      const next = editorReducer(full, { type: "duplicate", id: "p3", word: "projekt" });
+      expect(next).toBe(full);
+      expect(pageSchema.safeParse({ profile, blocks: next.present.blocks }).success).toBe(true);
+      // One fewer, and a copy is made.
+      const room = initialEditorState({ blocks: projects.slice(1), sizes: {}, theme: { template: "werkbogen" } });
+      expect(editorReducer(room, { type: "duplicate", id: "p3", word: "projekt" }).present.blocks).toHaveLength(MAX_PROJECTS);
     });
 
     it("never copies the contact block (a page has one)", () => {

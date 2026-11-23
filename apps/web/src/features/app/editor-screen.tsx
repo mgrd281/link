@@ -1,6 +1,6 @@
 "use client";
 
-import { chooseProjectsLayout, coverImage, FEATURED_PROJECTS, hasImage, slugWord, suggestBlockOrder, type Block, type BlockOf, type CreatorKind } from "@linkyo/blocks";
+import { coverImage, FEATURED_PROJECTS, hasImage, MAX_PROJECTS, slugWord, suggestBlockOrder, type Block, type CreatorKind } from "@linkyo/blocks";
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Badge, Button, cn, Icon, IconButton, initialsOf, Menu, Switch, toast, Tooltip } from "@linkyo/ui";
 import { ArrowDown, ArrowRight, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, Heading, LayoutList, ListOrdered, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
@@ -22,6 +22,7 @@ import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { blankBlock } from "./blocks";
 import { PreviewButton } from "./preview";
+import { projectRuns } from "./project-runs";
 import { ProfileSheet } from "./profile-form";
 import { rowAnchor } from "./jump";
 import { NAV_ANCHORS } from "./routes";
@@ -30,36 +31,6 @@ import { ProfileAvatar } from "./shell";
 import { useSite } from "./site-context";
 import { useFlip } from "./use-flip";
 import { validatePage } from "./validate";
-
-/**
- * Where each run of projects starts in the list, with its length and the layout the page gives it
- * (as the renderer chooses it), and each project's place in its run. A run is projects one after the
- * other; hidden ones count, as the owner sees them all in the list.
- */
-export function projectRuns(blocks: readonly Block[], wanted: Parameters<typeof chooseProjectsLayout>[2]) {
-  const starts = new Map<string, { count: number; layout: ReturnType<typeof chooseProjectsLayout> }>();
-  const position = new Map<string, number>();
-  let run: BlockOf<"project">[] = [];
-  let runs = 0;
-  const flush = () => {
-    const first = run[0];
-    if (first) {
-      starts.set(first.id, { count: run.length, layout: chooseProjectsLayout(run, runs, wanted) });
-      runs += 1;
-    }
-    run = [];
-  };
-  for (const block of blocks) {
-    if (block.type !== "project") {
-      flush();
-      continue;
-    }
-    run.push(block);
-    position.set(block.id, run.length);
-  }
-  flush();
-  return { starts, position };
-}
 
 /** ⌥↑ / ⌥↓ moves a row (brand §7: keyboard reordering). */
 const reorderKey = (onMove: (delta: number) => void) => (event: KeyboardEvent<HTMLElement>) => {
@@ -90,7 +61,11 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   const wanted = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: doc.profile.locale === "ar" }).layout.projects, [doc.theme, doc.profile.locale]);
   const runs = useMemo(() => projectRuns(doc.blocks, wanted), [doc.blocks, wanted]);
   // The page's rules, and close to the size limit with a real account (the demo's limit is the browser's).
-  const problems = useMemo(() => validatePage({ page: doc, theme: doc.theme }, { real: supabaseEnabled }), [doc]);
+  // Measured as a real account stores it: the page (profile and blocks), its look, its legal details.
+  const problems = useMemo(
+    () => validatePage({ page: { profile: doc.profile, blocks: doc.blocks }, theme: doc.theme, legal: site.legal }, { real: supabaseEnabled }),
+    [doc, site.legal],
+  );
   const hasProjects = doc.blocks.some((block) => block.type === "project");
   // "Suggest an order": the kind's order of sections, one step that one Undo takes back.
   const suggest = () => {
@@ -278,13 +253,16 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
                 <Fragment key={block.id}>
                   <li data-project-run className={cn("flex min-w-0 flex-wrap items-center gap-x-3", inShell ? "mt-6 ps-4 pe-2" : "mt-4")}>
                     <span className="text-small font-semibold text-fg-secondary">{tPortfolio("group", { count: run.count })}</span>
-                    <Link
-                      href="/app/design"
-                      className="inline-flex min-h-touch-target items-center gap-1 rounded-xs text-small font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
-                    >
-                      {tDesign(run.layout)}
-                      <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
-                    </Link>
+                    {/* No layout to name while the page shows none of the run's projects. */}
+                    {run.layout ? (
+                      <Link
+                        href="/app/design"
+                        className="inline-flex min-h-touch-target items-center gap-1 rounded-xs text-small font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
+                      >
+                        {tDesign(run.layout)}
+                        <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+                      </Link>
+                    ) : null}
                   </li>
                   {item}
                 </Fragment>
@@ -530,8 +508,8 @@ function BlockRow({
           { label: t("addBelow"), icon: Plus, onSelect: () => setAddOpen(true, index + 1) },
           ...(first ? [] : [{ label: t("moveUp"), icon: ArrowUp, shortcut: "⌥↑", onSelect: () => onMove(-1) }]),
           ...(last ? [] : [{ label: t("moveDown"), icon: ArrowDown, shortcut: "⌥↓", onSelect: () => onMove(1) }]),
-          // A page has one contact block: it has no copy.
-          ...(block.type === "contact"
+          // A page has one contact block, and at most MAX_PROJECTS projects: neither gets a copy then.
+          ...(block.type === "contact" || (block.type === "project" && doc.blocks.filter((other) => other.type === "project").length >= MAX_PROJECTS)
             ? []
             : [
                 {

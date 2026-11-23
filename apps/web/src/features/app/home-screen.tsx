@@ -154,8 +154,15 @@ function PortfolioStep() {
   if (!doc.blocks.some((block) => block.type === "project")) return null;
   const step = nextPageStep(doc);
   if (!step) return null;
-  const start = (type: "contact" | "quotes") =>
-    edit({ mode: "create", block: startedBlock(blankBlock(type, { artist: "", newsletter: "" }), site.kind as CreatorKind | undefined, (key) => t(key as "sentence")) });
+  const start = (type: "contact" | "quotes") => {
+    // The contact block closes the page: a client's words go in before it, not after it.
+    const before = type === "quotes" ? doc.blocks.findIndex((block) => block.type === "contact") : -1;
+    edit({
+      mode: "create",
+      block: startedBlock(blankBlock(type, { artist: "", newsletter: "" }), site.kind as CreatorKind | undefined, (key) => t(key as "sentence")),
+      ...(before >= 0 ? { index: before } : {}),
+    });
+  };
   const run = () => {
     if (step === "contact") start("contact");
     else if (step === "quote") start("quotes");
@@ -167,9 +174,9 @@ function PortfolioStep() {
       type="button"
       data-portfolio-step={step}
       onClick={run}
-      className="flex items-start gap-2 justify-self-start rounded-xs text-start text-body font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
+      className="flex min-h-touch-target items-center gap-2 justify-self-start rounded-xs text-start text-body font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
     >
-      <Icon icon={ArrowRight} size="md" className="mt-0.5 shrink-0 rtl:-scale-x-100" />
+      <Icon icon={ArrowRight} size="md" className="shrink-0 rtl:-scale-x-100" />
       {t(`page.${step}`)}
     </button>
   );

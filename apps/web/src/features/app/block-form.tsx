@@ -17,11 +17,12 @@ import {
   type ContactKind,
   type CreatorKind,
   type LinkIcon,
+  type Page,
   type Platform,
   type VideoPlayback,
 } from "@linkyo/blocks";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { platformName } from "@/features/directions/shared/creator-kit";
 import { STORE_NAMES } from "@/features/directions/shared/stores";
@@ -31,6 +32,7 @@ import { FormSection, ImageInput, Repeater, SelectField, SwitchRow, TextArea, Te
 import { fetchLinkMetadata, installCommand } from "./metadata";
 import { ProjectForm } from "./project-form";
 import { ReachInput } from "./reach-input";
+import { isReachWay, reachFrom, shapeWay } from "./reach";
 import { useSite } from "./site-context";
 import { inPage, type FieldErrors } from "./validate";
 
@@ -624,7 +626,8 @@ export function BlockForm({ block, onChange: handOn, errors, creating = false }:
       fields = <QuotesFields block={block} onChange={onChange} err={err} />;
       break;
     case "contact":
-      fields = <ContactFields block={block} onChange={onChange} err={err} kind={kind} />;
+      // Keyed by the block: the step fields keep their own places while one is typed in.
+      fields = <ContactFields key={block.id} block={block} onChange={onChange} err={err} kind={kind} locale={doc.profile.locale} />;
       break;
   }
 
@@ -813,11 +816,26 @@ function QuotesFields({ block, onChange, err }: { block: BlockOf<"quotes">; onCh
   );
 }
 
-function ContactFields({ block, onChange, err, kind }: { block: BlockOf<"contact">; onChange: (block: Block) => void; err: Err; kind: CreatorKind | undefined }) {
+function ContactFields({
+  block,
+  onChange,
+  err,
+  kind,
+  locale,
+}: {
+  block: BlockOf<"contact">;
+  onChange: (block: Block) => void;
+  err: Err;
+  kind: CreatorKind | undefined;
+  locale: Page["profile"]["locale"];
+}) {
   const t = useTranslations("app.portfolio.contact");
   const tFields = useTranslations("app.fields");
+  const tPlatforms = useTranslations("app.welcome.platforms");
   type Way = NonNullable<BlockOf<"contact">["links"]>[number];
-  const steps = [0, 1, 2].map((index) => block.steps?.[index] ?? "");
+  // The three step fields keep their places while the owner types (an empty first step does not pull
+  // the second one up into it); the block stores only the filled ones, in order.
+  const [steps, setSteps] = useState(() => [0, 1, 2].map((index) => block.steps?.[index] ?? ""));
   return (
     <>
       {err("page") ? (
@@ -828,7 +846,7 @@ function ContactFields({ block, onChange, err, kind }: { block: BlockOf<"contact
       <TextInput label={t("title")} value={block.title} onValue={(title) => onChange({ ...block, title })} maxLength={80} error={err("title")} />
       <TextInput label={t("text")} value={block.text ?? ""} onValue={(text) => onChange(withOptional(block, "text", text))} maxLength={160} />
       <FormSection title={t("primary")}>
-        <ReachInput value={block.primary} onValue={(primary) => onChange({ ...block, primary })} kind={kind} errors={{ url: err("primary.url"), label: err("primary.label") }} />
+        <ReachInput value={block.primary} onValue={(primary) => onChange({ ...block, primary })} kind={kind} locale={locale} errors={{ url: err("primary.url"), label: err("primary.label") }} />
       </FormSection>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextInput label={t("status")} hint={t("statusHint")} value={block.status ?? ""} onValue={(status) => onChange(withOptional(block, "status", status))} maxLength={40} />
@@ -851,8 +869,26 @@ function ContactFields({ block, onChange, err, kind }: { block: BlockOf<"contact
           addLabel={t("addWay")}
           render={(way, update, index) => (
             <>
-              <SelectField<ContactKind> label={tFields("kind")} value={way.kind} onValue={(next) => update({ ...way, kind: next })} options={CONTACT_KINDS.map((value) => ({ value, label: t(`kinds.${value}`) }))} />
-              <UrlInput label={tFields("url")} hint={way.kind === "cv" ? t("cvHint") : undefined} value={way.url} onValue={(url) => update({ ...way, url })} error={err(`links.${String(index)}.url`)} />
+              {/* A new kind shapes the address again: a number moves from phone to WhatsApp as a chat link. */}
+              <SelectField<ContactKind> label={tFields("kind")} value={way.kind} onValue={(next) => update(shapeWay({ ...way, kind: next }))} options={CONTACT_KINDS.map((value) => ({ value, label: t(`kinds.${value}`) }))} />
+              {isReachWay(way.kind) ? (
+                // Typed as the owner writes it; the address its kind builds is made when the field is left.
+                <TextInput
+                  label={tFields("url")}
+                  hint={way.kind === "whatsapp" ? tPlatforms("whatsapp") : undefined}
+                  ltr
+                  type={way.kind === "email" ? "email" : way.kind === "calendar" ? "url" : "tel"}
+                  inputMode={way.kind === "email" ? "email" : way.kind === "calendar" ? "url" : "tel"}
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  value={reachFrom(way.url).typed}
+                  onValue={(url) => update({ ...way, url })}
+                  onBlur={() => update(shapeWay(way))}
+                  error={err(`links.${String(index)}.url`)}
+                />
+              ) : (
+                <UrlInput label={tFields("url")} hint={way.kind === "cv" ? t("cvHint") : undefined} value={way.url} onValue={(url) => update({ ...way, url })} error={err(`links.${String(index)}.url`)} />
+              )}
               <TextInput label={tFields("titleOptional")} value={way.label ?? ""} onValue={(label) => update(withOptional(way, "label", label))} maxLength={40} />
             </>
           )}
@@ -866,7 +902,9 @@ function ContactFields({ block, onChange, err, kind }: { block: BlockOf<"contact
             value={text}
             maxLength={80}
             onValue={(value) => {
-              const next = steps.map((step, i) => (i === index ? value : step)).filter((step) => step.trim() !== "");
+              const slots = steps.map((step, i) => (i === index ? value : step));
+              setSteps(slots);
+              const next = slots.filter((step) => step.trim() !== "");
               onChange(withOptional(block, "steps", next.length > 0 ? next : undefined));
             }}
           />

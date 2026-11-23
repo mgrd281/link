@@ -14,7 +14,7 @@ import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { ADD_PRESETS, addGroups, blankBlock, blockFromLink, insertAt, newBlockId, presetBlock, type AddPreset } from "./blocks";
-import { ImageError, pickFiles, prepareAndStore, storedImage, workImageKind } from "./images";
+import { ImageError, pickFiles, prepareAndStore, projectPictureLimit, storedImage, workImageKind } from "./images";
 import { isPortfolioKind, titleKeys } from "./kinds";
 import { useMediaOwner } from "./media-owner";
 import { fetchLinkMetadata } from "./metadata";
@@ -37,6 +37,16 @@ const never = () => () => undefined;
  */
 /** The icon of a preset entry (a block of an existing type, started for one purpose). */
 const PRESET_ICONS: Record<AddPreset, typeof Building2> = { clients: Building2 };
+
+/** One entry of a group in the sheet: a block type, or a preset (a block of a type, already set up). */
+type AddEntry = { type: BlockType; preset?: undefined } | { type?: undefined; preset: AddPreset };
+
+/** A group's entries in order: its presets ("Clients") right after its quotes, else at its end. */
+export function addEntries(types: readonly BlockType[], presets: readonly AddPreset[]): AddEntry[] {
+  const quotes = types.indexOf("quotes");
+  const cut = quotes < 0 ? types.length : quotes + 1;
+  return [...types.slice(0, cut).map((type) => ({ type })), ...presets.map((preset) => ({ preset })), ...types.slice(cut).map((type) => ({ type }))];
+}
 
 export function AddSheet() {
   const t = useTranslations("app.add");
@@ -61,13 +71,13 @@ export function AddSheet() {
   const detection = useMemo(() => (value.trim() ? detectLink(value.trim()) : null), [value]);
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
   // Real accounts have no newsletter backend yet: the block is not offered (public pages drop it too).
-  // A group's presets (Portfolio: "Clients") follow its types.
+  // A group's presets (Portfolio: "Clients") stand right after its quotes, else at its end.
   const groups = useMemo(
     () =>
       addGroups(site.kind)
         .map((group) => (accountStore.demo ? group : { ...group, types: group.types.filter((candidate) => candidate !== "newsletter") }))
-        .map((group) => ({ ...group, presets: (Object.hasOwn(ADD_PRESETS, group.key) ? ADD_PRESETS[group.key as keyof typeof ADD_PRESETS] : []) as readonly AddPreset[] }))
-        .filter((group) => group.types.length > 0 || group.presets.length > 0),
+        .map((group) => ({ key: group.key, entries: addEntries(group.types, (Object.hasOwn(ADD_PRESETS, group.key) ? ADD_PRESETS[group.key as keyof typeof ADD_PRESETS] : []) as readonly AddPreset[]) }))
+        .filter((group) => group.entries.length > 0),
     [site.kind],
   );
 
@@ -193,6 +203,13 @@ export function AddSheet() {
     if (!notice || !step) return;
     document.querySelector<HTMLInputElement>("[role=dialog] [data-project-title]")?.focus();
   }, [notice, step]);
+  // That line is read out: its live region is on the page first and the words arrive a frame later
+  // (a region inserted already filled is not reliably announced).
+  const [spoken, setSpoken] = useState<string | null>(null);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setSpoken(step ? notice : null));
+    return () => cancelAnimationFrame(frame);
+  }, [notice, step]);
 
   const owner = useMediaOwner();
   // One picture becomes an image; several ask first whether they are a gallery or a project.
@@ -206,10 +223,14 @@ export function AddSheet() {
     setUploading(true);
     try {
       const real = supabaseEnabled;
-      const images = await Promise.all(files.slice(0, 24).map((file) => prepareAndStore(file, as === "project" ? workImageKind(real) : "photo", owner)));
+      // A project keeps its cover and as many pictures as it holds: only those are prepared and stored
+      // (a file uploaded and then dropped would wait in Storage with nothing pointing to it).
+      const cap = as === "project" ? projectPictureLimit(real) + 1 : 24;
+      const images = await Promise.all(files.slice(0, cap).map((file) => prepareAndStore(file, as === "project" ? workImageKind(real) : "photo", owner)));
       setPhotos(null);
       if (as === "project") {
-        create(projectFromPictures(newBlockId("project"), images, real));
+        // The demo says why some were left out; a real account sees "20 of 20" on the Pictures row.
+        create(projectFromPictures(newBlockId("project"), images, real), files.length > cap && !real ? tPortfolio("demoPictures") : null);
         return;
       }
       const base = { visible: true, highlight: false };
@@ -261,11 +282,9 @@ export function AddSheet() {
       >
         {step && editor.draft ? (
           <div className="grid grid-cols-1 gap-4">
-            {notice ? (
-              <p role="status" className="rounded-md border border-line-strong bg-surface p-3 text-small">
-                {notice}
-              </p>
-            ) : null}
+            <p role="status" className="rounded-md border border-line-strong bg-surface p-3 text-small empty:hidden">
+              {spoken}
+            </p>
             <BlockEditorFields editor={{ ...editor, draft: editor.draft }} creating onSave={save} />
           </div>
         ) : (
@@ -374,43 +393,44 @@ export function AddSheet() {
                   {t(`groups.${group.key}`)}
                 </h3>
                 <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {group.types.map((type) => (
-                    <li key={type} className="grid min-w-0">
+                  {group.entries.map((entry) =>
+                    entry.type ? (
+                    <li key={entry.type} className="grid min-w-0">
                       {/* The name starts with the type ("Link Any website …"), then what it is for. */}
                       <button
                         type="button"
-                        data-type={type}
-                        onClick={() => pick(type)}
+                        data-type={entry.type}
+                        onClick={() => pick(entry.type)}
                         className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3 text-start transition-[background-color,border-color,scale] duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed active:bg-pressed motion-reduce:active:scale-none"
                       >
                         <span className="grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg">
-                          <Icon icon={blockIcon[type]} size="md" />
+                          <Icon icon={blockIcon[entry.type]} size="md" />
                         </span>
                         <span className="grid min-w-0">
-                          <span className="text-small font-semibold break-words hyphens-auto">{tTypes(type)}</span>
-                          <span className="text-caption text-fg-secondary">{t(`desc.${type}`)}</span>
+                          <span className="text-small font-semibold break-words hyphens-auto">{tTypes(entry.type)}</span>
+                          <span className="text-caption text-fg-secondary">{t(`desc.${entry.type}`)}</span>
                         </span>
                       </button>
                     </li>
-                  ))}
-                  {group.presets.map((preset) => (
-                    <li key={preset} className="grid min-w-0">
+                    ) : (
+                    <li key={entry.preset} className="grid min-w-0">
                       <button
                         type="button"
-                        data-preset={preset}
-                        onClick={() => pickPreset(preset)}
+                        data-preset={entry.preset}
+                        onClick={() => pickPreset(entry.preset)}
                         className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3 text-start transition-[background-color,border-color,scale] duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed active:bg-pressed motion-reduce:active:scale-none"
                       >
                         <span className="grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg">
-                          <Icon icon={PRESET_ICONS[preset]} size="md" />
+                          <Icon icon={PRESET_ICONS[entry.preset]} size="md" />
                         </span>
                         <span className="grid min-w-0">
-                          <span className="text-small font-semibold break-words hyphens-auto">{t(`presets.${preset}`)}</span>
-                          <span className="text-caption text-fg-secondary">{t(`desc.${preset}`)}</span>
+                          <span className="text-small font-semibold break-words hyphens-auto">{t(`presets.${entry.preset}`)}</span>
+                          <span className="text-caption text-fg-secondary">{t(`desc.${entry.preset}`)}</span>
                         </span>
                       </button>
                     </li>
-                  ))}
+                    ),
+                  )}
                 </ul>
               </section>
             ))}

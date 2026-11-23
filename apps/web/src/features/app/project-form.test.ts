@@ -1,4 +1,4 @@
-import { nextStep, pageSchema, slugFor, type Block, type BlockOf } from "@linkyo/blocks";
+import { coverImage, nextStep, pageSchema, slugFor, type Block, type BlockOf } from "@linkyo/blocks";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/i18n/navigation", () => ({ Link: () => null, useRouter: () => ({ push: () => undefined }), usePathname: () => "/" }));
@@ -6,10 +6,10 @@ vi.mock("@/i18n/navigation", () => ({ Link: () => null, useRouter: () => ({ push
 import { projectPictureLimit, workImageKind, type PreparedImage } from "./images";
 import {
   addPictures,
-  addressNeedsAttention,
   changeSlug,
   cutSentence,
   formerOwner,
+  inlineAddress,
   projectFromLink,
   projectFromPictures,
   projectFromRepository,
@@ -18,6 +18,7 @@ import {
   startedBlock,
   takenAddresses,
   waitingPictures,
+  withFocal,
   withTitle,
 } from "./project-form";
 
@@ -93,12 +94,42 @@ describe("the address", () => {
     expect(releasedAddresses(repaired)).toEqual([]);
   });
 
-  it("asks for an address when the title has no Latin letters (an Arabic title)", () => {
+  it("asks for an address right below the title when the title has no Latin letters (an Arabic title)", () => {
     const arabic = withTitle(project(), "مسار", [], "project");
     expect(arabic.slug).toBe("project-1");
-    expect(addressNeedsAttention(arabic)).toBe(true);
+    // The rule the quick form uses: a new project whose title gives no address.
+    expect(inlineAddress(arabic, undefined, "project")).toBe(true);
+    // It stays while the owner types one (the rule reads the title, not the address typed) …
+    expect(inlineAddress(changeSlug(arabic, "masar", undefined), undefined, "project")).toBe(true);
+    // … and is gone once the project is on the page (the Address row holds it then), or for a Latin title.
+    expect(inlineAddress(arabic, arabic, "project")).toBe(false);
+    expect(inlineAddress(withTitle(project(), "Masar", [], "project"), undefined, "project")).toBe(false);
+    expect(inlineAddress(project(), undefined, "project")).toBe(false);
     expect(nextStep({ ...arabic, summary: "x" })).toBe("address");
-    expect(addressNeedsAttention(withTitle(project(), "Masar", [], "project"))).toBe(false);
+  });
+});
+
+describe("the focal point", () => {
+  const image = (n: number) => ({ src: `data:image/jpeg;base64,${String(n)}`, alt: `Bild ${String(n)}`, w: 1200, h: 800 });
+
+  it("moves on the cover when the project has one", () => {
+    const withCover = project({ cover: image(0), pictures: [{ image: image(1) }] });
+    const moved = withFocal(withCover, [0.25, 0.75]);
+    expect(moved.cover?.focal).toEqual([0.25, 0.75]);
+    expect(moved.pictures?.[0]?.image.focal).toBeUndefined();
+    expect("focal" in (withFocal(moved, undefined).cover ?? {})).toBe(false);
+  });
+
+  it("moves on the first picture, which cards show, when there is no cover", () => {
+    const pictures = project({ pictures: [{ image: image(1) }, { image: { ...image(2), focal: [0.1, 0.1] } }] });
+    const moved = withFocal(pictures, [0.3, 0.2]);
+    expect(coverImage(moved)?.focal).toEqual([0.3, 0.2]);
+    expect(moved.cover).toBeUndefined();
+    // The others keep theirs.
+    expect(moved.pictures?.[1]?.image.focal).toEqual([0.1, 0.1]);
+    // Back to the centre drops the point.
+    expect("focal" in (withFocal(moved, undefined).pictures?.[0]?.image ?? {})).toBe(false);
+    expect(withFocal(project(), [0.3, 0.2])).toEqual(project());
   });
 });
 

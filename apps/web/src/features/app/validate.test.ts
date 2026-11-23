@@ -18,6 +18,10 @@ describe("validateBlock: the errors of a project", () => {
   it("needs a title and a sentence", () => {
     expect(validateBlock(project({ title: "" }))?.title).toBe("required");
     expect(validateBlock(project({ summary: "" }))?.summary).toBe("required");
+    // Spaces alone are no title and no sentence (the card would have no name).
+    expect(validateBlock(project({ title: "   " }))?.title).toBe("required");
+    expect(validateBlock(project({ title: " \t" }))?.title).toBe("required");
+    expect(validateBlock(project({ summary: " " }))?.summary).toBe("required");
   });
 
   it("refuses an end before the start", () => {
@@ -44,6 +48,15 @@ describe("validateBlock: the errors of a project", () => {
     // Another project's earlier address can be taken over (the editor confirms it in one line).
     const older = project({ id: "p2", slug: "harbour", was: ["hafenlicht"] });
     expect(validateBlock(inPage(project(), [older]))).toBeNull();
+  });
+
+  it("refuses an address typed into the sheet that cannot be used, so Save does not drop it quietly", () => {
+    // The Address field puts what was typed into the draft even when it shows a problem.
+    const saved = project();
+    expect(validateBlock(inPage(project({ slug: "kontakt", was: ["hafenlicht"] }), [saved]))?.slug).toBe("portfolio.slugReserved");
+    const other = project({ id: "p2", slug: "harbour" });
+    expect(validateBlock(inPage(project({ slug: "harbour" }), [saved, other]))?.slug).toBe("portfolio.slugTaken");
+    expect(validateBlock(inPage(project({ slug: "x" }), [saved]))?.slug).toBe("portfolio.slugInvalid");
   });
 
   it("refuses a 25th project", () => {
@@ -81,6 +94,17 @@ describe("validateBlock: the other portfolio blocks", () => {
     expect(validateBlock(timeline)?.["items.0.years.to"]).toBe("portfolio.yearOrder");
   });
 
+  it("needs another way's address to be what its kind builds", () => {
+    const ways = (links: NonNullable<BlockOf<"contact">["links"]>): Block => ({ ...contact(), links });
+    expect(validateBlock(ways([{ kind: "whatsapp", url: "https://wa.me/4915123456789" }, { kind: "email", url: "mailto:hallo@example.com" }, { kind: "phone", url: "tel:+49301234567" }]))).toBeNull();
+    expect(validateBlock(ways([{ kind: "calendar", url: "https://cal.example.com/ronja" }, { kind: "cv", url: "https://example.com/cv.pdf" }, { kind: "link", url: "https://example.com" }]))).toBeNull();
+    // A number under WhatsApp that became a phone call, and a dead wa.me link without a country code.
+    expect(validateBlock(ways([{ kind: "whatsapp", url: "tel:+4915123456789" }]))?.["links.0.url"]).toBe("invalid");
+    expect(validateBlock(ways([{ kind: "whatsapp", url: "https://wa.me/01512345678" }]))?.["links.0.url"]).toBe("invalid");
+    // An e-mail address under "Phone", a phone number under "E-mail".
+    expect(validateBlock(ways([{ kind: "email", url: "https://example.com" }, { kind: "phone", url: "mailto:a@b.de" }]))).toEqual({ "links.0.url": "invalidEmail", "links.1.url": "invalid" });
+  });
+
   it("lets clients be names without logos", () => {
     expect(validateBlock({ ...base, id: "b", type: "brands", title: "Kunden", columns: 3, items: [{ name: "Bäckerei Sonnenschein" }] })).toBeNull();
   });
@@ -102,6 +126,13 @@ describe("validatePage", () => {
     expect(validatePage({ page }, { real: true })).toContain("pageSize");
     const small = { profile, blocks: blocks.slice(0, 100) };
     expect(validatePage({ page: small }, { real: true })).not.toContain("pageSize");
+  });
+
+  it("measures what a real account stores: the page, its look and its legal details", () => {
+    const page = { profile, blocks: [project()] };
+    const legal = { name: "Ronja Feldkamp", address: "Am Hafen 1, 20457 Hamburg", email: "hallo@example.com", phone: "" };
+    expect(storedSize({ page, theme: { template: "werkbogen" }, legal })).toBeGreaterThan(storedSize({ page, theme: { template: "werkbogen" } }));
+    expect(storedSize({ page, theme: { template: "werkbogen" }, legal })).toBe(new TextEncoder().encode(JSON.stringify([page, { template: "werkbogen" }, legal])).length);
   });
 
   it("measures nothing in the demo, where six pictures are data URLs inside the page", () => {

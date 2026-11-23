@@ -63,9 +63,11 @@ export function FocalInput({ image, onFocal }: { image: ImageValue; onFocal: (fo
           <span
             data-focal-marker
             style={{ left: `${String(focal[0] * 100)}%`, top: `${String(focal[1] * 100)}%` }}
-            className="pointer-events-none absolute grid size-touch-target -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-surface-elevated bg-scrim"
+            // White ring and dot on a dark disc in both modes (control-knob is white in the dark
+            // dashboard too, where surface-elevated is near black): it stands out on any picture.
+            className="pointer-events-none absolute grid size-touch-target -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-control-knob bg-scrim"
           >
-            <span className="size-dot rounded-full bg-surface-elevated" />
+            <span className="size-dot rounded-full bg-control-knob" />
           </span>
         </div>
         <div className="flex flex-wrap items-end gap-3" aria-hidden>

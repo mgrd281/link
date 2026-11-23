@@ -13,7 +13,7 @@ import { linkStyleClasses } from "@/features/creator/link-button";
 import { displayStyle } from "@/features/directions/poster/styles";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
 
-import { projectRuns } from "./editor-screen";
+import { projectRuns } from "./project-runs";
 import { setDesignTabUrl } from "./jump";
 import { PhonePreview, PreviewButton } from "./preview";
 import { DESIGN_TABS, designTabFrom, NAV_ANCHORS, type DesignTab } from "./routes";
@@ -206,7 +206,8 @@ export function DesignScreen() {
   // fill falls back to the list on the page; one line says why.
   const hasProjects = doc.blocks.some((block) => block.type === "project");
   const projects: ProjectsStyle = theme.projects ?? "auto";
-  const forced = projects !== "auto" && [...projectRuns(doc.blocks, projects).starts.values()].some((run) => run.layout !== projects);
+  // As the page shows it: hidden and scheduled projects do not count.
+  const forced = projects !== "auto" && projectRuns(doc.blocks, projects).layouts.some((layout) => layout !== projects);
   const work = (
     <Panel title={t("projects.label")} id={`${id}-projects`}>
       <fieldset className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
@@ -238,11 +239,10 @@ export function DesignScreen() {
           );
         })}
       </fieldset>
-      {forced ? (
-        <p role="status" className="text-small font-regular text-fg-secondary">
-          {t("projects.forced")}
-        </p>
-      ) : null}
+      {/* Always there, so the line is read out when a choice makes it appear. */}
+      <p role="status" className="text-small font-regular text-fg-secondary empty:hidden">
+        {forced ? t("projects.forced") : null}
+      </p>
     </Panel>
   );
 

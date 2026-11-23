@@ -1,5 +1,7 @@
 import { blockSchema, hasImage, isProjectSlug, MAX_PROJECTS, PROJECT_SLUG, PROJECT_SLUG_MAX, PROJECT_SLUG_MIN, RESERVED_PROJECT_SLUGS, type Block, type Page } from "@linkyo/blocks";
 
+import { isReachWay, reachesBy } from "./reach";
+
 /**
  * Field errors by path ("title", "items.0.url"), as message keys under app.errors; keys that start
  * with "portfolio." are under app.portfolio ("portfolio.slugTaken"). The path "page" holds a problem
@@ -58,6 +60,9 @@ function schemaErrors(block: Block, errors: FieldErrors) {
 function portfolioErrors(block: Block, errors: FieldErrors, blocks: readonly Block[] | undefined) {
   switch (block.type) {
     case "project": {
+      // A title or sentence of spaces alone says nothing (the card would have no name).
+      if (!errors.title && block.title.trim() === "") errors.title = "required";
+      if (!errors.summary && block.summary.trim() === "") errors.summary = "required";
       // The address in the owner's words: why it cannot be used, not "check this field".
       delete errors.slug;
       const slug = blocks ? slugProblem(block.slug, block.id, blocks) : isProjectSlug(block.slug) ? null : RESERVED_PROJECT_SLUGS.has(block.slug) ? "slugReserved" : "slugInvalid";
@@ -82,6 +87,11 @@ function portfolioErrors(block: Block, errors: FieldErrors, blocks: readonly Blo
       break;
     case "contact":
       if (blocks?.some((other) => other.type === "contact" && other.id !== block.id)) errors.page = "portfolio.oneContact";
+      // Another way leads where its kind says: a WhatsApp way to a chat, not to the phone's dialler.
+      block.links?.forEach((link, index) => {
+        const path = `links.${String(index)}.url`;
+        if (!errors[path] && isReachWay(link.kind) && !reachesBy(link.kind, link.url)) errors[path] = link.kind === "email" ? "invalidEmail" : "invalid";
+      });
       break;
     default:
       break;

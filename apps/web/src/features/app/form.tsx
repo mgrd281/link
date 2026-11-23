@@ -254,6 +254,7 @@ export function ImageInput({
   withAlt = true,
   error,
   hint,
+  altId,
   altLabel,
   altHint,
 }: {
@@ -265,6 +266,8 @@ export function ImageInput({
   withAlt?: boolean;
   error?: string | undefined;
   hint?: string | undefined;
+  /** The description field's id, for a form that leads the owner to it ("describe your picture"). */
+  altId?: string | undefined;
   /** The description field's own words, where the form says more than "Image description". */
   altLabel?: string | undefined;
   altHint?: string | undefined;
@@ -349,7 +352,7 @@ export function ImageInput({
         </p>
       ) : null}
       {withAlt && present ? (
-        <TextInput label={altLabel ?? t("alt")} hint={altHint ?? t("altHint")} value={image.alt} onValue={(alt) => onImage({ ...image, alt })} maxLength={300} />
+        <TextInput id={altId} label={altLabel ?? t("alt")} hint={altHint ?? t("altHint")} value={image.alt} onValue={(alt) => onImage({ ...image, alt })} maxLength={300} />
       ) : null}
     </div>
   );

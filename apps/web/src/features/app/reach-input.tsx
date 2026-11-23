@@ -1,86 +1,18 @@
 "use client";
 
-import { normalizeUrl, type CreatorKind, type LinkIcon } from "@linkyo/blocks";
+import type { CreatorKind } from "@linkyo/blocks";
 import { cn, Icon } from "@linkyo/ui";
 import { CalendarDays, Mail, MessageCircle, Phone } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 
 import { TextInput } from "./form";
+import { isPresetLabel, presetLabel, reachFrom, reachIcon, reachPresets, reachUrl, REACH_WAYS, type PageLocale, type ReachWay, type ReachValue } from "./reach";
 
-/** The ways a page's one button can reach its owner. */
-export const REACH_WAYS = ["calendar", "email", "whatsapp", "phone"] as const;
-export type ReachWay = (typeof REACH_WAYS)[number];
-
-/** Label presets (`app.portfolio.contact.presets.*`). */
-export type ReachPreset = "call" | "email" | "whatsapp" | "phone" | "project" | "shoot";
-
-/** The page's one primary action, as the contact block stores it. */
-export interface ReachValue {
-  label: string;
-  url: string;
-  icon?: LinkIcon | undefined;
-}
-
-const ICONS: Record<ReachWay, LinkIcon> = { calendar: "calendar", email: "mail", whatsapp: "chat", phone: "phone" };
-
-/** The icon a way's button carries on the page. */
-export const reachIcon = (way: ReachWay): LinkIcon => ICONS[way];
-
-/** At least this many digits make a phone number (a short service number has more than this). */
-const MIN_DIGITS = 6;
-const MAX_DIGITS = 15;
-const EMAIL = /^[^\s@/:]+@[^\s@/:]+\.[^\s@/:]{2,}$/;
-
-/**
- * The address a way leads to, built by code from what was typed: a booking link stays a web
- * address, an e-mail becomes `mailto:`, a WhatsApp number `https://wa.me/<digits>` and a phone
- * number `tel:`. Null when what was typed is not such an address (never a half-made link).
- */
-export function reachUrl(way: ReachWay, typed: string): string | null {
-  const raw = typed.trim();
-  if (!raw) return null;
-  switch (way) {
-    case "calendar": {
-      const url = normalizeUrl(raw);
-      return url && /^https?:$/.test(url.protocol) ? url.toString() : null;
-    }
-    case "email": {
-      const address = raw.replace(/^mailto:/i, "");
-      return EMAIL.test(address) ? `mailto:${address}` : null;
-    }
-    case "whatsapp": {
-      // A pasted wa.me link or a number with spaces, dashes, brackets or a leading +.
-      const number = raw.replace(/^(?:https?:\/\/)?(?:www\.)?wa\.me\//i, "");
-      if (!/^\+?[\d\s()./-]+$/.test(number)) return null;
-      const digits = number.replace(/\D/g, "");
-      return digits.length >= MIN_DIGITS && digits.length <= MAX_DIGITS ? `https://wa.me/${digits}` : null;
-    }
-    case "phone": {
-      const number = raw.replace(/^tel:/i, "");
-      if (!/^\+?[\d\s()./-]+$/.test(number)) return null;
-      const digits = number.replace(/\D/g, "");
-      if (digits.length < MIN_DIGITS || digits.length > MAX_DIGITS) return null;
-      return `tel:${number.trim().startsWith("+") ? "+" : ""}${digits}`;
-    }
-  }
-}
-
-/** Which way a stored address belongs to, and what to show in its field. */
-export function reachFrom(url: string): { way: ReachWay; typed: string } {
-  if (/^mailto:/i.test(url)) return { way: "email", typed: url.replace(/^mailto:/i, "") };
-  if (/^tel:/i.test(url)) return { way: "phone", typed: url.replace(/^tel:/i, "") };
-  const whatsapp = /^https?:\/\/(?:www\.)?wa\.me\/(\d+)/i.exec(url);
-  if (whatsapp) return { way: "whatsapp", typed: `+${whatsapp[1] ?? ""}` };
-  return { way: "calendar", typed: url };
-}
-
-/** The label presets of a way, best first, by the kind of page: photographers are booked for shoots. */
-export function reachPresets(way: ReachWay, kind: CreatorKind | undefined): ReachPreset[] {
-  const work: ReachPreset = kind === "photographer" ? "shoot" : "project";
-  if (way === "calendar") return kind === "photographer" ? ["shoot", "call"] : ["call", work];
-  return [way, work];
-}
+// The rules live in a plain module (validate.ts checks contact ways with them too); they are
+// re-exported here for the forms that import them with the field.
+export { isPresetLabel, isReachWay, presetLabel, reachesBy, reachFrom, reachIcon, reachPresets, reachUrl, REACH_WAYS, shapeWay } from "./reach";
+export type { PageLocale, ReachPreset, ReachValue, ReachWay } from "./reach";
 
 const INPUT: Record<ReachWay, { type: string; inputMode: "url" | "email" | "tel"; autoComplete: string }> = {
   calendar: { type: "url", inputMode: "url", autoComplete: "url" },
@@ -95,18 +27,22 @@ const WAY_ICONS = { calendar: CalendarDays, email: Mail, whatsapp: MessageCircle
  * The page's one button: how people reach the owner (a segmented choice), one address field typed
  * left to right in every language, and the button's words with presets for the kind of page. It
  * returns `{ label, url, icon }`, the address built by code (`reachUrl`). The welcome flow and the
- * contact block's form both use it.
+ * contact block's form both use it. The button's preset words are in the page's language, which
+ * can differ from the dashboard's.
  */
 export function ReachInput({
   value,
   onValue,
   kind,
+  locale,
   labels,
   errors = {},
 }: {
   value: ReachValue;
   onValue: (value: ReachValue) => void;
   kind: CreatorKind | undefined;
+  /** The page's language, for the preset words visitors read (the dashboard's when not given). */
+  locale?: PageLocale | undefined;
   /** The field names where a form has its own words (the welcome flow). */
   labels?: { address?: string | undefined; label?: string | undefined } | undefined;
   errors?: { url?: string | undefined; label?: string | undefined } | undefined;
@@ -114,18 +50,21 @@ export function ReachInput({
   const t = useTranslations("app.portfolio.contact");
   const tWays = useTranslations("app.welcome.portfolio.ways");
   const tErrors = useTranslations("app.errors");
+  const tPlatforms = useTranslations("app.welcome.platforms");
+  const dashboard = useLocale();
+  const words = locale ?? (dashboard === "en" || dashboard === "ar" ? dashboard : "de");
   const id = useId();
   const [state, setState] = useState(() => reachFrom(value.url));
   const [touched, setTouched] = useState(false);
   const presets = reachPresets(state.way, kind);
-  const presetLabels = new Set(REACH_WAYS.flatMap((way) => reachPresets(way, kind)).map((preset) => t(`presets.${preset}`)));
-  // The label follows the way while it is empty or still one of our presets.
-  const ownLabel = value.label.trim() !== "" && !presetLabels.has(value.label);
+  // The label follows the way while it is empty or still one of our presets (in any language).
+  const ownLabel = value.label.trim() !== "" && !isPresetLabel(value.label);
+  const firstPreset = (way: ReachWay) => presetLabel(reachPresets(way, kind)[0] ?? "call", words);
 
   // A button needs words: the way's first preset, until the owner writes or picks others.
   const emit = (way: ReachWay, typed: string, label = value.label) => {
     const url = reachUrl(way, typed) ?? "";
-    onValue({ label: label.trim() ? label : t(`presets.${reachPresets(way, kind)[0] ?? "call"}`), url, icon: reachIcon(way) });
+    onValue({ label: label.trim() ? label : firstPreset(way), url, icon: reachIcon(way) });
   };
   const choose = (way: ReachWay) => {
     // A number typed for WhatsApp stays when switching to phone (and back); other addresses start over.
@@ -133,7 +72,7 @@ export function ReachInput({
     const typed = phoneLike ? state.typed : "";
     setState({ way, typed });
     setTouched(false);
-    emit(way, typed, ownLabel ? value.label : t(`presets.${reachPresets(way, kind)[0] ?? "call"}`));
+    emit(way, typed, ownLabel ? value.label : firstPreset(way));
   };
 
   const invalid = touched && state.typed.trim() !== "" && reachUrl(state.way, state.typed) === null;
@@ -163,6 +102,8 @@ export function ReachInput({
       <TextInput
         id={`${id}-address`}
         label={labels?.address ?? t("primaryUrl")}
+        // WhatsApp needs the country code ("WhatsApp (number with country code)"): said before it is missed.
+        hint={state.way === "whatsapp" ? tPlatforms("whatsapp") : undefined}
         value={state.typed}
         ltr
         type={INPUT[state.way].type}
@@ -175,7 +116,7 @@ export function ReachInput({
           // An e-mail address typed into another way's field is an e-mail: the choice follows it.
           const way = state.way !== "email" && reachUrl(state.way, typed) === null && reachUrl("email", typed) !== null ? "email" : state.way;
           setState({ way, typed });
-          emit(way, typed, way === state.way || ownLabel ? value.label : t(`presets.${reachPresets(way, kind)[0] ?? "call"}`));
+          emit(way, typed, way === state.way || ownLabel ? value.label : firstPreset(way));
         }}
         onBlur={() => setTouched(true)}
       />
@@ -190,7 +131,7 @@ export function ReachInput({
         />
         <div className="flex flex-wrap gap-2">
           {presets.map((preset) => {
-            const text = t(`presets.${preset}`);
+            const text = presetLabel(preset, words);
             const chosen = value.label === text;
             return (
               <button

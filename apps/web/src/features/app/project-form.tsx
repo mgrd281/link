@@ -2,8 +2,10 @@
 
 import {
   CODE_LANGS,
+  coverImage,
   FALLBACK_SLUG,
   formatYears,
+  hasImage,
   nextStep,
   shownPictures,
   slugFor,
@@ -18,7 +20,7 @@ import { Button, cn, Icon, IconButton } from "@linkyo/ui";
 import { ArrowRight, ChevronLeft, ChevronRight, Crosshair, ImagePlus, Plus, RefreshCw, StarOff } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 import { remoteImageProps, resolveMedia } from "@/features/directions/shared/media";
 import { supabaseEnabled } from "@/lib/supabase/config";
@@ -101,8 +103,13 @@ export function addPictures(project: Project, prepared: readonly PreparedImage[]
 /** Pictures that wait for a description (the page leaves them out until then). */
 export const waitingPictures = (project: Project): number => (project.pictures?.length ?? 0) - shownPictures(project).length;
 
-/** Group the project sheet opens by itself: the address, when the title gave none to make one from. */
-export const addressNeedsAttention = (project: Project): boolean => project.title.trim() !== "" && FALLBACK_SLUG.test(project.slug);
+/**
+ * Whether the quick form asks for the address right below the title: a project not yet on the page
+ * whose title gives no address to make (no Latin letters), so it would get the fallback "project-n".
+ * It stays while the owner types one: the rule reads the title, not the address typed.
+ */
+export const inlineAddress = (project: Project, saved: Project | undefined, word: string): boolean =>
+  !saved && project.title.trim() !== "" && FALLBACK_SLUG.test(slugFor(project.title, [], word, project.source?.repo));
 
 /** A sentence cut to fit a card: at a word where possible, with an ellipsis. */
 export function cutSentence(text: string, max: number): string {
@@ -236,6 +243,7 @@ export function ProjectForm({
   const t = useTranslations("app.portfolio");
   const tFields = useTranslations("app.fields");
   const tEdit = useTranslations("app.edit");
+  const tTypes = useTranslations("dashboard.types");
   const { doc, site, account } = useSite();
   const real = supabaseEnabled;
   const word = slugWord(doc.profile.locale);
@@ -253,13 +261,51 @@ export function ProjectForm({
   const step = nextStep(block);
   const codeShown = CODE_KINDS.has(site.kind as CreatorKind) || block.source !== undefined || block.code !== undefined;
   // A new project whose title gives no address (no Latin letters) asks for one right below the title.
-  const inlineAddress = !saved && block.title.trim() !== "" && FALLBACK_SLUG.test(slugFor(block.title, [], word, block.source?.repo));
+  const showInlineAddress = inlineAddress(block, saved, word);
+  // The cover's description field, where the "describe your picture" step leads while the cover waits.
+  const coverAltId = useId();
+
+  // Back from a panel returns to the overview where the owner left it: scrolled as it was, with focus
+  // on the control that opened the panel (else the group's chip or row, else the title).
+  const overview = useRef<HTMLDivElement>(null);
+  const opener = useRef<{ selectors: string[]; top: number } | null>(null);
+  const shownPanel = useRef<Panel | null>(null);
+  const open = (next: Panel, selector?: string) => {
+    const body = overview.current?.closest<HTMLElement>("[data-sheet-body]");
+    opener.current = { selectors: [...(selector ? [selector] : []), `[data-group="${next}"]`], top: body?.scrollTop ?? 0 };
+    setPanel(next);
+  };
+  useLayoutEffect(() => {
+    const left = shownPanel.current;
+    shownPanel.current = panel;
+    if (panel !== null || left === null) return;
+    const root = overview.current;
+    if (!root) return;
+    const back = opener.current;
+    opener.current = null;
+    const body = root.closest<HTMLElement>("[data-sheet-body]");
+    if (body && back) body.scrollTop = back.top;
+    const target = [...(back?.selectors ?? []), "[data-project-title]"].map((selector) => root.querySelector<HTMLElement>(selector)).find((element) => element !== null);
+    target?.focus({ preventScroll: back !== null });
+  }, [panel]);
+  const takeStep = (next: ProjectStep) => {
+    // A cover without a description waits on this screen: its field sits right above, no panel holds it.
+    if (next === "alt" && hasImage(block.cover) && !filled(block.cover.alt)) {
+      const field = document.getElementById(coverAltId);
+      field?.scrollIntoView({ block: "center" });
+      field?.focus({ preventScroll: true });
+      return;
+    }
+    open(STEP_GROUP[next], "[data-next-step]");
+  };
 
   if (panel) {
     const title =
       panel === "describe" ? t("describeAll") : panel === "focus" ? t("focus.title") : t(`groups.${panel}`);
+    // Named by where it leads: in the Add sheet the sheet's own Back, beside it, leaves the form instead.
+    const backTo = panel === "describe" ? t("groups.pictures") : block.title.trim() || tTypes("project");
     return (
-      <PanelView title={title} back={tEdit("back")} onBack={() => setPanel(panel === "describe" ? "pictures" : null)}>
+      <PanelView title={title} back={`${tEdit("back")}: ${backTo}`} onBack={() => setPanel(panel === "describe" ? "pictures" : null)}>
         {panel === "result" ? <ResultFields block={block} set={set} err={err} /> : null}
         {panel === "story" ? <StoryFields block={block} set={set} /> : null}
         {panel === "pictures" ? <PictureFields block={block} onChange={onChange} real={real} onDescribe={() => setPanel("describe")} /> : null}
@@ -276,25 +322,33 @@ export function ProjectForm({
   const groups: { key: GroupKey; summary: string | null }[] = [
     { key: "result", summary: resultSummary(block) },
     { key: "story", summary: [block.story?.about, block.story?.problem, block.story?.solution].find(filled) ?? null },
-    { key: "pictures", summary: block.pictures?.length ? t("pictureCount", { count: block.pictures.length, max: projectPictureLimit(real) }) : null },
+    // Pictures that wait for a description are left off the page: the row says how many, before anything else.
+    {
+      key: "pictures",
+      summary: block.pictures?.length
+        ? waitingPictures(block) > 0
+          ? t("altMissing", { count: waitingPictures(block) })
+          : t("pictureCount", { count: block.pictures.length, max: projectPictureLimit(real) })
+        : null,
+    },
     { key: "forRole", summary: forRoleSummary(block, t("hideClient"), t("untilToday")) },
     { key: "links", summary: block.links?.length ? block.links.map((link) => link.label ?? hostOf(link.url)).join(" · ") : null },
     ...(codeShown ? [{ key: "code" as const, summary: block.source ? `${block.source.owner}/${block.source.repo}` : (block.code?.file ?? block.code?.lang ?? null) }] : []),
   ];
   const rows = groups.filter((group) => group.summary !== null);
   const chips = groups.filter((group) => group.summary === null);
-  const address = inlineAddress ? [] : [{ key: "address" as const, summary: `linkyo.app/${account.username}/${block.slug}` }];
+  const address = showInlineAddress ? [] : [{ key: "address" as const, summary: `linkyo.app/${account.username}/${block.slug}` }];
   const cover = block.cover;
 
   return (
-    <div className="grid grid-cols-1 gap-6">
+    <div ref={overview} className="grid grid-cols-1 gap-6">
       {errors.page ? (
         <p role="alert" className="rounded-md border border-danger-strong bg-danger-subtle p-3 text-small">
           {err("page")}
         </p>
       ) : null}
       <TextInput data-project-title label={tFields("title")} value={block.title} onValue={(title) => onChange(withTitle(block, title, doc.blocks, word))} maxLength={60} error={err("title")} />
-      {inlineAddress ? <AddressFields block={block} onChange={onChange} saved={saved} username={account.username} err={err} inline /> : null}
+      {showInlineAddress ? <AddressFields block={block} onChange={onChange} saved={saved} username={account.username} err={err} inline /> : null}
       <TextArea label={t("sentence")} hint={t("sentenceHint")} value={block.summary} onValue={(summary) => set({ summary: summary.replace(/\n/g, " ") })} max={140} rows={2} count error={err("summary")} />
       <div className="grid grid-cols-1 gap-3">
         <ImageInput
@@ -303,6 +357,7 @@ export function ProjectForm({
           kind={workImageKind(real)}
           shape="wide"
           image={cover}
+          altId={coverAltId}
           altLabel={t("alt")}
           altHint={t("altHint")}
           onImage={(image) => {
@@ -310,8 +365,9 @@ export function ProjectForm({
             onChange(image ? { ...rest, cover: image } : rest);
           }}
         />
-        {cover ? (
-          <Button type="button" variant="ghost" icon={Crosshair} className="justify-self-start" onClick={() => setPanel("focus")}>
+        {/* The picture the cards show: the cover, else the first picture. */}
+        {coverImage(block) ? (
+          <Button type="button" variant="ghost" icon={Crosshair} data-group="focus" className="justify-self-start" onClick={() => open("focus")}>
             {t("focus.open")}
           </Button>
         ) : null}
@@ -320,15 +376,16 @@ export function ProjectForm({
       {step ? (
         <button
           type="button"
-          onClick={() => setPanel(STEP_GROUP[step])}
-          className="flex items-start gap-2 justify-self-start rounded-xs text-start text-small font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
+          data-next-step={step}
+          onClick={() => takeStep(step)}
+          className="flex min-h-touch-target items-center gap-2 justify-self-start rounded-xs text-start text-small font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
         >
-          <Icon icon={ArrowRight} size="sm" className="mt-0.5 shrink-0 rtl:-scale-x-100" />
+          <Icon icon={ArrowRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
           {t(`next.${step}`)}
         </button>
       ) : null}
 
-      <GroupRows rows={rows} onOpen={setPanel} />
+      <GroupRows rows={rows} onOpen={open} />
       {chips.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {chips.map((group) => (
@@ -336,7 +393,7 @@ export function ProjectForm({
               key={group.key}
               type="button"
               data-group={group.key}
-              onClick={() => setPanel(group.key)}
+              onClick={() => open(group.key)}
               className="inline-flex min-h-touch-target items-center gap-2 rounded-full border border-line-strong px-4 text-small font-medium transition-colors duration-micro hover:border-line-input hover:bg-hover focus-visible:focus-ring"
             >
               <Icon icon={Plus} size="sm" />
@@ -346,7 +403,7 @@ export function ProjectForm({
         </div>
       ) : null}
       {/* The address closes the list: it is there from the start, and rarely needs a change. */}
-      <GroupRows rows={address} onOpen={setPanel} ltr />
+      <GroupRows rows={address} onOpen={open} ltr />
       {schedule}
     </div>
   );
@@ -582,21 +639,47 @@ function DescribeAll({ block, onChange, onDone }: { block: Project; onChange: (b
   const picture = pictures[index];
   const [text, setText] = useState({ index, value: picture?.caption ?? "" });
   if (text.index !== index) setText({ index, value: picture?.caption ?? "" });
+  // Done (or "Needs no description") moves on to the next picture: focus goes to its description
+  // field, as the button that had it is now disabled. The first picture keeps the panel's own focus.
+  const fields = useRef<HTMLDivElement>(null);
+  const shown = useRef(index);
+  useEffect(() => {
+    if (shown.current === index) return;
+    shown.current = index;
+    fields.current?.querySelector<HTMLInputElement>("input")?.focus();
+  }, [index]);
   useEffect(() => {
     if (index < 0) onDone();
   }, [index, onDone]);
   if (!picture) return null;
   const update = (next: Picture) => onChange({ ...block, pictures: pictures.map((candidate, i) => (i === index ? next : candidate)) });
+  const describe = () => {
+    if (text.value.trim()) update({ ...picture, image: { ...picture.image, alt: text.value.trim() } });
+  };
   const waiting = waitingPictures(block);
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div ref={fields} className="grid grid-cols-1 gap-4">
       <p className="text-small text-fg-secondary tabular-nums" aria-live="polite">
         {t("altMissing", { count: waiting })}
       </p>
       <Thumbnail image={picture.image} natural className="max-h-[50dvh] w-full [&_img]:object-contain" />
-      <TextInput label={t("alt")} hint={t("altHint")} value={text.value} onValue={(value) => setText({ index, value })} maxLength={300} />
+      <TextInput
+        label={t("alt")}
+        hint={t("altHint")}
+        value={text.value}
+        onValue={(value) => setText({ index, value })}
+        maxLength={300}
+        enterKeyHint="next"
+        onKeyDown={(event) => {
+          // Enter describes this picture and goes on to the next, as Done does; it does not save the sheet.
+          if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+            event.preventDefault();
+            describe();
+          }
+        }}
+      />
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="primary" disabled={!text.value.trim()} onClick={() => update({ ...picture, image: { ...picture.image, alt: text.value.trim() } })}>
+        <Button type="button" variant="primary" disabled={!text.value.trim()} onClick={describe}>
           {t("focus.done")}
         </Button>
         <Button type="button" variant="ghost" onClick={() => update({ ...picture, decorative: true })}>
@@ -607,19 +690,26 @@ function DescribeAll({ block, onChange, onDone }: { block: Project; onChange: (b
   );
 }
 
+/**
+ * The card picture (`coverImage`: the cover, else the first picture) with a new focal point; none is
+ * the centre. The other pictures keep theirs.
+ */
+export function withFocal(block: Project, focal: [number, number] | undefined): Project {
+  const moved = <I extends { focal?: [number, number] | undefined }>(image: I): I => {
+    const { focal: _focal, ...rest } = image;
+    return (focal ? { ...rest, focal } : rest) as I;
+  };
+  if (hasImage(block.cover)) return { ...block, cover: moved(block.cover) };
+  const [first, ...rest] = block.pictures ?? [];
+  if (!first || !hasImage(first.image)) return block;
+  return { ...block, pictures: [{ ...first, image: moved(first.image) }, ...rest] };
+}
+
 /** The focal point of the picture cards show: the cover, else the first picture. */
 function FocusFields({ block, onChange }: { block: Project; onChange: (block: Project) => void }) {
-  const cover = block.cover;
-  if (!cover) return null;
-  return (
-    <FocalInput
-      image={cover}
-      onFocal={(focal) => {
-        const { focal: _focal, ...rest } = cover;
-        onChange({ ...block, cover: focal ? { ...rest, focal } : rest });
-      }}
-    />
-  );
+  const image = coverImage(block);
+  if (!image) return null;
+  return <FocalInput image={image} onFocal={(focal) => onChange(withFocal(block, focal))} />;
 }
 
 function ForRoleFields({ block, onChange, err }: { block: Project; onChange: (block: Project) => void; err: (path: string) => string | undefined }) {
@@ -825,7 +915,9 @@ export function codeLangOf(language: string | undefined): CodeLang | undefined {
 /**
  * The project's address, left to right in every language: linkyo.app/<username>/<slug>. The typed
  * address counts when the field is left (or Enter is pressed), so the steps in between never become
- * earlier addresses. Problems show under the field and keep the address that works.
+ * earlier addresses. A problem shows under the field at once, and the address goes into the draft
+ * all the same, so Save refuses it with the same words instead of quietly keeping the old one.
+ * Left empty, the address that works comes back (the saved one, else the one the title gives).
  */
 function AddressFields({
   block,
@@ -846,29 +938,36 @@ function AddressFields({
   const t = useTranslations("app.portfolio");
   const { doc } = useSite();
   const id = useId();
-  const fallback = FALLBACK_SLUG.test(block.slug);
-  const [text, setText] = useState({ slug: block.slug, value: inline && fallback ? "" : block.slug });
-  if (text.slug !== block.slug) setText({ slug: block.slug, value: inline && FALLBACK_SLUG.test(block.slug) ? "" : block.slug });
+  const shownAs = (slug: string) => (inline && FALLBACK_SLUG.test(slug) ? "" : slug);
+  const [text, setText] = useState({ slug: block.slug, value: shownAs(block.slug) });
+  if (text.slug !== block.slug) setText({ slug: block.slug, value: shownAs(block.slug) });
   const [problem, setProblem] = useState<string | null>(null);
   const typed = text.value.trim().toLowerCase();
   const previous = formerOwner(typed, block.id, doc.blocks);
   const commit = () => {
     if (!typed) {
       setProblem(null);
-      setText({ slug: block.slug, value: inline && fallback ? "" : block.slug });
+      const working = saved?.slug ?? slugFor(block.title, takenAddresses(doc.blocks, block.id), slugWord(doc.profile.locale), block.source?.repo);
+      if (working !== block.slug) onChange(changeSlug(block, working, saved));
+      else setText({ slug: block.slug, value: shownAs(block.slug) });
       return;
     }
     const why = slugProblem(typed, block.id, doc.blocks);
     setProblem(why ? t(why) : null);
-    if (!why && typed !== block.slug) onChange(changeSlug(block, typed, saved));
+    // `changeSlug` builds `was` from the saved project, so a corrected address later leaves nothing behind.
+    if (typed !== block.slug) onChange(changeSlug(block, typed, saved));
   };
   const kept = saved?.slug && block.slug !== saved.slug;
+  // What the field should know besides a problem, read with it (its description is a polite live region).
+  const notes = [previous ? t("slugTakeover", { title: previous.title }) : null, kept ? t("addressKept") : null, inline ? t("slugLatinHint") : null].filter(
+    (note): note is string => note !== null,
+  );
   return (
     <div className="grid grid-cols-1 gap-2">
       <TextInput
         id={id}
         label={t("address")}
-        hint={problem ? undefined : inline ? t("slugLatinHint") : undefined}
+        hint={problem ? undefined : notes.join(" ") || undefined}
         error={problem ?? err("slug")}
         ltr
         leading={
@@ -895,8 +994,6 @@ function AddressFields({
           }
         }}
       />
-      {previous && !problem ? <p className="text-small text-fg-secondary">{t("slugTakeover", { title: previous.title })}</p> : null}
-      {kept ? <p className="text-small text-fg-secondary">{t("addressKept")}</p> : null}
     </div>
   );
 }

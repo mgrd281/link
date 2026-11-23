@@ -1,4 +1,4 @@
-import { NO_IMAGE, PLATFORMS, slugFor, type Block, type BlockOf, type Detection, type Platform } from "@linkyo/blocks";
+import { MAX_PROJECTS, NO_IMAGE, PLATFORMS, slugFor, type Block, type BlockOf, type Detection, type Platform } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import type { TileSize } from "../mosaic/renderer";
@@ -68,8 +68,9 @@ function apply<D extends EditorDoc>(doc: D, action: EditorAction): D {
     }
     case "duplicate": {
       const source = doc.blocks[index];
-      // A page has one contact block: it has no copy.
+      // A page has one contact block: it has no copy. Nor has a project on a page that is full.
       if (!source || source.type === "contact") return doc;
+      if (source.type === "project" && doc.blocks.filter((block) => block.type === "project").length >= MAX_PROJECTS) return doc;
       const id = `${source.id}-copy-${Date.now().toString(36)}`;
       const copy: Block = source.type === "project" ? duplicateProject(source, id, doc.blocks, action.word ?? "project") : { ...source, id };
       const blocks = [...doc.blocks];
