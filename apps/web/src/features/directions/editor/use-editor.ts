@@ -1,6 +1,6 @@
 "use client";
 
-import { detectLink, detectMany, type Block, type BlockType } from "@linkyo/blocks";
+import { detectLink, detectMany, formatYears, type Block, type BlockType } from "@linkyo/blocks";
 import { toast } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ChangeEvent, type ClipboardEvent, type KeyboardEvent } from "react";
@@ -81,7 +81,11 @@ export function blockTitle(block: Block, typeLabel: (type: BlockType) => string)
     case "shorts":
     case "brands":
       return block.title ?? typeLabel(block.type);
-    case "about": case "tools": case "timeline": case "quotes": return block.title ?? typeLabel(block.type);
+    case "about":
+    case "tools":
+    case "timeline":
+    case "quotes":
+      return block.title ?? typeLabel(block.type);
     default:
       return block.title;
   }
@@ -231,6 +235,19 @@ export function blockSummary(block: Block, platformLabel: (platform: string) => 
       return block.provider === "upload" ? "" : block.provider === "vimeo" ? "Vimeo" : platformLabel(block.provider);
     case "text":
       return block.text;
+    // A project: its role and years ("Concept, photography · 2023–2025"; an open end stays open).
+    case "project":
+      return [block.role, block.year ? formatYears(block.year, "") : undefined].filter((part) => part?.trim()).join(" · ");
+    case "about":
+      return block.text;
+    case "tools":
+      return list(block.items);
+    case "timeline":
+      return list(block.items.map((item) => item.role), 2);
+    case "quotes":
+      return list(block.items.map((item) => item.name), 2);
+    case "contact":
+      return block.primary.label;
     case "header":
     case "divider":
       return "";

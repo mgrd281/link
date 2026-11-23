@@ -4,17 +4,24 @@ import type { Block } from "@linkyo/blocks";
 import { Button, ConfirmDialog } from "@linkyo/ui";
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { PreviewButton } from "./preview";
+import { releasedAddresses } from "./project-form";
 import { useShellChrome } from "./screen";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
 
 /** The one place blocks are edited (and created, except from the Add sheet): a sheet with the form, the page live beside it. */
 export function EditSheet() {
-  const { editing, edit, doc } = useSite();
+  const { editing, edit, doc, dispatch } = useSite();
+  // A project that took over another one's earlier address (the sheet said so before saving): that
+  // address now leads to it alone, so it leaves the other project's list. Part of the same save, no
+  // undo step of its own; the page's rules (every address once) hold again.
+  useEffect(() => {
+    for (const fix of releasedAddresses(doc.blocks)) dispatch({ type: "enrich", id: fix.id, patch: { was: fix.was } });
+  }, [doc.blocks, dispatch]);
   // A block picked in the Add sheet is filled in there.
   if (editing?.mode === "create" && editing.inAddSheet) return null;
   const source = editing?.mode === "edit" ? doc.blocks.find((block) => block.id === editing.id) : editing?.mode === "create" ? editing.block : undefined;
