@@ -810,6 +810,7 @@
       "proLive": {
         "per": "a month",
         "vat": "incl. VAT",
+        "lead": "AI drafts for your page, month after month.",
         "features": [
           "AI drafts for your page: up to 5 a month",
           "Everything in Free"
@@ -1074,7 +1075,7 @@
       "title": "Sign up for free",
       "lead": "Ready to be linkyo?",
       "submit": "Sign up",
-      "terms": "By creating an account you accept the terms of use and confirm the privacy policy.",
+      "terms": "By creating an account you accept the <terms>terms of use</terms> and confirm the <privacy>privacy policy</privacy>.",
       "haveAccount": "Already have an account?",
       "login": "Sign in",
       "preparedTitle": "Your page is ready",
@@ -1904,7 +1905,7 @@
         "orders": "My orders",
         "withdraw": "Withdraw from contract",
         "cancel": "Cancel contracts here",
-        "imprint": "Imprint",
+        "imprint": "Linkyo's imprint",
         "privacy": "Privacy",
         "terms": "Terms"
       },
@@ -2454,13 +2455,18 @@
       "back": "To the dashboard",
       "proposals": "Proposals",
       "viewProposal": "View proposal",
+      "withdrawalPending": "We have your withdrawal. Work on this order is paused until it is handled.",
+      "ended": "This order has ended. We are no longer working on it, so there is no ready date.",
       "briefing": {
         "title": "Briefing",
         "lead": "Give us everything that should go on your page. The clock for the ready date starts once you send it.",
         "links": "Your links",
-        "linksHint": "One link per line.",
+        "linksHint": "One link per line, 20 at most.",
+        "empty": "Add at least one link or your wishes. Once sent, the briefing can't be changed.",
+        "tooManyLinks": "That's {count} links; {max} is the most we can take. Shorten the list so none gets lost.",
         "photos": "Photos",
         "photosHint": "Up to 10 photos, at most 10 MB each.",
+        "photosSkipped": "{count, plural, one {One photo was not added} other {# photos were not added}}. We take JPEG, PNG, WebP and HEIC up to 10 MB each, 10 photos in total.",
         "addPhotos": "Add photos",
         "removePhoto": "Remove photo",
         "wishes": "Your wishes",
@@ -3868,6 +3874,8 @@
       "body": "The payment field appears here once the Stripe test account is connected. Until then you can't order."
     },
     "loadFailed": "The payment field couldn't load. Reload the page.",
+    "payFailed": "The payment didn't go through. Check your details or choose another payment method.",
+    "orderFailed": "We couldn't place the order just now. Nothing was charged. Please try again in a moment.",
     "early": {
       "label": "Please start right away. I expressly request that Linkyo begins the design before the withdrawal period ends. I know that my right of withdrawal ends once Linkyo has fully performed the order. If I withdraw before that, I pay for the part of the service provided until then.",
       "without": "Without the tick we start only after the withdrawal period, on {date}; your ready date moves accordingly."
@@ -3899,6 +3907,7 @@
       "next": "Next step: fill in the briefing (links, photos, wishes). The clock starts once it is complete.",
       "briefing": "Fill in the briefing",
       "pending": "We're confirming your payment …",
+      "late": "This is taking longer than usual. Your confirmation comes by email; you'll then find the order in your dashboard.",
       "pro": "Thank you, Pro is active. The confirmation comes by email."
     }
   },

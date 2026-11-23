@@ -9,7 +9,8 @@ import { useAccount } from "@/features/account/store";
 import { Link } from "@/i18n/navigation";
 import { accessToken } from "@/lib/supabase/access-token";
 
-import { CheckoutSignIn, CheckoutSkeleton, CheckoutSummary, OrderButton, postJson, TermsLine, vatText, type CheckoutLocale } from "./checkout-summary";
+import { paymentFailedText } from "./checkout-state";
+import { CheckoutSignIn, CheckoutSkeleton, CheckoutSummary, OrderButton, OrderFailure, postJson, TermsLine, vatText, type CheckoutLocale } from "./checkout-summary";
 import { billingDay } from "./delivery";
 import { PaymentSlot } from "./payment-slot";
 import { formatEuro, PRICES, PRO_DRAFTS } from "./prices";
@@ -31,21 +32,25 @@ export function CheckoutPro() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<ConfirmPayment | null>(null);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState("");
+  // Why the order did not go through (a declined payment, an order that could not be placed).
+  const [failure, setFailure] = useState("");
   const opened = useRef(false);
   const price = PRICES["pro-monthly"].amountCents;
 
   useEffect(() => {
     if (!signedIn || opened.current) return;
     opened.current = true;
-    void accessToken().then(async (token) => {
-      const { status, data } = await postJson("/api/checkout/pro", { locale }, token);
-      if (status === 409 && data.error === "alreadyPro") setState("alreadyPro");
-      else if (status === 200 && typeof data.clientSecret === "string") {
-        setClientSecret(data.clientSecret);
-        setState("open");
-      } else setState("failed");
-    });
+    void accessToken()
+      .then(async (token) => {
+        const { status, data } = await postJson("/api/checkout/pro", { locale }, token);
+        if (status === 409 && data.error === "alreadyPro") setState("alreadyPro");
+        else if (status === 200 && typeof data.clientSecret === "string") {
+          setClientSecret(data.clientSecret);
+          setState("open");
+        } else setState("failed");
+      })
+      // Unreachable server: the payment slot says so (as for any session that could not be created).
+      .catch(() => setState("failed"));
   }, [signedIn, locale]);
 
   const onReady = useCallback((next: ConfirmPayment | null) => setConfirm(() => next), []);
@@ -53,9 +58,11 @@ export function CheckoutPro() {
   const order = async () => {
     if (!confirm) return;
     setBusy(true);
-    setNotice("");
+    setFailure("");
     try {
-      if (!(await confirm()).ok) setNotice(t("loadFailed"));
+      const result = await confirm();
+      // A decline or a cancelled confirmation: the provider's own reason, else that the payment failed.
+      if (!result.ok) setFailure(paymentFailedText(result, t("payFailed")));
     } finally {
       setBusy(false);
     }
@@ -94,7 +101,7 @@ export function CheckoutPro() {
                   {t("payment")}
                 </h2>
                 <p className="text-small text-fg-secondary">{t("methods.pro")}</p>
-                <PaymentSlot clientSecret={clientSecret} statusId={statusId} onReady={onReady} />
+                <PaymentSlot clientSecret={clientSecret} failed={state === "failed"} statusId={statusId} onReady={onReady} />
               </section>
 
               <CheckoutSummary line={t("pro.line")} features={[t("pro.includes", { count: PRO_DRAFTS })]} amountCents={price}>
@@ -107,9 +114,7 @@ export function CheckoutPro() {
               <TermsLine />
               <div className="grid gap-3">
                 <OrderButton disabled={!confirm || state !== "open"} busy={busy} describedBy={statusId} onPress={() => void order()} />
-                <p role="status" className="text-small font-medium empty:hidden">
-                  {notice}
-                </p>
+                <OrderFailure text={failure} />
               </div>
             </>
           )}

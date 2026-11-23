@@ -12,11 +12,7 @@ import { TextArea } from "../form";
 import { pickFiles } from "../images";
 import { uploadToBucket } from "../media-upload";
 
-/** File types the `briefing` bucket accepts, with their extension. */
-const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic" };
-const MAX_PHOTOS = 10;
-const MAX_BYTES = 10 * 1024 * 1024;
-const MAX_LINKS = 20;
+import { briefingLinks, briefingProblem, choosePhotos, MAX_LINKS, MAX_PHOTOS, PHOTO_TYPES } from "./briefing-rules";
 
 interface Photo {
   path: string;
@@ -47,6 +43,10 @@ export function BriefingForm({ orderId, accountId, pkg, onSent }: { orderId: str
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState("");
+  // Why the briefing cannot be sent as it is (shown at the links field), and how many picked photos were left out.
+  const [linksProblem, setLinksProblem] = useState("");
+  const [skipped, setSkipped] = useState(0);
+  const form = useRef<HTMLFormElement>(null);
   const languageId = useId();
   const photosId = useId();
 
@@ -58,14 +58,17 @@ export function BriefingForm({ orderId, accountId, pkg, onSent }: { orderId: str
   }, []);
 
   const addPhotos = async () => {
-    const files = (await pickFiles({ multiple: true, accept: Object.keys(PHOTO_TYPES).join(",") })).filter((file) => file.type in PHOTO_TYPES && file.size <= MAX_BYTES);
-    const room = MAX_PHOTOS - photos.length;
-    if (files.length === 0 || room <= 0) return;
+    const picked = await pickFiles({ multiple: true, accept: Object.keys(PHOTO_TYPES).join(",") });
+    if (picked.length === 0) return;
+    // Every photo that is not taken (too large, another type, no room) is counted and said on screen.
+    const chosen = choosePhotos(picked, photos.length);
+    setSkipped(chosen.skipped);
+    if (chosen.kept.length === 0) return;
     setUploading(true);
     setProblem("");
     try {
       const added: Photo[] = [];
-      for (const file of files.slice(0, room)) {
+      for (const file of chosen.kept) {
         const path = `${accountId}/${orderId}/${crypto.randomUUID()}.${PHOTO_TYPES[file.type] ?? "jpg"}`;
         await uploadToBucket("briefing", path, file, file.type);
         const preview = URL.createObjectURL(file);
@@ -81,14 +84,17 @@ export function BriefingForm({ orderId, accountId, pkg, onSent }: { orderId: str
   };
 
   const send = async () => {
+    // Sending locks the briefing for good: an empty one is not sent, and no link is dropped silently.
+    const list = briefingLinks(links);
+    const blocked = briefingProblem({ links: list, wishes });
+    if (blocked) {
+      setLinksProblem(blocked === "empty" ? t("empty") : t("tooManyLinks", { count: list.length, max: MAX_LINKS }));
+      form.current?.querySelector("textarea")?.focus();
+      return;
+    }
     setBusy(true);
     setProblem("");
     try {
-      const list = links
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .slice(0, MAX_LINKS);
       const token = await accessToken();
       const response = await fetch(`/api/orders/${orderId}/briefing`, {
         method: "POST",
@@ -107,13 +113,28 @@ export function BriefingForm({ orderId, accountId, pkg, onSent }: { orderId: str
 
   return (
     <form
+      ref={form}
+      noValidate
       className="grid gap-6"
       onSubmit={(event) => {
         event.preventDefault();
         void send();
       }}
     >
-      <TextArea label={t("links")} hint={t("linksHint")} value={links} onValue={setLinks} max={MAX_LINKS * 300} rows={4} dir="ltr" inputMode="url" />
+      <TextArea
+        label={t("links")}
+        hint={t("linksHint")}
+        error={linksProblem || undefined}
+        value={links}
+        onValue={(next) => {
+          setLinks(next);
+          setLinksProblem("");
+        }}
+        max={MAX_LINKS * 300}
+        rows={4}
+        dir="ltr"
+        inputMode="url"
+      />
 
       <div className="grid gap-3">
         <p id={photosId} className="text-small text-fg">
@@ -144,9 +165,25 @@ export function BriefingForm({ orderId, accountId, pkg, onSent }: { orderId: str
           </Button>
           <span className="text-small text-fg-secondary">{t("photosHint")}</span>
         </div>
+        {skipped > 0 ? (
+          <p role="alert" className="flex items-start gap-2 text-small text-danger-strong" data-photos-skipped>
+            <Icon icon={CircleAlert} size="sm" className="mt-0.5 shrink-0" />
+            {t("photosSkipped", { count: skipped })}
+          </p>
+        ) : null}
       </div>
 
-      <TextArea label={t("wishes")} hint={t("wishesHint")} value={wishes} onValue={setWishes} max={2000} rows={4} />
+      <TextArea
+        label={t("wishes")}
+        hint={t("wishesHint")}
+        value={wishes}
+        onValue={(next) => {
+          setWishes(next);
+          setLinksProblem("");
+        }}
+        max={2000}
+        rows={4}
+      />
 
       <div className="grid gap-2">
         <label htmlFor={languageId} className="text-small text-fg">

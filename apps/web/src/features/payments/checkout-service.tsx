@@ -11,7 +11,8 @@ import { Link } from "@/i18n/navigation";
 import { accessToken } from "@/lib/supabase/access-token";
 import { browserSupabase } from "@/lib/supabase/browser";
 
-import { CheckoutSignIn, CheckoutSkeleton, CheckoutSummary, OrderButton, postJson, TermsLine, type CheckoutLocale } from "./checkout-summary";
+import { isLate, nextLookDelay, paymentFailedText, readSession } from "./checkout-state";
+import { CheckoutSignIn, CheckoutSkeleton, CheckoutSummary, OrderButton, OrderFailure, postJson, TermsLine, type CheckoutLocale } from "./checkout-summary";
 import { PaymentSlot } from "./payment-slot";
 import { formatEuro, PRICES } from "./prices";
 import type { ConfirmPayment } from "./stripe-js";
@@ -52,9 +53,12 @@ export function CheckoutService({ pkg }: { pkg: ServicePackage }) {
   const [early, setEarly] = useState(false);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [session, setSession] = useState<{ sessionId: string; clientSecret: string } | null>(null);
+  const [sessionFailed, setSessionFailed] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmPayment | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  // Why the order did not go through (a declined payment, an order that could not be placed).
+  const [failure, setFailure] = useState("");
   const signedIn = snapshot.status === "signedIn";
   const opened = useRef(false);
 
@@ -69,14 +73,19 @@ export function CheckoutService({ pkg }: { pkg: ServicePackage }) {
     };
   }, [product, early]);
 
-  // One Checkout Session per visit, once signed in.
+  // One Checkout Session per visit, once signed in. When it cannot be created (the server refused,
+  // is unreachable or answered something else), the payment slot says so instead of loading forever.
   useEffect(() => {
     if (!signedIn || opened.current) return;
     opened.current = true;
-    void accessToken().then(async (token) => {
-      const { status, data } = await postJson("/api/checkout/service", { product, locale }, token);
-      if (status === 200 && typeof data.sessionId === "string" && typeof data.clientSecret === "string") setSession({ sessionId: data.sessionId, clientSecret: data.clientSecret });
-    });
+    void accessToken()
+      .then(async (token) => {
+        const { status, data } = await postJson("/api/checkout/service", { product, locale }, token);
+        const created = readSession(status, data);
+        if (created) setSession(created);
+        else setSessionFailed(true);
+      })
+      .catch(() => setSessionFailed(true));
   }, [signedIn, product, locale]);
 
   const onReady = useCallback((next: ConfirmPayment | null) => setConfirm(() => next), []);
@@ -85,6 +94,7 @@ export function CheckoutService({ pkg }: { pkg: ServicePackage }) {
     if (!session || !plan || !confirm) return;
     setBusy(true);
     setNotice("");
+    setFailure("");
     try {
       const { status, data } = await postJson("/api/checkout/consent", { sessionId: session.sessionId, earlyStart: early, shownDueAt: plan.dueAt }, await accessToken());
       if (status === 409 && isPlan(data.plan)) {
@@ -94,11 +104,15 @@ export function CheckoutService({ pkg }: { pkg: ServicePackage }) {
         return;
       }
       if (status !== 200) {
-        setNotice(t("loadFailed"));
+        // The order was not placed and nothing was confirmed with the payment provider.
+        setFailure(t("orderFailed"));
         return;
       }
       const result = await confirm();
-      if (!result.ok) setNotice(t("loadFailed"));
+      // A decline or a cancelled confirmation: the provider's own reason, else that the payment failed.
+      if (!result.ok) setFailure(paymentFailedText(result, t("payFailed")));
+    } catch {
+      setFailure(t("orderFailed"));
     } finally {
       setBusy(false);
     }
@@ -122,7 +136,7 @@ export function CheckoutService({ pkg }: { pkg: ServicePackage }) {
               {t("payment")}
             </h2>
             <p className="text-small text-fg-secondary">{t("methods.service")}</p>
-            <PaymentSlot clientSecret={session?.clientSecret ?? null} statusId={statusId} onReady={onReady} />
+            <PaymentSlot clientSecret={session?.clientSecret ?? null} failed={sessionFailed} statusId={statusId} onReady={onReady} />
           </section>
 
           <div className="grid gap-2">
@@ -151,6 +165,7 @@ export function CheckoutService({ pkg }: { pkg: ServicePackage }) {
             <p role="status" className="text-small font-medium empty:hidden">
               {notice}
             </p>
+            <OrderFailure text={failure} />
           </div>
         </>
       )}
@@ -167,8 +182,11 @@ interface DoneOrder {
 }
 
 /**
- * After Stripe's return: waits (up to 20 s) until the webhook has created the session's order, then
- * shows its number, price and ready date and the next step, the briefing. Pro: a short thank you.
+ * After Stripe's return: waits until the webhook has created the session's order, then shows its
+ * number, price and ready date and the next step, the briefing. When the order is not there after
+ * 20 seconds (a late webhook, a payment method that settles later), the page says that it takes
+ * longer, where the confirmation comes and offers the dashboard, and keeps looking more slowly for a
+ * few minutes. Pro: a short thank you.
  */
 export function CheckoutDone({ sessionId, pro }: { sessionId: string | null; pro: boolean }) {
   const t = useTranslations("checkout.done");
@@ -176,6 +194,9 @@ export function CheckoutDone({ sessionId, pro }: { sessionId: string | null; pro
   const locale = useLocale() as CheckoutLocale;
   const snapshot = useAccount();
   const [order, setOrder] = useState<DoneOrder | null>(null);
+  // No order after the first seconds, or no session to look for: say so and offer a way on.
+  const [overdue, setOverdue] = useState(false);
+  const late = overdue || !sessionId;
   const signedIn = snapshot.status === "signedIn";
 
   useEffect(() => {
@@ -192,7 +213,9 @@ export function CheckoutDone({ sessionId, pro }: { sessionId: string | null; pro
         return;
       }
       tries += 1;
-      if (tries < 20) timer = setTimeout(() => void look(), 1000);
+      if (isLate(tries)) setOverdue(true);
+      const delay = nextLookDelay(tries);
+      if (delay !== null) timer = setTimeout(() => void look(), delay);
     };
     void look();
     return () => {
@@ -218,11 +241,20 @@ export function CheckoutDone({ sessionId, pro }: { sessionId: string | null; pro
   }
   if (!order) {
     return (
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         <h1 className="text-h1 tracking-tight text-balance">{t("title")}</h1>
-        <p role="status" className="text-body text-fg-secondary">
-          {t("pending")}
+        {/* One live region for both texts, so the change from "confirming" to "takes longer" is announced. */}
+        <p role="status" className="text-body text-pretty text-fg-secondary" data-done-state={late ? "late" : "pending"}>
+          {late ? t("late") : t("pending")}
         </p>
+        {late ? (
+          <Button asChild variant="primary" size="cta" className="group justify-self-start">
+            <Link href="/app">
+              <AppLabel />
+              <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+            </Link>
+          </Button>
+        ) : null}
       </div>
     );
   }
