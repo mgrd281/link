@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <!--
   Linkyo original motion graphic "Palette packen": order picking and load securing. A warehouse worker
-  scans a carton in the rack with a ring scanner (the pick list on the rack ticks the line off), carries
+  raises his handheld scanner and scans each carton's label in the rack (the beam sweeps the label, a
+  check pops and the pick list on the rack ticks the line off), lowers it to his side, carries
   it to a pallet and builds the order in two layers; then he wraps the pallet in stretch film, two laps,
   and a check confirms it. A colleague's pallet jack takes the pallet away and brings an empty one.
   Black, graphite and silver. Drawn from scratch in SVG; render(t) is a pure function of time, so the
-  frames are exact and the 18 s loop is seamless. It starts on the wrapped pallet (START), which makes
+  frames are exact and the 20.4 s loop is seamless. It starts on the wrapped pallet (START), which makes
   the best still. No text, no brands. The action stays inside the centre
   of the frame, which phones show.
 -->
@@ -60,12 +61,25 @@
       <rect x="53" y="-88" width="18" height="88" fill="#a7a9ae" opacity="0.7"/>
       <g transform="translate(70 -64)"><rect width="46" height="28" rx="3" fill="#fff"/><g fill="#111113"><rect x="5" y="5" width="3" height="15"/><rect x="10" y="5" width="1.6" height="15"/><rect x="14" y="5" width="4" height="15"/><rect x="20" y="5" width="2" height="15"/><rect x="25" y="5" width="3" height="15"/><rect x="30" y="5" width="1.6" height="15"/><rect x="34" y="5" width="4" height="15"/></g></g>
     </g>
+    <!-- The same carton with its label on the left: the ones he picks, so the scanner can reach it from the side. -->
+    <g id="ctnL">
+      <rect x="0" y="-88" width="124" height="88" rx="6" fill="url(#box)"/>
+      <rect x="53" y="-88" width="18" height="88" fill="#a7a9ae" opacity="0.7"/>
+      <g transform="translate(8 -64)"><rect width="46" height="28" rx="3" fill="#fff"/><g fill="#111113"><rect x="5" y="5" width="3" height="15"/><rect x="10" y="5" width="1.6" height="15"/><rect x="14" y="5" width="4" height="15"/><rect x="20" y="5" width="2" height="15"/><rect x="25" y="5" width="3" height="15"/><rect x="30" y="5" width="1.6" height="15"/><rect x="34" y="5" width="4" height="15"/></g></g>
+    </g>
     <!-- A pallet seen from the front (origin: top-left of the top deck), 372 × 56. -->
     <g id="pal">
       <rect x="0" y="0" width="372" height="12" rx="2" fill="#8d8f95"/>
       <rect x="0" y="12" width="372" height="2" fill="#5d5f64"/>
       <rect x="0" y="14" width="40" height="30" fill="#6f7177"/><rect x="166" y="14" width="40" height="30" fill="#6f7177"/><rect x="332" y="14" width="40" height="30" fill="#6f7177"/>
       <rect x="0" y="44" width="372" height="12" rx="2" fill="#7d7f85"/>
+    </g>
+    <!-- A handheld scanner: origin at the hand on its grip, pointing along +x; the window lights up while it scans. -->
+    <g id="gun">
+      <rect x="-12" y="0" width="23" height="44" rx="8" fill="#55575d" transform="rotate(-14)"/>
+      <rect x="-11" y="-22" width="86" height="30" rx="11" fill="#e4e5e8"/>
+      <rect x="-5" y="-22" width="74" height="7" rx="3.5" fill="#ffffff"/>
+      <rect x="-11" y="2" width="86" height="6" rx="3" fill="#a7a9ae"/>
     </g>
     <g id="chk">
       <circle r="40" fill="#ffffff" opacity="0.16" filter="url(#soft)"/>
@@ -95,7 +109,7 @@
         <g fill="#232326"><rect x="40" y="420" width="310" height="10"/><rect x="40" y="640" width="310" height="10"/><rect x="40" y="860" width="310" height="10"/><rect x="40" y="1062" width="310" height="10"/></g>
         <g id="rackBoxes"></g>
         <!-- The pick slot: the carton taken next; a new one rolls forward after each pick. -->
-        <g id="slot"><use href="#ctn" x="200" y="860"/><rect id="slotShade" x="200" y="772" width="124" height="88" rx="6" fill="#0a0a0b" opacity="0"/></g>
+        <g id="slot"><use href="#ctnL" x="200" y="860"/><rect id="slotShade" x="200" y="772" width="124" height="88" rx="6" fill="#0a0a0b" opacity="0"/></g>
       </g>
       <g id="terminal">
         <rect x="350" y="486" width="22" height="8" fill="#2b2c30"/>
@@ -139,7 +153,7 @@
         <use id="pickCheck" href="#chk" opacity="0"/>
       </g>
 
-      <!-- The worker: helmet, reflective vest, a ring scanner on his hand. Moved between the layers. -->
+      <!-- The worker: helmet, reflective vest, a handheld scanner. Moved between the layers. -->
       <g id="worker">
         <g id="legs">
           <line id="legL" stroke="#232427" stroke-width="34" stroke-linecap="round"/>
@@ -161,14 +175,15 @@
         </g>
         <path id="armL" stroke="#2a2b2f" stroke-width="30" stroke-linecap="round" fill="none"/>
         <path id="armR" stroke="#2a2b2f" stroke-width="30" stroke-linecap="round" fill="none"/>
-        <use id="held" href="#ctn" opacity="0"/>
+        <use id="held" href="#ctnL" opacity="0"/>
         <g id="roll" opacity="0">
           <rect x="-16" y="-40" width="32" height="80" rx="6" fill="url(#rollG)"/>
           <rect x="-6" y="-46" width="12" height="8" rx="3" fill="#4a4c52"/><rect x="-6" y="38" width="12" height="8" rx="3" fill="#4a4c52"/>
         </g>
+        <g id="scanner"><use href="#gun"/><rect id="gunTip" x="69" y="-19" width="10" height="24" rx="4" fill="#2b2c30"/></g>
         <circle id="handL" r="15" fill="#b98262"/>
         <circle id="handR" r="15" fill="#b98262"/>
-        <rect id="ring" width="20" height="12" rx="4" fill="#121214"/>
+
       </g>
     </g>
    </g>
@@ -177,7 +192,10 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const NS = "http://www.w3.org/2000/svg";
-const T = 18, C = 2, PICK = 400, ROLL_X = 500;
+const C = 2.4, PICKS = 6, W0 = PICKS * C, T = W0 + 6, PICK = 420, ROLL_X = 500;
+/** The scanner hangs at his side pointing down; raised, it aims from AIM at the slot carton's label. */
+const HOLSTER_ANGLE = 118, AIM = { x: 346, y: 742 }, LABEL = { x: 231, y: 810 };
+const AIM_ANGLE = (Math.atan2(LABEL.y - AIM.y, LABEL.x - AIM.x) * 180) / Math.PI;
 const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
 const ease = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
 const seg = (t, a, b) => clamp((t - a) / (b - a));
@@ -208,7 +226,7 @@ const SLOT = (k) => ({ x: 582 + (k % 3) * 122, b: k < 3 ? 1024 : 936 });
     add(g, "rect", { x: 402, y: 438 + r * 16, width: 86 - (r % 3) * 14, height: 5, rx: 2.5, fill: "#4a4c52", id: "bar" + r });
   }
   const stack = $("stack");
-  for (let k = 0; k < 6; k++) { const s = SLOT(k); add(stack, "use", { href: "#ctn", x: s.x, y: s.b, id: "placed" + k }); }
+  for (let k = 0; k < 6; k++) { const s = SLOT(k); add(stack, "use", { href: "#ctnL", x: s.x, y: s.b, id: "placed" + k }); }
   const rf = $("rollFloor");
   const g = add(rf, "g", { id: "rollRest", transform: `translate(${ROLL_X} 1040)` });
   add(g, "rect", { x: -16, y: -40, width: 32, height: 80, rx: 6, fill: "url(#rollG)" });
@@ -217,16 +235,16 @@ const SLOT = (k) => ({ x: 582 + (k % 3) * 122, b: k < 3 ? 1024 : 936 });
   for (let i = 0; i < 30; i++) { const c = add(dust, "circle", { r: 1.2 + (i % 3) * 0.7 }); c.dataset.x = (i % 2 ? 280 : 750) + Math.sin(i * 12.9898) * 120; c.dataset.y = 160 + ((i * 97) % 820); }
 })();
 
-/** Where the worker is at time t, how low he bends, and in which layer he is drawn. */
+/** Where the worker is at time t. */
 function walk(t) {
-  if (t < 12) {
+  if (t < W0) {
     const k = Math.floor(t / C), p = t - k * C, sc = SLOT(k).x + 62;
-    if (p < 0.42) return PICK;
-    if (p < 1.25) return lerp(PICK, sc, ease(seg(p, 0.42, 1.25)));
-    if (p < 1.52) return sc;
-    return lerp(sc, PICK, ease(seg(p, 1.52, 2)));
+    if (p < 0.8) return PICK;
+    if (p < 1.55) return lerp(PICK, sc, ease(seg(p, 0.8, 1.55)));
+    if (p < 1.9) return sc;
+    return lerp(sc, PICK, ease(seg(p, 1.9, 2.4)));
   }
-  const u = t - 12;
+  const u = t - W0;
   if (u < 0.3) return lerp(PICK, ROLL_X, ease(seg(u, 0, 0.22)));
   if (u < 1.0) return lerp(ROLL_X, 1020, ease(seg(u, 0.3, 1.0)));
   if (u < 1.55) return lerp(1020, ROLL_X, ease(seg(u, 1.0, 1.55)));
@@ -246,50 +264,67 @@ function draw(t) {
   const bob = -5 * Math.abs(stride) * moving;
   let dip = 0, front = false, look = 0;
   const rest = (d) => ({ L: { x: wx - 72, y: 884 + d + 10 * stride * moving }, R: { x: wx + 72, y: 884 + d - 10 * stride * moving } });
-  let hands = null, held = null, roll = null, scanOn = 0, scanHand = null;
+  let hands = null, held = null, roll = null, scanOn = 0, sweep = 0;
+  // The scanner: in his left hand (screen left) with an angle, or hanging at his side.
+  let gunInHand = true, gunAngle = HOLSTER_ANGLE;
 
-  // The pick list: line k is ticked once carton k is scanned; a new list comes in at 16.6 s.
-  const ticked = (k) => (t >= k * C + 0.26 && t < 16.6 ? 1 : 0);
+  // The pick list: line k is ticked once carton k is scanned; a new list comes in after the pallet leaves.
+  const ticked = (k) => (t >= k * C + 0.38 && t < W0 + 4.6 ? 1 : 0);
   let placedCount = 0;
 
-  if (t < 12) {
+  if (t < W0) {
     const k = Math.floor(t / C), p = t - k * C, s = SLOT(k);
-    placedCount = k + (p >= 1.45 ? 1 : 0);
+    placedCount = k + (p >= 1.8 ? 1 : 0);
     const r = rest(0);
-    const pickL = { x: 196, y: 816 }, pickR = { x: 328, y: 816 }, scanPt = { x: 352, y: 798 };
-    if (p < 0.16) {
-      hands = { L: mix(r.L, scanPt, ease(seg(p, 0.02, 0.1))), R: r.R };
-    } else if (p < 0.3) {
-      const e = ease(seg(p, 0.16, 0.3));
-      hands = { L: mix(scanPt, pickL, e), R: mix(r.R, pickR, e) };
+    const pickL = { x: 196, y: 816 }, pickR = { x: 328, y: 816 };
+    // 1. Raise the scanner and aim it at the label; 2. scan; 3. lower it again.
+    if (p < 0.14) {
+      const e = ease(seg(p, 0, 0.14));
+      hands = { L: mix(r.L, AIM, e), R: r.R };
+      gunAngle = lerp(HOLSTER_ANGLE, AIM_ANGLE, e);
+    } else if (p < 0.42) {
+      hands = { L: AIM, R: r.R };
+      gunAngle = AIM_ANGLE + 3 * Math.sin(Math.PI * seg(p, 0.16, 0.4));
+    } else if (p < 0.54) {
+      const e = ease(seg(p, 0.42, 0.54));
+      hands = { L: mix(AIM, r.L, e), R: r.R };
+      gunAngle = lerp(AIM_ANGLE, HOLSTER_ANGLE, e);
+    } else if (p < 0.68) {
+      // 4. Both hands to the carton; the scanner stays at his side.
+      const e = ease(seg(p, 0.54, 0.68));
+      hands = { L: mix(r.L, pickL, e), R: mix(r.R, pickR, e) };
     }
-    scanOn = seg(p, 0.08, 0.11) * (1 - seg(p, 0.22, 0.27));
-    scanHand = p < 0.16 ? mix(r.L, scanPt, ease(seg(p, 0.02, 0.1))) : scanPt;
-    if (p >= 0.3 && p < 1.45) {
-      if (p < 0.42) { const e = ease(seg(p, 0.3, 0.42)); held = { x: lerp(200, PICK - 62, e), b: lerp(860, 828, e) }; }
-      else if (p < 1.25) held = { x: wx - 62, b: 828 };
-      else held = { x: s.x, b: lerp(828, s.b, ease(seg(p, 1.25, 1.45))) };
+    gunInHand = p < 0.54 || p >= 2.38;
+    scanOn = seg(p, 0.16, 0.19) * (1 - seg(p, 0.36, 0.41));
+    sweep = ease(seg(p, 0.18, 0.36));
+    // 5. Lift, carry to the slot, set down.
+    if (p >= 0.68 && p < 1.8) {
+      if (p < 0.8) { const e = ease(seg(p, 0.68, 0.8)); held = { x: lerp(200, PICK - 62, e), b: lerp(860, 828, e) }; }
+      else if (p < 1.55) held = { x: wx - 62, b: 828 };
+      else held = { x: s.x, b: lerp(828, s.b, ease(seg(p, 1.55, 1.8))) };
       hands = { L: { x: held.x - 4, y: held.b - 44 }, R: { x: held.x + 128, y: held.b - 44 } };
     }
-    dip = (k < 3 ? 26 : 10) * Math.sin(Math.PI * seg(p, 1.18, 1.62));
-    if (p >= 1.45 && p < 1.62) {
-      const e = ease(seg(p, 1.45, 1.62)), r2 = rest(dip);
+    dip = (k < 3 ? 26 : 10) * Math.sin(Math.PI * seg(p, 1.48, 1.95));
+    if (p >= 1.8 && p < 1.95) {
+      const e = ease(seg(p, 1.8, 1.95)), r2 = rest(dip);
       hands = { L: mix({ x: s.x - 4, y: s.b - 44 }, r2.L, e), R: mix({ x: s.x + 128, y: s.b - 44 }, r2.R, e) };
     }
     // The slot: its carton is lifted out, then the next one rolls forward.
-    const gone = p >= 0.3 && p < 0.45;
-    const comeIn = seg(p, 0.45, 0.85);
-    const slotScale = p >= 0.45 && p < 0.85 ? lerp(0.86, 1, ease(comeIn)) : 1;
+    const gone = p >= 0.68 && p < 0.82;
+    const comeIn = seg(p, 0.82, 1.22);
+    const slotScale = p >= 0.82 && p < 1.22 ? lerp(0.86, 1, ease(comeIn)) : 1;
     $("slot").setAttribute("opacity", gone ? 0 : 1);
     $("slot").setAttribute("transform", `translate(262 860) scale(${slotScale}) translate(-262 -860)`);
-    $("slotShade").setAttribute("opacity", p >= 0.45 && p < 0.85 ? 0.7 * (1 - ease(comeIn)) : 0);
-    look = p < 0.3 ? -10 * Math.sin(Math.PI * seg(p, 0, 0.3)) : p < 0.5 ? -8 * Math.sin(Math.PI * seg(p, 0.26, 0.5)) : 0;
+    $("slotShade").setAttribute("opacity", p >= 0.82 && p < 1.22 ? 0.7 * (1 - ease(comeIn)) : 0);
+    // He watches the label while he scans, then glances at the pick list.
+    look = p < 0.45 ? -12 * Math.sin(Math.PI * seg(p, 0, 0.45)) : p < 0.7 ? 6 * Math.sin(Math.PI * seg(p, 0.42, 0.7)) : 0;
   } else {
     placedCount = 6;
     $("slot").setAttribute("opacity", 1);
     $("slot").setAttribute("transform", "");
     $("slotShade").setAttribute("opacity", 0);
-    const u = t - 12;
+    const u = t - W0;
+    gunInHand = u >= 3.5;
     const lap1 = u >= 0.3 && u < 1.0, lap2 = u >= 1.55 && u < 2.25;
     front = lap1 || lap2;
     const rollHeld = u >= 0.22 && u < 2.95;
@@ -310,15 +345,15 @@ function draw(t) {
     $("rollRest").setAttribute("opacity", rollHeld ? 0 : 1);
     // The film: each lap's band grows behind the roll as he walks along the front.
     const edge = (on, done) => (done ? 380 : on ? clamp(wx - 574, 0, 380) : 0);
-    $("band0").setAttribute("width", t >= 16.6 ? 0 : edge(lap1, u >= 1.0));
-    $("band1").setAttribute("width", t >= 16.6 ? 0 : edge(lap2, u >= 2.25));
+    $("band0").setAttribute("width", u >= 4.6 ? 0 : edge(lap1, u >= 1.0));
+    $("band1").setAttribute("width", u >= 4.6 ? 0 : edge(lap2, u >= 2.25));
     if (front && roll && wx > 954) {
       const top = lap1 ? 930 : 842, h = lap1 ? 102 : 98;
       $("sheet").setAttribute("points", `954,${top} ${roll.x},${roll.y - 36} ${roll.x},${roll.y + 36} 954,${top + h}`);
     } else $("sheet").setAttribute("points", "0,0 0,0 0,0 0,0");
     look = u > 3.5 && u < 4.6 ? 6 * Math.sin(Math.PI * seg(u, 3.5, 4.6)) : u > 4.6 ? -8 * Math.sin(Math.PI * seg(u, 4.6, 5.2)) : 0;
   }
-  if (t < 12) { $("band0").setAttribute("width", 0); $("band1").setAttribute("width", 0); $("sheet").setAttribute("points", "0,0 0,0 0,0 0,0"); $("rollRest").setAttribute("opacity", 1); }
+  if (t < W0) { $("band0").setAttribute("width", 0); $("band1").setAttribute("width", 0); $("sheet").setAttribute("points", "0,0 0,0 0,0 0,0"); $("rollRest").setAttribute("opacity", 1); }
 
   // The worker's layer: in front of the pallet while he walks the front with the roll.
   const parent = front ? $("frontLayer") : $("backLayer");
@@ -338,58 +373,66 @@ function draw(t) {
     $("arm" + side).setAttribute("d", `M${sh.x} ${sh.y} Q${mid.x} ${mid.y} ${h.x} ${h.y}`);
     $("hand" + side).setAttribute("cx", h.x); $("hand" + side).setAttribute("cy", h.y);
   }
-  $("ring").setAttribute("x", hands.L.x - 4); $("ring").setAttribute("y", hands.L.y - 18);
+  // The scanner: in the hand, or at his side where the resting hand would be (so nothing jumps).
+  const anchor = gunInHand ? hands.L : { x: wx - 72, y: 884 + dip };
+  const flip = Math.cos((gunAngle * Math.PI) / 180) < 0 ? -1 : 1;
+  $("scanner").setAttribute("transform", `translate(${anchor.x} ${anchor.y}) rotate(${gunAngle}) scale(1 ${flip})`);
+  $("gunTip").setAttribute("fill", scanOn > 0.1 ? "#ffffff" : "#2b2c30");
+  const ga = (gunAngle * Math.PI) / 180, tipLocal = { x: 79, y: -7 * flip };
+  const tip = { x: anchor.x + tipLocal.x * Math.cos(ga) - tipLocal.y * Math.sin(ga), y: anchor.y + tipLocal.x * Math.sin(ga) + tipLocal.y * Math.cos(ga) };
   $("held").setAttribute("opacity", held ? 1 : 0);
   if (held) { $("held").setAttribute("x", held.x); $("held").setAttribute("y", held.b); }
   $("roll").setAttribute("opacity", roll ? 1 : 0);
   if (roll) $("roll").setAttribute("transform", `translate(${roll.x} ${roll.y})`);
 
-  // Scan: a fan from the ring scanner to the label of the carton in the slot.
+  // Scan: a fan from the scanner's window to the label of the carton in the slot; the line sweeps down it.
   $("scan").setAttribute("opacity", scanOn);
   if (scanOn > 0) {
-    const hx = hands.L.x - 4, hy = hands.L.y - 12, lx = 270, sy = 800 + 18 * ease(seg(t % C, 0.1, 0.22));
-    $("scanFan").setAttribute("points", `${lx},${sy - 2} ${hx},${hy} ${lx},${sy + 2} ${lx + 46},${sy + 2} ${lx + 46},${sy - 2}`);
+    const lx = 208, sy = 800 + 18 * sweep;
+    $("scanFan").setAttribute("points", `${lx},${sy - 2} ${tip.x},${tip.y} ${lx},${sy + 2} ${lx + 46},${sy + 2} ${lx + 46},${sy - 2}`);
     for (const id of ["scanLine", "scanCore"]) { const e = $(id); e.setAttribute("x1", lx - 4); e.setAttribute("x2", lx + 50); e.setAttribute("y1", sy); e.setAttribute("y2", sy); }
-    $("scanDot").setAttribute("cx", hx); $("scanDot").setAttribute("cy", hy);
+    $("scanDot").setAttribute("cx", tip.x); $("scanDot").setAttribute("cy", tip.y);
   }
   // A check pops above the scanned carton and fades.
-  const pc = t < 12 ? t % C : 9;
-  const pcOn = seg(pc, 0.24, 0.34) * (1 - seg(pc, 0.8, 1.05));
+  const pc = t < W0 ? t % C : 9;
+  const pcOn = seg(pc, 0.38, 0.48) * (1 - seg(pc, 1.0, 1.3));
   $("pickCheck").setAttribute("opacity", pcOn);
-  $("pickCheck").setAttribute("transform", `translate(262 ${742 - 16 * seg(pc, 0.24, 0.6)}) scale(${0.6 + 0.4 * back(seg(pc, 0.24, 0.42))})`);
+  $("pickCheck").setAttribute("transform", `translate(231 ${742 - 16 * seg(pc, 0.38, 0.75)}) scale(${0.6 + 0.4 * back(seg(pc, 0.38, 0.56))})`);
 
   // The pick list.
-  const reset = seg(t, 16.6, 16.85), refill = seg(t, 16.85, 17.2);
+  const reset = seg(t, W0 + 4.6, W0 + 4.85), refill = seg(t, W0 + 4.85, W0 + 5.2);
   for (let r = 0; r < 6; r++) {
     const on = ticked(r);
     $("box" + r).setAttribute("fill", on ? "#ededef" : "none");
-    $("bar" + r).setAttribute("fill", on ? "#7d7f85" : r === Math.min(placedCount, 5) && t < 12 ? "#c9cacf" : "#4a4c52");
-    $("row" + r).setAttribute("opacity", t >= 16.6 ? (t < 16.85 ? 1 - reset : refill) : 1);
+    $("bar" + r).setAttribute("fill", on ? "#7d7f85" : r === Math.min(placedCount, 5) && t < W0 ? "#c9cacf" : "#4a4c52");
+    $("row" + r).setAttribute("opacity", t >= W0 + 4.6 ? (t < W0 + 4.85 ? 1 - reset : refill) : 1);
   }
-  const done = t >= 11.45 && t < 16.6 ? seg(t, 11.45, 11.6) * (1 - seg(t, 12.2, 12.5)) : 0;
+  const last = (PICKS - 1) * C + 1.8;
+  const done = t >= last && t < W0 + 4.6 ? seg(t, last, last + 0.15) * (1 - seg(t, W0 + 0.2, W0 + 0.5)) : 0;
   $("termOk").setAttribute("opacity", done);
-  $("termGlow").setAttribute("opacity", 0.4 * seg(t % C, 0.26, 0.3) * (1 - seg(t % C, 0.3, 0.7)) * (t < 12 ? 1 : 0) + 0.2 * done);
+  $("termGlow").setAttribute("opacity", 0.4 * seg(t % C, 0.38, 0.42) * (1 - seg(t % C, 0.42, 0.8)) * (t < W0 ? 1 : 0) + 0.2 * done);
 
-  // The pallet: cartons as placed; after 16.4 s (out of sight) it comes back empty.
-  for (let k = 0; k < 6; k++) $("placed" + k).setAttribute("opacity", k < placedCount && t < 16.6 ? 1 : 0);
-  const big = seg(t, 14.85, 15.05) * (1 - seg(t, 15.7, 15.9));
+  // The pallet: cartons as placed; once out of sight it comes back empty.
+  for (let k = 0; k < 6; k++) $("placed" + k).setAttribute("opacity", k < placedCount && t < W0 + 4.6 ? 1 : 0);
+  const big = seg(t, W0 + 2.85, W0 + 3.05) * (1 - seg(t, W0 + 3.7, W0 + 3.9));
   $("bigCheck").setAttribute("opacity", big);
-  $("bigCheck").setAttribute("transform", `translate(764 ${790 - 14 * seg(t, 14.85, 15.3)}) scale(${(0.6 + 0.4 * back(seg(t, 14.85, 15.1))) * 1.25})`);
+  $("bigCheck").setAttribute("transform", `translate(764 ${790 - 14 * seg(t, W0 + 2.85, W0 + 3.3)}) scale(${(0.6 + 0.4 * back(seg(t, W0 + 2.85, W0 + 3.1))) * 1.25})`);
 
   // The pallet jack: in, lift, out with the pallet; back with an empty one, set down, away.
   const OUT = 640, AWAY = 560;
   let jackDx = AWAY, loadDx = 0, lift = 0;
-  if (t >= 15.5 && t < 16.0) jackDx = lerp(AWAY, 0, ease(seg(t, 15.5, 16.0)));
-  else if (t >= 16.0 && t < 16.1) { jackDx = 0; lift = 8 * ease(seg(t, 16.0, 16.1)); }
-  else if (t >= 16.1 && t < 16.6) { lift = 8; loadDx = OUT * ease(seg(t, 16.1, 16.6)); jackDx = loadDx; }
-  else if (t >= 16.6 && t < 17.15) { lift = 8; loadDx = OUT * (1 - ease(seg(t, 16.6, 17.15))); jackDx = loadDx; }
-  else if (t >= 17.15 && t < 17.25) { jackDx = 0; lift = 8 * (1 - ease(seg(t, 17.15, 17.25))); }
-  else if (t >= 17.25) jackDx = lerp(0, AWAY, ease(seg(t, 17.25, 17.95)));
+  const v = t - W0;
+  if (v >= 3.5 && v < 4.0) jackDx = lerp(AWAY, 0, ease(seg(v, 3.5, 4.0)));
+  else if (v >= 4.0 && v < 4.1) { jackDx = 0; lift = 8 * ease(seg(v, 4.0, 4.1)); }
+  else if (v >= 4.1 && v < 4.6) { lift = 8; loadDx = OUT * ease(seg(v, 4.1, 4.6)); jackDx = loadDx; }
+  else if (v >= 4.6 && v < 5.15) { lift = 8; loadDx = OUT * (1 - ease(seg(v, 4.6, 5.15))); jackDx = loadDx; }
+  else if (v >= 5.15 && v < 5.25) { jackDx = 0; lift = 8 * (1 - ease(seg(v, 5.15, 5.25))); }
+  else if (v >= 5.25) jackDx = lerp(0, AWAY, ease(seg(v, 5.25, 5.95)));
   $("load").setAttribute("transform", `translate(${loadDx} ${-lift})`);
   $("fork").setAttribute("x", 600 + jackDx); $("fork").setAttribute("y", 1046 - lift);
   $("jackBody").setAttribute("transform", `translate(${960 + jackDx} 0)`);
 
-  // Gentle periodic camera drift (seamless over 18 s), phone-safe around x 600.
+  // Gentle periodic camera drift (seamless over the loop), phone-safe around x 600.
   const a = (t / T) * Math.PI * 2;
   const zoom = 1.1 + 0.025 * Math.sin(a);
   const cx = 600 + 26 * Math.sin(a), cy = 790 + 12 * Math.cos(a);
@@ -399,7 +442,7 @@ function draw(t) {
   for (let i = 0; i < dust.length; i++) { const d = dust[i], ph = i * 2.399; d.setAttribute("cx", Number(d.dataset.x) + Math.sin(a + ph) * 16); d.setAttribute("cy", Number(d.dataset.y) + Math.cos(a * (i % 2 ? 1 : 2) + ph) * 22); d.setAttribute("opacity", 0.12 + 0.18 * (Math.sin(a * 2 + ph) + 1) / 2); }
 }
 // The loop starts on the finished, wrapped pallet: frame 0 is the still, so it should show the result.
-const START = 15.4;
+const START = W0 + 3.4;
 window.render = (t) => draw(t + START);
 window.render(0);
 </script>
