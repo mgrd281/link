@@ -70,6 +70,10 @@ test("a page prepared from a person's own application letter is labelled, uninde
   const role = page.getByText("Lagerist · Staplerfahrer mit Flurförderzeugschein").first();
   const [badgeBox, roleBox] = [await badge.boundingBox(), await role.boundingBox()];
   expect(roleBox && badgeBox && roleBox.y >= badgeBox.y + badgeBox.height).toBe(true);
+  // The motion graphic comes from our own origin and stays still for reduced motion.
+  const clip = page.locator("video").first();
+  await expect(clip).toHaveAttribute("src", "/media/motion/sevag-lager.mp4");
+  expect(await clip.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
   // The letter keeps its paragraphs.
   const letter = page.getByText(/^Sehr geehrter Herr Vitt,/);
   await expect(letter).toHaveCSS("white-space", "pre-line");

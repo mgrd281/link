@@ -49,6 +49,17 @@ from cover import cover_crop, lift_backdrop, tint, vignette, spaced, font, conta
 - Release covers are square, 1000 px. Wide announcement banners are 1200 × 675 (shown 16:9 by
   highlighted cards).
 
+## Original motion graphics from a photo
+
+When no licensed clip fits (most Mixkit warehouse and logistics clips are "Restricted", personal use
+only), make our own loop from a licensed photo: `scripts/scan_loop.py <photo> <out_dir>` renders a 7 s
+4:5 loop (grade, a periodic camera move so the loop has no seam, a scan beam, corner marks that lock
+onto measured boxes). Adapt `CROP`, `SIGNS` and the timings per photo, keep frame 0 free of
+overlays (it is the still), no text in the video. Encode:
+`ffmpeg -framerate 30 -i frames/%04d.png -vf scale=864:1080:flags=lanczos -c:v libx264 -preset veryslow -crf 31 -pix_fmt yuv420p -movflags +faststart -an <name>.mp4`
+(about 0.8 MB), put it in `public/media/motion/` and use `motion: { src: "sample:motion-<name>" }`
+with frame 0 as the hero picture (no focal point: the clip is centred).
+
 ## Add to the repo
 
 1. Copy the files to `apps/web/src/assets/examples/ex<N>-<name>.jpg` (the next free series

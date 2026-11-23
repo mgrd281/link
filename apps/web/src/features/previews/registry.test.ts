@@ -64,5 +64,7 @@ describe("Sevag's application page", () => {
     // No e-mail yet: nobody can take the page over, and his address stays free for him.
     expect(found?.preview.invite).toBeUndefined();
     expect(found?.page.profile.hero?.src).toBe(`/prepared/${SEVAG_SLUG}/lager.jpg`);
+    // The motion graphic is served from our own origin, like every sample clip (no third party).
+    expect(found?.page.profile.motion?.src).toBe("sample:motion-sevag-lager");
   });
 });

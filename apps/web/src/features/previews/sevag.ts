@@ -7,7 +7,11 @@ import { NO_IMAGE, type Page } from "@linkyo/blocks";
  * warehouse until he sends his own.
  *
  * Picture: "A large empty warehouse" by Krisana Nakajo, Unsplash License
- * (https://unsplash.com/photos/a-large-empty-warehouse-CeRq-JzKGi4), resized to 2000 px.
+ * (https://unsplash.com/photos/a-large-empty-warehouse-CeRq-JzKGi4), cropped 4:5 and graded.
+ * Moving picture (public/media/motion/sevag-lager.mp4): Linkyo's own motion graphic on that photo,
+ * a 7 s loop — a slow camera move into the aisle, a scan beam across the racks, corner marks that
+ * lock onto the aisle signs J and K. No text in it. Its first frame is the picture above, so nothing
+ * jumps when it starts; visitors who prefer less motion keep the still.
  *
  * Not listed anywhere, not indexed, removed on request.
  */
@@ -35,11 +39,11 @@ export const sevagDe: Page = {
     avatar: { src: NO_IMAGE, alt: "" },
     hero: {
       src: `/prepared/${SEVAG_SLUG}/lager.jpg`,
-      alt: "Eine helle Lagerhalle mit Palettenregalen, die Gänge mit J, K, L und M beschriftet",
-      focal: [0.42, 0.45],
-      w: 2000,
-      h: 1500,
+      alt: "Eine helle Lagerhalle mit Palettenregalen, die Gänge mit J und K beschriftet",
+      w: 1080,
+      h: 1350,
     },
+    motion: { src: "sample:motion-sevag-lager" },
     stats: [
       { value: "seit 2018", label: "in der Logistik" },
       { value: "seit 2021", label: "Staplerschein" },
