@@ -145,17 +145,29 @@ export function DraftReview({
           ]}
         />
       ) : null}
-      <DraftPhone page={shown.page} theme={shown.theme} label={tAi("phone")} busy={false} className={DRAFT_PHONE_HEIGHT.review} />
+      {/* The owner checks the whole draft here before using it: the phone scrolls by touch and keyboard. */}
+      <DraftPhone page={shown.page} theme={shown.theme} label={tAi("phone")} busy={false} scrollable className={DRAFT_PHONE_HEIGHT.review} />
     </>
   );
 
   return (
     <DraftColumns phone={phone} top="review" className="pb-0">
-      <section aria-labelledby={headingId} className="grid grid-cols-1 gap-2">
-        <h2 id={headingId} ref={headingRef} tabIndex={-1} className="text-h2 tracking-tight outline-none rtl:tracking-normal">
+      {/* A proposal's screen already shows this title in its bar, right above on a phone: there the
+          heading is kept for screen readers only (it still names the section), and a section with
+          nothing else in it takes no room. */}
+      <section
+        aria-labelledby={headingId}
+        data-review-title={kind}
+        className={cn("grid grid-cols-1 gap-2", kind === "proposal" && (summary ? "max-lg:has-[[data-review-summary]:empty]:sr-only" : "max-lg:sr-only"))}
+      >
+        <h2 id={headingId} ref={headingRef} tabIndex={-1} className={cn("text-h2 tracking-tight outline-none rtl:tracking-normal", kind === "proposal" && "max-lg:sr-only")}>
           {kind === "ai" ? t("title") : tProposal("title")}
         </h2>
-        {summary ? <div className="grid grid-cols-1 gap-1 text-small text-fg-secondary">{summary}</div> : null}
+        {summary ? (
+          <div data-review-summary className="grid grid-cols-1 gap-1 text-small text-fg-secondary">
+            {summary}
+          </div>
+        ) : null}
       </section>
 
       {notes && notes.length > 0 ? (

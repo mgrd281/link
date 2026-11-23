@@ -239,6 +239,10 @@
       "linkStyles": "Link-Buttons: 6 Stile × 3 Formen",
       "linkStylesNote": "Mit dem Theme oben gerendert. Hover und Drücken funktionieren bei jedem Stil."
     },
+    "aiRun": {
+      "title": "KI-Lauf",
+      "description": "So sieht ein KI-Lauf aus: Fortschritt, Schritte und der Entwurf im Handy. Hier läuft er mit Testdaten, an jedem Schritt als solche beschriftet."
+    },
     "toc": "Auf dieser Seite"
   },
   "sampleContent": {

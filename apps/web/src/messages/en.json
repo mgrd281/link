@@ -239,6 +239,10 @@
       "linkStyles": "Link buttons: 6 styles × 3 shapes",
       "linkStylesNote": "Rendered with the theme above. Hover and press work on every style."
     },
+    "aiRun": {
+      "title": "AI run",
+      "description": "What an AI run looks like: progress, steps and the draft in a phone. Here it plays test data, labelled as such at every step."
+    },
     "toc": "On this page"
   },
   "sampleContent": {

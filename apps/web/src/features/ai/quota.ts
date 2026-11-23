@@ -22,17 +22,27 @@ export interface AiQuota {
   resetsAt: string | null;
 }
 
+/**
+ * Why there are no AI drafts right now: `demo` (no real accounts in this build), `disabled` (the
+ * team switched the AI off, or it is not set up: the route answers 404) or `failed` (the question
+ * could not be asked or answered: no connection, a server error, a session that ran out).
+ */
+export type QuotaOff = "demo" | "disabled" | "failed";
+
 export type QuotaState =
   | { status: "loading" }
-  /** AI is off: the demo, the route answers 404, the team switched it off, or the answer was unusable. */
-  | { status: "off" }
+  /** AI is off; every AI entry point stays hidden, and the build screen says why. */
+  | { status: "off"; reason: QuotaOff }
   | { status: "ready"; quota: AiQuota };
+
+/** The sentence for each reason, as a key of `app.ai`: only the demo is told about real accounts. */
+export const OFF_MESSAGE = { demo: "unavailable", disabled: "errors.disabled", failed: "errors.server" } as const satisfies Record<QuotaOff, string>;
 
 /** Reads the route's answer; anything unexpected switches the AI entry points off. */
 export function quotaFrom(body: unknown): QuotaState {
-  if (!body || typeof body !== "object") return { status: "off" };
+  if (!body || typeof body !== "object") return { status: "off", reason: "failed" };
   const value = body as Record<string, unknown>;
-  if (value.enabled !== true) return { status: "off" };
+  if (value.enabled !== true) return { status: "off", reason: value.enabled === false ? "disabled" : "failed" };
   const number = (key: string) => {
     const field = value[key];
     return typeof field === "number" && Number.isFinite(field) ? field : 0;
@@ -50,21 +60,24 @@ export function quotaFrom(body: unknown): QuotaState {
   };
 }
 
+const LOADING: QuotaState = { status: "loading" };
+/** The demo: there is nobody to ask. */
+const OFF: QuotaState = { status: "off", reason: "demo" };
+
 export async function fetchQuota(): Promise<QuotaState> {
-  if (!supabaseEnabled) return { status: "off" };
+  if (!supabaseEnabled) return OFF;
   try {
     const token = await accessToken();
-    if (!token) return { status: "off" };
+    if (!token) return { status: "off", reason: "failed" };
     const response = await fetch("/api/ai/quota", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
-    if (!response.ok) return { status: "off" };
+    // 404: the AI is not set up on this server (the routes do not exist).
+    if (!response.ok) return { status: "off", reason: response.status === 404 ? "disabled" : "failed" };
     return quotaFrom(await response.json());
   } catch {
-    return { status: "off" };
+    return { status: "off", reason: "failed" };
   }
 }
 
-const LOADING: QuotaState = { status: "loading" };
-const OFF: QuotaState = { status: "off" };
 
 let current: QuotaState = supabaseEnabled ? LOADING : OFF;
 /** The account the cached answer belongs to (another sign-in in the same tab asks again). */
@@ -92,6 +105,8 @@ export interface AiQuotaView {
   status: QuotaState["status"];
   /** The AI is on for this account (a real account, the switch on). */
   enabled: boolean;
+  /** While `status` is "off": why. */
+  off: QuotaOff | null;
   quota: AiQuota | null;
   refresh: () => Promise<void>;
 }
@@ -115,7 +130,13 @@ export function useAiQuota({ account, fresh = false }: { account: string; fresh?
     } else if (fresh) void refreshQuota();
   }, [account, fresh]);
   const known = owner === account ? state : supabaseEnabled ? LOADING : OFF;
-  return { status: known.status, enabled: known.status === "ready", quota: known.status === "ready" ? known.quota : null, refresh: refreshQuota };
+  return {
+    status: known.status,
+    enabled: known.status === "ready",
+    off: known.status === "off" ? known.reason : null,
+    quota: known.status === "ready" ? known.quota : null,
+    refresh: refreshQuota,
+  };
 }
 
 /** Free with nothing left: a new draft needs Pro (the Pro sheet); Pro at zero waits for next month. */

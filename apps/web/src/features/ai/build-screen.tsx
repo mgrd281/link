@@ -23,7 +23,7 @@ import { addSources, BuildInput, emptyInputs, QuotaLine, type BuildErrors, type 
 import { DraftChip } from "./draft-phone";
 import type { AiErrorCode } from "./events";
 import { ProSheet } from "./pro-sheet";
-import { needsPro, useAiQuota, type AiQuota } from "./quota";
+import { needsPro, OFF_MESSAGE, useAiQuota, type AiQuota } from "./quota";
 import { DraftReview, type ReviewDraft } from "./review";
 import { isLive } from "./run-reducer";
 import { AiRunView, RunAnnouncer } from "./run-view";
@@ -99,6 +99,7 @@ export function BuildScreen() {
   const [proOpen, setProOpen] = useState(false);
   const [applying, setApplying] = useState(false);
   const [quotaNote, setQuotaNote] = useState(false);
+  const [asking, setAsking] = useState(false);
   const [edited, setEdited] = useState<{ page: Page; theme: CreatorThemeConfig } | null>(null);
   const aboutRef = useRef<HTMLTextAreaElement>(null);
   const primary = useRef<HTMLButtonElement>(null);
@@ -390,7 +391,20 @@ export function BuildScreen() {
               <span className="grid size-control-xl place-items-center rounded-full bg-selected text-selected-fg">
                 <Icon icon={Sparkles} size="lg" />
               </span>
-              <p className="text-body">{t("unavailable")}</p>
+              {/* Why: only the demo is told about real accounts; a failed question can be asked again. */}
+              <p className="text-body">{t(OFF_MESSAGE[quotaView.off ?? "demo"])}</p>
+              {quotaView.off === "failed" ? (
+                <Button
+                  variant="tinted"
+                  loading={asking}
+                  onClick={() => {
+                    setAsking(true);
+                    void refresh().finally(() => setAsking(false));
+                  }}
+                >
+                  {t("actions.retry")}
+                </Button>
+              ) : null}
               <WithoutAi href={without} />
             </div>
           </div>
