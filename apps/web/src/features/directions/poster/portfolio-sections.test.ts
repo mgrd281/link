@@ -343,6 +343,8 @@ describe("contact band", () => {
     expect([...markup.matchAll(/<bdi dir="ltr"[^>]*>([^<]*)<\/bdi>/g)].map((match) => match[1])).toEqual(["hello@example.com", "+49300000000", "example.com"]);
     expect(text(markup)).toContain("E-Mail schreiben");
     expect(text(markup)).toContain("Anrufen");
+    // Never cut off: a long address wraps under its label instead.
+    for (const bdi of markup.match(/<bdi dir="ltr"[^>]*>/g) ?? []) expect(bdi).not.toContain("truncate");
     // Three other ways, each a link of its own.
     expect([...markup.matchAll(/<a href="([^"]*)"/g)].map((match) => match[1])).toEqual([
       "mailto:werkstatt@example.com",

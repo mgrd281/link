@@ -311,15 +311,17 @@ export function ContactBand({ block, now, wide }: { block: BlockOf<"contact">; n
       {links.length > 0 ? (
         <ul className="grid w-full grid-cols-1 gap-x-8 @prose:flex @prose:flex-wrap">
           {links.map((link) => {
-            // WhatsApp's address says nothing a visitor needs; the others show where they lead.
+            // WhatsApp's address says nothing a visitor needs; the others show where they lead. A long
+            // address wraps under its label (and breaks inside itself only when it alone is too wide):
+            // an e-mail address cut off with "…" cannot be read.
             const address = link.kind === "whatsapp" ? "" : linkDestination(link.url);
             return (
               <li key={`${link.kind}-${link.url}`} className="min-w-0">
-                <a href={link.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-2 text-small", textLink)}>
+                <a href={link.url} className={cn("inline-flex min-h-touch-target max-w-full flex-wrap items-center gap-x-2 text-small", textLink)}>
                   <LinkIconGlyph icon={CONTACT_ICONS[link.kind]} size="sm" className="shrink-0" />
                   <span dir="auto" className="shrink-0">{label(link)}</span>
                   {address ? (
-                    <bdi dir="ltr" className="truncate font-regular text-creator-fg-muted">
+                    <bdi dir="ltr" className="min-w-0 font-regular break-all text-creator-fg-muted">
                       {address}
                     </bdi>
                   ) : null}

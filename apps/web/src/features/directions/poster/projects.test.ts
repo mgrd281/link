@@ -482,7 +482,11 @@ describe("the work on the page", () => {
 
   it("without a picture the hero is text only and nothing is taken out of the run", () => {
     const tree = rendered("de", [figure("termine"), titled("halle"), picture("hafen")]);
-    expect(all(one(tree, tagged("header"), "header"), tagged("img"))).toEqual([]);
+    const header = one(tree, tagged("header"), "header");
+    expect(all(header, tagged("img"))).toEqual([]);
+    // The role line, the portrait and the name keep to the reading column with the rest, so the
+    // portrait does not stand alone at the far end of the wide canvas.
+    expect(kids(header).filter((part) => part.tag === "div").map((part) => classes(part).includes("max-w-prose"))).toEqual([true, true]);
     expect(all(one(tree, tagged("main"), "main"), (element) => element.tag === "li" && element.attrs.id !== undefined).map((row) => row.attrs.id)).toEqual(["termine", "halle", "hafen"]);
   });
 

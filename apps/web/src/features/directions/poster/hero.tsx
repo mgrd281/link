@@ -291,7 +291,8 @@ export function PosterHero({
           picture ? "@work:grid-cols-12 @work:grid-rows-[minmax(0,1fr)_auto] @work:items-end @work:pt-6" : "@work:pt-6",
         )}
       >
-        <div className={cn("grid min-w-0 grid-cols-1 gap-3", picture && "@work:col-span-5 @work:row-start-1 @work:gap-4")}>
+        {/* Without a plate the portrait stays beside the role line in the reading column, not at the canvas's far end. */}
+        <div className={cn("grid min-w-0 grid-cols-1 gap-3", picture ? "@work:col-span-5 @work:row-start-1 @work:gap-4" : "max-w-prose")}>
           {live ? (
             <div className="justify-self-start">
               <HeroLive block={live} />
