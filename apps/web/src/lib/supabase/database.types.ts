@@ -1496,6 +1496,7 @@ export type Database = {
       has_pro: { Args: { account: string }; Returns: boolean };
       is_active: { Args: { account: string }; Returns: boolean };
       is_ip_blocked: { Args: { address: unknown }; Returns: boolean };
+      legal_is_complete: { Args: { legal: Json }; Returns: boolean };
       make_owner: { Args: { owner_email: string }; Returns: undefined };
       mark_confirmation_sent: { Args: { target: string }; Returns: undefined };
       mark_pro_confirmation_sent: { Args: { subscription: string }; Returns: boolean };
