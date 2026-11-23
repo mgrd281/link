@@ -11,6 +11,9 @@ import { siteUrl } from "@/lib/site-url";
 
 import "../../globals.css";
 
+/** The words of `creator.portfolio` that client islands read; the rest is server-rendered text. */
+const ISLAND_WORDS = ["pictureOf", "previousPicture", "nextPicture", "viewer", "closeViewer", "railBack", "railOn", "copyCodeSample", "toPage", "projectMissing"] as const;
+
 /** Absolute addresses for the link preview image, also on the 404 page. */
 export function generateMetadata(): Metadata {
   return { metadataBase: siteUrl() };
@@ -28,8 +31,14 @@ export default async function CreatorLayout({ children, params }: { children: Re
   const locale = found?.page.profile.locale ?? "de";
   setRequestLocale(locale);
   // The page's islands (share, privacy notice, players, copy buttons) only read these two namespaces.
+  // Of a portfolio's words only those its islands read travel to the browser (the picture viewer,
+  // the rail buttons, the code sample's copy button, the way back from a missing project); every
+  // other portfolio word is rendered on the server and stays there (plan §3.4 P12).
   const all = (await getMessages({ locale })) as Record<string, AbstractIntlMessages | undefined>;
-  const messages: AbstractIntlMessages = { creator: all.creator ?? {}, common: all.common ?? {} };
+  const { portfolio, ...creator } = (all.creator ?? {}) as Record<string, AbstractIntlMessages | string | undefined>;
+  const words = (portfolio ?? {}) as Record<string, AbstractIntlMessages | string | undefined>;
+  const islands = Object.fromEntries(ISLAND_WORDS.flatMap((key) => (words[key] === undefined ? [] : [[key, words[key]]])));
+  const messages: AbstractIntlMessages = { creator: { ...creator, portfolio: islands }, common: all.common ?? {} };
 
   return (
     <html lang={locale} dir={isRtl(locale) ? "rtl" : "ltr"} className={fontVariables}>
