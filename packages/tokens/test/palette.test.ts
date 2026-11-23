@@ -1,8 +1,16 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { contrastRatio, hexToOklch, oklchToHex, parseHex, toHex } from "../src/creator/color";
 import { auditPalette, generatePalette, type ThemeMode } from "../src/creator/palette";
-import { PRESET_IDS, resolveCreatorTheme, shuffleCreatorTheme, TEMPLATE_IDS } from "../src/creator/theme";
+import { DEFAULT_LAYOUT, PRESET_IDS, PROJECTS_STYLES, resolveCreatorTheme, shuffleCreatorTheme, TEMPLATE_IDS, type CreatorLayout } from "../src/creator/theme";
+import { tokens } from "../src/generated/tokens";
+
+/** The two portfolio templates (v8); every other template is "old" and must keep its layout. */
+const PORTFOLIO_TEMPLATES = ["werkbogen", "tiefdruck"] as const;
+const OLD_TEMPLATES = TEMPLATE_IDS.filter((id) => !(PORTFOLIO_TEMPLATES as readonly string[]).includes(id));
 
 /** Deterministic PRNG (mulberry32) so failures are reproducible. */
 function rng(seed: number) {
@@ -149,15 +157,112 @@ describe("presets", () => {
     expect(resolveCreatorTheme({ template: "marquee" }).layout.hero).toBe("logo");
     expect(resolveCreatorTheme({ template: "atelier" }).layout.headings).toBe("sans-upper");
     expect(resolveCreatorTheme({ template: "nocturne", mode: "light" }).palette.mode).toBe("light");
-    expect(resolveCreatorTheme({ preset: "midnight" }).layout).toEqual({ headings: "display", hero: "portrait", socials: "tiles", backdrop: "none", gallery: "rail", motion: "calm" });
-    expect(resolveCreatorTheme({ template: "mono" }).layout).toEqual({ headings: "sans-upper", hero: "mono", socials: "plain", backdrop: "none", gallery: "rail", motion: "calm" });
+    expect(resolveCreatorTheme({ preset: "midnight" }).layout).toEqual({ headings: "display", hero: "portrait", socials: "tiles", backdrop: "none", gallery: "rail", motion: "calm", projects: "auto", canvas: "column" });
+    expect(resolveCreatorTheme({ template: "mono" }).layout).toEqual({ headings: "sans-upper", hero: "mono", socials: "plain", backdrop: "none", gallery: "rail", motion: "calm", projects: "auto", canvas: "column" });
     // The five newer looks bring their own layouts.
-    expect(resolveCreatorTheme({ template: "studio" }).layout).toEqual({ headings: "numbered", hero: "cinema", socials: "plain", backdrop: "none", gallery: "rail", motion: "reveal" });
-    expect(resolveCreatorTheme({ template: "aura" }).layout).toEqual({ headings: "display", hero: "halo", socials: "tiles", backdrop: "aurora", gallery: "rail", motion: "reveal" });
-    expect(resolveCreatorTheme({ template: "folio" }).layout).toEqual({ headings: "rule", hero: "inset", socials: "plain", backdrop: "none", gallery: "grid", motion: "reveal" });
-    expect(resolveCreatorTheme({ template: "signal" }).layout).toEqual({ headings: "mono", hero: "frame", socials: "tiles", backdrop: "grid", gallery: "rail", motion: "reveal" });
-    expect(resolveCreatorTheme({ template: "bloom" }).layout).toEqual({ headings: "display", hero: "arch", socials: "tiles", backdrop: "none", gallery: "rail", motion: "reveal" });
+    expect(resolveCreatorTheme({ template: "studio" }).layout).toEqual({ headings: "numbered", hero: "cinema", socials: "plain", backdrop: "none", gallery: "rail", motion: "reveal", projects: "auto", canvas: "column" });
+    expect(resolveCreatorTheme({ template: "aura" }).layout).toEqual({ headings: "display", hero: "halo", socials: "tiles", backdrop: "aurora", gallery: "rail", motion: "reveal", projects: "auto", canvas: "column" });
+    expect(resolveCreatorTheme({ template: "folio" }).layout).toEqual({ headings: "rule", hero: "inset", socials: "plain", backdrop: "none", gallery: "grid", motion: "reveal", projects: "auto", canvas: "column" });
+    expect(resolveCreatorTheme({ template: "signal" }).layout).toEqual({ headings: "mono", hero: "frame", socials: "tiles", backdrop: "grid", gallery: "rail", motion: "reveal", projects: "auto", canvas: "column" });
+    expect(resolveCreatorTheme({ template: "bloom" }).layout).toEqual({ headings: "display", hero: "arch", socials: "tiles", backdrop: "none", gallery: "rail", motion: "reveal", projects: "auto", canvas: "column" });
     expect(resolveCreatorTheme({ template: "mono" }).palette.mode).toBe("light");
+  });
+
+  it("Werkbogen and Tiefdruck: the layouts, and palettes that pass the audit", () => {
+    expect(TEMPLATE_IDS).toHaveLength(13);
+    expect(OLD_TEMPLATES).toHaveLength(11);
+    expect(resolveCreatorTheme({ template: "werkbogen" }).layout).toEqual({ headings: "marker", hero: "plate", socials: "plain", backdrop: "none", gallery: "grid", motion: "calm", projects: "auto", canvas: "wide" });
+    expect(resolveCreatorTheme({ template: "tiefdruck" }).layout).toEqual({ headings: "headline", hero: "statement", socials: "plain", backdrop: "none", gallery: "grid", motion: "reveal", projects: "list", canvas: "wide" });
+    for (const template of PORTFOLIO_TEMPLATES) {
+      for (const rtlScript of [false, true]) {
+        const failed = auditPalette(resolveCreatorTheme({ template }, { rtlScript }).palette).filter((check) => !check.pass);
+        expect(failed, `${template} ${rtlScript ? "rtl" : "ltr"}`).toEqual([]);
+      }
+    }
+    // The palettes as designed: a change in the generator or in the seeds shows up here.
+    const werkbogen = resolveCreatorTheme({ template: "werkbogen" }).palette;
+    expect({ mode: werkbogen.mode, bg: werkbogen.bg, surface: werkbogen.surface, surface2: werkbogen.surface2, fg: werkbogen.fg, fgMuted: werkbogen.fgMuted, accent: werkbogen.accent, accentFg: werkbogen.accentFg, accentText: werkbogen.accentText, line: werkbogen.line, lineStrong: werkbogen.lineStrong }).toEqual({
+      mode: "light",
+      bg: "#F4F6F8",
+      surface: "#FCFCFD",
+      surface2: "#E8EAEB",
+      fg: "#151617",
+      fgMuted: "#595B5D",
+      accent: "#C2361B",
+      accentFg: "#FFFFFF",
+      accentText: "#C2361B",
+      line: "#D8D9DB",
+      lineStrong: "#8D8E90",
+    });
+    const tiefdruck = resolveCreatorTheme({ template: "tiefdruck" }).palette;
+    expect({ mode: tiefdruck.mode, bg: tiefdruck.bg, surface: tiefdruck.surface, surface2: tiefdruck.surface2, fg: tiefdruck.fg, fgMuted: tiefdruck.fgMuted, accent: tiefdruck.accent, accentFg: tiefdruck.accentFg, accentText: tiefdruck.accentText, line: tiefdruck.line, lineStrong: tiefdruck.lineStrong }).toEqual({
+      mode: "dark",
+      bg: "#12100E",
+      surface: "#1B1917",
+      surface2: "#262321",
+      fg: "#F6F3F1",
+      fgMuted: "#B4B0AD",
+      accent: "#3D5AFE",
+      accentFg: "#FFFFFF",
+      accentText: "#5E81FF",
+      line: "#32302E",
+      lineStrong: "#676562",
+    });
+  });
+
+  it("each portfolio template differs from every other template in at least three layout keys", () => {
+    const keys = Object.keys(DEFAULT_LAYOUT) as (keyof CreatorLayout)[];
+    for (const template of PORTFOLIO_TEMPLATES) {
+      const mine = resolveCreatorTheme({ template }).layout;
+      for (const other of TEMPLATE_IDS.filter((id) => id !== template)) {
+        const theirs = resolveCreatorTheme({ template: other }).layout;
+        const different = keys.filter((key) => mine[key] !== theirs[key]);
+        expect(different.length, `${template} vs ${other}: ${different.join(", ")}`).toBeGreaterThanOrEqual(3);
+      }
+    }
+  });
+
+  it("the work layout is the owner's choice; the canvas is the template's", () => {
+    expect(PROJECTS_STYLES).toEqual(["auto", "bento", "list", "rail"]);
+    expect(resolveCreatorTheme({ template: "tiefdruck" }).layout.projects).toBe("list");
+    expect(resolveCreatorTheme({ template: "tiefdruck", projects: "bento" }).layout.projects).toBe("bento");
+    expect(resolveCreatorTheme({ template: "werkbogen", projects: "rail" }).layout.projects).toBe("rail");
+    expect(resolveCreatorTheme({ template: "folio", projects: "list" }).layout.projects).toBe("list");
+    expect(resolveCreatorTheme({ projects: "rail" }).layout.projects).toBe("rail");
+    // A stored value this version does not know falls back to the template.
+    expect(resolveCreatorTheme({ template: "tiefdruck", projects: "masonry" as never }).layout.projects).toBe("list");
+    for (const template of OLD_TEMPLATES) {
+      const layout = resolveCreatorTheme({ template, projects: "bento" }).layout;
+      expect(layout.canvas, template).toBe("column");
+      expect(resolveCreatorTheme({ template }).layout.projects, template).toBe("auto");
+    }
+    expect(resolveCreatorTheme({ preset: "midnight" }).layout.canvas).toBe("column");
+    for (const template of PORTFOLIO_TEMPLATES) expect(resolveCreatorTheme({ template }).layout.canvas, template).toBe("wide");
+  });
+
+  it("Arabic pages: the display weight is 400 on Werkbogen and 700 everywhere else", () => {
+    const weight = (template: (typeof TEMPLATE_IDS)[number] | undefined, rtlScript: boolean) => resolveCreatorTheme(template ? { template } : {}, { rtlScript }).cssVars["--creator-display-weight"];
+    expect(weight("werkbogen", true)).toBe("400");
+    expect(weight("tiefdruck", true)).toBe("700");
+    for (const template of OLD_TEMPLATES) expect(weight(template, true), template).toBe("700");
+    expect(weight(undefined, true)).toBe("700");
+    // Left to right nothing changes: the weight is the pairing's.
+    for (const template of TEMPLATE_IDS) {
+      const theme = resolveCreatorTheme({ template });
+      expect(theme.cssVars["--creator-display-weight"], template).toBe(String(theme.pairing.display.weight));
+    }
+    expect(resolveCreatorTheme({ template: "werkbogen" }, { rtlScript: true }).pairing.id).toBe("arabic");
+  });
+
+  it("the wide canvas and the photo ratio exist as tokens and as utilities", () => {
+    expect(tokens.layout.work).toBe(tokens.layout.content);
+    expect(tokens.layout.work).toBe(1120);
+    expect(tokens.aspect.photo).toBe("3 / 2");
+    // Tailwind turns --container-work into max-w-work and the @work: container variant, and
+    // --aspect-photo into aspect-photo (the build writes the theme before the tests run).
+    const theme = readFileSync(path.join(import.meta.dirname, "../dist/tailwind/theme.css"), "utf8");
+    expect(theme).toContain("--container-work: 70rem;");
+    expect(theme).toContain("--aspect-photo: 3 / 2;");
   });
 
   it("switches to the Arabic pairing for RTL scripts", () => {
