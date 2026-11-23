@@ -18,7 +18,9 @@ interface Props {
 const OG_LOCALES: Record<string, string> = { de: "de_DE", en: "en_US", ar: "ar_AR" };
 
 // Rendered on the first visit, then served from the cache and refreshed at most once a minute:
-// saves go from the browser straight to the database, so a change shows up within about a minute.
+// saves go from the browser straight to the database, so a change shows up about a minute later
+// (on a quiet page, on the visit after the next one). What takes a page off the web or moves it
+// (account deleted or suspended, address changed) drops the cached copy at once: features/creator/revalidate.ts.
 export const revalidate = 60;
 export function generateStaticParams(): { username: string }[] {
   return [];

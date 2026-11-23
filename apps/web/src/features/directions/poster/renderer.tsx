@@ -28,7 +28,7 @@ import { AppFeature, AppList, RepoCard } from "./apps";
 import { EventTabs } from "./events";
 import { PosterBar, PosterHero } from "./hero";
 import { featuredApp, groupSections, type PosterItem } from "./sections";
-import { cardSurface, pressable, railFrame, sectionTitle, type HeadingTag } from "./styles";
+import { cardSurface, pageSide, pressable, railFrame, sectionTitle, type HeadingTag } from "./styles";
 
 /**
  * Direction D — "Poster": the creator as a headliner.
@@ -207,7 +207,7 @@ function PosterSection({
             {"//"}
           </span>
         ) : null}
-        <span className="min-w-0">{title}</span>
+        <span dir="auto" className={cn(pageSide, "min-w-0")}>{title}</span>
         {headings === "rule" ? <span aria-hidden className="h-px min-w-6 flex-1 bg-creator-line-strong" /> : null}
       </h2>
       {children}
@@ -339,7 +339,7 @@ function PosterBlock({
       );
     }
     case "text":
-      return <p className="text-body text-creator-fg-muted">{block.text}</p>;
+      return <p dir="auto" className="text-body text-creator-fg-muted">{block.text}</p>;
     case "divider":
       return <hr className="border-creator-line" />;
     case "video":

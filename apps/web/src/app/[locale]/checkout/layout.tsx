@@ -8,6 +8,7 @@ import { Suspense, type ReactNode } from "react";
 import { LEGAL_TEXT_LOCALES } from "@/features/legal/texts";
 import { MarketingFooter } from "@/features/marketing/footer";
 import { GermanOnlyLink } from "@/features/payments/checkout-summary";
+import { StripeLeaveGuard } from "@/features/payments/stripe-js";
 import { TestBanner } from "@/features/payments/test-banner";
 import { Link } from "@/i18n/navigation";
 import { paymentsEnabled } from "@/lib/flags";
@@ -35,6 +36,8 @@ export default async function CheckoutLayout({ children, params }: { children: R
   const contractLocale = (LEGAL_TEXT_LOCALES as readonly string[]).includes(locale);
   return (
     <>
+      {/* Stripe.js stays on these pages: once it is loaded, leaving the checkout is a full page load. */}
+      <StripeLeaveGuard />
       <header className="layer-sticky sticky top-0 bg-canvas">
         <a
           href="#main"

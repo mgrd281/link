@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { useCreatorFormat } from "../shared/creator-kit";
-import { displayStyle, pressable } from "./styles";
+import { displayStyle, pageSide, pressable } from "./styles";
 
 type EventItem = BlockOf<"events">["items"][number];
 
@@ -37,8 +37,8 @@ function EventRow({ event, surface }: { event: EventItem; surface: string }) {
         <span className="text-caption font-semibold text-creator-fg-muted uppercase">{f.date(event.date, { month: "short" })}</span>
       </span>
       <span className="grid min-w-0 flex-1 gap-0.5">
-        <span className={cn("line-clamp-2 text-body-lg leading-snug font-semibold", soldOut && "text-creator-fg-muted line-through")}>{event.name ?? event.city}</span>
-        <span className="truncate text-small text-creator-fg-muted">
+        <span dir="auto" className={cn(pageSide, "line-clamp-2 text-body-lg leading-snug font-semibold", soldOut && "text-creator-fg-muted line-through")}>{event.name ?? event.city}</span>
+        <span dir="auto" className={cn(pageSide, "truncate text-small text-creator-fg-muted")}>
           {place}
           {event.time ? ` · ${event.time}` : null}
         </span>

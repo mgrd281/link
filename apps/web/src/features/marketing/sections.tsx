@@ -204,7 +204,8 @@ function ProLive() {
     <article className="mk-reveal grid content-start gap-5 rounded-xl bg-canvas-muted p-6 md:p-10">
       <header className="grid gap-1">
         <h3 className="text-h3">{t("pro.name")}</h3>
-        <p className="text-body text-fg-secondary">{t("pro.lead")}</p>
+        {/* Only what Pro holds today: the coming-soon card's line (selling, growing) is not for a card with a buy button. */}
+        <p className="text-body text-fg-secondary">{t("proLive.lead")}</p>
       </header>
       <p className="flex flex-wrap items-baseline gap-x-2">
         <span className="text-display-sm font-extrabold tracking-display tabular-nums">{formatEuro(PRICES["pro-monthly"].amountCents, locale)}</span>

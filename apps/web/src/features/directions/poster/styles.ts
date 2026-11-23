@@ -3,6 +3,16 @@ import type { HeadingStyle } from "@linkyo/tokens/creator";
 import { cn } from "@linkyo/ui";
 import type { CSSProperties } from "react";
 
+/**
+ * For creator-written text, together with `dir="auto"`. The attribute lets the text run in its own
+ * direction (a Latin title on an Arabic page keeps its punctuation in place and is cut off at its
+ * own end; an Arabic title on a German page likewise). This class keeps the line on the page's side,
+ * next to its icon and under its neighbours, instead of jumping to the other edge: `match-parent`
+ * takes "start" and "end" as the parent means them. Chromium knows the value only under its older
+ * name, so that one is the base and the standard name applies wherever it is supported.
+ */
+export const pageSide = "[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent]";
+
 /** The creator's display face with its pairing's weight, tracking and case. */
 export const displayStyle: CSSProperties = {
   fontWeight: "var(--creator-display-weight)",

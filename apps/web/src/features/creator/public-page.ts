@@ -1,15 +1,17 @@
-import { blockSchema, isBlockActive, profileSchema, type Block, type Page } from "@linkyo/blocks";
+import { blockSchema, isBlockActive, NO_IMAGE, profileSchema, type Block, type Page } from "@linkyo/blocks";
 import { BUTTON_SHAPES, BUTTON_STYLES, isTemplate, PAIRING_IDS, PRESET_IDS, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { cache } from "react";
 
 import type { Legal } from "@/features/account/types";
+import { isProxiedImage } from "@/features/directions/shared/remote-images";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { anonServerSupabase } from "@/lib/supabase/server";
 
 /**
  * A creator's public page, read the way a visitor may see it: `public_page()` (active, confirmed and
  * onboarded accounts only; hidden and out-of-schedule blocks already left out in SQL), parsed block by
- * block, then filtered again here. Server only: it never runs in a visitor's browser and sets no cookie.
+ * block, then filtered again here, and with nothing left that a visitor's browser would fetch from
+ * another host. Server only: it never runs in a visitor's browser and sets no cookie.
  */
 
 export interface PublicPage {
@@ -28,6 +30,38 @@ const text = (value: unknown): string => (typeof value === "string" ? value : ""
  */
 export function filterPublic(page: Page, now: Date = new Date()): Page {
   return { ...page, blocks: page.blocks.filter((block) => block.type !== "newsletter" && isBlockActive(block, now)) };
+}
+
+/**
+ * A picture a visitor's browser may load: none, a bundled sample, one kept inside the page (a data
+ * URL), or one our image optimizer re-serves (this deployment's Storage and the listed platform
+ * hosts, https only). An allowlist: every other address, whatever its scheme, is somebody else's.
+ */
+export function isOwnPicture(src: string): boolean {
+  return src === NO_IMAGE || src.startsWith("sample:") || src.startsWith("data:image/") || isProxiedImage(src);
+}
+
+/** One of our sample clips ("sample:motion-<key>", served from /media/motion): the only clips we host. */
+const OWN_MOTION = /^sample:motion-[a-z0-9-]+$/;
+
+/** Every `{ src }` picture below `value` that is not ours loses its address (the page shows its calm placeholder). */
+function ownPicturesOnly<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(ownPicturesOnly) as T;
+  if (!isRecord(value)) return value;
+  const entries = Object.entries(value).map(([key, inner]) => [key, key === "src" && typeof inner === "string" && !isOwnPicture(inner) ? NO_IMAGE : ownPicturesOnly(inner)]);
+  return Object.fromEntries(entries) as T;
+}
+
+/**
+ * Creator pages load nothing from third parties (GDPR): the page's content is the creator's own
+ * JSON, saved from their browser, so it can name any address. Pictures on a foreign host become "no
+ * picture", and a hero clip that is not one of ours is left out (it would start by itself and tell
+ * its host about every visitor). Players stay: they load only after the visitor's tap.
+ */
+export function withoutThirdParties(page: Page): Page {
+  const { motion, ...profile } = page.profile;
+  const ownMotion = motion && OWN_MOTION.test(motion.src) ? { motion } : {};
+  return { profile: ownPicturesOnly({ ...profile, ...ownMotion }), blocks: ownPicturesOnly(page.blocks) };
 }
 
 /** Each block on its own: one that does not parse is left out, the rest of the page still shows. */
@@ -84,7 +118,7 @@ export function toPublicPage(raw: unknown, now: Date = new Date()): PublicPage |
   if (!isRecord(raw)) return null;
   const page = parsePage(raw.page);
   if (!page) return null;
-  return { page: filterPublic(page, now), theme: parseTheme(raw.theme), legal: parseLegal(raw.legal), updatedAt: text(raw.updatedAt) };
+  return { page: withoutThirdParties(filterPublic(page, now)), theme: parseTheme(raw.theme), legal: parseLegal(raw.legal), updatedAt: text(raw.updatedAt) };
 }
 
 /**

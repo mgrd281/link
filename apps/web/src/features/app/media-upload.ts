@@ -18,9 +18,22 @@ export type MediaType = keyof typeof MEDIA_TYPES;
 
 const isMediaType = (type: string): type is MediaType => type in MEDIA_TYPES;
 
-/** Uploads one file (browser session, row-level security decides). Files never change: cached for a year. */
+/**
+ * How long a browser or cache may keep an uploaded file without asking Storage again: one hour. A
+ * file never changes, but it can be deleted (with its account, or after a report), and a deleted
+ * picture must not live on in caches: our image optimizer keeps its copies for the longer of this
+ * and its own minimum (four hours), so a year here meant a year of copies there.
+ */
+export const UPLOAD_CACHE_SECONDS = 3600;
+
+/** The Storage options of every upload: a short cache lifetime, never overwriting, the file's type. */
+export function uploadOptions(contentType: string): { cacheControl: string; upsert: false; contentType: string } {
+  return { cacheControl: String(UPLOAD_CACHE_SECONDS), upsert: false, contentType };
+}
+
+/** Uploads one file (browser session, row-level security decides). */
 export async function uploadToBucket(bucket: Bucket, path: string, blob: Blob, contentType: string): Promise<void> {
-  const { error } = await browserSupabase().storage.from(bucket).upload(path, blob, { cacheControl: "31536000", upsert: false, contentType });
+  const { error } = await browserSupabase().storage.from(bucket).upload(path, blob, uploadOptions(contentType));
   if (error) throw new Error(`upload to ${bucket} failed: ${error.message}`);
 }
 

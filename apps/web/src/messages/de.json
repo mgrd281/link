@@ -814,6 +814,7 @@
       "proLive": {
         "per": "pro Monat",
         "vat": "inkl. MwSt.",
+        "lead": "KI-Entwürfe für deine Seite, Monat für Monat.",
         "features": [
           "KI-Entwürfe für deine Seite: bis zu 5 im Monat",
           "Alles aus Free"
@@ -1078,7 +1079,7 @@
       "title": "Kostenlos registrieren",
       "lead": "Bereit, linkyo zu sein?",
       "submit": "Registrieren",
-      "terms": "Mit dem Erstellen akzeptierst du die Nutzungsbedingungen und bestätigst die Datenschutzerklärung.",
+      "terms": "Mit dem Erstellen akzeptierst du die <terms>Nutzungsbedingungen</terms> und bestätigst die <privacy>Datenschutzerklärung</privacy>.",
       "haveAccount": "Schon ein Konto?",
       "login": "Anmelden",
       "preparedTitle": "Deine Seite ist fertig",
@@ -1901,14 +1902,14 @@
       "rows": {
         "profile": "Profil",
         "address": "Seitenadresse",
-        "legal": "Impressum",
+        "legal": "Impressum deiner Seite",
         "pageLanguage": "Sprache der Seite",
         "account": "Konto",
         "appLanguage": "Sprache der App",
         "orders": "Meine Bestellungen",
         "withdraw": "Vertrag widerrufen",
         "cancel": "Verträge hier kündigen",
-        "imprint": "Impressum",
+        "imprint": "Impressum von Linkyo",
         "privacy": "Datenschutz",
         "terms": "AGB"
       },
@@ -2458,13 +2459,18 @@
       "back": "Zum Dashboard",
       "proposals": "Vorschläge",
       "viewProposal": "Vorschlag ansehen",
+      "withdrawalPending": "Dein Widerruf ist eingegangen. Bis er bearbeitet ist, ruht die Arbeit an dieser Bestellung.",
+      "ended": "Diese Bestellung ist beendet. Wir arbeiten nicht mehr daran, deshalb gibt es keinen Fertig-Termin mehr.",
       "briefing": {
         "title": "Briefing",
         "lead": "Gib uns alles, was auf deine Seite soll. Die Uhr für den Fertig-Termin läuft, sobald du absendest.",
         "links": "Deine Links",
-        "linksHint": "Ein Link pro Zeile.",
+        "linksHint": "Ein Link pro Zeile, höchstens 20.",
+        "empty": "Schreib mindestens einen Link oder deine Wünsche hinein. Nach dem Absenden lässt sich das Briefing nicht mehr ändern.",
+        "tooManyLinks": "Das sind {count} Links, möglich sind höchstens {max}. Kürze die Liste, damit keiner verloren geht.",
         "photos": "Fotos",
         "photosHint": "Bis zu 10 Fotos, je höchstens 10 MB.",
+        "photosSkipped": "{count, plural, one {Ein Foto wurde nicht übernommen} other {# Fotos wurden nicht übernommen}}. Möglich sind JPEG, PNG, WebP und HEIC bis 10 MB, insgesamt höchstens 10 Fotos.",
         "addPhotos": "Fotos hinzufügen",
         "removePhoto": "Foto entfernen",
         "wishes": "Deine Wünsche",
@@ -3880,6 +3886,8 @@
       "body": "Hier erscheint das Zahlungsfeld, sobald der Stripe-Testzugang verbunden ist. Bis dahin kannst du nicht bestellen."
     },
     "loadFailed": "Das Zahlungsfeld konnte nicht geladen werden. Lade die Seite neu.",
+    "payFailed": "Die Zahlung hat nicht geklappt. Prüf deine Angaben oder nimm eine andere Zahlungsart.",
+    "orderFailed": "Die Bestellung konnte gerade nicht abgeschickt werden. Es wurde nichts abgebucht. Versuch es gleich noch einmal.",
     "early": {
       "label": "Bitte fangt sofort an. Ich verlange ausdrücklich, dass Linkyo vor Ablauf der Widerrufsfrist mit der Gestaltung beginnt. Mir ist bekannt, dass mein Widerrufsrecht erlischt, sobald Linkyo den Auftrag vollständig erfüllt hat. Widerrufe ich vorher, zahle ich den Anteil der bis dahin erbrachten Leistung.",
       "without": "Ohne Haken starten wir erst nach Ablauf der Widerrufsfrist am {date}; dein Fertig-Termin verschiebt sich entsprechend."
@@ -3911,6 +3919,7 @@
       "next": "Nächster Schritt: Briefing ausfüllen (Links, Fotos, Wünsche). Die Uhr läuft, sobald es vollständig ist.",
       "briefing": "Briefing ausfüllen",
       "pending": "Wir bestätigen deine Zahlung gerade …",
+      "late": "Das dauert länger als sonst. Deine Bestätigung kommt per E-Mail; die Bestellung findest du danach in deinem Dashboard.",
       "pro": "Danke, Pro ist aktiv. Die Bestätigung kommt per E-Mail."
     }
   },

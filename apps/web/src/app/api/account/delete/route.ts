@@ -1,3 +1,4 @@
+import { revalidateCreatorPages, usernameOf } from "@/features/creator/revalidate";
 import { removeAccountFiles } from "@/lib/server/storage-purge";
 import { requireUser } from "@/lib/server/user";
 
@@ -7,15 +8,20 @@ export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "no-store" };
 
 /**
- * Deletes the signed-in account (GDPR Art. 17): the database deletion runs as the user, then every
- * file of the account leaves Storage (page pictures, order photos, delivered story pictures). A file
- * that cannot be removed now waits in the deletion queue; the account is gone either way.
+ * Deletes the signed-in account (GDPR Art. 17): the database deletion runs as the user, then the
+ * cached copy of their public page is dropped (so the next visit to the address is a 404, not the
+ * old page once more) and every file of the account leaves Storage (page pictures, order photos,
+ * delivered story pictures). A file that cannot be removed now waits in the deletion queue; the
+ * account is gone either way.
  */
 export async function POST(request: Request) {
   const signedIn = await requireUser(request);
   if (signedIn instanceof Response) return signedIn;
+  // Read before the deletion: afterwards nothing says which address the page had.
+  const username = await usernameOf(signedIn.db, signedIn.user.id);
   const { error } = await signedIn.db.rpc("delete_my_account");
   if (error) return Response.json({ ok: false, error: "serverError" }, { status: 500, headers: noStore });
+  revalidateCreatorPages(username);
   try {
     await removeAccountFiles(signedIn.user.id);
   } catch {

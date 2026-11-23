@@ -9,6 +9,7 @@ import { ImageResponse } from "next/og";
 
 import { isProxiedImage, isStorageImage, PROXIED_IMAGE_HOSTS } from "@/features/directions/shared/remote-images";
 
+import { drawablePicture, isDrawableHeader, MAX_PHOTO_BYTES } from "./og-picture";
 import { initials } from "./story-card";
 
 /**
@@ -48,36 +49,26 @@ const MIME: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpe
  * YouTube's channel pictures (prepared pages use them as the avatar). Exact hosts, https only.
  */
 const PHOTO_HOSTS = new Set<string>([...PROXIED_IMAGE_HOSTS, "yt3.googleusercontent.com"]);
-const MAX_PHOTO_BYTES = 1_500_000;
-
-/** JPEG or PNG by its first bytes: Satori draws nothing else reliably, so a mislabelled file is left out. */
-function sniff(bytes: Uint8Array): "image/jpeg" | "image/png" | null {
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
-  if ([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((byte, index) => bytes[index] === byte)) return "image/png";
-  return null;
-}
 
 /**
  * A creator's photo on a platform or in our own Storage, fetched once when the card is drawn and
  * embedded, so whoever opens the card never contacts the platform. Only allowlisted hosts (and our
  * public media bucket), no redirects (they could lead off the list), JPEG or PNG up to 1.5 MB, five
- * seconds at most: anything else, or any error, gives no photo, and the card shows the initials instead.
+ * seconds at most: anything else (a WebP upload, see og-picture.ts), or any error, gives no photo,
+ * and the card shows the initials instead.
  */
 async function remotePicture(src: string): Promise<string | null> {
   try {
     const url = new URL(src);
     if (!isProxiedImage(src) && !(url.protocol === "https:" && PHOTO_HOSTS.has(url.hostname))) return null;
     const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(5000), headers: { accept: "image/jpeg,image/png" } });
-    const type = response.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
+    const type = response.headers.get("content-type");
     const length = Number(response.headers.get("content-length") ?? 0);
-    if (!response.ok || (type !== "image/jpeg" && type !== "image/png") || length > MAX_PHOTO_BYTES) {
+    if (!response.ok || !isDrawableHeader(type) || length > MAX_PHOTO_BYTES) {
       await response.body?.cancel();
       return null;
     }
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    const sniffed = sniff(bytes);
-    if (bytes.byteLength > MAX_PHOTO_BYTES || !sniffed) return null;
-    return `data:${sniffed};base64,${Buffer.from(bytes).toString("base64")}`;
+    return drawablePicture(type, new Uint8Array(await response.arrayBuffer()));
   } catch {
     return null;
   }

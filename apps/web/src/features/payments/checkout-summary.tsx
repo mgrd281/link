@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Icon, Skeleton } from "@linkyo/ui";
-import { ArrowRight, Check, LogIn, UserPlus } from "lucide-react";
+import { ArrowRight, Check, CircleAlert, LogIn, UserPlus } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
@@ -94,6 +94,20 @@ export function OrderButton({ disabled, busy, describedBy, onPress }: { disabled
     >
       {t("submit")}
     </Button>
+  );
+}
+
+/**
+ * Why the order did not go through (a declined payment, an order that could not be placed), right
+ * under the button: an alert, so it is read out at once and cannot be taken for a passing note.
+ */
+export function OrderFailure({ text }: { text: string }) {
+  if (!text) return null;
+  return (
+    <p role="alert" data-order-failure className="flex items-start gap-2 text-small font-medium text-pretty text-danger-strong">
+      <Icon icon={CircleAlert} size="sm" className="mt-0.5 shrink-0" />
+      {text}
+    </p>
   );
 }
 

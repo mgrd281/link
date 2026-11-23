@@ -13,8 +13,7 @@ import { useSite } from "../site-context";
 import { useScrolled } from "../use-scrolled";
 
 import { BriefingForm, dueParts } from "./briefing-form";
-
-type Status = "paid" | "awaiting_briefing" | "queued" | "in_progress" | "delivered" | "revision_requested" | "completed" | "refunded" | "withdrawn";
+import { orderView, type OrderStatus as Status } from "./order-state";
 
 interface Proposal {
   id: string;
@@ -100,7 +99,9 @@ export function OrderScreen({ orderId }: { orderId: string }) {
     if (sentDue) sentRef.current?.focus();
   }, [sentDue]);
 
-  const open = order && !order.briefed && !order.withdrawalPending && (order.status === "paid" || order.status === "awaiting_briefing");
+  // What this order's state allows the screen to say: no ready date and no briefing for a withdrawal
+  // in progress or an order that ended, and "the briefing is sent" only when one was sent.
+  const view = order ? orderView(order) : null;
   const due = order ? dueParts(sentDue ?? order.dueAt ?? order.promisedDueAt, locale) : null;
   const delivered = order?.proposals.filter((proposal) => proposal.deliveredAt) ?? [];
 
@@ -135,27 +136,37 @@ export function OrderScreen({ orderId }: { orderId: string }) {
                 <Badge>{tStatus(order.status)}</Badge>
               </div>
               <p className="text-body text-fg-secondary">{tPackage(order.package)}</p>
-              {due ? <p className="text-body font-medium">{t("due", due)}</p> : null}
+              {view?.note ? (
+                <p className="text-body font-medium text-pretty" data-order-note={view.note}>
+                  {t(view.note)}
+                </p>
+              ) : due && view?.due ? (
+                <p className="text-body font-medium" data-order-due>
+                  {t("due", due)}
+                </p>
+              ) : null}
             </section>
 
-            <section aria-labelledby="briefing-title" className="grid gap-4 rounded-lg border border-line bg-surface p-4 lg:p-6">
-              <h2 id="briefing-title" className="text-h3">
-                {t("briefing.title")}
-              </h2>
-              {sentDue && due ? (
-                <p ref={sentRef} tabIndex={-1} role="status" className="flex items-start gap-2 text-body font-medium outline-none">
-                  <Icon icon={CircleCheck} size="md" className="mt-0.5 shrink-0 text-success-strong" />
-                  {t("briefing.sent", due)}
-                </p>
-              ) : open ? (
-                <>
-                  <p className="text-body text-pretty text-fg-secondary">{t("briefing.lead")}</p>
-                  <BriefingForm orderId={order.id} accountId={account.id} pkg={order.package} onSent={setSentDue} />
-                </>
-              ) : (
-                <p className="text-body text-pretty text-fg-secondary">{t("briefing.locked")}</p>
-              )}
-            </section>
+            {view && view.briefing !== "none" ? (
+              <section aria-labelledby="briefing-title" className="grid gap-4 rounded-lg border border-line bg-surface p-4 lg:p-6">
+                <h2 id="briefing-title" className="text-h3">
+                  {t("briefing.title")}
+                </h2>
+                {sentDue && due ? (
+                  <p ref={sentRef} tabIndex={-1} role="status" className="flex items-start gap-2 text-body font-medium outline-none">
+                    <Icon icon={CircleCheck} size="md" className="mt-0.5 shrink-0 text-success-strong" />
+                    {t("briefing.sent", due)}
+                  </p>
+                ) : view.briefing === "form" ? (
+                  <>
+                    <p className="text-body text-pretty text-fg-secondary">{t("briefing.lead")}</p>
+                    <BriefingForm orderId={order.id} accountId={account.id} pkg={order.package} onSent={setSentDue} />
+                  </>
+                ) : (
+                  <p className="text-body text-pretty text-fg-secondary">{t("briefing.locked")}</p>
+                )}
+              </section>
+            ) : null}
 
             {delivered.length > 0 ? (
               <section aria-labelledby="proposals-title" className="grid gap-2 rounded-lg border border-line bg-surface p-4 lg:p-6">

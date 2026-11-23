@@ -72,12 +72,19 @@ const NAME_SLOT = "\u0000";
 /**
  * A legal page named in the consent sentence: a link once the legal pages are published (the company
  * data is in, or a payments test build), else the plain words, as in the footer (LegalLinks). A plain
- * link, not the router's: nothing is fetched ahead for a page that is rarely opened.
+ * link, not the router's: nothing is fetched ahead for a page that is rarely opened. It opens in a
+ * new tab, so the e-mail address already typed into the form is still there afterwards. Marked by
+ * colour and weight, never a line under it (ADR 0041).
  */
 function LegalWord({ href, locale, children }: { href: "/agb" | "/datenschutz"; locale: string; children: ReactNode }) {
   if (!legalLinksVisible) return <>{children}</>;
   return (
-    <a href={`/${locale}${href}`} className="rounded-xs font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring">
+    <a
+      href={`/${locale}${href}`}
+      target="_blank"
+      rel="noopener"
+      className="rounded-xs font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
+    >
       {children}
     </a>
   );
