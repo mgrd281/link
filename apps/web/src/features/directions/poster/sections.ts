@@ -137,3 +137,10 @@ export function featuredApp(blocks: readonly Block[]): string | undefined {
   const apps = blocks.filter((block): block is BlockOf<"app"> => block.type === "app" && block.stores.some((store) => store.store !== "web"));
   return (apps.find((app) => app.highlight) ?? (apps.length === 1 ? apps[0] : undefined))?.id;
 }
+
+/** A text's paragraphs: split at blank lines; a single line break stays a line break inside its paragraph. */
+export const paragraphs = (text: string): string[] =>
+  text
+    .split(/\n\s*\n/u)
+    .map((part) => part.trim())
+    .filter(Boolean);

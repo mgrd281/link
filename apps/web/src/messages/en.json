@@ -329,6 +329,7 @@
     "report": "Report",
     "share": "Share page",
     "shareCopied": "Link copied.",
+    "shareFailed": "The link couldn't be copied.",
     "socialLabel": "{platform}",
     "menu": "More",
     "upcoming": "Upcoming",
@@ -472,8 +473,7 @@
       "readLetter": "Read the letter",
       "readLetterWhole": "Read the whole letter",
       "readMore": "Read more",
-      "readLess": "Show less",
-      "copied": "Copied"
+      "readLess": "Show less"
     }
   },
   "directions": {

@@ -70,7 +70,8 @@ describe("a page with a contact block", () => {
     if (template === "laufbahn") {
       // Laufbahn pairs the action with "Teilen", an outlined button of the same 48 px (ADR 0069).
       expect(words(/<a [\s\S]*?<\/a>/.exec(row ?? "")?.[0] ?? null)).toBe(label);
-      expect(row).toContain('<button type="button" aria-label="Teilen"');
+      // Its name is its visible label (WCAG 2.5.3): no aria-label that could differ from it.
+      expect(row).toMatch(/<button type="button" class="[^"]*">[\s\S]*?<span>Teilen<\/span><\/button>/);
       expect(row).toContain("min-h-control-lg");
     } else {
       expect(words(row)).toBe(label);
@@ -173,7 +174,7 @@ describe("a page without a contact block", () => {
     const markup = html(template, blocks);
     // Laufbahn's hero always offers "Teilen" (and a jump to the content when there is a section to
     // read); a highlighted link is never promoted there either.
-    if (template === "laufbahn") expect(words(heroRow(markup))).toBe("TeilenKopiert");
+    if (template === "laufbahn") expect(words(heroRow(markup))).toBe("Teilen");
     else expect(heroRow(markup)).toBeNull();
     expect(barButton(markup)).toBeNull();
     expect(markup.split("Jetzt Tickets sichern")).toHaveLength(2);

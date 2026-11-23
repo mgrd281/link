@@ -13,6 +13,7 @@ import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
 import { signpostLetter, signposts } from "./laufbahn";
+import { splitLead } from "./laufbahn-content";
 import { PosterRenderer } from "./renderer";
 import { portfolioSample } from "./sample";
 
@@ -97,7 +98,8 @@ describe("Sevag's application page on Laufbahn", () => {
     for (const fact of [profile.displayName.split(" ")[0], profile.tagline, profile.bio, ...(profile.stats ?? []).flatMap((stat) => [stat.value, stat.label])]) expect(words).toContain(fact);
     for (const block of sevagDe.blocks) {
       if (block.type === "about") {
-        for (const part of block.text.split("\n\n")) expect(words).toContain(part);
+        // A long first paragraph leads with its first sentence; the rest of it follows the facts (splitLead drops nothing).
+        for (const part of block.text.split("\n\n").flatMap((paragraph) => splitLead(paragraph))) if (part) expect(words).toContain(part);
         for (const fact of block.facts ?? []) expect(words).toContain(`${fact.label}${fact.value}`);
       }
       if (block.type === "tools") for (const item of block.items) expect(words).toContain(item);
@@ -150,8 +152,10 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(text(lead)).toBe("Anschreiben lesen");
     // One filled button (the first action) and the outlined share button, both 48 px with the page's button radius.
     expect(lead).toMatch(/bg-creator-accent[^"]*text-creator-accent-fg/);
-    const share = /<button[^>]*>/.exec(actions)?.[0] ?? "";
-    expect(share).toContain('aria-label="Teilen"');
+    const share = /<button[^>]*>[\s\S]*?<\/button>/.exec(actions)?.[0] ?? "";
+    // Its visible label is its name, and stays "Teilen" while the address is copied (WCAG 2.5.3).
+    expect(share).not.toContain("aria-label");
+    expect(text(share)).toBe("Teilen");
     expect(share).toContain("border-creator-line-strong");
     for (const control of [lead, share]) expect(control).toMatch(/min-h-control-lg[^"]*rounded-creator-button|rounded-creator-button[^"]*min-h-control-lg/);
     expect(count(/<header[\s\S]*?<\/header>/.exec(sevag)?.[0] ?? "", /<a [^>]*bg-creator-accent/g)).toBe(1);
@@ -186,7 +190,11 @@ describe("Sevag's application page on Laufbahn", () => {
     const tiles = [...skills.matchAll(/<li class="([^"]*)"[^>]*>([\s\S]*?)<\/li>/g)];
     expect(tiles).toHaveLength(12);
     for (const [, , inner] of tiles) expect(inner).toMatch(/<span aria-hidden="true" class="lb-soft [^"]*"><svg[^>]*class="lucide lucide-/);
-    expect(tiles.map(([, classes]) => (classes?.includes("col-span-2 flex-row") ? "wide" : "half"))).toEqual(["wide", ...Array<string>(10).fill("half"), "wide"]);
+    // Phones: the lead across, then pairs, the labels that cannot share a row across (one line each).
+    const across = tiles.map(([, classes]) => (classes?.split(" ").includes("col-span-2") ? "across" : "half"));
+    expect(across).toEqual(["across", "half", "half", "across", "across", "half", "half", "across", "half", "half", "half", "half"]);
+    // Every tile lies flat (the icon beside the label) at one height.
+    for (const [, classes] of tiles) expect(classes).toMatch(/\bflex\b[^"]*\bmin-h-control-xl\b[^"]*\bitems-center\b/);
     expect(skills).not.toMatch(/>0\d</);
     expect(skills).not.toContain("hyphens-auto");
     expect(skills).toContain("hyphens-manual");
@@ -211,7 +219,7 @@ describe("the same page once a contact block is added (fixture only)", () => {
 
   it("puts the contact block's primary action first in the hero, 'Teilen' beside it and the CV below, quietly", () => {
     const row = /<div data-hero-actions[\s\S]*?Lebenslauf \(PDF\)<\/span><\/a>/.exec(markup)?.[0] ?? "";
-    expect(text(row)).toBe("Ab sofort verfügbarGespräch vereinbarenTeilenKopiertLebenslauf (PDF)");
+    expect(text(row)).toBe("Ab sofort verfügbarGespräch vereinbarenTeilenLebenslauf (PDF)");
     expect(row).toContain('href="mailto:bewerbung@example.com"');
     // The letter is no longer the first action: the contact block's is.
     expect(row).not.toContain('href="#section-letter-title"');

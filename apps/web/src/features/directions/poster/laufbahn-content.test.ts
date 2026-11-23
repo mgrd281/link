@@ -2,6 +2,9 @@ import {
   Accessibility,
   Award,
   Camera,
+  Car,
+  ChartColumn,
+  ChefHat,
   ClipboardCheck,
   CodeXml,
   Database,
@@ -11,6 +14,7 @@ import {
   Headset,
   IdCard,
   Languages,
+  Megaphone,
   MousePointerClick,
   PackageCheck,
   PackageOpen,
@@ -20,10 +24,13 @@ import {
   ScanBarcode,
   ShieldCheck,
   Signpost,
+  Stethoscope,
   TriangleAlert,
   Truck,
   Users,
   Warehouse,
+  Wrench,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import { describe, expect, it } from "vitest";
@@ -31,20 +38,25 @@ import { describe, expect, it } from "vitest";
 import { sevagDe } from "@/features/previews/sevag";
 
 import {
+  BESIDE_ICON_EMS,
   factSpans,
-  HALF_ROW_EMS,
+  fitsBeside,
   iconFor,
   isLetter,
+  LEAD_MAX,
+  linesIn,
   longestPieceEms,
   opensShort,
   packSpans,
-  paragraphsOf,
+  pairUp,
   readingMinutes,
-  skillSpans,
+  skillLayout,
   softJoints,
+  splitLead,
   textKind,
   wordsOf,
 } from "./laufbahn-content";
+import { paragraphs } from "./sections";
 
 const SOFT = "\u00AD";
 /** The icon's display name, so a failure names the icon instead of printing a component. */
@@ -185,12 +197,81 @@ describe("the skills' icon map", () => {
       ["Designated driver", "en", Palette],
       ["إفريقيا", "ar", Users],
       ["شاحن الهاتف", "ar", Truck],
+      // An application is no advertising, "gefahren" (driven) no hazard, Photovoltaik no photograph.
+      ["Bewerbung", "de", Megaphone],
+      ["Initiativbewerbung", "de", Megaphone],
+      ["Zu meiner Bewerbung", "de", Megaphone],
+      ["Stapler gefahren seit 2015", "de", TriangleAlert],
+      ["Lkw gefahren", "de", TriangleAlert],
+      ["Photovoltaik", "de", Camera],
+      ["Photovoltaik-Montage", "de", Camera],
+      ["Photovoltaic installation", "en", Camera],
+      // Care of vehicles, buildings and landscapes is no nursing; annual accounts and contracts are no degree.
+      ["Fahrzeugpflege", "de", Stethoscope],
+      ["Gebäudepflege", "de", Stethoscope],
+      ["Landschaftspflege", "de", Stethoscope],
+      ["Jahresabschluss", "de", Award],
+      ["Vertragsabschluss", "de", Award],
+      // Agreements and call-backs are no languages; nor is a cuisine, a polish or an Arab market.
+      ["Absprachen treffen", "de", Languages],
+      ["Rücksprache", "de", Languages],
+      ["Vertragsabsprache", "de", Languages],
+      ["Kundenansprache", "de", Languages],
+      ["Italian cooking", "en", Languages],
+      ["German cuisine", "en", Languages],
+      ["Floor polish", "en", Languages],
+      ["طبخ عربي", "ar", Languages],
+      ["السوق العربي", "ar", Languages],
+      // Leadership is no driving, a car workshop no presentation, an impostor no forklift.
+      ["مهارات القيادة", "ar", Car],
+      ["ورشة سيارات", "ar", Presentation],
+      ["Car workshop", "en", Presentation],
+      ["Hochstapler", "de", Forklift],
+      ["تحليل البيانات", "ar", Database],
     ];
     for (const [label, locale, lookAlike] of lookAlikes) expect(named(iconFor(label, locale)), label).not.toBe(named(lookAlike));
     // Most have no icon at all (the template's neutral one stands in); some find their own.
     for (const label of ["Schlager", "Gutschein", "Sonnenschein", "Krankenversicherung", "Urkunden"]) expect(iconFor(label, "de"), label).toBeUndefined();
     expect(iconFor("Dokumentarfilm", "de")).toBe(Camera);
     expect(iconFor("", "de")).toBeUndefined();
+    for (const label of ["Hochstapler", "Absprachen treffen", "Jahresabschluss", "Fahrzeugpflege"]) expect(iconFor(label, "de"), label).toBeUndefined();
+  });
+
+  it("gives the look-alikes their own icon where they have one", () => {
+    const cases: [string, "de" | "en" | "ar", LucideIcon][] = [
+      ["Photovoltaik", "de", Zap],
+      ["Photovoltaic installation", "en", Wrench],
+      ["Bewerbungsunterlagen", "de", FileText],
+      ["Kundenansprache", "de", Handshake],
+      ["Italian cooking", "en", ChefHat],
+      ["طبخ عربي", "ar", ChefHat],
+      ["ورشة سيارات", "ar", Wrench],
+      ["Car workshop", "en", Wrench],
+      ["تحليل البيانات", "ar", ChartColumn],
+      ["قيادة السيارات", "ar", Car],
+      ["Krankenpflege", "de", Stethoscope],
+      ["Altenpflege", "de", Stethoscope],
+      ["Realschulabschluss", "de", Award],
+      ["Gefahrgut", "de", TriangleAlert],
+      ["Gefahrstoffe", "de", TriangleAlert],
+    ];
+    for (const [label, locale, icon] of cases) expect(named(iconFor(label, locale)), label).toBe(named(icon));
+  });
+
+  it("names a language by its name only when the text says nothing else (apart from a level)", () => {
+    const cases: [string, "de" | "en" | "ar"][] = [
+      ["Deutsch", "de"],
+      ["Englisch (C1)", "de"],
+      ["Deutsch und Englisch", "de"],
+      ["Arabisch – Muttersprache", "de"],
+      ["English", "en"],
+      ["Arabic (native)", "en"],
+      ["German, fluent", "en"],
+      ["عربي", "ar"],
+      ["اللغة العربية", "ar"],
+      ["الإنجليزية (جيد)", "ar"],
+    ];
+    for (const [label, locale] of cases) expect(named(iconFor(label, locale)), label).toBe(named(Languages));
   });
 
   it("reads a page's own language and English only (an English lager is beer)", () => {
@@ -245,20 +326,66 @@ describe("tiles", () => {
     }
   });
 
-  it("lets the first of five or more skills lead and closes the last row (Sevag: twelve skills)", () => {
-    const labels = (sevagDe.blocks.find((block) => block.type === "tools")?.items ?? []).map((item) => softJoints(item, "de"));
-    const spans = skillSpans(labels);
-    // Phones: the lead across, five pairs, the twelfth across. Tablets and up: the lead beside one, three rows of three, the twelfth across.
-    expect(spans.phone).toEqual([2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]);
-    expect(spans.wide).toEqual([2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3]);
-    expect(skillSpans(["SAP", "Excel", "Teamwork", "Forklift"]).phone).toEqual([1, 1, 1, 1]);
+  it("closes a last row of one in three columns as one and two, then two and one", () => {
+    expect(packSpans([2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 3)).toEqual([2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1]);
+    expect(packSpans([1, 1, 1, 1], 3)).toEqual([1, 2, 2, 1]);
+    // Not when the row before is not three single tiles.
+    expect(packSpans([2, 1, 1], 3)).toEqual([2, 1, 3]);
   });
 
-  it("gives a label the whole row only when a piece of it cannot fit half a 360 px phone's row", () => {
-    expect(HALF_ROW_EMS).toBeCloseTo(8.25);
-    expect(longestPieceEms(`Flurförder${SOFT}zeug${SOFT}schein`)).toBeLessThan(HALF_ROW_EMS);
-    expect(longestPieceEms("Donaudampfschifffahrtsgesellschaft")).toBeGreaterThan(HALF_ROW_EMS);
-    expect(skillSpans(["Forklift", "Donaudampfschifffahrtsgesellschaft", "SAP", "Team"]).phone).toEqual([2, 2, 1, 1]);
+  it("pairs half tiles past at most two whole-row tiles, keeps the first in place and closes the last row", () => {
+    expect(pairUp([2, 1, 2, 1, 1])).toEqual({ order: [0, 1, 3, 2, 4], spans: [2, 1, 1, 2, 2] });
+    expect(pairUp([1, 1, 1])).toEqual({ order: [0, 1, 2], spans: [1, 1, 2] });
+    // Three whole-row tiles in between: the waiting tile takes its row, nothing moves.
+    expect(pairUp([1, 2, 2, 2, 1])).toEqual({ order: [0, 1, 2, 3, 4], spans: [2, 2, 2, 2, 2] });
+    expect(pairUp([])).toEqual({ order: [], spans: [] });
+    for (const wants of [[2, 1, 2, 2, 1, 1, 2, 1], [1, 2, 1, 2, 1, 2, 1], [1, 1, 2, 1]]) {
+      const { order, spans } = pairUp(wants);
+      expect([...order].sort((x, y) => x - y)).toEqual(wants.map((_, index) => index));
+      expect(spans.reduce((sum, span) => sum + span, 0) % 2).toBe(0);
+      // No tile moves more than two places.
+      order.forEach((index, place) => expect(Math.abs(index - place)).toBeLessThanOrEqual(2));
+    }
+  });
+
+  it("lays out Sevag's twelve skills in eight rows on phones: the lead, four pairs, three across", () => {
+    const items = sevagDe.blocks.find((block) => block.type === "tools")?.items ?? [];
+    const layout = skillLayout(items.map((item) => softJoints(item, "de")));
+    const rows = layout.order.map((index, place) => `${items[index] ?? ""}${layout.phone[place] === 2 ? " ↔" : ""}`);
+    expect(rows).toEqual([
+      "Seitenschubstapler ↔",
+      "Flurförderzeugschein",
+      "Scannen von Waren",
+      "Kommissionierung ↔",
+      "Be- und Entladen von Lkw ↔",
+      "Ein- und Auslagern",
+      "Inventur",
+      "SAP: Bestände & Buchungen ↔",
+      "Versanddokumente",
+      "Ladungssicherung",
+      "Gefahrgut",
+      "Warenausgabe",
+    ]);
+    // Tablets and up: the lead beside one, rows of three, the end as one and two, then two and one.
+    expect(layout.wide).toEqual([2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1]);
+    // Four skills: no lead, two pairs.
+    expect(skillLayout(["SAP", "Excel", "Teamwork", "Forklift"]).phone).toEqual([1, 1, 1, 1]);
+  });
+
+  it("lets a label share a row only when it fits beside its icon in two lines, never breaking a word on a 360 px phone", () => {
+    expect(BESIDE_ICON_EMS.narrow).toBeCloseTo(5.625);
+    expect(BESIDE_ICON_EMS.phone).toBeCloseTo(6.5625);
+    expect(linesIn(`Flurförder${SOFT}zeug${SOFT}schein`, BESIDE_ICON_EMS.phone)).toBe(2);
+    expect(linesIn("Be- und Entladen von Lkw", BESIDE_ICON_EMS.phone)).toBe(3);
+    expect(linesIn("Inventur", BESIDE_ICON_EMS.phone)).toBe(1);
+    expect(fitsBeside(`Versand${SOFT}dokumente`)).toBe(true);
+    // "Kommissio-" is wider than the room beside the icon on a 360 px phone.
+    expect(fitsBeside(`Kommissio${SOFT}nierung`)).toBe(false);
+    expect(fitsBeside("SAP: Bestände & Buchungen")).toBe(false);
+    expect(longestPieceEms("Donaudampfschifffahrtsgesellschaft")).toBeGreaterThan(BESIDE_ICON_EMS.narrow);
+    // Only a piece that ends at a soft hyphen counts the hyphen.
+    expect(longestPieceEms(`Waren${SOFT}ausgabe`)).toBeCloseTo(Math.max(longestPieceEms("Waren") + 0.35, longestPieceEms("ausgabe")));
+    expect(skillLayout(["Forklift", "Donaudampfschifffahrtsgesellschaft", "SAP", "Team"]).phone).toEqual([1, 1, 2, 2]);
   });
 
   it("sets Sevag's four facts as a two-by-two sheet", () => {
@@ -286,18 +413,39 @@ describe("text sections", () => {
   it("opens a long read with two paragraphs on phones (Sevag's letter: seven paragraphs, a minute's read)", () => {
     expect(letterText.length).toBeGreaterThan(900);
     expect(opensShort(letterText)).toBe(true);
-    expect(paragraphsOf(letterText)).toHaveLength(7);
+    expect(paragraphs(letterText)).toHaveLength(7);
     expect(readingMinutes(letterText)).toBe(1);
     expect(opensShort(toningText)).toBe(false);
   });
 
   it("knows a letter by its title or by its salutation and closing, in three languages", () => {
-    expect(isLetter("Anschreiben", letterText)).toBe(true);
-    expect(isLetter("Bewerbung", letterText)).toBe(true);
-    expect(isLetter("Cover letter", "Dear Ms Smith,\n\n" + "I am writing to apply. ".repeat(40) + "\n\nKind regards\nSam")).toBe(true);
-    expect(isLetter("خطاب التقديم", "نص طويل. ".repeat(80))).toBe(true);
+    expect(isLetter("Anschreiben", letterText, "de")).toBe(true);
+    expect(isLetter("Bewerbung", letterText, "de")).toBe(true);
+    expect(isLetter("Cover letter", "Dear Ms Smith,\n\n" + "I am writing to apply. ".repeat(40) + "\n\nKind regards\nSam", "en")).toBe(true);
+    expect(isLetter("خطاب التقديم", "نص طويل. ".repeat(80), "ar")).toBe(true);
+    expect(isLetter("Mein Brief an Sie", "Ich mag Ordnung. ".repeat(60), "de")).toBe(true);
     // A short note is never a letter; neither is a long text with neither title nor greeting.
-    expect(isLetter("Anschreiben", toningText)).toBe(false);
-    expect(isLetter("Mein Steckbrief", "Ich mag Ordnung. ".repeat(60))).toBe(false);
+    expect(isLetter("Anschreiben", toningText, "de")).toBe(false);
+    expect(isLetter("Mein Steckbrief", "Ich mag Ordnung. ".repeat(60), "de")).toBe(false);
+    // An English "brief" is a summary, not a letter.
+    for (const title of ["The brief", "Brief", "In brief", "Project brief", "Brief bio"]) expect(isLetter(title, "I like order. ".repeat(60), "en"), title).toBe(false);
+  });
+
+  it("leads with the first sentence of a long first paragraph, and drops nothing", () => {
+    const about = sevagDe.blocks.find((block) => block.type === "about");
+    const first = paragraphs(about?.type === "about" ? about.text : "")[0] ?? "";
+    expect(first.length).toBeGreaterThan(LEAD_MAX);
+    const [lead, rest] = splitLead(first);
+    expect(lead).toBe("In meiner aktuellen Position liegt mein Schwerpunkt in der Kommissionierung, im Scannen von Waren und im Be- und Entladen von Lkw.");
+    expect(rest).toBe("Das sichere Ein- und Auslagern mit dem Seitenschubstapler gehört zu meinen täglichen Aufgaben.");
+    expect(`${lead} ${rest ?? ""}`).toBe(first);
+    // A short paragraph leads whole.
+    expect(splitLead("Ich arbeite gern im Lager.")).toEqual(["Ich arbeite gern im Lager.", null]);
+    // Never after an abbreviation, a single letter or an ordinal; never before a small letter.
+    const tricky = `Ich arbeite seit dem 1. Mai im Lager, z. B. mit dem Stapler, bzw. Hubwagen und ca. zehn Kollegen aus Lörrach. ${"Danach mehr. ".repeat(12)}`;
+    expect(splitLead(tricky)[0]).toBe("Ich arbeite seit dem 1. Mai im Lager, z. B. mit dem Stapler, bzw. Hubwagen und ca. zehn Kollegen aus Lörrach.");
+    // Arabic: a full stop before an Arabic letter ends a sentence.
+    const arabic = `أعمل في المستودع منذ عام ألفين وثمانية عشر وأقود الرافعة الشوكية يومياً. ${"وأحب النظام والعمل ضمن الفريق. ".repeat(6)}`;
+    expect(splitLead(arabic)[0]).toBe("أعمل في المستودع منذ عام ألفين وثمانية عشر وأقود الرافعة الشوكية يومياً.");
   });
 });

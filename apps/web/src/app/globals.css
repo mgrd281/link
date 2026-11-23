@@ -642,8 +642,8 @@
 }
 
 /* A Laufbahn page keeps what is focused or jumped to clear of its fixed chrome: the compact bar at the
-   top (control-xl) and a preview's or example's dock at the bottom; on phones also the sticky section
-   index under the bar (a chip and its band). Sections, the hero's last row of links and anything
+   top (control-xl) and a preview's or example's dock at the bottom (on phones the sticky section index
+   adds its own band through lb-under-index). Sections, the hero's last row of links and anything
    reached by Tab or by an anchor stop below them, never under them (WCAG 2.4.11). Scoped to pages that
    have a signposted section, so every other template scrolls as before. Jumps glide unless the visitor
    prefers less motion. */
@@ -655,22 +655,24 @@
   }
 }
 
-:root:has(.lb-index) {
-  @variant max-sm {
-    scroll-padding-block-start: calc(var(--spacing-control-xl) + var(--spacing-touch-target) + var(--spacing-2) + var(--spacing-4));
-  }
-}
-
 /* stylelint-disable nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
 
 /* The section index on phones: it sticks flush under the compact bar (which slides in as the hero
    leaves), on the page's solid ground. Where the bar never shows (no scroll-driven animations), it
    sticks to the top edge instead, so no gap opens above it. It is a scroll-state container, so its
-   hairline (lb-index-edge) shows only while it is stuck. From tablet widths on it stands in the flow. */
+   hairline (lb-index-edge) shows only while it is stuck. Stuck, its chips sit inside the band the
+   document keeps clear for the bar (its scroll padding), where the browser would scroll the page on
+   every Tab to "reveal" them, in vain: a negative scroll margin as deep as that band exempts them, so
+   moving along the chips scrolls the row only, never the page. From tablet widths on, and on short
+   screens (a phone held sideways, 400 % zoom: sticky bars scroll away there), it stands in the flow. */
 @utility lb-index {
   position: sticky;
   inset-block-start: var(--spacing-control-xl);
   container-type: scroll-state;
+
+  & a {
+    scroll-margin-block-start: calc((var(--spacing-control-xl) + var(--spacing-4)) * -1);
+  }
 
   @supports not (animation-timeline: view()) {
     inset-block-start: 0;
@@ -678,6 +680,40 @@
 
   @variant @prose {
     position: static;
+
+    & a {
+      scroll-margin-block-start: 0;
+    }
+  }
+
+  @variant short {
+    position: static;
+
+    & a {
+      scroll-margin-block-start: 0;
+    }
+  }
+}
+
+/* The content beside or under the section index. Where the index sticks (phones, not short screens:
+   the same conditions as lb-index), whatever is focused or jumped to in it stops below the index as
+   well as the bar (WCAG 2.4.11): a scroll margin of the index's band (a 44 px chip and 4 px above and
+   below it) on top of the document's scroll padding for the bar. */
+@utility lb-under-index {
+  & :where(*) {
+    scroll-margin-block-start: calc(var(--spacing-touch-target) + var(--spacing-2));
+  }
+
+  @variant @prose {
+    & :where(*) {
+      scroll-margin-block-start: 0;
+    }
+  }
+
+  @variant short {
+    & :where(*) {
+      scroll-margin-block-start: 0;
+    }
   }
 }
 
@@ -691,23 +727,28 @@
 }
 
 /* A row that scrolls sideways fades at an edge only while more of it lies beyond that edge (the index
-   sets data-fade-start / data-fade-end); logical, so an Arabic row fades on the mirrored sides. */
+   sets data-fade-start / data-fade-end); logical, so an Arabic row fades on the mirrored sides. The
+   fade is as wide as the row's padding (the gutter), so it veils the cut neighbour, never the chip
+   snapped beside it. No mask at all while nothing lies beyond (tablets, the wide canvas): a mask clips
+   whatever is drawn outside the row, a chip's focus ring included. */
 @utility lb-fade {
   --lb-fade-start: 0%;
   --lb-fade-end: 0%;
 
-  mask-image: linear-gradient(to right, transparent, var(--color-ink) var(--lb-fade-start), var(--color-ink) calc(100% - var(--lb-fade-end)), transparent);
+  &:is([data-fade-start], [data-fade-end]) {
+    mask-image: linear-gradient(to right, transparent, var(--color-ink) var(--lb-fade-start), var(--color-ink) calc(100% - var(--lb-fade-end)), transparent);
+  }
 
-  &:dir(rtl) {
+  &:is([data-fade-start], [data-fade-end]):dir(rtl) {
     mask-image: linear-gradient(to left, transparent, var(--color-ink) var(--lb-fade-start), var(--color-ink) calc(100% - var(--lb-fade-end)), transparent);
   }
 
   &[data-fade-start] {
-    --lb-fade-start: var(--spacing-10);
+    --lb-fade-start: var(--spacing-creator-gutter);
   }
 
   &[data-fade-end] {
-    --lb-fade-end: var(--spacing-10);
+    --lb-fade-end: var(--spacing-creator-gutter);
   }
 }
 
@@ -716,9 +757,13 @@
   background-color: color-mix(in oklab, var(--creator-accent) calc(var(--opacity-pressed) * 100%), var(--creator-surface));
 }
 
-/* A long read's disclosure: closed on phones and tablets (the button follows the text it opens), always
-   open on the wide canvas, where the whole text is shown and the button is not. Opened, the new text
-   unfolds from just above its place, so the eye sees what was added (not with reduced motion). */
+/* A long read's disclosure: closed on phones and tablets (the button under the first paragraphs; it
+   stays where it was pressed and the text unfolds below it). Shown whole, without its button, on the
+   wide canvas and whenever the visitor arrives at its section by the section's address (the hero's
+   "Read the letter", the index): a button that promises the letter opens it. Only where CSS can show a
+   closed disclosure's content (::details-content); elsewhere the button stays everywhere, so the text
+   is never hidden without a way to it. Opened, the new text unfolds from just above its place, so the
+   eye sees what was added (not with reduced motion). */
 @utility lb-more {
   @media (prefers-reduced-motion: no-preference) {
     &[open] > div {
@@ -726,13 +771,23 @@
     }
   }
 
-  @variant @work {
-    &::details-content {
+  @supports selector(::details-content) {
+    :where(.lb-section:target) &::details-content {
       content-visibility: visible;
     }
 
-    & > summary {
+    :where(.lb-section:target) & > summary {
       display: none;
+    }
+
+    @variant @work {
+      &::details-content {
+        content-visibility: visible;
+      }
+
+      & > summary {
+        display: none;
+      }
     }
   }
 }

@@ -9,7 +9,7 @@ import { useId, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
 import { LinkIconGlyph } from "../shared/link-icons";
-import { linkDestination } from "./sections";
+import { linkDestination, paragraphs } from "./sections";
 import { displayStyle, pageSide, pressable } from "./styles";
 
 /**
@@ -31,13 +31,6 @@ export const textLink = "rounded-xs font-semibold text-creator-accent-text trans
  */
 const portraitSizes = (wide: boolean): string =>
   wide ? `(min-width: ${String(tokens.layout.work)}px) ${String(Math.round(tokens.layout.work / 3))}px, ${mediaSizes.third}` : mediaSizes.third;
-
-/** Paragraphs are split at blank lines; a single line break stays a line break. */
-export const paragraphs = (text: string): string[] =>
-  text
-    .split(/\n\s*\n/)
-    .map((part) => part.trim())
-    .filter(Boolean);
 
 /**
  * Who the owner is: a lead paragraph, a portrait beside up to four facts, then the rest of the text.

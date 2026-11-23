@@ -125,10 +125,10 @@ function BleedName({ profile, theme, isRtl }: { profile: Profile; theme: Resolve
  * quiet chip and the name in white, set very large, on a veil of ink tied to the words (lb-veil), so
  * they keep AA however short the picture is. When the picture is the portrait itself (no separate
  * hero picture), it rides high in a square and fades into an ink ground, so the words stand below the
- * face, never across it. Below it, on the page: the sentence, the numbers in a row between hairlines,
- * then two actions where the thumb is (LaufbahnActions): the page's first action, filled, and "Share",
- * outlined. Without any picture the picture's place is an accent field with the initials, never an
- * empty box.
+ * face, never across it. Below it, on the page: the sentence, then two actions where the thumb is
+ * (LaufbahnActions: the page's first action, filled, and "Share", outlined), on a phone's first screen,
+ * then the numbers in a row between hairlines. Without any picture the picture's place is an accent
+ * field with the initials, never an empty box.
  *
  * The wide canvas: one composition on twelve columns. The words on the first five (the name on two
  * lines when it has two words), the picture as a tall rounded plate on the last six.
@@ -240,15 +240,16 @@ export function BleedHero({
         </div>
       </div>
 
-      {/* Under the picture: the sentence, the numbers and the actions; under the name on the wide canvas. */}
+      {/* Under the picture: the sentence, the actions (within a phone's first screen) and the numbers; under the name on the wide canvas. */}
       <div className="grid min-w-0 gap-6 px-creator-gutter pt-6 @prose:mx-auto @prose:w-full @prose:max-w-prose @prose:px-0 @prose:pt-8 @work:col-span-5 @work:col-start-1 @work:row-start-2 @work:mx-0 @work:max-w-none @work:pt-6">
         {profile.bio ? (
           <p dir="auto" className={cn(pageSide, "text-body-lg text-pretty break-words text-creator-fg", rise(2).className)} style={rise(2).style} {...aiText(profile, "bio")}>
             {profile.bio}
           </p>
         ) : null}
+        <LaufbahnActions profile={profile} action={action} lead={lead} now={now} className={rise(3).className} style={rise(3).style} />
         {profile.stats?.length ? (
-          <dl className={cn("grid auto-cols-fr grid-flow-col border-y border-creator-line py-4", rise(3).className)} style={rise(3).style}>
+          <dl className={cn("grid auto-cols-fr grid-flow-col border-y border-creator-line py-4", rise(4).className)} style={rise(4).style}>
             {profile.stats.map((stat) => (
               // The label first for screen readers, the value on top for the eye; the first number on the reading edge.
               <div key={stat.label} className="flex min-w-0 flex-col-reverse justify-end gap-1 px-3 first:ps-0 last:pe-0 not-first:border-s not-first:border-creator-line @prose:px-5">
@@ -267,7 +268,6 @@ export function BleedHero({
             ))}
           </dl>
         ) : null}
-        <LaufbahnActions profile={profile} action={action} lead={lead} now={now} className={rise(4).className} style={rise(4).style} />
         {socials ? (
           <div className={rise(5).className} style={rise(5).style}>
             <Socials block={socials} plain={theme.layout.socials === "plain"} start />
@@ -344,7 +344,7 @@ function LaufbahnActions({
             <span>{t(lead.kind === "letter" ? "laufbahn.readLetter" : "laufbahn.jump")}</span>
           </a>
         ) : null}
-        <ShareAction title={profile.displayName} label={t("laufbahn.share")} copiedLabel={t("laufbahn.copied")} className={cn(heroButton, "grow border border-creator-line-strong bg-creator-surface text-creator-fg")} />
+        <ShareAction title={profile.displayName} label={t("laufbahn.share")} className={cn(heroButton, "grow border border-creator-line-strong bg-creator-surface text-creator-fg")} />
       </div>
       {cv ? (
         <a

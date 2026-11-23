@@ -329,6 +329,7 @@
     "report": "إبلاغ",
     "share": "شارك الصفحة",
     "shareCopied": "تم نسخ الرابط.",
+    "shareFailed": "تعذّر نسخ الرابط.",
     "socialLabel": "{platform}",
     "menu": "المزيد",
     "upcoming": "القادم",
@@ -472,8 +473,7 @@
       "readLetter": "اقرأ الخطاب",
       "readLetterWhole": "اقرأ الخطاب كاملاً",
       "readMore": "اقرأ المزيد",
-      "readLess": "عرض أقل",
-      "copied": "تم النسخ"
+      "readLess": "عرض أقل"
     }
   },
   "directions": {

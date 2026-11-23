@@ -46,6 +46,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { paragraphs } from "./sections";
+
 /**
  * What the Laufbahn template reads out of a page's words (ADR 0069): an icon for a skill or a title,
  * the joints of long German compounds, how tiles share a row, and what kind of text a section holds.
@@ -113,17 +115,38 @@ interface CompiledRule {
   icon: LucideIcon;
   /** Per language: phrases, each a list of word tests. */
   patterns: Partial<Record<Locale, WordTest[][] | undefined>>;
+  /** Per language: words that count only when every other word of the text is a level word. */
+  solo: Partial<Record<Locale, WordTest[] | undefined>>;
   /** Words this rule never matches (same pattern syntax), whatever the language. */
   except: WordTest[];
 }
 
-/** An icon and the words that call for it, per language; `not` lists the look-alikes it must never take. */
+/**
+ * The words that may stand beside a language without making the text about something else: levels
+ * (A1 … C2, native, fluent, Muttersprache), "language" itself and small joining words, in the three
+ * languages, normalized.
+ */
+const LEVEL_WORDS = new Set(
+  [
+    "a1", "a2", "b1", "b2", "c1", "c2", "und", "and", "in", "wort", "schrift", "sehr", "gut", "gute", "fließend", "verhandlungssicher",
+    "grundkenntnisse", "kenntnisse", "muttersprache", "native", "fluent", "basic", "basics", "intermediate", "advanced", "business",
+    "conversational", "proficient", "mother", "tongue", "level", "spoken", "written", "اللغه", "لغه", "و", "ممتاز", "جيد", "جيده",
+    "طلاقه", "الام", "مبتدئ", "متوسط", "متقدم",
+  ].map(normalize),
+);
+
+/**
+ * An icon and the words that call for it, per language; `not` lists the look-alikes it must never
+ * take. `solo` words count only when the text says nothing else (apart from the words of a level,
+ * `LEVEL_WORDS`): "Englisch (C1)" names a language, "Italian cooking" does not.
+ */
 interface Rule {
   icon: LucideIcon;
   de?: string[];
   en?: string[];
   ar?: string[];
   not?: string[];
+  solo?: Partial<Record<Locale, string[]>>;
 }
 
 /**
@@ -143,14 +166,16 @@ const RULES: Rule[] = [
   },
   {
     icon: Award,
-    de: ["zertifi*", "*zertifikat", "*zertifikate", "*zertifizierung", "meisterbrief", "gesellenbrief", "diplom*", "bachelor*", "*abschluss"],
+    // A school or vocational qualification, never a "Jahresabschluss" (annual accounts) or a "Vertragsabschluss".
+    de: ["zertifi*", "*zertifikat", "*zertifikate", "*zertifizierung", "meisterbrief", "gesellenbrief", "diplom*", "bachelor*", "abschluss", "*schulabschluss", "berufsabschluss", "studienabschluss"],
     en: ["certificate", "certificates", "certified", "certification", "certifications", "accredited", "diploma", "diplomas", "degree", "bachelor*"],
     ar: ["شهاده", "شهادات", "معتمد", "معتمده", "دبلوم", "بكالوريوس", "ماجستير"],
     not: ["diplomat*", "diplomatie*"],
   },
   {
     icon: TriangleAlert,
-    de: ["gefahr*", "adr"],
+    // Dangerous goods, never "gefahren" (driven): "Stapler gefahren seit 2015".
+    de: ["gefahrgut*", "*gefahrgut", "gefahrgüter", "gefahrstoff*", "*gefahrstoffe", "gefahrenstoff*", "gefährlich*", "adr"],
     en: ["hazard*", "hazmat", "dangerous"],
     ar: ["خطر", "خطره", "خطيره", "مخاطر"],
   },
@@ -165,10 +190,11 @@ const RULES: Rule[] = [
     de: ["*stapler*", "flurförder*", "hubwagen*", "*hubwagen"],
     en: ["forklift*", "reach truck"],
     ar: ["رافعه", "رافعات", "شوكيه"],
+    not: ["hochstapler*", "*hochstapler"],
   },
   {
     icon: FileText,
-    de: ["*dokument*", "*papiere", "lieferschein*", "*lieferschein", "frachtbrief*", "*frachtbrief", "korrespondenz", "schriftverkehr"],
+    de: ["*dokument*", "*papiere", "lieferschein*", "*lieferschein", "frachtbrief*", "*frachtbrief", "korrespondenz", "schriftverkehr", "bewerbung*", "*bewerbung"],
     en: ["document*", "paperwork", "correspondence"],
     ar: ["وثائق", "وثيقه", "مستندات", "مستند", "اوراق"],
     not: ["dokumentar*", "documentary", "documentaries"],
@@ -197,6 +223,13 @@ const RULES: Rule[] = [
     en: ["truck*", "lorry", "lorries", "loading", "unloading", "shipping", "freight*", "deliver*", "transport*", "haulage"],
     ar: ["شاحنه", "شاحنات", "تفريغ", "توصيل"],
     not: ["deliverable", "deliverables"],
+  },
+  // Before the database: "تحليل البيانات" (data analysis) is analysis.
+  {
+    icon: ChartColumn,
+    de: ["analyse*", "*analyse", "analysen", "statistik*", "*statistik", "auswertung*", "*auswertung", "reporting", "berichtswesen", "kennzahlen"],
+    en: ["analys*", "analyz*", "analytics", "statistic*", "reporting"],
+    ar: ["تحليل", "احصاء", "احصائيات", "تقارير"],
   },
   {
     icon: Database,
@@ -239,9 +272,17 @@ const RULES: Rule[] = [
   },
   {
     icon: Languages,
-    de: ["sprach*", "*sprache", "*sprachen", "*sprachig", "deutsch", "englisch", "arabisch", "französisch", "spanisch", "türkisch", "russisch", "italienisch", "polnisch", "armenisch", "übersetz*", "dolmetsch*"],
-    en: ["language*", "english", "german", "arabic", "french", "spanish", "turkish", "russian", "italian", "polish", "armenian", "bilingual", "multilingual", "translat*", "interpreting"],
-    ar: ["لغه", "لغات", "عربي", "عربيه", "انجليزي", "انجليزيه", "الماني", "المانيه", "فرنسي", "فرنسيه", "ترجمه"],
+    de: ["sprach*", "*sprache", "*sprachen", "*sprachig", "übersetz*", "dolmetsch*"],
+    en: ["language*", "bilingual", "multilingual", "translat*", "interpreting"],
+    ar: ["لغه", "لغات", "ترجمه"],
+    // A language by name only when the text names nothing else: "Englisch (C1)", never "Italian cooking", "Floor polish" or "طبخ عربي".
+    solo: {
+      de: ["deutsch", "englisch", "arabisch", "französisch", "spanisch", "türkisch", "russisch", "italienisch", "polnisch", "armenisch"],
+      en: ["english", "german", "arabic", "french", "spanish", "turkish", "russian", "italian", "polish", "armenian"],
+      ar: ["عربي", "عربيه", "انجليزي", "انجليزيه", "الماني", "المانيه", "فرنسي", "فرنسيه"],
+    },
+    // Agreements, call-backs and speeches are no languages.
+    not: ["*absprache*", "absprache*", "*rücksprache*", "rücksprache*", "*fürsprache", "ansprache*", "*ansprache"],
   },
   {
     icon: Accessibility,
@@ -266,6 +307,7 @@ const RULES: Rule[] = [
     de: ["*foto*", "photo*", "kamera*", "*kamera", "*video*", "film*", "*film"],
     en: ["photo*", "camera*", "video*", "film*"],
     ar: ["تصوير", "مصور", "فيديو"],
+    not: ["photovolt*", "*photovoltaik", "fotovolt*", "*fotovoltaik"],
   },
   {
     icon: CodeXml,
@@ -292,22 +334,24 @@ const RULES: Rule[] = [
     ar: ["تصميم", "هويه", "هويات"],
     not: ["designated"],
   },
+  // Before the workshops of a presentation: a car workshop is a garage.
+  {
+    icon: Wrench,
+    de: ["wartung*", "*wartung", "reparatur*", "*reparatur", "instandhaltung*", "*instandhaltung", "instandsetzung", "mechanik*", "*mechanik", "mechaniker*", "*mechaniker", "kfz*", "montage*", "*montage", "installation*", "*installation", "sanitär*", "klempner*", "heizung*"],
+    en: ["maintenance", "repair*", "mechanic*", "servicing", "assembly", "installation*", "plumb*", "garage", "car workshop*", "auto workshop*", "vehicle workshop*"],
+    ar: ["صيانه", "تصليح", "اصلاح", "ميكانيك*", "ورشه سيارات", "ورش سيارات"],
+  },
   {
     icon: Presentation,
     de: ["workshop*", "präsentation*", "*präsentation*", "moderation*", "vortrag", "vorträge", "seminar*", "*seminar", "powerpoint"],
     en: ["workshop*", "presentation*", "presenting", "facilitat*", "seminar*", "public speaking", "powerpoint"],
-    ar: ["ورش", "ورشه"],
-  },
-  {
-    icon: Wrench,
-    de: ["wartung*", "*wartung", "reparatur*", "*reparatur", "instandhaltung*", "*instandhaltung", "instandsetzung", "mechanik*", "*mechanik", "mechaniker*", "*mechaniker", "kfz*", "montage*", "*montage", "installation*", "*installation", "sanitär*", "klempner*", "heizung*"],
-    en: ["maintenance", "repair*", "mechanic*", "servicing", "assembly", "installation*", "plumb*"],
-    ar: ["صيانه", "تصليح", "اصلاح", "ميكانيك*"],
+    // "ورشة" alone is also a garage: only "workshops" (ورش العمل) are presentations.
+    ar: ["ورش عمل", "ورشه عمل", "ورشات عمل"],
   },
   {
     icon: Zap,
-    de: ["elektr*", "*elektrik", "*elektronik", "*elektriker"],
-    en: ["electric*", "electronics", "wiring"],
+    de: ["elektr*", "*elektrik", "*elektronik", "*elektriker", "photovoltaik*", "*photovoltaik", "fotovoltaik*", "solar", "solaranlage*", "solartechnik", "solarmodul*"],
+    en: ["electric*", "electronics", "wiring", "photovoltaic*", "solar"],
     ar: ["كهرباء", "كهربائي*"],
   },
   {
@@ -318,7 +362,8 @@ const RULES: Rule[] = [
   },
   {
     icon: Stethoscope,
-    de: ["pflege*", "*pflege", "medizin*", "*medizin", "ersthelfer*", "erste hilfe", "sanitäter*", "arzthelfer*", "*therapie", "therapeut*"],
+    // Care of people, never of vehicles, buildings or landscapes ("Fahrzeugpflege", "Gebäudepflege").
+    de: ["pflege", "pflegefach*", "pflegehilf*", "pflegekraft", "pflegekräfte", "pflegeassist*", "pflegedienst*", "*pflegedienst", "krankenpflege*", "*krankenpflege", "altenpflege*", "*altenpflege", "intensivpflege", "behindertenpflege", "medizin*", "*medizin", "ersthelfer*", "erste hilfe", "sanitäter*", "arzthelfer*", "*therapie", "therapeut*"],
     en: ["nursing", "nurse", "nurses", "medical", "medicine", "healthcare", "caregiving", "caregiver*", "paramedic*", "first aid"],
     ar: ["تمريض", "طبي", "طبيه", "اسعاف", "اسعافات"],
     not: ["*datenpflege", "*kundenpflege", "*gartenpflege", "*grünpflege", "*körperpflege"],
@@ -347,6 +392,8 @@ const RULES: Rule[] = [
     de: ["marketing", "*marketing", "vertrieb*", "werbung", "*werbung", "social media", "öffentlichkeitsarbeit"],
     en: ["marketing", "sales", "selling", "advertising", "social media"],
     ar: ["تسويق", "مبيعات", "اعلان", "اعلانات"],
+    // An application ("Bewerbung") is not advertising.
+    not: ["*bewerbung", "bewerbung*"],
   },
   {
     icon: ShoppingCart,
@@ -380,12 +427,6 @@ const RULES: Rule[] = [
     ar: ["مناوبات", "مناوبه"],
   },
   {
-    icon: ChartColumn,
-    de: ["analyse*", "*analyse", "analysen", "statistik*", "*statistik", "auswertung*", "*auswertung", "reporting", "berichtswesen", "kennzahlen"],
-    en: ["analys*", "analyz*", "analytics", "statistic*", "reporting"],
-    ar: ["تحليل", "احصاء", "احصائيات", "تقارير"],
-  },
-  {
     icon: ClipboardList,
     de: ["organisation*", "*organisation", "planung*", "*planung", "projektmanagement", "projektleitung", "disposition", "disponent*", "koordination*", "*koordination"],
     en: ["planning", "organisation", "organization", "organising", "organizing", "organisational", "organizational", "scheduling", "project management", "coordinat*"],
@@ -395,7 +436,8 @@ const RULES: Rule[] = [
     icon: Car,
     de: ["fahrer", "fahrerin", "*fahrer", "pkw*", "autofahr*", "kurier*"],
     en: ["driving", "driver", "drivers", "chauffeur", "courier*"],
-    ar: ["قياده", "سائق", "سياقه"],
+    // "القيادة" alone is leadership in a list of skills: only the driving of cars is driving.
+    ar: ["قياده سيارات", "قياده سياره", "سائق", "سياقه"],
   },
 ];
 
@@ -404,6 +446,7 @@ const phrase = (pattern: string): WordTest[] => pattern.split(" ").map(wordTest)
 const COMPILED: CompiledRule[] = RULES.map((rule) => ({
   icon: rule.icon,
   patterns: { de: rule.de?.map(phrase), en: rule.en?.map(phrase), ar: rule.ar?.map(phrase) },
+  solo: { de: rule.solo?.de?.map(wordTest), en: rule.solo?.en?.map(wordTest), ar: rule.solo?.ar?.map(wordTest) },
   except: (rule.not ?? []).map(wordTest),
 }));
 
@@ -426,6 +469,7 @@ function phraseAt(tests: WordTest[], forms: string[][], start: number, except: W
 export function iconFor(text: string, locale: Locale): LucideIcon | undefined {
   const forms = wordsOf(text).map(formsOf);
   if (forms.length === 0) return undefined;
+  const level = (options: string[]) => options.some((form) => LEVEL_WORDS.has(form));
   for (const rule of COMPILED) {
     for (const language of READS[locale]) {
       for (const tests of rule.patterns[language] ?? []) {
@@ -433,6 +477,9 @@ export function iconFor(text: string, locale: Locale): LucideIcon | undefined {
           if (phraseAt(tests, forms, start, rule.except)) return rule.icon;
         }
       }
+      const solo = rule.solo[language] ?? [];
+      const named = (options: string[]) => options.some((form) => solo.some((test) => test(form)));
+      if (solo.length > 0 && forms.some(named) && forms.every((options) => named(options) || level(options))) return rule.icon;
     }
   }
   return undefined;
@@ -533,22 +580,80 @@ export function pieceEms(piece: string): number {
   }, 0);
 }
 
-/** The widest piece of a label that cannot break (between spaces, hyphens and soft hyphens), in em, a hyphen included. */
+/**
+ * The widest piece of a label that cannot break (between spaces, hyphens and soft hyphens), in em; a
+ * piece that ends at a soft hyphen counts the hyphen it shows when the line breaks there.
+ */
 export function longestPieceEms(label: string): number {
-  const pieces = label.split(/[\s\-\u00AD\u2010\u2011]+/u).filter(Boolean);
-  return Math.max(0, ...pieces.map((piece) => pieceEms(piece) + (label.includes(SOFT_HYPHEN) ? 0.35 : 0)));
+  const pieces = label.match(/[^\s\-\u00AD\u2010\u2011]+\u00AD?/gu) ?? [];
+  return Math.max(0, ...pieces.map((piece) => (piece.endsWith(SOFT_HYPHEN) ? pieceEms(piece.slice(0, -1)) + HYPHEN_EMS : pieceEms(piece))));
+}
+
+/** The width a soft hyphen adds to its line when the line breaks there, in em. */
+const HYPHEN_EMS = 0.35;
+/** A space between two words, in em. */
+const SPACE_EMS = 0.28;
+
+/** The units of a label between its break opportunities, each with how it joins the one before. */
+function unitsOf(label: string): { width: number; gap: number; soft: boolean }[] {
+  const units: { width: number; gap: number; soft: boolean }[] = [];
+  let gap = 0;
+  for (const token of label.match(/\s+|[^\s\-\u2010\u2011\u00AD]*[-\u2010\u2011\u00AD]|[^\s\-\u2010\u2011\u00AD]+/gu) ?? []) {
+    if (/^\s+$/u.test(token)) {
+      gap = SPACE_EMS;
+      continue;
+    }
+    const soft = token.endsWith(SOFT_HYPHEN);
+    units.push({ width: pieceEms(soft ? token.slice(0, -1) : token), gap: units.length === 0 ? 0 : gap, soft });
+    gap = 0;
+  }
+  return units;
+}
+
+/**
+ * How many lines a label takes in `room` em, filled as the browser fills them (text-wrap: balance
+ * evens the lines out but never adds one): breaks after spaces and hyphens and at soft hyphens (which
+ * then show), never inside a piece; a piece wider than the room counts as the lines it would fill.
+ */
+export function linesIn(label: string, room: number): number {
+  let lines = 0;
+  let used = 0;
+  for (const [index, unit] of unitsOf(label).entries()) {
+    const fits = used + unit.gap + unit.width + (unit.soft ? HYPHEN_EMS : 0) <= room;
+    if (index > 0 && fits) {
+      used += unit.gap + unit.width;
+      continue;
+    }
+    lines += Math.max(1, Math.ceil((unit.width + (unit.soft ? HYPHEN_EMS : 0)) / room));
+    used = unit.width;
+  }
+  return lines;
 }
 
 /** The narrowest phone a tile's label must fit without breaking a piece (common Android phones). */
 const NARROW_PHONE = 360;
+/** The phone the layout is drawn for (the brief's 390 px). */
+const PHONE = 390;
 /** The body face's size in px (text-body), so a label's width in em can be compared with room in px. */
 const BODY_PX = tokens.text.body.fontSize;
 
 /**
- * The room for a label in half a phone's row, in em of the body face: a 360 px phone, its gutters, the
- * gap between the two tiles and each tile's padding ((360 − 2 × 20 − 8) / 2 − 2 × 12 = 132 px).
+ * The room beside the icon in a half-row tile on a phone of `width` px, in em of the body face: half
+ * the row (the gutters and the 8 px between two tiles taken off), less the tile's hairlines, its
+ * padding (12 at the start, 8 at the end), the 32 px icon square and the 12 px beside it.
+ * 360 px: 90 px (5.6 em); 390 px: 105 px (6.6 em).
  */
-export const HALF_ROW_EMS = ((NARROW_PHONE - 2 * tokens.spacing.creatorGutter - tokens.spacing["2"]) / 2 - 2 * tokens.spacing["3"]) / BODY_PX;
+const besideIcon = (width: number): number =>
+  ((width - 2 * tokens.spacing.creatorGutter - tokens.spacing["2"]) / 2 - 2 * tokens.borderWidth.hairline - tokens.spacing["3"] - tokens.spacing["2"] - tokens.size.controlSm - tokens.spacing["3"]) /
+  BODY_PX;
+export const BESIDE_ICON_EMS = { narrow: besideIcon(NARROW_PHONE), phone: besideIcon(PHONE) } as const;
+
+/**
+ * Whether a skill's label can share a phone's row with another: no piece of it is wider than the
+ * room beside the icon on a 360 px phone (so no word is ever broken inside), and it takes at most two
+ * lines there on a 390 px phone. Otherwise the tile takes the whole row, where it is one line.
+ */
+export const fitsBeside = (label: string): boolean => longestPieceEms(label) <= BESIDE_ICON_EMS.narrow && linesIn(label, BESIDE_ICON_EMS.phone) <= 2;
 
 /**
  * The room for a fact's value in half the facts' sheet on a 360 px phone, in em of the body face: the
@@ -559,7 +664,9 @@ export const HALF_CELL_EMS = ((NARROW_PHONE - 2 * tokens.spacing.creatorGutter -
 /**
  * How many columns each tile spans, in order and with no holes: a tile asks for `wants[i]` columns
  * (at most `columns`); when it does not fit the rest of its row, the tile before it widens to close
- * the row, and the last row's last tile widens to its end. Order is never changed.
+ * the row, and the last row's last tile widens to its end. In three columns a last row of one tile
+ * after a row of three takes the four as one and two, then two and one (no lone strip at the end).
+ * Order is never changed.
  */
 export function packSpans(wants: readonly number[], columns: number): number[] {
   const spans = wants.map((want) => Math.min(Math.max(1, want), columns));
@@ -575,22 +682,83 @@ export function packSpans(wants: readonly number[], columns: number): number[] {
     if (used === columns) used = 0;
   });
   if (used > 0 && last >= 0) spans[last] = (spans[last] ?? 1) + columns - used;
+  const n = spans.length;
+  const before = spans.slice(0, Math.max(0, n - 4)).reduce((sum, span) => sum + span, 0);
+  if (columns === 3 && n >= 4 && spans[n - 1] === 3 && wants[n - 1] === 1 && spans.slice(n - 4, n - 1).every((span) => span === 1) && before % 3 === 0) {
+    spans.splice(n - 4, 4, 1, 2, 2, 1);
+  }
   return spans;
 }
 
 /** From this many skills on, the first one leads as a wide tile. */
 export const LEAD_FROM = 5;
+/** How many whole-row tiles a half tile may move up past to share a row with the half tile before them. */
+const MAX_PASS = 2;
 
 /**
- * The spans of a list of skill tiles on phones (two columns) and from tablets on (three): the first
- * leads wide when the list is long enough, a label whose widest piece would not fit half a phone's
- * row takes the whole row, and every row is closed.
+ * Two columns from tiles that want one or two (`wants`, in the owner's order): two half tiles share a
+ * row. A half tile followed by whole-row tiles waits for the next half tile, which moves up past at
+ * most two of them to stand beside it; if none comes in time (or the list ends), the waiting tile
+ * takes the whole row. The first tile never moves, and no tile moves more than two places.
  */
-export function skillSpans(labels: readonly string[]): { phone: number[]; wide: number[] } {
+export function pairUp(wants: readonly number[]): { order: number[]; spans: number[] } {
+  const order: number[] = [];
+  const spans: number[] = [];
+  let open = -1;
+  let held: number[] = [];
+  const flush = () => {
+    for (const index of held) {
+      order.push(index);
+      spans.push(2);
+    }
+    held = [];
+  };
+  wants.forEach((want, index) => {
+    if (want >= 2) {
+      if (open < 0) {
+        order.push(index);
+        spans.push(2);
+        return;
+      }
+      held.push(index);
+      if (held.length > MAX_PASS) {
+        spans[open] = 2;
+        open = -1;
+        flush();
+      }
+      return;
+    }
+    order.push(index);
+    spans.push(1);
+    if (open < 0) open = order.length - 1;
+    else {
+      open = -1;
+      flush();
+    }
+  });
+  if (open >= 0) spans[open] = 2;
+  flush();
+  return { order, spans };
+}
+
+/** How a list of skills is laid out: its order on the page and each tile's columns. */
+export interface SkillLayout {
+  /** Indexes into the owner's list, in page order (the owner's, but for a half tile moved up to share a row). */
+  order: number[];
+  /** Columns each tile in `order` spans on phones (of two) and from tablets on (of three). */
+  phone: number[];
+  wide: number[];
+}
+
+/**
+ * The skills as a bento: the first leads across when the list is long enough; on phones a label that
+ * cannot share a row (`fitsBeside`) takes the whole row and the others pair up; from tablets on every
+ * row of three is closed. One order for every width, so what the eye scans is what a screen reader reads.
+ */
+export function skillLayout(labels: readonly string[]): SkillLayout {
   const lead = labels.length >= LEAD_FROM;
-  const phone = labels.map((label, index) => (lead && index === 0) || longestPieceEms(label) > HALF_ROW_EMS ? 2 : 1);
-  const wide = labels.map((_, index) => (lead && index === 0 ? 2 : 1));
-  return { phone: packSpans(phone, 2), wide: packSpans(wide, 3) };
+  const { order, spans } = pairUp(labels.map((label, index) => ((lead && index === 0) || !fitsBeside(label) ? 2 : 1)));
+  return { order, phone: spans, wide: packSpans(order.map((index) => (lead && index === 0 ? 2 : 1)), 3) };
 }
 
 /** The spans of the facts' cells (two columns): a value whose widest piece would not fit half the sheet takes the row. */
@@ -610,31 +778,28 @@ const READING_CHARACTERS = 600;
 /** Reading speed for the reading-time label (words a minute). */
 const WORDS_A_MINUTE = 200;
 
-/** A text's paragraphs (split at blank lines; a single line break stays inside its paragraph). */
-export const paragraphsOf = (text: string): string[] =>
-  text
-    .split(/\n\s*\n/u)
-    .map((part) => part.trim())
-    .filter(Boolean);
-
 export type TextKind = "note" | "plain" | "reading";
 
 /** How a text section is set: a short note as a callout, a long read as a reading tile, the rest as paragraphs. */
 export function textKind(text: string): TextKind {
   const length = text.trim().length;
   if (length < SHORT_TEXT) return "note";
-  if (paragraphsOf(text).length >= READING_PARAGRAPHS || length >= READING_CHARACTERS) return "reading";
+  if (paragraphs(text).length >= READING_PARAGRAPHS || length >= READING_CHARACTERS) return "reading";
   return "plain";
 }
 
 /** Whether a reading tile opens with two paragraphs on phones and offers the rest behind a disclosure. */
-export const opensShort = (text: string): boolean => text.trim().length > LONG_TEXT && paragraphsOf(text).length > 2;
+export const opensShort = (text: string): boolean => text.trim().length > LONG_TEXT && paragraphs(text).length > 2;
 
 /** Minutes to read a text, at least one. */
 export const readingMinutes = (text: string): number => Math.max(1, Math.round(text.split(/\s+/u).filter(Boolean).length / WORDS_A_MINUTE));
 
-/** Titles that name a letter (cover letter, motivation letter), in the three languages. */
-const LETTER_TITLES = ["anschreiben", "bewerbungsschreiben", "motivationsschreiben", "begleitschreiben", "brief", "bewerbungsbrief", "motivationsbrief", "letter", "خطاب", "رساله"];
+/** Titles that name a letter (cover letter, motivation letter), per language: an English "brief" is no letter. */
+const LETTER_TITLES: Record<Locale, string[]> = {
+  de: ["anschreiben", "bewerbungsschreiben", "motivationsschreiben", "begleitschreiben", "brief", "bewerbungsbrief", "motivationsbrief"],
+  en: ["letter"],
+  ar: ["خطاب", "رساله"],
+};
 /** How letters open and close, in the three languages. */
 const SALUTATION = /^(sehr geehrte|liebe[rs]?\b|hallo\b|guten tag|dear\b|hello\b|to whom|السيد|السيده|عزيزي|عزيزتي|حضره|تحيه)/u;
 const CLOSING = /(mit freundlichen grüßen|freundliche grüße|viele grüße|beste grüße|hochachtungsvoll|kind regards|best regards|yours sincerely|yours faithfully|sincerely|مع خالص التحيه|مع التحيه|وتفضلوا بقبول|تحياتي)/u;
@@ -643,9 +808,37 @@ const CLOSING = /(mit freundlichen grüßen|freundliche grüße|viele grüße|be
  * Whether a section's text is a letter: a long read under a title that names one, or a long read that
  * opens with a salutation and closes with a greeting. The hero's first action then leads to it.
  */
-export function isLetter(title: string | null, text: string): boolean {
+export function isLetter(title: string | null, text: string, locale: Locale): boolean {
   if (textKind(text) !== "reading") return false;
-  const titled = title !== null && wordsOf(title).some((word) => LETTER_TITLES.some((pattern) => wordTest(pattern)(word)));
+  const titled = title !== null && wordsOf(title).some((word) => formsOf(word).some((form) => LETTER_TITLES[locale].includes(form)));
   const body = normalize(text.trim());
   return titled || (SALUTATION.test(body) && CLOSING.test(body.slice(-160)));
+}
+
+/** Over this many characters a paragraph is too long to lead a section whole. */
+export const LEAD_MAX = 180;
+/** The shortest first sentence that may lead on its own. */
+const LEAD_MIN = 40;
+/** Words before a full stop that do not end a sentence (German and English abbreviations), lower case. */
+const ABBREVIATIONS = new Set(["bzw", "inkl", "usw", "etc", "vgl", "ggf", "evtl", "ca", "dr", "nr", "str", "prof", "tel", "zzgl", "abs", "mind", "max", "min", "approx", "incl", "e.g", "i.e", "vs", "mr", "mrs", "ms", "jr", "sr", "st"]);
+
+/**
+ * A lead and what follows it. A paragraph of at most LEAD_MAX characters leads whole. A longer one
+ * leads with its first sentence when that is a full one (40 to LEAD_MAX characters, ending in . ! ? …
+ * or ؟ before a capital, an Arabic letter or a figure, not after an abbreviation, a single letter or a
+ * single figure such as "z. B." or "1."); the rest of the paragraph follows as body text. Nothing is
+ * dropped: lead and rest together are the paragraph.
+ */
+export function splitLead(paragraph: string): [lead: string, rest: string | null] {
+  const text = paragraph.trim();
+  if (text.length <= LEAD_MAX) return [text, null];
+  for (const match of text.matchAll(/[.!?…؟](?=\s+["„«“]?[\p{Lu}\p{Lo}\p{N}])/gu)) {
+    const cut = match.index + 1;
+    if (cut < LEAD_MIN) continue;
+    if (cut > LEAD_MAX) break;
+    const word = (/[\p{L}\p{M}\p{N}.]+$/u.exec(text.slice(0, match.index))?.[0] ?? "").toLowerCase();
+    if (word.length < 2 || ABBREVIATIONS.has(word)) continue;
+    return [text.slice(0, cut), text.slice(cut).trim()];
+  }
+  return [text, null];
 }

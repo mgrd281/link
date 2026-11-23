@@ -1,9 +1,9 @@
 "use client";
 
 import { cn } from "@linkyo/ui";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import { pageSide } from "./styles";
+import { pageSide, signStyle } from "./styles";
 
 /** A section as the index lists it. */
 export interface IndexEntry {
@@ -15,12 +15,9 @@ export interface IndexEntry {
 /** Where reading happens: a section is being read once its start has passed this share of the screen's height. */
 const READING_LINE = 0.35;
 
-/** The signpost's letter: the display face at its pairing's weight (one letter: no tracking or case change). */
-const signStyle: CSSProperties = { fontWeight: "var(--creator-display-weight)" };
-
 /**
- * The section index's list (Laufbahn, ADR 0069). Plain anchor links that work without this script;
- * with it:
+ * The section index's list (Laufbahn, ADR 0069). Plain anchor links that work without this script
+ * (and then mark nothing: a mark that cannot follow the reader would be wrong wherever they are); with it:
  * - the section being read is marked (`aria-current`), found by an IntersectionObserver on a thin
  *   band at a third of the screen (no scroll handler), the first one at the top of the page and the
  *   last one once the end of the content is on screen;
@@ -30,7 +27,8 @@ const signStyle: CSSProperties = { fontWeight: "var(--creator-display-weight)" }
  */
 export function IndexList({ entries, className }: { entries: readonly IndexEntry[]; className: string }): ReactNode {
   const list = useRef<HTMLOListElement>(null);
-  const [current, setCurrent] = useState(0);
+  // Nothing is marked until the observer has looked: the server's HTML claims no section.
+  const [current, setCurrent] = useState<number | null>(null);
 
   // The section being read.
   useEffect(() => {
@@ -88,7 +86,7 @@ export function IndexList({ entries, className }: { entries: readonly IndexEntry
   // then the focused chip stays where they put it.
   useEffect(() => {
     const row = list.current;
-    const chip = row?.querySelectorAll("a")[current];
+    const chip = current === null ? undefined : row?.querySelectorAll("a")[current];
     if (row && chip && !row.contains(document.activeElement)) bringIntoRow(row, chip, true);
   }, [current]);
 

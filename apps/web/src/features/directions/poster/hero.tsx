@@ -523,11 +523,18 @@ export function PosterHero({
  * Compact bar that slides in once the hero has scrolled away: avatar, name, share; on a page with a
  * contact block also its primary action, as a small filled button before the share button.
  * Driven by the hero's view timeline; browsers without scroll-driven animations never show it.
+ * `solid`: on the page's own ground instead of glass, where a solid bar sits right above it (Laufbahn's
+ * section index), so nothing shows through the top of the screen.
  */
-export function PosterBar({ profile, primary }: { profile: Profile; primary?: Primary | null | undefined }) {
+export function PosterBar({ profile, primary, solid = false }: { profile: Profile; primary?: Primary | null | undefined; solid?: boolean }) {
   return (
     <div className="pointer-events-none sticky top-0 layer-sticky h-0">
-      <div className="poster-bar pointer-events-auto flex h-control-xl items-center gap-3 border-b border-creator-line bg-creator-glass ps-creator-gutter pe-2 backdrop-blur-glass">
+      <div
+        className={cn(
+          "poster-bar pointer-events-auto flex h-control-xl items-center gap-3 border-b border-creator-line ps-creator-gutter pe-2",
+          solid ? "bg-creator-bg" : "bg-creator-glass backdrop-blur-glass",
+        )}
+      >
         <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-small">
           {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
         </span>

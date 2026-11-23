@@ -4,14 +4,14 @@ import { hasImage } from "@linkyo/blocks/rules";
 import { cn, Icon } from "@linkyo/ui";
 import { ArrowUpRight, Briefcase, ChevronDown, CircleCheck, Clock, Lightbulb } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useId, type CSSProperties, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
-import { CREDENTIAL_ICONS, factSpans, iconFor, opensShort, paragraphsOf, readingMinutes, skillSpans, softJoints, textKind } from "./laufbahn-content";
+import { CREDENTIAL_ICONS, factSpans, iconFor, opensShort, readingMinutes, skillLayout, softJoints, splitLead, textKind } from "./laufbahn-content";
 import { IndexList } from "./laufbahn-index";
 import { textLink } from "./portfolio-sections";
-import { linkDestination } from "./sections";
-import { displayStyle, pageSide } from "./styles";
+import { linkDestination, paragraphs } from "./sections";
+import { displayStyle, pageSide, signStyle } from "./styles";
 
 /**
  * Laufbahn (ADR 0069): pages for applications, CVs and personal profiles. Every titled section is
@@ -24,7 +24,7 @@ import { displayStyle, pageSide } from "./styles";
  * one small script (the index); motion is CSS (globals.css, `lb-*`), and the page is complete without it.
  *
  * One rhythm on phones: 48 between sections, 32 under a section's hairline, 24 between a title and
- * its content and between the parts of a content, 16 between paragraphs, 8 between tiles.
+ * its content and between the parts of a content, 16 between paragraphs, 8 between tiles and cells.
  */
 
 const LATIN = Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -58,9 +58,6 @@ export function signposts(sections: readonly { id: string; title: string | null 
       return { id: section.id, anchor, letter: signpostLetter(index, locale), title: section.title };
     });
 }
-
-/** A signpost's letter: the display face at its pairing's weight (no tracking or case change: it is one letter). */
-const signStyle: CSSProperties = { fontWeight: "var(--creator-display-weight)" };
 
 /**
  * The section index. Phones: a compact row of chips that sticks flush under the compact bar once the
@@ -149,12 +146,15 @@ function IconSquare({ icon, size = "sm" }: { icon: Parameters<typeof Icon>[0]["i
 const FACT_SPAN = { 1: "", 2: "col-span-2" } as const;
 
 /**
- * Who the owner is: the first paragraph as a lead (calm on phones, larger from tablets on), the facts
- * as a two-by-two sheet of cells between hairlines, then the rest of the text as body. A portrait,
- * when there is one, stands at the start of the lead.
+ * Who the owner is: the first paragraph as a lead (calm on phones, larger from tablets on; a long one
+ * leads with its first sentence, so the lead stays within about five lines on a phone, and the rest of
+ * it opens the body), the facts as a two-by-two sheet of cells between hairlines, then the rest of the
+ * text as body. A portrait, when there is one, stands at the start of the lead.
  */
 export function LaufbahnAbout({ block, locale }: { block: BlockOf<"about">; locale: Profile["locale"] }): ReactNode {
-  const [first, ...rest] = paragraphsOf(block.text);
+  const [opening, ...others] = paragraphs(block.text);
+  const [first, more] = opening ? splitLead(opening) : [undefined, null];
+  const rest = more ? [more, ...others] : others;
   const facts = block.facts ?? [];
   const portrait = hasImage(block.portrait) ? block.portrait : undefined;
   const values = facts.map((fact) => softJoints(fact.value, locale));
@@ -173,7 +173,7 @@ export function LaufbahnAbout({ block, locale }: { block: BlockOf<"about">; loca
               dir="auto"
               className={cn(
                 pageSide,
-                "max-w-prose text-title leading-snug font-medium text-pretty whitespace-pre-line text-creator-fg rtl:leading-normal rtl:tracking-normal @prose:text-h3 @work:text-h2 @work:rtl:leading-normal",
+                "max-w-prose text-title leading-normal font-medium text-pretty whitespace-pre-line text-creator-fg rtl:tracking-normal @prose:text-h3 @prose:leading-snug @work:text-h2 @prose:rtl:leading-normal",
                 portrait && "@prose:col-span-2",
               )}
             >
@@ -185,7 +185,8 @@ export function LaufbahnAbout({ block, locale }: { block: BlockOf<"about">; loca
       {facts.length > 0 ? (
         <dl className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-creator-card border border-creator-line bg-creator-line">
           {facts.map((fact, index) => (
-            <div key={`${fact.label}-${fact.value}`} className={cn("grid min-w-0 content-start gap-1 bg-creator-surface p-4 @prose:px-5", FACT_SPAN[spans[index] ?? 1])}>
+            // One shrinkable column (grid-cols-1), so a long value breaks inside its cell instead of widening it (WCAG 1.4.12 at 320 px).
+            <div key={`${fact.label}-${fact.value}`} className={cn("grid min-w-0 grid-cols-1 content-start gap-1 bg-creator-surface p-4 @prose:px-5", FACT_SPAN[spans[index] ?? 1])}>
               <dt dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>
                 {fact.label}
               </dt>
@@ -209,51 +210,48 @@ export function LaufbahnAbout({ block, locale }: { block: BlockOf<"about">; loca
   );
 }
 
-/**
- * A tile's shape on phones (two columns) by its span: alone in its row it lies flat (icon beside the
- * label), beside another it stands (icon above, the label at the foot).
- */
-const PHONE_TILE = {
-  1: "flex-col justify-between gap-2",
-  2: "col-span-2 flex-row items-center gap-3",
-} as const;
-/** The same from tablets on (three columns). */
-const WIDE_TILE = {
-  1: "@prose:col-span-1 @prose:flex-col @prose:items-stretch @prose:justify-between @prose:gap-4",
-  2: "@prose:col-span-2 @prose:flex-row @prose:items-center @prose:justify-start @prose:gap-4",
-  3: "@prose:col-span-3 @prose:flex-row @prose:items-center @prose:justify-start @prose:gap-4",
-} as const;
+/** A tile's columns on phones (of two) and from tablets on (of three). */
+const PHONE_SPAN = { 1: "", 2: "col-span-2" } as const;
+const WIDE_SPAN = { 1: "@prose:col-span-1", 2: "@prose:col-span-2", 3: "@prose:col-span-3" } as const;
 
 /**
  * Skills and tools as a bento of flat tiles: two columns on phones, three from tablets on, the first
- * skill leading as a wide tile when there are five or more, every row closed (the last tile widens).
- * Each tile has an icon in a soft accent square, chosen from the skill's own words by a curated map
- * (laufbahn-content.ts; a neutral check where nothing fits), and the skill at body size. No automatic
- * hyphenation: German compounds break only at their joints, and a label that still would not fit half
- * a phone's row takes the whole row. Hover gives a stronger hairline and a step in the fill.
+ * skill leading across when there are five or more. Every tile lies flat: the icon in a soft accent
+ * square beside the label (body size, semibold), both centred in a row of one height (56 px, a little
+ * more for a label of two lines), so a phone shows twelve skills in about 500 px. The icon comes from
+ * the skill's own words by a curated map (laufbahn-content.ts; a neutral check where nothing fits). No
+ * automatic hyphenation: German compounds break only at their joints, and a label that would not fit
+ * beside its icon in two lines (or would have to break a word on a 360 px phone) takes the whole row;
+ * the next half tile may move up past at most two such rows to share one (skillLayout). Hover gives a
+ * stronger hairline and a step in the fill. No numbers.
  */
 export function LaufbahnSkills({ block, locale, reveal }: { block: BlockOf<"tools">; locale: Profile["locale"]; reveal: boolean }): ReactNode {
   const labels = block.items.map((item) => softJoints(item, locale));
-  const spans = skillSpans(labels);
+  const layout = skillLayout(labels);
   return (
     <ul className="grid min-w-0 grid-cols-2 gap-2 @prose:grid-cols-3 @prose:gap-3">
-      {block.items.map((item, index) => (
-        <li
-          key={item}
-          className={cn(
-            "flex min-w-0 rounded-creator-card border border-creator-line bg-creator-surface p-3 @prose:p-4",
-            "transition-colors duration-micro hover:border-creator-line-strong hover:bg-creator-bg motion-reduce:transition-none",
-            PHONE_TILE[(spans.phone[index] ?? 1) as 1 | 2],
-            WIDE_TILE[(spans.wide[index] ?? 1) as 1 | 2 | 3],
-            reveal && "lb-reveal",
-          )}
-        >
-          <IconSquare icon={iconFor(item, locale) ?? CircleCheck} />
-          <span dir="auto" className={cn(pageSide, "min-w-0 text-body leading-snug font-semibold text-balance hyphens-manual break-words rtl:leading-normal")}>
-            {labels[index]}
-          </span>
-        </li>
-      ))}
+      {layout.order.map((index, place) => {
+        const item = block.items[index] ?? "";
+        return (
+          <li
+            key={item}
+            className={cn(
+              // The label sits beside the icon while its widest piece fits there (always from 360 px on: skillLayout);
+              // on a narrower screen it wraps under the icon rather than break a word.
+              "flex min-h-control-xl min-w-0 flex-wrap content-center items-center gap-x-3 gap-y-2 rounded-creator-card border border-creator-line bg-creator-surface py-2 ps-3 pe-2 @prose:pe-3",
+              "transition-colors duration-micro hover:border-creator-line-strong hover:bg-creator-bg motion-reduce:transition-none",
+              PHONE_SPAN[(layout.phone[place] ?? 1) as 1 | 2],
+              WIDE_SPAN[(layout.wide[place] ?? 1) as 1 | 2 | 3],
+              reveal && "lb-reveal",
+            )}
+          >
+            <IconSquare icon={iconFor(item, locale) ?? CircleCheck} />
+            <span dir="auto" className={cn(pageSide, "min-w-0 grow basis-[min-content] text-body leading-snug font-semibold text-balance hyphens-manual break-words rtl:leading-normal")}>
+              {labels[index]}
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -335,12 +333,13 @@ const readingParagraph = cn(pageSide, "max-w-prose text-body whitespace-pre-line
  * - a long read (a cover letter) is a reading tile under a quiet line with its reading time; over
  *   900 characters it opens on phones with its first two paragraphs and a native disclosure for the
  *   rest ("Read the whole letter", or "Read more" when it is not a letter), keyboard and screen
- *   readers included, no script; from the wide canvas on it is always whole;
+ *   readers included, no script; from the wide canvas on, and whenever the visitor arrives at the
+ *   section by its address (the hero's "Read the letter", the index), it is whole;
  * - anything between is a lead of plain paragraphs.
  */
 export function LaufbahnText({ text, title, letter, locale }: { text: string; title: string | null; letter: boolean; locale: Profile["locale"] }): ReactNode {
   const t = useTranslations("creator");
-  const parts = paragraphsOf(text);
+  const parts = paragraphs(text);
   const kind = textKind(text);
   if (kind === "note") {
     return (
@@ -381,10 +380,11 @@ export function LaufbahnText({ text, title, letter, locale }: { text: string; ti
         </p>
       ))}
       {rest.length > 0 ? (
-        // Closed: the button under the first two paragraphs. Open: the rest of the text, then the
-        // button (now "Show less") after it. The wide canvas shows everything and no button.
+        // The button under the first two paragraphs; opened, it stays where it was pressed (now "Show
+        // less", focus and all) and the rest unfolds below it. The wide canvas, and arriving at the
+        // section by its address (the hero's button, the index), show everything and no button.
         <details className="lb-more group/more flex min-w-0 flex-col gap-4 @prose:gap-6">
-          <summary className="order-last flex min-h-control-lg w-full cursor-pointer list-none items-center justify-center gap-2 rounded-creator-button border border-creator-line-strong px-4 text-body font-semibold text-creator-fg transition-[scale,background-color] duration-standard ease-standard select-none hover:bg-creator-bg focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none motion-reduce:active:scale-none @prose:w-auto @prose:justify-self-start [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-control-lg w-full cursor-pointer list-none items-center justify-center gap-2 rounded-creator-button border border-creator-line-strong px-4 text-body font-semibold text-creator-fg transition-[scale,background-color] duration-standard ease-standard select-none hover:bg-creator-bg focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none motion-reduce:active:scale-none @prose:w-auto @prose:justify-self-start [&::-webkit-details-marker]:hidden">
             <span className="group-open/more:hidden">{t(letter ? "laufbahn.readLetterWhole" : "laufbahn.readMore")}</span>
             <span className="hidden group-open/more:inline">{t("laufbahn.readLess")}</span>
             <Icon icon={ChevronDown} size="md" className="shrink-0 transition-transform duration-standard ease-standard group-open/more:rotate-180 motion-reduce:transition-none" />
