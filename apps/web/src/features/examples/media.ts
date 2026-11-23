@@ -30,16 +30,50 @@ import exMakeup from "@/assets/examples/ex-makeup.jpg";
 import exMechanic from "@/assets/examples/ex-mechanic.jpg";
 import exNgo from "@/assets/examples/ex-ngo.jpg";
 import exPainter from "@/assets/examples/ex-painter.jpg";
+import exPfJorinde01 from "@/assets/examples/ex-pf-jorinde-01.jpg";
+import exPfJorinde02 from "@/assets/examples/ex-pf-jorinde-02.jpg";
+import exPfJorinde03 from "@/assets/examples/ex-pf-jorinde-03.jpg";
+import exPfJorinde04 from "@/assets/examples/ex-pf-jorinde-04.jpg";
+import exPfJorinde05 from "@/assets/examples/ex-pf-jorinde-05.jpg";
+import exPfJorinde06 from "@/assets/examples/ex-pf-jorinde-06.jpg";
+import exPfJorinde07 from "@/assets/examples/ex-pf-jorinde-07.jpg";
+import exPfJorinde08 from "@/assets/examples/ex-pf-jorinde-08.jpg";
+import exPfJorinde09 from "@/assets/examples/ex-pf-jorinde-09.jpg";
+import exPfJorinde10 from "@/assets/examples/ex-pf-jorinde-10.jpg";
+import exPfNaya01 from "@/assets/examples/ex-pf-naya-01.jpg";
+import exPfRonja01 from "@/assets/examples/ex-pf-ronja-01.jpg";
+import exPfRonja02 from "@/assets/examples/ex-pf-ronja-02.jpg";
+import exPfRonja03 from "@/assets/examples/ex-pf-ronja-03.jpg";
+import exPfRonja04 from "@/assets/examples/ex-pf-ronja-04.jpg";
+import exPfRonja05 from "@/assets/examples/ex-pf-ronja-05.jpg";
+import exPfRonja06 from "@/assets/examples/ex-pf-ronja-06.jpg";
+import exPfRonja07 from "@/assets/examples/ex-pf-ronja-07.jpg";
+import exPfRonja08 from "@/assets/examples/ex-pf-ronja-08.jpg";
+import exPfRonja09 from "@/assets/examples/ex-pf-ronja-09.jpg";
+import exPfRonja10 from "@/assets/examples/ex-pf-ronja-10.jpg";
+import exPfRonja11 from "@/assets/examples/ex-pf-ronja-11.jpg";
+import exPfRonja12 from "@/assets/examples/ex-pf-ronja-12.jpg";
+import exPfRonja13 from "@/assets/examples/ex-pf-ronja-13.jpg";
+import exPfRonja14 from "@/assets/examples/ex-pf-ronja-14.jpg";
+import exPfRonja15 from "@/assets/examples/ex-pf-ronja-15.jpg";
+import exPfRonja16 from "@/assets/examples/ex-pf-ronja-16.jpg";
+import exPfRonja17 from "@/assets/examples/ex-pf-ronja-17.jpg";
+import exPfRonja18 from "@/assets/examples/ex-pf-ronja-18.jpg";
+import exPfRonja19 from "@/assets/examples/ex-pf-ronja-19.jpg";
+import exPfRonja20 from "@/assets/examples/ex-pf-ronja-20.jpg";
+import exPfTobin01 from "@/assets/examples/ex-pf-tobin-01.jpg";
+import exPfTobin02 from "@/assets/examples/ex-pf-tobin-02.jpg";
+import exPfTobin03 from "@/assets/examples/ex-pf-tobin-03.jpg";
 import exPhotographer from "@/assets/examples/ex-photographer.jpg";
 import exPodcast from "@/assets/examples/ex-podcast.jpg";
 import exPolitician from "@/assets/examples/ex-politician.jpg";
 import exPopStar from "@/assets/examples/ex-pop-star.jpg";
 import exRealestate from "@/assets/examples/ex-realestate.jpg";
 import exRestaurant from "@/assets/examples/ex-restaurant.jpg";
+import exSamiTravels from "@/assets/examples/ex-sami-travels.jpg";
 import exStreamer from "@/assets/examples/ex-streamer.jpg";
 import exStudent from "@/assets/examples/ex-student.jpg";
 import exSweets from "@/assets/examples/ex-sweets.jpg";
-import exSamiTravels from "@/assets/examples/ex-sami-travels.jpg";
 import exTravel from "@/assets/examples/ex-travel.jpg";
 import exTutor from "@/assets/examples/ex-tutor.jpg";
 import exWedding from "@/assets/examples/ex-wedding.jpg";
@@ -219,16 +253,50 @@ export const exampleMedia = {
   "sample:ex-mechanic": exMechanic,
   "sample:ex-ngo": exNgo,
   "sample:ex-painter": exPainter,
+  "sample:ex-pf-jorinde-01": exPfJorinde01,
+  "sample:ex-pf-jorinde-02": exPfJorinde02,
+  "sample:ex-pf-jorinde-03": exPfJorinde03,
+  "sample:ex-pf-jorinde-04": exPfJorinde04,
+  "sample:ex-pf-jorinde-05": exPfJorinde05,
+  "sample:ex-pf-jorinde-06": exPfJorinde06,
+  "sample:ex-pf-jorinde-07": exPfJorinde07,
+  "sample:ex-pf-jorinde-08": exPfJorinde08,
+  "sample:ex-pf-jorinde-09": exPfJorinde09,
+  "sample:ex-pf-jorinde-10": exPfJorinde10,
+  "sample:ex-pf-naya-01": exPfNaya01,
+  "sample:ex-pf-ronja-01": exPfRonja01,
+  "sample:ex-pf-ronja-02": exPfRonja02,
+  "sample:ex-pf-ronja-03": exPfRonja03,
+  "sample:ex-pf-ronja-04": exPfRonja04,
+  "sample:ex-pf-ronja-05": exPfRonja05,
+  "sample:ex-pf-ronja-06": exPfRonja06,
+  "sample:ex-pf-ronja-07": exPfRonja07,
+  "sample:ex-pf-ronja-08": exPfRonja08,
+  "sample:ex-pf-ronja-09": exPfRonja09,
+  "sample:ex-pf-ronja-10": exPfRonja10,
+  "sample:ex-pf-ronja-11": exPfRonja11,
+  "sample:ex-pf-ronja-12": exPfRonja12,
+  "sample:ex-pf-ronja-13": exPfRonja13,
+  "sample:ex-pf-ronja-14": exPfRonja14,
+  "sample:ex-pf-ronja-15": exPfRonja15,
+  "sample:ex-pf-ronja-16": exPfRonja16,
+  "sample:ex-pf-ronja-17": exPfRonja17,
+  "sample:ex-pf-ronja-18": exPfRonja18,
+  "sample:ex-pf-ronja-19": exPfRonja19,
+  "sample:ex-pf-ronja-20": exPfRonja20,
+  "sample:ex-pf-tobin-01": exPfTobin01,
+  "sample:ex-pf-tobin-02": exPfTobin02,
+  "sample:ex-pf-tobin-03": exPfTobin03,
   "sample:ex-photographer": exPhotographer,
   "sample:ex-podcast": exPodcast,
   "sample:ex-politician": exPolitician,
   "sample:ex-pop-star": exPopStar,
   "sample:ex-realestate": exRealestate,
   "sample:ex-restaurant": exRestaurant,
+  "sample:ex-sami-travels": exSamiTravels,
   "sample:ex-streamer": exStreamer,
   "sample:ex-student": exStudent,
   "sample:ex-sweets": exSweets,
-  "sample:ex-sami-travels": exSamiTravels,
   "sample:ex-travel": exTravel,
   "sample:ex-tutor": exTutor,
   "sample:ex-wedding": exWedding,
@@ -376,3 +444,47 @@ export const exampleMedia = {
   "sample:ex9-merve-aksoy": ex9MerveAksoy,
   "sample:ex9-skill-video": ex9SkillVideo,
 } satisfies Record<string, StaticImageData>;
+
+/**
+ * Portfolio pictures (ex-pf-*): size in px and the focal point as [x, y], each 0 to 1 from the left and the top.
+ * Covers are cropped around the focal point on cards. `media_index.py` rebuilds this file without this table:
+ * put it back after running that script.
+ */
+export const portfolioMedia = {
+  "sample:ex-pf-jorinde-01": { width: 1280, height: 1600, focal: [0.5, 0.3] },
+  "sample:ex-pf-jorinde-02": { width: 2240, height: 1493, focal: [0.4, 0.58] },
+  "sample:ex-pf-jorinde-03": { width: 1067, height: 1600, focal: [0.55, 0.5] },
+  "sample:ex-pf-jorinde-04": { width: 1137, height: 1600, focal: [0.45, 0.6] },
+  "sample:ex-pf-jorinde-05": { width: 2240, height: 1493, focal: [0.5, 0.5] },
+  "sample:ex-pf-jorinde-06": { width: 1067, height: 1600, focal: [0.5, 0.58] },
+  "sample:ex-pf-jorinde-07": { width: 1600, height: 1067, focal: [0.6, 0.4] },
+  "sample:ex-pf-jorinde-08": { width: 1493, height: 2240, focal: [0.5, 0.66] },
+  "sample:ex-pf-jorinde-09": { width: 1600, height: 1067, focal: [0.62, 0.45] },
+  "sample:ex-pf-jorinde-10": { width: 1600, height: 1067, focal: [0.35, 0.5] },
+  "sample:ex-pf-naya-01": { width: 1600, height: 1600, focal: [0.5, 0.38] },
+  "sample:ex-pf-ronja-01": { width: 1600, height: 1067, focal: [0.62, 0.45] },
+  "sample:ex-pf-ronja-02": { width: 2240, height: 1493, focal: [0.3, 0.55] },
+  "sample:ex-pf-ronja-03": { width: 1067, height: 1600, focal: [0.5, 0.55] },
+  "sample:ex-pf-ronja-04": { width: 2240, height: 1493, focal: [0.55, 0.5] },
+  "sample:ex-pf-ronja-05": { width: 1067, height: 1600, focal: [0.47, 0.55] },
+  "sample:ex-pf-ronja-06": { width: 2240, height: 1399, focal: [0.62, 0.58] },
+  "sample:ex-pf-ronja-07": { width: 1600, height: 1600, focal: [0.48, 0.52] },
+  "sample:ex-pf-ronja-08": { width: 2240, height: 1493, focal: [0.62, 0.58] },
+  "sample:ex-pf-ronja-09": { width: 1067, height: 1600, focal: [0.45, 0.5] },
+  "sample:ex-pf-ronja-10": { width: 2240, height: 1493, focal: [0.42, 0.55] },
+  "sample:ex-pf-ronja-11": { width: 1600, height: 1600, focal: [0.5, 0.5] },
+  "sample:ex-pf-ronja-12": { width: 1600, height: 1067, focal: [0.45, 0.5] },
+  "sample:ex-pf-ronja-13": { width: 2240, height: 1493, focal: [0.5, 0.42] },
+  "sample:ex-pf-ronja-14": { width: 1600, height: 1067, focal: [0.62, 0.4] },
+  "sample:ex-pf-ronja-15": { width: 1600, height: 1067, focal: [0.63, 0.52] },
+  "sample:ex-pf-ronja-16": { width: 1067, height: 1600, focal: [0.5, 0.42] },
+  "sample:ex-pf-ronja-17": { width: 1600, height: 1067, focal: [0.5, 0.3] },
+  "sample:ex-pf-ronja-18": { width: 1600, height: 1066, focal: [0.5, 0.5] },
+  "sample:ex-pf-ronja-19": { width: 1200, height: 1600, focal: [0.5, 0.42] },
+  "sample:ex-pf-ronja-20": { width: 1600, height: 1200, focal: [0.5, 0.5] },
+  "sample:ex-pf-tobin-01": { width: 1512, height: 1512, focal: [0.5, 0.33] },
+  "sample:ex-pf-tobin-02": { width: 1600, height: 1000, focal: [0.45, 0.45] },
+  "sample:ex-pf-tobin-03": { width: 1600, height: 1000, focal: [0.62, 0.38] },
+} satisfies Partial<
+  Record<keyof typeof exampleMedia, { width: number; height: number; focal: [x: number, y: number] }>
+>;
