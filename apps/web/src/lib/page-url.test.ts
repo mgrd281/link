@@ -28,4 +28,9 @@ describe("page addresses", () => {
     expect(preview.pageUrl("mila")).toBe("https://preview.linkyo.app/mila");
     expect((await load("localhost.evil.example")).creatorOrigin()).toBe("https://localhost.evil.example");
   });
+
+  it("adds a project's address part to the page's address", async () => {
+    expect((await load()).projectUrl("mila", "hafenlicht")).toBe("https://linkyo.app/mila/hafenlicht");
+    expect((await load("localhost:3100")).projectUrl("mila-aurel", "web-2")).toBe("http://localhost:3100/mila-aurel/web-2");
+  });
 });

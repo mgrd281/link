@@ -224,8 +224,146 @@ test.describe("public creator page @real", () => {
   });
 });
 
+// ─── Project pages at /<username>/<slug> (plan §1.5) ──────────────────────────────────────────
+
+/** A project with more to read than its card (a story part), so it has a page of its own. */
+const project = (id: string, slug: string, title: string, extra: Record<string, unknown> = {}): Block =>
+  ({ id, type: "project", slug, title, summary: `${title}: one sentence.`, story: { problem: `Why ${title} was needed.` }, visible: true, highlight: false, ...extra });
+
+/** The HTML of an address and its React Server Components payload (what a client navigation fetches). */
+async function served(page: Page, path: string): Promise<{ status: number; html: string; rsc: string }> {
+  const response = await page.request.get(path, { maxRedirects: 0 });
+  const rsc = await page.request.get(path, { maxRedirects: 0, headers: { RSC: "1" } });
+  return { status: response.status(), html: await response.text(), rsc: await rsc.text() };
+}
+
+test.describe("project pages @real", () => {
+  test.skip(!realEnabled, "Needs the local Supabase stack (E2E_SUPABASE=1).");
+
+  test("/<username>/<slug> renders in the page's language with no cookie and nothing from another origin @real", async ({ page, context, baseURL }) => {
+    const { username } = await publicAccount("prj-ar", "ar", { displayName: "نايا الدباس" }, [project("p1", "masar", "تطبيق Masar للتوصيل", { year: { from: 2024, to: 2025 } })]);
+    const origins = new Set<string>();
+    const cookieHeaders: string[] = [];
+    page.on("request", (request) => {
+      if (/^https?:/.test(request.url())) origins.add(new URL(request.url()).origin);
+    });
+    page.on("response", async (response) => {
+      const header = (await response.allHeaders())["set-cookie"];
+      if (header) cookieHeaders.push(`${response.url()}: ${header}`);
+    });
+    const response = await page.goto(`/${username}/masar`);
+    expect(response?.status()).toBe(200);
+    await page.waitForLoadState("networkidle");
+    expect(page.url()).toMatch(new RegExp(`/${username}/masar$`));
+    await expect(page.locator("html")).toHaveAttribute("lang", "ar");
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expect(page.locator("h1")).toHaveText("تطبيق Masar للتوصيل");
+    await expect(page).toHaveTitle("تطبيق Masar للتوصيل · نايا الدباس");
+    // The way back leads to the card on the page.
+    await expect(page.locator("[data-project-bar] a").first()).toHaveAttribute("href", `/${username}#masar`);
+    expect([...origins]).toEqual([new URL(baseURL ?? "").origin]);
+    expect(cookieHeaders).toEqual([]);
+    expect(await context.cookies()).toEqual([]);
+    // Capital letters lead to the lowercase address.
+    const upper = await page.request.get(`/${username.toUpperCase()}/Masar`, { maxRedirects: 0 });
+    expect(upper.status()).toBe(308);
+    expect(upper.headers().location).toMatch(new RegExp(`/${username}/masar$`));
+  });
+
+  test("hidden and scheduled-out projects answer 404 and are absent from the portfolio's HTML and RSC payload @real", async ({ page }) => {
+    const later = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
+    const { username } = await publicAccount("prj-hidden", "de", {}, [
+      project("p1", "sichtbar", "Sichtbares Projekt"),
+      project("p2", "versteckt", "Verstecktes Projekt", { visible: false }),
+      project("p3", "spaeter", "Spaeteres Projekt", { schedule: { from: later } }),
+    ]);
+    const portfolio = await served(page, `/${username}`);
+    expect(portfolio.status).toBe(200);
+    expect(portfolio.html).toContain("Sichtbares Projekt");
+    for (const hidden of ["Verstecktes Projekt", "Spaeteres Projekt", "versteckt", "spaeter"]) {
+      expect(portfolio.html, hidden).not.toContain(hidden);
+      expect(portfolio.rsc, hidden).not.toContain(hidden);
+    }
+    for (const slug of ["versteckt", "spaeter", "gibt-es-nicht"]) {
+      const response = await page.goto(`/${username}/${slug}`);
+      expect(response?.status(), slug).toBe(404);
+      // The way back to the page.
+      await expect(page.locator("[data-project-back]")).toHaveAttribute("href", `/${username}`);
+    }
+  });
+
+  test("an earlier address answers 307 to exactly /<username>/<slug>; a slug stored twice serves the first project @real", async ({ page }) => {
+    const { username } = await publicAccount("prj-moved", "en", {}, [
+      project("p1", "tidewatch", "Tidewatch", { was: ["tide-old", "tide-older"] }),
+      project("p2", "tidewatch", "Second with the same address"),
+    ]);
+    for (const old of ["tide-old", "tide-older"]) {
+      const moved = await page.request.get(`/${username}/${old}`, { maxRedirects: 0 });
+      expect(moved.status(), old).toBe(307);
+      // Exactly the public address, never /u/…. (Next.js repeats the header on the first, uncached
+      // answer; every copy is the same address, which browsers accept.)
+      const locations = moved.headersArray().filter((header) => header.name.toLowerCase() === "location");
+      expect(locations.length, old).toBeGreaterThan(0);
+      for (const header of locations) expect(header.value, old).toBe(`/${username}/tidewatch`);
+    }
+    await page.goto(`/${username}/tide-old`);
+    expect(page.url()).toMatch(new RegExp(`/${username}/tidewatch$`));
+    await page.goto(`/${username}/tidewatch`);
+    await expect(page.locator("h1")).toHaveText("Tidewatch");
+  });
+
+  test("a confidential client's name never reaches a visitor @real", async ({ page }) => {
+    const name = "Hafenbetrieb Nordwerft";
+    // As the editor saves it: "Confidential" switched on clears the name, so the database has none.
+    const saved = await publicAccount("prj-conf", "de", {}, [project("p1", "leitsystem", "Leitsystem", { confidential: true })]);
+    const { data: answer } = await service().rpc("public_page", { handle: saved.username });
+    expect(JSON.stringify(answer)).toContain("Leitsystem");
+    expect(JSON.stringify(answer)).not.toContain('"client"');
+    const shown = await served(page, `/${saved.username}/leitsystem`);
+    expect(shown.status).toBe(200);
+    expect(shown.html).toContain("Vertraulich");
+    // A row written by hand with both fails closed: the block does not parse, so it is not shown at all,
+    // not on its own page, the portfolio, the JSON-LD in either, or the link preview.
+    const forged = await publicAccount("prj-forged", "de", {}, [project("p1", "werft", "Werft", { confidential: true, client: name }), project("p2", "offen", "Offen")]);
+    for (const path of [`/${forged.username}`, `/${forged.username}/werft`, `/${forged.username}/offen`]) {
+      const { html, rsc } = await served(page, path);
+      expect(html, path).not.toContain(name);
+      expect(rsc, path).not.toContain(name);
+    }
+    expect((await page.request.get(`/${forged.username}/werft`)).status()).toBe(404);
+    expect((await page.request.get(`/u/${forged.username}/werft/opengraph-image`)).status()).toBe(404);
+    // The project page's structured data never names a client, confidential or not.
+    const open = await publicAccount("prj-client", "de", {}, [project("p1", "kunde", "Kunde", { client: name })]);
+    const { html } = await served(page, `/${open.username}/kunde`);
+    const ld = /<script type="application\/ld\+json">([^<]*)<\/script>/.exec(html)?.[1] ?? "";
+    expect(ld).toContain("CreativeWork");
+    expect(ld).not.toContain(name);
+  });
+
+  test("has its canonical address on the creator domain and a link preview image @real", async ({ page }) => {
+    const { username } = await publicAccount("prj-og", "en", {}, [project("p1", "harbour-light", "Harbour light", { results: [{ value: "9 → 3", label: "weeks to wait" }] })]);
+    await page.goto(`/${username}/harbour-light`);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `https://linkyo.app/${username}/harbour-light`);
+    await expect(page.locator('meta[property="og:type"]')).toHaveAttribute("content", "article");
+    const og = await page.locator('meta[property="og:image"]').first().getAttribute("content");
+    expect(og).toMatch(new RegExp(`/u/${username}/harbour-light/opengraph-image`));
+    const image = await page.request.get(new URL(og ?? "").pathname);
+    expect(image.status()).toBe(200);
+    expect(image.headers()["content-type"]).toBe("image/png");
+    const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+  });
+});
+
 test.describe("public creator page in a demo build", () => {
   test.skip(realEnabled, "Demo build only (no Supabase settings).");
+
+  test("/<name>/<project> is not a creator address without real accounts", async ({ page }) => {
+    expect((await page.goto("/u/mila/hafenlicht"))?.status()).toBe(404);
+    const bare = await page.goto("/mila/hafenlicht");
+    expect(bare?.status()).toBe(404);
+    expect(page.url()).toMatch(/\/(de|en|ar)\/mila\/hafenlicht$/);
+  });
 
   test("/u/<name> answers 404 and /<name> behaves as before", async ({ page }) => {
     const internal = await page.goto("/u/mila");

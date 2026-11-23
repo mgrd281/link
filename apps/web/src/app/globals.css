@@ -496,6 +496,28 @@
   border: var(--border-width-focus) solid var(--creator-accent);
 }
 
+/*
+ * A project's code sample: each line (`data-line`) is numbered by a counter in a pseudo-element, so
+ * the numbers are never selected, copied or read aloud, and the sample's text stays exactly the
+ * owner's. The numbers stand at the line's start (always left: code reads left to right).
+ */
+@utility poster-code-lines {
+  counter-reset: poster-line;
+
+  /* stylelint-disable-next-line nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
+  & > [data-line]::before {
+    display: inline-block;
+    min-inline-size: var(--spacing-6);
+    margin-inline-end: var(--spacing-4);
+    color: var(--creator-fg-muted);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+    user-select: none;
+    content: counter(poster-line);
+    counter-increment: poster-line;
+  }
+}
+
 /* stylelint-enable no-invalid-position-declaration */
 
 /* A still template picker (the dashboard's Design screen): the thumbnails keep their look, without
