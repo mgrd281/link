@@ -10,13 +10,14 @@ import en from "@/messages/en.json";
 
 import { checkFreeText, factsFrom, languageWarning, type Facts } from "../content-rules";
 import type { AiCounts, AiErrorCode, AiRunEvent, AiStepKey, AiStepState } from "../events";
-import { DRAFT_DAYS, MAX_CALLS, MAX_TOKENS, reserveMicros } from "../limits";
+import { DRAFT_DAYS, INPUT_TOKENS_ESTIMATE, MAX_CALLS, MAX_TOKENS, reserveMicros, WORST_INPUT_USD_PER_MTOK, WORST_OUTPUT_USD_PER_MTOK } from "../limits";
 import { createBlockMapper, normalizeBlock, normalizePlan, planProfile, planTheme, planToPage, type BlockMapper, type PageDraft, type PlanContext } from "../plan-to-page";
 import type { PipelineInput } from "../request";
 import { createPlanScanner } from "../scanner";
 
 import { buildBundle, bundleCounts, bundleHasContent, promptSources, redactContacts, withMetadata, type SourceBundle, type SourceResult } from "./bundle";
 import { ClaudeCallError, type PlanCall, type PlanCaller, type PlanCallResult } from "./claude";
+import { cutOffCostMicros } from "./cost";
 import { enrichLinks } from "./enrich";
 import type { LimitsClient, ProgressEntry, SettleDetails } from "./limits-client";
 import { followUpTurn, PROMPT_VERSION, userTurn } from "./prompts";
@@ -112,7 +113,7 @@ const LABELS = {
 } as const;
 
 /** What one call may cost at most (its output cap and the input estimate, at the worst prices). */
-const callWorstMicros = (maxTokens: number) => Math.ceil(maxTokens * 25 + 20_000 * 6.25);
+const callWorstMicros = (maxTokens: number) => Math.ceil(maxTokens * WORST_OUTPUT_USD_PER_MTOK + INPUT_TOKENS_ESTIMATE * WORST_INPUT_USD_PER_MTOK);
 
 const withTimeout = <T>(promise: Promise<T>, ms: number, fallback: () => T): Promise<T> =>
   new Promise<T>((resolve) => {
@@ -456,9 +457,15 @@ export async function runPipeline(run: PipelineRun, deps: PipelineDeps): Promise
     } catch (error) {
       stats.msModel += now() - began;
       const mapped = error instanceof ClaudeCallError ? error : new ClaudeCallError("server", false, "unknown");
-      // An aborted or timed-out stream is billed for what it produced; without its usage the call's
-      // worst case is booked. A refused request (429, 5xx) produced nothing.
-      if (mapped.code === "aborted" || mapped.code === "timeout") stats.cost += callWorstMicros(request.maxTokens);
+      // A stream that was cut off (a stop, the deadline) is billed for what it produced; its usage
+      // never arrives, so the most it can have cost by now is booked. After a connection time-out a
+      // retry may have run unseen: the call's worst case. A refused request (429, 5xx) produced nothing.
+      if (mapped.code === "aborted") {
+        stats.cost += cutOffCostMicros({ started: mapped.cutOff, elapsedMs: now() - began, maxTokens: request.maxTokens });
+        stats.input += mapped.cutOff?.input ?? 0;
+        stats.cacheRead += mapped.cutOff?.cacheRead ?? 0;
+        stats.cacheWrite += mapped.cutOff?.cacheWrite ?? 0;
+      } else if (mapped.code === "timeout") stats.cost += callWorstMicros(request.maxTokens);
       stats.errorName = mapped.errorName;
       if (mapped.code === "aborted") return stopRequested() ? stopped() : fail("timeout");
       if (mapped.spendLimit) {

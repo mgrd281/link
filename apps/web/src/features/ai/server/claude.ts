@@ -3,7 +3,7 @@ import type { BetaMessageStreamParams } from "@anthropic-ai/sdk/resources/beta/m
 import { PAGE_PLAN_JSON_SCHEMA } from "@linkyo/blocks/ai-plan";
 
 import { assertAnthropicBaseUrl } from "./config";
-import { costMicros, servedByFallback } from "./cost";
+import { costMicros, servedByFallback, tokenCounts, type CutOffCall, type TokenCounts } from "./cost";
 import { CATALOGUE_AND_EXAMPLE_V1, SYSTEM_CORE_V1, type PromptText } from "./prompts";
 import type { Effort } from "./repair";
 
@@ -41,8 +41,10 @@ export interface PlanCallResult {
   /** The model that served the answer (a fallback model after a refusal). */
   model: string;
   fallback: boolean;
+  /** Every attempt of the call (after a refusal: the declined one and the fallback's), each at its model's prices. */
   costMicros: number;
-  usage: { input: number; cacheRead: number; cacheWrite: number; output: number };
+  /** The tokens of every attempt together. */
+  usage: TokenCounts;
   requestId: string | null;
 }
 
@@ -55,6 +57,8 @@ export class ClaudeCallError extends Error {
     readonly spendLimit: boolean,
     /** The SDK's error class name, for the log (never the message: it can echo input). */
     readonly errorName: string,
+    /** `aborted` only: what the stream had reported when it was cut off (null: before the answer began). */
+    readonly cutOff: CutOffCall | null = null,
   ) {
     super(code);
     this.name = "ClaudeCallError";
@@ -79,11 +83,11 @@ export function planRequest(call: Pick<PlanCall, "effort" | "maxTokens" | "conte
 
 const nameOf = (error: unknown): string => (error instanceof Error ? error.constructor.name : typeof error);
 
-/** Maps a thrown error to the run's codes. Most specific class first. */
-export function claudeError(error: unknown, aborted: boolean): ClaudeCallError {
+/** Maps a thrown error to the run's codes. Most specific class first. `cutOff`: what an aborted stream had reported. */
+export function claudeError(error: unknown, aborted: boolean, cutOff: CutOffCall | null = null): ClaudeCallError {
   if (error instanceof ClaudeCallError) return error;
   const name = nameOf(error);
-  if (error instanceof Anthropic.APIUserAbortError || aborted) return new ClaudeCallError("aborted", false, name);
+  if (error instanceof Anthropic.APIUserAbortError || aborted) return new ClaudeCallError("aborted", false, name, cutOff);
   if (error instanceof Anthropic.APIConnectionTimeoutError) return new ClaudeCallError("timeout", false, name);
   if (error instanceof Anthropic.RateLimitError) {
     const spend = error.errorCode === "enforced_spend_limit_reached";
@@ -103,11 +107,17 @@ export function createPlanCaller(client?: Anthropic): PlanCaller {
   let made = client;
   return {
     async call(call) {
+      // Kept for a stream that is cut off: its final usage never arrives, its first event did.
+      let cutOff: CutOffCall | null = null;
       try {
         made ??= createClaudeClient();
         const stream = made.beta.messages.stream(planRequest(call), { signal: call.signal });
         for await (const event of stream) {
           if (event.type === "content_block_delta" && event.delta.type === "text_delta") call.onText?.(event.delta.text);
+          else if (event.type === "message_start") {
+            const { usage } = event.message;
+            cutOff = { input: usage.input_tokens, cacheRead: usage.cache_read_input_tokens ?? 0, cacheWrite: usage.cache_creation_input_tokens ?? 0, attempts: 1 };
+          } else if (event.type === "content_block_start" && event.content_block.type === "fallback" && cutOff) cutOff.attempts += 1;
         }
         const message = await stream.finalMessage();
         const text = message.content.flatMap((block) => (block.type === "text" ? [block.text] : [])).join("");
@@ -118,16 +128,11 @@ export function createPlanCaller(client?: Anthropic): PlanCaller {
           model: message.model,
           fallback: servedByFallback(usage),
           costMicros: costMicros(message.model, usage),
-          usage: {
-            input: usage.input_tokens,
-            cacheRead: usage.cache_read_input_tokens ?? 0,
-            cacheWrite: usage.cache_creation_input_tokens ?? 0,
-            output: usage.output_tokens,
-          },
+          usage: tokenCounts(usage),
           requestId: stream.request_id ?? null,
         };
       } catch (error) {
-        throw claudeError(error, call.signal.aborted);
+        throw claudeError(error, call.signal.aborted, cutOff);
       }
     },
   };
