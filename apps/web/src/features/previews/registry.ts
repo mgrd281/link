@@ -118,7 +118,9 @@ function sevagPreview(): Preview {
   return {
     name: { de: "Sevag Ghazarian" },
     username: "sevag-ghazarian",
-    theme: { template: "laufbahn", accent: creatorTokens.swatches.navy },
+    // Black and grey, at the founder's request: dark mode, ink as the accent (the engine lifts it to
+    // a light grey on dark, with black text on the buttons), no tint in the greys.
+    theme: { template: "laufbahn", mode: "dark", accent: creatorTokens.swatches.ink, tint: 0 },
     pages: { de: contact ? { ...sevagDe, blocks: [...sevagDe.blocks, contact] } : sevagDe },
     ...(own.invite?.length ? { invite: { emailSha256: own.invite.map(emailHash) } } : {}),
     verified: true,

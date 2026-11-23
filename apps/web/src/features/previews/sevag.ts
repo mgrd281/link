@@ -7,9 +7,9 @@ import { NO_IMAGE, type BlockOf, type Page } from "@linkyo/blocks";
  *
  * Picture and moving picture: Linkyo's own illustration, drawn for this page (no stock material):
  * a forklift driver lifts a pallet of boxes into a high rack at night, a blue check confirms it, the
- * truck backs out and returns with the next pallet. A 10 s seamless loop
- * (public/media/motion/sevag-stapler.mp4, source in .claude/skills/linkyo-media-assets/scripts/
- * forklift-scene.html); the picture is its first frame, so nothing jumps when it starts, and
+ * truck backs out and returns with the next pallet. In black, graphite and silver, like the page. A
+ * 10 s seamless loop (public/media/motion/sevag-stapler-noir.mp4, source in
+ * .claude/skills/linkyo-media-assets/scripts/forklift-scene-noir.html); the picture is its first frame, so nothing jumps when it starts, and
  * visitors who prefer less motion keep the still. No text in it.
  *
  * Not listed anywhere, not indexed, removed on request.
@@ -37,12 +37,12 @@ export const sevagDe: Page = {
     bio: "Sorgfältig und zuverlässig im Lager. Sicherheit, Ordnung und Sauberkeit sind mir wichtig.",
     avatar: { src: NO_IMAGE, alt: "" },
     hero: {
-      src: `/prepared/${SEVAG_SLUG}/stapler.jpg`,
+      src: `/prepared/${SEVAG_SLUG}/stapler-noir.jpg`,
       alt: "Illustration: Ein Staplerfahrer hebt eine Palette mit Kartons in ein Hochregal",
       w: 1080,
       h: 1350,
     },
-    motion: { src: "sample:motion-sevag-stapler" },
+    motion: { src: "sample:motion-sevag-stapler-noir" },
     stats: [
       { value: "seit 2018", label: "in der Logistik" },
       { value: "seit 2021", label: "Staplerschein" },

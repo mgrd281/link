@@ -1,0 +1,389 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  Linkyo original motion graphic: a forklift driver stores a pallet in a high rack.
+  Drawn from scratch in SVG; time is a pure function render(t) so every frame can be captured
+  exactly and the 10 s loop is seamless (the last frame equals the first). No text.
+-->
+<style>
+  html, body { margin: 0; background: #0a0a0b; }
+  svg { display: block; width: 1080px; height: 1350px; }
+</style>
+</head>
+<body>
+<svg id="scene" viewBox="0 0 1080 1350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0a0b"/>
+      <stop offset="0.72" stop-color="#151517"/>
+      <stop offset="0.74" stop-color="#18181a"/>
+      <stop offset="1" stop-color="#0a0a0b"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1c1f"/>
+      <stop offset="0.35" stop-color="#131315"/>
+      <stop offset="1" stop-color="#0a0a0b"/>
+    </linearGradient>
+    <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2f2f4" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#f2f2f4" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="spot" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ededef" stop-opacity="0.95"/>
+      <stop offset="0.45" stop-color="#c9ccd1" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#c9ccd1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="beaconGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#c9ccd1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="yellowBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6e7ea"/>
+      <stop offset="1" stop-color="#c6c8cd"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2b2c30"/>
+      <stop offset="0.5" stop-color="#3d3e43"/>
+      <stop offset="1" stop-color="#222326"/>
+    </linearGradient>
+    <linearGradient id="upright" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4a4c52"/>
+      <stop offset="1" stop-color="#3a3b40"/>
+    </linearGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2f2f3"/>
+      <stop offset="1" stop-color="#d6d7da"/>
+    </linearGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+    <clipPath id="frame"><rect width="1080" height="1350"/></clipPath>
+    <clipPath id="floorClip"><rect x="-300" y="1003" width="1680" height="700"/></clipPath>
+    <linearGradient id="fadeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="fadeDown" maskUnits="userSpaceOnUse" x="-300" y="1000" width="1680" height="360"><rect x="-300" y="1000" width="1680" height="300" fill="url(#fadeGrad)"/></mask>
+    <!-- One load: a blue plastic pallet with four wrapped boxes and a barcode label. -->
+    <g id="load">
+      <rect x="0" y="-26" width="220" height="26" rx="4" fill="#3a3b3f"/>
+      <rect x="14" y="-18" width="44" height="12" rx="2" fill="#121214"/>
+      <rect x="88" y="-18" width="44" height="12" rx="2" fill="#121214"/>
+      <rect x="162" y="-18" width="44" height="12" rx="2" fill="#121214"/>
+      <rect x="6" y="-104" width="102" height="76" rx="5" fill="url(#box)"/>
+      <rect x="112" y="-104" width="102" height="76" rx="5" fill="url(#box)"/>
+      <rect x="6" y="-182" width="102" height="76" rx="5" fill="url(#box)"/>
+      <rect x="112" y="-182" width="102" height="76" rx="5" fill="url(#box)"/>
+      <rect x="51" y="-182" width="12" height="154" fill="#a7a9ae" opacity="0.8"/>
+      <rect x="157" y="-182" width="12" height="154" fill="#a7a9ae" opacity="0.8"/>
+      <rect x="128" y="-90" width="70" height="40" rx="3" fill="#ffffff"/>
+      <g fill="#121214">
+        <rect x="134" y="-84" width="3" height="22"/><rect x="140" y="-84" width="1.6" height="22"/>
+        <rect x="144" y="-84" width="4" height="22"/><rect x="151" y="-84" width="2" height="22"/>
+        <rect x="156" y="-84" width="3" height="22"/><rect x="162" y="-84" width="1.6" height="22"/>
+        <rect x="166" y="-84" width="4" height="22"/><rect x="173" y="-84" width="2" height="22"/>
+        <rect x="178" y="-84" width="3" height="22"/><rect x="184" y="-84" width="1.6" height="22"/>
+        <rect x="188" y="-84" width="4" height="22"/>
+        <rect x="134" y="-58" width="58" height="3" rx="1.5" opacity="0.5"/>
+      </g>
+      <rect x="6" y="-182" width="208" height="154" rx="6" fill="#ffffff" opacity="0.06"/>
+    </g>
+  </defs>
+
+  <g clip-path="url(#frame)">
+   <g id="cam">
+    <rect x="-300" y="-300" width="1680" height="1950" fill="url(#sky)"/>
+
+    <!-- Far layer: the back wall and a second row of racks, in a darker blue (parallax). -->
+    <g id="far">
+      <g fill="#161618">
+        <rect x="-200" y="80" width="1500" height="10"/>
+      </g>
+      <g id="farRacks" opacity="0.9">
+        <!-- generated -->
+      </g>
+    </g>
+
+    <!-- Ceiling: three light fixtures and their cones. -->
+    <g id="lights">
+      <polygon points="190,96 290,96 420,1000 60,1000" fill="url(#cone)"/>
+      <polygon points="590,96 690,96 830,1000 450,1000" fill="url(#cone)"/>
+      <rect x="196" y="84" width="88" height="12" rx="6" fill="#f4f4f6"/>
+      <rect x="596" y="84" width="88" height="12" rx="6" fill="#f4f4f6"/>
+      <rect x="180" y="74" width="120" height="12" rx="4" fill="#2a2a2e"/>
+      <rect x="580" y="74" width="120" height="12" rx="4" fill="#2a2a2e"/>
+    </g>
+
+    <!-- Floor with a glossy band and the yellow lane line. -->
+    <rect x="-300" y="1000" width="1680" height="650" fill="url(#floor)"/>
+    <rect x="-300" y="1000" width="1680" height="3" fill="#3a3a3e"/>
+    <!-- Reflection of the rack, the truck and the load on the glossy floor. -->
+    <g clip-path="url(#floorClip)" mask="url(#fadeDown)" opacity="0.16">
+      <use href="#world" transform="translate(0 2000) scale(1 -1)"/>
+    </g>
+    <g id="lane" fill="#7c7e84" opacity="0.85"></g>
+    <g id="dust" fill="#f2f2f3"></g>
+    <ellipse id="spotLight" cx="0" cy="1030" rx="70" ry="16" fill="url(#spot)" opacity="0"/>
+
+    <g id="world">
+    <!-- The near rack: two uprights, bracing, three beams; pallets stored at levels 1, 3 and 4. -->
+    <g id="rack">
+      <rect x="740" y="130" width="26" height="870" fill="url(#upright)"/>
+      <rect x="1040" y="130" width="26" height="870" fill="url(#upright)"/>
+      <g stroke="#2f3034" stroke-width="7" fill="none" stroke-linecap="round">
+        <path d="M766 990 L1040 860 M766 860 L1040 730 M766 730 L1040 600 M766 600 L1040 470 M766 470 L1040 340 M766 340 L1040 210"/>
+      </g>
+      <g fill="#d0d1d5">
+        <rect x="728" y="760" width="352" height="20" rx="3"/>
+        <rect x="728" y="520" width="352" height="20" rx="3"/>
+        <rect x="728" y="280" width="352" height="20" rx="3"/>
+      </g>
+      <g fill="#8e9096"><rect x="728" y="776" width="352" height="4"/><rect x="728" y="536" width="352" height="4"/><rect x="728" y="296" width="352" height="4"/></g>
+      <!-- Location tile on the empty slot's beam. -->
+      <rect x="772" y="764" width="38" height="12" rx="2" fill="#0c0c0d"/>
+      <rect x="776" y="767" width="18" height="6" rx="1" fill="#ededef"/>
+      <use href="#load" x="800" y="1000"/>
+      <use href="#load" x="800" y="520"/>
+    </g>
+
+    <!-- The pallet that is being stored (moves with the forks, then stays, then flows out the back). -->
+    <use id="moving" href="#load" x="0" y="0"/>
+
+    <!-- The forklift. -->
+    <g id="truck">
+      <!-- Blue warning beacon glow (blinks). -->
+      <circle id="beaconHalo" cx="230" cy="582" r="40" fill="url(#beaconGlow)" opacity="0"/>
+      <!-- Mast: outer rails and the inner stage that rises out of them. -->
+      <rect id="innerMast" x="454" y="620" width="30" height="380" rx="3" fill="#3d3e43"/>
+      <rect x="448" y="620" width="18" height="378" rx="3" fill="url(#steel)"/>
+      <rect x="474" y="620" width="18" height="378" rx="3" fill="url(#steel)"/>
+      <rect x="446" y="612" width="48" height="12" rx="3" fill="#121214"/>
+      <!-- Chain. -->
+      <line id="chain" x1="470" y1="624" x2="470" y2="820" stroke="#7a7c82" stroke-width="3" stroke-dasharray="5 4"/>
+      <!-- Carriage and forks (lift with the load). -->
+      <g id="carriage">
+        <rect x="490" y="830" width="20" height="160" rx="3" fill="#1a1b1e"/>
+        <rect x="492" y="846" width="16" height="6" fill="#7c7e84"/>
+        <rect x="492" y="900" width="16" height="6" fill="#7c7e84"/>
+        <path d="M498 978 L726 978 L726 990 L498 990 Z" fill="#a6a8ad"/>
+        <rect x="498" y="978" width="228" height="3" fill="#d3d4d8"/>
+      </g>
+      <!-- Body: counterweight, chassis, side panel. -->
+      <g id="body">
+        <path d="M40 960 L40 846 Q40 790 96 786 L170 786 Q196 786 200 812 L206 846 L440 846 Q452 846 452 858 L452 960 Z" fill="url(#yellowBody)"/>
+        <path d="M40 920 L452 920 L452 960 L40 960 Z" fill="#a2a5ab"/>
+        <rect x="210" y="862" width="200" height="44" rx="10" fill="#121214"/>
+        <rect x="222" y="872" width="70" height="8" rx="4" fill="#7c7e84" opacity="0.9"/>
+        <rect x="56" y="806" width="96" height="10" rx="5" fill="#ffffff" opacity="0.55"/>
+        <!-- Overhead guard. -->
+        <path d="M206 846 L222 604" stroke="#121214" stroke-width="14" stroke-linecap="round" fill="none"/>
+        <path d="M424 846 L430 604" stroke="#121214" stroke-width="14" stroke-linecap="round" fill="none"/>
+        <rect x="200" y="590" width="246" height="20" rx="8" fill="#121214"/>
+        <rect x="214" y="594" width="218" height="5" rx="2.5" fill="#2c2d31"/>
+        <!-- Beacon. -->
+        <rect x="220" y="572" width="20" height="18" rx="5" fill="#121214"/>
+        <rect id="beacon" x="222" y="566" width="16" height="12" rx="6" fill="#ededef"/>
+        <!-- Seat. -->
+        <path d="M262 846 L262 790 Q262 770 282 770 L296 770 Q306 770 304 782 L298 846 Z" fill="#0e0e10"/>
+        <rect x="270" y="834" width="96" height="16" rx="8" fill="#0e0e10"/>
+        <!-- Steering column and wheel. -->
+        <path d="M396 846 L380 760" stroke="#0e0e10" stroke-width="10" stroke-linecap="round"/>
+        <ellipse cx="376" cy="754" rx="30" ry="9" transform="rotate(-24 376 754)" fill="none" stroke="#0e0e10" stroke-width="8"/>
+      </g>
+      <!-- The driver. -->
+      <g id="driver">
+        <!-- Legs. -->
+        <path d="M300 820 L370 822 L392 846" stroke="#1f2023" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M392 846 L404 852" stroke="#0d0d0e" stroke-width="22" stroke-linecap="round"/>
+        <!-- Torso with reflective band. -->
+        <path d="M282 828 Q276 760 300 730 Q318 708 340 716 Q356 724 350 760 L336 828 Z" fill="#2a2b2f"/>
+        <path d="M286 786 L346 778" stroke="#e9e9eb" stroke-width="9" stroke-linecap="round"/>
+        <path d="M290 762 L348 754" stroke="#bfc1c6" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+        <!-- Arm to the wheel. -->
+        <path id="arm" d="M330 738 Q352 772 364 760" stroke="#2a2b2f" stroke-width="20" stroke-linecap="round" fill="none"/>
+        <circle cx="366" cy="757" r="9" fill="#b98262"/>
+        <!-- Head (tilts up while lifting). -->
+        <g id="head">
+          <rect x="314" y="700" width="16" height="16" rx="4" fill="#b98262"/>
+          <circle cx="324" cy="684" r="22" fill="#c48f6f"/>
+          <path d="M300 680 Q300 652 326 650 Q352 652 352 678 L356 682 L300 682 Z" fill="#f4f6fa"/>
+          <rect x="342" y="676" width="20" height="6" rx="3" fill="#f4f6fa"/>
+          <rect x="304" y="671" width="46" height="4" rx="2" fill="#c9ccd1"/>
+        </g>
+      </g>
+      <!-- Wheels (rotate as the truck moves). -->
+      <g id="wheelRear">
+        <circle cx="120" cy="948" r="52" fill="#0e0e10"/>
+        <circle cx="120" cy="948" r="30" fill="#9a9ca2"/>
+        <circle cx="120" cy="948" r="10" fill="#0e0e10"/>
+        <g id="boltsRear" fill="#0e0e10"><circle cx="120" cy="926" r="4"/><circle cx="141" cy="955" r="4"/><circle cx="133" cy="966" r="4"/><circle cx="107" cy="966" r="4"/><circle cx="99" cy="955" r="4"/></g>
+      </g>
+      <g id="wheelFront">
+        <circle cx="380" cy="940" r="60" fill="#0e0e10"/>
+        <circle cx="380" cy="940" r="34" fill="#9a9ca2"/>
+        <circle cx="380" cy="940" r="11" fill="#0e0e10"/>
+        <g id="boltsFront" fill="#0e0e10"><circle cx="380" cy="915" r="4.5"/><circle cx="404" cy="932" r="4.5"/><circle cx="395" cy="960" r="4.5"/><circle cx="365" cy="960" r="4.5"/><circle cx="356" cy="932" r="4.5"/></g>
+      </g>
+    </g>
+
+    </g>
+    <!-- Confirmation: a blue check that pops when the pallet is stored. -->
+    <g id="check" opacity="0">
+      <circle id="checkHalo" cx="0" cy="0" r="56" fill="#c9ccd1" opacity="0.25" filter="url(#soft)"/>
+      <circle cx="0" cy="0" r="30" fill="#c9ccd1"/>
+      <path d="M-13 1 L-4 10 L14 -9" stroke="#111113" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+   </g>
+    <!-- Foreground: a near upright, out of focus, moving faster than the scene (parallax). -->
+    <g id="fore">
+      <rect x="-40" y="-100" width="70" height="1600" fill="#050505" filter="url(#softer)"/>
+    </g>
+  </g>
+</svg>
+<script>
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const T = 10;
+const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
+const ease = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };   // in-out cubic
+const out = (x) => { x = clamp(x); return 1 - Math.pow(1 - x, 3); };
+const inn = (x) => { x = clamp(x); return x * x * x; };
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const back = (x) => { x = clamp(x); const c = 1.70158 + 1; return 1 + c * Math.pow(x - 1, 3) + (c - 1) * Math.pow(x - 1, 2); };
+
+// Far racks, drawn once.
+(() => {
+  const g = $("farRacks");
+  for (let i = -1; i < 8; i++) {
+    const x = i * 230 + 30;
+    const add = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); g.appendChild(e); };
+    add("rect", { x, y: 300, width: 12, height: 700, fill: "#1c1c1f" });
+    add("rect", { x: x + 150, y: 300, width: 12, height: 700, fill: "#1c1c1f" });
+    for (const y of [460, 640, 820]) add("rect", { x: x - 6, y, width: 180, height: 8, fill: "#232326" });
+    for (const [y, on] of [[460, i % 2 === 0], [640, i % 3 !== 1], [820, true], [1000, i % 2 === 1]]) {
+      if (!on) continue;
+      add("rect", { x: x + 18, y: y - 92, width: 126, height: 88, rx: 4, fill: "#1f1f22" });
+      add("rect", { x: x + 14, y: y - 8, width: 134, height: 8, fill: "#1a1a1c" });
+    }
+  }
+  const dust = $("dust");
+  for (let i = 0; i < 34; i++) {
+    const c = document.createElementNS(NS, "circle");
+    const cone = i % 2 ? [240, 640] : [640, 640];
+    const x = cone[0] + Math.sin(i * 12.9898) * 120, y = 160 + ((i * 97) % 780);
+    c.dataset.x = x; c.dataset.y = y; c.setAttribute("r", 1.2 + (i % 3) * 0.7);
+    dust.appendChild(c);
+  }
+  const lane = $("lane");
+  for (let i = -2; i < 16; i++) { const r = document.createElementNS(NS, "rect"); r.setAttribute("x", i * 110); r.setAttribute("y", "1074"); r.setAttribute("width", "64"); r.setAttribute("height", "8"); r.setAttribute("rx", "4"); lane.appendChild(r); }
+})();
+
+/*
+ * Timeline (seconds):
+ * 0.0-0.5 hold · 0.5-2.6 lift to level 2 · 2.6-3.8 creep in · 3.8-4.2 set down · 4.1-5.4 check
+ * 4.3-5.5 back out · 5.5-6.7 forks down · 6.0-7.6 stored pallet flows out the back · 6.7-8.1 reverse
+ * out of the frame · 8.1-10 come back with a new pallet and stop where it started.
+ */
+const LIFT = 228, CREEP = 260, OUT = -960;
+function truckX(t) {
+  if (t < 2.6) return 0;
+  if (t < 3.8) return CREEP * ease(seg(t, 2.6, 3.8));
+  if (t < 4.3) return CREEP;
+  if (t < 5.5) return CREEP * (1 - ease(seg(t, 4.3, 5.5)));
+  if (t < 6.7) return 0;
+  if (t < 8.1) return OUT * inn(seg(t, 6.7, 8.1)) * 1.0;
+  if (t < 8.2) return OUT;
+  return OUT * (1 - out(seg(t, 8.2, 10)));
+}
+function forkLift(t) {
+  if (t < 0.5) return 0;
+  if (t < 2.6) return LIFT * ease(seg(t, 0.5, 2.6));
+  if (t < 3.8) return LIFT;
+  if (t < 4.2) return LIFT - 26 * ease(seg(t, 3.8, 4.2));
+  if (t < 5.5) return LIFT - 26;
+  if (t < 6.7) return (LIFT - 26) * (1 - ease(seg(t, 5.5, 6.7)));
+  return 0;
+}
+function render(t) {
+  t = ((t % T) + T) % T;
+  const x = truckX(t);
+  const lift = forkLift(t);
+  // Speed for wheels, bob and the floor spot.
+  const dt = 1 / 60;
+  const v = (truckX(t + dt) - truckX(t - dt)) / (2 * dt);
+  const moving = clamp(Math.abs(v) / 240);
+  const bob = Math.sin(t * 26) * 1.6 * moving;
+  $("truck").setAttribute("transform", `translate(${x} ${bob})`);
+  const dist = x; // wheel angle follows the distance travelled
+  $("wheelRear").setAttribute("transform", `rotate(${(dist / 52) * 57.3} 120 948)`);
+  $("wheelFront").setAttribute("transform", `rotate(${(dist / 60) * 57.3} 380 940)`);
+  $("wheelRear").setAttribute("transform", `translate(0 ${-bob}) rotate(${(dist / 52) * 57.3} 120 948)`);
+  $("wheelFront").setAttribute("transform", `translate(0 ${-bob}) rotate(${(dist / 60) * 57.3} 380 940)`);
+  // Carriage and the inner mast that rises out of the outer rails once the carriage passes them.
+  $("carriage").setAttribute("transform", `translate(0 ${-lift})`);
+  const carriageTop = 830 - lift;
+  const innerTop = Math.min(620, carriageTop - 24);
+  $("innerMast").setAttribute("y", innerTop);
+  $("innerMast").setAttribute("height", 1000 - innerTop);
+  $("chain").setAttribute("y1", innerTop + 4);
+  $("chain").setAttribute("y2", carriageTop + 6);
+  // The moving pallet: on the forks until it is set down, then on the beam, then it flows out.
+  const m = $("moving");
+  const forkTop = 978 - lift;
+  if (t < 4.0) {
+    m.setAttribute("x", 502 + x); m.setAttribute("y", forkTop + bob); m.setAttribute("opacity", 1);
+  } else if (t < 6.0) {
+    m.setAttribute("x", 502 + CREEP); m.setAttribute("y", 760); m.setAttribute("opacity", 1);
+  } else if (t < 7.6) {
+    const f = ease(seg(t, 6.0, 7.6));
+    m.setAttribute("x", 502 + CREEP + f * 420); m.setAttribute("y", 760); m.setAttribute("opacity", 1);
+  } else if (t < 8.1) {
+    m.setAttribute("opacity", 0);
+  } else {
+    m.setAttribute("x", 502 + x); m.setAttribute("y", forkTop + bob); m.setAttribute("opacity", 1);
+  }
+  // Driver looks up while lifting and storing, back to the road when driving.
+  const look = t > 0.5 && t < 5.8 ? -14 * ease(seg(t, 0.5, 1.4)) * (1 - ease(seg(t, 5.0, 5.8))) : 0;
+  $("head").setAttribute("transform", `rotate(${look} 324 704)`);
+  // Beacon blinks; the blue spot shines ahead (or behind when reversing) while moving.
+  const blink = (Math.sin(t * Math.PI * 2 * 1.5) + 1) / 2;
+  $("beacon").setAttribute("fill", blink > 0.5 ? "#ffffff" : "#c9ccd1");
+  $("beaconHalo").setAttribute("opacity", 0.25 + 0.55 * blink);
+  const spot = $("spotLight");
+  const ahead = v >= 0 ? 1 : -1;
+  spot.setAttribute("cx", (ahead > 0 ? 840 : -40) + x);
+  spot.setAttribute("opacity", 0.85 * moving);
+  // Check pops when the pallet is set down.
+  const c = $("check");
+  const show = seg(t, 4.1, 4.5) * (1 - seg(t, 5.2, 5.6));
+  const s = 0.6 + 0.4 * back(seg(t, 4.1, 4.5));
+  c.setAttribute("opacity", show);
+  c.setAttribute("transform", `translate(1012 690) scale(${s})`);
+  // Camera: follows the load up, leans in for the check, pulls back while the truck leaves, and is
+  // back where it started at the end of the loop. Keyframes [t, focusX, focusY, zoom].
+  const K = [[0, 470, 800, 1.16], [0.5, 470, 800, 1.16], [2.6, 560, 690, 1.2], [4.4, 690, 700, 1.27], [5.6, 600, 760, 1.18], [7.6, 470, 800, 1.06], [8.6, 420, 800, 1.06], [10, 470, 800, 1.16]];
+  let k = 0; while (k < K.length - 2 && t > K[k + 1][0]) k++;
+  const [t0, x0, y0, z0] = K[k], [t1, x1, y1, z1] = K[k + 1];
+  const f = (1 - Math.cos(Math.PI * clamp((t - t0) / (t1 - t0)))) / 2;
+  const cx = x0 + (x1 - x0) * f, cy = y0 + (y1 - y0) * f, zoom = z0 + (z1 - z0) * f;
+  // The focus point sits a little above the frame's centre (room for the name under it).
+  const tx = 540 - cx * zoom, ty = 600 - cy * zoom;
+  $("cam").setAttribute("transform", `translate(${tx} ${ty}) scale(${zoom})`);
+  $("far").setAttribute("transform", `translate(${(cx - 470) * 0.35} ${(cy - 800) * 0.25})`);
+  $("fore").setAttribute("transform", `translate(${-(cx - 470) * 0.5} 0)`);
+  // Dust in the light, drifting on closed paths (seamless).
+  const dust = $("dust").children;
+  for (let i = 0; i < dust.length; i++) {
+    const d = dust[i], ph = i * 2.399, a = (t / T) * Math.PI * 2;
+    const bx = Number(d.dataset.x), by = Number(d.dataset.y);
+    d.setAttribute("cx", bx + Math.sin(a + ph) * 16);
+    d.setAttribute("cy", by + Math.cos(a * (i % 2 ? 1 : 2) + ph) * 22);
+    d.setAttribute("opacity", 0.12 + 0.18 * (Math.sin(a * 2 + ph) + 1) / 2);
+  }
+}
+window.render = render;
+render(0);
+</script>
+</body>
+</html>

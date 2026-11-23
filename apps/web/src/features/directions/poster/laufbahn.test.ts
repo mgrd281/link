@@ -85,9 +85,11 @@ describe("signpost letters", () => {
 });
 
 describe("Sevag's application page on Laufbahn", () => {
-  it("uses the template in navy, the blue of the picture's racks", () => {
-    expect(sevagTheme).toEqual({ template: "laufbahn", accent: creatorTokens.swatches.navy });
-    expect(resolveCreatorTheme(sevagTheme).layout.hero).toBe("bleed");
+  it("uses the template in black and grey: dark, ink lifted to a light grey, untinted greys", () => {
+    expect(sevagTheme).toEqual({ template: "laufbahn", mode: "dark", accent: creatorTokens.swatches.ink, tint: 0 });
+    const theme = resolveCreatorTheme(sevagTheme);
+    expect(theme.layout.hero).toBe("bleed");
+    expect({ mode: theme.palette.mode, bg: theme.palette.bg, accent: theme.palette.accent, accentFg: theme.palette.accentFg }).toEqual({ mode: "dark", bg: "#101010", accent: "#E8E8E8", accentFg: "#0F0F0F" });
   });
 
   it("keeps every fact of the page and adds none", () => {

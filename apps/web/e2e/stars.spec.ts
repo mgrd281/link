@@ -72,7 +72,7 @@ test("a page prepared from a person's own application letter is labelled, uninde
   expect(roleBox && badgeBox && roleBox.y >= badgeBox.y + badgeBox.height).toBe(true);
   // The motion graphic comes from our own origin and stays still for reduced motion.
   const clip = page.locator("video").first();
-  await expect(clip).toHaveAttribute("src", "/media/motion/sevag-stapler.mp4");
+  await expect(clip).toHaveAttribute("src", "/media/motion/sevag-stapler-noir.mp4");
   expect(await clip.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
   // The badge covers no text of the page: no line of the hero (or anything else) runs under it.
   const covered = await page.evaluate(() => {
