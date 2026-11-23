@@ -13,7 +13,7 @@ import {
   type PlateRow,
 } from "@linkyo/blocks/project";
 import type { ResolvedCreatorTheme } from "@linkyo/tokens/creator";
-import type { CreatorButtonStyle } from "@linkyo/tokens";
+import { tokens, type CreatorButtonStyle } from "@linkyo/tokens";
 import { cn, Icon } from "@linkyo/ui";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Scale, Star } from "lucide-react";
 import { getImageProps } from "next/image";
@@ -83,6 +83,21 @@ export function largePictureHref(src: string): string {
  */
 const FIT_SCREEN = "max-w-[calc((100dvh_-_var(--spacing-16))_*_var(--ratio))]";
 const ratioVar = (ratio: number): CSSProperties => ({ "--ratio": String(ratio) }) as CSSProperties;
+
+// `sizes` for this page's pictures, from layout tokens: the width each one is drawn at, so the
+// browser asks for no more pixels than it shows (plan §3.4 P10). Phones are up to breakpoint sm,
+// the creator column up to the wide canvas, then the canvas. Inside the page's side padding the
+// phone width is written as calc(100vw − 2 gutters): a bare "100vw" would also make next/image
+// leave every candidate under 640 px out of the srcset, too wide for a picture drawn half as wide
+// in the column.
+const px = (n: number): string => `${String(n)}px`;
+const ON_PHONE = `(max-width: ${px(tokens.breakpoint.sm)})`;
+const IN_COLUMN = `(max-width: ${px(tokens.layout.work - 1)})`;
+const PHONE_TEXT = `calc(100vw - ${px(2 * tokens.spacing.creatorGutter)})`;
+/** As wide as `max`, or as FIT_SCREEN lets a picture of this ratio be under the bar if that is less. */
+const fitScreen = (max: number, ratio: number): string => `min(${px(max)}, calc((100vh - ${px(tokens.spacing["16"])}) * ${ratio.toFixed(3)}))`;
+/** The cover: edge to edge on phones, then the column or the canvas, never taller than the screen. */
+const coverSizes = (ratio: number): string => `${ON_PHONE} 100vw, ${IN_COLUMN} ${fitScreen(tokens.layout.creator, ratio)}, ${fitScreen(tokens.layout.work, ratio)}`;
 
 /** The aspect-ratio of a stored picture (3:2 when its size is unknown). */
 function aspect(image: { w?: number | undefined; h?: number | undefined }): CSSProperties {
@@ -241,7 +256,7 @@ function ProjectBar({
       <Icon icon={ChevronLeft} size="md" className="shrink-0 rtl:-scale-x-100" />
       {hasImage(profile.avatar) ? (
         <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2">
-          <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={mediaSizes.thumb} />
+          <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={px(tokens.size.controlSm)} />
         </span>
       ) : null}
       <span
@@ -502,7 +517,7 @@ function Cover({ image, alt, priority }: { image: NonNullable<Project["cover"]>;
         className={cn("relative mx-auto w-full overflow-hidden bg-creator-surface-2 @prose:rounded-creator-card", FIT_SCREEN)}
         style={{ ...aspect(image), ...ratioVar(pictureRatio(image)) }}
       >
-        <MediaImage src={image.src} focal={image.focal} alt={alt} sizes={mediaSizes.work} priority={priority} />
+        <MediaImage src={image.src} focal={image.focal} alt={alt} sizes={coverSizes(pictureRatio(image))} priority={priority} />
       </div>
     </div>
   );
@@ -586,7 +601,7 @@ function ProjectQuotes({ items, ownerName }: { items: Quotes["items"]; ownerName
           <figcaption className="flex min-w-0 items-center gap-3">
             {hasImage(item.photo) ? (
               <span className="relative size-avatar-md shrink-0 overflow-hidden rounded-full bg-creator-surface-2">
-                <MediaImage src={item.photo.src} focal={item.photo.focal} alt="" sizes={mediaSizes.thumb} />
+                <MediaImage src={item.photo.src} focal={item.photo.focal} alt="" sizes={px(tokens.size.avatarMd)} />
               </span>
             ) : null}
             <span className="grid min-w-0 gap-0.5">
@@ -631,8 +646,10 @@ function Pictures({ pictures }: { pictures: Picture[] }) {
 const ROW_SIZES = {
   full: mediaSizes.work,
   pairPhone: mediaSizes.workHalf,
-  pairStack: mediaSizes.workHalfAlone,
-  narrow: mediaSizes.workHalfAlone,
+  // Across the screen on phones, beside its partner (about half) from the column on.
+  pairStack: `${ON_PHONE} ${PHONE_TEXT}, ${IN_COLUMN} ${px(tokens.layout.creator / 2)}, ${px(tokens.layout.work / 2)}`,
+  // Three fifths of the screen and of the column (w-3/5), half of the canvas (@work:w-1/2).
+  narrow: `${ON_PHONE} calc(${PHONE_TEXT} * 0.6), ${IN_COLUMN} ${px((tokens.layout.creator * 3) / 5)}, ${px(tokens.layout.work / 2)}`,
 } as const;
 
 function PictureRow({ row, pictures, total, enlarge }: { row: PlateRow; pictures: Picture[]; total: number; enlarge: (n: number) => string }) {

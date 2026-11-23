@@ -3,7 +3,7 @@ import { z } from "zod";
 import { revalidateCreatorPages } from "@/features/creator/revalidate";
 import { requireUser } from "@/lib/server/user";
 
-import { customerUsername } from "../../username";
+import { customerAddress } from "../../username";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,8 +14,9 @@ const body = z.object({ next: z.enum(["active", "suspended"]) });
 /**
  * The team suspends a customer or lets them back in: `admin_set_status` runs as the team member (the
  * database checks the `customers.manage` permission, signs a suspended account out and writes the
- * activity log), then the cached copy of the customer's public page is dropped, so a suspended page
- * is gone on the very next visit (a takedown after a report) and a restored one is back at once.
+ * activity log), then the cached copies of the customer's public page and project pages are dropped,
+ * so a suspended page is gone on the very next visit (a takedown after a report) and a restored one
+ * is back at once.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,6 +30,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const forbidden = error.code === "42501";
     return Response.json({ ok: false, error: forbidden ? "forbidden" : "serverError" }, { status: forbidden ? 403 : 500, headers: noStore });
   }
-  revalidateCreatorPages(await customerUsername(customer.data));
+  const { username, slugs } = await customerAddress(customer.data);
+  revalidateCreatorPages([username], slugs);
   return Response.json({ ok: true }, { headers: noStore });
 }

@@ -146,20 +146,25 @@ test.describe("project pages of the sample, every template and language", () => 
             const widths = await page.locator("[data-story] p").evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
             for (const measured of widths) expect(measured, `${slug} at ${String(width)}`).toBeLessThanOrEqual(640.5);
           }
-          // Tabbing: the focused element is never under the bar.
+          // Tabbing: the focused element is never under the bar, going down and coming back up (going
+          // down, the browser scrolls a target in from the bottom; only on the way back up does
+          // scroll-padding-top keep it out from under the bar).
           await page.setViewportSize({ width: 390, height: 844 });
           await load(page, sample(locale, template, slug));
           const barBottom = (await page.locator("[data-project-bar]").boundingBox())?.height ?? 64;
-          for (let step = 0; step < 30; step += 1) {
-            await page.keyboard.press("Tab");
-            const focus = await page.evaluate(() => {
-              const active = document.activeElement;
-              if (!active || active === document.body) return null;
-              const rect = active.getBoundingClientRect();
-              return { top: rect.top, inBar: active.closest("[data-project-bar]") !== null, tag: active.tagName };
-            });
-            if (!focus || focus.inBar) continue;
-            expect(focus.top, `${slug} tab ${String(step)} ${focus.tag}`).toBeGreaterThanOrEqual(barBottom - 1);
+          expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollPaddingTop), slug).toBe(`${String(barBottom)}px`);
+          for (const key of ["Tab", "Shift+Tab"]) {
+            for (let step = 0; step < 30; step += 1) {
+              await page.keyboard.press(key);
+              const focus = await page.evaluate(() => {
+                const active = document.activeElement;
+                if (!active || active === document.body) return null;
+                const rect = active.getBoundingClientRect();
+                return { top: rect.top, inBar: active.closest("[data-project-bar]") !== null, tag: active.tagName };
+              });
+              if (!focus || focus.inBar) continue;
+              expect(focus.top, `${slug} ${key} ${String(step)} ${focus.tag}`).toBeGreaterThanOrEqual(barBottom - 1);
+            }
           }
           // At 320 px only the code box scrolls sideways.
           await page.setViewportSize({ width: 320, height: 640 });
@@ -204,6 +209,51 @@ test.describe("project pages of the sample, every template and language", () => 
       await expect(page.locator("[data-project-bar] a").first()).toHaveAttribute("href", /\/de\/directions\/poster\?.*page=portfolio.*#hafenlicht$/);
     } finally {
       await context.close();
+    }
+  });
+
+  test("no picture is served wider than 1.5 × its drawn width × the pixel density (P10)", async ({ browser, baseURL }, testInfo) => {
+    // Each screen is its own context (a picture cached at another size would be reused), so the
+    // desktop project covers phones as well; the mobile project would only repeat it.
+    test.skip(testInfo.project.name !== "desktop", "Every screen below runs in the desktop project.");
+    test.setTimeout(240_000);
+    const screens = [
+      { width: 390, height: 844, dpr: 3 },
+      { width: 412, height: 915, dpr: 2.625 },
+      { width: 768, height: 1024, dpr: 1 },
+      { width: 768, height: 1024, dpr: 2 },
+      { width: 1280, height: 800, dpr: 1 },
+      { width: 1366, height: 768, dpr: 1 },
+      { width: 1440, height: 900, dpr: 1 },
+    ];
+    // Twelve pictures in every kind of row; a portrait cover; the sample's quote photo and code project.
+    const pages = ["/de/p/ronja-feldkamp/hafenlicht", "/de/p/jorinde-ahlfeld/sechs-stuehle", sample("en", "werkbogen", "rasterblick")];
+    for (const path of pages) {
+      for (const { width, height, dpr } of screens) {
+        const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: dpr, reducedMotion: "reduce", ...(baseURL ? { baseURL } : {}) });
+        const page = await context.newPage();
+        try {
+          await load(page, path);
+          const images = page.locator("[data-project-page] img");
+          const count = await images.count();
+          expect(count, path).toBeGreaterThan(0);
+          for (let index = 0; index < count; index += 1) {
+            const image = images.nth(index);
+            if (!(await image.isVisible())) continue;
+            await image.scrollIntoViewIfNeeded();
+            await expect.poll(() => image.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0), { timeout: 15_000 }).toBe(true);
+          }
+          const drawn = await images.evaluateAll((nodes) =>
+            nodes.map((node) => ({ src: (node as HTMLImageElement).currentSrc, natural: (node as HTMLImageElement).naturalWidth, width: node.getBoundingClientRect().width })),
+          );
+          for (const item of drawn) {
+            if (item.width === 0) continue;
+            expect(item.natural, `${path} at ${String(width)}×${String(height)}@${String(dpr)}: ${item.src} drawn ${item.width.toFixed(0)} px`).toBeLessThanOrEqual(Math.ceil(1.5 * item.width * dpr));
+          }
+        } finally {
+          await context.close();
+        }
+      }
     }
   });
 

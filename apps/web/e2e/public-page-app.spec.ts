@@ -1,9 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Block, Page as BlocksPage } from "@linkyo/blocks";
 import type { Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "../src/lib/supabase/database.types";
 import { toJson } from "../src/lib/supabase/json";
-import { createRealAccount, expect, realEnabled, seedMedia, seedPage, service, signIn, test, uniqueName } from "./real";
+import { addTeamMember, createRealAccount, expect, realEnabled, seedMedia, seedPage, service, signIn, test, uniqueName } from "./real";
 
 /**
  * Public creator pages at `/<username>` and going live without demo mode (plan §1.8). The `@real`
@@ -12,7 +14,10 @@ import { createRealAccount, expect, realEnabled, seedMedia, seedPage, service, s
  */
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
-const link = (id: string, title: string, extra: Partial<Block> = {}): Block =>
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
+// The local stack's publishable key (public by design) unless the run names another.
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
+const link =(id: string, title: string, extra: Partial<Block> = {}): Block =>
   ({ id, type: "link", title, url: `https://example.com/${id}`, visible: true, highlight: false, ...extra }) as Block;
 
 /** A confirmed, onboarded account with this page; answers its name and id. */
@@ -20,6 +25,16 @@ async function publicAccount(prefix: string, locale: "de" | "en" | "ar", profile
   const { username, email } = uniqueName(prefix);
   const account = await createRealAccount({ email, username, locale, onboarded: true, page: seedPage(username, locale, { displayName: "Mira Okafor", ...profile }, blocks) });
   return account;
+}
+
+/** An access token for API calls as this account (a magic-link token verified directly). */
+async function tokenFor(email: string): Promise<string> {
+  const { data, error } = await service().auth.admin.generateLink({ type: "magiclink", email });
+  if (error) throw new Error(error.message);
+  const anon = createClient<Database>(SUPABASE_URL, PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  const verified = await anon.auth.verifyOtp({ token_hash: data.properties.hashed_token, type: "magiclink" });
+  if (verified.error || !verified.data.session) throw new Error(verified.error?.message ?? "no session");
+  return verified.data.session.access_token;
 }
 
 /** The address a Storage picture has inside our own image optimizer's URL. */
@@ -251,6 +266,9 @@ test.describe("project pages @real", () => {
       const header = (await response.allHeaders())["set-cookie"];
       if (header) cookieHeaders.push(`${response.url()}: ${header}`);
     });
+    // The portfolio's card leads to the project's own address.
+    expect((await page.goto(`/${username}`))?.status()).toBe(200);
+    await expect(page.locator(`a[href="/${username}/masar"]`).first()).toBeAttached();
     const response = await page.goto(`/${username}/masar`);
     expect(response?.status()).toBe(200);
     await page.waitForLoadState("networkidle");
@@ -352,6 +370,41 @@ test.describe("project pages @real", () => {
     expect(image.headers()["content-type"]).toBe("image/png");
     const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+  });
+
+  test("suspending or deleting an account drops its project pages and their previews at once @real", async ({ page }) => {
+    const owner = await publicAccount("prj-gone", "de", {}, [project("p1", "werkhalle", "Werkhalle", { was: ["halle-alt"] })]);
+    const team = uniqueName("prj-team");
+    await createRealAccount({ ...team, locale: "de", onboarded: true });
+    await addTeamMember(team.email, "admin");
+    const teamToken = await tokenFor(team.email);
+    const status = async (path: string) => (await page.request.get(path, { maxRedirects: 0 })).status();
+    const visit = async (name: string) => ({
+      page: await status(`/${name}/werkhalle`),
+      preview: await status(`/u/${name}/werkhalle/opengraph-image`),
+      earlier: await status(`/${name}/halle-alt`),
+    });
+    const shown = { page: 200, preview: 200, earlier: 307 };
+    const gone = { page: 404, preview: 404, earlier: 404 };
+    // Visited twice: the second answers come from the cache.
+    await visit(owner.username);
+    expect(await visit(owner.username)).toEqual(shown);
+    const setStatus = (next: string) => page.request.post(`/api/admin/customers/${owner.id}/status`, { headers: { Authorization: `Bearer ${teamToken}` }, data: { next } });
+    expect((await setStatus("suspended")).status()).toBe(200);
+    expect(await visit(owner.username)).toEqual(gone);
+    expect((await setStatus("active")).status()).toBe(200);
+    expect(await visit(owner.username)).toEqual(shown);
+    // The owner deletes the account: gone on the very next visit, too.
+    const deleted = await page.request.post("/api/account/delete", { headers: { Authorization: `Bearer ${await tokenFor(owner.email)}` } });
+    expect(deleted.status()).toBe(200);
+    expect(await visit(owner.username)).toEqual(gone);
+
+    // The control: the same deletion behind the app's back (no route that drops the cached copies)
+    // leaves the old project page and its preview up. That is what the routes above prevent.
+    const other = await publicAccount("prj-stale", "de", {}, [project("p1", "werkhalle", "Werkhalle", { was: ["halle-alt"] })]);
+    expect(await visit(other.username)).toEqual(shown);
+    expect((await service().auth.admin.deleteUser(other.id)).error).toBeNull();
+    expect(await visit(other.username)).toEqual(shown);
   });
 });
 

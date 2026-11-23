@@ -5,7 +5,7 @@ import { POST as pageMoved } from "@/app/api/account/revalidate/route";
 import { POST as deleteCustomer } from "@/app/api/admin/customers/[id]/delete/route";
 import { POST as setStatus } from "@/app/api/admin/customers/[id]/status/route";
 
-import { creatorPaths, revalidateCreatorPages } from "./revalidate";
+import { creatorPaths, projectSlugs, revalidateCreatorPages } from "./revalidate";
 
 // The routes with a faked signed-in user and database; `revalidatePath` is recorded, in call order
 // with the database calls, so a test can tell what was read or dropped before and after an action.
@@ -14,12 +14,26 @@ interface State {
   log: string[];
   /** The address the profile read answers (null: no such profile). */
   username: string | null;
+  /** The stored page the site read answers (null: no page). */
+  page: unknown;
   /** The error an RPC answers, by function name. */
   fail: Record<string, { code: string }>;
   service: boolean;
 }
 
-const state = vi.hoisted((): State => ({ log: [], username: "mila", fail: {}, service: true }));
+// A page with a project at "tidewatch" that lived at "tide-old" before, a hidden project, a link and
+// a project whose address is not one (never stored by the app; skipped).
+const PROJECTS = {
+  profile: { username: "mila" },
+  blocks: [
+    { id: "p1", type: "project", slug: "tidewatch", was: ["tide-old"] },
+    { id: "l1", type: "link", slug: "not-a-project" },
+    { id: "p2", type: "project", slug: "harbour", visible: false },
+    { id: "p3", type: "project", slug: "../admin", was: ["Kontakt Seite", 7] },
+  ],
+};
+
+const state = vi.hoisted((): State => ({ log: [], username: "mila", page: null, fail: {}, service: true }));
 
 vi.mock("next/cache", () => ({
   revalidatePath: (path: string) => {
@@ -34,6 +48,7 @@ const fakeDb = (who: string) => ({
       eq: () => query,
       maybeSingle: () => {
         state.log.push(`${who} reads ${table}`);
+        if (table === "sites") return Promise.resolve({ data: state.page === null ? null : { page: state.page }, error: null });
         return Promise.resolve({ data: state.username === null ? null : { username: state.username }, error: null });
       },
     };
@@ -74,30 +89,62 @@ const post = (body?: unknown, token = "good-token") =>
 const forCustomer = { params: Promise.resolve({ id: CUSTOMER }) };
 const dropped = () => state.log.filter((entry) => entry.startsWith("revalidate "));
 const PAGE = ["revalidate /u/mila", "revalidate /u/mila/opengraph-image"];
+/** The page, its link preview and every project page with its link preview. */
+const under = (name: string) => [
+  `revalidate /u/${name}`,
+  `revalidate /u/${name}/opengraph-image`,
+  ...["tidewatch", "tide-old", "harbour"].flatMap((slug) => [`revalidate /u/${name}/${slug}`, `revalidate /u/${name}/${slug}/opengraph-image`]),
+];
 
 beforeEach(() => {
   state.log = [];
   state.username = "mila";
+  state.page = PROJECTS;
   state.fail = {};
   state.service = true;
 });
 
 describe("dropping a creator page from the cache", () => {
-  it("names the internal page and its link preview", () => {
+  it("names the internal page and its link preview, then each project page and its link preview", () => {
     expect(creatorPaths("mila")).toEqual(["/u/mila", "/u/mila/opengraph-image"]);
+    expect(creatorPaths("mila", ["tidewatch"])).toEqual(["/u/mila", "/u/mila/opengraph-image", "/u/mila/tidewatch", "/u/mila/tidewatch/opengraph-image"]);
   });
 
   it("drops each address once and skips what is not an address", () => {
-    expect(revalidateCreatorPages("mila", " Mila ", null, undefined, "../admin", "a", "de/app", "mila-aurel")).toEqual(["mila", "mila-aurel"]);
+    expect(revalidateCreatorPages(["mila", " Mila ", null, undefined, "../admin", "a", "de/app", "mila-aurel"])).toEqual(["mila", "mila-aurel"]);
     expect(dropped()).toEqual([...PAGE, "revalidate /u/mila-aurel", "revalidate /u/mila-aurel/opengraph-image"]);
+  });
+
+  it("drops each project page under each address once, and skips slugs that are not a project address", () => {
+    expect(revalidateCreatorPages(["mila", "mila-aurel"], ["tidewatch", "tidewatch", "../x", "kontakt", "A"])).toEqual(["mila", "mila-aurel"]);
+    expect(dropped()).toEqual([
+      ...PAGE,
+      "revalidate /u/mila/tidewatch",
+      "revalidate /u/mila/tidewatch/opengraph-image",
+      "revalidate /u/mila-aurel",
+      "revalidate /u/mila-aurel/opengraph-image",
+      "revalidate /u/mila-aurel/tidewatch",
+      "revalidate /u/mila-aurel/tidewatch/opengraph-image",
+    ]);
+  });
+
+  it("reads every project address of a stored page, hidden ones and earlier ones included", () => {
+    expect(projectSlugs(PROJECTS)).toEqual(["tidewatch", "tide-old", "harbour"]);
+    for (const nothing of [null, undefined, "page", {}, { blocks: "x" }, { blocks: [null, 1, { type: "project" }] }]) expect(projectSlugs(nothing)).toEqual([]);
   });
 });
 
 describe("deleting the own account", () => {
-  it("reads the address first, deletes, then drops the cached page before the files go", async () => {
+  it("reads the addresses first, deletes, then drops the cached page and project pages before the files go", async () => {
     const response = await deleteAccount(post());
     expect(response.status).toBe(200);
-    expect(state.log).toEqual(["user reads profiles", "user rpc delete_my_account", ...PAGE, "files removed"]);
+    expect(state.log).toEqual(["user reads profiles", "user reads sites", "user rpc delete_my_account", ...under("mila"), "files removed"]);
+  });
+
+  it("still drops the page when its project addresses cannot be read", async () => {
+    state.page = null;
+    expect((await deleteAccount(post())).status).toBe(200);
+    expect(dropped()).toEqual(PAGE);
   });
 
   it("drops nothing when the deletion failed or nobody is signed in", async () => {
@@ -109,10 +156,10 @@ describe("deleting the own account", () => {
 });
 
 describe("the team deletes a customer", () => {
-  it("reads the address first, deletes as the team member, then drops the cached page", async () => {
+  it("reads the addresses first, deletes as the team member, then drops the cached page and project pages", async () => {
     const response = await deleteCustomer(post(), forCustomer);
     expect(response.status).toBe(200);
-    expect(state.log).toEqual(["service reads profiles", "user rpc admin_delete_customer", ...PAGE, "files removed"]);
+    expect(state.log).toEqual(["service reads profiles", "service reads sites", "user rpc admin_delete_customer", ...under("mila"), "files removed"]);
   });
 
   it("drops nothing when the database refused the caller", async () => {
@@ -129,12 +176,12 @@ describe("the team deletes a customer", () => {
 });
 
 describe("the team suspends a customer or lets them back in", () => {
-  it("changes the status as the team member, then drops the cached page", async () => {
+  it("changes the status as the team member, then drops the cached page and project pages", async () => {
     for (const next of ["suspended", "active"]) {
       state.log = [];
       const response = await setStatus(post({ next }), forCustomer);
       expect(response.status).toBe(200);
-      expect(state.log).toEqual([`user rpc admin_set_status ${next}`, "service reads profiles", ...PAGE]);
+      expect(state.log).toEqual([`user rpc admin_set_status ${next}`, "service reads profiles", "service reads sites", ...under("mila")]);
     }
   });
 
@@ -149,17 +196,17 @@ describe("the team suspends a customer or lets them back in", () => {
 });
 
 describe("the account changed its address", () => {
-  it("drops the cached page at the new address and at the one before", async () => {
+  it("drops the cached page and project pages at the new address and at the one before", async () => {
     state.username = "mila-aurel";
     const response = await pageMoved(post({ previous: "mila" }));
     expect(response.status).toBe(200);
-    expect(dropped()).toEqual(["revalidate /u/mila-aurel", "revalidate /u/mila-aurel/opengraph-image", ...PAGE]);
+    expect(dropped()).toEqual([...under("mila-aurel"), ...under("mila")]);
   });
 
   it("needs a signed-in account and ignores a previous value that is not an address", async () => {
     expect((await pageMoved(post({ previous: "mila" }, "bad"))).status).toBe(401);
     expect(dropped()).toEqual([]);
     expect((await pageMoved(post({ previous: "../../de" }))).status).toBe(200);
-    expect(dropped()).toEqual(PAGE);
+    expect(dropped()).toEqual(under("mila"));
   });
 });

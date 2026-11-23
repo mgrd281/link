@@ -79,6 +79,8 @@ export default async function CreatorRoute({ params }: Props) {
       <PosterRenderer
         page={page}
         theme={theme}
+        // Cards of projects with a page of their own lead to /<username>/<slug>.
+        projectBase={`/${page.profile.username}`}
         footerLinks={{
           ...(hasCreatorLegal(legal) ? { imprint: "#imprint" } : {}),
           privacy: `${site}/${locale}/datenschutz#creator-pages`,

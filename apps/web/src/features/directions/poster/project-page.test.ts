@@ -315,13 +315,18 @@ describe("what must not reach the page", () => {
   });
 
   it("a confidential project shows the word for it and no client, in the HTML and the JSON-LD", () => {
-    // The editor clears the name; a block stored by hand with both is stripped before it renders.
-    const secret = full({ confidential: true, client: undefined });
-    const tree = render("de", secret);
+    // The block deliberately carries both fields, which the schema refuses and filterPublic strips:
+    // this checks the renderer's own guard, the only one where a page is shown unfiltered (previews).
+    const forged = full({ confidential: true });
+    expect(forged.client).toBe("Hafenbetrieb Nord");
+    const tree = render("de", forged);
     expect(text(tree)).toContain("Vertraulich");
     expect(text(tree)).not.toContain("Hafenbetrieb");
     expect(JSON.stringify(jsonLdOf(tree))).not.toContain("Hafenbetrieb");
-    expect(text(render("ar", secret))).toContain("عميل لم يُذكر اسمه");
+    // As the editor stores it: "Confidential" switched on clears the name.
+    const saved = full({ confidential: true, client: undefined });
+    expect(text(render("de", saved))).toContain("Vertraulich");
+    expect(text(render("ar", saved))).toContain("عميل لم يُذكر اسمه");
   });
 });
 

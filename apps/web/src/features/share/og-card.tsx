@@ -336,9 +336,15 @@ export async function ogProjectCard({
     </div>
   ) : figure ? (
     <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: rtl ? "flex-end" : "flex-start", gap: 16, width: OG_SIZE.width / 2, height: OG_SIZE.height, padding: 64, background: palette.surface2 }}>
-      <div style={{ display: "flex", fontFamily: display.family, fontWeight: display.weight, fontSize: Math.round(Math.min(220, Math.max(88, 440 / (Math.max(Array.from(figure.value).length, 2) * display.width)))), lineHeight: 1, color: palette.fg }}>
-        {figure.value}
-      </div>
+      {/* Word by word from the right only when the value has Arabic letters or digits ("8 أشهر"), as the
+          page's <bdi> does; "9 → 3" stays left to right on an Arabic page, too. */}
+      <Words
+        text={figure.value}
+        rtl={rtl && ARABIC.test(figure.value)}
+        size={Math.round(Math.min(220, Math.max(88, 440 / (Math.max(Array.from(figure.value).length, 2) * display.width))))}
+        width={OG_SIZE.width / 2 - 128}
+        style={{ fontFamily: display.family, fontWeight: display.weight, lineHeight: 1, color: palette.fg }}
+      />
       <Words text={figure.label} rtl={rtl} size={32} width={OG_SIZE.width / 2 - 128} style={{ color: palette.fgMuted }} />
     </div>
   ) : null;
