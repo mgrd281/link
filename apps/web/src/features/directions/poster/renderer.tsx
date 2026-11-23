@@ -36,6 +36,9 @@ import { ProjectPlate, ProjectsGroup } from "./projects";
 import { featuredApp, groupSections, type PosterItem, type PosterSection as Section } from "./sections";
 import { cardSurface, pageSide, pressable, railFrame, sectionTitle, type HeadingTag } from "./styles";
 
+/** The start of a signposted page's content: "read on" leads here when the first section has no title. */
+const CONTENT_ID = "page-content";
+
 /**
  * Direction D — "Poster": the creator as a headliner.
  * A template chooses the look (colors, fonts, hero treatment, section titles, backdrop, motion); the
@@ -158,6 +161,9 @@ export function PosterRenderer({
   const signposted = layout.headings === "signpost";
   const signposts = signposted ? signpostsOf(sections, profile.locale) : [];
   const firstSign = signposts[0];
+  // "Read on" leads to the first section when that is titled, else to the start of the content (an
+  // untitled run, a live card or a release first, is never skipped).
+  const jump = !firstSign ? undefined : sections[0]?.id === firstSign.id ? { href: `#${firstSign.anchor}`, title: firstSign.title } : { href: `#${CONTENT_ID}` };
   const portfolio: PortfolioContext = {
     theme,
     locale: profile.locale,
@@ -221,7 +227,8 @@ export function PosterRenderer({
             contact={contact}
             primary={primary}
             now={now}
-            jump={firstSign ? { href: `#${firstSign.anchor}`, title: firstSign.title } : undefined}
+            jump={jump}
+            banner={overlay !== undefined && overlay !== null}
           />
         ) : (
           <PosterHero
@@ -258,36 +265,42 @@ export function PosterRenderer({
           // Phones: the index under the hero, then the sections. Tablets: the reading column. The wide
           // canvas: the index sticky in the first three columns, the sections in the last eight.
           <Main
+            id={CONTENT_ID}
             className="grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:mx-auto @prose:max-w-prose @prose:px-0 @work:max-w-none @work:grid-cols-12 @work:gap-x-6 @work:pt-24"
             style={indexScope(signposts)}
           >
             {signposts.length > 1 ? <SignpostIndex entries={signposts} /> : null}
-            <div className="grid min-w-0 grid-cols-1 gap-12 @work:col-span-8 @work:col-start-5 @work:gap-16">
-              {sections.map((section) => (
-                <SignpostSection
-                  key={section.id}
-                  entry={signposts.find((sign) => sign.id === section.id)}
-                  blockIds={preview && section.title !== null ? section.id : undefined}
-                  ai={isAiBlock(blocks.find((block) => block.id === section.id))}
-                  // Skills and experience rise in tile by tile and step by step; the rest section by section.
-                  reveal={layout.motion !== "reveal" ? "none" : section.items.every((item) => item.kind === "block" && (item.block.type === "tools" || item.block.type === "timeline")) ? "self" : "section"}
-                >
-                  {section.items.map((item) => (
-                    <PosterItemView
-                      key={itemKey(item)}
-                      item={item}
-                      linkStyle={linkStyle}
-                      surface={surface}
-                      label={section.title ?? profile.displayName}
-                      nested={section.title !== null}
-                      gallery={layout.gallery}
-                      featured={featured}
-                      portfolio={portfolio}
-                      preview={preview}
-                    />
-                  ))}
-                </SignpostSection>
-              ))}
+            {/* Beside the index in the last eight columns; without an index in the first eight, under the hero's words. */}
+            <div className={cn("grid min-w-0 grid-cols-1 gap-12 @work:col-span-8 @work:gap-16", signposts.length > 1 ? "@work:col-start-5" : "@work:col-start-1")}>
+              {sections.map((section) => {
+                // Skills and experience rise in tile by tile and step by step; the rest section by section
+                // (then the tiles and steps inside do not rise a second time).
+                const reveal = layout.motion !== "reveal" ? "none" : section.items.every((item) => item.kind === "block" && (item.block.type === "tools" || item.block.type === "timeline")) ? "self" : "section";
+                return (
+                  <SignpostSection
+                    key={section.id}
+                    entry={signposts.find((sign) => sign.id === section.id)}
+                    blockIds={preview && section.title !== null ? section.id : undefined}
+                    ai={isAiBlock(blocks.find((block) => block.id === section.id))}
+                    reveal={reveal}
+                  >
+                    {section.items.map((item) => (
+                      <PosterItemView
+                        key={itemKey(item)}
+                        item={item}
+                        linkStyle={linkStyle}
+                        surface={surface}
+                        label={section.title ?? profile.displayName}
+                        nested={section.title !== null}
+                        gallery={layout.gallery}
+                        featured={featured}
+                        portfolio={reveal === "self" ? portfolio : { ...portfolio, revealItems: false }}
+                        preview={preview}
+                      />
+                    ))}
+                  </SignpostSection>
+                );
+              })}
             </div>
           </Main>
         ) : (
@@ -482,6 +495,8 @@ interface PortfolioContext {
   onOpen: ((id: string) => void) | undefined;
   now: Date;
   wide: boolean;
+  /** Signposted templates: false when the whole section rises in, so its tiles and steps do not rise again. */
+  revealItems?: boolean;
 }
 
 interface ItemProps {
@@ -576,7 +591,7 @@ function PosterBlock({
   const t = useTranslations("creator");
   // Signposted templates (Laufbahn) read about, skills, experience and text in their own calm way.
   const signposted = portfolio.theme.layout.headings === "signpost";
-  const reveal = portfolio.theme.layout.motion === "reveal";
+  const reveal = portfolio.theme.layout.motion === "reveal" && portfolio.revealItems !== false;
   if (signposted) {
     if (block.type === "about") return <LaufbahnAbout block={block} />;
     if (block.type === "tools") return <LaufbahnSkills block={block} reveal={reveal} />;

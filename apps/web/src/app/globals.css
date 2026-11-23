@@ -514,6 +514,13 @@
   }
 }
 
+/* A section or tile rising into place: movement only, so nothing ever rests faded at the fold. */
+@keyframes lb-rise {
+  from {
+    translate: 0 var(--spacing-6);
+  }
+}
+
 /* The section being read, as a number the index's signs and titles mix their colors with (1 or 0). */
 @property --lb-here {
   syntax: "<number>";
@@ -534,13 +541,52 @@
   height: clamp(var(--spacing-32) * 3, 72svh, 160cqi);
 }
 
-/* Ink at the secondary opacity under the name, easing out above it: at least 48 % ink over the lower
-   45 % of the picture (where the role line and the name stand), so white large text passes AA even
-   on a white picture; the upper part of the picture stays clear. */
+/* Ink at the secondary opacity at the foot of a picture, easing out above it (the template picker's card). */
 @utility lb-scrim {
   --lb-ink: color-mix(in oklab, var(--color-ink) calc(var(--opacity-secondary) * 100%), transparent);
 
   background: linear-gradient(to top, var(--lb-ink) 0%, color-mix(in oklab, var(--lb-ink) 75%, transparent) 45%, transparent 80%);
+}
+
+/* The veil under the words that stand on the picture. It is tied to the words, not to the picture's
+   height: ink at the secondary opacity behind every line (the role line and the name), whatever the
+   picture's height (a landscape phone, 200 % zoom), easing out over 6 rem above them. White text keeps
+   AA there even on a white picture (64 % ink over white is about 6 : 1); the picture stays clear above.
+   The words' box is its own stacking context (isolate), so the veil sits behind them and over the picture. */
+/* stylelint-disable nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
+@utility lb-veil {
+  --lb-ink: color-mix(in oklab, var(--color-ink) calc(var(--opacity-secondary) * 100%), transparent);
+
+  isolation: isolate;
+
+  &::before {
+    position: absolute;
+    z-index: -1;
+    inset-inline: 0;
+    inset-block: calc(var(--spacing-24) * -1) 0;
+    background: linear-gradient(
+      to top,
+      var(--lb-ink) calc(100% - var(--spacing-24)),
+      color-mix(in oklab, var(--lb-ink) 55%, transparent) calc(100% - var(--spacing-12)),
+      transparent
+    );
+    content: "";
+    pointer-events: none;
+  }
+}
+/* stylelint-enable nesting-selector-no-missing-scoping-root */
+
+/* The name over the picture: as large as its longest line allows (--name-fit), and never taller than
+   an eighth of the small viewport, so on a landscape phone or at 200 % zoom the words keep to the
+   foot of the picture, under an example's badge. */
+@utility lb-name {
+  font-size: clamp(var(--text-h1), min(var(--name-fit), 12svh), var(--text-display-2xl));
+}
+
+/* The ground under a portrait that rides high on phones (Laufbahn without a separate hero picture):
+   the portrait fades into it, and the name stands on it below the face. */
+@utility lb-ground {
+  background-color: var(--color-ink);
 }
 
 /* The role line over the picture: dark glass with a white hairline, so its small white text keeps AA
@@ -562,26 +608,38 @@
   }
 }
 
-/* Sections and tiles rise in once, within the first 8 rem of entering the screen, whatever their height. */
+/* Sections and tiles rise in once, within the first 8 rem of entering the screen, whatever their height.
+   Movement only, no fade: content resting at the fold of a large screen is always fully legible. */
 @utility lb-reveal {
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
-      animation: poster-rise linear both;
+      animation: lb-rise linear both;
       animation-timeline: view();
       animation-range: entry 0% entry var(--spacing-32);
     }
   }
 }
 
-/* A signposted section: anchored clear of the compact bar; its view timeline (named per section in the
-   markup) covers the thin band at 30 % of the screen, so exactly one section is "being read" at a time. */
+/* A signposted section: its view timeline (named per section in the markup) covers the thin band at
+   30 % of the screen, so exactly one section is "being read" at a time. */
 @utility lb-section {
-  scroll-margin-block-start: calc(var(--spacing-16) + var(--spacing-4));
   view-timeline-axis: block;
   view-timeline-inset: 30% 69%;
 }
 
-/* The index on the wide canvas: --lb-here is 1 while the link's section (--lb-t) is being read, else 0. */
+/* A Laufbahn page keeps what is focused or jumped to clear of its fixed chrome: the compact bar at the
+   top (control-xl) and a preview's or example's dock at the bottom. Sections, the hero's last row of
+   links and anything reached by Tab or by an anchor stop below the bar, never under it (WCAG 2.4.11).
+   Scoped to pages that have a signposted section, so every other template scrolls as before. */
+:root:has(.lb-section) {
+  scroll-padding-block: calc(var(--spacing-control-xl) + var(--spacing-4)) calc(var(--spacing-control-xl) + var(--spacing-8));
+}
+
+/* stylelint-disable nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
+
+/* The index on the wide canvas: --lb-here is 1 while the link's section (--lb-t) is being read, else 0.
+   The first entry also holds 1 before its section reaches the reading band (backwards fill), so at the
+   top of the page the index shows where reading starts instead of looking switched off. */
 @utility lb-spy {
   @supports (animation-timeline: view()) and (timeline-scope: --lb) {
     --lb-here: 0;
@@ -589,8 +647,14 @@
     animation: lb-here linear none;
     animation-timeline: var(--lb-t);
     animation-range: cover 0% cover 100%;
+
+    li:first-child > & {
+      animation-fill-mode: backwards;
+    }
   }
 }
+
+/* stylelint-enable nesting-selector-no-missing-scoping-root */
 
 @utility lb-spy-sign {
   background-color: color-mix(in oklab, var(--creator-accent) calc(var(--lb-here) * 100%), var(--creator-surface-2));

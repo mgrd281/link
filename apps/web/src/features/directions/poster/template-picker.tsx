@@ -26,8 +26,8 @@ const PICTURE: Partial<Record<HeroStyle, string>> = {
   // Werkbogen: a plate from edge to edge under a quiet top line. Tiefdruck: no large picture, a small round portrait.
   plate: "inset-x-0 top-4 h-2/5",
   statement: "start-3 top-3 size-8 rounded-full",
-  // Laufbahn: the picture from edge to edge, cut straight above the name.
-  bleed: "inset-x-0 top-0 h-1/2",
+  // Laufbahn: the picture from edge to edge, the name in white at its foot (drawn inside it, below).
+  bleed: "inset-x-0 top-0 h-3/5",
 };
 
 /**
@@ -121,13 +121,34 @@ export function TemplatePicker({
                         <span className="absolute inset-0 grid place-items-center bg-creator-surface-2 font-creator-display text-h2 text-creator-fg">{initials(profile.displayName)}</span>
                       )}
                     </span>
+                    {/* Laufbahn sets the name in white over a veil at the foot of the picture, as its hero does on phones. */}
+                    {theme.layout.hero === "bleed" ? (
+                      <>
+                        <span className="lb-scrim absolute inset-0" />
+                        <span className="absolute inset-x-3 bottom-2 truncate font-creator-display text-body leading-none text-white" style={displayStyle}>
+                          {profile.displayName}
+                        </span>
+                      </>
+                    ) : null}
                   </span>
-                  {/* Tiefdruck sets the name large: its card does too. */}
-                  <span className={cn("relative truncate font-creator-display leading-none", theme.layout.hero === "statement" ? "text-h3" : "text-body")} style={displayStyle}>
-                    {profile.displayName}
-                  </span>
+                  {/* Tiefdruck sets the name large: its card does too. Laufbahn's stands on its picture. */}
+                  {theme.layout.hero === "bleed" ? null : (
+                    <span className={cn("relative truncate font-creator-display leading-none", theme.layout.hero === "statement" ? "text-h3" : "text-body")} style={displayStyle}>
+                      {profile.displayName}
+                    </span>
+                  )}
                   <span className="relative grid gap-1">
-                    <span className="h-2 rounded-xs bg-creator-surface-2" />
+                    {/* Laufbahn's signature: a lettered signpost before its first section. */}
+                    {theme.layout.headings === "signpost" ? (
+                      <span className="flex items-center gap-1">
+                        <span className="grid size-4 shrink-0 place-items-center rounded-xs bg-creator-accent font-creator-display text-caption leading-none text-creator-accent-fg" style={displayStyle}>
+                          {profile.locale === "ar" ? "أ" : "A"}
+                        </span>
+                        <span className="h-2 flex-1 rounded-xs bg-creator-surface-2" />
+                      </span>
+                    ) : (
+                      <span className="h-2 rounded-xs bg-creator-surface-2" />
+                    )}
                     <span className="h-2 w-3/4 rounded-xs bg-creator-surface-2" />
                     <span className="h-3 w-1/2 rounded-full bg-creator-accent" />
                   </span>

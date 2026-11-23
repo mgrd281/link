@@ -22,6 +22,70 @@ async function phone(browser: Browser, options: { reducedMotion?: "reduce" | "no
 
 const axe = async (page: Page) => (await new AxeBuilder({ page }).withTags(WCAG).analyze()).violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`);
 
+/**
+ * The contrast of the white words over the picture, measured on the pixels: the words are made
+ * transparent (and the example badge hidden), the screen is captured, and every fourth pixel inside the
+ * words' line boxes is compared with white. Returns the lowest ratio found.
+ */
+async function wordsContrast(page: Page): Promise<number> {
+  const boxes = await page.evaluate(() => {
+    const out: [number, number, number, number][] = [];
+    for (const element of [document.querySelector("header h1"), document.querySelector("header p.inline-flex span[dir]")]) {
+      if (!(element instanceof HTMLElement)) continue;
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      for (const box of range.getClientRects()) out.push([box.left, box.top, box.width, box.height]);
+      element.style.color = "transparent";
+    }
+    // The example badge (and, in development, the framework's indicator) are not part of the picture.
+    for (const aside of document.querySelectorAll("aside, nextjs-portal")) (aside as HTMLElement).style.visibility = "hidden";
+    return out;
+  });
+  const shot = (await page.screenshot()).toString("base64");
+  return page.evaluate(
+    async ({ shot, boxes }) => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${shot}`;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      [canvas.width, canvas.height] = [image.width, image.height];
+      const context = canvas.getContext("2d");
+      if (!context) return 0;
+      context.drawImage(image, 0, 0);
+      const linear = (value: number) => (value / 255 <= 0.04045 ? value / 255 / 12.92 : ((value / 255 + 0.055) / 1.055) ** 2.4);
+      let lowest = 21;
+      for (const [x, y, width, height] of boxes) {
+        const data = context.getImageData(Math.round(x), Math.round(y), Math.max(1, Math.round(width)), Math.max(1, Math.round(height))).data;
+        for (let index = 0; index < data.length; index += 16) {
+          const luminance = 0.2126 * linear(data[index] ?? 0) + 0.7152 * linear(data[index + 1] ?? 0) + 0.0722 * linear(data[index + 2] ?? 0);
+          lowest = Math.min(lowest, 1.05 / (luminance + 0.05));
+        }
+      }
+      return lowest;
+    },
+    { shot, boxes },
+  );
+}
+
+/** Text of the page that runs under the example badge (none may). */
+const underBadge = (page: Page) =>
+  page.evaluate(() => {
+    const aside = document.querySelector('aside[data-theme="dark"]')?.getBoundingClientRect();
+    if (!aside) return ["no badge"];
+    const hits: string[] = [];
+    const walker = document.createTreeWalker(document.querySelector("[lang]") ?? document.body, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const owner = node.parentElement;
+      if (!owner || owner.closest("aside") || !node.textContent?.trim()) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      for (const box of range.getClientRects()) {
+        if (box.width > 0 && box.left < aside.right && box.right > aside.left && box.top < aside.bottom && box.bottom > aside.top) hits.push(node.textContent.trim());
+      }
+    }
+    return hits;
+  });
+
 test.describe("Laufbahn", () => {
   test("the section index leads to each section by keyboard, clear of the compact bar", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -68,9 +132,21 @@ test.describe("Laufbahn", () => {
     const chips = page.getByRole("navigation", { name: "Abschnitte" }).getByRole("list");
     expect(await chips.evaluate((list) => list.scrollWidth > list.clientWidth)).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
-    const link = page.getByRole("navigation", { name: "Abschnitte" }).getByRole("link", { name: "Anschreiben" });
-    await link.focus();
-    await expect(link).toBeInViewport();
+    // Tab along the chips: each one scrolls fully into the row, label and focus ring whole (once the
+    // row's small script is running).
+    await page.waitForLoadState("networkidle");
+    const links = page.getByRole("navigation", { name: "Abschnitte" }).getByRole("link");
+    await links.first().focus();
+    for (let index = 1; index < 5; index += 1) {
+      await page.keyboard.press("Tab");
+      await expect(links.nth(index)).toBeFocused();
+      await expect(async () => {
+        const box = await links.nth(index).boundingBox();
+        expect(box && box.x >= 0 && box.x + box.width <= 390).toBe(true);
+      }).toPass();
+    }
+    const link = links.last();
+    await expect(link).toBeInViewport({ ratio: 1 });
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { level: 2, name: "Anschreiben" })).toBeInViewport();
     await expect(page.locator("[data-shown]")).toHaveCount(1);
@@ -99,7 +175,7 @@ test.describe("Laufbahn", () => {
     const moving = await phone(browser, { reducedMotion: "no-preference" });
     await moving.goto(SEVAG);
     const live = await names(moving);
-    expect([live.reveal, live.rise, live.zoom, live.rail]).toEqual(["poster-rise", "poster-rise", "lb-zoom", "lb-fill"]);
+    expect([live.reveal, live.rise, live.zoom, live.rail]).toEqual(["lb-rise", "poster-rise", "lb-zoom", "lb-fill"]);
     await moving.context().close();
   });
 
@@ -114,12 +190,84 @@ test.describe("Laufbahn", () => {
       await small.goto(url);
       expect(await axe(small), url).toEqual([]);
     }
-    // With a contact block the hero leads with its action, "Read on" beside it as the quiet partner.
+    // With a contact block the hero leads with its action, "Read on" beside the CV link as a quiet
+    // text action: one filled button in the hero.
     await small.goto(SAMPLE("en"));
     const actions = small.locator("[data-hero-actions]");
     await expect(actions.getByRole("link", { name: "Ask about a project" })).toBeVisible();
-    await expect(small.getByRole("link", { name: /^Read on: / })).toBeVisible();
+    await expect(actions.getByRole("link", { name: /^Read on/ })).toBeVisible();
+    const [cv, read] = [await actions.getByRole("link", { name: /^CV/ }).boundingBox(), await actions.getByRole("link", { name: /^Read on/ }).boundingBox()];
+    expect(cv && read && Math.abs(cv.y - read.y) < 2).toBe(true);
     await small.context().close();
+  });
+
+  test("large screens with motion on: nothing rests faded at the fold, and axe finds nothing", async ({ browser }) => {
+    for (const viewport of [
+      { width: 1920, height: 1080 },
+      { width: 1680, height: 1050 },
+    ]) {
+      const context = await browser.newContext({ viewport, reducedMotion: "no-preference" });
+      await context.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
+      const page = await context.newPage();
+      for (const url of [SEVAG, SAMPLE("en")]) {
+        await page.goto(url);
+        // Wait until the hero's lines have risen in.
+        await expect.poll(() => page.evaluate(() => [...document.querySelectorAll(".poster-rise")].every((element) => getComputedStyle(element).opacity === "1"))).toBe(true);
+        const faded = await page.evaluate(() =>
+          [...document.querySelectorAll(".lb-reveal")].filter((element) => element.getBoundingClientRect().top < innerHeight && Number(getComputedStyle(element).opacity) < 1).length,
+        );
+        expect(faded, `${url} at ${String(viewport.width)}`).toBe(0);
+        expect(await axe(page), `${url} at ${String(viewport.width)}`).toEqual([]);
+      }
+      await context.close();
+    }
+  });
+
+  test("Shift+Tab from the index back into the hero never leaves focus under the compact bar", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(SAMPLE("en"));
+    await page.keyboard.press("End");
+    const index = page.getByRole("navigation", { name: "Sections" });
+    await index.getByRole("link").first().focus();
+    const bar = page.locator(".poster-bar");
+    for (let step = 0; step < 6; step += 1) {
+      await page.keyboard.press("Shift+Tab");
+      const [focused, barBox] = [await page.evaluate(() => document.activeElement?.getBoundingClientRect().toJSON() as DOMRect), await bar.boundingBox()];
+      expect(barBox && focused.top >= barBox.y + barBox.height).toBe(true);
+    }
+  });
+
+  test("tablets: the index chips wrap inside the reading column, none cut off", async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 820, height: 1180 }, reducedMotion: "reduce" });
+    await context.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
+    const page = await context.newPage();
+    await page.goto(SEVAG);
+    const list = page.getByRole("navigation", { name: "Abschnitte" }).getByRole("list");
+    expect(await list.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+    const column = await list.boundingBox();
+    for (const link of await list.getByRole("link").all()) {
+      const box = await link.boundingBox();
+      expect(box && column && box.x >= column.x - 1 && box.x + box.width <= column.x + column.width + 1).toBe(true);
+    }
+    await context.close();
+  });
+
+  test("short screens (a landscape phone, 200 % zoom): the white words keep AA on the picture and stay clear of the badge", async ({ browser }) => {
+    for (const viewport of [
+      { width: 844, height: 390 },
+      { width: 640, height: 360 },
+    ]) {
+      for (const url of [SEVAG, SAMPLE("ar")]) {
+        const context = await browser.newContext({ viewport, reducedMotion: "reduce" });
+        await context.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
+        const page = await context.newPage();
+        await page.goto(url);
+        if (url === SEVAG) expect(await underBadge(page)).toEqual([]);
+        // Large text: at least 3 : 1 on every pixel behind it (the veil gives about 6 : 1 even on white).
+        expect(await wordsContrast(page), `${url} at ${String(viewport.width)}x${String(viewport.height)}`).toBeGreaterThanOrEqual(4.5);
+        await context.close();
+      }
+    }
   });
 
   test("Arabic pages are mirrored: the name, the index, the signposts and the timeline start on the right", async ({ browser }) => {

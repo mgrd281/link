@@ -1,4 +1,5 @@
 import type { BlockOf, Profile } from "@linkyo/blocks";
+import { formatYears } from "@linkyo/blocks/project";
 import { hasImage } from "@linkyo/blocks/rules";
 import { cn, Icon } from "@linkyo/ui";
 import { ArrowUpRight } from "lucide-react";
@@ -6,6 +7,8 @@ import { useTranslations } from "next-intl";
 import { useId, type CSSProperties, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
+import { IndexList } from "./laufbahn-index";
+import { paragraphs, textLink } from "./portfolio-sections";
 import { linkDestination } from "./sections";
 import { displayStyle, pageSide } from "./styles";
 
@@ -62,15 +65,16 @@ export const indexScope = (entries: readonly Signpost[]): CSSProperties | undefi
 const signStyle: CSSProperties = { fontWeight: "var(--creator-display-weight)" };
 
 /**
- * The section index: a row of chips to swipe on phones (no scrollbar, each chip snaps), a sticky list
- * in the start columns on the wide canvas. Plain anchor links, so the keyboard, the back button and a
+ * The section index: a row of chips to swipe on phones (no scrollbar, each chip snaps, a chip reached
+ * with Tab scrolls fully into view), chips that wrap in the reading column on tablets, a sticky list in
+ * the start columns on the wide canvas. Plain anchor links, so the keyboard, the back button and a
  * shared address all work; each section keeps clear of the compact bar when it is jumped to.
  */
 export function SignpostIndex({ entries }: { entries: readonly Signpost[] }): ReactNode {
   const t = useTranslations("creator");
   return (
     <nav aria-label={t("laufbahn.index")} className="min-w-0 @work:col-span-3">
-      <ol className="mk-no-scrollbar -mx-creator-gutter flex snap-x snap-mandatory scroll-px-creator-gutter gap-2 overflow-x-auto px-creator-gutter py-1 @prose:mx-0 @prose:scroll-px-0 @prose:px-0 @work:sticky @work:top-24 @work:grid @work:snap-none @work:gap-1 @work:overflow-visible">
+      <IndexList className="mk-no-scrollbar -mx-creator-gutter flex snap-x snap-mandatory scroll-px-creator-gutter gap-2 overflow-x-auto px-creator-gutter py-1 @prose:mx-0 @prose:flex-wrap @prose:snap-none @prose:overflow-visible @prose:scroll-px-0 @prose:px-0 @work:sticky @work:top-24 @work:grid @work:gap-1">
         {entries.map((entry) => (
           <li key={entry.id} className="shrink-0 snap-start">
             <a
@@ -91,7 +95,7 @@ export function SignpostIndex({ entries }: { entries: readonly Signpost[] }): Re
             </a>
           </li>
         ))}
-      </ol>
+      </IndexList>
     </nav>
   );
 }
@@ -151,16 +155,6 @@ export function SignpostSection({
     </section>
   );
 }
-
-/** Paragraphs are split at blank lines; a single line break stays a line break. */
-const paragraphs = (text: string): string[] =>
-  text
-    .split(/\n\s*\n/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-/** A text link on a creator page: colour and weight, never a line under it. */
-const textLink = "rounded-xs font-semibold text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring";
 
 /**
  * Who the owner is: the first paragraph as a large lead, the facts as a definition grid under a
@@ -252,14 +246,12 @@ export function LaufbahnSkills({ block, reveal }: { block: BlockOf<"tools">; rev
 
 /**
  * Experience as a vertical timeline in the order the owner entered it: a node per step, the years in
- * tabular figures ("2021 – heute" for a step still going on, its node filled), the role, where, and a
+ * tabular figures ("2021–heute" for a step still going on, its node filled), the role, where, and a
  * note. The rail between the nodes fills with the accent as the steps scroll by (drawn in full without
  * scroll-driven animations and with reduced motion). Logical sides: it mirrors in Arabic.
  */
 export function LaufbahnTimeline({ block, locale, reveal }: { block: BlockOf<"timeline">; locale: Profile["locale"]; reveal: boolean }): ReactNode {
   const t = useTranslations("creator");
-  const years = ({ from, to }: BlockOf<"timeline">["items"][number]["years"]): string =>
-    to === undefined || to === from ? String(from) : `${String(from)} – ${to === "now" ? t("laufbahn.ongoing") : String(to)}`;
   return (
     <ol className="grid min-w-0 grid-cols-1">
       {block.items.map((item) => (
@@ -270,7 +262,7 @@ export function LaufbahnTimeline({ block, locale, reveal }: { block: BlockOf<"ti
           />
           {/* One isolated run in the page's direction, so every range reads from its start, also in Arabic. */}
           <p className="text-small font-semibold text-creator-accent-text tabular-nums">
-            <bdi dir={locale === "ar" ? "rtl" : "ltr"}>{years(item.years)}</bdi>
+            <bdi dir={locale === "ar" ? "rtl" : "ltr"}>{formatYears(item.years, t("laufbahn.ongoing"))}</bdi>
           </p>
           <p dir="auto" className={cn(pageSide, "text-title font-semibold text-balance rtl:tracking-normal")}>
             {item.role}
@@ -316,7 +308,8 @@ const WORDS_A_MINUTE = 200;
 /**
  * A text block in its paragraphs (a single line break stays one). A short text reads as a lead; a long
  * one, such as a cover letter, is set in a calm reading column on a flat tile with a hairline, under a
- * quiet label with its reading time.
+ * quiet label with its reading time. The tile runs the column's width like every other edge there; the
+ * lines keep the reading measure.
  */
 export function LaufbahnText({ text }: { text: string }): ReactNode {
   const t = useTranslations("creator");
@@ -334,10 +327,10 @@ export function LaufbahnText({ text }: { text: string }): ReactNode {
   }
   const minutes = Math.max(1, Math.round(text.split(/\s+/u).filter(Boolean).length / WORDS_A_MINUTE));
   return (
-    <div className="grid max-w-prose min-w-0 gap-5 rounded-creator-card border border-creator-line bg-creator-surface p-6 @prose:gap-6 @prose:p-10">
+    <div className="grid min-w-0 gap-5 rounded-creator-card border border-creator-line bg-creator-surface p-6 @prose:gap-6 @prose:p-10">
       <p className="text-caption font-semibold text-creator-fg-muted">{t("laufbahn.readingTime", { minutes })}</p>
       {parts.map((part) => (
-        <p key={part} dir="auto" className={cn(pageSide, "text-body whitespace-pre-line text-creator-fg @prose:text-body-lg")}>
+        <p key={part} dir="auto" className={cn(pageSide, "max-w-prose text-body whitespace-pre-line text-creator-fg @prose:text-body-lg")}>
           {part}
         </p>
       ))}

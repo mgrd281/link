@@ -21,7 +21,7 @@ type Contact = BlockOf<"contact">;
 type Primary = Contact["primary"];
 
 /** `data-ai-generated` on a profile text an AI draft wrote (AI Act Art. 50(2)); nothing otherwise. */
-const aiText = (profile: Profile, field: AiProfileField) => (profile.aiFields?.includes(field) ? { "data-ai-generated": "true" } : {});
+export const aiText = (profile: Profile, field: AiProfileField) => (profile.aiFields?.includes(field) ? { "data-ai-generated": "true" } : {});
 
 /**
  * Average advance per character of each display face, measured on real names (em per character).
@@ -160,6 +160,7 @@ export function HeroActions({
   status = true,
   className,
   style,
+  extra,
 }: {
   contact: Contact;
   /** `primaryAction()` of the page: the same action the bar and the closing band show. */
@@ -170,6 +171,8 @@ export function HeroActions({
   status?: boolean;
   className?: string | undefined;
   style?: CSSProperties | undefined;
+  /** A quiet action after the CV link, in the same row (Laufbahn's "read on"). */
+  extra?: ReactNode;
 }) {
   const t = useTranslations("creator");
   const line = status ? contactStatus(contact, now) : null;
@@ -199,6 +202,7 @@ export function HeroActions({
             <span dir="auto">{cv.label?.trim() ? cv.label : t(isPdf(cv.url) ? "portfolio.cvPdf" : "portfolio.cv")}</span>
           </a>
         ) : null}
+        {extra}
       </div>
     </div>
   );

@@ -465,7 +465,7 @@
     "laufbahn": {
       "index": "Abschnitte",
       "jump": "Weiterlesen",
-    "jumpTo": "Weiterlesen: {title}",
+      "jumpTo": "Weiterlesen: {title}",
       "ongoing": "heute",
       "readingTime": "{minutes} Min. Lesezeit"
     }

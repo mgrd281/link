@@ -465,7 +465,7 @@
     "laufbahn": {
       "index": "Sections",
       "jump": "Read on",
-    "jumpTo": "Read on: {title}",
+      "jumpTo": "Read on: {title}",
       "ongoing": "now",
       "readingTime": "{minutes} min read"
     }

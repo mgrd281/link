@@ -23,7 +23,7 @@ import { displayStyle, pageSide, pressable } from "./styles";
  */
 
 /** A text link on a creator page: colour and weight, never a line under it. */
-const textLink = "rounded-xs font-semibold text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring";
+export const textLink = "rounded-xs font-semibold text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring";
 
 /**
  * `sizes` of the about portrait, from the layout tokens: about a third of the column, and a third of
@@ -33,7 +33,7 @@ const portraitSizes = (wide: boolean): string =>
   wide ? `(min-width: ${String(tokens.layout.work)}px) ${String(Math.round(tokens.layout.work / 3))}px, ${mediaSizes.third}` : mediaSizes.third;
 
 /** Paragraphs are split at blank lines; a single line break stays a line break. */
-const paragraphs = (text: string): string[] =>
+export const paragraphs = (text: string): string[] =>
   text
     .split(/\n\s*\n/)
     .map((part) => part.trim())

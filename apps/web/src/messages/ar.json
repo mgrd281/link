@@ -465,7 +465,7 @@
     "laufbahn": {
       "index": "الأقسام",
       "jump": "تابع القراءة",
-    "jumpTo": "تابع القراءة: {title}",
+      "jumpTo": "تابع القراءة: {title}",
       "ongoing": "حتى الآن",
       "readingTime": "مدة القراءة: {minutes, plural, one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}"
     }

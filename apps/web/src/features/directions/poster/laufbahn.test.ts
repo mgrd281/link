@@ -104,8 +104,8 @@ describe("Sevag's application page on Laufbahn", () => {
       if (block.type === "header") expect(words).toContain(block.title);
       if (block.type === "text") for (const part of block.text.split("\n\n")) expect(words).toContain(part);
     }
-    // Both steps are still going on: "heute", in tabular figures.
-    expect(count(sevag, /2021 – heute|2018 – heute/g)).toBe(2);
+    // Both steps are still going on: "heute", in tabular figures, with the en dash every template uses.
+    expect(count(sevag, /2021–heute|2018–heute/g)).toBe(2);
   });
 
   it("names him in one heading, on two lines, and shows his initials while there is no portrait", () => {
@@ -115,6 +115,17 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(count(sevag, />SG</g)).toBeGreaterThanOrEqual(2);
     // The warehouse is the large picture, with its description.
     expect(sevag).toContain('alt="Eine helle Lagerhalle mit Palettenregalen, die Gänge mit J, K, L und M beschriftet"');
+  });
+
+  it("asks for the picture as wide as it is drawn: a 4:3 photo covers the tall plate", () => {
+    // Phones: 4/3 of a plate 1.56 times as tall as the screen is wide; the wide canvas: 4/3 of a 700 px tall plate.
+    expect(sevag).toContain('sizes="(max-width: 1119px) 208vw, 933px"');
+  });
+
+  it("sets the white words on a veil tied to them, and caps the name by the screen's height", () => {
+    expect(sevag).toMatch(/class="relative [^"]*lb-veil text-white @work:text-creator-fg @work:before:hidden"/);
+    expect(sevag).toMatch(/<h1 class="[^"]*\blb-name\b/);
+    expect(sevag).not.toContain("lb-scrim");
   });
 
   it("letters its five sections A to E and lists them in an index that leads to them", () => {
@@ -136,8 +147,9 @@ describe("Sevag's application page on Laufbahn", () => {
     const jump = /<a href="#section-about"[^>]*>[\s\S]*?<\/a>/.exec(sevag)?.[0] ?? "";
     expect(text(jump)).toBe("Weiterlesen");
     expect(jump).toContain(`aria-label="Weiterlesen: Über mich"`);
-    // Alone, it is the hero's one action, filled with the accent.
-    expect(jump).toContain("bg-creator-accent");
+    // Alone, it stays a secondary action: outlined, never filled with the accent.
+    expect(jump).toContain("border-creator-line-strong");
+    expect(jump).not.toContain("bg-creator-accent");
   });
 
   it("sets the letter as a reading column of paragraphs, with its reading time", () => {
@@ -160,13 +172,17 @@ describe("the same page once a contact block is added (fixture only)", () => {
   const withContact: Page = { ...sevagDe, blocks: [...sevagDe.blocks, contact] };
   const markup = render(withContact, sevagTheme);
 
-  it("puts the contact block's primary action first in the hero and 'Weiterlesen' beside it, quietly", () => {
+  it("puts the contact block's primary action first in the hero and 'Weiterlesen' beside its CV link, quietly", () => {
     const row = /<div data-hero-actions[\s\S]*?<\/div><\/div>/.exec(markup)?.[0] ?? "";
-    expect(text(row)).toBe("Ab sofort verfügbarGespräch vereinbarenLebenslauf (PDF)");
+    expect(text(row)).toBe("Ab sofort verfügbarGespräch vereinbarenLebenslauf (PDF)Weiterlesen");
     expect(row).toContain('href="mailto:bewerbung@example.com"');
-    const jump = /<a href="#section-about"[^>]*>/.exec(markup)?.[0] ?? "";
-    expect(jump).toContain("border-creator-line-strong");
-    expect(jump).not.toContain("bg-creator-accent");
+    // "Weiterlesen" is a text action in the CV link's row, not a second button.
+    const jump = /<a href="#section-about"[^>]*>/.exec(row)?.[0] ?? "";
+    expect(jump).toContain("min-h-touch-target");
+    expect(jump).not.toMatch(/border-creator-line-strong|bg-creator-accent/);
+    // Exactly one filled button in the hero.
+    const hero = /<header[\s\S]*?<\/header>/.exec(markup)?.[0] ?? "";
+    expect(count(hero, /<a [^>]*bg-creator-accent/g)).toBe(1);
     // The compact bar says the same words; the band closes the page under its own heading.
     expect(text(/<a [^>]*data-bar-action[\s\S]*?<\/a>/.exec(markup)?.[0] ?? "")).toBe("Gespräch vereinbaren");
     expect(markup).toMatch(/<h2[^>]*>Lassen Sie uns sprechen<\/h2>/);
@@ -181,7 +197,7 @@ describe("without any picture", () => {
 
   it("fills the picture's place with the accent and the initials, never an empty box", () => {
     expect(markup).toMatch(/data-hero-plate="true" class="[^"]*bg-creator-accent[^"]*"><span aria-hidden="true"[^>]*>SG<\/span>/);
-    expect(markup).not.toContain("lb-scrim");
+    expect(markup).not.toContain("lb-veil");
     expect(markup).not.toContain("<img");
     // The name reads in the accent's own text color over the field.
     expect(markup).toMatch(/text-creator-accent-fg @work:text-creator-fg/);
@@ -201,7 +217,7 @@ describe("other blocks in the signposted frame", () => {
   it("changes nothing for any other template", () => {
     for (const template of ["nocturne", "werkbogen", "tiefdruck", "studio"] as const) {
       const markup = render(sevagDe, { template });
-      expect(markup, template).not.toMatch(/lb-(?:plate|scrim|section|spy|step|reveal|zoom)/);
+      expect(markup, template).not.toMatch(/lb-(?:plate|scrim|veil|name|ground|section|spy|step|reveal|zoom)/);
       expect(markup, template).not.toContain('aria-label="Abschnitte"');
     }
   });
@@ -239,8 +255,54 @@ describe("a page whose first blocks have no title", () => {
   it("shows them before the first signpost, without a letter", () => {
     const markup = render({ ...sevagDe, blocks: mixed });
     expect(markup).toMatch(/Kurz und gut\.[\s\S]*<section id="section-links"/);
-    // One titled section: no index for a single entry, but "Weiterlesen" still leads to it.
+    // One titled section: no index for a single entry. "Weiterlesen" leads to the start of the
+    // content, so the untitled text before the first signpost is not skipped.
     expect(markup).not.toContain('aria-label="Abschnitte"');
-    expect(markup).toContain('href="#section-links"');
+    expect(markup).toMatch(/<a href="#page-content"[^>]*>[\s\S]*?Weiterlesen/);
+    expect(markup).toContain('<main id="page-content"');
+    expect(markup).not.toContain("Weiterlesen: Links");
+    // Without an index the sections stand in the first eight columns, under the hero's words.
+    expect(markup).toContain("@work:col-start-1");
+    expect(markup).not.toContain("@work:col-start-5");
+  });
+
+  it("a plain link page (no title at all) has no index and keeps its content under the hero's words", () => {
+    const markup = render({ ...sevagDe, blocks: [{ ...base, id: "site", type: "link", title: "Website", url: "https://example.com" }] });
+    expect(markup).not.toContain('aria-label="Abschnitte"');
+    expect(markup).not.toContain("@work:col-start-5");
+    // Nothing to read on to: no "Weiterlesen".
+    expect(markup).not.toContain("Weiterlesen");
+  });
+});
+
+describe("motion", () => {
+  const tiles = (markup: string) => [.../<ol class="grid min-w-0 grid-cols-2[\s\S]*?<\/ol>/.exec(markup)?.[0].matchAll(/<li class="([^"]*)"/g) ?? []].map((match) => match[1] ?? "");
+
+  it("skills in a section of their own rise in tile by tile", () => {
+    expect(tiles(sevag).length).toBe(12);
+    expect(tiles(sevag).every((tile) => tile.includes("lb-reveal"))).toBe(true);
+  });
+
+  it("skills sharing a section with other blocks rise once with the section, never twice", () => {
+    const blocks: Block[] = [
+      { ...base, id: "skills", type: "header", title: "Können" },
+      { ...base, id: "note", type: "text", text: "Was ich am liebsten tue." },
+      { ...base, id: "tools", type: "tools", items: ["Stapler", "SAP"] },
+    ];
+    const markup = render({ ...sevagDe, blocks });
+    expect(tiles(markup)).toHaveLength(2);
+    expect(tiles(markup).some((tile) => tile.includes("lb-reveal"))).toBe(false);
+    expect(markup).toMatch(/<div class="grid min-w-0 grid-cols-1 gap-4 lb-reveal">/);
+  });
+});
+
+describe("a portrait as the only picture (no separate hero picture)", () => {
+  const markup = render(portfolioSample("en"));
+
+  it("rides high in a square on phones and fades into an ink ground, so the words stand below the face", () => {
+    expect(markup).toMatch(/data-hero-plate="true" class="[^"]*lb-ground @work:bg-creator-surface-2/);
+    expect(markup).toContain("absolute inset-x-0 top-0 aspect-square mask-b-from-60% mask-b-to-100% @work:inset-0 @work:aspect-auto @work:mask-none");
+    // Without a portrait beside it, the role line keeps the same room on both sides.
+    expect(markup).toMatch(/<p class="inline-flex [^"]*ps-4 pe-4/);
   });
 });
