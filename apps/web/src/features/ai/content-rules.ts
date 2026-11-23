@@ -39,7 +39,50 @@ export const numbersIn = (text: string): string[] => [...westernDigits(text).mat
 const TLDS = "com|de|net|org|io|co|app|me|at|ch|eu|info|shop|store|art|studio|music|tv|fm|ai|dev|page|link|bio|ee|to|gg|ly|be|uk|fr|it|es|nl|us|ca|sa|ae|eg|ma|tn|jo|lb|qa|kw|om|bh|tr|pl|se|dk|no|fi|pt|gr|cz|online|site|xyz|biz|social|club";
 const URLISH = new RegExp(`\\b(?:https?:\\/\\/|www\\.)[^\\s<>"]+|\\b[\\p{L}\\p{N}][\\p{L}\\p{N}-]*(?:\\.[\\p{L}\\p{N}-]+)*\\.(?:${TLDS})\\b(?:\\/[^\\s<>"]*)?`, "giu");
 const EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.\p{L}{2,}/gu;
-const PHONE = /(?:\+|\b00)?\(?\d(?:[ ./()-]{0,2}\d){6,}/g;
+
+// ── Phone numbers ────────────────────────────────────────────────────────────
+
+/** Digits as people write them on a page: Western, Arabic-Indic and Persian. */
+const DIGIT = "[0-9\u0660-\u0669\u06f0-\u06f9]";
+/** What stands between the digits of a phone number: spaces (also the non-breaking ones), dot, slash, brackets, hyphens and dashes. */
+const SEPARATOR = "[ \\t\u00a0\u2009\u202f./()\\-\u2010-\u2015]";
+/**
+ * A phone-like run: 7 or more digits with at most three separator characters between two of them,
+ * optionally after + or 00. Three, because the separator people type most has a space on both
+ * sides: "0621 - 12 34 56", "040 / 12 34 56", "+49 (0) 151 – 234 567 89".
+ */
+const PHONE = new RegExp(`(?:\\+|\\b00)?\\(?${DIGIT}(?:${SEPARATOR}{0,3}${DIGIT}){6,}`, "g");
+const DAY = /(?:0?[1-9]|[12]\d|3[01])/.source;
+const MONTH = /(?:0?[1-9]|1[0-2])/.source;
+const YEAR = /(?:19|20)\d{2}/.source;
+const CLOCK = /(?:[01]?\d|2[0-4])[.:][0-5]\d/.source;
+/**
+ * Digit runs that are no phone numbers although they look like one to a digit counter: real dates
+ * (2026-11-22, 22.11.2026, 11/22/2026), opening hours (10:00 – 18:00) and year ranges (2019 – 2024,
+ * 2019/2020). Only real ones: "12.34.56" is the end of a phone number, not a date.
+ */
+const NOT_A_PHONE = new RegExp(
+  `\\b(?:\\d{4}-${MONTH}-${DAY}|${DAY}[./]${MONTH}[./](?:\\d{4}|\\d{2})|${MONTH}/${DAY}/(?:\\d{4}|\\d{2})|${CLOCK}\\s?[-–—]\\s?${CLOCK}|${YEAR}\\s?[-–—/]\\s?${YEAR})\\b`,
+  "g",
+);
+/** Stands in for a date while phone numbers are looked for (a private-use character, removed from the input first). */
+const ASIDE = "\ue002";
+
+/**
+ * Replaces every phone-like run of 7 or more digits with `replacement()`. Dates, opening hours and
+ * year ranges stay as they are; prices (24,99) and short numbers have too few digits in one run.
+ * The one definition of "a phone number" for what we send to the model and for what it answers.
+ */
+export function replacePhones(text: string, replacement: () => string): string {
+  const kept: string[] = [];
+  const aside = text.replaceAll(ASIDE, "").replace(NOT_A_PHONE, (match) => {
+    kept.push(match);
+    return ASIDE;
+  });
+  let next = 0;
+  return aside.replace(PHONE, replacement).replaceAll(ASIDE, () => kept[next++] ?? "");
+}
+
 const PLACEHOLDER = /\[(?:E-Mail|Telefon)\]/g;
 const TLD = /\.[a-z]{2,}$/i;
 
@@ -89,7 +132,7 @@ export function checkFreeText(input: string, facts: Facts): TextCheck {
     const host = hostOf(match);
     return host && facts.hosts.has(host) ? match : drop();
   });
-  text = text.replace(PHONE, (match) => ((match.match(/\d/g)?.length ?? 0) >= 7 ? drop() : match));
+  text = replacePhones(text, drop);
   if (removed.any) text = tidy(text);
   const invented = [...westernDigits(text).matchAll(NUMBER)].some((match) => {
     const number = match[0];

@@ -2,6 +2,7 @@ import type { Detection, Platform } from "@linkyo/blocks";
 
 import type { LinkMetadata } from "@/features/app/metadata";
 
+import { replacePhones } from "../content-rules";
 import type { AiSourceKind, AiSourceReason, AiSourceStatus } from "../events";
 
 import { detectAddress, socialPlatformOf } from "./sources/classify";
@@ -67,24 +68,21 @@ export interface SourceBundle {
 // ── Redaction ────────────────────────────────────────────────────────────────
 
 const EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.\p{L}{2,}/gu;
-/** Dates and opening hours look like phone numbers to a digit counter; they are kept as they are. */
-const DATE = /\b(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[./]\d{1,2}[./]\d{2,4}|\d{1,2}[.:]\d{2}\s?[-–]\s?\d{1,2}[.:]\d{2})\b/g;
-/** Digits with at most two separators between them (space . / - and brackets), optionally after + or 00. */
-const PHONE = /(?:\+|\b00)?\(?\d(?:[ ./()-]{0,2}\d){6,}/g;
 /** The local mock picks its answer by a marker in the owner's text; markers pass unchanged. */
 const MARKER = /\[\[fixture:[a-z0-9-]{1,40}(?:#[a-z0-9_-]{1,64})?\]\]/gi;
 
 /**
  * Replaces every e-mail address with "[E-Mail]" and every phone-like run of 7 or more digits with
- * "[Telefon]". Dates (2026-11-22, 22.11.2026) and prices (24,99) have fewer digits in one run and stay.
+ * "[Telefon]", however its digits are separated ("0621 - 12 34 56", "040 / 12 34 56",
+ * "+49 (0) 151 – 234 567 89"; `replacePhones` in content-rules.ts). Dates (2026-11-22, 22.11.2026),
+ * opening hours, year ranges and prices (24,99) stay.
  */
 export function redactContacts(text: string): string {
-  // Markers and dates are set aside (as private-use characters around an index) and put back after.
+  // Markers are set aside (as private-use characters around an index) and put back after.
   const kept: string[] = [];
-  const keep = (match: string) => `${String(kept.push(match) - 1)}`;
-  let out = text.replace(/[]/g, "").replace(MARKER, keep).replace(EMAIL, "[E-Mail]").replace(DATE, keep);
-  out = out.replace(PHONE, (match) => ((match.match(/\d/g)?.length ?? 0) >= 7 ? "[Telefon]" : match));
-  return out.replace(/(\d+)/g, (_, index: string) => kept[Number(index)] ?? "");
+  const keep = (match: string) => `\ue000${String(kept.push(match) - 1)}\ue001`;
+  const out = replacePhones(text.replace(/[\ue000\ue001]/g, "").replace(MARKER, keep).replace(EMAIL, "[E-Mail]"), () => "[Telefon]");
+  return out.replace(/\ue000(\d+)\ue001/g, (_, index: string) => kept[Number(index)] ?? "");
 }
 
 /** Trimmed, whitespace collapsed, redacted and cut to `max` characters (with "…"). */
