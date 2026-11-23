@@ -1,5 +1,6 @@
 "use client";
 
+import { nextPageStep, type CreatorKind } from "@linkyo/blocks";
 import { Badge, Icon } from "@linkyo/ui";
 import { ArrowRight, AtSign, ChartNoAxesColumn, Gift, HandHeart, ImagePlus, Palette, Plus, Scale, TextQuote, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -17,6 +18,7 @@ import { homeProgress, homeTasksDone } from "./home/progress";
 import { ProposalCard } from "./home/proposal-card";
 import { ListGroup, ListRow } from "./list";
 import { ProfileSheet } from "./profile-form";
+import { startedBlock } from "./project-form";
 import { INVITE_HREF, NAV_ANCHORS } from "./routes";
 import { sampleStats, totals } from "./sample-stats";
 import { Panel, Screen } from "./screen";
@@ -105,6 +107,7 @@ export function HomeScreen() {
 
       {/* Real accounts with the page service: a proposal from the team comes first. */}
       <ProposalCard />
+      <PortfolioStep />
       {ready ? null : <AiHomeCard ready={false} />}
       {ready ? null : <NextStep tasks={tasks} />}
       <LinkCard username={account.username} ready={ready} />
@@ -137,6 +140,38 @@ export function HomeScreen() {
 
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </Screen>
+  );
+}
+
+/**
+ * A page that shows work gets one next step for it (a way to reach you, more work, a client's
+ * words, something recent). One line that starts it; no score, no percentage.
+ */
+function PortfolioStep() {
+  const t = useTranslations("app.portfolio");
+  const router = useRouter();
+  const { doc, site, setAddOpen, edit } = useSite();
+  if (!doc.blocks.some((block) => block.type === "project")) return null;
+  const step = nextPageStep(doc);
+  if (!step) return null;
+  const start = (type: "contact" | "quotes") =>
+    edit({ mode: "create", block: startedBlock(blankBlock(type, { artist: "", newsletter: "" }), site.kind as CreatorKind | undefined, (key) => t(key as "sentence")) });
+  const run = () => {
+    if (step === "contact") start("contact");
+    else if (step === "quote") start("quotes");
+    else if (step === "secondProject") setAddOpen(true);
+    else router.push("/app/editor");
+  };
+  return (
+    <button
+      type="button"
+      data-portfolio-step={step}
+      onClick={run}
+      className="flex items-start gap-2 justify-self-start rounded-xs text-start text-body font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
+    >
+      <Icon icon={ArrowRight} size="md" className="mt-0.5 shrink-0 rtl:-scale-x-100" />
+      {t(`page.${step}`)}
+    </button>
   );
 }
 

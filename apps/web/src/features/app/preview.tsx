@@ -48,7 +48,11 @@ export function PhoneFrame({ children, className }: { children: ReactNode; class
  */
 export function PhonePreview({ className, hint = false }: { className?: string; hint?: boolean }) {
   const t = useTranslations("app.preview");
+  const tCreator = useTranslations("creator.portfolio");
   const { previewPage, doc, editing } = useSite();
+  // A project opened in place (a tap on its card), and the way back (its "Back to …" button).
+  const [opened, setOpened] = useState<string | null>(null);
+  const content = useRef<HTMLDivElement>(null);
   const theme = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: previewPage.profile.locale === "ar" }), [doc.theme, previewPage.profile.locale]);
   const scroller = useRef<HTMLDivElement>(null);
   const hintId = useId();
@@ -76,6 +80,37 @@ export function PhonePreview({ className, hint = false }: { className?: string; 
       delete element.dataset.editing;
     };
   }, [editingId, previewPage]);
+  // A project page starts at its top, and so does the portfolio it returns to.
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: 0 });
+  }, [opened]);
+
+  /**
+   * The page inside is inert (no links that leave the dashboard, no players, nothing to tab into), so
+   * a tap lands on the frame. Only a project's card and the way back are let through: the frame
+   * looks up what lies under the finger and presses it if it is one of those.
+   */
+  useEffect(() => {
+    const box = scroller.current;
+    const page = content.current;
+    const titles = previewPage.blocks.flatMap((block) => (block.type === "project" && block.title ? [block.title] : []));
+    if (!box || !page || titles.length === 0) return;
+    const back = tCreator("backTo", { name: previewPage.profile.displayName });
+    const tap = (event: MouseEvent) => {
+      page.inert = false;
+      try {
+        const control = document.elementFromPoint(event.clientX, event.clientY)?.closest("button");
+        const name = control?.getAttribute("aria-label") ?? control?.textContent ?? "";
+        const allowed = control && page.contains(control) && (name.trim() === back || titles.some((title) => name.includes(title)));
+        if (allowed) control.click();
+      } finally {
+        page.inert = true;
+      }
+    };
+    box.addEventListener("click", tap);
+    return () => box.removeEventListener("click", tap);
+  }, [previewPage, tCreator]);
+
   return (
     <PhoneFrame className={className}>
       <div
@@ -88,8 +123,14 @@ export function PhonePreview({ className, hint = false }: { className?: string; 
         aria-label={t("region", { name: previewPage.profile.displayName })}
         aria-describedby={hint ? hintId : undefined}
       >
-        <div inert>
-          <PosterRenderer page={previewPage} theme={theme} preview />
+        <div ref={content} inert>
+          <PosterRenderer
+            page={previewPage}
+            theme={theme}
+            preview
+            openProject={opened ? { id: opened, onBack: () => setOpened(null) } : undefined}
+            onOpenProject={setOpened}
+          />
         </div>
       </div>
       {hint ? (

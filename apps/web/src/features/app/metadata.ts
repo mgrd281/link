@@ -13,6 +13,10 @@ export interface LinkMetadata {
   language?: string;
   license?: string;
   kind?: "skill" | "repo";
+  /** GitHub: the repository's topics, homepage and the year it was created. */
+  topics?: string[];
+  homepage?: string;
+  year?: number;
 }
 
 /**

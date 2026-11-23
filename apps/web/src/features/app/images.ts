@@ -5,8 +5,26 @@
  * address; our image optimizer serves the sizes.
  */
 
-export const IMAGE_SIDE = { avatar: 512, photo: 1080, logo: 640, thumb: 480 } as const;
+export const IMAGE_SIDE = { avatar: 512, photo: 1080, logo: 640, thumb: 480, work: 2400 } as const;
 export type ImageKind = keyof typeof IMAGE_SIDE;
+
+/**
+ * Work pictures (a project's cover and pictures): 2400 px with real accounts, whose pictures live in
+ * Storage; 1080 px in the demo, whose pictures are data URLs in this browser's few MB.
+ */
+export const workImageKind = (real: boolean): ImageKind => (real ? "work" : "photo");
+
+/** Pictures one project holds: 20, or 6 in the demo (the same storage reason). */
+export const projectPictureLimit = (real: boolean): number => (real ? 20 : 6);
+
+/** A prepared picture as a page keeps it: its address, tone and measured size (`w`/`h`). */
+export const storedImage = (prepared: PreparedImage, alt = ""): { src: string; alt: string; tone: "light" | "dark"; w: number; h: number } => ({
+  src: prepared.src,
+  alt,
+  tone: prepared.tone,
+  w: Math.min(8192, Math.max(1, Math.round(prepared.width))),
+  h: Math.min(8192, Math.max(1, Math.round(prepared.height))),
+});
 
 export interface PreparedImage {
   src: string;

@@ -1,23 +1,29 @@
 "use client";
 
-import { detectLink, detectMany, type Block, type BlockType } from "@linkyo/blocks";
+import { detectLink, detectMany, normalizeUrl, slugWord, type Block, type BlockType, type CreatorKind } from "@linkyo/blocks";
 import { Badge, Button, cn, ConfirmDialog, Icon, toast } from "@linkyo/ui";
-import { CircleAlert, ClipboardPaste, ImagePlus, Link2 } from "lucide-react";
+import { Building2, CircleAlert, ClipboardPaste, FolderKanban, ImagePlus, Images, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useId, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { blockIcon } from "@/features/directions/editor/ui";
 import { canReadClipboard, readText } from "@/lib/clipboard";
+import { linkOnlyPlatform } from "@/lib/link-metadata";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
-import { ADD_GROUPS, addGroups, blankBlock, blockFromLink, insertAt, newBlockId } from "./blocks";
-import { ImageError, pickFiles, prepareAndStore } from "./images";
+import { ADD_PRESETS, addGroups, blankBlock, blockFromLink, insertAt, newBlockId, presetBlock, type AddPreset } from "./blocks";
+import { ImageError, pickFiles, prepareAndStore, storedImage, workImageKind } from "./images";
+import { isPortfolioKind, titleKeys } from "./kinds";
 import { useMediaOwner } from "./media-owner";
+import { fetchLinkMetadata } from "./metadata";
 import { PreviewButton } from "./preview";
+import { projectFromLink, projectFromPictures, projectFromRepository, startedBlock } from "./project-form";
 import { useShellChrome } from "./screen";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
+import { inPage } from "./validate";
 
 // Whether the clipboard can be read never changes while the page is open; the server can't know it.
 const never = () => () => undefined;
@@ -29,15 +35,23 @@ const never = () => () => undefined;
  * is one sheet the whole time. Pasted links and picked types land in the same place. Reachable from
  * every screen (sidebar, tab bar, the editor's buttons and its "Add below").
  */
-/** Types whose edit form does not exist yet. The editor work package empties this list. */
-const UNFINISHED: ReadonlySet<BlockType> = new Set(ADD_GROUPS.portfolio);
+/** The icon of a preset entry (a block of an existing type, started for one purpose). */
+const PRESET_ICONS: Record<AddPreset, typeof Building2> = { clients: Building2 };
 
 export function AddSheet() {
   const t = useTranslations("app.add");
   const tEdit = useTranslations("app.edit");
   const tTypes = useTranslations("dashboard.types");
   const tFields = useTranslations("app.fields");
+  const tPortfolio = useTranslations("app.portfolio");
   const { addOpen, setAddOpen, addIndex, addBlocks, edit, editing, doc, site } = useSite();
+  const kind = site.kind as CreatorKind | undefined;
+  // Pages that show work: a pasted link can become a project, so pasting waits for the choice.
+  const portfolio = isPortfolioKind(kind);
+  // Photos picked for a choice ("as a gallery" or "as a project"), and the line a new project opens with.
+  const [photos, setPhotos] = useState<File[] | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [linking, setLinking] = useState(false);
   const inShell = useShellChrome();
   const inputId = useId();
   const [value, setValue] = useState("");
@@ -47,13 +61,13 @@ export function AddSheet() {
   const detection = useMemo(() => (value.trim() ? detectLink(value.trim()) : null), [value]);
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
   // Real accounts have no newsletter backend yet: the block is not offered (public pages drop it too).
-  // The portfolio blocks have no fields yet, so the sheet offers none of them until they do.
+  // A group's presets (Portfolio: "Clients") follow its types.
   const groups = useMemo(
     () =>
       addGroups(site.kind)
-        .map((group) => ({ ...group, types: group.types.filter((candidate) => !UNFINISHED.has(candidate)) }))
         .map((group) => (accountStore.demo ? group : { ...group, types: group.types.filter((candidate) => candidate !== "newsletter") }))
-        .filter((group) => group.types.length > 0),
+        .map((group) => ({ ...group, presets: (Object.hasOwn(ADD_PRESETS, group.key) ? ADD_PRESETS[group.key as keyof typeof ADD_PRESETS] : []) as readonly AddPreset[] }))
+        .filter((group) => group.types.length > 0 || group.presets.length > 0),
     [site.kind],
   );
 
@@ -73,6 +87,8 @@ export function AddSheet() {
     setAddOpen(false);
     setValue("");
     setError(false);
+    setPhotos(null);
+    setNotice(null);
     if (current) edit(null);
   };
   // Leaving a form with changes asks first (closing, and going back to the types).
@@ -83,7 +99,10 @@ export function AddSheet() {
   // Back to the types: what was pasted is still in the field.
   const back = () => {
     if (editor.dirty) setDiscard("back");
-    else edit(null);
+    else {
+      setNotice(null);
+      edit(null);
+    }
   };
   const save = () => {
     if (editor.save()) close();
@@ -105,33 +124,101 @@ export function AddSheet() {
   };
 
   // One tap instead of long-press and Paste. iOS asks once with its own Paste button; when reading is
-  // refused or the clipboard is empty, the field takes focus so the usual paste still works.
+  // refused or the clipboard is empty, the field takes focus so the usual paste still works. On a page
+  // that shows work one link waits in the field, so it can still become a project.
   const paste = async () => {
     const text = await readText();
-    if (text) addText(text);
+    if (text && portfolio && detectMany(text).length === 1) setValue(text.trim());
+    else if (text) addText(text);
     else document.getElementById(inputId)?.focus();
   };
 
-  const pick = (type: BlockType) => {
-    // The same place as a pasted link. A new section goes to the end: it starts a part of the page.
-    const index = addIndex ?? (type === "header" ? undefined : insertAt(doc.blocks));
-    edit({ mode: "create", block: blankBlock(type, { artist: doc.profile.displayName, newsletter: tFields("newsletterDefault") }), index, inAddSheet: true });
+  // The same place as a pasted link. A new section, and the contact block that closes the page, go to the end.
+  const placeFor = (type: BlockType) => addIndex ?? (type === "header" || type === "contact" ? undefined : insertAt(doc.blocks));
+  const create = (block: Block, line: string | null = null) => {
+    setNotice(line);
+    edit({ mode: "create", block: inPage(block, doc.blocks), index: placeFor(block.type), inAddSheet: true });
   };
 
+  const pick = (type: BlockType) => {
+    // A page has one contact block: its entry opens the one there is.
+    const contact = type === "contact" ? doc.blocks.find((block) => block.type === "contact") : undefined;
+    if (contact) {
+      close();
+      edit({ mode: "edit", id: contact.id });
+      return;
+    }
+    // A new portfolio section starts with the kind's title and, for quotes, one quote to fill in.
+    const blank = blankBlock(type, { artist: doc.profile.displayName, newsletter: tFields("newsletterDefault") });
+    create(startedBlock(blank, kind, (key) => tPortfolio(key as "sentence")));
+  };
+
+  const pickPreset = (preset: AddPreset) => create(presetBlock(preset, { clients: tPortfolio(titleKeys(kind).clients) }));
+
+  // A link as a project. Details arrive only where a platform gives them (GitHub's API for a
+  // repository); any other address is kept as the project's link, and the title is the owner's.
+  const linkAsProject = async () => {
+    const address = normalizeUrl(value.trim());
+    if (!address || !/^https?:$/.test(address.protocol)) {
+      setError(true);
+      document.getElementById(inputId)?.focus();
+      return;
+    }
+    const url = address.toString();
+    const id = newBlockId("project");
+    const word = slugWord(doc.profile.locale);
+    const found = detectLink(url);
+    const platform = linkOnlyPlatform(url);
+    setLinking(true);
+    try {
+      if (found?.type === "repo" && found.id) {
+        const [owner = "", repo = ""] = found.id.split("/");
+        const meta = await fetchLinkMetadata(`https://github.com/${owner}/${repo}`);
+        create(projectFromRepository(id, { url, owner, repo }, meta, doc.blocks, word, new Date().toISOString().slice(0, 10)));
+      } else if (platform) {
+        create(projectFromLink(id, url, undefined, doc.blocks, word), tPortfolio("linkOnly", { platform }));
+      } else {
+        // Our server only knows titles for platforms it recognises (it answers nothing for other sites).
+        const meta = found?.platform ? await fetchLinkMetadata(url) : null;
+        create(projectFromLink(id, url, meta?.title, doc.blocks, word), meta?.title ? null : tPortfolio("linkKept"));
+      }
+      setValue("");
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  // The project's title takes the focus when the sheet says what to add (a link was kept).
+  useEffect(() => {
+    if (!notice || !step) return;
+    document.querySelector<HTMLInputElement>("[role=dialog] [data-project-title]")?.focus();
+  }, [notice, step]);
+
   const owner = useMediaOwner();
+  // One picture becomes an image; several ask first whether they are a gallery or a project.
   const upload = async () => {
     const files = await pickFiles({ multiple: true });
     if (files.length === 0) return;
+    if (files.length > 1) setPhotos(files);
+    else await store(files, "gallery");
+  };
+  const store = async (files: File[], as: "gallery" | "project") => {
     setUploading(true);
     try {
-      const images = await Promise.all(files.slice(0, 24).map((file) => prepareAndStore(file, "photo", owner)));
+      const real = supabaseEnabled;
+      const images = await Promise.all(files.slice(0, 24).map((file) => prepareAndStore(file, as === "project" ? workImageKind(real) : "photo", owner)));
+      setPhotos(null);
+      if (as === "project") {
+        create(projectFromPictures(newBlockId("project"), images, real));
+        return;
+      }
       const base = { visible: true, highlight: false };
       const first = images[0];
       const block: Block | null =
         images.length === 1 && first
-          ? { ...base, id: newBlockId("image"), type: "image", image: { src: first.src, alt: "", tone: first.tone } }
+          ? { ...base, id: newBlockId("image"), type: "image", image: storedImage(first) }
           : images.length > 1
-            ? { ...base, id: newBlockId("gallery"), type: "gallery", images: images.map((image) => ({ src: image.src, alt: "", tone: image.tone })) }
+            ? { ...base, id: newBlockId("gallery"), type: "gallery", images: images.map((image) => storedImage(image)) }
             : null;
       if (block) addBlocks([block], { index: addIndex });
       close();
@@ -173,7 +260,14 @@ export function AddSheet() {
         }
       >
         {step && editor.draft ? (
-          <BlockEditorFields editor={{ ...editor, draft: editor.draft }} creating onSave={save} />
+          <div className="grid grid-cols-1 gap-4">
+            {notice ? (
+              <p role="status" className="rounded-md border border-line-strong bg-surface p-3 text-small">
+                {notice}
+              </p>
+            ) : null}
+            <BlockEditorFields editor={{ ...editor, draft: editor.draft }} creating onSave={save} />
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
             <form
@@ -206,6 +300,8 @@ export function AddSheet() {
                   }}
                   onPaste={(event) => {
                     const text = event.clipboardData.getData("text");
+                    // One link on a page that shows work waits in the field: it may become a project.
+                    if (portfolio && detectMany(text).length === 1) return;
                     if (!value && detectMany(text).length > 0) {
                       event.preventDefault();
                       addText(text);
@@ -245,13 +341,31 @@ export function AddSheet() {
                   t("pasteHint")
                 )}
               </p>
+              {/* Under the detected block: the same link as a piece of work. */}
+              {detection && value.trim() ? (
+                <Button type="button" variant="ghost" icon={FolderKanban} loading={linking} className="justify-self-start" onClick={() => void linkAsProject()}>
+                  {t("asProject")}
+                </Button>
+              ) : null}
             </form>
 
             <div className="grid grid-cols-1 gap-2">
-              <Button variant="tinted" size="lg" block icon={ImagePlus} loading={uploading} onClick={() => void upload()}>
+              <Button variant="tinted" size="lg" block icon={ImagePlus} loading={uploading && photos === null} onClick={() => void upload()}>
                 {t("photos")}
               </Button>
-              <p className="text-caption text-fg-secondary">{t("photosHint")}</p>
+              {photos ? (
+                // Several pictures: a gallery, or the pictures of one piece of work (the first is its cover).
+                <div role="group" aria-label={t("photos")} className="grid grid-cols-2 gap-2">
+                  <Button size="lg" icon={Images} disabled={uploading} onClick={() => void store(photos, "gallery")}>
+                    {t("photosAsGallery")}
+                  </Button>
+                  <Button size="lg" variant="primary" icon={FolderKanban} loading={uploading} onClick={() => void store(photos, "project")}>
+                    {t("photosAsProject")}
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-caption text-fg-secondary">{t("photosHint")}</p>
+              )}
             </div>
 
             {groups.map((group) => (
@@ -279,6 +393,24 @@ export function AddSheet() {
                       </button>
                     </li>
                   ))}
+                  {group.presets.map((preset) => (
+                    <li key={preset} className="grid min-w-0">
+                      <button
+                        type="button"
+                        data-preset={preset}
+                        onClick={() => pickPreset(preset)}
+                        className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3 text-start transition-[background-color,border-color,scale] duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed active:bg-pressed motion-reduce:active:scale-none"
+                      >
+                        <span className="grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg">
+                          <Icon icon={PRESET_ICONS[preset]} size="md" />
+                        </span>
+                        <span className="grid min-w-0">
+                          <span className="text-small font-semibold break-words hyphens-auto">{t(`presets.${preset}`)}</span>
+                          <span className="text-caption text-fg-secondary">{t(`desc.${preset}`)}</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
                 </ul>
               </section>
             ))}
@@ -297,8 +429,10 @@ export function AddSheet() {
         onConfirm={() => {
           const leaving = discard;
           setDiscard(null);
-          if (leaving === "back") edit(null);
-          else close();
+          if (leaving === "back") {
+            setNotice(null);
+            edit(null);
+          } else close();
         }}
       />
     </>

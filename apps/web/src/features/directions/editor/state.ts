@@ -1,4 +1,4 @@
-import { NO_IMAGE, PLATFORMS, type Block, type Detection, type Platform } from "@linkyo/blocks";
+import { NO_IMAGE, PLATFORMS, slugFor, type Block, type BlockOf, type Detection, type Platform } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import type { TileSize } from "../mosaic/renderer";
@@ -24,7 +24,8 @@ export type EditorAction =
   | { type: "toggle"; id: string }
   | { type: "remove"; id: string }
   | { type: "move"; id: string; to: number }
-  | { type: "duplicate"; id: string }
+  /** `word`: what a project's fallback address starts with ("projekt" on German pages, else "project"). */
+  | { type: "duplicate"; id: string; word?: string }
   | { type: "resize"; id: string; size: TileSize }
   | { type: "theme"; theme: CreatorThemeConfig }
   | { type: "select"; id: string | null }
@@ -32,6 +33,16 @@ export type EditorAction =
   | { type: "redo" };
 
 const HISTORY_LIMIT = 50;
+
+/**
+ * A copy of a project gets an address of its own (made from its title, as for a new project) and no
+ * earlier addresses: those keep leading to the original. The page's rules stay kept.
+ */
+function duplicateProject(source: BlockOf<"project">, id: string, blocks: readonly Block[], word: string): Block {
+  const taken = blocks.flatMap((block) => (block.type === "project" ? [block.slug, ...(block.was ?? [])] : []));
+  const { was: _was, ...rest } = source;
+  return { ...rest, id, slug: slugFor(source.title, taken, word, source.source?.repo) };
+}
 
 function apply<D extends EditorDoc>(doc: D, action: EditorAction): D {
   const index = "id" in action ? doc.blocks.findIndex((block) => block.id === action.id) : -1;
@@ -57,8 +68,10 @@ function apply<D extends EditorDoc>(doc: D, action: EditorAction): D {
     }
     case "duplicate": {
       const source = doc.blocks[index];
-      if (!source) return doc;
-      const copy: Block = { ...source, id: `${source.id}-copy-${Date.now().toString(36)}` };
+      // A page has one contact block: it has no copy.
+      if (!source || source.type === "contact") return doc;
+      const id = `${source.id}-copy-${Date.now().toString(36)}`;
+      const copy: Block = source.type === "project" ? duplicateProject(source, id, doc.blocks, action.word ?? "project") : { ...source, id };
       const blocks = [...doc.blocks];
       blocks.splice(index + 1, 0, copy);
       const size = doc.sizes[source.id];
