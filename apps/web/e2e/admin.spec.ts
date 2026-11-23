@@ -476,3 +476,18 @@ test.describe("referrals", () => {
     await expect(page.getByRole("button", { name: /reward/ })).toHaveCount(0);
   });
 });
+
+test.describe("team console: templates", () => {
+  test("every design and every example page, each opening the real page", async ({ page }) => {
+    await owner(page);
+    await page.goto("/en/admin/templates");
+    await expect(page.getByRole("heading", { level: 1, name: "Templates" })).toBeVisible();
+    const designs = page.locator('a[href^="/directions/poster?template="]');
+    await expect(designs).toHaveCount(13);
+    await expect(designs.first()).toHaveAttribute("target", "_blank");
+    await page.getByText(/^Examples \(/).click();
+    await expect(page.locator('a[href*="/p/"]').first()).toBeVisible();
+    expect(await page.locator('a[href*="/p/"]').count()).toBeGreaterThan(40);
+    expect(await axe(page)).toEqual([]);
+  });
+});

@@ -2904,6 +2904,7 @@
     "meta": {
       "overview": "Team · Übersicht",
       "creators": "Team · Creator-Seiten",
+      "templates": "Team · Vorlagen",
       "creator": "Team · Creator-Seite",
       "referrals": "Team · Empfehlungen",
       "team": "Team · Mitglieder & Rechte",
@@ -2941,10 +2942,20 @@
       "account": "Konto",
       "accountMenu": "Kontomenü"
     },
+    "templates": {
+      "title": "Vorlagen",
+      "lead": "Alle {designs} Designs und {pages} Beispielseiten. Jede Karte öffnet die echte Seite in einem neuen Tab.",
+      "filterLabel": "Anzeigen",
+      "designs": "Designs ({count})",
+      "examples": "Beispiele ({count})",
+      "people": "Prominente ({count})",
+      "newTab": "(öffnet in einem neuen Tab)"
+    },
     "nav": {
       "label": "Teambereich",
       "overview": "Übersicht",
       "creators": "Creator",
+      "templates": "Vorlagen",
       "referrals": "Empfehlungen",
       "team": "Team",
       "activity": "Verlauf",

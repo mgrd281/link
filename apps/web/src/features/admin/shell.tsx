@@ -12,6 +12,7 @@ import {
   History,
   Inbox,
   LayoutDashboard,
+  LayoutTemplate,
   LayoutList,
   LogOut,
   ShieldAlert,
@@ -32,7 +33,7 @@ import { useAdmin } from "./session";
 import { ROLES, type Permission, type Role } from "./types";
 
 interface NavItem {
-  key: "overview" | "customers" | "orders" | "subscriptions" | "security" | "analytics" | "creators" | "referrals" | "team" | "activity";
+  key: "overview" | "customers" | "orders" | "subscriptions" | "security" | "analytics" | "creators" | "templates" | "referrals" | "team" | "activity";
   href: string;
   icon: LucideIcon;
   /** Shown only to roles with this permission. */
@@ -57,6 +58,7 @@ const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
     key: "teamWork",
     items: [
       { key: "creators", href: "/admin/creators", icon: PenTool },
+      { key: "templates", href: "/admin/templates", icon: LayoutTemplate },
       // The invite program: verification requests and held invites (ADR 0064).
       { key: "referrals", href: "/admin/referrals", icon: BadgeCheck, permission: "customers.view" },
       { key: "team", href: "/admin/team", icon: ShieldCheck },

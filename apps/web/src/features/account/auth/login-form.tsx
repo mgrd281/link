@@ -60,7 +60,10 @@ export function LoginForm() {
     }
     setBusy(true);
     setError(null);
-    const codeRequest: CodeRequest = { email: email.trim(), locale: locales.find((code) => code === locale) ?? "de" };
+    const codeRequest: CodeRequest = {
+      email: email.trim(),
+      locale: locales.find((code) => code === locale) ?? "de",
+    };
     const result = await accountStore.requestCode(codeRequest);
     setBusy(false);
     if (result.ok) {
@@ -98,7 +101,13 @@ export function LoginForm() {
       <AuthHeading title={t("login.title")} lead={t("login.lead")} />
       <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-4">
         <FormError
-          message={error && error !== "invalidEmail" && error !== "passwordRequired" ? t(`errors.${error}`) : linkExpired ? t("errors.linkExpired") : null}
+          message={
+            error && error !== "invalidEmail" && error !== "passwordRequired"
+              ? t(`errors.${error}`)
+              : linkExpired
+                ? t("errors.linkExpired")
+                : null
+          }
         />
         <TextField
           id="login-email"
@@ -149,9 +158,12 @@ export function LoginForm() {
               setWithPassword((value) => !value);
               setPassword("");
               setError(null);
-              window.setTimeout(() => document.getElementById(withPassword ? "login-email" : "login-password")?.focus(), 0);
+              window.setTimeout(
+                () => document.getElementById(withPassword ? "login-email" : "login-password")?.focus(),
+                0,
+              );
             }}
-            className="mx-auto inline-flex min-h-touch-target items-center rounded-full px-3 text-small font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed"
+            className="min-h-touch-target text-small text-link duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed mx-auto inline-flex items-center rounded-full px-3 font-semibold transition-colors"
           >
             {withPassword ? t("login.withCode") : t("login.withPassword")}
           </button>
@@ -159,9 +171,12 @@ export function LoginForm() {
       </form>
       <OrDivider label={t("social.or")} />
       <SocialButtons emailField="login-email" />
-      <p className="text-center text-small text-fg-secondary">
+      <p className="text-small text-fg-secondary text-center">
         {t("login.noAccount")}{" "}
-        <Link href="/signup" className="-mx-2 inline-flex min-h-touch-target items-center rounded-full px-2 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed">
+        <Link
+          href="/signup"
+          className="min-h-touch-target text-link duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed -mx-2 inline-flex items-center rounded-full px-2 font-semibold transition-colors"
+        >
           {t("login.signup")}
         </Link>
       </p>

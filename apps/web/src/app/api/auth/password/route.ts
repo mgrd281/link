@@ -31,20 +31,36 @@ export async function POST(request: Request) {
   const { data: failures } = await service.rpc("recent_failures", { email });
   if (typeof failures === "number" && failures >= MAX_FAILURES) return fail("tooManyAttempts");
 
-  const { data, error } = await anonServerSupabase().auth.signInWithPassword({ email, password: input.password });
+  const { data, error } = await anonServerSupabase().auth.signInWithPassword({
+    email,
+    password: input.password,
+  });
   if (error) {
     if (error.status === 429) return fail("tooManyAttempts");
     await recordSignIn(service, { email, result: "failed", place, device: input });
     return fail("wrongPassword");
   }
 
-  const { data: profile } = await service.from("profiles").select("status").eq("id", data.user.id).maybeSingle<{ status: string }>();
+  const { data: profile } = await service
+    .from("profiles")
+    .select("status")
+    .eq("id", data.user.id)
+    .maybeSingle<{ status: string }>();
   if (profile?.status !== "active") {
     await service.auth.admin.signOut(data.session.access_token).catch(() => undefined);
     await recordSignIn(service, { email, result: "failed", place, device: input });
     return fail("suspended");
   }
   await ensureFirstSite(service, data.user);
-  await recordSignIn(service, { email, result: "success", place, device: input, sessionId: sessionIdOf(data.session.access_token) });
-  return json({ ok: true, session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } });
+  await recordSignIn(service, {
+    email,
+    result: "success",
+    place,
+    device: input,
+    sessionId: sessionIdOf(data.session.access_token),
+  });
+  return json({
+    ok: true,
+    session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token },
+  });
 }

@@ -2904,6 +2904,7 @@
     "meta": {
       "overview": "Team · Overview",
       "creators": "Team · Creator pages",
+      "templates": "Team · Templates",
       "creator": "Team · Creator page",
       "referrals": "Team · Referrals",
       "team": "Team · Members & roles",
@@ -2941,10 +2942,20 @@
       "account": "Account",
       "accountMenu": "Account menu"
     },
+    "templates": {
+      "title": "Templates",
+      "lead": "All {designs} designs and {pages} example pages. Every card opens the real page in a new tab.",
+      "filterLabel": "Show",
+      "designs": "Designs ({count})",
+      "examples": "Examples ({count})",
+      "people": "Well-known people ({count})",
+      "newTab": "(opens in a new tab)"
+    },
     "nav": {
       "label": "Team area",
       "overview": "Overview",
       "creators": "Creators",
+      "templates": "Templates",
       "referrals": "Referrals",
       "team": "Team",
       "activity": "Activity",
