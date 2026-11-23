@@ -1,3 +1,5 @@
+import type { Page } from "@linkyo/blocks";
+
 /**
  * Linkyo's own moving pictures that any page may use as its moving header (profile.motion): original
  * illustrated loops drawn for Linkyo (sources in .claude/skills/linkyo-media-assets/scripts) and real
@@ -96,3 +98,11 @@ export function libraryClip(src: string | undefined): MotionClip | undefined {
 
 /** The library clip whose still a header picture is, if it is one. */
 export const posterClip = (src: string | undefined): MotionClip | undefined => MOTION_LIBRARY.find((clip) => clip.poster === src);
+
+/**
+ * A profile with a library clip as its moving header and the clip's first frame as its header
+ * picture (so nothing jumps when the clip starts), described in the page's language.
+ */
+export function withLibraryClip(profile: Page["profile"], clip: MotionClip): Page["profile"] {
+  return { ...profile, motion: { src: motionSrc(clip) }, hero: { src: clip.poster, alt: clip.alt[profile.locale], w: clip.w, h: clip.h } };
+}

@@ -52,9 +52,10 @@ const CONTENT_ID = "page-content";
  * work, pictures, about, quotes, clients and the contact band take the whole canvas; everything
  * else is read in a column beside its section title. Phones and every other template are unchanged.
  *
- * Signposted templates (Laufbahn, `layout.headings` "signpost") frame every titled section with a
- * lettered signpost and add the section index (`./laufbahn`); their page runs edge to edge below the
- * wide canvas, so the bleed hero's picture can.
+ * Signposted templates (Laufbahn, `layout.headings` "signpost") frame every titled section under a
+ * hairline and add the page's contents (`./laufbahn`: the app bar's sheet on phones, an index beside
+ * the sections on wider screens); their page runs edge to edge below the wide canvas, so the bleed
+ * hero's picture can.
  */
 export function PosterRenderer({
   page,
@@ -158,9 +159,9 @@ export function PosterRenderer({
       : grouped;
   // Numbered titles count the titled sections: 01, 02 …
   const titled = sections.filter((section) => section.title !== null);
-  // Signposted templates letter the titled sections (A, B … or أ، ب …) and list them in an index.
+  // Signposted templates (Laufbahn) list the titled sections as the page's contents.
   const signposted = layout.headings === "signpost";
-  const signposts = signposted ? signpostsOf(sections, profile.locale) : [];
+  const signposts = signposted ? signpostsOf(sections) : [];
   const firstSign = signposts[0];
   // Without a contact block the bleed hero's first action leads to the cover letter when the page has
   // one, else to the first section when that is titled, else to the start of the content (an untitled
@@ -226,7 +227,7 @@ export function PosterRenderer({
         }
       >
         {overlay ? <div className="pointer-events-none absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12 *:pointer-events-auto">{overlay}</div> : null}
-        <PosterBar profile={profile} primary={primary} solid={signposted} />
+        <PosterBar profile={profile} primary={primary} solid={signposted} sections={signposts.length > 1 ? signposts.map(({ anchor, title }) => ({ anchor, title })) : undefined} />
         {layout.hero === "bleed" ? (
           <BleedHero
             profile={profile}
@@ -272,16 +273,16 @@ export function PosterRenderer({
 
         {/* A preview sits inside the dashboard, which already has the page's one <main>. */}
         {signposted ? (
-          // Phones: the index under the hero, then the sections. Tablets: the reading column. The wide
-          // canvas: the index sticky in the first three columns, the sections in the last eight.
+          // Phones: the sections under the hero (their contents open from the app bar). Tablets: the index's
+          // chips, then the sections, in the reading column. The wide canvas: the index sticky in the first
+          // three columns, the sections in the last eight.
           <Main
             id={CONTENT_ID}
             className="grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:mx-auto @prose:max-w-prose @prose:px-0 @work:max-w-none @work:grid-cols-12 @work:gap-x-6 @work:pt-24"
           >
             {signposts.length > 1 ? <SignpostIndex entries={signposts} /> : null}
-            {/* Beside the index in the last eight columns; without an index in the first eight, under the hero's words.
-                Under a sticky index (phones) whatever is focused or jumped to stops below it (lb-under-index). */}
-            <div className={cn("relative grid min-w-0 grid-cols-1 gap-12 @work:col-span-8 @work:gap-16", signposts.length > 1 ? "lb-under-index @work:col-start-5" : "@work:col-start-1")}>
+            {/* Beside the index in the last eight columns; without an index in the first eight, under the hero's words. */}
+            <div className={cn("relative grid min-w-0 grid-cols-1 gap-12 @work:col-span-8 @work:gap-16", signposts.length > 1 ? "@work:col-start-5" : "@work:col-start-1")}>
               {sections.map((section) => {
                 // Skills and experience rise in tile by tile and step by step; the rest section by section
                 // (then the tiles and steps inside do not rise a second time).
@@ -620,7 +621,7 @@ function PosterBlock({
   const signposted = portfolio.theme.layout.headings === "signpost";
   const reveal = portfolio.theme.layout.motion === "reveal" && portfolio.revealItems !== false;
   if (signposted) {
-    if (block.type === "about") return <LaufbahnAbout block={block} locale={portfolio.locale} />;
+    if (block.type === "about") return <LaufbahnAbout block={block} />;
     if (block.type === "tools") return <LaufbahnSkills block={block} locale={portfolio.locale} reveal={reveal} />;
     if (block.type === "timeline") return <LaufbahnTimeline block={block} locale={portfolio.locale} reveal={reveal} />;
     if (block.type === "text") {

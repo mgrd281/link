@@ -7,17 +7,19 @@ import { useTranslations } from "next-intl";
 import { useId, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
-import { CREDENTIAL_ICONS, factSpans, iconFor, opensShort, readingMinutes, skillLayout, softJoints, splitLead, textKind } from "./laufbahn-content";
+import { CREDENTIAL_ICONS, iconFor, opensShort, readingMinutes, splitLead, textKind } from "./laufbahn-content";
 import { IndexList } from "./laufbahn-index";
 import { textLink } from "./portfolio-sections";
 import { linkDestination, paragraphs } from "./sections";
-import { displayStyle, pageSide, signStyle } from "./styles";
+import { displayStyle, pageSide } from "./styles";
 
 /**
- * Laufbahn (ADR 0069): pages for applications, CVs and personal profiles. Every titled section is
- * announced by a signpost, a square tile with a bold letter like the signs over a warehouse's aisles,
- * and the same signposts form the page's section index: a sticky row of chips on phones, chips that
- * wrap on tablets, a sticky list beside the sections on the wide canvas, marking the section being read.
+ * Laufbahn (ADR 0069): pages for applications, CVs and personal profiles, set like a native app. Every
+ * titled section opens under a hairline with its title, and the titles form the page's contents: on
+ * phones the app bar names the section being read and opens the contents as a sheet; chips that wrap
+ * on tablets; a sticky list beside the sections on the wide canvas, marking the section being read.
+ * Facts and skills are grouped lists (the rows of a settings screen), never tiles that look like
+ * buttons, and no word is ever broken: a label too long for its row wraps between words.
  *
  * The section frame takes every kind of block; about, skills, experience and text have their own
  * calm renderers here, everything else keeps the renderer it has in every template. Server HTML with
@@ -27,27 +29,17 @@ import { displayStyle, pageSide, signStyle } from "./styles";
  * its content and between the parts of a content, 16 between paragraphs, 8 between tiles and cells.
  */
 
-const LATIN = Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-/** The abjad order (أبجد هوز حطي كلمن سعفص قرشت ثخذ ضظغ), in which Arabic letters items in a list. */
-const ABJAD = ["أ", "ب", "ج", "د", "ه", "و", "ز", "ح", "ط", "ي", "ك", "ل", "م", "ن", "س", "ع", "ف", "ص", "ق", "ر", "ش", "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"];
-
-/** The letter of the section at `index` (0 = the first titled section): A, B, C … or أ، ب، ج …; past the last letter, its number. */
-export function signpostLetter(index: number, locale: Profile["locale"]): string {
-  return (locale === "ar" ? ABJAD : LATIN)[index] ?? String(index + 1);
-}
-
-/** A titled section as the index and its signpost know it. */
+/** A titled section as the contents and its heading know it. */
 export interface Signpost {
   /** The id of the block that opened the section (the section's key). */
   id: string;
-  /** The section's own address on the page (`#anchor`), for the index and the hero's first action. */
+  /** The section's own address on the page (`#anchor`), for the contents and the hero's first action. */
   anchor: string;
-  letter: string;
   title: string;
 }
 
-/** The signposts of a page's sections, in page order; untitled runs of blocks have none. */
-export function signposts(sections: readonly { id: string; title: string | null }[], locale: Profile["locale"]): Signpost[] {
+/** The titled sections of a page, in page order; untitled runs of blocks have none. */
+export function signposts(sections: readonly { id: string; title: string | null }[]): Signpost[] {
   const taken = new Set<string>();
   return sections
     .flatMap((section) => (section.title === null ? [] : [{ id: section.id, title: section.title }]))
@@ -55,35 +47,30 @@ export function signposts(sections: readonly { id: string; title: string | null 
       const base = `section-${section.id.replace(/[^\w-]/g, "-")}`;
       const anchor = taken.has(base) ? `${base}-${String(index + 1)}` : base;
       taken.add(anchor);
-      return { id: section.id, anchor, letter: signpostLetter(index, locale), title: section.title };
+      return { id: section.id, anchor, title: section.title };
     });
 }
 
 /**
- * The section index. Phones: a compact row of chips that sticks flush under the compact bar once the
- * hero has passed, on the page's solid ground (a hairline under it only while it is stuck), to swipe
- * sideways, the section being read marked and kept in view. Tablets: chips that wrap in the reading
- * column. The wide canvas: a sticky list in the first three columns. Plain anchor links throughout,
- * so the keyboard, the back button and a shared address all work without the script.
+ * The section index beside the sections. Tablets: chips that wrap in the reading column. The wide
+ * canvas: a sticky list in the first three columns. Phones have none in the page: the app bar names
+ * the section being read and opens the contents as a sheet (SectionSwitcher). Plain anchor links, so
+ * the keyboard, the back button and a shared address all work without the script.
  */
 export function SignpostIndex({ entries }: { entries: readonly Signpost[] }): ReactNode {
   const t = useTranslations("creator");
   return (
-    <nav aria-label={t("laufbahn.index")} className="lb-index layer-sticky -mx-creator-gutter min-w-0 bg-creator-bg @prose:mx-0 @prose:bg-transparent @work:col-span-3">
-      <IndexList
-        entries={entries.map(({ anchor, letter, title }) => ({ anchor, letter, title }))}
-        className="mk-no-scrollbar lb-fade flex snap-x scroll-px-creator-gutter gap-2 overflow-x-auto px-creator-gutter py-1 @prose:flex-wrap @prose:snap-none @prose:overflow-visible @prose:scroll-px-0 @prose:px-0 @work:sticky @work:top-24 @work:grid @work:gap-1"
-      />
-      <span aria-hidden className="lb-index-edge absolute inset-x-0 bottom-0 @prose:hidden" />
+    <nav aria-label={t("laufbahn.index")} className="hidden min-w-0 @prose:block @work:col-span-3">
+      <IndexList entries={entries.map(({ anchor, title }) => ({ anchor, title }))} className="flex flex-wrap gap-2 @work:sticky @work:top-24 @work:grid @work:gap-1" />
     </nav>
   );
 }
 
 /**
- * One section: a hairline across, the signpost and the title, then the content. An untitled run of
- * blocks (before the first title, or the contact band) has no signpost. With motion "reveal" the
- * title row and the content rise in once as they enter the screen (`reveal: "self"`: the content's
- * own tiles and steps rise in one by one instead).
+ * One section: a hairline across, the title, then the content. An untitled run of blocks (before the
+ * first title, or the contact band) has no heading. With motion "reveal" the title and the content
+ * rise in once as they enter the screen (`reveal: "self"`: the content's own rows and steps rise in
+ * one by one instead).
  */
 export function SignpostSection({
   entry,
@@ -110,24 +97,15 @@ export function SignpostSection({
   }
   return (
     <section id={entry.anchor} aria-labelledby={id} data-block-ids={blockIds} className="lb-section grid min-w-0 grid-cols-1 gap-6 border-t border-creator-line pt-8 @prose:gap-8 @work:pt-10">
-      <div className={cn("flex min-w-0 items-center gap-4", reveal !== "none" && "lb-reveal")}>
-        <span
-          aria-hidden
-          className="grid size-control-md shrink-0 place-items-center rounded-xs bg-creator-accent font-creator-display text-title leading-none text-creator-accent-fg @prose:size-control-lg @prose:text-h3"
-          style={signStyle}
-        >
-          {entry.letter}
-        </span>
-        <h2
-          id={id}
-          dir="auto"
-          className={cn(pageSide, "min-w-0 font-creator-display text-h2 leading-tight text-balance break-words @work:text-h1 rtl:leading-snug")}
-          style={displayStyle}
-          {...(ai ? { "data-ai-generated": "true" } : {})}
-        >
-          {entry.title}
-        </h2>
-      </div>
+      <h2
+        id={id}
+        dir="auto"
+        className={cn(pageSide, "min-w-0 font-creator-display text-h2 leading-tight text-balance break-words @work:text-h1 rtl:leading-snug", reveal !== "none" && "lb-reveal")}
+        style={displayStyle}
+        {...(ai ? { "data-ai-generated": "true" } : {})}
+      >
+        {entry.title}
+      </h2>
       <div className={content}>{children}</div>
     </section>
   );
@@ -142,23 +120,18 @@ function IconSquare({ icon, size = "sm" }: { icon: Parameters<typeof Icon>[0]["i
   );
 }
 
-/** How a fact cell spans the two columns, by its span (closing every row). */
-const FACT_SPAN = { 1: "", 2: "col-span-2" } as const;
-
 /**
  * Who the owner is: the first paragraph as a lead (calm on phones, larger from tablets on; a long one
  * leads with its first sentence, so the lead stays within about five lines on a phone, and the rest of
- * it opens the body), the facts as a two-by-two sheet of cells between hairlines, then the rest of the
- * text as body. A portrait, when there is one, stands at the start of the lead.
+ * it opens the body), the facts as a grouped list, then the rest of the text as body. A portrait, when
+ * there is one, stands at the start of the lead.
  */
-export function LaufbahnAbout({ block, locale }: { block: BlockOf<"about">; locale: Profile["locale"] }): ReactNode {
+export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode {
   const [opening, ...others] = paragraphs(block.text);
   const [first, more] = opening ? splitLead(opening) : [undefined, null];
   const rest = more ? [more, ...others] : others;
   const facts = block.facts ?? [];
   const portrait = hasImage(block.portrait) ? block.portrait : undefined;
-  const values = facts.map((fact) => softJoints(fact.value, locale));
-  const spans = factSpans(values) as (1 | 2)[];
   return (
     <div className="grid min-w-0 gap-6 @prose:gap-8">
       {first || portrait ? (
@@ -183,15 +156,17 @@ export function LaufbahnAbout({ block, locale }: { block: BlockOf<"about">; loca
         </div>
       ) : null}
       {facts.length > 0 ? (
-        <dl className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-creator-card border border-creator-line bg-creator-line">
-          {facts.map((fact, index) => (
-            // One shrinkable column (grid-cols-1), so a long value breaks inside its cell instead of widening it (WCAG 1.4.12 at 320 px).
-            <div key={`${fact.label}-${fact.value}`} className={cn("grid min-w-0 grid-cols-1 content-start gap-1 bg-creator-surface p-4 @prose:px-5", FACT_SPAN[spans[index] ?? 1])}>
+        // A grouped list, as on a settings screen: one fact a row on phones (the label above its value),
+        // two a row from tablets on, hairlines between. Words stay whole: a value wraps between words, and
+        // only a word wider than the whole row (320 px, 400 % zoom) may break (WCAG 1.4.10).
+        <dl className="grid min-w-0 grid-cols-1 gap-px overflow-hidden rounded-creator-card border border-creator-line bg-creator-line @prose:grid-cols-2">
+          {facts.map((fact) => (
+            <div key={`${fact.label}-${fact.value}`} className="grid min-w-0 grid-cols-1 content-start gap-1 bg-creator-surface px-4 py-3 @prose:px-5 @prose:py-4 @prose:odd:last:col-span-2">
               <dt dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>
                 {fact.label}
               </dt>
-              <dd dir="auto" className={cn(pageSide, "text-body leading-snug font-semibold text-balance hyphens-manual break-words")}>
-                {values[index]}
+              <dd dir="auto" className={cn(pageSide, "text-body leading-snug font-semibold text-pretty hyphens-manual break-words")}>
+                {fact.value}
               </dd>
             </div>
           ))}
@@ -210,48 +185,25 @@ export function LaufbahnAbout({ block, locale }: { block: BlockOf<"about">; loca
   );
 }
 
-/** A tile's columns on phones (of two) and from tablets on (of three). */
-const PHONE_SPAN = { 1: "", 2: "col-span-2" } as const;
-const WIDE_SPAN = { 1: "@prose:col-span-1", 2: "@prose:col-span-2", 3: "@prose:col-span-3" } as const;
-
 /**
- * Skills and tools as a bento of flat tiles: two columns on phones, three from tablets on, the first
- * skill leading across when there are five or more. Every tile lies flat: the icon in a soft accent
- * square beside the label (body size, semibold), both centred in a row of one height (56 px, a little
- * more for a label of two lines), so a phone shows twelve skills in about 500 px. The icon comes from
- * the skill's own words by a curated map (laufbahn-content.ts; a neutral check where nothing fits). No
- * automatic hyphenation: German compounds break only at their joints, and a label that would not fit
- * beside its icon in two lines (or would have to break a word on a 360 px phone) takes the whole row;
- * the next half tile may move up past at most two such rows to share one (skillLayout). Hover gives a
- * stronger hairline and a step in the fill. No numbers.
+ * Skills and tools as a grouped list, as on a settings screen: one skill a row on phones, two a row
+ * from tablets on, hairlines between. Each row is the skill's icon in the accent (from the skill's own
+ * words by a curated map, laufbahn-content.ts; a neutral check where nothing fits) and its label, whole:
+ * no automatic hyphenation and no breaks inside words, a long label wraps between words. Nothing about
+ * a row says "press me" (no frame of its own, no hover), because nothing happens on a press. No numbers.
+ * The list rises in once as it enters the screen (motion "reveal").
  */
 export function LaufbahnSkills({ block, locale, reveal }: { block: BlockOf<"tools">; locale: Profile["locale"]; reveal: boolean }): ReactNode {
-  const labels = block.items.map((item) => softJoints(item, locale));
-  const layout = skillLayout(labels);
   return (
-    <ul className="grid min-w-0 grid-cols-2 gap-2 @prose:grid-cols-3 @prose:gap-3">
-      {layout.order.map((index, place) => {
-        const item = block.items[index] ?? "";
-        return (
-          <li
-            key={item}
-            className={cn(
-              // The label sits beside the icon while its widest piece fits there (always from 360 px on: skillLayout);
-              // on a narrower screen it wraps under the icon rather than break a word.
-              "flex min-h-control-xl min-w-0 flex-wrap content-center items-center gap-x-3 gap-y-2 rounded-creator-card border border-creator-line bg-creator-surface py-2 ps-3 pe-2 @prose:pe-3",
-              "transition-colors duration-micro hover:border-creator-line-strong hover:bg-creator-bg motion-reduce:transition-none",
-              PHONE_SPAN[(layout.phone[place] ?? 1) as 1 | 2],
-              WIDE_SPAN[(layout.wide[place] ?? 1) as 1 | 2 | 3],
-              reveal && "lb-reveal",
-            )}
-          >
-            <IconSquare icon={iconFor(item, locale) ?? CircleCheck} />
-            <span dir="auto" className={cn(pageSide, "min-w-0 grow basis-[min-content] text-body leading-snug font-semibold text-balance hyphens-manual break-words rtl:leading-normal")}>
-              {labels[index]}
-            </span>
-          </li>
-        );
-      })}
+    <ul className={cn("grid min-w-0 grid-cols-1 gap-px overflow-hidden rounded-creator-card border border-creator-line bg-creator-line @prose:grid-cols-2", reveal && "lb-reveal")}>
+      {block.items.map((item) => (
+        <li key={item} className="flex min-h-control-lg min-w-0 items-center gap-3 bg-creator-surface px-4 py-2 @prose:odd:last:col-span-2">
+          <Icon icon={iconFor(item, locale) ?? CircleCheck} size="md" className="shrink-0 text-creator-accent-text" />
+          <span dir="auto" className={cn(pageSide, "min-w-0 text-body leading-snug font-medium text-pretty hyphens-manual break-words rtl:leading-normal")}>
+            {item}
+          </span>
+        </li>
+      ))}
     </ul>
   );
 }

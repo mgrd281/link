@@ -465,6 +465,9 @@
     },
     "laufbahn": {
       "index": "Abschnitte",
+      "sections": "Inhalt",
+      "openSections": "Inhalt öffnen",
+      "close": "Schließen",
       "jump": "Weiterlesen",
       "jumpTo": "Weiterlesen: {title}",
       "ongoing": "heute",
@@ -703,7 +706,7 @@
       "description": "Dunkel und kräftig: riesige Schrift, Projekte als nummerierte Liste, ein elektrisches Blau."
     },
     "laufbahn": {
-      "description": "Für Bewerbungen und Lebensläufe: ein großes Bild, ein Wegweiser mit Buchstaben für jeden Abschnitt, ein Werdegang, der sich beim Lesen füllt."
+      "description": "Für Bewerbungen und Lebensläufe: ein großes Bild, klare Abschnitte mit Inhaltsmenü, ein Werdegang, der sich beim Lesen füllt."
     }
   },
   "marketing": {

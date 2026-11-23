@@ -12,6 +12,7 @@ import {
   MOTION_LIBRARY,
   motionSrc,
   posterClip,
+  withLibraryClip,
   type MotionClip,
 } from "@/features/creator/motion-library";
 import { resolveMedia } from "@/features/directions/shared/media";
@@ -24,13 +25,7 @@ type Profile = Page["profile"];
 type Hero = Profile["hero"];
 
 /** A library clip becomes the moving header, and its first frame the header picture (so nothing jumps). */
-export function withClip(profile: Profile, clip: MotionClip): Profile {
-  return {
-    ...profile,
-    motion: { src: motionSrc(clip) },
-    hero: { src: clip.poster, alt: clip.alt[profile.locale], w: clip.w, h: clip.h },
-  };
-}
+export const withClip = (profile: Profile, clip: MotionClip): Profile => withLibraryClip(profile, clip);
 
 /**
  * Leaving a library clip: the moving header goes, and so does the clip's still, which gives back the

@@ -46,6 +46,12 @@ export interface Preview {
    * choice for an application page that goes to an employer). Still unlisted and not indexed.
    */
   bare?: boolean;
+  /**
+   * Motion-library clips (keys) the page takes turns with: every visit (a refresh too) opens with the
+   * next one, its first frame as the header picture (features/previews/rotation.ts). The page keeps
+   * its own clip everywhere else (the link preview card, a claim).
+   */
+  motionRotation?: readonly string[];
   /** The preview shows example states (live now, the verified look) that are not carried over. */
   examples?: boolean;
   /**
@@ -117,6 +123,9 @@ const tonightAt =
  * (./private); without them the page shows without the contact band and nobody can take it over by
  * e-mail. Verified as soon as he takes it over (the founder's rule for pages the team prepared).
  */
+/** The clips Sevag's page takes turns with, the page's own first. */
+export const SEVAG_ROTATION = ["palette-packen", "barcode-scannen", "lagerarbeit", "ware-scannen"] as const;
+
 function sevagPreview(): Preview {
   const own = privatePreviewDetails()[SEVAG_SLUG] ?? {};
   const contact = sevagContact(own);
@@ -124,9 +133,11 @@ function sevagPreview(): Preview {
     name: { de: "Sevag Ghazarian" },
     username: "sevag-ghazarian",
     // Black and grey, easy on the eyes (the founder found the dark page tiring): a soft light grey
-    // ground, near-black text, black buttons with white text, untinted greys; the black forklift
-    // loop opens the page.
+    // ground, near-black text, black buttons with white text, untinted greys.
     theme: { template: "laufbahn", mode: "light", accent: creatorTokens.swatches.ink, tint: 0 },
+    // The founder's wish: a different video on every refresh, all four warehouse clips of the library
+    // (his own tasks: order picking and load securing, scanning, the reach truck, the conveyor).
+    motionRotation: SEVAG_ROTATION,
     pages: { de: contact ? { ...sevagDe, blocks: [...sevagDe.blocks, contact] } : sevagDe },
     ...(own.invite?.length ? { invite: { emailSha256: own.invite.map(emailHash) } } : {}),
     verified: true,

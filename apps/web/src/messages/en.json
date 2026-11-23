@@ -465,6 +465,9 @@
     },
     "laufbahn": {
       "index": "Sections",
+      "sections": "Contents",
+      "openSections": "Open contents",
+      "close": "Close",
       "jump": "Read on",
       "jumpTo": "Read on: {title}",
       "ongoing": "now",
@@ -703,7 +706,7 @@
       "description": "Dark and bold: huge type, projects as a numbered list, one electric blue."
     },
     "laufbahn": {
-      "description": "For applications and CVs: a large picture, a lettered signpost for every section, a timeline that fills as you read."
+      "description": "For applications and CVs: a large picture, clear sections with a contents menu, a timeline that fills as you read."
     }
   },
   "marketing": {

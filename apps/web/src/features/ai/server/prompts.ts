@@ -13,7 +13,7 @@ import { promptSources, redactContacts, stableStringify, type SourceBundle } fro
  * Changing any text here is a new prompt version: bump PROMPT_VERSION.
  */
 
-export const PROMPT_VERSION = "core-v3";
+export const PROMPT_VERSION = "core-v4";
 
 export const SYSTEM_CORE_V1 = `You design pages for Linkyo, a link-in-bio service. A page has a profile (name, a one-line tagline, a short bio) and a list of blocks that visitors see from top to bottom on a phone. You receive what Linkyo's servers collected about one person or business, and you return one page plan as JSON that matches the schema.
 
@@ -65,7 +65,7 @@ Templates (id: look; page mode):
 - bloom: Warm and friendly: the portrait in an arch, round bold type, big buttons. Mode light.
 - daylight: Bright and calm, the portrait melts into white. Mode light.
 - folio: A quiet portfolio: a framed picture, the name on the left, ruled sections, work in a grid. Mode light.
-- laufbahn: For applications and CVs: a large picture, a lettered signpost for every section, a timeline that fills as you read. Mode light.
+- laufbahn: For applications and CVs: a large picture, clear sections with a contents menu, a timeline that fills as you read. Mode light.
 - marquee: Your logo in lights over a soft, blurred stage photo. Mode dark.
 - mono: Black and white: the portrait in greyscale melts into white, a tall condensed name, titles in capitals. Mode light.
 - nocturne: Black stage, white headline name, portrait first. Mode dark.

@@ -12,14 +12,15 @@ import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
-import { signpostLetter, signposts } from "./laufbahn";
+import { signposts } from "./laufbahn";
 import { splitLead } from "./laufbahn-content";
 import { PosterRenderer } from "./renderer";
 import { portfolioSample } from "./sample";
 
 // Laufbahn (ADR 0069) rendered to HTML in Node: Sevag's page keeps every fact of his letter, the
-// signposts and the index agree, the page works with and without a contact block and without any
-// picture, and Arabic pages are lettered and mirrored.
+// headings, the index and the app bar's contents sheet agree, facts and skills are grouped lists with
+// whole words, the page works with and without a contact block and without any picture, and Arabic
+// pages are mirrored.
 
 vi.mock("@/i18n/navigation", () => ({
   Link: ({ href, children, ...rest }: { href: string; children?: unknown }) => createElement("a", { href, ...rest }, children as never),
@@ -43,6 +44,10 @@ const render = (page: Page, config: CreatorThemeConfig = { template: "laufbahn" 
 const text = (markup: string): string =>
   markup.replace(/<[^>]+>/g, "").replaceAll("&amp;", "&").replaceAll("&quot;", '"').replaceAll("&#x27;", "'").replaceAll("­", "");
 const count = (markup: string, pattern: RegExp): number => markup.match(pattern)?.length ?? 0;
+/** The page without its closed contents sheet (a dialog), as the document reads before it opens. */
+const page = (markup: string): string => markup.replace(/<dialog[\s\S]*?<\/dialog>/g, "");
+/** The section titles a visitor reads on the page (the h2 headings outside the sheet). */
+const headingsOf = (markup: string): string[] => [...page(markup).matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map((match) => text(match[1] ?? ""));
 
 const sevagTheme = PREVIEWS[SEVAG_SLUG]?.theme ?? {};
 const sevag = render(sevagDe, sevagTheme);
@@ -58,29 +63,16 @@ const contact: BlockOf<"contact"> = {
   links: [{ kind: "cv", url: "https://example.com/lebenslauf.pdf" }],
 };
 
-describe("signpost letters", () => {
-  it("run A, B, C … on German and English pages and أ، ب، ج … (abjad order) on Arabic ones", () => {
-    expect([0, 1, 2, 25].map((index) => signpostLetter(index, "de"))).toEqual(["A", "B", "C", "Z"]);
-    expect([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((index) => signpostLetter(index, "ar")).join(" ")).toBe("أ ب ج د ه و ز ح ط ي");
-    // Past the last letter a section keeps a sign: its number.
-    expect(signpostLetter(26, "en")).toBe("27");
-  });
-
-  it("are given to titled sections only, each with its own anchor and view timeline", () => {
-    const entries = signposts(
-      [
-        { id: "top", title: null },
-        { id: "about", title: "Über mich" },
-        { id: "a b", title: "Zwei" },
-        { id: "a-b", title: "Drei" },
-      ],
-      "de",
-    );
-    expect(entries.map((entry) => [entry.letter, entry.title])).toEqual([
-      ["A", "Über mich"],
-      ["B", "Zwei"],
-      ["C", "Drei"],
+describe("the page's contents", () => {
+  it("list the titled sections only, each with its own anchor, and no letters", () => {
+    const entries = signposts([
+      { id: "top", title: null },
+      { id: "about", title: "Über mich" },
+      { id: "a b", title: "Zwei" },
+      { id: "a-b", title: "Drei" },
     ]);
+    expect(entries.map((entry) => entry.title)).toEqual(["Über mich", "Zwei", "Drei"]);
+    expect(entries.every((entry) => !("letter" in entry))).toBe(true);
     expect(entries.map((entry) => entry.anchor)).toEqual(["section-about", "section-a-b", "section-a-b-3"]);
     expect(new Set(entries.map((entry) => entry.anchor)).size).toBe(3);
   });
@@ -134,17 +126,29 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(sevag).not.toContain("lb-scrim");
   });
 
-  it("letters its five sections A to E and lists them in an index that leads to them", () => {
+  it("titles its five sections plainly (no letters) and lists them as contents: the app bar's sheet and an index", () => {
     const titles = ["Über mich", "Was ich mitbringe", "Werdegang", "Neu für mich: das Tönen", "Anschreiben"];
-    const nav = /<nav aria-label="Abschnitte"[\s\S]*?<\/nav>/.exec(sevag)?.[0] ?? "";
-    expect(text(nav)).toBe(titles.map((title, index) => `${"ABCDE"[index] ?? ""}${title}`).join(""));
-    const targets = [...nav.matchAll(/href="#([^"]+)"/g)].map((match) => match[1]);
+    // The index beside the sections (tablets and wider): words only.
+    const nav = /<nav aria-label="Abschnitte" class="([^"]*)"[\s\S]*?<\/nav>/.exec(sevag);
+    expect(text(nav?.[0] ?? "")).toBe(titles.join(""));
+    // Phones have no row of chips: the index is hidden there, the app bar carries the contents.
+    expect(nav?.[1]).toMatch(/^hidden\b[^"]*@prose:block/);
+    const targets = [...(nav?.[0] ?? "").matchAll(/href="#([^"]+)"/g)].map((match) => match[1]);
     expect(targets).toHaveLength(5);
     for (const target of targets) expect(sevag).toContain(`<section id="${target ?? ""}"`);
-    // Each section's title is its h2, the letter beside it is decoration.
-    const headings = [...sevag.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map((match) => text(match[1] ?? ""));
-    expect(headings).toEqual(titles);
-    expect(count(sevag, /<span aria-hidden="true" class="grid size-control-md shrink-0 place-items-center rounded-xs bg-creator-accent/g)).toBe(5);
+    // Each section's title is its h2, nothing beside it.
+    expect(headingsOf(sevag)).toEqual(titles);
+    expect(sevag).not.toMatch(/>[A-E]<\/span><h2|bg-creator-accent[^"]*">[A-E]</);
+    // The app bar's title opens the contents as a modal sheet that lists the same sections, in order.
+    const bar = /<div class="poster-bar[^"]*"[\s\S]*?<\/dialog>/.exec(sevag)?.[0] ?? "";
+    expect(bar).toMatch(/<button type="button" aria-haspopup="dialog"[^>]*>[\s\S]*?Sevag Ghazarian[\s\S]*?Inhalt öffnen<\/span><\/button>/);
+    const sheet = /<dialog[^>]*class="lb-sheet"[\s\S]*?<\/dialog>/.exec(bar)?.[0] ?? "";
+    expect(sheet).toMatch(/aria-labelledby="([^"]+)"[\s\S]*<h2 id="\1"[^>]*>Inhalt<\/h2>/);
+    expect([...sheet.matchAll(/<a href="#([^"]+)"/g)].map((match) => match[1])).toEqual(targets);
+    expect(sheet).toContain('aria-label="Schließen"');
+    // The bar is solid, with the reading line along its foot.
+    expect(bar).toMatch(/class="poster-bar [^"]*lb-bar bg-creator-bg"/);
+    expect(sevag).toMatch(/<\/dialog>[\s\S]*?<span aria-hidden="true" class="lb-progress /);
   });
 
   it("without a contact block: the hero leads to his cover letter, with 'Teilen' beside it", () => {
@@ -188,25 +192,31 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(toning).not.toContain("<details");
   });
 
-  it("gives every skill an icon, lets the first lead and closes the last row, and never numbers them", () => {
+  it("lists the skills like a settings screen: one a row on phones, an icon and the whole label, nothing that looks pressable", () => {
     const skills = /<section id="section-skills"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
-    const tiles = [...skills.matchAll(/<li class="([^"]*)"[^>]*>([\s\S]*?)<\/li>/g)];
-    expect(tiles).toHaveLength(12);
-    for (const [, , inner] of tiles) expect(inner).toMatch(/<span aria-hidden="true" class="lb-soft [^"]*"><svg[^>]*class="lucide lucide-/);
-    // Phones: the lead across, then pairs, the labels that cannot share a row across (one line each).
-    const across = tiles.map(([, classes]) => (classes?.split(" ").includes("col-span-2") ? "across" : "half"));
-    expect(across).toEqual(["across", "half", "half", "across", "across", "half", "half", "across", "half", "half", "half", "half"]);
-    // Every tile lies flat (the icon beside the label) at one height.
-    for (const [, classes] of tiles) expect(classes).toMatch(/\bflex\b[^"]*\bmin-h-control-xl\b[^"]*\bitems-center\b/);
-    expect(skills).not.toMatch(/>0\d</);
+    const list = /<ul class="([^"]*)"/.exec(skills)?.[1] ?? "";
+    expect(list).toMatch(/^grid min-w-0 grid-cols-1 gap-px [^"]*rounded-creator-card border border-creator-line bg-creator-line @prose:grid-cols-2/);
+    const rows = [...skills.matchAll(/<li class="([^"]*)"[^>]*>([\s\S]*?)<\/li>/g)];
+    const items = sevagDe.blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")?.items ?? [];
+    expect(rows.map(([, , inner]) => text(inner ?? ""))).toEqual(items);
+    for (const [, classes, inner] of rows) {
+      expect(inner).toMatch(/^<svg[^>]*class="lucide lucide-/);
+      // A row of the list: no frame of its own, no hover, at least 48 px.
+      expect(classes).toMatch(/\bflex\b[^"]*\bmin-h-control-lg\b[^"]*\bbg-creator-surface\b/);
+      expect(classes).not.toMatch(/\bborder\b|hover:/);
+    }
+    // Whole words: no soft hyphens put in, no automatic hyphenation, never numbered.
+    expect(skills).not.toContain("\u00AD");
     expect(skills).not.toContain("hyphens-auto");
     expect(skills).toContain("hyphens-manual");
-    // German compounds may break only at their joints.
-    expect(skills).toContain("Flurförder­zeug­schein");
+    expect(skills).not.toMatch(/>0\d</);
   });
 
-  it("sets the facts as a two-by-two sheet and the timeline's licence on its node", () => {
-    expect(sevag).toMatch(/<dl class="grid min-w-0 grid-cols-2 gap-px/);
+  it("sets the facts as a grouped list with whole words, and the timeline's licence on its node", () => {
+    const facts = /<dl class="([^"]*)"[\s\S]*?<\/dl>/.exec(/<section id="section-about"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "");
+    expect(facts?.[1]).toMatch(/^grid min-w-0 grid-cols-1 gap-px [^"]*@prose:grid-cols-2/);
+    expect(facts?.[0]).not.toContain("\u00AD");
+    expect(text(facts?.[0] ?? "")).toContain("vor allem Seitenschubstapler");
     const timeline = /<section id="section-path"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
     expect([...timeline.matchAll(/class="lucide lucide-([a-z-]+)/g)].map((match) => match[1])).toEqual(["id-card", "briefcase"]);
   });
@@ -232,7 +242,7 @@ describe("the same page once a contact block is added (fixture only)", () => {
     // The compact bar says the same words; the band closes the page under its own heading.
     expect(text(/<a [^>]*data-bar-action[\s\S]*?<\/a>/.exec(markup)?.[0] ?? "")).toBe("Gespräch vereinbaren");
     expect(markup).toMatch(/<h2[^>]*>Lassen Sie uns sprechen<\/h2>/);
-    // The band is no signposted section: the index keeps its five letters.
+    // The band is no titled section: the index keeps its five entries.
     expect(count(/<nav aria-label="Abschnitte"[\s\S]*?<\/nav>/.exec(markup)?.[0] ?? "", /<li/g)).toBe(5);
   });
 });
@@ -253,7 +263,7 @@ describe("without any picture", () => {
 describe("other blocks in the signposted frame", () => {
   it("keeps the content of every template: the same section titles as Tiefdruck on the portfolio sample", () => {
     const page = portfolioSample("de");
-    const titles = (markup: string) => [...markup.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map((match) => text(match[1] ?? "").replace(/^\d{2}/, ""));
+    const titles = (markup: string) => headingsOf(markup).map((title) => title.replace(/^\d{2}/, ""));
     const laufbahn = render(page);
     expect(titles(laufbahn)).toEqual(titles(render(page, { template: "tiefdruck" })));
     // Projects keep their cards (each one the anchor the way back from its page lands on).
@@ -263,7 +273,8 @@ describe("other blocks in the signposted frame", () => {
   it("changes nothing for any other template", () => {
     for (const template of ["nocturne", "werkbogen", "tiefdruck", "studio"] as const) {
       const markup = render(sevagDe, { template });
-      expect(markup, template).not.toMatch(/lb-(?:plate|scrim|veil|name|ground|section|index|fade|soft|more|step|reveal|zoom)/);
+      expect(markup, template).not.toMatch(/lb-(?:plate|scrim|veil|name|ground|section|soft|more|step|reveal|zoom|sheet|bar|progress)/);
+      expect(markup, template).not.toContain("<dialog");
       expect(markup, template).not.toContain('aria-label="Abschnitte"');
     }
   });
@@ -273,10 +284,12 @@ describe("Arabic pages", () => {
   const page = portfolioSample("ar");
   const markup = render(page);
 
-  it("are right to left, lettered in the abjad order, with the Arabic word for 'until now'", () => {
+  it("are right to left, with their contents in Arabic and the Arabic word for 'until now'", () => {
     expect(markup).toContain('<div lang="ar" dir="rtl"');
     const nav = /<nav aria-label="الأقسام"[\s\S]*?<\/nav>/.exec(markup)?.[0] ?? "";
-    expect([...nav.matchAll(/<span aria-hidden="true" class="grid size-control-sm[^"]*"[^>]*>([^<]+)</g)].map((match) => match[1])).toEqual(["أ", "ب", "ج", "د", "ه", "و"]);
+    expect(count(nav, /<li/g)).toBe(6);
+    expect(markup).toMatch(/<h2 id="[^"]+"[^>]*>المحتويات<\/h2>/);
+    expect(markup).toContain('aria-label="إغلاق"');
     expect(markup).toContain("حتى الآن");
   });
 
@@ -298,7 +311,7 @@ const mixed: Block[] = [
 ];
 
 describe("a page whose first blocks have no title", () => {
-  it("shows them before the first signpost, without a letter", () => {
+  it("shows them before the first titled section, without a heading of their own", () => {
     const markup = render({ ...sevagDe, blocks: mixed });
     expect(markup).toMatch(/Kurz und gut\.[\s\S]*<section id="section-links"/);
     // One titled section: no index for a single entry. "Weiterlesen" leads to the start of the
@@ -322,11 +335,13 @@ describe("a page whose first blocks have no title", () => {
 });
 
 describe("motion", () => {
-  const tiles = (markup: string) => [.../<ul class="grid min-w-0 grid-cols-2[\s\S]*?<\/ul>/.exec(markup)?.[0].matchAll(/<li class="([^"]*)"/g) ?? []].map((match) => match[1] ?? "");
+  const skillList = (markup: string) => /<ul class="(grid min-w-0 grid-cols-1 gap-px[^"]*)">([\s\S]*?)<\/ul>/.exec(markup);
+  const rows = (markup: string) => [...(skillList(markup)?.[2] ?? "").matchAll(/<li class="([^"]*)"/g)].map((match) => match[1] ?? "");
 
-  it("skills in a section of their own rise in tile by tile", () => {
-    expect(tiles(sevag).length).toBe(12);
-    expect(tiles(sevag).every((tile) => tile.includes("lb-reveal"))).toBe(true);
+  it("skills in a section of their own rise in once, as one list", () => {
+    expect(rows(sevag)).toHaveLength(12);
+    expect(skillList(sevag)?.[1]).toContain("lb-reveal");
+    expect(rows(sevag).some((row) => row.includes("lb-reveal"))).toBe(false);
   });
 
   it("skills sharing a section with other blocks rise once with the section, never twice", () => {
@@ -336,8 +351,9 @@ describe("motion", () => {
       { ...base, id: "tools", type: "tools", items: ["Stapler", "SAP"] },
     ];
     const markup = render({ ...sevagDe, blocks });
-    expect(tiles(markup)).toHaveLength(2);
-    expect(tiles(markup).some((tile) => tile.includes("lb-reveal"))).toBe(false);
+    expect(rows(markup)).toHaveLength(2);
+    expect(skillList(markup)?.[1]).not.toContain("lb-reveal");
+    expect(rows(markup).some((row) => row.includes("lb-reveal"))).toBe(false);
     expect(markup).toMatch(/<div class="grid min-w-0 grid-cols-1 gap-6 lb-reveal">/);
   });
 });

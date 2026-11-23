@@ -2,10 +2,12 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 
 /**
- * Laufbahn (ADR 0069), the template for applications and CVs: the section index works with the
- * keyboard and keeps each section clear of the compact bar, reduced motion stills every animation,
- * phone and desktop pass axe, and Arabic pages are mirrored. Runs in the desktop project; phone checks
- * open their own phone-sized context.
+ * Laufbahn (ADR 0069), the template for applications and CVs, set like a native app: on phones one app
+ * bar names the section being read and opens the contents as a sheet (keyboard included), the index
+ * beside the sections works on wider screens, every section stops clear of the bar, facts and skills
+ * are grouped lists with whole words, reduced motion stills every animation, phone and desktop pass
+ * axe, and Arabic pages are mirrored. Runs in the desktop project; phone checks open their own
+ * phone-sized context.
  */
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -91,7 +93,8 @@ test.describe("Laufbahn", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const index = page.getByRole("navigation", { name: "Abschnitte" });
-    await expect(index.getByRole("link")).toHaveText(["AÜber mich", "BWas ich mitbringe", "CWerdegang", "DNeu für mich: das Tönen", "EAnschreiben"]);
+    // Words only: no letters before the titles.
+    await expect(index.getByRole("link")).toHaveText(["Über mich", "Was ich mitbringe", "Werdegang", "Neu für mich: das Tönen", "Anschreiben"]);
     // Tab walks the index in order; Enter follows a link.
     await index.getByRole("link", { name: "Über mich" }).focus();
     await page.keyboard.press("Tab");
@@ -204,116 +207,131 @@ test.describe("Laufbahn", () => {
     }
   });
 
-  test("phones: moving along the stuck index with Tab or Shift+Tab never scrolls the page", async ({ browser }) => {
+  test("phones: one app bar at the top, solid, names the section being read; no row of chips, no letters", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     await page.waitForLoadState("networkidle");
-    const nav = page.getByRole("navigation", { name: "Abschnitte" });
-    const letter = page.getByRole("region", { name: "Anschreiben" });
-    // From the letter's disclosure back into the stuck index: the page stays where it is.
-    await letter.locator("summary").focus();
-    await expect(nav.getByRole("link").first()).toHaveCSS("scroll-margin-block-start", /^-/);
-    const before = await page.evaluate(() => window.scrollY);
-    const shifts: number[] = [];
-    for (let step = 0; step < 5; step += 1) {
-      await page.keyboard.press("Shift+Tab");
-      shifts.push(await page.evaluate(() => window.scrollY));
-    }
-    expect(shifts, "Shift+Tab").toEqual(Array<number>(5).fill(before));
-    // The focused chip is whole in the row, and the row (not the page) followed it.
-    const focused = page.locator(":focus");
-    await expect(focused).toHaveText(/Über mich/);
-    const box = await focused.boundingBox();
-    expect(box && box.x >= 0 && box.x + box.width <= 390 && box.y >= 56).toBe(true);
-    // Tab along the stuck row: still no jump.
-    const tabs: number[] = [];
-    for (let step = 0; step < 2; step += 1) {
-      await page.keyboard.press("Tab");
-      tabs.push(await page.evaluate(() => window.scrollY));
-    }
-    expect(tabs, "Tab").toEqual([before, before]);
-    // Enter on a chip still lands its heading below the bar and the index.
-    await page.keyboard.press("Enter");
-    const [title, navBox] = [await page.getByRole("heading", { level: 2, name: "Werdegang" }).boundingBox(), await nav.boundingBox()];
-    expect(title && navBox && title.y >= navBox.y + navBox.height).toBe(true);
-    await page.context().close();
-  });
-
-  test("phones: the index sticks flush under the compact bar and marks the section being read", async ({ browser }) => {
-    const page = await phone(browser, { reducedMotion: "reduce" });
-    await page.goto(SEVAG);
-    await page.waitForLoadState("networkidle");
-    const nav = page.getByRole("navigation", { name: "Abschnitte" });
+    // The index of wider screens has no place on a phone: the bar carries the contents.
+    await expect(page.getByRole("navigation", { name: "Abschnitte" })).toBeHidden();
     await page.getByRole("heading", { level: 2, name: "Werdegang" }).scrollIntoViewIfNeeded();
     await page.evaluate(() => window.scrollBy(0, 200));
     const bar = page.locator(".poster-bar");
+    const title = bar.getByRole("button", { name: /Inhalt öffnen/ });
+    await expect(title).toContainText("Werdegang");
+    await expect(title).toContainText("Sevag Ghazarian");
     await expect(async () => {
-      const [barBox, navBox] = [await bar.boundingBox(), await nav.boundingBox()];
-      // Flush: the index starts where the bar ends, at the screen's top, compact (one row of 44 px chips).
-      expect(barBox && navBox && Math.abs(navBox.y - (barBox.y + barBox.height)) <= 1 && barBox.y === 0 && navBox.height <= 56).toBe(true);
+      const box = await bar.boundingBox();
+      // Flush at the top and the only chrome there: one bar of 56 px.
+      expect(box?.y === 0 && Math.round(box.height) === 56).toBe(true);
     }).toPass();
-    // A solid ground: nothing shows through between or behind the chips, nor through the bar above them.
-    expect(await nav.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toMatch(/rgba\(.*, 0\)|transparent/);
-    expect(await bar.evaluate((element) => [getComputedStyle(element).backdropFilter, getComputedStyle(element).backgroundColor])).toEqual([
-      "none",
-      await nav.evaluate((element) => getComputedStyle(element).backgroundColor),
-    ]);
-    const current = nav.locator("[aria-current='true']");
-    await expect(current).toHaveCount(1);
-    await expect(current).toContainText("Werdegang");
-    // The marked chip is whole in the row; the row fades only on the sides where more chips lie.
-    await expect(async () => {
-      const box = await current.boundingBox();
-      expect(box && box.x >= 0 && box.x + box.width <= 390).toBe(true);
-    }).toPass();
-    const row = nav.getByRole("list");
-    expect(await row.evaluate((list) => [list.hasAttribute("data-fade-start"), list.hasAttribute("data-fade-end")])).toEqual([true, true]);
-    // Chips are 44 px targets.
-    for (const link of await nav.getByRole("link").all()) expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
-    // A section jumped to from the index stops below the bar and the index (WCAG 2.4.11).
-    await nav.getByRole("link", { name: "Was ich mitbringe" }).click();
-    await expect(nav.getByRole("link", { name: "Was ich mitbringe" })).toHaveAttribute("aria-current", "true");
-    const [title, navBox] = [await page.getByRole("heading", { level: 2, name: "Was ich mitbringe" }).boundingBox(), await nav.boundingBox()];
-    expect(title && navBox && title.y >= navBox.y + navBox.height).toBe(true);
-    // At the end of the page the last section is marked.
+    // Solid: nothing shows through it.
+    expect(await bar.evaluate((element) => [getComputedStyle(element).backdropFilter, getComputedStyle(element).backgroundColor])).toEqual(["none", expect.not.stringMatching(/rgba?\(.*,\s*0(\.\d+)?\)$/)]);
+    // The title is a 44 px target that says it opens a dialog.
+    expect((await title.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    await expect(title).toHaveAttribute("aria-haspopup", "dialog");
+    // No letters anywhere on the page: the sections are titled by their words.
+    for (const heading of await page.getByRole("heading", { level: 2 }).all()) await expect(heading).not.toHaveText(/^[A-E]\s*$/);
+    // At the end of the page the last section is named.
     await page.keyboard.press("End");
-    await expect(nav.getByRole("link", { name: "Anschreiben" })).toHaveAttribute("aria-current", "true");
+    await expect(title).toContainText("Anschreiben");
     await page.context().close();
   });
 
-  test("phones: skills have an icon each, no numbers, no automatic hyphenation, and a compact bento", async ({ browser }) => {
+  test("phones: the contents open as a sheet; a section chosen there lands below the bar; Escape and the close button close it", async ({ browser }) => {
+    const page = await phone(browser, { reducedMotion: "reduce" });
+    await page.goto(SEVAG);
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("heading", { level: 2, name: "Über mich" }).scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollBy(0, 300));
+    const title = page.locator(".poster-bar").getByRole("button", { name: /Inhalt öffnen/ });
+    await expect(title).toContainText("Über mich");
+    // By keyboard: focusing the bar's title never moves the page (it sits in the band kept clear for the bar).
+    const before = await page.evaluate(() => window.scrollY);
+    await title.focus();
+    expect(await page.evaluate(() => window.scrollY)).toBe(before);
+    // Enter opens it, focus moves in and stays in, Escape closes it and focus comes back.
+    await page.keyboard.press("Enter");
+    const sheet = page.getByRole("dialog", { name: "Inhalt" });
+    await expect(sheet).toBeVisible();
+    const links = sheet.getByRole("link");
+    await expect(links).toHaveText(["Über mich", "Was ich mitbringe", "Werdegang", "Neu für mich: das Tönen", "Anschreiben"]);
+    await expect(sheet.locator("[aria-current='true']")).toHaveCount(1);
+    // Tab never reaches the page behind the sheet (it is inert): focus stays in the sheet, or passes to
+    // the browser's own controls after the last row, as a native modal dialog allows.
+    const inSheetOrBrowser = () => sheet.evaluate((dialog) => dialog.contains(document.activeElement) || document.activeElement === document.body);
+    for (let step = 0; step < 8; step += 1) {
+      await page.keyboard.press("Tab");
+      expect(await inSheetOrBrowser()).toBe(true);
+    }
+    for (let step = 0; step < 3; step += 1) {
+      await page.keyboard.press("Shift+Tab");
+      expect(await inSheetOrBrowser()).toBe(true);
+    }
+    // The page holds still under the sheet.
+    const held = await page.evaluate(() => window.scrollY);
+    await page.mouse.wheel(0, 600);
+    expect(await page.evaluate(() => window.scrollY)).toBe(held);
+    expect(await axe(page)).toEqual([]);
+    await page.keyboard.press("Escape");
+    await expect(sheet).toBeHidden();
+    await expect(title).toBeFocused();
+    // A sheet from the bottom edge, as wide as the screen; every row a 56 px target.
+    await title.click();
+    const box = await sheet.boundingBox();
+    expect(box && Math.round(box.x) === 0 && Math.round(box.width) === 390 && Math.round(box.y + box.height) === 844).toBe(true);
+    for (const link of await links.all()) expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(56);
+    // The close button closes it too.
+    await sheet.getByRole("button", { name: "Schließen" }).click();
+    await expect(sheet).toBeHidden();
+    // Choosing a section: the sheet closes, the address follows, and the heading stops below the bar.
+    await title.click();
+    await sheet.getByRole("link", { name: "Werdegang" }).click();
+    await expect(sheet).toBeHidden();
+    await expect(page).toHaveURL(/#section-path$/);
+    const [heading, bar] = [await page.getByRole("heading", { level: 2, name: "Werdegang" }).boundingBox(), await page.locator(".poster-bar").boundingBox()];
+    expect(heading && bar && heading.y >= bar.y + bar.height).toBe(true);
+    await expect(title).toContainText("Werdegang");
+    await page.context().close();
+  });
+
+  test("phones: skills are a grouped list: an icon and the whole label in each row, no hyphenation, nothing broken", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const skills = page.getByRole("region", { name: "Was ich mitbringe" });
-    const tiles = skills.getByRole("listitem");
-    await expect(tiles).toHaveCount(12);
-    for (const tile of await tiles.all()) await expect(tile.locator("svg.lucide")).toHaveCount(1);
+    const rows = skills.getByRole("listitem");
+    await expect(rows).toHaveCount(12);
+    for (const row of await rows.all()) await expect(row.locator("svg.lucide")).toHaveCount(1);
     await expect(skills).not.toContainText(/\b0\d\b/);
     expect(await skills.locator("li span[dir]").first().evaluate((label) => getComputedStyle(label).hyphens)).toBe("manual");
-    // Flat tiles: the icon beside its label. The lead runs across; tiles sharing a row are as tall as each other.
-    const boxes = (await Promise.all((await tiles.all()).map((tile) => tile.boundingBox()))).filter((box) => box !== null);
-    expect(boxes[0]?.width).toBeGreaterThan(300);
-    const rows = new Map<number, number[]>();
-    for (const box of boxes) rows.set(Math.round(box.y), [...(rows.get(Math.round(box.y)) ?? []), box.height]);
-    expect(rows.size).toBe(8);
-    for (const heights of rows.values()) expect(new Set(heights).size).toBe(1);
-    for (const tile of await tiles.all()) {
-      const [icon, label] = [await tile.locator("svg").boundingBox(), await tile.locator("span[dir]").boundingBox()];
+    // One skill a row, each row the list's full width, the icon beside its label.
+    const list = await skills.getByRole("list").boundingBox();
+    for (const row of await rows.all()) {
+      const [box, icon, label] = [await row.boundingBox(), await row.locator("svg").boundingBox(), await row.locator("span[dir]").boundingBox()];
+      expect(box && list && Math.abs(box.width - list.width) <= 2).toBe(true);
       expect(icon && label && label.x > icon.x + icon.width && label.y < icon.y + icon.height).toBe(true);
     }
-    // Twelve skills in about 520 px (round 1: 678 px for the grid, 783 px for the section), measured, not hoped.
-    const grid = await skills.getByRole("list").boundingBox();
-    expect(grid?.height).toBeLessThan(540);
-    expect((await skills.boundingBox())?.height).toBeLessThan(640);
-    // Every label fits its tile in at most two lines (long compounds break at their joints only).
+    // Every label whole on one line at 390 px: no word broken, nothing cut.
     for (const label of await skills.locator("li span[dir]").all()) {
-      const [lines, overflows] = await label.evaluate((element) => {
+      const [lines, overflows, text] = await label.evaluate((element) => {
         const range = document.createRange();
         range.selectNodeContents(element);
-        return [new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size, element.scrollWidth > element.clientWidth] as const;
+        return [new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size, element.scrollWidth > element.clientWidth, element.textContent] as const;
       });
-      expect(lines).toBeLessThanOrEqual(2);
-      expect(overflows).toBe(false);
+      expect(lines, text).toBe(1);
+      expect(overflows, text).toBe(false);
+      expect(text).not.toContain("\u00AD");
+    }
+    // Twelve skills in under 600 px.
+    expect(list?.height).toBeLessThan(600);
+    // The facts are a grouped list as well, every value whole on its row.
+    const facts = page.getByRole("region", { name: "Über mich" }).locator("dl");
+    for (const value of await facts.locator("dd").all()) {
+      const lines = await value.evaluate((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+      });
+      expect(lines, await value.textContent() ?? "").toBe(1);
     }
     await page.context().close();
   });
@@ -356,14 +374,14 @@ test.describe("Laufbahn", () => {
     await expect(page).toHaveURL(/#section-letter-title$/);
     await expect(letter.locator("summary")).toBeHidden();
     await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeVisible();
-    // The heading stops below the bar and the index.
-    const [title, nav] = [await page.getByRole("heading", { level: 2, name: "Anschreiben" }).boundingBox(), await page.getByRole("navigation", { name: "Abschnitte" }).boundingBox()];
-    expect(title && nav && title.y >= nav.y + nav.height).toBe(true);
+    // The heading stops below the bar.
+    const [title, bar] = [await page.getByRole("heading", { level: 2, name: "Anschreiben" }).boundingBox(), await page.locator(".poster-bar").boundingBox()];
+    expect(title && bar && title.y >= bar.y + bar.height).toBe(true);
     await page.context().close();
   });
 
   test("without JavaScript the index is plain links and claims no section as the current one", async ({ browser }) => {
-    const context = await browser.newContext({ ...PHONE, javaScriptEnabled: false });
+    const context = await browser.newContext({ viewport: { width: 820, height: 1180 }, javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto(SEVAG);
     const nav = page.getByRole("navigation", { name: "Abschnitte" });
@@ -375,18 +393,26 @@ test.describe("Laufbahn", () => {
     await context.close();
   });
 
-  test("short screens: the index stands in the flow, like every sticky bar there", async ({ browser }) => {
-    const context = await browser.newContext({ viewport: { width: 390, height: 420 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  test("short screens (a phone held sideways): the contents sheet fits the screen and every section in it is reachable", async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
     await context.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
     const page = await context.newPage();
     await page.goto(SEVAG);
-    const nav = page.getByRole("navigation", { name: "Abschnitte" });
-    expect(await nav.evaluate((element) => getComputedStyle(element).position)).toBe("static");
-    expect(await nav.getByRole("link").first().evaluate((link) => getComputedStyle(link).scrollMarginBlockStart)).toBe("0px");
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("heading", { level: 2, name: "Werdegang" }).scrollIntoViewIfNeeded();
+    await page.locator(".poster-bar").getByRole("button", { name: /Inhalt öffnen/ }).click();
+    const sheet = page.getByRole("dialog", { name: "Inhalt" });
+    await expect(sheet).toBeVisible();
+    expect((await sheet.boundingBox())?.height).toBeLessThanOrEqual(390);
+    const last = sheet.getByRole("link", { name: "Anschreiben" });
+    await last.scrollIntoViewIfNeeded();
+    await expect(last).toBeInViewport({ ratio: 1 });
+    await last.click();
+    await expect(page).toHaveURL(/#section-letter-title$/);
     await context.close();
   });
 
-  test("phones: the picture runs edge to edge, the index is a row of chips under the hero, and his own page has no Linkyo bar", async ({ browser }) => {
+  test("phones: the picture runs edge to edge, nothing runs off the side, and his own page has no Linkyo bar", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const plate = await page.locator("[data-hero-plate]").boundingBox();
@@ -396,28 +422,10 @@ test.describe("Laufbahn", () => {
     expect(plate && plate.height > 844 * 0.6 && plate.height < 844 * 0.8).toBe(true);
     const name = await page.getByRole("heading", { level: 1 }).boundingBox();
     expect(name && plate && name.y + name.height <= plate.y + plate.height).toBe(true);
-    // The chips scroll sideways, the page itself never does.
-    const chips = page.getByRole("navigation", { name: "Abschnitte" }).getByRole("list");
-    expect(await chips.evaluate((list) => list.scrollWidth > list.clientWidth)).toBe(true);
+    // The page never scrolls sideways.
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
-    // Tab along the chips: each one scrolls fully into the row, label and focus ring whole (once the
-    // row's small script is running).
-    await page.waitForLoadState("networkidle");
-    const links = page.getByRole("navigation", { name: "Abschnitte" }).getByRole("link");
-    await links.first().focus();
-    for (let index = 1; index < 5; index += 1) {
-      await page.keyboard.press("Tab");
-      await expect(links.nth(index)).toBeFocused();
-      await expect(async () => {
-        const box = await links.nth(index).boundingBox();
-        expect(box && box.x >= 0 && box.x + box.width <= 390).toBe(true);
-      }).toPass();
-    }
-    const link = links.last();
-    await expect(link).toBeInViewport({ ratio: 1 });
-    await page.keyboard.press("Enter");
-    await expect(page.getByRole("heading", { level: 2, name: "Anschreiben" })).toBeInViewport();
     // Sevag's page is shown as his own (bare): no Linkyo bar comes in.
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("[data-shown]")).toHaveCount(0);
     expect(await axe(page)).toEqual([]);
     await page.context().close();
@@ -541,7 +549,7 @@ test.describe("Laufbahn", () => {
     }
   });
 
-  test("Arabic pages are mirrored: the name, the index, the signposts and the timeline start on the right", async ({ browser }) => {
+  test("Arabic pages are mirrored: the name, the contents, the skills and the timeline start on the right", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SAMPLE("ar"));
     await expect(page.locator("[lang='ar']").first()).toHaveAttribute("dir", "rtl");
@@ -549,10 +557,15 @@ test.describe("Laufbahn", () => {
     // The name's lines end at the right gutter.
     const right = await page.getByRole("heading", { level: 1 }).evaluate((h1) => Math.max(...[...h1.querySelectorAll("bdi")].map((bdi) => bdi.getBoundingClientRect().right)));
     expect(name && right > 390 - 40).toBe(true);
-    const links = page.getByRole("navigation", { name: "الأقسام" }).getByRole("link");
-    const [first, second] = [await links.nth(0).boundingBox(), await links.nth(1).boundingBox()];
-    expect(first && second && first.x > second.x).toBe(true);
-    await expect(links.first()).toContainText("أ");
+    // The contents sheet reads from the right, in Arabic.
+    await page.waitForLoadState("networkidle");
+    await page.locator(".lb-step").first().scrollIntoViewIfNeeded();
+    await page.locator(".poster-bar").getByRole("button", { name: /فتح المحتويات/ }).click();
+    const sheet = page.getByRole("dialog", { name: "المحتويات" });
+    await expect(sheet).toBeVisible();
+    const [sheetBox, rowText] = [await sheet.boundingBox(), await sheet.getByRole("link").first().locator("span[dir]").boundingBox()];
+    expect(sheetBox && rowText && rowText.x + rowText.width > sheetBox.x + sheetBox.width * 0.6).toBe(true);
+    await page.keyboard.press("Escape");
     // Skills carry their icons at the right, the label to their left.
     const tile = page.getByRole("region", { name: "المهارات والأدوات" }).getByRole("listitem").first();
     const [tileBox, iconBox] = [await tile.boundingBox(), await tile.locator("svg").boundingBox()];

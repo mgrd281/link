@@ -38,20 +38,11 @@ import { describe, expect, it } from "vitest";
 import { sevagDe } from "@/features/previews/sevag";
 
 import {
-  BESIDE_ICON_EMS,
-  factSpans,
-  fitsBeside,
   iconFor,
   isLetter,
   LEAD_MAX,
-  linesIn,
-  longestPieceEms,
   opensShort,
-  packSpans,
-  pairUp,
   readingMinutes,
-  skillLayout,
-  softJoints,
   splitLead,
   textKind,
   wordsOf,
@@ -284,115 +275,6 @@ describe("the skills' icon map", () => {
     expect(wordsOf(`SAP: Bestände & Buchungen`)).toEqual(["sap", "bestände", "buchungen"]);
     expect(wordsOf(`Flurförder${SOFT}zeug${SOFT}schein`)).toEqual(["flurförderzeugschein"]);
     expect(wordsOf("الرَّافِعَة")).toEqual(["الرافعه"]);
-  });
-});
-
-describe("the joints of German compounds", () => {
-  it("lets a long compound break only where its parts meet, and nowhere else", () => {
-    expect(softJoints("Flurförderzeugschein", "de")).toBe(`Flurförder${SOFT}zeug${SOFT}schein`);
-    expect(softJoints("Seitenschubstapler", "de")).toBe(`Seitenschub${SOFT}stapler`);
-    expect(softJoints("Versanddokumente", "de")).toBe(`Versand${SOFT}dokumente`);
-    expect(softJoints("Ladungssicherung", "de")).toBe(`Ladungs${SOFT}sicherung`);
-    expect(softJoints("Warenausgabe", "de")).toBe(`Waren${SOFT}ausgabe`);
-    expect(softJoints("keine Farbenfehlsichtigkeit", "de")).toBe(`keine Farben${SOFT}fehlsichtigkeit`);
-    // "-ierung" breaks before its consonant, as German syllables do.
-    expect(softJoints("Kommissionierung", "de")).toBe(`Kommissio${SOFT}nierung`);
-  });
-
-  it("leaves short words, other languages and words without a known joint alone", () => {
-    expect(softJoints("Gefahrgut", "de")).toBe("Gefahrgut");
-    expect(softJoints("Barrierefreiheit", "de")).toBe("Barrierefreiheit");
-    expect(softJoints("Seitenschubstapler", "en")).toBe("Seitenschubstapler");
-    expect(softJoints("Be- und Entladen von Lkw", "de")).toBe("Be- und Entladen von Lkw");
-    // No stub on either side of a joint.
-    expect(softJoints("Gabelstapler", "de")).toBe(`Gabel${SOFT}stapler`);
-    expect(softJoints("Staplerschein", "de")).toBe(`Stapler${SOFT}schein`);
-  });
-});
-
-describe("tiles", () => {
-  it("never leaves a hole and never changes the order", () => {
-    expect(packSpans([2, 1, 1, 1], 2)).toEqual([2, 1, 1, 2]);
-    expect(packSpans([1, 2, 1, 1], 2)).toEqual([2, 2, 1, 1]);
-    expect(packSpans([2, 1, 1, 1, 1], 3)).toEqual([2, 1, 1, 1, 1]);
-    expect(packSpans([2, 1, 1, 1], 3)).toEqual([2, 1, 1, 2]);
-    expect(packSpans([1], 2)).toEqual([2]);
-    expect(packSpans([], 2)).toEqual([]);
-    for (const columns of [2, 3]) {
-      for (const wants of [[1, 1, 1], [2, 2, 1], [1, 3, 1, 1], [2, 1, 1, 1, 1, 1, 1]]) {
-        const spans = packSpans(wants, columns);
-        expect(spans.reduce((sum, span) => sum + span, 0) % columns, `${String(wants)} in ${String(columns)}`).toBe(0);
-      }
-    }
-  });
-
-  it("closes a last row of one in three columns as one and two, then two and one", () => {
-    expect(packSpans([2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 3)).toEqual([2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1]);
-    expect(packSpans([1, 1, 1, 1], 3)).toEqual([1, 2, 2, 1]);
-    // Not when the row before is not three single tiles.
-    expect(packSpans([2, 1, 1], 3)).toEqual([2, 1, 3]);
-  });
-
-  it("pairs half tiles past at most two whole-row tiles, keeps the first in place and closes the last row", () => {
-    expect(pairUp([2, 1, 2, 1, 1])).toEqual({ order: [0, 1, 3, 2, 4], spans: [2, 1, 1, 2, 2] });
-    expect(pairUp([1, 1, 1])).toEqual({ order: [0, 1, 2], spans: [1, 1, 2] });
-    // Three whole-row tiles in between: the waiting tile takes its row, nothing moves.
-    expect(pairUp([1, 2, 2, 2, 1])).toEqual({ order: [0, 1, 2, 3, 4], spans: [2, 2, 2, 2, 2] });
-    expect(pairUp([])).toEqual({ order: [], spans: [] });
-    for (const wants of [[2, 1, 2, 2, 1, 1, 2, 1], [1, 2, 1, 2, 1, 2, 1], [1, 1, 2, 1]]) {
-      const { order, spans } = pairUp(wants);
-      expect([...order].sort((x, y) => x - y)).toEqual(wants.map((_, index) => index));
-      expect(spans.reduce((sum, span) => sum + span, 0) % 2).toBe(0);
-      // No tile moves more than two places.
-      order.forEach((index, place) => expect(Math.abs(index - place)).toBeLessThanOrEqual(2));
-    }
-  });
-
-  it("lays out Sevag's twelve skills in eight rows on phones: the lead, four pairs, three across", () => {
-    const items = sevagDe.blocks.find((block) => block.type === "tools")?.items ?? [];
-    const layout = skillLayout(items.map((item) => softJoints(item, "de")));
-    const rows = layout.order.map((index, place) => `${items[index] ?? ""}${layout.phone[place] === 2 ? " ↔" : ""}`);
-    expect(rows).toEqual([
-      "Seitenschubstapler ↔",
-      "Flurförderzeugschein",
-      "Scannen von Waren",
-      "Kommissionierung ↔",
-      "Be- und Entladen von Lkw ↔",
-      "Ein- und Auslagern",
-      "Inventur",
-      "SAP: Bestände & Buchungen ↔",
-      "Versanddokumente",
-      "Ladungssicherung",
-      "Gefahrgut",
-      "Warenausgabe",
-    ]);
-    // Tablets and up: the lead beside one, rows of three, the end as one and two, then two and one.
-    expect(layout.wide).toEqual([2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1]);
-    // Four skills: no lead, two pairs.
-    expect(skillLayout(["SAP", "Excel", "Teamwork", "Forklift"]).phone).toEqual([1, 1, 1, 1]);
-  });
-
-  it("lets a label share a row only when it fits beside its icon in two lines, never breaking a word on a 360 px phone", () => {
-    expect(BESIDE_ICON_EMS.narrow).toBeCloseTo(5.625);
-    expect(BESIDE_ICON_EMS.phone).toBeCloseTo(6.5625);
-    expect(linesIn(`Flurförder${SOFT}zeug${SOFT}schein`, BESIDE_ICON_EMS.phone)).toBe(2);
-    expect(linesIn("Be- und Entladen von Lkw", BESIDE_ICON_EMS.phone)).toBe(3);
-    expect(linesIn("Inventur", BESIDE_ICON_EMS.phone)).toBe(1);
-    expect(fitsBeside(`Versand${SOFT}dokumente`)).toBe(true);
-    // "Kommissio-" is wider than the room beside the icon on a 360 px phone.
-    expect(fitsBeside(`Kommissio${SOFT}nierung`)).toBe(false);
-    expect(fitsBeside("SAP: Bestände & Buchungen")).toBe(false);
-    expect(longestPieceEms("Donaudampfschifffahrtsgesellschaft")).toBeGreaterThan(BESIDE_ICON_EMS.narrow);
-    // Only a piece that ends at a soft hyphen counts the hyphen.
-    expect(longestPieceEms(`Waren${SOFT}ausgabe`)).toBeCloseTo(Math.max(longestPieceEms("Waren") + 0.35, longestPieceEms("ausgabe")));
-    expect(skillLayout(["Forklift", "Donaudampfschifffahrtsgesellschaft", "SAP", "Team"]).phone).toEqual([1, 1, 2, 2]);
-  });
-
-  it("sets Sevag's four facts as a two-by-two sheet", () => {
-    const facts = sevagDe.blocks.find((block) => block.type === "about")?.facts ?? [];
-    expect(factSpans(facts.map((fact) => softJoints(fact.value, "de")))).toEqual([1, 1, 1, 1]);
-    // Three facts: the third across.
-    expect(factSpans(["Berlin", "Deutsch, Englisch", "Kultur"])).toEqual([1, 1, 2]);
   });
 });
 

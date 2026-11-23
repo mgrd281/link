@@ -1,11 +1,13 @@
 import { colorSchemeOf, resolveCreatorTheme } from "@linkyo/tokens/creator";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { previewChrome, sampleLabel } from "@/features/previews/preview-chrome";
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
+import { nextInRotation } from "@/features/previews/rotation";
 
 /** The page's language as Open Graph names it (language_TERRITORY). */
 const OG_LOCALES: Record<string, string> = { de: "de_DE", en: "en_US", ar: "ar_AR" };
@@ -73,11 +75,16 @@ export default async function PreviewRoute({ params }: Props) {
   const theme = resolveCreatorTheme(found.preview.theme, { rtlScript: locale === "ar" });
   // Linkyo's label (with the photographers' credit on a portfolio) and dock: features/previews/preview-chrome.tsx.
   const chrome = await previewChrome({ preview: found.preview, page: found.page, slug, locale, theme });
+  // A page that takes turns with clips (Sevag's) is rendered for every visit, so a refresh brings the
+  // next clip; every other preview stays a cached page.
+  const rotation = found.preview.motionRotation;
+  if (rotation?.length) await connection();
+  const page = rotation?.length ? nextInRotation(found.page, rotation) : found.page;
   return (
     <>
       <style>{`html,body{background-color:${theme.palette.bg}}`}</style>
       {chrome.above}
-      <PosterRenderer page={found.page} theme={theme} overlay={chrome.overlay} dock={chrome.dock} projectBase={`/${locale}/p/${slug}`} />
+      <PosterRenderer page={page} theme={theme} overlay={chrome.overlay} dock={chrome.dock} projectBase={`/${locale}/p/${slug}`} />
     </>
   );
 }

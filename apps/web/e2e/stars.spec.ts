@@ -73,9 +73,13 @@ test("a page prepared from a person's own application letter reads as his own pa
   const [nameBox, roleBox] = [await name.boundingBox(), await role.boundingBox()];
   expect(nameBox && roleBox && roleBox.y >= nameBox.y + nameBox.height - 1).toBe(true);
   expect(await name.evaluate((h1) => Math.round(h1.getBoundingClientRect().height / parseFloat(getComputedStyle(h1).lineHeight)))).toBe(1);
-  // The motion graphic comes from our own origin and stays still for reduced motion.
+  // The motion graphic comes from our own origin (one of his four library clips, a different one on
+  // every visit), its own first frame is the still, and it stays still for reduced motion.
   const clip = page.locator("video").first();
-  await expect(clip).toHaveAttribute("src", "/media/motion/palette-packen.mp4");
+  const src = (await clip.getAttribute("src")) ?? "";
+  expect(src).toMatch(/^\/media\/motion\/(palette-packen|barcode-scannen|lagerarbeit|ware-scannen)\.mp4$/);
+  const key = /motion\/([a-z-]+)\.mp4/.exec(src)?.[1] ?? "";
+  await expect(page.locator("[data-hero-plate] img").first()).toHaveAttribute("src", new RegExp(`ex-motion-${key}`));
   expect(await clip.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
   // The letter keeps its paragraphs: seven of them, the signature with its line break. On phones the
   // last five wait behind "Ganzes Anschreiben lesen".
@@ -88,4 +92,19 @@ test("a page prepared from a person's own application letter reads as his own pa
   await expect(paragraphs.last()).toHaveText("Mit freundlichen Grüßen\nSevag Ghazarian", { useInnerText: true });
   const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+});
+
+test("his page opens with the next of his clips on every refresh, each with its own still", async ({ request }) => {
+  const seen: string[] = [];
+  for (let visit = 0; visit < 6; visit += 1) {
+    const html = await (await request.get("/de/p/sevag-ghazarian-2131af")).text();
+    const key = /\/media\/motion\/([a-z-]+)\.mp4/.exec(html)?.[1] ?? "";
+    expect(["palette-packen", "barcode-scannen", "lagerarbeit", "ware-scannen"]).toContain(key);
+    // The still is that clip's own first frame, never another one's.
+    expect(html).toContain(`ex-motion-${key}`);
+    for (const other of ["palette-packen", "barcode-scannen", "lagerarbeit", "ware-scannen"].filter((name) => name !== key)) expect(html).not.toContain(`ex-motion-${other}`);
+    seen.push(key);
+  }
+  // Rendered per visit: more than one clip over six visits (other tests may visit in between).
+  expect(new Set(seen).size).toBeGreaterThan(1);
 });

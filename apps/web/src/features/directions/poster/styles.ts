@@ -20,9 +20,6 @@ export const displayStyle: CSSProperties = {
   textTransform: "var(--creator-display-transform)",
 };
 
-/** A signpost's letter (Laufbahn): the display face at its pairing's weight, no tracking or case change (it is one letter). */
-export const signStyle: CSSProperties = { fontWeight: "var(--creator-display-weight)" };
-
 /** Media cards follow the creator's button style. "Filled" stays soft so the artwork remains the loudest thing. */
 export const cardSurface: Record<CreatorButtonStyle, string> = {
   filled: "bg-creator-surface-2",

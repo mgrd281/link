@@ -10,6 +10,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from "../shared/creator-kit";
 import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
+import { SectionSwitcher, type IndexEntry } from "./laufbahn-index";
 import { HeroLive } from "./live";
 import { plateFrame, plateRatio } from "./projects";
 import { ShareButton } from "./share";
@@ -523,24 +524,40 @@ export function PosterHero({
  * Compact bar that slides in once the hero has scrolled away: avatar, name, share; on a page with a
  * contact block also its primary action, as a small filled button before the share button.
  * Driven by the hero's view timeline; browsers without scroll-driven animations never show it.
- * `solid`: on the page's own ground instead of glass, where a solid bar sits right above it (Laufbahn's
- * section index), so nothing shows through the top of the screen.
+ * `solid`: on the page's own ground instead of glass (Laufbahn), with a thin line along its foot that
+ * fills with the accent as the page is read; there, where scroll-driven animations are missing, it
+ * stands at the top from the start (lb-bar). `sections`: a page with contents (Laufbahn) makes the
+ * name a title that names the section being read and opens the contents as a sheet.
  */
-export function PosterBar({ profile, primary, solid = false }: { profile: Profile; primary?: Primary | null | undefined; solid?: boolean }) {
+export function PosterBar({
+  profile,
+  primary,
+  solid = false,
+  sections,
+}: {
+  profile: Profile;
+  primary?: Primary | null | undefined;
+  solid?: boolean;
+  sections?: readonly IndexEntry[] | undefined;
+}) {
   return (
     <div className="pointer-events-none sticky top-0 layer-sticky h-0">
       <div
         className={cn(
-          "poster-bar pointer-events-auto flex h-control-xl items-center gap-3 border-b border-creator-line ps-creator-gutter pe-2",
-          solid ? "bg-creator-bg" : "bg-creator-glass backdrop-blur-glass",
+          "poster-bar pointer-events-auto relative flex h-control-xl items-center gap-3 border-b border-creator-line ps-creator-gutter pe-2",
+          solid ? "lb-bar bg-creator-bg" : "bg-creator-glass backdrop-blur-glass",
         )}
       >
         <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-small">
           {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
         </span>
-        <p dir="auto" className={cn(pageSide, "min-w-0 flex-1 truncate text-body font-semibold")} {...aiText(profile, "displayName")}>
-          {profile.displayName}
-        </p>
+        {sections && sections.length > 1 ? (
+          <SectionSwitcher entries={sections} name={profile.displayName} ai={aiText(profile, "displayName")} />
+        ) : (
+          <p dir="auto" className={cn(pageSide, "min-w-0 flex-1 truncate text-body font-semibold")} {...aiText(profile, "displayName")}>
+            {profile.displayName}
+          </p>
+        )}
         {primary ? (
           // The label may be cut short here; the link's name is still the whole label.
           <a
@@ -554,6 +571,8 @@ export function PosterBar({ profile, primary, solid = false }: { profile: Profil
           </a>
         ) : null}
         <ShareButton title={profile.displayName} />
+        {/* How far the page has been read: a line along the bar's foot that fills with the accent. Decorative. */}
+        {solid ? <span aria-hidden className="lb-progress absolute inset-x-0 -bottom-px h-0.5 bg-creator-accent" /> : null}
       </div>
     </div>
   );

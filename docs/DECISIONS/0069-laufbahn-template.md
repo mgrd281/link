@@ -13,7 +13,7 @@ baseline review stays byte-equal).
 | Key | Value | What it does |
 |---|---|---|
 | `hero` | `bleed` | Phones and tablets: the picture from edge to edge, about three quarters of the small viewport tall (`clamp(24rem, 72svh, 160cqi)`, so a phone preview in the dashboard keeps a phone's proportions), a veil of ink at the secondary opacity tied to the words (not to the picture's height, so they keep AA on a landscape phone or at 200 % zoom), the role line as a quiet dark-glass chip with the portrait or the initials, the name in white set as large as its longest word allows and never taller than 12svh. When the picture is the portrait itself, it rides high in a square on phones and fades into an ink ground, so the words stand below the face. Below it on the page: the sentence, the numbers in a row between hairlines (tabular figures), then two buttons (see "Round 2"): the page's first action, filled, and "Teilen", outlined. Without any picture an accent field carries the initials. The wide canvas: one twelve-column composition, the words on the first five columns (a two-word name on two lines), the picture as a tall rounded plate on the last six. |
-| `headings` | `signpost` | Every titled section is announced by a square signpost with a bold letter in the display face, like the signs over a warehouse's aisles (A, B, C …; Arabic pages in the abjad order أ ب ج د ه و ز ح ط ي). The same signposts form the page's section index: a sticky row of chips on phones, chips that wrap in the reading column on tablets, a sticky list in the first three columns on the wide canvas; each marks the section being read (see "Round 2"). Without an index (one titled section or none) the sections take the first eight columns, under the hero's words. |
+| `headings` | `signpost` | Every titled section is announced by a square signpost with a bold letter in the display face, like the signs over a warehouse's aisles (A, B, C …; Arabic pages in the abjad order أ ب ج د ه و ز ح ط ي). The same signposts form the page's section index: a sticky row of chips on phones, chips that wrap in the reading column on tablets, a sticky list in the first three columns on the wide canvas; each marks the section being read (see "Round 2"). Without an index (one titled section or none) the sections take the first eight columns, under the hero's words. Round 3 removed the letters and the phone index (see below). |
 
 The rest of the template is tokens: Inter for both faces (`classic`), a cobalt accent (#1E50C8) on a
 very light cool canvas (#F5F6F7), soft rounded buttons, `motion: "reveal"`, the wide canvas, the
@@ -160,5 +160,54 @@ every Laufbahn page gets it, and every other template renders exactly as before.
   have one, so it stays. The icon map ships in the shared renderer chunk (about 12 KB gzip on pages
   that preview creator pages in the browser); loading the signposted renderers lazily there is left for
   a later change.
+
+## Round 3: an app, not a document (the founder's screen recording)
+
+The founder scrolled Sevag's page on an iPhone and asked for four things: a different clip on every
+refresh, no "A und B" while scrolling, no words broken in the middle of the skills, and a page that
+feels like a real app. Everything is template-level again, and every other template renders as before.
+
+- **No letters.** The letters (A, B, C …; أ ب ج …) are gone from the titles, the index and the picker
+  card: on a phone they read as a code nobody needs. A titled section keeps its hairline and its h2 in
+  the display face. The layout value keeps its name (`headings: "signpost"`), so stored themes stay
+  valid. The template's description in de/en/ar and the AI catalogue follow (`core-v4`: that
+  description, nothing else).
+- **The app bar is the index on phones.** The sticky row of chips is gone. Once the hero has passed,
+  the solid bar's title is the owner's name with the section being read under it and a chevron, as in
+  a native app. Pressed, it opens the contents as a sheet from the bottom edge: a native modal
+  `<dialog>` (focus moves in and stays, Escape, a tap on the veil and a close button close it, focus
+  returns to the title, the page behind is inert and does not scroll). Every section is a row of 56 px,
+  the one being read carries a check. Choosing one closes the sheet and lets the link do its own work,
+  so the address, `:target` (a letter reached this way opens whole), the back button and the glide all
+  keep working. From tablets on the sheet is a centred card. The stuck chrome on phones is now the bar
+  alone, 64 px instead of 108 px (Round 2's "not done"). Tablets keep the chips in the reading column
+  and the wide canvas its sticky list, both as words only. The bar's own controls have a negative
+  scroll margin as deep as the band the document keeps clear for it, so focusing them never scrolls
+  the page.
+- **The bar slides in, opaque.** It used to fade in, so the text under it showed through for a moment
+  (visible in the recording). It now slides down fully opaque (`lb-bar-enter`, translate only), or
+  simply appears for reduced motion. A 2 px reading line in the accent along its foot fills as the
+  page scrolls (`lb-progress`, `scroll(root)`, from the right on Arabic pages; absent for reduced
+  motion and where scroll-driven animations are missing).
+- **Lists, not tiles: every word whole.** Skills are a grouped list, as in a phone's settings: rows of
+  at least 52 px between hairlines in one rounded card, the icon in the accent before the label, one
+  column on phones and two from tablets on. One column gives each label the whole width, so
+  "Flurförderzeugschein", "Versanddokumente" and "Seitenschubstapler" stay whole. The soft hyphens at
+  compound joints, the width estimates and the tile pairing (`softJoints`, `fitsBeside`, `pairUp`,
+  `packSpans`, `factSpans`) went with the tiles that needed them. The facts are the same kind of list,
+  the label small and quiet above its value. `break-words` stays as the last resort for a word wider
+  than the phone.
+- **A different clip on every visit (prepared previews).** A preview may name a rotation of library
+  clips (`motionRotation`). Sevag's takes turns with the four warehouse clips: Palette packen, Barcode
+  scannen, Lagerarbeit and Ware scannen. Only that page renders per request (`connection()`); the
+  other prepared previews stay prerendered. A counter in the server module, starting at a random
+  clip, gives every render the next clip, so on one server instance a refresh never repeats the clip
+  before it (several instances each keep their own count). Each clip brings its own first frame as the
+  still and its own description in the page's language. No cookie, no storage, nothing about the
+  visitor is kept. Everything outside the page itself (its link preview card, the dashboard, a claimed
+  page) keeps the page's own clip, the one its owner picks in the motion picker.
+- **Not done.** The sheet closes by tap, Escape or its button, not by dragging it down: a drag would
+  need a gesture script for little gain. With a native modal dialog, Tab may step from its last row
+  to the browser's own controls (the page behind stays inert).
 
 **Status.** Accepted.

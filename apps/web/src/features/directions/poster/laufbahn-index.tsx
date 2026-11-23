@@ -1,14 +1,15 @@
 "use client";
 
-import { cn } from "@linkyo/ui";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { cn, Icon } from "@linkyo/ui";
+import { Check, ChevronDown, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
-import { pageSide, signStyle } from "./styles";
+import { pageSide } from "./styles";
 
 /** A section as the index lists it. */
 export interface IndexEntry {
   anchor: string;
-  letter: string;
   title: string;
 }
 
@@ -16,21 +17,14 @@ export interface IndexEntry {
 const READING_LINE = 0.35;
 
 /**
- * The section index's list (Laufbahn, ADR 0069). Plain anchor links that work without this script
- * (and then mark nothing: a mark that cannot follow the reader would be wrong wherever they are); with it:
- * - the section being read is marked (`aria-current`), found by an IntersectionObserver on a thin
- *   band at a third of the screen (no scroll handler), the first one at the top of the page and the
- *   last one once the end of the content is on screen;
- * - on phones, where the chips are a row to swipe, the marked chip and a chip reached with Tab are
- *   scrolled fully into the row (the row only, never the page), and the row fades at an edge only while
- *   more chips lie beyond it.
+ * The section being read (its index in `entries`), or null before the observer has looked (the
+ * server's HTML claims no section): found by an IntersectionObserver on a thin band at a third of the
+ * screen (no scroll handler), and the last one once the end of the content (`[data-lb-end]`) is on
+ * screen. Above the first section: the first one (`top: "first"`, an index that always marks where
+ * the reader is headed) or none (the app bar, which names a section only once it is being read).
  */
-export function IndexList({ entries, className }: { entries: readonly IndexEntry[]; className: string }): ReactNode {
-  const list = useRef<HTMLOListElement>(null);
-  // Nothing is marked until the observer has looked: the server's HTML claims no section.
+export function useCurrentSection(entries: readonly IndexEntry[], top: "first" | "none" = "first"): number | null {
   const [current, setCurrent] = useState<number | null>(null);
-
-  // The section being read.
   useEffect(() => {
     const sections = entries.map((entry) => document.getElementById(entry.anchor)).filter((section): section is HTMLElement => section !== null);
     const end = document.querySelector("[data-lb-end]");
@@ -39,83 +33,51 @@ export function IndexList({ entries, className }: { entries: readonly IndexEntry
     const decide = () => {
       const line = window.innerHeight * READING_LINE;
       const passed = sections.findLastIndex((section) => section.getBoundingClientRect().top <= line);
-      setCurrent(atEnd ? sections.length - 1 : Math.max(0, passed));
+      setCurrent(atEnd ? sections.length - 1 : passed >= 0 ? passed : top === "first" ? 0 : null);
     };
     // A band one percent tall at the reading line: it fires whenever a section's edge crosses it.
-    const top = READING_LINE * 100;
-    const band = new IntersectionObserver(decide, { rootMargin: `-${String(top)}% 0% -${String(100 - top - 1)}% 0%` });
+    const at = READING_LINE * 100;
+    const band = new IntersectionObserver(decide, { rootMargin: `-${String(at)}% 0% -${String(100 - at - 1)}% 0%` });
     for (const section of sections) band.observe(section);
     const tail = new IntersectionObserver(([entry]) => {
       atEnd = entry?.isIntersecting === true;
       decide();
     });
     if (end) tail.observe(end);
+    decide();
     return () => {
       band.disconnect();
       tail.disconnect();
     };
-  }, [entries]);
+  }, [entries, top]);
+  return current;
+}
 
-  // Phones: the row keeps the marked chip, and a chip reached with Tab, whole in view; its edges fade
-  // only while chips lie beyond them.
-  useEffect(() => {
-    const row = list.current;
-    if (!row) return;
-    const fades = () => {
-      const room = row.scrollWidth - row.clientWidth;
-      const offset = Math.abs(row.scrollLeft);
-      row.toggleAttribute("data-fade-start", room > 1 && offset > 1);
-      row.toggleAttribute("data-fade-end", room > 1 && offset < room - 1);
-    };
-    const reveal = (event: FocusEvent) => {
-      if (event.target instanceof HTMLElement) bringIntoRow(row, event.target, false);
-    };
-    fades();
-    row.addEventListener("scroll", fades, { passive: true });
-    row.addEventListener("focusin", reveal);
-    const resize = new ResizeObserver(fades);
-    resize.observe(row);
-    return () => {
-      row.removeEventListener("scroll", fades);
-      row.removeEventListener("focusin", reveal);
-      resize.disconnect();
-    };
-  }, []);
-
-  // The marked chip comes into view, unless the visitor is moving along the chips with the keyboard:
-  // then the focused chip stays where they put it.
-  useEffect(() => {
-    const row = list.current;
-    const chip = current === null ? undefined : row?.querySelectorAll("a")[current];
-    if (row && chip && !row.contains(document.activeElement)) bringIntoRow(row, chip, true);
-  }, [current]);
-
+/**
+ * The section index beside the sections (Laufbahn, ADR 0069): words only, chips that wrap in the
+ * reading column on tablets, a sticky list in the first three columns of the wide canvas, the
+ * section being read marked (`aria-current`, a filled row). Plain anchor links that work without
+ * this script (and then mark nothing: a mark that cannot follow the reader would be wrong). Phones
+ * have no row of chips: the app bar's title opens the same list as a sheet (SectionSwitcher).
+ */
+export function IndexList({ entries, className }: { entries: readonly IndexEntry[]; className: string }): ReactNode {
+  const current = useCurrentSection(entries);
   return (
-    <ol ref={list} className={className}>
+    <ol className={className}>
       {entries.map((entry, index) => (
-        <li key={entry.anchor} className="shrink-0 snap-start">
+        <li key={entry.anchor} className="min-w-0">
           <a
             href={`#${entry.anchor}`}
             aria-current={index === current ? "true" : undefined}
             className={cn(
-              "group flex min-h-touch-target items-center gap-3 rounded-sm border border-creator-line bg-creator-surface py-1 ps-1 pe-4 text-small font-semibold text-creator-fg-muted",
+              "flex min-h-touch-target items-center rounded-creator-button border border-creator-line px-4 text-small font-semibold text-creator-fg-muted",
               "transition-colors duration-micro hover:border-creator-line-strong hover:text-creator-fg focus-visible:focus-ring motion-reduce:transition-none",
-              "aria-[current=true]:border-creator-line-strong aria-[current=true]:text-creator-fg",
-              "@work:border-transparent @work:bg-transparent @work:pe-2 @work:hover:border-creator-line @work:aria-[current=true]:border-transparent",
+              "aria-[current=true]:border-creator-fg aria-[current=true]:bg-creator-fg aria-[current=true]:text-creator-bg",
+              "@work:rounded-xs @work:border-transparent @work:px-3 @work:hover:border-creator-line",
+              "@work:aria-[current=true]:border-transparent @work:aria-[current=true]:bg-creator-surface @work:aria-[current=true]:text-creator-fg",
             )}
           >
-            <span
-              aria-hidden
-              className={cn(
-                "grid size-control-sm shrink-0 place-items-center rounded-xs bg-creator-surface-2 font-creator-display text-body leading-none text-creator-fg-muted",
-                "transition-colors duration-micro motion-reduce:transition-none",
-                "group-aria-[current=true]:bg-creator-accent group-aria-[current=true]:text-creator-accent-fg",
-              )}
-              style={signStyle}
-            >
-              {entry.letter}
-            </span>
-            <span dir="auto" className={cn(pageSide, "min-w-0 whitespace-nowrap @work:whitespace-normal")}>
+            <span dir="auto" className={cn(pageSide, "min-w-0 text-pretty")}>
               {entry.title}
             </span>
           </a>
@@ -126,18 +88,99 @@ export function IndexList({ entries, className }: { entries: readonly IndexEntry
 }
 
 /**
- * Scrolls a row of chips (and only the row) so that `chip` stands in it whole: when any of it lies
- * outside the row's padding, the row goes to the chip's own snap position (its start at the row's
- * padding), so the row's snapping keeps it there instead of pulling it back half out. Works the same
- * in a right-to-left row. Nothing happens where the row does not scroll (tablets, the wide canvas).
+ * The app bar's title on a signposted page (Laufbahn), as in a native app: the owner's name and,
+ * once a section is being read, that section under it with a chevron. Pressed, it opens the
+ * contents as a sheet (a native modal dialog: focus moves in and stays, Escape and a tap outside
+ * close it, focus returns to the title): every section a full-width row of 56 px, the one being
+ * read marked with a check. Choosing one closes the sheet and goes to the section's address, so the
+ * page glides there (unless the visitor prefers less motion), the back button returns, and a letter
+ * reached this way opens whole (lb-more).
  */
-function bringIntoRow(row: HTMLElement, chip: HTMLElement, gentle: boolean): void {
-  if (row.scrollWidth <= row.clientWidth) return;
-  const [frame, box, style] = [row.getBoundingClientRect(), chip.getBoundingClientRect(), getComputedStyle(row)];
-  const pad = Number.parseFloat(style.paddingInlineStart) || 0;
-  if (box.left >= frame.left + pad - 1 && box.right <= frame.right - pad + 1) return;
-  const delta = style.direction === "rtl" ? box.right - (frame.right - pad) : box.left - (frame.left + pad);
-  if (Math.abs(delta) < 1) return;
-  const still = !gentle || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  row.scrollBy({ left: delta, behavior: still ? "instant" : "smooth" });
+export function SectionSwitcher({ entries, name, ai }: { entries: readonly IndexEntry[]; name: string; ai?: Record<string, string> | undefined }): ReactNode {
+  const t = useTranslations("creator");
+  const sheet = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const current = useCurrentSection(entries, "none");
+  const section = current === null ? undefined : entries[current];
+
+  const open = () => sheet.current?.showModal();
+  const close = () => sheet.current?.close();
+  // A tap on the backdrop lands on the dialog itself (its content fills the box inside it) and closes
+  // the sheet, as on a phone; the keyboard has Escape (the dialog's own) and the close button.
+  useEffect(() => {
+    const dialog = sheet.current;
+    if (!dialog) return;
+    const outside = (event: globalThis.MouseEvent) => {
+      if (event.target === dialog) dialog.close();
+    };
+    dialog.addEventListener("click", outside);
+    return () => dialog.removeEventListener("click", outside);
+  }, []);
+  // The sheet closes before the link does its own work (the page is no longer inert by then): the
+  // address changes, so :target, the back button and a shared link all follow.
+  const go = () => close();
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={open}
+        aria-haspopup="dialog"
+        className="group flex min-h-touch-target min-w-0 flex-1 items-center gap-1 rounded-xs text-start focus-visible:focus-ring"
+      >
+        <span className="grid min-w-0">
+          <span
+            dir="auto"
+            className={cn(pageSide, "truncate transition-[font-size,color] duration-standard ease-standard motion-reduce:transition-none", section ? "text-caption text-creator-fg-muted" : "text-body font-semibold")}
+            {...ai}
+          >
+            {name}
+          </span>
+          {section ? (
+            <span dir="auto" className={cn(pageSide, "truncate text-body leading-snug font-semibold")}>
+              {section.title}
+            </span>
+          ) : null}
+        </span>
+        <Icon icon={ChevronDown} size="sm" className="shrink-0 text-creator-fg-muted transition-colors duration-micro group-hover:text-creator-fg" />
+        <span className="sr-only">{t("laufbahn.openSections")}</span>
+      </button>
+      <dialog ref={sheet} aria-labelledby={titleId} className="lb-sheet">
+        <div className="grid gap-2 px-creator-gutter pt-3 pb-[max(var(--spacing-6),env(safe-area-inset-bottom))]">
+          {/* The grabber says "sheet" at a glance, as on iOS; decorative. */}
+          <span aria-hidden className="mx-auto h-1 w-10 rounded-full bg-creator-line-strong @prose:hidden" />
+          <div className="flex min-h-touch-target items-center justify-between gap-3">
+            <h2 id={titleId} className="text-title font-semibold">
+              {t("laufbahn.sections")}
+            </h2>
+            <button
+              type="button"
+              onClick={close}
+              aria-label={t("laufbahn.close")}
+              className="grid size-touch-target shrink-0 place-items-center rounded-full bg-creator-surface-2 text-creator-fg transition-colors duration-micro hover:bg-creator-line focus-visible:focus-ring motion-reduce:transition-none"
+            >
+              <Icon icon={X} size="md" />
+            </button>
+          </div>
+          <ol className="grid overflow-hidden rounded-creator-card border border-creator-line bg-creator-surface">
+            {entries.map((entry, index) => (
+              <li key={entry.anchor} className="min-w-0 not-first:border-t not-first:border-creator-line">
+                <a
+                  href={`#${entry.anchor}`}
+                  onClick={go}
+                  aria-current={index === current ? "true" : undefined}
+                  className="flex min-h-control-xl items-center justify-between gap-3 px-4 text-body font-semibold text-creator-fg transition-colors duration-micro hover:bg-creator-bg focus-visible:focus-ring motion-reduce:transition-none"
+                >
+                  <span dir="auto" className={cn(pageSide, "min-w-0 text-pretty")}>
+                    {entry.title}
+                  </span>
+                  {index === current ? <Icon icon={Check} size="md" className="shrink-0 text-creator-accent-text" /> : null}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </dialog>
+    </>
+  );
 }

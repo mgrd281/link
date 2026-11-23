@@ -36,10 +36,11 @@ describe("prompts", () => {
     expect(sha256(SYSTEM_CORE_V1)).toBe("b22954184af69c363f0a179353e821be95a81d1862682785e2b59ec442ddf276");
     // core-v2: the catalogue gained two kinds (photographer, freelancer) and two templates (tiefdruck, werkbogen).
     // core-v3: one more template (laufbahn), nothing else.
-    expect(sha256(CATALOGUE_V1)).toBe("340fc88a8de3166e936ba74c54ef7f8d65eb100f34c1f2781529f1afa9a6071f");
+    // core-v4: laufbahn's description (its sections lost their letters and gained a contents menu), nothing else.
+    expect(sha256(CATALOGUE_V1)).toBe("048b098a84fc1c7f7b71592187b991d5c956b150e573314072799221d9af7f31");
     expect(sha256(EXAMPLE_V1)).toBe("a8f7cc40b2ba0811b70a63fb4c4a9bf458f9bfe2241e345a690bd97203db3742");
     expect(CATALOGUE_AND_EXAMPLE_V1).toBe(`${CATALOGUE_V1}\n\n${EXAMPLE_V1}`);
-    expect(PROMPT_VERSION).toBe("core-v3");
+    expect(PROMPT_VERSION).toBe("core-v4");
   });
 
   it("hold nothing that changes per run (the cached prefix stays the same)", () => {

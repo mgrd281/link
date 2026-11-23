@@ -544,6 +544,56 @@
   }
 }
 
+/* Laufbahn's app bar: down from above the screen, opaque all the way. */
+@keyframes lb-bar-enter {
+  from {
+    translate: 0 -100%;
+    visibility: hidden;
+  }
+
+  to {
+    translate: 0 0;
+    visibility: visible;
+  }
+}
+
+@keyframes lb-bar-enter-still {
+  from {
+    visibility: hidden;
+  }
+
+  to {
+    visibility: visible;
+  }
+}
+
+/* The reading line along the app bar's foot. */
+@keyframes lb-progress {
+  to {
+    scale: 1 1;
+  }
+}
+
+/* The contents sheet: up from the bottom edge on phones, settling in the middle on wider screens. */
+@keyframes lb-sheet-in {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@keyframes lb-sheet-in-card {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+@keyframes lb-veil-in {
+  from {
+    opacity: 0;
+  }
+}
+
 /* A section or tile rising into place: movement only, so nothing ever rests faded at the fold. */
 @keyframes lb-rise {
   from {
@@ -633,12 +683,12 @@
   position: relative;
 }
 
-/* A Laufbahn page keeps what is focused or jumped to clear of its fixed chrome: the compact bar at the
-   top (control-xl) and a preview's or example's dock at the bottom (on phones the sticky section index
-   adds its own band through lb-under-index). Sections, the hero's last row of links and anything
-   reached by Tab or by an anchor stop below them, never under them (WCAG 2.4.11). Scoped to pages that
-   have a signposted section, so every other template scrolls as before. Jumps glide unless the visitor
-   prefers less motion. */
+/* A Laufbahn page keeps what is focused or jumped to clear of its fixed chrome: the app bar at the top
+   (control-xl) and a preview's or example's dock at the bottom. Sections, the hero's last row of links
+   and anything reached by Tab or by an anchor stop below them, never under them (WCAG 2.4.11). Scoped
+   to pages that have a signposted section, so every other template scrolls as before. Jumps glide
+   unless the visitor prefers less motion. While the contents sheet is open the page holds still, as
+   under a sheet in an app. */
 :root:has(.lb-section) {
   scroll-padding-block: calc(var(--spacing-control-xl) + var(--spacing-4)) calc(var(--spacing-control-xl) + var(--spacing-8));
 
@@ -647,100 +697,108 @@
   }
 }
 
+:root:has(.lb-sheet[open]) {
+  overflow: hidden;
+}
+
 /* stylelint-disable nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
 
-/* The section index on phones: it sticks flush under the compact bar (which slides in as the hero
-   leaves), on the page's solid ground. Where the bar never shows (no scroll-driven animations), it
-   sticks to the top edge instead, so no gap opens above it. It is a scroll-state container, so its
-   hairline (lb-index-edge) shows only while it is stuck. Stuck, its chips sit inside the band the
-   document keeps clear for the bar (its scroll padding), where the browser would scroll the page on
-   every Tab to "reveal" them, in vain: a negative scroll margin as deep as that band exempts them, so
-   moving along the chips scrolls the row only, never the page. From tablet widths on, and on short
-   screens (a phone held sideways, 400 % zoom: sticky bars scroll away there), it stands in the flow. */
-@utility lb-index {
-  position: sticky;
-  inset-block-start: var(--spacing-control-xl);
-  container-type: scroll-state;
-
-  & a {
+/* Laufbahn's app bar (PosterBar, solid): it slides down whole as the hero leaves, never half
+   transparent, so nothing of the page ever shows through it or crosses its words (with reduced motion
+   it simply appears). Where scroll-driven animations are missing it never slides in, so it stands at
+   the top from the start, as an app's bar does; nothing is ever out of reach. */
+@utility lb-bar {
+  /* The bar's own controls sit inside the band the document keeps clear for the bar (its scroll
+     padding), where the browser would scroll the page to "reveal" them on every focus, in vain: a
+     negative scroll margin as deep as that band exempts them, so Tab into the bar never moves the page. */
+  & :is(a, button) {
     scroll-margin-block-start: calc((var(--spacing-control-xl) + var(--spacing-4)) * -1);
   }
 
+  @supports (animation-timeline: view()) {
+    &:is(.poster-bar) {
+      animation-name: lb-bar-enter;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation-name: lb-bar-enter-still;
+      }
+    }
+  }
+
   @supports not (animation-timeline: view()) {
-    inset-block-start: 0;
+    &:is(.poster-bar) {
+      visibility: visible;
+    }
+  }
+}
+
+/* How far the page has been read: the line along the app bar's foot fills from the reading start
+   with the page's scroll (scroll-driven, no script). Absent where that is not supported and with
+   reduced motion: the bar is complete without it. */
+@utility lb-progress {
+  transform-origin: left;
+  scale: 0 1;
+
+  &:dir(rtl) {
+    transform-origin: right;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: lb-progress linear both;
+      animation-timeline: scroll(root block);
+    }
+  }
+}
+
+/* The contents as a sheet (a native modal dialog). Phones: from the bottom edge, the page's full
+   width, rounded at the top, at most 85 % of the screen tall (its list scrolls inside), sliding up
+   as it opens. From tablet widths on: a card in the middle, as wide as a phone. The page behind is
+   veiled with ink at the secondary opacity and holds still. Flat: a hairline, no shadow. It stays
+   visible whatever the bar it opens from is doing (the bar fades with the scroll). */
+@utility lb-sheet {
+  visibility: visible;
+  inset-block: auto 0;
+  margin: auto 0 0;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  max-block-size: 85dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0;
+  border: 0;
+  border-block-start: var(--border-width-hairline) solid var(--creator-line);
+  border-start-start-radius: var(--radius-xl);
+  border-start-end-radius: var(--radius-xl);
+  background-color: var(--creator-bg);
+  color: var(--creator-fg);
+
+  &::backdrop {
+    background-color: color-mix(in oklab, var(--color-ink) calc(var(--opacity-secondary) * 100%), transparent);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[open] {
+      animation: lb-sheet-in var(--duration-standard) var(--ease-emphasized);
+    }
+
+    &[open]::backdrop {
+      animation: lb-veil-in var(--duration-standard) var(--ease-standard);
+    }
   }
 
   @variant @prose {
-    position: static;
+    inset-block: 0;
+    margin: auto;
+    inline-size: min(100% - 2 * var(--spacing-creator-gutter), var(--container-preview));
+    border: var(--border-width-hairline) solid var(--creator-line);
+    border-radius: var(--radius-xl);
 
-    & a {
-      scroll-margin-block-start: 0;
+    @media (prefers-reduced-motion: no-preference) {
+      &[open] {
+        animation-name: lb-sheet-in-card;
+      }
     }
-  }
-
-  @variant short {
-    position: static;
-
-    & a {
-      scroll-margin-block-start: 0;
-    }
-  }
-}
-
-/* The content beside or under the section index. Where the index sticks (phones, not short screens:
-   the same conditions as lb-index), whatever is focused or jumped to in it stops below the index as
-   well as the bar (WCAG 2.4.11): a scroll margin of the index's band (a 44 px chip and 4 px above and
-   below it) on top of the document's scroll padding for the bar. */
-@utility lb-under-index {
-  & :where(*) {
-    scroll-margin-block-start: calc(var(--spacing-touch-target) + var(--spacing-2));
-  }
-
-  @variant @prose {
-    & :where(*) {
-      scroll-margin-block-start: 0;
-    }
-  }
-
-  @variant short {
-    & :where(*) {
-      scroll-margin-block-start: 0;
-    }
-  }
-}
-
-@utility lb-index-edge {
-  border-block-end: var(--border-width-hairline) solid transparent;
-  transition: border-color var(--duration-standard) var(--ease-standard);
-
-  @container scroll-state(stuck: top) {
-    border-block-end-color: var(--creator-line);
-  }
-}
-
-/* A row that scrolls sideways fades at an edge only while more of it lies beyond that edge (the index
-   sets data-fade-start / data-fade-end); logical, so an Arabic row fades on the mirrored sides. The
-   fade is as wide as the row's padding (the gutter), so it veils the cut neighbour, never the chip
-   snapped beside it. No mask at all while nothing lies beyond (tablets, the wide canvas): a mask clips
-   whatever is drawn outside the row, a chip's focus ring included. */
-@utility lb-fade {
-  --lb-fade-start: 0%;
-  --lb-fade-end: 0%;
-
-  &:is([data-fade-start], [data-fade-end]) {
-    mask-image: linear-gradient(to right, transparent, var(--color-ink) var(--lb-fade-start), var(--color-ink) calc(100% - var(--lb-fade-end)), transparent);
-  }
-
-  &:is([data-fade-start], [data-fade-end]):dir(rtl) {
-    mask-image: linear-gradient(to left, transparent, var(--color-ink) var(--lb-fade-start), var(--color-ink) calc(100% - var(--lb-fade-end)), transparent);
-  }
-
-  &[data-fade-start] {
-    --lb-fade-start: var(--spacing-creator-gutter);
-  }
-
-  &[data-fade-end] {
-    --lb-fade-end: var(--spacing-creator-gutter);
   }
 }
 

@@ -162,7 +162,7 @@ describe("AI pipeline", { timeout: 20_000 }, () => {
     expect(events.find((event) => event.type === "look")).toMatchObject({ kind: "music", theme: { template: "nocturne", accent: "#C2410C" } });
 
     expect(limits.reserveCalls).toHaveLength(1);
-    expect(limits.reserveCalls[0]).toMatchObject({ account: "user-1", ipHash: "hash-1", route: "welcome", worstMicros: 1_050_000, promptVersion: "core-v3", schemaVersion: "plan-v3" });
+    expect(limits.reserveCalls[0]).toMatchObject({ account: "user-1", ipHash: "hash-1", route: "welcome", worstMicros: 1_050_000, promptVersion: "core-v4", schemaVersion: "plan-v3" });
     expect(limits.settleCalls).toHaveLength(1);
     const settled = limits.settleCalls[0];
     expect(settled).toMatchObject({ run: "run-1", status: "succeeded", counted: true, costMicros: Math.ceil(812 * 4 + 3605 * 0.2 + 2911 * 20) });
@@ -182,7 +182,7 @@ describe("AI pipeline", { timeout: 20_000 }, () => {
     // One log line, without content.
     expect(log).toHaveBeenCalledTimes(1);
     const line = String(log.mock.calls[0]?.[0]);
-    expect(JSON.parse(line)).toMatchObject({ evt: "ai_run", id: "run-1", status: "succeeded", blocks: 4, prompt: "core-v3", plan: "plan-v3" });
+    expect(JSON.parse(line)).toMatchObject({ evt: "ai_run", id: "run-1", status: "succeeded", blocks: 4, prompt: "core-v4", plan: "plan-v3" });
     expect(line).not.toMatch(/Lio|instagram|spotify|Berlin|https?:/);
   });
 

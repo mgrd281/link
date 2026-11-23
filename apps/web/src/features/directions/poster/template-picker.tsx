@@ -138,12 +138,10 @@ export function TemplatePicker({
                     </span>
                   )}
                   <span className="relative grid gap-1">
-                    {/* Laufbahn's signature: a lettered signpost before its first section. */}
+                    {/* Laufbahn's signature: lists whose rows lead with an icon in the accent. */}
                     {theme.layout.headings === "signpost" ? (
                       <span className="flex items-center gap-1">
-                        <span className="grid size-4 shrink-0 place-items-center rounded-xs bg-creator-accent font-creator-display text-caption leading-none text-creator-accent-fg" style={displayStyle}>
-                          {profile.locale === "ar" ? "أ" : "A"}
-                        </span>
+                        <span className="size-4 shrink-0 rounded-xs bg-creator-accent" />
                         <span className="h-2 flex-1 rounded-xs bg-creator-surface-2" />
                       </span>
                     ) : (
