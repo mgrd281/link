@@ -337,6 +337,11 @@ export class LocalAccountStore implements AccountStore {
     return reason ? next : withRewards(next, inviter.id, at);
   }
 
+  /** The demo keeps no passwords: accounts there sign in with the code shown on screen. */
+  signInWithPassword(): Promise<Result> {
+    return Promise.resolve({ ok: false, error: "wrongPassword" });
+  }
+
   logOut(): void {
     this.write({ ...this.db(), session: null });
   }

@@ -92,6 +92,8 @@ export type AuthError =
   | "emailTaken"
   /** The 6-digit code does not match the one we sent. */
   | "invalidCode"
+  /** Real accounts: the e-mail and password do not match an account with a password. */
+  | "wrongPassword"
   /** The code is older than 10 minutes, was used, or was guessed wrong too often: ask for a new one. */
   | "codeExpired"
   | "notFound"
@@ -161,6 +163,8 @@ export interface AccountStore {
   requestCode(input: CodeRequest): Promise<Result>;
   /** Signs in with the code. Someone new gets their account and first page here. */
   verifyCode(input: CodeRequest & { code: string }): Promise<Result>;
+  /** Real accounts only: signs in an account that has a password (the team). The demo has none. */
+  signInWithPassword(input: { email: string; password: string }): Promise<Result>;
   logOut(): void;
   /** Real accounts confirm the new address by email first (`pending: "confirmEmail"`). */
   changeEmail(email: string): Promise<Result>;

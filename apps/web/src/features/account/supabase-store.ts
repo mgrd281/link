@@ -245,6 +245,10 @@ export class SupabaseAccountStore implements AccountStore {
     return this.adopt(await this.post("/api/auth/verify", { ...SupabaseAccountStore.codeBody(input), code: input.code }));
   }
 
+  async signInWithPassword(input: { email: string; password: string }): Promise<Result> {
+    return this.adopt(await this.post("/api/auth/password", { email: input.email, password: input.password }));
+  }
+
   logOut(): void {
     void this.flush().finally(() => void this.client().auth.signOut({ scope: "local" }));
   }

@@ -6,6 +6,7 @@ import { useState, type SubmitEvent } from "react";
 import { z } from "zod";
 
 import { Link } from "@/i18n/navigation";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { accountStore } from "../store";
 import type { AuthError, CodeRequest } from "../types";
@@ -16,15 +17,20 @@ import { SocialButtons, useLeaveWhenSignedIn, useSearchParam } from "./shared";
 
 const locales = ["de", "en", "ar"] as const;
 
-/** Sign in without a password: the email, then the 6-digit code we send to it. */
+/**
+ * Sign in without a password: the email, then the 6-digit code we send to it. With real accounts an
+ * account that has a password (the team) can use it instead.
+ */
 export function LoginForm() {
   const t = useTranslations("auth");
   const locale = useLocale();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState<AuthError | null>(null);
+  const [error, setError] = useState<AuthError | "passwordRequired" | null>(null);
   const [busy, setBusy] = useState(false);
   const [request, setRequest] = useState<CodeRequest | null>(null);
   const [demoCode, setDemoCode] = useState<string | undefined>(undefined);
+  const [withPassword, setWithPassword] = useState(false);
+  const [password, setPassword] = useState("");
   const leaving = useLeaveWhenSignedIn();
   // Back from an email link that no longer works (expired or used): say so until the next try.
   const linkExpired = useSearchParam("link") === "expired";
@@ -34,6 +40,22 @@ export function LoginForm() {
     if (!z.email().safeParse(email.trim()).success) {
       setError("invalidEmail");
       document.getElementById("login-email")?.focus();
+      return;
+    }
+    if (withPassword) {
+      if (password === "") {
+        setError("passwordRequired");
+        document.getElementById("login-password")?.focus();
+        return;
+      }
+      setBusy(true);
+      setError(null);
+      const result = await accountStore.signInWithPassword({ email: email.trim(), password });
+      setBusy(false);
+      if (!result.ok) {
+        setError(result.error);
+        document.getElementById("login-password")?.focus();
+      }
       return;
     }
     setBusy(true);
@@ -75,7 +97,9 @@ export function LoginForm() {
     <>
       <AuthHeading title={t("login.title")} lead={t("login.lead")} />
       <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-4">
-        <FormError message={error && error !== "invalidEmail" ? t(`errors.${error}`) : linkExpired ? t("errors.linkExpired") : null} />
+        <FormError
+          message={error && error !== "invalidEmail" && error !== "passwordRequired" ? t(`errors.${error}`) : linkExpired ? t("errors.linkExpired") : null}
+        />
         <TextField
           id="login-email"
           label={t("fields.email")}
@@ -95,9 +119,43 @@ export function LoginForm() {
           required
           error={error === "invalidEmail" ? t("errors.invalidEmail") : undefined}
         />
+        {withPassword && (
+          <TextField
+            id="login-password"
+            label={t("fields.password")}
+            hideLabel
+            placeholder={t("fields.password")}
+            variant="filled"
+            size="xl"
+            ltr
+            type="password"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              if (error === "passwordRequired" || error === "wrongPassword") setError(null);
+            }}
+            autoComplete="current-password"
+            required
+            error={error === "passwordRequired" ? t("errors.passwordRequired") : undefined}
+          />
+        )}
         <Button type="submit" variant="primary" size="cta" block loading={busy || leaving}>
-          {t("login.submit")}
+          {withPassword ? t("login.passwordSubmit") : t("login.submit")}
         </Button>
+        {supabaseEnabled && (
+          <button
+            type="button"
+            onClick={() => {
+              setWithPassword((value) => !value);
+              setPassword("");
+              setError(null);
+              window.setTimeout(() => document.getElementById(withPassword ? "login-email" : "login-password")?.focus(), 0);
+            }}
+            className="mx-auto inline-flex min-h-touch-target items-center rounded-full px-3 text-small font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed"
+          >
+            {withPassword ? t("login.withCode") : t("login.withPassword")}
+          </button>
+        )}
       </form>
       <OrDivider label={t("social.or")} />
       <SocialButtons emailField="login-email" />

@@ -128,6 +128,26 @@ test("a wrong code is logged as failed; the right one signs in and is logged wit
   await expect(page.getByText("Dieses Gerät").first()).toBeVisible();
 });
 
+test("an account with a password (the team) signs in with it; a wrong one is refused and logged", async ({ page }) => {
+  const teamEmail = `team-${Date.now()}@example.com`;
+  const secret = `pw-${Date.now()}-Linkyo`;
+  const { error } = await admin().auth.admin.createUser({ email: teamEmail, password: secret, email_confirm: true });
+  expect(error).toBeNull();
+  await page.goto("/de/login");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Mit Passwort anmelden" }).click();
+  await page.locator("#login-email").fill(teamEmail);
+  await page.locator("#login-password").fill("not-the-password");
+  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+  await expect(page.getByText("E-Mail oder Passwort stimmt nicht.")).toBeVisible();
+  await page.locator("#login-password").fill(secret);
+  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+  await page.waitForURL(/\/de\/app/);
+  const account = await profileOf(teamEmail);
+  const log = await signIns(account?.id ?? "");
+  expect(log.slice(0, 2).map((entry) => entry.result)).toEqual(["success", "failed"]);
+});
+
 test("the one-click link in the email signs in as well", async ({ page }) => {
   await logIn(page, email, { enter: false });
   const { link } = await mail(page, email);

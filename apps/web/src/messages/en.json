@@ -1119,6 +1119,7 @@
       "usernameHint": "Lowercase letters, numbers and dashes, 3–30 characters.",
       "usernameOk": "linkyo.app/{name} is available",
       "email": "Email",
+      "password": "Password",
       "usernameReserved": "linkyo.app/{name} is reserved for you",
       "code": "Sign-in code",
       "changeAddress": "Change"
@@ -1141,6 +1142,8 @@
       "serverError": "We can't reach Linkyo right now. Try again in a moment.",
       "linkExpired": "This link has expired or was already used. Just ask for a new code.",
       "invalidCode": "This code doesn't match. Check the digits or ask for a new code.",
+      "wrongPassword": "The e-mail or password is not right.",
+      "passwordRequired": "Please enter your password.",
       "codeExpired": "This code has expired. Ask for a new one below."
     },
     "signup": {
@@ -1167,6 +1170,9 @@
       "title": "Welcome back",
       "lead": "Enter your email and we'll send you a 6‑digit code. No password needed.",
       "submit": "Send code",
+      "withPassword": "Sign in with password",
+      "withCode": "Get a code by e-mail instead",
+      "passwordSubmit": "Sign in",
       "noAccount": "New to Linkyo?",
       "signup": "Create a page"
     },
