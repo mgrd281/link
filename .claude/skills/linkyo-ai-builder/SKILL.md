@@ -24,7 +24,7 @@ present.
 | Claude call, the only SDK value import | `features/ai/server/claude.ts` (static guard: `lib/static-guard.test.ts`) |
 | Prompts (versioned constants) | `features/ai/server/prompts.ts` (`PROMPT_VERSION`) |
 | Repair, cost | `features/ai/server/repair.ts`, `cost.ts` |
-| Sources | `features/ai/server/sources/{classify,website,linkinbio,tiktok}.ts`, `safe-fetch.ts`, `robots.ts`, `html.ts` |
+| Sources | `features/ai/server/sources/{classify,website,linkinbio,tiktok}.ts`, `safe-fetch.ts`, `robots.ts`, `html.ts`, `html-scan.ts` (the linear tag scanner; the importer's `extractLinks` uses it too) |
 | Bundle, redaction | `features/ai/server/bundle.ts` (`redactContacts`, `L1…L40` ids, affiliate hints) |
 | Plan → page (pure) | `features/ai/plan-to-page.ts`, `content-rules.ts`; scanner `features/ai/scanner.ts` |
 | Reserve/settle client | `features/ai/server/limits-client.ts`; config and base-URL guard `config.ts` |
@@ -71,7 +71,14 @@ Any thrown error settles `failed` or `refused`, uncounted. `ai_record_progress` 
 - **Links by id only.** The model sees `L1…L40`, never raw URLs to copy; `planToPage` resolves ids
   and drops unknown or reused ones.
 - **Redact before sending:** every free text goes through `redactContacts()` (e-mails → `[E-Mail]`,
-  phone-like runs of 7+ digits → `[Telefon]`).
+  phone numbers → `[Telefon]`). One phone definition for sending and for checking the answer:
+  `replacePhones` in `content-rules.ts` (up to three separators between digits, Arabic-Indic digits,
+  real dates and year ranges set aside).
+- **Someone else's HTML is never read with a backtracking pattern.** Pages are scanned with
+  `html-scan.ts` (every search only forward, caps on tags and links); `robots.ts` matches rules
+  without regular expressions and refuses oversized rule sets; `safeFetch` has one clock for the
+  whole fetch (the robots.txt read and the name lookup included). Each has a test with a hostile
+  megabyte that must finish in well under 200 ms.
 - **Newsletter blocks are dropped** in phase 1; at most 2 highlights; at most 30 blocks; every block
   gets `origin: "ai"`; `aiFields` lists the AI-written display name, tagline and bio.
 - **The AI never publishes.** Apply is the owner's, one undoable `replace`; it never sets `onboarded`.
@@ -79,7 +86,9 @@ Any thrown error settles `failed` or `refused`, uncounted. `ai_record_progress` 
   `high` and 32,000 tokens, and save a proposal (`admin_save_proposal`), never `sites`.
 - **Numbers live in one place each:** `ai_settings` in SQL, mirrored in `limits.ts` (the test
   compares). A price change goes into `cost.ts`; if it raises the worst case, `cost.test.ts` fails
-  until `WORST_*_USD_PER_MTOK` (and so the reservation) is raised too.
+  until `WORST_*_USD_PER_MTOK` (and so the reservation) is raised too. `costMicros` prices every
+  attempt of a call by its own model (`usage.iterations`); a cut-off stream books what it can have
+  cost by then (`cutOffCostMicros`), not the worst case.
 - **Base URL guard:** `ANTHROPIC_BASE_URL` may be unset, Anthropic's host, or loopback off Vercel.
   Container shells often set `ANTHROPIC_BASE_URL` for their own use: **unset it** before building or
   running the app and tests (`unset ANTHROPIC_BASE_URL`), or set it to the mock.

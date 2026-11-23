@@ -87,8 +87,11 @@ only after the handler succeeded, and any failure answers 500 so Stripe redelive
 idempotent on its own. **A paid service order enters the team queue only after the confirmation
 e-mail was sent** (§ 312f): it carries who we are, the order, the early-start record, the
 Widerrufsbelehrung, the Muster-Widerrufsformular, a "Vertrag widerrufen" link and the AGB. Pro events
-upsert one entitlement from the subscription's current state, so the event order does not matter; a
-refunded entitlement is final.
+upsert one entitlement from the subscription's current state, read from Stripe again for every
+subscription event, so the event order does not matter; a refunded entitlement is final. **Only a
+withdrawal reverses a contract:** a goodwill or voluntary refund of a Pro invoice, whole or
+partial, leaves Pro as it is, and a partial refund of a service order is only noted in its
+timeline.
 
 **Stripe API version moves** (stripe 23.2.0 pins `2026-11-18.endive`, later than
 `2025-03-31.basil`), each checked against the package's type definitions:
@@ -108,7 +111,10 @@ revision, no team AI run) and the order moves to the top of the team queue. **Re
 actions:** the contracts panel shows the § 357 Abs. 1 BGB deadline (received + 14 days) with an SLA
 chip; accepting refunds (in full, or the § 357a value share for work done after an early-start
 request) and ends the contract; a Pro withdrawal cancels the subscription at once and refunds the
-latest invoice. There is no "too many attempts" error: above 10 declarations an hour from one IP hash
+latest invoice. An accepted withdrawal stays open, with its deadline, until its refund is on record
+(a refund Stripe refused can be finished from the panel); one contract is withdrawn once, however
+many declarations name it; "refund" on an order is refused while a withdrawal waits, and every
+refund the team orders is in the activity log with the member's name. There is no "too many attempts" error: above 10 declarations an hour from one IP hash
 or 3 receipts a day to one address a request is stored as `suspect` and its receipt is held until the
 team checks it.
 

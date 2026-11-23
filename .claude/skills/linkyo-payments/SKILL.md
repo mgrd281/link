@@ -26,7 +26,8 @@ For legal questions also read the `gdpr-dsgvo` skill; for anything statutory, th
 | Legal texts, company data, gate | `features/legal/{texts,company,live-guard,legal-links,legal-page,withdraw-form,cancel-form}.ts(x)` |
 | E-mail | `features/email/{send,types,capture-sender,console-sender,tem-sender}.ts`, templates in `features/email/templates/` |
 | Flags | `lib/flags.ts` (`paymentsMode`, `paymentsEnabled`, `stripePublishableKey`) |
-| Database | `supabase/migrations/20261123100200_billing.sql`, `supabase/tests/billing.test.sql` |
+| Team decisions | `features/admin/orders/{contract-rules,order-rules}.ts` (what the panel offers), `app/api/admin/contracts/[kind]/[id]`, `app/api/admin/orders/[id]/{refund,deliver}` |
+| Database | `supabase/migrations/20261123100200_billing.sql`, `…100400_review_fixes.sql` (`record_refund`, `has_pro`), `…100500_team_fixes.sql` (team decisions), `supabase/tests/billing.test.sql` |
 | Stripe mock | `apps/web/e2e/mocks/stripe.handler.mjs` |
 | E2E | `e2e/checkout-app.spec.ts`, `e2e/contracts-app.spec.ts`, `e2e/legal-a11y.spec.ts` |
 
@@ -84,14 +85,40 @@ For legal questions also read the `gdpr-dsgvo` skill; for anything statutory, th
   `processed_at` is set, set it after the handler succeeded, answer 500 on any failure so Stripe
   redelivers. Every handler must be idempotent by itself (`record_service_order` by session,
   `upsert_pro_subscription` from the subscription's current state, `refunded` is final).
+  `customer.subscription.created/updated` never apply the event's snapshot: the handler reads the
+  subscription from Stripe again (a redelivered event must not bring back an ended Pro).
+- **Refunds (`record_refund`):** `charge.refunded` always reports kind `goodwill` with Stripe's
+  cumulative amount. Only a withdrawal reverses a contract; a goodwill or voluntary refund leaves Pro
+  as it is; a partial refund of an order is only noted (`partial`); a kind the team chose replaces
+  an earlier `goodwill`; a `goodwill` report for a contract whose withdrawal the team accepted is
+  that withdrawal's refund. The console's own record is tried three times (`RefundNotRecorded` →
+  500, send it again).
+- **Team decisions follow what is on record, not which button was pressed:**
+  - an accepted withdrawal is finished (`handled_at`) only when its refund is recorded; until then
+    the panel shows "Erstattung offen" with the deadline and offers "Erstattung abschließen"
+    (`withdrawalStep` "finish": the amount on record, the key `contract-<id>-refund`);
+  - one contract is withdrawn once: SQL refuses to accept a declaration for an order that is already
+    withdrawn or refunded, or beside another accepted one; such a declaration is only filed;
+  - "Erstatten" on an order goes through `admin_refund_order` (audit `order.refund`, timeline
+    `refund_requested` with the member) and is refused while a withdrawal waits;
+  - cancellations move only null → scheduled / ended / rejected and scheduled → resumed
+    (`cancellation_step_allowed`, checked in `admin_resolve_cancellation` and `confirm_cancellation`);
+    an ordinary one that was held is carried out with the action `schedule`;
+  - `cancelNow` answers an already ended subscription instead of Stripe's refusal, so every step
+    can run again after a failure.
 - **Writes only through SQL functions** (`record_*`, `upsert_pro_subscription`, `admin_*`); tables
   revoke insert, update and delete from customers and the team. Team permissions reuse the table:
   orders `customers.view`, proposals `pages.edit`, refunds and contracts `billing.manage`.
 - **Stripe host override** (`STRIPE_API_HOST`/`_PORT`/`_PROTOCOL`) is accepted only for a loopback
   host and only off Vercel. Without `STRIPE_SECRET_KEY` the checkout APIs answer `503 notConfigured`.
 - **E-mail** goes through `getEmailSender()`: `capture` writes JSON files (tests; throws on Vercel),
-  unset logs one content-free line, `tem` is Scaleway (unused in phase 1). HTML e-mails use inline
-  layout only: no images, no tracking pixels, no remote fonts.
+  unset or `console` logs one content-free line, `tem` is Scaleway (unused in phase 1). Any other
+  name throws, and with live payments only `tem` is handed out (the live build checks it too). HTML
+  e-mails use inline layout only: no images, no tracking pixels, no remote fonts. A route that
+  answers `mailed: false` must be said on screen (the team then tells the account itself).
+- **Leaving the checkout unloads Stripe.js:** `StripeLeaveGuard` (in `stripe-js.tsx`, mounted in the
+  checkout layout) makes every way out a full page load. A declined payment shows Stripe's reason
+  (`checkout.payFailed` otherwise); a session that could not be opened shows the slot's alert.
 - Website pages here are teal (no `data-console`); the order screen under `/app` is console.
 
 ## Test flow without any account

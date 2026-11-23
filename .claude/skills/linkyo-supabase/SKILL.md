@@ -12,7 +12,7 @@ them the demo store runs. Both must keep working (ADR 0030).
 
 | What | Where |
 |---|---|
-| Schema, RLS, functions | `supabase/migrations/*.sql`: core (profiles, sites, history, public_page), security (sign_ins, blocked_ips, retention), team (roles, audit, billing, notes, `admin_*` functions), referrals (the invite program, ADR 0064: codes, `referrals`, `rewards`, `verification_requests`, `settle_referral`, hourly cron); v7: `public_pages` (`block_is_public`, the filtered `public_page`, reserved names), `media` (Storage buckets `media`/`briefing`/`deliverables`, their policies, `storage_purge`), `billing` (entitlements, orders, proposals, checkout intents, Stripe events, withdrawals, cancellations, `has_pro`, two daily jobs; ADR 0066), `ai` (settings, runs, budget, usage, `ai_reserve_run`/`ai_settle_run`, 5-minute cleanup; ADR 0065) |
+| Schema, RLS, functions | `supabase/migrations/*.sql`: core (profiles, sites, history, public_page), security (sign_ins, blocked_ips, retention), team (roles, audit, billing, notes, `admin_*` functions), referrals (the invite program, ADR 0064: codes, `referrals`, `rewards`, `verification_requests`, `settle_referral`, hourly cron); v7: `public_pages` (`block_is_public`, the filtered `public_page`, reserved names), `media` (Storage buckets `media`/`briefing`/`deliverables`, their policies, `storage_purge`), `billing` (entitlements, orders, proposals, checkout intents, Stripe events, withdrawals, cancellations, `has_pro`, two daily jobs; ADR 0066), `ai` (settings, runs, budget, usage, `ai_reserve_run`/`ai_settle_run`, 5-minute cleanup; ADR 0065); after the v7 review: `review_fixes` (`legal_is_complete`, the stricter `public_page`, `has_pro`, `record_refund`) and `team_fixes` (`admin_refund_order`, `settle_withdrawal`, the withdrawal and cancellation decisions, `team_may_upload_for`, `story_handed_to_me` and their Storage policies) |
 | DB tests (pgTAP) | `supabase/tests/access.test.sql`, run as customer, visitor, server, owner and viewer; `supabase/tests/referrals.test.sql` (codes, sign-up attribution, the abuse checks, counting, rewards, verification, team writes, privacy); one file per v7 migration: `public_pages.test.sql`, `media.test.sql`, `billing.test.sql`, `ai.test.sql` |
 | Storage (v7, ADR 0067) | `features/app/media-upload.ts` (`uploadToBucket`, `storePreparedImage`), `features/account/media-migrate.ts` (data URLs → Storage on save), `lib/server/storage-purge.ts` (`removePrefix`, `drainStoragePurge`), `app/api/maintenance/storage-purge`, `app/api/account/delete`, `app/api/admin/customers/[id]/delete` |
 | Server helpers (v7) | `lib/server/user.ts` (`requireUser`: RPCs as the user, so SQL enforces team permissions), `lib/server/ip-hash.ts` (daily-salted HMAC) |
@@ -82,16 +82,20 @@ them the demo store runs. Both must keep working (ADR 0030).
   a `grant` to the role that may call them.
 - **Team actions** go through one `admin_*` function each:
   - `perform public.require_permission('…')` first;
-  - `perform public.audit(…)` after the change.
+  - `perform public.audit(…)` after the change. A team action that moves money is recorded as the
+    member **before** the route calls Stripe (`admin_refund_order`, `admin_resolve_withdrawal`).
+  - Lock the contract first (order or entitlement), then the declaration: `record_refund` and the
+    withdrawal functions take them in that order.
   - Mirror any change to roles in `role_permissions` and in `features/admin/types.ts`; the
     pgTAP role-count test catches drift.
 - **The badge and the username on a page** come from `profiles` (the `sites_guard` trigger).
   Never trust page JSON for them.
 - **The secret key only in server routes** (`serviceSupabase()`), never `NEXT_PUBLIC_`.
 - **Optional function arguments get `default null`**, so generated types make them optional.
-- **Production has the migrations now.** The real project (Central EU, Frankfurt) got all eight
-  migrations through the Management API on 2026-11-22. **Never edit a migration in place any
-  more**: every change is a new migration. The project is not connected to Vercel yet (Auth e-mails
+- **Production has the migrations now.** The real project (Central EU, Frankfurt) got the first
+  eight migrations through the Management API on 2026-11-22; `20261123100400_review_fixes.sql` and
+  `20261123100500_team_fixes.sql` are local only until the founder says go. **Never edit a migration
+  in place any more**: every change is a new migration. The project is not connected to Vercel yet (Auth e-mails
   need custom SMTP, which needs a domain; `docs/SUPABASE_SETUP.md`). Never run anything against the
   hosted project without the founder's go-ahead.
 - **Files are deleted only through the Storage API.** SQL never deletes from `storage.objects`;
@@ -100,12 +104,19 @@ them the demo store runs. Both must keep working (ADR 0030).
   remove it with `removePrefix`. Paths always start with the owner's account id
   (`media/<uid>/…`, `briefing/<uid>/<order>/…`, `deliverables/<customer>/<order>/…`), which is what
   the policies check.
+- **A proposal's pictures are the customer's.** The team's proposal editor uploads page pictures
+  into `media/<customer>/…` (`MediaOwnerProvider`, policy "media insert team for a customer's
+  order"), never into the team member's folder: they are purged with the customer's account and
+  stay when the member leaves. A customer reads only the story pictures of proposals that were
+  handed over (`story_handed_to_me`); a story picture taken out of a draft is deleted through the
+  Storage API unless a delivered round still lists it (`storyRemovable`).
 - **Service-only tables** (`storage_purge`, `stripe_events`, `checkout_intents`, `ai_settings`,
   `ai_budget_days`, `ai_usage`, `form_limits`, `service_settings`) have RLS on, no policy and
   `revoke all` from `authenticated` and `anon`. Billing and AI tables revoke insert, update and
   delete from everyone but the service role: writes go through functions.
 - **Mirrored numbers:** `ai_settings` ↔ `features/ai/limits.ts`, `RESERVED_USERNAMES` ↔ the
-  `reserved_usernames` inserts, `referral_rule()` ↔ `features/referrals/rules.ts`. Each pair has a
+  `reserved_usernames` inserts, `referral_rule()` ↔ `features/referrals/rules.ts`,
+  `legal_is_complete()` ↔ `missingLegalFields()` in `features/app/legal.ts`. Each pair has a
   test that reads the migrations; change both sides together.
 - **"Today" and "this month" are Europe/Berlin** (`(now() at time zone 'Europe/Berlin')::date`).
 
