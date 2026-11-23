@@ -1,5 +1,5 @@
 import { blockSchema, isBlockActive, NO_IMAGE, profileSchema, type Block, type Page } from "@linkyo/blocks";
-import { BUTTON_SHAPES, BUTTON_STYLES, isTemplate, PAIRING_IDS, PRESET_IDS, type CreatorThemeConfig } from "@linkyo/tokens/creator";
+import { BUTTON_SHAPES, BUTTON_STYLES, isTemplate, PAIRING_IDS, PRESET_IDS, PROJECTS_STYLES, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { cache } from "react";
 
 import type { Legal } from "@/features/account/types";
@@ -24,12 +24,21 @@ export interface PublicPage {
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const text = (value: unknown): string => (typeof value === "string" ? value : "");
 
+/** A project marked confidential never carries its client's name to a visitor. */
+function withoutConfidentialClient(block: Block): Block {
+  if (block.type !== "project" || block.confidential !== true || block.client === undefined) return block;
+  const { client: _client, ...rest } = block;
+  return rest;
+}
+
 /**
  * What visitors see right now: switched-on blocks inside their schedule, without newsletter sign-ups
  * (real accounts have no newsletter backend yet, so the form would promise something it cannot keep).
+ * A confidential project loses its `client`: the schema already refuses such a block and the editor
+ * clears the field, so this only matters for a page that reached this function unparsed.
  */
 export function filterPublic(page: Page, now: Date = new Date()): Page {
-  return { ...page, blocks: page.blocks.filter((block) => block.type !== "newsletter" && isBlockActive(block, now)) };
+  return { ...page, blocks: page.blocks.filter((block) => block.type !== "newsletter" && isBlockActive(block, now)).map(withoutConfidentialClient) };
 }
 
 /**
@@ -105,6 +114,9 @@ export function parseTheme(raw: unknown): CreatorThemeConfig {
   const buttonShape = known(BUTTON_SHAPES, raw.buttonShape);
   if (buttonShape) theme.buttonShape = buttonShape;
   if (typeof raw.background === "string" && BACKGROUNDS.has(raw.background)) theme.background = raw.background as CreatorThemeConfig["background"];
+  // The one layout choice an owner makes: how a run of projects is shown.
+  const projects = known(PROJECTS_STYLES, raw.projects);
+  if (projects) theme.projects = projects;
   return theme;
 }
 

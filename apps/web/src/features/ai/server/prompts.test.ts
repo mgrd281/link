@@ -34,10 +34,11 @@ const listed = (label: string) =>
 describe("prompts", () => {
   it("are the reviewed texts, byte for byte (r2 §6.1–§6.3)", () => {
     expect(sha256(SYSTEM_CORE_V1)).toBe("b22954184af69c363f0a179353e821be95a81d1862682785e2b59ec442ddf276");
-    expect(sha256(CATALOGUE_V1)).toBe("33694a79c35c80cb2c09e420a593781bc8ab6868665bb6ceb0b163c1cd4cb572");
+    // core-v2: the catalogue gained two kinds (photographer, freelancer) and two templates (tiefdruck, werkbogen).
+    expect(sha256(CATALOGUE_V1)).toBe("f9a0cb6ce0d5bea4b3c6b0009f67ada6530b31fce4b306eaa6098727e68dbafc");
     expect(sha256(EXAMPLE_V1)).toBe("a8f7cc40b2ba0811b70a63fb4c4a9bf458f9bfe2241e345a690bd97203db3742");
     expect(CATALOGUE_AND_EXAMPLE_V1).toBe(`${CATALOGUE_V1}\n\n${EXAMPLE_V1}`);
-    expect(PROMPT_VERSION).toBe("core-v1");
+    expect(PROMPT_VERSION).toBe("core-v2");
   });
 
   it("hold nothing that changes per run (the cached prefix stays the same)", () => {
@@ -46,8 +47,16 @@ describe("prompts", () => {
 
   it("list exactly the current kinds, templates, pairings (without the Arabic one), button styles and shapes, swatches and link icons", () => {
     expect(new Set(listed("Kinds"))).toEqual(new Set(KINDS));
+    expect(listed("Kinds")).toHaveLength(24);
+    expect(listed("Kinds")).toEqual(expect.arrayContaining(["photographer", "freelancer"]));
     const templates = [...CATALOGUE_V1.matchAll(/^- ([a-z-]+): .*Mode (light|dark|vivid)\.$/gm)].map((match) => [match[1], match[2]]);
     expect(new Set(templates.map(([id]) => id))).toEqual(new Set(TEMPLATE_IDS));
+    expect(templates).toHaveLength(13);
+    // Each template line is the template's own description from the design tokens.
+    for (const [id] of templates) {
+      const description = (creatorTokens.templates as Record<string, { description: string }>)[id ?? ""]?.description ?? "missing";
+      expect(CATALOGUE_V1, id).toContain(`- ${id ?? ""}: ${description} Mode `);
+    }
     for (const [id, mode] of templates) expect((creatorTokens.templates as Record<string, { mode: string }>)[id ?? ""]?.mode).toBe(mode);
     const pairings = [...CATALOGUE_V1.matchAll(/^- ([a-z]+): [^/\n]+ \/ /gm)].map((match) => match[1]);
     expect(new Set(pairings)).toEqual(new Set(PAIRING_IDS));

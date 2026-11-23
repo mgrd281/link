@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Linkyo",
-    "description": "The creator page that looks premium in five minutes: eleven templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
+    "description": "The creator page that looks premium in five minutes: thirteen templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
   },
   "common": {
     "close": "Close",
@@ -405,7 +405,63 @@
       "body": "Check the address. Maybe the name is still free.",
       "cta": "Create your own page"
     },
-    "legalTitle": "Legal notice"
+    "legalTitle": "Legal notice",
+    "portfolio": {
+      "work": "Work",
+      "projectCount": "{count, plural, one {# project} other {# projects}}",
+      "allProjects": "Show all {count} projects",
+      "backTo": "Back to {name}",
+      "factFor": "For",
+      "factRole": "Role",
+      "factYear": "Year",
+      "factTopics": "Topics",
+      "confidential": "Confidential client",
+      "untilNow": "present",
+      "storyProblem": "Starting point",
+      "storySolution": "Approach",
+      "storyResult": "Result",
+      "figures": "Results in numbers",
+      "linkView": "View",
+      "linkViewCode": "View the code",
+      "linkWatch": "Watch the video",
+      "linkListen": "Listen",
+      "linkOpenPdf": "Open the PDF",
+      "opens": "opens {host}",
+      "repository": "Repository",
+      "license": "License: {license}",
+      "codeSample": "Code sample",
+      "codeRegion": "Code sample from {file}, scrolls sideways",
+      "codeRegionPlain": "Code sample, scrolls sideways",
+      "copyCodeSample": "Copy the code sample",
+      "nextProject": "Next project",
+      "similar": "Planning something similar?",
+      "about": "About me",
+      "tools": "Skills & tools",
+      "timeline": "Experience",
+      "quotes": "What clients say",
+      "clients": "Clients",
+      "quotesNote": "Chosen by {name} and published with permission. Linkyo does not verify them.",
+      "moreQuotes": "More quotes",
+      "seeProject": "See the project",
+      "steps": "How it works",
+      "cv": "CV",
+      "cvPdf": "CV (PDF)",
+      "contactEmail": "Send an e-mail",
+      "contactPhone": "Call",
+      "contactWhatsapp": "Message on WhatsApp",
+      "contactCalendar": "Book a time",
+      "enlarge": "Enlarge, picture {n} of {total}",
+      "pictureOf": "Picture {n} of {total}",
+      "previousPicture": "Previous picture",
+      "nextPicture": "Next picture",
+      "viewer": "Picture viewer",
+      "closeViewer": "Close",
+      "railBack": "Scroll back",
+      "railOn": "Scroll forward",
+      "projectMissing": "This project no longer exists.",
+      "toPage": "To the page",
+      "plateLink": "Project 1 of {total}: {title}"
+    }
   },
   "directions": {
     "title": "Directions",
@@ -462,10 +518,10 @@
     "earlier": "Earlier directions",
     "poster": {
       "name": "Poster",
-      "tagline": "Eleven templates. Clear sections. Your photo first.",
+      "tagline": "Thirteen templates. Clear sections. Your photo first.",
       "description": "Built from the pages you sent: a full-width portrait or your logo, the name set like a gig poster, then titled sections — releases, shows with month tabs, mixes in a two-row rail, a two-up shop, partner tiles and videos. Pick a template, the content stays. The dashboard edits the page section by section.",
       "traits": [
-        "Six templates: Nocturne, Daylight, Marquee, Pulse, Atelier, Mono",
+        "Thirteen templates, from Nocturne to Tiefdruck",
         "Every color pair passes WCAG AA in every template",
         "Zero cookies, videos load only after a tap, ads are labelled"
       ],
@@ -513,7 +569,13 @@
       "live": "Live status",
       "brands": "Partners",
       "app": "App",
-      "repo": "GitHub skill"
+      "repo": "GitHub skill",
+      "project": "Project",
+      "about": "About me",
+      "tools": "Skills & tools",
+      "timeline": "Experience",
+      "quotes": "Testimonials",
+      "contact": "Contact & enquiry"
     },
     "blocks": "Blocks",
     "blockCount": "{count, plural, one {# block} other {# blocks}}",
@@ -620,12 +682,18 @@
     },
     "bloom": {
       "description": "Warm and friendly: the portrait in an arch, round bold type, big buttons."
+    },
+    "werkbogen": {
+      "description": "Calm and editorial: the work opens the page, a serif name, numbered captions, plenty of white space."
+    },
+    "tiefdruck": {
+      "description": "Dark and bold: huge type, projects as a numbered list, one electric blue."
     }
   },
   "marketing": {
     "meta": {
       "title": "Linkyo — One link. Everything you create.",
-      "description": "The creator page that looks premium in five minutes: eleven templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
+      "description": "The creator page that looks premium in five minutes: thirteen templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
     },
     "nav": {
       "features": "Features",
@@ -1022,7 +1090,7 @@
       }
     },
     "real": {
-      "metaDescription": "The creator page that looks premium in five minutes: eleven templates, music, shows and a shop. Free to start, data stored in Frankfurt.",
+      "metaDescription": "The creator page that looks premium in five minutes: thirteen templates, music, shows and a shop. Free to start, data stored in Frankfurt.",
       "analyticsBadge": "In the works",
       "freeAnalytics": "Cookie-free analytics (in the works)",
       "faqFree": "Yes. Templates, unlimited links and sections stay free; cookie-free analytics is in the works. Nothing that is free today becomes paid.",
@@ -1400,7 +1468,13 @@
         "brands": "Partners, sponsors or your team as logo tiles.",
         "live": "Shows when you're live on Twitch, YouTube or Kick.",
         "app": "An app from your videos: visitors get it from their own store in one tap.",
-        "repo": "A skill or repository from GitHub: visitors copy the install command in one tap."
+        "repo": "A skill or repository from GitHub: visitors copy the install command in one tap.",
+        "project": "A title and one sentence are enough. Add the rest later.",
+        "about": "Write the way you talk: who you are and who you work for.",
+        "tools": "Twelve at most. Fewer reads stronger.",
+        "timeline": "Your most important roles, six at most.",
+        "quotes": "Real quotes only, with a name or initials, and with permission.",
+        "contact": "One way, one button. It appears at the top, in the bar and at the end."
       },
       "addShort": "Add",
       "back": "Back"
@@ -1439,10 +1513,17 @@
         "events": "Dates & tickets",
         "product": "With price",
         "newsletter": "Email sign-up",
-        "brands": "Logo tiles",
+        "brands": "Names or logos",
         "live": "Twitch, YouTube, Kick",
         "app": "App Store & Google Play",
-        "repo": "With install command"
+        "repo": "With install command",
+        "project": "One piece of work, with its own page",
+        "about": "Who you are, with a portrait",
+        "tools": "Short lists, no bars",
+        "timeline": "Roles and years",
+        "quotes": "Real quotes, with permission",
+        "contact": "The one way to reach you",
+        "clients": "Names are enough; logos only with permission"
       },
       "photosHint": "Have photos on this device? One becomes an image, several a gallery.",
       "photos": "Upload photos",
@@ -1459,8 +1540,15 @@
         "links": "Links & contact",
         "media": "Photos, video & music",
         "sell": "Sell & events",
-        "layout": "Text & layout"
-      }
+        "layout": "Text & layout",
+        "portfolio": "Portfolio"
+      },
+      "presets": {
+        "clients": "Clients"
+      },
+      "asProject": "Add as a project",
+      "photosAsGallery": "As a gallery",
+      "photosAsProject": "As a project"
     },
     "editor": {
       "title": "Page",
@@ -1710,6 +1798,18 @@
         "color": "Color",
         "fonts": "Font",
         "buttons": "Buttons"
+      },
+      "projects": {
+        "label": "Work layout",
+        "auto": "Automatic (recommended)",
+        "autoHint": "Linkyo chooses by your content.",
+        "bento": "Grid",
+        "bentoHint": "For pictures",
+        "list": "List",
+        "listHint": "For texts and results",
+        "rail": "Row",
+        "railHint": "For a short series",
+        "forced": "There are not enough pictures or projects for this yet, so the list is shown."
       }
     },
     "analytics": {
@@ -1968,7 +2068,7 @@
         "look": {
           "short": "Look",
           "title": "Pick a look",
-          "lead": "Eleven templates, all with your photo and name. Try them — the preview changes instantly."
+          "lead": "Thirteen templates, all with your photo and name. Try them — the preview changes instantly."
         },
         "links": {
           "short": "Links",
@@ -2206,6 +2306,24 @@
           "links": "Apps from your videos (optional)",
           "linksHint": "Links from the App Store or Google Play, one per line. We turn them into app cards.",
           "extras": "More"
+        },
+        "photographer": {
+          "label": "Photographer",
+          "description": "Series, enquiries, clients",
+          "name": "Your name or studio",
+          "taglineHint": "e.g. \"Portrait and reportage in Leipzig\".",
+          "links": "More links (optional)",
+          "linksHint": "Website, Instagram, a video — one link per line.",
+          "extras": "For your clients"
+        },
+        "freelancer": {
+          "label": "Freelancer",
+          "description": "Show your work, get enquiries",
+          "name": "Your name",
+          "taglineHint": "e.g. \"Copy people understand on first read\".",
+          "links": "More links (optional)",
+          "linksHint": "Website, LinkedIn, a video — one link per line.",
+          "extras": "For your clients"
         }
       },
       "fields": {
@@ -2311,6 +2429,23 @@
       "fromAi": {
         "lead": "Your draft is in. Now choose your page's name and address.",
         "finish": "Finish my page"
+      },
+      "portfolio": {
+        "proofTitle": "Three things you are proud of",
+        "proofLead": "A title and one sentence are enough.",
+        "proofLeadVisual": "A title, one sentence and, if you like, a picture.",
+        "proofCoverN": "Picture for {n} (optional)",
+        "proofTitleN": "Title {n}",
+        "proofSentenceN": "Sentence for {n}",
+        "actionTitle": "How should people reach you?",
+        "ways": {
+          "calendar": "Booking link",
+          "email": "E-mail",
+          "whatsapp": "WhatsApp",
+          "phone": "Phone"
+        },
+        "actionAddress": "Address or number",
+        "actionLabel": "Button label"
       }
     },
     "ownPage": {
@@ -2372,7 +2507,15 @@
           "label": "Page language"
         },
         "own": "Use only profiles that are yours.",
-        "privacy": "To make the draft, we send what you entered and the texts and links we found to our AI provider, Anthropic (USA). We never send photos, and we remove email addresses and phone numbers first."
+        "privacy": "To make the draft, we send what you entered and the texts and links we found to our AI provider, Anthropic (USA). We never send photos, and we remove email addresses and phone numbers first.",
+        "notes": {
+          "title": "A piece of work",
+          "add": "Add a piece of work",
+          "placeholder": "Key points are enough: Who was it for? What did you do? What came of it?",
+          "promise": "Linkyo checks every number, year and client name against your notes and links. Read the draft before you publish.",
+          "remove": "Remove the note",
+          "count": "{count} of 3"
+        }
       },
       "platform": {
         "website": "Website: we read its title, description and links if the site allows it.",
@@ -2382,7 +2525,10 @@
         "instagram": "Instagram shares no profile data. We take your @name; you add the photo and bio.",
         "youtube": "YouTube: we link your channel.",
         "x": "X: the link only.",
-        "other": "We take over the link."
+        "other": "We take over the link.",
+        "github": "GitHub repository: we read its name, description, language and topics.",
+        "linkOnly": "We don't read {platform}. The link becomes a button.",
+        "githubProfile": "Paste the links of single repositories. We don't read a whole profile."
       },
       "quota": {
         "free": "Your first AI draft is free.",
@@ -2414,7 +2560,12 @@
           "missing": "What's missing"
         },
         "read": "What we read",
-        "disclosure": "Made with AI. Check everything before you publish."
+        "disclosure": "Made with AI. Check everything before you publish.",
+        "onlyYou": "Only you know this",
+        "askResult": "What came of “{title}”?",
+        "askYear": "Which year was “{title}”?",
+        "askPicture": "Add a picture or a number to “{title}”.",
+        "confirmResult": "Is the result for “{title}” right?"
       },
       "actions": {
         "apply": "Use this page",
@@ -2520,6 +2671,196 @@
       "reviseSuperseded": "There is a newer proposal. Request changes there.",
       "ended": "This order has ended. The proposal can no longer be used or changed.",
       "reviseRefused": "That isn't possible right now. We have reloaded the current state."
+    },
+    "portfolio": {
+      "sentence": "In one sentence",
+      "sentenceHint": "What was it, and who was it for?",
+      "coverHint": "Without a picture we show your result or the title large.",
+      "groups": {
+        "result": "Result",
+        "story": "Story",
+        "pictures": "Pictures",
+        "forRole": "For and role",
+        "links": "Links",
+        "code": "Code",
+        "address": "Address"
+      },
+      "figureValue": "Figure",
+      "figureLabel": "Label",
+      "figuresHint": "Only numbers you can stand behind.",
+      "addFigure": "Add a figure",
+      "resultText": "The result in words",
+      "storyAbout": "Lead paragraph",
+      "storyProblem": "Starting point",
+      "storySolution": "Approach",
+      "client": "Who it was for",
+      "clientHint": "A client, an employer or a publication.",
+      "hideClient": "Confidential, no name",
+      "hideClientHint": "Your page then says “Confidential client”. We don't store the name: whatever is in a page can be read publicly.",
+      "roleHint": "e.g. “Concept, photography” or “Backend, alone”",
+      "yearFrom": "From (year)",
+      "yearTo": "To (year)",
+      "untilToday": "Ongoing",
+      "yearOrder": "The end is before the start.",
+      "topics": "Topics",
+      "topicsHint": "Up to five. Tap “Add”, or separate with a comma.",
+      "addChip": "Add",
+      "removeChip": "Remove {label}",
+      "alt": "Picture description",
+      "altHint": "For people who can't see the picture. One sentence is enough.",
+      "noAlt": "Needs no description",
+      "caption": "Caption",
+      "addPictures": "Add pictures",
+      "pictureCount": "{count} of {max}",
+      "rights": "Only show work you are allowed to show. Client work, recognisable people and stock pictures need permission.",
+      "demoPictures": "The demo takes six pictures per project.",
+      "altMissing": "{count, plural, one {One picture is not shown yet: it has no description.} other {# pictures are not shown yet: they have no description.}}",
+      "describeAll": "Describe all",
+      "linkLabel": "Label (optional)",
+      "linkOnly": "We don't read {platform}. The link becomes a button; add pictures and text yourself.",
+      "linkKept": "We kept the link. Add a title and one sentence.",
+      "repoRefresh": "Refresh from GitHub",
+      "removeStars": "Hide the stars",
+      "codeText": "Code sample",
+      "codeHint": "30 lines at most.",
+      "codeLang": "Language",
+      "codeFile": "File name (optional)",
+      "codeTooLong": "That is more than 30 lines.",
+      "address": "Project address",
+      "addressKept": "The old address keeps working.",
+      "slugTaken": "Another project already uses this address.",
+      "slugTakeover": "This address used to belong to “{title}”. From now on it leads here.",
+      "slugLatinHint": "Type a short name in Latin letters. It appears in the link.",
+      "slugInvalid": "Lowercase letters, numbers and dashes only, 2 to 48 characters.",
+      "slugReserved": "This address is reserved.",
+      "next": {
+        "address": "Next step: give the project an address that says something.",
+        "alt": "Next step: describe your picture in one sentence.",
+        "codeOrStory": "Next step: add a code sample, or say what you built.",
+        "resultOrPicture": "Next step: add a result or a picture.",
+        "storyOrLink": "Next step: tell the story in three short parts, or add a link.",
+        "year": "Next step: add the year."
+      },
+      "page": {
+        "contact": "Next step: choose how people reach you.",
+        "secondProject": "Next step: add another piece of work.",
+        "quote": "Next step: ask a client for one sentence.",
+        "recent": "Your newest project is over three years old. Show something recent."
+      },
+      "group": "Projects ({count})",
+      "capNote": "Shown under “All projects”",
+      "tooMany": "A page takes 24 projects at most.",
+      "oneContact": "A page has exactly one contact block.",
+      "pageSize": "Your page is almost full. Remove pictures or text before adding more.",
+      "suggestOrder": "Suggest an order",
+      "orderApplied": "Reordered. You can undo it.",
+      "focus": {
+        "title": "Picture focus",
+        "open": "Choose the focus",
+        "hint": "Tap the most important spot. Cards crop around it; the project page shows the whole picture.",
+        "x": "Left to right",
+        "y": "Top to bottom",
+        "centre": "Centre",
+        "done": "Done"
+      },
+      "logoHint": "A logo is a trademark. Show it only if the client agreed. The name alone is enough.",
+      "about": {
+        "portrait": "Portrait (optional)",
+        "factLabel": "Label",
+        "factValue": "Value",
+        "addFact": "Add a fact",
+        "factsHint": "e.g. “Based in · Leipzig”"
+      },
+      "tools": {
+        "items": "Items",
+        "hint": "Tap “Add”, or separate with a comma."
+      },
+      "timeline": {
+        "role": "Role or degree",
+        "org": "Organisation",
+        "note": "One line about it",
+        "add": "Add an entry",
+        "entryN": "Entry {n}"
+      },
+      "quotes": {
+        "text": "Quote",
+        "name": "Name or initials",
+        "role": "The person's role",
+        "roleHint": "e.g. “Managing director, bakery”",
+        "photo": "Photo (optional)",
+        "about": "About which project?",
+        "aboutNone": "No particular one",
+        "consent": "I have permission to show this quote with the name.",
+        "consentMissing": "Without permission we can't show this quote.",
+        "add": "Add a quote",
+        "entryN": "Quote {n}"
+      },
+      "contact": {
+        "title": "Closing line",
+        "text": "One sentence (optional)",
+        "status": "Availability (optional)",
+        "statusHint": "e.g. “Free from March 2027”",
+        "statusUntil": "Show until",
+        "primary": "The one button",
+        "primaryLabel": "Label",
+        "primaryUrl": "Address",
+        "other": "Other ways",
+        "addWay": "Add a way",
+        "kinds": {
+          "email": "E-mail",
+          "phone": "Phone",
+          "whatsapp": "WhatsApp",
+          "calendar": "Calendar",
+          "cv": "CV",
+          "link": "Link"
+        },
+        "cvHint": "Link to a PDF you host yourself. Upload comes later.",
+        "steps": "How it works (up to three steps)",
+        "stepN": "Step {n}",
+        "presets": {
+          "call": "Book an intro call",
+          "email": "Send a message",
+          "whatsapp": "Message me on WhatsApp",
+          "phone": "Call me",
+          "project": "Start a project",
+          "shoot": "Book a shoot"
+        },
+        "closing": "A project in mind? I'd be glad to hear about it."
+      },
+      "ai": {
+        "write": "Write with AI from my notes",
+        "promise": "Linkyo checks every number, year and client name against your notes and links. Read the draft before you publish."
+      },
+      "titles": {
+        "work": {
+          "default": "From my work",
+          "designer": "Work",
+          "developer": "Projects",
+          "writer": "Writing",
+          "coach": "Client stories",
+          "lawyer": "Cases and articles"
+        },
+        "tools": {
+          "default": "Focus areas",
+          "designer": "Tools",
+          "developer": "Tech stack",
+          "lawyer": "Areas of law",
+          "writer": "Subjects"
+        },
+        "quotes": {
+          "default": "What clients say",
+          "developer": "What colleagues say"
+        },
+        "timeline": {
+          "default": "Experience"
+        },
+        "about": {
+          "default": "About me"
+        },
+        "clients": {
+          "default": "Clients"
+        }
+      }
     }
   },
   "preview": {
@@ -2550,7 +2891,8 @@
       "sample": "{name} · Example page for {kind}",
       "concept": "{name} · Concept on Linkyo",
       "prepared": "{name} on Linkyo"
-    }
+    },
+    "samplePictures": "The pictures are by the credited photographers."
   },
   "admin": {
     "meta": {
@@ -3726,7 +4068,11 @@
         "failed": "{source} didn't respond, so we're building without it.",
         "notFound": "{source}: not found",
         "tooLarge": "{source}: too large to read",
-        "blocked": "{source}: can't be reached"
+        "blocked": "{source}: can't be reached",
+        "linkOnly": "We don't read {platform}. The link becomes a button.",
+        "aiOptOut": "Your website asks AI tools not to read it. Paste the text instead.",
+        "rateLimited": "GitHub is not taking more requests from Linkyo right now. Try again at {time}, or type the details yourself.",
+        "githubProfile": "Paste the links of single repositories. We don't read a whole profile."
       },
       "stop": "Stop",
       "stopping": "Stopping …",

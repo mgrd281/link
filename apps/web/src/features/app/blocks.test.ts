@@ -1,7 +1,7 @@
 import { blockSchema, detectLink, hasImage, NO_IMAGE } from "@linkyo/blocks";
 import { describe, expect, it } from "vitest";
 
-import { ADD_GROUPS, ADDABLE, addGroups, blankBlock, blockFromLink, insertAt } from "./blocks";
+import { ADD_GROUPS, ADD_PRESETS, ADDABLE, addGroups, blankBlock, blockFromLink, insertAt, presetBlock } from "./blocks";
 import { KINDS } from "./kinds";
 import { sampleStats, totals } from "./sample-stats";
 import { validateBlock } from "./validate";
@@ -36,6 +36,26 @@ describe("the Add sheet's groups", () => {
 
   it("put every addable type in exactly one fixed group", () => {
     expect(sorted(Object.values(ADD_GROUPS).flat())).toEqual(sorted(ADDABLE));
+    expect(ADDABLE).toHaveLength(24);
+    expect(new Set(ADDABLE).size).toBe(24);
+  });
+
+  it("have a portfolio group: the project first, the way to get in touch last", () => {
+    expect(ADD_GROUPS.portfolio).toEqual(["project", "about", "tools", "timeline", "quotes", "contact"]);
+    expect(Object.keys(ADD_GROUPS)).toEqual(["links", "media", "sell", "portfolio", "layout"]);
+    expect(addGroups("music").map((group) => group.key)).toEqual(["suggested", "links", "media", "sell", "portfolio", "layout"]);
+    expect(addGroups("music").find((group) => group.key === "portfolio")?.types).toEqual(["project", "about", "tools", "timeline", "quotes", "contact"]);
+  });
+
+  it("offer clients as a preset of the portfolio group: a brands block that starts as names", () => {
+    expect(ADD_PRESETS).toEqual({ portfolio: ["clients"] });
+    // A preset is no type: the groups above stay a partition of the addable types.
+    expect(ADDABLE as string[]).not.toContain("clients");
+    const block = presetBlock("clients", { clients: "Kunden" });
+    expect(block).toMatchObject({ type: "brands", title: "Kunden", columns: 3, items: [{ name: "" }], visible: true, highlight: false });
+    expect(block.type === "brands" && block.items[0] && "logo" in block.items[0]).toBe(false);
+    expect(validateBlock(block)).toEqual({ "items.0.name": "required" });
+    expect(validateBlock({ ...block, items: [{ name: "A regional utility" }] } as typeof block)).toBeNull();
   });
 
   it("list every type exactly once for every page kind, and without one", () => {
@@ -50,6 +70,14 @@ describe("the Add sheet's groups", () => {
     expect(addGroups("music")[0]).toEqual({ key: "suggested", types: ["music", "video", "events", "socials"] });
     expect(addGroups("other")[0]?.key).toBe("popular");
     expect(addGroups(undefined)[0]?.key).toBe("popular");
+  });
+
+  it.each([
+    [["designer", "photographer"], ["project", "gallery", "quotes", "contact"]],
+    [["developer", "engineer"], ["project", "repo", "tools", "contact"]],
+    [["freelancer", "writer", "journalist", "coach", "lawyer", "student"], ["project", "about", "quotes", "contact"]],
+  ])("pages that show work start with the project: %s", (kinds, types) => {
+    for (const kind of kinds) expect(addGroups(kind)[0], kind).toEqual({ key: "suggested", types });
   });
 });
 

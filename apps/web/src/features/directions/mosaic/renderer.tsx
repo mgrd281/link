@@ -375,6 +375,13 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
       );
     case "divider":
       return <hr className="col-span-2 my-2 border-creator-line" />;
+    // Portfolio blocks belong to the Poster direction; this one shows nothing for them.
+    case "project":
+    case "about":
+    case "tools":
+    case "timeline":
+    case "quotes":
+    case "contact":
     case "socials":
       return null;
   }
