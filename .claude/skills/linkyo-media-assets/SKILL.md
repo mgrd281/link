@@ -62,7 +62,11 @@ hero picture. Never show a real person's face in an illustration of a real custo
 ## The motion library: clips every creator can choose
 
 Original loops that fit more than one person go into Linkyo's motion library
-(`apps/web/src/features/creator/motion-library.ts`). The dashboard's profile sheet ("Bewegtes
+(`apps/web/src/features/creator/motion-library.ts`): today "Lagerarbeit" (`reach-truck-scene.html`),
+"Palette packen" (`pallet-scene.html`: order picking onto a pallet with a ring scanner and a pick list,
+then two laps of stretch film and a pallet jack that swaps the pallet; 18 s, starting on the wrapped
+pallet so the still shows the result) and "Scannen von Waren" (`scan-conveyor-scene.html`). The
+dashboard's profile sheet ("Bewegtes
 Kopfbild") shows them as tiles: still, name, length, and a button that plays the clip in its tile.
 Choosing one sets `profile.motion` to `sample:motion-<key>` and the header picture to the clip's
 first frame. These are the only clips a live creator page plays: `withoutThirdParties` drops every

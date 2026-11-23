@@ -35,6 +35,7 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex-makeup.jpg | Vitaly Gariev | https://unsplash.com/photos/woman-applying-makeup-in-front-of-a-mirror-Zi1R0uKTJSs | Unsplash License |
 | ex-mechanic.jpg | Jimmy Nilsson Masth | https://unsplash.com/photos/a-man-working-on-a-car-in-a-garage-jL9zfzTVSwY | Unsplash License |
 | ex-motion-lagerarbeit.jpg | Linkyo original illustration (first frame of public/media/motion/lagerarbeit.mp4) | .claude/skills/linkyo-media-assets/scripts/reach-truck-scene.html | Linkyo |
+| ex-motion-palette-packen.jpg | Linkyo original illustration (first frame of public/media/motion/palette-packen.mp4) | .claude/skills/linkyo-media-assets/scripts/pallet-scene.html | Linkyo |
 | ex-motion-ware-scannen.jpg | Linkyo original illustration (first frame of public/media/motion/ware-scannen.mp4) | .claude/skills/linkyo-media-assets/scripts/scan-conveyor-scene.html | Linkyo |
 | ex-ngo.jpg | Ismael Paramo | https://unsplash.com/photos/women-packing-food-bags-at-distribution-Cns0h4ypRyA | Unsplash License |
 | ex-painter.jpg | Vitaly Gariev | https://unsplash.com/photos/bearded-man-painting-in-art-studio-t_v0GguF9JQ | Unsplash License |

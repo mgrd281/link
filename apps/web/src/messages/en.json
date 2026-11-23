@@ -1633,6 +1633,7 @@
       "motionStop": "Stop {name}",
       "motionClips": {
         "lagerarbeit": "Warehouse work",
+        "palette-packen": "Packing a pallet",
         "ware-scannen": "Scanning goods"
       },
       "more": "More for the header",

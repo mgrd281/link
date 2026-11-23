@@ -34,6 +34,19 @@ export const MOTION_LIBRARY: readonly MotionClip[] = [
     },
   },
   {
+    key: "palette-packen",
+    poster: "sample:ex-motion-palette-packen",
+    w: 1080,
+    h: 1350,
+    seconds: 18,
+    topic: "warehouse",
+    alt: {
+      de: "Illustration: Ein Lagerist kommissioniert Kartons auf eine Palette und sichert sie mit Stretchfolie",
+      en: "Illustration: a warehouse worker picks cartons onto a pallet and secures the load with stretch film",
+      ar: "رسم توضيحي: عامل مستودع يجهّز الكراتين على منصة بضائع ويؤمّن الحمولة بغلاف النايلون",
+    },
+  },
+  {
     key: "ware-scannen",
     poster: "sample:ex-motion-ware-scannen",
     w: 1080,

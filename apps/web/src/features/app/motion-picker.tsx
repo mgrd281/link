@@ -130,7 +130,7 @@ export function MotionPicker({
       <p id={leadId} className="text-small font-regular text-fg-secondary -mt-2">
         {t("motionLead")}
       </p>
-      {/* Clips as tall tiles, two per row on phones and three in a wider sheet; then "none" and "own link" as
+      {/* Clips as tall tiles, three per row; then "none" and "own link" as
           short ones. One group of native radios: the arrow keys go through all of them. */}
       <div
         role="radiogroup"
@@ -138,7 +138,7 @@ export function MotionPicker({
         aria-describedby={leadId}
         className="grid grid-cols-1 gap-2"
       >
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2">
           {MOTION_LIBRARY.map((item) => {
             const title = t(`motionClips.${item.key}`);
             const playing = watching === item.key;
@@ -153,7 +153,7 @@ export function MotionPicker({
                   className="grid content-start gap-2 p-2"
                 >
                   <span className="aspect-portrait bg-canvas-muted relative block overflow-hidden rounded-md">
-                    <Image src={still} alt="" fill sizes={mediaSizes.half} className="object-cover" />
+                    <Image src={still} alt="" fill sizes={mediaSizes.third} className="object-cover" />
                     {playing && url ? (
                       <video
                         src={url}
@@ -166,27 +166,33 @@ export function MotionPicker({
                         className="absolute inset-0 size-full object-cover"
                       />
                     ) : null}
-                  </span>
-                  <span className="flex items-start justify-between gap-2 px-1 pb-1">
-                    <span className="grid min-w-0">
-                      <span className="text-small font-medium break-words">{title}</span>
-                      <span className="text-small font-regular text-fg-secondary">
-                        {t("motionSeconds", { seconds: item.seconds })}
+                    {/* The chosen clip's mark sits on its picture, so the name keeps the tile's whole width. */}
+                    {choice === item.key ? (
+                      <span className="border-line bg-surface-elevated text-fg absolute start-2 top-2 grid size-6 place-items-center rounded-full border">
+                        <Icon icon={Check} size="sm" />
                       </span>
+                    ) : null}
+                  </span>
+                  <span className="grid min-w-0 px-1 pb-1">
+                    <span className="text-small font-medium break-words">{title}</span>
+                    <span className="text-small font-regular text-fg-secondary">
+                      {t("motionSeconds", { seconds: item.seconds })}
                     </span>
-                    {choice === item.key ? <Icon icon={Check} size="sm" className="mt-0.5 shrink-0" /> : null}
                   </span>
                 </Tile>
                 {/* Outside the tile's label, so it is a control of its own: it plays the clip, it does not choose it.
-                  Opaque on hover too, so it stays readable over the moving picture. */}
+                  A 44 px target around a smaller disc, so it does not cover a narrow picture; the disc stays
+                  opaque on hover, readable over the moving picture. */}
                 <button
                   type="button"
                   aria-label={playing ? t("motionStop", { name: title }) : t("motionWatch", { name: title })}
                   aria-pressed={playing}
                   onClick={() => setWatching(playing ? null : item.key)}
-                  className="size-touch-target border-line bg-surface-elevated text-fg duration-micro hover:bg-canvas-muted focus-visible:focus-ring active:scale-pressed absolute end-3 top-3 grid place-items-center rounded-full border transition-[background-color,scale] motion-reduce:active:scale-none"
+                  className="group size-touch-target focus-visible:focus-ring absolute end-1 top-1 grid place-items-center rounded-full"
                 >
-                  <Icon icon={playing ? Pause : Play} size="sm" />
+                  <span className="size-control-sm border-line bg-surface-elevated text-fg duration-micro group-hover:bg-canvas-muted group-active:scale-pressed grid place-items-center rounded-full border transition-[background-color,scale] motion-reduce:group-active:scale-none">
+                    <Icon icon={playing ? Pause : Play} size="sm" />
+                  </span>
                 </button>
               </div>
             );

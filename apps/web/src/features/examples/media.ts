@@ -29,6 +29,7 @@ import exLogoSonnenkorn from "@/assets/examples/ex-logo-sonnenkorn.png";
 import exMakeup from "@/assets/examples/ex-makeup.jpg";
 import exMechanic from "@/assets/examples/ex-mechanic.jpg";
 import exMotionLagerarbeit from "@/assets/examples/ex-motion-lagerarbeit.jpg";
+import exMotionPalettePacken from "@/assets/examples/ex-motion-palette-packen.jpg";
 import exMotionWareScannen from "@/assets/examples/ex-motion-ware-scannen.jpg";
 import exNgo from "@/assets/examples/ex-ngo.jpg";
 import exPainter from "@/assets/examples/ex-painter.jpg";
@@ -254,6 +255,7 @@ export const exampleMedia = {
   "sample:ex-makeup": exMakeup,
   "sample:ex-mechanic": exMechanic,
   "sample:ex-motion-lagerarbeit": exMotionLagerarbeit,
+  "sample:ex-motion-palette-packen": exMotionPalettePacken,
   "sample:ex-motion-ware-scannen": exMotionWareScannen,
   "sample:ex-ngo": exNgo,
   "sample:ex-painter": exPainter,

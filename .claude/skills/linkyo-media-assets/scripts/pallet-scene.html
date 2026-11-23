@@ -1,0 +1,407 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  Linkyo original motion graphic "Palette packen": order picking and load securing. A warehouse worker
+  scans a carton in the rack with a ring scanner (the pick list on the rack ticks the line off), carries
+  it to a pallet and builds the order in two layers; then he wraps the pallet in stretch film, two laps,
+  and a check confirms it. A colleague's pallet jack takes the pallet away and brings an empty one.
+  Black, graphite and silver. Drawn from scratch in SVG; render(t) is a pure function of time, so the
+  frames are exact and the 18 s loop is seamless. It starts on the wrapped pallet (START), which makes
+  the best still. No text, no brands. The action stays inside the centre
+  of the frame, which phones show.
+-->
+<style>
+  html, body { margin: 0; background: #0a0a0b; }
+  svg { display: block; width: 1080px; height: 1350px; }
+</style>
+</head>
+<body>
+<svg id="scene" viewBox="0 0 1080 1350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0a0b"/><stop offset="0.66" stop-color="#151517"/><stop offset="1" stop-color="#0a0a0b"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1c1f"/><stop offset="0.4" stop-color="#131315"/><stop offset="1" stop-color="#0a0a0b"/>
+    </linearGradient>
+    <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2f2f4" stop-opacity="0.2"/><stop offset="1" stop-color="#f2f2f4" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2f2f3"/><stop offset="1" stop-color="#d6d7da"/>
+    </linearGradient>
+    <linearGradient id="boxDim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5b5c61"/><stop offset="1" stop-color="#46474b"/>
+    </linearGradient>
+    <linearGradient id="laser" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.6"/><stop offset="1" stop-color="#ffffff" stop-opacity="0.25"/>
+    </linearGradient>
+    <linearGradient id="rollG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#cfd0d4"/><stop offset="0.45" stop-color="#ffffff"/><stop offset="1" stop-color="#b9bbc0"/>
+    </linearGradient>
+    <pattern id="filmLines" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
+      <rect width="26" height="26" fill="#ffffff" opacity="0.13"/>
+      <rect width="26" height="3" fill="#ffffff" opacity="0.22"/>
+    </pattern>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="beam" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="3"/></filter>
+    <clipPath id="frame"><rect width="1080" height="1350"/></clipPath>
+    <clipPath id="floorClip"><rect x="-300" y="1083" width="1700" height="700"/></clipPath>
+    <linearGradient id="fadeGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <mask id="fadeDown" maskUnits="userSpaceOnUse" x="-300" y="1080" width="1700" height="300"><rect x="-300" y="1080" width="1700" height="260" fill="url(#fadeGrad)"/></mask>
+    <!-- A carton (origin: bottom-left), 124 × 88, with tape and a barcode label. -->
+    <g id="ctn">
+      <rect x="0" y="-88" width="124" height="88" rx="6" fill="url(#box)"/>
+      <rect x="53" y="-88" width="18" height="88" fill="#a7a9ae" opacity="0.7"/>
+      <g transform="translate(70 -64)"><rect width="46" height="28" rx="3" fill="#fff"/><g fill="#111113"><rect x="5" y="5" width="3" height="15"/><rect x="10" y="5" width="1.6" height="15"/><rect x="14" y="5" width="4" height="15"/><rect x="20" y="5" width="2" height="15"/><rect x="25" y="5" width="3" height="15"/><rect x="30" y="5" width="1.6" height="15"/><rect x="34" y="5" width="4" height="15"/></g></g>
+    </g>
+    <!-- A pallet seen from the front (origin: top-left of the top deck), 372 × 56. -->
+    <g id="pal">
+      <rect x="0" y="0" width="372" height="12" rx="2" fill="#8d8f95"/>
+      <rect x="0" y="12" width="372" height="2" fill="#5d5f64"/>
+      <rect x="0" y="14" width="40" height="30" fill="#6f7177"/><rect x="166" y="14" width="40" height="30" fill="#6f7177"/><rect x="332" y="14" width="40" height="30" fill="#6f7177"/>
+      <rect x="0" y="44" width="372" height="12" rx="2" fill="#7d7f85"/>
+    </g>
+    <g id="chk">
+      <circle r="40" fill="#ffffff" opacity="0.16" filter="url(#soft)"/>
+      <circle r="22" fill="#ededef"/>
+      <path d="M-10 1 L-3 8 L11 -7" stroke="#111113" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </defs>
+
+  <g clip-path="url(#frame)">
+   <g id="cam">
+    <rect x="-300" y="-300" width="1700" height="1950" fill="url(#sky)"/>
+    <g id="far"></g>
+    <polygon points="230,96 330,96 470,1080 90,1080" fill="url(#cone)"/>
+    <polygon points="700,96 800,96 940,1080 560,1080" fill="url(#cone)"/>
+    <rect x="236" y="84" width="88" height="12" rx="6" fill="#f4f4f6"/><rect x="706" y="84" width="88" height="12" rx="6" fill="#f4f4f6"/>
+    <rect x="220" y="74" width="120" height="12" rx="4" fill="#2a2a2e"/><rect x="690" y="74" width="120" height="12" rx="4" fill="#2a2a2e"/>
+    <rect x="-300" y="1080" width="1700" height="600" fill="url(#floor)"/>
+    <rect x="-300" y="1080" width="1700" height="3" fill="#3a3a3e"/>
+    <g clip-path="url(#floorClip)" mask="url(#fadeDown)" opacity="0.14"><use href="#world" transform="translate(0 2163) scale(1 -1)"/></g>
+    <g id="dust" fill="#f2f2f3"></g>
+
+    <g id="world">
+      <!-- The picking rack on the left, with the pick list on its post. -->
+      <g id="rack">
+        <rect x="40" y="380" width="14" height="700" fill="#2b2c30"/>
+        <rect x="336" y="380" width="14" height="700" fill="#2b2c30"/>
+        <g fill="#232326"><rect x="40" y="420" width="310" height="10"/><rect x="40" y="640" width="310" height="10"/><rect x="40" y="860" width="310" height="10"/><rect x="40" y="1062" width="310" height="10"/></g>
+        <g id="rackBoxes"></g>
+        <!-- The pick slot: the carton taken next; a new one rolls forward after each pick. -->
+        <g id="slot"><use href="#ctn" x="200" y="860"/><rect id="slotShade" x="200" y="772" width="124" height="88" rx="6" fill="#0a0a0b" opacity="0"/></g>
+      </g>
+      <g id="terminal">
+        <rect x="350" y="486" width="22" height="8" fill="#2b2c30"/>
+        <rect x="368" y="420" width="140" height="122" rx="10" fill="#121214"/>
+        <rect x="376" y="428" width="124" height="106" rx="5" fill="#1f2023"/>
+        <g id="rows"></g>
+        <g id="termOk" opacity="0"><circle cx="438" cy="481" r="26" fill="#ededef"/><path d="M425 481 L434 490 L451 471" stroke="#111113" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <circle id="termGlow" cx="438" cy="481" r="90" fill="url(#glow)" opacity="0"/>
+      </g>
+      <!-- The film roll waits on the floor between rack and pallet. -->
+      <g id="rollFloor"></g>
+
+      <g id="backLayer"></g>
+      <g id="jack">
+        <rect id="fork" x="0" y="1046" width="360" height="12" rx="4" fill="#2b2c30"/>
+        <g id="jackBody">
+          <rect x="0" y="996" width="44" height="72" rx="8" fill="#232427"/>
+          <circle cx="22" cy="1066" r="13" fill="#3a3b40"/><circle cx="22" cy="1066" r="5" fill="#121214"/>
+          <path d="M26 1002 L190 740" stroke="#2b2c30" stroke-width="12" stroke-linecap="round"/>
+          <rect x="176" y="714" width="40" height="14" rx="7" fill="#3a3b40" transform="rotate(-58 196 721)"/>
+        </g>
+      </g>
+      <g id="load">
+        <g id="stack"></g>
+        <use href="#pal" x="578" y="1024"/>
+        <g id="film">
+          <rect id="band0" x="574" y="930" width="0" height="102" fill="url(#filmLines)"/>
+          <rect id="band1" x="574" y="842" width="0" height="98" fill="url(#filmLines)"/>
+          <polygon id="sheet" points="0,0 0,0 0,0 0,0" fill="#ffffff" opacity="0.12"/>
+        </g>
+        <use id="bigCheck" href="#chk" opacity="0"/>
+      </g>
+      <g id="frontLayer"></g>
+      <g id="fx">
+        <g id="scan" opacity="0">
+          <polygon id="scanFan" points="0,0 0,0 0,0" fill="url(#laser)"/>
+          <line id="scanLine" stroke="#ffffff" stroke-width="10" filter="url(#beam)"/>
+          <line id="scanCore" stroke="#ffffff" stroke-width="3"/>
+          <circle id="scanDot" r="22" fill="url(#glow)"/>
+        </g>
+        <use id="pickCheck" href="#chk" opacity="0"/>
+      </g>
+
+      <!-- The worker: helmet, reflective vest, a ring scanner on his hand. Moved between the layers. -->
+      <g id="worker">
+        <g id="legs">
+          <line id="legL" stroke="#232427" stroke-width="34" stroke-linecap="round"/>
+          <line id="legR" stroke="#232427" stroke-width="34" stroke-linecap="round"/>
+          <rect id="bootL" width="46" height="16" rx="6" fill="#121214"/>
+          <rect id="bootR" width="46" height="16" rx="6" fill="#121214"/>
+        </g>
+        <g id="body">
+          <rect x="-66" y="700" width="132" height="200" rx="40" fill="#2a2b2f"/>
+          <path d="M-60 776 L60 776" stroke="#e9e9eb" stroke-width="10" stroke-linecap="round"/>
+          <path d="M-60 806 L60 806" stroke="#bfc1c6" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+          <rect x="-16" y="666" width="32" height="40" rx="10" fill="#b98262"/>
+          <g id="head">
+            <circle cx="0" cy="636" r="40" fill="#c48f6f"/>
+            <path d="M-44 630 Q-44 582 2 578 Q46 582 46 626 L54 632 L-44 632 Z" fill="#f4f6fa"/>
+            <rect x="34" y="624" width="32" height="9" rx="4" fill="#f4f6fa"/>
+            <rect x="-38" y="616" width="84" height="6" rx="3" fill="#1a1a1c"/>
+          </g>
+        </g>
+        <path id="armL" stroke="#2a2b2f" stroke-width="30" stroke-linecap="round" fill="none"/>
+        <path id="armR" stroke="#2a2b2f" stroke-width="30" stroke-linecap="round" fill="none"/>
+        <use id="held" href="#ctn" opacity="0"/>
+        <g id="roll" opacity="0">
+          <rect x="-16" y="-40" width="32" height="80" rx="6" fill="url(#rollG)"/>
+          <rect x="-6" y="-46" width="12" height="8" rx="3" fill="#4a4c52"/><rect x="-6" y="38" width="12" height="8" rx="3" fill="#4a4c52"/>
+        </g>
+        <circle id="handL" r="15" fill="#b98262"/>
+        <circle id="handR" r="15" fill="#b98262"/>
+        <rect id="ring" width="20" height="12" rx="4" fill="#121214"/>
+      </g>
+    </g>
+   </g>
+  </g>
+</svg>
+<script>
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const T = 18, C = 2, PICK = 400, ROLL_X = 500;
+const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
+const ease = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, e) => a + (b - a) * e;
+const mix = (p, q, e) => ({ x: lerp(p.x, q.x, e), y: lerp(p.y, q.y, e) });
+const back = (x) => { x = clamp(x); const c = 2.70158; return 1 + c * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2); };
+const add = (parent, tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+/** Slot k on the pallet: three columns, two layers. */
+const SLOT = (k) => ({ x: 582 + (k % 3) * 122, b: k < 3 ? 1024 : 936 });
+
+(() => {
+  const far = $("far");
+  for (let i = -1; i < 7; i++) {
+    const x = i * 230 + 20;
+    add(far, "rect", { x, y: 260, width: 12, height: 820, fill: "#1c1c1f" });
+    add(far, "rect", { x: x + 150, y: 260, width: 12, height: 820, fill: "#1c1c1f" });
+    for (const y of [430, 610, 790]) add(far, "rect", { x: x - 6, y, width: 180, height: 8, fill: "#232326" });
+    for (const y of [430, 610, 790, 1080]) if ((i + y) % 3 !== 0) add(far, "rect", { x: x + 18, y: y - 92, width: 126, height: 88, rx: 4, fill: "#1f1f22" });
+  }
+  const rb = $("rackBoxes");
+  for (const [x, y] of [[66, 420], [200, 420], [66, 640], [200, 640], [66, 860], [66, 1062], [200, 1062]]) add(rb, "use", { href: "#ctn", x, y });
+  // Cartons further back in the rack read darker.
+  for (const [x, y] of [[66, 420], [200, 420], [66, 1062], [200, 1062]]) add(rb, "rect", { x, y: y - 88, width: 124, height: 88, rx: 6, fill: "#0a0a0b", opacity: 0.35 });
+  const rows = $("rows");
+  for (let r = 0; r < 6; r++) {
+    const g = add(rows, "g", { id: "row" + r });
+    add(g, "rect", { x: 386, y: 436 + r * 16, width: 9, height: 9, rx: 2, fill: "none", stroke: "#6b6d73", "stroke-width": 1.5, id: "box" + r });
+    add(g, "rect", { x: 402, y: 438 + r * 16, width: 86 - (r % 3) * 14, height: 5, rx: 2.5, fill: "#4a4c52", id: "bar" + r });
+  }
+  const stack = $("stack");
+  for (let k = 0; k < 6; k++) { const s = SLOT(k); add(stack, "use", { href: "#ctn", x: s.x, y: s.b, id: "placed" + k }); }
+  const rf = $("rollFloor");
+  const g = add(rf, "g", { id: "rollRest", transform: `translate(${ROLL_X} 1040)` });
+  add(g, "rect", { x: -16, y: -40, width: 32, height: 80, rx: 6, fill: "url(#rollG)" });
+  add(g, "rect", { x: -6, y: -46, width: 12, height: 8, rx: 3, fill: "#4a4c52" });
+  const dust = $("dust");
+  for (let i = 0; i < 30; i++) { const c = add(dust, "circle", { r: 1.2 + (i % 3) * 0.7 }); c.dataset.x = (i % 2 ? 280 : 750) + Math.sin(i * 12.9898) * 120; c.dataset.y = 160 + ((i * 97) % 820); }
+})();
+
+/** Where the worker is at time t, how low he bends, and in which layer he is drawn. */
+function walk(t) {
+  if (t < 12) {
+    const k = Math.floor(t / C), p = t - k * C, sc = SLOT(k).x + 62;
+    if (p < 0.42) return PICK;
+    if (p < 1.25) return lerp(PICK, sc, ease(seg(p, 0.42, 1.25)));
+    if (p < 1.52) return sc;
+    return lerp(sc, PICK, ease(seg(p, 1.52, 2)));
+  }
+  const u = t - 12;
+  if (u < 0.3) return lerp(PICK, ROLL_X, ease(seg(u, 0, 0.22)));
+  if (u < 1.0) return lerp(ROLL_X, 1020, ease(seg(u, 0.3, 1.0)));
+  if (u < 1.55) return lerp(1020, ROLL_X, ease(seg(u, 1.0, 1.55)));
+  if (u < 2.25) return lerp(ROLL_X, 1020, ease(seg(u, 1.55, 2.25)));
+  if (u < 2.8) return lerp(1020, ROLL_X, ease(seg(u, 2.25, 2.8)));
+  if (u < 3.05) return ROLL_X;
+  if (u < 3.45) return lerp(ROLL_X, PICK, ease(seg(u, 3.05, 3.45)));
+  return PICK;
+}
+
+function draw(t) {
+  t = ((t % T) + T) % T;
+  const wx = walk(t);
+  const speed = Math.abs(walk(t + 0.02) - walk(t - 0.02)) / 0.04;
+  const moving = clamp(speed / 260);
+  const stride = Math.sin(wx / 34);
+  const bob = -5 * Math.abs(stride) * moving;
+  let dip = 0, front = false, look = 0;
+  const rest = (d) => ({ L: { x: wx - 72, y: 884 + d + 10 * stride * moving }, R: { x: wx + 72, y: 884 + d - 10 * stride * moving } });
+  let hands = null, held = null, roll = null, scanOn = 0, scanHand = null;
+
+  // The pick list: line k is ticked once carton k is scanned; a new list comes in at 16.6 s.
+  const ticked = (k) => (t >= k * C + 0.26 && t < 16.6 ? 1 : 0);
+  let placedCount = 0;
+
+  if (t < 12) {
+    const k = Math.floor(t / C), p = t - k * C, s = SLOT(k);
+    placedCount = k + (p >= 1.45 ? 1 : 0);
+    const r = rest(0);
+    const pickL = { x: 196, y: 816 }, pickR = { x: 328, y: 816 }, scanPt = { x: 352, y: 798 };
+    if (p < 0.16) {
+      hands = { L: mix(r.L, scanPt, ease(seg(p, 0.02, 0.1))), R: r.R };
+    } else if (p < 0.3) {
+      const e = ease(seg(p, 0.16, 0.3));
+      hands = { L: mix(scanPt, pickL, e), R: mix(r.R, pickR, e) };
+    }
+    scanOn = seg(p, 0.08, 0.11) * (1 - seg(p, 0.22, 0.27));
+    scanHand = p < 0.16 ? mix(r.L, scanPt, ease(seg(p, 0.02, 0.1))) : scanPt;
+    if (p >= 0.3 && p < 1.45) {
+      if (p < 0.42) { const e = ease(seg(p, 0.3, 0.42)); held = { x: lerp(200, PICK - 62, e), b: lerp(860, 828, e) }; }
+      else if (p < 1.25) held = { x: wx - 62, b: 828 };
+      else held = { x: s.x, b: lerp(828, s.b, ease(seg(p, 1.25, 1.45))) };
+      hands = { L: { x: held.x - 4, y: held.b - 44 }, R: { x: held.x + 128, y: held.b - 44 } };
+    }
+    dip = (k < 3 ? 26 : 10) * Math.sin(Math.PI * seg(p, 1.18, 1.62));
+    if (p >= 1.45 && p < 1.62) {
+      const e = ease(seg(p, 1.45, 1.62)), r2 = rest(dip);
+      hands = { L: mix({ x: s.x - 4, y: s.b - 44 }, r2.L, e), R: mix({ x: s.x + 128, y: s.b - 44 }, r2.R, e) };
+    }
+    // The slot: its carton is lifted out, then the next one rolls forward.
+    const gone = p >= 0.3 && p < 0.45;
+    const comeIn = seg(p, 0.45, 0.85);
+    const slotScale = p >= 0.45 && p < 0.85 ? lerp(0.86, 1, ease(comeIn)) : 1;
+    $("slot").setAttribute("opacity", gone ? 0 : 1);
+    $("slot").setAttribute("transform", `translate(262 860) scale(${slotScale}) translate(-262 -860)`);
+    $("slotShade").setAttribute("opacity", p >= 0.45 && p < 0.85 ? 0.7 * (1 - ease(comeIn)) : 0);
+    look = p < 0.3 ? -10 * Math.sin(Math.PI * seg(p, 0, 0.3)) : p < 0.5 ? -8 * Math.sin(Math.PI * seg(p, 0.26, 0.5)) : 0;
+  } else {
+    placedCount = 6;
+    $("slot").setAttribute("opacity", 1);
+    $("slot").setAttribute("transform", "");
+    $("slotShade").setAttribute("opacity", 0);
+    const u = t - 12;
+    const lap1 = u >= 0.3 && u < 1.0, lap2 = u >= 1.55 && u < 2.25;
+    front = lap1 || lap2;
+    const rollHeld = u >= 0.22 && u < 2.95;
+    // Bending to take the roll and to put it back; low for the first lap, upright for the second.
+    dip = 30 * Math.sin(Math.PI * seg(u, 0.08, 0.36)) + 30 * Math.sin(Math.PI * seg(u, 2.8, 3.08))
+      + (u >= 0.3 && u < 1.55 ? 22 * Math.min(seg(u, 0.3, 0.4), 1 - seg(u, 1.3, 1.55)) : 0);
+    const ry = u < 1.4 ? 982 : 893;
+    if (rollHeld) {
+      roll = { x: wx, y: u < 0.3 ? lerp(1040, ry, ease(seg(u, 0.22, 0.3))) : u > 2.8 ? lerp(ry, 1040, ease(seg(u, 2.8, 2.95))) : ry };
+      hands = { L: { x: roll.x - 22, y: roll.y + 4 }, R: { x: roll.x + 22, y: roll.y - 4 } };
+    } else if (u < 0.22) {
+      const r = rest(dip), e = ease(seg(u, 0.1, 0.22));
+      hands = { L: mix(r.L, { x: ROLL_X - 22, y: 1044 }, e), R: mix(r.R, { x: ROLL_X + 22, y: 1036 }, e) };
+    } else if (u < 3.15) {
+      const r = rest(dip), e = ease(seg(u, 2.95, 3.15));
+      hands = { L: mix({ x: ROLL_X - 22, y: 1044 }, r.L, e), R: mix({ x: ROLL_X + 22, y: 1036 }, r.R, e) };
+    }
+    $("rollRest").setAttribute("opacity", rollHeld ? 0 : 1);
+    // The film: each lap's band grows behind the roll as he walks along the front.
+    const edge = (on, done) => (done ? 380 : on ? clamp(wx - 574, 0, 380) : 0);
+    $("band0").setAttribute("width", t >= 16.6 ? 0 : edge(lap1, u >= 1.0));
+    $("band1").setAttribute("width", t >= 16.6 ? 0 : edge(lap2, u >= 2.25));
+    if (front && roll && wx > 954) {
+      const top = lap1 ? 930 : 842, h = lap1 ? 102 : 98;
+      $("sheet").setAttribute("points", `954,${top} ${roll.x},${roll.y - 36} ${roll.x},${roll.y + 36} 954,${top + h}`);
+    } else $("sheet").setAttribute("points", "0,0 0,0 0,0 0,0");
+    look = u > 3.5 && u < 4.6 ? 6 * Math.sin(Math.PI * seg(u, 3.5, 4.6)) : u > 4.6 ? -8 * Math.sin(Math.PI * seg(u, 4.6, 5.2)) : 0;
+  }
+  if (t < 12) { $("band0").setAttribute("width", 0); $("band1").setAttribute("width", 0); $("sheet").setAttribute("points", "0,0 0,0 0,0 0,0"); $("rollRest").setAttribute("opacity", 1); }
+
+  // The worker's layer: in front of the pallet while he walks the front with the roll.
+  const parent = front ? $("frontLayer") : $("backLayer");
+  if ($("worker").parentNode !== parent) parent.appendChild($("worker"));
+  if (!hands) hands = rest(dip);
+  const y0 = dip + bob;
+  $("body").setAttribute("transform", `translate(${wx} ${y0})`);
+  $("head").setAttribute("transform", `rotate(${look} 0 676)`);
+  for (const [side, sign] of [["L", -1], ["R", 1]]) {
+    const hip = { x: wx + 22 * sign, y: 888 + y0 };
+    const foot = { x: wx + 22 * sign + 26 * stride * moving * (sign === -1 ? 1 : -1) + sign * dip * 0.4, y: 1064 };
+    const leg = $("leg" + side);
+    leg.setAttribute("x1", hip.x); leg.setAttribute("y1", hip.y); leg.setAttribute("x2", foot.x); leg.setAttribute("y2", foot.y);
+    $("boot" + side).setAttribute("x", foot.x - 23 + sign * 6); $("boot" + side).setAttribute("y", 1064);
+    const sh = { x: wx + 56 * sign, y: 730 + y0 }, h = hands[side];
+    const mid = { x: (sh.x + h.x) / 2 + 18 * sign, y: Math.max(sh.y, h.y) - Math.abs(h.y - sh.y) / 2 + 34 };
+    $("arm" + side).setAttribute("d", `M${sh.x} ${sh.y} Q${mid.x} ${mid.y} ${h.x} ${h.y}`);
+    $("hand" + side).setAttribute("cx", h.x); $("hand" + side).setAttribute("cy", h.y);
+  }
+  $("ring").setAttribute("x", hands.L.x - 4); $("ring").setAttribute("y", hands.L.y - 18);
+  $("held").setAttribute("opacity", held ? 1 : 0);
+  if (held) { $("held").setAttribute("x", held.x); $("held").setAttribute("y", held.b); }
+  $("roll").setAttribute("opacity", roll ? 1 : 0);
+  if (roll) $("roll").setAttribute("transform", `translate(${roll.x} ${roll.y})`);
+
+  // Scan: a fan from the ring scanner to the label of the carton in the slot.
+  $("scan").setAttribute("opacity", scanOn);
+  if (scanOn > 0) {
+    const hx = hands.L.x - 4, hy = hands.L.y - 12, lx = 270, sy = 800 + 18 * ease(seg(t % C, 0.1, 0.22));
+    $("scanFan").setAttribute("points", `${lx},${sy - 2} ${hx},${hy} ${lx},${sy + 2} ${lx + 46},${sy + 2} ${lx + 46},${sy - 2}`);
+    for (const id of ["scanLine", "scanCore"]) { const e = $(id); e.setAttribute("x1", lx - 4); e.setAttribute("x2", lx + 50); e.setAttribute("y1", sy); e.setAttribute("y2", sy); }
+    $("scanDot").setAttribute("cx", hx); $("scanDot").setAttribute("cy", hy);
+  }
+  // A check pops above the scanned carton and fades.
+  const pc = t < 12 ? t % C : 9;
+  const pcOn = seg(pc, 0.24, 0.34) * (1 - seg(pc, 0.8, 1.05));
+  $("pickCheck").setAttribute("opacity", pcOn);
+  $("pickCheck").setAttribute("transform", `translate(262 ${742 - 16 * seg(pc, 0.24, 0.6)}) scale(${0.6 + 0.4 * back(seg(pc, 0.24, 0.42))})`);
+
+  // The pick list.
+  const reset = seg(t, 16.6, 16.85), refill = seg(t, 16.85, 17.2);
+  for (let r = 0; r < 6; r++) {
+    const on = ticked(r);
+    $("box" + r).setAttribute("fill", on ? "#ededef" : "none");
+    $("bar" + r).setAttribute("fill", on ? "#7d7f85" : r === Math.min(placedCount, 5) && t < 12 ? "#c9cacf" : "#4a4c52");
+    $("row" + r).setAttribute("opacity", t >= 16.6 ? (t < 16.85 ? 1 - reset : refill) : 1);
+  }
+  const done = t >= 11.45 && t < 16.6 ? seg(t, 11.45, 11.6) * (1 - seg(t, 12.2, 12.5)) : 0;
+  $("termOk").setAttribute("opacity", done);
+  $("termGlow").setAttribute("opacity", 0.4 * seg(t % C, 0.26, 0.3) * (1 - seg(t % C, 0.3, 0.7)) * (t < 12 ? 1 : 0) + 0.2 * done);
+
+  // The pallet: cartons as placed; after 16.4 s (out of sight) it comes back empty.
+  for (let k = 0; k < 6; k++) $("placed" + k).setAttribute("opacity", k < placedCount && t < 16.6 ? 1 : 0);
+  const big = seg(t, 14.85, 15.05) * (1 - seg(t, 15.7, 15.9));
+  $("bigCheck").setAttribute("opacity", big);
+  $("bigCheck").setAttribute("transform", `translate(764 ${790 - 14 * seg(t, 14.85, 15.3)}) scale(${(0.6 + 0.4 * back(seg(t, 14.85, 15.1))) * 1.25})`);
+
+  // The pallet jack: in, lift, out with the pallet; back with an empty one, set down, away.
+  const OUT = 640, AWAY = 560;
+  let jackDx = AWAY, loadDx = 0, lift = 0;
+  if (t >= 15.5 && t < 16.0) jackDx = lerp(AWAY, 0, ease(seg(t, 15.5, 16.0)));
+  else if (t >= 16.0 && t < 16.1) { jackDx = 0; lift = 8 * ease(seg(t, 16.0, 16.1)); }
+  else if (t >= 16.1 && t < 16.6) { lift = 8; loadDx = OUT * ease(seg(t, 16.1, 16.6)); jackDx = loadDx; }
+  else if (t >= 16.6 && t < 17.15) { lift = 8; loadDx = OUT * (1 - ease(seg(t, 16.6, 17.15))); jackDx = loadDx; }
+  else if (t >= 17.15 && t < 17.25) { jackDx = 0; lift = 8 * (1 - ease(seg(t, 17.15, 17.25))); }
+  else if (t >= 17.25) jackDx = lerp(0, AWAY, ease(seg(t, 17.25, 17.95)));
+  $("load").setAttribute("transform", `translate(${loadDx} ${-lift})`);
+  $("fork").setAttribute("x", 600 + jackDx); $("fork").setAttribute("y", 1046 - lift);
+  $("jackBody").setAttribute("transform", `translate(${960 + jackDx} 0)`);
+
+  // Gentle periodic camera drift (seamless over 18 s), phone-safe around x 600.
+  const a = (t / T) * Math.PI * 2;
+  const zoom = 1.1 + 0.025 * Math.sin(a);
+  const cx = 600 + 26 * Math.sin(a), cy = 790 + 12 * Math.cos(a);
+  $("cam").setAttribute("transform", `translate(${540 - cx * zoom} ${700 - cy * zoom}) scale(${zoom})`);
+  $("far").setAttribute("transform", `translate(${(cx - 600) * 0.4} 0)`);
+  const dust = $("dust").children;
+  for (let i = 0; i < dust.length; i++) { const d = dust[i], ph = i * 2.399; d.setAttribute("cx", Number(d.dataset.x) + Math.sin(a + ph) * 16); d.setAttribute("cy", Number(d.dataset.y) + Math.cos(a * (i % 2 ? 1 : 2) + ph) * 22); d.setAttribute("opacity", 0.12 + 0.18 * (Math.sin(a * 2 + ph) + 1) / 2); }
+}
+// The loop starts on the finished, wrapped pallet: frame 0 is the still, so it should show the result.
+const START = 15.4;
+window.render = (t) => draw(t + START);
+window.render(0);
+</script>
+</body>
+</html>

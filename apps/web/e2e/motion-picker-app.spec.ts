@@ -10,6 +10,8 @@ import { enterDemoCode } from "./auth";
  */
 
 const STORAGE_KEY = "linkyo.demo.v1";
+/** Linkyo's clips in the picker (features/creator/motion-library.ts); "None" and "Own link" come on top. */
+const MOTION_CLIPS = 3;
 
 let counter = 0;
 const unique = () => `${Date.now().toString(36)}${(counter++).toString(36)}`;
@@ -60,7 +62,7 @@ test.describe("profile: moving header from Linkyo's clips", () => {
     const sheet = await openPicker(page);
     const group = sheet.getByRole("radiogroup", { name: "Moving header" });
     await expect(group).toBeVisible();
-    await expect(group.getByRole("radio")).toHaveCount(4);
+    await expect(group.getByRole("radio")).toHaveCount(MOTION_CLIPS + 2);
     await expect(group.getByRole("radio", { name: "None" })).toBeChecked();
 
     // Watching plays the clip in its tile and chooses nothing.
@@ -77,8 +79,8 @@ test.describe("profile: moving header from Linkyo's clips", () => {
     await group.getByText("Scanning goods").click();
     await expect(group.getByRole("radio", { name: /Scanning goods/ })).toBeChecked();
     await page.keyboard.press("ArrowLeft");
-    await expect(group.getByRole("radio", { name: /Warehouse work/ })).toBeChecked();
-    await expect(group.getByRole("radio", { name: /Warehouse work/ })).toBeFocused();
+    await expect(group.getByRole("radio", { name: /Packing a pallet/ })).toBeChecked();
+    await expect(group.getByRole("radio", { name: /Packing a pallet/ })).toBeFocused();
 
     const results = await new AxeBuilder({ page }).include("[role=dialog]").analyze();
     expect(results.violations.map((v) => v.id)).toEqual([]);
@@ -87,14 +89,14 @@ test.describe("profile: moving header from Linkyo's clips", () => {
     await save.click();
     await expect(sheet).toBeHidden();
     // The store is written a moment after the sheet closes.
-    await expect.poll(async () => (await storedProfile(page)).motion).toEqual({ src: "sample:motion-lagerarbeit" });
+    await expect.poll(async () => (await storedProfile(page)).motion).toEqual({ src: "sample:motion-palette-packen" });
     const saved = await storedProfile(page);
-    expect(saved.hero).toMatchObject({ src: "sample:ex-motion-lagerarbeit", w: 1080, h: 1350 });
-    expect(saved.hero?.alt).toMatch(/reach-truck driver/);
+    expect(saved.hero).toMatchObject({ src: "sample:ex-motion-palette-packen", w: 1080, h: 1350 });
+    expect(saved.hero?.alt).toMatch(/stretch film/);
 
     // Back in: the clip is chosen; None takes the clip and its still away again.
     await openPicker(page);
-    await expect(sheet.getByRole("radio", { name: /Warehouse work/ })).toBeChecked();
+    await expect(sheet.getByRole("radio", { name: /Packing a pallet/ })).toBeChecked();
     await sheet.getByRole("radiogroup", { name: "Moving header" }).getByText("None").click();
     await save.click();
     await expect(sheet).toBeHidden();
