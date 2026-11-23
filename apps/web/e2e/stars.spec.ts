@@ -75,7 +75,7 @@ test("a page prepared from a person's own application letter reads as his own pa
   expect(await name.evaluate((h1) => Math.round(h1.getBoundingClientRect().height / parseFloat(getComputedStyle(h1).lineHeight)))).toBe(1);
   // The motion graphic comes from our own origin and stays still for reduced motion.
   const clip = page.locator("video").first();
-  await expect(clip).toHaveAttribute("src", "/media/motion/sevag-lagerdienst.mp4");
+  await expect(clip).toHaveAttribute("src", "/media/motion/sevag-lagerarbeit.mp4");
   expect(await clip.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
   // The letter keeps its paragraphs: seven of them, the signature with its line break. On phones the
   // last five wait behind "Ganzes Anschreiben lesen".

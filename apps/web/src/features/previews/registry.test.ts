@@ -65,6 +65,6 @@ describe("Sevag's application page", () => {
     expect(found?.preview.invite).toBeUndefined();
     expect(found?.page.profile.hero?.src).toBe(`/prepared/${SEVAG_SLUG}/schubmast.jpg`);
     // The motion graphic is served from our own origin, like every sample clip (no third party).
-    expect(found?.page.profile.motion?.src).toBe("sample:motion-sevag-lagerdienst");
+    expect(found?.page.profile.motion?.src).toBe("sample:motion-sevag-lagerarbeit");
   });
 });

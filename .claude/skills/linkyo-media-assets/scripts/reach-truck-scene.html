@@ -174,8 +174,19 @@
         <rect x="292" y="574" width="18" height="16" rx="5" fill="#121214" transform="translate(48 0)"/>
         <rect id="beacon" x="342" y="568" width="14" height="11" rx="5" fill="#9a9ca2"/>
         <!-- Scanner unit on the front post. -->
-        <rect x="448" y="682" width="20" height="30" rx="5" fill="#121214"/>
-        <rect id="scanEye" x="462" y="690" width="6" height="12" rx="2" fill="#3d3e43"/>
+        <!-- The vehicle terminal under the roof (the warehouse system): rows of data, a check after each scan. -->
+        <path d="M436 614 L436 630" stroke="#121214" stroke-width="6"/>
+        <rect x="402" y="626" width="54" height="40" rx="6" fill="#121214"/>
+        <rect x="406" y="630" width="46" height="32" rx="3" fill="#1f2023"/>
+        <rect x="411" y="635" width="24" height="3" rx="1.5" fill="#9a9ca2"/>
+        <rect x="411" y="641" width="34" height="3" rx="1.5" fill="#4a4c52"/>
+        <rect x="411" y="647" width="28" height="3" rx="1.5" fill="#4a4c52"/>
+        <rect x="411" y="653" width="20" height="3" rx="1.5" fill="#4a4c52"/>
+        <g id="termOk" opacity="0">
+          <rect x="406" y="630" width="46" height="32" rx="3" fill="#ededef"/>
+          <path d="M419 646 L426 653 L440 638" stroke="#111113" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <circle id="termGlow" cx="429" cy="646" r="46" fill="url(#glow)" opacity="0"/>
         <!-- Seat. -->
         <path d="M342 852 L342 796 Q342 776 362 776 L374 776 Q384 776 382 788 L376 852 Z" fill="#0e0e10"/>
         <rect x="350" y="838" width="84" height="16" rx="8" fill="#0e0e10"/>
@@ -189,8 +200,20 @@
         <path d="M282 828 Q276 760 300 730 Q318 708 340 716 Q356 724 350 760 L336 828 Z" fill="#2a2b2f"/>
         <path d="M286 786 L346 778" stroke="#e9e9eb" stroke-width="9" stroke-linecap="round"/>
         <path d="M290 762 L348 754" stroke="#bfc1c6" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
-        <path d="M330 738 Q352 772 368 760" stroke="#2a2b2f" stroke-width="20" stroke-linecap="round" fill="none"/>
-        <circle cx="370" cy="757" r="9" fill="#b98262"/>
+        <g id="armWheel">
+          <path d="M330 738 Q352 772 368 760" stroke="#2a2b2f" stroke-width="20" stroke-linecap="round" fill="none"/>
+          <circle cx="370" cy="757" r="9" fill="#b98262"/>
+        </g>
+        <!-- Raised with a handheld scanner while scanning. -->
+        <g id="armScan" opacity="0">
+          <path d="M330 738 Q360 728 388 712" stroke="#2a2b2f" stroke-width="20" stroke-linecap="round" fill="none"/>
+          <g transform="rotate(-8 404 706)">
+            <rect x="388" y="698" width="34" height="13" rx="4" fill="#121214"/>
+            <rect x="392" y="709" width="9" height="16" rx="3" fill="#121214"/>
+            <rect id="gunTip" x="418" y="700" width="6" height="9" rx="2" fill="#4a4c52"/>
+          </g>
+          <circle cx="392" cy="710" r="9" fill="#b98262"/>
+        </g>
         <g id="head">
           <rect x="314" y="700" width="16" height="16" rx="4" fill="#b98262"/>
           <circle cx="324" cy="684" r="22" fill="#c48f6f"/>
@@ -281,15 +304,17 @@ const back = (x) => { x = clamp(x); const c = 2.70158; return 1 + c * Math.pow(x
  * Timeline (s): 0-0.6 hold · 0.6-2.2 scan the label · 2.2-4.2 lift to level 2 · 4.2-5.4 reach in ·
  * 5.4-5.8 set down · 5.7-7.0 check · 5.9-7.1 reach back · 7.1-8.3 forks down · 8.3-10.8 drive to the
  * loading dock (the camera tracks) · 10.8-11.8 reach into the trailer · 11.8-12.2 pick the pallet up ·
- * 12.2-13.2 reach back with it · 13.4-16.6 reverse to the rack · 16.6-18 settle where it started.
+ * 12.2-13.2 reach back with it · 13.2-14.2 scan it (goods receipt), the terminal confirms · 14.2-17.0
+ * reverse to the rack · 17.0-18 settle where it started. Each scan: the driver raises a handheld
+ * scanner, its beam sweeps the label, the label flashes, the terminal under the roof shows a check.
  * The stored pallet leaves the rack while the camera is at the dock (the rack is out of view).
  */
 const LIFT = 200, SET = 24, REACH = 272, DOCK = 960, DEEP = 330, PICK = 16;
 function truckX(t) {
   if (t < 8.3) return 0;
   if (t < 10.8) return DOCK * ease(seg(t, 8.3, 10.8));
-  if (t < 13.4) return DOCK;
-  if (t < 16.6) return DOCK * (1 - ease(seg(t, 13.4, 16.6)));
+  if (t < 14.2) return DOCK;
+  if (t < 17.0) return DOCK * (1 - ease(seg(t, 14.2, 17.0)));
   return 0;
 }
 function lift(t) {
@@ -301,8 +326,8 @@ function lift(t) {
   if (t < 8.3) return (LIFT - SET) * (1 - ease(seg(t, 7.1, 8.3)));
   if (t < 11.8) return 0;
   if (t < 12.2) return PICK * ease(seg(t, 11.8, 12.2));
-  if (t < 16.6) return PICK;
-  return PICK * (1 - ease(seg(t, 16.6, 17.4)));
+  if (t < 17.0) return PICK;
+  return PICK * (1 - ease(seg(t, 17.0, 17.6)));
 }
 function reach(t) {
   if (t < 4.2) return 0;
@@ -316,7 +341,7 @@ function reach(t) {
   return 0;
 }
 // Camera keyframes [t, focusX, focusY, zoom]: phone-safe framing; a tracking shot to the dock and back.
-const K = [[0, 545, 800, 1.04], [0.6, 545, 800, 1.04], [2.2, 585, 830, 1.12], [4.2, 640, 720, 1.08], [5.9, 790, 700, 1.14], [7.1, 690, 760, 1.08], [8.3, 600, 800, 1.02], [10.8, 1580, 800, 1.0], [12.2, 1700, 840, 1.08], [13.4, 1580, 800, 1.0], [16.6, 560, 800, 1.02], [17.4, 545, 800, 1.04], [18, 545, 800, 1.04]];
+const K = [[0, 545, 800, 1.04], [0.6, 545, 800, 1.04], [2.2, 585, 830, 1.12], [4.2, 640, 720, 1.08], [5.9, 790, 700, 1.14], [7.1, 690, 760, 1.08], [8.3, 600, 800, 1.02], [10.8, 1580, 800, 1.0], [12.2, 1700, 840, 1.08], [13.2, 1600, 800, 1.06], [14.2, 1600, 800, 1.06], [17.0, 560, 800, 1.02], [17.6, 545, 800, 1.04], [18, 545, 800, 1.04]];
 function camera(t) {
   let k = 0; while (k < K.length - 2 && t > K[k + 1][0]) k++;
   const [t0, x0, y0, z0] = K[k], [t1, x1, y1, z1] = K[k + 1];
@@ -350,20 +375,29 @@ function render(t) {
   else if (t < 11.8) { m.setAttribute("opacity", 0); }
   else { m.setAttribute("x", onForks.x); m.setAttribute("y", onForks.y); m.setAttribute("opacity", 1); }
   $("trailerLoad").setAttribute("opacity", t >= 11.8 ? 0 : 1);
-  // Scan: from the scanner on the front post (truck coords 468,696) to the label (load x+128..198, y-90..-50).
-  const scanOn = seg(t, 0.75, 0.95) * (1 - seg(t, 2.0, 2.2));
-  const sweep = ease(seg(t, 0.95, 1.9));
+  // Scans: the driver raises a handheld scanner (its tip at truck coords 468,710); the beam sweeps the
+  // label (load x+128..198, y-90..-50), the label flashes, then the terminal shows a check.
+  const scanA = { on: seg(t, 0.75, 0.95) * (1 - seg(t, 2.0, 2.2)), sweep: ease(seg(t, 0.95, 1.9)), flash: seg(t, 1.9, 2.0) * (1 - seg(t, 2.0, 2.35)) };
+  const scanB = { on: seg(t, 13.3, 13.45) * (1 - seg(t, 14.0, 14.2)), sweep: ease(seg(t, 13.45, 13.95)), flash: seg(t, 13.95, 14.0) * (1 - seg(t, 14.0, 14.3)) };
+  const scan = t < 8 ? scanA : scanB;
   const lx = onForks.x + 128, ly = onForks.y - 90;
-  const sy = ly + 4 + sweep * 32;
-  $("scan").setAttribute("opacity", scanOn);
-  $("scanFan").setAttribute("points", `${468 + x},${696 + bob} ${lx},${sy - 2} ${lx},${sy + 2} ${lx + 70},${sy + 2} ${lx + 70},${sy - 2}`);
+  const sy = ly + 4 + scan.sweep * 32;
+  const gx = 468 + x, gy = 710 + bob;
+  $("scan").setAttribute("opacity", scan.on);
+  $("scanFan").setAttribute("points", `${gx},${gy} ${lx},${sy - 2} ${lx},${sy + 2} ${lx + 70},${sy + 2} ${lx + 70},${sy - 2}`);
   for (const id of ["scanLine", "scanCore"]) { const e = $(id); e.setAttribute("x1", lx - 4); e.setAttribute("x2", lx + 74); e.setAttribute("y1", sy); e.setAttribute("y2", sy); }
-  const flash = seg(t, 1.9, 2.0) * (1 - seg(t, 2.0, 2.35));
-  const lf = $("labelFlash"); lf.setAttribute("x", lx); lf.setAttribute("y", ly); lf.setAttribute("opacity", 0.75 * flash);
-  $("scanEye").setAttribute("fill", scanOn > 0.1 ? "#ffffff" : "#3d3e43");
-  $("scanDot").setAttribute("cx", 466 + x); $("scanDot").setAttribute("cy", 696 + bob);
+  const lf = $("labelFlash"); lf.setAttribute("x", lx); lf.setAttribute("y", ly); lf.setAttribute("opacity", 0.75 * scan.flash);
+  $("scanDot").setAttribute("cx", gx); $("scanDot").setAttribute("cy", gy);
+  $("gunTip").setAttribute("fill", scan.on > 0.1 ? "#ffffff" : "#4a4c52");
+  const raised = Math.max(seg(t, 0.55, 0.75) * (1 - seg(t, 2.1, 2.3)), seg(t, 13.15, 13.3) * (1 - seg(t, 14.1, 14.3)));
+  $("armScan").setAttribute("opacity", raised);
+  $("armWheel").setAttribute("opacity", 1 - raised);
+  const ok = Math.max(seg(t, 2.0, 2.15) * (1 - seg(t, 3.7, 4.0)), seg(t, 14.0, 14.15) * (1 - seg(t, 15.5, 15.8)));
+  const pulse = Math.max(seg(t, 2.0, 2.1) * (1 - seg(t, 2.1, 2.6)), seg(t, 14.0, 14.1) * (1 - seg(t, 14.1, 14.6)));
+  $("termOk").setAttribute("opacity", ok);
+  $("termGlow").setAttribute("opacity", 0.2 * ok + 0.6 * pulse);
   // Driver looks at the label, then up while lifting and storing.
-  const look = t > 2.2 && t < 7.4 ? -14 * ease(seg(t, 2.2, 3.0)) * (1 - ease(seg(t, 6.6, 7.4))) : t > 0.6 && t < 2.2 ? 6 * ease(seg(t, 0.6, 1.0)) * (1 - ease(seg(t, 1.9, 2.2))) : 0;
+  const look = t > 2.2 && t < 7.4 ? -14 * ease(seg(t, 2.2, 3.0)) * (1 - ease(seg(t, 6.6, 7.4))) : t > 0.6 && t < 2.2 ? 6 * ease(seg(t, 0.6, 1.0)) * (1 - ease(seg(t, 1.9, 2.2))) : t > 13.2 && t < 14.4 ? 6 * ease(seg(t, 13.2, 13.5)) * (1 - ease(seg(t, 14.0, 14.4))) : 0;
   $("head").setAttribute("transform", `rotate(${look} 324 704)`);
   const blink = (Math.sin(t * Math.PI * 2 * 1.5) + 1) / 2;
   $("beacon").setAttribute("fill", blink > 0.5 ? "#ffffff" : "#9a9ca2");
