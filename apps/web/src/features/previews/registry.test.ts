@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import { describeStart } from "../directions/poster/live";
 import { nextBerlinTime, previewPage } from "./registry";
 
+import { libraryClip } from "@/features/creator/motion-library";
+
 describe("nextBerlinTime", () => {
   it("is tonight before the hour and tomorrow after it, in winter and in summer", () => {
     // 18 Nov 2026, 10:00 Berlin (UTC+1) → 21:00 Berlin = 20:00 UTC the same day.
@@ -63,8 +65,11 @@ describe("Sevag's application page", () => {
     expect(found?.preview.fromOwner).toBe(true);
     // No e-mail yet: nobody can take the page over, and his address stays free for him.
     expect(found?.preview.invite).toBeUndefined();
-    expect(found?.page.profile.hero?.src).toBe("sample:ex-motion-lagerarbeit");
+    expect(found?.page.profile.hero?.src).toBe("sample:ex-motion-palette-packen");
     // The motion graphic is served from our own origin, like every sample clip (no third party).
-    expect(found?.page.profile.motion?.src).toBe("sample:motion-lagerarbeit");
+    expect(found?.page.profile.motion?.src).toBe("sample:motion-palette-packen");
+    // The still and its description are the library clip's own, so they cannot drift apart.
+    const clip = libraryClip(found?.page.profile.motion?.src);
+    expect(found?.page.profile.hero).toMatchObject({ src: clip?.poster, alt: clip?.alt.de, w: clip?.w, h: clip?.h });
   });
 });

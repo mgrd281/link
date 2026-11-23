@@ -5,15 +5,15 @@ import { NO_IMAGE, type BlockOf, type Page } from "@linkyo/blocks";
  * (Lagerist / Töner, Sales Center Lörrach). Every fact on it comes from that letter; nothing is
  * added. No photo of him yet: his initials stand in.
  *
- * Picture and moving picture: Linkyo's own illustration, drawn for this page (no stock material): the
- * driver of a reach truck (his Schubmaststapler) scans a pallet's label with a handheld scanner and
- * the terminal under the roof confirms the booking (scanning, the warehouse system), lifts it, reaches
- * it into a high rack, a check confirms it; then the camera follows him to the loading dock, where he
- * reaches into a truck's trailer for the next pallet (unloading), scans it in and brings it back to
- * the rack. In black, graphite and silver; no brand names or logos on the terminal. An 18 s seamless
- * loop from Linkyo's motion library ("lagerarbeit", features/creator/motion-library.ts; source in
- * .claude/skills/linkyo-media-assets/scripts/reach-truck-scene.html); the picture is its first frame, so nothing jumps when it starts, and
- * visitors who prefer less motion keep the still. No text in it.
+ * Picture and moving picture: Linkyo's own illustration, drawn for this page (no stock material), the
+ * founder's choice from the motion library ("palette-packen", features/creator/motion-library.ts;
+ * source in .claude/skills/linkyo-media-assets/scripts/pallet-scene.html). It shows two tasks from
+ * his letter, order picking and load securing: a warehouse worker scans each carton in the rack with
+ * a handheld scanner, its EAN comes up and the pick list ticks it off; he builds the order on a pallet
+ * in two layers, wraps it in stretch film, a check confirms it, and a pallet jack swaps the pallet.
+ * In black, graphite and silver; the only text is in-store EAN numbers (prefix 20), no brands. A
+ * 22 s seamless loop; the picture is its first frame (the wrapped pallet), so nothing jumps when it
+ * starts, and visitors who prefer less motion keep the still.
  *
  * Not listed anywhere, not indexed, removed on request.
  */
@@ -40,12 +40,12 @@ export const sevagDe: Page = {
     bio: "Sorgfältig und zuverlässig im Lager. Sicherheit, Ordnung und Sauberkeit sind mir wichtig.",
     avatar: { src: NO_IMAGE, alt: "" },
     hero: {
-      src: "sample:ex-motion-lagerarbeit",
-      alt: "Illustration: Ein Schubmaststapler-Fahrer scannt eine Palette und hebt sie in ein Hochregal",
+      src: "sample:ex-motion-palette-packen",
+      alt: "Illustration: Ein Lagerist scannt jeden Karton mit dem Handscanner, die EAN erscheint; er packt die Palette und sichert sie mit Stretchfolie",
       w: 1080,
       h: 1350,
     },
-    motion: { src: "sample:motion-lagerarbeit" },
+    motion: { src: "sample:motion-palette-packen" },
     stats: [
       { value: "seit 2018", label: "in der Logistik" },
       { value: "seit 2021", label: "Staplerschein" },
