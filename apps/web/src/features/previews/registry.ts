@@ -13,7 +13,8 @@ import { starPage } from "./stars";
 import { STARS } from "./stars-data";
 import { nizarAr, nizarDe } from "./nizar";
 import { PREPARED } from "./prepared";
-import { SEVAG_SLUG, sevagDe } from "./sevag";
+import { emailHash, privatePreviewDetails } from "./private";
+import { SEVAG_SLUG, sevagContact, sevagDe } from "./sevag";
 
 /**
  * Private previews: a page prepared for one creator to see before they sign up. Reached only by an
@@ -106,6 +107,25 @@ const tonightAt =
     ),
   });
 
+/**
+ * Sevag's application page. His phone number, e-mail and invite come from the server's environment
+ * (./private); without them the page shows without the contact band and nobody can take it over by
+ * e-mail. Verified as soon as he takes it over (the founder's rule for pages the team prepared).
+ */
+function sevagPreview(): Preview {
+  const own = privatePreviewDetails()[SEVAG_SLUG] ?? {};
+  const contact = sevagContact(own);
+  return {
+    name: { de: "Sevag Ghazarian" },
+    username: "sevag-ghazarian",
+    theme: { template: "laufbahn", accent: creatorTokens.swatches.navy },
+    pages: { de: contact ? { ...sevagDe, blocks: [...sevagDe.blocks, contact] } : sevagDe },
+    ...(own.invite?.length ? { invite: { emailSha256: own.invite.map(emailHash) } } : {}),
+    verified: true,
+    fromOwner: true,
+  };
+}
+
 const HAND_MADE: Record<string, Preview> = {
   nizar: {
     name: { de: "Nizar", ar: "نزار" },
@@ -119,13 +139,7 @@ const HAND_MADE: Record<string, Preview> = {
   },
   // An application page from the letter Sevag gave the team; a placeholder warehouse picture until he sends his own.
   // Laufbahn in navy, the blue of the picture's pallet racks.
-  [SEVAG_SLUG]: {
-    name: { de: "Sevag Ghazarian" },
-    username: "sevag-ghazarian",
-    theme: { template: "laufbahn", accent: creatorTokens.swatches.navy },
-    pages: { de: sevagDe },
-    fromOwner: true,
-  },
+  [SEVAG_SLUG]: sevagPreview(),
   journalist: {
     name: { de: "Lea Hartmann", en: "Lea Hartmann", ar: "ليا هارتمان" },
     username: "lea-hartmann",

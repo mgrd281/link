@@ -1,4 +1,4 @@
-import { NO_IMAGE, type Page } from "@linkyo/blocks";
+import { NO_IMAGE, type BlockOf, type Page } from "@linkyo/blocks";
 
 /**
  * A page prepared for Sevag Ghazarian, from the application letter he gave the Linkyo team
@@ -114,3 +114,23 @@ export const sevagDe: Page = {
     { ...block, id: "letter", type: "text", text: LETTER },
   ],
 };
+
+/**
+ * The closing band with his phone number and e-mail. Both come from the server's environment
+ * (LINKYO_PREVIEW_PRIVATE, see ./private): they never enter this public repository. The line is his
+ * own, from the letter. "Kontakt" (e-mail) leads: it works on every screen and fits the compact bar;
+ * the number follows as "Anrufen" with the number beside it.
+ */
+export function sevagContact(details: { phone?: string | undefined; email?: string | undefined }): BlockOf<"contact"> | null {
+  const { phone, email } = details;
+  const primary = email ? { label: "Kontakt", url: `mailto:${email}`, icon: "mail" as const } : phone ? { label: "Anrufen", url: `tel:${phone}`, icon: "phone" as const } : null;
+  if (!primary) return null;
+  return {
+    ...block,
+    id: "contact",
+    type: "contact",
+    title: "Über eine Einladung zum Gespräch freue ich mich.",
+    primary,
+    ...(email && phone ? { links: [{ kind: "phone" as const, url: `tel:${phone}` }] } : {}),
+  };
+}

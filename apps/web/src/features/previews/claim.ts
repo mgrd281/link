@@ -1,11 +1,10 @@
-import { createHash } from "node:crypto";
-
 import type { Page } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
+import { emailHash } from "./private";
 import { PREVIEWS } from "./registry";
 
-export const emailHash = (email: string) => createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+export { emailHash };
 
 export type ClaimResult =
   | { kind: "match"; slug: string; username: string; theme: CreatorThemeConfig; page: Page }
