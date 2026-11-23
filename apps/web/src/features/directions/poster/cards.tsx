@@ -14,7 +14,7 @@ import { linkGlyph, LinkIconGlyph } from "../shared/link-icons";
 import { providerOf } from "../shared/providers";
 import { LiveNextRow } from "./live";
 import { linkDestination, RAIL_THRESHOLD, type RowBlock } from "./sections";
-import { displayStyle, pressable, railFrame, railTrack, type HeadingTag } from "./styles";
+import { displayStyle, pageSide, pressable, railFrame, railTrack, type HeadingTag } from "./styles";
 
 /** Paid or commission links are labelled as advertising (DE: "Anzeige"). */
 export function AdLabel({ className }: { className?: string }) {
@@ -52,10 +52,10 @@ export function MediaRow({
         <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={mediaSizes.cover} />
       </span>
       <span className="grid min-w-0 flex-1 gap-0.5 px-4 py-3">
-        <span className="line-clamp-2 text-body-lg leading-snug font-semibold">{title}</span>
+        <span dir="auto" className={cn(pageSide, "line-clamp-2 text-body-lg leading-snug font-semibold")}>{title}</span>
         {subtitle || ad ? (
           <span className="flex min-w-0 items-center gap-2 text-body text-creator-fg-muted">
-            {subtitle ? <span className="line-clamp-2">{subtitle}</span> : null}
+            {subtitle ? <span dir="auto" className={cn(pageSide, "line-clamp-2")}>{subtitle}</span> : null}
             {ad ? <AdLabel /> : null}
           </span>
         ) : null}
@@ -98,10 +98,10 @@ export function FeaturedRelease({ block, surface, heading: Heading }: { block: B
           <p className="text-caption font-semibold tracking-wide text-creator-accent-text uppercase">
             {t(`kind.${block.kind}`)} · {t("outNow")}
           </p>
-          <Heading className="font-creator-display text-h1 leading-none" style={displayStyle}>
+          <Heading dir="auto" className={cn(pageSide, "font-creator-display text-h1 leading-none")} style={displayStyle}>
             {block.title}
           </Heading>
-          <p className="text-body text-creator-fg-muted">{block.artist}</p>
+          <p dir="auto" className={cn(pageSide, "text-body text-creator-fg-muted")}>{block.artist}</p>
         </div>
         <PlatformLinks block={block} />
       </div>
@@ -122,8 +122,8 @@ function ReleaseRow({ block, surface }: { block: BlockOf<"music">; surface: stri
           <MediaImage src={block.cover.src} focal={block.cover.focal} alt={block.cover.alt} sizes={mediaSizes.cover} />
         </span>
         <span className="grid min-w-0 flex-1 gap-0.5 px-4 py-3">
-          <span className="line-clamp-2 text-body-lg leading-snug font-semibold">{block.title}</span>
-          <span className="truncate text-body text-creator-fg-muted">
+          <span dir="auto" className={cn(pageSide, "line-clamp-2 text-body-lg leading-snug font-semibold")}>{block.title}</span>
+          <span dir="auto" className={cn(pageSide, "truncate text-body text-creator-fg-muted")}>
             {block.artist} · {t(`kind.${block.kind}`)}
           </span>
         </span>
@@ -208,7 +208,7 @@ export function VideoFeature({ video }: { video: BlockOf<"video"> | undefined })
       >
         {video.duration ? <Duration seconds={video.duration} /> : null}
       </ClickToLoad>
-      <figcaption className="text-body-lg leading-snug font-semibold">{video.title}</figcaption>
+      <figcaption dir="auto" className={cn(pageSide, "text-body-lg leading-snug font-semibold")}>{video.title}</figcaption>
     </figure>
   );
 }
@@ -239,7 +239,7 @@ export function VideoRail({ videos }: { videos: BlockOf<"video">[] }) {
                 </span>
               ) : null}
             </ClickToLoad>
-            <p className="line-clamp-2 text-body leading-snug font-semibold">{video.title}</p>
+            <p dir="auto" className={cn(pageSide, "line-clamp-2 text-body leading-snug font-semibold")}>{video.title}</p>
           </li>
         ))}
       </ul>
@@ -276,7 +276,7 @@ export function ShortsRail({ block }: { block: BlockOf<"shorts"> }) {
                 </span>
               ) : null}
             </ClickToLoad>
-            <p className="line-clamp-2 text-small leading-snug font-medium">{item.title}</p>
+            <p dir="auto" className={cn(pageSide, "line-clamp-2 text-small leading-snug font-medium")}>{item.title}</p>
           </li>
         ))}
       </ul>
@@ -296,7 +296,7 @@ export function ProductGrid({ products, surface }: { products: BlockOf<"product"
               <MediaImage src={product.image.src} focal={product.image.focal} alt={product.image.alt} sizes={mediaSizes.half} />
             </span>
             <span className="grid gap-1 p-3 @preview:p-4">
-              <span className="line-clamp-2 text-body leading-snug font-semibold">{product.title}</span>
+              <span dir="auto" className={cn(pageSide, "line-clamp-2 text-body leading-snug font-semibold")}>{product.title}</span>
               <span className="flex flex-wrap items-center gap-2 text-small text-creator-fg-muted">
                 {/* Prices read left to right in every language ("39 US$", not "$US 39" on Arabic pages). */}
                 <bdi dir="ltr">{f.price(product.price, product.currency)}</bdi>
@@ -342,8 +342,8 @@ export function BrandGrid({ block }: { block: BlockOf<"brands"> }) {
               <MediaImage src={item.logo.src} alt="" sizes={wide ? mediaSizes.half : mediaSizes.third} />
             </span>
             <span className={cn("grid gap-0.5", wide ? "px-1 pt-2" : "px-0.5 pt-2")}>
-              <span className={cn("line-clamp-2 leading-snug font-semibold", wide ? "text-body" : "text-small")}>{item.name}</span>
-              {wide && item.role ? <span className="truncate text-small text-creator-fg-muted">{item.role}</span> : null}
+              <span dir="auto" className={cn(pageSide, "line-clamp-2 leading-snug font-semibold", wide ? "text-body" : "text-small")}>{item.name}</span>
+              {wide && item.role ? <span dir="auto" className={cn(pageSide, "truncate text-small text-creator-fg-muted")}>{item.role}</span> : null}
             </span>
           </>
         );
@@ -393,9 +393,9 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
       </span>
       <span className="grid min-w-0 flex-1 gap-0.5 text-start">
         {/* Two lines before an ellipsis: headlines and long titles stay readable. */}
-        <span className="line-clamp-2 text-body-lg leading-snug font-semibold">{block.title}</span>
+        <span dir="auto" className={cn(pageSide, "line-clamp-2 text-body-lg leading-snug font-semibold")}>{block.title}</span>
         <span className={cn("flex min-w-0 items-center gap-2 text-small", !onColor && "text-creator-fg-muted")}>
-          <span className="truncate">
+          <span dir="auto" className={cn(pageSide, "truncate")}>
             {/* Hosts, emails and phone numbers read left to right, also on Arabic pages (+49 …). */}
             {block.subtitle ?? <bdi dir="ltr">{linkDestination(block.url)}</bdi>}
           </span>
@@ -403,7 +403,7 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
         </span>
       </span>
       {block.badge ? (
-        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold", onColor ? "bg-creator-bg text-creator-fg" : "bg-creator-accent text-creator-accent-fg")}>
+        <span dir="auto" className={cn(pageSide, "shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold", onColor ? "bg-creator-bg text-creator-fg" : "bg-creator-accent text-creator-accent-fg")}>
           {block.badge}
         </span>
       ) : null}
@@ -452,10 +452,10 @@ export function FeaturedCard({ block, surface }: { block: BlockOf<"card">; surfa
         <MediaImage src={block.image.src} focal={block.image.focal} alt={block.image.alt} sizes={mediaSizes.column} />
       </span>
       <span className="grid gap-1 p-4 @prose:p-5">
-        <span className="font-creator-display text-h3 leading-tight" style={displayStyle}>
+        <span dir="auto" className={cn(pageSide, "font-creator-display text-h3 leading-tight")} style={displayStyle}>
           {block.title}
         </span>
-        {block.description ? <span className="text-body text-creator-fg-muted">{block.description}</span> : null}
+        {block.description ? <span dir="auto" className={cn(pageSide, "text-body text-creator-fg-muted")}>{block.description}</span> : null}
         {block.affiliate ? <AdLabel className="justify-self-start text-creator-fg-muted" /> : null}
       </span>
     </a>
@@ -470,10 +470,10 @@ export function NewsletterCard({ block, surface, heading: Heading }: { block: Bl
           <Icon icon={Mail} size="md" />
         </span>
         <div className="grid min-w-0 gap-1">
-          <Heading className="font-creator-display text-h3 leading-tight" style={displayStyle}>
+          <Heading dir="auto" className={cn(pageSide, "font-creator-display text-h3 leading-tight")} style={displayStyle}>
             {block.title}
           </Heading>
-          {block.description ? <p className="text-small text-creator-fg-muted">{block.description}</p> : null}
+          {block.description ? <p dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>{block.description}</p> : null}
         </div>
       </div>
       <NewsletterForm />

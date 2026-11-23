@@ -8,6 +8,8 @@ import { useSyncExternalStore } from "react";
 
 import { PlatformGlyph, platformName } from "../shared/creator-kit";
 
+import { pageSide } from "./styles";
+
 type Live = BlockOf<"live">;
 
 const MINUTE = 60_000;
@@ -124,7 +126,7 @@ export function LiveNextRow({ block, surface }: { block: Live; surface: string }
         </span>
       )}
       <a href={block.url} className="grid min-w-0 flex-1 gap-1 rounded-xs focus-visible:focus-ring">
-        <span className="line-clamp-2 text-body font-semibold leading-snug">{block.title ?? platform}</span>
+        <span dir="auto" className={cn(pageSide, "line-clamp-2 text-body font-semibold leading-snug")}>{block.title ?? platform}</span>
         <span className="flex min-w-0 items-center gap-2 text-small text-creator-fg-muted">
           <PlatformGlyph platform={block.platform} size="sm" className="shrink-0" />
           <span className="truncate">{planned?.relative ? `${platform} · ${capitalize(planned.relative, locale)}` : planned ? t("liveOn", { platform }) : `${platform} · ${t("offline")}`}</span>

@@ -8,7 +8,7 @@ import { MediaImage, mediaSizes, Monogram, PlatformGlyph, useCreatorFormat } fro
 import { GetButton, OtherStores } from "./app-store";
 import { StoreBadges } from "./store-badges";
 import { AdLabel } from "./cards";
-import { pressable, type HeadingTag } from "./styles";
+import { pageSide, pressable, type HeadingTag } from "./styles";
 
 /** An app icon: the store's picture with the rounded corners phones give icons, or its initials. */
 function AppIcon({ block, size = "lg" }: { block: BlockOf<"app">; size?: "lg" | "xl" }) {
@@ -77,12 +77,12 @@ function AppItem({ block, heading: Heading }: { block: BlockOf<"app">; heading: 
     <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 p-3 @prose:p-4">
       <AppIcon block={block} />
       <div className="grid min-w-0 gap-0.5">
-        <Heading className="truncate text-body-lg leading-snug font-semibold">{block.title}</Heading>
+        <Heading dir="auto" className={cn(pageSide, "truncate text-body-lg leading-snug font-semibold")}>{block.title}</Heading>
         {/* The ad label sits right under the name, where nobody can miss it (UWG § 5a); the maker gives way, never the name. */}
         {block.developer || block.affiliate ? (
           <p className="flex min-w-0 items-center gap-2 text-small text-creator-fg-muted">
             {block.affiliate ? <AdLabel /> : null}
-            {block.developer ? <span className="truncate">{block.developer}</span> : null}
+            {block.developer ? <span dir="auto" className={cn(pageSide, "truncate")}>{block.developer}</span> : null}
           </p>
         ) : null}
         <AppFacts block={block} pricing={false} />
@@ -94,7 +94,7 @@ function AppItem({ block, heading: Heading }: { block: BlockOf<"app">; heading: 
       </div>
       {more ? (
         <div className="col-span-2 col-start-2 grid gap-2">
-          {block.description ? <p className="text-small text-pretty">{block.description}</p> : null}
+          {block.description ? <p dir="auto" className={cn(pageSide, "text-small text-pretty")}>{block.description}</p> : null}
           {block.code || block.stores.length > 1 ? (
             <div className="flex flex-wrap items-center gap-2">
               {block.code ? <CodeChip code={block.code} app={block.title} /> : null}
@@ -134,17 +134,17 @@ export function AppFeature({ block, surface, heading: Heading }: { block: BlockO
       <div className="flex items-center gap-4">
         <AppIcon block={block} size="xl" />
         <div className="grid min-w-0 gap-1">
-          <Heading className="text-h3 leading-tight font-semibold text-balance break-words">{block.title}</Heading>
+          <Heading dir="auto" className={cn(pageSide, "text-h3 leading-tight font-semibold text-balance break-words")}>{block.title}</Heading>
           {block.developer || block.affiliate ? (
             <p className="flex min-w-0 items-center gap-2 text-small text-creator-fg-muted">
               {block.affiliate ? <AdLabel /> : null}
-              {block.developer ? <span className="truncate">{block.developer}</span> : null}
+              {block.developer ? <span dir="auto" className={cn(pageSide, "truncate")}>{block.developer}</span> : null}
             </p>
           ) : null}
           <AppFacts block={block} wrap />
         </div>
       </div>
-      {block.description ? <p className="text-body text-pretty">{block.description}</p> : null}
+      {block.description ? <p dir="auto" className={cn(pageSide, "text-body text-pretty")}>{block.description}</p> : null}
       {block.code ? (
         <div className="flex">
           <CodeChip code={block.code} app={block.title} />
@@ -174,11 +174,11 @@ export function RepoCard({ block, surface, heading: Heading }: { block: BlockOf<
           <p dir="ltr" className="truncate text-start font-mono text-caption text-creator-fg-muted">
             {where}
           </p>
-          <Heading className="text-body-lg leading-snug font-semibold text-balance break-words">{block.title}</Heading>
+          <Heading dir="auto" className={cn(pageSide, "text-body-lg leading-snug font-semibold text-balance break-words")}>{block.title}</Heading>
         </div>
         {block.kind === "skill" ? <span className="shrink-0 rounded-full bg-creator-accent px-2 py-0.5 text-caption font-semibold text-creator-accent-fg">{t("skill")}</span> : null}
       </div>
-      {block.description ? <p className="line-clamp-3 text-small text-pretty text-creator-fg-muted">{block.description}</p> : null}
+      {block.description ? <p dir="auto" className={cn(pageSide, "line-clamp-3 text-small text-pretty text-creator-fg-muted")}>{block.description}</p> : null}
       {block.stars !== undefined || block.language || block.license ? (
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-creator-fg-muted">
           {block.stars !== undefined ? (

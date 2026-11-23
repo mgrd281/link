@@ -10,7 +10,7 @@ import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from ".
 import { HeroMotion } from "../shared/motion";
 import { HeroLive } from "./live";
 import { ShareButton } from "./share";
-import { displayStyle } from "./styles";
+import { displayStyle, pageSide } from "./styles";
 
 type Profile = Page["profile"];
 
@@ -45,7 +45,9 @@ function Name({ profile, isRtl, theme, compact = false }: { profile: Profile; is
       style={{ ...displayStyle, "--name-fit": `calc((${room}) / ${ems.toFixed(2)})` } as CSSProperties}
       {...aiText(profile, "displayName")}
     >
-      {profile.displayName}
+      {/* The name runs in its own direction (a Latin name on an Arabic page, and the reverse), so its
+          punctuation stays in place; the heading itself keeps the hero's alignment. */}
+      <bdi dir="auto">{profile.displayName}</bdi>
       {profile.verified ? (
         <span className="ms-2 inline-block align-middle text-creator-accent-text">
           <Icon icon={BadgeCheck} size="lg" label={t("verified")} />
@@ -154,7 +156,7 @@ export function PosterHero({
         </div>
       )}
       {profile.tagline ? (
-        <p className={cn("text-small font-semibold tracking-wide text-balance uppercase", rise(1).className)} style={rise(1).style} {...aiText(profile, "tagline")}>
+        <p dir="auto" className={cn(pageSide, "text-small font-semibold tracking-wide text-balance uppercase", rise(1).className)} style={rise(1).style} {...aiText(profile, "tagline")}>
           {profile.tagline}
           {treatment === "frame" ? (
             <span aria-hidden className="poster-caret ms-1 text-creator-accent-text">
@@ -165,7 +167,7 @@ export function PosterHero({
       ) : null}
       {profile.stats?.length ? <Stats stats={profile.stats} /> : null}
       {profile.bio ? (
-        <p className={cn("max-w-prose text-body-lg text-balance text-creator-fg-muted", rise(2).className)} style={rise(2).style} {...aiText(profile, "bio")}>
+        <p dir="auto" className={cn(pageSide, "max-w-prose text-body-lg text-balance text-creator-fg-muted", rise(2).className)} style={rise(2).style} {...aiText(profile, "bio")}>
           {profile.bio}
         </p>
       ) : null}
@@ -295,7 +297,7 @@ export function PosterBar({ profile }: { profile: Profile }) {
         <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-small">
           {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
         </span>
-        <p className="min-w-0 flex-1 truncate text-body font-semibold" {...aiText(profile, "displayName")}>
+        <p dir="auto" className={cn(pageSide, "min-w-0 flex-1 truncate text-body font-semibold")} {...aiText(profile, "displayName")}>
           {profile.displayName}
         </p>
         <ShareButton title={profile.displayName} />
