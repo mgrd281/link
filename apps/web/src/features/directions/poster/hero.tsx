@@ -288,7 +288,9 @@ export function PosterHero({
         className={cn(
           "poster-hero-timeline grid grid-cols-1 gap-x-6 gap-y-5 px-creator-gutter pt-10 text-start @prose:px-0",
           // Beside the plate the words stand at the foot of the first five columns.
-          picture ? "@work:grid-cols-12 @work:grid-rows-[minmax(0,1fr)_auto] @work:items-end @work:pt-6" : "@work:pt-6",
+          // Without a plate the words open the page: they start under the band an example page lays
+          // over the top of the hero (its "Example" badge), never beneath it.
+          picture ? "@work:grid-cols-12 @work:grid-rows-[minmax(0,1fr)_auto] @work:items-end @work:pt-6" : "@work:pt-24",
         )}
       >
         {/* Without a plate the portrait stays beside the role line in the reading column, not at the canvas's far end. */}
