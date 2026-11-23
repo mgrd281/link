@@ -3,8 +3,8 @@
 import type { Page } from "@linkyo/blocks";
 import { Button, Icon, IconButton, Skeleton, TextField, toast } from "@linkyo/ui";
 import { ArrowLeft, ImagePlus, Lock, Send, ShieldAlert, X } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { NextIntlClientProvider, useLocale, useMessages, useTranslations } from "next-intl";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 
 import type { Account, Result, Site } from "@/features/account/types";
 import { AddSheet } from "@/features/app/add-sheet";
@@ -22,6 +22,7 @@ import { useAdmin } from "../session";
 
 import { currentDraft } from "./order-detail-screen";
 import { ApiError, deliverProposal, kitComplete, loadOrder, saveProposal, signedUrls, type Kit, type TeamOrder } from "./orders-data";
+import { teamEditorMessages } from "./team-words";
 
 const EMPTY_LEGAL = { name: "", address: "", email: "", phone: "" };
 const STORY_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/webp": "webp", "image/png": "png" };
@@ -226,6 +227,21 @@ function ProposalTools({
 }
 
 /**
+ * The editor inside reads its words from here: the page's messages with the team's empty state
+ * (`teamEditorMessages`). The customer's editor would say "Deine Seite wartet" to a team member.
+ */
+function TeamEditorWords({ children }: { children: ReactNode }) {
+  const locale = useLocale();
+  const messages = useMessages();
+  const team = useMemo(() => teamEditorMessages(messages), [messages]);
+  return (
+    <NextIntlClientProvider locale={locale} messages={team}>
+      {children}
+    </NextIntlClientProvider>
+  );
+}
+
+/**
  * The proposal of an order in the page editor (`/admin/orders/<id>/proposal`, team area, teal). It
  * edits a copy: `write` saves the round's draft with `admin_save_proposal` and never touches the
  * customer's page. Once the round's proposal is delivered (and no change was requested), it opens
@@ -343,7 +359,9 @@ export function ProposalEditorScreen({ orderId }: { orderId: string }) {
         </Screen>
       ) : (
         <>
-          <EditorScreen title={t("actions.edit")} />
+          <TeamEditorWords>
+            <EditorScreen title={t("actions.edit")} />
+          </TeamEditorWords>
           <AddSheet />
           <EditSheet />
         </>

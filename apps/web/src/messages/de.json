@@ -3405,7 +3405,12 @@
       "sla": {
         "ok": "in {time}",
         "soon": "bald fällig: in {time}",
-        "overdue": "überfällig seit {time}"
+        "overdue": "überfällig seit {time}",
+        "time": {
+          "day": "{count, plural, one {# Tag} other {# Tagen}}",
+          "hour": "{count, plural, other {# Std.}}",
+          "minute": "{count, plural, other {# Min.}}"
+        }
       },
       "empty": "Keine Aufträge in dieser Ansicht.",
       "withdrawalPending": "Widerruf eingegangen",
@@ -3447,7 +3452,9 @@
         "title": "Vorschlag für {customer}",
         "note": "Dieser Vorschlag ändert die veröffentlichte Seite nicht. Übernehmen kann ihn nur das Konto selbst.",
         "message": "Nachricht an das Konto (optional)",
-        "locked": "Dieser Vorschlag ist übergeben. Bearbeiten geht erst wieder, wenn das Konto Änderungen anfragt."
+        "locked": "Dieser Vorschlag ist übergeben. Bearbeiten geht erst wieder, wenn das Konto Änderungen anfragt.",
+        "emptyTitle": "Noch nichts im Vorschlag",
+        "emptyBody": "Füg den ersten Link aus dem Briefing ein, zum Beispiel einen Song, ein Video oder den Shop. Das Konto sieht den Vorschlag erst, wenn du ihn übergibst."
       },
       "delivered": "Vorschlag übergeben. Das Konto bekommt eine E-Mail.",
       "refunded": "Erstattung veranlasst.",
@@ -3461,6 +3468,7 @@
         "revision_requested": "Änderungen angefragt",
         "proposal_applied": "Vorschlag übernommen",
         "refunded": "Erstattet",
+        "refunded_partial": "Teilweise erstattet: {amount}",
         "withdrawal_received": "Widerruf eingegangen",
         "withdrawal_accepted": "Widerruf angenommen",
         "withdrawal_rejected": "Widerruf abgelehnt",

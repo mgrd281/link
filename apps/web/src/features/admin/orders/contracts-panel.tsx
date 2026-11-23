@@ -17,8 +17,7 @@ import { slaChip } from "./sla";
 /** A deadline as a chip with words (and a tone as the second signal): queue, detail and this panel. */
 export function SlaBadge({ due, now }: { due: string; now: Date }) {
   const t = useTranslations("admin.orders.sla");
-  const locale = useLocale();
-  const chip = slaChip(new Date(due), now, locale, (key, values) => t(key, values));
+  const chip = slaChip(new Date(due), now, (key, values) => t(key, values));
   return (
     <Badge size="sm" tone={chip.tone} data-sla={chip.state}>
       {chip.state === "ok" ? null : <Icon icon={chip.state === "overdue" ? CircleAlert : AlarmClock} size="sm" />}
