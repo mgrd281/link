@@ -1,4 +1,5 @@
 import type { Block, Page } from "@linkyo/blocks";
+import { suggestBlockOrder } from "@linkyo/blocks/project";
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { NextIntlClientProvider } from "next-intl";
 import { createElement, type ReactNode } from "react";
@@ -110,6 +111,19 @@ describe("portfolio blocks", () => {
 
   it("keeps a project that follows a self-titled block in that block's section, as a run", () => {
     expect(shape([about("About me"), project("a"), project("b")])).toEqual([["About me", ["about", "projects:a,b"]]]);
+  });
+
+  it("the suggested order reads sections as the page does: a link stays under the heading it stood under", () => {
+    // The page is already in a designer's order; the CV link belongs to "About me", not to "Tech stack".
+    const designer = [header("h", "Work"), project("a"), project("b"), about("About me"), link("cv-pdf"), tools("Tech stack"), contact];
+    expect(shape(suggestBlockOrder(designer, "designer"))).toEqual(shape(designer));
+    // For a coach the sections move, each with what stood under it.
+    const coach = [header("h", "Work"), project("a"), about("About me"), link("cv-pdf"), quotes, link("review-site"), contact];
+    expect(shape(suggestBlockOrder(coach, "coach"))).toEqual([
+      ["About me", ["about", "cv-pdf"]],
+      ["Work", ["projects:a"]],
+      ["What clients say", ["quotes", "review-site", "contact"]],
+    ]);
   });
 
   it("gives every section the text span until the wide canvas computes it", () => {
@@ -238,13 +252,28 @@ describe("the renderer and the portfolio blocks", () => {
   });
 
   it("a brands block without any logo is a list of names (not tiles); one logo keeps the tiles", () => {
-    const names: Block = { ...base, id: "kunden", type: "brands", title: "Kunden", columns: 3, items: [{ name: "Stadtwerk Beispiel" }, { name: "Bäckerei Beispiel", logo: { src: "none:", alt: "" } }] };
+    const names: Block = {
+      ...base,
+      id: "kunden",
+      type: "brands",
+      title: "Kunden",
+      columns: 3,
+      items: [{ name: "Stadtwerk Beispiel" }, { name: "Bäckerei Beispiel", logo: { src: "none:", alt: "" } }, { name: "Kiez Radio", url: "https://example.com/kiez-radio", logo: { src: "none:", alt: "" } }],
+    };
     const tiles: Block = { ...base, id: "partner", type: "brands", title: "Partner", columns: 3, items: [{ name: "Studio Nord", logo: { src: "sample:brand-audio", alt: "" } }, { name: "Ohne Logo" }] };
     const TILE = "block aspect-square overflow-hidden rounded-creator-card";
-    // The names list is written with the sections; until then the block shows its title only.
+    // The designed names list comes with the sections. Until then the names are a plain list: a
+    // partner block made today without logos (the editor allows it) never loses its content.
     const plain = html("de", { blocks: [names] });
     expect(plain).toContain("Kunden");
     expect(plain).not.toContain(TILE);
+    expect(plain).toMatch(/<li[^>]*>Stadtwerk Beispiel<\/li>/);
+    expect(plain).toMatch(/<li[^>]*>Bäckerei Beispiel<\/li>/);
+    // A name that led somewhere still does.
+    expect(plain).toMatch(/<li[^>]*><a href="https:\/\/example\.com\/kiez-radio"[^>]*>Kiez Radio<\/a><\/li>/);
+    // Without a title the block is still on the page.
+    const untitled = html("de", { blocks: [{ ...names, title: undefined }] });
+    expect(untitled).toContain("Stadtwerk Beispiel");
     const grid = html("de", { blocks: [tiles] });
     expect(grid).toContain("Studio Nord");
     expect(grid).toContain("Ohne Logo");
