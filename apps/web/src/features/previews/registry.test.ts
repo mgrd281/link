@@ -51,3 +51,18 @@ describe("renamed addresses", () => {
     expect(EXAMPLES["rihana-store"]).toBeUndefined();
   });
 });
+
+describe("Sevag's application page", () => {
+  it("is valid, German only, labelled as made from his own details, and reserves no address", async () => {
+    const { pageSchema } = await import("@linkyo/blocks");
+    const { SEVAG_SLUG } = await import("./sevag");
+    const found = previewPage(SEVAG_SLUG, "de");
+    expect(found).not.toBeNull();
+    expect(pageSchema.safeParse(found?.page).success).toBe(true);
+    expect(previewPage(SEVAG_SLUG, "en")).toBeNull();
+    expect(found?.preview.fromOwner).toBe(true);
+    // No e-mail yet: nobody can take the page over, and his address stays free for him.
+    expect(found?.preview.invite).toBeUndefined();
+    expect(found?.page.profile.hero?.src).toBe(`/prepared/${SEVAG_SLUG}/lager.jpg`);
+  });
+});

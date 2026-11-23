@@ -571,7 +571,8 @@ function PosterBlock({
       );
     }
     case "text":
-      return <p dir="auto" className="text-body text-creator-fg-muted">{block.text}</p>;
+      // Paragraphs typed in the editor's text area stay paragraphs on the page.
+      return <p dir="auto" className="text-body text-creator-fg-muted whitespace-pre-line">{block.text}</p>;
     case "divider":
       return <hr className="border-creator-line" />;
     case "video":

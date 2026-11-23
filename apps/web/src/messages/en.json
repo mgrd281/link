@@ -2874,6 +2874,7 @@
     "label": "About this preview",
     "badge": "Preview for {name}",
     "note": "Not his official page – made by Linkyo from his public channels.",
+    "ownNote": "Prepared by Linkyo from the details {name} gave us. Not published yet.",
     "ctaLabel": "Claim this page",
     "cta": "Claim {url}",
     "verifiedNote": "The check mark shows how the page looks once he verifies his account.",

@@ -2,6 +2,7 @@ import type { Page } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import { pageSchema } from "@linkyo/blocks";
+import { creatorTokens } from "@linkyo/tokens";
 import { z } from "zod";
 
 import { EXAMPLES } from "@/features/examples/catalog";
@@ -12,6 +13,7 @@ import { starPage } from "./stars";
 import { STARS } from "./stars-data";
 import { nizarAr, nizarDe } from "./nizar";
 import { PREPARED } from "./prepared";
+import { SEVAG_SLUG, sevagDe } from "./sevag";
 
 /**
  * Private previews: a page prepared for one creator to see before they sign up. Reached only by an
@@ -33,6 +35,11 @@ export interface Preview {
   invite?: { emailSha256: string[] };
   /** Verified by the team: the badge stays when the creator takes the page over. */
   verified?: boolean;
+  /**
+   * Built from details the person gave the team themselves (an application letter, a CV), not from
+   * their public channels: the preview's note says so.
+   */
+  fromOwner?: boolean;
   /** The preview shows example states (live now, the verified look) that are not carried over. */
   examples?: boolean;
   /**
@@ -109,6 +116,14 @@ const HAND_MADE: Record<string, Preview> = {
     // The business email from his public TikTok profile; add the one he gives you with prepare-page.
     invite: { emailSha256: ["f162f82de536c27fc25ee9575813959d7f7ddbbd4603cdbc383112a487af2647"] },
     examples: true,
+  },
+  // An application page from the letter Sevag gave the team; a placeholder warehouse picture until he sends his own.
+  [SEVAG_SLUG]: {
+    name: { de: "Sevag Ghazarian" },
+    username: "sevag-ghazarian",
+    theme: { template: "werkbogen", accent: creatorTokens.swatches["ink-blue"] },
+    pages: { de: sevagDe },
+    fromOwner: true,
   },
   journalist: {
     name: { de: "Lea Hartmann", en: "Lea Hartmann", ar: "ليا هارتمان" },

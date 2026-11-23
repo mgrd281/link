@@ -57,3 +57,22 @@ test("a preview video plays 30 seconds here, then offers to keep watching on You
   await expect(keepWatching).toBeVisible();
   await expect(keepWatching).toHaveAttribute("href", /youtube\.com\/watch\?v=[\w-]{11}&t=30s$/);
 });
+
+test("a page prepared from a person's own application letter is labelled, unindexed, keeps the letter's paragraphs and is accessible", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/de/p/sevag-ghazarian-2131af");
+  const badge = page.getByText("Vorschau für Sevag Ghazarian").first();
+  await expect(badge).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await expect(page.getByRole("heading", { level: 1, name: "Sevag Ghazarian" })).toBeVisible();
+  // No photo of him yet: his initials stand in, and the role line sits clear of the preview's badge.
+  await expect(page.getByText("SG", { exact: true }).locator("visible=true").first()).toBeVisible();
+  const role = page.getByText("Lagerist · Staplerfahrer mit Flurförderzeugschein").first();
+  const [badgeBox, roleBox] = [await badge.boundingBox(), await role.boundingBox()];
+  expect(roleBox && badgeBox && roleBox.y >= badgeBox.y + badgeBox.height).toBe(true);
+  // The letter keeps its paragraphs.
+  const letter = page.getByText(/^Sehr geehrter Herr Vitt,/);
+  await expect(letter).toHaveCSS("white-space", "pre-line");
+  const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+  expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+});

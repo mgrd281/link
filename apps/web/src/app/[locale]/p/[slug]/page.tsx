@@ -92,7 +92,7 @@ export default async function PreviewRoute({ params }: Props) {
     : concept
       ? [t("conceptNote", { name }), concept.credit ? t("photoCredit", { credit: concept.credit }) : null].filter(Boolean)
       : [
-        t("note"),
+        found.preview.fromOwner ? t("ownNote", { name }) : t("note"),
         found.page.profile.verified ? t("verifiedNote") : null,
         found.page.blocks.some((block) => block.type === "live") ? t("liveNote") : null,
       ].filter(Boolean);

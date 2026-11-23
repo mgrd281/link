@@ -300,22 +300,23 @@ export function PosterHero({
               <HeroLive block={live} />
             </div>
           ) : null}
-          {profile.tagline || hasImage(profile.avatar) ? (
-            <div className="flex min-w-0 items-center justify-between gap-4">
-              {profile.tagline ? (
-                <p dir="auto" className={cn(pageSide, "min-w-0 text-small text-balance break-words text-creator-fg-muted")} {...aiText(profile, "tagline")}>
-                  {profile.tagline}
-                </p>
-              ) : (
-                <span />
-              )}
+          {/* Without a photo the initials take the portrait's place, as in the statement hero: the role line keeps its height and stays clear of a preview's badge. */}
+          <div className="flex min-w-0 items-center justify-between gap-4">
+            {profile.tagline ? (
+              <p dir="auto" className={cn(pageSide, "min-w-0 text-small text-balance break-words text-creator-fg-muted")} {...aiText(profile, "tagline")}>
+                {profile.tagline}
+              </p>
+            ) : (
+              <span />
+            )}
+            <span className="relative size-avatar-lg shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-h3">
               {hasImage(profile.avatar) ? (
-                <span className="relative size-avatar-lg shrink-0 overflow-hidden rounded-full bg-creator-surface-2">
-                  <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt={profile.avatar.alt} sizes={mediaSizes.thumb} />
-                </span>
-              ) : null}
-            </div>
-          ) : null}
+                <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt={profile.avatar.alt} sizes={mediaSizes.thumb} />
+              ) : (
+                <Monogram name={profile.displayName} />
+              )}
+            </span>
+          </div>
           <Name profile={profile} isRtl={isRtl} theme={theme} scale="plate" />
         </div>
         {picture ? <div className="min-w-0 @work:col-span-7 @work:col-start-6 @work:row-span-2 @work:row-start-1">{picture}</div> : null}

@@ -2874,6 +2874,7 @@
     "label": "Hinweis zur Vorschau",
     "badge": "Vorschau für {name}",
     "note": "Nicht seine offizielle Seite – von Linkyo aus seinen öffentlichen Kanälen erstellt.",
+    "ownNote": "Von Linkyo vorbereitet – aus den Angaben, die {name} uns gegeben hat. Noch nicht veröffentlicht.",
     "ctaLabel": "Seite übernehmen",
     "cta": "{url} sichern",
     "verifiedNote": "Das Häkchen zeigt, wie die Seite nach der Verifizierung seines Kontos aussieht.",
