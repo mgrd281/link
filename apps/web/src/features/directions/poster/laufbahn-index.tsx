@@ -35,9 +35,12 @@ export function useCurrentSection(entries: readonly IndexEntry[], top: "first" |
       const passed = sections.findLastIndex((section) => section.getBoundingClientRect().top <= line);
       setCurrent(atEnd ? sections.length - 1 : passed >= 0 ? passed : top === "first" ? 0 : null);
     };
-    // A band one percent tall at the reading line: it fires whenever a section's edge crosses it.
+    // A band one percent tall that ends at the reading line: a section's top enters it just as it passes
+    // the line going down (so `decide` already counts it as read) and leaves it just as it goes back
+    // below the line going up. A band that began at the line reported the entry while the top was still
+    // a hair below it, and nothing more until the section had been read: the bar named the one before.
     const at = READING_LINE * 100;
-    const band = new IntersectionObserver(decide, { rootMargin: `-${String(at)}% 0% -${String(100 - at - 1)}% 0%` });
+    const band = new IntersectionObserver(decide, { rootMargin: `-${String(at - 1)}% 0% -${String(100 - at)}% 0%` });
     for (const section of sections) band.observe(section);
     const tail = new IntersectionObserver(([entry]) => {
       atEnd = entry?.isIntersecting === true;

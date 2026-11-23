@@ -237,6 +237,41 @@ test.describe("Laufbahn", () => {
     await page.context().close();
   });
 
+  test("phones: scrolled by hand, a few pixels a frame, the bar names each section as its top passes the reading line, both ways", async ({ browser }) => {
+    const page = await phone(browser);
+    await page.goto(SEVAG);
+    await page.waitForLoadState("networkidle");
+    const title = page.locator(".poster-bar").getByRole("button", { name: /Inhalt öffnen/ });
+    // A finger's pace: 4 px a frame, less than the observer's band (1 % of the screen), so the section's
+    // top is seen entering it and nothing else happens until the next section. Stops a little past
+    // (or, going back, a little before) the reading line at 35 % of the screen.
+    const drag = (name: string, direction: 1 | -1, stop = direction > 0 ? 0.3 : 0.4) =>
+      page.evaluate(
+        async ([heading, step, until]) => {
+          const section = [...document.querySelectorAll("section.lb-section")].find((element) => element.querySelector("h2")?.textContent === heading);
+          if (!section) throw new Error(`no section "${heading}"`);
+          const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+          const done = () => (step > 0 ? section.getBoundingClientRect().top < window.innerHeight * until : section.getBoundingClientRect().top > window.innerHeight * until);
+          for (let moves = 0; moves < 2000 && !done(); moves += 1) {
+            window.scrollBy({ top: step, behavior: "instant" });
+            await frame();
+          }
+        },
+        [name, direction * 4, stop] as const,
+      );
+    // The bar slides in once the picture has all but left the screen: the first section near the top.
+    await drag("Über mich", 1, 0.1);
+    await expect(title).toContainText("Über mich");
+    await drag("Was ich mitbringe", 1);
+    await expect(title).toContainText("Was ich mitbringe");
+    await drag("Werdegang", 1);
+    await expect(title).toContainText("Werdegang");
+    // Back up: the section before is named again once this one's top is below the line.
+    await drag("Werdegang", -1);
+    await expect(title).toContainText("Was ich mitbringe");
+    await page.context().close();
+  });
+
   test("phones: the contents open as a sheet; a section chosen there lands below the bar; Escape and the close button close it", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);

@@ -180,7 +180,11 @@ feels like a real app. Everything is template-level again, and every other templ
   the one being read carries a check. Choosing one closes the sheet and lets the link do its own work,
   so the address, `:target` (a letter reached this way opens whole), the back button and the glide all
   keep working. From tablets on the sheet is a centred card. The stuck chrome on phones is now the bar
-  alone, 64 px instead of 108 px (Round 2's "not done"). Tablets keep the chips in the reading column
+  alone, 56 px instead of 108 px (Round 2's "not done"). The section being read is the last one whose
+  top has passed a line at 35 % of the screen. The observer's band now ends at that line, so it reports
+  the very moment a top passes it; Round 2's band began there and reported the entry a hair too early,
+  so a page scrolled by hand named a section only once the next one came (now an e2e test that drags
+  4 px a frame, both ways). Tablets keep the chips in the reading column
   and the wide canvas its sticky list, both as words only. The bar's own controls have a negative
   scroll margin as deep as the band the document keeps clear for it, so focusing them never scrolls
   the page.
