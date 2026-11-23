@@ -11,7 +11,7 @@ import { enterDemoCode } from "./auth";
 
 const STORAGE_KEY = "linkyo.demo.v1";
 /** Linkyo's clips in the picker (features/creator/motion-library.ts); "None" and "Own link" come on top. */
-const MOTION_CLIPS = 3;
+const MOTION_CLIPS = 4;
 
 let counter = 0;
 const unique = () => `${Date.now().toString(36)}${(counter++).toString(36)}`;
@@ -64,6 +64,10 @@ test.describe("profile: moving header from Linkyo's clips", () => {
     await expect(group).toBeVisible();
     await expect(group.getByRole("radio")).toHaveCount(MOTION_CLIPS + 2);
     await expect(group.getByRole("radio", { name: "None" })).toBeChecked();
+
+    // Each tile says whether it is real footage or an illustration.
+    await expect(group.getByRole("radio", { name: /Scanning a barcode.*Real footage/ })).toHaveCount(1);
+    await expect(group.getByRole("radio", { name: /Scanning goods.*Illustration/ })).toHaveCount(1);
 
     // Watching plays the clip in its tile and chooses nothing.
     const watch = sheet.getByRole("button", { name: "Watch Scanning goods" });

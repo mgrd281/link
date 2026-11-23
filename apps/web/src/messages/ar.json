@@ -1632,9 +1632,18 @@
       "motionWatch": "شاهد {name}",
       "motionStop": "أوقف {name}",
       "motionClips": {
+        "barcode-scannen": "مسح الباركود",
         "lagerarbeit": "عمل المستودع",
         "palette-packen": "تجهيز منصة البضائع",
         "ware-scannen": "مسح البضائع"
+      },
+      "motionKind": {
+        "film": "حقيقي",
+        "illustration": "مرسوم"
+      },
+      "motionKindLong": {
+        "film": "فيديو حقيقي",
+        "illustration": "رسم متحرك"
       },
       "more": "المزيد لأعلى الصفحة",
       "logoHint": "يظهر فقط في القوالب التي تعرض الشعار أعلى الصفحة.",

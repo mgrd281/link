@@ -21,6 +21,14 @@ competitor's page or a brand's assets.
   celebrities on fictional pages, and a face in view after cropping.
 - **Mixkit clips** for moving pictures: the "Stock Video Free License" only, checked on each clip
   page. Cutting rules are in `linkyo-example-page`.
+- **Pexels videos** for real footage when Mixkit's free clips have nothing (Mixkit's scanning and most
+  warehouse clips are "Restricted"). Pexels License: free to use and to modify, no attribution
+  required; not allowed: selling unaltered copies, implying endorsement by people or brands shown,
+  redistributing on other stock platforms, using it in a trademark. The site's pages answer 403 here;
+  `https://www.pexels.com/download/video/<id>/` redirects to the file (swap the size part for
+  `hd_1920_1080`), and the web-fetch agent reads the clip page for creator and license. Credit the
+  creator in CREDITS.md anyway. Clips for the motion library show no identifiable face (crop it
+  out): a library clip may stand for any creator, and nobody should be taken for someone else.
 - **Real people** (concept pages): Wikimedia Commons free licenses only, credited on the page (see
   `linkyo-concept-page`).
 
@@ -62,7 +70,9 @@ hero picture. Never show a real person's face in an illustration of a real custo
 ## The motion library: clips every creator can choose
 
 Original loops that fit more than one person go into Linkyo's motion library
-(`apps/web/src/features/creator/motion-library.ts`): today "Lagerarbeit" (`reach-truck-scene.html`),
+(`apps/web/src/features/creator/motion-library.ts`): today "Barcode scannen" (real footage, Tiger Lily
+on Pexels: two takes of a hand scanner on a wrapped pallet, cropped 4:5 without the face, joined with
+dissolves where no scanner is in frame, 5.7 s), "Lagerarbeit" (`reach-truck-scene.html`),
 "Palette packen" (`pallet-scene.html`: order picking onto a pallet with a ring scanner and a pick list,
 then two laps of stretch film and a pallet jack that swaps the pallet; 18 s, starting on the wrapped
 pallet so the still shows the result) and "Scannen von Waren" (`scan-conveyor-scene.html`). The
@@ -76,7 +86,8 @@ other address (an own MP4 link shows in the editor's preview only). To add a cli
    `ex-motion-<key>.jpg` (1080 × 1350), in `apps/web/src/assets/examples/`.
 2. Register the still in `features/examples/media.ts` by hand (an import plus an `exampleMedia`
    entry), and add a credits row ("Linkyo original illustration").
-3. Add an entry to `MOTION_LIBRARY`: key, poster, `w`/`h`, seconds, topic, and `alt` in de, en and ar.
+3. Add an entry to `MOTION_LIBRARY`: key, poster, `w`/`h`, seconds, topic, `kind` (`film` or
+   `illustration`: the tile says which) and `alt` in de, en and ar.
 4. Add the tile name to `app.profile.motionClips.<key>` in `src/messages/{de,en,ar}.json`.
 5. `motion-library.test.ts` checks the file, the still, its size and the lookups;
    `e2e/motion-picker-app.spec.ts` covers the picker.

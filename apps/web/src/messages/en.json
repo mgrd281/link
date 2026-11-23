@@ -1632,9 +1632,18 @@
       "motionWatch": "Watch {name}",
       "motionStop": "Stop {name}",
       "motionClips": {
+        "barcode-scannen": "Scanning a barcode",
         "lagerarbeit": "Warehouse work",
         "palette-packen": "Packing a pallet",
         "ware-scannen": "Scanning goods"
+      },
+      "motionKind": {
+        "film": "Real",
+        "illustration": "Drawn"
+      },
+      "motionKindLong": {
+        "film": "Real footage",
+        "illustration": "Illustration"
       },
       "more": "More for the header",
       "logoHint": "Shows only in templates with a logo header.",

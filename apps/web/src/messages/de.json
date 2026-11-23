@@ -1632,9 +1632,18 @@
       "motionWatch": "{name} ansehen",
       "motionStop": "{name} anhalten",
       "motionClips": {
+        "barcode-scannen": "Barcode scannen",
         "lagerarbeit": "Lagerarbeit",
         "palette-packen": "Palette packen",
         "ware-scannen": "Scannen von Waren"
+      },
+      "motionKind": {
+        "film": "Echt",
+        "illustration": "Gezeichnet"
+      },
+      "motionKindLong": {
+        "film": "Echtes Video",
+        "illustration": "Illustration"
       },
       "more": "Mehr für den Kopfbereich",
       "logoHint": "Erscheint nur in Vorlagen mit Logo-Kopf.",

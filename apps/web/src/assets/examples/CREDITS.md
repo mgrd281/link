@@ -34,6 +34,7 @@ connection to the fictional names and are not endorsing Linkyo.
 | ex-logistics.jpg | Bernd Dittrich | https://unsplash.com/photos/a-forklift-driving-through-a-warehouse-filled-with-pallets-F2C_mSrb6iM | Unsplash License |
 | ex-makeup.jpg | Vitaly Gariev | https://unsplash.com/photos/woman-applying-makeup-in-front-of-a-mirror-Zi1R0uKTJSs | Unsplash License |
 | ex-mechanic.jpg | Jimmy Nilsson Masth | https://unsplash.com/photos/a-man-working-on-a-car-in-a-garage-jL9zfzTVSwY | Unsplash License |
+| ex-motion-barcode-scannen.jpg | Tiger Lily on Pexels (cropped to 4:5 without the face, two takes joined into a 5.7 s loop, light grade; first frame of public/media/motion/barcode-scannen.mp4) | https://www.pexels.com/video/man-scanning-the-codes-of-the-stocks-in-the-warehouse-4292903/ | Pexels License |
 | ex-motion-lagerarbeit.jpg | Linkyo original illustration (first frame of public/media/motion/lagerarbeit.mp4) | .claude/skills/linkyo-media-assets/scripts/reach-truck-scene.html | Linkyo |
 | ex-motion-palette-packen.jpg | Linkyo original illustration (first frame of public/media/motion/palette-packen.mp4) | .claude/skills/linkyo-media-assets/scripts/pallet-scene.html | Linkyo |
 | ex-motion-ware-scannen.jpg | Linkyo original illustration (first frame of public/media/motion/ware-scannen.mp4) | .claude/skills/linkyo-media-assets/scripts/scan-conveyor-scene.html | Linkyo |

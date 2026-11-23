@@ -2,7 +2,7 @@
 
 import type { Page } from "@linkyo/blocks";
 import { cn, Icon } from "@linkyo/ui";
-import { Ban, Check, Link2, Pause, Play } from "lucide-react";
+import { Ban, Check, Link2, Pause, PenTool, Play, Video } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useId, useState, type ReactNode } from "react";
@@ -130,7 +130,7 @@ export function MotionPicker({
       <p id={leadId} className="text-small font-regular text-fg-secondary -mt-2">
         {t("motionLead")}
       </p>
-      {/* Clips as tall tiles, three per row; then "none" and "own link" as
+      {/* Clips as tall tiles, two per row on phones and four in a wider sheet; then "none" and "own link" as
           short ones. One group of native radios: the arrow keys go through all of them. */}
       <div
         role="radiogroup"
@@ -138,7 +138,7 @@ export function MotionPicker({
         aria-describedby={leadId}
         className="grid grid-cols-1 gap-2"
       >
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {MOTION_LIBRARY.map((item) => {
             const title = t(`motionClips.${item.key}`);
             const playing = watching === item.key;
@@ -150,10 +150,10 @@ export function MotionPicker({
                   name={name}
                   checked={choice === item.key}
                   onChange={() => choose(item.key)}
-                  className="grid content-start gap-2 p-2"
+                  className="grid h-full content-start gap-2 p-2"
                 >
                   <span className="aspect-portrait bg-canvas-muted relative block overflow-hidden rounded-md">
-                    <Image src={still} alt="" fill sizes={mediaSizes.third} className="object-cover" />
+                    <Image src={still} alt="" fill sizes={mediaSizes.half} className="object-cover" />
                     {playing && url ? (
                       <video
                         src={url}
@@ -172,11 +172,19 @@ export function MotionPicker({
                         <Icon icon={Check} size="sm" />
                       </span>
                     ) : null}
+                    {/* Real footage or a drawing, as a badge on the picture; screen readers hear it after the length. */}
+                    <span aria-hidden className="absolute inset-x-2 bottom-2 flex">
+                      <span className="border-line bg-surface-elevated text-caption text-fg inline-flex min-w-0 items-center gap-1 rounded-full border px-2 py-0.5 font-medium">
+                        <Icon icon={item.kind === "film" ? Video : PenTool} size="sm" className="shrink-0" />
+                        <span className="truncate">{t(`motionKind.${item.kind}`)}</span>
+                      </span>
+                    </span>
                   </span>
                   <span className="grid min-w-0 px-1 pb-1">
                     <span className="text-small font-medium break-words">{title}</span>
                     <span className="text-small font-regular text-fg-secondary">
                       {t("motionSeconds", { seconds: item.seconds })}
+                      <span className="sr-only">, {t(`motionKindLong.${item.kind}`)}</span>
                     </span>
                   </span>
                 </Tile>

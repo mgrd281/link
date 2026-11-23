@@ -1,7 +1,9 @@
 /**
  * Linkyo's own moving pictures that any page may use as its moving header (profile.motion): original
- * illustrated loops drawn for Linkyo (sources in .claude/skills/linkyo-media-assets/scripts), served
- * from /media/motion like every sample clip, so a page that uses one loads nothing from elsewhere.
+ * illustrated loops drawn for Linkyo (sources in .claude/skills/linkyo-media-assets/scripts) and real
+ * footage under a free license, cut into a loop without an identifiable face (a clip may stand for any
+ * creator; credits in src/assets/examples/CREDITS.md). All are served from /media/motion like every
+ * sample clip, so a page that uses one loads nothing from elsewhere.
  * Each comes with its first frame as a sample picture: chosen as the header, it is the still that
  * shows before the clip starts and for visitors who prefer less motion, so nothing jumps.
  */
@@ -10,16 +12,32 @@ export interface MotionClip {
   key: string;
   /** The first frame, a sample picture ("sample:ex-motion-<key>"). */
   poster: string;
-  /** The first frame's size in px (every clip is 4 : 5, 1080 × 1350). */
+  /** The first frame's size in px (every clip is 4 : 5). */
   w: number;
   h: number;
   seconds: number;
   topic: "warehouse";
+  /** Real footage or an illustration: the picker says which, so nobody takes a drawing for a film. */
+  kind: "film" | "illustration";
   /** What the still shows, in each page language (it becomes the header picture's description). */
   alt: Readonly<Record<"de" | "en" | "ar", string>>;
 }
 
 export const MOTION_LIBRARY: readonly MotionClip[] = [
+  {
+    key: "barcode-scannen",
+    poster: "sample:ex-motion-barcode-scannen",
+    w: 864,
+    h: 1080,
+    seconds: 6,
+    topic: "warehouse",
+    kind: "film",
+    alt: {
+      de: "Video: Eine Hand scannt mit einem Handscanner den Barcode auf einer in Folie gewickelten Palette im Lager",
+      en: "Video: a hand scans the barcode on a stretch-wrapped pallet in a warehouse with a handheld scanner",
+      ar: "فيديو: يد تمسح الباركود على منصة مغلّفة بالنايلون في مستودع بماسح يدوي",
+    },
+  },
   {
     key: "lagerarbeit",
     poster: "sample:ex-motion-lagerarbeit",
@@ -27,6 +45,7 @@ export const MOTION_LIBRARY: readonly MotionClip[] = [
     h: 1350,
     seconds: 18,
     topic: "warehouse",
+    kind: "illustration",
     alt: {
       de: "Illustration: Ein Schubmaststapler-Fahrer scannt eine Palette und hebt sie in ein Hochregal",
       en: "Illustration: a reach-truck driver scans a pallet and lifts it into a high rack",
@@ -40,6 +59,7 @@ export const MOTION_LIBRARY: readonly MotionClip[] = [
     h: 1350,
     seconds: 18,
     topic: "warehouse",
+    kind: "illustration",
     alt: {
       de: "Illustration: Ein Lagerist kommissioniert Kartons auf eine Palette und sichert sie mit Stretchfolie",
       en: "Illustration: a warehouse worker picks cartons onto a pallet and secures the load with stretch film",
@@ -53,6 +73,7 @@ export const MOTION_LIBRARY: readonly MotionClip[] = [
     h: 1350,
     seconds: 8,
     topic: "warehouse",
+    kind: "illustration",
     alt: {
       de: "Illustration: Ein Lagerist scannt Kartons auf einem Rollenband, das Terminal bestätigt jeden Scan",
       en: "Illustration: a warehouse worker scans cartons on a roller conveyor; the terminal confirms each scan",
