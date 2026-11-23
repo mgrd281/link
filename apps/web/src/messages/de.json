@@ -467,7 +467,13 @@
       "jump": "Weiterlesen",
       "jumpTo": "Weiterlesen: {title}",
       "ongoing": "heute",
-      "readingTime": "{minutes} Min. Lesezeit"
+      "readingTime": "{minutes} Min. Lesezeit",
+      "share": "Teilen",
+      "readLetter": "Anschreiben lesen",
+      "readLetterWhole": "Ganzes Anschreiben lesen",
+      "readMore": "Weiterlesen",
+      "readLess": "Weniger anzeigen",
+      "copied": "Kopiert"
     }
   },
   "directions": {

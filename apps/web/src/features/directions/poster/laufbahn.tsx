@@ -2,25 +2,29 @@ import type { BlockOf, Profile } from "@linkyo/blocks";
 import { formatYears } from "@linkyo/blocks/project";
 import { hasImage } from "@linkyo/blocks/rules";
 import { cn, Icon } from "@linkyo/ui";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Briefcase, ChevronDown, CircleCheck, Clock, Lightbulb } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, type CSSProperties, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
+import { CREDENTIAL_ICONS, factSpans, iconFor, opensShort, paragraphsOf, readingMinutes, skillSpans, softJoints, textKind } from "./laufbahn-content";
 import { IndexList } from "./laufbahn-index";
-import { paragraphs, textLink } from "./portfolio-sections";
+import { textLink } from "./portfolio-sections";
 import { linkDestination } from "./sections";
 import { displayStyle, pageSide } from "./styles";
 
 /**
  * Laufbahn (ADR 0069): pages for applications, CVs and personal profiles. Every titled section is
  * announced by a signpost, a square tile with a bold letter like the signs over a warehouse's aisles,
- * and the same signposts form the page's section index: a row of chips under the hero on phones, a
- * sticky list beside the sections on the wide canvas, marking the section being read.
+ * and the same signposts form the page's section index: a sticky row of chips on phones, chips that
+ * wrap on tablets, a sticky list beside the sections on the wide canvas, marking the section being read.
  *
  * The section frame takes every kind of block; about, skills, experience and text have their own
- * calm renderers here, everything else keeps the renderer it has in every template. Plain server HTML:
- * motion is CSS (globals.css, `lb-*`), and the page is complete without it.
+ * calm renderers here, everything else keeps the renderer it has in every template. Server HTML with
+ * one small script (the index); motion is CSS (globals.css, `lb-*`), and the page is complete without it.
+ *
+ * One rhythm on phones: 48 between sections, 32 under a section's hairline, 24 between a title and
+ * its content and between the parts of a content, 16 between paragraphs, 8 between tiles.
  */
 
 const LATIN = Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -36,12 +40,10 @@ export function signpostLetter(index: number, locale: Profile["locale"]): string
 export interface Signpost {
   /** The id of the block that opened the section (the section's key). */
   id: string;
-  /** The section's own address on the page (`#anchor`), for the index and the hero's "read on". */
+  /** The section's own address on the page (`#anchor`), for the index and the hero's first action. */
   anchor: string;
   letter: string;
   title: string;
-  /** The section's view timeline: the index on the wide canvas follows it. */
-  timeline: `--${string}`;
 }
 
 /** The signposts of a page's sections, in page order; untitled runs of blocks have none. */
@@ -53,49 +55,29 @@ export function signposts(sections: readonly { id: string; title: string | null 
       const base = `section-${section.id.replace(/[^\w-]/g, "-")}`;
       const anchor = taken.has(base) ? `${base}-${String(index + 1)}` : base;
       taken.add(anchor);
-      return { id: section.id, anchor, letter: signpostLetter(index, locale), title: section.title, timeline: `--lb-${String(index)}` };
+      return { id: section.id, anchor, letter: signpostLetter(index, locale), title: section.title };
     });
 }
-
-/** The page's index scope: every section's timeline, so the index (outside the sections) can follow them. */
-export const indexScope = (entries: readonly Signpost[]): CSSProperties | undefined =>
-  entries.length > 0 ? { timelineScope: entries.map((entry) => entry.timeline).join(", ") } : undefined;
 
 /** A signpost's letter: the display face at its pairing's weight (no tracking or case change: it is one letter). */
 const signStyle: CSSProperties = { fontWeight: "var(--creator-display-weight)" };
 
 /**
- * The section index: a row of chips to swipe on phones (no scrollbar, each chip snaps, a chip reached
- * with Tab scrolls fully into view), chips that wrap in the reading column on tablets, a sticky list in
- * the start columns on the wide canvas. Plain anchor links, so the keyboard, the back button and a
- * shared address all work; each section keeps clear of the compact bar when it is jumped to.
+ * The section index. Phones: a compact row of chips that sticks flush under the compact bar once the
+ * hero has passed, on the page's solid ground (a hairline under it only while it is stuck), to swipe
+ * sideways, the section being read marked and kept in view. Tablets: chips that wrap in the reading
+ * column. The wide canvas: a sticky list in the first three columns. Plain anchor links throughout,
+ * so the keyboard, the back button and a shared address all work without the script.
  */
 export function SignpostIndex({ entries }: { entries: readonly Signpost[] }): ReactNode {
   const t = useTranslations("creator");
   return (
-    <nav aria-label={t("laufbahn.index")} className="min-w-0 @work:col-span-3">
-      <IndexList className="mk-no-scrollbar -mx-creator-gutter flex snap-x snap-mandatory scroll-px-creator-gutter gap-2 overflow-x-auto px-creator-gutter py-1 @prose:mx-0 @prose:flex-wrap @prose:snap-none @prose:overflow-visible @prose:scroll-px-0 @prose:px-0 @work:sticky @work:top-24 @work:grid @work:gap-1">
-        {entries.map((entry) => (
-          <li key={entry.id} className="shrink-0 snap-start">
-            <a
-              href={`#${entry.anchor}`}
-              style={{ "--lb-t": entry.timeline } as CSSProperties}
-              className={cn(
-                "flex min-h-touch-target items-center gap-3 rounded-sm border border-creator-line bg-creator-surface py-1 ps-1 pe-4 text-small font-semibold",
-                "transition-colors duration-micro hover:border-creator-line-strong focus-visible:focus-ring motion-reduce:transition-none",
-                "@work:lb-spy @work:border-transparent @work:bg-transparent @work:pe-2 @work:hover:border-creator-line",
-              )}
-            >
-              <span aria-hidden className="lb-spy-sign grid size-control-sm shrink-0 place-items-center rounded-xs font-creator-display text-body leading-none" style={signStyle}>
-                {entry.letter}
-              </span>
-              <span dir="auto" className={cn(pageSide, "lb-spy-label min-w-0 whitespace-nowrap @work:whitespace-normal")}>
-                {entry.title}
-              </span>
-            </a>
-          </li>
-        ))}
-      </IndexList>
+    <nav aria-label={t("laufbahn.index")} className="lb-index layer-sticky -mx-creator-gutter min-w-0 bg-creator-bg @prose:mx-0 @prose:bg-transparent @work:col-span-3">
+      <IndexList
+        entries={entries.map(({ anchor, letter, title }) => ({ anchor, letter, title }))}
+        className="mk-no-scrollbar lb-fade flex snap-x scroll-px-creator-gutter gap-2 overflow-x-auto px-creator-gutter py-1 @prose:flex-wrap @prose:snap-none @prose:overflow-visible @prose:scroll-px-0 @prose:px-0 @work:sticky @work:top-24 @work:grid @work:gap-1"
+      />
+      <span aria-hidden className="lb-index-edge absolute inset-x-0 bottom-0 @prose:hidden" />
     </nav>
   );
 }
@@ -121,7 +103,7 @@ export function SignpostSection({
   children: ReactNode;
 }): ReactNode {
   const id = useId();
-  const content = cn("grid min-w-0 grid-cols-1 gap-4", reveal === "section" && "lb-reveal");
+  const content = cn("grid min-w-0 grid-cols-1 gap-6", reveal === "section" && "lb-reveal");
   if (!entry) {
     return (
       <div data-block-ids={blockIds} className={content}>
@@ -130,15 +112,13 @@ export function SignpostSection({
     );
   }
   return (
-    <section
-      id={entry.anchor}
-      aria-labelledby={id}
-      data-block-ids={blockIds}
-      className="lb-section grid min-w-0 grid-cols-1 gap-6 border-t border-creator-line pt-8 @prose:gap-8 @work:pt-10"
-      style={{ viewTimelineName: entry.timeline }}
-    >
+    <section id={entry.anchor} aria-labelledby={id} data-block-ids={blockIds} className="lb-section grid min-w-0 grid-cols-1 gap-6 border-t border-creator-line pt-8 @prose:gap-8 @work:pt-10">
       <div className={cn("flex min-w-0 items-center gap-4", reveal !== "none" && "lb-reveal")}>
-        <span aria-hidden className="grid size-control-lg shrink-0 place-items-center rounded-xs bg-creator-accent font-creator-display text-h3 leading-none text-creator-accent-fg" style={signStyle}>
+        <span
+          aria-hidden
+          className="grid size-control-md shrink-0 place-items-center rounded-xs bg-creator-accent font-creator-display text-title leading-none text-creator-accent-fg @prose:size-control-lg @prose:text-h3"
+          style={signStyle}
+        >
           {entry.letter}
         </span>
         <h2
@@ -156,17 +136,31 @@ export function SignpostSection({
   );
 }
 
+/** A soft square in the accent for an icon (skills, notes): decorative, the words beside it carry the meaning. */
+function IconSquare({ icon, size = "sm" }: { icon: Parameters<typeof Icon>[0]["icon"]; size?: "sm" | "md" }): ReactNode {
+  return (
+    <span aria-hidden className={cn("lb-soft grid shrink-0 place-items-center rounded-xs text-creator-accent-text", size === "sm" ? "size-control-sm" : "size-control-md")}>
+      <Icon icon={icon} size="md" />
+    </span>
+  );
+}
+
+/** How a fact cell spans the two columns, by its span (closing every row). */
+const FACT_SPAN = { 1: "", 2: "col-span-2" } as const;
+
 /**
- * Who the owner is: the first paragraph as a large lead, the facts as a definition grid under a
- * hairline each, then the rest of the text in a readable measure. A portrait, when there is one,
- * stands at the start of the lead.
+ * Who the owner is: the first paragraph as a lead (calm on phones, larger from tablets on), the facts
+ * as a two-by-two sheet of cells between hairlines, then the rest of the text as body. A portrait,
+ * when there is one, stands at the start of the lead.
  */
-export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode {
-  const [first, ...rest] = paragraphs(block.text);
+export function LaufbahnAbout({ block, locale }: { block: BlockOf<"about">; locale: Profile["locale"] }): ReactNode {
+  const [first, ...rest] = paragraphsOf(block.text);
   const facts = block.facts ?? [];
   const portrait = hasImage(block.portrait) ? block.portrait : undefined;
+  const values = facts.map((fact) => softJoints(fact.value, locale));
+  const spans = factSpans(values) as (1 | 2)[];
   return (
-    <div className="grid min-w-0 gap-8">
+    <div className="grid min-w-0 gap-6 @prose:gap-8">
       {first || portrait ? (
         <div className={cn("grid min-w-0 items-start gap-6", portrait && "@prose:grid-cols-3")}>
           {portrait ? (
@@ -179,7 +173,7 @@ export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode
               dir="auto"
               className={cn(
                 pageSide,
-                "max-w-prose text-h3 leading-snug font-medium text-pretty whitespace-pre-line text-creator-fg rtl:leading-normal rtl:tracking-normal @work:text-h2 @work:rtl:leading-normal",
+                "max-w-prose text-title leading-snug font-medium text-pretty whitespace-pre-line text-creator-fg rtl:leading-normal rtl:tracking-normal @prose:text-h3 @work:text-h2 @work:rtl:leading-normal",
                 portrait && "@prose:col-span-2",
               )}
             >
@@ -189,14 +183,14 @@ export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode
         </div>
       ) : null}
       {facts.length > 0 ? (
-        <dl className="grid min-w-0 grid-cols-1 gap-x-8 @prose:grid-cols-2">
-          {facts.map((fact) => (
-            <div key={`${fact.label}-${fact.value}`} className="grid min-w-0 content-start gap-1 border-t border-creator-line py-4">
+        <dl className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-creator-card border border-creator-line bg-creator-line">
+          {facts.map((fact, index) => (
+            <div key={`${fact.label}-${fact.value}`} className={cn("grid min-w-0 content-start gap-1 bg-creator-surface p-4 @prose:px-5", FACT_SPAN[spans[index] ?? 1])}>
               <dt dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>
                 {fact.label}
               </dt>
-              <dd dir="auto" className={cn(pageSide, "text-body font-semibold break-words")}>
-                {fact.value}
+              <dd dir="auto" className={cn(pageSide, "text-body leading-snug font-semibold text-balance hyphens-manual break-words")}>
+                {values[index]}
               </dd>
             </div>
           ))}
@@ -205,7 +199,7 @@ export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode
       {rest.length > 0 ? (
         <div className="grid max-w-prose gap-4">
           {rest.map((part) => (
-            <p key={part} dir="auto" className={cn(pageSide, "text-body whitespace-pre-line text-creator-fg @prose:text-body-lg")}>
+            <p key={part} dir="auto" className={cn(pageSide, "text-body text-pretty whitespace-pre-line text-creator-fg @prose:text-body-lg")}>
               {part}
             </p>
           ))}
@@ -216,105 +210,153 @@ export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode
 }
 
 /**
- * Skills and tools as a grid of flat tiles (two columns on phones, three on the wide canvas), each with
- * its place in the list and the skill. The list is ordered, so the numbers are only its look. Hover
- * gives a stronger hairline and a step in the fill; nothing lifts.
+ * A tile's shape on phones (two columns) by its span: alone in its row it lies flat (icon beside the
+ * label), beside another it stands (icon above, the label at the foot).
  */
-export function LaufbahnSkills({ block, reveal }: { block: BlockOf<"tools">; reveal: boolean }): ReactNode {
+const PHONE_TILE = {
+  1: "flex-col justify-between gap-2",
+  2: "col-span-2 flex-row items-center gap-3",
+} as const;
+/** The same from tablets on (three columns). */
+const WIDE_TILE = {
+  1: "@prose:col-span-1 @prose:flex-col @prose:items-stretch @prose:justify-between @prose:gap-4",
+  2: "@prose:col-span-2 @prose:flex-row @prose:items-center @prose:justify-start @prose:gap-4",
+  3: "@prose:col-span-3 @prose:flex-row @prose:items-center @prose:justify-start @prose:gap-4",
+} as const;
+
+/**
+ * Skills and tools as a bento of flat tiles: two columns on phones, three from tablets on, the first
+ * skill leading as a wide tile when there are five or more, every row closed (the last tile widens).
+ * Each tile has an icon in a soft accent square, chosen from the skill's own words by a curated map
+ * (laufbahn-content.ts; a neutral check where nothing fits), and the skill at body size. No automatic
+ * hyphenation: German compounds break only at their joints, and a label that still would not fit half
+ * a phone's row takes the whole row. Hover gives a stronger hairline and a step in the fill.
+ */
+export function LaufbahnSkills({ block, locale, reveal }: { block: BlockOf<"tools">; locale: Profile["locale"]; reveal: boolean }): ReactNode {
+  const labels = block.items.map((item) => softJoints(item, locale));
+  const spans = skillSpans(labels);
   return (
-    <ol className="grid min-w-0 grid-cols-2 gap-2 @prose:gap-3 @work:grid-cols-3">
+    <ul className="grid min-w-0 grid-cols-2 gap-2 @prose:grid-cols-3 @prose:gap-3">
       {block.items.map((item, index) => (
         <li
           key={item}
           className={cn(
-            "grid min-h-24 min-w-0 content-between gap-4 rounded-creator-card border border-creator-line bg-creator-surface p-4",
+            "flex min-w-0 rounded-creator-card border border-creator-line bg-creator-surface p-3 @prose:p-4",
             "transition-colors duration-micro hover:border-creator-line-strong hover:bg-creator-bg motion-reduce:transition-none",
+            PHONE_TILE[(spans.phone[index] ?? 1) as 1 | 2],
+            WIDE_TILE[(spans.wide[index] ?? 1) as 1 | 2 | 3],
             reveal && "lb-reveal",
           )}
         >
-          <span aria-hidden className="text-caption font-semibold text-creator-accent-text tabular-nums">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-          <span dir="auto" className={cn(pageSide, "text-body leading-snug font-semibold hyphens-auto break-words")}>
-            {item}
+          <IconSquare icon={iconFor(item, locale) ?? CircleCheck} />
+          <span dir="auto" className={cn(pageSide, "min-w-0 text-body leading-snug font-semibold text-balance hyphens-manual break-words rtl:leading-normal")}>
+            {labels[index]}
           </span>
         </li>
       ))}
-    </ol>
+    </ul>
   );
 }
 
 /**
- * Experience as a vertical timeline in the order the owner entered it: a node per step, the years in
- * tabular figures ("2021–heute" for a step still going on, its node filled), the role, where, and a
- * note. The rail between the nodes fills with the accent as the steps scroll by (drawn in full without
- * scroll-driven animations and with reduced motion). Logical sides: it mirrors in Arabic.
+ * Experience as a vertical timeline in the order the owner entered it: an icon node per step (a
+ * briefcase; a licence or a certificate when the role names one), the years in tabular figures
+ * ("2021–heute" for a step still going on, its node filled), the role, where, and a note. The rail
+ * between the nodes fills with the accent as the steps scroll by (drawn in full without scroll-driven
+ * animations and with reduced motion). Logical sides: it mirrors in Arabic.
  */
 export function LaufbahnTimeline({ block, locale, reveal }: { block: BlockOf<"timeline">; locale: Profile["locale"]; reveal: boolean }): ReactNode {
   const t = useTranslations("creator");
   return (
     <ol className="grid min-w-0 grid-cols-1">
-      {block.items.map((item) => (
-        <li key={`${item.role}-${String(item.years.from)}-${item.org ?? ""}`} className={cn("lb-step grid min-w-0 justify-items-start gap-1 ps-10 pb-8 last:pb-0", reveal && "lb-reveal")}>
-          <span
-            aria-hidden
-            className={cn("absolute start-0 top-1 size-3 rounded-full border-emphasis border-creator-accent", item.years.to === "now" ? "bg-creator-accent" : "bg-creator-bg")}
-          />
-          {/* One isolated run in the page's direction, so every range reads from its start, also in Arabic. */}
-          <p className="text-small font-semibold text-creator-accent-text tabular-nums">
-            <bdi dir={locale === "ar" ? "rtl" : "ltr"}>{formatYears(item.years, t("laufbahn.ongoing"))}</bdi>
-          </p>
-          <p dir="auto" className={cn(pageSide, "text-title font-semibold text-balance rtl:tracking-normal")}>
-            {item.role}
-          </p>
-          {item.org ? (
-            item.url ? (
-              <a href={item.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-1", textLink)}>
-                <span dir="auto" className="truncate">
+      {block.items.map((item) => {
+        const named = iconFor(item.role, locale);
+        const icon = named && CREDENTIAL_ICONS.includes(named) ? named : Briefcase;
+        const ongoing = item.years.to === "now";
+        return (
+          <li key={`${item.role}-${String(item.years.from)}-${item.org ?? ""}`} className={cn("lb-step grid min-w-0 justify-items-start gap-1 ps-12 pb-8 last:pb-0", reveal && "lb-reveal")}>
+            <span
+              aria-hidden
+              className={cn(
+                "absolute start-0 top-0 grid size-control-sm place-items-center rounded-full border",
+                ongoing ? "border-creator-accent bg-creator-accent text-creator-accent-fg" : "border-creator-line-strong bg-creator-surface text-creator-accent-text",
+              )}
+            >
+              <Icon icon={icon} size="sm" />
+            </span>
+            {/* One isolated run in the page's direction, so every range reads from its start, also in Arabic.
+                As tall as the node, so the years stand level with its centre. */}
+            <p className="flex min-h-control-sm items-center text-small font-semibold text-creator-accent-text tabular-nums">
+              <bdi dir={locale === "ar" ? "rtl" : "ltr"}>{formatYears(item.years, t("laufbahn.ongoing"))}</bdi>
+            </p>
+            <p dir="auto" className={cn(pageSide, "text-title font-semibold text-balance rtl:tracking-normal")}>
+              {item.role}
+            </p>
+            {item.org ? (
+              item.url ? (
+                <a href={item.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-1", textLink)}>
+                  <span dir="auto" className="truncate">
+                    {item.org}
+                  </span>
+                  <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+                </a>
+              ) : (
+                <p dir="auto" className={cn(pageSide, "text-body text-creator-fg-muted")}>
                   {item.org}
-                </span>
+                </p>
+              )
+            ) : item.url ? (
+              <a href={item.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-1", textLink)}>
+                <bdi dir="ltr" className="truncate">
+                  {linkDestination(item.url)}
+                </bdi>
                 <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
               </a>
-            ) : (
-              <p dir="auto" className={cn(pageSide, "text-body text-creator-fg-muted")}>
-                {item.org}
+            ) : null}
+            {item.note ? (
+              <p dir="auto" className={cn(pageSide, "max-w-prose text-body text-pretty text-creator-fg-muted")}>
+                {item.note}
               </p>
-            )
-          ) : item.url ? (
-            <a href={item.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-1", textLink)}>
-              <bdi dir="ltr" className="truncate">
-                {linkDestination(item.url)}
-              </bdi>
-              <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
-            </a>
-          ) : null}
-          {item.note ? (
-            <p dir="auto" className={cn(pageSide, "max-w-prose text-body text-pretty text-creator-fg-muted")}>
-              {item.note}
-            </p>
-          ) : null}
-        </li>
-      ))}
+            ) : null}
+          </li>
+        );
+      })}
     </ol>
   );
 }
 
-/** From this many paragraphs (or characters) on, a text is a long read (a letter) and gets its reading column. */
-const LONG_PARAGRAPHS = 3;
-const LONG_CHARACTERS = 600;
-/** Reading speed for the reading-time label (words a minute). */
-const WORDS_A_MINUTE = 200;
+/** A paragraph of a long read: body on phones, a size up from tablets on, the measure kept. */
+const readingParagraph = cn(pageSide, "max-w-prose text-body whitespace-pre-line text-creator-fg @prose:text-body-lg");
 
 /**
- * A text block in its paragraphs (a single line break stays one). A short text reads as a lead; a long
- * one, such as a cover letter, is set in a calm reading column on a flat tile with a hairline, under a
- * quiet label with its reading time. The tile runs the column's width like every other edge there; the
- * lines keep the reading measure.
+ * A text block in its paragraphs (a single line break stays one), set by its length:
+ * - a short note (under 320 characters) is a callout: a flat tile with a hairline and an icon in a
+ *   soft accent square, chosen from the section's title by the skills' map (a light bulb otherwise);
+ * - a long read (a cover letter) is a reading tile under a quiet line with its reading time; over
+ *   900 characters it opens on phones with its first two paragraphs and a native disclosure for the
+ *   rest ("Read the whole letter", or "Read more" when it is not a letter), keyboard and screen
+ *   readers included, no script; from the wide canvas on it is always whole;
+ * - anything between is a lead of plain paragraphs.
  */
-export function LaufbahnText({ text }: { text: string }): ReactNode {
+export function LaufbahnText({ text, title, letter, locale }: { text: string; title: string | null; letter: boolean; locale: Profile["locale"] }): ReactNode {
   const t = useTranslations("creator");
-  const parts = paragraphs(text);
-  if (parts.length < LONG_PARAGRAPHS && text.length < LONG_CHARACTERS) {
+  const parts = paragraphsOf(text);
+  const kind = textKind(text);
+  if (kind === "note") {
+    return (
+      <div className="flex min-w-0 items-start gap-4 rounded-creator-card border border-creator-line bg-creator-surface p-5 @prose:gap-5 @prose:p-6">
+        <IconSquare icon={(title ? iconFor(title, locale) : undefined) ?? Lightbulb} size="md" />
+        <div className="grid min-w-0 flex-1 gap-4 pt-2">
+          {parts.map((part) => (
+            <p key={part} dir="auto" className={cn(pageSide, "max-w-prose text-body text-pretty whitespace-pre-line text-creator-fg @prose:text-body-lg")}>
+              {part}
+            </p>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (kind === "plain") {
     return (
       <div className="grid max-w-prose gap-4">
         {parts.map((part) => (
@@ -325,15 +367,37 @@ export function LaufbahnText({ text }: { text: string }): ReactNode {
       </div>
     );
   }
-  const minutes = Math.max(1, Math.round(text.split(/\s+/u).filter(Boolean).length / WORDS_A_MINUTE));
+  const short = opensShort(text);
+  const [head, rest] = short ? [parts.slice(0, 2), parts.slice(2)] : [parts, []];
   return (
-    <div className="grid min-w-0 gap-5 rounded-creator-card border border-creator-line bg-creator-surface p-6 @prose:gap-6 @prose:p-10">
-      <p className="text-caption font-semibold text-creator-fg-muted">{t("laufbahn.readingTime", { minutes })}</p>
-      {parts.map((part) => (
-        <p key={part} dir="auto" className={cn(pageSide, "max-w-prose text-body whitespace-pre-line text-creator-fg @prose:text-body-lg")}>
+    <div className="grid min-w-0 gap-4 rounded-creator-card border border-creator-line bg-creator-surface p-5 @prose:gap-6 @prose:p-10">
+      <p className="inline-flex items-center gap-2 text-small font-medium text-creator-fg-muted">
+        <Icon icon={Clock} size="sm" className="shrink-0" />
+        {t("laufbahn.readingTime", { minutes: readingMinutes(text) })}
+      </p>
+      {head.map((part) => (
+        <p key={part} dir="auto" className={readingParagraph}>
           {part}
         </p>
       ))}
+      {rest.length > 0 ? (
+        // Closed: the button under the first two paragraphs. Open: the rest of the text, then the
+        // button (now "Show less") after it. The wide canvas shows everything and no button.
+        <details className="lb-more group/more flex min-w-0 flex-col gap-4 @prose:gap-6">
+          <summary className="order-last flex min-h-control-lg w-full cursor-pointer list-none items-center justify-center gap-2 rounded-creator-button border border-creator-line-strong px-4 text-body font-semibold text-creator-fg transition-[scale,background-color] duration-standard ease-standard select-none hover:bg-creator-bg focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none motion-reduce:active:scale-none @prose:w-auto @prose:justify-self-start [&::-webkit-details-marker]:hidden">
+            <span className="group-open/more:hidden">{t(letter ? "laufbahn.readLetterWhole" : "laufbahn.readMore")}</span>
+            <span className="hidden group-open/more:inline">{t("laufbahn.readLess")}</span>
+            <Icon icon={ChevronDown} size="md" className="shrink-0 transition-transform duration-standard ease-standard group-open/more:rotate-180 motion-reduce:transition-none" />
+          </summary>
+          <div className="grid min-w-0 gap-4 @prose:gap-6">
+            {rest.map((part) => (
+              <p key={part} dir="auto" className={readingParagraph}>
+                {part}
+              </p>
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

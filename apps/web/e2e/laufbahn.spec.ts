@@ -108,14 +108,138 @@ test.describe("Laufbahn", () => {
     expect(box && bar && box.y >= bar.y + bar.height).toBe(true);
     // On the wide canvas the index stays in view beside the sections and marks the one being read.
     await expect(index.getByRole("list")).toBeInViewport();
-    const here = (name: string) => index.getByRole("link", { name }).evaluate((link) => getComputedStyle(link).getPropertyValue("--lb-here").trim());
-    expect(await here("Werdegang")).toBe("1");
-    expect(await here("Über mich")).toBe("0");
-    // "Weiterlesen" in the hero leads to the first section.
+    await expect(index.getByRole("link", { name: "Werdegang" })).toHaveAttribute("aria-current", "true");
+    await expect(index.locator("[aria-current]")).toHaveCount(1);
+    // His page has a cover letter and no contact block: the hero's first action leads to the letter.
     await page.goto(SEVAG);
-    await page.getByRole("link", { name: "Weiterlesen: Über mich" }).press("Enter");
-    await expect(page).toHaveURL(/#section-about$/);
-    await expect(page.getByRole("heading", { level: 2, name: "Über mich" })).toBeInViewport();
+    await expect(index.getByRole("link", { name: "Über mich" })).toHaveAttribute("aria-current", "true");
+    await page.locator("[data-hero-actions]").getByRole("link", { name: "Anschreiben lesen" }).press("Enter");
+    await expect(page).toHaveURL(/#section-letter-title$/);
+    await expect(page.getByRole("heading", { level: 2, name: "Anschreiben" })).toBeInViewport();
+    // The whole letter on the wide canvas: no disclosure button, all seven paragraphs on screen.
+    const letter = page.getByRole("region", { name: "Anschreiben" });
+    await expect(letter.locator("summary")).toBeHidden();
+    await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeVisible();
+  });
+
+  test("phones: two hero buttons share a row at 390 and 360 px; 'Teilen' copies the address and says so", async ({ browser }) => {
+    for (const width of [390, 360]) {
+      const context = await browser.newContext({ ...PHONE, viewport: { width, height: 780 }, reducedMotion: "reduce" });
+      await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+      await context.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
+      const page = await context.newPage();
+      await page.goto(SEVAG);
+      const actions = page.locator("[data-hero-actions]");
+      const [lead, share] = [actions.getByRole("link", { name: "Anschreiben lesen" }), actions.getByRole("button", { name: "Teilen" })];
+      const [a, b] = [await lead.boundingBox(), await share.boundingBox()];
+      // Side by side, the same height (at least 48 px), the first action the wider one; nothing leaves the screen.
+      expect(a && b && Math.abs(a.y - b.y) < 1 && a.height >= 48 && b.height === a.height && a.width > b.width, `${String(width)}: ${JSON.stringify([a, b])}`).toBe(true);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      if (width === 390) {
+        // Headless Chromium has no share sheet: the address is copied and a polite live region says so.
+        expect(await page.evaluate(() => typeof navigator.share)).toBe("undefined");
+        await share.click();
+        await expect(actions.getByRole("status")).toHaveText("Link kopiert.");
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/de\/p\/sevag-ghazarian-2131af$/);
+        await expect(share).toHaveAccessibleName("Teilen");
+      }
+      await context.close();
+    }
+  });
+
+  test("phones: the index sticks flush under the compact bar and marks the section being read", async ({ browser }) => {
+    const page = await phone(browser, { reducedMotion: "reduce" });
+    await page.goto(SEVAG);
+    await page.waitForLoadState("networkidle");
+    const nav = page.getByRole("navigation", { name: "Abschnitte" });
+    await page.getByRole("heading", { level: 2, name: "Werdegang" }).scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollBy(0, 200));
+    const bar = page.locator(".poster-bar");
+    await expect(async () => {
+      const [barBox, navBox] = [await bar.boundingBox(), await nav.boundingBox()];
+      // Flush: the index starts where the bar ends, at the screen's top, compact (one row of 44 px chips).
+      expect(barBox && navBox && Math.abs(navBox.y - (barBox.y + barBox.height)) <= 1 && barBox.y === 0 && navBox.height <= 56).toBe(true);
+    }).toPass();
+    // A solid ground: nothing shows through between or behind the chips.
+    expect(await nav.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toMatch(/rgba\(.*, 0\)|transparent/);
+    const current = nav.locator("[aria-current='true']");
+    await expect(current).toHaveCount(1);
+    await expect(current).toContainText("Werdegang");
+    // The marked chip is whole in the row; the row fades only on the sides where more chips lie.
+    await expect(async () => {
+      const box = await current.boundingBox();
+      expect(box && box.x >= 0 && box.x + box.width <= 390).toBe(true);
+    }).toPass();
+    const row = nav.getByRole("list");
+    expect(await row.evaluate((list) => [list.hasAttribute("data-fade-start"), list.hasAttribute("data-fade-end")])).toEqual([true, true]);
+    // Chips are 44 px targets.
+    for (const link of await nav.getByRole("link").all()) expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    // A section jumped to from the index stops below the bar and the index (WCAG 2.4.11).
+    await nav.getByRole("link", { name: "Was ich mitbringe" }).click();
+    await expect(nav.getByRole("link", { name: "Was ich mitbringe" })).toHaveAttribute("aria-current", "true");
+    const [title, navBox] = [await page.getByRole("heading", { level: 2, name: "Was ich mitbringe" }).boundingBox(), await nav.boundingBox()];
+    expect(title && navBox && title.y >= navBox.y + navBox.height).toBe(true);
+    // At the end of the page the last section is marked.
+    await page.keyboard.press("End");
+    await expect(nav.getByRole("link", { name: "Anschreiben" })).toHaveAttribute("aria-current", "true");
+    await page.context().close();
+  });
+
+  test("phones: skills have an icon each, no numbers, no automatic hyphenation, and a compact bento", async ({ browser }) => {
+    const page = await phone(browser, { reducedMotion: "reduce" });
+    await page.goto(SEVAG);
+    const skills = page.getByRole("region", { name: "Was ich mitbringe" });
+    const tiles = skills.getByRole("listitem");
+    await expect(tiles).toHaveCount(12);
+    for (const tile of await tiles.all()) await expect(tile.locator("svg.lucide")).toHaveCount(1);
+    await expect(skills).not.toContainText(/\b0\d\b/);
+    expect(await skills.locator("li span[dir]").first().evaluate((label) => getComputedStyle(label).hyphens)).toBe("manual");
+    // The lead and the closing tile run across; the others pair up at equal heights.
+    const boxes = await Promise.all((await tiles.all()).map((tile) => tile.boundingBox()));
+    expect(boxes[0]?.width).toBeGreaterThan(300);
+    expect(boxes[11]?.width).toBeGreaterThan(300);
+    for (let index = 1; index < 11; index += 2) expect(boxes[index]?.height).toBe(boxes[index + 1]?.height);
+    // About 680 px for twelve skills (round 1: about 900), measured, not hoped.
+    const grid = await skills.getByRole("list").boundingBox();
+    expect(grid?.height).toBeLessThan(700);
+    // Every label fits its tile in at most two lines (long compounds break at their joints only).
+    for (const label of await skills.locator("li span[dir]").all()) {
+      const [lines, overflows] = await label.evaluate((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return [new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size, element.scrollWidth > element.clientWidth] as const;
+      });
+      expect(lines).toBeLessThanOrEqual(2);
+      expect(overflows).toBe(false);
+    }
+    await page.context().close();
+  });
+
+  test("phones: the letter opens with two paragraphs and a native disclosure that works by keyboard", async ({ browser }) => {
+    const page = await phone(browser, { reducedMotion: "reduce" });
+    await page.goto(SEVAG);
+    const letter = page.getByRole("region", { name: "Anschreiben" });
+    await expect(letter.getByText("1 Min. Lesezeit")).toBeVisible();
+    await expect(letter.getByText(/^Sehr geehrter Herr Vitt,$/)).toBeVisible();
+    await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeHidden();
+    // Tab reaches the disclosure; its name says what it opens; Enter opens it, and its name changes.
+    await letter.getByText(/^ich bewerbe mich/).click();
+    const more = letter.locator("summary");
+    await page.keyboard.press("Tab");
+    await expect(more).toBeFocused();
+    await expect(more).toHaveAccessibleName("Ganzes Anschreiben lesen");
+    await expect(letter.locator("details")).not.toHaveAttribute("open");
+    await page.keyboard.press("Enter");
+    await expect(letter.locator("details")).toHaveAttribute("open", "");
+    await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeVisible();
+    await expect(more).toHaveAccessibleName("Weniger anzeigen");
+    // The button now follows the text it opened.
+    const [signature, button] = [await letter.getByText(/^Mit freundlichen Grüßen/).boundingBox(), await more.boundingBox()];
+    expect(signature && button && button.y > signature.y).toBe(true);
+    await page.keyboard.press("Space");
+    await expect(letter.locator("details")).not.toHaveAttribute("open");
+    expect(await axe(page)).toEqual([]);
+    await page.context().close();
   });
 
   test("phones: the picture runs edge to edge, the index is a row of chips under the hero, the Linkyo bar still comes in", async ({ browser }) => {
@@ -190,14 +314,15 @@ test.describe("Laufbahn", () => {
       await small.goto(url);
       expect(await axe(small), url).toEqual([]);
     }
-    // With a contact block the hero leads with its action, "Read on" beside the CV link as a quiet
-    // text action: one filled button in the hero.
+    // With a contact block the hero leads with its action, "Share" beside it, the CV below as a quiet
+    // link: one filled button in the hero.
     await small.goto(SAMPLE("en"));
     const actions = small.locator("[data-hero-actions]");
-    await expect(actions.getByRole("link", { name: "Ask about a project" })).toBeVisible();
-    await expect(actions.getByRole("link", { name: /^Read on/ })).toBeVisible();
-    const [cv, read] = [await actions.getByRole("link", { name: /^CV/ }).boundingBox(), await actions.getByRole("link", { name: /^Read on/ }).boundingBox()];
-    expect(cv && read && Math.abs(cv.y - read.y) < 2).toBe(true);
+    const [ask, share, cv] = [actions.getByRole("link", { name: "Ask about a project" }), actions.getByRole("button", { name: "Share" }), actions.getByRole("link", { name: /^CV/ })];
+    await expect(ask).toBeVisible();
+    await expect(share).toBeVisible();
+    const [askBox, shareBox, cvBox] = [await ask.boundingBox(), await share.boundingBox(), await cv.boundingBox()];
+    expect(askBox && shareBox && cvBox && Math.abs(askBox.y - shareBox.y) < 1 && cvBox.y > askBox.y + askBox.height).toBe(true);
     await small.context().close();
   });
 

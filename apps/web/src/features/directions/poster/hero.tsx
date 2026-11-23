@@ -127,7 +127,7 @@ function Stats({ stats, start = false }: { stats: NonNullable<Profile["stats"]>;
 }
 
 /** The owner's availability in their own words: a still dot in the accent and the text, which carries the meaning. */
-function StatusLine({ text }: { text: string }) {
+export function StatusLine({ text }: { text: string }) {
   return (
     <p className="inline-flex min-w-0 items-center gap-2 text-small font-medium">
       <span aria-hidden className="size-dot shrink-0 rounded-full bg-creator-accent" />
@@ -139,7 +139,7 @@ function StatusLine({ text }: { text: string }) {
 }
 
 /** A CV is called a PDF only when its address says so. */
-function isPdf(url: string): boolean {
+export function isPdf(url: string): boolean {
   try {
     return new URL(url).pathname.toLowerCase().endsWith(".pdf");
   } catch {

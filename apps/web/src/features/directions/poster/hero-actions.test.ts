@@ -67,12 +67,19 @@ describe("a page with a contact block", () => {
     expect(bar, "bar button").not.toBeNull();
     const label = primaryAction(blocks, new Date())?.label;
     expect(label).toBe("Shooting anfragen");
-    expect(words(row)).toBe(label);
+    if (template === "laufbahn") {
+      // Laufbahn pairs the action with "Teilen", an outlined button of the same 48 px (ADR 0069).
+      expect(words(/<a [\s\S]*?<\/a>/.exec(row ?? "")?.[0] ?? null)).toBe(label);
+      expect(row).toContain('<button type="button" aria-label="Teilen"');
+      expect(row).toContain("min-h-control-lg");
+    } else {
+      expect(words(row)).toBe(label);
+      expect(row).toContain("min-h-control-xl");
+    }
     expect(words(bar)).toBe(label);
     // Both are plain links to the same address; the hero's button is a full control, the bar's a touch target.
     expect(row).toContain('<a href="mailto:ronja@example.com"');
     expect(bar).toContain('href="mailto:ronja@example.com"');
-    expect(row).toContain("min-h-control-xl");
     expect(bar).toContain("min-h-touch-target");
     expect(bar).toContain("truncate");
     // One row, one bar button: the action is never repeated beyond these (the band is its own block).
@@ -164,7 +171,10 @@ describe("a page without a contact block", () => {
 
   it.each(["werkbogen", "tiefdruck", "laufbahn"] as const)("%s: the same holds on the portfolio templates and on Laufbahn", (template) => {
     const markup = html(template, blocks);
-    expect(heroRow(markup)).toBeNull();
+    // Laufbahn's hero always offers "Teilen" (and a jump to the content when there is a section to
+    // read); a highlighted link is never promoted there either.
+    if (template === "laufbahn") expect(words(heroRow(markup))).toBe("TeilenKopiert");
+    else expect(heroRow(markup)).toBeNull();
     expect(barButton(markup)).toBeNull();
     expect(markup.split("Jetzt Tickets sichern")).toHaveLength(2);
   });

@@ -1,15 +1,18 @@
 import { hasImage, type BlockOf, type Page } from "@linkyo/blocks";
+import { contactStatus } from "@linkyo/blocks/project";
 import { creatorTokens, tokens } from "@linkyo/tokens";
 import { PAIRING_IDS, type ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
-import { ArrowDown, BadgeCheck } from "lucide-react";
+import { ArrowDown, BadgeCheck, FileText, MailOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
 import { initials, MediaImage, mediaSizes, Monogram } from "../shared/creator-kit";
+import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
-import { aiText, GLYPH_WIDTH, HeroActions, Socials } from "./hero";
+import { aiText, GLYPH_WIDTH, isPdf, Socials, StatusLine } from "./hero";
 import { HeroLive } from "./live";
+import { ShareAction } from "./share";
 import { displayStyle, pageSide, pressable } from "./styles";
 
 type Profile = Page["profile"];
@@ -123,9 +126,9 @@ function BleedName({ profile, theme, isRtl }: { profile: Profile; theme: Resolve
  * they keep AA however short the picture is. When the picture is the portrait itself (no separate
  * hero picture), it rides high in a square and fades into an ink ground, so the words stand below the
  * face, never across it. Below it, on the page: the sentence, the numbers in a row between hairlines,
- * then the actions where the thumb is: the contact block's primary action when the page has one, and
- * "read on" as its quiet partner (an outlined button when it is alone). Without any picture the
- * picture's place is an accent field with the initials, never an empty box.
+ * then two actions where the thumb is (LaufbahnActions): the page's first action, filled, and "Share",
+ * outlined. Without any picture the picture's place is an accent field with the initials, never an
+ * empty box.
  *
  * The wide canvas: one composition on twelve columns. The words on the first five (the name on two
  * lines when it has two words), the picture as a tall rounded plate on the last six.
@@ -142,7 +145,7 @@ export function BleedHero({
   contact,
   primary,
   now,
-  jump,
+  lead,
   banner = false,
 }: {
   profile: Profile;
@@ -154,12 +157,11 @@ export function BleedHero({
   contact?: Contact | undefined;
   primary?: Contact["primary"] | null | undefined;
   now: Date;
-  /** Where "read on" leads: the first signposted section (its title names it for screen readers), or the start of the content. */
-  jump?: { href: string; title?: string | undefined } | undefined;
+  /** Without a contact block: where the first action leads (the letter, the first section or the start of the content). */
+  lead?: Lead | undefined;
   /** A badge lies over the top of the page (a prepared preview, an example): the wide canvas starts below it. */
   banner?: boolean;
 }): ReactNode {
-  const t = useTranslations("creator");
   const isRtl = profile.locale === "ar";
   const picture = hasImage(profile.hero) ? profile.hero : hasImage(profile.avatar) ? profile.avatar : null;
   // Beside the role line: the portrait when the large picture shows something else (a place, a
@@ -265,45 +267,7 @@ export function BleedHero({
             ))}
           </dl>
         ) : null}
-        {action ? (
-          // One filled button: the contact block's action. "Read on" sits beside its CV link as a quiet text action.
-          <HeroActions
-            contact={action.contact}
-            primary={action.primary}
-            now={now}
-            align="start"
-            className={rise(4).className}
-            style={rise(4).style}
-            extra={
-              jump ? (
-                <a
-                  href={jump.href}
-                  aria-label={jump.title ? t("laufbahn.jumpTo", { title: jump.title }) : undefined}
-                  className="inline-flex min-h-touch-target items-center gap-2 rounded-xs text-small font-semibold text-creator-fg transition-colors duration-micro hover:text-creator-accent-text focus-visible:focus-ring motion-reduce:transition-none"
-                >
-                  <Icon icon={ArrowDown} size="sm" className="shrink-0" />
-                  <span>{t("laufbahn.jump")}</span>
-                </a>
-              ) : undefined
-            }
-          />
-        ) : jump ? (
-          // Alone, "read on" stays a secondary action: outlined, never the page's filled button.
-          <div className={cn("grid min-w-0 @prose:flex", rise(4).className)} style={rise(4).style}>
-            <a
-              href={jump.href}
-              // Where it leads, for screen readers; the visible words come first in the name.
-              aria-label={jump.title ? t("laufbahn.jumpTo", { title: jump.title }) : undefined}
-              className={cn(
-                "inline-flex min-h-control-xl w-full items-center justify-center gap-2 rounded-creator-button border border-creator-line-strong px-6 py-2 text-center text-body leading-snug font-semibold text-creator-fg @prose:w-auto",
-                pressable,
-              )}
-            >
-              <Icon icon={ArrowDown} size="md" className="shrink-0" />
-              <span>{t("laufbahn.jump")}</span>
-            </a>
-          </div>
-        ) : null}
+        <LaufbahnActions profile={profile} action={action} lead={lead} now={now} className={rise(4).className} style={rise(4).style} />
         {socials ? (
           <div className={rise(5).className} style={rise(5).style}>
             <Socials block={socials} plain={theme.layout.socials === "plain"} start />
@@ -311,5 +275,86 @@ export function BleedHero({
         ) : null}
       </div>
     </header>
+  );
+}
+
+/** Where the hero's first action leads on a page without a contact block. */
+export interface Lead {
+  href: string;
+  /** The cover letter ("Read the letter"), the first section or the start of the content ("Read on"). */
+  kind: "letter" | "section" | "content";
+  /** The first section's title: "Read on" names its destination for screen readers. */
+  title?: string | undefined;
+}
+
+/**
+ * Both hero buttons: the same height, radius and press as every button on the page (48 px, the
+ * template's button radius, scale on press, the focus ring). On phones they share a row when both
+ * labels fit (the first action takes the larger part) and stack at full width when they do not.
+ */
+const heroButton = cn(
+  "inline-flex min-h-control-lg max-w-full min-w-0 basis-auto items-center justify-center gap-2 rounded-creator-button px-3 text-center text-body leading-snug font-semibold @prose:flex-none @prose:px-6",
+  pressable,
+);
+
+/**
+ * The hero's actions: the page's first action as the one filled button (the contact block's primary
+ * action when there is one, else "Read the letter" on an application with a cover letter, else "Read
+ * on" to the first section) and "Share" beside it, outlined: the native share sheet, or the address
+ * copied and announced. With a contact block its availability line stands above and its CV below.
+ */
+function LaufbahnActions({
+  profile,
+  action,
+  lead,
+  now,
+  className,
+  style,
+}: {
+  profile: Profile;
+  action: { contact: Contact; primary: Contact["primary"] } | null;
+  lead: Lead | undefined;
+  now: Date;
+  className?: string | undefined;
+  style?: CSSProperties | undefined;
+}): ReactNode {
+  const t = useTranslations("creator");
+  const line = action ? contactStatus(action.contact, now) : null;
+  const cv = action?.contact.links?.find((link) => link.kind === "cv");
+  const filled = cn(heroButton, "grow-2 bg-creator-accent text-creator-accent-fg");
+  return (
+    <div data-hero-actions className={cn("grid w-full min-w-0 gap-3", className)} style={style}>
+      {line ? <StatusLine text={line} /> : null}
+      <div className="flex min-w-0 flex-wrap gap-2 @prose:gap-3">
+        {action ? (
+          <a href={action.primary.url} className={filled}>
+            {action.primary.icon ? <LinkIconGlyph icon={action.primary.icon} size="md" className="shrink-0" /> : null}
+            <span dir="auto" className="min-w-0 break-words">
+              {action.primary.label}
+            </span>
+          </a>
+        ) : lead ? (
+          <a
+            href={lead.href}
+            // "Read on" says where it leads for screen readers; the visible words come first in the name.
+            aria-label={lead.kind === "section" && lead.title ? t("laufbahn.jumpTo", { title: lead.title }) : undefined}
+            className={filled}
+          >
+            <Icon icon={lead.kind === "letter" ? MailOpen : ArrowDown} size="md" className="shrink-0" />
+            <span>{t(lead.kind === "letter" ? "laufbahn.readLetter" : "laufbahn.jump")}</span>
+          </a>
+        ) : null}
+        <ShareAction title={profile.displayName} label={t("laufbahn.share")} copiedLabel={t("laufbahn.copied")} className={cn(heroButton, "grow border border-creator-line-strong bg-creator-surface text-creator-fg")} />
+      </div>
+      {cv ? (
+        <a
+          href={cv.url}
+          className="inline-flex min-h-touch-target items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring motion-reduce:transition-none"
+        >
+          <Icon icon={FileText} size="sm" className="shrink-0" />
+          <span dir="auto">{cv.label?.trim() ? cv.label : t(isPdf(cv.url) ? "portfolio.cvPdf" : "portfolio.cv")}</span>
+        </a>
+      ) : null}
+    </div>
   );
 }
