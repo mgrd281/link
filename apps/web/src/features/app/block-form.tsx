@@ -3,6 +3,7 @@
 import {
   APP_PRICING,
   APP_STORES,
+  CONTACT_KINDS,
   detectLink,
   LINK_ICONS,
   NO_IMAGE,
@@ -13,19 +14,27 @@ import {
   type AppStore,
   type Block,
   type BlockOf,
+  type ContactKind,
+  type CreatorKind,
   type LinkIcon,
+  type Page,
   type Platform,
   type VideoPlayback,
 } from "@linkyo/blocks";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { platformName } from "@/features/directions/shared/creator-kit";
 import { STORE_NAMES } from "@/features/directions/shared/stores";
 
+import { ChipsInput } from "./chips-input";
 import { FormSection, ImageInput, Repeater, SelectField, SwitchRow, TextArea, TextInput, UrlInput } from "./form";
 import { fetchLinkMetadata, installCommand } from "./metadata";
-import type { FieldErrors } from "./validate";
+import { ProjectForm } from "./project-form";
+import { ReachInput } from "./reach-input";
+import { isReachWay, reachFrom, shapeWay } from "./reach";
+import { useSite } from "./site-context";
+import { inPage, type FieldErrors } from "./validate";
 
 const noImage = { src: NO_IMAGE, alt: "" };
 const platformOptions = PLATFORMS.map((value) => ({ value, label: platformName(value) }));
@@ -121,12 +130,21 @@ const atHour = (days: number, hour: number) => {
  * The edit form for a block. One column, labels above fields, errors under the field that needs
  * attention. Every change is a draft that the live preview shows immediately.
  */
-export function BlockForm({ block, onChange, errors, creating = false }: { block: Block; onChange: (block: Block) => void; errors: FieldErrors; creating?: boolean }) {
+export function BlockForm({ block, onChange: handOn, errors, creating = false }: { block: Block; onChange: (block: Block) => void; errors: FieldErrors; creating?: boolean }) {
   const t = useTranslations("app.fields");
   const tErr = useTranslations("app.errors");
+  const tPortfolio = useTranslations("app.portfolio");
+  const { doc, site } = useSite();
+  // Every draft is checked against the page it is edited on (a taken address, a second contact block).
+  const onChange = (next: Block) => handOn(inPage(next, doc.blocks));
   useLinkTitle(block, onChange, creating);
-  const err = (path: string) => (errors[path] ? tErr(errors[path]) : undefined);
+  const err = (path: string) => {
+    const key = errors[path];
+    if (!key) return undefined;
+    return key.startsWith("portfolio.") ? tPortfolio(key.slice("portfolio.".length) as "slugTaken") : tErr(key as "required");
+  };
   const set = <B extends Block>(current: B, patch: Partial<B>) => onChange({ ...current, ...patch });
+  const kind = site.kind as CreatorKind | undefined;
 
   const featured = (current: Block) =>
     "title" in current && current.type !== "header" && current.type !== "newsletter" ? (
@@ -403,14 +421,25 @@ export function BlockForm({ block, onChange, errors, creating = false }: { block
           <Repeater<BlockOf<"brands">["items"][number]>
             items={block.items}
             onItems={(items) => set(block, { items })}
-            make={() => ({ name: "", logo: noImage })}
+            make={() => ({ name: "" })}
             min={1}
             max={24}
             itemLabel={(item, index) => item.name || t("partnerN", { n: index + 1 })}
             addLabel={t("addPartner")}
             render={(item, update, index) => (
               <>
-                <ImageInput label={t("logo")} kind="logo" image={item.logo} onImage={(logo) => update({ ...item, logo: logo ?? noImage })} withAlt={false} />
+                {/* A name is enough; a logo is someone's trademark and only shows with their consent. */}
+                <ImageInput
+                  label={t("logo")}
+                  hint={tPortfolio("logoHint")}
+                  kind="logo"
+                  image={item.logo}
+                  onImage={(logo) => {
+                    const { logo: _logo, ...rest } = item;
+                    update(logo ? { ...rest, logo } : rest);
+                  }}
+                  withAlt={false}
+                />
                 <TextInput label={t("name")} value={item.name} onValue={(name) => update({ ...item, name })} maxLength={80} error={err(`items.${index}.name`)} />
                 <TextInput label={t("role")} value={item.role ?? ""} onValue={(role) => update({ ...item, role: role || undefined })} maxLength={80} />
                 <UrlInput label={t("urlOptional")} value={item.url ?? ""} onValue={(url) => update({ ...item, url: url || undefined })} error={err(`items.${index}.url`)} />
@@ -567,50 +596,324 @@ export function BlockForm({ block, onChange, errors, creating = false }: { block
         </>
       );
       break;
-    // The portfolio blocks get their forms with the editor work package; until then no fields.
     case "project":
-      fields = null;
-      break;
+      // The project sheet has its own overview and panels; the schedule rows close its overview.
+      return <ProjectForm block={block} onChange={onChange} errors={errors} err={err} schedule={<ScheduleRows block={block} onChange={onChange} />} />;
     case "about":
-      fields = null;
+      fields = <AboutFields block={block} onChange={onChange} err={err} />;
       break;
     case "tools":
-      fields = null;
+      fields = (
+        <>
+          <TextInput label={t("titleOptional")} value={block.title ?? ""} onValue={(title) => set(block, { title: title || undefined })} maxLength={80} />
+          <ChipsInput
+            label={tPortfolio("tools.items")}
+            hint={tPortfolio("tools.hint")}
+            values={block.items}
+            onValues={(items) => set(block, { items })}
+            max={12}
+            maxLength={32}
+            movable
+            error={err("items")}
+          />
+        </>
+      );
       break;
     case "timeline":
-      fields = null;
+      fields = <TimelineFields block={block} onChange={onChange} err={err} />;
       break;
     case "quotes":
-      fields = null;
+      fields = <QuotesFields block={block} onChange={onChange} err={err} />;
       break;
     case "contact":
-      fields = null;
+      // Keyed by the block: the step fields keep their own places while one is typed in.
+      fields = <ContactFields key={block.id} block={block} onChange={onChange} err={err} kind={kind} locale={doc.profile.locale} />;
       break;
   }
 
   return (
     <div className="grid grid-cols-1 gap-6">
       {fields}
-      <Disclosure summary={t("schedule")}>
-        <p className="text-small text-fg-secondary">{t("scheduleHint")}</p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <TextInput
-            label={t("showFrom")}
-            type="datetime-local"
-            value={toLocalInput(block.schedule?.from)}
-            onValue={(value) => onChange({ ...block, schedule: { ...block.schedule, from: fromLocalInput(value) } })}
-          />
-          <TextInput
-            label={t("showUntil")}
-            type="datetime-local"
-            value={toLocalInput(block.schedule?.until)}
-            onValue={(value) => onChange({ ...block, schedule: { ...block.schedule, until: fromLocalInput(value) } })}
-          />
-        </div>
-      </Disclosure>
+      <ScheduleRows block={block} onChange={onChange} />
     </div>
   );
 }
+
+/** When a block shows: always, or only in a time window. */
+function ScheduleRows({ block, onChange }: { block: Block; onChange: (block: Block) => void }) {
+  const t = useTranslations("app.fields");
+  return (
+    <Disclosure summary={t("schedule")}>
+      <p className="text-small text-fg-secondary">{t("scheduleHint")}</p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <TextInput
+          label={t("showFrom")}
+          type="datetime-local"
+          value={toLocalInput(block.schedule?.from)}
+          onValue={(value) => onChange({ ...block, schedule: { ...block.schedule, from: fromLocalInput(value) } })}
+        />
+        <TextInput
+          label={t("showUntil")}
+          type="datetime-local"
+          value={toLocalInput(block.schedule?.until)}
+          onValue={(value) => onChange({ ...block, schedule: { ...block.schedule, until: fromLocalInput(value) } })}
+        />
+      </div>
+    </Disclosure>
+  );
+}
+
+type Err = (path: string) => string | undefined;
+
+/** A year typed into a field: a whole number, or nothing. */
+const yearOf = (text: string): number | undefined => {
+  const value = Number.parseInt(text, 10);
+  return Number.isInteger(value) ? value : undefined;
+};
+
+/** A section's own title, or none (the section then has no title of its own). */
+function SectionTitle({ value, onValue }: { value: string | undefined; onValue: (title: string | undefined) => void }) {
+  const t = useTranslations("app.fields");
+  return <TextInput label={t("titleOptional")} value={value ?? ""} onValue={(title) => onValue(title || undefined)} maxLength={80} />;
+}
+
+function AboutFields({ block, onChange, err }: { block: BlockOf<"about">; onChange: (block: Block) => void; err: Err }) {
+  const t = useTranslations("app.portfolio");
+  const tFields = useTranslations("app.fields");
+  type Fact = NonNullable<BlockOf<"about">["facts"]>[number];
+  return (
+    <>
+      <SectionTitle value={block.title} onValue={(title) => onChange(withOptional(block, "title", title))} />
+      <TextArea label={tFields("text")} value={block.text} onValue={(text) => onChange({ ...block, text })} max={1000} rows={6} error={err("text")} />
+      <ImageInput label={t("about.portrait")} image={block.portrait} onImage={(portrait) => onChange(withOptional(block, "portrait", portrait))} />
+      <FormSection title={t("about.addFact")} description={t("about.factsHint")}>
+        <Repeater<Fact>
+          items={block.facts ?? []}
+          onItems={(facts) => onChange(withOptional(block, "facts", facts.length > 0 ? facts : undefined))}
+          make={() => ({ label: "", value: "" })}
+          max={4}
+          itemLabel={(fact, index) => fact.label || `${t("about.factLabel")} ${String(index + 1)}`}
+          addLabel={t("about.addFact")}
+          render={(fact, update, index) => (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <TextInput label={t("about.factLabel")} value={fact.label} onValue={(label) => update({ ...fact, label })} maxLength={24} error={err(`facts.${String(index)}.label`)} />
+              <TextInput label={t("about.factValue")} value={fact.value} onValue={(value) => update({ ...fact, value })} maxLength={40} error={err(`facts.${String(index)}.value`)} />
+            </div>
+          )}
+        />
+      </FormSection>
+    </>
+  );
+}
+
+/** An object with an optional key set, or without the key when the value is empty (never `key: undefined`). */
+function withOptional<T extends object, K extends keyof T>(object: T, key: K, value: T[K] | undefined | ""): T {
+  const { [key]: _old, ...rest } = object;
+  return (value === undefined || value === "" ? rest : { ...rest, [key]: value }) as T;
+}
+
+function TimelineFields({ block, onChange, err }: { block: BlockOf<"timeline">; onChange: (block: Block) => void; err: Err }) {
+  const t = useTranslations("app.portfolio");
+  const tFields = useTranslations("app.fields");
+  type Entry = BlockOf<"timeline">["items"][number];
+  return (
+    <>
+      <SectionTitle value={block.title} onValue={(title) => onChange(withOptional(block, "title", title))} />
+      <Repeater<Entry>
+        items={block.items}
+        onItems={(items) => onChange({ ...block, items })}
+        make={() => ({ role: "", years: { from: new Date().getFullYear() } })}
+        min={1}
+        max={6}
+        itemLabel={(item, index) => item.role || t("timeline.entryN", { n: index + 1 })}
+        addLabel={t("timeline.add")}
+        render={(item, update, index) => {
+          const path = `items.${String(index)}`;
+          const to = item.years.to;
+          return (
+            <>
+              <TextInput label={t("timeline.role")} value={item.role} onValue={(role) => update({ ...item, role })} maxLength={60} error={err(`${path}.role`)} />
+              <TextInput label={t("timeline.org")} value={item.org ?? ""} onValue={(org) => update(withOptional(item, "org", org))} maxLength={60} />
+              <div className="grid grid-cols-2 gap-4">
+                <TextInput
+                  label={t("yearFrom")}
+                  type="number"
+                  inputMode="numeric"
+                  value={String(item.years.from)}
+                  onValue={(text) => update({ ...item, years: { ...item.years, from: yearOf(text) ?? item.years.from } })}
+                  error={err(`${path}.years.from`)}
+                />
+                <TextInput
+                  label={t("yearTo")}
+                  type="number"
+                  inputMode="numeric"
+                  value={typeof to === "number" ? String(to) : ""}
+                  disabled={to === "now"}
+                  onValue={(text) => {
+                    const value = yearOf(text);
+                    update({ ...item, years: value === undefined ? { from: item.years.from } : { from: item.years.from, to: value } });
+                  }}
+                  error={err(`${path}.years.to`)}
+                />
+              </div>
+              <SwitchRow label={t("untilToday")} checked={to === "now"} onChecked={(on) => update({ ...item, years: on ? { from: item.years.from, to: "now" } : { from: item.years.from } })} />
+              <TextInput label={t("timeline.note")} value={item.note ?? ""} onValue={(note) => update(withOptional(item, "note", note))} maxLength={120} />
+              <UrlInput label={tFields("urlOptional")} value={item.url ?? ""} onValue={(url) => update(withOptional(item, "url", url))} error={err(`${path}.url`)} />
+            </>
+          );
+        }}
+      />
+    </>
+  );
+}
+
+function QuotesFields({ block, onChange, err }: { block: BlockOf<"quotes">; onChange: (block: Block) => void; err: Err }) {
+  const t = useTranslations("app.portfolio.quotes");
+  const { doc } = useSite();
+  type Quote = BlockOf<"quotes">["items"][number];
+  const projects = doc.blocks.filter((candidate): candidate is BlockOf<"project"> => candidate.type === "project");
+  return (
+    <>
+      <SectionTitle value={block.title} onValue={(title) => onChange(withOptional(block, "title", title))} />
+      {err("items") ? <p className="text-small text-danger-strong">{err("items")}</p> : null}
+      <Repeater<Quote>
+        items={block.items}
+        onItems={(items) => onChange({ ...block, items })}
+        // Not confirmed yet: the quote cannot be saved until its owner says they may publish it.
+        make={() => ({ text: "", name: "", role: "", consent: false as unknown as true })}
+        max={6}
+        itemLabel={(item, index) => item.name || t("entryN", { n: index + 1 })}
+        addLabel={t("add")}
+        render={(item, update, index) => {
+          const path = `items.${String(index)}`;
+          const consented = item.consent as boolean;
+          return (
+            <>
+              <TextArea label={t("text")} value={item.text} onValue={(text) => update({ ...item, text })} max={280} rows={3} error={err(`${path}.text`)} />
+              <TextInput label={t("name")} value={item.name} onValue={(name) => update({ ...item, name })} maxLength={60} error={err(`${path}.name`)} />
+              <TextInput label={t("role")} hint={t("roleHint")} value={item.role} onValue={(role) => update({ ...item, role })} maxLength={80} error={err(`${path}.role`)} />
+              <ImageInput label={t("photo")} kind="avatar" shape="round" withAlt={false} image={item.photo} onImage={(photo) => update(withOptional(item, "photo", photo))} />
+              {projects.length > 0 ? (
+                <SelectField
+                  label={t("about")}
+                  value={item.project ?? ""}
+                  onValue={(project) => update(withOptional(item, "project", project))}
+                  options={[{ value: "", label: t("aboutNone") }, ...projects.map((project) => ({ value: project.id, label: project.title }))]}
+                />
+              ) : null}
+              {/* Without it the quote is not saved: the reason stands right under the switch. */}
+              <SwitchRow label={t("consent")} description={consented ? undefined : t("consentMissing")} checked={consented} onChecked={(on) => update({ ...item, consent: on as true })} />
+              {err(`${path}.consent`) ? (
+                <p role="alert" className="text-small text-danger-strong">
+                  {err(`${path}.consent`)}
+                </p>
+              ) : null}
+            </>
+          );
+        }}
+      />
+    </>
+  );
+}
+
+function ContactFields({
+  block,
+  onChange,
+  err,
+  kind,
+  locale,
+}: {
+  block: BlockOf<"contact">;
+  onChange: (block: Block) => void;
+  err: Err;
+  kind: CreatorKind | undefined;
+  locale: Page["profile"]["locale"];
+}) {
+  const t = useTranslations("app.portfolio.contact");
+  const tFields = useTranslations("app.fields");
+  const tPlatforms = useTranslations("app.welcome.platforms");
+  type Way = NonNullable<BlockOf<"contact">["links"]>[number];
+  // The three step fields keep their places while the owner types (an empty first step does not pull
+  // the second one up into it); the block stores only the filled ones, in order.
+  const [steps, setSteps] = useState(() => [0, 1, 2].map((index) => block.steps?.[index] ?? ""));
+  return (
+    <>
+      {err("page") ? (
+        <p role="alert" className="rounded-md border border-danger-strong bg-danger-subtle p-3 text-small">
+          {err("page")}
+        </p>
+      ) : null}
+      <TextInput label={t("title")} value={block.title} onValue={(title) => onChange({ ...block, title })} maxLength={80} error={err("title")} />
+      <TextInput label={t("text")} value={block.text ?? ""} onValue={(text) => onChange(withOptional(block, "text", text))} maxLength={160} />
+      <FormSection title={t("primary")}>
+        <ReachInput value={block.primary} onValue={(primary) => onChange({ ...block, primary })} kind={kind} locale={locale} errors={{ url: err("primary.url"), label: err("primary.label") }} />
+      </FormSection>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <TextInput label={t("status")} hint={t("statusHint")} value={block.status ?? ""} onValue={(status) => onChange(withOptional(block, "status", status))} maxLength={40} />
+        <TextInput
+          label={t("statusUntil")}
+          type="date"
+          value={block.statusUntil ?? ""}
+          disabled={!block.status}
+          onValue={(until) => onChange(withOptional(block, "statusUntil", until))}
+          error={err("statusUntil")}
+        />
+      </div>
+      <FormSection title={t("other")}>
+        <Repeater<Way>
+          items={block.links ?? []}
+          onItems={(links) => onChange(withOptional(block, "links", links.length > 0 ? links : undefined))}
+          make={() => ({ kind: "email", url: "" })}
+          max={3}
+          itemLabel={(way) => t(`kinds.${way.kind}`)}
+          addLabel={t("addWay")}
+          render={(way, update, index) => (
+            <>
+              {/* A new kind shapes the address again: a number moves from phone to WhatsApp as a chat link. */}
+              <SelectField<ContactKind> label={tFields("kind")} value={way.kind} onValue={(next) => update(shapeWay({ ...way, kind: next }))} options={CONTACT_KINDS.map((value) => ({ value, label: t(`kinds.${value}`) }))} />
+              {isReachWay(way.kind) ? (
+                // Typed as the owner writes it; the address its kind builds is made when the field is left.
+                <TextInput
+                  label={tFields("url")}
+                  hint={way.kind === "whatsapp" ? tPlatforms("whatsapp") : undefined}
+                  ltr
+                  type={way.kind === "email" ? "email" : way.kind === "calendar" ? "url" : "tel"}
+                  inputMode={way.kind === "email" ? "email" : way.kind === "calendar" ? "url" : "tel"}
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  value={reachFrom(way.url).typed}
+                  onValue={(url) => update({ ...way, url })}
+                  onBlur={() => update(shapeWay(way))}
+                  error={err(`links.${String(index)}.url`)}
+                />
+              ) : (
+                <UrlInput label={tFields("url")} hint={way.kind === "cv" ? t("cvHint") : undefined} value={way.url} onValue={(url) => update({ ...way, url })} error={err(`links.${String(index)}.url`)} />
+              )}
+              <TextInput label={tFields("titleOptional")} value={way.label ?? ""} onValue={(label) => update(withOptional(way, "label", label))} maxLength={40} />
+            </>
+          )}
+        />
+      </FormSection>
+      <FormSection title={t("steps")}>
+        {steps.map((text, index) => (
+          <TextInput
+            key={index}
+            label={t("stepN", { n: index + 1 })}
+            value={text}
+            maxLength={80}
+            onValue={(value) => {
+              const slots = steps.map((step, i) => (i === index ? value : step));
+              setSteps(slots);
+              const next = slots.filter((step) => step.trim() !== "");
+              onChange(withOptional(block, "steps", next.length > 0 ? next : undefined));
+            }}
+          />
+        ))}
+      </FormSection>
+    </>
+  );
+}
+
 
 /** Settings most blocks never need, folded away under a one-line summary (the schedule, a link's extras). */
 function Disclosure({ summary, children }: { summary: string; children: ReactNode }) {

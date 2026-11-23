@@ -38,6 +38,11 @@ export function OwnPageScreen() {
   const noticeOpen = usePrivacyNoticeOpen(externalProviders(previewPage.blocks.filter((block) => isBlockActive(block))).length > 0);
   // Read once: this screen only renders in the browser (behind AppGate's splash).
   const [backTo] = useState(readReturnPath);
+  // The page has no addresses of its own here: a project opens in place, its "Back" returns.
+  const [opened, setOpened] = useState<string | null>(null);
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [opened]);
 
   // Match the browser's top bar and overscroll area to the page background.
   useEffect(() => {
@@ -53,7 +58,7 @@ export function OwnPageScreen() {
 
   return (
     <>
-      <PosterRenderer page={previewPage} theme={theme} />
+      <PosterRenderer page={previewPage} theme={theme} openProject={opened ? { id: opened, onBack: () => setOpened(null) } : undefined} onOpenProject={setOpened} />
       {/* The bar is dashboard chrome (black and grey); the creator's page under it keeps its own colours (ADR 0062). */}
       <nav
         data-console="local"

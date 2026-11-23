@@ -13,3 +13,6 @@ export const pageAddress = (username: string): string => `${CREATOR_DOMAIN}/${us
 
 /** For links, QR codes and sharing: "https://linkyo.app/mila". */
 export const pageUrl = (username: string): string => `${creatorOrigin()}/${username}`;
+
+/** A project's own address, for canonical links and sharing: "https://linkyo.app/mila/hafenlicht". */
+export const projectUrl = (username: string, slug: string): string => `${pageUrl(username)}/${slug}`;

@@ -1,11 +1,12 @@
 "use client";
 
-import { hasImage, type Block } from "@linkyo/blocks";
-import { Badge, Button, cn, Icon, IconButton, Menu, Switch, Tooltip } from "@linkyo/ui";
-import { ArrowDown, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, Heading, LayoutList, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { coverImage, FEATURED_PROJECTS, hasImage, MAX_PROJECTS, slugWord, suggestBlockOrder, type Block, type CreatorKind } from "@linkyo/blocks";
+import { resolveCreatorTheme } from "@linkyo/tokens/creator";
+import { Badge, Button, cn, Icon, IconButton, initialsOf, Menu, Switch, toast, Tooltip } from "@linkyo/ui";
+import { ArrowDown, ArrowRight, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, Heading, LayoutList, ListOrdered, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { useAiQuota } from "@/features/ai/quota";
 import { SortableBlocks, blockIcon, useSortableRow } from "@/features/directions/editor/ui";
@@ -17,9 +18,11 @@ import { LinkIconGlyph, linkGlyph } from "@/features/directions/shared/link-icon
 import { remoteImageProps, resolveMedia } from "@/features/directions/shared/media";
 import { Link } from "@/i18n/navigation";
 import { haptic } from "@/lib/haptics";
+import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { blankBlock } from "./blocks";
 import { PreviewButton } from "./preview";
+import { projectRuns } from "./project-runs";
 import { ProfileSheet } from "./profile-form";
 import { rowAnchor } from "./jump";
 import { NAV_ANCHORS } from "./routes";
@@ -27,6 +30,7 @@ import { Screen, UndoRedo, useShellChrome } from "./screen";
 import { ProfileAvatar } from "./shell";
 import { useSite } from "./site-context";
 import { useFlip } from "./use-flip";
+import { validatePage } from "./validate";
 
 /** ⌥↑ / ⌥↓ moves a row (brand §7: keyboard reordering). */
 const reorderKey = (onMove: (delta: number) => void) => (event: KeyboardEvent<HTMLElement>) => {
@@ -51,7 +55,28 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   const tNav = useTranslations("app.nav");
   const tDash = useTranslations("dashboard");
   const inShell = useShellChrome();
-  const { doc, dispatch, edit, setAddOpen, label, announce, justAdded, account } = useSite();
+  const tPortfolio = useTranslations("app.portfolio");
+  const tDesign = useTranslations("app.design.projects");
+  const { doc, dispatch, edit, setAddOpen, label, announce, justAdded, account, site } = useSite();
+  const wanted = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: doc.profile.locale === "ar" }).layout.projects, [doc.theme, doc.profile.locale]);
+  const runs = useMemo(() => projectRuns(doc.blocks, wanted), [doc.blocks, wanted]);
+  // The page's rules, and close to the size limit with a real account (the demo's limit is the browser's).
+  // Measured as a real account stores it: the page (profile and blocks), its look, its legal details.
+  const problems = useMemo(
+    () => validatePage({ page: { profile: doc.profile, blocks: doc.blocks }, theme: doc.theme, legal: site.legal }, { real: supabaseEnabled }),
+    [doc, site.legal],
+  );
+  const hasProjects = doc.blocks.some((block) => block.type === "project");
+  // "Suggest an order": the kind's order of sections, one step that one Undo takes back.
+  const suggest = () => {
+    const blocks = suggestBlockOrder(doc.blocks, site.kind as CreatorKind | undefined);
+    if (blocks.every((block, index) => block === doc.blocks[index])) {
+      toast({ title: tPortfolio("orderApplied") });
+      return;
+    }
+    dispatch({ type: "replace", doc: { ...doc, blocks } });
+    toast({ title: tPortfolio("orderApplied"), action: { label: tDash("undo"), onAction: () => dispatch({ type: "undo" }) } });
+  };
   // Rebuilding with AI: the owner's own page only (not the team area), while the AI is on for them.
   const ai = useAiQuota({ account: account.id });
   const [profileOpen, setProfileOpen] = useState(false);
@@ -165,6 +190,16 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
             </Button>
           ) : null}
         </div>
+        {problems.map((problem) => (
+          <p key={problem} role={problem === "pageSize" ? "status" : "alert"} className="rounded-md border border-line-strong bg-surface p-3 text-small">
+            {tPortfolio(problem === "tooMany" ? "tooMany" : problem === "oneContact" ? "oneContact" : problem === "slugTaken" ? "slugTaken" : "pageSize")}
+          </p>
+        ))}
+        {arranging && hasProjects ? (
+          <Button variant="ghost" icon={ListOrdered} className="justify-self-start" onClick={suggest}>
+            {tPortfolio("suggestOrder")}
+          </Button>
+        ) : null}
 
         {empty ? (
           <div className="grid justify-items-center gap-4 rounded-lg border border-dashed border-line-strong p-8 text-center">
@@ -191,7 +226,9 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
           >
             {(block, index) => {
               const row = rows[index];
-              return (
+              const run = runs.starts.get(block.id);
+              const place = runs.position.get(block.id) ?? 0;
+              const item = (
                 <BlockRow
                   key={block.id}
                   block={block}
@@ -206,8 +243,29 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
                   last={index === last}
                   arranging={arranging}
                   isNew={justAdded === block.id}
+                  capped={place > FEATURED_PROJECTS}
                   onMove={(delta) => moveBy(block.id, delta)}
                 />
+              );
+              if (!run || arranging) return item;
+              // A run of projects is named once, with the layout the page gives it (a way to Design).
+              return (
+                <Fragment key={block.id}>
+                  <li data-project-run className={cn("flex min-w-0 flex-wrap items-center gap-x-3", inShell ? "mt-6 ps-4 pe-2" : "mt-4")}>
+                    <span className="text-small font-semibold text-fg-secondary">{tPortfolio("group", { count: run.count })}</span>
+                    {/* No layout to name while the page shows none of the run's projects. */}
+                    {run.layout ? (
+                      <Link
+                        href="/app/design"
+                        className="inline-flex min-h-touch-target items-center gap-1 rounded-xs text-small font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
+                      >
+                        {tDesign(run.layout)}
+                        <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+                      </Link>
+                    ) : null}
+                  </li>
+                  {item}
+                </Fragment>
               );
             }}
           </SortableBlocks>
@@ -255,7 +313,11 @@ function Glyph({ block }: { block: Block }) {
 
 function Thumb({ block }: { block: Block }) {
   const image =
-    block.type === "music"
+    block.type === "project"
+      ? coverImage(block)
+      : block.type === "about"
+        ? block.portrait
+        : block.type === "music"
       ? block.cover
       : block.type === "video"
         ? block.poster
@@ -267,6 +329,14 @@ function Thumb({ block }: { block: Block }) {
               ? block.images[0]
               : undefined;
   const dim = !block.visible && "opacity-secondary";
+  // A project without a picture shows the first letters of its title (its card shows the title large).
+  if (block.type === "project" && !hasImage(image)) {
+    return (
+      <span aria-hidden className={cn("grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-small font-semibold text-tinted-fg", dim)}>
+        {initialsOf(block.title) || <Icon icon={blockIcon.project} size="md" />}
+      </span>
+    );
+  }
   if (hasImage(image)) {
     const resolved = resolveMedia(image.src);
     return (
@@ -298,6 +368,7 @@ function BlockRow({
   last,
   arranging,
   isNew,
+  capped = false,
   onMove,
 }: {
   block: Block;
@@ -316,11 +387,14 @@ function BlockRow({
   arranging: boolean;
   /** Just added: marked until the next change, and scrolled into view. */
   isNew: boolean;
+  /** A project past the first six of its run: the page lists it under "All projects". */
+  capped?: boolean;
   onMove: (delta: number) => void;
 }) {
   const t = useTranslations("app.editor");
+  const tPortfolio = useTranslations("app.portfolio");
   const tTypes = useTranslations("dashboard.types");
-  const { dispatch, edit, removeBlock, setAddOpen, announce } = useSite();
+  const { dispatch, edit, removeBlock, setAddOpen, announce, doc } = useSite();
   const sortable = useSortableRow(block.id);
   const { rowRef, rowStyle, isDragging, handleProps, dndKeyDown } = sortable;
   const metaId = useId();
@@ -434,14 +508,19 @@ function BlockRow({
           { label: t("addBelow"), icon: Plus, onSelect: () => setAddOpen(true, index + 1) },
           ...(first ? [] : [{ label: t("moveUp"), icon: ArrowUp, shortcut: "⌥↑", onSelect: () => onMove(-1) }]),
           ...(last ? [] : [{ label: t("moveDown"), icon: ArrowDown, shortcut: "⌥↓", onSelect: () => onMove(1) }]),
-          {
-            label: t("duplicate"),
-            icon: CopyPlus,
-            onSelect: () => {
-              dispatch({ type: "duplicate", id: block.id });
-              announce(t("duplicated", { title: label }));
-            },
-          },
+          // A page has one contact block, and at most MAX_PROJECTS projects: neither gets a copy then.
+          ...(block.type === "contact" || (block.type === "project" && doc.blocks.filter((other) => other.type === "project").length >= MAX_PROJECTS)
+            ? []
+            : [
+                {
+                  label: t("duplicate"),
+                  icon: CopyPlus,
+                  onSelect: () => {
+                    dispatch({ type: "duplicate", id: block.id, word: slugWord(doc.profile.locale) });
+                    announce(t("duplicated", { title: label }));
+                  },
+                },
+              ]),
           { label: t("delete"), icon: Trash2, destructive: true, onSelect: remove },
         ]}
       />
@@ -525,6 +604,7 @@ function BlockRow({
             </Badge>
           ) : null}
           {scheduled ? <Icon icon={CalendarClock} size="sm" label={t("scheduled")} /> : null}
+          {capped ? <Badge size="sm">{tPortfolio("capNote")}</Badge> : null}
           {typeName !== label ? <span className="shrink-0">{typeName}</span> : null}
           {summary ? (
             <>

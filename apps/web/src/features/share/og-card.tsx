@@ -2,7 +2,8 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
-import { hasImage, type Page } from "@linkyo/blocks";
+import { hasImage, type BlockOf, type Page } from "@linkyo/blocks";
+import { coverImage, coverMode } from "@linkyo/blocks/project";
 import { creatorTokens } from "@linkyo/tokens";
 import { PAIRING_IDS, type ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { ImageResponse } from "next/og";
@@ -237,6 +238,125 @@ export function RtlText({ text, size, width, style }: { text: string; size: numb
 /** Text in the page's direction: plain for left-to-right, word by word for right-to-left. */
 function Words({ text, rtl, size, width, style }: { text: string; rtl: boolean; size: number; width: number; style: Record<string, string | number> }) {
   return rtl ? <RtlText text={text} size={size} width={width} style={style} /> : <div style={{ display: "flex", fontSize: size, maxWidth: width, ...style }}>{text}</div>;
+}
+
+/** The display face of a theme, and whether its pairing sets it in capitals. */
+function displayOf(theme: ResolvedCreatorTheme) {
+  const pairing = PAIRING_IDS.find((id) => creatorTokens.pairings[id] === theme.pairing) ?? "classic";
+  return { display: DISPLAY[pairing] ?? FALLBACK_DISPLAY, upper: Boolean((theme.pairing.display as { uppercase?: boolean }).uppercase) };
+}
+
+/** The bottom row of every card: the address on the accent, and Linkyo's mark. */
+function CardFoot({ address, rtl, palette, logo }: { address: string; rtl: boolean; palette: ResolvedCreatorTheme["palette"]; logo: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: rtl ? "row-reverse" : "row", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
+      <div style={{ display: "flex", padding: "14px 28px", borderRadius: 999, background: palette.accent, color: palette.accentFg, fontSize: 26, fontWeight: 600, maxWidth: 760, overflow: "hidden", whiteSpace: "nowrap" }}>
+        {clip(address, 44)}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 30, fontWeight: 900, color: palette.fg, letterSpacing: "-0.03em" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws plain <img> elements */}
+        <img src={logo} alt="" width={38} height={38} />
+        linkyo
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The bottom row of a project card beside a picture or figure, where half the card leaves no room for
+ * the address and the wordmark side by side: one pill across the column with Linkyo's mark and the
+ * project's address, cut short with "…" when it is longer than the pill (Geist averages about 0.56 em).
+ */
+function HalfFoot({ address, rtl, palette, logo, width }: { address: string; rtl: boolean; palette: ResolvedCreatorTheme["palette"]; logo: string; width: number }) {
+  const size = 22;
+  const room = Math.floor((width - 2 * 22 - 30 - 12) / (size * 0.56));
+  return (
+    <div style={{ display: "flex", flexDirection: rtl ? "row-reverse" : "row", alignItems: "center", gap: 12, maxWidth: width, padding: "12px 22px", borderRadius: 999, background: palette.accent, color: palette.accentFg, fontSize: size, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws plain <img> elements */}
+      <img src={logo} alt="" width={30} height={30} />
+      <span>{clip(address, room)}</span>
+    </div>
+  );
+}
+
+/**
+ * The link preview of a project page, in its page's template: the cover picture on the end half with
+ * the title, the sentence and the owner's name beside it; without a picture, the first result figure
+ * set large (or, without one, the title alone across the card). Never the client's name.
+ */
+export async function ogProjectCard({
+  page,
+  project,
+  theme,
+  address,
+  badge,
+}: {
+  page: Page;
+  project: BlockOf<"project">;
+  theme: ResolvedCreatorTheme;
+  address: string;
+  badge?: string | undefined;
+}) {
+  const rtl = page.profile.locale === "ar";
+  const { palette } = theme;
+  const { display, upper } = displayOf(theme);
+  const mode = coverMode(project);
+  const picture = coverImage(project);
+  const [fonts, logo, photo] = await Promise.all([FONTS, LOGO, mode === "picture" && picture ? pictureData(picture.src) : Promise.resolve(null)]);
+  const focal = picture?.focal ? `${Math.round(picture.focal[0] * 100)}% ${Math.round(picture.focal[1] * 100)}%` : "50% 50%";
+  const figure = mode === "figure" ? project.results?.[0] : undefined;
+  // The end half holds the picture or the figure; a title-only card gives the words the whole width.
+  const half = photo !== null || figure !== undefined;
+  const column = half ? OG_SIZE.width / 2 - 2 * 64 : OG_SIZE.width - 2 * 72;
+  const chars = Math.max(Array.from(project.title).length, 6);
+  // As large as about three lines of the column allow (Arabic, whose lines are broken by estimate and set looser, about two).
+  const titleSize = Math.round(Math.min(half ? 84 : 96, Math.max(44, (column * (rtl ? 1.2 : 2.2)) / (chars * display.width))));
+  const titleStyle = {
+    fontFamily: display.family,
+    fontWeight: display.weight,
+    lineHeight: rtl ? 1.25 : 1.04,
+    letterSpacing: display.family === "Geist" ? "-0.03em" : "0",
+    textTransform: upper ? "uppercase" : "none",
+  } as const;
+  const words = (
+    <div style={{ display: "flex", flex: 1, flexDirection: "column", justifyContent: "space-between", padding: half ? "56px 64px 52px" : "64px 72px 56px", textAlign: rtl ? "right" : "left" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: rtl ? "flex-end" : "flex-start", gap: 20 }}>
+        {badge ? <Words text={badge} rtl={rtl} size={26} width={column} style={{ padding: "8px 20px", borderRadius: 999, background: palette.surface2, color: palette.fgMuted, fontWeight: 600 }} /> : null}
+        <Words text={page.profile.displayName} rtl={rtl} size={28} width={column} style={{ color: palette.accentText, fontWeight: 600 }} />
+        <Words text={project.title} rtl={rtl} size={titleSize} width={column} style={titleStyle} />
+        <Words text={clip(project.summary, half ? 96 : 140)} rtl={rtl} size={28} width={column} style={{ lineHeight: 1.35, color: palette.fgMuted }} />
+      </div>
+      {half ? <HalfFoot address={address} rtl={rtl} palette={palette} logo={logo} width={column} /> : <CardFoot address={address} rtl={rtl} palette={palette} logo={logo} />}
+    </div>
+  );
+  const end = photo ? (
+    <div style={{ display: "flex", width: OG_SIZE.width / 2, height: OG_SIZE.height }}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws plain <img> elements */}
+      <img src={photo} alt="" width={OG_SIZE.width / 2} height={OG_SIZE.height} style={{ objectFit: "cover", objectPosition: focal }} />
+    </div>
+  ) : figure ? (
+    <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: rtl ? "flex-end" : "flex-start", gap: 16, width: OG_SIZE.width / 2, height: OG_SIZE.height, padding: 64, background: palette.surface2 }}>
+      {/* Word by word from the right only when the value has Arabic letters or digits ("8 أشهر"), as the
+          page's <bdi> does; "9 → 3" stays left to right on an Arabic page, too. */}
+      <Words
+        text={figure.value}
+        rtl={rtl && ARABIC.test(figure.value)}
+        size={Math.round(Math.min(220, Math.max(88, 440 / (Math.max(Array.from(figure.value).length, 2) * display.width))))}
+        width={OG_SIZE.width / 2 - 128}
+        style={{ fontFamily: display.family, fontWeight: display.weight, lineHeight: 1, color: palette.fg }}
+      />
+      <Words text={figure.label} rtl={rtl} size={32} width={OG_SIZE.width / 2 - 128} style={{ color: palette.fgMuted }} />
+    </div>
+  ) : null;
+  return new ImageResponse(
+    (
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: rtl ? "row-reverse" : "row", background: palette.bg, color: palette.fg, fontFamily: "Geist" }}>
+        {words}
+        {end}
+      </div>
+    ),
+    { ...OG_SIZE, fonts: await Promise.resolve(fonts) },
+  );
 }
 
 export async function ogCard({ page, theme, address, badge }: { page: Page; theme: ResolvedCreatorTheme; address: string; badge?: string | undefined }) {

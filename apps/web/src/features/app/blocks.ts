@@ -56,7 +56,7 @@ export const ADD_GROUPS = {
 /**
  * Entries of a group that are no type of their own: a block of an existing type, started for one
  * purpose. "Clients" is a `brands` block that begins as a list of names (the Add sheet files
- * `brands` itself under "Sell & events" as partners with logos). Listed after the group's types.
+ * `brands` itself under "Sell & events" as partners with logos). Listed right after the group's quotes (at its end when it has none).
  */
 export const ADD_PRESETS = { portfolio: ["clients"] } as const satisfies Partial<Record<keyof typeof ADD_GROUPS, readonly string[]>>;
 export type AddPreset = (typeof ADD_PRESETS)[keyof typeof ADD_PRESETS][number];

@@ -1,9 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Block, Page as BlocksPage } from "@linkyo/blocks";
 import type { Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "../src/lib/supabase/database.types";
 import { toJson } from "../src/lib/supabase/json";
-import { createRealAccount, expect, realEnabled, seedMedia, seedPage, service, signIn, test, uniqueName } from "./real";
+import { addTeamMember, createRealAccount, expect, realEnabled, seedMedia, seedPage, service, signIn, test, uniqueName } from "./real";
 
 /**
  * Public creator pages at `/<username>` and going live without demo mode (plan §1.8). The `@real`
@@ -12,7 +14,10 @@ import { createRealAccount, expect, realEnabled, seedMedia, seedPage, service, s
  */
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
-const link = (id: string, title: string, extra: Partial<Block> = {}): Block =>
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
+// The local stack's publishable key (public by design) unless the run names another.
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
+const link =(id: string, title: string, extra: Partial<Block> = {}): Block =>
   ({ id, type: "link", title, url: `https://example.com/${id}`, visible: true, highlight: false, ...extra }) as Block;
 
 /** A confirmed, onboarded account with this page; answers its name and id. */
@@ -20,6 +25,16 @@ async function publicAccount(prefix: string, locale: "de" | "en" | "ar", profile
   const { username, email } = uniqueName(prefix);
   const account = await createRealAccount({ email, username, locale, onboarded: true, page: seedPage(username, locale, { displayName: "Mira Okafor", ...profile }, blocks) });
   return account;
+}
+
+/** An access token for API calls as this account (a magic-link token verified directly). */
+async function tokenFor(email: string): Promise<string> {
+  const { data, error } = await service().auth.admin.generateLink({ type: "magiclink", email });
+  if (error) throw new Error(error.message);
+  const anon = createClient<Database>(SUPABASE_URL, PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  const verified = await anon.auth.verifyOtp({ token_hash: data.properties.hashed_token, type: "magiclink" });
+  if (verified.error || !verified.data.session) throw new Error(verified.error?.message ?? "no session");
+  return verified.data.session.access_token;
 }
 
 /** The address a Storage picture has inside our own image optimizer's URL. */
@@ -224,8 +239,225 @@ test.describe("public creator page @real", () => {
   });
 });
 
+// ─── Project pages at /<username>/<slug> (plan §1.5) ──────────────────────────────────────────
+
+/** A project with more to read than its card (a story part), so it has a page of its own. */
+const project = (id: string, slug: string, title: string, extra: Record<string, unknown> = {}): Block =>
+  ({ id, type: "project", slug, title, summary: `${title}: one sentence.`, story: { problem: `Why ${title} was needed.` }, visible: true, highlight: false, ...extra });
+
+/** The HTML of an address and its React Server Components payload (what a client navigation fetches). */
+async function served(page: Page, path: string): Promise<{ status: number; html: string; rsc: string }> {
+  const response = await page.request.get(path, { maxRedirects: 0 });
+  const rsc = await page.request.get(path, { maxRedirects: 0, headers: { RSC: "1" } });
+  return { status: response.status(), html: await response.text(), rsc: await rsc.text() };
+}
+
+test.describe("project pages @real", () => {
+  test.skip(!realEnabled, "Needs the local Supabase stack (E2E_SUPABASE=1).");
+
+  test("/<username>/<slug> renders in the page's language with no cookie and nothing from another origin @real", async ({ page, context, baseURL }) => {
+    const { username } = await publicAccount("prj-ar", "ar", { displayName: "نايا الدباس" }, [project("p1", "masar", "تطبيق Masar للتوصيل", { year: { from: 2024, to: 2025 } })]);
+    const origins = new Set<string>();
+    const cookieHeaders: string[] = [];
+    page.on("request", (request) => {
+      if (/^https?:/.test(request.url())) origins.add(new URL(request.url()).origin);
+    });
+    page.on("response", async (response) => {
+      const header = (await response.allHeaders())["set-cookie"];
+      if (header) cookieHeaders.push(`${response.url()}: ${header}`);
+    });
+    // The portfolio's card leads to the project's own address.
+    expect((await page.goto(`/${username}`))?.status()).toBe(200);
+    await expect(page.locator(`a[href="/${username}/masar"]`).first()).toBeAttached();
+    const response = await page.goto(`/${username}/masar`);
+    expect(response?.status()).toBe(200);
+    await page.waitForLoadState("networkidle");
+    expect(page.url()).toMatch(new RegExp(`/${username}/masar$`));
+    await expect(page.locator("html")).toHaveAttribute("lang", "ar");
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expect(page.locator("h1")).toHaveText("تطبيق Masar للتوصيل");
+    await expect(page).toHaveTitle("تطبيق Masar للتوصيل · نايا الدباس");
+    // The way back leads to the card on the page.
+    await expect(page.locator("[data-project-bar] a").first()).toHaveAttribute("href", `/${username}#masar`);
+    expect([...origins]).toEqual([new URL(baseURL ?? "").origin]);
+    expect(cookieHeaders).toEqual([]);
+    expect(await context.cookies()).toEqual([]);
+    // Capital letters lead to the lowercase address.
+    const upper = await page.request.get(`/${username.toUpperCase()}/Masar`, { maxRedirects: 0 });
+    expect(upper.status()).toBe(308);
+    expect(upper.headers().location).toMatch(new RegExp(`/${username}/masar$`));
+  });
+
+  test("hidden and scheduled-out projects answer 404 and are absent from the portfolio's HTML and RSC payload @real", async ({ page }) => {
+    const later = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
+    const { username } = await publicAccount("prj-hidden", "de", {}, [
+      project("p1", "sichtbar", "Sichtbares Projekt"),
+      project("p2", "versteckt", "Verstecktes Projekt", { visible: false }),
+      project("p3", "spaeter", "Spaeteres Projekt", { schedule: { from: later } }),
+    ]);
+    const portfolio = await served(page, `/${username}`);
+    expect(portfolio.status).toBe(200);
+    expect(portfolio.html).toContain("Sichtbares Projekt");
+    for (const hidden of ["Verstecktes Projekt", "Spaeteres Projekt", "versteckt", "spaeter"]) {
+      expect(portfolio.html, hidden).not.toContain(hidden);
+      expect(portfolio.rsc, hidden).not.toContain(hidden);
+    }
+    for (const slug of ["versteckt", "spaeter", "gibt-es-nicht"]) {
+      const response = await page.goto(`/${username}/${slug}`);
+      expect(response?.status(), slug).toBe(404);
+      // The way back to the page.
+      await expect(page.locator("[data-project-back]")).toHaveAttribute("href", `/${username}`);
+    }
+  });
+
+  test("an earlier address answers 307 to exactly /<username>/<slug>; a slug stored twice serves the first project @real", async ({ page }) => {
+    const { username } = await publicAccount("prj-moved", "en", {}, [
+      project("p1", "tidewatch", "Tidewatch", { was: ["tide-old", "tide-older"] }),
+      project("p2", "tidewatch", "Second with the same address"),
+    ]);
+    for (const old of ["tide-old", "tide-older"]) {
+      const moved = await page.request.get(`/${username}/${old}`, { maxRedirects: 0 });
+      expect(moved.status(), old).toBe(307);
+      // Exactly the public address, never /u/…. (Next.js repeats the header on the first, uncached
+      // answer; every copy is the same address, which browsers accept.)
+      const locations = moved.headersArray().filter((header) => header.name.toLowerCase() === "location");
+      expect(locations.length, old).toBeGreaterThan(0);
+      for (const header of locations) expect(header.value, old).toBe(`/${username}/tidewatch`);
+    }
+    await page.goto(`/${username}/tide-old`);
+    expect(page.url()).toMatch(new RegExp(`/${username}/tidewatch$`));
+    await page.goto(`/${username}/tidewatch`);
+    await expect(page.locator("h1")).toHaveText("Tidewatch");
+  });
+
+  test("a confidential client's name never reaches a visitor @real", async ({ page }) => {
+    const name = "Hafenbetrieb Nordwerft";
+    // As the editor saves it: "Confidential" switched on clears the name, so the database has none.
+    const saved = await publicAccount("prj-conf", "de", {}, [project("p1", "leitsystem", "Leitsystem", { confidential: true })]);
+    const { data: answer } = await service().rpc("public_page", { handle: saved.username });
+    expect(JSON.stringify(answer)).toContain("Leitsystem");
+    expect(JSON.stringify(answer)).not.toContain('"client"');
+    const shown = await served(page, `/${saved.username}/leitsystem`);
+    expect(shown.status).toBe(200);
+    expect(shown.html).toContain("Vertraulich");
+    // A row written by hand with both fails closed: the block does not parse, so it is not shown at all,
+    // not on its own page, the portfolio, the JSON-LD in either, or the link preview.
+    const forged = await publicAccount("prj-forged", "de", {}, [project("p1", "werft", "Werft", { confidential: true, client: name }), project("p2", "offen", "Offen")]);
+    for (const path of [`/${forged.username}`, `/${forged.username}/werft`, `/${forged.username}/offen`]) {
+      const { html, rsc } = await served(page, path);
+      expect(html, path).not.toContain(name);
+      expect(rsc, path).not.toContain(name);
+    }
+    expect((await page.request.get(`/${forged.username}/werft`)).status()).toBe(404);
+    expect((await page.request.get(`/u/${forged.username}/werft/opengraph-image`)).status()).toBe(404);
+    // The project page's structured data never names a client, confidential or not.
+    const open = await publicAccount("prj-client", "de", {}, [project("p1", "kunde", "Kunde", { client: name })]);
+    const { html } = await served(page, `/${open.username}/kunde`);
+    const ld = /<script type="application\/ld\+json">([^<]*)<\/script>/.exec(html)?.[1] ?? "";
+    expect(ld).toContain("CreativeWork");
+    expect(ld).not.toContain(name);
+  });
+
+  test("a client name typed in the editor before Confidential is switched on is stored nowhere and shown nowhere @real", async ({ page }) => {
+    const name = "Reederei Kaiserkai";
+    const owner = await publicAccount("prj-sheet", "en", {}, [project("p1", "harbour-system", "Harbour system")]);
+    await signIn(page, owner.email, "/en/app/editor");
+    await page.waitForURL("**/en/app/editor");
+    // The project sheet, as an owner fills it in: the client's name first, then the switch.
+    await page.locator("[data-row]").filter({ hasText: "Harbour system" }).locator("[data-row-edit]").click();
+    const sheet = page.getByRole("dialog", { name: "Edit Project" });
+    await sheet.locator('[data-group="forRole"]').click();
+    await sheet.getByRole("textbox", { name: "Who it was for", exact: true }).fill(name);
+    await sheet.getByRole("switch", { name: "Confidential, no name" }).click();
+    await sheet.getByRole("button", { name: "Save", exact: true }).locator("visible=true").first().click();
+    await expect(sheet).toBeHidden();
+    // Stored: confidential, and no name in the row at all.
+    await expect
+      .poll(async () => JSON.stringify((await service().from("sites").select("page").eq("profile_id", owner.id).single()).data?.page ?? null), { timeout: 20_000 })
+      .toContain('"confidential":true');
+    const { data: row } = await service().from("sites").select("page").eq("profile_id", owner.id).single();
+    expect(JSON.stringify(row)).not.toContain(name);
+    // Nowhere a visitor or a program reads: the RPC, the HTML and RSC payload of both pages, the JSON-LD, the preview.
+    const { data: answer } = await service().rpc("public_page", { handle: owner.username });
+    expect(JSON.stringify(answer)).toContain("Harbour system");
+    expect(JSON.stringify(answer)).not.toContain(name);
+    for (const path of [`/${owner.username}`, `/${owner.username}/harbour-system`]) {
+      const { status, html, rsc } = await served(page, path);
+      expect(status, path).toBe(200);
+      expect(html, path).not.toContain(name);
+      expect(rsc, path).not.toContain(name);
+    }
+    const { html } = await served(page, `/${owner.username}/harbour-system`);
+    expect(html).toContain("Confidential client");
+    const ld = /<script type="application\/ld\+json">([^<]*)<\/script>/.exec(html)?.[1] ?? "";
+    expect(ld).toContain("Harbour system");
+    expect(ld).not.toContain(name);
+    const card = await page.request.get(`/u/${owner.username}/harbour-system/opengraph-image`);
+    expect(card.status()).toBe(200);
+    expect(card.headers()["content-type"]).toBe("image/png");
+    expect((await card.body()).toString("latin1")).not.toContain(name);
+  });
+
+  test("has its canonical address on the creator domain and a link preview image @real", async ({ page }) => {
+    const { username } = await publicAccount("prj-og", "en", {}, [project("p1", "harbour-light", "Harbour light", { results: [{ value: "9 → 3", label: "weeks to wait" }] })]);
+    await page.goto(`/${username}/harbour-light`);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `https://linkyo.app/${username}/harbour-light`);
+    await expect(page.locator('meta[property="og:type"]')).toHaveAttribute("content", "article");
+    const og = await page.locator('meta[property="og:image"]').first().getAttribute("content");
+    expect(og).toMatch(new RegExp(`/u/${username}/harbour-light/opengraph-image`));
+    const image = await page.request.get(new URL(og ?? "").pathname);
+    expect(image.status()).toBe(200);
+    expect(image.headers()["content-type"]).toBe("image/png");
+    const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+  });
+
+  test("suspending or deleting an account drops its project pages and their previews at once @real", async ({ page }) => {
+    const owner = await publicAccount("prj-gone", "de", {}, [project("p1", "werkhalle", "Werkhalle", { was: ["halle-alt"] })]);
+    const team = uniqueName("prj-team");
+    await createRealAccount({ ...team, locale: "de", onboarded: true });
+    await addTeamMember(team.email, "admin");
+    const teamToken = await tokenFor(team.email);
+    const status = async (path: string) => (await page.request.get(path, { maxRedirects: 0 })).status();
+    const visit = async (name: string) => ({
+      page: await status(`/${name}/werkhalle`),
+      preview: await status(`/u/${name}/werkhalle/opengraph-image`),
+      earlier: await status(`/${name}/halle-alt`),
+    });
+    const shown = { page: 200, preview: 200, earlier: 307 };
+    const gone = { page: 404, preview: 404, earlier: 404 };
+    // Visited twice: the second answers come from the cache.
+    await visit(owner.username);
+    expect(await visit(owner.username)).toEqual(shown);
+    const setStatus = (next: string) => page.request.post(`/api/admin/customers/${owner.id}/status`, { headers: { Authorization: `Bearer ${teamToken}` }, data: { next } });
+    expect((await setStatus("suspended")).status()).toBe(200);
+    expect(await visit(owner.username)).toEqual(gone);
+    expect((await setStatus("active")).status()).toBe(200);
+    expect(await visit(owner.username)).toEqual(shown);
+    // The owner deletes the account: gone on the very next visit, too.
+    const deleted = await page.request.post("/api/account/delete", { headers: { Authorization: `Bearer ${await tokenFor(owner.email)}` } });
+    expect(deleted.status()).toBe(200);
+    expect(await visit(owner.username)).toEqual(gone);
+
+    // The control: the same deletion behind the app's back (no route that drops the cached copies)
+    // leaves the old project page and its earlier address's redirect up. That is what the routes above
+    // prevent. (The link preview is drawn on every request, a dynamic route: it is gone either way.)
+    const other = await publicAccount("prj-stale", "de", {}, [project("p1", "werkhalle", "Werkhalle", { was: ["halle-alt"] })]);
+    expect(await visit(other.username)).toEqual(shown);
+    expect((await service().auth.admin.deleteUser(other.id)).error).toBeNull();
+    expect(await visit(other.username)).toEqual({ ...shown, preview: 404 });
+  });
+});
+
 test.describe("public creator page in a demo build", () => {
   test.skip(realEnabled, "Demo build only (no Supabase settings).");
+
+  test("/<name>/<project> is not a creator address without real accounts", async ({ page }) => {
+    expect((await page.goto("/u/mila/hafenlicht"))?.status()).toBe(404);
+    const bare = await page.goto("/mila/hafenlicht");
+    expect(bare?.status()).toBe(404);
+    expect(page.url()).toMatch(/\/(de|en|ar)\/mila\/hafenlicht$/);
+  });
 
   test("/u/<name> answers 404 and /<name> behaves as before", async ({ page }) => {
     const internal = await page.goto("/u/mila");

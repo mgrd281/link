@@ -1,7 +1,7 @@
 "use client";
 
 import { creatorTokens, type CreatorButtonShape, type CreatorButtonStyle, type CreatorTemplateId } from "@linkyo/tokens";
-import { BUTTON_SHAPES, BUTTON_STYLES, PAIRING_IDS, resolveCreatorTheme, type CreatorThemeConfig } from "@linkyo/tokens/creator";
+import { BUTTON_SHAPES, BUTTON_STYLES, PAIRING_IDS, PROJECTS_STYLES, resolveCreatorTheme, type CreatorThemeConfig, type ProjectsStyle } from "@linkyo/tokens/creator";
 import { Button, cn, Icon, Segmented, toast } from "@linkyo/ui";
 import { Check, Moon, PaintBucket, RotateCcw, Sun, SwatchBook } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -13,6 +13,7 @@ import { linkStyleClasses } from "@/features/creator/link-button";
 import { displayStyle } from "@/features/directions/poster/styles";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
 
+import { projectRuns } from "./project-runs";
 import { setDesignTabUrl } from "./jump";
 import { PhonePreview, PreviewButton } from "./preview";
 import { DESIGN_TABS, designTabFrom, NAV_ANCHORS, type DesignTab } from "./routes";
@@ -201,6 +202,50 @@ export function DesignScreen() {
     </div>
   );
 
+  // The work layout: the template's choice ("Automatic") or the owner's. A choice the content cannot
+  // fill falls back to the list on the page; one line says why.
+  const hasProjects = doc.blocks.some((block) => block.type === "project");
+  const projects: ProjectsStyle = theme.projects ?? "auto";
+  // As the page shows it: hidden and scheduled projects do not count.
+  const forced = projects !== "auto" && projectRuns(doc.blocks, projects).layouts.some((layout) => layout !== projects);
+  const work = (
+    <Panel title={t("projects.label")} id={`${id}-projects`}>
+      <fieldset className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
+        <legend className="sr-only">{t("projects.label")}</legend>
+        {PROJECTS_STYLES.map((style) => {
+          const checked = projects === style;
+          return (
+            <label
+              key={style}
+              className={cn(
+                "relative flex min-h-control-xl cursor-pointer items-start gap-3 rounded-lg border p-3 transition-[background-color,border-color] duration-micro has-[:focus-visible]:focus-ring",
+                checked ? "border-focus bg-selected" : "border-line bg-surface hover:border-line-input",
+              )}
+            >
+              <input
+                type="radio"
+                name={`${id}-projects`}
+                value={style}
+                checked={checked}
+                onChange={() => setTheme({ projects: style === "auto" ? undefined : style })}
+                className="sr-only"
+              />
+              <span className="grid min-w-0 flex-1 gap-0.5">
+                <span className="text-small font-semibold">{t(`projects.${style}`)}</span>
+                <span className="text-caption text-fg-secondary">{t(`projects.${style}Hint`)}</span>
+              </span>
+              {checked ? <Icon icon={Check} size="sm" className="mt-0.5 shrink-0" /> : null}
+            </label>
+          );
+        })}
+      </fieldset>
+      {/* Always there, so the line is read out when a choice makes it appear. */}
+      <p role="status" className="text-small font-regular text-fg-secondary empty:hidden">
+        {forced ? t("projects.forced") : null}
+      </p>
+    </Panel>
+  );
+
   const buttons = () => (
     <div className="grid min-w-0 grid-cols-1 gap-6">
       <fieldset className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
@@ -257,6 +302,8 @@ export function DesignScreen() {
       <Panel title={t("template")} id={NAV_ANCHORS.designTemplate}>
         <TemplatePicker still value={theme.template} profile={doc.profile} onChange={pickTemplate} />
       </Panel>
+
+      {hasProjects ? work : null}
 
       <Panel title={t("customize")} id={NAV_ANCHORS.designCustomize}>
         <Tabs<DesignTab> label={t("tabsLabel")} value={group} onValueChange={setGroup} tabs={DESIGN_TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))}>

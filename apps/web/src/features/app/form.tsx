@@ -9,7 +9,7 @@ import { useId, useState, type ReactNode, type TextareaHTMLAttributes } from "re
 
 import { remoteImageProps, resolveMedia } from "@/features/directions/shared/media";
 
-import { ImageError, pickFiles, prepareAndStore, type ImageKind } from "./images";
+import { ImageError, pickFiles, prepareAndStore, storedImage, type ImageKind } from "./images";
 import { useMediaOwner } from "./media-owner";
 
 import { haptic } from "@/lib/haptics";
@@ -81,8 +81,10 @@ export function TextArea({
   error,
   live = true,
   rows = 3,
+  count = false,
+  mono = false,
   ...props
-}: Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "onChange"> & {
+}: Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "onChange" | "className"> & {
   label: string;
   value: string;
   onValue: (value: string) => void;
@@ -91,6 +93,10 @@ export function TextArea({
   error?: string | undefined;
   /** Keep the message mounted (a polite live region) even with no hint or error, as `TextField` does. */
   live?: boolean | undefined;
+  /** Show the count from the first character, where the limit is part of the task ("in one sentence"). */
+  count?: boolean | undefined;
+  /** Code: the monospace face, left to right in every language, no wrapping of long lines. */
+  mono?: boolean | undefined;
 }) {
   const t = useTranslations("app.form");
   const id = useId();
@@ -105,7 +111,7 @@ export function TextArea({
           {label}
         </label>
         {/* The count only shows near the limit; the limit itself is read out below. */}
-        {value.length >= max * 0.8 ? (
+        {value.length >= max * 0.8 || (count && value.length > 0) ? (
           <span className={cn("text-caption tabular-nums", full ? "text-danger-strong" : "text-fg-tertiary")} aria-hidden>
             {value.length}/{max}
           </span>
@@ -121,10 +127,13 @@ export function TextArea({
         aria-describedby={hasMessage ? messageId : undefined}
         // Text runs in its own direction (a German bio on an Arabic page reads left to right); an empty
         // field follows the page, so the placeholder and the caret start on the page's side.
-        dir={value ? "auto" : undefined}
+        dir={mono ? "ltr" : value ? "auto" : undefined}
+        wrap={mono ? "off" : undefined}
+        spellCheck={mono ? false : undefined}
         className={cn(
           // Outlined like the text fields above it (see TextInput); it grows with its text instead of a resize handle.
           "resize-none rounded-md border px-4 py-3 text-start text-body text-fg outline-none transition-[border-color,background-color] duration-micro ease-standard lg:pointer-fine:px-3 lg:pointer-fine:py-2",
+          mono && "font-mono text-small",
           "focus-visible:focus-field placeholder:text-fg-tertiary",
           error
             ? "border-danger-strong bg-danger-subtle focus-visible:border-danger-strong [--color-focus:var(--color-danger-strong)]"
@@ -221,7 +230,21 @@ export function SwitchRow({
   );
 }
 
-/** Pick → resize in the browser → preview. Shows a calm tile when there is no picture yet. */
+/** A picture as a page keeps it: address, description, focal point, tone and measured size. */
+export interface ImageValue {
+  src: string;
+  alt: string;
+  tone?: "light" | "dark" | undefined;
+  focal?: [number, number] | undefined;
+  w?: number | undefined;
+  h?: number | undefined;
+}
+
+/**
+ * Pick → resize in the browser → preview. Shows a calm tile when there is no picture yet. A new
+ * picture keeps its measured size (`w`/`h`), so pages can reserve its space; its focal point starts
+ * over (it belonged to the picture before).
+ */
 export function ImageInput({
   label,
   image,
@@ -231,15 +254,23 @@ export function ImageInput({
   withAlt = true,
   error,
   hint,
+  altId,
+  altLabel,
+  altHint,
 }: {
   label: string;
-  image: { src: string; alt: string; tone?: "light" | "dark" | undefined } | undefined;
-  onImage: (image: { src: string; alt: string; tone?: "light" | "dark" | undefined } | undefined) => void;
+  image: ImageValue | undefined;
+  onImage: (image: ImageValue | undefined) => void;
   kind?: ImageKind;
   shape?: "square" | "round" | "wide";
   withAlt?: boolean;
   error?: string | undefined;
   hint?: string | undefined;
+  /** The description field's id, for a form that leads the owner to it ("describe your picture"). */
+  altId?: string | undefined;
+  /** The description field's own words, where the form says more than "Image description". */
+  altLabel?: string | undefined;
+  altHint?: string | undefined;
 }) {
   const t = useTranslations("app.form");
   const [busy, setBusy] = useState(false);
@@ -254,7 +285,7 @@ export function ImageInput({
     try {
       const prepared = await prepareAndStore(file, kind, owner);
       setProblem(null);
-      onImage({ src: prepared.src, alt: image?.alt ?? "", tone: prepared.tone });
+      onImage(storedImage(prepared, image?.alt ?? ""));
     } catch (reason) {
       setProblem(reason instanceof ImageError ? reason.reason : "decode");
     } finally {
@@ -321,7 +352,7 @@ export function ImageInput({
         </p>
       ) : null}
       {withAlt && present ? (
-        <TextInput label={t("alt")} hint={t("altHint")} value={image.alt} onValue={(alt) => onImage({ ...image, alt })} maxLength={300} />
+        <TextInput id={altId} label={altLabel ?? t("alt")} hint={altHint ?? t("altHint")} value={image.alt} onValue={(alt) => onImage({ ...image, alt })} maxLength={300} />
       ) : null}
     </div>
   );

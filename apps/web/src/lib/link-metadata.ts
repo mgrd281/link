@@ -37,6 +37,55 @@ export interface LinkMetadataResponse {
   language?: string;
   license?: string;
   kind?: "skill" | "repo";
+  /** GitHub: the repository's topics, its homepage and the year it was created. */
+  topics?: string[];
+  homepage?: string;
+  year?: number;
+}
+
+/**
+ * Hosted platforms whose pages we never read (their terms forbid it, or they have not been read
+ * yet): a link there stays a link. Host (and its subdomains) → the platform's own name.
+ */
+export const LINK_ONLY_PLATFORMS: Readonly<Record<string, string>> = {
+  "behance.net": "Behance",
+  "dribbble.com": "Dribbble",
+  "linkedin.com": "LinkedIn",
+  "figma.com": "Figma",
+  "notion.so": "Notion",
+  "notion.site": "Notion",
+  "xing.com": "XING",
+  "artstation.com": "ArtStation",
+  // eslint-disable-next-line linkyo/no-raw-design-values -- a host name, not a length
+  "500px.com": "500px",
+  "flickr.com": "Flickr",
+  "deviantart.com": "DeviantArt",
+  "medium.com": "Medium",
+  "substack.com": "Substack",
+  "vsco.co": "VSCO",
+  "upwork.com": "Upwork",
+  "fiverr.com": "Fiverr",
+  "malt.de": "Malt",
+  "malt.fr": "Malt",
+  "malt.com": "Malt",
+  "freelancermap.de": "freelancermap",
+  "read.cv": "Read.cv",
+  "contra.com": "Contra",
+  "gitlab.com": "GitLab",
+  "codeberg.org": "Codeberg",
+  "bitbucket.org": "Bitbucket",
+};
+
+/** The platform a link-only address belongs to ("Behance"), or null for any other address. */
+export function linkOnlyPlatform(url: string): string | null {
+  let host: string;
+  try {
+    host = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+  for (const [known, name] of Object.entries(LINK_ONLY_PLATFORMS)) if (host === known || host.endsWith(`.${known}`)) return name;
+  return null;
 }
 
 /** No platform we know serves details for this address. */
@@ -51,8 +100,10 @@ const text = (value: unknown, max: number): string | undefined => {
   return clean.length <= max ? clean : `${clean.slice(0, max - 1).trimEnd()}…`;
 };
 
-async function read(url: string, headers: Record<string, string>): Promise<string> {
-  const response = await fetch(url, { headers, signal: AbortSignal.timeout(3000), next: { revalidate: DAY } });
+type Fetch = typeof fetch;
+
+async function read(url: string, headers: Record<string, string>, fetcher: Fetch = fetch): Promise<string> {
+  const response = await fetcher(url, { headers, signal: AbortSignal.timeout(3000), next: { revalidate: DAY } });
   if (!response.ok) throw new LinkMetadataUnavailable(String(response.status));
   const body = await response.text();
   if (body.length > MAX_BYTES) throw new LinkMetadataUnavailable("too large");
@@ -117,38 +168,79 @@ export function skillFrontMatter(markdown: string): { name?: string; description
   return { ...(name ? { name } : {}), ...(description ? { description } : {}) };
 }
 
-/** GitHub: the repository's details, and for a skill (a folder with a SKILL.md) its own name and line. */
-async function github(detection: Detection): Promise<LinkMetadataResponse> {
-  const [owner = "", repo = "", ...folders] = (detection.id ?? "").split("/");
-  if (!/^[\w.-]+$/.test(owner) || !/^[\w.-]+$/.test(repo)) throw new LinkMetadataUnavailable("not a repository");
-  const token = process.env.GITHUB_TOKEN;
-  const data = JSON.parse(
-    await read(`https://api.github.com/repos/${owner}/${repo}`, {
-      accept: "application/vnd.github+json",
-      "user-agent": "Linkyo",
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
-    }),
-  ) as Record<string, unknown>;
-  const branch = text(data.default_branch, 100) ?? "main";
-  const path = folders.filter((folder) => /^[\w.-]+$/.test(folder)).join("/");
-  let skill: { name?: string; description?: string } = {};
-  try {
-    const file = `${path ? `${path}/` : ""}SKILL.md`;
-    skill = skillFrontMatter(await read(`https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(branch)}/${file}`, { accept: "text/plain" }));
-  } catch {
-    // No SKILL.md there: a plain repository.
-  }
+/** What GitHub's API says about a repository: the facts we use, nothing personal. */
+export interface RepositoryFacts {
+  name?: string;
+  description?: string;
+  stars?: number;
+  language?: string;
+  license?: string;
+  topics: string[];
+  homepage?: string;
+  /** The year the repository was created. */
+  year?: number;
+  defaultBranch: string;
+}
+
+const NAME = /^[\w.-]+$/;
+
+/**
+ * One request to GitHub's API (`GET /repos/{owner}/{repo}`) and the facts from its answer. The only
+ * host asked is api.github.com; `token` raises the limit (`GITHUB_TOKEN`). Shared by the editor's
+ * link details and the AI builder's repository reader.
+ */
+export async function readRepository(
+  owner: string,
+  repo: string,
+  { token, fetch: fetcher = fetch }: { token?: string | undefined; fetch?: Fetch } = {},
+): Promise<RepositoryFacts> {
+  if (!NAME.test(owner) || !NAME.test(repo)) throw new LinkMetadataUnavailable("not a repository");
+  const headers = { accept: "application/vnd.github+json", "user-agent": "Linkyo", ...(token ? { authorization: `Bearer ${token}` } : {}) };
+  const data = JSON.parse(await read(`https://api.github.com/repos/${owner}/${repo}`, headers, fetcher)) as Record<string, unknown>;
   const license = data.license && typeof data.license === "object" ? text((data.license as Record<string, unknown>).spdx_id, 40) : undefined;
-  const title = text(skill.name, 80) ?? (path ? text(path.split("/").at(-1), 80) : text(data.name, 80));
-  const description = text(skill.description ?? data.description, 240);
+  const topics = Array.isArray(data.topics) ? data.topics.flatMap((topic) => text(topic, 24) ?? []) : [];
+  const homepage = text(data.homepage, 2048);
+  const created = typeof data.created_at === "string" ? Number.parseInt(data.created_at.slice(0, 4), 10) : Number.NaN;
+  const name = text(data.name, 100);
+  const description = text(data.description, 240);
   const language = text(data.language, 40);
   return {
-    ...(title ? { title } : {}),
+    ...(name ? { name } : {}),
     ...(description ? { description } : {}),
     ...(typeof data.stargazers_count === "number" ? { stars: data.stargazers_count } : {}),
     ...(language ? { language } : {}),
     ...(license && license !== "NOASSERTION" ? { license } : {}),
+    topics,
+    ...(homepage && /^https?:\/\//i.test(homepage) ? { homepage } : {}),
+    ...(Number.isInteger(created) && created >= 1950 && created <= 2100 ? { year: created } : {}),
+    defaultBranch: text(data.default_branch, 100) ?? "main",
+  };
+}
+
+/** GitHub: the repository's details, and for a skill (a folder with a SKILL.md) its own name and line. */
+async function github(detection: Detection): Promise<LinkMetadataResponse> {
+  const [owner = "", repo = "", ...folders] = (detection.id ?? "").split("/");
+  const facts = await readRepository(owner, repo, { token: process.env.GITHUB_TOKEN });
+  const path = folders.filter((folder) => NAME.test(folder)).join("/");
+  let skill: { name?: string; description?: string } = {};
+  try {
+    const file = `${path ? `${path}/` : ""}SKILL.md`;
+    skill = skillFrontMatter(await read(`https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(facts.defaultBranch)}/${file}`, { accept: "text/plain" }));
+  } catch {
+    // No SKILL.md there: a plain repository.
+  }
+  const title = text(skill.name, 80) ?? (path ? text(path.split("/").at(-1), 80) : text(facts.name, 80));
+  const description = text(skill.description ?? facts.description, 240);
+  return {
+    ...(title ? { title } : {}),
+    ...(description ? { description } : {}),
+    ...(facts.stars !== undefined ? { stars: facts.stars } : {}),
+    ...(facts.language ? { language: facts.language } : {}),
+    ...(facts.license ? { license: facts.license } : {}),
     kind: skill.name || skill.description ? "skill" : "repo",
+    ...(facts.topics.length > 0 ? { topics: facts.topics } : {}),
+    ...(facts.homepage ? { homepage: facts.homepage } : {}),
+    ...(facts.year !== undefined ? { year: facts.year } : {}),
   };
 }
 
@@ -158,6 +250,8 @@ async function github(detection: Detection): Promise<LinkMetadataResponse> {
  * the platform did not answer (down, timed out).
  */
 export async function lookupLinkMetadata(url: string): Promise<LinkMetadataResponse> {
+  // Hosted platforms whose terms forbid reading them are never asked, not even through oEmbed.
+  if (linkOnlyPlatform(url) !== null) throw new LinkMetadataUnsupported("link only");
   const detection = url.length <= 2048 ? detectLink(url) : null;
   const endpoint = detection?.platform ? OEMBED[detection.platform] : undefined;
   if (detection?.type === "app" && detection.platform === "appstore" && detection.id) return appStore(detection);
