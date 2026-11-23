@@ -11,7 +11,7 @@ import { NO_IMAGE, type BlockOf, type Page } from "@linkyo/blocks";
  * it into a high rack, a check confirms it; then the camera follows him to the loading dock, where he
  * reaches into a truck's trailer for the next pallet (unloading), scans it in and brings it back to
  * the rack. In black, graphite and silver; no brand names or logos on the terminal. An 18 s seamless
- * loop (public/media/motion/sevag-lagerarbeit.mp4, source in
+ * loop from Linkyo's motion library ("lagerarbeit", features/creator/motion-library.ts; source in
  * .claude/skills/linkyo-media-assets/scripts/reach-truck-scene.html); the picture is its first frame, so nothing jumps when it starts, and
  * visitors who prefer less motion keep the still. No text in it.
  *
@@ -40,12 +40,12 @@ export const sevagDe: Page = {
     bio: "Sorgfältig und zuverlässig im Lager. Sicherheit, Ordnung und Sauberkeit sind mir wichtig.",
     avatar: { src: NO_IMAGE, alt: "" },
     hero: {
-      src: `/prepared/${SEVAG_SLUG}/schubmast.jpg`,
+      src: "sample:ex-motion-lagerarbeit",
       alt: "Illustration: Ein Schubmaststapler-Fahrer scannt eine Palette und hebt sie in ein Hochregal",
       w: 1080,
       h: 1350,
     },
-    motion: { src: "sample:motion-sevag-lagerarbeit" },
+    motion: { src: "sample:motion-lagerarbeit" },
     stats: [
       { value: "seit 2018", label: "in der Logistik" },
       { value: "seit 2021", label: "Staplerschein" },

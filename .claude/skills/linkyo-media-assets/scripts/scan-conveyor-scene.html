@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  Linkyo original motion graphic "Scannen von Waren": a warehouse worker at a roller conveyor scans each
+  carton that passes with a handheld scanner; the label flashes, a check rides along with the carton,
+  and the terminal beside him books it. Black, graphite and silver. Drawn from scratch in SVG; render(t)
+  is a pure function of time, so frames are exact and the 8 s loop is seamless. No text, no brands.
+  The action stays inside the centre 75 % of the width, which phones show.
+-->
+<style>
+  html, body { margin: 0; background: #0a0a0b; }
+  svg { display: block; width: 1080px; height: 1350px; }
+</style>
+</head>
+<body>
+<svg id="scene" viewBox="0 0 1080 1350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0a0b"/><stop offset="0.66" stop-color="#151517"/><stop offset="1" stop-color="#0a0a0b"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1c1f"/><stop offset="0.4" stop-color="#131315"/><stop offset="1" stop-color="#0a0a0b"/>
+    </linearGradient>
+    <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2f2f4" stop-opacity="0.2"/><stop offset="1" stop-color="#f2f2f4" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2f2f3"/><stop offset="1" stop-color="#d6d7da"/>
+    </linearGradient>
+    <linearGradient id="laser" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.25"/><stop offset="1" stop-color="#ffffff" stop-opacity="0.6"/>
+    </linearGradient>
+    <linearGradient id="belt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d3e43"/><stop offset="1" stop-color="#2b2c30"/>
+    </linearGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="beam" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="3"/></filter>
+    <clipPath id="frame"><rect width="1080" height="1350"/></clipPath>
+    <clipPath id="floorClip"><rect x="-300" y="1083" width="1700" height="700"/></clipPath>
+    <linearGradient id="fadeGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <mask id="fadeDown" maskUnits="userSpaceOnUse" x="-300" y="1080" width="1700" height="300"><rect x="-300" y="1080" width="1700" height="260" fill="url(#fadeGrad)"/></mask>
+    <!-- Cartons in three sizes, each with a barcode label (origin: bottom-left). -->
+    <g id="c0"><rect x="0" y="-120" width="150" height="120" rx="6" fill="url(#box)"/><rect x="66" y="-120" width="18" height="120" fill="#a7a9ae" opacity="0.7"/><g transform="translate(92 -76)"><rect width="50" height="30" rx="3" fill="#fff"/><g fill="#111113"><rect x="5" y="5" width="3" height="16"/><rect x="10" y="5" width="1.6" height="16"/><rect x="14" y="5" width="4" height="16"/><rect x="20" y="5" width="2" height="16"/><rect x="25" y="5" width="3" height="16"/><rect x="30" y="5" width="1.6" height="16"/><rect x="34" y="5" width="4" height="16"/><rect x="40" y="5" width="2" height="16"/></g></g></g>
+    <g id="c1"><rect x="0" y="-92" width="190" height="92" rx="6" fill="url(#box)"/><rect x="0" y="-52" width="190" height="14" fill="#a7a9ae" opacity="0.7"/><g transform="translate(126 -86)"><rect width="50" height="30" rx="3" fill="#fff"/><g fill="#111113"><rect x="5" y="5" width="3" height="16"/><rect x="10" y="5" width="1.6" height="16"/><rect x="14" y="5" width="4" height="16"/><rect x="20" y="5" width="2" height="16"/><rect x="25" y="5" width="3" height="16"/><rect x="30" y="5" width="1.6" height="16"/><rect x="34" y="5" width="4" height="16"/><rect x="40" y="5" width="2" height="16"/></g></g></g>
+    <g id="c2"><rect x="0" y="-150" width="130" height="150" rx="6" fill="url(#box)"/><rect x="56" y="-150" width="18" height="150" fill="#a7a9ae" opacity="0.7"/><g transform="translate(72 -110)"><rect width="50" height="30" rx="3" fill="#fff"/><g fill="#111113"><rect x="5" y="5" width="3" height="16"/><rect x="10" y="5" width="1.6" height="16"/><rect x="14" y="5" width="4" height="16"/><rect x="20" y="5" width="2" height="16"/><rect x="25" y="5" width="3" height="16"/><rect x="30" y="5" width="1.6" height="16"/><rect x="34" y="5" width="4" height="16"/><rect x="40" y="5" width="2" height="16"/></g></g></g>
+  </defs>
+
+  <g clip-path="url(#frame)">
+   <g id="cam">
+    <rect x="-300" y="-300" width="1700" height="1950" fill="url(#sky)"/>
+    <g id="far"></g>
+    <polygon points="230,96 330,96 470,1080 90,1080" fill="url(#cone)"/>
+    <polygon points="700,96 800,96 940,1080 560,1080" fill="url(#cone)"/>
+    <rect x="236" y="84" width="88" height="12" rx="6" fill="#f4f4f6"/><rect x="706" y="84" width="88" height="12" rx="6" fill="#f4f4f6"/>
+    <rect x="220" y="74" width="120" height="12" rx="4" fill="#2a2a2e"/><rect x="690" y="74" width="120" height="12" rx="4" fill="#2a2a2e"/>
+    <rect x="-300" y="1080" width="1700" height="600" fill="url(#floor)"/>
+    <rect x="-300" y="1080" width="1700" height="3" fill="#3a3a3e"/>
+    <g clip-path="url(#floorClip)" mask="url(#fadeDown)" opacity="0.14"><use href="#world" transform="translate(0 2163) scale(1 -1)"/></g>
+    <g id="dust" fill="#f2f2f3"></g>
+
+    <g id="world">
+      <!-- The terminal on its stand, behind the conveyor on the right. -->
+      <g id="terminal">
+        <rect x="846" y="660" width="12" height="420" fill="#2b2c30"/>
+        <rect x="790" y="560" width="124" height="96" rx="10" fill="#121214"/>
+        <rect x="798" y="568" width="108" height="80" rx="5" fill="#1f2023"/>
+        <g id="rows"></g>
+        <g id="termOk" opacity="0"><circle cx="852" cy="608" r="24" fill="#ededef"/><path d="M840 608 L849 617 L865 599" stroke="#111113" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <circle id="termGlow" cx="852" cy="608" r="80" fill="url(#glow)" opacity="0"/>
+      </g>
+
+      <!-- The worker behind the conveyor: helmet, reflective vest, the scanner in his hand. -->
+      <g id="worker" transform="translate(-34 -150) scale(1.14)">
+        <rect x="300" y="760" width="132" height="230" rx="40" fill="#2a2b2f"/>
+        <path d="M306 836 L426 836" stroke="#e9e9eb" stroke-width="10" stroke-linecap="round"/>
+        <path d="M306 866 L426 866" stroke="#bfc1c6" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+        <rect x="350" y="724" width="32" height="40" rx="10" fill="#b98262"/>
+        <g id="head">
+          <circle cx="366" cy="694" r="40" fill="#c48f6f"/>
+          <path d="M322 688 Q322 640 368 636 Q412 640 412 684 L420 690 L322 690 Z" fill="#f4f6fa"/>
+          <rect x="400" y="682" width="32" height="9" rx="4" fill="#f4f6fa"/>
+          <rect x="328" y="674" width="84" height="6" rx="3" fill="#1a1a1c"/>
+        </g>
+        <!-- Left arm resting on the belt edge. -->
+        <path d="M318 800 Q290 880 330 930" stroke="#2a2b2f" stroke-width="30" stroke-linecap="round" fill="none"/>
+        <!-- Right arm with the scanner; it tilts a little with each scan. -->
+        <g id="scanArm">
+          <path d="M414 800 Q470 820 500 850" stroke="#2a2b2f" stroke-width="30" stroke-linecap="round" fill="none"/>
+          <circle cx="504" cy="854" r="15" fill="#b98262"/>
+          <g transform="rotate(28 512 856)">
+            <rect x="494" y="840" width="58" height="22" rx="7" fill="#121214"/>
+            <rect x="500" y="858" width="15" height="28" rx="5" fill="#121214"/>
+            <rect id="gunTip" x="546" y="844" width="9" height="14" rx="3" fill="#4a4c52"/>
+          </g>
+        </g>
+      </g>
+
+      <!-- The roller conveyor. -->
+      <g id="conveyor">
+        <rect x="-300" y="930" width="1700" height="22" rx="6" fill="url(#belt)"/>
+        <rect x="-300" y="930" width="1700" height="5" fill="#4a4c52"/>
+        <g id="rollers"></g>
+        <rect x="-300" y="952" width="1700" height="34" fill="#1a1b1e"/>
+        <g fill="#2b2c30"><rect x="40" y="986" width="18" height="94"/><rect x="520" y="986" width="18" height="94"/><rect x="1000" y="986" width="18" height="94"/></g>
+        <g fill="#121214"><rect x="30" y="1074" width="38" height="8" rx="3"/><rect x="510" y="1074" width="38" height="8" rx="3"/><rect x="990" y="1074" width="38" height="8" rx="3"/></g>
+      </g>
+      <g id="cartons"></g>
+      <g id="scan" opacity="0">
+        <polygon id="scanFan" points="0,0 0,0 0,0" fill="url(#laser)"/>
+        <line id="scanLine" stroke="#ffffff" stroke-width="10" filter="url(#beam)"/>
+        <line id="scanCore" stroke="#ffffff" stroke-width="3"/>
+        <circle id="scanDot" r="24" fill="url(#glow)"/>
+      </g>
+      <g id="checks"></g>
+    </g>
+   </g>
+  </g>
+</svg>
+<script>
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const T = 8, P = 2, SPEED = 135, GAP = SPEED * P; // a carton every 2 s, 270 px apart
+const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
+const ease = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const back = (x) => { x = clamp(x); const c = 2.70158; return 1 + c * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2); };
+const add = (parent, tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+
+// Carton kinds and their label offsets (from the carton's bottom-left).
+const KINDS = [{ id: "c0", w: 150, lx: 92, ly: -76 }, { id: "c1", w: 190, lx: 126, ly: -86 }, { id: "c2", w: 130, lx: 72, ly: -110 }];
+const N = 8; // cartons on the belt at once (8 × 270 px = 2160 px of belt, enough for any camera)
+const SEQ = [0, 1, 2, 1, 0, 1, 2, 1]; // sizes in order; the loop shifts by 4 cartons (8 s / 2 s), so SEQ repeats every 4
+(() => {
+  const far = $("far");
+  for (let i = -1; i < 7; i++) {
+    const x = i * 230 + 20;
+    add(far, "rect", { x, y: 260, width: 12, height: 820, fill: "#1c1c1f" });
+    add(far, "rect", { x: x + 150, y: 260, width: 12, height: 820, fill: "#1c1c1f" });
+    for (const y of [430, 610, 790]) add(far, "rect", { x: x - 6, y, width: 180, height: 8, fill: "#232326" });
+    for (const y of [430, 610, 790, 1080]) if ((i + y) % 3 !== 0) add(far, "rect", { x: x + 18, y: y - 92, width: 126, height: 88, rx: 4, fill: "#1f1f22" });
+  }
+  const rows = $("rows");
+  for (let r = 0; r < 4; r++) add(rows, "rect", { x: 806, y: 578 + r * 16, width: r === 0 ? 50 : 84 - r * 10, height: 5, rx: 2.5, fill: r === 0 ? "#9a9ca2" : "#4a4c52" });
+  const rollers = $("rollers");
+  for (let i = -6; i < 26; i++) {
+    const g = add(rollers, "g", {});
+    add(g, "circle", { cx: i * 60, cy: 941, r: 9, fill: "#5a5c61" });
+    add(g, "rect", { x: i * 60 - 1.5, y: 933, width: 3, height: 16, fill: "#2b2c30", class: "spoke" });
+  }
+  const cartons = $("cartons"), checks = $("checks");
+  for (let k = 0; k < N; k++) {
+    add(cartons, "use", { href: "#" + KINDS[SEQ[k]].id, id: "carton" + k });
+    const c = add(checks, "g", { id: "check" + k, opacity: 0 });
+    add(c, "circle", { cx: 0, cy: 0, r: 40, fill: "#ffffff", opacity: 0.16, filter: "url(#soft)" });
+    add(c, "circle", { cx: 0, cy: 0, r: 22, fill: "#ededef" });
+    add(c, "path", { d: "M-10 1 L-3 8 L11 -7", stroke: "#111113", "stroke-width": 5, fill: "none", "stroke-linecap": "round", "stroke-linejoin": "round" });
+  }
+  const dust = $("dust");
+  for (let i = 0; i < 30; i++) { const c = add(dust, "circle", { r: 1.2 + (i % 3) * 0.7 }); c.dataset.x = (i % 2 ? 280 : 750) + Math.sin(i * 12.9898) * 120; c.dataset.y = 160 + ((i * 97) % 820); }
+})();
+
+/*
+ * The belt moves right at 135 px/s; a carton passes the scan point (x 640) every 2 s. Each pass: the
+ * scanner tilts, its beam sweeps the label (0.35 s), the label flashes, a check pops above the carton
+ * and rides along, fading by the right edge; the terminal shows a check and a new top row.
+ */
+const SCAN_X = 640;
+function render(t) {
+  t = ((t % T) + T) % T;
+  const phase = t % P;              // time since the last carton crossed the scan point
+  for (let k = 0; k < N; k++) {
+    // Carton k crosses SCAN_X at t = k*P (mod T*?) — positions repeat every GAP of travel.
+    const base = SCAN_X - k * GAP + t * SPEED;            // label centre position of carton k
+    const wrap = ((base + 2 * GAP) % (N * GAP) + N * GAP) % (N * GAP) - 2 * GAP; // keep within the belt
+    const kind = KINDS[SEQ[k]];
+    const x = wrap - kind.lx - 25;  // carton's left edge so its label centre sits at `wrap`
+    const use = $("carton" + k);
+    use.setAttribute("x", x); use.setAttribute("y", 930);
+    // Time since this carton's label passed the scan point.
+    const since = (wrap - SCAN_X) / SPEED;
+    const chk = $("check" + k);
+    const show = since >= 0.35 ? seg(since, 0.35, 0.55) * (1 - seg(since, 2.4, 3.0)) : 0;
+    chk.setAttribute("opacity", show);
+    chk.setAttribute("transform", `translate(${wrap} ${930 + kind.ly - 60 - 18 * seg(since, 0.35, 0.8)}) scale(${0.6 + 0.4 * back(seg(since, 0.35, 0.6))})`);
+  }
+  // The scan of the carton now at the scan point.
+  const on = seg(phase, 0.0, 0.08) * (1 - seg(phase, 0.38, 0.48));
+  const sweep = ease(seg(phase, 0.05, 0.35));
+  let best = null;
+  for (let k = 0; k < N; k++) {
+    const base = SCAN_X - k * GAP + t * SPEED;
+    const wrap = ((base + 2 * GAP) % (N * GAP) + N * GAP) % (N * GAP) - 2 * GAP;
+    if (wrap >= SCAN_X && (best === null || wrap < best.wrap)) best = { k, wrap };
+  }
+  const kind = KINDS[SEQ[best.k]];
+  const lx = best.wrap - 25, ly = 930 + kind.ly;
+  const sy = ly + 4 + sweep * 22;
+  // The scanner's tip, in the world's coordinates (it moves with the arm).
+  const tip = $("gunTip"), box = tip.getBBox();
+  const m = $("world").getCTM().inverse().multiply(tip.getCTM());
+  const pt = new DOMPoint(box.x + box.width, box.y + box.height / 2).matrixTransform(m);
+  const gx = pt.x, gy = pt.y;
+  $("scan").setAttribute("opacity", on);
+  $("scanFan").setAttribute("points", `${gx},${gy} ${lx},${sy - 2} ${lx},${sy + 2} ${lx + 50},${sy + 2} ${lx + 50},${sy - 2}`);
+  for (const id of ["scanLine", "scanCore"]) { const e = $(id); e.setAttribute("x1", lx - 4); e.setAttribute("x2", lx + 54); e.setAttribute("y1", sy); e.setAttribute("y2", sy); }
+  $("scanDot").setAttribute("cx", gx); $("scanDot").setAttribute("cy", gy);
+  $("gunTip").setAttribute("fill", on > 0.1 ? "#ffffff" : "#4a4c52");
+  $("scanArm").setAttribute("transform", `rotate(${-4 * Math.sin(Math.PI * clamp(phase / 0.5))} 414 800)`);
+  // The terminal: a check and a glow after each scan, the top row brightening.
+  const ok = seg(phase, 0.4, 0.5) * (1 - seg(phase, 1.4, 1.7));
+  $("termOk").setAttribute("opacity", ok);
+  $("termGlow").setAttribute("opacity", 0.15 * ok + 0.5 * seg(phase, 0.4, 0.45) * (1 - seg(phase, 0.45, 0.9)));
+  // Rollers turn with the belt.
+  const angle = (t * SPEED / 9) * 57.3;
+  for (const s of document.querySelectorAll(".spoke")) { const cx = Number(s.getAttribute("x")) + 1.5; s.setAttribute("transform", `rotate(${angle} ${cx} 941)`); }
+  // The worker looks at the label as it comes, then at the terminal.
+  const look = 6 * Math.sin(Math.PI * clamp(phase / 0.6)) - 4 * seg(phase, 0.6, 0.9) * (1 - seg(phase, 1.6, 2));
+  $("head").setAttribute("transform", `rotate(${look} 366 730)`);
+  // Gentle periodic camera drift (seamless over 8 s), phone-safe around x 600.
+  const a = (t / T) * Math.PI * 2;
+  const zoom = 1.14 + 0.025 * Math.sin(a);
+  const cx = 600 + 30 * Math.sin(a), cy = 800 + 12 * Math.cos(a);
+  $("cam").setAttribute("transform", `translate(${540 - cx * zoom} ${700 - cy * zoom}) scale(${zoom})`);
+  $("far").setAttribute("transform", `translate(${(cx - 600) * 0.4} 0)`);
+  const dust = $("dust").children;
+  for (let i = 0; i < dust.length; i++) { const d = dust[i], ph = i * 2.399; d.setAttribute("cx", Number(d.dataset.x) + Math.sin(a + ph) * 16); d.setAttribute("cy", Number(d.dataset.y) + Math.cos(a * (i % 2 ? 1 : 2) + ph) * 22); d.setAttribute("opacity", 0.12 + 0.18 * (Math.sin(a * 2 + ph) + 1) / 2); }
+}
+window.render = render;
+render(0);
+</script>
+</body>
+</html>
