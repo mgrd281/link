@@ -76,12 +76,14 @@ export function ProjectsGroup({
   numbered: boolean;
 }): ReactNode {
   const t = useTranslations("creator");
-  const layout = chooseProjectsLayout(blocks, groupIndex, theme.layout.projects);
+  const chosen = chooseProjectsLayout(blocks, groupIndex, theme.layout.projects);
   const wide = theme.layout.canvas === "wide";
   // The bold look sets its list very large and its tiles in the body face.
   const loud = theme.layout.headings === "headline";
   const entries: Entry[] = blocks.map((project, index) => ({ project, position: index + 1, target: targetOf(project, quotes, base, suffix, onOpen) }));
   const shown = entries.slice(leadTaken ? 1 : 0, FEATURED_PROJECTS);
+  // A row holds two cards or more (plan 1.4.8): when the plate took the first of two, the one left is a list.
+  const layout = chosen === "rail" && shown.length < 2 ? "list" : chosen;
   const rest = entries.slice(FEATURED_PROJECTS);
   const shared = { numbered, loud, wide, locale, onOpen };
   if (shown.length === 0 && rest.length === 0) return null;
@@ -212,11 +214,14 @@ export function ProjectPlate({
   const entry: Entry = { project, position: 1, target: targetOf(project, quotes, base, suffix, onOpen) };
   const name = t("portfolio.plateLink", { total, title: project.title });
   const linked = entry.target.kind === "page" || entry.target.kind === "link";
+  // Unlinked (a preview), the visible title is the heading itself.
+  const PlateTitle = linked ? "p" : "h2";
   return (
     <div id={project.slug} className="grid min-w-0 scroll-mt-16">
       <Shell entry={entry} onOpen={onOpen} label={name} className="grid min-w-0 grid-cols-1 gap-3 @work:gap-4">
-        {/* The link's name begins with these words; they hold the title, so the title below is not read twice. */}
-        {linked ? <span className="sr-only">{name}</span> : null}
+        {/* The link's name begins with these words; they hold the title, so the title below is not read
+            twice. A heading, so someone who moves by headings meets the plate as the first project. */}
+        {linked ? <h2 className="sr-only">{name}</h2> : null}
         <div data-plate className={cn(plateFrame, plateRatio(picture, wide))}>
           <MediaImage src={picture.src} focal={picture.focal} alt="" sizes={wide ? mediaSizes.workPlate : mediaSizes.column} priority={priority} />
         </div>
@@ -225,9 +230,9 @@ export function ProjectPlate({
             {projectNumber(1)}
           </span>
           <div className="grid min-w-0 flex-1 grid-cols-1 gap-1">
-            <p dir="auto" aria-hidden={linked} className={cn(pageSide, TITLE, "font-creator-display text-h3 leading-tight rtl:leading-snug")} style={displayStyle}>
+            <PlateTitle dir="auto" aria-hidden={linked} className={cn(pageSide, TITLE, "font-creator-display text-h3 leading-tight rtl:leading-snug")} style={displayStyle}>
               {project.title}
-            </p>
+            </PlateTitle>
             <Meta entry={entry} locale={locale} />
           </div>
           <TargetArrow target={entry.target} className="mt-1" />
@@ -612,7 +617,9 @@ export function bentoTiles<T extends { project: Project }>(entries: readonly T[]
         wideSpan = row.tiles === 1 ? 6 : row.tiles === 2 ? 3 : 2;
         wide = row.tiles === 1 ? "aspect-video" : "aspect-photo";
       }
-      tiles.push({ entry, lead, phoneSpan, wideSpan, wideRows, cover: { phone, wide, sizes: WIDE_SIZES[wideSpan] } });
+      // A tile alone on phones spans both columns there (and in the creator column): its sizes say so.
+      const sizes = !lead && phoneSpan === 2 && wideSpan === 3 ? mediaSizes.workHalfAlone : !lead && phoneSpan === 2 && wideSpan === 2 ? mediaSizes.workThirdAlone : WIDE_SIZES[wideSpan];
+      tiles.push({ entry, lead, phoneSpan, wideSpan, wideRows, cover: { phone, wide, sizes } });
     }
   }
   return tiles;
@@ -633,7 +640,7 @@ function Tile({ entry, lead, phoneSpan, wideSpan, wideRows, cover, wide, ...shar
  */
 function Row({ entry, compact, numbered, loud, wide, locale, onOpen }: { entry: Entry; compact: boolean } & Shared) {
   const { project, target } = entry;
-  const thumb = compact ? null : <Cover project={project} sizes={mediaSizes.thumb} ratio={cn("size-20", wide && "@work:aspect-photo @work:h-auto @work:w-full")} priority={false} size="thumb" heading={false} loud={loud} />;
+  const thumb = compact ? null : <Cover project={project} sizes={wide ? mediaSizes.workRowEnd : mediaSizes.thumb} ratio={cn("size-20", wide && "@work:aspect-photo @work:h-auto @work:w-full")} priority={false} size="thumb" heading={false} loud={loud} />;
   // Without a thumbnail the arrow stands in its place: a chevron on to the project's page, the
   // arrow out to the project's own link.
   const hasThumb = !compact && (coverMode(project) === "picture" || (coverMode(project) === "figure" && figureSize(project.results?.[0]?.value ?? "") === "lg"));
@@ -642,17 +649,19 @@ function Row({ entry, compact, numbered, loud, wide, locale, onOpen }: { entry: 
       <Shell
         entry={entry}
         onOpen={onOpen}
-        className={cn("grid min-h-20 grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1 py-4", wide && "@work:grid-cols-12 @work:items-center @work:gap-x-6 @work:py-6")}
+        className={cn(
+          "grid min-h-20 items-start gap-x-4 gap-y-1 py-4",
+          // Without numbers there is no number column, so the text starts at the hairline's start.
+          numbered ? "grid-cols-[auto_minmax(0,1fr)_auto]" : "grid-cols-[minmax(0,1fr)_auto]",
+          wide && "@work:grid-cols-12 @work:items-center @work:gap-x-6 @work:py-6",
+        )}
       >
         {numbered ? (
           <span aria-hidden className={cn("row-span-2 pt-1 text-caption font-semibold text-creator-accent-text tabular-nums", wide && "@work:col-span-1 @work:row-span-1 @work:pt-0 @work:text-small")}>
             {projectNumber(entry.position)}
           </span>
-        ) : (
-          // Keeps the three columns in place when rows carry no number.
-          <span aria-hidden className={cn("row-span-2", wide && "@work:hidden")} />
-        )}
-        <div className={cn("col-start-2 grid min-w-0 grid-cols-1 gap-1", wide && (numbered ? "@work:col-span-6 @work:col-start-auto" : "@work:col-span-7 @work:col-start-auto"))}>
+        ) : null}
+        <div className={cn(numbered ? "col-start-2" : "col-start-1", "grid min-w-0 grid-cols-1 gap-1", wide && (numbered ? "@work:col-span-6 @work:col-start-auto" : "@work:col-span-7 @work:col-start-auto"))}>
           <h3
             dir="auto"
             className={cn(
@@ -670,8 +679,9 @@ function Row({ entry, compact, numbered, loud, wide, locale, onOpen }: { entry: 
             {project.summary}
           </p>
         </div>
-        <Meta entry={entry} locale={locale} className={cn("col-start-2 row-start-2", wide && "@work:col-span-3 @work:col-start-auto @work:row-start-auto")} />
-        <div data-row-end className={cn("col-start-3 row-span-2 row-start-1 grid justify-items-end", wide && "@work:col-span-2 @work:col-start-auto @work:row-span-1 @work:row-start-auto")}>
+        <Meta entry={entry} locale={locale} className={cn(numbered ? "col-start-2" : "col-start-1", "row-start-2", wide && "@work:col-span-3 @work:col-start-auto @work:row-start-auto")} />
+        {/* On the canvas the end box always takes columns 11 and 12, with or without role and year before it. */}
+        <div data-row-end className={cn(numbered ? "col-start-3" : "col-start-2", "row-span-2 row-start-1 grid justify-items-end", wide && "@work:col-span-2 @work:col-start-11 @work:row-span-1 @work:row-start-auto")}>
           {hasThumb ? (
             thumb
           ) : target.kind === "link" ? (

@@ -161,7 +161,9 @@ export function PosterRenderer({
       lang={profile.locale}
       dir={isRtl ? "rtl" : "ltr"}
       style={themeStyle(theme)}
-      className={cn("poster-scope @container relative isolate overflow-clip bg-creator-bg font-creator-body text-creator-fg", preview ? "min-h-full" : "min-h-dvh")}
+      // The focus ring takes the page's accent text colour (AA on the page's own background, also on
+      // dark templates); Linkyo's own chrome inside (`data-theme`) keeps its ring.
+      className={cn("poster-scope @container relative isolate overflow-clip bg-creator-bg font-creator-body text-creator-fg [--color-focus:var(--creator-accent-text)]", preview ? "min-h-full" : "min-h-dvh")}
     >
       {/* Wide screens: the portrait becomes a soft ambient glow behind the column. Decorative. */}
       {ambient ? (
@@ -536,7 +538,7 @@ function PosterBlock({
                 key={image.src}
                 className={cn("relative mb-2 break-inside-avoid overflow-hidden rounded-creator-card", portfolio.wide && "@work:mb-4", index % 3 === 0 ? "aspect-portrait" : "aspect-square")}
               >
-                <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={portfolio.wide ? mediaSizes.workHalf : mediaSizes.half} />
+                <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={portfolio.wide ? mediaSizes.workQuarter : mediaSizes.half} />
               </li>
             ))}
           </ul>

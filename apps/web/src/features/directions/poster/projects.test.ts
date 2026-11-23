@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 
+import { mediaSizes } from "../shared/platforms";
 import { bentoTiles, ProjectsGroup } from "./projects";
 import { PosterRenderer } from "./renderer";
 import { portfolioSample, portfolioSampleLong } from "./sample";
@@ -174,6 +175,45 @@ describe("project cards", () => {
     const ids = all(tree, (element) => element.attrs.id !== undefined).map((element) => element.attrs.id);
     expect(ids).toEqual(["hafen", "termine", "bad", "halle"]);
     for (const id of ids) expect(classes(byId(tree, id ?? ""))).toContain("scroll-mt-16");
+  });
+
+  it("on the canvas a list row's thumbnail is served for two of twelve columns, and its end box always takes 11 and 12", () => {
+    const blocks = [picture("hafen", { role: "Fotografie", year: { from: 2025 } }), picture("bad"), figure("termine")];
+    const tree = group(blocks, "list", {}, "tiefdruck");
+    const thumbs = all(tree, tagged("img"));
+    expect(thumbs.map((img) => img.attrs.sizes)).toEqual([mediaSizes.workRowEnd, mediaSizes.workRowEnd]);
+    expect(mediaSizes.workRowEnd).toBe("(max-width: 1119px) 80px, 167px");
+    // "bad" has no role and no year, so no meta cell: its end box still starts at column 11.
+    for (const id of ["hafen", "bad", "termine"]) {
+      expect(classes(one(byId(tree, id), (element) => "data-row-end" in element.attrs, "end box")), id).toContain("@work:col-start-11");
+    }
+    // The column templates keep the 80 px thumbnail.
+    const column = group(blocks, "list", {}, "atelier");
+    expect(all(column, (element) => element.tag === "img").map((img) => img.attrs.sizes)).toEqual([mediaSizes.thumb, mediaSizes.thumb]);
+  });
+
+  it("rows without numbers have no number column, so their text starts at the hairline", () => {
+    const tree = group(mixed(), "list", { numbered: false }, "atelier");
+    const shell = (id: string) => kids(byId(tree, id))[0]!;
+    for (const id of ["hafen", "termine", "bad", "halle"]) {
+      expect(classes(shell(id)), id).toContain("grid-cols-[minmax(0,1fr)_auto]");
+      // Text, meta (when there is one) and the end box: nothing empty before them.
+      expect(kids(shell(id)).every((child) => kids(child).length > 0 || text(child) !== ""), id).toBe(true);
+      expect(classes(kids(shell(id))[0]!), id).toContain("col-start-1");
+    }
+    const numbered = group(mixed(), "list", { numbered: true }, "werkbogen");
+    expect(classes(kids(byId(numbered, "hafen"))[0]!)).toContain("grid-cols-[auto_minmax(0,1fr)_auto]");
+  });
+
+  it("a row the plate leaves with one card is a list, never a row of one", () => {
+    const two = [picture("hafen"), picture("bad")];
+    const tree = group(two, "rail", { leadTaken: true });
+    expect(all(tree, (element) => element.attrs.role === "region")).toEqual([]);
+    const list = one(tree, tagged("ol"), "list");
+    expect(list.attrs.start).toBe("2");
+    expect(kids(list).map((row) => row.attrs.id)).toEqual(["bad"]);
+    // Two left: still a row.
+    expect(all(group([...two, picture("halle")], "rail", { leadTaken: true }), (element) => element.attrs.role === "region")).toHaveLength(1);
   });
 
   it("the list is an ol of rows; the row is one link", () => {
@@ -374,6 +414,18 @@ describe("the grid's places", () => {
     expect(bentoTiles([level("a"), level("b"), level("c")], false)[0]?.cover.phone).toBe("aspect-photo");
   });
   const figureEntry = (id: string) => ({ project: figure(id) });
+
+  it("a tile alone on phones spans both columns there, and its sizes say so", () => {
+    const entries = (count: number) => Array.from({ length: count }, (_, index) => ({ project: picture(`p${String(index)}`) }));
+    // Five after the plate: rows [3], [2]; the fifth stands alone on phones, half the canvas wide.
+    const five = bentoTiles(entries(5), true);
+    expect(five.map((tile) => tile.cover.sizes)).toEqual([mediaSizes.workThird, mediaSizes.workThird, mediaSizes.workThird, mediaSizes.workHalf, mediaSizes.workHalfAlone]);
+    expect(mediaSizes.workHalfAlone).toMatch(/ 100vw, \(max-width: 1119px\) 560px, 560px$/);
+    // Three after the plate: one row of thirds; the third stands alone on phones.
+    expect(bentoTiles(entries(3), true).map((tile) => tile.cover.sizes)).toEqual([mediaSizes.workThird, mediaSizes.workThird, mediaSizes.workThirdAlone]);
+    // A lead across both columns keeps its own sizes.
+    expect(bentoTiles(entries(1), false)[0]?.cover.sizes).toBe(mediaSizes.work);
+  });
 });
 
 // ─── On the page ──────────────────────────────────────────────────────────────────────────────
@@ -388,7 +440,8 @@ describe("the work on the page", () => {
     expect(classes(headings[0]!)).toContain("sr-only");
     // Under a header the header is the heading: no second one.
     const titledRun = rendered("de", [header("h", "Ausgewählte Arbeiten"), ...work()]);
-    expect(all(titledRun, tagged("h2")).map(text)).toEqual(["01Ausgewählte Arbeiten"]);
+    // (The plate in the hero carries its own heading, project 1; the sections are in <main>.)
+    expect(all(one(titledRun, tagged("main"), "main"), tagged("h2")).map(text)).toEqual(["01Ausgewählte Arbeiten"]);
     expect(text(titledRun)).not.toContain("scrollbare");
   });
 
@@ -402,6 +455,8 @@ describe("the work on the page", () => {
     expect(link.attrs["aria-label"]).toBeUndefined();
     expect(plateName(link)).toBe("Projekt 1 von 4: HafenlichtFreie Serie\u00A0 2025");
     expect(all(link, (element) => element.attrs["aria-hidden"] === "true" && text(element) === "Hafenlicht")).toHaveLength(1);
+    // Someone who moves by headings meets it too: one heading, in the link, with the link's words.
+    expect(all(plate, (element) => /^h[1-6]$/.test(element.tag)).map((element) => [element.tag, text(element)])).toEqual([["h2", "Projekt 1 von 4: Hafenlicht"]]);
     // It stands in the hero, before the sections, and is the page's one preloaded picture.
     expect(all(one(tree, tagged("header"), "header"), (element) => element.attrs.id === "hafen")).toHaveLength(1);
     expect(all(tree, (element) => element.tag === "img" && element.attrs.loading === "eager")).toHaveLength(1);
@@ -434,7 +489,7 @@ describe("the work on the page", () => {
   it("a page whose only project is the plate has no empty section of work", () => {
     const tree = rendered("de", [header("h", "Arbeiten"), picture("hafen", { title: "Hafenlicht" }), header("l", "Links"), { ...base, id: "x", type: "link", title: "Website", url: "https://example.com" }]);
     expect(plateName(one(byId(tree, "hafen"), tagged("a"), "plate"))).toBe("Projekt 1 von 1: Hafenlicht");
-    expect(all(tree, tagged("h2")).map(text)).toEqual(["01Links"]);
+    expect(all(one(tree, tagged("main"), "main"), tagged("h2")).map(text)).toEqual(["01Links"]);
   });
 
   it("another template shows the same run inside its column, with every card and no plate", () => {
@@ -442,6 +497,22 @@ describe("the work on the page", () => {
     const main = one(tree, tagged("main"), "main");
     expect(all(main, (element) => ["hafen", "bad", "termine", "halle"].includes(element.attrs.id ?? ""))).toHaveLength(4);
     expect(elements(tree).flatMap(classes).filter((name) => name.startsWith("@work:"))).toEqual([]);
+  });
+
+  it("the gallery's four columns on the canvas are served for a quarter of it", () => {
+    const gallery: Block = { ...base, id: "g", type: "gallery", title: "Bilder", images: [{ src: "sample:ex-pf-ronja-06", alt: "Ein Kutter" }, { src: "sample:ex-pf-ronja-03", alt: "Am Steg" }] };
+    const sizes = (template: "werkbogen" | "atelier") =>
+      all(rendered("de", [gallery], { theme: resolveCreatorTheme({ template }) }), (element) => element.tag === "img" && element.attrs.alt !== "").map((img) => img.attrs.sizes);
+    expect(sizes("werkbogen")).toEqual([mediaSizes.workQuarter, mediaSizes.workQuarter]);
+    expect(mediaSizes.workQuarter).toMatch(/ 50vw, \(max-width: 1119px\) 280px, 280px$/);
+    expect(sizes("atelier")).toEqual([mediaSizes.half, mediaSizes.half]);
+  });
+
+  it("the focus ring takes the page's accent text colour on every template", () => {
+    for (const template of ["werkbogen", "tiefdruck", "nocturne"] as const) {
+      const root = one(rendered("de", work(), { theme: resolveCreatorTheme({ template }) }), (element) => classes(element).includes("poster-scope"), "page root");
+      expect(classes(root), template).toContain("[--color-focus:var(--creator-accent-text)]");
+    }
   });
 
   it("in Arabic the page runs right to left and the arrows turn", () => {

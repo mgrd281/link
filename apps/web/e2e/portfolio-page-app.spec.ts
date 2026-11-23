@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
+import { portfolioSampleLong } from "../src/features/directions/poster/sample";
+
 /**
  * The portfolio page on its two templates (Werkbogen, Tiefdruck): the sample page of
  * /directions/poster?page=portfolio in de, en and ar. What a visitor sees on the first screen, that
@@ -279,6 +281,14 @@ test.describe("without script", () => {
           expect(card.title.trim().length, card.id).toBeGreaterThan(0);
           expect(card.lines, card.id).toBeGreaterThanOrEqual(1);
           expect(card.href, card.id).not.toBeNull();
+        }
+        // Every card prints its project's sentence, word for word. Only the hero plate has none: its
+        // caption is number, title, role and year (plan 1.4.4).
+        const projects = portfolioSampleLong(locale).blocks.filter((block) => block.type === "project");
+        expect(projects).toHaveLength(8);
+        for (const project of projects) {
+          if ((await page.locator(`header [id="${project.slug}"]`).count()) > 0) continue;
+          expect(await page.locator(`[id="${project.slug}"]`).textContent(), project.slug).toContain(project.summary);
         }
         const base = `/${locale}/directions/poster/work`;
         expect(texts.map((card) => card.href)).toEqual([

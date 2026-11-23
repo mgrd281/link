@@ -83,6 +83,17 @@ export const mediaSizes = {
   workThird: canvas(1 / 3, "50vw", 1 / 2),
   workPlate: canvas(7 / 12, "100vw", 1),
   workRail: canvas(1 / 3, "80vw", 2 / 5),
+  // A tile of a half or a third that stands alone on phones and in the creator column, where it
+  // spans both columns of the grid.
+  workHalfAlone: canvas(1 / 2, "100vw", 1),
+  workThirdAlone: canvas(1 / 3, "100vw", 1),
+  // The gallery grid: two columns up to the canvas, four on it.
+  workQuarter: canvas(1 / 4, "50vw", 1 / 2),
+  // The end box of a list row: the 80 px thumbnail, and on the canvas two of twelve columns
+  // (with the row's gap of spacing 6 between them).
+  workRowEnd: `(max-width: ${px(tokens.layout.work - 1)}) ${px(tokens.spacing["20"])}, ${px(
+    Math.round(((tokens.layout.work - 11 * tokens.spacing["6"]) / 12) * 2 + tokens.spacing["6"]),
+  )}`,
   // The same row inside the creator column (templates without the wide canvas).
   rail: `${narrow} 80vw, ${px(Math.round((tokens.layout.creator * 2) / 5))}`,
 } as const;

@@ -280,8 +280,8 @@ describe("clients", () => {
     expect(count(markup, /font-creator-display/g)).toBe(3);
     expect(markup).not.toContain("<img");
     expect([...markup.matchAll(/<a href="([^"]*)"/g)].map((match) => match[1])).toEqual(["https://example.com/stiftungen"]);
-    // 22 px type at leading 1.1 plus 10 px above and below: a 44 px target that does not make its row taller.
-    expect(markup).toMatch(/<li[^>]*text-h3 leading-tight[^>]*><a href="https:\/\/example\.com\/stiftungen" class="-my-2\.5 [^"]*\bpy-2\.5\b/);
+    // A 44 px target (the type alone is 24 px tall), pulled into the row's own padding.
+    expect(markup).toMatch(/<li[^>]*text-h3 leading-tight[^>]*><a href="https:\/\/example\.com\/stiftungen" class="-my-2 [^"]*\bmin-h-touch-target\b/);
   });
 
   it("the page shows names when no client has a logo and tiles as soon as one has", () => {

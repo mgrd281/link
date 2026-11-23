@@ -367,9 +367,9 @@ export function BrandNames({ block }: { block: BlockOf<"brands"> }): ReactNode {
           // runs in its own direction (a Latin name on an Arabic page keeps its punctuation in place).
           <li key={item.name} className={cn("min-w-0 border-s border-creator-line px-5 py-2 font-creator-display text-h3 leading-tight break-words", ownDirection)} style={displayStyle}>
             {item.url ? (
-              // The link reaches the 44 px target (22 px type at 1.1 plus 2 x 10 px) while its margin box
-              // keeps the row's height, so rows do not grow.
-              <a href={item.url} className={cn("-my-2.5 inline-block rounded-xs py-2.5 text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring", ownDirection)}>
+              // The link is a full 44 px target (the spacing scale has no 10 px step to reach it by
+              // padding alone); the row's own padding is pulled back, so the row grows by 4 px at most.
+              <a href={item.url} className={cn("-my-2 inline-flex min-h-touch-target items-center rounded-xs text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring", ownDirection)}>
                 {item.name}
               </a>
             ) : (
