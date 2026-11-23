@@ -1,12 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { dataUrlToBlob, mediaObjectPath, publicMediaUrl, storePreparedImage, uploadDataUrl, type MediaDeps } from "./media-upload";
+import { dataUrlToBlob, mediaObjectPath, publicMediaUrl, storePreparedImage, uploadDataUrl, uploadOptions, type MediaDeps } from "./media-upload";
 
 const UID = "6f1c2f3e-1111-4222-8333-944445555666";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const JPEG = `data:image/jpeg;base64,${Buffer.from([0xff, 0xd8, 0xff, 0xe0]).toString("base64")}`;
 
 describe("page pictures in Storage", () => {
+  it("uploads with a short cache lifetime, so a deleted picture does not live on in caches", () => {
+    const options = uploadOptions("image/webp");
+    expect(options).toEqual({ cacheControl: "3600", upsert: false, contentType: "image/webp" });
+    // Not longer than the image optimizer's own minimum (four hours): then that minimum, not the
+    // upload, decides how long an optimized copy of a deleted picture can still be served.
+    expect(Number(options.cacheControl)).toBeLessThanOrEqual(4 * 3600);
+  });
+
   it("stores them as media/<uid>/<yyyy>/<uuid>.<ext>", () => {
     const path = `media/${mediaObjectPath(UID, "image/jpeg", new Date("2026-11-22T12:00:00Z"))}`;
     const [bucket, uid, year, file] = path.split("/");

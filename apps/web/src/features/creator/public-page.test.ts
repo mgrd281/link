@@ -1,7 +1,7 @@
 import type { Block, Page } from "@linkyo/blocks";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { filterPublic, loadPublicPage, parseBlocks, parseLegal, parseTheme, toPublicPage } from "./public-page";
+import { filterPublic, isOwnPicture, loadPublicPage, parseBlocks, parseLegal, parseTheme, toPublicPage, withoutThirdParties } from "./public-page";
 
 const NOW = new Date("2026-11-22T12:00:00Z");
 const link = (id: string, extra: Partial<Block> = {}): Block => ({ id, type: "link", title: id, url: `https://example.com/${id}`, visible: true, highlight: false, ...extra }) as Block;
@@ -70,5 +70,63 @@ describe("what visitors see", () => {
 
   it("finds nothing in a demo build (no database to ask)", async () => {
     await expect(loadPublicPage("mila")).resolves.toBeNull();
+  });
+});
+
+describe("nothing from another origin (GDPR)", () => {
+  const HOSTED = "https://abcd1234.supabase.co";
+  const OWN = `${HOSTED}/storage/v1/object/public/media/uid/2026/a.webp`;
+  const FOREIGN = "https://tracker.example/p.gif";
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("knows which pictures a visitor's browser may load", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", HOSTED);
+    for (const src of ["none:", "sample:mila-avatar", "data:image/webp;base64,AAAA", OWN, "https://i.ytimg.com/vi/x/hqdefault.jpg"]) expect(isOwnPicture(src), src).toBe(true);
+    for (const src of [FOREIGN, "http://tracker.example/p.gif", "//tracker.example/p.gif", "HTTPS://tracker.example/p.gif", "/\\tracker.example/p.gif", "ftp://tracker.example/p.gif", "data:text/html,x", `${HOSTED}.evil.example/storage/v1/object/public/media/a.jpg`, "http://i.ytimg.com/vi/x/hqdefault.jpg"]) {
+      expect(isOwnPicture(src), src).toBe(false);
+    }
+  });
+
+  it("replaces every foreign picture, wherever it sits in the page, and keeps our own", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", HOSTED);
+    const raw = {
+      page: {
+        profile: {
+          username: "mila",
+          displayName: "Mila",
+          bio: "",
+          avatar: { src: FOREIGN, alt: "Mila", focal: [0.5, 0.2] },
+          hero: { src: OWN, alt: "" },
+          logo: { src: "http://tracker.example/logo.png", alt: "" },
+          verified: false,
+          locale: "de",
+        },
+        blocks: [
+          { id: "g", type: "gallery", images: [{ src: OWN, alt: "one" }, { src: FOREIGN, alt: "two" }, { src: "sample:gallery-1", alt: "three" }] },
+          { id: "b", type: "brands", items: [{ name: "Werk 9", logo: { src: "//tracker.example/l.png", alt: "" } }] },
+          { id: "v", type: "video", title: "Clip", provider: "youtube", url: "https://youtube.com/watch?v=x", poster: { src: "https://i.ytimg.com/vi/x/hqdefault.jpg", alt: "" } },
+        ],
+      },
+    };
+    const found = toPublicPage(raw, NOW);
+    expect(found?.page.profile.avatar).toEqual({ src: "none:", alt: "Mila", focal: [0.5, 0.2] });
+    expect(found?.page.profile.hero?.src).toBe(OWN);
+    expect(found?.page.profile.logo?.src).toBe("none:");
+    const [gallery, brands, video] = found?.page.blocks ?? [];
+    expect(gallery?.type === "gallery" ? gallery.images.map((image) => image.src) : null).toEqual([OWN, "none:", "sample:gallery-1"]);
+    expect(brands?.type === "brands" ? brands.items[0]?.logo.src : null).toBe("none:");
+    expect(video?.type === "video" ? video.poster.src : null).toBe("https://i.ytimg.com/vi/x/hqdefault.jpg");
+    // Nothing a browser would fetch from another host is left anywhere in the page.
+    expect(JSON.stringify(found?.page)).not.toContain("tracker.example");
+  });
+
+  it("drops a hero clip that is not one of ours (it would start by itself on a visitor's phone)", () => {
+    const profile = { username: "mila", displayName: "Mila", bio: "", avatar: { src: "none:", alt: "" }, verified: false, locale: "de" as const };
+    const withMotion = (src: string): Page => ({ profile: { ...profile, motion: { src } }, blocks: [] });
+    for (const src of ["https://cdn.example.com/loop.mp4", "http://cdn.example.com/loop.mp4", "sample:motion-../../x", "/media/motion/lina.mp4"]) {
+      expect(withoutThirdParties(withMotion(src)).profile.motion, src).toBeUndefined();
+    }
+    expect(withoutThirdParties(withMotion("sample:motion-lina")).profile.motion).toEqual({ src: "sample:motion-lina" });
+    expect(toPublicPage({ page: withMotion("https://cdn.example.com/loop.mp4") }, NOW)?.page.profile).not.toHaveProperty("motion");
   });
 });

@@ -8,6 +8,7 @@ import { useRef, useState, type SubmitEvent } from "react";
 import { useUsernameStatus } from "@/features/account/auth/shared";
 import { accountStore } from "@/features/account/store";
 import type { AuthError } from "@/features/account/types";
+import { refreshPublicPage } from "@/features/creator/refresh";
 import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 
 import { TextInput } from "../form";
@@ -77,12 +78,15 @@ export function AddressScreen() {
     // field opens the keyboard).
     const keyboard = document.activeElement?.matches(":focus-visible") === true;
     setBusy(true);
+    const previous = account.username;
     const result = await accountStore.changeUsername(next);
     setBusy(false);
     if (!result.ok) {
       setError(result.error);
       return;
     }
+    // The old address stops working now, not after its cached page was shown once more.
+    void refreshPublicPage(previous);
     if (keyboard) form.current?.querySelector("input")?.focus();
     toast({ title: t("addressChanged", { url: pageAddress(next) }), tone: "success" });
   };

@@ -35,6 +35,8 @@ export default function proxy(request: NextRequest) {
   return intl(request);
 }
 
+// Everything but the API, Next's own paths and files. Each skipped name ends at a path boundary: as
+// a bare prefix it also skipped creator addresses that merely begin with it (linkyo.app/apiary).
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: ["/((?!api(?:/|$)|_next(?:/|$)|_vercel(?:/|$)|.*\\..*).*)"],
 };
