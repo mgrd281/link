@@ -21,13 +21,13 @@ type Contact = BlockOf<"contact">;
 type Primary = Contact["primary"];
 
 /** `data-ai-generated` on a profile text an AI draft wrote (AI Act Art. 50(2)); nothing otherwise. */
-const aiText = (profile: Profile, field: AiProfileField) => (profile.aiFields?.includes(field) ? { "data-ai-generated": "true" } : {});
+export const aiText = (profile: Profile, field: AiProfileField) => (profile.aiFields?.includes(field) ? { "data-ai-generated": "true" } : {});
 
 /**
  * Average advance per character of each display face, measured on real names (em per character).
  * Used to size the name so that it stays on one line whenever that still reads large.
  */
-const GLYPH_WIDTH: Record<string, number> = { classic: 0.53, stage: 0.47, editorial: 0.46, modern: 0.49, bold: 0.48, elegant: 0.5, tech: 0.52, arabic: 0.47 };
+export const GLYPH_WIDTH: Record<string, number> = { classic: 0.53, stage: 0.47, editorial: 0.46, modern: 0.49, bold: 0.48, elegant: 0.5, tech: 0.52, arabic: 0.47 };
 
 /**
  * The name's sizes in the two portfolio heroes, fitted like every name. The plate keeps it quiet on
@@ -88,7 +88,7 @@ function Name({ profile, isRtl, theme, compact = false, scale }: { profile: Prof
 }
 
 /** Social profiles under the name: round tiles, or (plain) bare glyphs at a larger size for quiet looks. */
-function Socials({ block, plain, start = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean }) {
+export function Socials({ block, plain, start = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean }) {
   return (
     <ul className={cn("flex flex-wrap", start ? "-ms-3 justify-start" : "justify-center", plain ? "gap-2" : "gap-3")}>
       {block.items.map((item) => (
@@ -160,6 +160,7 @@ export function HeroActions({
   status = true,
   className,
   style,
+  extra,
 }: {
   contact: Contact;
   /** `primaryAction()` of the page: the same action the bar and the closing band show. */
@@ -170,6 +171,8 @@ export function HeroActions({
   status?: boolean;
   className?: string | undefined;
   style?: CSSProperties | undefined;
+  /** A quiet action after the CV link, in the same row (Laufbahn's "read on"). */
+  extra?: ReactNode;
 }) {
   const t = useTranslations("creator");
   const line = status ? contactStatus(contact, now) : null;
@@ -199,6 +202,7 @@ export function HeroActions({
             <span dir="auto">{cv.label?.trim() ? cv.label : t(isPdf(cv.url) ? "portfolio.cvPdf" : "portfolio.cv")}</span>
           </a>
         ) : null}
+        {extra}
       </div>
     </div>
   );

@@ -65,7 +65,7 @@ test("a page prepared from a person's own application letter is labelled, uninde
   await expect(badge).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   await expect(page.getByRole("heading", { level: 1, name: "Sevag Ghazarian" })).toBeVisible();
-  // No photo of him yet: his initials stand in, and the role line sits clear of the preview's badge.
+  // Laufbahn: no photo of him yet, so his initials stand beside the role line, under the badge.
   await expect(page.getByText("SG", { exact: true }).locator("visible=true").first()).toBeVisible();
   const role = page.getByText("Lagerist · Staplerfahrer mit Flurförderzeugschein").first();
   const [badgeBox, roleBox] = [await badge.boundingBox(), await role.boundingBox()];
@@ -74,9 +74,31 @@ test("a page prepared from a person's own application letter is labelled, uninde
   const clip = page.locator("video").first();
   await expect(clip).toHaveAttribute("src", "/media/motion/sevag-stapler.mp4");
   expect(await clip.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
-  // The letter keeps its paragraphs.
-  const letter = page.getByText(/^Sehr geehrter Herr Vitt,/);
-  await expect(letter).toHaveCSS("white-space", "pre-line");
+  // The badge covers no text of the page: no line of the hero (or anything else) runs under it.
+  const covered = await page.evaluate(() => {
+    const aside = document.querySelector('aside[data-theme="dark"]')?.getBoundingClientRect();
+    if (!aside) return ["no badge"];
+    const hits: string[] = [];
+    const walker = document.createTreeWalker(document.querySelector("[lang]") ?? document.body, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const owner = node.parentElement;
+      if (!owner || owner.closest("aside") || !node.textContent?.trim()) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      for (const box of range.getClientRects()) {
+        const overlaps = box.width > 0 && box.left < aside.right && box.right > aside.left && box.top < aside.bottom && box.bottom > aside.top;
+        if (overlaps && getComputedStyle(owner).visibility !== "hidden") hits.push(node.textContent.trim());
+      }
+    }
+    return hits;
+  });
+  expect(covered).toEqual([]);
+  // The letter keeps its paragraphs: seven of them, the signature with its line break.
+  const letter = page.getByRole("region", { name: "Anschreiben" });
+  await expect(letter.getByText(/^Sehr geehrter Herr Vitt,$/)).toHaveCSS("white-space", "pre-line");
+  const paragraphs = letter.locator("p.whitespace-pre-line");
+  await expect(paragraphs).toHaveCount(7);
+  await expect(paragraphs.last()).toHaveText("Mit freundlichen Grüßen\nSevag Ghazarian", { useInnerText: true });
   const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
 });

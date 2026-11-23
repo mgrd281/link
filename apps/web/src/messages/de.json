@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Linkyo",
-    "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: dreizehn Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
+    "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: vierzehn Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
   },
   "common": {
     "close": "Schließen",
@@ -461,6 +461,13 @@
       "projectMissing": "Dieses Projekt gibt es nicht mehr.",
       "toPage": "Zur Seite",
       "plateLink": "Projekt 1 von {total}: {title}"
+    },
+    "laufbahn": {
+      "index": "Abschnitte",
+      "jump": "Weiterlesen",
+      "jumpTo": "Weiterlesen: {title}",
+      "ongoing": "heute",
+      "readingTime": "{minutes} Min. Lesezeit"
     }
   },
   "directions": {
@@ -518,10 +525,10 @@
     "earlier": "Frühere Richtungen",
     "poster": {
       "name": "Poster",
-      "tagline": "Dreizehn Vorlagen. Klare Abschnitte. Dein Foto zuerst.",
+      "tagline": "Vierzehn Vorlagen. Klare Abschnitte. Dein Foto zuerst.",
       "description": "Gebaut nach den Seiten, die du geschickt hast: Porträt über die volle Breite oder dein Logo, der Name wie auf einem Konzertplakat, danach Abschnitte mit Titel – Releases, Shows mit Monats-Tabs, Mixe in einer zweizeiligen Leiste, ein Shop im Zweier-Raster, Partner-Kacheln und Videos. Vorlage wählen, der Inhalt bleibt. Das Dashboard bearbeitet die Seite Abschnitt für Abschnitt.",
       "traits": [
-        "Dreizehn Vorlagen, von Nocturne bis Tiefdruck",
+        "Vierzehn Vorlagen, von Nocturne bis Laufbahn",
         "Jedes Farbpaar besteht WCAG AA – in jeder Vorlage",
         "Keine Cookies, Videos laden erst nach Tippen, Werbung ist gekennzeichnet"
       ],
@@ -688,12 +695,15 @@
     },
     "tiefdruck": {
       "description": "Dunkel und kräftig: riesige Schrift, Projekte als nummerierte Liste, ein elektrisches Blau."
+    },
+    "laufbahn": {
+      "description": "Für Bewerbungen und Lebensläufe: ein großes Bild, ein Wegweiser mit Buchstaben für jeden Abschnitt, ein Werdegang, der sich beim Lesen füllt."
     }
   },
   "marketing": {
     "meta": {
       "title": "Linkyo — Ein Link. Alles, was du erschaffst.",
-      "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: dreizehn Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
+      "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: vierzehn Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
     },
     "nav": {
       "features": "Funktionen",
@@ -1090,7 +1100,7 @@
       }
     },
     "real": {
-      "metaDescription": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: dreizehn Vorlagen, Musik, Shows und Shop. Kostenlos starten, Daten in Frankfurt.",
+      "metaDescription": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: vierzehn Vorlagen, Musik, Shows und Shop. Kostenlos starten, Daten in Frankfurt.",
       "analyticsBadge": "In Arbeit",
       "freeAnalytics": "Analytics ohne Cookies (in Arbeit)",
       "faqFree": "Ja. Vorlagen, unbegrenzte Links und Abschnitte bleiben kostenlos; Analytics ohne Cookies ist in Arbeit. Nichts, was heute gratis ist, wird kostenpflichtig.",
@@ -2074,7 +2084,7 @@
         "look": {
           "short": "Look",
           "title": "Wähl deinen Look",
-          "lead": "Dreizehn Vorlagen, alle mit deinem Foto und Namen. Probier sie aus – die Vorschau ändert sich sofort."
+          "lead": "Vierzehn Vorlagen, alle mit deinem Foto und Namen. Probier sie aus – die Vorschau ändert sich sofort."
         },
         "links": {
           "short": "Links",

@@ -35,7 +35,7 @@ test.describe("poster creator page", () => {
       return (await page.getByRole("heading", { level: 2 }).allInnerTexts()).map((text) => text.replace(/^\s*(\d{2}|\/\/)\s*/, "").trim().toLowerCase());
     };
     const reference = await headings("nocturne");
-    for (const template of ["daylight", "marquee", "pulse", "atelier", "mono", "studio", "aura", "folio", "signal", "bloom", "werkbogen", "tiefdruck"]) {
+    for (const template of ["daylight", "marquee", "pulse", "atelier", "mono", "studio", "aura", "folio", "signal", "bloom", "werkbogen", "tiefdruck", "laufbahn"]) {
       expect(await headings(template), template).toEqual(reference);
     }
   });
@@ -60,7 +60,7 @@ test.describe("poster creator page", () => {
   test("with reduced motion nothing on the newer templates moves", async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: "reduce" });
     const page = await context.newPage();
-    for (const template of ["studio", "aura", "signal", "bloom", "folio"]) {
+    for (const template of ["studio", "aura", "signal", "bloom", "folio", "laufbahn"]) {
       await page.goto(`/en/directions/poster?chrome=0&template=${template}`);
       // Time-based animations only: the hero's scroll-linked fade stays (opacity only with reduced motion).
       // Named, so a failure says which animation ran (and on what) instead of only how many.

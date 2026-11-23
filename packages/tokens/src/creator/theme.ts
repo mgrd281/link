@@ -31,17 +31,20 @@ export interface CreatorThemeConfig {
 /**
  * Section titles: the display face, the body face in title case, the body face set in caps, small
  * caps with the section's number ("01"), a title followed by a hairline rule, monospace caps, a small
- * numbered caption in the margin (marker), or the display face set very large with its number (headline).
+ * numbered caption in the margin (marker), the display face set very large with its number (headline),
+ * or a square signpost with the section's letter beside the title, the signposts also forming the
+ * page's section index (signpost).
  */
-export type HeadingStyle = "display" | "sans" | "sans-upper" | "numbered" | "rule" | "mono" | "marker" | "headline";
+export type HeadingStyle = "display" | "sans" | "sans-upper" | "numbered" | "rule" | "mono" | "marker" | "headline" | "signpost";
 /**
  * Hero treatment: the portrait, a logo over a blurred photo, the portrait toned into the page color,
  * the portrait in black and white, a full-height cinema still with the name set low (cinema), a round
  * portrait with a halo (halo), a framed picture with the name on the left (inset), a square picture in
  * corner marks (frame), the portrait in an arch (arch), the first piece of work as a large plate under a
- * quiet name (plate), or the name set as large as the screen allows (statement).
+ * quiet name (plate), the name set as large as the screen allows (statement), or the picture from edge
+ * to edge with the name set large on it, beside the words as a tall plate on the wide canvas (bleed).
  */
-export type HeroStyle = "portrait" | "logo" | "duotone" | "mono" | "cinema" | "halo" | "inset" | "frame" | "arch" | "plate" | "statement";
+export type HeroStyle = "portrait" | "logo" | "duotone" | "mono" | "cinema" | "halo" | "inset" | "frame" | "arch" | "plate" | "statement" | "bleed";
 /** Social profiles under the name: round tiles, or bare glyphs for quiet, editorial looks. */
 export type SocialStyle = "tiles" | "plain";
 /** Behind the page: nothing, the page's colors drifting slowly (aurora), or a fine grid. */

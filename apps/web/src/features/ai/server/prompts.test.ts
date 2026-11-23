@@ -35,10 +35,11 @@ describe("prompts", () => {
   it("are the reviewed texts, byte for byte (r2 §6.1–§6.3)", () => {
     expect(sha256(SYSTEM_CORE_V1)).toBe("b22954184af69c363f0a179353e821be95a81d1862682785e2b59ec442ddf276");
     // core-v2: the catalogue gained two kinds (photographer, freelancer) and two templates (tiefdruck, werkbogen).
-    expect(sha256(CATALOGUE_V1)).toBe("f9a0cb6ce0d5bea4b3c6b0009f67ada6530b31fce4b306eaa6098727e68dbafc");
+    // core-v3: one more template (laufbahn), nothing else.
+    expect(sha256(CATALOGUE_V1)).toBe("340fc88a8de3166e936ba74c54ef7f8d65eb100f34c1f2781529f1afa9a6071f");
     expect(sha256(EXAMPLE_V1)).toBe("a8f7cc40b2ba0811b70a63fb4c4a9bf458f9bfe2241e345a690bd97203db3742");
     expect(CATALOGUE_AND_EXAMPLE_V1).toBe(`${CATALOGUE_V1}\n\n${EXAMPLE_V1}`);
-    expect(PROMPT_VERSION).toBe("core-v2");
+    expect(PROMPT_VERSION).toBe("core-v3");
   });
 
   it("hold nothing that changes per run (the cached prefix stays the same)", () => {
@@ -51,7 +52,7 @@ describe("prompts", () => {
     expect(listed("Kinds")).toEqual(expect.arrayContaining(["photographer", "freelancer"]));
     const templates = [...CATALOGUE_V1.matchAll(/^- ([a-z-]+): .*Mode (light|dark|vivid)\.$/gm)].map((match) => [match[1], match[2]]);
     expect(new Set(templates.map(([id]) => id))).toEqual(new Set(TEMPLATE_IDS));
-    expect(templates).toHaveLength(13);
+    expect(templates).toHaveLength(14);
     // Each template line is the template's own description from the design tokens.
     for (const [id] of templates) {
       const description = (creatorTokens.templates as Record<string, { description: string }>)[id ?? ""]?.description ?? "missing";

@@ -389,6 +389,7 @@ exports[`PagePlan v1 > sends a stable schema (snapshot) 1`] = `
             "bloom",
             "werkbogen",
             "tiefdruck",
+            "laufbahn",
           ],
           "type": "string",
         },

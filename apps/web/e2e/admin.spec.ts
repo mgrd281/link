@@ -483,7 +483,7 @@ test.describe("team console: templates", () => {
     await page.goto("/en/admin/templates");
     await expect(page.getByRole("heading", { level: 1, name: "Templates" })).toBeVisible();
     const designs = page.locator('a[href^="/directions/poster?template="]');
-    await expect(designs).toHaveCount(13);
+    await expect(designs).toHaveCount(14);
     await expect(designs.first()).toHaveAttribute("target", "_blank");
     await page.getByText(/^Examples \(/).click();
     await expect(page.locator('a[href*="/p/"]').first()).toBeVisible();
