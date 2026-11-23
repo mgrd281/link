@@ -5,7 +5,7 @@ import { pageSchema } from "@linkyo/blocks";
 import { z } from "zod";
 
 import { EXAMPLES } from "@/features/examples/catalog";
-import { isLook, LOOKS } from "@/features/examples/looks";
+import { isLook, LOOKS, type Look } from "@/features/examples/looks";
 
 import { journalistAr, journalistDe, journalistEn } from "./journalist";
 import { starPage } from "./stars";
@@ -39,7 +39,13 @@ export interface Preview {
    * An example page for a kind of creator (a fictional person), sent to anyone of that kind. It is
    * labelled as an example, and its call to action starts a new account with that kind's template.
    */
-  sample?: { kind: string; category?: string; look?: string };
+  sample?: {
+    kind: string;
+    category?: string;
+    look?: string;
+    /** Who took the page's photographs (a portfolio shows pictures as work, so its example says whose they are). */
+    credit?: string;
+  };
   /**
    * A concept for a well-known person: how their page could look, built from public facts with links
    * to their official channels. Labelled as a concept, never listed or indexed; `credit` names the
@@ -128,8 +134,9 @@ const HAND_MADE: Record<string, Preview> = {
   ...Object.fromEntries(
     Object.entries(EXAMPLES).flatMap(([slug, page]): [string, Preview][] => {
       if (!isLook(slug)) return [];
-      const look = LOOKS[slug];
-      return [[slug, { name: { [look.locale]: page.profile.displayName }, username: slug, theme: look.theme, pages: { [look.locale]: page }, sample: { kind: look.kind, category: look.category, look: slug } }]];
+      const look: Look = LOOKS[slug];
+      const sample = { kind: look.kind, category: look.category, look: slug, ...(look.credit ? { credit: look.credit } : {}) };
+      return [[slug, { name: { [look.locale]: page.profile.displayName }, username: slug, theme: look.theme, pages: { [look.locale]: page }, sample }]];
     }),
   ),
 };
