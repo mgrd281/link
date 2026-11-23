@@ -1383,6 +1383,7 @@ export type Database = {
       admin_orders: { Args: { scope?: string }; Returns: Json };
       admin_referral_queue: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_refund_invoice: { Args: { invoice: string }; Returns: undefined };
+      admin_refund_order: { Args: { target: string }; Returns: Json };
       admin_remove_member: { Args: { member: string }; Returns: undefined };
       admin_resolve_cancellation: { Args: { decision: string; note: string; target: string }; Returns: Json };
       admin_resolve_withdrawal: {
@@ -1482,6 +1483,7 @@ export type Database = {
       berlin_month: { Args: Record<PropertyKey, never>; Returns: string };
       berlin_today: { Args: Record<PropertyKey, never>; Returns: string };
       block_is_public: { Args: { at: string; block: Json }; Returns: boolean };
+      cancellation_step_allowed: { Args: { current: string; next: string }; Returns: boolean };
       change_username: { Args: { candidate: string }; Returns: string };
       confirm_cancellation: {
         Args: { decision: string; effective?: string; target: string };
@@ -1620,6 +1622,9 @@ export type Database = {
       };
       settle_pending_referrals: { Args: Record<PropertyKey, never>; Returns: number };
       settle_referral: { Args: { invitee: string; ref?: string }; Returns: string };
+      settle_withdrawal: { Args: { target: string }; Returns: undefined };
+      story_handed_to_me: { Args: { path: string }; Returns: boolean };
+      team_may_upload_for: { Args: { folder: string }; Returns: boolean };
       update_pro_subscription: {
         Args: { next: Database["public"]["Enums"]["entitlement_status"]; subscription: string };
         Returns: undefined;

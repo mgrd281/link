@@ -520,12 +520,19 @@ select is((select decision || '/' || (handled_at is not null) from public.cancel
   'resumed/true', 'and is a decision');
 
 -- ── 14. Who handles contract requests ───────────────────────────────────────────────────────
+-- A second ordinary cancellation of Wes, scheduled when it arrived (the team may take it back).
+select set_config('test.c3', public.record_cancellation('ordinary', 'Wes', 'wes@example.com', 'pro-monthly',
+  'wes@example.com', 'ip-wes-2') ->> 'id', true);
+select public.confirm_cancellation(current_setting('test.c3')::uuid, 'scheduled',
+  (select current_period_end from public.entitlements where stripe_subscription_id = 'sub_wes'));
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
-select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'resumed', null) $$, current_setting('test.c1')),
+select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'resumed', null) $$, current_setting('test.c3')),
   'P0001', 'linkyo:invalid', 'taking a cancellation back needs the holder''s request as a note');
-select is(public.admin_resolve_cancellation(current_setting('test.c1')::uuid, 'resumed', 'Bitte doch weiter (Mail vom Konto)'),
+select is(public.admin_resolve_cancellation(current_setting('test.c3')::uuid, 'resumed', 'Bitte doch weiter (Mail vom Konto)'),
   '{"subscription":"sub_wes","accountEmail":"wes@example.com"}'::jsonb, 'with it the team resumes');
+select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'resumed', 'noch einmal') $$, current_setting('test.c1')),
+  'P0001', 'linkyo:locked', 'a cancellation that was already taken back is not taken back twice');
 select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000002","role":"authenticated"}', true);
 select throws_ok($$ select public.admin_contract_requests() $$, '42501', 'linkyo:forbidden', 'customers see no requests');
 select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
@@ -647,6 +654,228 @@ select ok(not public.has_pro('b3000000-0000-4000-8000-000000000016'), 'and Pro e
 set local role anon;
 select throws_ok($$ select public.has_pro('b3000000-0000-4000-8000-000000000016') $$, '42501', null,
   'visitors cannot ask who has Pro');
+reset role;
+
+-- ── 19. The team's refund names its member, and waits while a withdrawal is open ────────────
+-- Gus, Hana and Jule buy the service; Ivo and Lea have Pro.
+insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, raw_app_meta_data, created_at, updated_at, email_confirmed_at) values
+  ('b3000000-0000-4000-8000-000000000018', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'gus@example.com', '{"username":"gus"}', '{}', now(), now(), now()),
+  ('b3000000-0000-4000-8000-000000000019', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'hana@example.com', '{"username":"hana"}', '{}', now(), now(), now()),
+  ('b3000000-0000-4000-8000-000000000020', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ivo@example.com', '{"username":"ivo"}', '{}', now(), now(), now()),
+  ('b3000000-0000-4000-8000-000000000021', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'jule@example.com', '{"username":"jule"}', '{}', now(), now(), now()),
+  ('b3000000-0000-4000-8000-000000000022', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'lea@example.com', '{"username":"lea"}', '{}', now(), now(), now());
+insert into public.orders (profile_id, customer_email, package, status, locale, amount_cents, vat_mode, early_start,
+    start_after, promised_due_at, due_at, revisions_allowed, stripe_session_id, stripe_payment_intent,
+    confirmation_sent_at, briefing, delivered_at) values
+  ('b3000000-0000-4000-8000-000000000018', 'gus@example.com', 'start', 'delivered', 'de', 2499, 'standard19', true,
+    now(), now(), now(), 1, 'cs_g1', 'pi_g1', now(), '{}', now() - interval '1 day'),
+  ('b3000000-0000-4000-8000-000000000018', 'gus@example.com', 'start', 'queued', 'de', 2499, 'standard19', true,
+    now(), now(), now(), 1, 'cs_g2', 'pi_g2', now(), '{}', null),
+  ('b3000000-0000-4000-8000-000000000019', 'hana@example.com', 'start', 'queued', 'de', 2499, 'standard19', true,
+    now(), now(), now(), 1, 'cs_h1', 'pi_h1', now(), '{}', null),
+  ('b3000000-0000-4000-8000-000000000019', 'hana@example.com', 'start', 'queued', 'de', 2499, 'standard19', true,
+    now(), now(), now(), 1, 'cs_h2', 'pi_h2', now(), '{}', null),
+  ('b3000000-0000-4000-8000-000000000021', 'jule@example.com', 'start', 'queued', 'de', 2499, 'standard19', true,
+    now(), now(), now(), 1, 'cs_j1', 'pi_j1', now(), '{}', null);
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000004","role":"authenticated"}', true);
+select throws_ok($$ select public.admin_refund_order((select id from public.orders where stripe_session_id = 'cs_g1')) $$,
+  '42501', 'linkyo:forbidden', 'a viewer cannot decide a refund');
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select is(public.admin_refund_order((select id from public.orders where stripe_session_id = 'cs_g1')),
+  '{"paymentIntent":"pi_g1","amountCents":2499,"voluntaryUsed":false}'::jsonb, 'the owner decides it and learns what to refund');
+select lives_ok($$ select public.admin_refund_order((select id from public.orders where stripe_session_id = 'cs_g1')) $$,
+  'the same request again (the record failed after Stripe refunded)');
+reset role;
+select is((select array_agg((select u.email::text from auth.users u where u.id = e.actor)) from public.order_events e
+  join public.orders o on o.id = e.order_id where o.stripe_session_id = 'cs_g1' and e.kind = 'refund_requested'),
+  array['olga@example.com'], 'the timeline names the member who decided it, once');
+select is((select count(*)::int from public.audit_log a where a.action = 'order.refund' and a.actor = 'olga@example.com'
+  and a.target = (select number from public.orders where stripe_session_id = 'cs_g1')), 2,
+  'and the activity log has every request');
+select is(public.record_refund('pi_g1', 'voluntary', 2499), 'ok', 'the refund is recorded as the money-back');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select throws_ok($$ select public.admin_refund_order((select id from public.orders where stripe_session_id = 'cs_g1')) $$,
+  'P0001', 'linkyo:locked', 'an order refunded under the team''s kind is not refunded again');
+reset role;
+select set_config('test.wg2', public.record_withdrawal('Gus', 'gus@example.com',
+  (select number from public.orders where stripe_session_id = 'cs_g2'), 'ip-gus') ->> 'id', true);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select throws_ok($$ select public.admin_refund_order((select id from public.orders where stripe_session_id = 'cs_g2')) $$,
+  'P0001', 'linkyo:locked', 'while a withdrawal waits, "refund" is refused: it would be booked as the money-back');
+reset role;
+select is((select count(*)::int from public.order_events e join public.orders o on o.id = e.order_id
+  where o.stripe_session_id = 'cs_g2' and e.kind = 'refund_requested'), 0, 'and nothing is noted');
+
+-- ── 20. An accepted withdrawal stays open until its refund is on record ─────────────────────
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select lives_ok(format($$ select public.admin_resolve_withdrawal(%L, 'accepted', null, 2499) $$, current_setting('test.wg2')),
+  'the owner accepts Gus''s withdrawal');
+select is((select (r ->> 'decision') || '/' || coalesce(r ->> 'handledAt', 'open') from jsonb_array_elements(public.admin_contract_requests()) r
+  where r ->> 'id' = current_setting('test.wg2')), 'accepted/open', 'accepted, but not finished: the refund is still due');
+select throws_ok(format($$ select public.admin_mark_contract_handled('withdrawal', %L) $$, current_setting('test.wg2')),
+  'P0001', 'linkyo:locked', 'and it cannot be filed as handled while the money is owed');
+reset role;
+select is((select withdrawal_pending from public.orders where stripe_session_id = 'cs_g2'), true, 'the order waits with it');
+select is(public.record_refund('pi_g2', 'goodwill', 2499), 'ok', 'Stripe reports the refund');
+select is((select (w.handled_at is not null)::text || '/' || o.status || '/' || o.withdrawal_pending from public.withdrawals w
+  join public.orders o on o.id = w.order_id where w.id = current_setting('test.wg2')::uuid), 'true/withdrawn/false',
+  'now the withdrawal is finished and the order withdrawn');
+
+-- Without a refund (the team keeps the whole value share) it is finished at once.
+select set_config('test.wj1', public.record_withdrawal('Jule', 'jule@example.com',
+  (select number from public.orders where stripe_session_id = 'cs_j1'), 'ip-jule') ->> 'id', true);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select lives_ok(format($$ select public.admin_resolve_withdrawal(%L, 'accepted', null, 0) $$, current_setting('test.wj1')),
+  'accepting with nothing to refund');
+reset role;
+select is((select (w.handled_at is not null)::text || '/' || o.status from public.withdrawals w
+  join public.orders o on o.id = w.order_id where w.id = current_setting('test.wj1')::uuid), 'true/withdrawn',
+  'finishes the request and the order at once');
+
+-- Pro: open until the route has ended the subscription and booked the refund.
+select public.upsert_pro_subscription('b3000000-0000-4000-8000-000000000020', 'cus_ivo', 'sub_ivo', 'active',
+  now() + interval '20 days', false);
+select set_config('test.wi1', public.record_withdrawal('Ivo', 'ivo@example.com', 'Linkyo Pro', 'ip-ivo') ->> 'id', true);
+select set_config('test.wi2', public.record_withdrawal('Ivo', 'ivo@example.com', 'Pro', 'ip-ivo') ->> 'id', true);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select is(public.admin_resolve_withdrawal(current_setting('test.wi1')::uuid, 'accepted') ->> 'subscription', 'sub_ivo',
+  'a Pro withdrawal is accepted');
+select throws_ok(format($$ select public.admin_resolve_withdrawal(%L, 'accepted') $$, current_setting('test.wi2')),
+  'P0001', 'linkyo:locked', 'a second declaration for the same Pro contract is not accepted again');
+reset role;
+select is((select handled_at from public.withdrawals where id = current_setting('test.wi1')::uuid), null,
+  'it stays open (no invoice was refunded yet)');
+select public.settle_withdrawal(current_setting('test.wi1')::uuid);
+select isnt((select handled_at from public.withdrawals where id = current_setting('test.wi1')::uuid), null,
+  'until the route reports that Stripe and the bookkeeping are done');
+select public.settle_withdrawal(current_setting('test.wi2')::uuid);
+select is((select handled_at from public.withdrawals where id = current_setting('test.wi2')::uuid), null,
+  'an undecided declaration is never settled');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select throws_ok(format($$ select public.settle_withdrawal(%L) $$, current_setting('test.wi1')), '42501', null,
+  'customers cannot settle a withdrawal');
+reset role;
+
+-- ── 21. One contract is withdrawn once; "handled" and a rejection free the order only when ──
+--        nothing else waits
+select set_config('test.wh1', public.record_withdrawal('Hana', 'hana@example.com',
+  (select number from public.orders where stripe_session_id = 'cs_h1'), 'ip-hana') ->> 'id', true);
+select set_config('test.wh2', public.record_withdrawal('Hana', 'hana@example.com',
+  (select number from public.orders where stripe_session_id = 'cs_h1'), 'ip-hana') ->> 'id', true);
+select set_config('test.wh3', public.record_withdrawal('Hana', 'hana@example.com',
+  (select number from public.orders where stripe_session_id = 'cs_h1'), 'ip-hana') ->> 'id', true);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select lives_ok(format($$ select public.admin_resolve_withdrawal(%L, 'rejected', 'doppelt gesendet') $$, current_setting('test.wh1')),
+  'the first of three declarations is rejected');
+reset role;
+select is((select withdrawal_pending from public.orders where stripe_session_id = 'cs_h1'), true,
+  'the order stays stopped: two more declarations wait');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select throws_ok(format($$ select public.admin_resolve_withdrawal(%L, 'accepted', null, 9999) $$, current_setting('test.wh2')),
+  'P0001', 'linkyo:invalid', 'never more than the order cost');
+select lives_ok(format($$ select public.admin_resolve_withdrawal(%L, 'accepted', null, 1000) $$, current_setting('test.wh2')),
+  'the second is accepted with a share of 10 EUR back');
+select throws_ok(format($$ select public.admin_resolve_withdrawal(%L, 'accepted', null, 1000) $$, current_setting('test.wh3')),
+  'P0001', 'linkyo:locked', 'the third cannot be accepted, too: the order''s withdrawal is already accepted');
+reset role;
+select is(public.record_refund('pi_h1', 'withdrawal', 1000), 'ok', 'its refund is recorded');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select throws_ok(format($$ select public.admin_resolve_withdrawal(%L, 'accepted', null, 1000) $$, current_setting('test.wh3')),
+  'P0001', 'linkyo:locked', 'nor once the order is withdrawn (a second refund would follow)');
+select lives_ok(format($$ select public.admin_mark_contract_handled('withdrawal', %L, 'Auftrag bereits widerrufen') $$,
+  current_setting('test.wh3')), 'it is filed as handled instead');
+select throws_ok(format($$ select public.admin_resolve_withdrawal(%L, 'rejected', 'x') $$, current_setting('test.wh3')),
+  'P0001', 'linkyo:locked', 'and a handled request takes no decision any more');
+reset role;
+select is((select count(*)::int from public.order_events e join public.orders o on o.id = e.order_id
+  where o.stripe_session_id = 'cs_h1' and e.kind = 'refunded'), 1, 'one refund in the timeline');
+
+-- "Handled" on the last declaration that waits for an order frees the order.
+select set_config('test.wh4', public.record_withdrawal('Hana', 'hana@example.com',
+  (select number from public.orders where stripe_session_id = 'cs_h2'), 'ip-hana') ->> 'id', true);
+select set_config('test.wh5', public.record_withdrawal('Hana', 'hana@example.com',
+  (select number from public.orders where stripe_session_id = 'cs_h2'), 'ip-hana') ->> 'id', true);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select lives_ok(format($$ select public.admin_mark_contract_handled('withdrawal', %L, 'Spam') $$, current_setting('test.wh4')),
+  'one of two declarations is marked handled');
+reset role;
+select is((select withdrawal_pending from public.orders where stripe_session_id = 'cs_h2'), true, 'the other still stops the order');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select lives_ok(format($$ select public.admin_mark_contract_handled('withdrawal', %L, 'Spam') $$, current_setting('test.wh5')),
+  'then the last one');
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
+select lives_ok($$ select public.admin_save_proposal((select id from public.orders where stripe_session_id = 'cs_h2'),
+  '{"profile":{"displayName":"Hana"},"blocks":[]}', '{}') $$, 'and the team can work on the order again');
+reset role;
+select is((select o.withdrawal_pending::text || '/' || (select count(*) from public.order_events e where e.order_id = o.id
+  and e.kind = 'note' and e.details ->> 'handled' = 'true') from public.orders o where o.stripe_session_id = 'cs_h2'),
+  'false/1', 'the order is free and its timeline says why');
+
+-- ── 22. Cancellations: the team carries out an ordinary one; a decided one stays decided ────
+select public.upsert_pro_subscription('b3000000-0000-4000-8000-000000000022', 'cus_lea', 'sub_lea', 'active',
+  now() + interval '20 days', false);
+select set_config('test.cl1', public.record_cancellation('ordinary', 'Lea', 'lea@example.com', 'pro-monthly',
+  'lea@example.com', 'ip-lea') ->> 'id', true);
+select set_config('test.cl2', public.record_cancellation('extraordinary', 'Lea', 'lea@example.com', 'pro-monthly',
+  'lea@example.com', 'ip-lea', reason => 'Umzug') ->> 'id', true);
+select set_config('test.cl3', public.record_cancellation('ordinary', 'Lea', 'lea@example.com', 'pro-monthly',
+  'lea@example.com', 'ip-lea') ->> 'id', true);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000004","role":"authenticated"}', true);
+select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'scheduled', null) $$, current_setting('test.cl1')),
+  '42501', 'linkyo:forbidden', 'a viewer cannot carry out a cancellation');
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select is(public.admin_resolve_cancellation(current_setting('test.cl1')::uuid, 'scheduled', null),
+  '{"subscription":"sub_lea","accountEmail":"lea@example.com"}'::jsonb,
+  'the owner carries out an ordinary cancellation that was held (no note needed)');
+select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'scheduled', null) $$, current_setting('test.cl2')),
+  'P0001', 'linkyo:locked', 'an extraordinary one is decided, not scheduled');
+reset role;
+select is((select count(*)::int from public.audit_log where action = 'cancellation.scheduled' and actor = 'olga@example.com'), 1,
+  'the activity log names who did it');
+select public.confirm_cancellation(current_setting('test.cl1')::uuid, 'scheduled', now() + interval '20 days');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'scheduled', null) $$, current_setting('test.cl1')),
+  'P0001', 'linkyo:locked', 'a scheduled cancellation is not scheduled again by the team');
+select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'ended', 'x') $$, current_setting('test.cl1')),
+  'P0001', 'linkyo:locked', 'nor ended at once');
+select lives_ok(format($$ select public.admin_resolve_cancellation(%L, 'rejected', 'kein wichtiger Grund') $$,
+  current_setting('test.cl2')), 'the extraordinary one is rejected');
+reset role;
+select public.confirm_cancellation(current_setting('test.cl2')::uuid, 'rejected');
+select lives_ok(format($$ select public.confirm_cancellation(%L, 'rejected') $$, current_setting('test.cl2')),
+  'recording the same decision again (a retry) changes nothing');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'ended', 'doch beenden') $$, current_setting('test.cl2')),
+  'P0001', 'linkyo:locked', 'a rejected cancellation cannot be ended from a stale list');
+select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'rejected', 'noch einmal') $$, current_setting('test.cl2')),
+  'P0001', 'linkyo:locked', 'or rejected a second time (a second e-mail)');
+reset role;
+select throws_ok(format($$ select public.confirm_cancellation(%L, 'ended', now()) $$, current_setting('test.cl2')),
+  'P0001', 'linkyo:locked', 'and the server refuses to record the contradiction, too');
+select is((select e.status::text from public.entitlements e where e.stripe_subscription_id = 'sub_lea'), 'active',
+  'Pro goes on');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b3000000-0000-4000-8000-000000000005","role":"authenticated"}', true);
+select lives_ok(format($$ select public.admin_mark_contract_handled('cancellation', %L) $$, current_setting('test.cl3')),
+  'a third request is filed as handled');
+select throws_ok(format($$ select public.admin_resolve_cancellation(%L, 'scheduled', null) $$, current_setting('test.cl3')),
+  'P0001', 'linkyo:locked', 'and then takes no decision');
 reset role;
 
 -- ── 16. Retention ───────────────────────────────────────────────────────────────────────────

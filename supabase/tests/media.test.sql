@@ -17,6 +17,17 @@ insert into public.team_members (user_id, role) values
   ('a2000000-0000-4000-8000-000000000003', 'editor'),
   ('a2000000-0000-4000-8000-000000000004', 'viewer');
 
+-- Ana has a Premium order whose proposal (a draft at first) lists one story picture; Ben's order is refunded.
+insert into public.orders (id, profile_id, customer_email, package, status, locale, amount_cents, vat_mode, early_start,
+    start_after, promised_due_at, revisions_allowed, stripe_session_id) values
+  ('0b000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000001', 'ana@example.com', 'premium', 'in_progress',
+    'de', 7999, 'standard19', true, now(), now(), 3, 'cs_media_ana'),
+  ('0b000000-0000-4000-8000-000000000002', 'a2000000-0000-4000-8000-000000000002', 'ben@example.com', 'start', 'refunded',
+    'de', 2499, 'standard19', true, now(), now(), 1, 'cs_media_ben');
+insert into public.site_proposals (order_id, profile_id, round, status, page, theme, story_paths) values
+  ('0b000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000001', 0, 'draft', '{"profile":{},"blocks":[]}', '{}',
+    array['a2000000-0000-4000-8000-000000000001/0b000000-0000-4000-8000-000000000001/s1.png']);
+
 -- ── 1. Buckets ──────────────────────────────────────────────────────────────────────────────
 select results_eq(
   $$ select id, public, file_size_limit::bigint, allowed_mime_types from storage.buckets
@@ -82,8 +93,19 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"a2000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
 select lives_ok($$ insert into storage.objects (bucket_id, name) values ('deliverables', 'a2000000-0000-4000-8000-000000000001/0b000000-0000-4000-8000-000000000001/s1.png') $$,
   'an editor uploads a story picture under <ana>/<order>/');
+select lives_ok($$ insert into storage.objects (bucket_id, name) values ('deliverables', 'a2000000-0000-4000-8000-000000000001/0b000000-0000-4000-8000-000000000001/wrong.png') $$,
+  'and one by mistake, which is then taken out of the proposal');
+select is((select count(*)::int from storage.objects where bucket_id = 'deliverables'), 2, 'the team sees both');
 select set_config('request.jwt.claims', '{"sub":"a2000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
-select is((select count(*)::int from storage.objects where bucket_id = 'deliverables'), 1, 'Ana reads it');
+select is((select count(*)::int from storage.objects where bucket_id = 'deliverables'), 0,
+  'Ana reads neither while the proposal is a draft');
+reset role;
+update public.site_proposals set status = 'delivered', delivered_at = now() where order_id = '0b000000-0000-4000-8000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"a2000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select is((select array_agg(name) from storage.objects where bucket_id = 'deliverables'),
+  array['a2000000-0000-4000-8000-000000000001/0b000000-0000-4000-8000-000000000001/s1.png'],
+  'once it is handed over she reads the picture it lists, and not the one that was taken out');
 select throws_ok($$ insert into storage.objects (bucket_id, name) values ('deliverables', 'a2000000-0000-4000-8000-000000000001/0b000000-0000-4000-8000-000000000001/s2.png') $$,
   '42501', null, 'Ana cannot upload story pictures herself');
 select set_config('request.jwt.claims', '{"sub":"a2000000-0000-4000-8000-000000000002","role":"authenticated"}', true);
@@ -91,6 +113,26 @@ select is((select count(*)::int from storage.objects where bucket_id = 'delivera
 select set_config('request.jwt.claims', '{"sub":"a2000000-0000-4000-8000-000000000004","role":"authenticated"}', true);
 select throws_ok($$ insert into storage.objects (bucket_id, name) values ('deliverables', 'a2000000-0000-4000-8000-000000000001/0b000000-0000-4000-8000-000000000001/s3.png') $$,
   '42501', null, 'a viewer cannot upload them');
+reset role;
+
+-- ── 8. A proposal's page pictures belong to the customer ────────────────────────────────────
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"a2000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
+select lives_ok($$ insert into storage.objects (bucket_id, name) values ('media', 'a2000000-0000-4000-8000-000000000001/2026/team.jpg') $$,
+  'an editor puts a picture for Ana''s proposal into Ana''s media folder');
+select throws_ok($$ insert into storage.objects (bucket_id, name) values ('media', 'a2000000-0000-4000-8000-000000000002/2026/team.jpg') $$,
+  '42501', null, 'but not into the folder of a customer without an open order');
+select throws_ok($$ insert into storage.objects (bucket_id, name) values ('media', 'a2000000-0000-4000-8000-000000000004/2026/team.jpg') $$,
+  '42501', null, 'nor into a colleague''s');
+select set_config('request.jwt.claims', '{"sub":"a2000000-0000-4000-8000-000000000004","role":"authenticated"}', true);
+select throws_ok($$ insert into storage.objects (bucket_id, name) values ('media', 'a2000000-0000-4000-8000-000000000001/2026/viewer.jpg') $$,
+  '42501', null, 'a viewer cannot upload for a customer');
+select set_config('request.jwt.claims', '{"sub":"a2000000-0000-4000-8000-000000000002","role":"authenticated"}', true);
+select throws_ok($$ insert into storage.objects (bucket_id, name) values ('media', 'a2000000-0000-4000-8000-000000000001/2026/ben.jpg') $$,
+  '42501', null, 'and another customer never could');
+select set_config('request.jwt.claims', '{"sub":"a2000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select is((select count(*)::int from storage.objects where bucket_id = 'media' and name like '%/team.jpg'), 1,
+  'the picture is Ana''s: she sees it in her folder (and it is purged with her account)');
 reset role;
 
 -- ── 7. The purge queue is the server's ──────────────────────────────────────────────────────
