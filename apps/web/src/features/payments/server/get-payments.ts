@@ -1,5 +1,7 @@
 import { getEmailSender } from "@/features/email/send";
 import { paymentsEnabled, paymentsMode } from "@/lib/flags";
+import { ipForLog, requestPlace } from "@/lib/request-context";
+import { ipHash } from "@/lib/server/ip-hash";
 import { siteUrl } from "@/lib/site-url";
 import { serviceSupabase } from "@/lib/supabase/server";
 
@@ -37,6 +39,21 @@ export async function readJson(request: Request): Promise<unknown> {
     return (await request.json()) as unknown;
   } catch {
     return null;
+  }
+}
+
+/**
+ * The sender's network as a daily hash, for the "suspect" limits of the public contract forms. A
+ * withdrawal or cancellation is never lost over it: when the hash cannot be made (the salt secret is
+ * missing on this deployment), every sender shares one bucket. That only makes declarations suspect
+ * sooner (stored all the same, receipt held until the team checks), and one line says what is wrong.
+ */
+export function formIpHash(request: Request): string {
+  try {
+    return ipHash(ipForLog(requestPlace(request.headers)));
+  } catch (error) {
+    console.error(JSON.stringify({ evt: "ip_hash_failed", error: error instanceof Error ? error.message : "unknown" }));
+    return "unknown";
   }
 }
 

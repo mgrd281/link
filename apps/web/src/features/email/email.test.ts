@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CaptureEmailSender } from "./capture-sender";
 import { ConsoleEmailSender } from "./console-sender";
-import { getEmailSender } from "./send";
+import { getEmailSender, readEmailTransport } from "./send";
 import { TemEmailSender, parseSender } from "./tem-sender";
 import type { EmailMessage } from "./types";
 
@@ -100,5 +100,32 @@ describe("e-mail senders", () => {
     expect(() => getEmailSender()).toThrow(/EMAIL_FROM/);
     vi.stubEnv("EMAIL_FROM", "Linkyo <hello@example.com>");
     expect(getEmailSender()).toBeInstanceOf(TemEmailSender);
+  });
+
+  it("an unset transport logs only; a name that is no transport is an error, never a silent no-op", () => {
+    expect(readEmailTransport(undefined)).toBe("console");
+    expect(readEmailTransport("  ")).toBe("console");
+    expect(readEmailTransport(" tem ")).toBe("tem");
+    expect(getEmailSender({})).toBeInstanceOf(ConsoleEmailSender);
+    expect(getEmailSender({ EMAIL_TRANSPORT: "console" })).toBeInstanceOf(ConsoleEmailSender);
+    for (const typo of ["TEM", "smtp", "scaleway", "Capture"]) {
+      expect(() => getEmailSender({ EMAIL_TRANSPORT: typo })).toThrow(/EMAIL_TRANSPORT must be one of console, capture, tem/);
+    }
+    vi.stubEnv("EMAIL_TRANSPORT", "TEM");
+    expect(() => getEmailSender()).toThrow(/EMAIL_TRANSPORT must be one of/);
+  });
+
+  it("with live payments only a transport that really sends is handed out", () => {
+    const tem = { SCW_SECRET_KEY: "k", SCW_PROJECT_ID: "p", SCW_REGION: "fr-par", EMAIL_FROM: "Linkyo <hello@example.com>" };
+    for (const transport of [undefined, "", "console", "capture"]) {
+      expect(() => getEmailSender({ NEXT_PUBLIC_PAYMENTS: "live", EMAIL_TRANSPORT: transport, EMAIL_CAPTURE_DIR: dir })).toThrow(/NEXT_PUBLIC_PAYMENTS=live needs EMAIL_TRANSPORT=tem/);
+    }
+    expect(getEmailSender({ NEXT_PUBLIC_PAYMENTS: "live", EMAIL_TRANSPORT: "tem", ...tem })).toBeInstanceOf(TemEmailSender);
+    // Test mode keeps the logging and the capture transports (phase 1).
+    expect(getEmailSender({ NEXT_PUBLIC_PAYMENTS: "test" })).toBeInstanceOf(ConsoleEmailSender);
+    expect(getEmailSender({ NEXT_PUBLIC_PAYMENTS: "test", EMAIL_TRANSPORT: "capture", EMAIL_CAPTURE_DIR: dir })).toBeInstanceOf(CaptureEmailSender);
+    vi.stubEnv("NEXT_PUBLIC_PAYMENTS", "live");
+    vi.stubEnv("EMAIL_TRANSPORT", "");
+    expect(() => getEmailSender()).toThrow(/needs EMAIL_TRANSPORT=tem/);
   });
 });
