@@ -1,4 +1,5 @@
 import type { Block, BlockOf } from "@linkyo/blocks";
+import { selfTitle } from "@linkyo/blocks/project";
 
 /**
  * Poster pages are read as titled sections. Creators never build containers: a "header" block
@@ -40,14 +41,9 @@ export interface PosterSection {
   span: "wide" | "text";
 }
 
-/** `contact` never has a section title: its own line closes the page. */
-const SELF_TITLED = new Set<Block["type"]>(["events", "shorts", "gallery", "brands", "about", "tools", "timeline", "quotes"]);
-
-/** The title a block brings for its own section, if any. */
-export function selfTitle(block: Block): string | null {
-  if (!SELF_TITLED.has(block.type)) return null;
-  return "title" in block && typeof block.title === "string" && block.title.trim() ? block.title : null;
-}
+// Which block brings a title for its own section is one rule, shared with the suggested order
+// (`suggestBlockOrder`), so the two can never read a page differently.
+export { selfTitle };
 
 export function groupSections(blocks: readonly Block[], featured?: string): PosterSection[] {
   const sections: PosterSection[] = [{ id: "top", title: null, items: [], span: "text" }];

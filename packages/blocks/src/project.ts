@@ -112,7 +112,12 @@ const hasStory = (project: Project): boolean => storyParts(project).some(filled)
  */
 export function hasDetail(project: Project, quotes: readonly Quotes[] = []): boolean {
   if (hasStory(project) || (project.results?.length ?? 0) > 0 || project.code !== undefined || filled(project.source?.install)) return true;
-  if ((hasImage(project.cover) ? 1 : 0) + shownPictures(project).length > 1) return true;
+  // The cover the card shows counts once, whether it is the `cover` or a first picture standing in
+  // for it (which shows on the card even while it waits for its description).
+  const shown = shownPictures(project);
+  const cover = coverImage(project);
+  const coverExtra = cover !== undefined && !shown.some((picture) => picture.image === cover) ? 1 : 0;
+  if (coverExtra + shown.length > 1) return true;
   return quotes.some((block) => block.items.some((item) => item.project === project.id));
 }
 
@@ -339,34 +344,54 @@ export function sectionKindOf(block: Block): SectionKind {
   }
 }
 
+/** `contact` never has a section title: its own line closes the page. */
+const SELF_TITLED: ReadonlySet<Block["type"]> = new Set<Block["type"]>(["events", "shorts", "gallery", "brands", "about", "tools", "timeline", "quotes"]);
+
 /**
- * The page's blocks in the suggested order (`suggestOrder`). A header travels with the blocks it
- * titles; a run of projects or repositories moves as one; social icons stay on top (the hero shows
- * them). The blocks themselves are not changed.
+ * The title a block brings for its own section, if any. A block with such a title opens a section
+ * on the page exactly as a header does; the renderer and the suggested order both ask here.
+ */
+export function selfTitle(block: Block): string | null {
+  if (!SELF_TITLED.has(block.type)) return null;
+  return "title" in block && typeof block.title === "string" && block.title.trim() ? block.title : null;
+}
+
+/**
+ * The page's blocks in the suggested order (`suggestOrder`). A title travels with the blocks it
+ * titles, whether it is a header or a block's own title; a run of projects or repositories moves
+ * as one; social icons stay on top (the hero shows them). The blocks themselves are not changed.
  */
 export function suggestBlockOrder(blocks: readonly Block[], kind: CreatorKind | undefined): Block[] {
   const pinned: Block[] = [];
-  const sections: { kind: SectionKind; titled: boolean; blocks: Block[] }[] = [];
+  // `open`: a header that still waits for its first block, which decides what the section is.
+  const sections: { kind: SectionKind; titled: boolean; open: boolean; blocks: Block[] }[] = [];
   for (const block of blocks) {
     if (block.type === "socials") {
       pinned.push(block);
       continue;
     }
     if (block.type === "header") {
-      sections.push({ kind: "other", titled: true, blocks: [block] });
+      sections.push({ kind: "other", titled: true, open: true, blocks: [block] });
       continue;
     }
     const mine = sectionKindOf(block);
     const current = sections.at(-1);
-    // A header titles what follows it; a run of the same kind stays together; plain blocks stay
-    // with the titled section they follow.
-    const untitledYet = current?.titled === true && current.blocks.length === 1;
+    if (current?.open) {
+      current.blocks.push(block);
+      current.kind = mine;
+      current.open = false;
+      continue;
+    }
+    // A block with its own title opens a section, as on the page.
+    if (selfTitle(block) !== null) {
+      sections.push({ kind: mine, titled: true, open: false, blocks: [block] });
+      continue;
+    }
+    // A run of the same kind stays together; plain blocks stay with the titled section they follow.
     const sameRun = current?.kind === mine && (mine === "work" || mine === "repositories" || mine === "other");
     const trails = current?.titled === true && mine === "other";
-    if (current && (untitledYet || sameRun || trails)) {
-      current.blocks.push(block);
-      if (untitledYet) current.kind = mine;
-    } else sections.push({ kind: mine, titled: false, blocks: [block] });
+    if (current && (sameRun || trails)) current.blocks.push(block);
+    else sections.push({ kind: mine, titled: false, open: false, blocks: [block] });
   }
   const order = suggestOrder(
     sections.map((section) => section.kind),

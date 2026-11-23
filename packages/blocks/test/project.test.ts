@@ -20,6 +20,7 @@ import {
   projectTarget,
   sectionKindOf,
   sectionOrder,
+  selfTitle,
   shownPictures,
   slugFor,
   slugWord,
@@ -156,6 +157,11 @@ describe("hasDetail and projectTarget", () => {
     ["a cover and one shown picture", project({ cover: img("c"), pictures: [{ image: img("a", "A") }] }), true],
     ["a cover and one picture that waits for its description", project({ cover: img("c"), pictures: [{ image: img("a") }] }), false],
     ["two shown pictures", project({ pictures: [{ image: img("a", "A") }, { image: img("b"), decorative: true }] }), true],
+    // The card shows the first picture as its cover, described or not, so it counts like a cover.
+    ["a first picture that waits, standing in as the cover, and one shown picture", project({ pictures: [{ image: img("a") }, { image: img("b", "B") }] }), true],
+    ["a first picture that waits and nothing else", project({ pictures: [{ image: img("a") }] }), false],
+    ["two pictures that wait", project({ pictures: [{ image: img("a") }, { image: img("b") }] }), false],
+    ["a first picture that is shown counts once, not as cover and picture", project({ pictures: [{ image: img("a", "A") }, { image: img("b") }] }), false],
     ["tags, role, year and client", project({ tags: ["Maps"], role: "Design", year: { from: 2024 }, client: "A sailing club" }), false],
   ] as const)("%s → %s", (_, value, expected) => {
     expect(hasDetail(value, [])).toBe(expected);
@@ -174,6 +180,8 @@ describe("hasDetail and projectTarget", () => {
     expect(projectTarget(project({ links: [{ url: "https://example.com/talk" }, { url: "https://example.com/2" }] }), "/mats", [])).toEqual({ kind: "link", href: "https://example.com/talk" });
     expect(projectTarget(project(), "/mats", [quotesAbout("p1")])).toEqual({ kind: "page", href: "/mats/tidewatch" });
     expect(projectTarget(project(), "/mats", [])).toEqual({ kind: "none" });
+    // The described picture is reachable: the card (with the waiting first picture as cover) leads to the page.
+    expect(projectTarget(project({ pictures: [{ image: img("a") }, { image: img("b", "B") }] }), "/mats", [])).toEqual({ kind: "page", href: "/mats/tidewatch" });
     // A repository-only project opens the repository, with or without the stored link.
     expect(projectTarget(project({ source, links: [{ url: "https://github.com/example/tidewatch" }] }), "/mats", [])).toEqual({ kind: "link", href: "https://github.com/example/tidewatch" });
     expect(projectTarget(project({ source }), "/mats", [])).toEqual({ kind: "link", href: "https://github.com/example/tidewatch" });
@@ -407,6 +415,40 @@ describe("section order", () => {
     // Nothing is lost, nothing is changed.
     expect(suggestBlockOrder(blocks, "designer").slice().sort((a, b) => a.id.localeCompare(b.id))).toEqual(blocks.slice().sort((a, b) => a.id.localeCompare(b.id)));
     expect(suggestBlockOrder([], "designer")).toEqual([]);
+  });
+
+  describe("a block with its own title opens a section, as on the page", () => {
+    const about: Block = { ...base, id: "about", type: "about", title: "Über mich", text: "Hello." };
+    const tools: Block = { ...base, id: "tools", type: "tools", title: "Werkzeuge", items: ["Figma"] };
+    const quotes: Block = { ...quotesAbout("p1"), id: "quotes", title: "Stimmen" };
+    const ids = (blocks: readonly Block[], kind: Parameters<typeof suggestBlockOrder>[1]) => suggestBlockOrder(blocks, kind).map((block) => block.id);
+
+    it("names the blocks that bring a section title", () => {
+      expect(selfTitle(about)).toBe("Über mich");
+      expect(selfTitle({ ...about, title: "  " })).toBeNull();
+      expect(selfTitle({ ...base, id: "a", type: "about", text: "Hello." })).toBeNull();
+      // A header is not self-titled (it titles what follows), and a contact block never titles a section.
+      expect(selfTitle(header("h"))).toBeNull();
+      expect(selfTitle(contact())).toBeNull();
+    });
+
+    it("leaves a page alone that is already in its kind's order", () => {
+      const page: Block[] = [header("h-work"), plain("one"), plain("two"), plain("three"), about, link("cv-pdf"), tools, contact()];
+      expect(ids(page, "designer")).toEqual(page.map((block) => block.id));
+    });
+
+    it("moves the plain blocks after a titled block with it", () => {
+      const page: Block[] = [header("h-work"), plain("one"), plain("two"), about, link("cv-pdf"), quotes, link("review-site"), contact()];
+      expect(ids(page, "coach")).toEqual(["about", "cv-pdf", "h-work", "one", "two", "quotes", "review-site", "c1"]);
+      expect(ids(page, "developer")).toEqual(["h-work", "one", "two", "about", "cv-pdf", "quotes", "review-site", "c1"]);
+    });
+
+    it("a titled block takes one section: the next block of another kind is not swallowed", () => {
+      // A titled block is not a header that waits for its first block: the next block starts anew.
+      expect(ids([about, tools, plain("one"), contact()], "developer")).toEqual(["one", "tools", "about", "c1"]);
+      // A header directly before a titled block stays in front of it.
+      expect(ids([header("h"), about, link("cv-pdf"), plain("one")], "designer")).toEqual(["one", "h", "about", "cv-pdf"]);
+    });
   });
 });
 
