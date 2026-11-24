@@ -89,6 +89,7 @@ function setup(
     verifyWebhook: () => {
       throw new Error("unused");
     },
+    createPortalSession: () => Promise.reject(new Error("unused")),
   };
   const db: ContractsDb = {
     recordWithdrawal: () =>

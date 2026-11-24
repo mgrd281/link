@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { getPayments, json, paymentsOff, readJson, siteOrigin } from "@/features/payments/server/get-payments";
-import { StripePayments, stripeSettingsFromEnv } from "@/features/payments/server/stripe-payments";
+import { stripeSettingsFromEnv } from "@/features/payments/server/stripe-payments";
 import { PaymentsNotConfigured } from "@/features/payments/types";
 import { requireUser } from "@/lib/server/user";
 
@@ -31,17 +31,9 @@ function portalUrlAllowed(address: string, env: Record<string, string | undefine
   return Boolean(host) && (url.protocol === "http:" || url.protocol === "https:") && url.hostname === host;
 }
 
-/**
- * A Stripe customer portal session for this customer. The Payments interface has no portal call
- * yet and features/payments is not changed here, so this reaches the one configured Stripe client
- * (same key, API version, retries and test host) instead of building a second one.
- */
-async function createPortalSession(customer: string, returnUrl: string, locale: keyof typeof PORTAL_LOCALE): Promise<string> {
-  const payments = getPayments();
-  if (!(payments instanceof StripePayments)) throw new PaymentsNotConfigured("no Stripe client");
-  // eslint-disable-next-line @typescript-eslint/dot-notation -- the client is private to StripePayments; see above
-  const session = await payments["stripe"].billingPortal.sessions.create({ customer, return_url: returnUrl, locale: PORTAL_LOCALE[locale] });
-  return session.url;
+/** A Stripe customer portal session for this customer, through the one configured Payments client. */
+function createPortalSession(customer: string, returnUrl: string, locale: keyof typeof PORTAL_LOCALE): Promise<string> {
+  return getPayments().createPortalSession({ customerId: customer, returnUrl, locale: PORTAL_LOCALE[locale] });
 }
 
 /**

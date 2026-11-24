@@ -199,6 +199,11 @@ export class StripePayments implements Payments {
     return subscriptionState(await this.stripe.subscriptions.cancel(subscriptionId, { prorate: false, invoice_now: false }));
   }
 
+  async createPortalSession(input: { customerId: string; returnUrl: string; locale: "de" | "en" | "auto" }): Promise<string> {
+    const session = await this.stripe.billingPortal.sessions.create({ customer: input.customerId, return_url: input.returnUrl, locale: input.locale });
+    return session.url;
+  }
+
   verifyWebhook(rawBody: string, signature: string | null): PaymentsEvent {
     if (!this.settings.webhookSecret) throw new PaymentsNotConfigured("STRIPE_WEBHOOK_SECRET is not set");
     if (!signature) throw new WebhookSignatureError("No Stripe-Signature header");

@@ -42,6 +42,8 @@ export interface Payments {
   cancelNow(subscriptionId: string): Promise<SubscriptionState>;
   /** Throws WebhookSignatureError when the signature does not match the raw body. */
   verifyWebhook(rawBody: string, signature: string | null): PaymentsEvent;
+  /** A customer portal session (payment method, invoices, receipts); answers its address. */
+  createPortalSession(input: { customerId: string; returnUrl: string; locale: "de" | "en" | "auto" }): Promise<string>;
 }
 
 export interface PaymentsEvent {
