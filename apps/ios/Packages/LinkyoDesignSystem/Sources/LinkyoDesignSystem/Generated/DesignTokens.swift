@@ -44,6 +44,8 @@ public enum LinkyoTokens {
         public static let iconButton: CGFloat = 40
         /// Minimum hit area everywhere.
         public static let touchTarget: CGFloat = 44
+        /// Smallest icon: inline badges and dense meta rows.
+        public static let iconXs: CGFloat = 12
         public static let iconSm: CGFloat = 16
         public static let iconMd: CGFloat = 20
         public static let iconLg: CGFloat = 24
@@ -87,6 +89,8 @@ public enum LinkyoTokens {
         public static let navPanel: CGFloat = 184
         /// Dashboard content (max width).
         public static let content: CGFloat = 1120
+        /// Main column of a single-column dashboard or team screen on laptops (Home, editor, Settings): wider than a phone layout, narrower than content.
+        public static let columnWide: CGFloat = 840
         /// The wide canvas of creator pages (portfolio templates and every project page). Own name, same value as content.
         public static let work: CGFloat = 1120
         /// Live phone preview width.

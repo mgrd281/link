@@ -107,6 +107,32 @@ export const DEFAULT_PRESET: CreatorPresetId = "paper";
 const isPreset = (id: string | undefined): id is CreatorPresetId => !!id && id in creatorTokens.presets;
 export const isTemplate = (id: string | undefined): id is CreatorTemplateId => !!id && id in creatorTokens.templates;
 
+/** What a template is made for (tokens: `use`). A template can serve both. */
+export type TemplateUse = "portfolio" | "link-in-bio";
+
+/** A template's uses, from its tokens. */
+export const templateUses = (id: CreatorTemplateId): readonly TemplateUse[] => (creatorTokens.templates[id] as { use?: readonly TemplateUse[] }).use ?? ["link-in-bio"];
+
+/** The templates made for a use, in token order (pickers' filters, the portfolio row). */
+export const templatesFor = (use: TemplateUse): CreatorTemplateId[] => TEMPLATE_IDS.filter((id) => templateUses(id).includes(use));
+
+/**
+ * The templates suggested for a page kind (tokens: `suggestFor`), in token order. Data-driven, so a new
+ * template that names a kind appears in that kind's suggestions without code. The kind is a plain string
+ * here because the kinds live in @linkyo/blocks, which this package does not depend on.
+ */
+export const suggestedTemplates = (kind: string): CreatorTemplateId[] =>
+  TEMPLATE_IDS.filter((id) => ((creatorTokens.templates[id] as { suggestFor?: readonly string[] }).suggestFor ?? []).includes(kind));
+
+/**
+ * `ids` in the given order first (unknown and repeated ids dropped), then every other template in token
+ * order. For pickers that lead with a kind's default and suggestions without hiding any look.
+ */
+export const orderTemplates = (first: readonly string[]): CreatorTemplateId[] => {
+  const lead = [...new Set(first)].filter(isTemplate);
+  return [...lead, ...TEMPLATE_IDS.filter((id) => !lead.includes(id))];
+};
+
 interface TemplateDefaults {
   accent?: string | undefined;
   neutral?: string | undefined;

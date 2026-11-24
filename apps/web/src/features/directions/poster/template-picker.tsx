@@ -2,7 +2,7 @@
 
 import { hasImage, type Page } from "@linkyo/blocks";
 import { creatorTokens, type CreatorTemplateId } from "@linkyo/tokens";
-import { resolveCreatorTheme, TEMPLATE_IDS, type HeroStyle } from "@linkyo/tokens/creator";
+import { orderTemplates, resolveCreatorTheme, TEMPLATE_IDS, type HeroStyle } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
 import { Check } from "lucide-react";
 import Image from "next/image";
@@ -36,23 +36,30 @@ const PICTURE: Partial<Record<HeroStyle, string>> = {
  * Native radio inputs: arrow keys move between templates, screen readers announce the choice.
  * `still` (the dashboard's Design screen) stops the thumbnails' ambient loops, so nothing moves while
  * the creator compares looks (the live preview shows the real motion), and keeps the phone's single
- * scrolling row at every width.
+ * scrolling row at every width. `order` puts those template ids first (a kind's default and suggestions,
+ * see `suggestedTemplates`); every other look follows in token order, so none is hidden.
  */
 export function TemplatePicker({
   value,
   profile,
   onChange,
   still = false,
+  order,
 }: {
   value: CreatorTemplateId | undefined;
   profile: Page["profile"];
   onChange: (template: CreatorTemplateId) => void;
   still?: boolean;
+  order?: readonly CreatorTemplateId[] | undefined;
 }) {
   const t = useTranslations("dashboard");
   const tTemplates = useTranslations("templates");
   const rtlScript = profile.locale === "ar";
-  const themes = useMemo(() => TEMPLATE_IDS.map((id) => ({ id, theme: resolveCreatorTheme({ template: id }, { rtlScript }) })), [rtlScript]);
+  const orderKey = order?.join(",") ?? "";
+  const themes = useMemo(
+    () => (orderKey ? orderTemplates(orderKey.split(",")) : TEMPLATE_IDS).map((id) => ({ id, theme: resolveCreatorTheme({ template: id }, { rtlScript }) })),
+    [rtlScript, orderKey],
+  );
   const photo = hasImage(profile.avatar) ? profile.avatar : hasImage(profile.hero) ? profile.hero : null;
   const avatar = photo ? resolveMedia(photo.src) : null;
   const row = useRef<HTMLDivElement>(null);
