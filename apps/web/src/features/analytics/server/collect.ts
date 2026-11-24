@@ -12,7 +12,7 @@ import { referrerGroup } from "../referrer";
 import { visitorHash } from "../visitor";
 
 /**
- * The server side of the cookie-free statistics (draft ADR "cookie-free analytics"):
+ * The server side of the cookie-free statistics (ADR 0081):
  * - `collect` takes the beacon of a creator page (a view, or a tap on one of its blocks) and counts it
  *   through `page_stats_record`. Whatever happens it answers 204 with no body, so a script learns
  *   nothing from it; with the switch off (lib/flags.ts) it stores nothing at all.

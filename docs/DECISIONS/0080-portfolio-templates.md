@@ -1,6 +1,7 @@
-# Draft — Three portfolio templates: Leuchttisch, Grundriss, Logbuch (and the wide canvas, finished)
+# 0080 — Three portfolio templates: Leuchttisch, Grundriss, Logbuch (and the wide canvas, finished)
 
-**Status:** proposed (Stage 3, WP3.2). The integrator gives it its number.
+**Status.** Accepted (Stage 3, WP3.2, 2026-11-25). It extends the wide canvas of
+[ADR 0071](0071-wide-canvas.md) and follows the batch checklist of [ADR 0072](0072-werkbogen-tiefdruck.md).
 
 **Context.** Portfolio v1 shipped two portfolio templates, Werkbogen (an editorial plate) and Tiefdruck
 (a bold list), and Laufbahn for applications. The audit found three kinds of people without a fitting

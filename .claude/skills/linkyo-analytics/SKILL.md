@@ -28,7 +28,7 @@ the `linkyo-supabase` skill. Dashboard screens: `linkyo-creator-dashboard`. Cons
 - **Off in production behind `LINKYO_ANALYTICS`** (`lib/flags.ts`, server only, exactly `on`). Off: no island on
   `/u` (zero bytes), `/api/collect` answers 204 and stores nothing, Stats keep "coming soon". Tests set it on
   (`playwright.config.ts`). It goes on only after the founder applied the migration (F0) and the lawyer approved
-  the Datenschutz paragraph (F2, the ADR draft holds the proposal).
+  the Datenschutz paragraph (F2, ADR 0081 holds the proposal).
 - **Never fake.** The demo's numbers are samples, labelled "Beispieldaten" (also the CSV's file name). A real
   account sees measured numbers only: days before counting began (`since`) are gaps and empty CSV cells, never 0;
   a change against the period before shows only when that period was counted from its first day; a failure is a

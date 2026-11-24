@@ -1,6 +1,6 @@
-# draft — Cookie-free page statistics, off in production behind a server switch
+# 0081 — Cookie-free page statistics, off in production behind a server switch
 
-**Status.** Proposed (Stage 3, WP3.1, 2026-11-25). The integrator gives it its number. It **supersedes the
+**Status.** Accepted (Stage 3, WP3.1, 2026-11-25); switched off in production until F0 and F2. It **supersedes the
 analytics-beacon note of [ADR 0008](0008-public-page-rendering.md)** ("~3 KB of vanilla islands: … analytics beacon
 (`sendBeacon`)") and, for creator pages, the PostHog line of [ADR 0010](0010-hosting-and-data-residency.md): creator
 pages get no third-party analytics at all, only this first-party counter.

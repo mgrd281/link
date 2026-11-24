@@ -1,7 +1,7 @@
-# Draft — The wide canvas: portfolio pages use the laptop's width, link-in-bio pages keep their column
+# 0071 — The wide canvas: portfolio pages use the laptop's width, link-in-bio pages keep their column
 
-**Status.** Accepted in practice (Portfolio v1, release A, extended in Stage 3); written up in Stage 3, WP3.3. One
-of the three Portfolio v1 decisions reserved as 0070–0072; the integrator gives it its number.
+**Status.** Accepted (Portfolio v1, release A, extended in Stage 3 by [0080](0080-portfolio-templates.md)); written
+up in Stage 3, WP3.3. One of the three Portfolio v1 decisions reserved as 0070–0072.
 
 **Context.** Every creator page used one 560 px column (`layout.creator`) at every width. For a link-in-bio page
 that is right: it is read on a phone, and on a laptop the column keeps it calm. A portfolio is different: a

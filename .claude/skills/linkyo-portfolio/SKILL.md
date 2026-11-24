@@ -6,10 +6,10 @@ description: How Linkyo's portfolios work and how to extend them safely - the pr
 # Linkyo portfolios
 
 A portfolio is a creator page whose blocks are mostly `project`s, on a template with `use: ["portfolio"]`, read
-by people who judge work, mostly on a laptop. The decisions are in the three Portfolio v1 ADRs (project block,
-wide canvas, Werkbogen and Tiefdruck; reserved as 0070–0072, drafts in `docs/DECISIONS/draft-*.md` until
-numbered), ADR 0075 (the Portfolio section of the website), 0078 (the portfolio welcome) and 0079 (Arbeiten and
-template previews in the dashboard). Plan §4.2 (Stage 3) describes the three newest templates.
+by people who judge work, mostly on a laptop. The decisions are in the three Portfolio v1 ADRs (0070 project
+block, 0071 wide canvas, 0072 Werkbogen and Tiefdruck), ADR 0075 (the Portfolio section of the website), 0078
+(the portfolio welcome), 0079 (Arbeiten and template previews in the dashboard) and 0080 (the three Stage 3
+templates: Leuchttisch, Grundriss, Logbuch).
 
 ## Map
 

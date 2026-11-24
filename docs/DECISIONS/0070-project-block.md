@@ -1,7 +1,7 @@
-# Draft — Projects: one block type, a page of its own when there is more to read
+# 0070 — Projects: one block type, a page of its own when there is more to read
 
-**Status.** Accepted in practice (Portfolio v1, release A; written up in Stage 3, WP3.3). One of the three
-Portfolio v1 decisions reserved as 0070–0072; the integrator gives it its number.
+**Status.** Accepted (Portfolio v1, release A; written up in Stage 3, WP3.3). One of the three Portfolio v1
+decisions reserved as 0070–0072, with [0071](0071-wide-canvas.md) and [0072](0072-werkbogen-tiefdruck.md).
 
 **Context.** Linkyo started as a link-in-bio product: links, cards, media, products. Photographers, designers,
 architects, developers and makers need to show work, and work is more than a link: a picture series, a client,

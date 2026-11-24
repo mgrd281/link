@@ -21,6 +21,8 @@ Claude Code loads these skills automatically in this repository. They come in tw
 | `linkyo-payments` | Selling under German law: service packages and Pro, the § 312j checkout, statutory labels, webhook, `/widerruf`, `/kuendigen`, contract e-mails; testing without any Stripe account |
 | `linkyo-team-console` | The team console (`/admin`): roles and permissions, demo vs real-account actions, the activity log, money only through Stripe server routes, safe CSV export, honest numbers, phone layouts |
 | `linkyo-creator-dashboard` | The creator dashboard (`/app`): black-and-grey palette, screen anatomy, tab bar, rail and section panel, laptop widths, real template previews, Arbeiten, demo vs real, toasts, button shapes, a new block type's silent places |
+| `linkyo-portfolio` | Portfolios: the project block, the wide and full canvas, portfolio templates and how to add the next one (engine values, tokens, picker, AI catalogue, baseline, examples, credits) |
+| `linkyo-analytics` | Cookie-free page statistics: the inline counter, /api/collect, page_stats, Stats/Home/editor chip, console views30, the switch and the privacy rules |
 
 ## Vendored skills (open source, with their licenses)
 

@@ -1,11 +1,11 @@
-# Draft — Werkbogen and Tiefdruck: two portfolio templates, and how a portfolio template is made
+# 0072 — Werkbogen and Tiefdruck: two portfolio templates, and how a portfolio template is made
 
-**Status.** Accepted in practice (Portfolio v1, release A); written up in Stage 3, WP3.3 together with the rules
-the Stage 3 batch (Leuchttisch, Grundriss, Logbuch) followed. One of the three Portfolio v1 decisions reserved as
-0070–0072; the integrator gives it its number.
+**Status.** Accepted (Portfolio v1, release A); written up in Stage 3, WP3.3 together with the rules the Stage 3
+batch (Leuchttisch, Grundriss, Logbuch, [ADR 0080](0080-portfolio-templates.md)) followed. One of the three
+Portfolio v1 decisions reserved as 0070–0072.
 
 **Context.** The twelve templates before Portfolio v1 were link-in-bio looks: a portrait or logo hero, buttons,
-media rails. None opened with the work, none used the laptop's width (see the wide-canvas decision), and none had
+media rails. None opened with the work, none used the laptop's width (see [ADR 0071](0071-wide-canvas.md)), and none had
 a place for figures, clients or a story. Two opposite characters were needed first: a quiet one for people whose
 work is pictures, and a loud one for people whose work is code, products or numbers.
 

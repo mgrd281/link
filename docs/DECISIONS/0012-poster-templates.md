@@ -33,7 +33,7 @@ our own expression; no code, text, images or marks are copied.
    | Logbuch (Stage 3) | warm document white, ink, a sage accent, Geist and Geist Mono, rounded outline buttons, projects grouped by year with "running" or "done" | a README: name, role line and a monospace list of facts, a small avatar at the inline end (readme) |
 
    The portfolio templates (`use: ["portfolio"]`) and how a batch of them is added are recorded in the Werkbogen and
-   Tiefdruck decision (Portfolio v1, 0070–0072) and the linkyo-portfolio skill; each has a fictional example person in
+   Tiefdruck decision ([ADR 0072](0072-werkbogen-tiefdruck.md), the Stage 3 batch in [ADR 0080](0080-portfolio-templates.md)) and the linkyo-portfolio skill; each has a fictional example person in
    the gallery's Portfolio category.
 
 2. **Vivid mode** in the palette engine: the background is the seed hue at the lightest lightness where white text

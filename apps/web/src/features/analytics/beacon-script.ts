@@ -1,5 +1,5 @@
 /**
- * The cookie-free counter of a creator page (draft ADR "cookie-free analytics"), as the few lines of
+ * The cookie-free counter of a creator page (ADR 0081), as the few lines of
  * script that app/u/[username]/layout.tsx writes into the page, and only while the server switch is
  * on. Inline on purpose: no module in any bundle, so with the switch off a creator page carries not one
  * byte of counting code (a client component would have shared a chunk with the page's other islands).

@@ -8,7 +8,7 @@ import type { Page, Request as PlaywrightRequest } from "@playwright/test";
 import { createRealAccount, expect, realEnabled, seedPage, service, signIn, test, uniqueName } from "./real";
 
 /**
- * Cookie-free analytics (Stage 3 WP3.1, draft ADR "cookie-free analytics") on real accounts: a
+ * Cookie-free analytics (Stage 3 WP3.1, ADR 0081) on real accounts: a
  * creator page counts its views and the taps on its blocks through a same-origin beacon, without a
  * cookie, storage or a fingerprint, and the owner reads the numbers on Stats. Runs with the local
  * stack (E2E_SUPABASE=1) and the full migration set. The server switch is on in tests
