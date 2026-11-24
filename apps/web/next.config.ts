@@ -63,8 +63,11 @@ const config: NextConfig = {
   },
   headers: () => Promise.resolve([{ source: "/:path*", headers: securityHeaders }]),
   experimental: {
-    // Addresses no route matches (outside the languages) get Linkyo's own page, app/global-not-found.tsx:
-    // the app has several root layouts ([locale] and u/[username]), so there is no single not-found.
+    // app/global-not-found.tsx is Linkyo's page for an address no route matches at all (the app has
+    // several root layouts, [locale] and u/[username], so there is no single not-found). Today no
+    // address reaches it: every first segment matches [locale], and an unknown one (/u/a/b/c, /api/nope,
+    // /x.php) gets the language layout's own notFound(), which shows Next's built-in 404 (status 404).
+    // Routing those here needs a change to app/[locale]/layout.tsx (ADR 0074); until then it is a net.
     globalNotFound: true,
   },
 };

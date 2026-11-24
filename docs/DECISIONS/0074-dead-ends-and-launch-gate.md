@@ -28,12 +28,15 @@ boundary was not involved.
   `app/build/error.tsx` and `app/global-error.tsx` show Linkyo's page with "try again" and the way back. The global
   error page carries its few words itself (the message provider is gone when it shows, and its code is sent with every
   page); a unit test keeps them equal to `errors.*` in the message files.
-- **`app/global-not-found.tsx`** (with `experimental.globalNotFound`) answers addresses no route matches at all,
-  German by default with the three languages. It reads no request, so it stays static. Today every address matches
-  `[locale]` (the proxy adds a language, and the rest fall into `[locale]/[...rest]`), so it is a safety net.
-- **A static title on the not-found page.** `app/[locale]/not-found.tsx` is titled "404 · Linkyo" in every language:
-  it also answers the locale layout's own `notFound()`, where no language is set for the request, and a translated
-  title would read the request headers and turn a statically rendered route into a 500.
+- **`app/global-not-found.tsx`** (with `experimental.globalNotFound`) is for addresses no route matches at all,
+  German by default with the three languages. It reads no request, so it stays static. Today no address reaches it:
+  every first segment matches `[locale]` (the proxy adds a language, and the rest fall into `[locale]/[...rest]`),
+  and an unknown first segment gets the language layout's own `notFound()` (see Consequences). It is a safety net.
+- **No title of its own on the not-found page.** `app/[locale]/not-found.tsx` sets only `robots: noindex`: it also
+  answers the locale layout's own `notFound()`, where no language is set for the request, and a translated title
+  would read the request headers and turn a statically rendered route into a 500. The localized title ("Seite nicht
+  gefunden · Linkyo" and its translations) comes from the catch-all `[...rest]` page and the order pages, which know
+  their language.
 - **No fake buttons.** The Google button and the "oder" divider are gone from sign-up and log-in until Google sign-in
   exists. An empty email field now says what is missing; only a typed address that is not one "looks incomplete".
 - **Launch gate.** `assertLiveReady` also takes `LAUNCH` (passed by `next.config.ts`). With `LAUNCH=1` a build fails

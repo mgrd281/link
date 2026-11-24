@@ -4,7 +4,7 @@ import { routing, type Locale } from "@/i18n/routing";
  * The words of `app/global-error.tsx`, which replaces the root layout when that layout itself fails:
  * no message provider is left by then, and its code is sent with every page, so it carries these few
  * strings instead of the message files. They are the same strings as `errors.error.*` and
- * `errors.actions.*` in src/messages (global-copy.test.ts keeps the two identical).
+ * `errors.actions.*` in src/messages (errors.test.ts keeps the two identical).
  */
 export const GLOBAL_COPY: Record<Locale, { title: string; body: string; retry: string; home: string }> = {
   de: {
