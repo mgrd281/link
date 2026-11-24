@@ -8,12 +8,14 @@ import { assertLiveReady } from "./src/features/legal/live-guard";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 // A build that would take real money with placeholder legal texts, or without a transport that really
-// sends the contract e-mails, fails here (features/legal/live-guard.ts).
+// sends the contract e-mails, fails here; so does a launch build (LAUNCH=1) while the legal texts are
+// still drafts (features/legal/live-guard.ts).
 assertLiveReady({
   payments: process.env.NEXT_PUBLIC_PAYMENTS,
   legalReady,
   reviewed: process.env.LEGAL_REVIEWED,
   emailTransport: process.env.EMAIL_TRANSPORT,
+  launch: process.env.LAUNCH,
 });
 
 const securityHeaders = [
@@ -60,6 +62,11 @@ const config: NextConfig = {
     ...(storage?.local ? { dangerouslyAllowLocalIP: true } : {}),
   },
   headers: () => Promise.resolve([{ source: "/:path*", headers: securityHeaders }]),
+  experimental: {
+    // Addresses no route matches (outside the languages) get Linkyo's own page, app/global-not-found.tsx:
+    // the app has several root layouts ([locale] and u/[username]), so there is no single not-found.
+    globalNotFound: true,
+  },
 };
 
 export default withNextIntl(config);

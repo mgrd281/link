@@ -1128,11 +1128,6 @@
       "title": "Demo:",
       "body": "Dein Konto und deine Seite bleiben in diesem Browser und werden nirgendwohin gesendet. Es wird keine E-Mail verschickt: Dein Code steht hier auf dem Bildschirm."
     },
-    "social": {
-      "google": "Weiter mit Google",
-      "or": "oder",
-      "soonNote": "Die Anmeldung mit Google kommt zum Start. Bis dahin geht es mit deiner E-Mail, in einer Minute."
-    },
     "fields": {
       "username": "Deine Adresse",
       "usernameHint": "Kleinbuchstaben, Zahlen und Bindestriche, 3–30 Zeichen.",
@@ -1167,14 +1162,13 @@
     },
     "signup": {
       "title": "Kostenlos registrieren",
-      "lead": "Bereit, linkyo zu sein?",
+      "lead": "Nur deine E-Mail, kein Passwort. Deine Seite richtest du gleich danach ein.",
       "submit": "Registrieren",
       "terms": "Mit dem Erstellen akzeptierst du die <terms>Nutzungsbedingungen</terms> und bestätigst die <privacy>Datenschutzerklärung</privacy>.",
       "haveAccount": "Schon ein Konto?",
       "login": "Anmelden",
       "preparedTitle": "Deine Seite ist fertig",
       "preparedLead": "Das Linkyo-Team hat sie für dich vorbereitet. Registriere dich mit der E-Mail, die du uns gegeben hast – dann ist alles sofort da.",
-      "preparedGoogle": "Zum Start geht das auch mit Google: gleiche E-Mail, gleiche Seite.",
       "fromTemplate": "Deine Vorlage ist gewählt. Foto, Name und Links trägst du gleich ein.",
       "invitedBy": "Eingeladen von {name}",
       "invited": "Du wurdest zu Linkyo eingeladen",
@@ -4181,7 +4175,7 @@
       "cancellationPolicy": "Widerrufsbelehrung"
     },
     "draft": "Entwurf: Dieser Text wird vor dem Start anwaltlich geprüft. Angaben in eckigen Klammern fehlen noch.",
-    "german": "Verträge schließen wir derzeit nur auf Deutsch. Hier steht der deutsche Text.",
+    "german": "Diesen Text gibt es vorerst nur auf Deutsch. Verbindlich ist die deutsche Fassung.",
     "testMode": "Testmodus: Es wird kein echtes Geld bewegt.",
     "print": "Als PDF speichern",
     "errors": {
@@ -4428,6 +4422,36 @@
       "cancellationEnded": "Wir haben deine außerordentliche Kündigung angenommen. Linkyo Pro endet mit sofortiger Wirkung am {date}.",
       "cancellationRejected": "Wir können deine außerordentliche Kündigung nicht annehmen. Grund: {note} Ordentlich kündigen kannst du jederzeit unter „Verträge hier kündigen“; Pro endet dann am Ende des bezahlten Monats.",
       "resumed": "Wie von dir gewünscht, haben wir deine Kündigung zurückgenommen. Linkyo Pro läuft weiter; nächste Abbuchung am {date}."
+    }
+  },
+  "errors": {
+    "meta": {
+      "notFound": "Seite nicht gefunden"
+    },
+    "notFound": {
+      "title": "Diese Seite gibt es nicht",
+      "body": "Prüf die Adresse auf Tippfehler oder fang auf der Startseite neu an.",
+      "appBody": "Diesen Bereich gibt es im Dashboard nicht. Prüf die Adresse oder geh zurück zum Dashboard.",
+      "teamBody": "Diese Ansicht gibt es im Teambereich nicht. Prüf die Adresse oder geh zurück zur Übersicht.",
+      "ordersDemo": "Aufträge und Vorschläge gibt es nur mit einem echten Konto, nicht in der Demo."
+    },
+    "error": {
+      "title": "Da ist etwas schiefgelaufen",
+      "body": "Diese Seite ließ sich gerade nicht laden. Versuch es noch einmal.",
+      "reference": "Fehlerkennung"
+    },
+    "actions": {
+      "retry": "Noch einmal versuchen",
+      "home": "Zur Startseite",
+      "templates": "Vorlagen ansehen",
+      "dashboard": "Zum Dashboard",
+      "team": "Zum Teambereich"
+    },
+    "languages": {
+      "label": "Sprache",
+      "de": "Deutsch",
+      "en": "English",
+      "ar": "العربية"
     }
   }
 }

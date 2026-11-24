@@ -12,8 +12,8 @@ import { accountStore } from "../store";
 import type { AuthError, CodeRequest } from "../types";
 import { AuthHeading } from "./auth-shell";
 import { CodeStep } from "./code-step";
-import { FormError, OrDivider } from "./fields";
-import { SocialButtons, useLeaveWhenSignedIn, useSearchParam } from "./shared";
+import { FormError } from "./fields";
+import { useLeaveWhenSignedIn, useSearchParam } from "./shared";
 
 const locales = ["de", "en", "ar"] as const;
 
@@ -25,7 +25,7 @@ export function LoginForm() {
   const t = useTranslations("auth");
   const locale = useLocale();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState<AuthError | "passwordRequired" | null>(null);
+  const [error, setError] = useState<AuthError | "required" | "passwordRequired" | null>(null);
   const [busy, setBusy] = useState(false);
   const [request, setRequest] = useState<CodeRequest | null>(null);
   const [demoCode, setDemoCode] = useState<string | undefined>(undefined);
@@ -38,7 +38,8 @@ export function LoginForm() {
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!z.email().safeParse(email.trim()).success) {
-      setError("invalidEmail");
+      // An empty field says what is missing; only a typed address that is not one "looks incomplete".
+      setError(email.trim() === "" ? "required" : "invalidEmail");
       document.getElementById("login-email")?.focus();
       return;
     }
@@ -102,7 +103,7 @@ export function LoginForm() {
       <form noValidate onSubmit={(event) => void submit(event)} className="grid grid-cols-1 gap-4">
         <FormError
           message={
-            error && error !== "invalidEmail" && error !== "passwordRequired"
+            error && error !== "invalidEmail" && error !== "required" && error !== "passwordRequired"
               ? t(`errors.${error}`)
               : linkExpired
                 ? t("errors.linkExpired")
@@ -121,12 +122,12 @@ export function LoginForm() {
           value={email}
           onChange={(event) => {
             setEmail(event.target.value);
-            if (error === "invalidEmail") setError(null);
+            if (error === "invalidEmail" || error === "required") setError(null);
           }}
           autoComplete="email"
           inputMode="email"
           required
-          error={error === "invalidEmail" ? t("errors.invalidEmail") : undefined}
+          error={error === "invalidEmail" || error === "required" ? t(`errors.${error}`) : undefined}
         />
         {withPassword && (
           <TextField
@@ -169,8 +170,6 @@ export function LoginForm() {
           </button>
         )}
       </form>
-      <OrDivider label={t("social.or")} />
-      <SocialButtons emailField="login-email" />
       <p className="text-small text-fg-secondary text-center">
         {t("login.noAccount")}{" "}
         <Link

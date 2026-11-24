@@ -5,6 +5,8 @@ import { getTranslations } from "next-intl/server";
 
 import { NOINDEX, localeAlternates } from "@/lib/seo";
 
+import { legalReady } from "./company";
+import { legalIsDraft, reviewMarkers } from "./live-guard";
 import type { LegalBlock, LegalDoc } from "./texts";
 
 export type LegalTitle = "imprint" | "privacy" | "terms" | "cancellationPolicy";
@@ -50,19 +52,24 @@ function Block({ block }: { block: LegalBlock }) {
 
 /**
  * One of Linkyo's legal pages: the title in the visitor's language, a note that this is a draft for
- * the lawyer, in English and Arabic a note that contracts are made in German, then the German text
- * itself (marked `lang="de"`, left to right, also inside an Arabic page).
+ * the lawyer (while it is one: company data missing, no review, or a bracketed marker left; a launch
+ * build fails in that state, live-guard.ts), in English and Arabic a note that the German text is
+ * the binding one, then the German text itself (marked `lang="de"`, left to right, also inside an
+ * Arabic page).
  */
 export async function LegalPage({ locale, title, doc }: { locale: string; title: LegalTitle; doc: LegalDoc }) {
   const t = await getTranslations({ locale, namespace: "legal" });
+  const draft = legalIsDraft({ legalReady, reviewed: process.env.LEGAL_REVIEWED, markers: reviewMarkers([doc]) });
   return (
     <main id="main" className="mx-auto grid w-full max-w-prose grid-cols-1 gap-6 px-4 pt-10 pb-16 md:pt-16">
       <h1 className="text-h1 text-fg font-semibold text-balance">{t(`titles.${title}`)}</h1>
       <div className="grid gap-3">
-        <p role="note" className="border-line bg-surface text-small text-fg flex items-start gap-3 rounded-lg border p-4">
-          <Icon icon={FileWarning} size="sm" className="text-fg-secondary mt-0.5 shrink-0" />
-          <span>{t("draft")}</span>
-        </p>
+        {draft ? (
+          <p role="note" className="border-line bg-surface text-small text-fg flex items-start gap-3 rounded-lg border p-4">
+            <Icon icon={FileWarning} size="sm" className="text-fg-secondary mt-0.5 shrink-0" />
+            <span>{t("draft")}</span>
+          </p>
+        ) : null}
         {locale === "de" ? null : (
           <p className="border-line bg-surface text-small text-fg flex items-start gap-3 rounded-lg border p-4">
             <Icon icon={Languages} size="sm" className="text-fg-secondary mt-0.5 shrink-0" />

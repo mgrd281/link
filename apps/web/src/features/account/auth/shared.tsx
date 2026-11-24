@@ -1,10 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { useEffect, useState, useSyncExternalStore } from "react";
-
-import { tokens } from "@linkyo/tokens";
 
 import { useRouter } from "@/i18n/navigation";
 
@@ -13,7 +9,6 @@ import type { UsernameStatus } from "../types";
 import { localUsernameStatus, normalizeUsername } from "../username";
 
 const noop = () => () => undefined;
-const MARK = tokens.size.iconMd;
 
 /** A query parameter, read without an effect (empty during server render). */
 export function useSearchParam(name: string): string {
@@ -42,37 +37,6 @@ export function useLeaveWhenSignedIn() {
     router.replace(snapshot.site.onboarded ? (safeNext(next) ?? "/app") : "/app/welcome");
   }, [snapshot, router, next]);
   return snapshot.status === "signedIn";
-}
-
-/**
- * "Continue with Google", in the calm filled style of the other fields, with Google's own mark (as
- * their guidelines ask). Google sign-in is switched on at launch; until then a tap says so and
- * points to the email field, instead of a disabled button that explains nothing.
- */
-export function SocialButtons({ emailField }: { emailField: string }) {
-  const t = useTranslations("auth");
-  const [asked, setAsked] = useState(false);
-  return (
-    <div className="grid grid-cols-1 gap-2">
-      <button
-        type="button"
-        aria-describedby={asked ? "google-soon" : undefined}
-        onClick={() => {
-          setAsked(true);
-          document.getElementById(emailField)?.focus();
-        }}
-        className="flex h-control-xl items-center justify-center gap-3 rounded-full bg-canvas-muted px-6 text-body font-semibold text-fg transition-[background-color,scale] duration-micro hover:bg-hover focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none"
-      >
-        <Image src="/brands/google.svg" alt="" width={MARK} height={MARK} unoptimized className="size-5" />
-        {t("social.google")}
-      </button>
-      {asked ? (
-        <p id="google-soon" role="status" className="text-center text-small text-fg-secondary">
-          {t("social.soonNote")}
-        </p>
-      ) : null}
-    </div>
-  );
 }
 
 /**
