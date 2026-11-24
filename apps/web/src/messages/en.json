@@ -4521,7 +4521,7 @@
       "title2": "Every project gets its own page.",
       "lead": "Pictures, figures and the story behind them, on a phone and on a laptop. For photography, design, architecture, development and crafts.",
       "start": "Create your portfolio for free",
-      "open": "Open {name}'s page",
+      "open": "Open <bdi>{name}</bdi>'s page",
       "frames": "{name}'s page on a laptop and on a phone",
       "caption": "<bdi>{name}</bdi> is made up: an example page in the <bdi>{template}</bdi> template."
     },
@@ -4534,7 +4534,7 @@
       "build": "Development & crafts",
       "template": "<bdi>{name}</bdi> template",
       "view": "See {name}'s page",
-      "start": "Start with {name}"
+      "start": "Start with <bdi>{name}</bdi>"
     },
     "project": {
       "title": "What a project page can do",
@@ -4563,7 +4563,7 @@
         },
         "confidential": {
           "title": "Confidential clients",
-          "body": "“Confidential” shows in place of the name. We never store the name at all."
+          "body": "“Confidential client” shows in place of the name. We never store the name at all."
         }
       }
     },
@@ -4571,7 +4571,7 @@
       "title": "Templates for portfolios",
       "lead": "All free. You take the design; pictures, words and projects are yours to add.",
       "examples": "Example pages",
-      "start": "Start with {name}",
+      "start": "Start with <bdi>{name}</bdi>",
       "gallery": "All portfolio examples in the gallery"
     },
     "faq": {
@@ -4583,7 +4583,7 @@
         },
         {
           "q": "What if a client doesn't want to be named?",
-          "a": "Turn on “Confidential, no name” for the project. Your page then says “Confidential”, and we don't store the name: whatever is on a page can be read by anyone."
+          "a": "Turn on “Confidential, no name” for the project. Your page then says “Confidential client”, and we don't store the name: whatever is on a page can be read by anyone."
         },
         {
           "q": "Can I show projects from GitHub?",

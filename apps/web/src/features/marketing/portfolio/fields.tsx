@@ -18,7 +18,7 @@ export interface FieldTab {
   key: Profession;
   label: string;
   pages: { item: GalleryItem; href: string; open: string; template: ReactNode }[];
-  templates: { id: string; name: ReactNode; description: string; start: string; startLabel: string }[];
+  templates: { id: string; name: ReactNode; description: string; start: string; startLabel: ReactNode }[];
 }
 
 /**

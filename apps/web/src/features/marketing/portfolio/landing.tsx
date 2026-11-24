@@ -15,7 +15,7 @@ import { Link } from "@/i18n/navigation";
 import { phoneSizes } from "../assets";
 import { EXAMPLE_SHOTS, type ExampleShot } from "../examples";
 import { PortfolioFields, type FieldTab } from "./fields";
-import { pageHref, portfolioExamples, portfolioTemplates, professions, startHref } from "./model";
+import { pageHref, portfolioExamples, portfolioTemplates, professions, templateStartHref } from "./model";
 import { LAPTOP_SHOTS, PROJECT_SHOTS } from "./shots";
 
 const px = (n: number): string => `${n}px`;
@@ -107,19 +107,22 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
           ? [{ item, href: pageHref(slug), open: t("fields.view", { name: nameOf(slug) }), template: t.rich("fields.template", { name: label(LOOKS[slug].theme.template), bdi }) }]
           : [];
       }),
-      templates: ids.map((id) => {
-        const first = field.examples.find((slug) => LOOKS[slug].theme.template === id) ?? field.examples[0];
-        return {
-          id,
-          name: label(id),
-          description: tTemplates(`${id}.description`),
-          start: first ? startHref(first) : "/signup",
-          startLabel: t("fields.start", { name: label(id) }),
-        };
-      }),
+      // "Start with Folio" leads to the same look from every tab and from the template row.
+      templates: ids.map((id) => ({
+        id,
+        name: label(id),
+        description: tTemplates(`${id}.description`),
+        start: templateStartHref(id),
+        startLabel: t.rich("fields.start", { name: label(id), bdi }),
+      })),
     };
   });
-  const faq = t.raw("faq.items") as { q: string; a: string }[];
+  // Each answer through t.rich: Latin names and numbers in Arabic answers sit in <bdi>.
+  const faq = (t.raw("faq.items") as unknown[]).map((_, index) => ({
+    key: `faq-${String(index)}`,
+    q: t.rich(`faq.items.${String(index)}.q`, { bdi }),
+    a: t.rich(`faq.items.${String(index)}.a`, { bdi }),
+  }));
 
   return (
     <>
@@ -154,7 +157,7 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
               </Button>
               {lead ? (
                 <Button asChild variant="tinted" size="cta">
-                  <a href={pageHref(lead)}>{t("hero.open", { name: nameOf(lead) })}</a>
+                  <a href={pageHref(lead)}>{t.rich("hero.open", { name: nameOf(lead), bdi })}</a>
                 </Button>
               ) : null}
             </div>
@@ -163,9 +166,12 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
           {lead && laptopShot && phoneShot ? (
             <figure className="grid min-w-0 gap-4">
               {/* A real page on a laptop with the same page on a phone in front: one link to it. */}
+              {/* The captures are of a left-to-right page: the frames keep their places in Arabic too,
+                  so the phone covers the photo side of the laptop picture, not the start of its lines. */}
               <a
                 href={pageHref(lead)}
                 aria-label={t("hero.frames", { name: nameOf(lead) })}
+                dir="ltr"
                 className="group grid rounded-xl focus-visible:focus-ring"
               >
                 <span className="col-start-1 row-start-1 me-12 self-start sm:me-20 lg:me-16">
@@ -228,7 +234,7 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
                   <Icon icon={part.icon} size="md" />
                 </span>
                 <h3 className="text-body-lg font-semibold">{t(`project.items.${part.key}.title`)}</h3>
-                <p className="text-body text-pretty text-fg-secondary">{t(`project.items.${part.key}.body`)}</p>
+                <p className="text-body text-pretty text-fg-secondary">{t.rich(`project.items.${part.key}.body`, { bdi })}</p>
               </li>
             ))}
           </ul>
@@ -241,7 +247,7 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
         <ul className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
           {templates.map((template) => {
             const theme = resolveCreatorTheme({ template: template.id }, { rtlScript: locale === "ar" });
-            const first = template.examples[0];
+            const start = templateStartHref(template.id);
             return (
               <li key={template.id} className="grid grid-rows-[auto_1fr] overflow-hidden rounded-xl border border-line bg-surface">
                 {/* The template's name in its own colours and display face (the engine keeps them AA). */}
@@ -268,13 +274,9 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
                       ))}
                     </ul>
                   </div>
-                  {first ? (
-                    <Button asChild variant="tinted" size="lg" className="mt-auto rounded-full font-semibold">
-                      <Link href={startHref(first)}>
-                        {t("templates.start", { name: label(template.id) })}
-                      </Link>
-                    </Button>
-                  ) : null}
+                  <Button asChild variant="tinted" size="lg" className="mt-auto rounded-full font-semibold">
+                    <Link href={start}>{t.rich("templates.start", { name: label(template.id), bdi })}</Link>
+                  </Button>
                 </div>
               </li>
             );
@@ -296,7 +298,7 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
         </h2>
         <div className="divide-y divide-line border-y border-line">
           {faq.map((item) => (
-            <details key={item.q} className="group mk-faq">
+            <details key={item.key} className="group mk-faq">
               <summary className="-mx-3 flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-md px-3 py-4 text-body-lg font-semibold text-balance outline-none transition-colors duration-micro focus-visible:focus-ring active:bg-pressed [&::-webkit-details-marker]:hidden">
                 {item.q}
                 <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-canvas-muted text-fg-secondary transition-[rotate,background-color,color] duration-standard ease-standard group-open:rotate-45 group-open:bg-primary group-open:text-primary-fg motion-reduce:transition-none">

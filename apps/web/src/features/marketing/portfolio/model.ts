@@ -49,5 +49,24 @@ export function professions(): { key: Profession; examples: LookId[] }[] {
 /** Where "Start with this template" leads: sign-up with that example's look and kind. */
 export const startHref = (slug: LookId): string => `/signup?kind=${LOOKS[slug].kind}&look=${slug}`;
 
+/** How far an example's look moves from its template (accent, layout options): 0 is the template as it comes. */
+const overrides = (slug: LookId): number => Object.keys(LOOKS[slug].theme).filter((key) => key !== "template").length;
+
+/**
+ * The one example "Start with <template>" starts from, wherever the page offers it (the template row
+ * and every field tab): the template as it comes, so the look started is the one its card shows. Of
+ * equal ones, the first in the gallery.
+ */
+export function startExample(template: CreatorTemplateId): LookId | undefined {
+  const candidates = portfolioExamples().filter((slug) => LOOKS[slug].theme.template === template);
+  return candidates.reduce<LookId | undefined>((best, slug) => (best === undefined || overrides(slug) < overrides(best) ? slug : best), undefined);
+}
+
+/** Sign-up that starts with a template, the same address from every place on the page. */
+export const templateStartHref = (template: CreatorTemplateId): string => {
+  const slug = startExample(template);
+  return slug ? startHref(slug) : "/signup";
+};
+
 /** An example page's own address (each example exists in its own language only). */
 export const pageHref = (slug: LookId): string => `/${LOOKS[slug].locale}/p/${slug}`;

@@ -10,7 +10,7 @@ import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
-import { pageHref, portfolioExamples, portfolioTemplates, professions, startHref } from "./model";
+import { pageHref, portfolioExamples, portfolioTemplates, professions, startExample, startHref, templateStartHref } from "./model";
 
 const MESSAGES = { de, en, ar } as const;
 const LOCALES = ["de", "en", "ar"] as const;
@@ -77,9 +77,43 @@ describe("the Portfolio section", () => {
     expect(pageHref("tobin-achterberg")).toBe("/en/p/tobin-achterberg");
   });
 
+  it("starts a template from the same look wherever the page offers it: the template as it comes", () => {
+    // Folio: Jonas Ek's page is plain Folio; Arjun Mehta's adds an ink-blue accent.
+    expect(startExample("folio")).toBe("jonas-ek");
+    expect(startExample("werkbogen")).toBe("ronja-feldkamp");
+    expect(startExample("tiefdruck")).toBe("tobin-achterberg");
+    for (const template of portfolioTemplates()) {
+      const slug = startExample(template.id);
+      expect(slug && template.examples).toContain(slug);
+      expect(templateStartHref(template.id)).toBe(startHref(slug as LookId));
+    }
+  });
+
+  it.each(LOCALES)("%s: the confidential client is quoted as the product shows it", (locale) => {
+    const messages = MESSAGES[locale];
+    const label = messages.creator.portfolio.confidential;
+    const toggle = messages.app.portfolio.hideClient;
+    expect(messages.portfolioLanding.project.items.confidential.body).toContain(label);
+    const answer = messages.portfolioLanding.faq.items.find((item) => item.a.includes(toggle));
+    expect(answer?.a).toContain(label);
+  });
+
+  it("isolates Latin names and numbers in the Arabic page's sentences", () => {
+    const page = ar.portfolioLanding;
+    const plain = (text: string) => text.replace(/<bdi>[^<]*<\/bdi>/g, "");
+    for (const text of [page.hero.open, page.fields.start, page.templates.start, page.project.items.pictures.body, ...page.faq.items.flatMap((item) => [item.q, item.a])]) {
+      expect(plain(text), text).not.toMatch(/[A-Za-z0-9{}]/);
+    }
+  });
+
   it.each(LOCALES)("%s: every portfolioLanding string formats", (locale) => {
     const t = createTranslator({ locale, messages: MESSAGES[locale], namespace: "portfolioLanding" });
-    expect(t("hero.open", { name: "Ronja" })).toContain("Ronja");
+    const tag = (chunks: unknown) => `[${String(chunks)}]`;
+    expect(t.markup("hero.open", { name: "Ronja", bdi: tag })).toContain("[Ronja]");
+    expect(t.markup("fields.start", { name: "Folio", bdi: tag })).toContain("[Folio]");
+    expect(t.markup("templates.start", { name: "Folio", bdi: tag })).toContain("[Folio]");
+    const answer = t.markup as unknown as (key: string, values: Record<string, (chunks: unknown) => string>) => string;
+    for (const index of [0, 1, 2, 3, 4]) expect(answer(`faq.items.${String(index)}.a`, { bdi: tag }).length).toBeGreaterThan(0);
     expect(t.markup("hero.caption", { name: "Ronja", template: "Werkbogen", bdi: (chunks) => `[${chunks}]` })).toContain("[Werkbogen]");
     expect(t.raw("faq.items")).toHaveLength(5);
   });

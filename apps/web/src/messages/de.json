@@ -4521,7 +4521,7 @@
       "title2": "Jedes Projekt mit eigener Seite.",
       "lead": "Bilder, Kennzahlen und die Geschichte dahinter, auf dem Handy wie am Laptop. Für Fotografie, Design, Architektur, Entwicklung und Handwerk.",
       "start": "Portfolio kostenlos anlegen",
-      "open": "Seite von {name} öffnen",
+      "open": "Seite von <bdi>{name}</bdi> öffnen",
       "frames": "Die Seite von {name} auf einem Laptop und einem Handy",
       "caption": "<bdi>{name}</bdi> ist erfunden: eine Beispielseite in der Vorlage <bdi>{template}</bdi>."
     },
@@ -4534,7 +4534,7 @@
       "build": "Entwicklung & Handwerk",
       "template": "Vorlage <bdi>{name}</bdi>",
       "view": "Seite von {name} ansehen",
-      "start": "Mit {name} starten"
+      "start": "Mit <bdi>{name}</bdi> starten"
     },
     "project": {
       "title": "Was eine Projektseite kann",
@@ -4571,7 +4571,7 @@
       "title": "Vorlagen für Portfolios",
       "lead": "Alle kostenlos. Du übernimmst das Design; Bilder, Texte und Projekte trägst du selbst ein.",
       "examples": "Beispielseiten",
-      "start": "Mit {name} starten",
+      "start": "Mit <bdi>{name}</bdi> starten",
       "gallery": "Alle Portfolio-Beispiele in der Galerie"
     },
     "faq": {
