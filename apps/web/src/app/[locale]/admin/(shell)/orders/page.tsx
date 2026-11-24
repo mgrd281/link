@@ -8,6 +8,8 @@ import { paymentsEnabled } from "@/lib/flags";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
+  // Without payments the queue does not exist: a 404, and its tab says so.
+  if (!paymentsEnabled) return { title: (await getTranslations({ locale, namespace: "errors.meta" }))("notFound") };
   const t = await getTranslations({ locale, namespace: "admin.orders" });
   return { title: t("title") };
 }
