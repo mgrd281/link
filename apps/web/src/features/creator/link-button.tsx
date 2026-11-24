@@ -50,9 +50,9 @@ export function CreatorLink({ label, href, variant, leading, badge, className, e
         <span className="relative shrink-0 rounded-full bg-creator-accent px-2 py-0.5 text-caption text-creator-accent-fg">{badge}</span>
       ) : null}
       {variant === "minimal" ? (
-        <Icon icon={ArrowUpRight} size="sm" className="relative shrink-0 rtl:-scale-x-100" />
+        <Icon icon={ArrowUpRight} size="sm" className="relative shrink-0" />
       ) : leading ? (
-        <Icon icon={ChevronRight} size="sm" className="relative shrink-0 opacity-secondary rtl:-scale-x-100" />
+        <Icon icon={ChevronRight} size="sm" className="relative shrink-0 opacity-secondary" />
       ) : null}
     </a>
   );

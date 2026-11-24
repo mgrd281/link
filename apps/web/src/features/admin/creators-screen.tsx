@@ -74,7 +74,7 @@ function Row({ row, now }: { row: CreatorRow; now: number | null }) {
             </Badge>
           ) : null}
         </span>
-        <Icon icon={ChevronRight} size="md" className="shrink-0 text-fg-tertiary rtl:-scale-x-100" />
+        <Icon icon={ChevronRight} size="md" className="shrink-0 text-fg-tertiary" />
       </Link>
     </li>
   );

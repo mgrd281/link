@@ -128,7 +128,10 @@ describe("the viewer as it opens", () => {
     expect(html).toContain('aria-label="عارض الصور"');
     expect(html).toContain("الصورة 3 من 11");
     expect(html).toContain('<bdi dir="ltr">3 / 11</bdi>');
-    expect(html.match(/rtl:-scale-x-100/g)).toHaveLength(2);
+    // Icon mirrors the two chevrons itself; the buttons around them stay as they are.
+    expect(html.match(/data-mirror=""/g)).toHaveLength(2);
+    expect(html.match(/scale-x-100/g)).toHaveLength(2);
+    for (const button of html.match(/<button[^>]*>/g) ?? []) expect(button).not.toContain("scale-x");
   });
 
   it("fades in with the motion token, and not at all with reduced motion", () => {

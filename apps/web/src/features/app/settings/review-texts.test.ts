@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import { isDirectional } from "@linkyo/ui";
+import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -88,10 +90,13 @@ describe("the order screen", () => {
   });
 
   it("mirrors every arrow in a right-to-left screen", () => {
+    // Icon mirrors these glyphs itself (DIRECTIONAL); a hand-written flip on top would undo it.
+    for (const glyph of [ArrowLeft, ArrowRight, Send]) expect(isDirectional(glyph), glyph.displayName).toBe(true);
     for (const file of ["features/app/orders/order-screen.tsx", "features/app/orders/briefing-form.tsx"]) {
       const arrows = source(file).match(/<Icon icon=\{(?:ArrowLeft|ArrowRight|Send)\}[^>]*>/g) ?? [];
       expect(arrows.length, file).toBeGreaterThan(0);
-      for (const arrow of arrows) expect(arrow, file).toContain("rtl:-scale-x-100");
+      for (const arrow of arrows) expect(arrow, file).not.toMatch(/scale-x|mirror=\{false\}/);
+      expect(source(file), file).not.toMatch(/scale-x-100/);
     }
   });
 });

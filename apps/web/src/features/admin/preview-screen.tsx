@@ -37,7 +37,7 @@ export function TeamPreviewScreen({ slug, lang }: { slug: string; lang: string |
           <span className="text-small font-medium">{t("badge")}</span>
           <Button asChild variant="primary" className="rounded-full">
             <Link href={`/admin/creators/${slug}`}>
-              <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
+              <Icon icon={ArrowLeft} size="sm" />
               {t("back")}
             </Link>
           </Button>

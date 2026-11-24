@@ -126,7 +126,7 @@ export function ShareToolRow({ icon, label, onClick }: { icon: LucideIcon; label
         <Icon icon={icon} size="sm" />
       </span>
       <span className="min-w-0 flex-1">{label}</span>
-      <Icon icon={ChevronRight} size="sm" className="text-fg-tertiary rtl:-scale-x-100" />
+      <Icon icon={ChevronRight} size="sm" className="text-fg-tertiary" />
     </button>
   );
 }

@@ -233,7 +233,7 @@ export function CheckoutDone({ sessionId, pro }: { sessionId: string | null; pro
         <Button asChild variant="primary" size="cta" className="group justify-self-start">
           <Link href="/app">
             <AppLabel />
-            <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowRight} size="md" />
           </Link>
         </Button>
       </div>
@@ -251,7 +251,7 @@ export function CheckoutDone({ sessionId, pro }: { sessionId: string | null; pro
           <Button asChild variant="primary" size="cta" className="group justify-self-start">
             <Link href="/app">
               <AppLabel />
-              <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+              <Icon icon={ArrowRight} size="md" />
             </Link>
           </Button>
         ) : null}
@@ -276,7 +276,7 @@ export function CheckoutDone({ sessionId, pro }: { sessionId: string | null; pro
       <Button asChild variant="primary" size="cta" className="group justify-self-start">
         <Link href={`/app/orders/${order.id}`}>
           {t("briefing")}
-          <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+          <Icon icon={ArrowRight} size="md" />
         </Link>
       </Button>
     </div>

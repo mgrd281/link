@@ -111,7 +111,7 @@ export function ClickToLoad({
         <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 text-caption" aria-hidden>
           <span className="inline-flex items-center gap-1 rounded-full bg-creator-glass px-2 py-1 text-creator-fg backdrop-blur-glass">
             {t("opensOn", { provider })}
-            <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowUpRight} size="sm" />
           </span>
           {compact ? null : children}
         </span>
@@ -137,7 +137,7 @@ export function ClickToLoad({
             className="inline-flex h-control-md items-center gap-2 rounded-full bg-creator-accent px-4 text-small font-semibold text-creator-accent-fg focus-visible:focus-ring"
           >
             {t("continueOn", { provider })}
-            <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowUpRight} size="sm" />
           </a>
         </div>
       </div>
@@ -241,7 +241,7 @@ export function NewsletterForm() {
           className="inline-flex h-control-lg w-full items-center justify-center gap-2 rounded-creator-button bg-creator-accent px-6 text-body font-semibold text-creator-accent-fg transition-[scale,opacity] duration-micro focus-visible:focus-ring active:scale-pressed @prose:w-auto"
         >
           {t("subscribe")}
-          <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+          <Icon icon={ArrowRight} size="md" />
         </button>
       </div>
       <p className="flex items-center gap-2 text-caption text-creator-fg-muted">

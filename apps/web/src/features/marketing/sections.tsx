@@ -112,7 +112,7 @@ export function Templates() {
         <Button asChild variant="primary" size="cta" className="group">
           <Link href="/templates">
             {tExamples("seeAll", { count: Object.keys(LOOKS).length + Object.keys(PEOPLE_LOOKS).length })}
-            <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+            <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
           </Link>
         </Button>
       </div>
@@ -162,7 +162,7 @@ export function Pricing() {
           <Button asChild variant="primary" size="cta" className="group text-center whitespace-normal">
             <Link href="/signup">
               {t("free.cta")}
-              <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+              <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
             </Link>
           </Button>
         </article>
@@ -228,7 +228,7 @@ function ProLive() {
       <Button asChild variant="primary" size="cta" className="group text-center whitespace-normal">
         <Link href="/checkout/pro">
           {t("proLive.cta")}
-          <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+          <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
         </Link>
       </Button>
       <Link

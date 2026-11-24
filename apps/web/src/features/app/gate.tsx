@@ -91,8 +91,8 @@ export function AppSplash() {
             </span>
             {panel ? (
               <span className={railSlot}>
-                <Icon icon={PanelLeftClose} size="md" className="rtl:-scale-x-100 nav-folded:hidden" />
-                <Icon icon={PanelLeftOpen} size="md" className="hidden rtl:-scale-x-100 nav-folded:block" />
+                <Icon icon={PanelLeftClose} size="md" className="nav-folded:hidden" />
+                <Icon icon={PanelLeftOpen} size="md" className="hidden nav-folded:block" />
               </span>
             ) : null}
           </div>

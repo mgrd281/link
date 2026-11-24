@@ -158,7 +158,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
           {[doc.profile.tagline, doc.profile.bio].find((text) => text?.trim()) ?? t("profileEmpty")}
         </span>
       </span>
-      <Icon icon={ChevronRight} size="md" className="shrink-0 text-fg-tertiary rtl:-scale-x-100" />
+      <Icon icon={ChevronRight} size="md" className="shrink-0 text-fg-tertiary" />
     </button>
   );
 
@@ -280,7 +280,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
                         className="inline-flex min-h-touch-target items-center gap-1 rounded-xs text-small font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
                       >
                         {tDesign(run.layout)}
-                        <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+                        <Icon icon={ArrowRight} size="sm" />
                       </Link>
                     ) : null}
                   </li>

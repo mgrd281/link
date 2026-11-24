@@ -349,8 +349,8 @@ function WorkCard({ project, position, count }: { project: Project; position: nu
       {count > 1 ? (
         // Earlier and later in reading order: the arrows point the other way in Arabic.
         <span className="layer-raised relative flex justify-end gap-1">
-          <IconButton icon={ChevronLeft} size="sm" label={t("moveEarlier", { title })} disabled={position === 0} onClick={() => move(-1)} className="rtl:[&_svg]:-scale-x-100" />
-          <IconButton icon={ChevronRight} size="sm" label={t("moveLater", { title })} disabled={position === count - 1} onClick={() => move(1)} className="rtl:[&_svg]:-scale-x-100" />
+          <IconButton icon={ChevronLeft} size="sm" label={t("moveEarlier", { title })} disabled={position === 0} onClick={() => move(-1)} />
+          <IconButton icon={ChevronRight} size="sm" label={t("moveLater", { title })} disabled={position === count - 1} onClick={() => move(1)} />
         </span>
       ) : null}
     </li>

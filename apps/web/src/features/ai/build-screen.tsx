@@ -58,7 +58,7 @@ function WithoutAi({ href, className }: { href: string; className?: string }) {
       )}
     >
       {t("continueWithout")}
-      <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+      <Icon icon={ArrowRight} size="sm" />
     </Link>
   );
 }
@@ -363,7 +363,7 @@ export function BuildScreen() {
               className="inline-flex min-h-touch-target items-center gap-2 rounded-sm text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
             >
               {t("service", { price: formatEuro(PRICES["service-start"].amountCents, locale) })}
-              <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+              <Icon icon={ArrowRight} size="sm" />
             </Link>
           ) : null
         }

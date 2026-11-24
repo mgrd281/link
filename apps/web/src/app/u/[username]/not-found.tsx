@@ -25,7 +25,7 @@ export default async function CreatorNotFound() {
         <Button asChild variant="primary" size="cta" className="group">
           <a href={`/${locale}/signup`}>
             {t("cta")}
-            <Icon icon={ArrowRight} size="md" className="duration-micro transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+            <Icon icon={ArrowRight} size="md" className="duration-micro transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
           </a>
         </Button>
       </div>

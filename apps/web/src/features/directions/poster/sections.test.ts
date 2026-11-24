@@ -284,8 +284,11 @@ describe("the renderer and the portfolio blocks", () => {
     expect(markup).toContain('dir="rtl"');
     expect(markup).toContain("العودة إلى نايا الدباس");
     expect(markup).toMatch(/<h1[^>]*>تطبيق Masar للتوصيل<\/h1>/);
-    // The arrow points the other way.
-    expect(markup).toContain("rtl:-scale-x-100");
+    // The arrow points the other way: Icon mirrors it, once.
+    const back = markup.match(/<svg[^>]*lucide-chevron-left[^>]*>/g) ?? [];
+    expect(back).toHaveLength(1);
+    expect(back[0]).toContain('data-mirror=""');
+    expect(markup.match(/scale-x-100/g)).toHaveLength(1);
   });
 
   it("stays on the portfolio when the opened project is unknown, hidden or no project", () => {

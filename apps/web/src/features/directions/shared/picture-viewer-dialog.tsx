@@ -202,13 +202,13 @@ export function PictureViewerDialog({ pictures, start, opener, onClosed }: Viewe
         </div>
         <div className="flex min-h-20 items-center gap-3 px-creator-gutter py-3">
           <button type="button" onClick={() => go({ by: -1 })} aria-label={t("previousPicture")} aria-disabled={first || undefined} className={cn(ROUND, "md:absolute md:start-6 md:top-1/2 md:-translate-y-1/2")}>
-            <Icon icon={ChevronLeft} size="md" className="rtl:-scale-x-100" />
+            <Icon icon={ChevronLeft} size="md" />
           </button>
           <p dir="auto" data-viewer-caption className="line-clamp-2 min-w-0 flex-1 text-center text-small text-pretty text-creator-fg-muted">
             {caption}
           </p>
           <button type="button" onClick={() => go({ by: 1 })} aria-label={t("nextPicture")} aria-disabled={last || undefined} className={cn(ROUND, "md:absolute md:end-6 md:top-1/2 md:-translate-y-1/2")}>
-            <Icon icon={ChevronRight} size="md" className="rtl:-scale-x-100" />
+            <Icon icon={ChevronRight} size="md" />
           </button>
         </div>
       </div>

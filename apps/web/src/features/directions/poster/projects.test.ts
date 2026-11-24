@@ -1,6 +1,7 @@
 import { pageSchema, type Block, type BlockOf, type Page } from "@linkyo/blocks";
 import { chooseProjectsLayout, coverMode, projectTarget, shownPictures } from "@linkyo/blocks/project";
 import { resolveCreatorTheme, type ProjectsStyle } from "@linkyo/tokens/creator";
+import { MIRROR_IN_RTL } from "@linkyo/ui";
 import { NextIntlClientProvider } from "next-intl";
 import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -524,8 +525,13 @@ describe("the work on the page", () => {
     expect(one(tree, (element) => element.attrs.dir === "rtl" && element.attrs.lang === "ar", "root").tag).toBe("div");
     expect(plateName(one(byId(tree, "hafen"), tagged("a"), "plate"))).toContain("المشروع 1 من 4: Hafenlicht");
     expect(text(tree)).toContain("4 مشاريع");
-    for (const arrow of all(tree, (element) => element.tag === "svg" && classes(element).some((name) => /^lucide-(arrow|chevron)-(right|up-right)$/.test(name)))) {
-      expect(classes(arrow)).toContain("rtl:-scale-x-100");
+    const arrows = all(tree, (element) => element.tag === "svg" && classes(element).some((name) => /^lucide-(arrow|chevron)-(right|up-right)$/.test(name)));
+    expect(arrows.length).toBeGreaterThan(0);
+    for (const arrow of arrows) {
+      // Icon mirrors the glyph itself; nothing around it may flip it back.
+      expect(arrow.attrs["data-mirror"]).toBe("");
+      expect(classes(arrow)).toContain(MIRROR_IN_RTL);
+      for (let up = arrow.parent; up; up = up.parent) expect(classes(up).filter((name) => name.includes("scale-x"))).toEqual([]);
     }
   });
 

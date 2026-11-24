@@ -11,7 +11,7 @@ import { useRouter } from "@/i18n/navigation";
 type State = { kind: "idle" } | { kind: "ok"; name: string } | { kind: "invalid" };
 
 /** The arrow leans forward when the button is hovered (mirrored in Arabic). */
-const ARROW = "transition-transform duration-micro group-hover/button:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/button:-translate-x-0.5";
+const ARROW = "transition-transform duration-micro group-hover/button:translate-x-0.5 rtl:group-hover/button:-translate-x-0.5";
 
 /**
  * Claim your address. Validates exactly like sign-up (profile username rules), then continues to

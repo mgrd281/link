@@ -1188,7 +1188,7 @@ export function Playground({ looks, rtl, ai = false }: { looks: [LookOption, ...
             )}
           >
             {t("cta")}
-            <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+            <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
           </Link>
           <p className="text-center text-caption text-fg-secondary">{t("ctaHint")}</p>
         </div>

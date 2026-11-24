@@ -321,7 +321,7 @@ export function TryAiPanel({
           className="group inline-flex h-control-lg items-center justify-center gap-2 rounded-full bg-primary px-6 text-body font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed active:bg-primary-pressed motion-reduce:active:scale-none lg:h-control-xl"
         >
           {t("cta")}
-          <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+          <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
         </button>
         <p className="text-center text-caption text-fg-secondary">{t("hint")}</p>
       </div>

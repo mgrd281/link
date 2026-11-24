@@ -120,7 +120,7 @@ export function ListRow(props: ListRowProps) {
         ) : null}
       </span>
       {value ? <span className="min-w-0 shrink truncate text-small text-fg-secondary">{value}</span> : null}
-      {end === "chevron" ? <Icon icon={ChevronRight} size="sm" className="text-fg-tertiary rtl:-scale-x-100" /> : end === "none" ? null : end}
+      {end === "chevron" ? <Icon icon={ChevronRight} size="sm" className="text-fg-tertiary" /> : end === "none" ? null : end}
     </>
   );
 

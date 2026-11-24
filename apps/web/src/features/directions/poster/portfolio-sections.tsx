@@ -116,7 +116,7 @@ export function TimelineSection({ block, locale }: { block: BlockOf<"timeline">;
               item.url ? (
                 <a href={item.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-1", textLink)}>
                   <span dir="auto" className="truncate">{item.org}</span>
-                  <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+                  <Icon icon={ArrowUpRight} size="sm" className="shrink-0" />
                 </a>
               ) : (
                 <p dir="auto" className={cn(pageSide, "text-body text-creator-fg-muted")}>{item.org}</p>
@@ -125,7 +125,7 @@ export function TimelineSection({ block, locale }: { block: BlockOf<"timeline">;
               // An address without an organisation still leads somewhere: its host is the link text.
               <a href={item.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-1", textLink)}>
                 <bdi dir="ltr" className="truncate">{linkDestination(item.url)}</bdi>
-                <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+                <Icon icon={ArrowUpRight} size="sm" className="shrink-0" />
               </a>
             ) : null}
             {item.note ? <p dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>{item.note}</p> : null}
@@ -183,7 +183,7 @@ function QuoteFigure({ item, alone, wide, project }: { item: Quote; alone: boole
                 <bdi>{project.title}</bdi>
               </span>
             </span>
-            <Icon icon={ArrowRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+            <Icon icon={ArrowRight} size="sm" className="shrink-0" />
           </a>
         ) : null}
       </figcaption>

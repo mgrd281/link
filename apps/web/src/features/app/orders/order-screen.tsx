@@ -123,7 +123,7 @@ export function OrderScreen({ orderId }: { orderId: string }) {
           </div>
         ) : order === null ? (
           <Link href="/app" className={consoleLink}>
-            <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowLeft} size="sm" />
             {t("back")}
           </Link>
         ) : (
@@ -178,7 +178,7 @@ export function OrderScreen({ orderId }: { orderId: string }) {
                     <li key={proposal.id}>
                       <Link href={`/app/proposals/${proposal.id}`} className={consoleLink}>
                         {t("viewProposal")}
-                        <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+                        <Icon icon={ArrowRight} size="sm" />
                       </Link>
                     </li>
                   ))}
@@ -187,7 +187,7 @@ export function OrderScreen({ orderId }: { orderId: string }) {
             ) : null}
 
             <Link href="/app" className={consoleLink}>
-              <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
+              <Icon icon={ArrowLeft} size="sm" />
               {t("back")}
             </Link>
           </>

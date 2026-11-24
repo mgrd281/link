@@ -425,7 +425,7 @@ export function PeopleSearchPanel({
                             <Icon
                               icon={ChevronRight}
                               size="sm"
-                              className={cn("transition-[color,translate] duration-micro rtl:-scale-x-100", choosing && position === active ? "translate-x-0.5 text-link rtl:-translate-x-0.5" : "text-fg-tertiary")}
+                              className={cn("transition-[color,translate] duration-micro", choosing && position === active ? "translate-x-0.5 text-link rtl:-translate-x-0.5" : "text-fg-tertiary")}
                             />
                           )}
                         </span>

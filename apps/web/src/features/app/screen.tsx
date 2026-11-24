@@ -61,7 +61,7 @@ export function BackLink({ href, label, variant = "bar", className }: { href: st
         className,
       )}
     >
-      <Icon icon={ChevronLeft} size={variant === "bar" ? "md" : "sm"} className="shrink-0 rtl:-scale-x-100" />
+      <Icon icon={ChevronLeft} size={variant === "bar" ? "md" : "sm"} className="shrink-0" />
       <span className="sr-only">{t("back")}: </span>
       <span className="truncate">{label}</span>
     </Link>
@@ -77,8 +77,8 @@ export function UndoRedo() {
   const { dispatch, canUndo, canRedo } = useSite();
   return (
     <div className="flex items-center gap-1">
-      <IconButton icon={Undo2} label={t("undo")} shortcut="⌘Z" disabled={!canUndo} onClick={() => dispatch({ type: "undo" })} className="rtl:[&_svg]:-scale-x-100" />
-      <IconButton icon={Redo2} label={t("redo")} shortcut="⇧⌘Z" disabled={!canRedo} onClick={() => dispatch({ type: "redo" })} className="rtl:[&_svg]:-scale-x-100" />
+      <IconButton icon={Undo2} label={t("undo")} shortcut="⌘Z" disabled={!canUndo} onClick={() => dispatch({ type: "undo" })} />
+      <IconButton icon={Redo2} label={t("redo")} shortcut="⇧⌘Z" disabled={!canRedo} onClick={() => dispatch({ type: "redo" })} />
     </div>
   );
 }

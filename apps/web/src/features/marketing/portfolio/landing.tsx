@@ -152,7 +152,7 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
               <Button asChild variant="primary" size="cta" className="group">
                 <Link href="/signup">
                   {t("hero.start")}
-                  <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+                  <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
                 </Link>
               </Button>
               {lead ? (
@@ -292,7 +292,7 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
           className="group mt-8 -mx-2 inline-flex min-h-touch-target items-center gap-2 rounded-full px-2 text-body font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed"
         >
           {t("templates.gallery")}
-          <Icon icon={ArrowRight} size="sm" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+          <Icon icon={ArrowRight} size="sm" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
         </Link>
       </section>
 
@@ -330,7 +330,7 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
             className="relative inline-flex h-control-xl w-full items-center justify-center gap-2 rounded-full bg-primary-fg px-6 text-body font-semibold text-primary transition-transform duration-micro hover:-translate-y-0.5 focus-visible:focus-ring active:scale-pressed motion-reduce:hover:translate-y-0 sm:w-auto"
           >
             {t("final.cta")}
-            <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowRight} size="md" />
           </Link>
         </div>
         <p className="mt-6 flex max-w-prose items-start gap-2 text-caption text-fg-tertiary">

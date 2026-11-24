@@ -414,7 +414,7 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
           {block.badge}
         </span>
       ) : null}
-      <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+      <Icon icon={ArrowUpRight} size="sm" className="shrink-0" />
     </a>
   );
 }

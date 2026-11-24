@@ -244,7 +244,7 @@ function SampleWeekStats() {
         className="inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
       >
         {t("stats.more")}
-        <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+        <Icon icon={ArrowRight} size="sm" />
       </Link>
     </Panel>
   );

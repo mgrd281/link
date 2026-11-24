@@ -67,7 +67,7 @@ export function ServicePage() {
                 <Button asChild variant="primary" size="cta" className="group w-full text-center whitespace-normal">
                   <Link href={`/checkout/service?package=${id}`} aria-describedby={`package-${id}`}>
                     {t(`${id}.cta`)}
-                    <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+                    <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
                   </Link>
                 </Button>
               </li>

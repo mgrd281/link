@@ -98,7 +98,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   if (!customer) {
     return (
       <Screen title={t("notFound")} lead={t("notFoundLead")}>
-        <Button asChild icon={ArrowLeft} className="justify-self-start [&_svg]:rtl:-scale-x-100">
+        <Button asChild icon={ArrowLeft} className="justify-self-start">
           <Link href="/admin/customers">{t("back")}</Link>
         </Button>
       </Screen>
@@ -329,7 +329,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
         href="/admin/customers"
         className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 justify-self-start rounded-sm font-medium hover:text-fg transition-colors duration-micro"
       >
-        <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
+        <Icon icon={ArrowLeft} size="sm" />
         {t("back")}
       </Link>
       <div className="flex flex-wrap items-center gap-3">
@@ -1113,7 +1113,7 @@ function InvitesTab({ customer, now }: { customer: Customer; now: number }) {
               className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-semibold transition-colors duration-micro hover:text-fg"
             >
               {tNav("referrals")}
-              <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+              <Icon icon={ArrowRight} size="sm" />
             </Link>
           }
         >
@@ -1164,7 +1164,7 @@ function InvitesTab({ customer, now }: { customer: Customer; now: number }) {
             ) : (
               <span className="inline-flex flex-wrap items-center gap-1">
                 <span dir="ltr">@{customer.username}</span>
-                <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+                <Icon icon={ArrowRight} size="sm" />
                 <span dir="ltr">{pending.invite.username ? `@${pending.invite.username}` : none}</span>
               </span>
             )

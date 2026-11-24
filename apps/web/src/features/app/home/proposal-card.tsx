@@ -54,7 +54,7 @@ export function ProposalCard() {
           <p className="text-small font-regular text-fg-secondary">{proposal.aiAssisted ? t("bodyAi") : t("bodyTeam")}</p>
         </div>
       </div>
-      <Button asChild variant="tinted" size="lg" className="w-full sm:w-auto sm:justify-self-start" trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+      <Button asChild variant="tinted" size="lg" className="w-full sm:w-auto sm:justify-self-start" trailing={<Icon icon={ArrowRight} size="md" />}>
         <Link href={`/app/proposals/${proposal.id}`}>{t("cta")}</Link>
       </Button>
     </section>

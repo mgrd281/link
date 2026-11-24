@@ -152,7 +152,7 @@ export function GermanOnlyLink() {
       {/* A plain link: the target is another language's page (a full load sets its lang and dir). */}
       <a href={href} hrefLang="de">
         {t("cta")}
-        <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+        <Icon icon={ArrowRight} size="md" />
       </a>
     </Button>
   );

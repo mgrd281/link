@@ -71,7 +71,7 @@ function Attention({
         </span>
         <span className="text-small min-w-0 flex-1">{label}</span>
         <span className="text-body font-semibold tabular-nums">{value}</span>
-        <Icon icon={ArrowRight} size="sm" className="text-fg-tertiary rtl:-scale-x-100" />
+        <Icon icon={ArrowRight} size="sm" className="text-fg-tertiary" />
       </Link>
     </li>
   );
@@ -142,7 +142,7 @@ export function OverviewScreen() {
           className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
         >
           {t("allActivity")}
-          <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+          <Icon icon={ArrowRight} size="sm" />
         </Link>
       }
     >
@@ -371,7 +371,7 @@ export function OverviewScreen() {
                     className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
                   >
                     {t("allCustomers")}
-                    <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+                    <Icon icon={ArrowRight} size="sm" />
                   </Link>
                 }
               >

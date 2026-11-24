@@ -380,7 +380,7 @@ export function ProjectForm({
           onClick={() => takeStep(step)}
           className="flex min-h-touch-target items-center gap-2 justify-self-start rounded-xs text-start text-small font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
         >
-          <Icon icon={ArrowRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+          <Icon icon={ArrowRight} size="sm" className="shrink-0" />
           {t(`next.${step}`)}
         </button>
       ) : null}
@@ -431,7 +431,7 @@ function GroupRows({ rows, onOpen, ltr = false }: { rows: { key: GroupKey; summa
                 </span>
               ) : null}
             </span>
-            <Icon icon={ChevronRight} size="md" className="shrink-0 text-fg-tertiary rtl:-scale-x-100" />
+            <Icon icon={ChevronRight} size="md" className="shrink-0 text-fg-tertiary" />
           </button>
         </li>
       ))}
@@ -475,7 +475,7 @@ function PanelView({ title, back, onBack, children }: { title: string; back: str
   return (
     <div data-panel className="grid grid-cols-1 gap-5">
       <div className="flex items-center gap-2">
-        <IconButton icon={ChevronLeft} label={back} variant="tinted" className="shrink-0 rounded-full rtl:[&_svg]:-scale-x-100" onClick={onBack} />
+        <IconButton icon={ChevronLeft} label={back} variant="tinted" className="shrink-0 rounded-full" onClick={onBack} />
         <h3 ref={heading} tabIndex={-1} className="min-w-0 flex-1 text-h3 outline-none">
           {title}
         </h3>

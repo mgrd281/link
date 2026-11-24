@@ -271,7 +271,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
     return (
       <div className="mx-auto grid max-w-content gap-4 px-4 pt-6 md:px-8">
         <Link href="/admin/orders" className={consoleLink}>
-          <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
+          <Icon icon={ArrowLeft} size="sm" />
           {t("title")}
         </Link>
         {/* An order that could not be read is not "no such order". */}
@@ -322,7 +322,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
     <div className="mx-auto grid w-full max-w-content grid-cols-1 gap-6 px-4 pt-6 pb-10 md:px-8 lg:pt-10">
       <header className="grid gap-3">
         <Link href="/admin/orders" className={consoleLink}>
-          <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
+          <Icon icon={ArrowLeft} size="sm" />
           {t("title")}
         </Link>
         <div className="flex flex-wrap items-center gap-2">

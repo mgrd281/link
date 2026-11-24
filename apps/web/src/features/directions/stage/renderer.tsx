@@ -121,7 +121,7 @@ function StageBlock({ block, theme }: { block: Block; theme: ResolvedCreatorThem
           <span className="min-w-0 flex-1 truncate text-small">
             {block.title} · <span className="text-creator-fg-muted">{t("watching", { count: f.compact(block.viewers ?? 0) })}</span>
           </span>
-          <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+          <Icon icon={ArrowUpRight} size="sm" className="shrink-0" />
         </a>
       ) : null;
 

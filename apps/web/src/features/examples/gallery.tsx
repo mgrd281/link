@@ -711,8 +711,8 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
                       {current.name}
                     </Dialog.Title>
                     {playButton()}
-                    <IconButton icon={ChevronLeft} label={t("prev")} variant="tinted" data-keep-glide="" onClick={() => step(-1)} className="rounded-full rtl:-scale-x-100" />
-                    <IconButton icon={ChevronRight} label={t("next")} variant="tinted" data-keep-glide="" onClick={() => step(1)} className="rounded-full rtl:-scale-x-100" />
+                    <IconButton icon={ChevronLeft} label={t("prev")} variant="tinted" data-keep-glide="" onClick={() => step(-1)} className="rounded-full" />
+                    <IconButton icon={ChevronRight} label={t("next")} variant="tinted" data-keep-glide="" onClick={() => step(1)} className="rounded-full" />
                     <Dialog.Close asChild>
                       <IconButton icon={X} label={t("close")} variant="tinted" className="rounded-full" />
                     </Dialog.Close>
@@ -741,7 +741,7 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
                   <Button asChild variant="primary" size="lg" block className="rounded-full">
                     <Link href={current.signup}>
                       {t("use")}
-                      <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+                      <Icon icon={ArrowRight} size="md" />
                     </Link>
                   </Button>
                   <p className="text-center text-caption text-fg-secondary lg:text-start">{t("useHint")}</p>
@@ -756,12 +756,12 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
                     <Icon icon={ExternalLink} size="sm" />
                   </a>
                   <div className="hidden items-center justify-between gap-2 border-t border-line pt-4 lg:flex">
-                    <IconButton icon={ChevronLeft} label={t("prev")} variant="tinted" data-keep-glide="" onClick={() => step(-1)} className="rounded-full rtl:-scale-x-100" />
+                    <IconButton icon={ChevronLeft} label={t("prev")} variant="tinted" data-keep-glide="" onClick={() => step(-1)} className="rounded-full" />
                     <span className="flex items-center gap-2">
                       <span className="text-caption text-fg-secondary tabular-nums">{t("position", { index: position + 1, total: deck.length })}</span>
                       {playButton()}
                     </span>
-                    <IconButton icon={ChevronRight} label={t("next")} variant="tinted" data-keep-glide="" onClick={() => step(1)} className="rounded-full rtl:-scale-x-100" />
+                    <IconButton icon={ChevronRight} label={t("next")} variant="tinted" data-keep-glide="" onClick={() => step(1)} className="rounded-full" />
                   </div>
                   <p className="hidden text-center text-caption text-fg-tertiary lg:pointer-fine:block">{t("keys")}</p>
                 </div>

@@ -206,7 +206,7 @@ export function MobileMenu({
                 <Icon
                   icon={ChevronRight}
                   size="sm"
-                  className="shrink-0 text-fg-tertiary transition-[color,translate] duration-micro group-hover:translate-x-0.5 group-hover:text-fg rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
+                  className="shrink-0 text-fg-tertiary transition-[color,translate] duration-micro group-hover:translate-x-0.5 group-hover:text-fg rtl:group-hover:-translate-x-0.5"
                 />
               </a>
             ))}
@@ -224,7 +224,7 @@ export function MobileMenu({
                   <Avatar name={account.name} src={account.avatar} size="sm" />
                   <span className="min-w-0 truncate">{t.rich("signedIn", { name: account.name, bdi: (chunks) => <bdi>{chunks}</bdi> })}</span>
                 </p>
-                <Button asChild variant="primary" size="cta" block trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+                <Button asChild variant="primary" size="cta" block trailing={<Icon icon={ArrowRight} size="md" />}>
                   <a href={`/${locale}/app/editor`} onClick={close}>
                     {t("editPage")}
                   </a>
@@ -242,7 +242,7 @@ export function MobileMenu({
               </>
             ) : (
               <>
-                <Button asChild variant="primary" size="cta" block trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+                <Button asChild variant="primary" size="cta" block trailing={<Icon icon={ArrowRight} size="md" />}>
                   <a href={cta.href} onClick={close}>
                     {cta.label}
                   </a>

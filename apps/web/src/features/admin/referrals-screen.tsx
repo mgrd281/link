@@ -218,7 +218,7 @@ function HeldRow({ invite, canManage, onDecide }: { invite: HeldInvite; canManag
       <div className="grid min-w-0 gap-2">
         <p className="flex flex-wrap items-center gap-2 text-body">
           <CustomerLink id={invite.inviterId} username={invite.inviter} />
-          <Icon icon={ArrowRight} size="sm" className="shrink-0 text-fg-tertiary rtl:-scale-x-100" />
+          <Icon icon={ArrowRight} size="sm" className="shrink-0 text-fg-tertiary" />
           <CustomerLink id={invite.inviteeId} username={invite.invitee} />
         </p>
         <p className="text-small text-fg-secondary">{reason(invite.reason)}</p>
@@ -340,7 +340,7 @@ export function ReferralsScreen() {
         <span className="grid gap-1">
           <span className="inline-flex flex-wrap items-center gap-1 text-fg">
             <span dir="ltr">@{pending.invite.inviter}</span>
-            <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowRight} size="sm" />
             <span dir="ltr">{pending.invite.invitee ? `@${pending.invite.invitee}` : tCustomer("invites.none")}</span>
           </span>
           <span>{reasonLabel(pending.invite.reason)}</span>

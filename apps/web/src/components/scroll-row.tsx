@@ -59,12 +59,12 @@ export function ScrollRow({
       </div>
       {edges.start ? null : (
         <div className={cn(edge, "start-0 bg-linear-to-r pe-8 rtl:bg-linear-to-l")}>
-          <IconButton icon={ChevronLeft} label={labels.back} size="sm" variant="tinted" onClick={() => page(-1)} className="pointer-events-auto max-md:hidden rtl:-scale-x-100" />
+          <IconButton icon={ChevronLeft} label={labels.back} size="sm" variant="tinted" onClick={() => page(-1)} className="pointer-events-auto max-md:hidden" />
         </div>
       )}
       {edges.end ? null : (
         <div className={cn(edge, "end-0 bg-linear-to-l ps-8 rtl:bg-linear-to-r")}>
-          <IconButton icon={ChevronRight} label={labels.next} size="sm" variant="tinted" onClick={() => page(1)} className="pointer-events-auto max-md:hidden rtl:-scale-x-100" />
+          <IconButton icon={ChevronRight} label={labels.next} size="sm" variant="tinted" onClick={() => page(1)} className="pointer-events-auto max-md:hidden" />
         </div>
       )}
     </div>

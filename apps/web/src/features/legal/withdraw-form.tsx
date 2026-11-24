@@ -147,7 +147,7 @@ export function WithdrawForm() {
         ) : null}
         <div className="flex flex-col-reverse gap-3 sm:flex-row">
           <Button type="button" variant="secondary" size="lg" onClick={() => setStep("form")} disabled={busy}>
-            <Icon icon={ArrowLeft} size="md" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowLeft} size="md" />
             {t("withdraw.back")}
           </Button>
           <Button type="button" variant="primary" size="cta" loading={busy} onClick={() => void confirm()}>
@@ -218,7 +218,7 @@ export function WithdrawForm() {
       />
       <Button type="submit" variant="primary" size="cta" className="group justify-self-start">
         {t("withdraw.next")}
-        <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+        <Icon icon={ArrowRight} size="md" />
       </Button>
     </form>
   );

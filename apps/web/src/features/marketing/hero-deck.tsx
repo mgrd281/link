@@ -225,7 +225,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                           <Icon
                             icon={ArrowUpRight}
                             size="sm"
-                            className="transition-transform duration-standard ease-standard group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
+                            className="transition-transform duration-standard ease-standard group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:group-hover:-translate-x-0.5"
                           />
                         </span>
                       </span>

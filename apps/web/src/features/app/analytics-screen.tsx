@@ -34,7 +34,7 @@ function StatTile({ label, value, change, previousLabel }: { label: string; valu
       {change !== null ? (
         <dd className={cn("flex items-center gap-1 text-caption", up ? "text-success-strong" : "text-danger-strong")}>
           {/* The trend leans into the reading direction: up and to the end, also in Arabic. */}
-          <Icon icon={up ? ArrowUpRight : ArrowDownRight} size="sm" className="rtl:-scale-x-100" />
+          <Icon icon={up ? ArrowUpRight : ArrowDownRight} size="sm" />
           <span className="font-semibold tabular-nums">{new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0, signDisplay: "always" }).format(change)}</span>
           <span className="sr-only">{previousLabel}</span>
         </dd>

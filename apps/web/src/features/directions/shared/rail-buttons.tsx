@@ -67,10 +67,10 @@ export function RailButtons() {
   return (
     <div ref={box} data-rail-buttons className={cn("hidden justify-end gap-2 @prose:flex", !shown && "invisible")}>
       <button type="button" onClick={() => !state?.start && page(-1)} aria-label={t("railBack")} aria-disabled={!shown || state.start || undefined} className={BUTTON}>
-        <Icon icon={ChevronLeft} size="md" className="rtl:-scale-x-100" />
+        <Icon icon={ChevronLeft} size="md" />
       </button>
       <button type="button" onClick={() => !state?.end && page(1)} aria-label={t("railOn")} aria-disabled={!shown || state.end || undefined} className={BUTTON}>
-        <Icon icon={ChevronRight} size="md" className="rtl:-scale-x-100" />
+        <Icon icon={ChevronRight} size="md" />
       </button>
     </div>
   );

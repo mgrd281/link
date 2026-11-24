@@ -81,7 +81,7 @@ function BackLink() {
   const t = useTranslations("admin.creator");
   return (
     <Link href="/admin/creators" className="inline-flex h-control-sm items-center gap-2 justify-self-start rounded-sm text-small font-medium text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
-      <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
+      <Icon icon={ArrowLeft} size="sm" />
       {t("back")}
     </Link>
   );
@@ -248,7 +248,7 @@ function DraftEditor({ draft, server }: { draft: PreparedDraft; server: Publishe
             aria-label={t("back")}
             className="grid size-touch-target shrink-0 place-items-center rounded-md text-fg hover:bg-hover focus-visible:focus-ring"
           >
-            <Icon icon={ArrowLeft} size="md" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowLeft} size="md" />
           </Link>
           <div className="grid min-w-0 flex-1 gap-0.5">
             <p className="flex min-w-0 items-center gap-2">

@@ -194,13 +194,13 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
             <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-creator-accent-fg text-creator-accent">
               <Icon icon={Radio} size="sm" />
             </span>
-            {size === "s" ? <Icon icon={ArrowUpRight} size="md" className="shrink-0 rtl:-scale-x-100" /> : null}
+            {size === "s" ? <Icon icon={ArrowUpRight} size="md" className="shrink-0" /> : null}
           </span>
           <span className="grid min-w-0 flex-1 content-end">
             <span className="text-caption font-bold tracking-wide uppercase">{t("liveNow")}</span>
             <span className="text-small">{t("watching", { count: f.compact(block.viewers ?? 0) })}</span>
           </span>
-          {size === "s" ? null : <Icon icon={ArrowUpRight} size="md" className="shrink-0 rtl:-scale-x-100" />}
+          {size === "s" ? null : <Icon icon={ArrowUpRight} size="md" className="shrink-0" />}
         </Tile>
       ) : null;
 
@@ -210,7 +210,7 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
       const href = block.type === "app" ? block.stores[0]?.url : block.url;
       return href ? (
         <Tile size={size} href={href} tone="surface" className={cn("flex flex-col justify-between gap-6 p-4", size === "s" && "aspect-square")}>
-          <Icon icon={ArrowUpRight} size="md" className="self-end transition-transform duration-micro group-hover:-translate-y-0.5 rtl:-scale-x-100" />
+          <Icon icon={ArrowUpRight} size="md" className="self-end transition-transform duration-micro group-hover:-translate-y-0.5" />
           <span className="font-creator-display text-h3 leading-tight" style={displayStyle}>
             {block.title}
           </span>
@@ -232,7 +232,7 @@ function MosaicTile({ block, size, theme }: { block: Block; size: TileSize; them
             ) : (
               <span />
             )}
-            <Icon icon={ArrowUpRight} size="md" className="transition-transform duration-micro group-hover:-translate-y-0.5 rtl:-scale-x-100" />
+            <Icon icon={ArrowUpRight} size="md" className="transition-transform duration-micro group-hover:-translate-y-0.5" />
           </span>
           <span className="font-creator-display text-h3 leading-tight" style={displayStyle}>
             {block.title}

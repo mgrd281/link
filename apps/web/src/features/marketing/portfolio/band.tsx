@@ -39,7 +39,7 @@ export function PortfolioBand() {
           <Button asChild variant="primary" size="cta" className="group mt-1 w-full sm:w-auto">
             <Link href="/portfolio">
               {t("cta")}
-              <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+              <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
             </Link>
           </Button>
         </div>

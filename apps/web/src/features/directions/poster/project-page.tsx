@@ -256,7 +256,7 @@ function ProjectBar({
   // phones) and the label names it once.
   const body = (
     <>
-      <Icon icon={ChevronLeft} size="md" className="shrink-0 rtl:-scale-x-100" />
+      <Icon icon={ChevronLeft} size="md" className="shrink-0" />
       {hasImage(profile.avatar) ? (
         <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2">
           <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={px(tokens.size.controlSm)} />
@@ -405,7 +405,7 @@ function Links({ links, style }: { links: { url: string; label?: string | undefi
                   <Opens words={t("portfolio.opens", { host: HOST_MARK })} host={hostOf(link.url)} />
                 </span>
               </span>
-              <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+              <Icon icon={ArrowUpRight} size="sm" className="shrink-0" />
             </a>
           </li>
         );
@@ -774,7 +774,7 @@ function NextProject({ next }: { next: NextTarget }) {
           <ProjectCover project={project} sizes={mediaSizes.workRowEnd} ratio="aspect-square @work:aspect-photo" size="thumb" />
         </span>
       ) : null}
-      <Icon icon={ChevronRight} size="md" className="shrink-0 text-creator-fg-muted rtl:-scale-x-100" />
+      <Icon icon={ChevronRight} size="md" className="shrink-0 text-creator-fg-muted" />
     </>
   );
   const row = "flex min-h-20 w-full min-w-0 items-center gap-4 rounded-creator-card py-6 @work:gap-6";

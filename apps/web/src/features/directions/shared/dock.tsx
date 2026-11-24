@@ -88,7 +88,7 @@ export function LinkyoDock({ title, cta, href, closeLabel }: { title: string; ct
           className="inline-flex h-control-md shrink-0 items-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
         >
           {cta}
-          <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+          <Icon icon={ArrowRight} size="sm" />
         </Link>
         <button
           type="button"

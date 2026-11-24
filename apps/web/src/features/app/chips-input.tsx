@@ -135,12 +135,12 @@ export function ChipsInput({
               </span>
               {movable && index > 0 ? (
                 <ChipButton action="back" label={tForm("moveUp", { name: value })} onClick={() => move(index, -1)}>
-                  <Icon icon={ChevronLeft} size="sm" className="rtl:-scale-x-100" />
+                  <Icon icon={ChevronLeft} size="sm" />
                 </ChipButton>
               ) : null}
               {movable && index < values.length - 1 ? (
                 <ChipButton action="forward" label={tForm("moveDown", { name: value })} onClick={() => move(index, 1)}>
-                  <Icon icon={ChevronRight} size="sm" className="rtl:-scale-x-100" />
+                  <Icon icon={ChevronRight} size="sm" />
                 </ChipButton>
               ) : null}
               <ChipButton action="remove" label={t("removeChip", { label: value })} onClick={() => remove(index)}>

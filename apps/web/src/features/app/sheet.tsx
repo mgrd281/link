@@ -301,10 +301,10 @@ export function Sheet({
               <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-line pt-1 pr-[max(var(--spacing-2),env(safe-area-inset-right))] pb-2 pl-[max(var(--spacing-2),env(safe-area-inset-left))] lg:flex lg:items-start lg:gap-3 lg:px-5 lg:pt-5 lg:pb-4">
                 {back ? (
                   <>
-                    <Button variant="ghost" size="sm" icon={ChevronLeft} className="justify-self-start lg:hidden rtl:[&_svg]:-scale-x-100" onClick={back.onBack}>
+                    <Button variant="ghost" size="sm" icon={ChevronLeft} className="justify-self-start lg:hidden" onClick={back.onBack}>
                       {back.label}
                     </Button>
-                    <IconButton variant="tinted" icon={ChevronLeft} label={back.label} className="rounded-full max-lg:hidden rtl:[&_svg]:-scale-x-100" onClick={back.onBack} />
+                    <IconButton variant="tinted" icon={ChevronLeft} label={back.label} className="rounded-full max-lg:hidden" onClick={back.onBack} />
                   </>
                 ) : cancel ? (
                   <Button variant="ghost" size="sm" className="justify-self-start lg:hidden" onClick={cancel.onCancel}>

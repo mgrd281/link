@@ -198,7 +198,7 @@ function TeamSetup({ account }: { account: Account }) {
           hint={t("codeHint")}
           error={error === "code" ? t("codeWrong") : error === "network" ? t("network") : undefined}
         />
-        <Button type="submit" variant="primary" size="xl" block loading={busy} trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+        <Button type="submit" variant="primary" size="xl" block loading={busy} trailing={<Icon icon={ArrowRight} size="md" />}>
           {t("setupSubmit")}
         </Button>
       </form>

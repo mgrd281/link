@@ -229,7 +229,7 @@ export function RepoCard({ block, surface, heading: Heading }: { block: BlockOf<
       >
         <PlatformGlyph platform="github" size="sm" />
         {t("viewOnGithub")}
-        <Icon icon={ArrowUpRight} size="sm" className="transition-transform duration-micro group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
+        <Icon icon={ArrowUpRight} size="sm" className="transition-transform duration-micro group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:group-hover:-translate-x-0.5" />
       </a>
     </article>
   );

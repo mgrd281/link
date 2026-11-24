@@ -309,8 +309,8 @@ function Shell({ entry, onOpen, className, label, children }: { entry: Entry; on
 /** The arrow that says where a card leads: on to the project's page, or out to its own link. */
 function TargetArrow({ target, className }: { target: CardTarget; className?: string }) {
   if (target.kind === "none") return null;
-  if (target.kind === "link") return <Icon icon={ArrowUpRight} size="sm" className={cn("shrink-0 text-creator-fg-muted rtl:-scale-x-100", className)} />;
-  return <Icon icon={ArrowRight} size="sm" className={cn("shrink-0 text-creator-fg-muted rtl:-scale-x-100", className)} />;
+  if (target.kind === "link") return <Icon icon={ArrowUpRight} size="sm" className={cn("shrink-0 text-creator-fg-muted", className)} />;
+  return <Icon icon={ArrowRight} size="sm" className={cn("shrink-0 text-creator-fg-muted", className)} />;
 }
 
 /**
@@ -697,7 +697,7 @@ function Row({ entry, compact, numbered, loud, wide, locale, onOpen }: { entry: 
           ) : target.kind === "link" ? (
             <TargetArrow target={target} className={cn("mt-1", wide && "@work:mt-0")} />
           ) : target.kind === "none" ? null : (
-            <Icon icon={ChevronRight} size="sm" className={cn("mt-1 shrink-0 text-creator-fg-muted rtl:-scale-x-100", wide && "@work:mt-0")} />
+            <Icon icon={ChevronRight} size="sm" className={cn("mt-1 shrink-0 text-creator-fg-muted", wide && "@work:mt-0")} />
           )}
         </div>
       </Shell>

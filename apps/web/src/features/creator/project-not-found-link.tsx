@@ -59,7 +59,7 @@ export function ProjectNotFoundLink() {
       className="bg-primary text-primary-fg hover:bg-primary-hover focus-visible:focus-ring group inline-flex min-h-control-xl max-w-full items-center gap-2 rounded-full px-6 text-body font-semibold transition-colors duration-micro"
     >
       {/* "Back to Ronja Feldkamp" points back; "To the page linkyo.app/mila" points on. */}
-      {example ? <Icon icon={ArrowLeft} size="md" className="shrink-0 duration-micro transition-transform group-hover:-translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:translate-x-0.5" /> : null}
+      {example ? <Icon icon={ArrowLeft} size="md" className="shrink-0 duration-micro transition-transform group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5" /> : null}
       <span dir="auto" className="min-w-0 truncate">
         {params.username ? (
           <>
@@ -72,7 +72,7 @@ export function ProjectNotFoundLink() {
           t("examples.notFoundBack")
         )}
       </span>
-      {example ? null : <Icon icon={ArrowRight} size="md" className="shrink-0 duration-micro transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />}
+      {example ? null : <Icon icon={ArrowRight} size="md" className="shrink-0 duration-micro transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />}
     </a>
   );
 }

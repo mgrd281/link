@@ -130,7 +130,7 @@ export function CardFace({
         </div>
         {compact ? null : (
           <span className="grid size-control-sm shrink-0 place-items-center rounded-full border border-creator-line bg-creator-glass text-creator-fg backdrop-blur-glass transition-colors max-sm:hidden duration-standard ease-standard group-hover:bg-creator-accent group-hover:text-creator-accent-fg group-focus-visible:bg-creator-accent group-focus-visible:text-creator-accent-fg">
-            <Icon icon={ArrowUpRight} size="sm" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowUpRight} size="sm" />
           </span>
         )}
       </div>

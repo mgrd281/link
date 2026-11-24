@@ -83,7 +83,7 @@ export function CheckoutPro() {
           <Button asChild variant="primary" size="cta" className="group justify-self-start">
             <Link href="/app">
               {t("alreadyPro.cta")}
-              <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+              <Icon icon={ArrowRight} size="md" />
             </Link>
           </Button>
         </div>

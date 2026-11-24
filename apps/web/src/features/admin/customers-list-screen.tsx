@@ -80,7 +80,7 @@ export function CustomersHidden() {
     <Screen title={t("noAccessTitle")} lead={t("noAccessLead")}>
       <div className="border-line-strong grid justify-items-center gap-4 rounded-xl border border-dashed p-8 text-center">
         <Icon icon={EyeOff} size="lg" className="text-fg-tertiary" />
-        <Button asChild icon={ArrowLeft} className="[&_svg]:rtl:-scale-x-100">
+        <Button asChild icon={ArrowLeft}>
           <Link href="/admin">{t("toOverview")}</Link>
         </Button>
       </div>
@@ -351,7 +351,6 @@ function CustomersList() {
               icon={ChevronLeft}
               disabled={current === 0}
               onClick={() => setPage(current - 1)}
-              className="[&_svg]:rtl:-scale-x-100"
             >
               {t("previous")}
             </Button>
@@ -361,7 +360,7 @@ function CustomersList() {
             <Button
               disabled={current >= pages - 1}
               onClick={() => setPage(current + 1)}
-              trailing={<Icon icon={ChevronRight} size="sm" className="rtl:-scale-x-100" />}
+              trailing={<Icon icon={ChevronRight} size="sm" />}
             >
               {t("next")}
             </Button>

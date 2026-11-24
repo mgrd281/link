@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@linkyo/ui";
+import { Button, Icon } from "@linkyo/ui";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -29,7 +29,7 @@ export function ProSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
             {t("later")}
           </Button>
           {paymentsEnabled ? (
-            <Button asChild variant="primary" trailing={<ArrowRight className="size-icon-sm rtl:-scale-x-100" aria-hidden />}>
+            <Button asChild variant="primary" trailing={<Icon icon={ArrowRight} size="sm" />}>
               <Link href="/checkout/pro">{t("get")}</Link>
             </Button>
           ) : (

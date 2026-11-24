@@ -322,7 +322,7 @@ export function ProposalEditorScreen({ orderId }: { orderId: string }) {
     return (
       <div className="mx-auto grid max-w-content gap-4 px-4 pt-6 md:px-8">
         <Link href="/admin/orders" className={consoleLink}>
-          <Icon icon={ArrowLeft} size="sm" className="rtl:-scale-x-100" />
+          <Icon icon={ArrowLeft} size="sm" />
           {t("title")}
         </Link>
         {failed ? (
@@ -351,7 +351,7 @@ export function ProposalEditorScreen({ orderId }: { orderId: string }) {
       <div className="layer-sticky sticky top-16 border-b border-line bg-canvas lg:top-0">
         <div className="mx-auto flex max-w-content flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 md:px-8">
           <Link href={`/admin/orders/${order.id}`} aria-label={t("title")} className="grid size-touch-target shrink-0 place-items-center rounded-md text-fg hover:bg-hover focus-visible:focus-ring">
-            <Icon icon={ArrowLeft} size="md" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowLeft} size="md" />
           </Link>
           <p className="grid min-w-0 flex-1 gap-0.5">
             <span className="truncate text-body-lg font-semibold">{t("editor.title", { customer: `@${customer}` })}</span>

@@ -216,7 +216,7 @@ export function BriefingForm({ orderId, accountId, pkg, onSent }: { orderId: str
         </p>
       ) : null}
       <Button type="submit" variant="primary" size="lg" loading={busy} disabled={uploading} className="w-full sm:w-auto sm:justify-self-start">
-        <Icon icon={Send} size="md" className="rtl:-scale-x-100" />
+        <Icon icon={Send} size="md" />
         {t("submit")}
       </Button>
     </form>

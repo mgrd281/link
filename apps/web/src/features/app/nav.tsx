@@ -121,7 +121,7 @@ function NavPanelToggle() {
   return (
     <Tooltip content={t("panel")} side={side} sideOffset={RAIL_TIP_OFFSET}>
       <button type="button" aria-label={t("panel")} aria-expanded={open} aria-controls="nav-panel" onClick={toggle} className={railControl}>
-        <Icon icon={open ? PanelLeftClose : PanelLeftOpen} size="md" className="rtl:-scale-x-100" />
+        <Icon icon={open ? PanelLeftClose : PanelLeftOpen} size="md" />
       </button>
     </Tooltip>
   );

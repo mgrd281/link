@@ -759,7 +759,7 @@ export function WelcomeScreen() {
             ) : (
               <div key="steps" className="mx-auto flex max-w-prose items-center gap-2 md:px-10">
                 {index > 0 && !showStart && !fromAi ? (
-                  <Button variant="ghost" size="lg" icon={ArrowLeft} onClick={back} className="[&_svg]:rtl:-scale-x-100">
+                  <Button variant="ghost" size="lg" icon={ArrowLeft} onClick={back}>
                     {t("back")}
                   </Button>
                 ) : null}
@@ -780,7 +780,7 @@ export function WelcomeScreen() {
                     setStarted(true);
                     setMoved(true);
                   }}
-                  trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}
+                  trailing={<Icon icon={ArrowRight} size="md" />}
                 >
                   {showStart ? t("start.continue") : fromAi ? t("fromAi.finish") : step === steps[steps.length - 2] ? t("finish") : t("continue")}
                 </Button>

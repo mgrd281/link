@@ -40,7 +40,7 @@ export function AiHomeCard({ ready }: { ready: boolean }) {
           <p className="text-small font-regular text-fg-secondary">{t("body")}</p>
         </div>
       </div>
-      <Button asChild variant="tinted" size="lg" className="w-full sm:w-auto sm:justify-self-start" trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}>
+      <Button asChild variant="tinted" size="lg" className="w-full sm:w-auto sm:justify-self-start" trailing={<Icon icon={ArrowRight} size="md" />}>
         <Link href="/app/build">{t("cta")}</Link>
       </Button>
     </section>

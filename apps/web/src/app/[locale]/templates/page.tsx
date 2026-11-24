@@ -90,7 +90,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
                     <Icon
                       icon={ArrowRight}
                       size="md"
-                      className="duration-micro transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
+                      className="duration-micro transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5"
                     />
                   </Link>
                 </Button>
@@ -143,7 +143,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
             className="h-control-xl bg-primary-fg text-body text-primary duration-micro focus-visible:focus-ring active:scale-pressed md:h-control-lg relative inline-flex w-full items-center justify-center gap-2 rounded-full px-6 font-semibold transition-transform hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:w-auto sm:justify-self-start md:justify-self-end"
           >
             {t("ctaButton")}
-            <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />
+            <Icon icon={ArrowRight} size="md" />
           </Link>
         </section>
       </main>

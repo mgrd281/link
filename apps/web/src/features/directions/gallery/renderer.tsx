@@ -163,7 +163,7 @@ function GalleryBlock({ block, theme }: { block: Block; theme: ResolvedCreatorTh
               {block.title} · {t("watching", { count: f.compact(block.viewers ?? 0) })}
             </span>
           </span>
-          <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
+          <Icon icon={ArrowUpRight} size="sm" className="shrink-0" />
         </a>
       ) : null;
 
