@@ -246,7 +246,7 @@ function usePanelItems(section: SectionKey): PanelItem[] {
         anchor(NAV_ANCHORS.inviteRules, t("invite.rules.title")),
       ];
     case "settings":
-      return (["account", "address", "legal"] as const).map((pane) => ({ kind: "route", key: pane, label: t(`settings.panes.${pane}`), href: `${SETTINGS_HREF}/${pane}` }));
+      return (["plan", "account", "address", "legal"] as const).map((pane) => ({ kind: "route", key: pane, label: t(`settings.panes.${pane}`), href: `${SETTINGS_HREF}/${pane}` }));
     case "home":
     case "page":
     case "design":
