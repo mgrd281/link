@@ -72,6 +72,13 @@
     }
   }
 
+  /* Places without a section panel (the shell marks them data-panel="none"): only the rail. */
+  :root:has([data-nav][data-panel="none"]) {
+    @variant lg {
+      --toast-start: var(--container-nav-rail);
+    }
+  }
+
   /* The live preview column: compact from the desk breakpoint, full width from xl (its frame plus p-4). */
   :root:has([data-preview-aside]) {
     @variant desk {

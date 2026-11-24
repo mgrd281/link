@@ -186,6 +186,40 @@ test.describe("the section panel", () => {
     expect(await h1X(page)).toBe(288);
   });
 
+  test("Home: the splash draws no panel and the shell's column, so nothing jumps when it mounts", async ({ page }) => {
+    await signedIn(page);
+    await expect(page).toHaveURL(/\/en\/app$/);
+    await page.addInitScript(() => {
+      document.addEventListener("DOMContentLoaded", () => {
+        const title = document.querySelector("[data-splash-title]");
+        const column = title?.parentElement;
+        (window as unknown as { beforeMount: unknown }).beforeMount = {
+          panel: document.querySelector("[data-splash-panel]") ? "drawn" : "missing",
+          titleX: title ? Math.round(title.getBoundingClientRect().x) : -1,
+          columnWidth: column ? Math.round(column.getBoundingClientRect().width) : -1,
+        };
+      });
+    });
+    await page.reload();
+    await expect(heading(page)).toBeVisible();
+    const beforeMount = (await page.evaluate(() => (window as unknown as { beforeMount: unknown }).beforeMount)) as { panel: string; titleX: number; columnWidth: number };
+    expect(beforeMount.panel).toBe("missing");
+    expect(beforeMount.titleX, "the same start edge before and after the shell mounts").toBe(await h1X(page));
+    const shellColumn = await page.locator("#main [data-screen-column]").first().evaluate((element) => Math.round(element.getBoundingClientRect().width));
+    expect(beforeMount.columnWidth, "the same column width before and after").toBe(shellColumn);
+    // Toasts centre over the content: only the rail is skipped where there is no panel.
+    const toastStart = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--toast-start").trim());
+    const railWidth = await rail(page).evaluate((element) => `${String(Math.round(element.getBoundingClientRect().width))}px`);
+    expect(await page.evaluate((value) => {
+      const probe = document.createElement("div");
+      probe.style.width = value;
+      document.body.append(probe);
+      const width = `${String(Math.round(probe.getBoundingClientRect().width))}px`;
+      probe.remove();
+      return width;
+    }, await toastStart())).toBe(railWidth);
+  });
+
   test("storage that throws: the panel is open and the toggle still folds", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));

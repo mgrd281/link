@@ -8,6 +8,8 @@ import { useEffect, type ReactNode } from "react";
 import { useAccount } from "@/features/account/store";
 import { usePathname, useRouter } from "@/i18n/navigation";
 
+import { sectionPanelShown } from "./nav";
+import { routeInfo } from "./routes";
 import { SiteProvider } from "./site-context";
 
 /** The admin console's loading screen: the Linkyo symbol and a spinner (its layout is not the dashboard's). */
@@ -49,6 +51,13 @@ const gutters =
  */
 export function AppSplash() {
   const t = useTranslations("app");
+  // The place being opened decides the frame, as in the shell and Screen: the section panel only
+  // where it has one (and the fold toggle with it), the wide column from lg, centred without a panel.
+  // Otherwise Home, Page and Design would jump once the shell mounts.
+  const section = routeInfo(usePathname()).section;
+  const panel = sectionPanelShown(section);
+  const wide = section === "home" || section === "invite" || (section === "analytics" && !panel);
+  const column = cn("mx-auto", wide ? "max-w-content" : "max-w-prose lg:max-w-column-wide", panel && "lg:mx-0");
   return (
     // data-grouped: the same ground and scrollbar gutter as the shell, so nothing shifts when it appears.
     // data-console="frame": black and grey from the first paint, as the shell (ADR 0062).
@@ -80,25 +89,29 @@ export function AppSplash() {
             <span className={railSlot}>
               <Icon icon={Eye} size="md" />
             </span>
-            <span className={railSlot}>
-              <Icon icon={PanelLeftClose} size="md" className="rtl:-scale-x-100 nav-folded:hidden" />
-              <Icon icon={PanelLeftOpen} size="md" className="hidden rtl:-scale-x-100 nav-folded:block" />
-            </span>
+            {panel ? (
+              <span className={railSlot}>
+                <Icon icon={PanelLeftClose} size="md" className="rtl:-scale-x-100 nav-folded:hidden" />
+                <Icon icon={PanelLeftOpen} size="md" className="hidden rtl:-scale-x-100 nav-folded:block" />
+              </span>
+            ) : null}
           </div>
         </div>
-        {/* The section panel: its title and three rows. */}
-        <div data-splash-panel className="flex w-nav-panel shrink-0 flex-col border-e border-line bg-surface nav-folded:hidden">
-          <div className="flex h-16 shrink-0 items-center px-5">
-            <Skeleton className="h-4 w-20" />
+        {/* The section panel, where the place has one: its title and three rows. */}
+        {panel ? (
+          <div data-splash-panel className="flex w-nav-panel shrink-0 flex-col border-e border-line bg-surface nav-folded:hidden">
+            <div className="flex h-16 shrink-0 items-center px-5">
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <div className="grid gap-0.5 px-2 py-1">
+              {[0, 1, 2].map((row) => (
+                <div key={row} className="flex h-control-md items-center px-3">
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid gap-0.5 px-2 py-1">
-            {[0, 1, 2].map((row) => (
-              <div key={row} className="flex h-control-md items-center px-3">
-                <Skeleton className="h-3 w-24" />
-              </div>
-            ))}
-          </div>
-        </div>
+        ) : null}
       </div>
 
       <div aria-hidden className="min-w-0 flex-1">
@@ -114,12 +127,12 @@ export function AppSplash() {
         </div>
         {/* The title: a large title on phones, the toolbar on wide screens. */}
         <div className={cn(gutters, "pt-6 lg:h-16 lg:pt-0")}>
-          <div className="mx-auto flex max-w-prose lg:mx-0 lg:h-full lg:items-center">
+          <div className={cn(column, "flex lg:h-full lg:items-center")}>
             <Skeleton data-splash-title className="h-8 w-1/2 lg:h-6 lg:w-32" />
           </div>
         </div>
         <div className={cn(gutters, "pt-4 lg:pt-2")}>
-          <div className="mx-auto grid max-w-prose grid-cols-1 gap-6 lg:mx-0">
+          <div className={cn(column, "grid grid-cols-1 gap-6")}>
             <Skeleton className="h-24 rounded-lg" />
             <Skeleton className="h-32 rounded-lg" />
             <Skeleton className="h-32 rounded-lg" />
