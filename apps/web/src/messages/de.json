@@ -2623,6 +2623,8 @@
         "actionLead": "Ein Button für Anfragen, dazu deine Profile.",
         "doneTitle": "Dein Portfolio steht, {name}",
         "doneLead": "Setz den Link in deine E-Mail-Signatur und auf LinkedIn. Weitere Arbeiten fügst du jederzeit hinzu.",
+        "emptyDoneTitle": "Deine Seite steht, {name}",
+        "emptyDoneLead": "Füg deine erste Arbeit hinzu, sobald sie bereit ist.",
         "made": "Auf deiner Seite",
         "madeProjects": "{count, plural, one {# Projekt} other {# Projekte}}",
         "madeContact": "Button „<bdi>{label}</bdi>“ am Ende der Seite"

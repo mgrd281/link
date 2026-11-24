@@ -383,7 +383,10 @@ export function WelcomeScreen() {
       : step === "action"
         ? { title: t("portfolio.actionTitle"), lead: t("portfolio.actionLead") }
         : step === "done" && portfolio
-          ? { title: t("portfolio.doneTitle", { name }), lead: t.rich("portfolio.doneLead", { bdi }) }
+          ? made && made.projects === 0
+            ? // Nothing to show yet: no "portfolio is ready", no advice to share it.
+              { title: t("portfolio.emptyDoneTitle", { name }), lead: t("portfolio.emptyDoneLead") }
+            : { title: t("portfolio.doneTitle", { name }), lead: t.rich("portfolio.doneLead", { bdi }) }
           : shared(step);
 
   // Shared by the links step and a portfolio's contact step.

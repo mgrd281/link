@@ -2623,6 +2623,8 @@
         "actionLead": "زرّ واحد للطلبات، ومعه حساباتك.",
         "doneTitle": "معرض أعمالك جاهز يا {name}",
         "doneLead": "ضع الرابط في توقيع بريدك الإلكتروني وعلى <bdi>LinkedIn</bdi>. يمكنك إضافة أعمال أخرى في أي وقت.",
+        "emptyDoneTitle": "صفحتك جاهزة يا {name}",
+        "emptyDoneLead": "أضف أول عمل لك حين يصبح جاهزًا.",
         "made": "على صفحتك",
         "madeProjects": "{count, plural, one {مشروع واحد} two {مشروعان} few {# مشاريع} many {# مشروعًا} other {# مشروع}}",
         "madeContact": "زرّ «<bdi>{label}</bdi>» في آخر الصفحة"

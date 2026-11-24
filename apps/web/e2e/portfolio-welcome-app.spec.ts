@@ -294,7 +294,10 @@ test.describe("portfolio kinds end on a filled portfolio", () => {
     await kindYouLook(page, m, "photographer", "Ronja Feld", "werkbogen");
     await continueButton(page, m).click();
     await finishButton(page, m).click();
-    await expect(stepTitle(page)).toHaveText(m.app.welcome.portfolio.doneTitle.replace("{name}", "Ronja Feld"));
+    // No "your portfolio is ready" over a page without work, and no advice to share it yet.
+    await expect(stepTitle(page)).toHaveText(m.app.welcome.portfolio.emptyDoneTitle.replace("{name}", "Ronja Feld"));
+    await expect(page.getByText(m.app.welcome.portfolio.emptyDoneLead)).toBeVisible();
+    await expect(page.getByText(m.app.welcome.portfolio.doneTitle.replace("{name}", "Ronja Feld"))).toHaveCount(0);
     await expect(page.getByRole("list", { name: m.app.welcome.portfolio.made })).toHaveCount(0);
     await page.locator("footer").getByRole("button", { name: m.app.welcome.toDashboard }).click();
     await page.waitForURL("**/de/app");
