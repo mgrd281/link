@@ -305,7 +305,8 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
           {faq.map((item) => (
             <details key={item.key} className="group mk-faq">
               <summary className="-mx-3 flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-md px-3 py-4 text-body-lg font-semibold text-balance outline-none transition-colors duration-micro focus-visible:focus-ring active:bg-pressed [&::-webkit-details-marker]:hidden">
-                {item.q}
+                {/* One flex item: the summary spreads its children apart, and a <bdi> is a child too. */}
+                <span>{item.q}</span>
                 <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-canvas-muted text-fg-secondary transition-[rotate,background-color,color] duration-standard ease-standard group-open:rotate-45 group-open:bg-primary group-open:text-primary-fg motion-reduce:transition-none">
                   <Icon icon={Plus} size="sm" />
                 </span>
