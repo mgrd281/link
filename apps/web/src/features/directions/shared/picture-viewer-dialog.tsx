@@ -10,6 +10,9 @@ import { arrowStep, clampIndex, slideAt, type ViewerOpening } from "./picture-vi
 /** Marks the history entry the viewer adds, so the back gesture closes it instead of leaving the page. */
 const HISTORY_KEY = "linkyoPictureViewer";
 
+/** Without `scrollend`, a track that has not scrolled for this long has come to rest. */
+const SCROLL_PAUSE_MS = 120;
+
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const isRtl = (element: Element) => getComputedStyle(element).direction === "rtl";
 
@@ -57,8 +60,11 @@ export function PictureViewerDialog({ pictures, start, opener, onClosed }: Viewe
   }, [finish, token]);
 
   // The picture the viewer is heading for: a second press while the track still glides goes one
-  // further, not to the same picture again. A swipe sets it when the track comes to rest.
+  // further, not to the same picture again. Otherwise it follows the picture on screen, so a press
+  // or an arrow key after a swipe starts from where the swipe ended.
   const aim = useRef(clampIndex(start, total));
+  // The picture a press or a key is gliding to (null once it is there, and during a swipe).
+  const gliding = useRef<number | null>(null);
 
   /** Moves `by` pictures from the one the viewer is heading for, or `to` one. */
   const go = (move: { by: number } | { to: number }) => {
@@ -67,6 +73,7 @@ export function PictureViewerDialog({ pictures, start, opener, onClosed }: Viewe
     const slide = strip?.children[target];
     if (!strip || !slide) return;
     aim.current = target;
+    gliding.current = target;
     // To a position, not by an amount: a relative scroll would stop at every picture on the way
     // (each slide is `snap-always`, so a swipe never skips one), and Home and End must jump.
     const delta = slide.getBoundingClientRect().left - strip.getBoundingClientRect().left;
@@ -99,15 +106,30 @@ export function PictureViewerDialog({ pictures, start, opener, onClosed }: Viewe
       event.preventDefault();
       go(move);
     };
-    // The counter follows the track, however it was moved (swipe, wheel, buttons, keys).
+    // The counter follows the track, however it was moved (swipe, wheel, buttons, keys), and so
+    // does the aim, unless a press is still gliding to its picture. `scrollend` settles it; engines
+    // without it (WebKit before Safari 26, so every iOS browser) get the same after a pause.
     let frame = 0;
+    let pause = 0;
     const shown = () => slideAt(strip.scrollLeft, strip.clientWidth, total);
+    const onScrollEnd = () => {
+      window.clearTimeout(pause);
+      gliding.current = null;
+      aim.current = shown();
+    };
+    const settlesItself = "onscrollend" in window;
     const onScroll = () => {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => setIndex(shown()));
-    };
-    const onScrollEnd = () => {
-      aim.current = shown();
+      frame = requestAnimationFrame(() => {
+        const now = shown();
+        setIndex(now);
+        if (gliding.current === now) gliding.current = null;
+        if (gliding.current === null) aim.current = now;
+      });
+      if (!settlesItself) {
+        window.clearTimeout(pause);
+        pause = window.setTimeout(onScrollEnd, SCROLL_PAUSE_MS);
+      }
     };
     window.addEventListener("popstate", onPop);
     element.addEventListener("keydown", onKeyDown);
@@ -115,6 +137,7 @@ export function PictureViewerDialog({ pictures, start, opener, onClosed }: Viewe
     strip.addEventListener("scrollend", onScrollEnd);
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(pause);
       window.removeEventListener("popstate", onPop);
       element.removeEventListener("keydown", onKeyDown);
       strip.removeEventListener("scroll", onScroll);
