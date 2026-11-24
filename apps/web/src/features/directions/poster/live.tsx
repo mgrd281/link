@@ -156,6 +156,7 @@ export function HeroLive({ block }: { block: Live }) {
     return (
       <a
         href={block.url}
+        data-block={block.id}
         className="inline-flex h-control-md items-center gap-2 rounded-full bg-danger-fill px-4 text-small font-bold tracking-wide text-danger-fill-fg uppercase transition-transform duration-micro hover:scale-lift focus-visible:focus-ring motion-reduce:hover:scale-none"
       >
         <span aria-hidden className="size-dot rounded-full bg-current motion-safe:animate-pulse" />
@@ -169,6 +170,7 @@ export function HeroLive({ block }: { block: Live }) {
   return (
     <a
       href={`#${block.id}`}
+      data-block={block.id}
       className="inline-flex h-control-md items-center gap-2 rounded-full border border-creator-line-strong bg-creator-glass px-4 text-small font-semibold text-creator-fg backdrop-blur-glass transition-colors duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring"
     >
       <Icon icon={CalendarClock} size="sm" />

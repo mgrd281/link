@@ -56,6 +56,14 @@ const CONTENT_ID = "page-content";
  * hairline and add the page's contents (`./laufbahn`: the app bar's sheet on phones, an index beside
  * the sections on wider screens); their page runs edge to edge below the wide canvas, so the bleed
  * hero's picture can.
+ *
+ * Block marks (the contract per-block counts rely on): everything a block shows sits inside an element
+ * with `data-block="<the block's id>"`, so `closest("[data-block]")` names the block of a click. A block
+ * of its own (or a run of one) gets a wrapper here (`display: contents` on the page, so nothing moves);
+ * in a longer run of rows, videos, products, apps or projects each block's own element carries it; in
+ * the hero the socials, the contact action (hero and bar), the live pill and the plate's project carry
+ * theirs. Ids never change with the template, the language or the layout. Section titles (header
+ * blocks) are not marked. block-marks.test.ts holds every sample and example page to this.
  */
 export function PosterRenderer({
   page,
@@ -227,7 +235,13 @@ export function PosterRenderer({
         }
       >
         {overlay ? <div className="pointer-events-none absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12 *:pointer-events-auto">{overlay}</div> : null}
-        <PosterBar profile={profile} primary={primary} solid={signposted} sections={signposts.length > 1 ? signposts.map(({ anchor, title }) => ({ anchor, title })) : undefined} />
+        <PosterBar
+          profile={profile}
+          primary={primary}
+          primaryBlock={contact?.id}
+          solid={signposted}
+          sections={signposts.length > 1 ? signposts.map(({ anchor, title }) => ({ anchor, title })) : undefined}
+        />
         {layout.hero === "bleed" ? (
           <BleedHero
             profile={profile}
@@ -536,16 +550,21 @@ interface ItemProps {
 /**
  * One item of a section. In the dashboard's preview it is wrapped in a box that names the blocks it
  * shows, so the preview can scroll to (and outline) the block being edited; the page itself renders
- * the item as it is. AI-written content is marked `data-ai-generated` (on a box that takes no room).
+ * the item in a box that takes no room. An item of one block is named on that box (`data-block`, see
+ * the block marks above; a longer run's blocks carry their own). AI-written content is marked
+ * `data-ai-generated` there too.
  */
 function PosterItemView({ preview, ...props }: ItemProps & { preview: boolean }) {
   const { item } = props;
   const blocks: readonly Block[] = item.kind === "block" ? [item.block] : item.blocks;
   // A grouped item (a run of rows, videos, products or apps) is marked when any of its blocks is.
   const ai = blocks.some(isAiBlock);
+  // A block of its own, or a run of one (a single video or product is drawn without its run's list).
+  const only = blocks.length === 1 ? blocks[0] : undefined;
+  const mark = only ? { "data-block": only.id } : {};
   if (!preview) {
-    return ai ? (
-      <div className="contents" {...aiMark(ai)}>
+    return ai || only ? (
+      <div className="contents" {...mark} {...aiMark(ai)}>
         <PosterItemBody {...props} />
       </div>
     ) : (
@@ -553,7 +572,7 @@ function PosterItemView({ preview, ...props }: ItemProps & { preview: boolean })
     );
   }
   return (
-    <div data-block-ids={blocks.map((block) => block.id).join(" ")} className="min-w-0" {...aiMark(ai)}>
+    <div data-block-ids={blocks.map((block) => block.id).join(" ")} className="min-w-0" {...mark} {...aiMark(ai)}>
       <PosterItemBody {...props} />
     </div>
   );

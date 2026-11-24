@@ -120,10 +120,12 @@ describe("page kinds in the welcome flow", () => {
   });
 
   it("the look step leads with the kind's starter, then the looks the tokens suggest for it", () => {
-    expect(lookOrder("photographer").slice(0, 2)).toEqual(["werkbogen", "folio"]);
+    // Plan §4.2: the new portfolio looks come right after the starter (tokens: `leadFor`).
+    expect(lookOrder("photographer").slice(0, 3)).toEqual(["werkbogen", "leuchttisch", "folio"]);
     expect(lookOrder("designer")[0]).toBe("werkbogen");
-    expect(lookOrder("designer")).toEqual(expect.arrayContaining(["tiefdruck", "atelier", "folio"]));
-    expect(lookOrder("developer").slice(0, 2)).toEqual(["tiefdruck", "signal"]);
+    expect(lookOrder("designer")).toEqual(expect.arrayContaining(["tiefdruck", "atelier", "folio", "grundriss"]));
+    expect(lookOrder("developer").slice(0, 3)).toEqual(["tiefdruck", "logbuch", "signal"]);
+    expect(lookOrder("engineer").slice(0, 2)).toEqual(["tiefdruck", "logbuch"]);
     for (const kind of KINDS) {
       const order = lookOrder(kind);
       expect(order[0], kind).toBe(STARTERS[kind].theme.template);

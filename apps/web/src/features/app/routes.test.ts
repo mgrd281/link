@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import ar from "@/messages/ar.json";
+import de from "@/messages/de.json";
+import en from "@/messages/en.json";
+
 import {
   DESIGN_TABS,
   designTabFrom,
@@ -27,6 +31,14 @@ describe("dashboard routes", () => {
     expect(routeInfo("/app/settings/account")).toEqual({ title: "settings.panes.account", tab: null, parent: SETTINGS_HREF, section: "settings" });
     expect(routeInfo("/app/settings/address")).toEqual({ title: "settings.panes.address", tab: null, parent: SETTINGS_HREF, section: "settings" });
     expect(routeInfo("/app/settings/legal")).toEqual({ title: "settings.panes.legal", tab: null, parent: SETTINGS_HREF, section: "settings" });
+  });
+
+  it("pushes the Plan pane over Settings, titled by its own message", () => {
+    expect(routeInfo("/app/settings/plan")).toEqual({ title: "settings.panes.plan", tab: null, parent: SETTINGS_HREF, section: "settings" });
+    expect(routeInfo("/app/settings/plan/")).toEqual(routeInfo("/app/settings/plan"));
+    expect(markedTab("/app/settings/plan")).toBeNull();
+    expect(isReturnPath("/app/settings/plan")).toBe(true);
+    for (const locale of [de, en, ar]) expect(locale.app.settings.panes.plan.length).toBeGreaterThan(0);
   });
 
   it("shows Arbeiten as a view of the Page tab: Page stays marked, nothing to go back to", () => {

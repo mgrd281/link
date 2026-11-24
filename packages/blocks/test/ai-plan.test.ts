@@ -1,7 +1,7 @@
 import { creatorTokens } from "@linkyo/tokens";
 import { describe, expect, it } from "vitest";
 
-import { BUTTON_SHAPES, BUTTON_STYLES, PAGE_PLAN_JSON_SCHEMA, PAGE_PLAN_VERSION, PAIRING_IDS, SWATCH_NAMES, TEMPLATE_IDS, pagePlanSchema } from "../src/ai-plan";
+import { BUTTON_SHAPES, BUTTON_STYLES, PAGE_PLAN_JSON_SCHEMA, PAGE_PLAN_VERSION, PAIRING_IDS, SWATCH_NAMES, TEMPLATE_IDS, TEMPLATES_NOT_OFFERED, pagePlanSchema } from "../src/ai-plan";
 import { KINDS } from "../src/kinds";
 import { LINK_ICONS } from "../src/schema";
 
@@ -71,7 +71,9 @@ describe("PagePlan v1", () => {
   });
 
   it("offers every current token id, kind and icon (and never the Arabic pairing)", () => {
-    expect(TEMPLATE_IDS).toEqual(Object.keys(creatorTokens.templates));
+    // Every template of the tokens, except the ones the catalogue does not offer yet (Stage 3's stand-ins).
+    expect(TEMPLATE_IDS).toEqual(Object.keys(creatorTokens.templates).filter((id) => !TEMPLATES_NOT_OFFERED.includes(id)));
+    for (const id of TEMPLATES_NOT_OFFERED) expect(Object.keys(creatorTokens.templates), id).toContain(id);
     expect(PAIRING_IDS).toEqual(Object.keys(creatorTokens.pairings).filter((id) => id !== "arabic"));
     expect(PAIRING_IDS).not.toContain("arabic");
     expect(BUTTON_STYLES).toEqual([...creatorTokens.buttonStyles]);

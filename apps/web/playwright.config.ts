@@ -30,6 +30,9 @@ export default defineConfig({
       // Never test a server another worktree started: reuse only when a developer asks for it.
       reuseExistingServer: process.env.PW_REUSE_SERVER === "1",
       timeout: 120_000,
+      // Cookie-free analytics is on in tests (lib/flags.ts); production leaves it unset, so it is off.
+      // A run that checks the off state sets LINKYO_ANALYTICS=off itself.
+      env: { LINKYO_ANALYTICS: process.env.LINKYO_ANALYTICS ?? "on" },
     },
     // Real-mode runs (E2E_MOCKS=1) also start the local mock APIs (e2e/mocks/server.mjs).
     ...(process.env.E2E_MOCKS === "1"

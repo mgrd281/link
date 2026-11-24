@@ -20,3 +20,14 @@ export const paymentsEnabled: boolean = paymentsMode !== "off";
 export const stripePublishableKey: string = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
 /** The homepage's AI tab (it also needs a real recording). */
 export const aiTryPublic: boolean = process.env.NEXT_PUBLIC_AI_TRY === "1";
+
+/**
+ * Cookie-free page analytics (Stage 3): a server switch, read on each request. Only the exact value
+ * "on" turns it on. Unset (production, until the founder applies the analytics migrations and the
+ * lawyer approves the privacy wording) means creator pages render no beacon island, /api/collect
+ * answers 204 and stores nothing, and real-mode Stats keep their "coming soon" state. Never
+ * NEXT_PUBLIC_: the browser learns of it only through the island being on the page.
+ */
+export function analyticsEnabled(): boolean {
+  return process.env.LINKYO_ANALYTICS === "on";
+}

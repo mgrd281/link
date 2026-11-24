@@ -1,4 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
+import { TEMPLATE_IDS } from "@linkyo/tokens/creator";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { enterDemoCode } from "./auth";
@@ -239,12 +240,14 @@ test("a social row with an email address draws every glyph solid", async ({ page
 
 // ─── Long names fit the Arabic hero of every template (C-04) ─────────────────────────────────
 
-const TEMPLATES = ["nocturne", "daylight", "marquee", "pulse", "atelier", "mono", "studio", "aura", "folio", "signal", "bloom", "werkbogen", "tiefdruck", "laufbahn"] as const;
+/** Every template of the tokens (read from code, so a template added later is checked too). */
+const TEMPLATES = TEMPLATE_IDS;
 /** Fourteen letters each: one unbreakable Latin word with wide letters, and an Arabic name. */
 const NAMES = ["Wenzeslawowicz", "عبدالكريم الزين"] as const;
 
-test("/ar/app/preview: 14-letter Latin and Arabic names stay inside the hero in all 14 templates", async ({ page }) => {
-  test.setTimeout(300_000);
+test("/ar/app/preview: 14-letter Latin and Arabic names stay inside the hero in every template", async ({ page }) => {
+  // About 21 s per template (two widths, two names).
+  test.setTimeout(TEMPLATES.length * 21_500);
   await signedIn(page, "ar");
   const misfits: string[] = [];
   for (const width of [360, page.viewportSize()?.width ?? PHONE.width]) {

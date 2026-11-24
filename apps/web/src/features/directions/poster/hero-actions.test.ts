@@ -51,9 +51,12 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+/** The portfolio templates and Laufbahn, then Stage 3's three portfolio templates. */
+const PORTFOLIO_TEMPLATES = ["werkbogen", "tiefdruck", "laufbahn", "leuchttisch", "grundriss", "logbuch"] as const;
+
 describe("the list of old templates", () => {
-  it("is every template but the two portfolio templates and Laufbahn", () => {
-    expect([...OLD_TEMPLATES, "werkbogen", "tiefdruck", "laufbahn"].sort()).toEqual([...TEMPLATE_IDS].sort());
+  it("is every template but the portfolio templates and Laufbahn", () => {
+    expect([...OLD_TEMPLATES, ...PORTFOLIO_TEMPLATES].sort()).toEqual([...TEMPLATE_IDS].sort());
   });
 });
 
@@ -170,7 +173,7 @@ describe("a page without a contact block", () => {
     expect(markup).not.toContain("@work:");
   });
 
-  it.each(["werkbogen", "tiefdruck", "laufbahn"] as const)("%s: the same holds on the portfolio templates and on Laufbahn", (template) => {
+  it.each(PORTFOLIO_TEMPLATES)("%s: the same holds on the portfolio templates and on Laufbahn", (template) => {
     const markup = html(template, blocks);
     // Laufbahn's hero always offers "Teilen" (and a jump to the content when there is a section to
     // read); a highlighted link is never promoted there either.

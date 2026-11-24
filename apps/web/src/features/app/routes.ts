@@ -1,7 +1,7 @@
 /*
  * The dashboard's places, in one table: the name each screen shows in the bars, the tab it belongs
  * to, where "back" leads and the rail place (section) it lives under. Settings is pushed over the
- * tab it was opened from (its "origin"), and its three panes and Invite are pushed over Settings, as
+ * tab it was opened from (its "origin"), and its panes and Invite are pushed over Settings, as
  * in iOS. "Arbeiten" (/app/work) is a second view of the Page tab, beside the content list.
  */
 
@@ -40,6 +40,7 @@ export type RouteTitle =
   | "settings.panes.account"
   | "settings.panes.address"
   | "settings.panes.legal"
+  | "settings.panes.plan"
   | "invite.title";
 
 export interface RouteInfo {
@@ -63,6 +64,8 @@ const ROUTES: Record<string, RouteInfo> = {
   "/app/settings/account": { title: "settings.panes.account", tab: null, parent: SETTINGS_HREF, section: "settings" },
   "/app/settings/address": { title: "settings.panes.address", tab: null, parent: SETTINGS_HREF, section: "settings" },
   "/app/settings/legal": { title: "settings.panes.legal", tab: null, parent: SETTINGS_HREF, section: "settings" },
+  // The plan and billing pane (Stage 3, WP3.5 builds its screen).
+  "/app/settings/plan": { title: "settings.panes.plan", tab: null, parent: SETTINGS_HREF, section: "settings" },
   // Phones reach Invite from a Settings row (always there), so back leads to Settings, like the
   // legal notice opened from Home. Wide screens reach it from the rail and show no back link.
   "/app/invite": { title: "invite.title", tab: null, parent: SETTINGS_HREF, section: "invite" },

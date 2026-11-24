@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { tokens } from "@linkyo/tokens";
-import { templatesFor } from "@linkyo/tokens/creator";
+import { TEMPLATE_IDS, templatesFor } from "@linkyo/tokens/creator";
 import { expect, test, type Page } from "@playwright/test";
 
 import ar from "../src/messages/ar.json" with { type: "json" };
@@ -175,9 +175,9 @@ test.describe("laptop layout", () => {
     await page.goto("/en/app/design");
     await expect(heading(page)).toHaveText("Design");
     const cards = "#main fieldset label:has(input[name=poster-template])";
-    await expect(page.locator(cards)).toHaveCount(14);
+    await expect(page.locator(cards)).toHaveCount(TEMPLATE_IDS.length);
     // Every card shows its captured first screen.
-    await expect(page.locator(`${cards} img`)).toHaveCount(14);
+    await expect(page.locator(`${cards} img`)).toHaveCount(TEMPLATE_IDS.length);
     const perRow = await firstRow(page, cards);
     expect(perRow).toBeGreaterThanOrEqual(3);
     expect(perRow).toBeLessThanOrEqual(4);
@@ -199,7 +199,7 @@ test.describe("laptop layout", () => {
     await expect(page.locator(cards)).toHaveCount(templatesFor("portfolio").length);
     await expect(chosen).toBeInViewport();
     await page.getByRole("radio", { name: "All", exact: true }).click();
-    await expect(page.locator(cards)).toHaveCount(14);
+    await expect(page.locator(cards)).toHaveCount(TEMPLATE_IDS.length);
   });
 });
 

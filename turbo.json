@@ -5,7 +5,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["LAUNCH", "LEGAL_REVIEWED", "EMAIL_TRANSPORT"],
+      "env": ["LAUNCH", "LEGAL_REVIEWED", "EMAIL_TRANSPORT", "LINKYO_ANALYTICS"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.test.*", "!e2e/**"],
       "outputs": ["dist/**", "src/generated/**", ".next/**", "!.next/cache/**"]
     },

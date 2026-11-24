@@ -788,6 +788,15 @@
     },
     "laufbahn": {
       "description": "For applications and CVs: a large picture, clear sections with a contents menu, a timeline that fills as you read."
+    },
+    "leuchttisch": {
+      "description": "For photographers: whole series uncropped in rows across the full width, type in ink, only the pictures carry colour."
+    },
+    "grundriss": {
+      "description": "For designers and architects: a title block like a drawing sheet, projects as numbered sheets with their facts, one drafting green."
+    },
+    "logbuch": {
+      "description": "For developers and makers: reads like a well-kept README and build log, projects by year, facts in monospace, a calm sage green."
     }
   },
   "marketing": {
@@ -2195,7 +2204,8 @@
       "panes": {
         "account": "Account",
         "address": "Page address",
-        "legal": "Legal notice"
+        "legal": "Legal notice",
+        "plan": "Plan"
       },
       "emailConfirmTitle": "Change your email?",
       "emailConfirmBody": "We'll send a confirmation link to {new}. Until you open it, you keep signing in with {old}.",

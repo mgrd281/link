@@ -93,6 +93,8 @@ public enum LinkyoTokens {
         public static let columnWide: CGFloat = 840
         /// The wide canvas of creator pages (portfolio templates and every project page). Own name, same value as content.
         public static let work: CGFloat = 1120
+        /// The full canvas of creator pages (canvas "full"): pictures run this wide from large screens on, while text stays in the creator column.
+        public static let wall: CGFloat = 1680
         /// Live phone preview width.
         public static let preview: CGFloat = 390
         /// Compact live phone preview (desk to xl).

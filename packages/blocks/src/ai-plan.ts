@@ -22,8 +22,16 @@ const tuple = (values: readonly string[]): NonEmpty => {
   return [first, ...rest];
 };
 
-/** Template ids, as the design tokens define them. */
-export const TEMPLATE_IDS = tuple(Object.keys(creatorTokens.templates));
+/**
+ * Templates the AI's catalogue does not offer yet. Stage 3's three portfolio templates start as
+ * stand-ins with Werkbogen's look; the change that draws them takes the next plan and prompt versions
+ * (plan-v4, core-v5), lists them in the catalogue and empties this list. Until then the AI never picks
+ * one, and plan-v3's schema stays exactly as reviewed.
+ */
+export const TEMPLATES_NOT_OFFERED: readonly string[] = ["leuchttisch", "grundriss", "logbuch"];
+
+/** Template ids, as the design tokens define them (without those not offered yet). */
+export const TEMPLATE_IDS = tuple(Object.keys(creatorTokens.templates).filter((id) => !TEMPLATES_NOT_OFFERED.includes(id)));
 /** Font pairings the AI may pick: the Arabic pairing is chosen by the page's language, never by the AI. */
 export const PAIRING_IDS = tuple(Object.keys(creatorTokens.pairings).filter((id) => id !== "arabic"));
 export const BUTTON_STYLES = tuple(creatorTokens.buttonStyles);

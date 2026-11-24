@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { contrastRatio, hexToOklch, oklchToHex, parseHex, toHex } from "../src/creator/color";
 import { auditPalette, generatePalette, type ThemeMode } from "../src/creator/palette";
-import { DEFAULT_LAYOUT, PRESET_IDS, PROJECTS_STYLES, resolveCreatorTheme, shuffleCreatorTheme, TEMPLATE_IDS, type CreatorLayout } from "../src/creator/theme";
+import { DEFAULT_LAYOUT, drawnLayout, LAYOUT_FALLBACK, PRESET_IDS, PROJECTS_STYLES, resolveCreatorTheme, shuffleCreatorTheme, TEMPLATE_IDS, type CreatorLayout } from "../src/creator/theme";
 import { creatorTokens, tokens } from "../src/generated/tokens";
 
 /** The two portfolio templates (v8); every other template is "old" and must keep its layout. */
@@ -13,7 +13,12 @@ const PORTFOLIO_TEMPLATES = ["werkbogen", "tiefdruck"] as const;
 /** Templates added after the portfolio: Laufbahn, for applications and CVs (ADR 0069). */
 const LATER_TEMPLATES = ["laufbahn"] as const;
 const NEW_TEMPLATES = [...PORTFOLIO_TEMPLATES, ...LATER_TEMPLATES] as const;
-const OLD_TEMPLATES = TEMPLATE_IDS.filter((id) => !(NEW_TEMPLATES as readonly string[]).includes(id));
+/**
+ * Stage 3's three portfolio templates as stand-ins (S3.0): copies of Werkbogen's look until WP3.2 gives
+ * each its own layout and palette. WP3.2 moves them into NEW_TEMPLATES, where the three-keys rule holds.
+ */
+const STAND_INS = ["leuchttisch", "grundriss", "logbuch"] as const;
+const OLD_TEMPLATES = TEMPLATE_IDS.filter((id) => !([...NEW_TEMPLATES, ...STAND_INS] as readonly string[]).includes(id));
 
 /** Deterministic PRNG (mulberry32) so failures are reproducible. */
 function rng(seed: number) {
@@ -172,7 +177,8 @@ describe("presets", () => {
   });
 
   it("Werkbogen and Tiefdruck: the layouts, and palettes that pass the audit", () => {
-    expect(TEMPLATE_IDS).toHaveLength(14);
+    // Every template is old, new or a stand-in, so a template added later has to be placed in one group.
+    expect(TEMPLATE_IDS).toHaveLength(OLD_TEMPLATES.length + NEW_TEMPLATES.length + STAND_INS.length);
     expect(OLD_TEMPLATES).toHaveLength(11);
     expect(resolveCreatorTheme({ template: "werkbogen" }).layout).toEqual({ headings: "marker", hero: "plate", socials: "plain", backdrop: "none", gallery: "grid", motion: "calm", projects: "auto", canvas: "wide" });
     expect(resolveCreatorTheme({ template: "tiefdruck" }).layout).toEqual({ headings: "headline", hero: "statement", socials: "plain", backdrop: "none", gallery: "grid", motion: "reveal", projects: "list", canvas: "wide" });
@@ -217,7 +223,8 @@ describe("presets", () => {
     const keys = Object.keys(DEFAULT_LAYOUT) as (keyof CreatorLayout)[];
     for (const template of NEW_TEMPLATES) {
       const mine = resolveCreatorTheme({ template }).layout;
-      for (const other of TEMPLATE_IDS.filter((id) => id !== template)) {
+      // The stand-ins are Werkbogen's copies for now (see the stand-ins test below).
+      for (const other of TEMPLATE_IDS.filter((id) => id !== template && !(STAND_INS as readonly string[]).includes(id))) {
         const theirs = resolveCreatorTheme({ template: other }).layout;
         const different = keys.filter((key) => mine[key] !== theirs[key]);
         expect(different.length, `${template} vs ${other}: ${different.join(", ")}`).toBeGreaterThanOrEqual(3);
@@ -243,8 +250,58 @@ describe("presets", () => {
     for (const template of NEW_TEMPLATES) expect(resolveCreatorTheme({ template }).layout.canvas, template).toBe("wide");
   });
 
+  it("Stage 3's stand-ins: Werkbogen's look under their own names, made for portfolios, after every earlier template", () => {
+    expect(TEMPLATE_IDS.slice(-STAND_INS.length)).toEqual([...STAND_INS]);
+    const werkbogen = resolveCreatorTheme({ template: "werkbogen" });
+    for (const template of STAND_INS) {
+      const theme = resolveCreatorTheme({ template });
+      expect(theme.template).toBe(template);
+      expect(theme.layout, template).toEqual(werkbogen.layout);
+      expect(theme.palette, template).toEqual(werkbogen.palette);
+      expect(creatorTokens.templates[template].use, template).toEqual(["portfolio"]);
+      for (const rtlScript of [false, true]) {
+        const failed = auditPalette(resolveCreatorTheme({ template }, { rtlScript }).palette).filter((check) => !check.pass);
+        expect(failed, `${template} ${rtlScript ? "rtl" : "ltr"}`).toEqual([]);
+      }
+    }
+    expect(creatorTokens.templates.leuchttisch.label).toBe("Leuchttisch");
+    expect(creatorTokens.templates.grundriss.label).toBe("Grundriss");
+    expect(creatorTokens.templates.logbuch.label).toBe("Logbuch");
+  });
+
+  it("draws every layout value without a renderer yet as an existing one", () => {
+    const fallbacks = LAYOUT_FALLBACK as Partial<Record<keyof CreatorLayout, Record<string, string>>>;
+    // Every fallback is a value that is drawn today, never another fallback.
+    for (const [key, table] of Object.entries(fallbacks) as [keyof CreatorLayout, Record<string, string>][]) {
+      for (const [value, drawn] of Object.entries(table)) {
+        expect(Object.keys(table), `${key}: ${value} → ${drawn}`).not.toContain(drawn);
+        expect(drawnLayout({ ...DEFAULT_LAYOUT, [key]: value })[key], `${key}: ${value}`).toBe(drawn);
+      }
+    }
+    expect(drawnLayout({ ...DEFAULT_LAYOUT, hero: "strip", projects: "log", gallery: "justified", backdrop: "columns", canvas: "full" })).toEqual({
+      ...DEFAULT_LAYOUT,
+      hero: "plate",
+      projects: "list",
+      gallery: "grid",
+      backdrop: "none",
+      canvas: "wide",
+    });
+    // A drawn value passes through unchanged.
+    expect(drawnLayout(DEFAULT_LAYOUT)).toEqual(DEFAULT_LAYOUT);
+    // No template resolves to a value that nothing draws yet.
+    for (const template of TEMPLATE_IDS) {
+      const { layout } = resolveCreatorTheme({ template });
+      for (const key of Object.keys(DEFAULT_LAYOUT) as (keyof CreatorLayout)[]) {
+        expect(Object.keys(fallbacks[key] ?? {}), `${template} ${key}`).not.toContain(layout[key]);
+      }
+    }
+    // Owners still choose only the four work layouts that exist.
+    expect(PROJECTS_STYLES).not.toContain("justified");
+  });
+
   it("Laufbahn: signposts and the bleed hero, a light palette that passes the audit, and Sevag's navy", () => {
-    expect(TEMPLATE_IDS.at(-1)).toBe("laufbahn");
+    // Laufbahn follows the two portfolio templates (Stage 3's stand-ins come after it).
+    expect(TEMPLATE_IDS.indexOf("laufbahn")).toBe(TEMPLATE_IDS.indexOf("tiefdruck") + 1);
     expect(resolveCreatorTheme({ template: "laufbahn" }).layout).toEqual({ headings: "signpost", hero: "bleed", socials: "plain", backdrop: "none", gallery: "grid", motion: "reveal", projects: "auto", canvas: "wide" });
     // The new layout values belong to Laufbahn alone: every other template renders as before.
     for (const template of TEMPLATE_IDS.filter((id) => id !== "laufbahn")) {
@@ -311,6 +368,9 @@ describe("presets", () => {
     // --aspect-photo into aspect-photo (the build writes the theme before the tests run).
     const theme = readFileSync(path.join(import.meta.dirname, "../dist/tailwind/theme.css"), "utf8");
     expect(theme).toContain("--container-work: 70rem;");
+    // The full canvas (Stage 3): pictures up to layout.wall, as max-w-wall and the @wall: variant.
+    expect(tokens.layout.wall).toBe(1680);
+    expect(theme).toContain("--container-wall: 105rem;");
     expect(theme).toContain("--aspect-photo: 3 / 2;");
   });
 

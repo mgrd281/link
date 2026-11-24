@@ -116,7 +116,7 @@ export function ProjectsGroup({
               )}
             >
               {shown.map((entry) => (
-                <li key={entry.project.id} id={entry.project.slug} className="grid min-w-0 snap-start scroll-mt-16">
+                <li key={entry.project.id} id={entry.project.slug} data-block={entry.project.id} className="grid min-w-0 snap-start scroll-mt-16">
                   <Card entry={entry} cover={{ phone: "aspect-portrait", wide: null, sizes: wide ? mediaSizes.workRail : mediaSizes.rail }} lead={false} {...shared} />
                 </li>
               ))}
@@ -227,7 +227,7 @@ export function ProjectPlate({
   // Unlinked (a preview), the visible title is the heading itself.
   const PlateTitle = linked ? "p" : "h2";
   return (
-    <div id={project.slug} className="grid min-w-0 scroll-mt-16">
+    <div id={project.slug} data-block={project.id} className="grid min-w-0 scroll-mt-16">
       <Shell entry={entry} onOpen={onOpen} label={name} className="grid min-w-0 grid-cols-1 gap-3 @work:gap-4">
         {/* The link's name begins with these words; they hold the title, so the title below is not read
             twice. A heading, so someone who moves by headings meets the plate as the first project. */}
@@ -637,7 +637,7 @@ export function bentoTiles<T extends { project: Project }>(entries: readonly T[]
 
 function Tile({ entry, lead, phoneSpan, wideSpan, wideRows, cover, wide, ...shared }: TileSpec & Shared) {
   return (
-    <div role="listitem" id={entry.project.slug} className={cn("grid min-w-0 scroll-mt-16", PHONE_SPAN[phoneSpan], wide && WIDE_SPAN[wideSpan], wide && wideRows === 2 && "@work:row-span-2")}>
+    <div role="listitem" id={entry.project.slug} data-block={entry.project.id} className={cn("grid min-w-0 scroll-mt-16", PHONE_SPAN[phoneSpan], wide && WIDE_SPAN[wideSpan], wide && wideRows === 2 && "@work:row-span-2")}>
       <Card entry={entry} lead={lead} narrow={phoneSpan === 1} roomy={wide && wideSpan >= 3} wide={wide} cover={wide ? cover : { phone: cover.phone, wide: null, sizes: phoneSpan === 2 ? mediaSizes.column : mediaSizes.half }} {...shared} />
     </div>
   );
@@ -655,7 +655,7 @@ function Row({ entry, compact, numbered, loud, wide, locale, onOpen }: { entry: 
   // arrow out to the project's own link.
   const hasThumb = !compact && (coverMode(project) === "picture" || (coverMode(project) === "figure" && figureSize(project.results?.[0]?.value ?? "") === "lg"));
   return (
-    <li id={project.slug} className="scroll-mt-16 border-b border-creator-line">
+    <li id={project.slug} data-block={project.id} className="scroll-mt-16 border-b border-creator-line">
       <Shell
         entry={entry}
         onOpen={onOpen}

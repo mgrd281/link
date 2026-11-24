@@ -788,6 +788,15 @@
     },
     "laufbahn": {
       "description": "Für Bewerbungen und Lebensläufe: ein großes Bild, klare Abschnitte mit Inhaltsmenü, ein Werdegang, der sich beim Lesen füllt."
+    },
+    "leuchttisch": {
+      "description": "Für Fotografie: ganze Serien ungeschnitten in Reihen über die volle Breite, Schrift in Tinte, nur die Bilder tragen Farbe."
+    },
+    "grundriss": {
+      "description": "Für Design und Architektur: ein Schriftfeld wie auf dem Plan, Projekte als nummerierte Blätter mit ihren Fakten, ein Zeichengrün."
+    },
+    "logbuch": {
+      "description": "Für Entwicklung und Handwerk: liest sich wie ein gepflegtes README und Bautagebuch, Projekte nach Jahren, Fakten in Monospace, ein ruhiges Salbeigrün."
     }
   },
   "marketing": {
@@ -2195,7 +2204,8 @@
       "panes": {
         "account": "Konto",
         "address": "Seitenadresse",
-        "legal": "Impressum"
+        "legal": "Impressum",
+        "plan": "Plan"
       },
       "emailConfirmTitle": "E-Mail ändern?",
       "emailConfirmBody": "Wir schicken einen Bestätigungslink an {new}. Bis du ihn öffnest, meldest du dich weiter mit {old} an.",

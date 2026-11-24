@@ -125,7 +125,7 @@ function Name({ profile, isRtl, theme, compact = false, scale }: { profile: Prof
  */
 export function Socials({ block, plain, start = false, solid = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean; solid?: boolean }) {
   return (
-    <ul className={cn("flex flex-wrap", start ? "-ms-3 justify-start" : "justify-center", plain ? "gap-2" : "gap-3")}>
+    <ul data-block={block.id} className={cn("flex flex-wrap", start ? "-ms-3 justify-start" : "justify-center", plain ? "gap-2" : "gap-3")}>
       {block.items.map((item) => (
         <li key={item.url}>
           <a
@@ -213,7 +213,7 @@ export function HeroActions({
   const line = status ? contactStatus(contact, now) : null;
   const cv = contact.links?.find((link) => link.kind === "cv");
   return (
-    <div data-hero-actions className={cn("grid w-full grid-cols-1 gap-3", align === "start" ? "justify-items-start" : "justify-items-center", className)} style={style}>
+    <div data-hero-actions data-block={contact.id} className={cn("grid w-full grid-cols-1 gap-3", align === "start" ? "justify-items-start" : "justify-items-center", className)} style={style}>
       {line ? <StatusLine text={line} /> : null}
       <div className={cn("flex w-full flex-wrap items-center gap-x-5 gap-y-1", align === "start" ? "justify-start" : "justify-center")}>
         <a
@@ -577,11 +577,14 @@ function BarActionGlyph({ primary }: { primary: NonNullable<Primary> }) {
 export function PosterBar({
   profile,
   primary,
+  primaryBlock,
   solid = false,
   sections,
 }: {
   profile: Profile;
   primary?: Primary | null | undefined;
+  /** The id of the contact block the primary action comes from (its block mark). */
+  primaryBlock?: string | undefined;
   solid?: boolean;
   sections?: readonly IndexEntry[] | undefined;
 }) {
@@ -608,6 +611,7 @@ export function PosterBar({
           <a
             href={primary.url}
             data-bar-action
+            data-block={primaryBlock}
             className={cn("inline-flex min-h-touch-target max-w-2/5 shrink-0 items-center rounded-creator-button bg-creator-accent px-4 text-small font-semibold text-creator-accent-fg", pressable)}
           >
             <span dir="auto" className="truncate">
@@ -620,6 +624,7 @@ export function PosterBar({
           <a
             href={primary.url}
             data-bar-action
+            data-block={primaryBlock}
             className={cn(
               "inline-flex min-h-touch-target w-touch-target shrink-0 items-center justify-center rounded-creator-button bg-creator-accent text-small font-semibold text-creator-accent-fg @prose:w-auto @prose:max-w-2/5 @prose:px-4",
               pressable,

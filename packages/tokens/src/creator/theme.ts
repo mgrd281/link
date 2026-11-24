@@ -43,14 +43,39 @@ export type HeadingStyle = "display" | "sans" | "sans-upper" | "numbered" | "rul
  * corner marks (frame), the portrait in an arch (arch), the first piece of work as a large plate under a
  * quiet name (plate), the name set as large as the screen allows (statement), or the picture from edge
  * to edge with the name set large on it, beside the words as a tall plate on the wide canvas (bleed).
+ *
+ * Stage 3 adds three, drawn as their fallback until their renderer lands (`LAYOUT_FALLBACK`): the first
+ * covers in one justified row at their own ratios (strip), an architect's title block beside the lead
+ * cover (titleblock), and a README: the name, a role line and a monospace list of facts (readme).
  */
-export type HeroStyle = "portrait" | "logo" | "duotone" | "mono" | "cinema" | "halo" | "inset" | "frame" | "arch" | "plate" | "statement" | "bleed";
+export type HeroStyle =
+  | "portrait"
+  | "logo"
+  | "duotone"
+  | "mono"
+  | "cinema"
+  | "halo"
+  | "inset"
+  | "frame"
+  | "arch"
+  | "plate"
+  | "statement"
+  | "bleed"
+  | "strip"
+  | "titleblock"
+  | "readme";
 /** Social profiles under the name: round tiles, or bare glyphs for quiet, editorial looks. */
 export type SocialStyle = "tiles" | "plain";
-/** Behind the page: nothing, the page's colors drifting slowly (aurora), or a fine grid. */
-export type BackdropStyle = "none" | "aurora" | "grid";
-/** Photo galleries: a sideways rail, or a two-column grid for portfolios. */
-export type GalleryStyle = "rail" | "grid";
+/**
+ * Behind the page: nothing, the page's colors drifting slowly (aurora), a fine grid, or hairline
+ * column guides behind the wide canvas (columns, Stage 3; drawn as its fallback until it lands).
+ */
+export type BackdropStyle = "none" | "aurora" | "grid" | "columns";
+/**
+ * Photo galleries: a sideways rail, a two-column grid for portfolios, or rows of equal height with
+ * every picture uncropped (justified, Stage 3; drawn as its fallback until it lands).
+ */
+export type GalleryStyle = "rail" | "grid" | "justified";
 /** Sections stay put (calm) or rise in as they scroll into view (reveal); never with reduced motion. */
 export type MotionStyle = "calm" | "reveal";
 /**
@@ -58,10 +83,21 @@ export type MotionStyle = "calm" | "reveal";
  * chosen from the content (auto). The first layout key an owner may set (`CreatorThemeConfig.projects`).
  */
 export type ProjectsStyle = "auto" | "bento" | "list" | "rail";
+/**
+ * A run of projects as a template may lay it out: every owner choice, plus three that only a template
+ * sets (Stage 3), drawn as their fallback until their renderer lands: uncropped rows of equal height
+ * (justified), one drawing sheet per project with its facts (sheets), and a build log grouped by year (log).
+ */
+export type TemplateProjectsStyle = ProjectsStyle | "justified" | "sheets" | "log";
+/** The work layouts an owner may choose (Arbeiten, the import); otherwise the template's own value. */
 export const PROJECTS_STYLES = ["auto", "bento", "list", "rail"] as const satisfies readonly ProjectsStyle[];
 export const isProjectsStyle = (value: unknown): value is ProjectsStyle => typeof value === "string" && (PROJECTS_STYLES as readonly string[]).includes(value);
-/** The page column: the narrow creator column, or the wide canvas from desktop widths (layout.work). */
-export type CanvasStyle = "column" | "wide";
+/**
+ * The page column: the narrow creator column, the wide canvas from desktop widths (layout.work), or
+ * the full canvas whose pictures run to layout.wall while text keeps the creator column (full,
+ * Stage 3; drawn as its fallback until it lands).
+ */
+export type CanvasStyle = "column" | "wide" | "full";
 
 export interface CreatorLayout {
   headings: HeadingStyle;
@@ -70,14 +106,54 @@ export interface CreatorLayout {
   backdrop: BackdropStyle;
   gallery: GalleryStyle;
   motion: MotionStyle;
-  projects: ProjectsStyle;
+  projects: TemplateProjectsStyle;
   canvas: CanvasStyle;
+}
+
+/**
+ * The layout values the tokens may already name but no renderer draws yet (Stage 3: WP3.2 draws them),
+ * each with the existing value it is drawn as until then, so every template compiles and renders. A
+ * value leaves this table in the change that draws it; `resolveCreatorTheme` applies what is left.
+ */
+export const LAYOUT_FALLBACK = {
+  hero: { strip: "plate", titleblock: "plate", readme: "statement" },
+  projects: { justified: "bento", sheets: "list", log: "list" },
+  gallery: { justified: "grid" },
+  backdrop: { columns: "none" },
+  canvas: { full: "wide" },
+} as const satisfies { [K in keyof CreatorLayout]?: Partial<Record<CreatorLayout[K], CreatorLayout[K]>> };
+
+type Fallbacks = typeof LAYOUT_FALLBACK;
+/**
+ * A layout as the renderers draw it: `CreatorLayout` without the values that still fall back. When a
+ * value leaves `LAYOUT_FALLBACK`, this type takes it in and the compiler names every place that has to
+ * draw it.
+ */
+export type DrawnLayout = { [K in keyof CreatorLayout]: K extends keyof Fallbacks ? Exclude<CreatorLayout[K], keyof Fallbacks[K]> : CreatorLayout[K] };
+
+/** A layout with every value that has no renderer yet replaced by its fallback (`LAYOUT_FALLBACK`). */
+export function drawnLayout(layout: CreatorLayout): DrawnLayout {
+  const drawn = <K extends keyof CreatorLayout>(key: K): DrawnLayout[K] => {
+    const table = (LAYOUT_FALLBACK as { [Key in keyof CreatorLayout]?: Partial<Record<string, DrawnLayout[Key]>> })[key];
+    return table?.[layout[key]] ?? (layout[key] as DrawnLayout[K]);
+  };
+  return {
+    headings: drawn("headings"),
+    hero: drawn("hero"),
+    socials: drawn("socials"),
+    backdrop: drawn("backdrop"),
+    gallery: drawn("gallery"),
+    motion: drawn("motion"),
+    projects: drawn("projects"),
+    canvas: drawn("canvas"),
+  };
 }
 
 export interface ResolvedCreatorTheme {
   preset: CreatorPresetId;
   template: CreatorTemplateId | null;
-  layout: CreatorLayout;
+  /** The template's layout as it is drawn today (values without a renderer yet fall back). */
+  layout: DrawnLayout;
   palette: CreatorPalette;
   pairing: (typeof creatorTokens.pairings)[CreatorPairingId];
   buttonStyle: CreatorButtonStyle;
@@ -116,13 +192,22 @@ export const templateUses = (id: CreatorTemplateId): readonly TemplateUse[] => (
 /** The templates made for a use, in token order (pickers' filters, the portfolio row). */
 export const templatesFor = (use: TemplateUse): CreatorTemplateId[] => TEMPLATE_IDS.filter((id) => templateUses(id).includes(use));
 
+/** The kinds a template names under `key` in its tokens (`suggestFor`, `leadFor`). */
+const kindsOf = (id: CreatorTemplateId, key: "suggestFor" | "leadFor"): readonly string[] =>
+  (creatorTokens.templates[id] as { suggestFor?: readonly string[]; leadFor?: readonly string[] })[key] ?? [];
+
 /**
- * The templates suggested for a page kind (tokens: `suggestFor`), in token order. Data-driven, so a new
- * template that names a kind appears in that kind's suggestions without code. The kind is a plain string
- * here because the kinds live in @linkyo/blocks, which this package does not depend on.
+ * The templates suggested for a page kind (tokens: `suggestFor`): those that also name the kind in
+ * `leadFor` first (a new look offered right after the kind's own starter, e.g. Leuchttisch to
+ * photographers), then the others, each group in token order. Data-driven, so a new template that names
+ * a kind appears in that kind's suggestions without code. The kind is a plain string here because the
+ * kinds live in @linkyo/blocks, which this package does not depend on.
  */
-export const suggestedTemplates = (kind: string): CreatorTemplateId[] =>
-  TEMPLATE_IDS.filter((id) => ((creatorTokens.templates[id] as { suggestFor?: readonly string[] }).suggestFor ?? []).includes(kind));
+export const suggestedTemplates = (kind: string): CreatorTemplateId[] => {
+  const suggested = TEMPLATE_IDS.filter((id) => kindsOf(id, "suggestFor").includes(kind));
+  const lead = suggested.filter((id) => kindsOf(id, "leadFor").includes(kind));
+  return [...lead, ...suggested.filter((id) => !lead.includes(id))];
+};
 
 /**
  * `ids` in the given order first (unknown and repeated ids dropped), then every other template in token
@@ -147,7 +232,7 @@ interface TemplateDefaults {
   backdrop?: BackdropStyle | undefined;
   gallery?: GalleryStyle | undefined;
   motion?: MotionStyle | undefined;
-  projects?: ProjectsStyle | undefined;
+  projects?: TemplateProjectsStyle | undefined;
   canvas?: CanvasStyle | undefined;
   /** Weight of the display face on Arabic pages; wins over the Arabic companion's own weight. */
   arabicDisplayWeight?: 400 | 700 | undefined;
@@ -258,7 +343,8 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
   const arabic = options.rtlScript ? arabicStacks(latinPairingId, ownArabic) : null;
   const buttonStyle: CreatorButtonStyle = config.buttonStyle ?? preset.buttonStyle;
   const buttonShape: CreatorButtonShape = config.buttonShape ?? preset.buttonShape;
-  const layout: CreatorLayout = {
+  // Values without a renderer yet are drawn as their fallback (LAYOUT_FALLBACK).
+  const layout = drawnLayout({
     headings: t.headings ?? DEFAULT_LAYOUT.headings,
     hero: t.hero ?? DEFAULT_LAYOUT.hero,
     socials: t.socials ?? DEFAULT_LAYOUT.socials,
@@ -268,7 +354,7 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     // The one layout key an owner may set; an unknown stored value falls back to the template.
     projects: (isProjectsStyle(config.projects) ? config.projects : undefined) ?? t.projects ?? DEFAULT_LAYOUT.projects,
     canvas: t.canvas ?? DEFAULT_LAYOUT.canvas,
-  };
+  });
   const background = config.background ?? preset.background;
 
   const display = pairing.display as {

@@ -21,4 +21,9 @@ export const ROUTES = [
   "/directions/poster?chrome=0&template=tiefdruck&page=portfolio",
   // Laufbahn (applications and CVs) with a contact block, projects and every portfolio section.
   "/directions/poster?chrome=0&template=laufbahn&page=portfolio",
+  // Stage 3's portfolio templates (Leuchttisch, Grundriss, Logbuch), on the music and the portfolio sample.
+  ...["leuchttisch", "grundriss", "logbuch"].flatMap((template) => [
+    `/directions/poster?chrome=0&template=${template}`,
+    `/directions/poster?chrome=0&template=${template}&page=portfolio`,
+  ]),
 ];

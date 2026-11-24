@@ -6,7 +6,10 @@ import aura from "@/assets/templates/aura.webp";
 import bloom from "@/assets/templates/bloom.webp";
 import daylight from "@/assets/templates/daylight.webp";
 import folio from "@/assets/templates/folio.webp";
+import grundriss from "@/assets/templates/grundriss.webp";
 import laufbahn from "@/assets/templates/laufbahn.webp";
+import leuchttisch from "@/assets/templates/leuchttisch.webp";
+import logbuch from "@/assets/templates/logbuch.webp";
 import marquee from "@/assets/templates/marquee.webp";
 import mono from "@/assets/templates/mono.webp";
 import nocturne from "@/assets/templates/nocturne.webp";
@@ -40,6 +43,9 @@ export const TEMPLATE_PREVIEWS: Partial<Record<CreatorTemplateId, StaticImageDat
   werkbogen,
   tiefdruck,
   laufbahn,
+  leuchttisch,
+  grundriss,
+  logbuch,
 };
 
 /** Picker cards: up to a quarter of the 840 px column on laptops, nearly half the screen on phones. */

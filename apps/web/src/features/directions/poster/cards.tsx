@@ -166,7 +166,10 @@ export function RowGroup({ blocks, surface, label }: { blocks: RowBlock[]; surfa
     return (
       <div className="grid gap-2">
         {blocks.map((block) => (
-          <RowCard key={block.id} block={block} surface={surface} inRail={false} />
+          // Each row names its block (renderer.tsx, block marks) in a box that takes no room.
+          <div key={block.id} data-block={block.id} className="contents">
+            <RowCard block={block} surface={surface} inRail={false} />
+          </div>
         ))}
       </div>
     );
@@ -175,7 +178,7 @@ export function RowGroup({ blocks, surface, label }: { blocks: RowBlock[]; surfa
     <div role="region" aria-label={t("scroller", { title: label })} tabIndex={0} className={railFrame}>
       <ul className={cn("grid auto-cols-[86%] grid-flow-col grid-rows-2 gap-2 @prose:auto-cols-[72%]", railTrack)}>
         {blocks.map((block) => (
-          <li key={block.id} className="min-w-0 snap-start">
+          <li key={block.id} data-block={block.id} className="min-w-0 snap-start">
             <RowCard block={block} surface={surface} inRail />
           </li>
         ))}
@@ -224,7 +227,7 @@ export function VideoRail({ videos }: { videos: BlockOf<"video">[] }) {
     <div role="region" aria-label={t("scroller", { title: t("videos") })} tabIndex={0} className={railFrame}>
       <ul className={cn("flex gap-3", railTrack)}>
         {videos.map((video) => (
-          <li key={video.id} className="grid w-4/5 shrink-0 snap-start content-start gap-3 @prose:w-3/4">
+          <li key={video.id} data-block={video.id} className="grid w-4/5 shrink-0 snap-start content-start gap-3 @prose:w-3/4">
             <ClickToLoad
               compact
               provider={providerName(video)}
@@ -291,7 +294,7 @@ export function ProductGrid({ products, surface }: { products: BlockOf<"product"
   return (
     <ul className="grid grid-cols-2 gap-3">
       {products.map((product) => (
-        <li key={product.id} className="min-w-0">
+        <li key={product.id} data-block={product.id} className="min-w-0">
           <a href={product.url} className={cn("grid h-full content-start overflow-hidden rounded-creator-card", surface, pressable)}>
             <span className="relative aspect-square">
               <MediaImage src={product.image.src} focal={product.image.focal} alt={product.image.alt} sizes={mediaSizes.half} />

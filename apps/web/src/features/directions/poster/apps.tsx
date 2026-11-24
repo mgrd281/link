@@ -115,7 +115,7 @@ export function AppList({ apps, surface, heading }: { apps: BlockOf<"app">[]; su
   return (
     <ul className={cn("grid divide-y divide-creator-line overflow-hidden rounded-creator-card", surface)}>
       {apps.map((app) => (
-        <li key={app.id} className={cn("relative", app.highlight && "border-s-emphasis border-creator-accent")}>
+        <li key={app.id} data-block={app.id} className={cn("relative", app.highlight && "border-s-emphasis border-creator-accent")}>
           <AppItem block={app} heading={heading} />
         </li>
       ))}
