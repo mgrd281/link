@@ -73,12 +73,12 @@ test("a page prepared from a person's own application letter reads as his own pa
   const [nameBox, roleBox] = [await name.boundingBox(), await role.boundingBox()];
   expect(nameBox && roleBox && roleBox.y >= nameBox.y + nameBox.height - 1).toBe(true);
   expect(await name.evaluate((h1) => Math.round(h1.getBoundingClientRect().height / parseFloat(getComputedStyle(h1).lineHeight)))).toBe(1);
-  // The motion graphic comes from our own origin (one of his four library clips: his own on a first
+  // The motion graphic comes from our own origin (one of his three drawn library clips: his own on a first
   // visit, the next on every refresh, see below), its own first frame is the still, and it stays
   // still for reduced motion.
   const clip = page.locator("video").first();
   const src = (await clip.getAttribute("src")) ?? "";
-  expect(src).toMatch(/^\/media\/motion\/(hochregal|barcode-scannen|stapler-fahren|hubwagen)\.mp4$/);
+  expect(src).toMatch(/^\/media\/motion\/(palette-packen|lagerarbeit|ware-scannen)\.mp4$/);
   const key = /motion\/([a-z-]+)\.mp4/.exec(src)?.[1] ?? "";
   await expect(page.locator("[data-hero-plate] img").first()).toHaveAttribute("src", new RegExp(`ex-motion-${key}`));
   expect(await clip.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
@@ -95,15 +95,15 @@ test("a page prepared from a person's own application letter reads as his own pa
   expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
 });
 
-const ROTATION = ["hochregal", "barcode-scannen", "stapler-fahren", "hubwagen"];
+const ROTATION = ["palette-packen", "lagerarbeit", "ware-scannen"];
 
 test("his page shows the clip its address names, each with its own still; a first visit shows his own", async ({ request }) => {
   const clipOf = (html: string) => /\/media\/motion\/([a-z-]+)\.mp4/.exec(html)?.[1] ?? "";
   // A first visit (and a link preview, a shared link) without a clip in the address: his own clip.
-  expect(clipOf(await (await request.get("/de/p/sevag-ghazarian-2131af")).text())).toBe("hochregal");
+  expect(clipOf(await (await request.get("/de/p/sevag-ghazarian-2131af")).text())).toBe("palette-packen");
   for (const key of [...ROTATION, "not-a-clip"]) {
     const html = await (await request.get(`/de/p/sevag-ghazarian-2131af?clip=${key}`)).text();
-    const shown = key === "not-a-clip" ? "hochregal" : key;
+    const shown = key === "not-a-clip" ? "palette-packen" : key;
     expect(clipOf(html)).toBe(shown);
     // The still is that clip's own first frame, never another one's.
     expect(html).toContain(`ex-motion-${shown}`);
@@ -111,7 +111,7 @@ test("his page shows the clip its address names, each with its own still; a firs
   }
 });
 
-test("every refresh of his page shows the next of his four clips, and the address keeps its section", async ({ page }) => {
+test("every refresh of his page shows the next of his three drawn clips, and the address keeps its section", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/de/p/sevag-ghazarian-2131af");
   const clip = page.locator("video").first();

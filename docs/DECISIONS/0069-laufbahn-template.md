@@ -218,22 +218,19 @@ feels like a real app. Everything is template-level again, and every other templ
   need a gesture script for little gain. With a native modal dialog, Tab may step from its last row
   to the browser's own controls (the page behind stays inert).
 
-## Round 4: real footage, one line, modern buttons, calm scrolling (the founder's review of round 3)
+## Round 4: drawn clips only, one line, modern buttons, calm scrolling (the founder's review of round 3)
 
-The founder looked at round 3 on his phone and asked for four things: videos that look real ("no
-design"), no line repeated over and over while scrolling, modern buttons, and scroll motion that is
+The founder looked at round 3 on his phone and asked for four things: no clip that looks like real
+video, no line repeated over and over while scrolling, modern buttons, and scroll motion that is
 modern and fitting. Template-level again (Sevag's clips aside); every other template renders as before
 (the portfolio baseline review: 51 of 51 byte-equal).
 
-- **Real footage only on Sevag's page.** Three new real clips in the motion library, all under the
-  Pexels License, cropped to 4:5 so that no face can be identified, cut into seamless loops (the end
-  dissolves into the start) with a light, calm grade: "Hochregal" (a reach truck at a high-bay rack,
-  Rolan Muradov), "Stapler fahren" (a forklift carrying a pallet of cartons down a long aisle, Paul
-  Cruz; the crop pans with it) and "Hubwagen ziehen" (a worker, seen from behind, pulling a pallet
-  truck through the aisles, Tiger Lily). With "Barcode scannen" they are his rotation, and his own clip
-  (a first visit, the link preview) is "Hochregal". About 0.9 to 1.3 MB each. The drawn clips stay in
-  the library for whoever wants them. Rejected on the way: clips with brand names on boxes, shirts or
-  the truck, and clips whose face could not be cropped out.
+- **Drawn clips only on Sevag's page.** The founder does not want real footage on it ("no real video").
+  A first take of this round misread his message and put real clips in; they were removed again the
+  same day. His page takes turns with the library's three drawn warehouse clips only: "Palette packen"
+  (his own: a first visit, the link preview), "Lagerarbeit" and "Scannen von Waren"; the real clip
+  "Barcode scannen" stays in the library for other pages but is not in his rotation. A unit test holds
+  every clip of his rotation to `kind: "illustration"`.
 - **One line where there were many.** No hairline above each section: space and the title separate
   them, as on an app's screen. The facts, the skills, the hero's numbers, the note and the letter stand
   on soft sheets (a step in the fill, rounded) without a frame and without rules between their rows.

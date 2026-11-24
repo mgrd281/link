@@ -112,7 +112,7 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(sevag).toMatch(/<\/h1><\/div><p class="[^"]*text-body[^"]*"[^>]*><span dir="auto"[^>]*>Lagerist · Staplerfahrer mit Flurförderzeugschein<\/span><\/p>/);
     expect(sevag).not.toContain("lb-chip");
     // The reach-truck illustration is the large picture, with its description.
-    expect(sevag).toContain('alt="Video: Ein Schubmaststapler arbeitet vor einem Hochregal voller Paletten in einer Lagerhalle"');
+    expect(sevag).toContain('alt="Illustration: Ein Lagerist scannt jeden Karton mit dem Handscanner, die EAN erscheint; er packt die Palette und sichert sie mit Stretchfolie"');
   });
 
   it("asks for the picture as wide as it is drawn: a 4:5 picture covers the tall plate", () => {

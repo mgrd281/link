@@ -5,12 +5,15 @@ import { NO_IMAGE, type BlockOf, type Page } from "@linkyo/blocks";
  * (Lagerist / Töner, Sales Center Lörrach). Every fact on it comes from that letter; nothing is
  * added. No photo of him yet: his initials stand in.
  *
- * Picture and moving picture: real footage only, the founder's wish ("no drawings: it should look like
- * a real video"). His own clip is "Hochregal" from the motion library (features/creator/motion-library.ts:
- * a reach truck at work in front of a high-bay rack, Rolan Muradov on Pexels, cropped to 4:5, no face),
- * and every refresh brings the next of the four real warehouse clips (SEVAG_ROTATION in ./registry).
- * The picture is the clip's first frame, so nothing jumps when it starts, and visitors who prefer less
- * motion keep the still.
+ * Picture and moving picture: Linkyo's own illustrations only, drawn for this kind of page (no stock
+ * material, no real footage: the founder's wish). His own clip is the founder's choice from the motion
+ * library, "Palette packen" (features/creator/motion-library.ts; source in
+ * .claude/skills/linkyo-media-assets/scripts/pallet-scene.html): a warehouse worker scans each carton
+ * with a handheld scanner, its EAN comes up and the pick list ticks it off; he builds the order on a
+ * pallet, wraps it in stretch film, and a pallet jack swaps the pallet. Every refresh brings the next
+ * of the library's three drawn warehouse clips (SEVAG_ROTATION in ./registry). The picture is the
+ * clip's first frame, so nothing jumps when it starts, and visitors who prefer less motion keep the
+ * still.
  *
  * Not listed anywhere, not indexed, removed on request.
  */
@@ -37,12 +40,12 @@ export const sevagDe: Page = {
     bio: "Sorgfältig und zuverlässig im Lager. Sicherheit, Ordnung und Sauberkeit sind mir wichtig.",
     avatar: { src: NO_IMAGE, alt: "" },
     hero: {
-      src: "sample:ex-motion-hochregal",
-      alt: "Video: Ein Schubmaststapler arbeitet vor einem Hochregal voller Paletten in einer Lagerhalle",
+      src: "sample:ex-motion-palette-packen",
+      alt: "Illustration: Ein Lagerist scannt jeden Karton mit dem Handscanner, die EAN erscheint; er packt die Palette und sichert sie mit Stretchfolie",
       w: 1080,
       h: 1350,
     },
-    motion: { src: "sample:motion-hochregal" },
+    motion: { src: "sample:motion-palette-packen" },
     stats: [
       { value: "seit 2018", label: "in der Logistik" },
       { value: "seit 2021", label: "Staplerschein" },

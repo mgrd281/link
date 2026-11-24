@@ -1636,9 +1636,6 @@
       "motionStop": "Stop {name}",
       "motionClips": {
         "barcode-scannen": "Scanning a barcode",
-        "hochregal": "High-bay rack",
-        "stapler-fahren": "Driving a forklift",
-        "hubwagen": "Pulling a pallet truck",
         "lagerarbeit": "Warehouse work",
         "palette-packen": "Packing a pallet",
         "ware-scannen": "Scanning goods"

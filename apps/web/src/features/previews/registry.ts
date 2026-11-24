@@ -125,7 +125,7 @@ const tonightAt =
  * e-mail. Verified as soon as he takes it over (the founder's rule for pages the team prepared).
  */
 /** The clips Sevag's page takes turns with, the page's own first. */
-export const SEVAG_ROTATION = ["hochregal", "barcode-scannen", "stapler-fahren", "hubwagen"] as const;
+export const SEVAG_ROTATION = ["palette-packen", "lagerarbeit", "ware-scannen"] as const;
 
 function sevagPreview(): Preview {
   const own = privatePreviewDetails()[SEVAG_SLUG] ?? {};
@@ -136,9 +136,9 @@ function sevagPreview(): Preview {
     // Black and grey, easy on the eyes (the founder found the dark page tiring): a soft light grey
     // ground, near-black text, black buttons with white text, untinted greys.
     theme: { template: "laufbahn", mode: "light", accent: creatorTokens.swatches.ink, tint: 0 },
-    // The founder's wish: a different video on every refresh, and real footage only (no drawings): the
-    // library's four real warehouse clips (the reach truck at the rack, scanning, the forklift in the
-    // aisle, the pallet truck).
+    // The founder's wish: a different video on every refresh, drawn clips only (no real footage): the
+    // library's three drawn warehouse clips (packing and wrapping a pallet with the scanner and its
+    // EAN, the reach truck at the rack, scanning on the conveyor).
     motionRotation: SEVAG_ROTATION,
     pages: { de: contact ? { ...sevagDe, blocks: [...sevagDe.blocks, contact] } : sevagDe },
     ...(own.invite?.length ? { invite: { emailSha256: own.invite.map(emailHash) } } : {}),

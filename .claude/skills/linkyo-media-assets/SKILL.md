@@ -80,10 +80,7 @@ hero picture. Never show a real person's face in an illustration of a real custo
 Original loops that fit more than one person go into Linkyo's motion library
 (`apps/web/src/features/creator/motion-library.ts`): today "Barcode scannen" (real footage, Tiger Lily
 on Pexels: two takes of a hand scanner on a wrapped pallet, cropped 4:5 without the face, joined with
-dissolves where no scanner is in frame, 5.7 s), "Hochregal" (real footage, Rolan Muradov on Pexels: a
-reach truck at a high-bay rack, 6.3 s), "Stapler fahren" (real footage, Paul Cruz on Pexels: a forklift
-carries a pallet down a long aisle, the crop pans with it, 7.8 s), "Hubwagen ziehen" (real footage,
-Tiger Lily on Pexels: a worker seen from behind pulls a pallet truck through the aisles, 8.3 s), "Lagerarbeit" (`reach-truck-scene.html`),
+dissolves where no scanner is in frame, 5.7 s), "Lagerarbeit" (`reach-truck-scene.html`),
 "Palette packen" (`pallet-scene.html`: the worker raises a pistol-grip scanner (silver body, rubber
 grip, trigger, a screen at the back) and scans each carton's label; a card beside his head types out
 the EAN-13 it read and confirms it (in-store numbers, prefix 20, valid check digits; DM Mono at 24 px
