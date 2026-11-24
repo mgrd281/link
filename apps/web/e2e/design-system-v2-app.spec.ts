@@ -190,6 +190,52 @@ test.describe("Arabic companions (C-03)", () => {
     expect(await page.locator("h1").first().evaluate((element) => getComputedStyle(element).fontWeight)).toBe("700");
   });
 
+  /**
+   * The fonts Chrome draws the text of one element with: the first element in the page's creator
+   * scope (or the h1) whose own text has two Arabic words with a space between them.
+   */
+  const drawnArabicText = async (page: Page, kind: "h1" | "body") => {
+    const marked = await page.evaluate((which) => {
+      const twoWords = /[\u0621-\u064A]{2,}[\u0020\u00A0][\u0621-\u064A]{2,}/;
+      const scope = document.querySelector(".poster-scope") ?? document.body;
+      const candidates = which === "h1" ? Array.from(scope.querySelectorAll("h1, h1 *")) : Array.from(scope.querySelectorAll("p, span, li, dd"));
+      for (const element of candidates) {
+        if (which === "body" && element.closest("h1, h2, h3")) continue;
+        // Only Arabic words and spaces in its own text, so every face it draws with is an answer.
+        const texts = Array.from(element.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? "").trim() !== "");
+        const pure = texts.every((node) => /^[؀-ۿ  ‌-‏]+$/.test((node.textContent ?? "").trim()));
+        if (!pure || !texts.some((node) => twoWords.test(node.textContent ?? ""))) continue;
+        element.setAttribute("data-drawn-probe", which);
+        return true;
+      }
+      return false;
+    }, kind);
+    expect(marked, `an Arabic ${kind} text with a word space`).toBe(true);
+    const session = await page.context().newCDPSession(page);
+    await session.send("DOM.enable");
+    await session.send("CSS.enable");
+    const { root } = await session.send("DOM.getDocument", { depth: -1 });
+    const { nodeId } = await session.send("DOM.querySelector", { nodeId: root.nodeId, selector: `[data-drawn-probe="${kind}"]` });
+    const { fonts } = await session.send("CSS.getPlatformFontsForNode", { nodeId });
+    await session.detach();
+    return fonts.map((font) => font.familyName);
+  };
+
+  test("Laufbahn draws its Arabic words and the spaces between them in IBM Plex Sans Arabic only", async ({ page, browserName }) => {
+    test.skip(browserName !== "chromium", "Reads the drawn fonts through the Chrome DevTools Protocol");
+    await h1Font(page, "laufbahn");
+    expect(await drawnArabicText(page, "h1")).toEqual(["IBM Plex Sans Arabic"]);
+    expect(await drawnArabicText(page, "body")).toEqual(["IBM Plex Sans Arabic"]);
+  });
+
+  test("Signal's Arabic body keeps its word spaces in the Arabic face, not in Geist Mono", async ({ page, browserName }) => {
+    test.skip(browserName !== "chromium", "Reads the drawn fonts through the Chrome DevTools Protocol");
+    await h1Font(page, "signal");
+    const drawn = await drawnArabicText(page, "body");
+    expect(drawn).toContain("IBM Plex Sans Arabic");
+    expect(drawn).not.toContain("Geist Mono");
+  });
+
   test("the Arabic letters of a name are drawn in the companion, not in a fallback", async ({ page, browserName }) => {
     test.skip(browserName !== "chromium", "Reads the drawn fonts through the Chrome DevTools Protocol");
     const drawn: Record<string, string[]> = {};
@@ -230,7 +276,8 @@ test.describe("no Arabic font on a German page", () => {
         }
         for (const rule of Array.from(rules)) {
           if (!(rule instanceof CSSFontFaceRule)) continue;
-          if (!/^U\+600/i.test(rule.style.getPropertyValue("unicode-range").trim())) continue;
+          // Arabic faces: their range has the Arabic block (and the word spaces, but no Latin letter).
+          if (!/(^|,\s*)U\+600-6FF\b/i.test(rule.style.getPropertyValue("unicode-range").trim())) continue;
           for (const match of rule.style.getPropertyValue("src").matchAll(/url\("?([^")]+)"?\)/g)) files.push(new URL(match[1] ?? "", sheet.href ?? location.href).href);
         }
       }

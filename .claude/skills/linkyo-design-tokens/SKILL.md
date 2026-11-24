@@ -103,11 +103,15 @@ reports unknown classes.
   puts the companion first and the template's Latin stack after it; `theme.pairing` stays the
   Arabic pairing (name fitting, link cards and share pictures read it). The faces are vendored OFL
   files in `apps/web/src/assets/fonts/<family>/` (Arabic subset, at most two weights, `OFL.txt`
-  beside them), declared in `apps/web/src/fonts.ts` with an Arabic-only `unicode-range`,
-  `preload: false` and `adjustFontFallback: false`: German pages never download them, and Latin
-  letters skip them to reach the template's own face. Add one: copy the woff2 and licence from
-  `npm pack @fontsource/<family>` (never install it), add a `localFont` like the others, the `arabic`
-  token, and extend `packages/tokens/test/arabic-companions.test.ts`.
+  beside them), declared in `apps/web/src/fonts.ts` with a `unicode-range` of Arabic letters plus
+  the word spaces (U+0020, U+00A0, U+200C–2010; never a Latin letter or digit), `preload: false` and
+  `adjustFontFallback: false`: German pages never download them, Latin letters skip them to reach the
+  template's own face, and the gaps between Arabic words stay in the Arabic face. A companion whose
+  subset lacks common letters lists a fuller Arabic face after it (`faces`: Readex Pro, then Plex).
+  Add one: copy the woff2 and licence from `npm pack @fontsource/<family>` (never install it), add a
+  `localFont` like the others, the `arabic` token, and extend
+  `packages/tokens/test/arabic-companions.test.ts`; `apps/web/src/fonts.test.ts` reads the file's
+  cmap and fails when the stack misses common Arabic, Persian or Gulf letters.
 
 
 ## When a general design or motion skill says otherwise

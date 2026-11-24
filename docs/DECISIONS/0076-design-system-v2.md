@@ -35,7 +35,7 @@ reverse: every face is one token and one `localFont` call; the founder may overr
    | Nocturne (template override) | Rakkas 400 | Plex 400 | The black stage gets the more dramatic, high-contrast display face, also a single heavy 400; it keeps Nocturne apart from Daylight, which shares its pairing. |
    | editorial (Instrument Serif 400) | Amiri 400 | Plex 400 | A classical Naskh with the calm contrast of a book serif; regular, like Instrument Serif, and Werkbogen's light Arabic name. Atelier, Aura, Werkbogen. |
    | elegant (Playfair 700) | Amiri 700 | Plex 400 | Playfair's high contrast in Naskh form; the same family as editorial, second of its two weights. |
-   | modern (Space Grotesk 700) | Readex Pro 700 | Readex Pro 400 | A geometric Arabic for a geometric grotesk; Space Grotesk's body has no Arabic, so Readex is the body too. Folio. |
+   | modern (Space Grotesk 700) | Readex Pro 700, then Plex | Readex Pro 400, then Plex | A geometric Arabic for a geometric grotesk; Space Grotesk's body has no Arabic, so Readex is the body too. Plex after it draws the letters Readex's subset lacks (پ چ گ ک ی). Folio. |
    | bold (Bricolage 700/800) | Changa 700 | Plex 400 | A wide, punchy Kufi-like display for a chunky grotesque. 700 keeps the existing "Tiefdruck is heavy (700) in Arabic" check true. Pulse, Bloom, Tiefdruck. |
    | tech (Geist 700) | IBM Plex Sans Arabic 700 | Plex 400 | Plex is an engineered, technical family, the nearest Arabic voice to Geist and Geist Mono. Signal. |
    | arabic | itself | itself | — |
@@ -48,10 +48,20 @@ reverse: every face is one token and one `localFont` call; the founder may overr
    next/font gives every local face a metric fallback (`"<face> Fallback"`, `src: local("Arial")`)
    inside the same CSS variable, and Arial has Arabic glyphs on Windows: with the Latin face first,
    Arabic letters would be drawn in Arial before the browser ever reached the companion. So each
-   companion is declared with an **Arabic-letters-only `unicode-range`** and **no metric fallback**
-   (`adjustFontFallback: false`) and comes first. Latin letters, digits and spaces are outside its
-   range and go on to the template's own Latin face; Arabic letters get the companion. The effect the
-   plan wanted (Latin text in the template's face) holds, and it holds on Windows too.
+   companion is declared with a **`unicode-range` of Arabic letters and word spaces** (U+0020, U+00A0,
+   the joiners U+200C–U+200F and the hyphen U+2010, no Latin letter or digit) and **no metric
+   fallback** (`adjustFontFallback: false`) and comes first. Latin letters and digits are outside its
+   range and go on to the template's own Latin face; Arabic letters and the spaces between Arabic
+   words get the companion. The effect the plan wanted (Latin text in the template's face) holds, and
+   it holds on Windows too.
+   - **Amended at the Stage 2 integration:** the first range left the spaces out, so the gaps between
+     Arabic words were drawn by the Latin face: on Signal (tech) a monospace Geist Mono space, 2.5
+     times Plex's. Every vendored file maps U+0020 and U+00A0, so they now belong to the companion.
+   - **Readex Pro (modern) has only 82 code points:** no پ چ گ ک ی and almost no presentation forms.
+     The modern companion stacks put IBM Plex Sans Arabic right after Readex (`faces` in the token),
+     so those letters fall to an Arabic face, never to the Latin face's Arial fallback.
+     `apps/web/src/fonts.test.ts` reads each file's cmap and checks that every Arabic stack covers the
+     common Arabic, Persian and Gulf letters before its Latin face.
 
 3. **Vendored files, not packages.** `fonts.ts` loads the existing faces from `@fontsource` packages in
    `node_modules`; the new families are not dependencies, and the rule for Stage 2 is no new
@@ -62,7 +72,11 @@ reverse: every face is one token and one `localFont` call; the founder may overr
    20,136 (400: 9,776, 700: 10,360); Changa 11,320; plus about 4.4 KB of licence per family. A page
    downloads only the faces it sets in Arabic, and only if it has Arabic text: the unicode-range keeps
    German pages free of Arabic fonts (e2e on /de/p/ronja-feldkamp). IBM Plex Sans Arabic gets the same
-   unicode-range (rendering is unchanged: its subset file has only Arabic glyphs).
+   unicode-range. Its subset file maps the Arabic glyphs plus U+0020, U+00A0 and U+2010, and all three
+   are inside the range, so a stack that starts with Plex (Laufbahn, the Arabic pairing) draws exactly
+   what it drew before: the first range of this decision left them out and drew Laufbahn's word gaps
+   in the Arial fallback (about 18 % wider; corrected at the integration, unit and e2e tested). On a
+   German page Geist and its local Arial fallback draw every space before Plex is reached.
 
 4. **One icon set, `packages/ui/src/icons.ts`.** A registry maps about 80 meanings to one lucide glyph
    each (analytics ChartNoAxesColumn, more Ellipsis, warning TriangleAlert, error CircleAlert, invite
