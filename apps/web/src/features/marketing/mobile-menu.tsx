@@ -9,6 +9,7 @@ import { LocaleSwitch } from "@/components/locale-switch";
 import { Link } from "@/i18n/navigation";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
+import { createHeaderSession, type HeaderAccount } from "./header-session";
 import { HeaderSignup } from "./header-signup";
 
 export interface NavItem {
@@ -28,73 +29,26 @@ const ICONS: Record<MenuItem["key"], LucideIcon> = { features: Blocks, templates
 
 // ─── Who is signed in ───────────────────────────────────────────────────────────────────────────
 
-/** What the website's header shows of a signed-in visitor: a name for the avatar and its picture. */
-export interface HeaderAccount {
-  name: string;
-  avatar: string | undefined;
-}
+export type { HeaderAccount } from "./header-session";
 
-/**
- * Real accounts keep their session in a first-party cookie (`sb-<project>-auth-token`, split into
- * `.0`, `.1` when long). Without it nobody is signed in, and the account code is not even loaded.
- */
-const SESSION_COOKIE = /(?:^|;\s*)sb-[^=;]+-auth-token(?:\.\d+)?=/;
+/** One session reader for every header on the page (see `createHeaderSession`). */
+const session = createHeaderSession({
+  realAccounts: supabaseEnabled,
+  cookie: () => document.cookie,
+  load: () => import("@/features/account/store").then(({ accountStore }) => accountStore),
+});
 
-/**
- * A picture the header may show as it is: one of Linkyo's own files or one made in this browser.
- * Anything on another server shows initials instead (the website loads nothing from third parties).
- */
-const ownPicture = (src: string | undefined): string | undefined => (src && /^(?:\/(?!\/)|data:image\/|blob:)/.test(src) ? src : undefined);
-
-/**
- * The visitor's session for the website's header, read after the first paint. `undefined` until it
- * is known (the server and the first paint show the signed-out header), then `null` or the account.
- * The account store loads on demand: in a demo build always (the session lives in this browser), with
- * real accounts only when the session cookie is there, so visitors without an account download none
- * of it.
- */
-const session = {
-  value: undefined as HeaderAccount | null | undefined,
-  listeners: new Set<() => void>(),
-  started: false,
-  set(next: HeaderAccount | null) {
-    const same = next === null ? this.value === null : this.value?.name === next.name && this.value.avatar === next.avatar;
-    if (same) return;
-    this.value = next;
-    for (const listener of this.listeners) listener();
-  },
-  start() {
-    if (this.started) return;
-    this.started = true;
-    if (supabaseEnabled && !SESSION_COOKIE.test(document.cookie)) {
-      this.set(null);
-      return;
-    }
-    import("@/features/account/store").then(
-      ({ accountStore }) => {
-        const read = () => {
-          const snapshot = accountStore.getSnapshot();
-          if (snapshot.status === "signedIn") {
-            const profile = snapshot.site.page.profile;
-            // A new account may have no name or address yet: then the first part of its e-mail.
-            const name = profile.displayName.trim() || snapshot.account.username || (snapshot.account.email.split("@")[0] ?? "");
-            this.set({ name, avatar: ownPicture(profile.avatar.src) });
-          } else if (snapshot.status === "signedOut") this.set(null);
-        };
-        accountStore.subscribe(read);
-        read();
-      },
-      () => {
-        this.set(null);
-      },
-    );
-  },
-};
-
+// Back to a page from the router cache or the back-forward cache, or back to the tab: look again.
+let watching = false;
 const subscribe = (listener: () => void) => {
-  session.listeners.add(listener);
-  session.start();
-  return () => session.listeners.delete(listener);
+  if (!watching) {
+    watching = true;
+    window.addEventListener("pageshow", session.refresh);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") session.refresh();
+    });
+  }
+  return session.subscribe(listener);
 };
 
 export function useHeaderAccount(): HeaderAccount | null | undefined {
