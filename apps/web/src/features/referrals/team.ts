@@ -94,19 +94,20 @@ async function rpcJson<T>(call: PromiseLike<{ data: Json | null; error: { messag
 
 const loadQueue = () => rpcJson<ReferralQueue | null>(browserSupabase().rpc("admin_referral_queue")).then((queue) => queue ?? EMPTY_QUEUE);
 
-function useLiveQueue(): { status: LoadStatus; queue: ReferralQueue; reload(): void } {
-  const { status, data, reload } = useLive(loadQueue, "queue");
+/** `enabled` false: nothing is asked (a role that may not read the queue gets no forbidden call). */
+function useLiveQueue(enabled = true): { status: LoadStatus; queue: ReferralQueue; reload(): void } {
+  const { status, data, reload } = useLive(enabled ? loadQueue : null, "queue");
   return { status, queue: data ?? EMPTY_QUEUE, reload };
 }
 
-function useDemoQueue(): { status: LoadStatus; queue: ReferralQueue; reload(): void } {
+function useDemoQueue(_enabled = true): { status: LoadStatus; queue: ReferralQueue; reload(): void } {
   const raw = useDemoRaw();
   const queue = useMemo(() => (raw && demoStore ? demoStore.teamQueue() : EMPTY_QUEUE), [raw]);
   return { status: "ready", queue, reload: noop };
 }
 
 /** Open verification requests, held invites and every reward, for `/admin/referrals` and the customers list. */
-export const useReferralQueue: () => { status: LoadStatus; queue: ReferralQueue; reload(): void } = supabaseEnabled ? useLiveQueue : useDemoQueue;
+export const useReferralQueue: (enabled?: boolean) => { status: LoadStatus; queue: ReferralQueue; reload(): void } = supabaseEnabled ? useLiveQueue : useDemoQueue;
 
 function useLiveCustomer(customerId: string): { status: LoadStatus; data: CustomerReferrals | null; reload(): void } {
   const load = useMemo(() => () => rpcJson<CustomerReferrals | null>(browserSupabase().rpc("admin_customer_referrals", { customer: customerId })), [customerId]);

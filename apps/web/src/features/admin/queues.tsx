@@ -63,8 +63,9 @@ function useOrderQueues(enabled: boolean, contractsAllowed: boolean): Pick<Queue
 export function QueuesProvider({ children }: { children: ReactNode }) {
   const { can } = useAdmin();
   const orderQueues = useOrderQueues(paymentsEnabled && supabaseEnabled && can("orders.view"), can("billing.view"));
-  const referral = useReferralQueue();
-  const referralsAllowed = can("orders.view");
+  // The queue's function needs customers.view on the database: a role without it asks nothing.
+  const referralsAllowed = can("orders.view") && can("customers.view");
+  const referral = useReferralQueue(referralsAllowed);
   const referrals = useMemo<Queues["referrals"]>(() => {
     if (!referralsAllowed) return OFF;
     if (referral.status === "loading") return { status: "loading" };
