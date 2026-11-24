@@ -24,6 +24,9 @@ export const RESERVED_USERNAMES = new Set([
   "account", "agb", "ai", "build", "checkout", "dashboard", "datenschutz", "kontakt", "kuendigen", "manifest", "media",
   "orders", "pro", "robots", "reset-password", "service", "services", "sitemap", "studio", "team", "templates",
   "widerruf", "widerrufsbelehrung",
+  // The portfolio section, the help and trust pages that follow it, and words of the claim and report flows.
+  "arbeiten", "changelog", "claim", "contact", "features", "funktionen", "hilfe", "melden", "plan", "portfolio",
+  "portfolios", "sicherheit", "ueber-uns",
 ]);
 
 /**

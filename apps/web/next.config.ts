@@ -49,6 +49,9 @@ const config: NextConfig = {
   transpilePackages: ["@linkyo/ui", "@linkyo/tokens", "@linkyo/blocks"],
   images: {
     formats: ["image/avif", "image/webp"],
+    // A picture opened from its link shows in the browser instead of downloading (a project picture
+    // links to its full size); SVG stays refused, so inline is safe.
+    contentDispositionType: "inline",
     // Platform pictures (thumbnails, covers) are re-served by us, never loaded from the platform.
     remotePatterns: [
       ...PROXIED_IMAGE_HOSTS.map((hostname) => ({ protocol: "https" as const, hostname, pathname: "/**" })),
