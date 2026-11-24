@@ -56,6 +56,8 @@ public enum LinkyoTokens {
         public static let avatar2xl: CGFloat = 128
         /// Status dots (Live).
         public static let dot: CGFloat = 8
+        /// The height a row of uncropped pictures aims for before it stretches to its width (Leuchttisch's rows on phones).
+        public static let rowPhoto: CGFloat = 280
     }
 
     public enum Radius {

@@ -481,14 +481,29 @@ describe("the work on the page", () => {
     expect(text(byId(one(tree, tagged("main"), "main"), "hafen"))).toContain("01");
   });
 
-  it("without a picture the hero is text only and nothing is taken out of the run", () => {
-    const tree = rendered("de", [figure("termine"), titled("halle"), picture("hafen")]);
+  it("without a picture the plate shows the first project's figure or title (P-08), and the run goes on after it", () => {
+    for (const [first, cover] of [
+      [figure("termine"), "figure"],
+      [titled("termine"), "title"],
+    ] as const) {
+      const tree = rendered("de", [first, titled("halle"), picture("hafen")]);
+      const header = one(tree, tagged("header"), "header");
+      // No picture in the hero: the plate is the project's own figure or title, on a fill step.
+      expect(all(header, tagged("img"))).toEqual([]);
+      expect(one(byId(tree, "termine"), (element) => element.attrs["data-cover"] !== undefined, "cover").attrs["data-cover"]).toBe(cover);
+      // The words stand in the first five columns, the plate in the other seven: both halves are filled.
+      expect(kids(header).filter((part) => part.tag === "div").map((part) => classes(part).filter((name) => name.startsWith("@work:col-span-")))).toEqual([["@work:col-span-5"], ["@work:col-span-7"], ["@work:col-span-5"]]);
+      expect(all(one(tree, tagged("main"), "main"), (element) => element.tag === "li" && element.attrs.id !== undefined).map((row) => row.attrs.id)).toEqual(["halle", "hafen"]);
+    }
+  });
+
+  it("without any project the plate's hero is text only and keeps to the reading column", () => {
+    const tree = rendered("de", [{ ...base, id: "x", type: "link", title: "Website", url: "https://example.com" }]);
     const header = one(tree, tagged("header"), "header");
     expect(all(header, tagged("img"))).toEqual([]);
     // The role line, the portrait and the name keep to the reading column with the rest, so the
     // portrait does not stand alone at the far end of the wide canvas.
     expect(kids(header).filter((part) => part.tag === "div").map((part) => classes(part).includes("max-w-prose"))).toEqual([true, true]);
-    expect(all(one(tree, tagged("main"), "main"), (element) => element.tag === "li" && element.attrs.id !== undefined).map((row) => row.attrs.id)).toEqual(["termine", "halle", "hafen"]);
   });
 
   it("a page whose only project is the plate has no empty section of work", () => {
@@ -498,10 +513,19 @@ describe("the work on the page", () => {
   });
 
   it("another template shows the same run inside its column, with every card and no plate", () => {
-    const tree = provided("de", createElement(PosterRenderer, { page: page("de", [header("h", "Arbeiten"), ...work()]), theme: resolveCreatorTheme({ template: "folio" }), projectBase: "/mats" }));
+    const tree = provided("de", createElement(PosterRenderer, { page: page("de", [header("h", "Arbeiten"), ...work()]), theme: resolveCreatorTheme({ template: "atelier" }), projectBase: "/mats" }));
     const main = one(tree, tagged("main"), "main");
     expect(all(main, (element) => ["hafen", "bad", "termine", "halle"].includes(element.attrs.id ?? ""))).toHaveLength(4);
     expect(elements(tree).flatMap(classes).filter((name) => name.startsWith("@work:"))).toEqual([]);
+  });
+
+  it("Folio shows the same run, with every card and no plate, on the wide canvas (C-06)", () => {
+    const tree = provided("de", createElement(PosterRenderer, { page: page("de", [header("h", "Arbeiten"), ...work()]), theme: resolveCreatorTheme({ template: "folio" }), projectBase: "/mats" }));
+    const main = one(tree, tagged("main"), "main");
+    expect(all(main, (element) => ["hafen", "bad", "termine", "halle"].includes(element.attrs.id ?? ""))).toHaveLength(4);
+    expect(all(tree, (element) => element.attrs["data-plate"] !== undefined)).toEqual([]);
+    const page_ = one(tree, (element) => classes(element).includes("@work:max-w-work"), "canvas");
+    expect(classes(page_)).toContain("max-w-creator");
   });
 
   it("the gallery's four columns on the canvas are served for a quarter of it", () => {

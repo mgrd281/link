@@ -538,7 +538,21 @@
       "railOn": "Scroll forward",
       "projectMissing": "This project no longer exists.",
       "toPage": "To the page",
-      "plateLink": "Project 1 of {total}: {title}"
+      "plateLink": "Project 1 of {total}: {title}",
+      "logRunning": "ongoing",
+      "logDone": "done",
+      "logUndated": "No year"
+    },
+    "readme": {
+      "stack": "Stack",
+      "place": "Based in",
+      "available": "Available",
+      "repos": "Repos"
+    },
+    "titleblock": {
+      "discipline": "Discipline",
+      "place": "Based in",
+      "status": "Status"
     },
     "laufbahn": {
       "index": "Sections",

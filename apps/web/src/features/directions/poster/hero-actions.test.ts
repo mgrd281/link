@@ -169,8 +169,9 @@ describe("a page without a contact block", () => {
     // The highlighted link is where it was: once, in the page, as a link.
     expect(markup.split("Jetzt Tickets sichern")).toHaveLength(2);
     expect(markup.split('href="https://example.com/tickets"')).toHaveLength(2);
-    // Nothing of the wide canvas reaches an old template.
-    expect(markup).not.toContain("@work:");
+    // Nothing of the wide canvas reaches an old link-in-bio template; Folio has it since Stage 3 (C-06).
+    if (template === "folio") expect(markup).toContain("@work:max-w-work");
+    else expect(markup).not.toContain("@work:");
   });
 
   it.each(PORTFOLIO_TEMPLATES)("%s: the same holds on the portfolio templates and on Laufbahn", (template) => {

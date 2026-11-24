@@ -35,14 +35,18 @@ const portraitSizes = (wide: boolean): string =>
 /**
  * Who the owner is: a lead paragraph, a portrait beside up to four facts, then the rest of the text.
  * The lead is set in the display face where the template's face suits running text (`lead`), in the
- * body face otherwise. Wide canvas: the portrait takes the start columns, the words the rest.
+ * body face otherwise. Wide canvas: the portrait takes the start columns, the words the rest; without
+ * a portrait the words take the first eight columns and the facts stand beside them in the last four,
+ * one under the other (P-09), so the section spans the canvas.
  */
 export function AboutSection({ block, wide, lead = "body" }: { block: BlockOf<"about">; wide: boolean; lead?: "display" | "body" | undefined }): ReactNode {
   const [first, ...rest] = paragraphs(block.text);
   const portrait = hasImage(block.portrait) ? block.portrait : undefined;
   const facts = block.facts ?? [];
-  // Beside a portrait the words keep to the end columns; without one they keep a readable measure.
-  const words = wide ? (portrait ? "@work:col-span-6 @work:col-start-6" : "@work:col-span-7") : undefined;
+  // Beside a portrait the words keep to the end columns; without one they take eight columns.
+  const words = wide ? (portrait ? "@work:col-span-6 @work:col-start-6" : "@work:col-span-8") : undefined;
+  // Without a portrait the facts stand in the last four columns, beside the words.
+  const factsBeside = wide && !portrait ? "@work:col-span-4 @work:col-start-9 @work:row-span-2 @work:row-start-1 @work:grid-cols-1" : words;
   return (
     // Wide, beside a portrait: the words keep their own height and the last row takes what the portrait leaves over.
     <div className={cn("grid grid-cols-5 gap-x-4 gap-y-6", wide && "@work:grid-cols-12 @work:gap-x-6", wide && portrait && "@work:grid-rows-[auto_auto_1fr]")}>
@@ -61,7 +65,7 @@ export function AboutSection({ block, wide, lead = "body" }: { block: BlockOf<"a
         </div>
       ) : null}
       {facts.length > 0 ? (
-        <dl className={cn("grid content-start gap-x-4", portrait ? "col-span-3 grid-cols-1 @prose:grid-cols-2" : "col-span-5 grid-cols-2", words)}>
+        <dl className={cn("grid content-start gap-x-4", portrait ? "col-span-3 grid-cols-1 @prose:grid-cols-2" : "col-span-5 grid-cols-2", factsBeside)}>
           {facts.map((fact) => (
             <div key={`${fact.label}-${fact.value}`} className="grid min-w-0 content-start gap-0.5 border-t border-creator-line py-3">
               <dt dir="auto" className={cn(pageSide, "text-caption text-creator-fg-muted")}>{fact.label}</dt>

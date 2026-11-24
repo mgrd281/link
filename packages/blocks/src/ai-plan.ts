@@ -23,12 +23,11 @@ const tuple = (values: readonly string[]): NonEmpty => {
 };
 
 /**
- * Templates the AI's catalogue does not offer yet. Stage 3's three portfolio templates start as
- * stand-ins with Werkbogen's look; the change that draws them takes the next plan and prompt versions
- * (plan-v4, core-v5), lists them in the catalogue and empties this list. Until then the AI never picks
- * one, and plan-v3's schema stays exactly as reviewed.
+ * Templates the AI's catalogue does not offer yet: a template added to the tokens before its renderer
+ * is listed here until the change that draws it takes the next plan and prompt versions and lists it
+ * in the catalogue. Empty: plan-v4 and core-v5 offer Stage 3's Leuchttisch, Grundriss and Logbuch.
  */
-export const TEMPLATES_NOT_OFFERED: readonly string[] = ["leuchttisch", "grundriss", "logbuch"];
+export const TEMPLATES_NOT_OFFERED: readonly string[] = [];
 
 /** Template ids, as the design tokens define them (without those not offered yet). */
 export const TEMPLATE_IDS = tuple(Object.keys(creatorTokens.templates).filter((id) => !TEMPLATES_NOT_OFFERED.includes(id)));
@@ -99,7 +98,7 @@ export const pagePlanSchema = z
   })
   .strict();
 export type PagePlan = z.infer<typeof pagePlanSchema>;
-export const PAGE_PLAN_VERSION = "plan-v3";
+export const PAGE_PLAN_VERSION = "plan-v4";
 
 type JsonObject = Record<string, unknown>;
 
