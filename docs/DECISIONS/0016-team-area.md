@@ -50,4 +50,8 @@ by hand.
 The team code and published pages are server-side. Phase 1 moves members, drafts and activity to Supabase. Members
 then sign in with verified emails, and roles are enforced by the database as well as the UI.
 
-**Status.** Proposed — waiting for the founder's review.
+**Status.** Accepted (confirmed in the Stage 1 audit, 2026-11-24), with changes: the team and its activity log live in
+the database for real accounts (ADR 0028, 0030); the permission table gained `customers.export` (owners and admins)
+and `orders.view` (every role), editors no longer see customers or their e-mail addresses, and money in the console
+moves only through Stripe (draft "team money through Stripe", Stage 1 WP1.1). The `linkyo-team-console` skill keeps
+the current rules.

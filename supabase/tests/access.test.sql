@@ -123,7 +123,7 @@ insert into public.team_members (user_id, role) values ('d0000000-0000-4000-8000
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"c0000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
 select is(public.admin_me() ->> 'role', 'owner', 'the owner sees their role');
-select is(jsonb_array_length(public.admin_me() -> 'permissions'), 16, 'owners have every permission');
+select is(jsonb_array_length(public.admin_me() -> 'permissions'), 18, 'owners have every permission');
 select is((select count(*)::int from jsonb_array_elements(public.admin_customers()) c
   where c ->> 'email' in ('ana@example.com', 'ben@example.com', 'cara@example.com', 'dan@example.com')), 4,
   'the console lists every account');
@@ -216,7 +216,7 @@ select is_empty($$ select 1 from public.sign_ins where profile_id = 'a0000000-00
 -- ── The role table matches the app ──────────────────────────────────────────────────────────
 select results_eq(
   $$ select role::text as name, count(*)::int from public.role_permissions group by role order by name $$,
-  $$ values ('admin', 14), ('editor', 5), ('owner', 16), ('viewer', 5) $$,
+  $$ values ('admin', 16), ('editor', 5), ('owner', 18), ('viewer', 6) $$,
   'roles have the same number of permissions as in the app'
 );
 

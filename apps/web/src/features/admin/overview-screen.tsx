@@ -30,8 +30,8 @@ import { Link } from "@/i18n/navigation";
 import { ActivityList } from "./activity-screen";
 import { ColumnChart, KpiTile, RankedBars } from "./charts";
 import { useCustomers } from "./customers/data";
-import { daysAgo, riskFlags } from "./customers/model";
-import { kpis, lastDevice, mrrByMonth, shares, signupsPerDay } from "./customers/stats";
+import { daysAgo, riskFlags, viewsMeasured } from "./customers/model";
+import { kpis, lastDevice, mrrByMonth, REST, shares, signupsPerDay } from "./customers/stats";
 import { DemoNote, PlanBadge, StatusBadges } from "./customers/ui";
 import { useCreatorRows, usePublished } from "./data";
 import { count, country, money, percent, timeAgo } from "./format";
@@ -206,11 +206,12 @@ export function OverviewScreen() {
                 share: percent(numbers.customers ? numbers.active7 / numbers.customers : 0, locale),
               })}
             />
+            {/* Real accounts have no view counter yet: "not measured", never a made-up 0. */}
             <KpiTile
               icon={Eye}
               label={t("kpi.views")}
-              value={count(numbers.views, locale)}
-              hint={t("kpi.viewsHint")}
+              value={viewsMeasured ? count(numbers.views, locale) : "–"}
+              hint={viewsMeasured ? t("kpi.viewsHint") : t("kpi.viewsNotMeasured")}
             />
           </div>
 
@@ -264,13 +265,15 @@ export function OverviewScreen() {
                     tone={trialsEnding ? "warning" : "neutral"}
                   />
                 ) : null}
-                <Attention
-                  icon={UserX}
-                  label={t("suspended")}
-                  value={numbers.suspended}
-                  href="/admin/customers?status=suspended"
-                  tone="neutral"
-                />
+                {can("customers.view") ? (
+                  <Attention
+                    icon={UserX}
+                    label={t("suspended")}
+                    value={numbers.suspended}
+                    href="/admin/customers?status=suspended"
+                    tone="neutral"
+                  />
+                ) : null}
               </ul>
             </Panel>
             <Panel title={t("countries")} id="countries-title">
@@ -279,8 +282,8 @@ export function OverviewScreen() {
                 items={countries.map((share) => ({
                   key: share.key,
                   label:
-                    share.key === "other"
-                      ? t("other")
+                    share.key === REST
+                      ? t("rest")
                       : country(share.key === "unknown" ? "" : share.key, locale, unknown),
                   value: share.value,
                 }))}
@@ -310,41 +313,44 @@ export function OverviewScreen() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Panel
-              title={t("newest")}
-              id="newest-title"
-              action={
-                <Link
-                  href="/admin/customers"
-                  className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
-                >
-                  {t("allCustomers")}
-                  <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
-                </Link>
-              }
-            >
-              <ul className="grid grid-cols-1 gap-1">
-                {newest.map((customer) => (
-                  <li key={customer.id}>
-                    <Link
-                      href={`/admin/customers/${customer.id}`}
-                      className="hover:bg-hover focus-visible:focus-ring flex min-w-0 items-center gap-3 rounded-md px-2 py-2"
-                    >
-                      <Avatar name={customer.name} size="sm" />
-                      <span className="grid min-w-0 flex-1">
-                        <span className="text-small truncate font-medium">{customer.name}</span>
-                        <span className="text-caption text-fg-tertiary truncate">
-                          {country(customer.country, locale, unknown)} ·{" "}
-                          {timeAgo(customer.createdAt, now, locale)}
+            {/* The newest customers are people: only for roles that may see customers. */}
+            {can("customers.view") ? (
+              <Panel
+                title={t("newest")}
+                id="newest-title"
+                action={
+                  <Link
+                    href="/admin/customers"
+                    className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
+                  >
+                    {t("allCustomers")}
+                    <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+                  </Link>
+                }
+              >
+                <ul className="grid grid-cols-1 gap-1">
+                  {newest.map((customer) => (
+                    <li key={customer.id}>
+                      <Link
+                        href={`/admin/customers/${customer.id}`}
+                        className="hover:bg-hover focus-visible:focus-ring flex min-w-0 items-center gap-3 rounded-md px-2 py-2"
+                      >
+                        <Avatar name={customer.name} size="sm" />
+                        <span className="grid min-w-0 flex-1">
+                          <span className="text-small truncate font-medium">{customer.name}</span>
+                          <span className="text-caption text-fg-tertiary truncate">
+                            {country(customer.country, locale, unknown)} ·{" "}
+                            {timeAgo(customer.createdAt, now, locale)}
+                          </span>
                         </span>
-                      </span>
-                      <PlanBadge customer={customer} />
-                      <StatusBadges customer={customer} />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </Panel>
+                        <PlanBadge customer={customer} />
+                        <StatusBadges customer={customer} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+            ) : null}
             <Panel
               title={t("teamWork")}
               id="team-work-title"

@@ -8,11 +8,10 @@ import { useMemo, useState } from "react";
 
 import { Panel, Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
-import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { ColumnChart, KpiTile } from "./charts";
 import { useCustomers } from "./customers/data";
-import { hasProForLife, monthlyRevenue, PLAN_PRICE, SUBSCRIPTION_STATUSES, type SubscriptionStatus } from "./customers/model";
+import { hasProForLife, monthlyRevenue, PLAN_PRICE, SUBSCRIPTION_STATUSES, subscriptionSource, type SubscriptionStatus } from "./customers/model";
 import { kpis, mrrByMonth } from "./customers/stats";
 import { DemoNote, StatusBadges } from "./customers/ui";
 import { count, date, money, percent } from "./format";
@@ -23,6 +22,7 @@ type Filter = "all" | SubscriptionStatus;
 export function SubscriptionsScreen() {
   const t = useTranslations("admin.subscriptions");
   const tc = useTranslations("admin.customers");
+  const tSource = useTranslations("admin.customer.sources");
   const locale = useLocale();
   const params = useSearchParams();
   const { customers, now, ready } = useCustomers();
@@ -70,12 +70,7 @@ export function SubscriptionsScreen() {
                 </li>
                 <li className="flex items-center justify-between gap-3 rounded-md border border-line p-3">
                   <span className="grid">
-                    <span className="flex items-center gap-2 text-small font-semibold">
-                      Pro
-                      <Badge size="sm" tone="warning">
-                        {t("assumption")}
-                      </Badge>
-                    </span>
+                    <span className="text-small font-semibold">Pro</span>
                     <span className="text-caption text-fg-secondary">{t("proHint")}</span>
                   </span>
                   <span className="text-body font-semibold tabular-nums">
@@ -131,6 +126,9 @@ export function SubscriptionsScreen() {
                         {t("columns.status")}
                       </th>
                       <th scope="col" className="py-2 text-start font-medium">
+                        {t("columns.source")}
+                      </th>
+                      <th scope="col" className="py-2 text-start font-medium">
                         {t("columns.since")}
                       </th>
                       <th scope="col" className="py-2 text-start font-medium">
@@ -159,10 +157,20 @@ export function SubscriptionsScreen() {
                           <td className="py-2">
                             <StatusBadges customer={customer} />
                           </td>
+                          <td className="py-2">
+                            {(() => {
+                              const source = subscriptionSource(customer);
+                              return source ? (
+                                <Badge size="sm" tone={source === "stripe" ? "primary" : "outline"} data-source={source}>
+                                  {tSource(source)}
+                                </Badge>
+                              ) : null;
+                            })()}
+                          </td>
                           <td className="py-2 whitespace-nowrap text-fg-secondary">{sub.startedAt ? date(sub.startedAt, locale) : "–"}</td>
                           <td className="py-2 whitespace-nowrap text-fg-secondary">{next ? date(next, locale) : "–"}</td>
                           <td className="py-2 text-end tabular-nums">{sub.invoices.length}</td>
-                          <td className="py-2 text-end tabular-nums">{money(monthlyRevenue(customer), locale, true)}</td>
+                          <td className="py-2 text-end tabular-nums">{money(monthlyRevenue(customer, now), locale, true)}</td>
                         </tr>
                       );
                     })}
@@ -171,8 +179,7 @@ export function SubscriptionsScreen() {
               </div>
             )}
           </Panel>
-          {/* The cost-model price and "Stripe takes over at launch" describe the demo only. */}
-          {supabaseEnabled ? null : <p className="text-caption text-fg-tertiary">{t("note")}</p>}
+          <p className="text-caption text-fg-tertiary">{t("teamNote")}</p>
           <DemoNote />
         </>
       ) : null}

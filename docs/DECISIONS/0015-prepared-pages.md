@@ -29,4 +29,7 @@ with. In Phase 1 the claim runs after Supabase Auth has verified the email (Goog
 owner of the invited address can take the page over; invites move to a `prepared_pages` table readable only by the
 service role, with an admin screen for the team instead of the script.
 
-**Status.** Proposed — waiting for the founder's review.
+**Status.** Accepted (confirmed in the Stage 1 audit, 2026-11-24): the team prepares pages this way, and the claim
+works as described. Still open: in real mode the team's drafts live in one browser and publishing needs the script and
+a deploy; Stage 2 (WP2.1) moves drafts and invites to the database (`prepared_pages`, `prepared_invites`, hashed
+one-time invite links).

@@ -48,7 +48,7 @@ const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
       { key: "overview", href: "/admin", icon: LayoutDashboard },
       { key: "customers", href: "/admin/customers", icon: UsersRound, permission: "customers.view" },
       // Page-service orders exist only where contracts can be made (NEXT_PUBLIC_PAYMENTS).
-      ...(paymentsEnabled ? [{ key: "orders" as const, href: "/admin/orders", icon: Inbox, permission: "customers.view" as const }] : []),
+      ...(paymentsEnabled ? [{ key: "orders" as const, href: "/admin/orders", icon: Inbox, permission: "orders.view" as const }] : []),
       { key: "subscriptions", href: "/admin/subscriptions", icon: CreditCard, permission: "billing.view" },
       { key: "security", href: "/admin/security", icon: ShieldAlert, permission: "security.view" },
       { key: "analytics", href: "/admin/analytics", icon: ChartColumn, permission: "analytics.view" },
@@ -60,7 +60,7 @@ const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
       { key: "creators", href: "/admin/creators", icon: PenTool },
       { key: "templates", href: "/admin/templates", icon: LayoutTemplate },
       // The invite program: verification requests and held invites (ADR 0064).
-      { key: "referrals", href: "/admin/referrals", icon: BadgeCheck, permission: "customers.view" },
+      { key: "referrals", href: "/admin/referrals", icon: BadgeCheck, permission: "orders.view" },
       { key: "team", href: "/admin/team", icon: ShieldCheck },
       { key: "activity", href: "/admin/activity", icon: History },
     ],

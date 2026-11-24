@@ -1,7 +1,7 @@
 "use client";
 
-import { Avatar, Badge, Button, Icon, TextField } from "@linkyo/ui";
-import { ChevronLeft, ChevronRight, Download, Search, UsersRound } from "lucide-react";
+import { Avatar, Badge, Button, Icon, TextField, toast } from "@linkyo/ui";
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, EyeOff, Search, UsersRound } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useMemo, useState, type ReactNode } from "react";
@@ -9,15 +9,18 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import { Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
 
+import { useConsoleActions } from "./actions";
 import { useCustomers } from "./customers/data";
-import { hasProForLife, monthlyRevenue, type Customer } from "./customers/model";
+import { hasProForLife, monthlyRevenue, viewsMeasured, type Customer } from "./customers/model";
+import { customersCsv } from "./customers/stats";
 import { DemoNote, PlanBadge, StatusBadges } from "./customers/ui";
 import { count, country, date, money, timeAgo } from "./format";
 import { useAdmin } from "./session";
 
 const STATUS = ["all", "active", "trialing", "past_due", "canceled", "suspended", "device"] as const;
 type StatusFilter = (typeof STATUS)[number];
-const SORTS = ["newest", "lastSeen", "revenue", "views"] as const;
+// Views sort only where they are measured (the demo's sample customers).
+const SORTS = ["newest", "lastSeen", "revenue", ...(viewsMeasured ? (["views"] as const) : [])] as const;
 type Sort = (typeof SORTS)[number];
 const PAGE = 25;
 
@@ -67,12 +70,36 @@ function ProForLifeBadge({ customer }: { customer: Customer }) {
   ) : null;
 }
 
-/** Every customer: search, filter, sort, open one; export what you see as CSV. */
+/**
+ * For roles without `customers.view` (editors): customers and their e-mail addresses stay hidden,
+ * also when the address is typed in directly.
+ */
+export function CustomersHidden() {
+  const t = useTranslations("admin.customers");
+  return (
+    <Screen title={t("noAccessTitle")} lead={t("noAccessLead")}>
+      <div className="border-line-strong grid justify-items-center gap-4 rounded-xl border border-dashed p-8 text-center">
+        <Icon icon={EyeOff} size="lg" className="text-fg-tertiary" />
+        <Button asChild icon={ArrowLeft} className="[&_svg]:rtl:-scale-x-100">
+          <Link href="/admin">{t("toOverview")}</Link>
+        </Button>
+      </div>
+    </Screen>
+  );
+}
+
+/** Every customer: search, filter, sort, open one; export what you see as CSV (owners and admins, logged). */
 export function CustomersListScreen() {
+  const { can } = useAdmin();
+  return can("customers.view") ? <CustomersList /> : <CustomersHidden />;
+}
+
+function CustomersList() {
   const t = useTranslations("admin.customers");
   const locale = useLocale();
   const params = useSearchParams();
   const { can } = useAdmin();
+  const actions = useConsoleActions();
   const { customers, now, ready } = useCustomers();
   const initialStatus = STATUS.find((status) => status === params.get("status")) ?? "all";
   const [query, setQuery] = useState("");
@@ -99,18 +126,18 @@ export function CustomersListScreen() {
         (place === "all" || customer.country === place) &&
         (!needle ||
           customer.name.toLowerCase().includes(needle) ||
-          customer.email.includes(needle) ||
+          (customer.email ?? "").includes(needle) ||
           customer.username.includes(needle) ||
           customer.logins.some((login) => login.ip.startsWith(needle))),
     );
     const by: Record<Sort, (a: Customer, b: Customer) => number> = {
       newest: (a, b) => b.createdAt.localeCompare(a.createdAt),
       lastSeen: (a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt),
-      revenue: (a, b) => monthlyRevenue(b) - monthlyRevenue(a) || b.createdAt.localeCompare(a.createdAt),
+      revenue: (a, b) => monthlyRevenue(b, now) - monthlyRevenue(a, now) || b.createdAt.localeCompare(a.createdAt),
       views: (a, b) => b.usage.views30 - a.usage.views30,
     };
     return list.sort(by[sort]);
-  }, [customers, query, plan, status, place, sort]);
+  }, [customers, query, plan, status, place, sort, now]);
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const current = Math.min(page, pages - 1);
   const shown = filtered.slice(current * PAGE, current * PAGE + PAGE);
@@ -121,42 +148,14 @@ export function CustomersListScreen() {
       setPage(0);
     };
 
-  const exportCsv = () => {
-    const header = [
-      "name",
-      "email",
-      "username",
-      "plan",
-      "subscription",
-      "status",
-      "country",
-      "created",
-      "last_seen",
-      "mrr_eur",
-      "views_30d",
-    ];
-    const cell = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
-    const lines = filtered.map((customer) =>
-      [
-        customer.name,
-        customer.email,
-        customer.username,
-        customer.subscription.plan,
-        customer.subscription.status ?? "",
-        customer.status,
-        customer.country,
-        customer.createdAt,
-        customer.lastSeenAt,
-        (monthlyRevenue(customer) / 100).toFixed(2),
-        customer.usage.views30,
-      ]
-        .map(cell)
-        .join(","),
-    );
+  /** Logged first (who exported how many rows); no log, no file. Cells a spreadsheet would run stay text. */
+  const exportCsv = async () => {
+    if (!(await actions.exported(filtered.length))) {
+      toast({ title: t("exportFailed"), tone: "danger" });
+      return;
+    }
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(
-      new Blob([[header.join(","), ...lines].join("\n")], { type: "text/csv" }),
-    );
+    link.href = URL.createObjectURL(new Blob([customersCsv(filtered, now, { views: viewsMeasured })], { type: "text/csv" }));
     link.download = "linkyo-customers.csv";
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
@@ -168,9 +167,11 @@ export function CustomersListScreen() {
       lead={t("lead")}
       wide
       actions={
-        <Button icon={Download} onClick={exportCsv} disabled={!filtered.length}>
-          {t("export")}
-        </Button>
+        can("customers.export") ? (
+          <Button icon={Download} onClick={() => void exportCsv()} disabled={!filtered.length}>
+            {t("export")}
+          </Button>
+        ) : null
       }
     >
       <div className="border-line bg-surface grid grid-cols-1 gap-3 rounded-xl border p-4 md:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))] md:items-end">
@@ -249,9 +250,11 @@ export function CustomersListScreen() {
                   <th scope="col" className="px-3 py-2 text-start font-medium">
                     {t("columns.lastSeen")}
                   </th>
-                  <th scope="col" className="px-3 py-2 text-end font-medium">
-                    {t("columns.views")}
-                  </th>
+                  {viewsMeasured ? (
+                    <th scope="col" className="px-3 py-2 text-end font-medium">
+                      {t("columns.views")}
+                    </th>
+                  ) : null}
                   {can("billing.view") ? (
                     <th scope="col" className="px-4 py-2 text-end font-medium">
                       {t("columns.mrr")}
@@ -270,9 +273,11 @@ export function CustomersListScreen() {
                         <Avatar name={customer.name} size="sm" />
                         <span className="grid min-w-0">
                           <span className="truncate font-medium">{customer.name}</span>
-                          <span dir="ltr" className="text-caption text-fg-tertiary truncate text-start">
-                            {customer.email}
-                          </span>
+                          {customer.email ? (
+                            <span dir="ltr" className="text-caption text-fg-tertiary truncate text-start">
+                              {customer.email}
+                            </span>
+                          ) : null}
                         </span>
                       </Link>
                     </th>
@@ -292,12 +297,14 @@ export function CustomersListScreen() {
                     <td className="text-fg-secondary px-3 py-2 whitespace-nowrap">
                       {timeAgo(customer.lastSeenAt, now, locale)}
                     </td>
-                    <td className="px-3 py-2 text-end tabular-nums">
-                      {count(customer.usage.views30, locale)}
-                    </td>
+                    {viewsMeasured ? (
+                      <td className="px-3 py-2 text-end tabular-nums">
+                        {count(customer.usage.views30, locale)}
+                      </td>
+                    ) : null}
                     {can("billing.view") ? (
                       <td className="px-4 py-2 text-end tabular-nums">
-                        {money(monthlyRevenue(customer), locale)}
+                        {money(monthlyRevenue(customer, now), locale)}
                       </td>
                     ) : null}
                   </tr>
@@ -317,9 +324,11 @@ export function CustomersListScreen() {
                     <Avatar name={customer.name} size="sm" />
                     <span className="grid min-w-0 flex-1">
                       <span className="text-small truncate font-medium">{customer.name}</span>
-                      <span dir="ltr" className="text-caption text-fg-tertiary truncate text-start">
-                        {customer.email}
-                      </span>
+                      {customer.email ? (
+                        <span dir="ltr" className="text-caption text-fg-tertiary truncate text-start">
+                          {customer.email}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="flex shrink-0 flex-wrap justify-end gap-1">
                       <PlanBadge customer={customer} />

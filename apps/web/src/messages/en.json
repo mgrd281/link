@@ -3022,11 +3022,11 @@
       },
       "editor": {
         "name": "Editor",
-        "description": "Create and design pages. An admin approves and verifies."
+        "description": "Create and design pages, work on orders. Customer data, approval and verification are for admins."
       },
       "viewer": {
         "name": "Viewer",
-        "description": "See everything, change nothing."
+        "description": "See everything, change and export nothing."
       }
     },
     "permissions": {
@@ -3045,7 +3045,9 @@
       "billing_manage": "Change plans, trials & refunds",
       "security_view": "See sign-ins, IPs & devices",
       "security_manage": "Block IP addresses",
-      "analytics_view": "See analytics"
+      "analytics_view": "See analytics",
+      "orders_view": "See page-service orders",
+      "customers_export": "Export the customer list (CSV)"
     },
     "status": {
       "draft": "Draft",
@@ -3075,7 +3077,7 @@
         "step3": "An admin reviews, verifies and sets the page to \"Ready\".",
         "step4": "Publish and send the invite link. When the creator signs up with their email, everything is ready."
       },
-      "demo": "Demo: team data (members, drafts, activity) lives in this browser. With the database in Phase 1 the whole team shares the same data.",
+      "demo": "Demo: team data (members, drafts, activity) lives in this browser. With real accounts the whole team shares the same data.",
       "range": "Time range",
       "days": "{days} days",
       "kpi": {
@@ -3094,7 +3096,8 @@
         "active": "Active this week",
         "activeHint": "{share} of all customers",
         "views": "Page views",
-        "viewsHint": "All pages, last 30 days"
+        "viewsHint": "All pages, last 30 days",
+        "viewsNotMeasured": "Not measured yet"
       },
       "signupsTitle": "New customers per day",
       "mrrTitle": "Monthly recurring revenue",
@@ -3104,11 +3107,11 @@
       "trialsEnding": "Trials ending in 3 days",
       "suspended": "Suspended accounts",
       "countries": "Countries",
-      "other": "Other",
       "devices": "Devices",
       "newest": "Newest customers",
       "allCustomers": "All customers",
-      "teamWork": "Team work"
+      "teamWork": "Team work",
+      "rest": "All others"
     },
     "creators": {
       "title": "Creator pages",
@@ -3455,7 +3458,7 @@
       },
       "suspended": "Suspended",
       "thisDevice": "This device",
-      "demoNote": "Demo: besides the accounts created in this browser (marked \"This device\"), these are fictional sample customers with example.com addresses and IP addresses reserved for documentation. With the database in Phase 1 this shows every real customer.",
+      "demoNote": "Demo: besides the accounts created in this browser (marked \"This device\"), these are fictional sample customers with example.com addresses and IP addresses reserved for documentation. With real accounts this shows the customers from the database.",
       "unknownCountry": "Unknown",
       "export": "Export CSV",
       "search": "Search",
@@ -3494,7 +3497,11 @@
       "pagination": "Pages of the customer list",
       "previous": "Previous",
       "next": "Next",
-      "page": "Page {page} of {pages}"
+      "page": "Page {page} of {pages}",
+      "noAccessTitle": "Customers aren't visible to your role",
+      "noAccessLead": "Your role builds pages and works on orders without customer data such as e-mail addresses. If you need access, ask an owner.",
+      "exportFailed": "The export couldn't be logged, so no file was made.",
+      "toOverview": "Go to the overview"
     },
     "customer": {
       "loading": "Loading …",
@@ -3516,7 +3523,9 @@
         "refunded": "Invoice refunded",
         "blocked": "{ip} blocked",
         "deleted": "Customer deleted",
-        "failed": "That didn't work. Please try again."
+        "failed": "That didn't work. Please try again.",
+        "cancelScheduled": "Pro ends on {date}",
+        "notMailed": "The e-mail to the customer did not go out."
       },
       "actions": {
         "plan": "Change plan",
@@ -3533,7 +3542,10 @@
         "refund": "Refund",
         "signout": "Sign out",
         "blockIp": "Block {ip}",
-        "block": "Block address"
+        "block": "Block address",
+        "givePro": "Give Pro (team)",
+        "cancelStripe": "Cancel at the end of the paid month",
+        "resumeStripe": "Undo the cancellation"
       },
       "confirm": {
         "suspendTitle": "Suspend {name}?",
@@ -3551,7 +3563,13 @@
         "deleteTitle": "Delete {name} for good?",
         "deleteBody": "Account, page and history are removed and can't be restored. Type {username} to confirm.",
         "typeUsername": "Type {username} to confirm",
-        "keep": "Keep as is"
+        "keep": "Keep as is",
+        "cancelStripeTitle": "Cancel at the end of the paid month?",
+        "cancelStripeBody": "Stripe ends Pro when the paid month is over and charges nothing after that. Pro stays on until then, and the customer gets a confirmation by e-mail.",
+        "resumeStripeTitle": "Undo the cancellation?",
+        "resumeStripeBody": "Pro goes on and renews through Stripe as usual.",
+        "refundStripeTitle": "Refund this invoice through Stripe?",
+        "refundStripeBody": "{amount} goes back to the customer through Stripe. Pro goes on. The customer gets an e-mail."
       },
       "tabs": {
         "label": "Customer details",
@@ -3586,11 +3604,13 @@
         "started": "Started",
         "renews": "Renews",
         "trialEnds": "Trial ends",
-        "canceled": "Canceled"
+        "canceled": "Canceled",
+        "planSource": "Pro through",
+        "endsAt": "Ends on"
       },
       "subscription": "Subscription",
       "month": "month",
-      "billingNote": "Demo: no money moves. Payments go through Stripe once Pro launches; refunds and plan changes then happen there and show up here.",
+      "billingNote": "Demo: no money moves. With real accounts, refunds and cancellations go through Stripe, and Pro from the team is free of charge.",
       "invoices": "Invoices",
       "noInvoices": "No invoices yet.",
       "invoice": {
@@ -3668,7 +3688,29 @@
         "verification_request": "Asked for verification",
         "verification_approve": "{actor} verified (request)",
         "verification_decline": "{actor} declined the verification"
-      }
+      },
+      "sources": {
+        "stripe": "Stripe (paid)",
+        "team": "Team (free of charge)",
+        "reward": "Reward (Pro for life)"
+      },
+      "notMeasured": "Not measured yet",
+      "billingErrors": {
+        "paymentsOff": "Payments are switched off here: nothing was sent to Stripe.",
+        "unauthorized": "Your session has ended. Please sign in again.",
+        "forbidden": "Your role can't do that.",
+        "notFound": "There is no running Stripe subscription or no such invoice.",
+        "locked": "Not possible right now: already refunded, not paid, or a withdrawal is waiting.",
+        "noPayment": "This invoice has no payment to refund.",
+        "notAvailable": "This works once the database is updated. Nothing changed.",
+        "notConfigured": "Stripe isn't set up on this server. Nothing changed.",
+        "stripe": "Stripe refused or couldn't be reached. Nothing changed.",
+        "server": "Stripe did it, but it isn't on record yet. Send it again: Stripe won't do it twice.",
+        "invalid": "The request was invalid. Nothing changed.",
+        "network": "No answer from the server. Check the status, then try again."
+      },
+      "stripeWaiting": "This subscription runs through Stripe. Refunds and cancelling work here once payments are switched on.",
+      "stripeNote": "Refunds and cancellations go through Stripe. “Refunded” shows here only once Stripe has confirmed it."
     },
     "subscriptions": {
       "title": "Subscriptions",
@@ -3684,7 +3726,6 @@
       "mrrTitle": "Recurring revenue per month",
       "plans": "Plans",
       "freeHint": "Everything a page needs, for good",
-      "assumption": "Price assumed",
       "proHint": "Custom domain, selling, email list, advanced analytics",
       "proForLife": "Pro for life (rewards): {count} · not revenue",
       "month": "month",
@@ -3699,9 +3740,10 @@
         "since": "Since",
         "next": "Next date",
         "invoices": "Invoices",
-        "mrr": "Per month"
+        "mrr": "Per month",
+        "source": "Pro through"
       },
-      "note": "Pro's price isn't decided yet: the €8 per month from the cost model is used until then. Stripe takes over billing at launch."
+      "teamNote": "Pro from the team is free of charge and doesn't count as revenue."
     },
     "security": {
       "title": "Security",
@@ -3797,7 +3839,9 @@
       "systems": "Systems",
       "languages": "Languages",
       "browsers": "Browsers",
-      "other": "Other"
+      "rest": "All others",
+      "visited": "Pages with visitors (30 days): {count}",
+      "visitedNotMeasured": "Page visits aren't measured yet. The “On Pro” step doesn't depend on them."
     },
     "orders": {
       "title": "Orders",

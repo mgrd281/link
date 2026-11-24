@@ -3022,11 +3022,11 @@
       },
       "editor": {
         "name": "Redaktion",
-        "description": "Seiten anlegen und gestalten. Freigabe und Verifizierung macht ein Admin."
+        "description": "Seiten anlegen und gestalten, Aufträge bearbeiten. Kundendaten, Freigabe und Verifizierung macht ein Admin."
       },
       "viewer": {
         "name": "Lesen",
-        "description": "Alles ansehen, nichts ändern."
+        "description": "Alles ansehen, nichts ändern oder exportieren."
       }
     },
     "permissions": {
@@ -3045,7 +3045,9 @@
       "billing_manage": "Pläne, Testphasen & Erstattungen ändern",
       "security_view": "Anmeldungen, IPs & Geräte sehen",
       "security_manage": "IP-Adressen sperren",
-      "analytics_view": "Analysen sehen"
+      "analytics_view": "Analysen sehen",
+      "orders_view": "Aufträge des Seitenservice sehen",
+      "customers_export": "Kundenliste exportieren (CSV)"
     },
     "status": {
       "draft": "Entwurf",
@@ -3075,7 +3077,7 @@
         "step3": "Ein Admin prüft, verifiziert und setzt die Seite auf „Bereit“.",
         "step4": "Veröffentlichen und den Einladungslink schicken. Meldet sich der Creator mit seiner E-Mail an, ist alles fertig."
       },
-      "demo": "Demo: Teamdaten (Mitglieder, Entwürfe, Verlauf) liegen in diesem Browser. Mit der Datenbank in Phase 1 teilt das ganze Team dieselben Daten.",
+      "demo": "Demo: Teamdaten (Mitglieder, Entwürfe, Verlauf) liegen in diesem Browser. Mit echten Konten teilt das ganze Team dieselben Daten.",
       "range": "Zeitraum",
       "days": "{days} Tage",
       "kpi": {
@@ -3094,7 +3096,8 @@
         "active": "Aktiv diese Woche",
         "activeHint": "{share} aller Kunden",
         "views": "Seitenaufrufe",
-        "viewsHint": "Alle Seiten, letzte 30 Tage"
+        "viewsHint": "Alle Seiten, letzte 30 Tage",
+        "viewsNotMeasured": "Noch nicht gemessen"
       },
       "signupsTitle": "Neue Kunden pro Tag",
       "mrrTitle": "Monatlicher Umsatz",
@@ -3104,11 +3107,11 @@
       "trialsEnding": "Testphasen enden in 3 Tagen",
       "suspended": "Gesperrte Konten",
       "countries": "Länder",
-      "other": "Andere",
       "devices": "Geräte",
       "newest": "Neueste Kunden",
       "allCustomers": "Alle Kunden",
-      "teamWork": "Team-Arbeit"
+      "teamWork": "Team-Arbeit",
+      "rest": "Alle anderen"
     },
     "creators": {
       "title": "Creator-Seiten",
@@ -3455,7 +3458,7 @@
       },
       "suspended": "Gesperrt",
       "thisDevice": "Dieses Gerät",
-      "demoNote": "Demo: Neben den Konten aus diesem Browser („Dieses Gerät“) sind das erfundene Beispielkunden mit example.com-Adressen und IP-Adressen aus den Bereichen für Dokumentation. Mit der Datenbank in Phase 1 stehen hier alle echten Kunden.",
+      "demoNote": "Demo: Neben den Konten aus diesem Browser („Dieses Gerät“) sind das erfundene Beispielkunden mit example.com-Adressen und IP-Adressen aus den Bereichen für Dokumentation. Mit echten Konten stehen hier die Kunden aus der Datenbank.",
       "unknownCountry": "Unbekannt",
       "export": "CSV exportieren",
       "search": "Suchen",
@@ -3494,7 +3497,11 @@
       "pagination": "Seiten der Kundenliste",
       "previous": "Zurück",
       "next": "Weiter",
-      "page": "Seite {page} von {pages}"
+      "page": "Seite {page} von {pages}",
+      "noAccessTitle": "Kunden sind für deine Rolle nicht sichtbar",
+      "noAccessLead": "Deine Rolle baut Seiten und bearbeitet Aufträge, ohne Kundendaten wie E-Mail-Adressen. Brauchst du Zugriff, frag eine Inhaberin oder einen Inhaber.",
+      "exportFailed": "Der Export ließ sich nicht protokollieren, darum wurde keine Datei erstellt.",
+      "toOverview": "Zur Übersicht"
     },
     "customer": {
       "loading": "Lädt …",
@@ -3516,7 +3523,9 @@
         "refunded": "Rechnung erstattet",
         "blocked": "{ip} gesperrt",
         "deleted": "Kunde gelöscht",
-        "failed": "Das hat nicht geklappt. Bitte versuch es noch einmal."
+        "failed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+        "cancelScheduled": "Pro endet am {date}",
+        "notMailed": "Die E-Mail an den Kunden ging nicht raus."
       },
       "actions": {
         "plan": "Plan ändern",
@@ -3533,7 +3542,10 @@
         "refund": "Erstatten",
         "signout": "Abmelden",
         "blockIp": "{ip} sperren",
-        "block": "Adresse sperren"
+        "block": "Adresse sperren",
+        "givePro": "Pro geben (Team)",
+        "cancelStripe": "Zum Ende des bezahlten Monats kündigen",
+        "resumeStripe": "Kündigung zurücknehmen"
       },
       "confirm": {
         "suspendTitle": "{name} sperren?",
@@ -3551,7 +3563,13 @@
         "deleteTitle": "{name} endgültig löschen?",
         "deleteBody": "Konto, Seite und Verlauf werden entfernt und lassen sich nicht wiederherstellen. Gib zur Bestätigung {username} ein.",
         "typeUsername": "Zur Bestätigung {username} eingeben",
-        "keep": "So lassen"
+        "keep": "So lassen",
+        "cancelStripeTitle": "Zum Ende des bezahlten Monats kündigen?",
+        "cancelStripeBody": "Stripe beendet Pro am Ende des bezahlten Monats und bucht danach nichts mehr ab. Bis dahin bleibt Pro aktiv, und der Kunde bekommt eine Bestätigung per E-Mail.",
+        "resumeStripeTitle": "Kündigung zurücknehmen?",
+        "resumeStripeBody": "Pro läuft weiter und verlängert sich wie gewohnt über Stripe.",
+        "refundStripeTitle": "Diese Rechnung über Stripe erstatten?",
+        "refundStripeBody": "{amount} gehen über Stripe an den Kunden zurück. Pro läuft weiter. Der Kunde bekommt eine E-Mail."
       },
       "tabs": {
         "label": "Kundendetails",
@@ -3586,11 +3604,13 @@
         "started": "Begonnen",
         "renews": "Verlängert sich am",
         "trialEnds": "Testphase endet",
-        "canceled": "Gekündigt am"
+        "canceled": "Gekündigt am",
+        "planSource": "Pro über",
+        "endsAt": "Endet am"
       },
       "subscription": "Abo",
       "month": "Monat",
-      "billingNote": "Demo: Es fließt kein Geld. Zahlungen laufen ab dem Start von Pro über Stripe; Erstattungen und Planwechsel passieren dann dort und erscheinen hier.",
+      "billingNote": "Demo: Es fließt kein Geld. Mit echten Konten laufen Erstattungen und Kündigungen über Stripe; Pro vom Team ist kostenlos.",
       "invoices": "Rechnungen",
       "noInvoices": "Noch keine Rechnungen.",
       "invoice": {
@@ -3668,7 +3688,29 @@
         "verification_request": "Verifizierung angefragt",
         "verification_approve": "{actor} hat auf Anfrage verifiziert",
         "verification_decline": "{actor} hat die Verifizierung abgelehnt"
-      }
+      },
+      "sources": {
+        "stripe": "Stripe (bezahlt)",
+        "team": "Team (kostenlos)",
+        "reward": "Belohnung (Pro für immer)"
+      },
+      "notMeasured": "Noch nicht gemessen",
+      "billingErrors": {
+        "paymentsOff": "Zahlungen sind hier ausgeschaltet: An Stripe ging nichts.",
+        "unauthorized": "Deine Anmeldung ist abgelaufen. Bitte melde dich neu an.",
+        "forbidden": "Dafür fehlt deiner Rolle die Berechtigung.",
+        "notFound": "Dazu gibt es kein laufendes Stripe-Abo oder keine solche Rechnung.",
+        "locked": "Das geht gerade nicht: schon erstattet, nicht bezahlt oder ein Widerruf wartet.",
+        "noPayment": "Zu dieser Rechnung gibt es keine Zahlung zum Erstatten.",
+        "notAvailable": "Das geht erst, wenn die Datenbank aktualisiert ist. Es hat sich nichts geändert.",
+        "notConfigured": "Stripe ist auf diesem Server nicht eingerichtet. Es hat sich nichts geändert.",
+        "stripe": "Stripe hat abgelehnt oder war nicht erreichbar. Es hat sich nichts geändert.",
+        "server": "Stripe hat es ausgeführt, der Eintrag fehlt aber noch. Bitte noch einmal senden: Stripe führt es nicht doppelt aus.",
+        "invalid": "Die Anfrage war ungültig. Es hat sich nichts geändert.",
+        "network": "Keine Antwort vom Server. Bitte den Stand prüfen und noch einmal versuchen."
+      },
+      "stripeWaiting": "Dieses Abo läuft über Stripe. Erstatten und Kündigen gehen hier, sobald Zahlungen eingeschaltet sind.",
+      "stripeNote": "Erstattungen und Kündigungen laufen über Stripe. „Erstattet“ steht hier erst, wenn Stripe es bestätigt hat."
     },
     "subscriptions": {
       "title": "Abos",
@@ -3684,7 +3726,6 @@
       "mrrTitle": "Wiederkehrender Umsatz pro Monat",
       "plans": "Pläne",
       "freeHint": "Alles, was eine Seite braucht – dauerhaft",
-      "assumption": "Preis angenommen",
       "proHint": "Eigene Domain, Verkauf, E-Mail-Liste, erweiterte Analysen",
       "proForLife": "Pro für immer (Belohnungen): {count} · kein Umsatz",
       "month": "Monat",
@@ -3699,9 +3740,10 @@
         "since": "Seit",
         "next": "Nächster Termin",
         "invoices": "Rechnungen",
-        "mrr": "Pro Monat"
+        "mrr": "Pro Monat",
+        "source": "Pro über"
       },
-      "note": "Der Pro-Preis steht noch nicht fest: Bis dahin gelten die 8 € pro Monat aus dem Kostenmodell. Zum Start übernimmt Stripe die Abrechnung."
+      "teamNote": "Pro vom Team ist kostenlos und zählt nicht zum Umsatz."
     },
     "security": {
       "title": "Sicherheit",
@@ -3797,7 +3839,9 @@
       "systems": "Systeme",
       "languages": "Sprachen",
       "browsers": "Browser",
-      "other": "Andere"
+      "rest": "Alle anderen",
+      "visited": "Seiten mit Besuchern (30 Tage): {count}",
+      "visitedNotMeasured": "Seitenbesuche werden noch nicht gemessen. Die Stufe „Mit Pro“ hängt nicht davon ab."
     },
     "orders": {
       "title": "Aufträge",
