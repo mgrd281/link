@@ -45,6 +45,12 @@ async function axe(page: Page) {
 /** The bottom tab bar on phones, the sidebar on wide screens: both are labelled "Team area". */
 const nav = (page: Page) => page.getByRole("navigation", { name: "Team area" }).locator("visible=true");
 
+/** "View as" sits in the account menu (A-11), on phones and laptops alike. */
+async function viewAs(page: Page, role: "Viewer" | "Editor" | "Owner") {
+  await page.getByRole("button", { name: /^Account/ }).locator("visible=true").first().click();
+  await page.getByRole("menuitemradio", { name: role }).click();
+}
+
 /** Opens a section from the navigation; on phones the less used ones sit under "More". */
 async function go(page: Page, name: string) {
   const link = nav(page).getByRole("link", { name, exact: true });
@@ -140,7 +146,7 @@ test.describe("team area", () => {
     }
   });
 
-  test("roles decide what each person can do; owners can check by viewing as another role", async ({ page, isMobile }) => {
+  test("roles decide what each person can do; owners can check by viewing as another role", async ({ page }) => {
     await owner(page);
     await go(page, "Team");
     await page.getByRole("button", { name: "Add member" }).click();
@@ -148,12 +154,13 @@ test.describe("team area", () => {
     await page.getByLabel("Email", { exact: true }).fill(`sara-${unique()}@example.com`);
     await page.getByRole("dialog").getByRole("button", { name: "Add", exact: true }).click();
     await expect(page.getByText("Sara is now on the team.", { exact: true })).toBeVisible();
-    await expect(page.getByRole("table", { name: "Roles & permissions" })).toBeVisible();
+    // A table from md; on a phone one row per permission with every role under it (nothing cut off).
+    const matrix = page.getByRole("table", { name: "Roles & permissions" }).or(page.getByRole("list", { name: "Roles & permissions" }));
+    await expect(matrix.locator("visible=true")).toHaveCount(1);
 
     const username = `mo-${unique()}`;
     await createPage(page, "Mo", username);
-    if (isMobile) await nav(page).getByRole("link", { name: "Overview" }).click();
-    await page.getByLabel("View as").locator("visible=true").selectOption("editor");
+    await viewAs(page, "Editor");
     await expect(page.getByText("You're viewing the team area as Editor.")).toBeVisible();
     // Editors build pages; approval, verification and invites are for admins.
     await nav(page).getByRole("link", { name: "Creators" }).click();
@@ -209,12 +216,19 @@ test.describe("customer console", () => {
     await owner(page);
     await go(page, "Customers");
     await expect(page.getByRole("heading", { level: 1, name: "Customers" })).toBeVisible();
-    await page.getByLabel("Status").selectOption("past_due");
+    // Filters sit behind one button, in a sheet (A-11); what is on shows as removable chips.
+    await page.getByRole("button", { name: "Filters", exact: true }).click();
+    const filters = page.getByRole("dialog", { name: "Filters" });
+    await filters.getByRole("button", { name: "Payment failed" }).click();
+    await expect(filters.getByRole("button", { name: "Payment failed" })).toHaveAttribute("aria-pressed", "true");
+    await filters.getByRole("button", { name: /^Show \d+ customers?$/ }).click();
+    await expect(filters).toBeHidden();
     await expect(page.getByRole("status")).toContainText(/\d+ customers?/);
-    await page.getByLabel("Status").selectOption("all");
+    await page.getByRole("button", { name: "Remove filter Payment failed" }).click();
+    await expect(page.getByRole("group", { name: "Active filters" })).toHaveCount(0);
     await page.getByLabel("Search").fill("haddad");
     const first = page.locator("main a[href*='/admin/customers/cus_']").locator("visible=true").first();
-    const name = (await first.locator("span.truncate").first().textContent()) ?? "";
+    const name = (await first.textContent()) ?? "";
     await first.click();
     await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
 
@@ -243,13 +257,14 @@ test.describe("customer console", () => {
     await go(page, "Security");
     await expect(page.getByRole("heading", { level: 1, name: "Security" })).toBeVisible();
     // The list shows the person's name, which a new page makes from its address ("team-x1" → "Team X1").
-    const row = page.getByRole("row").filter({ hasText: new RegExp(account.name.replace(/-/g, " "), "i") }).first();
+    const row = page.locator("[data-sign-ins] > li").filter({ hasText: new RegExp(account.name.replace(/-/g, " "), "i") }).first();
     await expect(row).toContainText(/127\.0\.0\.1|::1/);
     await expect(row).toContainText("Signed in");
-    const ip = (await row.locator("td span.font-mono").first().textContent())?.trim() ?? "";
+    const ip = (await row.locator("[data-ip]").textContent())?.trim() ?? "";
     await row.getByRole("button", { name: `Block ${ip}` }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Block", exact: true }).click();
-    await expect(page.getByRole("region", { name: "Blocked addresses" }).getByText(ip, { exact: true })).toBeVisible();
+    await page.getByRole("radio", { name: /^Blocked/ }).click();
+    await expect(page.getByRole("list", { name: "Blocked addresses" }).getByText(ip, { exact: true })).toBeVisible();
     // The customer sees the same sign-in in their own settings (after skipping the welcome flow).
     await page.goto("/en/app/welcome");
     await page.getByRole("button", { name: "Skip for now" }).click();
@@ -259,18 +274,13 @@ test.describe("customer console", () => {
     await expect(page.getByText("This device").first()).toBeVisible();
   });
 
-  test("only owners and admins export customers; editors see no customers at all", async ({ page, isMobile }) => {
+  test("only owners and admins export customers; editors see no customers at all", async ({ page }) => {
     await owner(page);
     await go(page, "Customers");
     await expect(page.getByRole("button", { name: "Export CSV" })).toBeVisible();
-    // "View as" sits in the sidebar, and on phones at the top of the overview.
-    const viewAs = async (role: "viewer" | "editor") => {
-      if (isMobile) await nav(page).getByRole("link", { name: "Overview", exact: true }).click();
-      await page.getByLabel("View as").locator("visible=true").selectOption(role);
-    };
 
     // A viewer: the list, no export.
-    await viewAs("viewer");
+    await viewAs(page, "Viewer");
     await expect(page.getByText("You're viewing the team area as Viewer.")).toBeVisible();
     await go(page, "Customers");
     await expect(page.getByRole("heading", { level: 1, name: "Customers" })).toBeVisible();
@@ -278,14 +288,12 @@ test.describe("customer console", () => {
     await expect(page.getByRole("button", { name: "Export CSV" })).toHaveCount(0);
 
     // An editor: no customers, no addresses, no export, on any screen.
-    await viewAs("editor");
+    await viewAs(page, "Editor");
     await expect(page.getByText("You're viewing the team area as Editor.")).toBeVisible();
-    if (!isMobile) {
-      // The customer list that was open turns into the notice.
-      await expect(page.getByRole("heading", { level: 1, name: "Customers aren't visible to your role" })).toBeVisible();
-      await expect(page.locator("main")).not.toContainText("@example.com");
-      await nav(page).getByRole("link", { name: "Overview", exact: true }).click();
-    }
+    // The customer list that was open turns into the notice (the menu is on every screen now, phones too).
+    await expect(page.getByRole("heading", { level: 1, name: "Customers aren't visible to your role" })).toBeVisible();
+    await expect(page.locator("main")).not.toContainText("@example.com");
+    await nav(page).getByRole("link", { name: "Overview", exact: true }).click();
     await expect(nav(page).getByRole("link", { name: "Customers", exact: true })).toHaveCount(0);
     await expect(page.getByRole("heading", { level: 2, name: "Newest customers" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Export CSV" })).toHaveCount(0);
@@ -303,7 +311,7 @@ test.describe("customer console", () => {
 
   test("viewers see revenue and customers but can't change anything", async ({ page }) => {
     await owner(page);
-    await page.getByLabel("View as").locator("visible=true").selectOption("viewer");
+    await viewAs(page, "Viewer");
     await go(page, "Customers");
     await page.locator("main a[href*='/admin/customers/cus_']").locator("visible=true").first().click();
     await expect(page.getByRole("radio", { name: "Subscription" })).toBeVisible();
@@ -494,7 +502,7 @@ test.describe("referrals", () => {
     await expect(page.getByText(`declined ${username}'s verification`).first()).toBeVisible();
   });
 
-  test("viewers see requests and invites but can't approve or remove anything", async ({ page, isMobile }) => {
+  test("viewers see requests and invites but can't approve or remove anything", async ({ page }) => {
     await owner(page);
     const username = `omar-${unique()}`;
     await seedRequest(page, username, "Omar Fares");
@@ -508,14 +516,13 @@ test.describe("referrals", () => {
     await expect(page.getByRole("button", { name: "Remove", exact: true })).toHaveCount(3);
     await expect(page.getByRole("button", { name: "Remove reward …" })).toHaveCount(1);
 
-    if (isMobile) await nav(page).getByRole("link", { name: "Overview" }).click();
-    await page.getByLabel("View as").locator("visible=true").selectOption("viewer");
+    await viewAs(page, "Viewer");
     await go(page, "Referrals");
     await expect(request.getByText("Admins and owners can verify.")).toBeVisible();
     await expect(request.getByRole("button")).toHaveCount(0);
     await request.getByRole("link", { name: `@${username}` }).click();
     await page.getByRole("radio", { name: "Invites" }).click();
-    await expect(page.getByRole("cell", { name: "Counts" })).toHaveCount(3);
+    await expect(page.locator("[data-invite-state='qualified']")).toHaveCount(3);
     await expect(page.getByRole("button", { name: "Remove", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /reward/ })).toHaveCount(0);
   });

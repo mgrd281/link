@@ -1,8 +1,8 @@
 "use client";
 
 import { hasImage, profileSchema, RESERVED_USERNAMES } from "@linkyo/blocks";
-import { Avatar, Badge, Button, Icon, Segmented, Skeleton, TextField } from "@linkyo/ui";
-import { BadgeCheck, ChevronRight, Mail, PenTool, Plus, Search } from "lucide-react";
+import { Avatar, Badge, Button, Icon, icons, Segmented, Skeleton, TextField } from "@linkyo/ui";
+import { BadgeCheck, ChevronRight, Mail, Plus, Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type SubmitEvent } from "react";
 import { z } from "zod";
@@ -16,6 +16,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 
 import { useCreatorRows, usePublished, type CreatorRow } from "./data";
+import { isolate } from "./bidi";
 import { timeAgo } from "./format";
 import { useAdmin } from "./session";
 import { adminStore, blankPreparedPage } from "./store";
@@ -123,10 +124,12 @@ export function CreatorsScreen() {
           label={t("filter")}
           value={filter}
           onValueChange={setFilter}
-          className="overflow-x-auto"
+          // The count is the segment's badge: one line, never "Alle ·" over "14" (A-11).
+          formatCount={(value) => new Intl.NumberFormat(locale).format(value)}
           options={(["all", "draft", "ready", "published"] as const).map((value) => ({
             value,
-            label: `${value === "all" ? t("all") : tStatus(value)} · ${counts(value)}`,
+            label: value === "all" ? t("all") : tStatus(value),
+            count: counts(value),
           }))}
         />
       </div>
@@ -141,7 +144,7 @@ export function CreatorsScreen() {
       ) : visible.length === 0 ? (
         <div className="grid justify-items-center gap-4 rounded-xl border border-dashed border-line-strong p-8 text-center">
           <span className="grid size-control-xl place-items-center rounded-full bg-selected text-selected-fg">
-            <Icon icon={PenTool} size="lg" />
+            <Icon icon={icons.creators} size="lg" />
           </span>
           <div className="grid grid-cols-1 gap-1">
             <p className="text-body-lg font-semibold">{rows.length === 0 ? t("emptyTitle") : t("noMatch")}</p>
@@ -261,7 +264,7 @@ function NewPageSheet({ open, onOpenChange, taken, defaultLocale }: { open: bool
           maxLength={30}
           required
           hint={t("usernameHint")}
-          error={(tried || username.length >= 3) && usernameError ? t(`usernameErrors.${usernameError}`) : undefined}
+          error={(tried || username.length >= 3) && usernameError ? t.markup(`usernameErrors.${usernameError}`, { bdi: isolate }) : undefined}
         />
         <TextField
           id="new-slug"
@@ -274,7 +277,7 @@ function NewPageSheet({ open, onOpenChange, taken, defaultLocale }: { open: bool
           spellCheck={false}
           maxLength={64}
           hint={t("slugHint")}
-          error={tried && slugError ? t(`slugErrors.${slugError}`) : undefined}
+          error={tried && slugError ? t.markup(`slugErrors.${slugError}`, { bdi: isolate }) : undefined}
         />
         <SelectField label={t("locale")} value={locale} onValue={setLocale} options={LOCALES.map((value) => ({ value, label: tLocales(value) }))} />
         <TextField

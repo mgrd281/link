@@ -23,6 +23,7 @@ import { copyText } from "@/lib/clipboard";
 import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 
 import { StatusBadge } from "./creators-screen";
+import { bdi, isolate } from "./bidi";
 import { usePublished, type PublishedPage } from "./data";
 import { useOrigin } from "./format";
 import { useAdmin } from "./session";
@@ -80,7 +81,7 @@ export function CreatorScreen({ slug }: { slug: string }) {
 function BackLink() {
   const t = useTranslations("admin.creator");
   return (
-    <Link href="/admin/creators" className="inline-flex h-control-sm items-center gap-2 justify-self-start rounded-sm text-small font-medium text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
+    <Link href="/admin/creators" className="inline-flex min-h-touch-target items-center gap-2 justify-self-start rounded-sm text-small font-semibold text-link focus-visible:focus-ring hover:text-fg transition-colors duration-micro">
       <Icon icon={ArrowLeft} size="sm" />
       {t("back")}
     </Link>
@@ -242,7 +243,8 @@ function DraftEditor({ draft, server }: { draft: PreparedDraft; server: Publishe
   return (
     <EditorProvider key={`${slug}:${locale}`} account={account} site={site} write={write} previewHref={`/admin/preview/${slug}?lang=${locale}`}>
       <div className="layer-sticky sticky top-16 border-b border-line bg-canvas lg:top-0">
-        <div className="mx-auto flex max-w-content flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 md:px-8">
+        {/* Phones: who and what on the first row, the tabs on a row of their own, so nothing covers the status (A-11). */}
+        <div data-editor-header className="mx-auto grid max-w-content grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3 md:flex md:flex-wrap md:gap-x-4 md:px-8">
           <Link
             href="/admin/creators"
             aria-label={t("back")}
@@ -250,25 +252,31 @@ function DraftEditor({ draft, server }: { draft: PreparedDraft; server: Publishe
           >
             <Icon icon={ArrowLeft} size="md" />
           </Link>
-          <div className="grid min-w-0 flex-1 gap-0.5">
+          <div className="grid min-w-0 gap-0.5 md:flex-1">
             <p className="flex min-w-0 items-center gap-2">
-              <span className="truncate text-body-lg font-semibold">{name}</span>
+              <span className="truncate text-body-lg font-semibold">
+                <bdi>{name}</bdi>
+              </span>
               {draft.verified ? <Icon icon={BadgeCheck} size="sm" label={t("verified")} className="shrink-0 text-link" /> : null}
             </p>
-            <p className="flex flex-wrap items-center gap-2 text-caption text-fg-secondary">
+            <p data-editor-status className="flex min-w-0 flex-wrap items-center gap-2 text-caption text-fg-secondary">
               <StatusBadge status={draft.status} />
               {server ? (
                 <Badge size="sm" tone="outline">
                   {t("liveVersion")}
                 </Badge>
               ) : null}
-              <span dir="ltr">{pageAddress(draft.username)}</span>
+              <span dir="ltr" className="min-w-0 truncate">
+                {pageAddress(draft.username)}
+              </span>
             </p>
           </div>
-          {locales.length > 1 ? (
-            <Segmented size="sm" label={t("language")} value={locale} onValueChange={setChosen} options={locales.map((value) => ({ value, label: tLocales(value) }))} />
-          ) : null}
-          <Segmented label={t("tabsLabel")} value={tab} onValueChange={setTab} options={tabs} />
+          <div className="col-span-full flex min-w-0 flex-wrap items-center gap-2 md:col-auto">
+            <Segmented label={t("tabsLabel")} value={tab} onValueChange={setTab} options={tabs} className="max-md:flex-1 max-md:[&>*]:flex-1" />
+            {locales.length > 1 ? (
+              <Segmented size="sm" label={t("language")} value={locale} onValueChange={setChosen} options={locales.map((value) => ({ value, label: tLocales(value) }))} />
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -371,14 +379,14 @@ function PublishPanel({ draft }: { draft: PreparedDraft }) {
       {allowed ? (
         <ol className="grid grid-cols-1 gap-3">
           <li className="grid grid-cols-1 gap-2">
-            <p className="text-small font-medium">{t("step1")}</p>
+            <p className="text-small font-medium">{t.rich("step1", { bdi })}</p>
             <Button icon={Download} disabled={draft.status !== "ready"} onClick={() => void download()} className="justify-self-start">
               {t("download")}
             </Button>
             {draft.status === "ready" ? null : <p className="text-caption text-fg-tertiary">{t("readyFirst")}</p>}
           </li>
           <li className="grid grid-cols-1 gap-2">
-            <p className="text-small font-medium">{t("step2")}</p>
+            <p className="text-small font-medium">{t.rich("step2", { bdi })}</p>
             <div className="flex min-w-0 items-center gap-2 rounded-md border border-line bg-canvas-muted ps-3 pe-1">
               <code dir="ltr" className="min-w-0 flex-1 py-2 text-start text-caption break-all">
                 {command}
@@ -391,7 +399,7 @@ function PublishPanel({ draft }: { draft: PreparedDraft }) {
               />
             </div>
           </li>
-          <li className="text-small font-medium">{t("step3")}</li>
+          <li className="text-small font-medium">{t.rich("step3", { bdi })}</li>
         </ol>
       ) : (
         <Locked>{t("locked")}</Locked>
@@ -470,7 +478,7 @@ function InvitesPanel({ draft }: { draft: PreparedDraft }) {
       ) : (
         <Locked>{t("locked")}</Locked>
       )}
-      <p className="text-caption text-fg-tertiary">{t("privacy")}</p>
+      <p className="text-caption text-fg-tertiary">{t.rich("privacy", { bdi })}</p>
     </Panel>
   );
 }
@@ -527,7 +535,7 @@ function IdentityPanel({ draft, locale }: { draft: PreparedDraft; locale: Locale
           maxLength={30}
           disabled={!allowed}
           hint={t("usernameHint")}
-          error={usernameError && (tried || username !== draft.username) ? tCreate(`usernameErrors.${usernameError}`) : undefined}
+          error={usernameError && (tried || username !== draft.username) ? tCreate.markup(`usernameErrors.${usernameError}`, { bdi: isolate }) : undefined}
         />
         {allowed ? (
           <Button type="submit" variant="primary" disabled={!changed} className="justify-self-start">
@@ -620,7 +628,7 @@ function DeletePanel({ draft, live }: { draft: PreparedDraft; live: boolean }) {
         open={open}
         onOpenChange={setOpen}
         title={t("confirmTitle")}
-        description={t("confirmBody", { name: draft.username })}
+        description={t.rich("confirmBody", { name: draft.username, bdi })}
         confirmLabel={live ? t("buttonLive") : t("button")}
         cancelLabel={t("cancel")}
         onConfirm={() => {

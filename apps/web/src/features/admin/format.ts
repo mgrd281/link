@@ -1,5 +1,8 @@
 import { useSyncExternalStore } from "react";
 
+/** Rows per page in the console's long lists (customers, sign-ins): A-11. */
+export const PAGE_SIZE = 25;
+
 /** "5 min ago", "yesterday", then a date: how recent team activity reads best. */
 export function timeAgo(iso: string, now: number, locale: string): string {
   const seconds = (Date.parse(iso) - now) / 1000;
@@ -36,3 +39,16 @@ export function country(code: string, locale: string, unknown: string) {
 
 export const dateTime = (iso: string, locale: string) => new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 export const date = (iso: string, locale: string) => new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
+
+/**
+ * A change with its sign, for the delta chip of a KPI tile ("+12", "−3", "0"): the sign is always
+ * written, so the chip never rests on its colour (WCAG 1.4.1).
+ */
+export const signed = (value: number, locale: string) => new Intl.NumberFormat(locale, { signDisplay: "exceptZero", maximumFractionDigits: 1 }).format(value);
+
+/** A change of money with its sign ("+24 €", "−8 €"). */
+export const signedMoney = (cents: number, locale: string) =>
+  new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", signDisplay: "exceptZero", maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(cents / 100);
+
+/** A change of a share in percentage points, as a signed number ("+1,5"); the unit is in the message. */
+export const signedPoints = (share: number, locale: string) => new Intl.NumberFormat(locale, { signDisplay: "exceptZero", maximumFractionDigits: 1 }).format(share * 100);

@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   ConfirmDialog,
+  DataList,
   Icon,
   icons,
   Menu,
@@ -49,8 +50,9 @@ import { CustomersHidden } from "./customers-list-screen";
 import { sessionsOf, useCustomers } from "./customers/data";
 import { DAY, hasProForLife, isPaying, monthlyRevenue, riskFlags, subscriptionSource, viewsMeasured, type Customer } from "./customers/model";
 import { DemoNote, DeviceLabel, PlanBadge, RiskBadges, StatusBadges } from "./customers/ui";
-import { count, country, date, dateTime, money, timeAgo } from "./format";
+import { count, date, dateTime, money, timeAgo } from "./format";
 import { bare, CustomerLink, ProfileLinks, SignalChips, useReasonLabel, WHY_MAX } from "./referrals-screen";
+import { Place } from "./security-screen";
 import { useAdmin } from "./session";
 
 type Tab = "overview" | "billing" | "security" | "notes" | "invites";
@@ -327,7 +329,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
     >
       <Link
         href="/admin/customers"
-        className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 justify-self-start rounded-sm font-medium hover:text-fg transition-colors duration-micro"
+        className="text-small text-link focus-visible:focus-ring inline-flex min-h-touch-target items-center gap-1 justify-self-start rounded-sm font-semibold hover:text-fg transition-colors duration-micro"
       >
         <Icon icon={ArrowLeft} size="sm" />
         {t("back")}
@@ -337,7 +339,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
         <PlanBadge customer={customer} />
         {hasProForLife(customer) ? (
           <Badge size="sm" tone="outline">
-            {tc("proForLife")}
+            {tc.rich("proForLife", { bdi })}
           </Badge>
         ) : null}
         <StatusBadges customer={customer} />
@@ -402,10 +404,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
           <Panel title={t("account")} id="account-title">
             <Facts
               items={[
-                [
-                  t("facts.country"),
-                  `${country(customer.country, locale, unknown)}${customer.city ? ` · ${customer.city}` : ""}`,
-                ],
+                [t("facts.country"), <Place key="place" code={customer.country} city={customer.city} unknown={unknown} />],
                 [
                   t("facts.language"),
                   new Intl.DisplayNames([locale], { type: "language" }).of(customer.locale) ??
@@ -502,73 +501,32 @@ export function CustomerDetailScreen({ id }: { id: string }) {
             {sub.invoices.length === 0 ? (
               <p className="text-small text-fg-secondary">{t("noInvoices")}</p>
             ) : (
-              <div className="relative overflow-x-auto" role="region" aria-labelledby="invoices-title" tabIndex={0}>
-                <table className="text-small w-full">
-                  <thead className="text-caption text-fg-secondary">
-                    <tr>
-                      <th scope="col" className="py-2 pe-4 text-start font-medium">
-                        {t("invoice.date")}
-                      </th>
-                      <th scope="col" className="py-2 pe-4 text-start font-medium">
-                        {t("invoice.number")}
-                      </th>
-                      <th scope="col" className="py-2 pe-4 text-start font-medium">
-                        {t("invoice.status")}
-                      </th>
-                      <th scope="col" className="py-2 text-end font-medium">
-                        {t("invoice.amount")}
-                      </th>
-                      {money_.refund ? (
-                        <th scope="col" className="py-2">
-                          <span className="sr-only">{t("invoice.actions")}</span>
-                        </th>
-                      ) : null}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...sub.invoices].reverse().map((invoice) => (
-                      <tr key={invoice.id} className="border-line border-t">
-                        <td className="py-2 pe-4 whitespace-nowrap">{date(invoice.at, locale)}</td>
-                        {/* The id reads left to right; the cell keeps the page's side (start in Arabic too). */}
-                        <td className="text-caption py-2 pe-4 text-start">
-                          <span dir="ltr" className="font-mono">
-                            {invoice.id}
-                          </span>
-                        </td>
-                        <td className="py-2 pe-4">
-                          <Badge
-                            size="sm"
-                            tone={
-                              invoice.status === "paid"
-                                ? "success"
-                                : invoice.status === "failed"
-                                  ? "danger"
-                                  : "neutral"
-                            }
-                          >
-                            {t(`invoice.${invoice.status}`)}
-                          </Badge>
-                        </td>
-                        <td className="py-2 text-end tabular-nums">{money(invoice.amount, locale, true)}</td>
-                        {money_.refund ? (
-                          <td className="py-2 text-end">
-                            {invoice.status === "paid" ? (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                icon={ReceiptText}
-                                onClick={() => setPending({ kind: "refund", invoice: invoice.id, amount: invoice.amount })}
-                              >
-                                {t("actions.refund")}
-                              </Button>
-                            ) : null}
-                          </td>
-                        ) : null}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataList
+                label={t("invoices")}
+                items={[...sub.invoices].reverse().map((invoice) => ({
+                  id: invoice.id,
+                  title: date(invoice.at, locale),
+                  fields: [
+                    // The id reads left to right; the cell keeps the page's side (start in Arabic too).
+                    { label: t("invoice.number"), value: <span dir="ltr" className="font-mono text-caption">{invoice.id}</span> },
+                    {
+                      label: t("invoice.status"),
+                      value: (
+                        <Badge size="sm" tone={invoice.status === "paid" ? "success" : invoice.status === "failed" ? "danger" : "neutral"}>
+                          {t(`invoice.${invoice.status}`)}
+                        </Badge>
+                      ),
+                    },
+                    { label: t("invoice.amount"), value: money(invoice.amount, locale, true), numeric: true },
+                  ],
+                  trailing:
+                    money_.refund && invoice.status === "paid" ? (
+                      <Button size="sm" variant="ghost" icon={ReceiptText} onClick={() => setPending({ kind: "refund", invoice: invoice.id, amount: invoice.amount })}>
+                        {t("actions.refund")}
+                      </Button>
+                    ) : undefined,
+                }))}
+              />
             )}
           </Panel>
         </div>
@@ -599,8 +557,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                         <span dir="ltr" className="font-mono">
                           {device.ip}
                         </span>{" "}
-                        · {country(device.country ?? "", locale, unknown)}
-                        {device.city ? ` · ${device.city}` : ""} ·{" "}
+                        · <Place code={device.country ?? ""} city={device.city} unknown={unknown} /> ·{" "}
                         {t("lastUsed", { when: timeAgo(device.lastAt, now, locale) })} ·{" "}
                         {t("signIns", { count: device.signIns })}
                       </span>
@@ -627,79 +584,37 @@ export function CustomerDetailScreen({ id }: { id: string }) {
             )}
           </Panel>
           <Panel title={t.markup("signInLog", { bdi: isolate })} id="signins-title">
-            <div className="overflow-x-auto" role="region" aria-labelledby="signins-title" tabIndex={0}>
-              <table className="min-w-prose text-small w-full">
-                <thead className="text-caption text-fg-secondary">
-                  <tr>
-                    <th scope="col" className="py-2 text-start font-medium">
-                      {ts("columns.when")}
-                    </th>
-                    <th scope="col" className="py-2 text-start font-medium">
-                      {ts("columns.result")}
-                    </th>
-                    <th scope="col" className="py-2 text-start font-medium">
-                      {ts("columns.ip")}
-                    </th>
-                    <th scope="col" className="py-2 text-start font-medium">
-                      {ts("columns.place")}
-                    </th>
-                    <th scope="col" className="py-2 text-start font-medium">
-                      {ts("columns.device")}
-                    </th>
-                    <th scope="col" className="py-2 text-start font-medium">
-                      {ts("columns.signature")}
-                    </th>
-                    <th scope="col" className="py-2 text-start font-medium">
-                      {ts("columns.flags")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customer.logins.map((login) => (
-                    <tr key={login.id} className="border-line border-t align-top">
-                      <td className="py-2 whitespace-nowrap">{dateTime(login.at, locale)}</td>
-                      <td className="py-2">
-                        <Badge size="sm" tone={login.result === "success" ? "success" : "danger"}>
-                          {ts(`result.${login.result}`)}
-                        </Badge>
-                      </td>
-                      <td className="py-2">
-                        <span className="flex items-center gap-1">
-                          <span dir="ltr" className="text-caption font-mono">
-                            {login.ip || "–"}
-                          </span>
-                          {can("security.manage") && login.ip && !blocked.has(login.ip) ? (
-                            <button
-                              type="button"
-                              onClick={() => setPending({ kind: "block", ip: login.ip })}
-                              className="size-control-sm text-fg-tertiary hover:bg-hover hover:text-danger-strong focus-visible:focus-ring grid place-items-center rounded-sm"
-                            >
-                              <Icon icon={Ban} size="sm" label={t("actions.blockIp", { ip: login.ip })} />
-                            </button>
-                          ) : null}
-                        </span>
-                      </td>
-                      <td className="py-2">
-                        {country(login.country ?? "", locale, unknown)}
-                        {login.city ? ` · ${login.city}` : ""}
-                      </td>
-                      <td className="py-2">
-                        <DeviceLabel device={login.device} />
-                      </td>
-                      <td className="py-2">
-                        <span dir="ltr" className="text-caption text-fg-secondary font-mono">
-                          {login.signature ?? "–"}
-                        </span>
-                      </td>
-                      <td className="py-2">
-                        <RiskBadges flags={riskFlags(login, customer.logins, blocked)} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="text-caption text-fg-tertiary">{ts("retention")}</p>
+            <DataList
+              label={t.markup("signInLog", { bdi: isolate })}
+              items={customer.logins.map((login) => ({
+                id: login.id,
+                title: dateTime(login.at, locale),
+                trailing: (
+                  <span className="flex items-center gap-1">
+                    <Badge size="sm" tone={login.result === "success" ? "success" : "danger"}>
+                      {ts(`result.${login.result}`)}
+                    </Badge>
+                    {can("security.manage") && login.ip && !blocked.has(login.ip) ? (
+                      <button
+                        type="button"
+                        onClick={() => setPending({ kind: "block", ip: login.ip })}
+                        className="relative grid size-control-sm place-items-center rounded-sm text-fg-tertiary hover:bg-hover hover:text-danger-strong focus-visible:focus-ring before:absolute before:-inset-2 pointer-fine:before:hidden"
+                      >
+                        <Icon icon={Ban} size="sm" label={t("actions.blockIp", { ip: login.ip })} />
+                      </button>
+                    ) : null}
+                  </span>
+                ),
+                fields: [
+                  { label: ts.markup("columns.ip", { bdi: isolate }), value: <span dir="ltr" data-ip className="font-mono text-caption">{login.ip || "–"}</span> },
+                  { label: ts("columns.place"), value: <Place code={login.country ?? ""} city={login.city} unknown={unknown} /> },
+                  { label: ts("columns.device"), value: <DeviceLabel device={login.device} /> },
+                  { label: ts("columns.signature"), value: <span dir="ltr" className="font-mono text-caption text-fg-secondary">{login.signature ?? "–"}</span> },
+                  { label: ts("columns.flags"), value: riskFlags(login, customer.logins, blocked).length ? <RiskBadges flags={riskFlags(login, customer.logins, blocked)} /> : "–" },
+                ],
+              }))}
+            />
+            <p className="text-caption text-fg-tertiary">{ts.rich("retention", { bdi })}</p>
           </Panel>
         </div>
       ) : null}
@@ -995,7 +910,7 @@ function InvitesTab({ customer, now }: { customer: Customer; now: number }) {
                 <li key={kind} className="border-line flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
                   <span className="grid min-w-0 gap-0.5">
                     <span id={labelId} className="text-small font-semibold">
-                      {tr(`kind.${kind}`)}
+                      {tr.rich(`kind.${kind}`, { bdi })}
                     </span>
                     <span className="text-caption text-fg-secondary">
                       {!reward
@@ -1027,79 +942,44 @@ function InvitesTab({ customer, now }: { customer: Customer; now: number }) {
         {!data || data.invited.length === 0 ? (
           <p className="text-small text-fg-secondary">{none}</p>
         ) : (
-          // `relative`: the column's screen-reader-only heading is positioned; without it, it would sit
-          // outside this scroller and widen the whole page on a phone.
-          <div className="relative overflow-x-auto" role="region" aria-labelledby="invited-title" tabIndex={0}>
-            <table className="min-w-prose text-small w-full">
-              <thead className="text-caption text-fg-secondary">
-                <tr>
-                  <th scope="col" className="py-2 pe-3 text-start font-medium">
-                    {tc("columns.customer")}
-                  </th>
-                  <th scope="col" className="py-2 pe-3 text-start font-medium">
-                    {t("invoice.status")}
-                  </th>
-                  <th scope="col" className="py-2 pe-3 text-start font-medium">
-                    {tr("verifications.reason")}
-                  </th>
-                  <th scope="col" className="py-2 pe-3 text-start font-medium">
-                    {ts("flags")}
-                  </th>
-                  <th scope="col" className="py-2 pe-3 text-start font-medium">
-                    {ts("when")}
-                  </th>
-                  {mayInvite ? (
-                    <th scope="col" className="py-2">
-                      <span className="sr-only">{t("invoice.actions")}</span>
-                    </th>
+          <DataList
+            label={t("invites.list")}
+            items={data.invited.map((invite) => ({
+              id: invite.id,
+              title: (
+                <span className="flex flex-wrap items-center gap-1">
+                  <CustomerLink id={invite.inviteeId} username={invite.username} />
+                  {invite.status === "suspended" ? (
+                    <Badge size="sm" tone="danger">
+                      {tc("suspended")}
+                    </Badge>
                   ) : null}
-                </tr>
-              </thead>
-              <tbody>
-                {data.invited.map((invite) => (
-                  <tr key={invite.id} className="border-line border-t align-middle">
-                    <td className="py-2 pe-3">
-                      <span className="flex flex-wrap items-center gap-1">
-                        <CustomerLink id={invite.inviteeId} username={invite.username} />
-                        {invite.status === "suspended" ? (
-                          <Badge size="sm" tone="danger">
-                            {tc("suspended")}
-                          </Badge>
-                        ) : null}
-                      </span>
-                    </td>
-                    <td className="py-2 pe-3">
-                      <Badge size="sm" tone={STATE_TONE[invite.state]}>
-                        {t(`invites.state.${invite.state}`)}
-                      </Badge>
-                    </td>
-                    <td className="text-fg-secondary py-2 pe-3">{invite.reason ? reasonLabel(invite.reason) : none}</td>
-                    <td className="py-2 pe-3">
-                      <SignalChips signals={invite.signals} />
-                    </td>
-                    <td className="text-fg-secondary py-2 pe-3 whitespace-nowrap">{date(invite.at, locale)}</td>
-                    {mayInvite ? (
-                      <td className="py-2 text-end">
-                        <span className="flex flex-wrap justify-end gap-1">
-                          {actionsFor(invite).map((action) => (
-                            <Button
-                              key={action.next}
-                              size="sm"
-                              variant={action.destructive ? "destructive" : "ghost"}
-                              icon={action.icon}
-                              onClick={() => setPending({ kind: "invite", invite, action })}
-                            >
-                              {action.label}
-                            </Button>
-                          ))}
-                        </span>
-                      </td>
-                    ) : null}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </span>
+              ),
+              fields: [
+                {
+                  label: t("invoice.status"),
+                  value: (
+                    <Badge size="sm" tone={STATE_TONE[invite.state]} data-invite-state={invite.state}>
+                      {t(`invites.state.${invite.state}`)}
+                    </Badge>
+                  ),
+                },
+                { label: tr("verifications.reason"), value: invite.reason ? reasonLabel(invite.reason) : none },
+                { label: ts("flags"), value: <SignalChips signals={invite.signals} /> },
+                { label: ts("when"), value: date(invite.at, locale) },
+              ],
+              trailing: mayInvite ? (
+                <span className="flex flex-wrap justify-end gap-1">
+                  {actionsFor(invite).map((action) => (
+                    <Button key={action.next} size="sm" variant={action.destructive ? "destructive" : "ghost"} icon={action.icon} onClick={() => setPending({ kind: "invite", invite, action })}>
+                      {action.label}
+                    </Button>
+                  ))}
+                </span>
+              ) : undefined,
+            }))}
+          />
         )}
       </Panel>
 
@@ -1124,7 +1004,7 @@ function InvitesTab({ customer, now }: { customer: Customer; now: number }) {
                   <span className="text-small">{tr("verifications.requested", { date: date(request.at, locale) })}</span>
                   <span className="flex flex-wrap items-center gap-2">
                     {request.state === "declined" && request.declineReason ? (
-                      <span className="text-caption text-fg-secondary">{tr(`declineReasons.${request.declineReason}`)}</span>
+                      <span className="text-caption text-fg-secondary">{tr.rich(`declineReasons.${request.declineReason}`, { bdi })}</span>
                     ) : null}
                     <Badge size="sm" tone={request.state === "approved" ? "success" : request.state === "declined" ? "neutral" : "warning"}>
                       {request.state === "approved"
@@ -1153,7 +1033,7 @@ function InvitesTab({ customer, now }: { customer: Customer; now: number }) {
           onOpenChange={(next) => {
             if (!next) close();
           }}
-          title={pending.kind === "reward" ? `${rewardLabel}: ${tr(`kind.${pending.reward}`)}` : pending.action.label}
+          title={pending.kind === "reward" ? `${rewardLabel}: ${tr.markup(`kind.${pending.reward}`, { bdi: isolate })}` : pending.action.label}
           description={
             pending.kind === "reward" && !pending.granted ? (
               t("invites.revokeBody")

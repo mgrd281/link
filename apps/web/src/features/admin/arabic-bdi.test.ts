@@ -24,8 +24,40 @@ function strings(tree: Tree | string, prefix: string): [string, string][] {
 
 const at = (messages: unknown, key: string): Tree | string => key.split(".").reduce<unknown>((node, part) => (node as Tree)[part], messages) as Tree | string;
 
-/** The namespaces and keys the rule covers. */
-const SCOPE = ["admin.customer", "admin.subscriptions", "admin.analytics.visited", "admin.permissions.customers_export", "admin.overview.kpi.conversionHint", "admin.customers.figuresWithheldTitle", "admin.customers.figuresWithheldBody"];
+/**
+ * The namespaces and keys the rule covers: since Stage 3 (WP3.4) every namespace of the console's
+ * screens. Left out: `admin.gate` (the team-code screen, rendered by session.tsx, which keeps `t()`).
+ */
+const SCOPE = [
+  "admin.meta",
+  "admin.nav",
+  "admin.shell",
+  "admin.overview",
+  "admin.charts",
+  "admin.customers",
+  "admin.customer",
+  "admin.subscriptions",
+  "admin.security",
+  "admin.analytics",
+  "admin.creators",
+  "admin.creator",
+  "admin.templates",
+  "admin.referrals",
+  "admin.team",
+  "admin.roles",
+  "admin.permissions",
+  "admin.activity",
+  "admin.status",
+  "admin.locales",
+  "admin.orders",
+  "admin.preview",
+];
+
+it("leaves out only the namespaces it names", () => {
+  const admin = Object.keys(ar.admin);
+  const covered = new Set(SCOPE.map((key) => key.split(".")[1]));
+  expect(admin.filter((key) => !covered.has(key))).toEqual(["gate"]);
+});
 
 /**
  * The literal text of a message outside <bdi>: without the isolated runs, the ICU structure

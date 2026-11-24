@@ -3241,7 +3241,13 @@
         "business": "Geschäft",
         "teamWork": "Team-Arbeit"
       },
-      "orders": "Aufträge"
+      "orders": "Aufträge",
+      "waiting": {
+        "orders": "{count, plural, one {# offener Auftrag} other {# offene Aufträge}}",
+        "ordersAndContracts": "{orders, plural, one {# offener Auftrag} other {# offene Aufträge}}, {contracts, plural, one {# Widerruf oder Kündigung wartet} other {# Widerrufe oder Kündigungen warten}}",
+        "referrals": "{count, plural, one {# Anfrage zu prüfen} other {# Anfragen zu prüfen}}",
+        "more": "{count, plural, one {# wartet unter Mehr} other {# warten unter Mehr}}"
+      }
     },
     "roles": {
       "owner": {
@@ -3323,27 +3329,42 @@
         "payingHint": "{trialing, plural, =0 {keine Testphase aktiv} one {# Testphase läuft} other {# Testphasen laufen}}",
         "conversion": "Free → Pro",
         "conversionHint": "Zahlende Kunden ÷ alle Kunden (geschenktes Pro zählt nicht)",
-        "churn": "Kündigungen ({days} Tage)",
+        "churn": "Kündigungsrate",
         "churnHint": "Gekündigt ÷ zahlend zu Beginn",
         "active": "Aktiv diese Woche",
         "activeHint": "{share} aller Kunden",
         "views": "Seitenaufrufe",
-        "viewsHint": "Alle Seiten, letzte 30 Tage",
-        "viewsNotMeasured": "Noch nicht gemessen"
+        "viewsHint": "Alle Seiten, letzte {days} Tage",
+        "viewsNotMeasured": "Noch nicht gemessen",
+        "revenue": "Umsatz im Monat",
+        "revenueHint": "Pro-Rechnungen und Seitenservice, abzüglich Erstattungen",
+        "revenueSubscriptions": "Pro-Rechnungen, abzüglich Erstattungen",
+        "revenueOrdersLoading": "Seitenservice wird geladen …",
+        "revenueOrdersFailed": "Seitenservice nicht geladen: nur Pro-Rechnungen",
+        "vsStart": "in {days} Tagen",
+        "vsPrevious": "ggü. den {days} Tagen davor",
+        "vsLastMonth": "ggü. Vormonat bis heute",
+        "points": "{value} Pp.",
+        "trend": "Verlauf der letzten {days} Tage",
+        "trendMonths": "Verlauf der letzten {months} Monate",
+        "mrrShort": "MRR (monatlich)"
       },
       "signupsTitle": "Neue Kunden pro Tag",
       "mrrTitle": "Monatlicher Umsatz",
       "attention": "Braucht Aufmerksamkeit",
       "pastDue": "Zahlungen fehlgeschlagen",
       "risky": "Auffällige Anmeldungen heute",
-      "trialsEnding": "Testphasen enden in 3 Tagen",
+      "trialsEnding": "Testphasen enden in {days} Tagen",
       "suspended": "Gesperrte Konten",
       "countries": "Länder",
       "devices": "Geräte",
       "newest": "Neueste Kunden",
       "allCustomers": "Alle Kunden",
       "teamWork": "Team-Arbeit",
-      "rest": "Alle anderen"
+      "rest": "Alle anderen",
+      "contractsWaiting": "Widerrufe und Kündigungen warten",
+      "ordersDue": "Aufträge fällig in {hours} Stunden",
+      "verificationsWaiting": "Verifizierungen warten"
     },
     "creators": {
       "title": "Creator-Seiten",
@@ -3725,7 +3746,8 @@
         "since": "Kunde seit",
         "lastSeen": "Zuletzt aktiv",
         "views": "Aufrufe (30 T.)",
-        "mrr": "MRR"
+        "mrr": "MRR",
+        "status": "Status"
       },
       "pagination": "Seiten der Kundenliste",
       "previous": "Zurück",
@@ -3736,7 +3758,8 @@
       "exportFailed": "Der Export ließ sich nicht protokollieren, darum wurde keine Datei erstellt.",
       "toOverview": "Zur Übersicht",
       "figuresWithheldTitle": "Kundenzahlen sind für deine Rolle nicht verfügbar",
-      "figuresWithheldBody": "Diese Datenbank würde mit den Zahlen auch Namen und E-Mail-Adressen der Kunden schicken. Deshalb lädt der Teambereich sie für deine Rolle nicht, bis die Datenbank aktualisiert ist."
+      "figuresWithheldBody": "Diese Datenbank würde mit den Zahlen auch Namen und E-Mail-Adressen der Kunden schicken. Deshalb lädt der Teambereich sie für deine Rolle nicht, bis die Datenbank aktualisiert ist.",
+      "showResults": "{count, plural, =0 {Keine Kunden} one {# Kunden zeigen} other {# Kunden zeigen}}"
     },
     "customer": {
       "loading": "Lädt …",
@@ -4014,22 +4037,23 @@
       },
       "kpi": {
         "signIns": "Anmeldungen",
-        "failed": "Fehlgeschlagene Anmeldungen",
+        "failed": "Fehlversuche",
         "newDevices": "Neue Geräte",
         "blocked": "Gesperrte Adressen",
-        "last24": "Letzte 24 Stunden",
-        "last7": "Letzte 7 Tage",
-        "blockedHint": "Für alle Konten abgelehnt"
+        "last24": "Letzte {hours} Stunden",
+        "last7": "Letzte {days} Tage",
+        "blockedHint": "Gilt für alle Konten",
+        "burst": "Auffällig viele"
       },
       "logTitle": "Anmeldeprotokoll",
       "filter": "Anmeldungen filtern",
       "filters": {
         "all": "Alle",
         "failed": "Fehlgeschlagen",
-        "risky": "Auffällig"
+        "risky": "Auffällig",
+        "blocked": "Gesperrt"
       },
       "blockIp": "{ip} sperren",
-      "shown": "Die {shown} neuesten von {total}.",
       "blockedTitle": "Gesperrte Adressen",
       "ipLabel": "IP-Adresse",
       "reasonLabel": "Grund (optional)",
@@ -4052,7 +4076,11 @@
         "how": "30 Tage gespeichert, dann gelöscht. Sehen dürfen es nur Teammitglieder mit Sicherheits-Berechtigung; jede Sperre wird protokolliert.",
         "visitors": "Besucher von Creator-Seiten werden nie identifiziert: Die Seiten-Analysen bleiben ohne Cookies und zusammengefasst.",
         "rights": "Kontoinhaber sehen ihre eigenen Anmeldungen unter Einstellungen und bekommen sie mit dem Datenexport."
-      }
+      },
+      "blockTitle": "Adresse sperren",
+      "pagination": "Seiten des Anmeldeprotokolls",
+      "pageRange": "{from}–{to} von {total}",
+      "empty": "Keine Anmeldungen in dieser Ansicht."
     },
     "analytics": {
       "title": "Analysen",
@@ -4079,7 +4107,17 @@
       "browsers": "Browser",
       "rest": "Alle anderen",
       "visited": "Seiten mit Besuchern (30 Tage): {count}",
-      "visitedNotMeasured": "Seitenbesuche werden noch nicht gemessen. Die Stufe „Mit Pro“ hängt nicht davon ab."
+      "visitedNotMeasured": "Seitenbesuche werden noch nicht gemessen. Die Stufe „Mit Pro“ hängt nicht davon ab.",
+      "pages": "Seiten",
+      "kpi": {
+        "views": "Seitenaufrufe",
+        "clicks": "Klicks",
+        "ctr": "Klickrate",
+        "ctrHint": "Klicks ÷ Seitenaufrufe, letzte 30 Tage",
+        "visitedPages": "Seiten mit Besuchern",
+        "window": "Letzte {days} Tage",
+        "notMeasured": "Noch nicht gemessen"
+      }
     },
     "orders": {
       "title": "Aufträge",

@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, Button, ConfirmDialog, Icon, IconButton, TextField, toast } from "@linkyo/ui";
+import { Avatar, Button, ConfirmDialog, Icon, IconButton, Select, TextField, toast } from "@linkyo/ui";
 import { Check, Mail, Minus, Trash2, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, useState, type SubmitEvent } from "react";
@@ -11,7 +11,7 @@ import { Panel, Screen } from "@/features/app/screen";
 import { Sheet } from "@/features/app/sheet";
 
 import { useConsoleActions } from "./actions";
-import { bdi } from "./bidi";
+import { bdi, isolate } from "./bidi";
 import { useAdmin } from "./session";
 import { RoleBadge } from "./shell";
 import { PERMISSIONS, ROLE_PERMISSIONS, ROLES, type Member, type Role } from "./types";
@@ -29,7 +29,7 @@ export function TeamScreen() {
   return (
     <Screen
       title={t("title")}
-      lead={t("lead")}
+      lead={t.rich("lead", { bdi })}
       wide
       actions={
         can("team.manage") ? (
@@ -77,14 +77,12 @@ function MemberRow({ member, lastOwner }: { member: Member; lastOwner: boolean }
       </span>
       {editable ? (
         <>
-          <label htmlFor={id} className="sr-only">
-            {t("roleOf", { name: member.name })}
-          </label>
-          <select
+          <Select
             id={id}
+            label={t("roleOf", { name: member.name })}
+            hideLabel
             value={member.role}
-            onChange={(event) => {
-              const next = event.target.value as Role;
+            onValueChange={(next) => {
               void actions.setRole(member.email, next).then((changed) =>
                 toast(
                   changed
@@ -93,14 +91,9 @@ function MemberRow({ member, lastOwner }: { member: Member; lastOwner: boolean }
                 ),
               );
             }}
-            className="h-control-md rounded-md border border-line-input bg-surface-elevated px-3 text-small text-fg outline-none hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring"
-          >
-            {ROLES.map((role) => (
-              <option key={role} value={role}>
-                {tRoles(`${role}.name`)}
-              </option>
-            ))}
-          </select>
+            options={ROLES.map((role) => ({ value: role, label: tRoles(`${role}.name`) }))}
+            className="w-auto"
+          />
           <IconButton icon={Trash2} label={t("remove", { name: member.name })} className="text-danger-strong" onClick={() => setRemoving(true)} />
           <ConfirmDialog
             open={removing}
@@ -139,7 +132,26 @@ function PermissionsMatrix() {
           </div>
         ))}
       </div>
-      <div className="-mx-4 overflow-x-auto px-4 md:-mx-5 md:px-5">
+      {/* Phones: one row per permission with the four roles under it, so no role is cut off at the side (A-11). */}
+      <ul aria-label={t("matrixTitle")} data-permissions-list className="grid divide-y divide-line md:hidden">
+        {PERMISSIONS.map((permission) => (
+          <li key={permission} className="grid gap-2 py-3 first:pt-0 last:pb-0">
+            <p className="text-small font-medium">{tPermissions.rich(permission.replace(".", "_"), { bdi })}</p>
+            <ul className="flex flex-wrap gap-x-4 gap-y-1">
+              {ROLES.map((role) => {
+                const allowed = ROLE_PERMISSIONS[role].includes(permission);
+                return (
+                  <li key={role} className={allowed ? "flex items-center gap-1 text-caption text-fg" : "flex items-center gap-1 text-caption text-fg-tertiary"}>
+                    <Icon icon={allowed ? Check : Minus} size="sm" label={allowed ? t("allowed") : t("notAllowed")} className={allowed ? "text-success-strong" : "text-fg-tertiary"} />
+                    {tRoles(`${role}.name`)}
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+        ))}
+      </ul>
+      <div className="hidden md:block">
         <table className="w-full border-collapse text-small">
           <caption className="sr-only">{t("matrixTitle")}</caption>
           <thead>
@@ -215,7 +227,7 @@ function AddMemberSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (
         toast({ title: t("added", { name: name.trim() }), tone: "success" });
         close();
       } else {
-        toast({ title: added === "notFound" ? t("noAccount", { email: normalized }) : t("failed"), tone: "danger" });
+        toast({ title: added === "notFound" ? t.markup("noAccount", { email: normalized, bdi: isolate }) : t("failed"), tone: "danger" });
       }
     });
   };
@@ -225,7 +237,7 @@ function AddMemberSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (
       open={open}
       onOpenChange={(next) => (next ? onOpenChange(true) : close())}
       title={t("title")}
-      description={t("lead")}
+      description={t.markup("lead", { bdi: isolate })}
       closeLabel={t("close")}
       footer={
         <>
@@ -250,7 +262,7 @@ function AddMemberSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="off"
           inputMode="email"
-          hint={t("emailHint")}
+          hint={t.rich("emailHint", { bdi })}
           error={tried && emailError ? t(`emailErrors.${emailError}`) : undefined}
         />
         <SelectField label={t("role")} value={role} onValue={setRole} options={ROLES.map((value) => ({ value, label: tRoles(`${value}.name`) }))} />

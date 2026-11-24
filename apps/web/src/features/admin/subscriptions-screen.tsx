@@ -1,7 +1,7 @@
 "use client";
 
-import { Avatar, Badge, Icon, icons, Segmented } from "@linkyo/ui";
-import { CalendarClock, CreditCard, Euro, Gift, Repeat, TrendingDown, UserRound } from "lucide-react";
+import { Avatar, Badge, DataList, Icon, icons, KpiTile, Segmented } from "@linkyo/ui";
+import { CreditCard, Gift, Repeat, TrendingDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -10,50 +10,84 @@ import { Panel, Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
 
 import { bdi, isolate } from "./bidi";
-import { ColumnChart, KpiTile } from "./charts";
+import { ColumnChart } from "./charts";
 import { useCustomers } from "./customers/data";
-import { hasProForLife, monthlyRevenue, PLAN_PRICE, SUBSCRIPTION_STATUSES, subscriptionSource, type SubscriptionStatus } from "./customers/model";
+import { hasProForLife, monthlyRevenue, PLAN_PRICE, SUBSCRIPTION_STATUSES, subscriptionSource, type Customer, type SubscriptionStatus } from "./customers/model";
 import { kpis, mrrByMonth } from "./customers/stats";
+import { kpiTrends } from "./customers/trends";
 import { DemoNote, StatusBadges } from "./customers/ui";
-import { count, date, money, percent } from "./format";
+import { count, date, money, percent, signed, signedMoney } from "./format";
 
 type Filter = "all" | SubscriptionStatus;
+/** The trends of this screen compare with 30 days ago. */
+const RANGE = 30;
+
+/** Where the plan comes from: Stripe (paid) or the team (free of charge). */
+function SourceBadge({ customer }: { customer: Customer }) {
+  const tSource = useTranslations("admin.customer.sources");
+  const source = subscriptionSource(customer);
+  return source ? (
+    <Badge size="sm" tone={source === "stripe" ? "primary" : "outline"} data-source={source}>
+      {tSource.rich(source, { bdi })}
+    </Badge>
+  ) : (
+    "–"
+  );
+}
 
 /** Revenue and every Pro plan (paid through Stripe or given by the team): what comes in, what's at risk. */
 export function SubscriptionsScreen() {
   const t = useTranslations("admin.subscriptions");
+  const to = useTranslations("admin.overview");
   const tc = useTranslations("admin.customers");
-  const tSource = useTranslations("admin.customer.sources");
+  const ui = useTranslations("ui");
   const locale = useLocale();
   const params = useSearchParams();
   const { customers, now, ready } = useCustomers();
   const [filter, setFilter] = useState<Filter>(SUBSCRIPTION_STATUSES.find((status) => status === params.get("status")) ?? "all");
-  const numbers = useMemo(() => kpis(customers, now, 30), [customers, now]);
+  const numbers = useMemo(() => kpis(customers, now, RANGE), [customers, now]);
+  const trends = useMemo(() => kpiTrends(customers, now, RANGE), [customers, now]);
   const months = useMemo(() => mrrByMonth(customers, now, 12), [customers, now]);
-  const paid = useMemo(
-    () =>
-      customers
-        .filter((customer) => customer.subscription.plan !== "free" && (filter === "all" || customer.subscription.status === filter))
-        .sort((a, b) => (b.subscription.startedAt ?? "").localeCompare(a.subscription.startedAt ?? "")),
-    [customers, filter],
-  );
+  const plans = useMemo(() => customers.filter((customer) => customer.subscription.plan !== "free").sort((a, b) => (b.subscription.startedAt ?? "").localeCompare(a.subscription.startedAt ?? "")), [customers]);
+  const paid = useMemo(() => plans.filter((customer) => filter === "all" || customer.subscription.status === filter), [plans, filter]);
   const arpu = numbers.paying ? numbers.mrr / numbers.paying : 0;
   // Rewards from the invite program: shown here so nobody adds them in, never part of the numbers above.
   const proForLife = useMemo(() => customers.filter(hasProForLife).length, [customers]);
+  const vsStart = to("kpi.vsStart", { days: RANGE });
+  const word = (change: number) => ui(change > 0 ? "kpi.up" : change < 0 ? "kpi.down" : "kpi.flat");
 
   return (
     <Screen title={t("title")} lead={t.rich("lead", { bdi })} wide>
       {ready ? (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <KpiTile icon={Euro} label={t("mrr")} value={money(numbers.mrr, locale)} hint={t("arr", { arr: money(numbers.mrr * 12, locale) })} />
-            <KpiTile icon={UserRound} label={t("paying")} value={count(numbers.paying, locale)} hint={t("arpu", { arpu: money(arpu, locale, true) })} />
-            <KpiTile icon={CalendarClock} label={t("trialing")} value={count(numbers.trialing, locale)} hint={t.rich("trialingHint", { bdi })} />
-            <KpiTile icon={icons.warning} label={t("pastDue")} value={count(numbers.pastDue, locale)} hint={t("pastDueHint")} tone={numbers.pastDue ? "danger" : "neutral"} />
-          </div>
+          <dl data-kpis className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <KpiTile
+              label={to.markup("kpi.mrrShort", { bdi: isolate })}
+              value={money(trends.mrr.value, locale)}
+              delta={{ change: trends.mrr.change, text: signedMoney(trends.mrr.change, locale), label: word(trends.mrr.change), context: vsStart }}
+              trend={trends.mrr.series}
+              trendLabel={to("kpi.trend", { days: RANGE })}
+              footer={t("arr", { arr: money(trends.mrr.value * 12, locale) })}
+            />
+            <KpiTile
+              label={t("paying")}
+              value={count(trends.paying.value, locale)}
+              delta={{ change: trends.paying.change, text: signed(trends.paying.change, locale), label: word(trends.paying.change), context: vsStart }}
+              trend={trends.paying.series}
+              trendLabel={to("kpi.trend", { days: RANGE })}
+              footer={t("arpu", { arpu: money(arpu, locale, true) })}
+            />
+            {/* Trials and failed payments are states of today: the records hold no history of them, so no trend. */}
+            <KpiTile label={t("trialing")} value={count(numbers.trialing, locale)} footer={t.rich("trialingHint", { bdi })} />
+            <KpiTile
+              label={t("pastDue")}
+              value={count(numbers.pastDue, locale)}
+              footer={numbers.pastDue ? <span className="font-semibold text-danger-strong">{t("pastDueHint")}</span> : t("pastDueHint")}
+            />
+          </dl>
           <p className="-mt-2 flex items-center gap-2 text-small text-fg-secondary">
             <Icon icon={Gift} size="sm" className="shrink-0" />
-            {t.rich("proForLife", { count: count(proForLife, locale), bdi })}
+            <span>{t.rich("proForLife", { count: count(proForLife, locale), bdi })}</span>
           </p>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -93,94 +127,66 @@ export function SubscriptionsScreen() {
                     <Icon icon={TrendingDown} size="sm" />
                     {t.rich("churn", { bdi })}
                   </dt>
-                  <dd className="text-h3 tabular-nums">{percent(numbers.churn, locale)}</dd>
+                  <dd className="text-h3 tabular-nums">{percent(trends.churn.value, locale)}</dd>
                 </div>
               </dl>
             </Panel>
           </div>
 
-          <Panel title={t.markup("list", { bdi: isolate })} id="list-title" action={<span className="text-small text-fg-secondary">{t("count", { count: paid.length })}</span>}>
-            {/* Wider than a phone in German: the strip scrolls sideways inside the card, never the page. */}
-            <div className="-mx-4 -my-1 overflow-x-auto px-4 py-1 md:mx-0 md:px-0">
-              <Segmented
-                label={t("filter")}
-                value={filter}
-                onValueChange={setFilter}
-                className="whitespace-nowrap"
-                options={(["all", ...SUBSCRIPTION_STATUSES] as const).map((value) => ({ value, label: value === "all" ? tc("all") : tc(`subscription.${value}`) }))}
-              />
+          <section aria-labelledby="list-title" className="grid grid-cols-1 gap-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <h2 id="list-title" className="text-title rtl:tracking-normal">
+                {t.markup("list", { bdi: isolate })}
+              </h2>
+              <span className="text-small text-fg-secondary">{t("count", { count: paid.length })}</span>
             </div>
+            {/* One line; with counts. Wider than a phone in German: it scrolls sideways inside itself, never the page. */}
+            <Segmented
+              label={t("filter")}
+              value={filter}
+              onValueChange={setFilter}
+              className="justify-self-start"
+              formatCount={(value) => count(value, locale)}
+              options={(["all", ...SUBSCRIPTION_STATUSES] as const).map((value) => ({
+                value,
+                label: value === "all" ? tc("all") : tc(`subscription.${value}`),
+                count: value === "all" ? plans.length : plans.filter((customer) => customer.subscription.status === value).length,
+              }))}
+            />
             {paid.length === 0 ? (
               <p className="flex items-center gap-2 text-small text-fg-secondary">
                 <Icon icon={CreditCard} size="sm" />
                 {t("empty")}
               </p>
             ) : (
-              <div className="overflow-x-auto" role="region" aria-labelledby="list-title" tabIndex={0}>
-                <table className="w-full min-w-prose text-small">
-                  <thead className="text-caption text-fg-secondary">
-                    <tr>
-                      <th scope="col" className="py-2 text-start font-medium">
-                        {tc("columns.customer")}
-                      </th>
-                      <th scope="col" className="py-2 text-start font-medium">
-                        {t("columns.status")}
-                      </th>
-                      <th scope="col" className="py-2 text-start font-medium">
-                        {t.rich("columns.source", { bdi })}
-                      </th>
-                      <th scope="col" className="py-2 text-start font-medium">
-                        {t("columns.since")}
-                      </th>
-                      <th scope="col" className="py-2 text-start font-medium">
-                        {t("columns.next")}
-                      </th>
-                      <th scope="col" className="py-2 text-end font-medium">
-                        {t("columns.invoices")}
-                      </th>
-                      <th scope="col" className="py-2 text-end font-medium">
-                        {t("columns.mrr")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paid.slice(0, 100).map((customer) => {
-                      const sub = customer.subscription;
-                      const next = sub.status === "trialing" ? sub.trialEndsAt : sub.status === "canceled" ? undefined : sub.renewsAt;
-                      return (
-                        <tr key={customer.id} className="border-t border-line hover:bg-hover">
-                          <th scope="row" className="py-2 text-start font-regular">
-                            <Link href={`/admin/customers/${customer.id}`} className="flex min-w-0 items-center gap-2 rounded-sm focus-visible:focus-ring">
-                              <Avatar name={customer.name} size="sm" />
-                              <span className="truncate font-medium">{customer.name}</span>
-                            </Link>
-                          </th>
-                          <td className="py-2">
-                            <StatusBadges customer={customer} />
-                          </td>
-                          <td className="py-2">
-                            {(() => {
-                              const source = subscriptionSource(customer);
-                              return source ? (
-                                <Badge size="sm" tone={source === "stripe" ? "primary" : "outline"} data-source={source}>
-                                  {tSource.rich(source, { bdi })}
-                                </Badge>
-                              ) : null;
-                            })()}
-                          </td>
-                          <td className="py-2 whitespace-nowrap text-fg-secondary">{sub.startedAt ? date(sub.startedAt, locale) : "–"}</td>
-                          <td className="py-2 whitespace-nowrap text-fg-secondary">{next ? date(next, locale) : "–"}</td>
-                          <td className="py-2 text-end tabular-nums">{sub.invoices.length}</td>
-                          <td className="py-2 text-end tabular-nums">{money(monthlyRevenue(customer, now), locale, true)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <DataList
+                label={t.markup("list", { bdi: isolate })}
+                linkAs={Link}
+                items={paid.slice(0, 100).map((customer) => {
+                  const sub = customer.subscription;
+                  const next = sub.status === "trialing" ? sub.trialEndsAt : sub.status === "canceled" ? undefined : sub.renewsAt;
+                  return {
+                    id: customer.id,
+                    href: `/admin/customers/${customer.id}`,
+                    title: <bdi>{customer.name}</bdi>,
+                    leading: <Avatar name={customer.name} size="sm" />,
+                    trailing: <StatusBadges customer={customer} />,
+                    fields: [
+                      { label: t.markup("columns.source", { bdi: isolate }), value: <SourceBadge customer={customer} /> },
+                      { label: t("columns.since"), value: sub.startedAt ? date(sub.startedAt, locale) : "–" },
+                      { label: t("columns.next"), value: next ? date(next, locale) : "–" },
+                      { label: t("columns.invoices"), value: count(sub.invoices.length, locale), numeric: true },
+                      { label: t("columns.mrr"), value: money(monthlyRevenue(customer, now), locale, true), numeric: true },
+                    ],
+                  };
+                })}
+              />
             )}
-          </Panel>
-          <p className="text-caption text-fg-tertiary">{t.rich("teamNote", { bdi })}</p>
+          </section>
+          <p className="flex items-start gap-2 text-caption text-fg-tertiary">
+            <Icon icon={icons.info} size="sm" className="mt-0.5 shrink-0" />
+            <span>{t.rich("teamNote", { bdi })}</span>
+          </p>
           <DemoNote />
         </>
       ) : null}

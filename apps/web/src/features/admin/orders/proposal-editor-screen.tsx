@@ -19,6 +19,7 @@ import { Panel, Screen } from "@/features/app/screen";
 import { EditorProvider, useSite, type SiteDoc } from "@/features/app/site-context";
 import { Link, useRouter } from "@/i18n/navigation";
 
+import { bdi, isolate } from "../bidi";
 import { useAdmin } from "../session";
 
 import { LoadFailed, settle } from "./load";
@@ -90,8 +91,8 @@ function KitFields({ order, kit, stories, change }: { order: TeamOrder; kit: Kit
 
   return (
     <Panel title={t("title")}>
-      <TextField label={t("bioInstagram")} value={kit.bioInstagram} maxLength={150} onChange={(event) => change(withKit({ bioInstagram: event.target.value }))} />
-      <TextField label={t("bioTiktok")} value={kit.bioTiktok} maxLength={80} onChange={(event) => change(withKit({ bioTiktok: event.target.value }))} />
+      <TextField label={t.markup("bioInstagram", { bdi: isolate })} value={kit.bioInstagram} maxLength={150} onChange={(event) => change(withKit({ bioInstagram: event.target.value }))} />
+      <TextField label={t.markup("bioTiktok", { bdi: isolate })} value={kit.bioTiktok} maxLength={80} onChange={(event) => change(withKit({ bioTiktok: event.target.value }))} />
       <fieldset className="grid gap-3">
         <legend className="mb-2 text-small font-semibold">{t("plan")}</legend>
         {kit.postingPlan.map((entry) => (
@@ -108,7 +109,7 @@ function KitFields({ order, kit, stories, change }: { order: TeamOrder; kit: Kit
       </fieldset>
       <div className="grid gap-3">
         <p id={storiesId} className="text-small font-semibold">
-          {t("stories")}
+          {t.rich("stories", { bdi })}
         </p>
         {stories.length > 0 ? (
           <ul aria-labelledby={storiesId} className="grid grid-cols-3 gap-2">
@@ -196,7 +197,7 @@ function ProposalTools({
       toast(answer.mailed === false ? { title: t("deliveredNoMail"), tone: "danger" } : { title: t("delivered"), tone: "success" });
       router.push(`/admin/orders/${order.id}`);
     } catch (error) {
-      toast({ title: error instanceof ApiError && error.code === "incomplete" ? t("kit.incomplete") : tErrors("server"), tone: "danger" });
+      toast({ title: error instanceof ApiError && error.code === "incomplete" ? t.markup("kit.incomplete", { bdi: isolate }) : tErrors("server"), tone: "danger" });
       setBusy(false);
     }
   };
@@ -216,7 +217,7 @@ function ProposalTools({
             </Button>
             {complete ? null : (
               <p id="kit-incomplete" className="text-small text-fg-secondary">
-                {t("kit.incomplete")}
+                {t.rich("kit.incomplete", { bdi })}
               </p>
             )}
           </div>

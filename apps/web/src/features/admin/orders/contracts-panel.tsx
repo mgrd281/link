@@ -9,6 +9,7 @@ import { TextArea } from "@/features/app/form";
 import { clockTime, shortDate, type EmailLocale } from "@/features/email/templates/render";
 import { formatEuro } from "@/features/payments/prices";
 
+import { bdi } from "../bidi";
 import { useAdmin } from "../session";
 
 import { actionsFor, contractEnded, NOTE_REQUIRED, parseCents, refundOpen, routeAction, type ContractAction } from "./contract-rules";
@@ -49,7 +50,7 @@ function Decide({ item, action, onDone, onClose }: { item: ContractRequest; acti
   const amountInvalid = orderAmount !== null && action === "acceptWithdrawal" && (cents === null || cents > orderAmount);
   const needsNote = NOTE_REQUIRED.has(action);
   const noteMissing = needsNote && note.trim() === "";
-  const hint = action === "finishWithdrawal" ? t("actions.finishWithdrawalHint") : action === "schedule" ? t("actions.scheduleHint") : null;
+  const hint = action === "finishWithdrawal" ? t.rich("actions.finishWithdrawalHint", { bdi }) : action === "schedule" ? t.rich("actions.scheduleHint", { bdi }) : null;
 
   const confirm = async () => {
     setBusy(true);
@@ -93,7 +94,7 @@ function Decide({ item, action, onDone, onClose }: { item: ContractRequest; acti
       {asksAmount ? (
         <TextField
           label={t("actions.refundAmount")}
-          hint={t("actions.refundAmountHint")}
+          hint={t.rich("actions.refundAmountHint", { bdi })}
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
           inputMode="decimal"

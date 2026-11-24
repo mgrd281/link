@@ -3241,7 +3241,13 @@
         "business": "Business",
         "teamWork": "Team work"
       },
-      "orders": "Orders"
+      "orders": "Orders",
+      "waiting": {
+        "orders": "{count, plural, one {# open order} other {# open orders}}",
+        "ordersAndContracts": "{orders, plural, one {# open order} other {# open orders}}, {contracts, plural, one {# withdrawal or cancellation waiting} other {# withdrawals or cancellations waiting}}",
+        "referrals": "{count, plural, one {# request to check} other {# requests to check}}",
+        "more": "{count, plural, one {# waiting under More} other {# waiting under More}}"
+      }
     },
     "roles": {
       "owner": {
@@ -3323,27 +3329,42 @@
         "payingHint": "{trialing, plural, =0 {no trials running} one {# trial running} other {# trials running}}",
         "conversion": "Free → Pro",
         "conversionHint": "Paying ÷ all customers (Pro given for free doesn't count)",
-        "churn": "Churn ({days} days)",
+        "churn": "Churn",
         "churnHint": "Canceled ÷ paying at the start",
         "active": "Active this week",
         "activeHint": "{share} of all customers",
         "views": "Page views",
-        "viewsHint": "All pages, last 30 days",
-        "viewsNotMeasured": "Not measured yet"
+        "viewsHint": "All pages, last {days} days",
+        "viewsNotMeasured": "Not measured yet",
+        "revenue": "Revenue this month",
+        "revenueHint": "Pro invoices and page service, net of refunds",
+        "revenueSubscriptions": "Pro invoices, net of refunds",
+        "revenueOrdersLoading": "Loading the page service …",
+        "revenueOrdersFailed": "Page service not loaded: Pro invoices only",
+        "vsStart": "in {days} days",
+        "vsPrevious": "vs. the {days} days before",
+        "vsLastMonth": "vs. last month to date",
+        "points": "{value} pts",
+        "trend": "Trend over the last {days} days",
+        "trendMonths": "Trend over the last {months} months",
+        "mrrShort": "MRR (monthly)"
       },
       "signupsTitle": "New customers per day",
       "mrrTitle": "Monthly recurring revenue",
       "attention": "Needs a look",
       "pastDue": "Payments failed",
       "risky": "Unusual sign-ins today",
-      "trialsEnding": "Trials ending in 3 days",
+      "trialsEnding": "Trials ending in {days} days",
       "suspended": "Suspended accounts",
       "countries": "Countries",
       "devices": "Devices",
       "newest": "Newest customers",
       "allCustomers": "All customers",
       "teamWork": "Team work",
-      "rest": "All others"
+      "rest": "All others",
+      "contractsWaiting": "Withdrawals and cancellations waiting",
+      "ordersDue": "Orders due within {hours} hours",
+      "verificationsWaiting": "Verification requests waiting"
     },
     "creators": {
       "title": "Creator pages",
@@ -3725,7 +3746,8 @@
         "since": "Customer since",
         "lastSeen": "Last active",
         "views": "Views (30 d)",
-        "mrr": "MRR"
+        "mrr": "MRR",
+        "status": "Status"
       },
       "pagination": "Pages of the customer list",
       "previous": "Previous",
@@ -3736,7 +3758,8 @@
       "exportFailed": "The export couldn't be logged, so no file was made.",
       "toOverview": "Go to the overview",
       "figuresWithheldTitle": "Customer figures aren't available for your role",
-      "figuresWithheldBody": "This database would send customers' names and e-mail addresses along with the figures. So the team area doesn't load them for your role until the database is updated."
+      "figuresWithheldBody": "This database would send customers' names and e-mail addresses along with the figures. So the team area doesn't load them for your role until the database is updated.",
+      "showResults": "{count, plural, =0 {No customers} one {Show # customer} other {Show # customers}}"
     },
     "customer": {
       "loading": "Loading …",
@@ -4017,19 +4040,20 @@
         "failed": "Failed sign-ins",
         "newDevices": "New devices",
         "blocked": "Blocked addresses",
-        "last24": "Last 24 hours",
-        "last7": "Last 7 days",
-        "blockedHint": "Refused for every account"
+        "last24": "Last {hours} hours",
+        "last7": "Last {days} days",
+        "blockedHint": "For every account",
+        "burst": "Unusually many"
       },
       "logTitle": "Sign-in log",
       "filter": "Filter sign-ins",
       "filters": {
         "all": "All",
         "failed": "Failed",
-        "risky": "Unusual"
+        "risky": "Unusual",
+        "blocked": "Blocked"
       },
       "blockIp": "Block {ip}",
-      "shown": "Showing the {shown} newest of {total}.",
       "blockedTitle": "Blocked addresses",
       "ipLabel": "IP address",
       "reasonLabel": "Reason (optional)",
@@ -4052,7 +4076,11 @@
         "how": "Kept 30 days, then deleted. Only team members with the security permission see it; every block is logged.",
         "visitors": "Visitors of creator pages are never identified: page analytics stay cookie-free and aggregated.",
         "rights": "Account holders see their own sign-ins under Settings and get them with their data export."
-      }
+      },
+      "blockTitle": "Block an address",
+      "pagination": "Pages of the sign-in log",
+      "pageRange": "{from}–{to} of {total}",
+      "empty": "No sign-ins in this view."
     },
     "analytics": {
       "title": "Analytics",
@@ -4079,7 +4107,17 @@
       "browsers": "Browsers",
       "rest": "All others",
       "visited": "Pages with visitors (30 days): {count}",
-      "visitedNotMeasured": "Page visits aren't measured yet. The “On Pro” step doesn't depend on them."
+      "visitedNotMeasured": "Page visits aren't measured yet. The “On Pro” step doesn't depend on them.",
+      "pages": "Pages",
+      "kpi": {
+        "views": "Page views",
+        "clicks": "Clicks",
+        "ctr": "Click rate",
+        "ctrHint": "Clicks ÷ page views, last 30 days",
+        "visitedPages": "Pages with visitors",
+        "window": "Last {days} days",
+        "notMeasured": "Not measured yet"
+      }
     },
     "orders": {
       "title": "Orders",

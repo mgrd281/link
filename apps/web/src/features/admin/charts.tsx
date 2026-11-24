@@ -1,9 +1,8 @@
 "use client";
 
-import { cn, Icon } from "@linkyo/ui";
-import type { LucideIcon } from "lucide-react";
+import { ChartTable, cn } from "@linkyo/ui";
 import { useLocale, useTranslations } from "next-intl";
-import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useState, type CSSProperties, type KeyboardEvent } from "react";
 
 /**
  * Charts for the team console (dataviz rules: one series = one hue, the primary; recessive grid;
@@ -16,43 +15,6 @@ const niceMax = (value: number) => {
   const step = [1, 2, 2.5, 5, 10].find((candidate) => candidate * power >= value) ?? 10;
   return step * power;
 };
-
-/** A headline number: label, value, and one line of context. */
-export function KpiTile({
-  icon,
-  label,
-  value,
-  hint,
-  tone = "neutral",
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  hint?: ReactNode;
-  tone?: "neutral" | "warning" | "danger";
-}) {
-  return (
-    <div className="border-line bg-surface grid min-w-0 content-start gap-3 rounded-xl border p-4">
-      <div className="flex min-w-0 items-start gap-2 text-small text-fg-secondary">
-        <span
-          className={cn(
-            "size-control-sm grid shrink-0 place-items-center rounded-md",
-            tone === "danger"
-              ? "bg-danger-subtle text-danger-strong"
-              : tone === "warning"
-                ? "bg-warning-subtle text-warning-strong"
-                : "bg-selected text-selected-fg",
-          )}
-        >
-          <Icon icon={icon} size="sm" />
-        </span>
-        <span className="min-w-0 leading-snug">{label}</span>
-      </div>
-      <p className="text-h2 leading-none tracking-tight tabular-nums">{value}</p>
-      {hint ? <p className="text-caption text-fg-tertiary">{hint}</p> : null}
-    </div>
-  );
-}
 
 export interface Point {
   date: string;
@@ -72,6 +34,7 @@ export function ColumnChart({
   dateStyle?: "day" | "month";
 }) {
   const t = useTranslations("admin.charts");
+  const ui = useTranslations("ui");
   const locale = useLocale();
   const [active, setActive] = useState<number | null>(null);
   const top = niceMax(Math.max(...points.map((point) => point.value)));
@@ -184,32 +147,18 @@ export function ColumnChart({
           ))}
         </div>
       </div>
-      <details className="text-small">
-        <summary className="text-fg-secondary hover:text-fg focus-visible:focus-ring w-fit cursor-pointer rounded-xs">
-          {t("table")}
-        </summary>
-        <table className="mt-2 w-full text-start">
-          <caption className="sr-only">{label}</caption>
-          <thead>
-            <tr className="text-caption text-fg-tertiary">
-              <th scope="col" className="py-1 text-start font-medium">
-                {t("date")}
-              </th>
-              <th scope="col" className="py-1 text-end font-medium">
-                {label}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {points.map((point) => (
-              <tr key={point.date} className="border-line border-t">
-                <td className="py-1">{date(point.date)}</td>
-                <td className="py-1 text-end tabular-nums">{format(point.value)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
+      {/* The same numbers as a table, one tap away (A-12: the kit's toggle, no native disclosure). */}
+      <ChartTable
+        caption={label}
+        columns={[
+          { key: "date", label: t("date"), cell: (point: Point) => date(point.date) },
+          { key: "value", label, numeric: true, cell: (point: Point) => format(point.value) },
+        ]}
+        rows={points}
+        rowKey={(point) => point.date}
+        showLabel={ui("chartTable.show")}
+        hideLabel={ui("chartTable.hide")}
+      />
     </figure>
   );
 }
