@@ -1,6 +1,6 @@
-# Draft — Team money through Stripe, least privilege for editors, one revenue number
+# 0073 — Team money through Stripe, least privilege for editors, one revenue number
 
-**Status.** Proposed (Stage 1, WP1.1). The integrator gives it its number.
+**Status.** Accepted (Stage 1, WP1.1, 2026-11-24).
 
 **Context.** The Stage 1 audit (plan §2.4) found that the team console told the team money had moved when it had not:
 

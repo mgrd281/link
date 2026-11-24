@@ -1,6 +1,6 @@
-# Draft — The Portfolio section of the website
+# 0075 — The Portfolio section of the website
 
-Status: proposed (Stage 1, WP1.4). The integrator gives it its number.
+**Status.** Accepted (Stage 1, WP1.4, 2026-11-24).
 
 **Context.** Linkyo has two portfolio templates from Portfolio v1 (Werkbogen and Tiefdruck) and project pages with figures, a story, pictures and an address of their own. The
 website did not show any of it: no gallery category, no `/portfolio`, no menu entry and no homepage

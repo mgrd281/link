@@ -1,4 +1,4 @@
--- Team money and permissions (Stage 1 WP1.1; ADR draft "team money through Stripe"). Tests:
+-- Team money and permissions (Stage 1 WP1.1; ADR 0073, team money through Stripe). Tests:
 -- supabase/tests/admin_money.test.sql. Functions keep their signatures, `security definer`,
 -- `search_path` and grants; new ones name theirs. Nothing here deletes customer data.
 --

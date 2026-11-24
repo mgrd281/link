@@ -1,4 +1,4 @@
-# Draft — Dead ends: real 404s behind the gates, Linkyo's own error pages, and a launch gate for the legal texts
+# 0074 — Dead ends: real 404s behind the gates, Linkyo's own error pages, and a launch gate for the legal texts
 
 **Context.** The audit (L-03, W-03, W-13, L-02) found that every unknown address showed Next's bare English 404
 without a language or a way back, that `/de/app/orders/x1` and `/de/admin/orders` answered 200 although their pages
@@ -52,4 +52,4 @@ boundary was not involved.
   with status 200: the data lives in the browser. A rule that can be decided from the address alone belongs in
   `gated-routes.ts`. The shells' own `not-found.tsx` files catch a future screen's `notFound()` inside the frame.
 
-**Status.** Draft (Stage 1, WP1.2); the integrator numbers it.
+**Status.** Accepted (Stage 1, WP1.2, 2026-11-24).

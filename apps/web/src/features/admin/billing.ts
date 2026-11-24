@@ -1,7 +1,7 @@
 import { subscriptionSource, type Customer } from "./customers/model";
 
 /**
- * Money in the team console (ADR draft "team money through Stripe"). A console button may say money
+ * Money in the team console (ADR 0073, team money through Stripe). A console button may say money
  * moved only when Stripe moved it: refunds, cancelling and resuming a Stripe subscription go through
  * our server (`/api/admin/customers/<id>/billing/<action>`), which checks the member's permission in
  * the database, asks Stripe and records Stripe's answer. Pro the team gave by hand involves no money

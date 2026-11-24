@@ -5,8 +5,8 @@ description: How Linkyo's team console (/[locale]/admin/*) works and how to chan
 
 # Linkyo team console
 
-Decision records: ADR 0016 (team area), 0028 (console v2), 0030 (real accounts), the WP1.1 draft "team money through
-Stripe". Data layer: the `linkyo-supabase` skill. Selling flows: the `linkyo-payments` skill. The console is part of
+Decision records: ADR 0016 (team area), 0028 (console v2), 0030 (real accounts), 0073 (team money through
+Stripe). Data layer: the `linkyo-supabase` skill. Selling flows: the `linkyo-payments` skill. The console is part of
 the team area: **teal**, not the dashboard's black and grey.
 
 ## Map

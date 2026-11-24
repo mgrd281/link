@@ -104,7 +104,7 @@ test.describe("not found", () => {
   });
 
   test("an unknown first segment still answers 404, never a server error", async ({ page }) => {
-    // The language layout answers these itself (its own notFound(): Next's built-in page, see the ADR draft).
+    // The language layout answers these itself (its own notFound(): Next's built-in page, see ADR 0074).
     for (const path of ["/u/mila/project/extra", "/missing-file.php", "/api/nope"]) {
       const response = await page.goto(path);
       expect(response?.status(), path).toBe(404);
