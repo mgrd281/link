@@ -178,7 +178,7 @@ export function CommandPalette({ open, onOpenChange, commands, label, placeholde
             <Icon icon={icons.search} size="md" className="text-fg-tertiary" />
             <input
               role="combobox"
-              aria-expanded
+              aria-expanded={results.length > 0}
               aria-controls={listId}
               aria-autocomplete="list"
               aria-activedescendant={results.length > 0 ? optionId(current) : undefined}
@@ -196,7 +196,9 @@ export function CommandPalette({ open, onOpenChange, commands, label, placeholde
               className="h-control-xl min-w-0 flex-1 bg-transparent text-body text-fg outline-none placeholder:text-fg-tertiary"
             />
           </div>
-          <div id={listId} role="listbox" aria-label={label} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
+          {/* A listbox owns only options and groups: the "nothing found" line sits beside it, and the
+              empty list is hidden (the combobox then reports itself collapsed). */}
+          <div id={listId} role="listbox" aria-label={label} hidden={results.length === 0} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
             {groups.map((group) => (
               <div key={group.name ?? "-"} role="group" aria-label={group.name}>
                 {group.name ? (
@@ -236,8 +238,8 @@ export function CommandPalette({ open, onOpenChange, commands, label, placeholde
                 ))}
               </div>
             ))}
-            {results.length === 0 ? <p className="px-3 py-8 text-center text-small text-fg-secondary">{emptyLabel}</p> : null}
           </div>
+          {results.length === 0 ? <p className="px-3 py-8 text-center text-small text-fg-secondary">{emptyLabel}</p> : null}
           <p aria-live="polite" className="sr-only">
             {resultsLabel(results.length)}
           </p>

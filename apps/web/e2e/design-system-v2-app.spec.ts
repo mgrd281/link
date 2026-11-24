@@ -125,7 +125,15 @@ test.describe("/design: UI kit", () => {
       const field = page.getByRole("combobox", { name: locale === "de" ? "Befehle" : "الأوامر" });
       await expect(field).toBeFocused();
       await expect(page.getByRole("option")).toHaveCount(5);
+      // Nothing found: the line says so beside the list, never inside it (a listbox owns only options).
+      await field.fill("zzqx");
+      await expect(page.getByRole("dialog").getByText(locale === "de" ? "Nichts gefunden." : "لا توجد نتائج.")).toBeVisible();
+      await expect(page.getByRole("option")).toHaveCount(0);
+      await expect(field).toHaveAttribute("aria-expanded", "false");
+      expect(await page.locator('[role="listbox"] p').count()).toBe(0);
+      expect(await axe(page, '[role="dialog"]')).toEqual([]);
       await field.fill(locale === "de" ? "kunden" : "العملاء");
+      await expect(field).toHaveAttribute("aria-expanded", "true");
       const options = page.getByRole("option");
       await expect(options.first()).toHaveAttribute("aria-selected", "true");
       const count = await options.count();
