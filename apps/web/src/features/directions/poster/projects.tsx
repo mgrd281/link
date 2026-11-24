@@ -24,6 +24,7 @@ import { useId, type CSSProperties, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes, useCreatorFormat } from "../shared/creator-kit";
 import { RailButtons } from "../shared/rail-buttons";
+import { ScrollRegion } from "../shared/scroll-region";
 import { JustifiedRows, ratioOf } from "./justified";
 import { linkDestination } from "./sections";
 import { displayStyle, pageSide, pressable, railFrame, railTrack } from "./styles";
@@ -391,9 +392,11 @@ export function ProjectStrip({
   const sum = frames.reduce((total_, frame) => total_ + frame.ratio, 0);
   if (frames.length === 0) return null;
   return (
-    <div role="region" aria-label={t("scroller", { title: t("portfolio.work") })} tabIndex={0} className={cn(railFrame, "@work:overflow-visible")}>
+    // A region to scroll on phones; on the canvas, where the row fits, a plain box (ScrollRegion).
+    <ScrollRegion label={t("scroller", { title: t("portfolio.work") })} className={cn(railFrame, "@work:overflow-visible")}>
       {/* The row is never taller than 70svh on the canvas: its width stops at 70svh times its ratios. */}
       <ol
+        data-scroll-track
         style={{ "--strip": sum } as CSSProperties}
         className={cn(railTrack, "flex items-end gap-2 @work:max-w-[calc(70svh*var(--strip))] @work:snap-none @work:items-start @work:gap-3 @work:overflow-visible")}
       >
@@ -433,7 +436,7 @@ export function ProjectStrip({
           );
         })}
       </ol>
-    </div>
+    </ScrollRegion>
   );
 }
 

@@ -86,6 +86,9 @@ test.describe("on the laptop", () => {
     expect(strip.width).toBeGreaterThan(1120);
     expect(strip.tops).toBe(1);
     expect(Math.max(...strip.heights) - Math.min(...strip.heights)).toBeLessThanOrEqual(1);
+    // A row that fits is no "scrollable row" and no stop for the keyboard (on a phone it is, see below).
+    await expect(page.locator("header").getByRole("region")).toHaveCount(0);
+    await expect(page.locator("header [data-plate]").first().locator("xpath=ancestor::*[@tabindex='0']")).toHaveCount(0);
     // Text keeps the creator column (layout.creator, 560 px): every paragraph of the page, but a caption under a picture (as wide as it).
     const widest = await page.locator("main p, header p").evaluateAll((paragraphs) => Math.max(...paragraphs.filter((p) => !p.closest("li")?.querySelector("[data-plate]")).map((p) => p.getBoundingClientRect().width)));
     expect(widest).toBeLessThanOrEqual(560.5);
