@@ -1,6 +1,7 @@
 "use client";
 
 import { detectMany } from "@linkyo/blocks";
+import { TEMPLATE_IDS } from "@linkyo/tokens/creator";
 import { Badge, Button, cn, Icon, Logo, Skeleton, TextField, toast } from "@linkyo/ui";
 import {
   ArrowLeft,
@@ -370,7 +371,8 @@ export function WelcomeScreen() {
             <h1 id="welcome-step" tabIndex={-1} className="text-h1 tracking-tight outline-none">
               {t(`steps.${step}.title`, { name: doc.profile.displayName })}
             </h1>
-            <p className="text-body text-fg-secondary">{t(`steps.${step}.lead`)}</p>
+            {/* The look step counts the designs from the tokens, so the sentence never goes stale. */}
+            <p className="text-body text-fg-secondary">{t(`steps.${step}.lead`, { designs: TEMPLATE_IDS.length })}</p>
           </div>
 
           {step === "kind" ? (

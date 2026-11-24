@@ -2145,7 +2145,7 @@
         "look": {
           "short": "Look",
           "title": "Wähl deinen Look",
-          "lead": "Vierzehn Vorlagen, alle mit deinem Foto und Namen. Probier sie aus – die Vorschau ändert sich sofort."
+          "lead": "{designs} Vorlagen, alle mit deinem Foto und Namen. Probier sie aus – die Vorschau ändert sich sofort."
         },
         "links": {
           "short": "Links",

@@ -32,6 +32,8 @@ describe("the website's counts (one vocabulary, fed from code)", () => {
       expect(text, key).toContain(String(SITE_COUNTS.pages));
     }
     expect(t("examples.title", { count: SITE_COUNTS.pages })).toContain(String(SITE_COUNTS.pages));
+    // The welcome flow's look step counts the designs too (it said "Vierzehn Vorlagen" in words).
+    expect(t("app.welcome.steps.look.lead", { designs: SITE_COUNTS.designs })).toContain(String(SITE_COUNTS.designs));
     // The sentences read without arguments (the layout's default description, the app manifest)
     // name no number at all, so they cannot drift.
     for (const text of [t("meta.description"), t("marketing.real.metaDescription")]) {

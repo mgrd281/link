@@ -2145,7 +2145,7 @@
         "look": {
           "short": "Look",
           "title": "Pick a look",
-          "lead": "Fourteen templates, all with your photo and name. Try them — the preview changes instantly."
+          "lead": "{designs} templates, all with your photo and name. Try them — the preview changes instantly."
         },
         "links": {
           "short": "Links",
