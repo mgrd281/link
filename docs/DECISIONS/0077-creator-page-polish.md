@@ -30,13 +30,16 @@ Werkbogen bar cut both the name and the action short on a phone ("Shooting anfrâ
      accept (one tap, same row). If F2 wants the companies visible on the first layer, the sentence
      has to become shorter, which is new wording.
 2. **The owner's preview without the visitor notice (D-17).** `OwnerPreview` (a context in
-   `shared/privacy.tsx`) wraps the renderer in the dashboard's phone preview and on "View my page".
+   `shared/privacy.tsx`) wraps the renderer on "View my page" (`/app/preview`), the one owner view
+   that still showed the notice: the dashboard's phone preview, the team console's creator preview
+   and the proposal editor pass `preview` to the renderer, which has listed no providers there since
+   2026-11-18, so they never showed it (corrected at the Stage 2 integration; the wrapper the first
+   version put around the phone preview changed nothing and was removed).
    Inside it the notice does not appear by itself; the footer's "Cookie-Einstellungen" still opens it
    (no dead button), and the owner's floating bar steps aside only while it is really on screen
    (`usePrivacyNoticeOpen` now counts notices on screen). On "View my page" (`<OwnerPreview bar>`) the
    page ends with room for the owner's floating bar, so the footer (and that link) can be scrolled
-   clear of it even on a short page. Visitors see it exactly as before. The team console's creator
-   preview uses the same phone preview, so it is free of the notice too.
+   clear of it even on a short page. Visitors see it exactly as before.
 3. **Solid globe and envelope (C-07).** `GLOBE_GLYPH` and `MAIL_GLYPH`, drawn for Linkyo on the 24 Ã— 24
    grid next to `LINKEDIN_GLYPH`, are the `website` and `email` platform glyphs and the fallback for
    anything unknown. Every platform glyph is now one filled path; the names ("Website", "Email") are

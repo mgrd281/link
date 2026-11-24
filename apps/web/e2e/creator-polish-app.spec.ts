@@ -180,14 +180,15 @@ test("the owner's preview shows the page without the visitor's notice; the foote
   const editor = page.getByRole("dialog").first();
   if (await editor.isVisible()) await page.keyboard.press("Escape");
 
-  // The dashboard's phone preview (beside the editor on laptops) holds the page, never the notice.
+  // Not D-17's doing, kept as a guard: the dashboard's phone preview (beside the editor on laptops)
+  // never mounted the notice, because the renderer's `preview` lists no providers.
   const aside = page.locator("[data-preview-aside]");
   if (await aside.isVisible()) {
     await expect(aside.locator(".poster-scope")).toBeVisible();
     await expect(aside.locator("[data-privacy-notice]")).toHaveCount(0);
   }
 
-  // "View my page": the page as visitors see it, minus the notice; the owner's bar at the bottom.
+  // D-17 itself: "View my page", the page as visitors see it, minus the notice; the owner's bar at the bottom.
   await page.goto("/en/app/preview");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const notice = page.getByRole("region", { name: privacy.en });
