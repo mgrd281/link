@@ -114,3 +114,8 @@ env $REAL npx playwright test --grep @global --workers=1 --project desktop   # g
 
 Production is https://link-web-one.vercel.app. Vercel deploys each push in about a minute. Poll with
 curl until the new content appears, then check the changed URLs return 200.
+
+- **Launch:** the launch build sets `LAUNCH=1` (with `LEGAL_REVIEWED=1` once the lawyer has
+  reviewed the texts); it fails while the legal texts are drafts (ADR 0074).
+- **Build-time variables** (`LAUNCH`, `LEGAL_REVIEWED`, `EMAIL_TRANSPORT`) must be listed under
+  `tasks.build.env` in `turbo.json`, or Turborepo's strict env mode hides them from `next build`.

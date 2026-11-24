@@ -5,6 +5,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["LAUNCH", "LEGAL_REVIEWED", "EMAIL_TRANSPORT"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.test.*", "!e2e/**"],
       "outputs": ["dist/**", "src/generated/**", ".next/**", "!.next/cache/**"]
     },

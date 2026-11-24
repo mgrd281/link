@@ -52,6 +52,13 @@ not turn on payments or AI: those need `NEXT_PUBLIC_PAYMENTS`, `AI_ENABLED` and 
 unless the company data in `apps/web/src/features/legal/company.ts` is complete and
 `LEGAL_REVIEWED=1`.
 
+The launch build sets `LAUNCH=1` on the Vercel project (Production): it fails while a legal text
+still has a bracketed marker, the company data is missing or `LEGAL_REVIEWED` is not `1` (ADR
+0074). `LAUNCH`, `LEGAL_REVIEWED` and `EMAIL_TRANSPORT` are read while building, so they are
+declared under `tasks.build.env` in `turbo.json`: Turborepo's strict env mode hands a build only the
+variables declared there (and `NEXT_PUBLIC_*`). A new variable read at build time goes there too
+(`features/legal/build-env.test.ts` checks it).
+
 ## 3. Schema — done
 
 The migrations in `supabase/migrations/`, in order:
