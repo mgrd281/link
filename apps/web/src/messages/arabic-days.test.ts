@@ -24,4 +24,10 @@ describe("Arabic day ranges", () => {
     expect(overview("kpi.vsStart", { days: 30 })).toBe("خلال 30 يومًا");
     expect(overview("kpi.trend", { days: 7 })).toBe("الاتجاه خلال آخر 7 أيام");
   });
+
+  it("puts the unit of a change in points with its words, not in the left-to-right chip", () => {
+    // The chip shows "+0.6" alone; "نقطة" follows the line's direction in the context beside it.
+    expect(overview("kpi.pointsContext", { context: overview("kpi.vsStart", { days: 30 }) })).toBe("نقطة خلال 30 يومًا");
+    expect(JSON.stringify(ar.admin.overview.kpi)).not.toContain('"points"');
+  });
 });

@@ -251,7 +251,8 @@ export function OverviewScreen() {
                 <KpiTile
                   label={t.markup("kpi.conversion", { bdi: isolate })}
                   value={percent(trends.conversion.value, locale)}
-                  delta={delta(trends.conversion.change, t("kpi.points", { value: signedPoints(trends.conversion.change, locale) }), vsStart)}
+                  // The chip holds the figure alone (it runs left to right); the unit goes with the words.
+                  delta={delta(trends.conversion.change, signedPoints(trends.conversion.change, locale), t("kpi.pointsContext", { context: vsStart }))}
                   trend={trends.conversion.series}
                   trendLabel={trendLabel}
                   footer={t.rich("kpi.conversionHint", { bdi })}
@@ -260,7 +261,7 @@ export function OverviewScreen() {
                   label={t("kpi.churn", { days: range })}
                   value={percent(trends.churn.value, locale)}
                   // Fewer cancellations are the good news here.
-                  delta={delta(trends.churn.change, t("kpi.points", { value: signedPoints(trends.churn.change, locale) }), vsPrevious, "down")}
+                  delta={delta(trends.churn.change, signedPoints(trends.churn.change, locale), t("kpi.pointsContext", { context: vsPrevious }), "down")}
                   footer={t("kpi.churnHint")}
                 />
               </>

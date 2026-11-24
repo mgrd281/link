@@ -3413,7 +3413,7 @@
         "vsStart": "in {days} Tagen",
         "vsPrevious": "ggü. den {days} Tagen davor",
         "vsLastMonth": "ggü. Vormonat bis heute",
-        "points": "{value} Pp.",
+        "pointsContext": "Pp. {context}",
         "trend": "Verlauf der letzten {days} Tage",
         "trendMonths": "Verlauf der letzten {months} Monate",
         "mrrShort": "MRR (monatlich)"

@@ -3413,7 +3413,7 @@
         "vsStart": "خلال {days, plural, one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
         "vsPrevious": "مقارنةً بالأيام الـ{days} السابقة",
         "vsLastMonth": "مقارنةً بالشهر الماضي حتى اليوم نفسه",
-        "points": "{value} نقطة",
+        "pointsContext": "نقطة {context}",
         "trend": "الاتجاه خلال آخر {days, plural, one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
         "trendMonths": "الاتجاه خلال آخر {months} أشهر",
         "mrrShort": "الإيراد المتكرر"
