@@ -199,6 +199,8 @@ export function WelcomeScreen() {
   const [proof, setProof] = useState<ProofRow[]>(emptyProof);
   const [proofProblems, setProofProblems] = useState<("title" | "summary" | null)[]>([]);
   const [reach, setReach] = useState<ReachValue>({ label: "", url: "" });
+  // The button's words, when an address was typed and its words were cleared (no button without them).
+  const [reachLabelError, setReachLabelError] = useState<string | undefined>(undefined);
   // What the flow put on the page, for the done step's honest list.
   const [made, setMade] = useState<Made | null>(null);
   // Coming from the homepage playground: its links wait in the links step, its look stays.
@@ -302,6 +304,12 @@ export function WelcomeScreen() {
       const typed = document.querySelector<HTMLInputElement>("#welcome-reach [id$='-address']");
       if (typed && typed.value.trim() !== "" && !reach.url) {
         typed.focus();
+        return;
+      }
+      // A good address with its words cleared would make no button (starterBlocks needs both): asked for.
+      if (reach.url && reach.label.trim() === "") {
+        setReachLabelError(tApp("errors.required"));
+        document.querySelector<HTMLInputElement>("#welcome-reach [id$='-label']")?.focus();
         return;
       }
     }
@@ -692,10 +700,14 @@ export function WelcomeScreen() {
               <div id="welcome-reach" className="sm:[&_[role=radiogroup]]:grid-cols-2">
                 <ReachInput
                   value={reach}
-                  onValue={setReach}
+                  onValue={(value) => {
+                    setReach(value);
+                    if (value.label.trim() !== "") setReachLabelError(undefined);
+                  }}
                   kind={kind}
                   locale={doc.profile.locale}
                   labels={{ address: t("portfolio.actionAddress"), label: t("portfolio.actionLabel") }}
+                  errors={{ label: reachLabelError }}
                 />
               </div>
               {extrasFieldset}

@@ -301,6 +301,28 @@ test.describe("portfolio kinds end on a filled portfolio", () => {
   });
 });
 
+test.describe("the contact step keeps what was typed", () => {
+  test("de · photographer: an address whose button words were cleared is pointed out, not dropped", async ({ page }) => {
+    const m = await signUp(page, "de");
+    await kindYouLook(page, m, "photographer", "Ilka Brandt", "werkbogen");
+    await fillWork(page, m, [{ title: "Hafenlicht", summary: "Nachtbilder vom Containerhafen." }]);
+    await continueButton(page, m).click();
+    await fillContact(page, m, "email", "ilka@example.com");
+    const label = page.getByLabel(m.app.welcome.portfolio.actionLabel, { exact: true });
+    await label.fill("");
+    await finishButton(page, m).click();
+    // Still the contact step: the words are asked for, at their field.
+    await expect(stepTitle(page)).toHaveText(m.app.welcome.portfolio.actionTitle);
+    await expect(label).toBeFocused();
+    await expect(page.getByText(m.app.errors.required)).toBeVisible();
+    await expectAccessible(page);
+    await label.fill("Schreib mir");
+    await expect(page.getByText(m.app.errors.required)).toHaveCount(0);
+    await finishButton(page, m).click();
+    await done(page, m, "de", "Ilka Brandt", 1, "Schreib mir");
+  });
+});
+
 test.describe("everyone else keeps the five steps", () => {
   test("de · coach: links step with booking, newsletter (demo) and e-mail; the done step speaks of the bio", async ({ page }) => {
     const m = await signUp(page, "de");
