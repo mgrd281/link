@@ -1,6 +1,8 @@
 import { contrastRatio, PRESET_IDS, TEMPLATE_IDS, toHex } from "@linkyo/tokens/creator";
 import { describe, expect, it } from "vitest";
 
+import { pageAddress, pageUrl, qrPageUrl } from "@/lib/page-url";
+
 import { qrInk, qrModules, qrSvg } from "./share-tools";
 
 /**
@@ -9,6 +11,17 @@ import { qrInk, qrModules, qrSvg } from "./share-tools";
  */
 
 const WHITE = toHex({ r: 255, g: 255, b: 255 });
+
+describe("what a page's QR code holds", () => {
+  it("the page's address marked as a scan, so the statistics count it as 'QR-Code'; people read the plain address", () => {
+    const code = qrPageUrl("mila");
+    expect(code).toBe(`${pageUrl("mila")}?src=qr`);
+    // The beacon reads exactly this marker (beacon-script.ts: `get("src") === "qr"`).
+    expect(new URL(code).searchParams.get("src")).toBe("qr");
+    expect(pageAddress("mila")).not.toContain("src=");
+    expect(qrModules(code).size).toBeGreaterThan(0);
+  });
+});
 
 describe("the QR code as SVG", () => {
   const value = "https://linkyo.app/mila";

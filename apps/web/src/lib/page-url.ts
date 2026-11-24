@@ -14,5 +14,11 @@ export const pageAddress = (username: string): string => `${CREATOR_DOMAIN}/${us
 /** For links, QR codes and sharing: "https://linkyo.app/mila". */
 export const pageUrl = (username: string): string => `${creatorOrigin()}/${username}`;
 
+/**
+ * What a page's QR code holds: the address marked `?src=qr`, so a scan is counted as "QR-Code" by the
+ * page's statistics (ADR 0081). People read the plain address beside the code (`pageAddress`).
+ */
+export const qrPageUrl = (username: string): string => `${pageUrl(username)}?src=qr`;
+
 /** A project's own address, for canonical links and sharing: "https://linkyo.app/mila/hafenlicht". */
 export const projectUrl = (username: string, slug: string): string => `${pageUrl(username)}/${slug}`;

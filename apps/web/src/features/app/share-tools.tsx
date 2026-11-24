@@ -10,7 +10,7 @@ import { encode } from "uqr";
 import { useAccount } from "@/features/account/store";
 import { copyText } from "@/lib/clipboard";
 import { haptic } from "@/lib/haptics";
-import { pageAddress, pageUrl } from "@/lib/page-url";
+import { pageAddress, pageUrl, qrPageUrl } from "@/lib/page-url";
 
 import { Sheet } from "./sheet";
 
@@ -187,10 +187,12 @@ export function QrButton({ compact = false, appearance = "button", ...target }: 
   // Read when the sheet opens, not while rendering: the server has no navigator, and the footer must match.
   const [canShare, setCanShare] = useState(false);
   const holder = useRef<HTMLDivElement>(null);
-  const { url, address, fileName } =
+  // `code` is what the QR code holds: a page's address marked `?src=qr` (a scan counts as "QR-Code" in
+  // the page's statistics); `url` is what is shared as a link, `address` what people read.
+  const { url, code, address, fileName } =
     target.username === undefined
-      ? target
-      : { url: pageUrl(target.username), address: pageAddress(target.username), fileName: `linkyo-${target.username}-qr.png` };
+      ? { ...target, code: target.url }
+      : { url: pageUrl(target.username), code: qrPageUrl(target.username), address: pageAddress(target.username), fileName: `linkyo-${target.username}-qr.png` };
   // The signed-in owner's own page look (the link card and the welcome flow show the owner's code).
   const snapshot = useAccount();
   const theme = target.username !== undefined && snapshot.status === "signedIn" ? snapshot.site.theme : null;
@@ -207,7 +209,7 @@ export function QrButton({ compact = false, appearance = "button", ...target }: 
     const box = holder.current;
     if (!box?.querySelector("svg")) return null;
     const style = getComputedStyle(box);
-    const { size, data } = encode(url, { ecc: "M", border: QR_BORDER });
+    const { size, data } = encode(code, { ecc: "M", border: QR_BORDER });
     const scale = Math.floor(1024 / size);
     const canvas = document.createElement("canvas");
     canvas.width = size * scale;
@@ -239,7 +241,7 @@ export function QrButton({ compact = false, appearance = "button", ...target }: 
     const box = holder.current;
     if (!box) return;
     const style = getComputedStyle(box);
-    const svg = qrSvg({ value: url, title: t("qrLabel", { url: address }), color: style.color, background: style.backgroundColor });
+    const svg = qrSvg({ value: code, title: t("qrLabel", { url: address }), color: style.color, background: style.backgroundColor });
     const link = document.createElement("a");
     link.download = fileName.replace(/\.png$/, ".svg");
     link.href = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
@@ -301,7 +303,7 @@ export function QrButton({ compact = false, appearance = "button", ...target }: 
             className="w-full max-w-menu rounded-xl border border-line bg-white p-4 text-ink"
             style={ink ? { color: ink } : undefined}
           >
-            <QrCode value={url} label={t("qrLabel", { url: address })} color={ink} className="w-full" />
+            <QrCode value={code} label={t("qrLabel", { url: address })} color={ink} className="w-full" />
           </div>
           <p dir="ltr" className="font-mono text-small text-fg-secondary">
             {address}
