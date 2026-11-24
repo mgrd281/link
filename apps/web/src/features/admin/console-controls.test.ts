@@ -40,7 +40,7 @@ describe("team console controls", () => {
     // constant (`!supabaseEnabled`) kept every real console at "not measured" whatever the database held.
     const model = readFileSync(join(ROOT, "customers/model.ts"), "utf8");
     expect(model).not.toMatch(/export const viewsMeasured/);
-    const screens = files.filter((file) => /viewsMeasured/.test(readFileSync(file, "utf8")) && /-screen\.tsx$/.test(file));
+    const screens = files.filter((file) => readFileSync(file, "utf8").includes("viewsMeasured") && file.endsWith("-screen.tsx"));
     expect(screens.map((file) => relative(ROOT, file)).sort()).toEqual(["analytics-screen.tsx", "customer-detail-screen.tsx", "customers-list-screen.tsx", "overview-screen.tsx"]);
     for (const file of screens) expect(readFileSync(file, "utf8"), relative(ROOT, file)).toMatch(/\bviewsMeasured\b[^}]*\} = useCustomers\(\)/);
     // The demo's sample customers carry numbers; the live data says itself.

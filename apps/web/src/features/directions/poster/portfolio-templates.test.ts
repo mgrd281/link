@@ -36,6 +36,10 @@ const ids = (fragment: string, tag: string) => [...fragment.matchAll(new RegExp(
 const base = { visible: true, highlight: false } as const;
 const shot = (id: string, w: number, h: number): BlockOf<"project"> => ({ ...base, id, type: "project", slug: id, title: id, summary: "One sentence.", cover: { src: `sample:ex-pf-ronja-0${String(2)}`, alt: "", w, h } });
 
+/** Every phone width from layout.preview-compact (320) up to layout.prose (640), and the reference phone. */
+const PHONE_WIDTHS: readonly number[] = Array.from({ length: tokens.layout.prose - tokens.layout.previewCompact }, (_, index) => tokens.layout.previewCompact + index);
+const PREVIEW: number = tokens.layout.preview;
+
 describe("social rows on phones", () => {
   it("knows how many icons a row holds", () => {
     // Tiles of 56 px with 12 between; bare glyphs of 44 with 8, a row at the start reaching 12 further.
@@ -87,9 +91,9 @@ describe("social rows on phones", () => {
         // Bare glyphs sit 8 px apart (gap-2), tiles 12 (gap-3); a row at the reading start is pulled out.
         const plain = /\bgap-2\b/.test(list);
         const start = list.includes("justify-start");
-        for (let width = tokens.layout.previewCompact; width < tokens.layout.prose; width++) {
+        for (const width of PHONE_WIDTHS) {
           // The page's CSS: below layout.preview the narrow count, from there to layout.prose the phone's.
-          const limit = width < tokens.layout.preview ? clamp(list, "socials-row-narrow") : clamp(list, "socials-row");
+          const limit = width < PREVIEW ? clamp(list, "socials-row-narrow") : clamp(list, "socials-row");
           const perRow = Math.min(limit, socialsPerRow(width, plain, start));
           if (count > perRow && count % perRow === 1) alone.push(`${template}: ${String(count)} at ${String(width)} px`);
         }

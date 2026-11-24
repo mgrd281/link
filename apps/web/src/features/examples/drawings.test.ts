@@ -21,10 +21,12 @@ describe("example pages with drawings", () => {
   });
 
   it("mark exactly the looks whose pictures include Linkyo drawings", () => {
-    const portfolios = Object.entries(LOOKS).filter(([, look]) => "credit" in look && look.category === "portfolio");
+    // The looks that credit photographers are the portfolio examples (their pictures are their work).
+    const portfolios = Object.entries(LOOKS).filter(([, look]) => "credit" in look);
+    expect(portfolios.length).toBeGreaterThan(5);
     for (const [slug, look] of portfolios) {
       const prefix = `ex-pf-${slug.split("-")[0] ?? ""}`;
-      expect("drawings" in look && look.drawings === true, slug).toBe(drawn.has(prefix));
+      expect("drawings" in look, slug).toBe(drawn.has(prefix));
     }
   });
 

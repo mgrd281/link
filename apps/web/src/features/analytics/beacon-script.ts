@@ -27,7 +27,7 @@ function view(){
 if(seen||doc.visibilityState!=="visible"||doc.prerendering)return;
 seen=true;
 var from="",step=false;
-try{if(doc.referrer){var before=new URL(doc.referrer);from=before.hostname;step=before.host===location.host&&before.pathname.split(/\\\//)[1]===page}}catch(e){}
+try{if(doc.referrer){var before=new URL(doc.referrer);from=before.hostname;step=before.host===location.host&&before.pathname.split(/\\//)[1]===page}}catch(e){}
 var event={t:"v",r:from};
 if(step)event.s="page";
 try{if(new URLSearchParams(location.search).get("src")==="qr")event.s="qr"}catch(e){}
