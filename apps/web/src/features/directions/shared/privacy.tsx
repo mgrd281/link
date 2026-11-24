@@ -152,6 +152,14 @@ export function OwnerPreview({ children, bar = false }: { children: ReactNode; b
  * label that still does not fit (a narrow phone, a wide face) wraps inside its button instead of
  * pushing the bar wider. Touch grows the tap area to the touch target.
  */
+/**
+ * The settings layer: the sheet on the creator's surface, each category card on the page's own
+ * background. The theme engine guarantees the switch's track (line-strong off, accent on) 3:1 against
+ * `bg` (WCAG 1.4.11), not against `surface-2`, where it fell to about 2.6:1.
+ */
+export const SETTINGS_SHEET_BG = "bg-creator-surface";
+export const SETTINGS_CARD_BG = "bg-creator-bg";
+
 const barButton = cn(
   "relative inline-flex h-control-md min-w-0 items-center justify-center gap-2 rounded-creator-button px-3 text-center text-caption leading-tight font-semibold text-balance",
   "transition-[scale,background-color,color] duration-micro focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none",
@@ -225,7 +233,7 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
       <section
         aria-label={t("privacyLabel")}
         data-privacy-notice="settings"
-        className="layer-overlay fixed inset-x-0 bottom-0 max-h-dvh overflow-y-auto overscroll-contain border-t border-creator-line bg-creator-surface text-creator-fg"
+        className={cn("layer-overlay fixed inset-x-0 bottom-0 max-h-dvh overflow-y-auto overscroll-contain border-t border-creator-line text-creator-fg", SETTINGS_SHEET_BG)}
       >
         <div className="mx-auto grid max-w-creator gap-4 px-5 pt-5 pb-[max(var(--spacing-5),env(safe-area-inset-bottom))]">
           <div className="grid gap-2">
@@ -241,14 +249,14 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
             <p className="text-small text-pretty text-creator-fg-muted">{sentence}</p>
           </div>
           <ul className="grid gap-2">
-            <li className="flex items-start gap-3 rounded-creator-card bg-creator-surface-2 p-3">
+            <li className={cn("flex items-start gap-3 rounded-creator-card p-3", SETTINGS_CARD_BG)}>
               <span className="grid min-w-0 flex-1 gap-0.5">
                 <span className="text-body font-semibold">{t("privacyNecessary")}</span>
                 <span className="text-small text-creator-fg-muted">{t("privacyNecessaryBody")}</span>
               </span>
               <span className="shrink-0 pt-0.5 text-small font-medium text-creator-fg-muted">{t("privacyAlwaysOn")}</span>
             </li>
-            <li className="flex items-start gap-3 rounded-creator-card bg-creator-surface-2 p-3">
+            <li className={cn("flex items-start gap-3 rounded-creator-card p-3", SETTINGS_CARD_BG)}>
               <span className="grid min-w-0 flex-1 gap-0.5">
                 <span className="text-body font-semibold">{t("privacyMedia")}</span>
                 <span className="text-small text-creator-fg-muted">{t("privacyMediaBody", { providers: list })}</span>

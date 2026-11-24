@@ -1,7 +1,32 @@
 import type { Block } from "@linkyo/blocks";
+import { contrastRatio, PRESET_IDS, resolveCreatorTheme, TEMPLATE_IDS, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { describe, expect, it } from "vitest";
 
+import { SETTINGS_CARD_BG } from "./privacy";
 import { externalProviders } from "./providers";
+
+describe("privacy settings in the creator's colours", () => {
+  // The palette role behind each background class the settings layer may use.
+  const ROLE = { "bg-creator-bg": "bg", "bg-creator-surface": "surface", "bg-creator-surface-2": "surface2" } as const;
+
+  it("draws the consent switch at 3:1 against its card in every template, preset and mode (WCAG 1.4.11)", () => {
+    const role = ROLE[SETTINGS_CARD_BG as keyof typeof ROLE];
+    expect(role).toBeDefined();
+    const configs: CreatorThemeConfig[] = [
+      ...TEMPLATE_IDS.map((template) => ({ template })),
+      ...PRESET_IDS.flatMap((preset) => [{ preset }, { preset, mode: "light" as const }, { preset, mode: "dark" as const }]),
+      ...["#00454C", "#E11D48", "#FACC15", "#22C55E", "#FFFFFF", "#000000"].flatMap((accent) => [{ accent, mode: "light" as const }, { accent, mode: "dark" as const }]),
+    ];
+    for (const config of configs) {
+      const palette = resolveCreatorTheme(config).palette;
+      const card = palette[role];
+      const name = JSON.stringify(config);
+      // Off: the line-strong track (the knob is the surface colour, close to the card); on: the accent.
+      expect(contrastRatio(palette.lineStrong, card), `${name} off`).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio(palette.accent, card), `${name} on`).toBeGreaterThanOrEqual(3);
+    }
+  });
+});
 
 const poster = { src: "none:", alt: "" };
 const base = { visible: true, highlight: false };
