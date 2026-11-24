@@ -25,7 +25,8 @@ only after the lawyer's review (F2).
    writes into the page only while the switch is on. Inline, not a client component: Turbopack put a client
    component into the same chunk as the page's other islands, so it would have shipped with the switch off too;
    inline, an off page carries not one byte of it and an on page loads no extra file. It sends to `/api/collect`
-   on the page's own origin (`navigator.sendBeacon`, else `fetch` with `keepalive` and no credentials): one view
+   on the page's own origin with `fetch`, `keepalive` and no credentials (never `navigator.sendBeacon`, which
+   always sends the site's cookies, a signed-in owner's session included): one view
    once the page is really seen (not while prerendered, not in a background tab), and one tap per click on a link
    or button in a block (a double tap within a second is one). A view carries the page's name, the kind and the
    referring site's host name, never its path or query; `?src=qr` marks a QR code. It reads and writes nothing on

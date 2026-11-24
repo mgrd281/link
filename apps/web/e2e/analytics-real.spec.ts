@@ -156,6 +156,23 @@ test.describe("cookie-free analytics @real", () => {
     expect(kept).toEqual({ local: 0, session: 0, databases: 0 });
   });
 
+  test("a signed-in owner's session cookies never travel with the beacon @real", async ({ page, context }) => {
+    test.skip(!ON, "the switch is off in this run");
+    await keepLinksLocal(page);
+    const { email, username } = await creator("stats-session");
+    // Signed in, in the same browser: the site's session cookies exist on path "/".
+    await signIn(page, email, "/en/app");
+    await page.waitForURL("**/en/app**");
+    expect((await context.cookies()).length).toBeGreaterThan(0);
+    const counted = beacon(page, "v");
+    await page.goto(`/${username}`);
+    const view = await counted;
+    expect(await view.allHeaders()).not.toHaveProperty("cookie");
+    const tap = beacon(page, "c");
+    await page.getByRole("link", { name: /Visit the shop/ }).first().click();
+    expect(await (await tap).allHeaders()).not.toHaveProperty("cookie");
+  });
+
   test("visitors who ask not to be tracked, bots and prefetches are not counted @real", async ({ page, baseURL }) => {
     test.skip(!ON, "the switch is off in this run");
     const { id, username } = await creator("stats-optout");

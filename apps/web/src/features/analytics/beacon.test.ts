@@ -32,7 +32,7 @@ interface Browser {
 }
 
 /** Runs the script for page "mila" in a fake browser and answers what it sent. */
-function run({ gpc = false, dnt = null as string | null, visibility = "visible", prerendering = false, referrer = "", search = "", beacon = true, host = "linkyo.app" } = {}): Browser {
+function run({ gpc = false, dnt = null as string | null, visibility = "visible", prerendering = false, referrer = "", search = "", host = "linkyo.app" } = {}): Browser {
   const listeners = new Map<string, ((event: object) => void)[]>();
   const sent: Record<string, string>[] = [];
   const browser: Browser = {
@@ -46,11 +46,9 @@ function run({ gpc = false, dnt = null as string | null, visibility = "visible",
   const navigator = {
     globalPrivacyControl: gpc,
     doNotTrack: dnt,
-    sendBeacon: (url: string, body: string) => {
-      expect(url).toBe("/api/collect");
-      if (!beacon) return false;
-      sent.push(JSON.parse(body) as Record<string, string>);
-      return true;
+    // sendBeacon always sends the site's cookies (a signed-in owner's session): the counter must not use it.
+    sendBeacon: () => {
+      throw new Error("the counter used sendBeacon");
     },
   };
   const document = Object.assign(browser.document, {
@@ -136,10 +134,15 @@ describe("the counter in the page", () => {
     expect(browser.sent).toHaveLength(1);
   });
 
-  it("falls back to a keepalive request without credentials when there is no beacon", () => {
-    const browser = run({ beacon: false });
-    expect(browser.fetched).toBe(1);
-    expect(browser.sent).toEqual([{ t: "v", r: "", p: "mila" }]);
+  it("sends with a keepalive request without credentials, never with sendBeacon (which sends cookies)", () => {
+    const browser = run();
+    browser.fire("click", { target: element({ control: true, block: "shop" }) });
+    expect(browser.fetched).toBe(2);
+    expect(browser.sent).toEqual([
+      { t: "v", r: "", p: "mila" },
+      { t: "c", b: "shop", p: "mila" },
+    ]);
+    expect(beaconScript("mila")).not.toContain("sendBeacon");
   });
 });
 

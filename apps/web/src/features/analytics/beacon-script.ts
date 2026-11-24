@@ -4,10 +4,11 @@
  * on. Inline on purpose: no module in any bundle, so with the switch off a creator page carries not one
  * byte of counting code (a client component would have shared a chunk with the page's other islands).
  *
- * It sends, to the page's own origin (/api/collect, `navigator.sendBeacon`, else `fetch` with
- * `keepalive` and no credentials), one view once the page is really seen (not while prerendered or in a
- * background tab) and one tap for each link or button inside a block (`data-block`, the renderer's block
- * marks; a double tap within a second is one). A view carries the referring site's host name only, never
+ * It sends, to the page's own origin (/api/collect, `fetch` with `keepalive` and no credentials: never
+ * `navigator.sendBeacon`, which always sends the site's cookies, a signed-in owner's session included),
+ * one view once the page is really seen (not while prerendered or in a background tab) and one tap for
+ * each link or button inside a block (`data-block`, the renderer's block marks; a double tap within a
+ * second is one). A view carries the referring site's host name only, never
  * its address; a step inside the page (from the page or one of its project pages, the same host and
  * the page's own first path segment) is marked `s:"page"` and adds no source, and `?src=qr` marks a QR
  * code. It reads and writes nothing on the visitor's device (no cookie, no storage, no fingerprint),
@@ -19,9 +20,7 @@ var nav=navigator,doc=document;
 if(nav.globalPrivacyControl===true||nav.doNotTrack==="1")return;
 function send(event){
 event.p=page;
-var body=JSON.stringify(event);
-try{if(nav.sendBeacon&&nav.sendBeacon("/api/collect",body))return}catch(e){}
-try{fetch("/api/collect",{method:"POST",body:body,keepalive:true,credentials:"omit"}).catch(function(){})}catch(e){}
+try{fetch("/api/collect",{method:"POST",body:JSON.stringify(event),keepalive:true,credentials:"omit"}).catch(function(){})}catch(e){}
 }
 var seen=false;
 function view(){
