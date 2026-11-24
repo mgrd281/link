@@ -196,6 +196,13 @@ test("the owner's preview shows the page without the visitor's notice; the foote
   await expect(notice).toHaveCount(0);
   const viewport = page.viewportSize() ?? PHONE;
   expect((await box(ownerBar)).y).toBeGreaterThan(viewport.height / 2);
+  // The bar's strip is as wide as the screen: beside the bar, a tap reaches the page under it.
+  const beside = await ownerBar.evaluate((nav) => {
+    const rect = nav.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + 2, rect.top + rect.height / 2);
+    return hit && nav.contains(hit) ? "the strip" : "the page";
+  });
+  expect(beside).toBe("the page");
 
   // The footer's "Cookie settings" is no dead button there: it opens the notice, the bar steps aside.
   await page.getByRole("button", { name: "Cookie settings" }).click();

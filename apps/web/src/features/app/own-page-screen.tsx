@@ -66,11 +66,12 @@ export function OwnPageScreen() {
         data-console="local"
         aria-label={t("label")}
         className={cn(
-          "layer-sticky fixed inset-x-0 flex justify-center px-4",
+          // A full-width strip, so taps beside the bar reach the page under it; only the bar takes them.
+          "pointer-events-none layer-sticky fixed inset-x-0 flex justify-center px-4",
           noticeOpen ? "top-0 pt-[max(var(--spacing-4),env(safe-area-inset-top))]" : "bottom-0 pb-[max(var(--spacing-4),env(safe-area-inset-bottom))]",
         )}
       >
-        <div className="flex items-center gap-1 rounded-full border border-line bg-surface-elevated p-1 text-fg">
+        <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-line bg-surface-elevated p-1 text-fg">
           {/* "Done", as on iOS: back to the dashboard screen the page was opened from. */}
           <Button asChild variant="ghost" className="rounded-full">
             <Link href={backTo}>{t("back")}</Link>
