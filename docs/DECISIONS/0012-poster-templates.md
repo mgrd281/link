@@ -26,6 +26,15 @@ our own expression; no code, text, images or marks are copied.
    | Signal (ADR 0054) | night blue, lime, a fine grid, monospace details | square picture in corner marks |
    | Bloom (ADR 0054) | cream and rose, round bold type, filled pills | portrait in an arch with an outline arch behind |
    | Laufbahn (ADR 0069) | a very light canvas, cobalt, Inter, pill buttons, plain section titles, a contents sheet in the app bar, lists with icons on soft sheets without rules | the picture from edge to edge with the name on it; a tall rounded plate beside the words on wide screens |
+   | Werkbogen (Portfolio v1) | light, one red accent, serif name, numbered captions, square minimal buttons, the wide canvas, projects chosen from the content | the first project's cover as a large plate under a quiet name |
+   | Tiefdruck (Portfolio v1) | dark, one electric blue, huge type, projects as a numbered list, filled pills, the wide canvas | the name as large as the screen allows (statement) |
+   | Leuchttisch (Stage 3) | light-table grey, all type in ink so only the photos carry colour, square corners, frame numbers, series uncropped in rows of equal height, pictures up to `layout.wall` while text keeps the creator column | the first covers in one justified row at their own ratios (strip) |
+   | Grundriss (Stage 3) | drawing-paper white, graphite text, one drafting green, hairline column guides behind the wide canvas, numbered sections, one "sheet" per project with its fact table | an architect's title block beside the lead cover (titleblock) |
+   | Logbuch (Stage 3) | warm document white, ink, a sage accent, Geist and Geist Mono, rounded outline buttons, projects grouped by year with "running" or "done" | a README: name, role line and a monospace list of facts, a small avatar at the inline end (readme) |
+
+   The portfolio templates (`use: ["portfolio"]`) and how a batch of them is added are recorded in the Werkbogen and
+   Tiefdruck decision (Portfolio v1, 0070–0072) and the linkyo-portfolio skill; each has a fictional example person in
+   the gallery's Portfolio category.
 
 2. **Vivid mode** in the palette engine: the background is the seed hue at the lightest lightness where white text
    still reaches 7:1 on every surface; buttons become near-white with a dark label in the same hue. Property-tested

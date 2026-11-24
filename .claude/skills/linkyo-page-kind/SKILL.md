@@ -37,8 +37,16 @@ the first social profiles, and a few questions that turn into blocks. See ADR 00
 6. Add a unit test showing that the starter's blocks are valid (`blockSchema.safeParse`).
 7. A portfolio kind: add it to `PORTFOLIO_KINDS`. Its fields are `["proof", "action"]` (plus `cv` for
    developers and engineers): the proof rows become projects under `titleKeys(kind).work`, the action
-   becomes the contact block, last. The look step leads with `lookOrder(kind)` (the starter, then the
-   templates whose tokens name the kind in `suggestFor`).
+   becomes the contact block, last. The look step leads with `lookOrder(kind)` (the starter, then
+   `suggestedTemplates(kind)`: the templates whose tokens name the kind in `leadFor` first, then those
+   naming it in `suggestFor`, in token order). Today the look step starts with: photographer →
+   Werkbogen, Leuchttisch, Folio …; developer → Tiefdruck, Logbuch, Signal …; engineer → Tiefdruck,
+   Logbuch …; designer lists Grundriss after Werkbogen, Atelier, Folio and Tiefdruck (`kinds.test.ts`
+   pins these). There is no architect kind: architects choose `designer`.
+8. A new kind that should see a portfolio template: name the kind in that template's `suggestFor` (and
+   `leadFor` if it should come first) in `tokens.json`, regenerate the tokens, and update the expected
+   orders in `kinds.test.ts`. A gallery example person for the kind lives in the `portfolio` category
+   (see linkyo-portfolio).
 
 ## Rules
 

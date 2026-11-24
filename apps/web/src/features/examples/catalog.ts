@@ -8,6 +8,7 @@ import { CATALOG_E } from "./catalog-e";
 import { CATALOG_F } from "./catalog-f";
 import { CATALOG_G } from "./catalog-g";
 import { CATALOG_H } from "./catalog-h";
+import { CATALOG_I } from "./catalog-i";
 
 /** Every example page by its address (the look of each lives in looks.ts). Server only. */
-export const EXAMPLES: Record<string, Page> = { ...CATALOG_H, ...CATALOG_G, ...CATALOG_F, ...CATALOG_D, ...CATALOG_E, ...CATALOG_A, ...CATALOG_B, ...CATALOG_C };
+export const EXAMPLES: Record<string, Page> = { ...CATALOG_I, ...CATALOG_H, ...CATALOG_G, ...CATALOG_F, ...CATALOG_D, ...CATALOG_E, ...CATALOG_A, ...CATALOG_B, ...CATALOG_C };

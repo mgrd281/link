@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { coverImage, hasDetail, pageSchema, repositoryUrl, shownPictures, type Block, type BlockOf, type Page } from "@linkyo/blocks";
+import { coverImage, coverMode, hasDetail, pageSchema, repositoryUrl, shownPictures, type Block, type BlockOf, type Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
 import { auditPalette, resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { describe, expect, it } from "vitest";
@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { PREVIEWS } from "@/features/previews/registry";
 
 import { EXAMPLES } from "./catalog";
-import { LOOKS, type Look } from "./looks";
+import { GALLERY_LEAD, LOOKS, type Look } from "./looks";
 
 /**
  * Every address a block leads to. A project's repository address is not stored: pages derive it
@@ -61,6 +61,9 @@ const addressLike = (value: unknown): string[] => {
 const EXAMPLE_ADDRESS = /^(https:\/\/example\.com\/|mailto:[a-z]+@example\.com$|tel:\+49300000000$|https:\/\/github\.com\/[a-z0-9-]+\.example\/[a-z0-9-]+$)/;
 
 const PORTFOLIOS = ["ronja-feldkamp", "tobin-achterberg", "naya-aldabbas", "jorinde-ahlfeld"] as const;
+/** One example person per Stage 3 template (catalog-i.ts). */
+const STAGE3 = ["merle-kastorf", "rana-al-khatib", "ines-vasconcelos"] as const;
+const ALL_PORTFOLIOS = [...PORTFOLIOS, ...STAGE3] as const;
 const SW = creatorTokens.swatches;
 
 const projectsOf = (page: Page): BlockOf<"project">[] => page.blocks.filter((block): block is BlockOf<"project"> => block.type === "project");
@@ -137,7 +140,7 @@ describe("example gallery", () => {
   });
 
   it("each portfolio page writes to one mailbox, from the icon row and from its main button alike", () => {
-    for (const slug of PORTFOLIOS) {
+    for (const slug of ALL_PORTFOLIOS) {
       const mail = new Set(example(slug).blocks.flatMap(urls).filter((url) => url.startsWith("mailto:")));
       expect(mail.size, `${slug}: ${[...mail].join(", ")}`).toBeLessThanOrEqual(1);
     }
@@ -248,7 +251,7 @@ describe("portfolio examples", () => {
   });
 
   it("every picture is in CREDITS.md, a series comes from one photographer, and the page names them", () => {
-    for (const slug of PORTFOLIOS) {
+    for (const slug of ALL_PORTFOLIOS) {
       const look: Look = LOOKS[slug];
       const page = example(slug);
       const used = pictures(page);
@@ -269,5 +272,104 @@ describe("portfolio examples", () => {
     // The two pages whose work is photographs.
     expect(LOOKS["ronja-feldkamp"].credit).toContain("Paul Einerhand");
     expect(LOOKS["jorinde-ahlfeld"].credit).toContain("Caroline Badran");
+  });
+});
+
+describe("Stage 3 portfolio examples (one person per new template)", () => {
+  const NAME_CHECK = readFileSync(path.resolve(import.meta.dirname, "name-check.md"), "utf8");
+
+  it("each sits on its template as it comes, in the Portfolio category, in its language, with an audited palette", () => {
+    const expected: Record<(typeof STAGE3)[number], [template: string, kind: Look["kind"], locale: Look["locale"]]> = {
+      "merle-kastorf": ["leuchttisch", "photographer", "de"],
+      "rana-al-khatib": ["grundriss", "designer", "ar"],
+      "ines-vasconcelos": ["logbuch", "engineer", "en"],
+    };
+    for (const slug of STAGE3) {
+      const look: Look = LOOKS[slug];
+      const page = example(slug);
+      expect([look.theme.template, look.kind, look.locale], slug).toEqual(expected[slug]);
+      expect(look.category, slug).toBe("portfolio");
+      // The template as it comes: "Start with Leuchttisch" on /portfolio starts from this page.
+      expect(Object.keys(look.theme), slug).toEqual(["template"]);
+      expect(page.profile.locale, slug).toBe(look.locale);
+      expect(page.profile.hero, slug).toBeUndefined();
+      const theme = resolveCreatorTheme(look.theme, { rtlScript: look.locale === "ar" });
+      const failed = auditPalette(theme.palette).filter((check) => !check.pass);
+      expect(failed, `${slug}: ${failed.map((check) => check.pair).join(", ")}`).toEqual([]);
+      // Every project has a page of its own to open, with something to read on it.
+      for (const project of projectsOf(page)) expect(hasDetail(project, quotesOf(page)), `${slug}/${project.slug}`).toBe(true);
+      // One primary action, in the closing contact band.
+      expect(page.blocks.filter((block) => block.type === "contact"), slug).toHaveLength(1);
+      // The gallery opens with them, after the older portfolio pages.
+      expect(GALLERY_LEAD, slug).toContain(slug);
+    }
+  });
+
+  it("Merle (Leuchttisch): four series whose covers differ in ratio, the lead one with fourteen pictures", () => {
+    const merle = example("merle-kastorf");
+    const series = projectsOf(merle);
+    expect(series.map((project) => project.slug)).toEqual(["nachbild", "gegenlicht", "nathan-portraets", "spielzeitkampagne"]);
+    // The strip hero shows the first covers side by side at their own ratios: landscape and portrait both.
+    const ratios = series.map((project) => {
+      const cover = coverImage(project);
+      return cover?.w && cover.h ? cover.w / cover.h : 0;
+    });
+    expect(ratios.every((ratio) => ratio > 0)).toBe(true);
+    expect(ratios.some((ratio) => ratio > 1.2)).toBe(true);
+    expect(ratios.some((ratio) => ratio < 0.8)).toBe(true);
+    // The lead series: its cover and thirteen pictures, each described and captioned.
+    const lead = series[0];
+    expect(lead ? shownPictures(lead).length + 1 : 0).toBe(14);
+    expect(lead?.pictures?.every((picture) => picture.caption && picture.image.alt && picture.image.w && picture.image.h)).toBe(true);
+    // Wider than the text column at the wall width: the series is stored at 2,240 px.
+    expect(lead?.pictures?.every((picture) => Math.max(picture.image.w ?? 0, picture.image.h ?? 0) >= 2240)).toBe(true);
+    // A confidential commission stores no client; the one quote is about a series of the page.
+    expect(series.filter((project) => project.confidential).map((project) => project.client)).toEqual([undefined]);
+    const quoted = quotesOf(merle).flatMap((block) => block.items);
+    expect(quoted).toHaveLength(1);
+    expect(series.map((project) => project.id)).toContain(quoted[0]?.project);
+    expect(merle.blocks.find((block): block is BlockOf<"contact"> => block.type === "contact")?.primary.label).toBe("Probenbesuch anfragen");
+  });
+
+  it("Rana (Grundriss): an architect's sheets with figures, a confidential study and a title cover, Latin digits in Arabic", () => {
+    const rana = example("rana-al-khatib");
+    const projects = projectsOf(rana);
+    expect(projects.map((project) => coverMode(project))).toEqual(["picture", "picture", "picture", "title"]);
+    expect(projects[0]?.results?.[0]).toEqual({ value: "1,240 م²", label: "مساحة التوسعة" });
+    expect(projects[0]?.year).toEqual({ from: 2024 });
+    expect(projects.filter((project) => project.confidential).map((project) => project.slug)).toEqual(["housing-study"]);
+    // Latin digits everywhere, also in Arabic text (Grundriss isolates them in <bdi>).
+    expect(JSON.stringify(rana)).not.toMatch(/[٠-٩۰-۹]/);
+    expect(rana.blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")?.items).toEqual(expect.arrayContaining(["Revit", "Rhino"]));
+    expect(rana.blocks.find((block): block is BlockOf<"contact"> => block.type === "contact")?.primary.label).toBe("احجز موعدًا");
+    expect(rana.blocks.some((block) => block.type === "timeline")).toBe(true);
+  });
+
+  it("Ines (Logbuch): a build log over three years, running and done, with sources, a code sample and a repo block", () => {
+    const ines = example("ines-vasconcelos");
+    const projects = projectsOf(ines);
+    // logGroups() groups by year.from; "running" when year.to is "now".
+    expect(new Set(projects.map((project) => project.year?.from))).toEqual(new Set([2025, 2024, 2023]));
+    expect(projects.filter((project) => project.year?.to === "now").map((project) => project.slug)).toEqual(["nevoa", "remendo-log"]);
+    expect(projects.find((project) => project.slug === "bike-light-mount")?.year?.to).toBeUndefined();
+    const sources = projects.flatMap((project) => (project.source ? [project.source] : []));
+    expect(sources.map((source) => source.repo)).toEqual(["nevoa-epd", "remendo-log", "sardinha-split"]);
+    for (const source of sources) expect(source.owner).toBe("vasconcelos.example");
+    expect(projects[0]?.code?.text.split("\n")).toHaveLength(12);
+    // The README hero reads the first four tools as the stack.
+    expect(ines.blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")?.items.slice(0, 4)).toEqual(["C", "ESP-IDF", "Zephyr", "KiCad"]);
+    expect(ines.blocks.some((block) => block.type === "repo")).toBe(true);
+    expect(ines.blocks.some((block) => block.type === "timeline")).toBe(true);
+    expect(ines.blocks.find((block): block is BlockOf<"contact"> => block.type === "contact")?.primary.label).toBe("Book a call");
+  });
+
+  it("their names and repository names were web-checked and recorded in name-check.md", () => {
+    for (const slug of STAGE3) {
+      const name = EXAMPLES[slug]?.profile.displayName ?? "";
+      const latin = { "merle-kastorf": "Merle Kastorf", "rana-al-khatib": "Rana Al-Khatib", "ines-vasconcelos": "Ines Vasconcelos" }[slug];
+      expect(NAME_CHECK, slug).toContain(latin);
+      if (slug === "rana-al-khatib") expect(NAME_CHECK).toContain(name);
+    }
+    for (const repo of ["nevoa-epd", "remendo-log", "sardinha-split", "deep-sleep-audit"]) expect(NAME_CHECK, repo).toContain(repo);
   });
 });
