@@ -326,6 +326,10 @@ test.describe("dashboard", () => {
     await page.goto("/en/app/preview");
     const notice = page.getByRole("region", { name: "Privacy" });
     const bar = page.getByRole("navigation", { name: "Page actions" });
+    // The owner's own view leaves the visitor's notice out (audit D-17); its footer link still opens it.
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(notice).toHaveCount(0);
+    await page.getByRole("button", { name: "Cookie settings" }).click();
     await expect(notice).toBeVisible();
     // Both reachable, neither on top of the other: the bar waits at the top.
     const [noticeBox, barBox] = [await notice.boundingBox(), await bar.boundingBox()];
