@@ -509,8 +509,9 @@ StyleDictionary.registerFormat({
       }
     }
 
-    // A face with its stack: the families with `var(--font-face-<id>, …)` for the self-hosted one.
-    const withStack = (face) => (face ? { ...face, stack: fontStack(face.family, face.face) } : undefined);
+    // A face with its stack: the families with `var(--font-face-<id>, …)` for the self-hosted one, or
+    // for each self-hosted family named in `faces` (an Arabic companion with a fuller face after it).
+    const withStack = (face) => (face ? { ...face, stack: fontStack(face.family, face.faces ?? face.face) } : undefined);
     // Arabic companions (C-03): the faces a pairing (or one template) uses for Arabic letters on Arabic
     // pages, next to its Latin faces. `pairing: "arabic"` means "the Arabic pairing as it is".
     const arabicFaces = (arabic) =>

@@ -158,7 +158,13 @@ interface TemplateDefaults {
 /** A face of an Arabic companion as the token build emits it. */
 interface ArabicFace {
   family: readonly string[];
+  /** The companion's own self-hosted face. */
   face: string;
+  /**
+   * Every self-hosted face in `family`, when the companion has a fuller Arabic face after it for the
+   * letters it lacks (Readex Pro has no پ چ گ ک ی; IBM Plex Sans Arabic draws them).
+   */
+  faces?: Readonly<Record<string, string>> | undefined;
   weight: number;
   stack: string;
 }
@@ -179,10 +185,11 @@ export const arabicFacesOf = (id: CreatorPairingId): ArabicFaces =>
 
 /**
  * The font stacks of a page in Arabic script: the Arabic companion first, then the template's own
- * Latin stack. Each companion face is declared with an Arabic-only `unicode-range` (apps/web/src/fonts.ts),
- * so Latin letters, digits and spaces skip it and keep the template's Latin face; Arabic letters get
- * the companion instead of whatever a Latin face's metric fallback (local Arial, which has Arabic
- * glyphs on Windows) would draw. `null` when the page uses the Arabic pairing as it is.
+ * Latin stack. Each companion face is declared with a `unicode-range` of Arabic letters and word spaces
+ * (apps/web/src/fonts.ts), so Latin letters and digits skip it and keep the template's Latin face;
+ * Arabic letters and the gaps between Arabic words get the companion instead of whatever a Latin face
+ * (a monospace space) or its metric fallback (local Arial, which has Arabic glyphs on Windows) would
+ * draw. `null` when the page uses the Arabic pairing as it is.
  */
 export function arabicStacks(latinPairing: CreatorPairingId, override?: ArabicFaces): { display: string; body: string; weight: number; uppercase: boolean } | null {
   const own = arabicFacesOf(latinPairing);
