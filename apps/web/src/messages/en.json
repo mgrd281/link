@@ -479,8 +479,8 @@
       "readLess": "Show less"
     },
     "newsletter": {
-      "exampleTitle": "Just an example",
-      "exampleBody": "Nothing is sent from this example page. Your email address was not stored."
+      "exampleTitle": "Just a preview",
+      "exampleBody": "Newsletter sign-ups aren't available yet: nothing is sent here, and your email address was not stored."
     }
   },
   "directions": {
@@ -4104,7 +4104,7 @@
     "previewGlide": "The page scrolls slowly by itself. Any key or touch stops it.",
     "previewHint": "Use the arrow keys to move to the next template.",
     "notFoundBack": "Back to the page",
-    "notFoundBackTo": "Back to {name}"
+    "notFoundBackTo": "Back to <bdi>{name}</bdi>"
   },
   "search": {
     "open": "Search people",

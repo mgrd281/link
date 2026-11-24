@@ -66,7 +66,8 @@ export function ProjectNotFoundLink() {
             {t("creator.portfolio.toPage")} <bdi dir="ltr">{`${CREATOR_DOMAIN}/${params.username}`}</bdi>
           </>
         ) : owner ? (
-          t("examples.notFoundBackTo", { name: owner.name })
+          // The owner's name is isolated: a Latin name inside Arabic words keeps its own direction.
+          t.rich("examples.notFoundBackTo", { name: owner.name, bdi: (chunks) => <bdi>{chunks}</bdi> })
         ) : (
           t("examples.notFoundBack")
         )}

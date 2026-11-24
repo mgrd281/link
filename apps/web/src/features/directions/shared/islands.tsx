@@ -187,9 +187,10 @@ export function ClickToLoad({
  * phones (a thumb-wide button), sits side by side on wide screens.
  *
  * There is no newsletter service yet, so the form only appears where nothing could be sent anyway
- * (example pages, previews and samples; real pages leave newsletter blocks out, public-page.ts). It
- * never claims a send: submitting says plainly that this is an example and that nothing was sent or
- * kept. No request leaves the page.
+ * (example pages, the owner's preview in the dashboard and samples; real pages leave newsletter
+ * blocks out, public-page.ts). It never claims a send: submitting says that sign-ups do not exist yet
+ * and that nothing was sent or kept, words that are true on each of those surfaces. No request
+ * leaves the page.
  */
 export function NewsletterForm() {
   const t = useTranslations("creator");

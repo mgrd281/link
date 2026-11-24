@@ -640,8 +640,8 @@ test.describe("private previews", () => {
     const form = page.getByRole("region", { name: "Investigations newsletter, every Friday" });
     await form.getByLabel("Your email").fill("reader@example.com");
     await form.getByRole("button", { name: "Subscribe" }).click();
-    await expect(form.getByRole("status")).toContainText("Just an example");
-    await expect(form.getByRole("status")).toContainText("Nothing is sent");
+    await expect(form.getByRole("status")).toContainText("Just a preview");
+    await expect(form.getByRole("status")).toContainText("nothing is sent here");
     await expect(form.getByText("We've sent you an email")).toHaveCount(0);
     expect(posts).toEqual([]);
   });

@@ -88,7 +88,7 @@ test("the newsletter on an example says it is one, and sends nothing", async ({ 
   await form.locator('button[type="submit"]').click();
   const status = page.locator("[data-newsletter-example]");
   await expect(status).toHaveAttribute("role", "status");
-  await expect(status).toContainText("Nur ein Beispiel");
+  await expect(status).toContainText("Nur eine Vorschau");
   await expect(status).toContainText("nichts gesendet");
   await expect(page.getByText(/E-Mail geschickt|Fast geschafft/)).toHaveCount(0);
   expect(sent).toEqual([]);

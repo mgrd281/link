@@ -479,8 +479,8 @@
       "readLess": "Weniger anzeigen"
     },
     "newsletter": {
-      "exampleTitle": "Nur ein Beispiel",
-      "exampleBody": "Auf dieser Beispielseite wird nichts gesendet. Deine E-Mail-Adresse wurde nicht gespeichert."
+      "exampleTitle": "Nur eine Vorschau",
+      "exampleBody": "Newsletter-Anmeldungen gibt es noch nicht: Hier wird nichts gesendet, und deine E-Mail-Adresse wurde nicht gespeichert."
     }
   },
   "directions": {
@@ -4104,7 +4104,7 @@
     "previewGlide": "Die Seite scrollt langsam von selbst. Jede Taste oder Berührung hält sie an.",
     "previewHint": "Mit den Pfeiltasten blätterst du zur nächsten Vorlage.",
     "notFoundBack": "Zurück zur Seite",
-    "notFoundBackTo": "Zurück zu {name}"
+    "notFoundBackTo": "Zurück zu <bdi>{name}</bdi>"
   },
   "search": {
     "open": "Personen suchen",

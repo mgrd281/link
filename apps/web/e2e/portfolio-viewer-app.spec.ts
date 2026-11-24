@@ -139,6 +139,46 @@ test.describe("picture viewer", () => {
     await expect(link).toBeFocused();
   });
 
+  test("without scrollend (WebKit before Safari 26), a press after a swipe starts from the picture on screen", async ({ page }, testInfo) => {
+    const touch = testInfo.project.name === "mobile";
+    // The engine as iOS browsers had it: no `onscrollend`, no `scrollend` event.
+    await page.addInitScript(() => {
+      for (const proto of [Window.prototype, Document.prototype, Element.prototype, HTMLElement.prototype]) {
+        delete (proto as unknown as Record<string, unknown>).onscrollend;
+      }
+      const add = EventTarget.prototype.addEventListener;
+      EventTarget.prototype.addEventListener = function (this: EventTarget, type: string, ...rest: unknown[]) {
+        if (type === "scrollend") return;
+        (add as (this: EventTarget, ...args: unknown[]) => void).call(this, type, ...rest);
+      };
+    });
+    await load(page, HAFENLICHT);
+    await viewerReady(page);
+    expect(await page.evaluate(() => "onscrollend" in window)).toBe(false);
+    const link = page.locator("a[data-viewer]").nth(2);
+    await link.scrollIntoViewIfNeeded();
+    await press(link, touch);
+    await expect(counter(page)).toHaveText("3 / 11");
+    const track = viewer(page).locator("[data-viewer-track]");
+
+    await swipe(page, touch, 1);
+    await expect(counter(page)).toHaveText("4 / 11");
+    await settled(track);
+    await press(viewer(page).getByRole("button", { name: "Nächstes Bild" }), touch);
+    await expect(counter(page)).toHaveText("5 / 11");
+    await settled(track);
+    await swipe(page, touch, 1);
+    await expect(counter(page)).toHaveText("6 / 11");
+    await settled(track);
+    await press(viewer(page).getByRole("button", { name: "Vorheriges Bild" }), touch);
+    await expect(counter(page)).toHaveText("5 / 11");
+    await settled(track);
+    if (!touch) {
+      await page.keyboard.press("ArrowRight");
+      await expect(counter(page)).toHaveText("6 / 11");
+    }
+  });
+
   test("on a laptop the keyboard does it all, and focus stays in the viewer", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === "mobile", "Keyboard and mouse: the laptop project.");
     await load(page, HAFENLICHT);
@@ -397,6 +437,7 @@ test.describe("addresses of example pages", () => {
   for (const [path, label, home] of [
     ["/de/p/ronja-feldkamp/gibt-es-nicht", "Zurück zu Ronja Feldkamp", "/de/p/ronja-feldkamp"],
     ["/en/p/tobin-achterberg/no-such-project", "Back to Tobin Achterberg", "/en/p/tobin-achterberg"],
+    ["/ar/p/tobin-achterberg/no-such-project", "العودة إلى Tobin Achterberg", "/en/p/tobin-achterberg"],
   ] as const) {
     test(`a missing project names whose page leads back (${path})`, async ({ page }) => {
       const response = await page.goto(path);
@@ -404,6 +445,8 @@ test.describe("addresses of example pages", () => {
       const back = page.locator("[data-project-back]");
       await expect(back).toHaveText(label);
       await expect(back).toHaveAttribute("href", home);
+      // The name sits in its own <bdi>: a Latin name in Arabic words keeps its direction.
+      await expect(back.locator("bdi")).toHaveText(label.includes("Ronja") ? "Ronja Feldkamp" : "Tobin Achterberg");
       const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
       expect(results.violations.map((violation) => violation.id)).toEqual([]);
     });
