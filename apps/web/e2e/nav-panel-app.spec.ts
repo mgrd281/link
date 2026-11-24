@@ -331,6 +331,6 @@ test("phones reach Invite from Settings, and back says Settings", async ({ page,
   await page.waitForURL(/\/en\/app\/invite$/);
   await expect(heading(page)).toHaveText("Invite friends");
   await expect(back(page, "Settings")).toBeVisible();
-  // The tab it was opened from stays marked under the pushed screen.
+  // The tab it was opened from is remembered (data-origin) but not marked.
   await expect(page.locator("[data-tabbar] a[data-origin]")).toHaveCount(1);
 });

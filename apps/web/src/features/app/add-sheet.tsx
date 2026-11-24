@@ -177,10 +177,8 @@ export function AddSheet() {
     }
     // A new portfolio section starts with the kind's title and, for quotes, one quote to fill in.
     const blank = blankBlock(type, { artist: doc.profile.displayName, newsletter: tFields("newsletterDefault") });
-    const started = startedBlock(blank, kind, (key) => tPortfolio(key as "sentence"));
-    // A new show starts without a date, like one from a ticket link: a day filled in for the owner
-    // could go on the page unchecked.
-    create(started.type === "events" ? { ...started, items: started.items.map((item) => ({ ...item, date: "" })) } : started);
+    // A new show starts without a date (blankBlock), like one from a ticket link.
+    create(startedBlock(blank, kind, (key) => tPortfolio(key as "sentence")));
   };
 
   const pickPreset = (preset: AddPreset) => create(presetBlock(preset, { clients: tPortfolio(titleKeys(kind).clients) }));

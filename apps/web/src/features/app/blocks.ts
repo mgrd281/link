@@ -10,9 +10,6 @@ export const newBlockId = (type: string) => `${type}-${Date.now().toString(36)}-
 
 const noImage = { src: NO_IMAGE, alt: "" };
 
-/** In two weeks, as YYYY-MM-DD (a sensible first show date). */
-const soon = () => new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
-
 /** Every type the Add sheet offers, most used first. */
 export const ADDABLE: BlockType[] = [
   "link",
@@ -140,7 +137,8 @@ export function blankBlock(type: BlockType, defaults: { artist: string; newslett
     case "music":
       return { ...base, type, title: "", artist: defaults.artist, kind: "single", cover: noImage, links: [{ platform: "spotify", url: "" }] };
     case "events":
-      return { ...base, type, items: [{ date: soon(), city: "", venue: "", url: "", status: "onsale" }] };
+      // No date filled in for the owner: a made-up day could go on the page unchecked (the form asks).
+      return { ...base, type, items: [{ date: "", city: "", venue: "", url: "", status: "onsale" }] };
     case "product":
       return { ...base, type, title: "", price: 0, currency: "EUR", url: "", image: noImage };
     case "newsletter":

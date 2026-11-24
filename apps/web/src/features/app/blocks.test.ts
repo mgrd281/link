@@ -10,6 +10,11 @@ const defaults = { artist: "Mila Aurel", newsletter: "Get my newsletter" };
 const labels = { video: "Video", music: "Music", event: "Events" };
 
 describe("blank blocks", () => {
+  it("start a show without a date: no day is made up for the owner", () => {
+    const block = blankBlock("events", defaults);
+    expect(block.type === "events" ? block.items.map((item) => item.date) : null).toEqual([""]);
+  });
+
   it("exist for every addable type and need the creator's input before they are valid", () => {
     for (const type of ADDABLE) {
       const block = blankBlock(type, defaults);

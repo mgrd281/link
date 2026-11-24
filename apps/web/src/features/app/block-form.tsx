@@ -343,7 +343,8 @@ export function BlockForm({ block, onChange: handOn, errors, creating = false }:
           <Repeater<BlockOf<"events">["items"][number]>
             items={block.items}
             onItems={(items) => set(block, { items })}
-            make={() => ({ date: new Date().toISOString().slice(0, 10), city: "", venue: "", url: "", status: "onsale" as const })}
+            // A further show starts without a date too: the form asks for it before it is shown.
+            make={() => ({ date: "", city: "", venue: "", url: "", status: "onsale" as const })}
             min={1}
             max={50}
             itemLabel={(item, index) => [item.name, item.city].find((text) => text?.trim()) ?? t("showN", { n: index + 1 })}
