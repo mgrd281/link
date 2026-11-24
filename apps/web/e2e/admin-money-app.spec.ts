@@ -132,6 +132,8 @@ test.describe("team money through Stripe @real", () => {
     await expect(row.getByText("Bezahlt", { exact: true })).toBeVisible();
     expect((await service().from("invoices").select("status").eq("id", pro.invoice).single()).data?.status).toBe("paid");
     expect(await readCapturedMail({ to: owner.email, tag: "refund-issued" })).toHaveLength(0);
+    // Nor does the activity log: a refusal is no refund.
+    expect((await service().from("audit_log").select("id").eq("target_id", owner.id).eq("action", "customer.refund")).data).toEqual([]);
 
     // The second try goes through: refunded at Stripe with the invoice's own key, on record, mailed.
     await row.getByRole("button", { name: "Erstatten" }).click();
@@ -147,12 +149,9 @@ test.describe("team money through Stripe @real", () => {
     expect((await service().from("entitlements").select("status").eq("stripe_subscription_id", pro.subscription).single()).data?.status).toBe("active");
     await expect.poll(async () => (await readCapturedMail({ to: owner.email, tag: "refund-issued" })).length).toBe(1);
     expect((await readCapturedMail({ to: owner.email, tag: "refund-issued" }))[0]?.text).toContain("8,00");
-    // Who decided it is in the activity log.
-    const { data: log } = await service().from("audit_log").select("actor, action").eq("target_id", owner.id).eq("action", "customer.refund");
-    expect(log).toEqual([
-      { actor: admin.email, action: "customer.refund" },
-      { actor: admin.email, action: "customer.refund" },
-    ]);
+    // The activity log says it once, with who did it: one refund, one entry.
+    const { data: log } = await service().from("audit_log").select("actor, action, details").eq("target_id", owner.id).eq("action", "customer.refund");
+    expect(log).toEqual([{ actor: admin.email, action: "customer.refund", details: { invoice: pro.invoice, amountCents: 800 } }]);
   });
 
   test("cancelling sets cancel_at_period_end at Stripe and on record, with the e-mail; taking it back clears it @real", async ({ page }) => {
@@ -187,6 +186,54 @@ test.describe("team money through Stripe @real", () => {
     expect((await service().from("entitlements").select("cancel_at_period_end").eq("stripe_subscription_id", pro.subscription).single()).data?.cancel_at_period_end).toBe(false);
     const actions = (await service().from("audit_log").select("action").eq("target_id", owner.id).order("id")).data?.map((entry) => entry.action);
     expect(actions).toEqual(["customer.cancel", "customer.resume"]);
+  });
+
+  test("the console never takes back a customer's own cancellation; that is decided under contracts @real", async ({ page }) => {
+    test.setTimeout(120_000);
+    const owner = await customer("money-own", "Ina Kündigt Selbst");
+    const pro = await stripePro(owner);
+    const db = service();
+    // The customer cancelled through /kuendigen: Stripe ends Pro with the period, the cancellation is scheduled.
+    expect((await db.rpc("upsert_pro_subscription", { account: owner.id, customer: "cus_e2e", subscription: pro.subscription, next: "active", period_end: pro.periodEnd.toISOString(), cancel_at_end: true })).error).toBeNull();
+    const entitlement = (await db.from("entitlements").select("id").eq("stripe_subscription_id", pro.subscription).single()).data;
+    expect(
+      (
+        await db.from("cancellations").insert({
+          kind: "ordinary",
+          name: "Ina Kündigt Selbst",
+          account_email: owner.email,
+          contract: "pro-monthly",
+          confirmation_email: owner.email,
+          profile_id: owner.id,
+          entitlement_id: entitlement?.id ?? null,
+          matched: true,
+          decision: "scheduled",
+          effective_at: pro.periodEnd.toISOString(),
+        })
+      ).error,
+    ).toBeNull();
+    const admin = await teamMember("money-own-admin", "admin");
+
+    await signIn(page, admin.email, `/de/admin/customers/${owner.id}`);
+    await page.getByRole("radio", { name: "Abo" }).click();
+    await expect(page.locator("[data-ends-at]")).toBeVisible();
+    // The console does not offer it ...
+    const actions = page.getByRole("button", { name: "Aktionen" });
+    if ((await actions.count()) > 0) {
+      await actions.click();
+      await expect(page.getByRole("menuitem", { name: "Kündigung zurücknehmen" })).toHaveCount(0);
+      await page.keyboard.press("Escape");
+    }
+    // ... and the route refuses it, before Stripe is asked.
+    const asAdmin = await clientAs(admin.email);
+    const token = (await asAdmin.auth.getSession()).data.session?.access_token ?? "";
+    expect(token).not.toBe("");
+    const answer = await page.request.post(`/api/admin/customers/${owner.id}/billing/resume`, { headers: { Authorization: `Bearer ${token}` }, data: {} });
+    expect(answer.status()).toBe(409);
+    expect(await answer.json()).toEqual({ ok: false, error: "customerCancelled" });
+    expect(await updatesOf(pro.subscription)).toHaveLength(0);
+    expect((await db.from("entitlements").select("cancel_at_period_end").eq("stripe_subscription_id", pro.subscription).single()).data?.cancel_at_period_end).toBe(true);
+    expect((await db.from("audit_log").select("id").eq("target_id", owner.id).eq("action", "customer.resume")).data).toEqual([]);
   });
 
   test("the Subscription tab names the source; plan and trial by hand only without Stripe @real", async ({ page }) => {

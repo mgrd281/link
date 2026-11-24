@@ -55,12 +55,18 @@ without name, e-mail, city and notes).
 ## Money moves only through Stripe
 
 - Never write "refunded", "canceled" or a paid plan into the database from the browser. A money action is a route:
-  1. the decision as the member (`admin_pro_refund_target`, `admin_pro_subscription_target`, `admin_refund_order`):
-     permission, locks (a withdrawal waits → `linkyo:locked`), the activity log;
+  1. the check as the member (`admin_pro_refund_target`, `admin_pro_subscription_target`, `admin_refund_order`):
+     permission and locks (a withdrawal waits → `linkyo:locked`; a customer's own cancellation from /kuendigen →
+     `linkyo:customerCancelled`: the console never takes that back, it is resumed under withdrawals and
+     cancellations, where the cancellation is marked `resumed`);
   2. Stripe through `getPayments()` (only `stripe-payments.ts` talks to Stripe), with an idempotency key per decision;
-  3. the record as the server (`record_refund`, `upsert_pro_subscription`), retried three times; failure → 500, the
-     same click is sent again;
-  4. the e-mail to the account's own address (`refund-issued`, `cancellation-confirmation`); report `mailed`.
+  3. the record as the server (`record_refund`, `upsert_pro_subscription`), retried three times; failure → 500
+     `notRecorded`, the same click is sent again;
+  4. the activity log as the member (`admin_pro_money_done`, `logMoneyDone()`), which writes only what the records
+     show, once per invoice;
+  5. the e-mail to the account's own address (`refund-issued`, `cancellation-confirmation`); report `mailed`.
+- Only `notRecorded` may say "Stripe did it". Any other failure (an unknown database error, an HTML 502, a missing
+  server key) is `server` or `notConfigured`: "check Stripe before sending it again", never "it happened".
 - The console says it happened only after the route answers ok (`runBilling` in the customer screen) and names every
   error (`admin.customer.billingErrors.*`).
 - `billingActions()` decides what is offered: a Stripe subscription → Stripe actions only (none while
@@ -76,7 +82,8 @@ without name, e-mail, city and notes).
   `ActivityEvent["action"]` in `types.ts`, an icon in `activity-screen.tsx` (`ICONS`), a sentence
   `admin.activity.actions.<action_with_underscore>` and, for customer actions, `admin.customer.historyLine.*`, in de,
   en and ar. An unknown action renders as its raw name (never a crash), but ship the sentence with it.
-- Who decided a money action is logged **before** Stripe is asked.
+- A money action is logged **after** Stripe did it and it is on record, never before: the log says what happened.
+  (The orders refund logs `order.refund`, "hat eine Erstattung angewiesen": a decision, worded as one.)
 
 ## Exports
 

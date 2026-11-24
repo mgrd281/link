@@ -18,7 +18,7 @@ import { count, date, money, percent } from "./format";
 
 type Filter = "all" | SubscriptionStatus;
 
-/** Revenue and every paid plan: what comes in, what's at risk, who is about to convert. */
+/** Revenue and every Pro plan (paid through Stripe or given by the team): what comes in, what's at risk. */
 export function SubscriptionsScreen() {
   const t = useTranslations("admin.subscriptions");
   const tc = useTranslations("admin.customers");

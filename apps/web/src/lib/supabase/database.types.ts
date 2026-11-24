@@ -1382,6 +1382,7 @@ export type Database = {
       admin_order: { Args: { target: string }; Returns: Json };
       admin_order_refund_target: { Args: { target: string }; Returns: Json };
       admin_orders: { Args: { scope?: string }; Returns: Json };
+      admin_pro_money_done: { Args: { action: string; customer: string; ref: string }; Returns: boolean };
       admin_pro_refund_target: { Args: { customer: string; invoice: string }; Returns: Json };
       admin_pro_subscription_target: { Args: { action: string; customer: string }; Returns: Json };
       admin_referral_queue: { Args: Record<PropertyKey, never>; Returns: Json };

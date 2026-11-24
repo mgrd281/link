@@ -1,9 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
+import ar from "@/messages/ar.json";
+import de from "@/messages/de.json";
+import en from "@/messages/en.json";
+
 import {
   billingActions,
   changeSubscription,
   invoiceRefundKey,
+  logMoneyDone,
   missingFunction,
   NotRecorded,
   readAnswer,
@@ -48,6 +53,9 @@ describe("what the console offers for money", () => {
     const ending: Customer = { ...stripe, subscription: { ...stripe.subscription, cancelAtPeriodEnd: true, endsAt: "2026-12-01T10:00:00.000Z" } };
     expect(billingActions(ending, live(true))).toMatchObject({ cancel: null, resume: "stripe" });
     expect(scheduledEnd(ending)).toBe("2026-12-01T10:00:00.000Z");
+    // The customer cancelled through /kuendigen: that is taken back under contracts, with their request.
+    const ownCancellation: Customer = { ...ending, subscription: { ...ending.subscription, cancelledByCustomer: true } };
+    expect(billingActions(ownCancellation, live(true))).toMatchObject({ cancel: null, resume: null });
     expect(scheduledEnd(stripe)).toBeNull();
   });
 
@@ -84,6 +92,9 @@ describe("the browser asks our server", () => {
     expect(readAnswer(false, { ok: true })).toEqual({ ok: false, error: "server" });
     expect(readAnswer(true, null)).toEqual({ ok: false, error: "server" });
     expect(readAnswer(false, { error: "made-up" })).toEqual({ ok: false, error: "server" });
+    // Only the route's own word says Stripe already did it; an HTML 502 or an empty body does not.
+    expect(readAnswer(false, { ok: false, error: "notRecorded" })).toEqual({ ok: false, error: "notRecorded" });
+    expect(readAnswer(false, "<html>Bad gateway</html>")).toEqual({ ok: false, error: "server" });
     expect(await sendBilling(base.id, "cancel", {}, { token: () => Promise.resolve(null), send: vi.fn() })).toEqual({ ok: false, error: "unauthorized" });
     expect(await sendBilling(base.id, "cancel", {}, { token: () => Promise.resolve("tok"), send: () => Promise.reject(new Error("offline")) })).toEqual({ ok: false, error: "network" });
   });
@@ -97,6 +108,8 @@ describe("the server's side", () => {
     expect(refusal({ message: "linkyo:invalidAction" })).toEqual({ status: 400, error: "invalid" });
     expect(refusal({ code: "PGRST202", message: "Could not find the function public.admin_pro_refund_target" })).toEqual({ status: 409, error: "notAvailable" });
     expect(refusal({ code: "XX000", message: "boom" })).toEqual({ status: 500, error: "server" });
+    expect(refusal({ code: "57014", message: "canceling statement due to statement timeout" })).toEqual({ status: 500, error: "server" });
+    expect(refusal({ code: "P0001", message: "linkyo:customerCancelled" })).toEqual({ status: 409, error: "customerCancelled" });
     expect(missingFunction({ code: "42883" })).toBe(true);
     expect(missingFunction({ code: "42501", message: "linkyo:forbidden" })).toBe(false);
   });
@@ -145,5 +158,47 @@ describe("the server's side", () => {
       changeSubscription("cancel", { subscription: "sub_1", stripeCustomer: null }, { cancelAtPeriodEnd: () => Promise.resolve(odd), resume: () => Promise.resolve(odd), record }),
     ).rejects.toBeInstanceOf(NotRecorded);
     expect(record).not.toHaveBeenCalled();
+  });
+});
+
+describe("what the console says", () => {
+  const codes = ["paymentsOff", "unauthorized", "forbidden", "notFound", "locked", "noPayment", "notAvailable", "notConfigured", "stripe", "notRecorded", "customerCancelled", "server", "invalid", "network"];
+
+  it("has a sentence for every answer, in every language", () => {
+    for (const messages of [de, en, ar]) {
+      const errors = messages.admin.customer.billingErrors as Record<string, string>;
+      expect(Object.keys(errors).sort()).toEqual([...codes].sort());
+    }
+    for (const code of codes) expect(readAnswer(false, { ok: false, error: code })).toEqual({ ok: false, error: code });
+  });
+
+  it("says Stripe did it only for an action on record at Stripe but not here", () => {
+    expect(de.admin.customer.billingErrors.notRecorded).toMatch(/Stripe hat es ausgeführt/);
+    expect(de.admin.customer.billingErrors.server).not.toMatch(/ausgeführt/);
+    expect(en.admin.customer.billingErrors.server).not.toMatch(/Stripe did it/);
+  });
+
+  it("does not call the subscription list 'paid': it also holds Pro the team gives free of charge", () => {
+    expect(de.admin.subscriptions.list).not.toMatch(/bezahlt/i);
+    expect(de.admin.subscriptions.lead).not.toMatch(/bezahlt/i);
+    expect(en.admin.subscriptions.list).not.toMatch(/paid/i);
+    expect(en.admin.subscriptions.lead).not.toMatch(/paid/i);
+    expect(ar.admin.subscriptions.list).not.toMatch(/المدفوعة/);
+  });
+});
+
+describe("the activity log after Stripe", () => {
+  it("asks the database, as the member, to log what is on record", async () => {
+    const rpc = vi.fn(() => Promise.resolve({ error: null }));
+    await logMoneyDone({ rpc }, base.id, "refund", "in_1");
+    expect(rpc).toHaveBeenCalledWith("admin_pro_money_done", { customer: base.id, action: "refund", ref: "in_1" });
+  });
+
+  it("never turns money that moved into an error", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    await expect(logMoneyDone({ rpc: () => Promise.resolve({ error: { message: "boom" } }) }, base.id, "cancel", "sub_1")).resolves.toBeUndefined();
+    await expect(logMoneyDone({ rpc: () => Promise.reject(new Error("offline")) }, base.id, "resume", "sub_1")).resolves.toBeUndefined();
+    expect(quiet).toHaveBeenCalledTimes(2);
+    quiet.mockRestore();
   });
 });

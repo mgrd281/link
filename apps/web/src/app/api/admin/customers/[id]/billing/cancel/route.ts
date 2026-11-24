@@ -1,4 +1,4 @@
-import { changeSubscription, NotRecorded, refusal } from "@/features/admin/billing";
+import { changeSubscription, logMoneyDone, NotRecorded, refusal } from "@/features/admin/billing";
 import { getEmailSender } from "@/features/email/send";
 import { cancellationConfirmation } from "@/features/email/templates/cancellation-confirmation";
 import type { EmailLocale } from "@/features/email/templates/render";
@@ -16,11 +16,12 @@ const LOCALES: readonly EmailLocale[] = ["de", "en", "ar"];
 
 /**
  * The team cancels a customer's Stripe Pro at the end of the paid period:
- * `admin_pro_subscription_target` as the team member (SQL checks `billing.manage` and logs it),
+ * `admin_pro_subscription_target` as the team member (SQL checks `billing.manage`),
  * `cancel_at_period_end` at Stripe, Stripe's answer recorded with `upsert_pro_subscription` (as the
- * webhook writes it), then the cancellation confirmation with the end date to the account's own
- * address. Pro the team gave by hand has no Stripe subscription (404 `notFound`): the console
- * changes that one without money. Without payments on this deployment: 409 `paymentsOff`.
+ * webhook writes it), the activity log as the member, then the cancellation confirmation with the
+ * end date to the account's own address. Pro the team gave by hand has no Stripe subscription (404
+ * `notFound`): the console changes that one without money. Without payments on this deployment: 409
+ * `paymentsOff`.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!paymentsEnabled) {
@@ -40,7 +41,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const subscription = typeof found.subscription === "string" ? found.subscription : null;
   if (!subscription) return json({ ok: false, error: "notFound" }, 404);
 
-  const db = serviceSupabase();
+  let db: ReturnType<typeof serviceSupabase>;
+  try {
+    db = serviceSupabase();
+  } catch {
+    // No server key for the database: nothing was sent to Stripe.
+    return json({ ok: false, error: "notConfigured" }, 503);
+  }
   let endsAt: string | null;
   try {
     ({ endsAt } = await changeSubscription(
@@ -68,11 +75,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (error instanceof NotRecorded) {
       // Stripe ends it at the period end; the next webhook or a second click records it.
       console.error(JSON.stringify({ evt: "subscription_cancel_unrecorded" }));
-      return json({ ok: false, error: "server" }, 500);
+      return json({ ok: false, error: "notRecorded" }, 500);
     }
     console.error(JSON.stringify({ evt: "subscription_cancel_failed", error: error instanceof Error ? error.name : "unknown" }));
     return json({ ok: false, error: "stripe" }, 502);
   }
+  await logMoneyDone(signedIn.db, id, "cancel", subscription);
 
   let mailed = false;
   try {

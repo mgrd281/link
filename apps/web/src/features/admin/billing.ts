@@ -22,18 +22,37 @@ export type BillingError =
   | "noPayment"
   /** The database does not have the money functions yet. */
   | "notAvailable"
-  /** No Stripe key on this server. */
+  /** This server is not set up for it (no Stripe key, or no server key for the database). Nothing changed. */
   | "notConfigured"
   /** Stripe refused or could not be reached; nothing changed. */
   | "stripe"
   /** Stripe did it, but our record failed: send the same action again (Stripe will not do it twice). */
+  | "notRecorded"
+  /** The customer cancelled Pro themselves (/kuendigen): that is taken back under contracts, with their request. */
+  | "customerCancelled"
+  /** Something went wrong and it is not known whether Stripe was asked: check Stripe before sending it again. */
   | "server"
   | "invalid"
   | "network";
 
 export type BillingAnswer = { ok: true; mailed: boolean; endsAt?: string | null } | { ok: false; error: BillingError };
 
-const ERRORS: readonly BillingError[] = ["paymentsOff", "unauthorized", "forbidden", "notFound", "locked", "noPayment", "notAvailable", "notConfigured", "stripe", "server", "invalid", "network"];
+const ERRORS: readonly BillingError[] = [
+  "paymentsOff",
+  "unauthorized",
+  "forbidden",
+  "notFound",
+  "locked",
+  "noPayment",
+  "notAvailable",
+  "notConfigured",
+  "stripe",
+  "notRecorded",
+  "customerCancelled",
+  "server",
+  "invalid",
+  "network",
+];
 
 export interface BillingContext {
   /** Real accounts (Supabase); false in the demo. */
@@ -82,7 +101,8 @@ export function billingActions(customer: Customer, context: BillingContext): Bil
       manualPlan: false,
       trial: false,
       cancel: context.payments && running && !ending ? "stripe" : null,
-      resume: context.payments && running && ending ? "stripe" : null,
+      // A customer's own cancellation is taken back under contracts, never here (the database refuses it too).
+      resume: context.payments && running && ending && sub.cancelledByCustomer !== true ? "stripe" : null,
       refund: context.payments ? "stripe" : null,
       waitingForPayments: !context.payments,
     };
@@ -109,7 +129,10 @@ export interface BillingDeps {
   send: (path: string, init: RequestInit) => Promise<{ ok: boolean; json(): Promise<unknown> }>;
 }
 
-/** Reads a route's answer; anything unexpected is a server error, never a success. */
+/**
+ * Reads a route's answer; anything unexpected (an HTML error page, an empty body, an unknown code) is
+ * the generic "server" error, never a success and never "Stripe did it".
+ */
 export function readAnswer(ok: boolean, body: unknown): BillingAnswer {
   const value = (body ?? {}) as Record<string, unknown>;
   if (ok && value.ok === true) {
@@ -154,8 +177,28 @@ export function refusal(error: { code?: string | undefined; message?: string | u
   if (message.includes("linkyo:forbidden")) return { status: 403, error: "forbidden" };
   if (message.includes("linkyo:notFound")) return { status: 404, error: "notFound" };
   if (message.includes("linkyo:locked")) return { status: 409, error: "locked" };
+  if (message.includes("linkyo:customerCancelled")) return { status: 409, error: "customerCancelled" };
   if (message.includes("linkyo:invalid")) return { status: 400, error: "invalid" };
   return { status: 500, error: "server" };
+}
+
+/** A database client as the routes hold it (structural: supabase-js `rpc`). */
+interface RpcClient {
+  rpc(fn: "admin_pro_money_done", args: { customer: string; action: BillingAction; ref: string }): PromiseLike<{ error: unknown }>;
+}
+
+/**
+ * Writes what Stripe did into the activity log, as the member, once it is on record
+ * (`admin_pro_money_done` checks the records itself). The money has moved by then, so a failure here
+ * is reported in the server log and never turns the answer into an error.
+ */
+export async function logMoneyDone(db: RpcClient, customer: string, action: BillingAction, ref: string): Promise<void> {
+  try {
+    const { error } = await db.rpc("admin_pro_money_done", { customer, action, ref });
+    if (error) console.error(JSON.stringify({ evt: "money_log_failed", action }));
+  } catch {
+    console.error(JSON.stringify({ evt: "money_log_failed", action }));
+  }
 }
 
 /** Stripe's subscription status as the entitlement status we record; null for states we leave alone. */

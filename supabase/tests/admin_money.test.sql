@@ -99,10 +99,12 @@ select throws_ok($$ select public.admin_pro_refund_target('e1000000-0000-4000-80
   'P0001', 'linkyo:notFound', 'only the customer''s own invoice');
 select throws_ok($$ select public.admin_pro_refund_target('e1000000-0000-4000-8000-000000000005', 'in_cleo_0') $$,
   'P0001', 'linkyo:locked', 'a failed invoice has nothing to refund');
+select is(public.admin_pro_money_done('e1000000-0000-4000-8000-000000000005', 'refund', 'in_cleo_1'), false,
+  'nothing is logged for an invoice Stripe has not refunded');
 reset role;
-select is((select actor || ' ' || action || ' ' || target || ' ' || (details ->> 'invoice') from public.audit_log
-  where action = 'customer.refund' order by id desc limit 1), 'ada@example.com customer.refund cleo-m in_cleo_1',
-  'the decision is logged with its member before Stripe is asked');
+select is_empty($$ select 1 from public.audit_log where action = 'customer.refund'
+  and target_id = 'e1000000-0000-4000-8000-000000000005' $$,
+  'asking Stripe is not logged as a refund (Stripe may still refuse)');
 select is((select status from public.invoices where id = 'in_cleo_1'), 'paid', 'and nothing says "refunded" yet');
 -- While a withdrawal of the subscription waits, its refund is decided there, not here.
 select public.record_invoice('in_cleo_2', 'e1000000-0000-4000-8000-000000000005', 'sub_cleo', 800, 'paid', 'pi_cleo_2');
@@ -122,10 +124,26 @@ select is((select status from public.invoices where id = 'in_cleo_1'), 'refunded
 select is((select status::text from public.entitlements where stripe_subscription_id = 'sub_cleo'), 'active',
   'and Pro goes on (only a withdrawal ends the contract)');
 set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"e1000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
+select throws_ok($$ select public.admin_pro_money_done('e1000000-0000-4000-8000-000000000005', 'refund', 'in_cleo_1') $$,
+  '42501', 'linkyo:forbidden', 'an editor cannot write a refund into the log');
 select set_config('request.jwt.claims', '{"sub":"e1000000-0000-4000-8000-000000000002","role":"authenticated"}', true);
+select is(public.admin_pro_money_done('e1000000-0000-4000-8000-000000000006', 'refund', 'in_cleo_1'), false,
+  'only the customer''s own invoice is logged');
+select is(public.admin_pro_money_done('e1000000-0000-4000-8000-000000000005', 'refund', 'in_cleo_1'), true,
+  'once it is on record, the refund is logged as the member');
+select is(public.admin_pro_money_done('e1000000-0000-4000-8000-000000000005', 'refund', 'in_cleo_1'), false,
+  'a second answer for the same invoice adds no second entry');
 select throws_ok($$ select public.admin_pro_refund_target('e1000000-0000-4000-8000-000000000005', 'in_cleo_1') $$,
   'P0001', 'linkyo:locked', 'a refunded invoice is not refunded twice');
+select throws_ok($$ select public.admin_pro_money_done('e1000000-0000-4000-8000-000000000005', 'delete', 'in_cleo_1') $$,
+  'P0001', 'linkyo:invalidAction', 'only refund, cancel and resume are logged this way');
 reset role;
+select results_eq(
+  $$ select actor || ' ' || target || ' ' || (details ->> 'invoice') from public.audit_log
+     where action = 'customer.refund' and target_id = 'e1000000-0000-4000-8000-000000000005' $$,
+  $$ values ('ada@example.com cleo-m in_cleo_1') $$,
+  'one refund, one entry, with its member');
 
 -- ── 4. Cancel and resume a Stripe subscription ──────────────────────────────────────────────
 set local role authenticated;
@@ -140,14 +158,50 @@ select throws_ok($$ select public.admin_pro_subscription_target('e1000000-0000-4
   'P0001', 'linkyo:notFound', 'Pro the team gave has no Stripe subscription');
 select throws_ok($$ select public.admin_pro_subscription_target('e1000000-0000-4000-8000-000000000005', 'refund') $$,
   'P0001', 'linkyo:invalidAction', 'only cancel and resume');
+select is(public.admin_pro_money_done('e1000000-0000-4000-8000-000000000005', 'cancel', 'sub_cleo'), false,
+  'a cancellation Stripe has not made is not logged');
 reset role;
-select is((select action || ' ' || target from public.audit_log where action like 'customer.%' order by id desc limit 1),
-  'customer.cancel cleo-m', 'the cancellation is logged');
+select is_empty($$ select 1 from public.audit_log where action = 'customer.cancel'
+  and target_id = 'e1000000-0000-4000-8000-000000000005' $$, 'nothing says "gekündigt" yet');
 -- Stripe set cancel_at_period_end: the route records the subscription as the server.
 select public.upsert_pro_subscription('e1000000-0000-4000-8000-000000000005', 'cus_cleo', 'sub_cleo', 'active',
   (select current_period_end from public.entitlements where stripe_subscription_id = 'sub_cleo'), true);
 select is((select cancel_at_period_end from public.entitlements where stripe_subscription_id = 'sub_cleo'), true,
   'the subscription ends with its period');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"e1000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select is(public.admin_pro_money_done('e1000000-0000-4000-8000-000000000005', 'cancel', 'sub_cleo'), true,
+  'now the cancellation is logged');
+select is(public.admin_pro_money_done('e1000000-0000-4000-8000-000000000005', 'resume', 'sub_cleo'), false,
+  'a resume that did not happen is not');
+select lives_ok($$ select public.admin_pro_subscription_target('e1000000-0000-4000-8000-000000000005', 'resume') $$,
+  'the team may take back its own cancellation');
+reset role;
+select is((select action || ' ' || target from public.audit_log where action like 'customer.%' order by id desc limit 1),
+  'customer.cancel cleo-m', 'the log says what Stripe did');
+-- The customer cancelled herself (/kuendigen, § 312k BGB): the console's resume must not undo it.
+insert into public.cancellations (kind, name, account_email, contract, confirmation_email, profile_id, entitlement_id, matched, decision)
+values ('ordinary', 'Cleo Brandt', 'cleo@example.com', 'pro-monthly', 'cleo@example.com', 'e1000000-0000-4000-8000-000000000005',
+  (select id from public.entitlements where stripe_subscription_id = 'sub_cleo'), true, null);
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"e1000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select throws_ok($$ select public.admin_pro_subscription_target('e1000000-0000-4000-8000-000000000005', 'resume') $$,
+  'P0001', 'linkyo:customerCancelled', 'an undecided customer cancellation is decided under contracts');
+select is((select (c -> 'subscription' ->> 'cancelledByCustomer')::boolean from jsonb_array_elements(public.admin_customers()) c
+  where c ->> 'username' = 'cleo-m'), true, 'the console knows the customer cancelled and offers no resume');
+reset role;
+update public.cancellations set decision = 'scheduled' where profile_id = 'e1000000-0000-4000-8000-000000000005';
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"e1000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select throws_ok($$ select public.admin_pro_subscription_target('e1000000-0000-4000-8000-000000000005', 'resume') $$,
+  'P0001', 'linkyo:customerCancelled', 'and a scheduled one is resumed there, never silently here');
+reset role;
+update public.cancellations set decision = 'resumed', handled_at = now() where profile_id = 'e1000000-0000-4000-8000-000000000005';
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"e1000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select lives_ok($$ select public.admin_pro_subscription_target('e1000000-0000-4000-8000-000000000005', 'resume') $$,
+  'once it is resumed there, nothing blocks the console');
+reset role;
 
 -- ── 5. Where Pro comes from ─────────────────────────────────────────────────────────────────
 set local role authenticated;
@@ -160,6 +214,8 @@ select is((select (c -> 'subscription' ->> 'cancelAtPeriodEnd')::boolean from se
   'with its end at the period end');
 select is((select (c -> 'subscription' ->> 'endsAt')::timestamptz from seen_by_viewer where c ->> 'username' = 'cleo-m'),
   (select current_period_end from public.entitlements where stripe_subscription_id = 'sub_cleo'), 'and the date');
+select is((select (c -> 'subscription' ->> 'cancelledByCustomer')::boolean from seen_by_viewer where c ->> 'username' = 'cleo-m'),
+  false, 'a cancellation the team made (or resumed under contracts) is not the customer''s');
 select is((select c -> 'subscription' ->> 'source' from seen_by_viewer where c ->> 'username' = 'tom-m'), 'team',
   'Pro by hand is the team''s');
 select is((select c -> 'subscription' ->> 'source' from seen_by_viewer where c ->> 'username' = 'fay-m'), null,

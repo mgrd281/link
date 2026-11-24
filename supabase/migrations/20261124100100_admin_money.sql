@@ -4,9 +4,12 @@
 --
 -- 1. Money moves only through Stripe. `admin_refund_invoice` (a refund that only wrote "refunded")
 --    is the server's alone now. The console's refund, cancel and resume go through server routes:
---    the member's decision is checked and logged here first (`admin_pro_refund_target`,
+--    the member's permission is checked here first (`admin_pro_refund_target`,
 --    `admin_pro_subscription_target`), then the route asks Stripe and records what Stripe did with
---    `record_refund` / `upsert_pro_subscription`, as the orders refund does.
+--    `record_refund` / `upsert_pro_subscription`, as the orders refund does, and only then logs it
+--    as the member (`admin_pro_money_done`, which writes only what the records show). The console's
+--    "resume" leaves a customer's own cancellation (/kuendigen) alone: that one is taken back under
+--    withdrawals and cancellations.
 -- 2. `orders.view`: the page-service queue and its orders, for every role (editors fulfil orders).
 --    The queue, one order, the order tables' policies and the invite program's team reads ask for it
 --    instead of `customers.view`.
@@ -14,16 +17,16 @@
 --    the console. Orders show the customer's address only to roles that may see customers; the
 --    browser cannot read `orders.customer_email` directly any more (column grants).
 -- 4. `customers.export` (owners and admins): the CSV export, logged as `customer.export`.
--- 5. `admin_customers()` says where Pro comes from (Stripe or the team) and whether a Stripe
---    subscription ends at its period end; roles with `analytics.view` but not `customers.view` get
+-- 5. `admin_customers()` says where Pro comes from (Stripe or the team), whether a Stripe
+--    subscription ends at its period end and whether the customer cancelled it themselves; roles with `analytics.view` but not `customers.view` get
 --    the rows without name, e-mail, city and notes (the numbers on Overview and Analytics).
 --
 -- Rollback (one line): re-run the definitions of admin_customers (team.sql), admin_customer_referrals and
 -- admin_referral_queue (referrals.sql), admin_orders and admin_order (billing.sql); alter the three policies
 -- back to has_permission('customers.view'); grant select on public.orders to authenticated; grant execute
 -- on admin_refund_invoice(text) to authenticated; insert ('editor','customers.view'); delete the role rows
--- for orders.view and customers.export; drop admin_pro_refund_target, admin_pro_subscription_target and
--- admin_customers_exported.
+-- for orders.view and customers.export; drop admin_pro_refund_target, admin_pro_subscription_target,
+-- admin_pro_money_done and admin_customers_exported.
 
 -- ── Roles ───────────────────────────────────────────────────────────────────────────────────
 -- Mirrors ROLE_PERMISSIONS in apps/web/src/features/admin/types.ts.
@@ -256,6 +259,12 @@ begin
             then stripe.cancel_at_period_end or stripe.cancel_at is not null end,
           'endsAt', case when billing and stripe.subscription is not null
             then coalesce(stripe.cancel_at, case when stripe.cancel_at_period_end then stripe.current_period_end end) end,
+          -- The customer cancelled through /kuendigen (open or scheduled): the console offers no "resume".
+          'cancelledByCustomer', case when billing and stripe.subscription is not null then exists (
+            select 1 from public.cancellations c
+            where c.entitlement_id = stripe.id
+              and (c.decision = 'scheduled' or (c.decision is null and c.handled_at is null))
+          ) end,
           'startedAt', case when billing then sub.started_at end,
           'renewsAt', case when billing then sub.renews_at end,
           'trialEndsAt', case when billing then sub.trial_ends_at end,
@@ -294,7 +303,7 @@ begin
       left join public.sites s on s.profile_id = p.id
       left join public.subscriptions sub on sub.profile_id = p.id
       left join lateral (
-        select e.stripe_subscription_id as subscription, e.cancel_at_period_end, e.cancel_at, e.current_period_end
+        select e.id, e.stripe_subscription_id as subscription, e.cancel_at_period_end, e.cancel_at, e.current_period_end
         from public.entitlements e
         where e.profile_id = p.id and e.source = 'stripe' and e.status in ('active', 'past_due')
         order by e.created_at desc limit 1
@@ -316,7 +325,8 @@ grant execute on function public.admin_refund_invoice(text) to service_role;
 
 /**
  * The team refunds a paid Pro invoice. Called as the member before the route asks Stripe: checks
- * `billing.manage`, writes who decided it into the activity log and answers what to refund. Refused
+ * `billing.manage` and answers what to refund (the log follows once Stripe refunded and it is on
+ * record: admin_pro_money_done). Refused
  * with linkyo:notFound (not this customer's invoice) or linkyo:locked (not paid: failed or already
  * refunded; or a withdrawal of this subscription waits: that refund is decided under withdrawals
  * and cancellations). The route records it as Stripe's webhook does ('goodwill'): Pro goes on,
@@ -342,11 +352,6 @@ begin
      )) then
     raise exception 'linkyo:locked' using errcode = 'P0001';
   end if;
-  if found_invoice.payment_intent is not null then
-    perform public.audit('customer.refund', admin_pro_refund_target.customer,
-      public.customer_label(admin_pro_refund_target.customer),
-      jsonb_build_object('invoice', found_invoice.id, 'amountCents', found_invoice.amount_cents));
-  end if;
   return jsonb_build_object(
     'paymentIntent', found_invoice.payment_intent,
     'amountCents', found_invoice.amount_cents,
@@ -357,9 +362,13 @@ $$;
 
 /**
  * The team ends a customer's Stripe Pro at the end of the paid period ('cancel') or takes that back
- * ('resume'). Called as the member before the route asks Stripe: checks `billing.manage`, logs it and
- * answers the subscription. linkyo:notFound without a running Stripe subscription (Pro the team
- * gave by hand is changed with admin_set_subscription; no money is involved there).
+ * ('resume'). Called as the member before the route asks Stripe: checks `billing.manage` and answers
+ * the subscription (the log follows once Stripe did it: admin_pro_money_done). linkyo:notFound
+ * without a running Stripe subscription (Pro the team gave by hand is changed with
+ * admin_set_subscription; no money is involved there). linkyo:customerCancelled for 'resume' while
+ * the customer's own cancellation (/kuendigen, § 312k BGB) is open or scheduled: taking that back
+ * needs the customer's request and is done under withdrawals and cancellations, where the
+ * cancellation is marked 'resumed'.
  */
 create function public.admin_pro_subscription_target(customer uuid, action text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -379,9 +388,13 @@ begin
   if found_entitlement.id is null then
     raise exception 'linkyo:notFound' using errcode = 'P0001';
   end if;
-  perform public.audit('customer.' || action, admin_pro_subscription_target.customer,
-    public.customer_label(admin_pro_subscription_target.customer),
-    jsonb_build_object('subscription', found_entitlement.stripe_subscription_id));
+  if action = 'resume' and exists (
+       select 1 from public.cancellations c
+       where c.entitlement_id = found_entitlement.id
+         and (c.decision = 'scheduled' or (c.decision is null and c.handled_at is null))
+     ) then
+    raise exception 'linkyo:customerCancelled' using errcode = 'P0001';
+  end if;
   return jsonb_build_object(
     'subscription', found_entitlement.stripe_subscription_id,
     'stripeCustomer', found_entitlement.stripe_customer_id,
@@ -389,6 +402,53 @@ begin
     'cancelAtPeriodEnd', found_entitlement.cancel_at_period_end,
     'locale', (select p.locale from public.profiles p where p.id = admin_pro_subscription_target.customer)
   );
+end;
+$$;
+
+/**
+ * Logs a money action of the team once Stripe did it and it is on record (the routes call it as the
+ * member after record_refund / upsert_pro_subscription). It writes only what the records show: a
+ * refunded invoice of this customer ('refund', `ref` = the invoice; logged once per invoice), or a
+ * Stripe Pro of this customer that now ends ('cancel') or goes on ('resume'; `ref` = the
+ * subscription). Answers whether it wrote an entry. The activity log never says money moved when
+ * Stripe refused, was not reached or the record is missing.
+ */
+create function public.admin_pro_money_done(customer uuid, action text, ref text) returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare
+  found_invoice public.invoices;
+  found_entitlement public.entitlements;
+begin
+  perform public.require_permission('billing.manage');
+  if action is null or action not in ('refund', 'cancel', 'resume') or ref is null then
+    raise exception 'linkyo:invalidAction' using errcode = 'P0001';
+  end if;
+  if action = 'refund' then
+    select * into found_invoice from public.invoices i
+    where i.id = admin_pro_money_done.ref and i.profile_id = admin_pro_money_done.customer;
+    if found_invoice.id is null or found_invoice.status <> 'refunded' or exists (
+         select 1 from public.audit_log l
+         where l.action = 'customer.refund' and l.target_id = admin_pro_money_done.customer
+           and l.details ->> 'invoice' = found_invoice.id
+       ) then
+      return false;
+    end if;
+    perform public.audit('customer.refund', admin_pro_money_done.customer,
+      public.customer_label(admin_pro_money_done.customer),
+      jsonb_build_object('invoice', found_invoice.id, 'amountCents', found_invoice.amount_cents));
+    return true;
+  end if;
+  select * into found_entitlement from public.entitlements e
+  where e.profile_id = admin_pro_money_done.customer and e.source = 'stripe'
+    and e.stripe_subscription_id = admin_pro_money_done.ref;
+  if found_entitlement.id is null
+     or (action = 'cancel') is distinct from (found_entitlement.cancel_at_period_end or found_entitlement.cancel_at is not null) then
+    return false;
+  end if;
+  perform public.audit('customer.' || action, admin_pro_money_done.customer,
+    public.customer_label(admin_pro_money_done.customer),
+    jsonb_build_object('subscription', found_entitlement.stripe_subscription_id));
+  return true;
 end;
 $$;
 
@@ -405,8 +465,8 @@ end;
 $$;
 
 revoke execute on function public.admin_pro_refund_target(uuid, text), public.admin_pro_subscription_target(uuid, text),
-  public.admin_customers_exported(integer)
+  public.admin_pro_money_done(uuid, text, text), public.admin_customers_exported(integer)
   from public, anon;
 grant execute on function public.admin_pro_refund_target(uuid, text), public.admin_pro_subscription_target(uuid, text),
-  public.admin_customers_exported(integer)
+  public.admin_pro_money_done(uuid, text, text), public.admin_customers_exported(integer)
   to authenticated;

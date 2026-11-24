@@ -18,13 +18,18 @@
 **Decision.**
 
 - **Money moves only through Stripe server routes.** `POST /api/admin/customers/<id>/billing/{refund,cancel,resume}`
-  follow the orders refund: the member's decision first, as that member (`admin_pro_refund_target`,
-  `admin_pro_subscription_target`: `billing.manage`, the activity log), then Stripe (a refund with one idempotency key
+  follow the orders refund: the member's permission first, as that member (`admin_pro_refund_target`,
+  `admin_pro_subscription_target`: `billing.manage` and the locks), then Stripe (a refund with one idempotency key
   per invoice; `cancel_at_period_end` set or cleared), then the record as the server (`record_refund` as Stripe's
-  webhook writes it, `upsert_pro_subscription`), then the customer's e-mail (`refund-issued`,
-  `cancellation-confirmation`). The console says "refunded" or "ends on …" only after that answer. A refusal by
-  Stripe changes nothing; a record that fails after Stripe acted answers 500 and the same click is sent again (Stripe
-  does not act twice).
+  webhook writes it, `upsert_pro_subscription`), then the activity log as the member (`admin_pro_money_done`, which
+  writes only what the records show and a refund once per invoice), then the customer's e-mail (`refund-issued`,
+  `cancellation-confirmation`). The console and the activity log say "refunded" or "gekündigt" only after that. A
+  refusal by Stripe changes and logs nothing; a record that fails after Stripe acted answers 500 `notRecorded` and
+  the same click is sent again (Stripe does not act twice). Only that answer tells the team Stripe already acted;
+  every other failure says "check Stripe before sending it again".
+- **The console's "resume" is for the team's own cancellations.** A cancellation the customer declared through
+  `/kuendigen` (open or scheduled) is refused with `linkyo:customerCancelled`: taking it back needs the customer's
+  request and happens under withdrawals and cancellations, which marks the cancellation `resumed`.
 - **`admin_refund_invoice` is the server's alone** (revoked from `authenticated`).
 - **A refund waits while a withdrawal of that subscription is open**: that refund is decided under withdrawals and
   cancellations, as for orders.

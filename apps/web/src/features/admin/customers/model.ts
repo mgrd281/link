@@ -48,6 +48,11 @@ export interface Subscription {
   cancelAtPeriodEnd?: boolean | null | undefined;
   /** When that Stripe subscription ends. */
   endsAt?: string | null | undefined;
+  /**
+   * The customer cancelled it themselves (/kuendigen, open or scheduled). Taking that back needs their
+   * request and is done under withdrawals and cancellations, so the console offers no "resume".
+   */
+  cancelledByCustomer?: boolean | null | undefined;
   startedAt?: string | undefined;
   renewsAt?: string | undefined;
   trialEndsAt?: string | undefined;
