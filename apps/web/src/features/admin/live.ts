@@ -6,6 +6,7 @@ import { browserSupabase } from "@/lib/supabase/browser";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { fromJson } from "@/lib/supabase/json";
 
+import { customerAccess, type CustomerAccess } from "./customers/access";
 import type { Customer } from "./customers/model";
 import type { BlockedIp } from "./customers/overrides";
 import { useAdminDb } from "./store";
@@ -29,6 +30,8 @@ export interface LiveCustomers {
   now: number;
   customers: Customer[];
   blockedIps: BlockedIp[];
+  /** Whether admin_customers() was called for this member, and how old the database is. */
+  access: CustomerAccess;
 }
 
 function liveStore<T>(initial: T, load: () => Promise<T>) {
@@ -85,8 +88,13 @@ const team = liveStore<LiveTeam>({ status: "loading" }, async () => {
   };
 });
 
-const customers = liveStore<LiveCustomers>({ ready: false, now: 0, customers: [], blockedIps: [] }, async () => {
+const customers = liveStore<LiveCustomers>({ ready: false, now: 0, customers: [], blockedIps: [], access: { legacy: false, withheld: false } }, async () => {
   const supabase = browserSupabase();
+  // First the member's role and the database's permissions: on a database without
+  // 20261124100100_admin_money.sql, admin_customers() would hand editors people (customers/access.ts).
+  const me = await supabase.rpc("admin_me");
+  const access = customerAccess(me.error ? null : me.data);
+  if (access.withheld) return { ready: true, now: Date.now(), customers: [], blockedIps: [], access };
   const [list, blocked] = await Promise.all([supabase.rpc("admin_customers"), supabase.rpc("admin_blocked_ips")]);
   const rows = fromJson<Omit<Customer, "source">[] | null>(list.data ?? null) ?? [];
   return {
@@ -95,6 +103,7 @@ const customers = liveStore<LiveCustomers>({ ready: false, now: 0, customers: []
     customers: rows.map((row) => ({ ...row, source: "live" as const })),
     // Without "security.view" the database refuses; the console then shows no blocked addresses.
     blockedIps: blocked.error ? [] : (fromJson<BlockedIp[] | null>(blocked.data ?? null) ?? []),
+    access,
   };
 });
 

@@ -176,6 +176,7 @@ function RefundButton({ order, onDone }: { order: TeamOrder; onDone: () => void 
   const t = useTranslations("admin.orders");
   const tKeep = useTranslations("admin.customer.confirm");
   const tErrors = useTranslations("legal.errors");
+  const tBilling = useTranslations("admin.customer.billingErrors");
   const locale = useLocale() as EmailLocale;
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -192,7 +193,9 @@ function RefundButton({ order, onDone }: { order: TeamOrder; onDone: () => void 
       toast(answer.mailed === false ? { title: t("mailFailed"), tone: "danger" } : { title: t("refunded"), tone: "success" });
     } catch (error) {
       // "locked": a withdrawal arrived, or someone else refunded it, while this screen was open.
-      toast({ title: error instanceof ApiError && error.code === "locked" ? t("changed") : tErrors("server"), tone: "danger" });
+      // "notAvailable": the database lacks the refund function yet; nothing was sent to Stripe.
+      const code = error instanceof ApiError ? error.code : "";
+      toast({ title: code === "locked" ? t("changed") : code === "notAvailable" ? tBilling("notAvailable") : tErrors("server"), tone: "danger" });
     } finally {
       setBusy(false);
       setOpen(false);

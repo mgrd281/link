@@ -3259,7 +3259,7 @@
         "paying": "Zahlende Kunden",
         "payingHint": "{trialing, plural, =0 {keine Testphase aktiv} one {# Testphase läuft} other {# Testphasen laufen}}",
         "conversion": "Free → Pro",
-        "conversionHint": "Anteil aller Kunden mit Pro",
+        "conversionHint": "Zahlende Kunden ÷ alle Kunden (geschenktes Pro zählt nicht)",
         "churn": "Kündigungen ({days} Tage)",
         "churnHint": "Gekündigt ÷ zahlend zu Beginn",
         "active": "Aktiv diese Woche",
@@ -3671,7 +3671,9 @@
       "noAccessTitle": "Kunden sind für deine Rolle nicht sichtbar",
       "noAccessLead": "Deine Rolle baut Seiten und bearbeitet Aufträge, ohne Kundendaten wie E-Mail-Adressen. Brauchst du Zugriff, frag eine Inhaberin oder einen Inhaber.",
       "exportFailed": "Der Export ließ sich nicht protokollieren, darum wurde keine Datei erstellt.",
-      "toOverview": "Zur Übersicht"
+      "toOverview": "Zur Übersicht",
+      "figuresWithheldTitle": "Kundenzahlen sind für deine Rolle nicht verfügbar",
+      "figuresWithheldBody": "Diese Datenbank würde mit den Zahlen auch Namen und E-Mail-Adressen der Kunden schicken. Deshalb lädt der Teambereich sie für deine Rolle nicht, bis die Datenbank aktualisiert ist."
     },
     "customer": {
       "loading": "Lädt …",
@@ -3882,7 +3884,8 @@
         "network": "Keine Antwort vom Server. Bitte den Stand prüfen und noch einmal versuchen."
       },
       "stripeWaiting": "Dieses Abo läuft über Stripe. Erstatten und Kündigen gehen hier, sobald Zahlungen eingeschaltet sind.",
-      "stripeNote": "Erstattungen und Kündigungen laufen über Stripe. „Erstattet“ steht hier erst, wenn Stripe es bestätigt hat."
+      "stripeNote": "Erstattungen und Kündigungen laufen über Stripe. „Erstattet“ steht hier erst, wenn Stripe es bestätigt hat.",
+      "liveSource": "Echtes Konto"
     },
     "subscriptions": {
       "title": "Abos",

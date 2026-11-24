@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Icon } from "@linkyo/ui";
-import { FlaskConical, Laptop, Smartphone, Tablet, type LucideIcon } from "lucide-react";
+import { EyeOff, FlaskConical, Laptop, Smartphone, Tablet, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { DeviceInfo } from "@/features/account/types";
@@ -97,6 +97,25 @@ export function DeviceLabel({ device }: { device: DeviceInfo }) {
         {device.os} · {device.browser}
       </span>
     </span>
+  );
+}
+
+/**
+ * In place of customer figures that were not loaded for this role (customers/access.ts): what is
+ * missing and why, never a 0 that reads like a count.
+ */
+export function FiguresWithheld() {
+  const t = useTranslations("admin.customers");
+  return (
+    <section data-figures-withheld aria-labelledby="figures-withheld-title" className="border-line-strong grid justify-items-start gap-3 rounded-xl border border-dashed p-6">
+      <span className="bg-canvas-muted text-fg-secondary grid size-control-md place-items-center rounded-md">
+        <Icon icon={EyeOff} size="md" />
+      </span>
+      <h2 id="figures-withheld-title" className="text-h3 text-balance">
+        {t("figuresWithheldTitle")}
+      </h2>
+      <p className="text-small text-fg-secondary max-w-prose text-pretty">{t("figuresWithheldBody")}</p>
+    </section>
   );
 }
 

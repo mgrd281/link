@@ -1,4 +1,5 @@
-import { getEmailSender } from "@/features/email/send";
+import { missingFunction } from "@/features/admin/billing";
+import { deliver } from "@/features/admin/mail";
 import { refundIssued } from "@/features/email/templates/refund-issued";
 import type { EmailLocale } from "@/features/email/templates/render";
 import { loadEmailTranslator, orderRefundable, RefundNotRecorded, resolveOrderRefund, supabaseContractsDb } from "@/features/payments/server/contracts";
@@ -36,6 +37,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // The decision, recorded as the member before any money moves.
   const target = await signedIn.db.rpc("admin_refund_order", { target: id });
   if (target.error) {
+    // A database without the function (20261123100500_team_fixes.sql not applied): nothing happened.
+    if (missingFunction(target.error)) return json({ ok: false, error: "notAvailable" }, 409);
     if (target.error.message.includes("linkyo:forbidden")) return json({ ok: false, error: "forbidden" }, 403);
     if (target.error.message.includes("linkyo:notFound")) return json({ ok: false, error: "notFound" }, 404);
     if (target.error.message.includes("linkyo:locked")) return json({ ok: false, error: "locked" }, 409);
@@ -72,13 +75,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (user.data.user?.email) to = user.data.user.email;
   }
   const locale = LOCALES.find((candidate) => candidate === row.locale) ?? "de";
-  let mailed = false;
-  try {
-    const t = await loadEmailTranslator(locale);
-    await getEmailSender().send(refundIssued({ to, locale, name: row.customer_name, number: row.number, amountCents, testMode }, t));
-    mailed = true;
-  } catch (mailError) {
-    console.error(JSON.stringify({ evt: "refund_mail_failed", error: mailError instanceof Error ? mailError.message : "unknown" }));
-  }
+  // `mailed` only when a transport that delivers took it (not the console stand-in).
+  const mailed = await deliver(async () => refundIssued({ to, locale, name: row.customer_name, number: row.number, amountCents, testMode }, await loadEmailTranslator(locale)), "refund_mail_failed");
   return json({ ok: true, mailed });
 }

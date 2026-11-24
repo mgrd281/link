@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { Panel, Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
 
+import { bdi, isolate } from "./bidi";
 import { ColumnChart, KpiTile } from "./charts";
 import { useCustomers } from "./customers/data";
 import { hasProForLife, monthlyRevenue, PLAN_PRICE, SUBSCRIPTION_STATUSES, subscriptionSource, type SubscriptionStatus } from "./customers/model";
@@ -41,18 +42,18 @@ export function SubscriptionsScreen() {
   const proForLife = useMemo(() => customers.filter(hasProForLife).length, [customers]);
 
   return (
-    <Screen title={t("title")} lead={t("lead")} wide>
+    <Screen title={t("title")} lead={t.rich("lead", { bdi })} wide>
       {ready ? (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <KpiTile icon={Euro} label={t("mrr")} value={money(numbers.mrr, locale)} hint={t("arr", { arr: money(numbers.mrr * 12, locale) })} />
             <KpiTile icon={UserRound} label={t("paying")} value={count(numbers.paying, locale)} hint={t("arpu", { arpu: money(arpu, locale, true) })} />
-            <KpiTile icon={CalendarClock} label={t("trialing")} value={count(numbers.trialing, locale)} hint={t("trialingHint")} />
+            <KpiTile icon={CalendarClock} label={t("trialing")} value={count(numbers.trialing, locale)} hint={t.rich("trialingHint", { bdi })} />
             <KpiTile icon={AlertTriangle} label={t("pastDue")} value={count(numbers.pastDue, locale)} hint={t("pastDueHint")} tone={numbers.pastDue ? "danger" : "neutral"} />
           </div>
           <p className="-mt-2 flex items-center gap-2 text-small text-fg-secondary">
             <Icon icon={Gift} size="sm" className="shrink-0" />
-            {t("proForLife", { count: count(proForLife, locale) })}
+            {t.rich("proForLife", { count: count(proForLife, locale), bdi })}
           </p>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -83,14 +84,14 @@ export function SubscriptionsScreen() {
                 <div className="grid gap-1 rounded-md bg-canvas-muted p-3">
                   <dt className="flex items-center gap-1 text-caption text-fg-secondary">
                     <Icon icon={Repeat} size="sm" />
-                    {t("conversion")}
+                    {t.rich("conversion", { bdi })}
                   </dt>
                   <dd className="text-h3 tabular-nums">{percent(numbers.conversion, locale)}</dd>
                 </div>
                 <div className="grid gap-1 rounded-md bg-canvas-muted p-3">
                   <dt className="flex items-center gap-1 text-caption text-fg-secondary">
                     <Icon icon={TrendingDown} size="sm" />
-                    {t("churn")}
+                    {t.rich("churn", { bdi })}
                   </dt>
                   <dd className="text-h3 tabular-nums">{percent(numbers.churn, locale)}</dd>
                 </div>
@@ -98,7 +99,7 @@ export function SubscriptionsScreen() {
             </Panel>
           </div>
 
-          <Panel title={t("list")} id="list-title" action={<span className="text-small text-fg-secondary">{t("count", { count: paid.length })}</span>}>
+          <Panel title={t.markup("list", { bdi: isolate })} id="list-title" action={<span className="text-small text-fg-secondary">{t("count", { count: paid.length })}</span>}>
             {/* Wider than a phone in German: the strip scrolls sideways inside the card, never the page. */}
             <div className="-mx-4 -my-1 overflow-x-auto px-4 py-1 md:mx-0 md:px-0">
               <Segmented
@@ -126,7 +127,7 @@ export function SubscriptionsScreen() {
                         {t("columns.status")}
                       </th>
                       <th scope="col" className="py-2 text-start font-medium">
-                        {t("columns.source")}
+                        {t.rich("columns.source", { bdi })}
                       </th>
                       <th scope="col" className="py-2 text-start font-medium">
                         {t("columns.since")}
@@ -162,7 +163,7 @@ export function SubscriptionsScreen() {
                               const source = subscriptionSource(customer);
                               return source ? (
                                 <Badge size="sm" tone={source === "stripe" ? "primary" : "outline"} data-source={source}>
-                                  {tSource(source)}
+                                  {tSource.rich(source, { bdi })}
                                 </Badge>
                               ) : null;
                             })()}
@@ -179,7 +180,7 @@ export function SubscriptionsScreen() {
               </div>
             )}
           </Panel>
-          <p className="text-caption text-fg-tertiary">{t("teamNote")}</p>
+          <p className="text-caption text-fg-tertiary">{t.rich("teamNote", { bdi })}</p>
           <DemoNote />
         </>
       ) : null}

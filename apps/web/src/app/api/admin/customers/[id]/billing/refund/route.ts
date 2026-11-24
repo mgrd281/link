@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { logMoneyDone, NotRecorded, refundInvoice, refusal } from "@/features/admin/billing";
-import { getEmailSender } from "@/features/email/send";
+import { deliver } from "@/features/admin/mail";
 import { refundIssued } from "@/features/email/templates/refund-issued";
 import type { EmailLocale } from "@/features/email/templates/render";
 import { loadEmailTranslator } from "@/features/payments/server/contracts";
@@ -80,19 +80,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   await logMoneyDone(signedIn.db, id, "refund", invoice);
 
-  // The account's own address; production sends nothing until a mail transport is set up.
-  let mailed = false;
-  try {
+  // The account's own address; production sends nothing until a mail transport is set up, and then
+  // `mailed` is false (the console says the e-mail did not go out).
+  const mailed = await deliver(async () => {
     const user = await db.auth.admin.getUserById(id);
     const to = user.data.user?.email;
-    if (to) {
-      const locale = LOCALES.find((candidate) => candidate === found.locale) ?? "de";
-      const t = await loadEmailTranslator(locale);
-      await getEmailSender().send(refundIssued({ to, locale, name: null, number: "Linkyo Pro", amountCents, testMode }, t));
-      mailed = true;
-    }
-  } catch (mailError) {
-    console.error(JSON.stringify({ evt: "refund_mail_failed", error: mailError instanceof Error ? mailError.message : "unknown" }));
-  }
+    if (!to) return null;
+    const locale = LOCALES.find((candidate) => candidate === found.locale) ?? "de";
+    return refundIssued({ to, locale, name: null, number: "Linkyo Pro", amountCents, testMode }, await loadEmailTranslator(locale));
+  }, "refund_mail_failed");
   return json({ ok: true, mailed });
 }

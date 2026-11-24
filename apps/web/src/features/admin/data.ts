@@ -4,6 +4,8 @@ import type { Page } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { useEffect, useMemo, useState } from "react";
 
+import { accessToken } from "@/lib/supabase/access-token";
+
 import type { AdminDb, Locale, PreparedDraft } from "./types";
 
 /** A prepared page that is live on the server (from /api/admin/prepared; invites only as a count). */
@@ -24,7 +26,11 @@ export function usePublished(token: string | undefined): Published {
   const [state, setState] = useState<{ token: string | undefined; value: Published }>({ token, value: { status: "loading" } });
   useEffect(() => {
     let alive = true;
-    fetch("/api/admin/prepared", { headers: token ? { Authorization: `Bearer ${token}` } : {}, cache: "no-store" })
+    // Demo: the team token from the code entered in this browser. Real accounts: the member's own
+    // session; the server checks the role (admin_me) before it lists anything.
+    accessToken()
+      .then((session) => token ?? session)
+      .then((bearer) => fetch("/api/admin/prepared", { headers: bearer ? { Authorization: `Bearer ${bearer}` } : {}, cache: "no-store" }))
       .then(async (response) => (response.ok ? ((await response.json()) as { pages: PublishedPage[] }) : Promise.reject(new Error(String(response.status)))))
       .then(
         (data) => alive && setState({ token, value: { status: "ready", pages: data.pages } }),

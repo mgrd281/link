@@ -10,7 +10,9 @@ import { useReferralQueue } from "@/features/referrals/team";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { useLiveCustomers } from "../live";
+import type { Role } from "../types";
 
+import { figuresWithheld } from "./access";
 import { withRewards, type Customer } from "./model";
 import { useOverrides, type CustomerPatch } from "./overrides";
 import { sampleCustomers } from "./sample";
@@ -148,6 +150,8 @@ function useDemoCustomers() {
     customers,
     blockedIps: db.blockedIps,
     signedOut: (id: string) => db.patches[id]?.signedOut ?? [],
+    // The demo has every customer in this browser: nothing is withheld.
+    withheld: (_role: Role) => false,
   };
 }
 
@@ -159,6 +163,8 @@ function useLiveCustomerData() {
   return {
     ...live,
     customers,
+    /** Customer figures are not available for this role on this database (customers/access.ts). */
+    withheld: (role: Role) => figuresWithheld(live.access, role),
     signedOut: (id: string) => {
       const customer = customers.find((candidate) => candidate.id === id);
       if (!customer) return [];

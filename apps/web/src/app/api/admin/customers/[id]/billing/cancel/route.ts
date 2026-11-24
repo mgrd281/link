@@ -1,5 +1,5 @@
 import { changeSubscription, logMoneyDone, NotRecorded, refusal } from "@/features/admin/billing";
-import { getEmailSender } from "@/features/email/send";
+import { deliver } from "@/features/admin/mail";
 import { cancellationConfirmation } from "@/features/email/templates/cancellation-confirmation";
 import type { EmailLocale } from "@/features/email/templates/render";
 import { loadEmailTranslator } from "@/features/payments/server/contracts";
@@ -82,18 +82,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   await logMoneyDone(signedIn.db, id, "cancel", subscription);
 
-  let mailed = false;
-  try {
+  // `mailed` only when a transport that delivers took it (not the console stand-in).
+  const mailed = await deliver(async () => {
     const user = await db.auth.admin.getUserById(id);
     const to = user.data.user?.email;
-    if (to) {
-      const locale = LOCALES.find((candidate) => candidate === found.locale) ?? "de";
-      const t = await loadEmailTranslator(locale);
-      await getEmailSender().send(cancellationConfirmation({ to, locale, name: null, receivedAt: new Date(), endsAt: endsAt ? new Date(endsAt) : null }, t));
-      mailed = true;
-    }
-  } catch (mailError) {
-    console.error(JSON.stringify({ evt: "cancellation_mail_failed", error: mailError instanceof Error ? mailError.message : "unknown" }));
-  }
+    if (!to) return null;
+    const locale = LOCALES.find((candidate) => candidate === found.locale) ?? "de";
+    return cancellationConfirmation({ to, locale, name: null, receivedAt: new Date(), endsAt: endsAt ? new Date(endsAt) : null }, await loadEmailTranslator(locale));
+  }, "cancellation_mail_failed");
   return json({ ok: true, mailed, endsAt });
 }

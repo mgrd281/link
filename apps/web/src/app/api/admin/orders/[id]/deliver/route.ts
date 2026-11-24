@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { getEmailSender } from "@/features/email/send";
+import { deliver } from "@/features/admin/mail";
 import { proposalDelivered } from "@/features/email/templates/proposal-delivered";
 import type { EmailLocale } from "@/features/email/templates/render";
 import { json, paymentsOff, readJson, siteOrigin } from "@/features/payments/server/get-payments";
@@ -46,31 +46,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   const result = (data ?? {}) as Record<string, unknown>;
   const locale = LOCALES.find((candidate) => candidate === result.locale) ?? "de";
-  let mailed = false;
-  if (typeof result.customerEmail === "string" && result.customerEmail) {
-    try {
-      const t = await loadEmailTranslator(locale);
-      await getEmailSender().send(
-        proposalDelivered(
-          {
-            to: result.customerEmail,
-            locale,
-            number: typeof result.number === "string" ? result.number : "",
-            aiAssisted: result.aiAssisted === true,
-            hasKit: result.hasKit === true,
-            revisionsLeft: typeof result.revisionsLeft === "number" ? result.revisionsLeft : 0,
-            reviseUntil: new Date(String(result.reviseUntil)),
-            proposalId: parsed.data.proposalId,
-            site: siteOrigin(),
-          },
-          t,
-        ),
-      );
-      mailed = true;
-    } catch (mailError) {
-      // Delivered all the same: the customer sees the proposal on Home.
-      console.error(JSON.stringify({ evt: "proposal_mail_failed", error: mailError instanceof Error ? mailError.message : "unknown" }));
-    }
-  }
+  const to = typeof result.customerEmail === "string" ? result.customerEmail : "";
+  // Delivered all the same when the e-mail fails: the customer sees the proposal on Home. `mailed`
+  // only when a transport that delivers took it (not the console stand-in).
+  const mailed = await deliver(
+    async () =>
+      to
+        ? proposalDelivered(
+            {
+              to,
+              locale,
+              number: typeof result.number === "string" ? result.number : "",
+              aiAssisted: result.aiAssisted === true,
+              hasKit: result.hasKit === true,
+              revisionsLeft: typeof result.revisionsLeft === "number" ? result.revisionsLeft : 0,
+              reviseUntil: new Date(String(result.reviseUntil)),
+              proposalId: parsed.data.proposalId,
+              site: siteOrigin(),
+            },
+            await loadEmailTranslator(locale),
+          )
+        : null,
+    "proposal_mail_failed",
+  );
   return json({ ok: true, mailed });
 }

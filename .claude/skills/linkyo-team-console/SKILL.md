@@ -21,7 +21,7 @@ the team area: **teal**, not the dashboard's black and grey.
 | Customers (one shape for demo and real) | `features/admin/customers/{model,data,stats,sample,overrides,ui}.ts(x)` |
 | Money | `features/admin/billing.ts` (what may happen, the browser call, the server's orchestration) and `app/api/admin/customers/[id]/billing/{refund,cancel,resume}/route.ts` |
 | Orders, contracts, AI switch | `features/admin/orders/**`, `app/api/admin/orders/**`, `app/api/admin/contracts/**` |
-| Messages | `admin.*` in `src/messages/{de,en,ar}.json` |
+| Messages | `admin.*` in `src/messages/{de,en,ar}.json`; Arabic Latin names and numbers in `<bdi>` (`bidi.tsx`, `arabic-bdi.test.ts`) |
 | Tests | `features/admin/**/*.test.ts`, `supabase/tests/{access,admin_money,billing,referrals}.test.sql`, `e2e/admin.spec.ts` (demo), `e2e/admin-money-app.spec.ts`, `orders-app.spec.ts`, `team-fixes-app.spec.ts`, `contracts-app.spec.ts` (`@real`) |
 
 ## Adding a permission or a screen
@@ -49,6 +49,11 @@ without name, e-mail, city and notes).
   Money is simulated: say so (`admin.customer.billingNote`).
 - **Real accounts:** one `admin_*` database function per action, `security definer`, `require_permission` first,
   `audit(...)` after; the console then calls `refreshLive()`. Reads go through functions too.
+- **Prepared pages** (`/api/admin/prepared`): the demo sends the team token; real accounts send the member's own
+  session, and the route checks the role as that member (`admin_me()`, `isTeamMember`). 401 without either, 403 off
+  the team.
+- **Customer source** on a customer's Overview: "Echtes Konto" for real accounts (`source: "live"`), "Dieses Gerät"
+  and "Beispieldaten" only in the demo.
 - A new database function must not break a database that does not have it yet: a missing function (`PGRST202` /
   `42883`, `missingFunction()` in `billing.ts`) means "behave as before"; any other error is shown honestly.
 
@@ -64,7 +69,9 @@ without name, e-mail, city and notes).
      `notRecorded`, the same click is sent again;
   4. the activity log as the member (`admin_pro_money_done`, `logMoneyDone()`), which writes only what the records
      show, once per invoice;
-  5. the e-mail to the account's own address (`refund-issued`, `cancellation-confirmation`); report `mailed`.
+  5. the e-mail to the account's own address (`refund-issued`, `cancellation-confirmation`) through `deliver()`
+     (`features/admin/mail.ts`); report `mailed`, which is true only when a delivering transport took it
+     (`emailDelivers()`: never the `console` stand-in that production has until F1).
 - Only `notRecorded` may say "Stripe did it". Any other failure (an unknown database error, an HTML 502, a missing
   server key) is `server` or `notConfigured`: "check Stripe before sending it again", never "it happened".
 - The console says it happened only after the route answers ok (`runBilling` in the customer screen) and names every
@@ -98,11 +105,20 @@ without name, e-mail, city and notes).
 - Folds use the key `REST` (`__rest`, "All others"), never a word a value can be.
 - Prices come from `features/payments/prices.ts` (`PLAN_PRICE`).
 
+- "Free → Pro" is paying (Stripe) customers ÷ all customers; its hint says so. The team's Pro and rewards are not in it.
+- A figure that could not be loaded is a dash or a notice, never a 0 (the prepared-pages count on Overview, the
+  withheld customer figures below).
+
 ## Privacy
 
 - Editors see no customer and no e-mail address: not in lists, details, orders, timelines or exports. In SQL, show an
   address only with `has_permission('customers.view')`; the browser cannot select `orders.customer_email`.
 - Customer e-mail addresses never appear in the activity log.
+- **Hosted database before `20261124100100_admin_money.sql`:** editors still hold `customers.view` there, so
+  `admin_customers()` would hand them people. `customers/access.ts` decides from `admin_me()`: a role without
+  `customers.view` (code map) on the old database (no `orders.view`), or wherever the database still grants it
+  `customers.view`, gets no `admin_customers()` call; Overview and Analytics show `FiguresWithheld`. An owner
+  viewing as an editor sees the same. Remove the interim once the migration is on production (ADR 0073).
 
 ## Phone patterns (current and planned)
 
