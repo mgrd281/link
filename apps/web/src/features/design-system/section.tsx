@@ -22,14 +22,15 @@ export function Section({
         </h2>
         {description ? <p className="max-w-prose text-body-lg text-fg-secondary">{description}</p> : null}
       </header>
-      <div className="grid gap-12">{children}</div>
+      {/* One column that never grows past the page: a wide specimen scrolls inside itself instead. */}
+      <div className="grid grid-cols-1 gap-12">{children}</div>
     </section>
   );
 }
 
-export function SubSection({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+export function SubSection({ title, note, children }: { title: string; note?: ReactNode; children: ReactNode }) {
   return (
-    <div className="grid gap-5">
+    <div className="grid min-w-0 grid-cols-1 gap-5">
       <div className="grid gap-1">
         <h3 className="text-body font-semibold">{title}</h3>
         {note ? <p className="max-w-prose text-small text-fg-secondary">{note}</p> : null}

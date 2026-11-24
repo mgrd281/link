@@ -149,8 +149,54 @@ interface TemplateDefaults {
   motion?: MotionStyle | undefined;
   projects?: ProjectsStyle | undefined;
   canvas?: CanvasStyle | undefined;
-  /** Weight of the display face on Arabic pages (the Arabic pairing has one family). Default 700. */
+  /** Weight of the display face on Arabic pages; wins over the Arabic companion's own weight. */
   arabicDisplayWeight?: 400 | 700 | undefined;
+  /** This template's own Arabic faces (tokens: `arabic`), over its pairing's companions. */
+  arabic?: ArabicFaces | undefined;
+}
+
+/** A face of an Arabic companion as the token build emits it. */
+interface ArabicFace {
+  family: readonly string[];
+  face: string;
+  weight: number;
+  stack: string;
+}
+
+/**
+ * The faces a pairing (or one template) uses for Arabic letters on Arabic pages (tokens: `arabic`).
+ * `pairing: "arabic"` keeps the Arabic pairing exactly as it is, with no Latin faces (Laufbahn).
+ */
+export interface ArabicFaces {
+  pairing?: "arabic" | undefined;
+  display?: ArabicFace | undefined;
+  body?: ArabicFace | undefined;
+}
+
+/** The Arabic companions of a pairing (C-03); the Arabic pairing is its own companion. */
+export const arabicFacesOf = (id: CreatorPairingId): ArabicFaces =>
+  (creatorTokens.pairings[id] as { arabic?: ArabicFaces }).arabic ?? { pairing: "arabic" };
+
+/**
+ * The font stacks of a page in Arabic script: the Arabic companion first, then the template's own
+ * Latin stack. Each companion face is declared with an Arabic-only `unicode-range` (apps/web/src/fonts.ts),
+ * so Latin letters, digits and spaces skip it and keep the template's Latin face; Arabic letters get
+ * the companion instead of whatever a Latin face's metric fallback (local Arial, which has Arabic
+ * glyphs on Windows) would draw. `null` when the page uses the Arabic pairing as it is.
+ */
+export function arabicStacks(latinPairing: CreatorPairingId, override?: ArabicFaces): { display: string; body: string; weight: number; uppercase: boolean } | null {
+  const own = arabicFacesOf(latinPairing);
+  if (latinPairing === "arabic" || override?.pairing === "arabic" || own.pairing === "arabic") return null;
+  const latin = creatorTokens.pairings[latinPairing];
+  const display = override?.display ?? own.display;
+  const body = override?.body ?? own.body;
+  if (!display || !body) return null;
+  return {
+    display: `${display.stack}, ${latin.display.stack}`,
+    body: `${body.stack}, ${latin.body.stack}`,
+    weight: display.weight,
+    uppercase: Boolean((latin.display as { uppercase?: boolean }).uppercase),
+  };
 }
 
 /** What a preset or template contributes before the creator's own choices. */
@@ -193,9 +239,16 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     mode: config.mode ?? preset.mode,
   });
 
-  // Arabic content always uses the Arabic pairing (full RTL glyph support).
-  const pairingId: CreatorPairingId = options.rtlScript ? "arabic" : (config.pairing ?? preset.pairing);
+  // The pairing the page chose (or its template's). Arabic content reports the Arabic pairing (its
+  // metrics drive name fitting, link cards and share pictures) but is set in the chosen pairing's
+  // Arabic companions with the Latin faces after them, so each template keeps its character (C-03).
+  const latinPairingId: CreatorPairingId = config.pairing ?? preset.pairing;
+  const pairingId: CreatorPairingId = options.rtlScript ? "arabic" : latinPairingId;
   const pairing = creatorTokens.pairings[pairingId];
+  // A template's own Arabic faces belong to its own pairing: a creator who picks another pairing gets
+  // that pairing's companions. Laufbahn's "the Arabic pairing as it is" holds whatever the pairing.
+  const ownArabic = t.arabic?.pairing === "arabic" || latinPairingId === t.pairing ? t.arabic : undefined;
+  const arabic = options.rtlScript ? arabicStacks(latinPairingId, ownArabic) : null;
   const buttonStyle: CreatorButtonStyle = config.buttonStyle ?? preset.buttonStyle;
   const buttonShape: CreatorButtonShape = config.buttonShape ?? preset.buttonShape;
   const layout: CreatorLayout = {
@@ -217,9 +270,11 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     tracking: string;
     uppercase?: boolean;
   };
-  // Arabic pages share one pairing, so a template says how heavy its name is there: the calm and
-  // the bold look stay different in Arabic too.
-  const displayWeight = options.rtlScript ? (t.arabicDisplayWeight ?? display.weight) : display.weight;
+  // On Arabic pages the companion brings its weight, unless the template sets one (Werkbogen's light
+  // serif, Laufbahn's bold sans). Letter spacing stays at the Arabic pairing's 0: spacing would pull
+  // joined Arabic letters apart. Latin names keep their pairing's capitals; Arabic has no case.
+  const displayWeight = options.rtlScript ? (t.arabicDisplayWeight ?? arabic?.weight ?? display.weight) : display.weight;
+  const uppercase = arabic ? arabic.uppercase : Boolean(display.uppercase);
 
   const cssVars: ResolvedCreatorTheme["cssVars"] = {
     "--creator-bg": palette.bg,
@@ -237,11 +292,11 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
     // The gradient's two hue-shifted neighbours of the page color (safe under text): the aurora's colors.
     "--creator-glow-1": palette.gradient[1],
     "--creator-glow-2": palette.gradient[2],
-    "--creator-font-display": display.stack,
-    "--creator-font-body": pairing.body.stack,
+    "--creator-font-display": arabic?.display ?? display.stack,
+    "--creator-font-body": arabic?.body ?? pairing.body.stack,
     "--creator-display-weight": String(displayWeight),
     "--creator-display-tracking": display.tracking,
-    "--creator-display-transform": display.uppercase ? "uppercase" : "none",
+    "--creator-display-transform": uppercase ? "uppercase" : "none",
     "--creator-radius-button": `${creatorTokens.buttonShapes[buttonShape]}px`,
     "--creator-radius-card": `${creatorTokens.cardShapes[buttonShape]}px`,
   };

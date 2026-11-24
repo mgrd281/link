@@ -63,6 +63,51 @@ reports unknown classes.
 - **Opacity:** `opacity-hover`, `opacity-pressed`, `opacity-secondary` (overlays use `bg-current`
   with these).
 - **Radii:** `rounded-creator-button`, `rounded-creator-card`, `rounded-xl`. Depth: borders and fills only (see the first rule).
+- **Button shapes (one rule, D-14):** every button is `rounded-md` (the default): in cards, lists,
+  sheets, dialogs, toolbars and empty states. A pill (`rounded-full`) only for the footer of a
+  step-by-step flow (welcome, checkout: Weiter / Zurück) and for the lone call to action of a
+  website section (`size="cta"`). Round icon-only buttons (`IconButton` + `rounded-full`: a sheet's
+  close, a rail's previous and next) carry no text and are not pills. Never mix both shapes in a row.
+
+## Icons (design system v2)
+
+- **One glyph per meaning.** Import the meaning from the registry, not a lucide name:
+  `import { icons } from "@linkyo/ui"` → `<Icon icon={icons.analytics} />`. The registry
+  (`packages/ui/src/icons.ts`) maps about 80 meanings (actions, ways through the product, states,
+  areas, content, playback); /design#icons shows them all. Need a new meaning? Add it there (and to
+  `ICON_GROUPS`), never a second glyph for an existing one. Lucide stays the only icon library; brand
+  logos come from Simple Icons through `PlatformIcon`.
+- **Deprecated aliases are banned** (`no-restricted-imports` in `packages/config/eslint`):
+  `AlertTriangle` → `icons.warning`, `MoreHorizontal` → `icons.more`, `BarChart3`/`ChartColumn` →
+  `icons.analytics` (`ChartNoAxesColumn`), `Music2` → `icons.music`, `Briefcase` → `icons.work`.
+  The rule warns until the Stage 2 codemod, then errors. Laufbahn's files are exempt (its rendering
+  does not change).
+- **Sizes and strokes.** `size="xs" | "sm" | "md" | "lg"` (12, 16, 20, 24 px; never a `size-3`
+  override). `Icon` sets the stroke so it is `icon.stroke-sm` (1.5 px) at xs and sm, `icon.stroke-md`
+  (1.6 px) at md and `icon.stroke-lg` (1.75 px) at lg on screen (`iconStroke(size)`), so small icons
+  are as strong as the text beside them. Do not pass `strokeWidth` yourself.
+- **Selected state:** `strong` (the token `icon.stroke-strong`, 2.25 px) together with a semibold
+  label, in both tab bars; never colour alone.
+- **Media transport** (play, pause, stop, skip) is always `solid` (`<Icon solid />`,
+  `<IconButton solid />`), so a toggle never mixes a filled and an outlined glyph. It never mirrors.
+- **Right to left.** Every glyph in `DIRECTIONAL` (arrows, chevrons, undo and redo, send, sign in and
+  out, lists, panels, trends) mirrors itself inside `dir="rtl"` (`MIRROR_IN_RTL`; a `dir="ltr"` island in
+  an Arabic page keeps its arrows; not `:dir(rtl)`, which the CSS minifier rewrites into `:lang()`
+  selectors). So: **never** add `rtl:-scale-x-100`, never
+  `[&_svg]:rtl:-scale-x-100` on a button, and never flip a button or a wrapper around an icon (a second
+  flip undoes the first). For a glyph that must keep its screen direction pass `mirror={false}`.
+- **Arabic companions of the creator faces (C-03).** Each pairing in `tokens.json` has
+  `creator.pairing.<id>.$extensions["app.linkyo"].arabic` (`display` and `body`: family, face,
+  weight); a template can override it with its own `arabic` (Nocturne: Rakkas) or keep the Arabic
+  pairing as it is (`{ "pairing": "arabic" }`, Laufbahn). On Arabic pages `resolveCreatorTheme`
+  puts the companion first and the template's Latin stack after it; `theme.pairing` stays the
+  Arabic pairing (name fitting, link cards and share pictures read it). The faces are vendored OFL
+  files in `apps/web/src/assets/fonts/<family>/` (Arabic subset, at most two weights, `OFL.txt`
+  beside them), declared in `apps/web/src/fonts.ts` with an Arabic-only `unicode-range`,
+  `preload: false` and `adjustFontFallback: false`: German pages never download them, and Latin
+  letters skip them to reach the template's own face. Add one: copy the woff2 and licence from
+  `npm pack @fontsource/<family>` (never install it), add a `localFont` like the others, the `arabic`
+  token, and extend `packages/tokens/test/arabic-companions.test.ts`.
 
 
 ## When a general design or motion skill says otherwise
@@ -137,9 +182,22 @@ to the console palette. Its greys come from the cool `graphite` scale, never the
 - To try a theme quickly, run a tsx script in `packages/tokens` that calls `resolveCreatorTheme` and
   prints `palette.bg`, `accent` and `accentFg`.
 
+## UI kit (packages/ui)
+
+Reach for these before writing a one-off: `Select` (the system's own select, framed like a text
+field; never an unstyled `<select>`), `Segmented` (one line, scrolls sideways, optional counts),
+`FilterSheet` + `FilterGroup` + `FilterChip` + `ActiveFilters` (a long list's filters behind one
+button), `DataList` (card rows on phones, aligned columns from md), `KpiTile` (inside a `<dl>`;
+change as arrow + signed text + words, optional sparkline), `ChartTable` (the numbers behind a
+chart; replaces `<details>`), `CommandPalette` (⌘K; `useCommandPaletteShortcut`). They take all
+their words as props; the shared wording is in the `ui.*` messages. None of them may carry
+`data-console` (the team area stays teal: `features/design-system/team-area-guard.test.ts`).
+
 ## Checks
 
 ```bash
 cd apps/web && npx eslint src e2e && npx tsc --noEmit -p .
-pnpm --filter @linkyo/tokens test   # palette guard, AA checks
+pnpm --filter @linkyo/tokens test   # palette guard, AA checks, Arabic companions
+pnpm --filter @linkyo/ui test       # icons (mirroring, strokes, registry), kit components
+pnpm --filter @linkyo/config test   # lint rules, the lucide alias ban
 ```

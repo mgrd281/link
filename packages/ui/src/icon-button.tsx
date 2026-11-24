@@ -45,10 +45,12 @@ export interface IconButtonProps
   shortcut?: string | undefined;
   loading?: boolean | undefined;
   tooltipSide?: "top" | "right" | "bottom" | "left";
+  /** A filled glyph: media transport (play, pause, stop), as on `Icon`. */
+  solid?: boolean | undefined;
 }
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
-  { icon, label, shortcut, loading = false, variant, size, className, tooltipSide, ...props },
+  { icon, label, shortcut, loading = false, variant, size, className, tooltipSide, solid = false, ...props },
   ref,
 ) {
   return (
@@ -61,7 +63,8 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
         className={cn(iconButtonVariants({ variant, size }), className)}
         {...props}
       >
-        {loading ? <Spinner className="size-icon-md" /> : <Icon icon={icon} size="md" />}
+        {/* Directional glyphs mirror themselves in right-to-left text (Icon): never flip the button too. */}
+        {loading ? <Spinner className="size-icon-md" /> : <Icon icon={icon} size="md" solid={solid} />}
       </button>
     </Tooltip>
   );

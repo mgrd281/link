@@ -9,6 +9,16 @@ import { Icon } from "./icon";
 import { cn } from "./lib/cn";
 import { Spinner } from "./spinner";
 
+/**
+ * Button shapes (one rule everywhere, plan §5 row 9, D-14):
+ * - **rounded-md** is the default shape of every button: inside cards, lists, sheets, dialogs, toolbars
+ *   and empty states, on every surface.
+ * - **pill** (`rounded-full`) only for the footer of a step-by-step flow (welcome, checkout: "Weiter",
+ *   "Zurück") and for the lone call to action of a website section (`size="cta"`, which is a pill).
+ * - Icon-only round buttons (a sheet's close, a rail's previous and next) are `IconButton` with
+ *   `rounded-full`; they carry no text, so they do not count as pills.
+ * Never mix the two shapes in one row.
+ */
 export const buttonVariants = cva(
   [
     "group/button relative inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium",
@@ -55,7 +65,10 @@ export const buttonVariants = cva(
 export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  /** Leading icon (16/20 px). Only when it adds meaning. */
+  /**
+   * Leading icon (16/20 px). Only when it adds meaning. A directional glyph (an arrow back, a chevron)
+   * mirrors itself in right-to-left text: never add `[&_svg]:rtl:-scale-x-100` or flip the button.
+   */
   icon?: LucideIcon | undefined;
   /** Shows a spinner; keeps the label and width, blocks clicks. */
   loading?: boolean | undefined;

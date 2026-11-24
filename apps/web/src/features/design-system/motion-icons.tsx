@@ -1,32 +1,10 @@
 "use client";
 
 import { tokens } from "@linkyo/tokens";
-import { Button, cn, Icon, PlatformIcon } from "@linkyo/ui";
-import {
-  BarChart3,
-  Calendar,
-  Command,
-  Copy,
-  Eye,
-  GripVertical,
-  Image as ImageIcon,
-  Inbox,
-  Link2,
-  Mail,
-  Music2,
-  Palette,
-  Plus,
-  QrCode,
-  Search,
-  Settings,
-  Share2,
-  ShoppingBag,
-  Trash2,
-  Undo2,
-  Video,
-} from "lucide-react";
+import { Button, cn, Icon, ICON_GROUPS, iconStroke, icons, PlatformIcon, type IconMeaning, type IconSize } from "@linkyo/ui";
+import { Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   siApplemusic,
   siBandcamp,
@@ -114,29 +92,6 @@ export function MotionSection() {
   );
 }
 
-const UI_ICONS = [
-  Plus,
-  Link2,
-  ImageIcon,
-  Video,
-  Music2,
-  Calendar,
-  ShoppingBag,
-  Mail,
-  BarChart3,
-  Palette,
-  Inbox,
-  Settings,
-  Search,
-  Command,
-  Share2,
-  QrCode,
-  Eye,
-  Copy,
-  Trash2,
-  Undo2,
-  GripVertical,
-];
 const PLATFORMS = [
   siYoutube,
   siSpotify,
@@ -152,32 +107,100 @@ const PLATFORMS = [
   siDiscord,
 ];
 
+/** The meanings shown pointing along the line: they mirror in right-to-left text by themselves. */
+const DIRECTIONAL_MEANINGS = ["back", "forward", "previous", "next", "external", "undo", "redo", "send", "signIn", "signOut", "sidebarOpen", "increase"] as const satisfies readonly IconMeaning[];
+const SIZES = ["xs", "sm", "md", "lg"] as const satisfies readonly IconSize[];
+const SIZE_PX: Record<IconSize, number> = { xs: tokens.size.iconXs, sm: tokens.size.iconSm, md: tokens.size.iconMd, lg: tokens.size.iconLg };
+/** The stroke an icon draws on screen, in CSS pixels (it is set in the glyph's 24-unit grid). */
+const strokePx = (size: IconSize, strong = false) => Math.round(((iconStroke(size, strong) * SIZE_PX[size]) / 24) * 100) / 100;
+
+/** A row of directional icons in one writing direction, to show the mirroring next to the page's own. */
+function DirectionRow({ dir, label }: { dir: "ltr" | "rtl"; label: string }) {
+  return (
+    <div className="grid gap-2">
+      <p className="text-caption text-fg-secondary">{label}</p>
+      <ul dir={dir} className="flex flex-wrap gap-2" data-direction={dir}>
+        {DIRECTIONAL_MEANINGS.map((meaning) => (
+          <li key={meaning} data-meaning={meaning} className="grid size-control-xl place-items-center rounded-md border border-line bg-surface text-fg" title={meaning}>
+            <Icon icon={icons[meaning]} size="md" />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function IconSection() {
   const t = useTranslations("design.icons");
+  const bdi = (chunks: ReactNode) => <bdi>{chunks}</bdi>;
   return (
     <Section id="icons" index="06" title={t("title")} description={t("description")}>
-      <SubSection title={t("ui")} note={t("uiNote")}>
-        <div className="grid grid-cols-6 gap-2 sm:grid-cols-8 lg:grid-cols-12">
-          {UI_ICONS.map((glyph) => (
-            <div
-              key={glyph.displayName}
-              className="grid aspect-square place-items-center rounded-md border border-line bg-surface text-fg"
-              title={glyph.displayName}
-            >
-              <Icon icon={glyph} size="md" />
+      <SubSection title={t("registry")} note={t.rich("registryNote", { bdi })}>
+        <div className="grid gap-6">
+          {(Object.keys(ICON_GROUPS) as (keyof typeof ICON_GROUPS)[]).map((group) => (
+            <div key={group} className="grid gap-3">
+              <h4 className="text-small font-semibold text-fg-secondary">{t(`groups.${group}`)}</h4>
+              <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8" data-icon-group={group}>
+                {ICON_GROUPS[group].map((meaning) => (
+                  <li key={meaning} className="grid min-w-0 justify-items-center gap-2 rounded-md border border-line bg-surface px-1 py-3 text-fg">
+                    <Icon icon={icons[meaning]} size="md" solid={group === "media"} />
+                    <code dir="ltr" className="max-w-full text-center font-mono text-caption break-all text-fg-secondary">
+                      {meaning}
+                    </code>
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
-        <div className="flex items-end gap-6 text-fg">
-          {(["sm", "md", "lg"] as const).map((size) => (
+      </SubSection>
+      <SubSection title={t("directional")} note={t("directionalNote")}>
+        <div className="grid gap-4 rounded-lg border border-line bg-surface p-5" data-testid="directional-icons">
+          <DirectionRow dir="ltr" label={t("ltr")} />
+          <DirectionRow dir="rtl" label={t("rtl")} />
+        </div>
+      </SubSection>
+      <SubSection title={t("sizes")} note={t("sizesNote")}>
+        <div className="flex flex-wrap items-end gap-8 rounded-lg border border-line bg-surface p-5 text-fg">
+          {SIZES.map((size) => (
             <figure key={size} className="grid justify-items-center gap-2">
               <Icon icon={Link2} size={size} />
-              <figcaption className="font-mono text-caption text-fg-tertiary">
-                {size} · {tokens.size[size === "sm" ? "iconSm" : size === "md" ? "iconMd" : "iconLg"]}
+              <figcaption dir="ltr" className="font-mono text-caption text-fg-tertiary">
+                {size} · {SIZE_PX[size]} · {strokePx(size)}
               </figcaption>
             </figure>
           ))}
-          <p className="font-mono text-caption text-fg-tertiary">stroke · {tokens.icon.stroke}</p>
+        </div>
+        <p className="text-small text-fg-secondary">{t("uiNote")}</p>
+      </SubSection>
+      <SubSection title={t("weights")} note={t("weightsNote")}>
+        <div className="flex flex-wrap items-center gap-8 rounded-lg border border-line bg-surface p-5 text-fg">
+          <figure className="grid justify-items-center gap-2">
+            <Icon icon={icons.home} size="md" />
+            <figcaption className="text-caption text-fg-secondary">
+              {t("regular")} <span dir="ltr" className="font-mono text-fg-tertiary">{strokePx("md")}</span>
+            </figcaption>
+          </figure>
+          <figure className="grid justify-items-center gap-2">
+            <Icon icon={icons.home} size="md" strong />
+            <figcaption className="text-caption font-semibold text-fg">
+              {t("strong")} <span dir="ltr" className="font-mono font-regular text-fg-tertiary">{strokePx("md", true)}</span>
+            </figcaption>
+          </figure>
+          <figure className="grid justify-items-center gap-2">
+            <span className="flex gap-2">
+              <Icon icon={icons.play} size="md" />
+              <Icon icon={icons.pause} size="md" />
+            </span>
+            <figcaption className="text-caption text-fg-secondary">{t("outline")}</figcaption>
+          </figure>
+          <figure className="grid justify-items-center gap-2">
+            <span className="flex gap-2">
+              <Icon icon={icons.play} size="md" solid />
+              <Icon icon={icons.pause} size="md" solid />
+            </span>
+            <figcaption className="text-caption text-fg-secondary">{t("solid")}</figcaption>
+          </figure>
         </div>
       </SubSection>
       <SubSection title={t("platforms")} note={t("platformsNote")}>

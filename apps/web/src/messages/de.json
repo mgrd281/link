@@ -108,9 +108,31 @@
       "title": "Icons",
       "description": "Lucide im Web, SF Symbols auf iOS. Eine Familie pro Ansicht, beschriftet, wenn es zählt.",
       "ui": "Produkt-Icons",
-      "uiNote": "Strichstärke 1,75, Größen 16 / 20 / 24, currentColor.",
+      "uiNote": "Der Strich wird in echten Pixeln gemessen und wächst leicht mit der Größe. Immer in der Farbe des Texts.",
       "platforms": "Plattform-Logos",
-      "platformsNote": "Simple Icons in Originalform. Standardmäßig einfarbig, Markenfarbe beim Hover."
+      "platformsNote": "Simple Icons in Originalform. Standardmäßig einfarbig, Markenfarbe beim Hover.",
+      "registry": "Ein Icon pro Bedeutung",
+      "registryNote": "Screens nehmen die Bedeutung aus der Registry (<bdi>icons.analytics</bdi>), nie einen <bdi>Lucide</bdi>-Namen. Keine Bedeutung hat zwei Icons, kein Icon zwei Bedeutungen.",
+      "groups": {
+        "actions": "Aktionen",
+        "navigation": "Wege",
+        "states": "Zustände",
+        "areas": "Bereiche",
+        "content": "Inhalte",
+        "media": "Wiedergabe"
+      },
+      "directional": "Richtung",
+      "directionalNote": "Pfeile, Chevrons, Rückgängig, Senden und Abmelden zeigen in Leserichtung. Auf Arabisch spiegeln sie sich von selbst, genau einmal.",
+      "sizes": "Größen und Strich",
+      "sizesNote": "Vier Größen. Der Strich bleibt bei jeder Größe gleich kräftig wie der Text daneben.",
+      "weights": "Gewählt und gefüllt",
+      "weightsNote": "Der gewählte Tab bekommt den kräftigeren Strich und ein halbfettes Label, nie nur eine Farbe. Wiedergabe-Icons sind immer gefüllt.",
+      "regular": "Normal",
+      "strong": "Gewählt",
+      "outline": "Linie",
+      "solid": "Gefüllt",
+      "ltr": "Von links nach rechts",
+      "rtl": "Von rechts nach links"
     },
     "buttons": {
       "title": "Buttons",
@@ -243,7 +265,62 @@
       "title": "KI-Lauf",
       "description": "So sieht ein KI-Lauf aus: Fortschritt, Schritte und der Entwurf im Handy. Hier läuft er mit Testdaten, an jedem Schritt als solche beschriftet."
     },
-    "toc": "Auf dieser Seite"
+    "toc": "Auf dieser Seite",
+    "kit": {
+      "selection": "Auswahl und Filter",
+      "selectionNote": "Die Auswahl ist das Menü des Systems im Look eines Textfelds. Filter einer langen Liste liegen hinter einem Knopf und erscheinen als Chips über der Liste. Mit Beispieldaten.",
+      "role": "Rolle",
+      "roleHint": "Was jemand im Team sehen und ändern darf.",
+      "allRoles": "Alle Rollen",
+      "roles": {
+        "owner": "Inhaber",
+        "admin": "Admin",
+        "editor": "Redaktion",
+        "support": "Support"
+      },
+      "status": "Status",
+      "statuses": {
+        "all": "Alle",
+        "active": "Aktiv",
+        "blocked": "Gesperrt"
+      },
+      "plan": "Plan",
+      "plans": {
+        "free": "Free",
+        "pro": "Pro"
+      },
+      "language": "Sprache",
+      "figures": "Kennzahlen und Tabellen",
+      "figuresNote": "Eine Veränderung zeigt immer Pfeil, Zahl und Richtung in Worten. Die Zahlen hinter einem Diagramm sind eine echte Tabelle. Mit Beispieldaten.",
+      "views": "Aufrufe",
+      "clicks": "Klicks",
+      "signups": "Anmeldungen",
+      "lastWeeks": "Letzte 8 Wochen",
+      "vsLastMonth": "ggü. Vormonat",
+      "week": "Woche",
+      "viewsPerWeek": "Aufrufe pro Woche",
+      "list": "Liste",
+      "listNote": "Auf dem Handy eine Karte pro Zeile, auf dem Laptop Spalten unter einer Kopfzeile.",
+      "customers": "Beispielkunden",
+      "pages": "Seiten",
+      "since": "Seit",
+      "newBadge": "Neu",
+      "palette": "Befehlspalette",
+      "paletteNote": "Ein Feld für alles: Seiten, Personen und Aktionen. Pfeiltasten, dann <bdi>Enter</bdi> oder <bdi>Escape</bdi>.",
+      "openPalette": "Befehle öffnen",
+      "paletteGroups": {
+        "pages": "Seiten",
+        "actions": "Aktionen"
+      },
+      "commands": {
+        "overview": "Übersicht",
+        "customers": "Kunden",
+        "security": "Sicherheit",
+        "export": "Kunden exportieren",
+        "invite": "Teammitglied einladen"
+      },
+      "ran": "Ausgeführt: {command}"
+    }
   },
   "sampleContent": {
     "bio": "DJ & Produzentin aus Berlin. Late-Night-Techno, warme Synths, ehrliche Geschichten.",
@@ -4635,6 +4712,33 @@
       "de": "Deutsch",
       "en": "English",
       "ar": "العربية"
+    }
+  },
+  "ui": {
+    "filter": {
+      "title": "Filter",
+      "active": "{count, plural, one {# Filter aktiv} other {# Filter aktiv}}",
+      "reset": "Zurücksetzen",
+      "done": "Fertig",
+      "close": "Schließen",
+      "activeList": "Aktive Filter",
+      "remove": "Filter {filter} entfernen",
+      "clear": "Alle entfernen"
+    },
+    "palette": {
+      "label": "Befehle",
+      "placeholder": "Suchen oder springen …",
+      "empty": "Nichts gefunden.",
+      "results": "{count, plural, =0 {Keine Treffer} one {# Treffer} other {# Treffer}}"
+    },
+    "chartTable": {
+      "show": "Als Tabelle zeigen",
+      "hide": "Tabelle ausblenden"
+    },
+    "kpi": {
+      "up": "Gestiegen",
+      "down": "Gesunken",
+      "flat": "Unverändert"
     }
   }
 }

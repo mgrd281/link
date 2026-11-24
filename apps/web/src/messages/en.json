@@ -108,9 +108,31 @@
       "title": "Icons",
       "description": "Lucide on the web, SF Symbols on iOS. One family per screen, labeled when it matters.",
       "ui": "Product icons",
-      "uiNote": "Stroke 1.75, sizes 16 / 20 / 24, currentColor.",
+      "uiNote": "The stroke is measured in real pixels and grows a little with the size. Always in the colour of the text.",
       "platforms": "Platform logos",
-      "platformsNote": "Simple Icons in official shapes. Monochrome by default, brand color on hover."
+      "platformsNote": "Simple Icons in official shapes. Monochrome by default, brand color on hover.",
+      "registry": "One icon per meaning",
+      "registryNote": "Screens take the meaning from the registry (<bdi>icons.analytics</bdi>), never a <bdi>Lucide</bdi> name. No meaning has two icons, no icon has two meanings.",
+      "groups": {
+        "actions": "Actions",
+        "navigation": "Ways",
+        "states": "States",
+        "areas": "Areas",
+        "content": "Content",
+        "media": "Playback"
+      },
+      "directional": "Direction",
+      "directionalNote": "Arrows, chevrons, undo, send and sign out point in the reading direction. In Arabic they mirror by themselves, exactly once.",
+      "sizes": "Sizes and stroke",
+      "sizesNote": "Four sizes. At every size the stroke stays as strong as the text next to it.",
+      "weights": "Selected and filled",
+      "weightsNote": "The selected tab gets the stronger stroke and a semibold label, never colour alone. Playback icons are always filled.",
+      "regular": "Regular",
+      "strong": "Selected",
+      "outline": "Line",
+      "solid": "Filled",
+      "ltr": "Left to right",
+      "rtl": "Right to left"
     },
     "buttons": {
       "title": "Buttons",
@@ -243,7 +265,62 @@
       "title": "AI run",
       "description": "What an AI run looks like: progress, steps and the draft in a phone. Here it plays test data, labelled as such at every step."
     },
-    "toc": "On this page"
+    "toc": "On this page",
+    "kit": {
+      "selection": "Selection and filters",
+      "selectionNote": "The select is the system's own menu, framed like a text field. A long list's filters sit behind one button and show as chips above the list. With sample data.",
+      "role": "Role",
+      "roleHint": "What someone in the team may see and change.",
+      "allRoles": "All roles",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "editor": "Editor",
+        "support": "Support"
+      },
+      "status": "Status",
+      "statuses": {
+        "all": "All",
+        "active": "Active",
+        "blocked": "Blocked"
+      },
+      "plan": "Plan",
+      "plans": {
+        "free": "Free",
+        "pro": "Pro"
+      },
+      "language": "Language",
+      "figures": "Figures and tables",
+      "figuresNote": "A change always shows an arrow, the number and the direction in words. The numbers behind a chart are a real table. With sample data.",
+      "views": "Views",
+      "clicks": "Clicks",
+      "signups": "Sign-ups",
+      "lastWeeks": "Last 8 weeks",
+      "vsLastMonth": "vs. last month",
+      "week": "Week",
+      "viewsPerWeek": "Views per week",
+      "list": "List",
+      "listNote": "On a phone one card per row, on a laptop columns under one header.",
+      "customers": "Sample customers",
+      "pages": "Pages",
+      "since": "Since",
+      "newBadge": "New",
+      "palette": "Command palette",
+      "paletteNote": "One field for everything: pages, people and actions. Arrow keys, then <bdi>Enter</bdi> or <bdi>Escape</bdi>.",
+      "openPalette": "Open commands",
+      "paletteGroups": {
+        "pages": "Pages",
+        "actions": "Actions"
+      },
+      "commands": {
+        "overview": "Overview",
+        "customers": "Customers",
+        "security": "Security",
+        "export": "Export customers",
+        "invite": "Invite a team member"
+      },
+      "ran": "Done: {command}"
+    }
   },
   "sampleContent": {
     "bio": "DJ & producer from Berlin. Late-night techno, warm synths, honest stories.",
@@ -4635,6 +4712,33 @@
       "de": "Deutsch",
       "en": "English",
       "ar": "العربية"
+    }
+  },
+  "ui": {
+    "filter": {
+      "title": "Filters",
+      "active": "{count, plural, one {# filter on} other {# filters on}}",
+      "reset": "Reset",
+      "done": "Done",
+      "close": "Close",
+      "activeList": "Active filters",
+      "remove": "Remove filter {filter}",
+      "clear": "Remove all"
+    },
+    "palette": {
+      "label": "Commands",
+      "placeholder": "Search or jump to …",
+      "empty": "Nothing found.",
+      "results": "{count, plural, =0 {No results} one {# result} other {# results}}"
+    },
+    "chartTable": {
+      "show": "Show as table",
+      "hide": "Hide table"
+    },
+    "kpi": {
+      "up": "Up",
+      "down": "Down",
+      "flat": "Unchanged"
     }
   }
 }

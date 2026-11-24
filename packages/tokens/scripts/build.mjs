@@ -509,14 +509,27 @@ StyleDictionary.registerFormat({
       }
     }
 
+    // A face with its stack: the families with `var(--font-face-<id>, …)` for the self-hosted one.
+    const withStack = (face) => (face ? { ...face, stack: fontStack(face.family, face.face) } : undefined);
+    // Arabic companions (C-03): the faces a pairing (or one template) uses for Arabic letters on Arabic
+    // pages, next to its Latin faces. `pairing: "arabic"` means "the Arabic pairing as it is".
+    const arabicFaces = (arabic) =>
+      arabic
+        ? Object.fromEntries(
+            Object.entries({ pairing: arabic.pairing, display: withStack(arabic.display), body: withStack(arabic.body) }).filter(
+              ([, value]) => value !== undefined,
+            ),
+          )
+        : undefined;
     const pairings = {};
     for (const t of byPath(dictionary, ["creator", "pairing"])) {
       const e = ext(t);
       pairings[t.path[2]] = {
         id: t.path[2],
         label: e.label,
-        display: { ...e.display, stack: fontStack(e.display.family, e.display.face) },
-        body: { ...e.body, stack: fontStack(e.body.family, e.body.face) },
+        display: withStack(e.display),
+        body: withStack(e.body),
+        ...(e.arabic ? { arabic: arabicFaces(e.arabic) } : {}),
       };
     }
     const presets = {};
@@ -525,7 +538,8 @@ StyleDictionary.registerFormat({
     }
     const templates = {};
     for (const t of byPath(dictionary, ["creator", "template"])) {
-      templates[t.path[2]] = { id: t.path[2], ...ext(t) };
+      const e = ext(t);
+      templates[t.path[2]] = { id: t.path[2], ...e, ...(e.arabic ? { arabic: arabicFaces(e.arabic) } : {}) };
     }
     const shapes = {};
     for (const t of byPath(dictionary, ["creator", "button", "shape"])) shapes[t.path[3]] = px(t.$value);

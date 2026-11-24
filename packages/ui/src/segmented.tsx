@@ -14,6 +14,8 @@ export interface SegmentedOption<T extends string> {
   iconOnly?: boolean;
   /** A fuller name for screen readers, when the visible label is short (a code like "DE"). */
   ariaLabel?: string;
+  /** A count after the label ("Alle 14"), as a small badge. Read together with the label. */
+  count?: number;
 }
 
 export interface SegmentedProps<T extends string> {
@@ -23,9 +25,16 @@ export interface SegmentedProps<T extends string> {
   label: string;
   size?: "sm" | "md";
   className?: string | undefined;
+  /** Formats a count for the badge (thousands separators in the page's language). Default: as is. */
+  formatCount?: ((count: number) => string) | undefined;
 }
 
-export function Segmented<T extends string>({ value, onValueChange, options, label, size = "md", className }: SegmentedProps<T>) {
+/**
+ * A segmented control: one choice out of a few. Segments never wrap ("Alle 14" stays on one line);
+ * when they do not fit, the track scrolls sideways instead of breaking a label (A-11). The chosen
+ * segment is a raised tile with an input-strength border, never colour alone.
+ */
+export function Segmented<T extends string>({ value, onValueChange, options, label, size = "md", className, formatCount = String }: SegmentedProps<T>) {
   return (
     <ToggleGroup.Root
       type="single"
@@ -35,7 +44,7 @@ export function Segmented<T extends string>({ value, onValueChange, options, lab
       }}
       aria-label={label}
       className={cn(
-        "inline-flex items-stretch gap-0.5 rounded-md bg-canvas-muted p-0.5",
+        "inline-flex max-w-full items-stretch gap-0.5 overflow-x-auto overscroll-x-contain rounded-md bg-canvas-muted p-0.5",
         size === "sm" ? "h-control-sm" : "h-control-md",
         className,
       )}
@@ -44,11 +53,12 @@ export function Segmented<T extends string>({ value, onValueChange, options, lab
         <ToggleGroup.Item
           key={option.value}
           value={option.value}
-          aria-label={option.ariaLabel ?? (option.iconOnly ? option.label : undefined)}
+          aria-label={option.ariaLabel ?? (option.iconOnly ? (option.count === undefined ? option.label : `${option.label} ${formatCount(option.count)}`) : undefined)}
           className={cn(
-            "inline-flex items-center justify-center gap-2 rounded-sm border border-transparent px-3 font-medium text-fg-secondary",
+            "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-sm border border-transparent px-3 font-medium text-fg-secondary",
             "transition-[background-color,border-color,color] duration-micro ease-standard",
-            "hover:text-fg focus-visible:focus-ring",
+            // Inside the edge: the track scrolls sideways, which would clip a ring drawn outside the segment.
+            "hover:text-fg focus-visible:focus-field",
             // The input-strength border gives the selected segment 3:1 against the track (WCAG 1.4.11):
             // a white pill on the pale track alone is barely visible.
             "data-[state=on]:border-line-input data-[state=on]:bg-surface-elevated data-[state=on]:text-fg",
@@ -60,6 +70,9 @@ export function Segmented<T extends string>({ value, onValueChange, options, lab
         >
           {option.icon ? <Icon icon={option.icon} size="sm" /> : null}
           {option.iconOnly ? null : option.label}
+          {option.count !== undefined && !option.iconOnly ? (
+            <span className="rounded-full bg-hover px-2 text-caption font-medium tabular-nums text-fg-secondary">{formatCount(option.count)}</span>
+          ) : null}
         </ToggleGroup.Item>
       ))}
     </ToggleGroup.Root>
