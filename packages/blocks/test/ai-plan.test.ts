@@ -39,7 +39,7 @@ const EXAMPLE_ANSWER = {
 
 describe("PagePlan v1", () => {
   it("sends a stable schema (snapshot)", () => {
-    expect(PAGE_PLAN_VERSION).toBe("plan-v3");
+    expect(PAGE_PLAN_VERSION).toBe("plan-v4");
     expect(PAGE_PLAN_JSON_SCHEMA).toMatchSnapshot();
   });
 
@@ -71,9 +71,9 @@ describe("PagePlan v1", () => {
   });
 
   it("offers every current token id, kind and icon (and never the Arabic pairing)", () => {
-    // Every template of the tokens, except the ones the catalogue does not offer yet (Stage 3's stand-ins).
+    // Every template of the tokens, except any the catalogue does not offer yet (none since plan-v4).
     expect(TEMPLATE_IDS).toEqual(Object.keys(creatorTokens.templates).filter((id) => !TEMPLATES_NOT_OFFERED.includes(id)));
-    for (const id of TEMPLATES_NOT_OFFERED) expect(Object.keys(creatorTokens.templates), id).toContain(id);
+    expect(TEMPLATES_NOT_OFFERED).toEqual([]);
     expect(PAIRING_IDS).toEqual(Object.keys(creatorTokens.pairings).filter((id) => id !== "arabic"));
     expect(PAIRING_IDS).not.toContain("arabic");
     expect(BUTTON_STYLES).toEqual([...creatorTokens.buttonStyles]);
@@ -90,9 +90,9 @@ describe("PagePlan v1", () => {
     // plan-v2: two more kinds and two more templates, and nothing else (no new block type).
     expect(KINDS).toHaveLength(24);
     expect(KINDS).toEqual(expect.arrayContaining(["photographer", "freelancer"]));
-    // plan-v3: one more template (laufbahn), and nothing else.
-    expect(TEMPLATE_IDS).toHaveLength(14);
-    expect(TEMPLATE_IDS.slice(-3)).toEqual(["werkbogen", "tiefdruck", "laufbahn"]);
+    // plan-v3: one more template (laufbahn); plan-v4: Stage 3's three portfolio templates, and nothing else.
+    expect(TEMPLATE_IDS).toHaveLength(17);
+    expect(TEMPLATE_IDS.slice(-6)).toEqual(["werkbogen", "tiefdruck", "laufbahn", "leuchttisch", "grundriss", "logbuch"]);
     const blockTypes = all.flatMap((node) => ((node.properties as Node | undefined)?.type as Node | undefined)?.const ?? []);
     expect(blockTypes).toEqual(["header", "link", "rich", "text", "socials", "newsletter"]);
     const link = all.find((node) => (node.properties as Node | undefined)?.icon);

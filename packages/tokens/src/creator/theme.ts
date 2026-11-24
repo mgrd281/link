@@ -42,11 +42,10 @@ export type HeadingStyle = "display" | "sans" | "sans-upper" | "numbered" | "rul
  * portrait with a halo (halo), a framed picture with the name on the left (inset), a square picture in
  * corner marks (frame), the portrait in an arch (arch), the first piece of work as a large plate under a
  * quiet name (plate), the name set as large as the screen allows (statement), or the picture from edge
- * to edge with the name set large on it, beside the words as a tall plate on the wide canvas (bleed).
- *
- * Stage 3 adds three, drawn as their fallback until their renderer lands (`LAYOUT_FALLBACK`): the first
- * covers in one justified row at their own ratios (strip), an architect's title block beside the lead
- * cover (titleblock), and a README: the name, a role line and a monospace list of facts (readme).
+ * to edge with the name set large on it, beside the words as a tall plate on the wide canvas (bleed),
+ * the first covers in one justified row at their own ratios, a snap strip on phones (strip), an
+ * architect's title block beside the lead cover (titleblock), or a README: the name, a role line and a
+ * monospace list of facts (readme).
  */
 export type HeroStyle =
   | "portrait"
@@ -68,12 +67,12 @@ export type HeroStyle =
 export type SocialStyle = "tiles" | "plain";
 /**
  * Behind the page: nothing, the page's colors drifting slowly (aurora), a fine grid, or hairline
- * column guides behind the wide canvas (columns, Stage 3; drawn as its fallback until it lands).
+ * column guides behind the wide canvas (columns; never on phones or with more contrast asked for).
  */
 export type BackdropStyle = "none" | "aurora" | "grid" | "columns";
 /**
  * Photo galleries: a sideways rail, a two-column grid for portfolios, or rows of equal height with
- * every picture uncropped (justified, Stage 3; drawn as its fallback until it lands).
+ * every picture uncropped (justified).
  */
 export type GalleryStyle = "rail" | "grid" | "justified";
 /** Sections stay put (calm) or rise in as they scroll into view (reveal); never with reduced motion. */
@@ -85,8 +84,8 @@ export type MotionStyle = "calm" | "reveal";
 export type ProjectsStyle = "auto" | "bento" | "list" | "rail";
 /**
  * A run of projects as a template may lay it out: every owner choice, plus three that only a template
- * sets (Stage 3), drawn as their fallback until their renderer lands: uncropped rows of equal height
- * (justified), one drawing sheet per project with its facts (sheets), and a build log grouped by year (log).
+ * sets: uncropped rows of equal height (justified), one drawing sheet per project with its facts
+ * (sheets), and a build log grouped by year (log).
  */
 export type TemplateProjectsStyle = ProjectsStyle | "justified" | "sheets" | "log";
 /** The work layouts an owner may choose (Arbeiten, the import); otherwise the template's own value. */
@@ -94,8 +93,7 @@ export const PROJECTS_STYLES = ["auto", "bento", "list", "rail"] as const satisf
 export const isProjectsStyle = (value: unknown): value is ProjectsStyle => typeof value === "string" && (PROJECTS_STYLES as readonly string[]).includes(value);
 /**
  * The page column: the narrow creator column, the wide canvas from desktop widths (layout.work), or
- * the full canvas whose pictures run to layout.wall while text keeps the creator column (full,
- * Stage 3; drawn as its fallback until it lands).
+ * the full canvas whose pictures run to layout.wall while text keeps the creator column (full).
  */
 export type CanvasStyle = "column" | "wide" | "full";
 
@@ -111,17 +109,13 @@ export interface CreatorLayout {
 }
 
 /**
- * The layout values the tokens may already name but no renderer draws yet (Stage 3: WP3.2 draws them),
- * each with the existing value it is drawn as until then, so every template compiles and renders. A
- * value leaves this table in the change that draws it; `resolveCreatorTheme` applies what is left.
+ * Layout values the tokens may already name but no renderer draws yet, each with the existing value it
+ * is drawn as until then, so a template can be added before its renderer and still compile and render.
+ * A value joins this table with the tokens that name it and leaves it in the change that draws it;
+ * `resolveCreatorTheme` applies what is left. Empty: every value is drawn (Stage 3 drew strip,
+ * titleblock and readme, justified, sheets and log, the justified gallery, columns and the full canvas).
  */
-export const LAYOUT_FALLBACK = {
-  hero: { strip: "plate", titleblock: "plate", readme: "statement" },
-  projects: { justified: "bento", sheets: "list", log: "list" },
-  gallery: { justified: "grid" },
-  backdrop: { columns: "none" },
-  canvas: { full: "wide" },
-} as const satisfies { [K in keyof CreatorLayout]?: Partial<Record<CreatorLayout[K], CreatorLayout[K]>> };
+export const LAYOUT_FALLBACK = {} as const satisfies { [K in keyof CreatorLayout]?: Partial<Record<CreatorLayout[K], CreatorLayout[K]>> };
 
 type Fallbacks = typeof LAYOUT_FALLBACK;
 /**
@@ -135,7 +129,9 @@ export type DrawnLayout = { [K in keyof CreatorLayout]: K extends keyof Fallback
 export function drawnLayout(layout: CreatorLayout): DrawnLayout {
   const drawn = <K extends keyof CreatorLayout>(key: K): DrawnLayout[K] => {
     const table = (LAYOUT_FALLBACK as { [Key in keyof CreatorLayout]?: Partial<Record<string, DrawnLayout[Key]>> })[key];
-    return table?.[layout[key]] ?? (layout[key] as DrawnLayout[K]);
+    // While the table is empty a value is drawn as itself; a value added to the table later needs the
+    // value cast to `DrawnLayout[K]` here again (the compiler says so).
+    return table?.[layout[key]] ?? layout[key];
   };
   return {
     headings: drawn("headings"),

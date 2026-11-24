@@ -1,10 +1,11 @@
 import { hasImage, isBlockActive, type Block, type BlockOf, type Page, type Profile } from "@linkyo/blocks";
-import { coverMode, primaryAction } from "@linkyo/blocks/project";
+import { coverImage, coverMode, primaryAction } from "@linkyo/blocks/project";
+import { FEATURED_PROJECTS } from "@linkyo/blocks/rules";
 import type { CreatorButtonStyle } from "@linkyo/tokens";
 import type { CreatorLayout, HeadingStyle, ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
-import { useId, type ReactNode } from "react";
+import { useId, type CSSProperties, type ReactNode } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
 
@@ -28,17 +29,44 @@ import {
 import { AppFeature, AppList, RepoCard } from "./apps";
 import { EventTabs } from "./events";
 import { PosterBar, PosterHero } from "./hero";
+import { JustifiedRows, ratioOf, WIDE_ROW } from "./justified";
 import { LaufbahnAbout, LaufbahnSkills, LaufbahnText, LaufbahnTimeline, SignpostIndex, SignpostSection, signposts as signpostsOf } from "./laufbahn";
 import { isLetter } from "./laufbahn-content";
 import { BleedHero, type Lead } from "./laufbahn-hero";
+import { ReadmeHero, StripHero, TitleBlockHero } from "./portfolio-heroes";
 import { AboutSection, BrandNames, ContactBand, QuotesSection, TimelineSection, ToolsSection } from "./portfolio-sections";
 import { ProjectPage } from "./project-page";
-import { ProjectPlate, ProjectsGroup } from "./projects";
+import { ProjectPlate, ProjectsGroup, ProjectStrip } from "./projects";
 import { featuredApp, groupSections, type PosterItem, type PosterSection as Section } from "./sections";
 import { cardSurface, pageSide, pressable, railFrame, sectionTitle, type HeadingTag } from "./styles";
 
 /** The start of a signposted page's content: "read on" leads here when the first section has no title. */
 const CONTENT_ID = "page-content";
+
+/** Leuchttisch's strip holds the first covers of the work: at most five, at least three when there are three. */
+const STRIP_MAX = 5;
+const STRIP_MIN = 3;
+
+/**
+ * The projects Leuchttisch's strip shows: the run's first projects with a picture, in a row (it stops at
+ * the first without one), five at most. Of three or more, the count whose ratios come closest to a row
+ * of the canvas (`WIDE_ROW`), so the strip stands as tall as the rows of work below it.
+ */
+export function stripProjects(run: readonly BlockOf<"project">[]): BlockOf<"project">[] {
+  const leading: BlockOf<"project">[] = [];
+  for (const project of run.slice(0, Math.min(STRIP_MAX, FEATURED_PROJECTS))) {
+    if (coverMode(project) !== "picture") break;
+    leading.push(project);
+  }
+  if (leading.length <= STRIP_MIN) return leading;
+  const ratios = leading.map((project) => ratioOf(coverImage(project)));
+  let best = STRIP_MIN;
+  for (let count = STRIP_MIN; count <= leading.length; count += 1) {
+    const sum = (n: number) => ratios.slice(0, n).reduce((total, ratio) => total + ratio, 0);
+    if (Math.abs(sum(count) - WIDE_ROW) < Math.abs(sum(best) - WIDE_ROW)) best = count;
+  }
+  return leading.slice(0, best);
+}
 
 /**
  * Direction D — "Poster": the creator as a headliner.
@@ -144,27 +172,46 @@ export function PosterRenderer({
     layout.hero !== "frame" &&
     layout.hero !== "plate" &&
     layout.hero !== "statement" &&
-    layout.hero !== "bleed";
+    layout.hero !== "bleed" &&
+    layout.hero !== "strip" &&
+    layout.hero !== "titleblock" &&
+    layout.hero !== "readme";
+  // The wide canvas (layout.work), or the full one (Leuchttisch): pictures run to layout.wall, text
+  // keeps the creator column. Both leave the narrow column from layout.work on.
   const wide = layout.canvas === "wide";
+  const full = layout.canvas === "full";
+  const canvas = wide || full;
+  // Below layout.work the portfolio templates breathe more between sections than the column does.
+  // Folio keeps the column's rhythm there: it came onto the wide canvas later (C-06), and its phone
+  // layout stays as it was.
+  const airy = canvas && theme.template !== "folio";
   // The page's one primary action comes from its contact block and from nowhere else.
   const primary = primaryAction(blocks, now);
   const contact = primary ? blocks.find((block): block is BlockOf<"contact"> => block.type === "contact") : undefined;
   // What the portfolio's blocks need to know about their page.
   const runs = grouped.flatMap((section) => section.items).filter((item) => item.kind === "projects");
-  // The plate hero opens with the first project of the first run when that has a picture (and the
-  // owner set no hero picture of their own): the run below then starts at its second project.
+  // The plate hero (Werkbogen) and the title block (Grundriss) open with the first project of the first
+  // run (when the owner set no hero picture of their own): its picture, else its figure or title set
+  // large (P-08). Leuchttisch's strip opens with the run's first covers. The run below then starts after them.
   const firstRun = runs[0];
   const first = firstRun?.blocks[0];
-  const lead = layout.hero === "plate" && !hasImage(profile.hero) && first && coverMode(first) === "picture" ? first : undefined;
-  // A run that only held the plate's project has nothing left to show; neither has a section that only held that run.
+  const ownHero = hasImage(profile.hero);
+  const lead = (layout.hero === "plate" || layout.hero === "titleblock") && !ownHero && first ? first : undefined;
+  const strip = layout.hero === "strip" && firstRun ? stripProjects(firstRun.blocks) : [];
+  const taken = lead ? 1 : strip.length;
+  // A run the hero showed whole has nothing left to show; neither has a section that only held that run.
   const sections =
-    lead && firstRun?.blocks.length === 1
+    firstRun && taken > 0 && firstRun.blocks.length <= taken
       ? grouped.flatMap((section): Section[] => {
           if (!section.items.includes(firstRun)) return [section];
           const items = section.items.filter((item) => item !== firstRun);
           return items.length > 0 ? [{ ...section, items }] : [];
         })
       : grouped;
+  // The full canvas gives its width to pictures only: a section of work or pictures runs across it, every
+  // other section keeps its words in the creator column beside its title.
+  const spanOf = (section: Section): Section["span"] =>
+    full ? (section.items.some((item) => item.kind === "projects" || (item.kind === "block" && item.block.type === "gallery")) ? "wide" : "text") : section.span;
   // Numbered titles count the titled sections: 01, 02 …
   const titled = sections.filter((section) => section.title !== null);
   // Signposted templates (Laufbahn) list the titled sections as the page's contents.
@@ -183,20 +230,25 @@ export function PosterRenderer({
       : sections[0]?.id === firstSign.id
         ? { href: `#${firstSign.anchor}`, kind: "section", title: firstSign.title }
         : { href: `#${CONTENT_ID}`, kind: "content" };
+  const projects = blocks.filter((block): block is BlockOf<"project"> => block.type === "project");
   const portfolio: PortfolioContext = {
     theme,
     locale: profile.locale,
     ownerName: profile.displayName,
-    projects: blocks.filter((block): block is BlockOf<"project"> => block.type === "project"),
+    projects,
     quotes: blocks.filter((block): block is BlockOf<"quotes"> => block.type === "quotes"),
     runs,
-    lead,
+    firstRun,
+    taken,
     base: projectBase,
     suffix: projectSuffix,
     onOpen: onOpenProject,
     now,
     wide,
   };
+  // The hero's own props, the same for every treatment.
+  const heroProps = { profile, socials, live, theme, preview, contact, primary, now };
+  const quotes = portfolio.quotes;
 
   return (
     <div
@@ -224,14 +276,27 @@ export function PosterRenderer({
       ) : null}
       {/* Signal: a fine grid that fades out down the first screen. Decorative. */}
       {layout.backdrop === "grid" ? <div aria-hidden className="poster-grid pointer-events-none absolute inset-x-0 top-0 h-dvh mask-b-from-20% mask-b-to-100%" /> : null}
+      {/* Grundriss: hairline column guides behind the canvas's twelve columns, like a drawing's grid.
+          Only on the canvas (never on phones) and never when the visitor asks for more contrast. Decorative. */}
+      {layout.backdrop === "columns" ? (
+        <div aria-hidden data-column-guides className="pointer-events-none absolute inset-0 hidden @work:block">
+          {/* A hairline where each column starts, and one where the last ends, faint enough to read through. */}
+          <div className="mx-auto grid h-full max-w-work box-content grid-cols-12 gap-x-6 px-creator-gutter opacity-secondary contrast-more:hidden">
+            {Array.from({ length: 12 }, (_, index) => (
+              <span key={index} className="border-s border-creator-line last:border-e" />
+            ))}
+          </div>
+        </div>
+      ) : null}
 
-      {/* The wide canvas: from desktop widths the column grows to layout.work, keeping a gutter beside it.
-          Signposted pages run edge to edge below it (their hero's picture does; the words keep a column). */}
+      {/* The wide canvas: from desktop widths the column grows to layout.work, keeping a gutter beside it;
+          the full canvas grows to layout.wall. Signposted pages run edge to edge below it (their hero's
+          picture does; the words keep a column). */}
       <div
         className={
           signposted
             ? "relative mx-auto @work:box-content @work:max-w-work @work:px-creator-gutter"
-            : cn("relative mx-auto max-w-creator @prose:pt-10", wide && "@work:box-content @work:max-w-work @work:px-creator-gutter")
+            : cn("relative mx-auto max-w-creator @prose:pt-10", wide && "@work:box-content @work:max-w-work @work:px-creator-gutter", full && "@work:box-content @work:max-w-wall @work:px-creator-gutter")
         }
       >
         {overlay ? <div className="pointer-events-none absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12 *:pointer-events-auto">{overlay}</div> : null}
@@ -255,16 +320,18 @@ export function PosterRenderer({
             lead={heroLead}
             banner={overlay !== undefined && overlay !== null}
           />
-        ) : (
-          <PosterHero
-            profile={profile}
-            socials={socials}
-            live={live}
-            theme={theme}
-            preview={preview}
-            contact={contact}
-            primary={primary}
-            now={now}
+        ) : layout.hero === "strip" ? (
+          <StripHero
+            {...heroProps}
+            strip={
+              strip.length > 0 && firstRun ? (
+                <ProjectStrip projects={strip} total={firstRun.blocks.length} quotes={quotes} base={projectBase} suffix={projectSuffix} onOpen={onOpenProject} priority={!preview} />
+              ) : undefined
+            }
+          />
+        ) : layout.hero === "titleblock" ? (
+          <TitleBlockHero
+            {...heroProps}
             plate={
               lead && firstRun ? (
                 <ProjectPlate
@@ -272,7 +339,33 @@ export function PosterRenderer({
                   total={firstRun.blocks.length}
                   theme={theme}
                   locale={profile.locale}
-                  quotes={portfolio.quotes}
+                  quotes={quotes}
+                  base={projectBase}
+                  suffix={projectSuffix}
+                  onOpen={onOpenProject}
+                  priority={!preview}
+                  drawing
+                />
+              ) : undefined
+            }
+          />
+        ) : layout.hero === "readme" ? (
+          <ReadmeHero
+            {...heroProps}
+            tools={blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")}
+            repos={projects.flatMap((project) => (project.source ? [`${project.source.owner}/${project.source.repo}`] : []))}
+          />
+        ) : (
+          <PosterHero
+            {...heroProps}
+            plate={
+              lead && firstRun ? (
+                <ProjectPlate
+                  project={lead}
+                  total={firstRun.blocks.length}
+                  theme={theme}
+                  locale={profile.locale}
+                  quotes={quotes}
                   base={projectBase}
                   suffix={projectSuffix}
                   onOpen={onOpenProject}
@@ -329,7 +422,13 @@ export function PosterRenderer({
             </div>
           </Main>
         ) : (
-          <Main className={wide ? "grid grid-cols-1 gap-16 px-creator-gutter pt-12 @prose:gap-20 @prose:px-0 @work:gap-24 @work:pt-20" : "grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:px-0"}>
+          <Main
+            className={
+              airy
+                ? "grid grid-cols-1 gap-16 px-creator-gutter pt-12 @prose:gap-20 @prose:px-0 @work:gap-24 @work:pt-20"
+                : cn("grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:px-0", canvas && "@work:gap-24 @work:pt-20")
+            }
+          >
             {sections.map((section) => (
               <PosterSection
                 key={section.id}
@@ -340,8 +439,9 @@ export function PosterRenderer({
                 // The dashboard's preview finds the block being edited by these ids (a section by its title block).
                 blockIds={preview && section.title !== null ? section.id : undefined}
                 ai={isAiBlock(blocks.find((block) => block.id === section.id))}
-                wide={wide}
-                span={section.span}
+                wide={canvas}
+                airy={airy}
+                span={spanOf(section)}
                 // A section of work says how many projects it holds, the hero plate's project included.
                 projects={section.items.reduce((count, item) => (item.kind === "projects" ? count + item.blocks.length : count), 0)}
               >
@@ -406,6 +506,7 @@ function PosterSection({
   blockIds,
   ai,
   wide,
+  airy = wide,
   span,
   projects,
   children,
@@ -417,8 +518,10 @@ function PosterSection({
   blockIds?: string | undefined;
   /** The title comes from an AI-written block. */
   ai: boolean;
-  /** The template uses the wide canvas. */
+  /** The template uses the wide (or the full) canvas. */
   wide: boolean;
+  /** Below the canvas, more room between a title and its content (the portfolio templates; not Folio). */
+  airy?: boolean | undefined;
   span: Section["span"];
   /** How many projects the section holds (0 for a section without work). */
   projects: number;
@@ -437,7 +540,8 @@ function PosterSection({
         aria-labelledby={title === null ? undefined : id}
         data-block-ids={blockIds}
         className={cn(
-          "grid min-w-0 grid-cols-1 gap-4 @prose:gap-6",
+          "grid min-w-0 grid-cols-1",
+          airy ? "gap-4 @prose:gap-6" : "gap-3 @work:gap-6",
           beside && "@work:grid-cols-12 @work:gap-x-6",
           title !== null && marker && "border-t border-creator-line pt-3",
           reveal && "poster-reveal",
@@ -513,12 +617,14 @@ interface PortfolioContext {
   quotes: BlockOf<"quotes">[];
   /** The page's runs of projects, in page order. */
   runs: PosterItem[];
-  /** The project the hero plate shows; its run starts at the second project. */
-  lead: BlockOf<"project"> | undefined;
+  /** The first run, and how many of its first projects the hero shows (the plate's one, the strip's few). */
+  firstRun: PosterItem | undefined;
+  taken: number;
   base: string | undefined;
   suffix: string;
   onOpen: ((id: string) => void) | undefined;
   now: Date;
+  /** The wide canvas: the portfolio's sections spread over it (the full canvas keeps them in the column). */
   wide: boolean;
   /** Signposted templates: the section's title (a note's icon comes from it) and the page's cover letter block. */
   section?: { title: string | null; letter: string | undefined };
@@ -589,7 +695,8 @@ function PosterItemBody({ item, linkStyle, surface, label, nested, gallery, feat
           <ProjectsGroup
             blocks={item.blocks}
             groupIndex={Math.max(0, portfolio.runs.indexOf(item))}
-            leadTaken={portfolio.lead !== undefined && item.blocks[0] === portfolio.lead}
+            leadTaken={item === portfolio.firstRun && portfolio.taken > 0}
+            taken={item === portfolio.firstRun ? portfolio.taken : 0}
             theme={portfolio.theme}
             locale={portfolio.locale}
             quotes={portfolio.quotes}
@@ -671,6 +778,21 @@ function PosterBlock({
     case "newsletter":
       return <NewsletterCard block={block} surface={surface} heading={heading} />;
     case "gallery":
+      // Leuchttisch: every picture uncropped, in rows of equal height across the canvas.
+      if (gallery === "justified") {
+        return (
+          <JustifiedRows
+            items={block.images.map((image) => ({ key: image.src, ratio: ratioOf(image), image }))}
+            label={block.title ?? t("gallery")}
+            canvas={portfolio.theme.layout.canvas === "full" ? "wall" : "work"}
+            render={({ image }, _index, sizes) => (
+              <div style={{ "--ratio": ratioOf(image) } as CSSProperties} className="relative aspect-(--ratio) w-full overflow-hidden bg-creator-surface-2">
+                <MediaImage src={image.src} focal={image.focal} alt={image.alt} sizes={sizes} />
+              </div>
+            )}
+          />
+        );
+      }
       // Portfolios: the work in two columns, tall and square pictures alternating like a contact sheet.
       if (gallery === "grid") {
         return (

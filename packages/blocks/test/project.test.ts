@@ -11,13 +11,17 @@ import {
   figureSize,
   formatYears,
   hasDetail,
+  justifiedBoxes,
+  justifyRows,
   linkLabelKey,
+  logGroups,
   nearestRatio,
   nextPageStep,
   nextStep,
   plateRows,
   primaryAction,
   projectTarget,
+  runLayout,
   sectionKindOf,
   sectionOrder,
   selfTitle,
@@ -243,6 +247,108 @@ describe("chooseProjectsLayout", () => {
     expect(chooseProjectsLayout([...mix(6, 6), ...mix(0, 4)], 0, "auto")).toBe("bento");
     expect(chooseProjectsLayout([...mix(0, 6), ...mix(4, 4)], 0, "bento")).toBe("list");
     expect(FEATURED_PROJECTS).toBe(6);
+  });
+
+  it.each([
+    ["justified, all pictures", mix(4, 4), "justified", "justified", "bento"],
+    ["justified, half pictures", mix(2, 4), "justified", "justified", "bento"],
+    ["justified, under half pictures", mix(1, 3), "justified", "list", "list"],
+    ["justified, one picture", mix(1, 1), "justified", "justified", "bento"],
+    ["justified, nothing", [], "justified", "list", "list"],
+    ["sheets, text only", mix(0, 3), "sheets", "sheets", "list"],
+    ["sheets, pictures", mix(5, 5), "sheets", "sheets", "list"],
+    ["log, one project", mix(1, 1), "log", "log", "list"],
+    ["auto as before", mix(3, 4), "auto", "bento", "bento"],
+    ["rail as before", mix(3, 6), "rail", "rail", "rail"],
+  ] as const)("a template's own layout: %s → drawn %s, named %s", (_, group, wanted, drawn, named) => {
+    expect(runLayout(group, 0, wanted)).toBe(drawn);
+    // The editor names a run in the owner's words: justified rows are a grid, sheets and the log a list.
+    expect(chooseProjectsLayout(group, 0, wanted)).toBe(named);
+  });
+});
+
+describe("justifyRows", () => {
+  /** Width and gap of the boxes in the table (a laptop's canvas, the page's gap). */
+  const WIDTH = 1120;
+  const GAP = 8;
+  const L = 1.5;
+  const P = 2 / 3;
+  const S = 1;
+
+  it.each([
+    ["four landscapes at 4:1", [L, L, L, L], 4, [[0, 1, 2], [3]]],
+    ["portraits fill a row of five", [P, P, P, P, P, P, P], 3.2, [[0, 1, 2, 3, 4], [5, 6]]],
+    ["mixed at 4:1", [L, P, S, L, P, P, S, L], 4, [[0, 1, 2, 3], [4, 5, 6, 7]]],
+    ["a phone's rows of one or two", [L, P, P, S, L, S, P], 1.25, [[0], [1, 2], [3], [4], [5], [6]]],
+    ["a panorama wider than the row", [4.5, P, P], 3, [[0], [1, 2]]],
+    ["one picture", [S], 4, [[0]]],
+    ["nothing", [], 4, []],
+  ] as const)("%s", (_, ratios, target, expected) => {
+    const rows = justifyRows(ratios, target);
+    expect(rows.map((row) => row.items.map((item) => item.index))).toEqual(expected);
+    rows.forEach((row, index) => {
+      const last = index === rows.length - 1;
+      const sum = row.items.reduce((total, item) => total + item.ratio, 0);
+      // Only the last row can fall short; it is not stretched: it keeps the target's height.
+      expect(row.short, `row ${String(index)} short`).toBe(last && sum < target);
+      expect(row.aspect).toBeCloseTo(row.short ? target : sum, 10);
+      const boxes = justifiedBoxes(row, WIDTH, GAP).map((box) => ({ w: Math.round(box.w), h: Math.round(box.h) }));
+      // Equal heights in a row (within a pixel of rounding), every picture at its own ratio within ±1 %.
+      const heights = boxes.map((box) => box.h);
+      expect(Math.max(...heights) - Math.min(...heights), `row ${String(index)} heights`).toBeLessThanOrEqual(1);
+      boxes.forEach((box, at) => expect(Math.abs(box.w / box.h / (row.items[at]?.ratio ?? 0) - 1), `row ${String(index)} picture ${String(at)}`).toBeLessThanOrEqual(0.01));
+      const used = boxes.reduce((total, box) => total + box.w, 0) + (row.items.length - 1) * GAP;
+      if (row.short) {
+        // A short row ends open and stands as tall as a full row at the target would.
+        expect(used).toBeLessThan(WIDTH);
+        expect(Math.abs((heights[0] ?? 0) - (WIDTH - row.items.length * GAP) / target)).toBeLessThanOrEqual(1);
+      } else {
+        // A full row fills the width, to the pixel.
+        expect(Math.abs(used - WIDTH)).toBeLessThanOrEqual(row.items.length);
+      }
+    });
+  });
+
+  it("closes a row before a picture that would overshoot more than the row falls short", () => {
+    // 3.0 of 3.2: a fourth landscape (4.5) overshoots by 1.3, the row falls short by 0.2.
+    expect(justifyRows([L, L, L], 3.2).map((row) => row.items.length)).toEqual([2, 1]);
+    // 2.67 of 3.2: a fifth portrait (3.33) overshoots by 0.13, less than 0.53 short: it joins.
+    expect(justifyRows([P, P, P, P, P], 3.2).map((row) => row.items.length)).toEqual([5]);
+  });
+
+  it("lays out a picture of unknown or broken size at 3:2", () => {
+    const [row] = justifyRows([Number.NaN, 0, -1, Number.POSITIVE_INFINITY], 100);
+    expect(row?.items.map((item) => item.ratio)).toEqual([1.5, 1.5, 1.5, 1.5]);
+    expect(row?.short).toBe(true);
+  });
+});
+
+describe("logGroups", () => {
+  const dated = (id: string, from: number, to?: number | "now"): Project => project({ id, slug: id, year: to === undefined ? { from } : { from, to } });
+
+  it("groups by the starting year, latest first, undated last, page order within a year", () => {
+    const groups = logGroups([dated("a", 2023), plain("b"), dated("c", 2025, "now"), dated("d", 2023, 2024), dated("e", 2025), plain("f")]);
+    expect(groups.map((group) => [group.year, group.entries.map((entry) => entry.project.id)])).toEqual([
+      [2025, ["c", "e"]],
+      [2023, ["a", "d"]],
+      [null, ["b", "f"]],
+    ]);
+  });
+
+  it.each([
+    ["until now", dated("x", 2024, "now"), "running"],
+    ["one year", dated("x", 2024), "done"],
+    ["a range", dated("x", 2021, 2024), "done"],
+    ["the same year as its end", dated("x", 2024, 2024), "done"],
+    ["no year", plain("x"), null],
+  ] as const)("a project with %s is %s", (_, value, status) => {
+    expect(logGroups([value])[0]?.entries[0]?.status).toBe(status);
+  });
+
+  it("keeps every project once and returns nothing for no projects", () => {
+    const all = [dated("a", 2020), dated("b", 2026, "now"), plain("c"), dated("d", 2020, 2022)];
+    expect(logGroups(all).flatMap((group) => group.entries.map((entry) => entry.project.id)).sort()).toEqual(["a", "b", "c", "d"]);
+    expect(logGroups([])).toEqual([]);
   });
 });
 

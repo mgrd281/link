@@ -1,26 +1,30 @@
 import type { BlockOf, Profile } from "@linkyo/blocks";
 import {
   bentoRows,
-  chooseProjectsLayout,
   coverImage,
   coverMode,
   figureSize,
   formatYears,
+  logGroups,
   nearestRatio,
   pictureRatio,
   projectTarget,
+  runLayout,
   type CoverRatio,
+  type LogStatus,
   type ProjectTarget,
 } from "@linkyo/blocks/project";
 import { FEATURED_PROJECTS } from "@linkyo/blocks/rules";
+import { tokens } from "@linkyo/tokens";
 import type { ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
 import { ArrowRight, ArrowUpRight, ChevronDown, ChevronRight, Scale, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useId, type CSSProperties, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes, useCreatorFormat } from "../shared/creator-kit";
 import { RailButtons } from "../shared/rail-buttons";
+import { JustifiedRows, ratioOf } from "./justified";
 import { linkDestination } from "./sections";
 import { displayStyle, pageSide, pressable, railFrame, railTrack } from "./styles";
 
@@ -38,8 +42,12 @@ export const RATIO_CLASS: Record<CoverRatio, string> = { portrait: "aspect-portr
  * (bento), a numbered list, or a row to swipe (rail). A run shows its first six projects; the rest
  * wait in a native `<details>` below, as plain rows.
  *
+ * Templates may bring a layout of their own (`runLayout`): Leuchttisch's uncropped rows of equal height
+ * (justified), Grundriss's drawing sheets with a fact table (sheets), Logbuch's build log by year (log).
+ *
  * `blocks` is always the whole run. With `leadTaken` the hero already shows its first project (the
- * plate of Werkbogen): the run starts at its second project, numbered 02, and the six count the plate.
+ * plate of Werkbogen and Grundriss), with `taken` its first few (Leuchttisch's strip): the run starts
+ * after them, numbered on from there, and the six count what the hero shows.
  *
  * Every card prints its title, its sentence and role and year; nothing is shown on hover only, and
  * no text sits on a picture. A card leads to the project's page, or to the project's own link when
@@ -50,6 +58,7 @@ export function ProjectsGroup({
   blocks,
   groupIndex,
   leadTaken,
+  taken = leadTaken ? 1 : 0,
   theme,
   locale,
   quotes,
@@ -63,6 +72,8 @@ export function ProjectsGroup({
   groupIndex: number;
   /** The hero already shows the first project (Werkbogen's plate): the grid has no lead tile. */
   leadTaken: boolean;
+  /** How many of the run's first projects the hero shows (Leuchttisch's strip); 1 with `leadTaken`. */
+  taken?: number | undefined;
   theme: ResolvedCreatorTheme;
   locale: Profile["locale"];
   /** The page's quotes: a quote about a project gives it a page of its own. */
@@ -77,12 +88,12 @@ export function ProjectsGroup({
   numbered: boolean;
 }): ReactNode {
   const t = useTranslations("creator");
-  const chosen = chooseProjectsLayout(blocks, groupIndex, theme.layout.projects);
-  const wide = theme.layout.canvas === "wide";
+  const chosen = runLayout(blocks, groupIndex, theme.layout.projects);
+  const wide = theme.layout.canvas !== "column";
   // The bold look sets its list very large and its tiles in the body face.
   const loud = theme.layout.headings === "headline";
   const entries: Entry[] = blocks.map((project, index) => ({ project, position: index + 1, target: targetOf(project, quotes, base, suffix, onOpen) }));
-  const shown = entries.slice(leadTaken ? 1 : 0, FEATURED_PROJECTS);
+  const shown = entries.slice(taken, FEATURED_PROJECTS);
   // A row holds two cards or more (plan 1.4.8): when the plate took the first of two, the one left is a list.
   const layout = chosen === "rail" && shown.length < 2 ? "list" : chosen;
   const rest = entries.slice(FEATURED_PROJECTS);
@@ -91,10 +102,20 @@ export function ProjectsGroup({
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-4">
-      {shown.length === 0 ? null : layout === "bento" ? (
+      {shown.length === 0 ? null : layout === "justified" ? (
+        <JustifiedWork entries={shown} total={blocks.length} canvas={theme.layout.canvas === "full" ? "wall" : "work"} onOpen={onOpen} />
+      ) : layout === "sheets" ? (
+        <ol start={shown[0]?.position} className="border-t border-creator-line-strong">
+          {shown.map((entry) => (
+            <Sheet key={entry.project.id} entry={entry} {...shared} />
+          ))}
+        </ol>
+      ) : layout === "log" ? (
+        <BuildLog entries={shown} {...shared} />
+      ) : layout === "bento" ? (
         // One list that is one grid: every tile is a direct child, in page order (no `order`, no dense flow).
         <div role="list" className={cn("grid grid-cols-2 gap-x-3 gap-y-8", wide && "@prose:gap-x-4 @prose:gap-y-10 @work:grid-cols-6 @work:gap-x-6 @work:gap-y-12")}>
-          {bentoTiles(shown, leadTaken).map(({ entry, ...tile }) => (
+          {bentoTiles(shown, taken > 0).map(({ entry, ...tile }) => (
             <Tile key={entry.project.id} entry={entry} {...tile} {...shared} />
           ))}
         </div>
@@ -190,10 +211,16 @@ export function plateRatio(image: { w?: number | undefined; h?: number | undefin
 }
 
 /**
- * The hero plate of Werkbogen: the first project's cover, large, as the link to that project. Its
- * caption sits under it (number 01, title, role and year, an arrow). The link is named "Project 1
- * of N: title", so someone who moves by links meets it as the first project. The page's one
- * preloaded picture.
+ * The hero plate of Werkbogen (and Grundriss's lead sheet): the first project's cover, large, as the
+ * link to that project. Its caption sits under it (number 01, title, role and year, an arrow). The link
+ * is named "Project 1 of N: title", so someone who moves by links meets it as the first project. The
+ * page's one preloaded picture.
+ *
+ * A first project without a picture still opens the page (P-08): its first result figure or its title
+ * set large on a fill step, at 3:2, so a text-only page fills the wide canvas's second half too.
+ *
+ * `drawing` (Grundriss) labels the plate like a drawing: a ruled strip with the sheet number, the title,
+ * and the client (or "Confidential") and year at the end, every figure isolated for Arabic pages.
  */
 export function ProjectPlate({
   project,
@@ -205,6 +232,7 @@ export function ProjectPlate({
   suffix = "",
   onOpen,
   priority,
+  drawing = false,
 }: {
   project: BlockOf<"project">;
   /** All projects of the run this project opens, the plate's own included. */
@@ -216,38 +244,190 @@ export function ProjectPlate({
   suffix?: string | undefined;
   onOpen?: ((id: string) => void) | undefined;
   priority: boolean;
+  drawing?: boolean | undefined;
 }): ReactNode {
   const t = useTranslations("creator");
   const picture = coverImage(project);
-  if (!picture) return null;
-  const wide = theme.layout.canvas === "wide";
+  const wide = theme.layout.canvas !== "column";
   const entry: Entry = { project, position: 1, target: targetOf(project, quotes, base, suffix, onOpen) };
   const name = t("portfolio.plateLink", { total, title: project.title });
   const linked = entry.target.kind === "page" || entry.target.kind === "link";
   // Unlinked (a preview), the visible title is the heading itself.
   const PlateTitle = linked ? "p" : "h2";
+  const years = project.year ? formatYears(project.year, t("portfolio.untilNow")) : undefined;
+  const client = project.confidential ? t("portfolio.confidential") : project.client;
   return (
     <div id={project.slug} data-block={project.id} className="grid min-w-0 scroll-mt-16">
       <Shell entry={entry} onOpen={onOpen} label={name} className="grid min-w-0 grid-cols-1 gap-3 @work:gap-4">
         {/* The link's name begins with these words; they hold the title, so the title below is not read
             twice. A heading, so someone who moves by headings meets the plate as the first project. */}
         {linked ? <h2 className="sr-only">{name}</h2> : null}
-        <div data-plate className={cn(plateFrame, plateRatio(picture, wide))}>
-          <MediaImage src={picture.src} focal={picture.focal} alt="" sizes={wide ? mediaSizes.workPlate : mediaSizes.column} priority={priority} />
-        </div>
-        <div className="flex min-w-0 items-start gap-3">
-          <span aria-hidden className="pt-1 text-caption font-semibold text-creator-accent-text tabular-nums">
-            {projectNumber(1)}
-          </span>
-          <div className="grid min-w-0 flex-1 grid-cols-1 gap-1">
-            <PlateTitle dir="auto" aria-hidden={linked} className={cn(pageSide, TITLE, "font-creator-display text-h3 leading-tight rtl:leading-snug")} style={displayStyle}>
+        {picture ? (
+          <div data-plate className={cn(plateFrame, drawing ? cn("aspect-photo", wide && PLATE_WIDE[nearestRatio(picture.w, picture.h)]) : plateRatio(picture, wide))}>
+            <MediaImage src={picture.src} focal={picture.focal} alt="" sizes={wide ? mediaSizes.workPlate : mediaSizes.column} priority={priority} />
+          </div>
+        ) : (
+          <TextPlate project={project} wide={wide} />
+        )}
+        {drawing ? (
+          // A drawing's title strip: number, title, then the facts at the line's end.
+          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1 border-t border-creator-line-strong pt-3">
+            <span aria-hidden className="text-small font-semibold text-creator-accent-text tabular-nums">
+              {projectNumber(1)}
+            </span>
+            <PlateTitle dir="auto" aria-hidden={linked} className={cn(pageSide, TITLE, "font-creator-display text-title leading-snug font-semibold")} style={displayStyle}>
               {project.title}
             </PlateTitle>
-            <Meta entry={entry} locale={locale} />
+            <TargetArrow target={entry.target} className="self-center" />
+            {client || years ? (
+              <p className="col-start-2 col-end-4 min-w-0 text-small text-creator-fg-muted">
+                {client ? <span dir="auto">{client}</span> : null}
+                {client && years ? <span aria-hidden> · </span> : null}
+                {years ? <bdi className="whitespace-nowrap tabular-nums">{years}</bdi> : null}
+              </p>
+            ) : null}
           </div>
-          <TargetArrow target={entry.target} className="mt-1" />
-        </div>
+        ) : (
+          <div className="flex min-w-0 items-start gap-3">
+            <span aria-hidden className="pt-1 text-caption font-semibold text-creator-accent-text tabular-nums">
+              {projectNumber(1)}
+            </span>
+            <div className="grid min-w-0 flex-1 grid-cols-1 gap-1">
+              <PlateTitle dir="auto" aria-hidden={linked} className={cn(pageSide, TITLE, "font-creator-display text-h3 leading-tight rtl:leading-snug")} style={displayStyle}>
+                {project.title}
+              </PlateTitle>
+              <Meta entry={entry} locale={locale} />
+            </div>
+            <TargetArrow target={entry.target} className="mt-1" />
+          </div>
+        )}
       </Shell>
+    </div>
+  );
+}
+
+/** A plate's result figure, by its length (`figureSize`); a second figure beside it takes one step less. */
+const PLATE_FIGURE: Record<"lg" | "md" | "sm", [one: string, two: string]> = {
+  lg: ["text-display @work:text-display-2xl", "text-display-sm @work:text-display-xl"],
+  md: ["text-display-sm @work:text-display-xl", "text-h1 @work:text-display"],
+  sm: ["text-h1 @work:text-display", "text-h2 @work:text-display-sm"],
+};
+
+/**
+ * The plate of a first project without a picture (P-08): on a fill step, its first topic (or its
+ * repository) at the top, and at the foot its result figures set large with their labels, up to two
+ * side by side; without a figure, its title set large. The caption under the plate names the project.
+ */
+function TextPlate({ project, wide }: { project: Project; wide: boolean }): ReactNode {
+  const figures = (project.results ?? []).slice(0, 2);
+  const topic = project.source ? `${project.source.owner}/${project.source.repo}` : project.tags?.[0];
+  return (
+    <div data-plate data-cover={figures.length > 0 ? "figure" : "title"} className={cn(plateFrame, "grid aspect-photo content-between gap-4 p-6", wide && "@work:p-10")}>
+      {topic ? (
+        <span dir={project.source ? "ltr" : "auto"} className={cn(pageSide, "block min-w-0 truncate text-caption font-medium text-creator-fg-muted", project.source && "font-mono")}>
+          {topic}
+        </span>
+      ) : (
+        <span />
+      )}
+      {figures.length > 0 ? (
+        <dl className="flex min-w-0 flex-wrap items-end gap-x-10 gap-y-4">
+          {figures.map((figure) => (
+            <div key={`${figure.value}-${figure.label}`} className="flex min-w-0 flex-col-reverse gap-2">
+              <dt dir="auto" className={cn(pageSide, "text-small break-words text-creator-fg-muted")}>
+                {figure.label}
+              </dt>
+              <dd className={cn("min-w-0 font-creator-display leading-none wrap-anywhere", PLATE_FIGURE[figureSize(figure.value)][figures.length > 1 ? 1 : 0])} style={displayStyle}>
+                <bdi>{figure.value}</bdi>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <span aria-hidden dir="auto" className={cn(pageSide, TITLE, "block min-w-0 font-creator-display text-h1 leading-tight rtl:leading-snug", wide && "@work:text-display")} style={displayStyle}>
+          {project.title}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Leuchttisch's strip: the first covers of the work at their own ratios, each the link to its project,
+ * with a frame number under it ("01/06", tabular figures) and its title. Phones: a strip to swipe, up to
+ * 70svh tall, each picture whole on the screen (as tall as 70svh allows, never wider than the column
+ * less a peek of the next one), standing on one line so the captions align, snapping picture by picture.
+ * The canvas: one justified row across the wall (every picture as tall as the others), never taller
+ * than 70svh. No text on a picture; the first picture is the page's one preloaded picture.
+ */
+export function ProjectStrip({
+  projects,
+  total,
+  quotes,
+  base,
+  suffix = "",
+  onOpen,
+  priority,
+}: {
+  projects: BlockOf<"project">[];
+  /** All projects of the run the strip opens. */
+  total: number;
+  quotes: BlockOf<"quotes">[];
+  base?: string | undefined;
+  suffix?: string | undefined;
+  onOpen?: ((id: string) => void) | undefined;
+  priority: boolean;
+}): ReactNode {
+  const t = useTranslations("creator");
+  const frames = projects.flatMap((project, index) => {
+    const picture = coverImage(project);
+    return picture ? [{ project, picture, ratio: pictureRatio(picture), position: index + 1 }] : [];
+  });
+  const sum = frames.reduce((total_, frame) => total_ + frame.ratio, 0);
+  if (frames.length === 0) return null;
+  return (
+    <div role="region" aria-label={t("scroller", { title: t("portfolio.work") })} tabIndex={0} className={cn(railFrame, "@work:overflow-visible")}>
+      {/* The row is never taller than 70svh on the canvas: its width stops at 70svh times its ratios. */}
+      <ol
+        style={{ "--strip": sum } as CSSProperties}
+        className={cn(railTrack, "flex items-end gap-2 @work:max-w-[calc(70svh*var(--strip))] @work:snap-none @work:items-start @work:gap-3 @work:overflow-visible")}
+      >
+        {frames.map(({ project, picture, ratio, position }, index) => {
+          const entry: Entry = { project, position, target: targetOf(project, quotes, base, suffix, onOpen) };
+          // Its share of the row on the canvas, for the picture's `sizes`.
+          const share = ratio / sum;
+          return (
+            <li
+              key={project.id}
+              id={project.slug}
+              data-block={project.id}
+              style={{ "--ratio": ratio } as CSSProperties}
+              className="grid w-[min(calc(100%-var(--spacing-8)),calc(70svh*var(--ratio)))] min-w-0 shrink-0 snap-start scroll-mt-16 @work:w-auto @work:flex-[var(--ratio)_1_0%] @work:shrink"
+            >
+              <Shell entry={entry} onOpen={onOpen} className="grid min-w-0 content-start gap-2">
+                <div data-plate className="relative aspect-(--ratio) w-full overflow-hidden bg-creator-surface-2">
+                  <MediaImage
+                    src={picture.src}
+                    focal={picture.focal}
+                    alt=""
+                    sizes={`(min-width: ${String(tokens.layout.work)}px) ${String(Math.max(1, Math.round(share * 100)))}vw, 100vw`}
+                    priority={priority && index === 0}
+                  />
+                </div>
+                <p className="flex min-w-0 items-baseline gap-2 text-small">
+                  <span aria-hidden className="shrink-0 text-caption font-semibold text-creator-accent-text tabular-nums">
+                    {projectNumber(position)}/{projectNumber(total)}
+                  </span>
+                  <span dir="auto" className={cn(pageSide, "min-w-0 truncate font-semibold")}>
+                    {project.title}
+                  </span>
+                  {project.year ? <bdi className="shrink-0 text-creator-fg-muted tabular-nums">{formatYears(project.year, t("portfolio.untilNow"))}</bdi> : null}
+                </p>
+              </Shell>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
@@ -702,5 +882,186 @@ function Row({ entry, compact, numbered, loud, wide, locale, onOpen }: { entry: 
         </div>
       </Shell>
     </li>
+  );
+}
+
+// ─── A template's own layouts ─────────────────────────────────────────────────────────────────
+
+/** Leuchttisch: a cover without a picture stands in the rows as a card of 5:4, a phone row of its own. */
+const CARD_RATIO = 5 / 4;
+
+/**
+ * Leuchttisch's work (justified): the covers in rows of equal height, each uncropped at its own ratio,
+ * with its frame number ("04/06") and title under it, never on it. A project without a picture stands
+ * as a card with its figure or title.
+ */
+function JustifiedWork({ entries, total, canvas, onOpen }: { entries: Entry[]; total: number; canvas: "work" | "wall"; onOpen: Shared["onOpen"] }): ReactNode {
+  const t = useTranslations("creator");
+  const items = entries.map((entry) => {
+    const picture = coverImage(entry.project);
+    return { key: entry.project.id, ratio: picture ? ratioOf(picture) : CARD_RATIO, entry, picture };
+  });
+  return (
+    <JustifiedRows
+      items={items}
+      canvas={canvas}
+      render={({ entry, picture }, _index, sizes) => {
+        const { project } = entry;
+        // A title cover is the card's title: the caption does not say it twice.
+        const titled = coverMode(project) !== "title";
+        return (
+          <div id={project.slug} data-block={project.id} className="grid min-w-0 scroll-mt-16">
+            <Shell entry={entry} onOpen={onOpen} className="grid min-w-0 content-start gap-2">
+              {picture ? (
+                <div data-cover="picture" className="relative aspect-(--ratio) w-full overflow-hidden bg-creator-surface-2">
+                  <MediaImage src={picture.src} focal={picture.focal} alt="" sizes={sizes} />
+                </div>
+              ) : (
+                <Cover project={project} sizes={sizes} ratio="aspect-(--ratio) w-full" priority={false} size="tile" heading loud={false} />
+              )}
+              <div className="flex min-w-0 items-baseline gap-2">
+                <span aria-hidden className="shrink-0 text-caption font-semibold text-creator-accent-text tabular-nums">
+                  {projectNumber(entry.position)}/{projectNumber(total)}
+                </span>
+                {titled ? (
+                  <h3 dir="auto" className={cn(pageSide, TITLE, "min-w-0 text-small leading-snug font-semibold")}>
+                    {project.title}
+                  </h3>
+                ) : null}
+                {project.year ? <bdi className="ms-auto shrink-0 text-small text-creator-fg-muted tabular-nums">{formatYears(project.year, t("portfolio.untilNow"))}</bdi> : null}
+              </div>
+            </Shell>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+/**
+ * Grundriss's work (sheets): one drawing sheet per project between strong hairlines. The cover takes
+ * columns 1–7 of the canvas; the sheet number and title, the sentence and a fact table (role, client
+ * or "Confidential", year, up to two result figures) take 8–12. Stacked on phones. Every value is
+ * isolated (`<bdi>`), so Latin figures such as "1.240 m²" or "LPH 1–5" keep their order on Arabic pages.
+ */
+function Sheet({ entry, wide, onOpen }: { entry: Entry } & Shared): ReactNode {
+  const t = useTranslations("creator");
+  const { project, target } = entry;
+  const years = project.year ? formatYears(project.year, t("portfolio.untilNow")) : undefined;
+  const client = project.confidential ? t("portfolio.confidential") : project.client;
+  const facts: [label: string, value: string][] = [];
+  if (project.role) facts.push([t("portfolio.factRole"), project.role]);
+  if (client) facts.push([t("portfolio.factFor"), client]);
+  if (years) facts.push([t("portfolio.factYear"), years]);
+  for (const figure of (project.results ?? []).slice(0, 2)) facts.push([figure.label, figure.value]);
+  // The sheet's words always carry its title, and the fact table its figures: a cover without a
+  // picture (the title or the first figure set large) is the drawing's face, read once, not twice.
+  const drawn = coverMode(project) !== "picture";
+  return (
+    <li id={project.slug} data-block={project.id} className="scroll-mt-16 border-b border-creator-line-strong">
+      <Shell entry={entry} onOpen={onOpen} className={cn("grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 py-6", wide && "@work:grid-cols-12 @work:py-10")}>
+        <div aria-hidden={drawn || undefined} className={cn("min-w-0", wide && "@work:col-span-7")}>
+          <Cover project={project} sizes={wide ? mediaSizes.workPlate : mediaSizes.column} ratio="aspect-photo" priority={false} size="lead" heading={false} loud={false} roomy={wide} />
+        </div>
+        <div className={cn("grid min-w-0 content-start gap-4", wide && "@work:col-span-5")}>
+          <div className="flex min-w-0 items-baseline gap-3">
+            <span aria-hidden className="shrink-0 text-small font-semibold text-creator-accent-text tabular-nums">
+              {projectNumber(entry.position)}
+            </span>
+            <h3 dir="auto" className={cn(pageSide, TITLE, "min-w-0 flex-1 font-creator-display text-h2 leading-tight rtl:leading-snug")} style={displayStyle}>
+              {project.title}
+            </h3>
+            <TargetArrow target={target} className="self-center" />
+          </div>
+          <p dir="auto" className={cn(pageSide, "text-body text-pretty break-words text-creator-fg-muted")}>
+            {project.summary}
+          </p>
+          {facts.length > 0 ? (
+            <dl className="grid grid-cols-1 border-t border-creator-line text-small">
+              {facts.map(([label, value]) => (
+                <div key={`${label}-${value}`} className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-4 border-b border-creator-line py-2">
+                  <dt dir="auto" className={cn(pageSide, "min-w-0 break-words text-creator-fg-muted")}>
+                    {label}
+                  </dt>
+                  <dd className="min-w-0 font-semibold break-words">
+                    <bdi>{value}</bdi>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+        </div>
+      </Shell>
+    </li>
+  );
+}
+
+/** A project's place in a build log: a dot and the word, never the colour alone. */
+function LogChip({ status }: { status: NonNullable<LogStatus> }): ReactNode {
+  const t = useTranslations("creator");
+  return (
+    <span className="inline-flex w-fit items-center gap-2 rounded-full border border-creator-line-strong px-2 py-0.5 text-caption font-semibold">
+      <span aria-hidden className={cn("size-dot shrink-0 rounded-full", status === "running" ? "bg-creator-accent" : "border border-creator-fg-muted")} />
+      {t(status === "running" ? "portfolio.logRunning" : "portfolio.logDone")}
+    </span>
+  );
+}
+
+/**
+ * Logbuch's work (log): a build log grouped by the year each project started (`logGroups`), the latest
+ * first. Phones: the year is a divider row (the year, then a hairline). The canvas: the year stands in
+ * columns 1–2 and stays under the bar while its entries pass (sticky at top-16); the entries take 3–12:
+ * a "running" or "done" chip, the title, the sentence, the facts line (role and years, stars, language,
+ * licence) and a small cover at the end. Each year's list is named by its year.
+ */
+function BuildLog({ entries, wide, locale, onOpen }: { entries: Entry[] } & Shared): ReactNode {
+  const t = useTranslations("creator");
+  const id = useId();
+  const byId = new Map(entries.map((entry) => [entry.project.id, entry]));
+  return (
+    <div className="grid grid-cols-1">
+      {logGroups(entries.map((entry) => entry.project)).map((group, index) => {
+        const label = `${id}-${String(index)}`;
+        return (
+          <div key={group.year ?? "undated"} className={cn("grid grid-cols-1", wide && "@work:grid-cols-12 @work:gap-x-6 @work:border-t @work:border-creator-line")}>
+            <p id={label} className={cn("flex min-w-0 items-center gap-3 pt-4 pb-1 text-title font-semibold", wide && "@work:sticky @work:top-16 @work:col-span-2 @work:self-start @work:py-6")}>
+              {group.year === null ? (
+                <span dir="auto" className="text-creator-fg-muted">
+                  {t("portfolio.logUndated")}
+                </span>
+              ) : (
+                <bdi className="tabular-nums">{group.year}</bdi>
+              )}
+              <span aria-hidden className={cn("h-px min-w-6 flex-1 bg-creator-line", wide && "@work:hidden")} />
+            </p>
+            <ol aria-labelledby={label} className={cn("grid min-w-0 grid-cols-1", wide && "@work:col-span-10 @work:col-start-3")}>
+              {group.entries.map(({ project, status }) => {
+                const entry = byId.get(project.id);
+                if (!entry) return null;
+                return (
+                  <li key={project.id} id={project.slug} data-block={project.id} className="scroll-mt-16 border-t border-creator-line first:border-t-0">
+                    <Shell entry={entry} onOpen={onOpen} className={cn("grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-2 py-4", wide && "@work:grid-cols-10 @work:gap-x-6 @work:py-6")}>
+                      <div className={cn("grid min-w-0 content-start justify-items-start gap-2", wide && "@work:col-span-7")}>
+                        {status ? <LogChip status={status} /> : null}
+                        <h3 dir="auto" className={cn(pageSide, TITLE, "w-full font-creator-display text-h3 leading-tight rtl:leading-snug", wide && "@work:text-h2")} style={displayStyle}>
+                          {project.title}
+                        </h3>
+                        <p dir="auto" className={cn(pageSide, "w-full text-small break-words text-creator-fg-muted", wide && "@work:text-body")}>
+                          {project.summary}
+                        </p>
+                        <Meta entry={entry} locale={locale} className="w-full" />
+                      </div>
+                      <div className={cn("grid justify-items-end", wide && "@work:col-span-3 @work:justify-items-stretch")}>
+                        <Cover project={project} sizes={wide ? mediaSizes.workRowEnd : mediaSizes.thumb} ratio={cn("size-20", wide && "@work:aspect-photo @work:h-auto @work:w-full")} priority={false} size="thumb" heading={false} loud={false} />
+                      </div>
+                    </Shell>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        );
+      })}
+    </div>
   );
 }

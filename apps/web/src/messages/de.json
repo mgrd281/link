@@ -538,7 +538,21 @@
       "railOn": "Weiterblättern",
       "projectMissing": "Dieses Projekt gibt es nicht mehr.",
       "toPage": "Zur Seite",
-      "plateLink": "Projekt 1 von {total}: {title}"
+      "plateLink": "Projekt 1 von {total}: {title}",
+      "logRunning": "läuft",
+      "logDone": "fertig",
+      "logUndated": "Ohne Jahr"
+    },
+    "readme": {
+      "stack": "Stack",
+      "place": "Ort",
+      "available": "Verfügbar",
+      "repos": "Repos"
+    },
+    "titleblock": {
+      "discipline": "Fach",
+      "place": "Ort",
+      "status": "Status"
     },
     "laufbahn": {
       "index": "Abschnitte",

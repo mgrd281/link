@@ -258,7 +258,9 @@ describe("the renderer and the portfolio blocks", () => {
 
   it("prints every project of a run, each under its address, and keeps the rest of the page", () => {
     const markup = html("de", { blocks: work });
-    expect(markup).toContain('<li id="hafenlicht"');
+    // Werkbogen's plate opens with the first project also when it has no picture (P-08): its title,
+    // set large, under its address; the run goes on with the second.
+    expect(markup).toMatch(/<div id="hafenlicht" data-block="hafenlicht"[^>]*>[\s\S]*data-plate/);
     expect(markup).toContain('<li id="werft"');
     expect(markup.indexOf("Hafenlicht")).toBeLessThan(markup.indexOf("Werft bei Nacht"));
     expect(markup).toContain("Arbeiten");
@@ -295,7 +297,8 @@ describe("the renderer and the portfolio blocks", () => {
     const hidden: Block = { ...project("geheim", "Geheim"), visible: false };
     for (const id of ["nope", "geheim", "shop"]) {
       const markup = html("de", { blocks: [...work, hidden], openProject: { id, onBack: () => undefined } });
-      expect(markup, id).toContain('<li id="hafenlicht"');
+      expect(markup, id).toContain('<div id="hafenlicht" data-block="hafenlicht"');
+      expect(markup, id).toContain('<li id="werft"');
       expect(markup, id).not.toContain("Zurück zu");
       expect(markup, id).not.toContain("Geheim");
     }

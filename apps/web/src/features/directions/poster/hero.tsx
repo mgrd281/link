@@ -1,6 +1,6 @@
 import { hasImage, type AiProfileField, type BlockOf, type Page } from "@linkyo/blocks";
 import { contactStatus } from "@linkyo/blocks/project";
-import { creatorTokens } from "@linkyo/tokens";
+import { creatorTokens, tokens } from "@linkyo/tokens";
 import { PAIRING_IDS, type ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
 import { BadgeCheck, FileText } from "lucide-react";
@@ -73,20 +73,42 @@ const NAME_SCALE = {
     ltr: "text-[length:clamp(var(--text-h1),var(--name-fit),var(--text-display-xl))] @work:text-[length:clamp(var(--text-h1),var(--name-fit-work),var(--text-display-2xl))] leading-none",
     rtl: "text-[length:clamp(var(--text-h1),var(--name-fit),var(--text-display))] @work:text-[length:clamp(var(--text-h1),var(--name-fit-work),var(--text-display-xl))] leading-tight",
   },
+  // Grundriss's title block and Logbuch's README: the plate's sizes, on less room (a box's padding, a
+  // heading mark), so a long name may take one step less (h2) before it would break.
+  block: {
+    ltr: "text-[length:clamp(var(--text-h2),var(--name-fit),var(--text-display-sm))] @work:text-[length:clamp(var(--text-h2),var(--name-fit-work),var(--text-display-xl))] leading-none",
+    rtl: "text-[length:clamp(var(--text-h2),var(--name-fit),var(--text-display))] @work:text-[length:clamp(var(--text-h2),var(--name-fit-work),var(--text-display-xl))] leading-snug",
+  },
 } as const;
 
-function Name({ profile, isRtl, theme, compact = false, scale }: { profile: Profile; isRtl: boolean; theme: ResolvedCreatorTheme; compact?: boolean; scale?: keyof typeof NAME_SCALE }) {
+export function Name({
+  profile,
+  isRtl,
+  theme,
+  compact = false,
+  scale,
+  inset,
+}: {
+  profile: Profile;
+  isRtl: boolean;
+  theme: ResolvedCreatorTheme;
+  compact?: boolean;
+  scale?: keyof typeof NAME_SCALE;
+  /** What else shares the name's line or box (a title block's padding, a heading mark and an avatar), as a sum of tokens. */
+  inset?: string | undefined;
+}) {
   const t = useTranslations("creator");
   const pairing = PAIRING_IDS.find((id) => creatorTokens.pairings[id] === theme.pairing) ?? "classic";
   const ems = nameEms(profile.displayName, pairing, isRtl);
+  const less = inset ? ` - (${inset})` : "";
   // Room for the name: the column minus the gutters (and the verified badge), shared by its characters.
   const room = profile.verified
-    ? "min(100cqi, var(--container-creator)) - 2 * var(--spacing-creator-gutter) - var(--spacing-icon-lg) - var(--spacing-2)"
-    : "min(100cqi, var(--container-creator)) - 2 * var(--spacing-creator-gutter)";
+    ? `min(100cqi, var(--container-creator)) - 2 * var(--spacing-creator-gutter) - var(--spacing-icon-lg) - var(--spacing-2)${less}`
+    : `min(100cqi, var(--container-creator)) - 2 * var(--spacing-creator-gutter)${less}`;
   // On the wide canvas: five of its twelve columns beside the plate, or the whole canvas.
   const canvas = "min(100cqi - 2 * var(--spacing-creator-gutter), var(--container-work))";
   const badge = profile.verified ? " - var(--spacing-icon-lg) - var(--spacing-2)" : "";
-  const workRoom = scale === "plate" ? `(${canvas} - 11 * var(--spacing-6)) * 5 / 12 + 4 * var(--spacing-6)${badge}` : `${canvas}${badge}`;
+  const workRoom = scale === "plate" || scale === "block" ? `(${canvas} - 11 * var(--spacing-6)) * 5 / 12 + 4 * var(--spacing-6)${badge}${less}` : `${canvas}${badge}${less}`;
   const fit = scale ? { "--name-fit": `calc((${room}) / ${ems.toFixed(2)})`, "--name-fit-work": `calc((${workRoom}) / ${ems.toFixed(2)})` } : { "--name-fit": `calc((${room}) / ${ems.toFixed(2)})` };
   return (
     <h1
@@ -118,14 +140,59 @@ function Name({ profile, isRtl, theme, compact = false, scale }: { profile: Prof
   );
 }
 
+/** How many social icons one row holds on a phone `width` wide (its column less the gutters). */
+export function socialsPerRow(width: number, plain: boolean, start: boolean): number {
+  const item = plain ? tokens.size.touchTarget : tokens.size.controlXl;
+  const gap = plain ? tokens.spacing["2"] : tokens.spacing["3"];
+  // A row at the reading start reaches one gap further (it is pulled out by -ms-3, so glyphs line up).
+  const room = width - 2 * tokens.spacing.creatorGutter + (start ? tokens.spacing["3"] : 0);
+  return Math.max(1, Math.floor((room + gap) / (item + gap)));
+}
+
+/**
+ * Icons per row on a phone `width` wide so that no row ends with a single icon: null when the icons
+ * fit one row or wrap without such an orphan, else the count that makes the rows even (6 tiles: 3 + 3
+ * instead of 5 + 1; 11: 4 + 4 + 3).
+ */
+export function balancedRow(count: number, width: number, plain: boolean, start: boolean): number | null {
+  const perRow = socialsPerRow(width, plain, start);
+  if (count <= perRow || count % perRow !== 1) return null;
+  return Math.ceil(count / Math.ceil(count / perRow));
+}
+
+/** The width of `count` icons in a row, in tokens. */
+const rowWidth = (count: number, plain: boolean): string =>
+  `calc(${String(count)} * var(${plain ? "--spacing-touch-target" : "--spacing-control-xl"}) + ${String(count - 1)} * var(${plain ? "--spacing-2" : "--spacing-3"}))`;
+
 /**
  * Social profiles under the name: round tiles, or (plain) bare glyphs at a larger size for quiet looks.
  * `solid` draws a website and an e-mail address with the solid globe and envelope like the brands
  * (C-07); every hero here passes it. Laufbahn's hero calls this without it and keeps its outline pair.
+ *
+ * `balance` (every hero but Laufbahn's): on phones no row ends with one icon alone. Where the icons
+ * would leave one on a row of its own, the list is narrowed to the balanced count (`balancedRow`), for
+ * the reference phone (layout.preview, 390) and for narrower ones (layout.preview-compact, 320); the
+ * column and wider screens are unchanged.
  */
-export function Socials({ block, plain, start = false, solid = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean; solid?: boolean }) {
+export function Socials({ block, plain, start = false, solid = false, balance = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean; solid?: boolean; balance?: boolean }) {
+  const phone = balance ? balancedRow(block.items.length, tokens.layout.preview, plain, start) : null;
+  const narrow = balance ? balancedRow(block.items.length, tokens.layout.previewCompact, plain, start) : null;
+  const style = {
+    ...(phone ? { "--socials-row": rowWidth(phone, plain) } : {}),
+    ...(narrow ? { "--socials-row-narrow": rowWidth(narrow, plain) } : {}),
+  } as CSSProperties;
   return (
-    <ul data-block={block.id} className={cn("flex flex-wrap", start ? "-ms-3 justify-start" : "justify-center", plain ? "gap-2" : "gap-3")}>
+    <ul
+      data-block={block.id}
+      style={phone || narrow ? style : undefined}
+      className={cn(
+        "flex flex-wrap",
+        start ? "-ms-3 justify-start" : "justify-center",
+        plain ? "gap-2" : "gap-3",
+        phone && "@preview:@max-prose:max-w-(--socials-row)",
+        narrow && "@max-preview:max-w-(--socials-row-narrow)",
+      )}
+    >
       {block.items.map((item) => (
         <li key={item.url}>
           <a
@@ -147,7 +214,7 @@ export function Socials({ block, plain, start = false, solid = false }: { block:
 }
 
 /** Headline numbers: social proof right under the name, read as "value · label". */
-function Stats({ stats, start = false }: { stats: NonNullable<Profile["stats"]>; start?: boolean }) {
+export function Stats({ stats, start = false }: { stats: NonNullable<Profile["stats"]>; start?: boolean }) {
   return (
     <dl className={cn("mt-1 grid w-full max-w-prose auto-cols-fr grid-flow-col divide-x divide-creator-line", start && "@prose:w-auto @prose:auto-cols-max")}>
       {stats.map((stat) => (
@@ -368,7 +435,7 @@ export function PosterHero({
           {actions("start", 0)}
           {/* Numbers follow the action here: the work, the sentence and the button come first. */}
           {profile.stats?.length ? <Stats stats={profile.stats} start /> : null}
-          {socials ? <Socials block={socials} plain={plain} start solid /> : null}
+          {socials ? <Socials block={socials} plain={plain} start solid balance /> : null}
         </div>
       </header>
     );
@@ -376,35 +443,42 @@ export function PosterHero({
 
   if (layout === "statement") {
     const line = contact ? contactStatus(contact, now ?? new Date()) : null;
+    // The wide canvas (P-08): the name across it, then the role line and the sentence in columns 1–7
+    // and the numbers, the action and the profiles in 8–12, so the first screen is filled on both
+    // sides. Those three are one box only there (below it, `contents`: no box, the same order); the
+    // grid packs it back up beside the role line (dense).
     return (
-      <header className="poster-hero-timeline grid grid-cols-1 justify-items-start gap-4 px-creator-gutter pt-10 text-start @prose:px-0 @work:gap-5 @work:pt-6">
+      // The live pill (a link, the header's only one) spans the canvas like the name.
+      <header className="poster-hero-timeline grid grid-cols-1 justify-items-start gap-4 px-creator-gutter pt-10 text-start @prose:px-0 @work:grid-flow-row-dense @work:grid-cols-12 @work:gap-x-6 @work:gap-y-5 @work:pt-6 @work:[&>a]:col-span-12">
         {live ? <HeroLive block={live} /> : null}
-        <div className={cn("flex min-w-0 items-center gap-4", rise(0).className)} style={rise(0).style}>
+        <div className={cn("flex min-w-0 items-center gap-4 @work:col-span-12", rise(0).className)} style={rise(0).style}>
           <span className="relative size-avatar-lg shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-h3">
             {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt={profile.avatar.alt} sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
           </span>
           {line ? <StatusLine text={line} /> : null}
         </div>
-        <div className={cn("w-full min-w-0", rise(1).className)} style={rise(1).style}>
+        <div className={cn("w-full min-w-0 @work:col-span-12", rise(1).className)} style={rise(1).style}>
           <Name profile={profile} isRtl={isRtl} theme={theme} scale="statement" />
         </div>
         {profile.tagline ? (
-          <p dir="auto" className={cn(pageSide, "w-full max-w-prose text-h3 leading-snug text-balance break-words", rise(2).className)} style={rise(2).style} {...aiText(profile, "tagline")}>
+          <p dir="auto" className={cn(pageSide, "w-full max-w-prose text-h3 leading-snug text-balance break-words @work:col-span-7", rise(2).className)} style={rise(2).style} {...aiText(profile, "tagline")}>
             {profile.tagline}
           </p>
         ) : null}
         {profile.bio ? (
-          <p dir="auto" className={cn(pageSide, "w-full max-w-prose text-body-lg text-pretty break-words text-creator-fg-muted", rise(3).className)} style={rise(3).style} {...aiText(profile, "bio")}>
+          <p dir="auto" className={cn(pageSide, "w-full max-w-prose text-body-lg text-pretty break-words text-creator-fg-muted @work:col-span-7", rise(3).className)} style={rise(3).style} {...aiText(profile, "bio")}>
             {profile.bio}
           </p>
         ) : null}
-        {profile.stats?.length ? <Stats stats={profile.stats} start /> : null}
-        {actions("start", 4, false)}
-        {socials ? (
-          <div className={rise(5).className} style={rise(5).style}>
-            <Socials block={socials} plain={plain} start solid />
-          </div>
-        ) : null}
+        <div className={cn("contents @work:col-span-5 @work:col-start-8 @work:grid @work:content-start @work:justify-items-start @work:gap-5 @work:justify-self-stretch", profile.tagline && profile.bio && "@work:row-span-2")}>
+          {profile.stats?.length ? <Stats stats={profile.stats} start /> : null}
+          {actions("start", 4, false)}
+          {socials ? (
+            <div className={rise(5).className} style={rise(5).style}>
+              <Socials block={socials} plain={plain} start solid balance />
+            </div>
+          ) : null}
+        </div>
       </header>
     );
   }
@@ -413,6 +487,8 @@ export function PosterHero({
   // reads as a filter, not as a portrait.
   const treatment = !hasImage(photo) && !profile.logo ? "monogram" : layout === "logo" && !profile.logo ? "portrait" : layout === "duotone" && profile.motion ? "portrait" : layout;
   const start = treatment === "cinema" || treatment === "inset";
+  // Folio has the wide canvas (C-06): from layout.work its words and its picture stand side by side.
+  const wideInset = treatment === "inset" && theme.layout.canvas !== "column";
 
   const lines = (
     <>
@@ -441,7 +517,7 @@ export function PosterHero({
       {actions(start ? "start" : "center", 3)}
       {socials ? (
         <div className={cn("pt-2", rise(3).className)} style={rise(3).style}>
-          <Socials block={socials} plain={plain} start={start} solid />
+          <Socials block={socials} plain={plain} start={start} solid balance />
         </div>
       ) : null}
     </>
@@ -489,8 +565,9 @@ export function PosterHero({
         </span>
       </div>
     ) : treatment === "inset" ? (
-      // Folio: a framed picture with a margin, uncovering itself.
-      <div className="poster-hero-fade w-full px-creator-gutter pt-creator-gutter @prose:px-0 @prose:pt-0">
+      // Folio: a framed picture with a margin, uncovering itself. On the wide canvas it stands in the
+      // last six columns, beside the name.
+      <div className={cn("poster-hero-fade w-full px-creator-gutter pt-creator-gutter @prose:px-0 @prose:pt-0", wideInset && "@work:col-span-6 @work:col-start-7 @work:row-start-1")}>
         <Photo profile={profile} preview={preview} className="poster-uncover aspect-portrait rounded-creator-card" />
       </div>
     ) : treatment === "frame" ? (
@@ -539,13 +616,15 @@ export function PosterHero({
 
   const below = treatment === "halo" || treatment === "inset" || treatment === "frame" || treatment === "arch";
   return (
-    <header className={cn("poster-hero-timeline grid", start ? "justify-items-stretch" : "justify-items-center text-center")}>
+    <header className={cn("poster-hero-timeline grid", start ? "justify-items-stretch" : "justify-items-center text-center", wideInset && "@work:grid-cols-12 @work:items-end @work:gap-x-6 @work:pt-16")}>
       {media}
       <div
         className={cn(
           "relative grid gap-3 px-creator-gutter",
           start ? "justify-items-start text-start @prose:px-0" : "justify-items-center",
           below ? "pt-6" : treatment === "logo" && profile.logo ? "-mt-6" : treatment === "monogram" ? "-mt-12" : "-mt-16",
+          // Folio on the wide canvas (C-06): the words in the first six columns, at the picture's foot.
+          wideInset && "@work:col-span-6 @work:col-start-1 @work:row-start-1 @work:pt-0 @work:pb-2",
         )}
       >
         {lines}

@@ -160,15 +160,45 @@ export function linkLabelKey(url: string): LinkLabelKey {
 
 // ─── Layouts ──────────────────────────────────────────────────────────────────────────────────
 
+/** The work layouts an owner chooses from (Design, Arbeiten). */
 export type WorkLayout = "bento" | "list" | "rail";
+/**
+ * The work layouts only a template sets: uncropped rows of equal height (justified, Leuchttisch), one
+ * drawing sheet per project with its facts (sheets, Grundriss), a build log by year (log, Logbuch).
+ */
+export type TemplateWorkLayout = "justified" | "sheets" | "log";
+/** A run's layout as the page draws it. */
+export type RunLayout = WorkLayout | TemplateWorkLayout;
 
 /**
- * The layout a run of projects gets. `wanted` is the theme's resolved choice. A fixed choice the
- * content cannot fill becomes the list; "auto" picks: a later run of 2–6 picture projects is a rail,
- * three or more with at least 60 % pictures a grid, anything else the list. Shares are counted on
- * the projects the run shows (the first six).
+ * The layout a run of projects gets, in the words an owner chooses from (the editor names a run's
+ * layout with them). `wanted` is the theme's resolved choice. A fixed choice the content cannot fill
+ * becomes the list; "auto" picks: a later run of 2–6 picture projects is a rail, three or more with at
+ * least 60 % pictures a grid, anything else the list. Shares are counted on the projects the run shows
+ * (the first six). A template's own layout is named by the nearest of these: justified rows of pictures
+ * are a grid, sheets and the log are lists (`runLayout` gives the layout the page draws).
  */
-export function chooseProjectsLayout(group: readonly Project[], groupIndex: number, wanted: WorkLayout | "auto"): WorkLayout {
+export function chooseProjectsLayout(group: readonly Project[], groupIndex: number, wanted: WorkLayout | TemplateWorkLayout | "auto"): WorkLayout {
+  if (wanted === "justified" || wanted === "sheets" || wanted === "log") return runLayout(group, groupIndex, wanted) === "justified" ? "bento" : "list";
+  return chooseWorkLayout(group, groupIndex, wanted);
+}
+
+/**
+ * The layout a run of projects is drawn in: `chooseProjectsLayout` for the owner's layouts, and a
+ * template's own layout as it is, except justified rows, which need pictures: at least half of the
+ * shown projects with one, else the list.
+ */
+export function runLayout(group: readonly Project[], groupIndex: number, wanted: WorkLayout | TemplateWorkLayout | "auto"): RunLayout {
+  if (wanted === "sheets" || wanted === "log") return wanted;
+  if (wanted === "justified") {
+    const shown = group.slice(0, FEATURED_PROJECTS);
+    const pictures = shown.filter((project) => coverMode(project) === "picture").length;
+    return shown.length > 0 && pictures * 2 >= shown.length ? "justified" : "list";
+  }
+  return chooseWorkLayout(group, groupIndex, wanted);
+}
+
+function chooseWorkLayout(group: readonly Project[], groupIndex: number, wanted: WorkLayout | "auto"): WorkLayout {
   const shown = group.slice(0, FEATURED_PROJECTS);
   const pictures = shown.filter((project) => coverMode(project) === "picture").length;
   const railFits = group.length >= 2 && group.length <= FEATURED_PROJECTS;
@@ -243,6 +273,92 @@ export function plateRows(pictures: readonly { image: { w?: number | undefined; 
     } else rows.push({ kind: "narrow", items: [item] });
   }
   return rows;
+}
+
+export interface JustifiedRow {
+  /** Positions in the list that was passed in, in order, with each picture's own ratio. */
+  items: PlateItem[];
+  /**
+   * The row's width over its height: the sum of its ratios (a full row, stretched to the width), or the
+   * target for a last row that falls short of it, which keeps a full row's height instead (`short`).
+   */
+  aspect: number;
+  short: boolean;
+}
+
+/** A usable ratio: a positive, finite width over height, else that of a picture whose size is unknown. */
+const usableRatio = (ratio: number): number => (Number.isFinite(ratio) && ratio > 0 ? ratio : FALLBACK_RATIO);
+
+/**
+ * Pictures in rows of equal height, every picture uncropped at its own ratio (Leuchttisch). `rowAspect`
+ * is the row the layout aims for: the width it fills over the height a row should have (layout width
+ * over `size.row-photo`). A row takes pictures while that brings its ratios' sum closer to the target;
+ * then it is stretched to the width (its height is width / sum, the same for every picture in it). The
+ * last row is never stretched: short of the target, it keeps the target's height and leaves the end
+ * open. A picture wider than the target is a row of its own. The page draws a row as a line of a flex
+ * box whose items grow by their ratio (`flex-grow` = ratio, `aspect-ratio` = ratio), which gives exactly
+ * these widths; `justifiedBoxes` computes them with the gaps.
+ */
+export function justifyRows(ratios: readonly number[], rowAspect: number): JustifiedRow[] {
+  const target = usableRatio(rowAspect);
+  const rows: JustifiedRow[] = [];
+  let items: PlateItem[] = [];
+  let sum = 0;
+  const close = () => {
+    if (items.length === 0) return;
+    rows.push({ items, aspect: sum, short: false });
+    items = [];
+    sum = 0;
+  };
+  ratios.forEach((raw, index) => {
+    const ratio = usableRatio(raw);
+    // Overshooting the target by more than the row now falls short of it: the row closes first.
+    if (items.length > 0 && sum + ratio - target > target - sum) close();
+    items.push({ index, ratio });
+    sum += ratio;
+    if (sum >= target) close();
+  });
+  if (items.length > 0) rows.push({ items, aspect: Math.max(sum, target), short: sum < target });
+  return rows;
+}
+
+/**
+ * The boxes of a justified row drawn `width` wide with `gap` between neighbours, as the page's flex line
+ * makes them: the width left after the gaps shared by ratio. A short row has one gap more (before the
+ * open end) and shares by the target, so its pictures stand as tall as in a full row.
+ */
+export function justifiedBoxes(row: JustifiedRow, width: number, gap: number): { w: number; h: number }[] {
+  const gaps = row.items.length - 1 + (row.short ? 1 : 0);
+  const room = Math.max(0, width - gaps * gap);
+  return row.items.map((item) => {
+    const w = (room * item.ratio) / row.aspect;
+    return { w, h: w / item.ratio };
+  });
+}
+
+/** Where a project stands in its build log: still running ("now"), finished, or without a year. */
+export type LogStatus = "running" | "done" | null;
+
+export interface LogGroup {
+  /** The year the projects started (`year.from`), or null for projects without a year. */
+  year: number | null;
+  entries: { project: Project; status: LogStatus }[];
+}
+
+/**
+ * A run of projects as a build log (Logbuch): grouped by the year they started, the latest year first
+ * and projects without a year last; within a year in page order. A project whose years run "until now"
+ * is running, one with a year is done, one without has no status.
+ */
+export function logGroups(projects: readonly Project[]): LogGroup[] {
+  const groups = new Map<number | null, LogGroup>();
+  for (const project of projects) {
+    const year = project.year?.from ?? null;
+    const group = groups.get(year) ?? { year, entries: [] };
+    group.entries.push({ project, status: project.year === undefined ? null : project.year.to === "now" ? "running" : "done" });
+    groups.set(year, group);
+  }
+  return [...groups.values()].sort((a, b) => (a.year === null ? 1 : b.year === null ? -1 : b.year - a.year));
 }
 
 /** The ratios a lead tile or the hero plate can take, by the name of their aspect token. */

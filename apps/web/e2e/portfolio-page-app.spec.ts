@@ -338,9 +338,10 @@ test.describe("the wide canvas", () => {
     });
   }
 
-  test("Folio at 1280 px shows the same sample in its 560 px column", async ({ page }) => {
+  // Folio left the 560 px column for the wide canvas in Stage 3 (audit C-06).
+  test("Folio at 1280 px shows the same sample on the wide canvas", async ({ page }) => {
     await open(page, url("de", "folio"), { width: 1280, height: 800 });
-    expect(await workWidth(page)).toBe(560);
+    expect(await workWidth(page)).toBeGreaterThan(1000);
     // Every project is on the page, as a card.
     for (const slug of SLUGS) await expect(page.locator(`#${slug}`)).toBeVisible();
   });

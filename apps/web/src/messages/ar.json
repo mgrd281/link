@@ -538,7 +538,21 @@
       "railOn": "تمرير للأمام",
       "projectMissing": "هذا المشروع لم يعد متاحًا.",
       "toPage": "إلى الصفحة",
-      "plateLink": "المشروع 1 من {total}: {title}"
+      "plateLink": "المشروع 1 من {total}: {title}",
+      "logRunning": "جارٍ",
+      "logDone": "مكتمل",
+      "logUndated": "بلا سنة"
+    },
+    "readme": {
+      "stack": "الأدوات",
+      "place": "المكان",
+      "available": "التوفّر",
+      "repos": "المستودعات"
+    },
+    "titleblock": {
+      "discipline": "التخصص",
+      "place": "المكان",
+      "status": "الحالة"
     },
     "laufbahn": {
       "index": "الأقسام",
