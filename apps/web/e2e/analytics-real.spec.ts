@@ -226,8 +226,16 @@ test.describe("cookie-free analytics @real", () => {
     const island = await page.locator("script[data-beacon]").textContent();
     expect(island).toContain("/api/collect");
     const gzip = gzipSync(island ?? "").length;
-    test.info().annotations.push({ type: "island-gzip-bytes", description: String(gzip) });
-    expect(gzip).toBeLessThanOrEqual(2048);
+    // The layout is a server component: the page carries the script once as the element and once more,
+    // escaped, in the RSC payload. What the page gains is every copy, counted at the island's own size
+    // (an upper bound: gzip shares the second copy's words with the first).
+    const html = await (await page.request.get(`/${username}`)).text();
+    const count = (text: string) => text.split("/api/collect").length - 1;
+    const copies = count(html) / count(island ?? "");
+    expect(copies).toBeGreaterThanOrEqual(1);
+    expect(copies).toBeLessThanOrEqual(2);
+    test.info().annotations.push({ type: "island-gzip-bytes", description: `${String(gzip)} × ${String(copies)}` });
+    expect(gzip * copies).toBeLessThanOrEqual(2048);
   });
 
   test("with the switch off a creator page ships no counting code and /api/collect stores nothing @real", async ({ page }) => {

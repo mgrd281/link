@@ -22,8 +22,9 @@ the `linkyo-supabase` skill. Dashboard screens: `linkyo-creator-dashboard`. Cons
 - **Same origin only.** The beacon posts to `/api/collect` on the page's own origin; the route refuses other
   origins (`Sec-Fetch-Site`, `Origin`). No third-party script, pixel or host, ever (CLAUDE.md privacy).
 - **GPC and DNT** stop counting twice: the island sends nothing, and the route ignores `Sec-GPC: 1` / `DNT: 1`.
-- **At most 2 KB gzip** for the island (under 1 KB today; the unit test and `e2e/analytics-real.spec.ts` measure
-  it). It is inline script, not a client component: Turbopack bundles a layout's client components into one chunk,
+- **At most 2 KB gzip** added to a page. The page carries the island twice (the script element and, escaped, the
+  RSC payload of the server layout), so one copy must stay under 1 KB (the unit test); the e2e counts the copies
+  in the page's HTML and checks copies × the island's gzip size. It is inline script, not a client component: Turbopack bundles a layout's client components into one chunk,
   so a component would ship with the switch off. Keep it plain ES2015, no imports.
 - **Off in production behind `LINKYO_ANALYTICS`** (`lib/flags.ts`, server only, exactly `on`). Off: no island on
   `/u` (zero bytes), `/api/collect` answers 204 and stores nothing, Stats keep "coming soon". Tests set it on

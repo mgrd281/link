@@ -160,7 +160,7 @@ describe("the counter's text", () => {
     expect(script).not.toMatch(/https?:\/\//);
   });
 
-  it("stays tiny: well under 2 KB gzip", () => {
+  it("stays tiny: under 1 KB gzip, so the page's two copies (the element and the RSC payload) stay under 2 KB", () => {
     expect(gzipSync(script).length).toBeLessThan(1024);
   });
 
