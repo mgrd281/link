@@ -541,15 +541,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 /**
- * A tab's icon: the brand stroke, and the strong stroke (icon.stroke-strong) once the tab is chosen,
- * so the choice never rests on colour alone (WCAG 1.4.1). Drawn here rather than through Icon until
- * Icon takes a `strong` prop (design system v2), then `<Icon strong>` replaces it.
- */
-function TabGlyph({ icon: Glyph, strong }: { icon: LucideIcon; strong: boolean }) {
-  return <Glyph aria-hidden focusable="false" className="size-icon-lg shrink-0" strokeWidth={strong ? tokens.icon.strokeStrong : tokens.icon.stroke} />;
-}
-
-/**
  * A tab. As on iOS, the chosen tab has no pill behind it: its tint, a stronger icon stroke and a
  * semibold label mark it. Under a pushed screen (Settings, its panes, Invite) no tab is marked: the
  * tab it was opened from only carries `data-origin` (where "‹ back" leads), so the bar never claims
@@ -599,7 +590,8 @@ function TabLink({
       >
         {/* A press dips the icon like a native tab: in fast, back out on the spring. */}
         <span className="grid h-control-sm w-12 place-items-center transition-[scale] duration-spring ease-spring group-active:scale-pressed group-active:duration-micro motion-reduce:group-active:scale-none">
-          <TabGlyph icon={item.icon} strong={selected} />
+          {/* The strong stroke (icon.stroke-strong) once chosen: the choice never rests on colour alone (WCAG 1.4.1). */}
+          <Icon icon={item.icon} size="lg" strong={selected} />
         </span>
         {label}
       </Link>
