@@ -52,12 +52,13 @@ PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --project desktop
 ## Picture baselines (existing pages never change)
 
 `e2e/portfolio-baseline.review.spec.ts` compares full-page captures byte for byte with a stored set
-(same machine, same browser). Two sets, chosen with `BASELINE_SET`:
+(same machine, same browser). Three sets, chosen with `BASELINE_SET`:
 
 | Set | Folder | Captures |
 |---|---|---|
 | unset or `v8` (the default) | `/root/linkyo-v8-baseline` | 50: eleven templates, de and ar, three `/p` pages; 390 and 1440 wide |
 | `s2` | `/root/linkyo-s2-baseline` | 78: all fourteen templates, de and ar; the four portfolio templates also on the portfolio sample; the same three `/p` pages; 390 and 1440 wide |
+| `s3` | `/root/linkyo-s3-baseline` (written at S3.Z) | 102: the s2 set plus Leuchttisch, Grundriss and Logbuch on both samples, de and ar, 390 and 1440 wide; same names as s2, so an s3 run can be compared with the s2 folder |
 
 Run on the demo build (no Supabase variables), from `apps/web`, on your own port. Compare against a
 copy: a difference writes `<name>.actual.png` into the folder.
@@ -74,7 +75,7 @@ PORT=$PORT BASELINE_SET=s2 V8_BASELINE_DIR="$SCRATCH/s2-copy" PW_CHROMIUM_PATH=/
 - `V8_BASELINE=write` stores a set. Write only into a new folder, from an integrated tree, never over a
   stored baseline; then add a `README.md` (tree, commit, runs) and `SHA256SUMS` next to the pictures.
 - Without `V8_BASELINE_DIR` every capture is skipped, so `pnpm review` is unaffected.
-- The `s2` set holds IntersectionObserver callbacks once a page is at rest at the top: a full-page
+- The `s2` and `s3` sets hold IntersectionObserver callbacks once a page is at rest at the top: a full-page
   capture itself made Laufbahn's app bar appear in one of two captures. The `v8` set is captured as it
   was written.
 
