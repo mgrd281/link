@@ -52,6 +52,17 @@ describe("pictures from someone else's server", () => {
     expect(isForeignImage("https://lh3.googleusercontent.com/a.jpg")).toBe(true);
   });
 
+  it("never re-serves an SVG: next/image would hand its address to the browser as it is", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", HOSTED);
+    for (const src of ["https://i.ytimg.com/a.svg", "https://i.ytimg.com/a.svg?x", "https://i.ytimg.com/vi/abc/A.SVG#frag", `${HOSTED}/storage/v1/object/public/media/u/2026/logo.svg`]) {
+      expect(isProxiedImage(src), src).toBe(false);
+      expect(isForeignImage(src), src).toBe(true);
+    }
+    // An SVG of our own (a path on this site) is not someone else's; a query that names svg is no SVG.
+    expect(isForeignImage("/brands/linkyo.svg")).toBe(false);
+    expect(isProxiedImage("https://i.ytimg.com/vi/abc/maxres.jpg?svg=1")).toBe(true);
+  });
+
   it("names every address on another host that the optimizer does not serve", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", HOSTED);
     for (const src of ["https://tracker.example/p.gif", "http://tracker.example/p.gif", "HTTPS://tracker.example/p.gif", "//tracker.example/p.gif", "/\\tracker.example/p.gif", " https://tracker.example/p.gif", "http://i.ytimg.com/vi/x/hqdefault.jpg"]) {

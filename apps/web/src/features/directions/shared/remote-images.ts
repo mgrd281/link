@@ -59,7 +59,22 @@ export function isForeignImage(src: string): boolean {
   return ABSOLUTE.test(address) && !isProxiedImage(address);
 }
 
+/**
+ * An SVG address (by its path, before `?` and `#`). Our optimizer does not re-serve SVG
+ * (`dangerouslyAllowSVG` stays off), and next/image hands such an address to the browser as it is,
+ * so it would load from the other host: never treat it as ours.
+ */
+function isSvgAddress(src: string): boolean {
+  try {
+    return new URL(src).pathname.toLowerCase().endsWith(".svg");
+  } catch {
+    return false;
+  }
+}
+
+/** A picture our optimizer re-serves: our own Storage, or an exact platform host, and never an SVG. */
 export function isProxiedImage(src: string): boolean {
+  if (isSvgAddress(src.trim())) return false;
   if (isStorageImage(src)) return true;
   if (!src.startsWith("https://")) return false;
   try {

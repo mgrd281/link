@@ -105,7 +105,7 @@ describe("nothing from another origin (GDPR)", () => {
   it("knows which pictures a visitor's browser may load", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", HOSTED);
     for (const src of ["none:", "sample:mila-avatar", "data:image/webp;base64,AAAA", OWN, "https://i.ytimg.com/vi/x/hqdefault.jpg"]) expect(isOwnPicture(src), src).toBe(true);
-    for (const src of [FOREIGN, "http://tracker.example/p.gif", "//tracker.example/p.gif", "HTTPS://tracker.example/p.gif", "/\\tracker.example/p.gif", "ftp://tracker.example/p.gif", "data:text/html,x", `${HOSTED}.evil.example/storage/v1/object/public/media/a.jpg`, "http://i.ytimg.com/vi/x/hqdefault.jpg"]) {
+    for (const src of [FOREIGN, "http://tracker.example/p.gif", "//tracker.example/p.gif", "HTTPS://tracker.example/p.gif", "/\\tracker.example/p.gif", "ftp://tracker.example/p.gif", "data:text/html,x", `${HOSTED}.evil.example/storage/v1/object/public/media/a.jpg`, "http://i.ytimg.com/vi/x/hqdefault.jpg", "https://i.ytimg.com/a.svg", "https://i.ytimg.com/a.svg?x", `${HOSTED}/storage/v1/object/public/media/u/a.svg`]) {
       expect(isOwnPicture(src), src).toBe(false);
     }
   });
