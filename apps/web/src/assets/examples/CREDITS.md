@@ -240,8 +240,38 @@ one photographer, who is named in the page's credit:
 | Tobin Achterberg | Two interface drawings | ex-pf-tobin-02, -03 | Original Linkyo artwork |
 | Naya Al-Dabbas | Avatar | ex-pf-naya-01 | Lisa Marie Theck |
 
+Pictures for the three Stage 3 portfolio examples (Merle Kastorf on Leuchttisch, Rana Al-Khatib on Grundriss,
+Ines Vasconcelos on Logbuch). Photos from the Unsplash CDN's free library, each license checked on the photo's
+own page on 2026-11-24, none from Unsplash+; resized to 2240 px on the long side for the series that run full
+width (Leuchttisch shows them uncropped and wider than the text), 1600 px or 1200 px (portraits, cropped square)
+for the rest. People in the photos are performers, models or anonymous; they have no connection to the
+fictional names. Rana's architectural drawings and Ines's screens, boards and technical drawings are original
+Linkyo drawings made with Pillow (DM Mono, Work Sans, JetBrains Mono; all SIL Open Font License); a project
+never mixes a photographer and a drawing:
+
+| Example | Project | Files | Photographer |
+|---|---|---|---|
+| Merle Kastorf | Portrait | ex-pf-merle-01 | Marissa Lewis |
+| Merle Kastorf | Nachbild (cover 02, pictures 03 to 15) | ex-pf-merle-02 to -15 | Ahmad Odeh |
+| Merle Kastorf | Gegenlicht (cover 16, pictures 17 to 19) | ex-pf-merle-16 to -19 | Samantha Weisburg |
+| Merle Kastorf | Nathan, Porträts (cover 20, pictures 21 and 22) | ex-pf-merle-20 to -22 | Hossein Nasr |
+| Merle Kastorf | Spielzeitkampagne (cover) | ex-pf-merle-23 | Kazuo ota |
+| Rana Al-Khatib | Avatar | ex-pf-rana-01 | kilarov |
+| Rana Al-Khatib | School extension, stairwell retrofit, housing study | ex-pf-rana-02 to -07 | Original Linkyo drawings |
+| Ines Vasconcelos | Avatar and the About portrait | ex-pf-ines-01, -02 | ThisisEngineering |
+| Ines Vasconcelos | Névoa, remendo-log, sardinha-split, bike-light mount | ex-pf-ines-03 to -09 | Original Linkyo drawings |
+
 | File | Photographer / source | Photo page | License |
 |---|---|---|---|
+| ex-pf-ines-01.jpg | ThisisEngineering (cropped square) | https://unsplash.com/photos/a-woman-working-on-a-project-with-a-magnifying-glass-193e0Bmkd_E | Unsplash License |
+| ex-pf-ines-02.jpg | ThisisEngineering | https://unsplash.com/photos/a-woman-working-on-a-circuit-board-with-a-magnifying-glass-lAbYmLWrT9o | Unsplash License |
+| ex-pf-ines-03.jpg | Original Linkyo drawing (the e-paper weather display on a shelf; Pillow, Work Sans, JetBrains Mono; OFL) | – | Original artwork |
+| ex-pf-ines-04.jpg | Original Linkyo drawing (the display's circuit board; Pillow, JetBrains Mono; OFL) | – | Original artwork |
+| ex-pf-ines-05.jpg | Original Linkyo drawing (a power profile of one wake cycle; Pillow, JetBrains Mono; OFL) | – | Original artwork |
+| ex-pf-ines-06.jpg | Original Linkyo drawing (a split keyboard's keymap; Pillow, JetBrains Mono; OFL) | – | Original artwork |
+| ex-pf-ines-07.jpg | Original Linkyo drawing (a repair café inventory screen; Pillow, Work Sans, JetBrains Mono; OFL) | – | Original artwork |
+| ex-pf-ines-08.jpg | Original Linkyo drawing (the bike-light mount, front and side view; Pillow, JetBrains Mono; OFL) | – | Original artwork |
+| ex-pf-ines-09.jpg | Original Linkyo drawing (the bike-light mount, exploded view; Pillow, JetBrains Mono; OFL) | – | Original artwork |
 | ex-pf-jorinde-01.jpg | mahdi chaghari | https://unsplash.com/photos/woman-sanding-wood-with-power-tool-in-workshop-7kfbZixwOZ8 | Unsplash License |
 | ex-pf-jorinde-02.jpg | Caroline Badran (lettering on the stand mixer retouched) | https://unsplash.com/photos/modern-kitchen-with-island-and-bar-stools-BaKdrhCvn0E | Unsplash License |
 | ex-pf-jorinde-03.jpg | Caroline Badran | https://unsplash.com/photos/woman-opening-a-glass-cabinet-filled-with-glassware-9zuIchwgNUk | Unsplash License |
@@ -252,7 +282,37 @@ one photographer, who is named in the page's credit:
 | ex-pf-jorinde-08.jpg | Bailey Alexander | https://unsplash.com/photos/a-man-working-on-a-chair-in-a-workshop-DAd_Wn6Mj78 | Unsplash License |
 | ex-pf-jorinde-09.jpg | Bailey Alexander | https://unsplash.com/photos/a-close-up-of-a-wooden-object-on-a-table-NbdUuX9p2Kw | Unsplash License |
 | ex-pf-jorinde-10.jpg | Bailey Alexander | https://unsplash.com/photos/a-knife-and-some-wood-shavings-on-a-table-Zw_3GoPXzI4 | Unsplash License |
+| ex-pf-merle-01.jpg | Marissa Lewis (cropped square; lettering on the camera and a print on the shirt retouched) | https://unsplash.com/photos/woman-in-black-t-shirt-holding-black-dslr-camera-47bVgRJ3bFI | Unsplash License |
+| ex-pf-merle-02.jpg | Ahmad Odeh | https://unsplash.com/photos/woman-in-white-dress-dancing-s5Dnv3BcPpk | Unsplash License |
+| ex-pf-merle-03.jpg | Ahmad Odeh | https://unsplash.com/photos/woman-in-white-long-sleeve-shirt-with-white-scarf-UYtEI-acsuY | Unsplash License |
+| ex-pf-merle-04.jpg | Ahmad Odeh | https://unsplash.com/photos/people-in-cluster-with-shirts-VvkEyIVz5es | Unsplash License |
+| ex-pf-merle-05.jpg | Ahmad Odeh | https://unsplash.com/photos/person-reaching-for-rope-in-spotlight-Lx38bS-DSdQ | Unsplash License |
+| ex-pf-merle-06.jpg | Ahmad Odeh | https://unsplash.com/photos/person-performing-aerial-silks-long-exposure-n4KiW-TFerI | Unsplash License |
+| ex-pf-merle-07.jpg | Ahmad Odeh | https://unsplash.com/photos/a-blurry-photo-of-a-group-of-dancers-q9FUxO2SdRc | Unsplash License |
+| ex-pf-merle-08.jpg | Ahmad Odeh | https://unsplash.com/photos/a-couple-of-people-that-are-standing-on-a-stage-pzROAHbOS5I | Unsplash License |
+| ex-pf-merle-09.jpg | Ahmad Odeh | https://unsplash.com/photos/woman-in-white-dress-dancing-on-stage-zhNuTzUJ_p8 | Unsplash License |
+| ex-pf-merle-10.jpg | Ahmad Odeh | https://unsplash.com/photos/woman-in-white-dress-walking-on-water-eGTNo7H-gek | Unsplash License |
+| ex-pf-merle-11.jpg | Ahmad Odeh | https://unsplash.com/photos/group-of-people-dancing-photo-TK_WT3dl2tw | Unsplash License |
+| ex-pf-merle-12.jpg | Ahmad Odeh | https://unsplash.com/photos/woman-dancing-time-lapse-photography-lVNjROfGm8Q | Unsplash License |
+| ex-pf-merle-13.jpg | Ahmad Odeh | https://unsplash.com/photos/JNIV5FDsHP8 | Unsplash License |
+| ex-pf-merle-14.jpg | Ahmad Odeh | https://unsplash.com/photos/dancer-performing-with-motion-blur-KHipnBn7sdY | Unsplash License |
+| ex-pf-merle-15.jpg | Ahmad Odeh | https://unsplash.com/photos/time-lapse-photography-of-man-dancing-ckm1yAe6jhU | Unsplash License |
+| ex-pf-merle-16.jpg | Samantha Weisburg | https://unsplash.com/photos/silhouette-of-people-dancing-Vgj9bUwaqT0 | Unsplash License |
+| ex-pf-merle-17.jpg | Samantha Weisburg | https://unsplash.com/photos/group-of-people-performing-on-stage-hFTcxZFsG6g | Unsplash License |
+| ex-pf-merle-18.jpg | Samantha Weisburg | https://unsplash.com/photos/women-dancing-KVh96nSLiIE | Unsplash License |
+| ex-pf-merle-19.jpg | Samantha Weisburg | https://unsplash.com/photos/2-women-dancing-on-stage-FLJQAe3k7wI | Unsplash License |
+| ex-pf-merle-20.jpg | Hossein Nasr | https://unsplash.com/photos/a-man-dressed-in-a-red-and-black-outfit-MSfafP0YFCw | Unsplash License |
+| ex-pf-merle-21.jpg | Hossein Nasr | https://unsplash.com/photos/a-man-with-a-beard-and-a-white-robe-h3OCqY_2RBA | Unsplash License |
+| ex-pf-merle-22.jpg | Hossein Nasr | https://unsplash.com/photos/a-man-standing-in-the-dark-holding-a-baseball-mitt-aOi3swqkZUg | Unsplash License |
+| ex-pf-merle-23.jpg | Kazuo ota | https://unsplash.com/photos/a-silhouette-of-a-woman-in-a-black-leotard-bYmzfvZ8Izk | Unsplash License |
 | ex-pf-naya-01.jpg | Lisa Marie Theck (cropped square) | https://unsplash.com/photos/a-woman-in-a-headscarf-smiles-at-the-camera-6awpFbYse3o | Unsplash License |
+| ex-pf-rana-01.jpg | kilarov (cropped square) | https://unsplash.com/photos/woman-in-black-scarf-and-brown-button-up-long-sleeved-top-under-trees-i1U5s5GkKxY | Unsplash License |
+| ex-pf-rana-02.jpg | Original Linkyo drawing (axonometric of the school extension; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-rana-03.jpg | Original Linkyo drawing (ground floor plan of the school extension; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-rana-04.jpg | Original Linkyo drawing (section through the school courtyard; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-rana-05.jpg | Original Linkyo drawing (section through the stairwell; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-rana-06.jpg | Original Linkyo drawing (stair core before and after; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-rana-07.jpg | Original Linkyo drawing (four massing options; Pillow, DM Mono; OFL) | – | Original artwork |
 | ex-pf-ronja-01.jpg | Peyman Shojaei (lettering on the camera retouched) | https://unsplash.com/photos/woman-looking-through-a-camera-viewfinder-AnlwDY2COY4 | Unsplash License |
 | ex-pf-ronja-02.jpg | Paul Einerhand (a sticker on a bin and lettering on a jacket retouched) | https://unsplash.com/photos/people-in-boat-on-water-during-daytime-QEV0iyd09MY | Unsplash License |
 | ex-pf-ronja-03.jpg | Paul Einerhand | https://unsplash.com/photos/black-and-brown-boat-on-dock-during-daytime-GCWX2zdk4lY | Unsplash License |

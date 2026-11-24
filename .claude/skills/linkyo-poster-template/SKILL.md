@@ -22,11 +22,13 @@ and motion as layout options).
 
 | What | Where |
 |---|---|
-| Template entry | `packages/tokens/tokens.json` → `creator.template.<id>` (`label`, `description`, `accent`, `neutral`, `tint`, `mode`, `pairing`, `buttonStyle`, `buttonShape`, `headings`, `hero`, `socials`) |
-| Layout option types | `packages/tokens/src/creator/theme.ts` (`HeadingStyle`, `HeroStyle`, `SocialStyle`, `BackdropStyle`, `GalleryStyle`, `MotionStyle`, `CreatorLayout`, `DEFAULT_LAYOUT`) + `test/palette.test.ts` |
-| Hero treatment and socials | `apps/web/src/features/directions/poster/hero.tsx` (treatments, `Socials plain`), backdrops, section titles and the gallery grid in `renderer.tsx`, motion utilities (`poster-*`) in `src/app/globals.css` |
-| Picker previews | `poster/template-picker.tsx` (two rows of three on wide screens), `examples/gallery-card.tsx` (`hero` type, card face) |
-| Texts | `templates.<id>.description` in de/en/ar, plus every "N templates" sentence (`grep -n "templates" src/messages/*.json`) |
+| Template entry | `packages/tokens/tokens.json` → `creator.template.<id>` (`label`, `description`, `accent`, `neutral`, `tint`, `mode`, `pairing`, `buttonStyle`, `buttonShape`, `headings`, `hero`, `socials`, `backdrop`, `gallery`, `motion`, `projects`, `canvas`; `use` (`portfolio`, `link-in-bio`), `suggestFor` and `leadFor` (page kinds, read by the welcome flow's look step and the picker's filter)) |
+| Layout option types | `packages/tokens/src/creator/theme.ts` (`HeadingStyle`, `HeroStyle`, `SocialStyle`, `BackdropStyle`, `GalleryStyle`, `MotionStyle`, `TemplateProjectsStyle`, `CanvasStyle`, `CreatorLayout`, `DEFAULT_LAYOUT`; a value without a renderer yet is mapped in `LAYOUT_FALLBACK`) + `test/palette.test.ts` (AA, no orange hue 40°–75°, at least three layout keys apart from every template) |
+| Hero treatment and socials | `apps/web/src/features/directions/poster/hero.tsx` (treatments, `Socials plain`), backdrops, section titles and the gallery grid in `renderer.tsx`, projects in `projects.tsx`, motion utilities (`poster-*`) and the container variants (`@work`, `@wall`) in `src/app/globals.css` |
+| Picker previews | real first-screen captures: `node scripts/capture-example-shots.mjs template:<id>` → `src/assets/templates/<id>.webp`, registered in `poster/template-previews.ts` (`template-previews.test.ts` fails without one); `examples/gallery-card.tsx` (`hero` type, card face) |
+| Texts | `templates.<id>.label` and `.description` in de/en/ar. Counts are placeholders fed by `SITE_COUNTS` (`TEMPLATE_IDS.length`), so no sentence names a number |
+| AI catalogue | a line per template in `features/ai/server/prompts.ts` and the template in `TEMPLATE_IDS` (`packages/blocks/src/ai-plan.ts`), with the next plan and prompt versions (see linkyo-ai-builder) |
+| Portfolio templates | the batch checklist, layout values, example people and acceptance captures are in **linkyo-portfolio** |
 | Example page | a `LOOKS` entry with `template: "<id>"` plus a page in `catalog-*.ts` (see `linkyo-example-page`) |
 | Decision | `docs/DECISIONS/00NN-*.md` + a row in its README, and a row in ADR 0012's table |
 
@@ -41,4 +43,6 @@ and motion as layout options).
    "Nur notwendige" / "الضروري فقط" first so the privacy notice is gone. The marketing site shows
    templates through the real renderer (picker, gallery, playground), so there are no phone captures
    to keep in step.
-5. Build an example page in the new look, then run `linkyo-qa-release`.
+5. Build an example page in the new look (the template as it comes, `theme: { template: "<id>" }`),
+   then run `linkyo-qa-release`. Every other template must stay byte-equal in the picture baseline
+   (`e2e/portfolio-baseline.review.spec.ts`); name each intended difference.

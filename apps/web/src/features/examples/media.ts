@@ -34,6 +34,15 @@ import exMotionPalettePacken from "@/assets/examples/ex-motion-palette-packen.jp
 import exMotionWareScannen from "@/assets/examples/ex-motion-ware-scannen.jpg";
 import exNgo from "@/assets/examples/ex-ngo.jpg";
 import exPainter from "@/assets/examples/ex-painter.jpg";
+import exPfInes01 from "@/assets/examples/ex-pf-ines-01.jpg";
+import exPfInes02 from "@/assets/examples/ex-pf-ines-02.jpg";
+import exPfInes03 from "@/assets/examples/ex-pf-ines-03.jpg";
+import exPfInes04 from "@/assets/examples/ex-pf-ines-04.jpg";
+import exPfInes05 from "@/assets/examples/ex-pf-ines-05.jpg";
+import exPfInes06 from "@/assets/examples/ex-pf-ines-06.jpg";
+import exPfInes07 from "@/assets/examples/ex-pf-ines-07.jpg";
+import exPfInes08 from "@/assets/examples/ex-pf-ines-08.jpg";
+import exPfInes09 from "@/assets/examples/ex-pf-ines-09.jpg";
 import exPfJorinde01 from "@/assets/examples/ex-pf-jorinde-01.jpg";
 import exPfJorinde02 from "@/assets/examples/ex-pf-jorinde-02.jpg";
 import exPfJorinde03 from "@/assets/examples/ex-pf-jorinde-03.jpg";
@@ -44,7 +53,37 @@ import exPfJorinde07 from "@/assets/examples/ex-pf-jorinde-07.jpg";
 import exPfJorinde08 from "@/assets/examples/ex-pf-jorinde-08.jpg";
 import exPfJorinde09 from "@/assets/examples/ex-pf-jorinde-09.jpg";
 import exPfJorinde10 from "@/assets/examples/ex-pf-jorinde-10.jpg";
+import exPfMerle01 from "@/assets/examples/ex-pf-merle-01.jpg";
+import exPfMerle02 from "@/assets/examples/ex-pf-merle-02.jpg";
+import exPfMerle03 from "@/assets/examples/ex-pf-merle-03.jpg";
+import exPfMerle04 from "@/assets/examples/ex-pf-merle-04.jpg";
+import exPfMerle05 from "@/assets/examples/ex-pf-merle-05.jpg";
+import exPfMerle06 from "@/assets/examples/ex-pf-merle-06.jpg";
+import exPfMerle07 from "@/assets/examples/ex-pf-merle-07.jpg";
+import exPfMerle08 from "@/assets/examples/ex-pf-merle-08.jpg";
+import exPfMerle09 from "@/assets/examples/ex-pf-merle-09.jpg";
+import exPfMerle10 from "@/assets/examples/ex-pf-merle-10.jpg";
+import exPfMerle11 from "@/assets/examples/ex-pf-merle-11.jpg";
+import exPfMerle12 from "@/assets/examples/ex-pf-merle-12.jpg";
+import exPfMerle13 from "@/assets/examples/ex-pf-merle-13.jpg";
+import exPfMerle14 from "@/assets/examples/ex-pf-merle-14.jpg";
+import exPfMerle15 from "@/assets/examples/ex-pf-merle-15.jpg";
+import exPfMerle16 from "@/assets/examples/ex-pf-merle-16.jpg";
+import exPfMerle17 from "@/assets/examples/ex-pf-merle-17.jpg";
+import exPfMerle18 from "@/assets/examples/ex-pf-merle-18.jpg";
+import exPfMerle19 from "@/assets/examples/ex-pf-merle-19.jpg";
+import exPfMerle20 from "@/assets/examples/ex-pf-merle-20.jpg";
+import exPfMerle21 from "@/assets/examples/ex-pf-merle-21.jpg";
+import exPfMerle22 from "@/assets/examples/ex-pf-merle-22.jpg";
+import exPfMerle23 from "@/assets/examples/ex-pf-merle-23.jpg";
 import exPfNaya01 from "@/assets/examples/ex-pf-naya-01.jpg";
+import exPfRana01 from "@/assets/examples/ex-pf-rana-01.jpg";
+import exPfRana02 from "@/assets/examples/ex-pf-rana-02.jpg";
+import exPfRana03 from "@/assets/examples/ex-pf-rana-03.jpg";
+import exPfRana04 from "@/assets/examples/ex-pf-rana-04.jpg";
+import exPfRana05 from "@/assets/examples/ex-pf-rana-05.jpg";
+import exPfRana06 from "@/assets/examples/ex-pf-rana-06.jpg";
+import exPfRana07 from "@/assets/examples/ex-pf-rana-07.jpg";
 import exPfRonja01 from "@/assets/examples/ex-pf-ronja-01.jpg";
 import exPfRonja02 from "@/assets/examples/ex-pf-ronja-02.jpg";
 import exPfRonja03 from "@/assets/examples/ex-pf-ronja-03.jpg";
@@ -261,6 +300,15 @@ export const exampleMedia = {
   "sample:ex-motion-ware-scannen": exMotionWareScannen,
   "sample:ex-ngo": exNgo,
   "sample:ex-painter": exPainter,
+  "sample:ex-pf-ines-01": exPfInes01,
+  "sample:ex-pf-ines-02": exPfInes02,
+  "sample:ex-pf-ines-03": exPfInes03,
+  "sample:ex-pf-ines-04": exPfInes04,
+  "sample:ex-pf-ines-05": exPfInes05,
+  "sample:ex-pf-ines-06": exPfInes06,
+  "sample:ex-pf-ines-07": exPfInes07,
+  "sample:ex-pf-ines-08": exPfInes08,
+  "sample:ex-pf-ines-09": exPfInes09,
   "sample:ex-pf-jorinde-01": exPfJorinde01,
   "sample:ex-pf-jorinde-02": exPfJorinde02,
   "sample:ex-pf-jorinde-03": exPfJorinde03,
@@ -271,7 +319,37 @@ export const exampleMedia = {
   "sample:ex-pf-jorinde-08": exPfJorinde08,
   "sample:ex-pf-jorinde-09": exPfJorinde09,
   "sample:ex-pf-jorinde-10": exPfJorinde10,
+  "sample:ex-pf-merle-01": exPfMerle01,
+  "sample:ex-pf-merle-02": exPfMerle02,
+  "sample:ex-pf-merle-03": exPfMerle03,
+  "sample:ex-pf-merle-04": exPfMerle04,
+  "sample:ex-pf-merle-05": exPfMerle05,
+  "sample:ex-pf-merle-06": exPfMerle06,
+  "sample:ex-pf-merle-07": exPfMerle07,
+  "sample:ex-pf-merle-08": exPfMerle08,
+  "sample:ex-pf-merle-09": exPfMerle09,
+  "sample:ex-pf-merle-10": exPfMerle10,
+  "sample:ex-pf-merle-11": exPfMerle11,
+  "sample:ex-pf-merle-12": exPfMerle12,
+  "sample:ex-pf-merle-13": exPfMerle13,
+  "sample:ex-pf-merle-14": exPfMerle14,
+  "sample:ex-pf-merle-15": exPfMerle15,
+  "sample:ex-pf-merle-16": exPfMerle16,
+  "sample:ex-pf-merle-17": exPfMerle17,
+  "sample:ex-pf-merle-18": exPfMerle18,
+  "sample:ex-pf-merle-19": exPfMerle19,
+  "sample:ex-pf-merle-20": exPfMerle20,
+  "sample:ex-pf-merle-21": exPfMerle21,
+  "sample:ex-pf-merle-22": exPfMerle22,
+  "sample:ex-pf-merle-23": exPfMerle23,
   "sample:ex-pf-naya-01": exPfNaya01,
+  "sample:ex-pf-rana-01": exPfRana01,
+  "sample:ex-pf-rana-02": exPfRana02,
+  "sample:ex-pf-rana-03": exPfRana03,
+  "sample:ex-pf-rana-04": exPfRana04,
+  "sample:ex-pf-rana-05": exPfRana05,
+  "sample:ex-pf-rana-06": exPfRana06,
+  "sample:ex-pf-rana-07": exPfRana07,
   "sample:ex-pf-ronja-01": exPfRonja01,
   "sample:ex-pf-ronja-02": exPfRonja02,
   "sample:ex-pf-ronja-03": exPfRonja03,
@@ -459,6 +537,15 @@ export const exampleMedia = {
  * put it back after running that script.
  */
 export const portfolioMedia = {
+  "sample:ex-pf-ines-01": { width: 1200, height: 1200, focal: [0.5, 0.45] },
+  "sample:ex-pf-ines-02": { width: 1600, height: 1067, focal: [0.42, 0.42] },
+  "sample:ex-pf-ines-03": { width: 2400, height: 1600, focal: [0.5, 0.45] },
+  "sample:ex-pf-ines-04": { width: 2400, height: 1600, focal: [0.45, 0.5] },
+  "sample:ex-pf-ines-05": { width: 2400, height: 1500, focal: [0.5, 0.5] },
+  "sample:ex-pf-ines-06": { width: 2400, height: 1150, focal: [0.5, 0.4] },
+  "sample:ex-pf-ines-07": { width: 2400, height: 1500, focal: [0.5, 0.4] },
+  "sample:ex-pf-ines-08": { width: 2400, height: 1600, focal: [0.4, 0.5] },
+  "sample:ex-pf-ines-09": { width: 2400, height: 1400, focal: [0.5, 0.55] },
   "sample:ex-pf-jorinde-01": { width: 1280, height: 1600, focal: [0.5, 0.3] },
   "sample:ex-pf-jorinde-02": { width: 2240, height: 1493, focal: [0.4, 0.58] },
   "sample:ex-pf-jorinde-03": { width: 1067, height: 1600, focal: [0.55, 0.5] },
@@ -469,7 +556,37 @@ export const portfolioMedia = {
   "sample:ex-pf-jorinde-08": { width: 1493, height: 2240, focal: [0.5, 0.66] },
   "sample:ex-pf-jorinde-09": { width: 1600, height: 1067, focal: [0.62, 0.45] },
   "sample:ex-pf-jorinde-10": { width: 1600, height: 1067, focal: [0.35, 0.5] },
+  "sample:ex-pf-merle-01": { width: 1200, height: 1200, focal: [0.56, 0.32] },
+  "sample:ex-pf-merle-02": { width: 2240, height: 1494, focal: [0.5, 0.55] },
+  "sample:ex-pf-merle-03": { width: 2240, height: 1494, focal: [0.5, 0.55] },
+  "sample:ex-pf-merle-04": { width: 2240, height: 1493, focal: [0.48, 0.65] },
+  "sample:ex-pf-merle-05": { width: 1493, height: 2240, focal: [0.42, 0.45] },
+  "sample:ex-pf-merle-06": { width: 1493, height: 2240, focal: [0.5, 0.45] },
+  "sample:ex-pf-merle-07": { width: 2240, height: 1493, focal: [0.5, 0.55] },
+  "sample:ex-pf-merle-08": { width: 2240, height: 1493, focal: [0.48, 0.55] },
+  "sample:ex-pf-merle-09": { width: 2240, height: 1493, focal: [0.6, 0.6] },
+  "sample:ex-pf-merle-10": { width: 2240, height: 1493, focal: [0.3, 0.6] },
+  "sample:ex-pf-merle-11": { width: 2240, height: 1493, focal: [0.5, 0.55] },
+  "sample:ex-pf-merle-12": { width: 2240, height: 1493, focal: [0.5, 0.5] },
+  "sample:ex-pf-merle-13": { width: 2240, height: 1493, focal: [0.52, 0.6] },
+  "sample:ex-pf-merle-14": { width: 2240, height: 1493, focal: [0.48, 0.5] },
+  "sample:ex-pf-merle-15": { width: 2240, height: 1493, focal: [0.55, 0.55] },
+  "sample:ex-pf-merle-16": { width: 2240, height: 1493, focal: [0.5, 0.55] },
+  "sample:ex-pf-merle-17": { width: 1600, height: 1066, focal: [0.45, 0.5] },
+  "sample:ex-pf-merle-18": { width: 1600, height: 1066, focal: [0.5, 0.55] },
+  "sample:ex-pf-merle-19": { width: 1067, height: 1600, focal: [0.5, 0.5] },
+  "sample:ex-pf-merle-20": { width: 1257, height: 2240, focal: [0.5, 0.3] },
+  "sample:ex-pf-merle-21": { width: 898, height: 1600, focal: [0.5, 0.3] },
+  "sample:ex-pf-merle-22": { width: 1600, height: 1066, focal: [0.55, 0.55] },
+  "sample:ex-pf-merle-23": { width: 1493, height: 2240, focal: [0.45, 0.55] },
   "sample:ex-pf-naya-01": { width: 1600, height: 1600, focal: [0.5, 0.38] },
+  "sample:ex-pf-rana-01": { width: 1200, height: 1200, focal: [0.52, 0.5] },
+  "sample:ex-pf-rana-02": { width: 2400, height: 1600, focal: [0.5, 0.55] },
+  "sample:ex-pf-rana-03": { width: 2400, height: 1600, focal: [0.5, 0.5] },
+  "sample:ex-pf-rana-04": { width: 2400, height: 1200, focal: [0.6, 0.6] },
+  "sample:ex-pf-rana-05": { width: 1600, height: 2000, focal: [0.45, 0.5] },
+  "sample:ex-pf-rana-06": { width: 2400, height: 1400, focal: [0.5, 0.45] },
+  "sample:ex-pf-rana-07": { width: 2400, height: 1600, focal: [0.5, 0.5] },
   "sample:ex-pf-ronja-01": { width: 1600, height: 1067, focal: [0.62, 0.45] },
   "sample:ex-pf-ronja-02": { width: 2240, height: 1493, focal: [0.3, 0.55] },
   "sample:ex-pf-ronja-03": { width: 1067, height: 1600, focal: [0.5, 0.55] },
