@@ -517,6 +517,7 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
   const playButton = (className?: string) => (
     <IconButton
       icon={paused ? Play : Pause}
+      solid
       label={playLabel}
       variant="tinted"
       data-keep-glide=""

@@ -61,7 +61,7 @@ export function Hero() {
             <span aria-hidden className="flex shrink-0 -space-x-2 rtl:space-x-reverse">
               {BIO_PLATFORMS.map((platform) => (
                 <span key={platform.slug} className="grid size-6 place-items-center rounded-full border border-line bg-canvas-muted text-fg">
-                  <PlatformIcon icon={platform} size="sm" className="size-3" />
+                  <PlatformIcon icon={platform} size="xs" />
                 </span>
               ))}
             </span>

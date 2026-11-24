@@ -1224,7 +1224,7 @@ export function Playground({ looks, rtl, ai = false }: { looks: [LookOption, ...
               className="absolute end-2 top-2 layer-raised grid size-touch-target place-items-center rounded-full border border-teal-700 bg-teal-800 text-teal-50 transition-[background-color,scale] duration-micro hover:bg-teal-700 focus-visible:focus-ring focus-visible:outline-teal-50 active:scale-pressed motion-reduce:active:scale-none lg:end-3 lg:top-3"
             >
               {/* Media controls keep their direction in Arabic: play points right, replay turns one way. */}
-              <Icon key={demo} icon={demo === "running" ? Square : demo === "done" ? RotateCcw : Play} size="sm" className={cn("motion-safe:animate-fade-in", demo === "running" && "fill-current")} />
+              <Icon key={demo} icon={demo === "running" ? Square : demo === "done" ? RotateCcw : Play} size="sm" solid={demo !== "done"} className="motion-safe:animate-fade-in" />
               <span className="sr-only">{demoLabel}</span>
             </button>
             {near ? (

@@ -96,7 +96,7 @@ export function ClickToLoad({
           compact ? "size-control-md" : "size-control-xl",
         )}
       >
-        <Icon icon={Play} size={compact ? "sm" : "md"} className="translate-x-0.5 fill-current" />
+        <Icon icon={Play} size={compact ? "sm" : "md"} solid className="translate-x-0.5" />
       </span>
     </span>
   );

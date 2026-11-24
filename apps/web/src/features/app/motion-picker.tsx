@@ -194,7 +194,7 @@ export function MotionPicker({
                   className="group size-touch-target focus-visible:focus-ring absolute end-1 top-1 grid place-items-center rounded-full"
                 >
                   <span className="size-control-sm border-line bg-surface-elevated text-fg duration-micro group-hover:bg-canvas-muted group-active:scale-pressed grid place-items-center rounded-full border transition-[background-color,scale] motion-reduce:group-active:scale-none">
-                    <Icon icon={playing ? Pause : Play} size="sm" />
+                    <Icon icon={playing ? Pause : Play} size="sm" solid />
                   </span>
                 </button>
               </div>

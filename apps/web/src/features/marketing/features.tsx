@@ -190,7 +190,7 @@ function Readable({ swatches }: { swatches: Record<string, string>[] }) {
           <span className="grid justify-items-center gap-1">
             Aa
             <span className="inline-flex items-center gap-0.5 rounded-full bg-creator-accent-fg px-2 text-caption text-creator-accent">
-              <Icon icon={Check} size="sm" className="size-3" />
+              <Icon icon={Check} size="xs" />
               AA
             </span>
           </span>

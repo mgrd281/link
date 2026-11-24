@@ -279,7 +279,7 @@ export function PeopleSearchPanel({
                   className="group grid size-control-md shrink-0 place-items-center rounded-full focus-visible:focus-ring"
                 >
                   <span className="grid size-5 place-items-center rounded-full bg-fg-tertiary text-canvas transition-colors duration-micro group-hover:bg-fg-secondary md:text-surface-elevated">
-                    <Icon icon={X} size="sm" className="size-3" />
+                    <Icon icon={X} size="xs" />
                   </span>
                 </button>
               ) : null}

@@ -135,7 +135,7 @@ export function TryAiStage({ replay: run, className }: { replay: RecordingReplay
         className="absolute end-4 top-3 layer-raised grid size-touch-target place-items-center rounded-full border border-line-strong bg-surface text-fg transition-[background-color,scale] duration-micro hover:bg-hover focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none md:end-8"
       >
         {/* Media controls keep their direction in Arabic (play points right, the circle turns one way). */}
-        <Icon key={status} icon={status === "playing" ? Square : status === "done" ? RotateCcw : Play} size="sm" className={cn("motion-safe:animate-fade-in", status === "playing" && "fill-current")} />
+        <Icon key={status} icon={status === "playing" ? Square : status === "done" ? RotateCcw : Play} size="sm" solid={status !== "done"} className="motion-safe:animate-fade-in" />
         <span className="sr-only">{label}</span>
       </button>
       <AiRunView
