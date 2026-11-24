@@ -118,8 +118,12 @@ function Name({ profile, isRtl, theme, compact = false, scale }: { profile: Prof
   );
 }
 
-/** Social profiles under the name: round tiles, or (plain) bare glyphs at a larger size for quiet looks. */
-export function Socials({ block, plain, start = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean }) {
+/**
+ * Social profiles under the name: round tiles, or (plain) bare glyphs at a larger size for quiet looks.
+ * `solid` draws a website and an e-mail address with the solid globe and envelope like the brands
+ * (C-07); every hero here passes it. Laufbahn's hero calls this without it and keeps its outline pair.
+ */
+export function Socials({ block, plain, start = false, solid = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean; solid?: boolean }) {
   return (
     <ul className={cn("flex flex-wrap", start ? "-ms-3 justify-start" : "justify-center", plain ? "gap-2" : "gap-3")}>
       {block.items.map((item) => (
@@ -134,7 +138,7 @@ export function Socials({ block, plain, start = false }: { block: BlockOf<"socia
                 : "size-control-xl bg-creator-surface-2 transition-[background-color,scale] hover:bg-creator-line-strong",
             )}
           >
-            <PlatformGlyph platform={item.platform} size={plain ? "lg" : "md"} />
+            <PlatformGlyph platform={item.platform} size={plain ? "lg" : "md"} outlineWeb={!solid} />
           </a>
         </li>
       ))}
@@ -364,7 +368,7 @@ export function PosterHero({
           {actions("start", 0)}
           {/* Numbers follow the action here: the work, the sentence and the button come first. */}
           {profile.stats?.length ? <Stats stats={profile.stats} start /> : null}
-          {socials ? <Socials block={socials} plain={plain} start /> : null}
+          {socials ? <Socials block={socials} plain={plain} start solid /> : null}
         </div>
       </header>
     );
@@ -398,7 +402,7 @@ export function PosterHero({
         {actions("start", 4, false)}
         {socials ? (
           <div className={rise(5).className} style={rise(5).style}>
-            <Socials block={socials} plain={plain} start />
+            <Socials block={socials} plain={plain} start solid />
           </div>
         ) : null}
       </header>
@@ -437,7 +441,7 @@ export function PosterHero({
       {actions(start ? "start" : "center", 3)}
       {socials ? (
         <div className={cn("pt-2", rise(3).className)} style={rise(3).style}>
-          <Socials block={socials} plain={plain} start={start} />
+          <Socials block={socials} plain={plain} start={start} solid />
         </div>
       ) : null}
     </>

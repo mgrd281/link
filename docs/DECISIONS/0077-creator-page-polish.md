@@ -40,8 +40,11 @@ Werkbogen bar cut both the name and the action short on a phone ("Shooting anfrâ
 3. **Solid globe and envelope (C-07).** `GLOBE_GLYPH` and `MAIL_GLYPH`, drawn for Linkyo on the 24 Ã— 24
    grid next to `LINKEDIN_GLYPH`, are the `website` and `email` platform glyphs and the fallback for
    anything unknown. Every platform glyph is now one filled path; the names ("Website", "Email") are
-   unchanged. This reaches every surface that draws platform glyphs (creator pages including
-   Laufbahn's social row, the editor, the welcome flow, the AI input).
+   unchanged. This reaches every surface that draws platform glyphs (creator pages, the editor, the
+   welcome flow, the AI input) except Laufbahn's social row: its rendering must not change (Stage 2
+   rule 6), so `Socials` draws the solid pair only when a hero passes `solid` (the three shared heroes
+   do), and Laufbahn's untouched call keeps the outline globe and envelope (corrected at the Stage 2
+   integration; unit test in `link-icons.test.ts`).
 4. **Names that fit in Arabic (C-04).** On Arabic pages the name's size estimate counts Latin letters
    by class (narrow, slim, wide, capitals, the rest), measured on bold system sans faces and rounded
    up, because the Arabic face has no Latin letters and the fallback is wider than the Arabic

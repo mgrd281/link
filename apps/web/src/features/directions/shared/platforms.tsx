@@ -1,6 +1,7 @@
 import type { Platform } from "@linkyo/blocks";
 import { tokens } from "@linkyo/tokens";
-import { PlatformIcon } from "@linkyo/ui";
+import { Icon, PlatformIcon } from "@linkyo/ui";
+import { Globe, Mail } from "lucide-react";
 import type { SimpleIcon } from "simple-icons";
 import {
   siApplemusic,
@@ -106,11 +107,20 @@ export function PlatformGlyph({
   platform,
   size = "md",
   className,
+  outlineWeb = false,
 }: {
   platform: Platform;
   size?: "sm" | "md" | "lg";
   className?: string | undefined;
+  /**
+   * The outline globe and envelope of before C-07 for a website and an e-mail address. Only Laufbahn's
+   * social row asks for it: its rendering must not change (Stage 2 rule 6). Brands stay solid.
+   */
+  outlineWeb?: boolean;
 }) {
+  if (outlineWeb && (platform === "email" || platform === "website" || !(platform in SIMPLE))) {
+    return <Icon icon={platform === "email" ? Mail : Globe} size={size} className={className} />;
+  }
   // Anything unknown (older stored data) is a website: the solid globe, never an outline icon.
   return <PlatformIcon icon={SIMPLE[platform] ?? GLOBE_GLYPH} size={size} className={className} />;
 }

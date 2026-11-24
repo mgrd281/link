@@ -1,8 +1,13 @@
-import { PLATFORMS, type Platform } from "@linkyo/blocks";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
+import { PLATFORMS, type BlockOf, type Platform } from "@linkyo/blocks";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { siInstagram } from "simple-icons";
 import { describe, expect, it } from "vitest";
 
+import { Socials } from "../poster/hero";
 import { GLOBE_GLYPH, LINKEDIN_GLYPH, linkGlyph, MAIL_GLYPH } from "./link-icons";
 import { PlatformGlyph, platformName } from "./platforms";
 
@@ -55,6 +60,35 @@ describe("social glyphs are uniformly solid", () => {
   it("an unknown platform from older data falls back to the solid globe", () => {
     expect(paths(markup("myspace" as Platform))).toEqual([GLOBE_GLYPH.path]);
     expect(platformName("myspace" as Platform)).toBe("Website");
+  });
+
+  it("Laufbahn's social row keeps its outline globe and envelope; every other hero passes `solid`", () => {
+    const block = {
+      id: "socials",
+      type: "socials",
+      visible: true,
+      highlight: false,
+      items: [
+        { platform: "instagram", url: "https://instagram.com/lio" },
+        { platform: "website", url: "https://example.com" },
+        { platform: "email", url: "mailto:hello@example.com" },
+      ],
+    } as unknown as BlockOf<"socials">;
+    const row = (solid: boolean) => renderToStaticMarkup(createElement(Socials, { block, plain: false, start: true, solid }));
+    // Without `solid` (Laufbahn's call): lucide's outline pair, the brand still solid.
+    expect(row(false)).toMatch(/lucide-globe/);
+    expect(row(false)).toMatch(/lucide-mail/);
+    expect(paths(row(false))).toContain(siInstagram.path);
+    // With it: one solid path each, nothing outlined.
+    expect(row(true)).not.toMatch(/lucide/);
+    expect(paths(row(true))).toEqual([siInstagram.path, GLOBE_GLYPH.path, MAIL_GLYPH.path]);
+    // The calls themselves: Laufbahn's hero (not to be touched) asks for nothing, the shared heroes ask for solid.
+    const source = (file: string) => readFileSync(path.join(import.meta.dirname, "../poster", file), "utf8");
+    const calls = (text: string) => text.match(/<Socials\b[^>]*\/>/g) ?? [];
+    expect(calls(source("laufbahn-hero.tsx"))).toHaveLength(1);
+    for (const call of calls(source("laufbahn-hero.tsx"))) expect(call).not.toMatch(/\bsolid\b/);
+    expect(calls(source("hero.tsx"))).toHaveLength(3);
+    for (const call of calls(source("hero.tsx"))) expect(call).toMatch(/\bsolid\b/);
   });
 
   it("the drawn glyphs stay on the 24 × 24 grid", () => {
