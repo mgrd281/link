@@ -560,14 +560,17 @@ test.describe("Laufbahn", () => {
   test("Shift+Tab from the index back into the hero never leaves focus under the compact bar", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(SAMPLE("en"));
-    await page.keyboard.press("End");
+    // To the end at once: the End key's scroll is animated by Chrome and could still be running (and pull
+    // the page back down) while focus moves up into the hero.
+    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
     const index = page.getByRole("navigation", { name: "Sections" });
     await index.getByRole("link").first().focus();
     const bar = page.locator(".poster-bar");
     for (let step = 0; step < 6; step += 1) {
       await page.keyboard.press("Shift+Tab");
       const [focused, barBox] = [await page.evaluate(() => document.activeElement?.getBoundingClientRect().toJSON() as DOMRect), await bar.boundingBox()];
-      expect(barBox && focused.top >= barBox.y + barBox.height).toBe(true);
+      // Back in the hero, with the name on screen, the bar has gone (no box): nothing can be under it.
+      expect(barBox === null || focused.top >= barBox.y + barBox.height).toBe(true);
     }
   });
 
