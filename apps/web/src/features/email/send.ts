@@ -27,6 +27,13 @@ export function readEmailTransport(value: string | undefined): EmailTransport {
 }
 
 /**
+ * Whether a sent e-mail is handed on (EMAIL_TRANSPORT): "tem" delivers, "capture" hands it to the
+ * tests' mailbox, "console" (also unset) sends nothing. Routes report `mailed` only when this is true,
+ * so the team never reads "the customer has it" for an e-mail that did not go out.
+ */
+export const emailDelivers = (env: Record<string, string | undefined> = process.env): boolean => readEmailTransport(env.EMAIL_TRANSPORT) !== "console";
+
+/**
  * The sender for this environment (EMAIL_TRANSPORT): "capture" writes JSON files for tests
  * (EMAIL_CAPTURE_DIR, default `.mail` in the working directory), "tem" sends through Scaleway (needs
  * its three settings and EMAIL_FROM), unset or "console" only logs a content-free line.

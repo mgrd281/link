@@ -44,6 +44,7 @@ import { pageAddress } from "@/lib/page-url";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { useConsoleActions } from "./actions";
+import { bdi, isolate } from "./bidi";
 import { billingActions, scheduledEnd, type BillingAnswer } from "./billing";
 import { CustomersHidden } from "./customers-list-screen";
 import { sessionsOf, useCustomers } from "./customers/data";
@@ -122,7 +123,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const runBilling = async (work: Promise<BillingAnswer>, message: (answer: BillingAnswer & { ok: true }) => string, mails: boolean) => {
     const answer = await work;
     if (!answer.ok) {
-      toast({ title: t(`billingErrors.${answer.error}`), tone: "danger" });
+      toast({ title: t.markup(`billingErrors.${answer.error}`, { bdi: isolate }), tone: "danger" });
       return;
     }
     toast({ title: message(answer), tone: "success" });
@@ -150,7 +151,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
         trialEndsAt: new Date(base + 14 * DAY).toISOString(),
         ...(sub.startedAt ? {} : { startedAt: new Date(now).toISOString() }),
       }),
-      t("toast.trial"),
+      t.markup("toast.trial", { bdi: isolate }),
     );
   };
   const resume = () => void run(actions.subscription(customer, "resume", { subscriptionStatus: "active", canceledAt: null }), t("toast.resumed"));
@@ -171,7 +172,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
     } else if (pending.kind === "stripeCancel") {
       void runBilling(
         actions.stripeSubscription(customer, "cancel"),
-        (answer) => (answer.endsAt ? t("toast.cancelScheduled", { date: date(answer.endsAt, locale) }) : t("toast.canceled")),
+        (answer) => (answer.endsAt ? t.markup("toast.cancelScheduled", { date: date(answer.endsAt, locale), bdi: isolate }) : t("toast.canceled")),
         true,
       );
     } else if (pending.kind === "stripeResume") {
@@ -196,7 +197,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   };
 
   const menu: MenuItem[] = [
-    ...(money_.trial ? [{ label: t("actions.trial"), icon: CalendarPlus, onSelect: extendTrial }] : []),
+    ...(money_.trial ? [{ label: t.markup("actions.trial", { bdi: isolate }), icon: CalendarPlus, onSelect: extendTrial }] : []),
     ...(money_.resume === "stripe"
       ? [{ label: t("actions.resumeStripe"), icon: CreditCard, onSelect: () => setPending({ kind: "stripeResume" }) }]
       : money_.resume
@@ -263,19 +264,19 @@ export function CustomerDetailScreen({ id }: { id: string }) {
         },
         cancel: {
           title: t("confirm.cancelTitle"),
-          body: t("confirm.cancelBody"),
+          body: t.rich("confirm.cancelBody", { bdi }),
           label: t("actions.cancel"),
           destructive: true,
         },
         stripeCancel: {
           title: t("confirm.cancelStripeTitle"),
-          body: t("confirm.cancelStripeBody"),
+          body: t.rich("confirm.cancelStripeBody", { bdi }),
           label: t("actions.cancelStripe"),
           destructive: true,
         },
         stripeResume: {
           title: t("confirm.resumeStripeTitle"),
-          body: t("confirm.resumeStripeBody"),
+          body: t.rich("confirm.resumeStripeBody", { bdi }),
           label: t("actions.resumeStripe"),
           destructive: false,
         },
@@ -288,8 +289,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
         refund:
           money_.refund === "stripe"
             ? {
-                title: t("confirm.refundStripeTitle"),
-                body: t("confirm.refundStripeBody", { amount: money(pending.kind === "refund" ? pending.amount : 0, locale, true) }),
+                title: t.markup("confirm.refundStripeTitle", { bdi: isolate }),
+                body: t.rich("confirm.refundStripeBody", { amount: money(pending.kind === "refund" ? pending.amount : 0, locale, true), bdi }),
                 label: t("actions.refund"),
                 destructive: true,
               }
@@ -358,7 +359,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
               }
               items={[
                 { label: tc("plans.free"), onSelect: () => setPlan("free") },
-                { label: t("actions.givePro"), onSelect: () => setPlan("pro") },
+                { label: t.markup("actions.givePro", { bdi: isolate }), onSelect: () => setPlan("pro") },
               ]}
             />
           ) : null}
@@ -413,7 +414,12 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                 ],
                 [t("facts.since"), date(customer.createdAt, locale)],
                 [t("facts.lastSeen"), timeAgo(customer.lastSeenAt, now, locale)],
-                [t("facts.source"), customer.source === "device" ? tc("thisDevice") : t("sample")],
+                [
+                  t("facts.source"),
+                  <span key="origin" data-customer-source={customer.source}>
+                    {customer.source === "live" ? t("liveSource") : customer.source === "device" ? tc("thisDevice") : t("sample")}
+                  </span>,
+                ],
                 [
                   t("facts.id"),
                   <span key="id" dir="ltr" className="text-caption font-mono">
@@ -447,8 +453,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                 ],
                 [t("facts.blocks"), count(customer.usage.blocks, locale)],
                 [t("facts.onboarded"), customer.usage.onboarded ? t("yes") : t("no")],
-                [t("facts.views"), viewsMeasured ? count(customer.usage.views30, locale) : t("notMeasured")],
-                [t("facts.clicks"), viewsMeasured ? count(customer.usage.clicks30, locale) : t("notMeasured")],
+                [t.markup("facts.views", { bdi: isolate }), viewsMeasured ? count(customer.usage.views30, locale) : t("notMeasured")],
+                [t.markup("facts.clicks", { bdi: isolate }), viewsMeasured ? count(customer.usage.clicks30, locale) : t("notMeasured")],
               ]}
             />
           </Panel>
@@ -462,9 +468,9 @@ export function CustomerDetailScreen({ id }: { id: string }) {
               items={[
                 [t("facts.plan"), sub.plan === "pro" ? "Pro" : tc("plans.free")],
                 [
-                  t("facts.planSource"),
+                  t.markup("facts.planSource", { bdi: isolate }),
                   <span key="source" data-plan-source={source ?? (hasProForLife(customer) ? "reward" : "none")}>
-                    {source ? t(`sources.${source}`) : hasProForLife(customer) ? t("sources.reward") : "–"}
+                    {source ? t.rich(`sources.${source}`, { bdi }) : hasProForLife(customer) ? t.rich("sources.reward", { bdi }) : "–"}
                   </span>,
                 ],
                 [t("facts.status"), sub.status ? tc(`subscription.${sub.status}`) : "–"],
@@ -484,13 +490,13 @@ export function CustomerDetailScreen({ id }: { id: string }) {
               ]}
             />
             {/* "Demo: no money moves" is true only in the demo. */}
-            {supabaseEnabled ? null : <p className="text-caption text-fg-tertiary">{t("billingNote")}</p>}
+            {supabaseEnabled ? null : <p className="text-caption text-fg-tertiary">{t.rich("billingNote", { bdi })}</p>}
             {money_.waitingForPayments ? (
               <p role="note" data-stripe-waiting className="text-small text-fg-secondary">
-                {t("stripeWaiting")}
+                {t.rich("stripeWaiting", { bdi })}
               </p>
             ) : supabaseEnabled && source === "stripe" ? (
-              <p className="text-caption text-fg-tertiary">{t("stripeNote")}</p>
+              <p className="text-caption text-fg-tertiary">{t.rich("stripeNote", { bdi })}</p>
             ) : null}
           </Panel>
           <Panel title={t("invoices")} id="invoices-title">
@@ -621,7 +627,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
               </ul>
             )}
           </Panel>
-          <Panel title={t("signInLog")} id="signins-title">
+          <Panel title={t.markup("signInLog", { bdi: isolate })} id="signins-title">
             <div className="overflow-x-auto" role="region" aria-labelledby="signins-title" tabIndex={0}>
               <table className="min-w-prose text-small w-full">
                 <thead className="text-caption text-fg-secondary">
@@ -760,8 +766,9 @@ export function CustomerDetailScreen({ id }: { id: string }) {
               <ul className="grid gap-2">
                 {history.map((event) => (
                   <li key={event.id} className="text-small">
-                    {t(`historyLine.${event.action.replace(".", "_")}`, {
+                    {t.rich(`historyLine.${event.action.replace(".", "_")}`, {
                       actor: db.members.find((member) => member.email === event.actor)?.name ?? event.actor,
+                      bdi,
                     })}
                     <span className="text-caption text-fg-tertiary block">
                       {timeAgo(event.at, now, locale)}
@@ -977,7 +984,7 @@ function InvitesTab({ customer, now }: { customer: Customer; now: number }) {
           {proForLife && !proForLife.revokedAt && isPaying(customer, now) ? (
             <p className="bg-warning-subtle text-small text-warning-strong flex items-start gap-2 rounded-md px-3 py-2">
               <Icon icon={AlertTriangle} size="sm" className="mt-0.5 shrink-0" />
-              <span>{t("invites.paysAndPro")}</span>
+              <span>{t.rich("invites.paysAndPro", { bdi })}</span>
             </p>
           ) : null}
           <ul className="grid grid-cols-1 gap-2">

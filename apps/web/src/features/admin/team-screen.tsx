@@ -11,6 +11,7 @@ import { Panel, Screen } from "@/features/app/screen";
 import { Sheet } from "@/features/app/sheet";
 
 import { useConsoleActions } from "./actions";
+import { bdi } from "./bidi";
 import { useAdmin } from "./session";
 import { RoleBadge } from "./shell";
 import { PERMISSIONS, ROLE_PERMISSIONS, ROLES, type Member, type Role } from "./types";
@@ -157,7 +158,7 @@ function PermissionsMatrix() {
             {PERMISSIONS.map((permission) => (
               <tr key={permission} className="border-b border-line last:border-b-0">
                 <th scope="row" className="py-2 pe-3 text-start font-regular">
-                  {tPermissions(permission.replace(".", "_"))}
+                  {tPermissions.rich(permission.replace(".", "_"), { bdi })}
                 </th>
                 {ROLES.map((role) => {
                   const allowed = ROLE_PERMISSIONS[role].includes(permission);

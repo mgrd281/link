@@ -12,7 +12,10 @@ export interface Kpis {
   paying: number;
   trialing: number;
   pastDue: number;
-  /** Share of all customers on a paid plan (0–1). */
+  /**
+   * Share of all customers who pay for Pro through Stripe (0–1): `paying ÷ customers`. The team's Pro,
+   * trials and rewards bring no money and do not count (the tile's hint says so).
+   */
   conversion: number;
   /** Paid subscriptions canceled in the range ÷ paid at its start (0–1). */
   churn: number;

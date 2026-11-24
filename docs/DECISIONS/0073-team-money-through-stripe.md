@@ -54,10 +54,23 @@
 **Consequences.**
 
 - **E-mail:** production sends no refund or cancellation e-mail until a mail transport exists (founder decision F1,
-  SMTP). The routes report `mailed: false`, and the console says the e-mail did not go out.
+  SMTP). The routes report `mailed: false`, and the console says the e-mail did not go out. `mailed` is true only
+  when a transport that delivers took the e-mail (`emailDelivers()`: `tem`, or `capture` in tests; never the
+  `console` stand-in), in the three billing routes and in the orders refund and deliver routes
+  (`features/admin/mail.ts`, Stage 2 WP2.6).
 - **Hosted database:** the migration `20261124100100_admin_money.sql` must be applied before this code relies on it.
-  Until then the money routes answer 409 `notAvailable` (never a database-only "refunded"); the export works unlogged
-  as before; `admin_customers()` without `source` falls back to "invoices mean Stripe".
+  Until then the money routes answer 409 `notAvailable` (never a database-only "refunded"; the orders refund too
+  when `admin_refund_order` is missing); the export works unlogged as before; `admin_customers()` without `source`
+  falls back to "invoices mean Stripe".
+- **Hosted database, editors (until the migration is applied):** the hosted `role_permissions` still give editors
+  `customers.view`, so `admin_customers()` (and the other functions that ask for `customers.view`) would still send an
+  editor's browser every customer's name, e-mail address, city and team notes, although the console hides customers
+  from editors. A-15 is therefore not done on production until the migration runs. Interim measure (Stage 2,
+  WP2.6): when the signed-in role may not see customers (the code's role map) and `admin_me()` shows the old
+  database (no `orders.view`), or the database still grants that role `customers.view`, the console does not call
+  `admin_customers()` at all; Overview and Analytics say that customer figures are not available for this role
+  (`customers/access.ts`), never a 0. A member calling the function by hand through PostgREST still gets the rows:
+  only the migration closes that.
 - **Stripe idempotency:** Stripe keeps the answer to an idempotency key for 24 hours, errors included. A refund Stripe
   refused (for example for lack of balance) gives the same refusal when sent again within that time; the team then
   refunds in the Stripe dashboard. The same holds for the existing order and withdrawal refunds.

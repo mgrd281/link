@@ -2,6 +2,8 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 import { supabaseEnabled } from "@/lib/supabase/config";
 
+import { ROLES } from "./types";
+
 /**
  * The team code that opens the team area. Set LINKYO_ADMIN_CODE_SHA256 (the SHA-256 of your own
  * code) in the hosting environment; the built-in hash is the demo code, and only a demo build (no
@@ -44,6 +46,17 @@ export const teamToken = (env?: Env): string => {
   const key = expected(env);
   if (!usable(key)) throw new Error("LINKYO_ADMIN_CODE_SHA256 is not set to a SHA-256");
   return createHmac("sha256", key).update("linkyo-team-v1").digest("hex");
+};
+
+/**
+ * With real accounts: whether `admin_me()`, called as the signed-in account, names a team role (it
+ * answers null for everyone else). Every role sees the Creators screen, so every role may list the
+ * prepared pages.
+ */
+export const isTeamMember = (me: unknown): boolean => {
+  if (typeof me !== "object" || me === null || !("role" in me)) return false;
+  const { role } = me;
+  return ROLES.some((known) => known === role);
 };
 
 export const checkToken = (header: string | null, env?: Env): boolean => {

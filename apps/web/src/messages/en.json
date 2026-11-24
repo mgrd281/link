@@ -3121,7 +3121,7 @@
         "paying": "Paying customers",
         "payingHint": "{trialing, plural, =0 {no trials running} one {# trial running} other {# trials running}}",
         "conversion": "Free → Pro",
-        "conversionHint": "Share of all customers on Pro",
+        "conversionHint": "Paying ÷ all customers (Pro given for free doesn't count)",
         "churn": "Churn ({days} days)",
         "churnHint": "Canceled ÷ paying at the start",
         "active": "Active this week",
@@ -3533,7 +3533,9 @@
       "noAccessTitle": "Customers aren't visible to your role",
       "noAccessLead": "Your role builds pages and works on orders without customer data such as e-mail addresses. If you need access, ask an owner.",
       "exportFailed": "The export couldn't be logged, so no file was made.",
-      "toOverview": "Go to the overview"
+      "toOverview": "Go to the overview",
+      "figuresWithheldTitle": "Customer figures aren't available for your role",
+      "figuresWithheldBody": "This database would send customers' names and e-mail addresses along with the figures. So the team area doesn't load them for your role until the database is updated."
     },
     "customer": {
       "loading": "Loading …",
@@ -3744,7 +3746,8 @@
         "network": "No answer from the server. Check the status, then try again."
       },
       "stripeWaiting": "This subscription runs through Stripe. Refunds and cancelling work here once payments are switched on.",
-      "stripeNote": "Refunds and cancellations go through Stripe. “Refunded” shows here only once Stripe has confirmed it."
+      "stripeNote": "Refunds and cancellations go through Stripe. “Refunded” shows here only once Stripe has confirmed it.",
+      "liveSource": "Real account"
     },
     "subscriptions": {
       "title": "Subscriptions",

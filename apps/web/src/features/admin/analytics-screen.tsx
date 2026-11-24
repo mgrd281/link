@@ -5,12 +5,14 @@ import { useMemo, type CSSProperties } from "react";
 
 import { Panel, Screen } from "@/features/app/screen";
 
+import { bdi } from "./bidi";
 import { CohortGrid, ColumnChart, RankedBars } from "./charts";
 import { useCustomers } from "./customers/data";
 import { DAY, viewsMeasured } from "./customers/model";
 import { cohorts, funnel, lastDevice, REST, shares, signupsPerDay, visitedCount } from "./customers/stats";
-import { DemoNote } from "./customers/ui";
+import { DemoNote, FiguresWithheld } from "./customers/ui";
 import { count, country, percent } from "./format";
+import { useAdmin } from "./session";
 
 /** Growth, activation, retention and who the customers are: the numbers behind product decisions. */
 export function AdminAnalyticsScreen() {
@@ -18,7 +20,8 @@ export function AdminAnalyticsScreen() {
   const tc = useTranslations("admin.customers");
   const tk = useTranslations("app.welcome.kinds");
   const locale = useLocale();
-  const { customers, now, ready } = useCustomers();
+  const { role } = useAdmin();
+  const { customers, now, ready, withheld } = useCustomers();
 
   const weekly = useMemo(() => {
     const days = signupsPerDay(customers, now, 84);
@@ -38,7 +41,8 @@ export function AdminAnalyticsScreen() {
 
   return (
     <Screen title={t("title")} lead={t("lead")} wide>
-      {ready ? (
+      {ready && withheld(role) ? <FiguresWithheld /> : null}
+      {ready && !withheld(role) ? (
         <>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Panel title={t("weekly")} id="weekly-title">
@@ -68,7 +72,7 @@ export function AdminAnalyticsScreen() {
               <p className="text-caption text-fg-tertiary">{t("funnelNote")}</p>
               {/* Visits are no step: "On Pro" must not hang on a number real accounts do not measure yet. */}
               <p data-visits className="text-small text-fg-secondary">
-                {viewsMeasured ? t("visited", { count: count(visitedCount(customers), locale) }) : t("visitedNotMeasured")}
+                {viewsMeasured ? t.rich("visited", { count: count(visitedCount(customers), locale), bdi }) : t("visitedNotMeasured")}
               </p>
             </Panel>
           </div>

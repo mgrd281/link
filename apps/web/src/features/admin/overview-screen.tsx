@@ -32,7 +32,8 @@ import { ColumnChart, KpiTile, RankedBars } from "./charts";
 import { useCustomers } from "./customers/data";
 import { daysAgo, riskFlags, viewsMeasured } from "./customers/model";
 import { kpis, lastDevice, mrrByMonth, REST, shares, signupsPerDay } from "./customers/stats";
-import { DemoNote, PlanBadge, StatusBadges } from "./customers/ui";
+import { DemoNote, FiguresWithheld, PlanBadge, StatusBadges } from "./customers/ui";
+import { bdi } from "./bidi";
 import { useCreatorRows, usePublished } from "./data";
 import { count, country, money, percent, timeAgo } from "./format";
 import { useAdmin } from "./session";
@@ -83,8 +84,8 @@ export function OverviewScreen() {
   const tc = useTranslations("admin.customers");
   const ts = useTranslations("admin.security");
   const locale = useLocale();
-  const { db, me, can } = useAdmin();
-  const { customers, now, ready, blockedIps } = useCustomers();
+  const { db, me, can, role } = useAdmin();
+  const { customers, now, ready, blockedIps, withheld } = useCustomers();
   const [rangeKey, setRange] = useState<(typeof RANGES)[number]>("30");
   const range = Number(rangeKey);
   const published = usePublished(db.token);
@@ -127,8 +128,49 @@ export function OverviewScreen() {
     .slice(0, 5);
   const pagesCount = (status: "draft" | "ready" | "published") =>
     rows.filter((row) => row.status === status).length;
-  const live = published.status === "ready" ? published.pages.length : 0;
+  // Not listed (an error): a dash, never a 0 that reads like a count.
+  const live = published.status === "ready" ? count(published.pages.length, locale) : published.status === "error" ? "–" : "…";
   const unknown = tc("unknownCountry");
+
+  // Prepared pages and the team's latest work: needs no customer data, so it shows for every role.
+  const teamWork = (
+    <Panel
+      title={t("teamWork")}
+      id="team-work-title"
+      action={
+        <Link
+          href="/admin/activity"
+          className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
+        >
+          {t("allActivity")}
+          <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
+        </Link>
+      }
+    >
+      <dl className="grid grid-cols-3 gap-2">
+        {(
+          [
+            ["published", Rocket, live],
+            ["ready", CircleCheck, pagesCount("ready")],
+            ["drafts", FilePen, pagesCount("draft")],
+          ] as const
+        ).map(([key, icon, value]) => (
+          <div key={key} className="bg-canvas-muted grid gap-1 rounded-md p-3">
+            <dt className="text-caption text-fg-secondary flex items-center gap-1">
+              <Icon icon={icon} size="sm" />
+              {t(key)}
+            </dt>
+            <dd className="text-h3 tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {db.activity.length > 0 ? (
+        <ActivityList events={db.activity.slice(0, 4)} now={now} />
+      ) : (
+        <p className="text-small text-fg-secondary">{t("noActivity")}</p>
+      )}
+    </Panel>
+  );
 
   return (
     <Screen
@@ -143,15 +185,21 @@ export function OverviewScreen() {
         ) : null
       }
     >
-      <Segmented
-        label={t("range")}
-        value={rangeKey}
-        onValueChange={setRange}
-        className="justify-self-start"
-        options={RANGES.map((days) => ({ value: days, label: t("days", { days: Number(days) }) }))}
-      />
-      {ready ? (
+      {ready && withheld(role) ? (
         <>
+          <FiguresWithheld />
+          {teamWork}
+        </>
+      ) : null}
+      {ready && !withheld(role) ? (
+        <>
+          <Segmented
+            label={t("range")}
+            value={rangeKey}
+            onValueChange={setRange}
+            className="justify-self-start"
+            options={RANGES.map((days) => ({ value: days, label: t("days", { days: Number(days) }) }))}
+          />
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <KpiTile
               icon={UsersRound}
@@ -187,7 +235,7 @@ export function OverviewScreen() {
                   icon={Percent}
                   label={t("kpi.conversion")}
                   value={percent(numbers.conversion, locale)}
-                  hint={t("kpi.conversionHint")}
+                  hint={t.rich("kpi.conversionHint", { bdi })}
                 />
                 <KpiTile
                   icon={TrendingDown}
@@ -351,42 +399,7 @@ export function OverviewScreen() {
                 </ul>
               </Panel>
             ) : null}
-            <Panel
-              title={t("teamWork")}
-              id="team-work-title"
-              action={
-                <Link
-                  href="/admin/activity"
-                  className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
-                >
-                  {t("allActivity")}
-                  <Icon icon={ArrowRight} size="sm" className="rtl:-scale-x-100" />
-                </Link>
-              }
-            >
-              <dl className="grid grid-cols-3 gap-2">
-                {(
-                  [
-                    ["published", Rocket, live],
-                    ["ready", CircleCheck, pagesCount("ready")],
-                    ["drafts", FilePen, pagesCount("draft")],
-                  ] as const
-                ).map(([key, icon, value]) => (
-                  <div key={key} className="bg-canvas-muted grid gap-1 rounded-md p-3">
-                    <dt className="text-caption text-fg-secondary flex items-center gap-1">
-                      <Icon icon={icon} size="sm" />
-                      {t(key)}
-                    </dt>
-                    <dd className="text-h3 tabular-nums">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-              {db.activity.length > 0 ? (
-                <ActivityList events={db.activity.slice(0, 4)} now={now} />
-              ) : (
-                <p className="text-small text-fg-secondary">{t("noActivity")}</p>
-              )}
-            </Panel>
+            {teamWork}
           </div>
           <DemoNote />
         </>
