@@ -118,5 +118,7 @@ describe("Arabic team console strings", () => {
     expect(t.markup("customer.sources.stripe", { bdi: tag })).toBe("[Stripe] (مدفوع)");
     expect(t.markup("analytics.visited", { count: "12", bdi: tag })).toBe("صفحات لها زوار ([30] يومًا): [12]");
     expect(t.markup("permissions.customers_export", { bdi: tag })).toBe("تصدير قائمة العملاء ([CSV])");
+    // A range of figures alone has no direction of its own: isolated (left to right) it reads 1–25, not 25–1.
+    expect(t.markup("security.pageRange", { from: 1, to: 25, total: 853, bdi: tag })).toBe("[1–25] من [853]");
   });
 });

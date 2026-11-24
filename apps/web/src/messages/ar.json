@@ -4148,7 +4148,7 @@
       },
       "blockTitle": "حظر عنوان",
       "pagination": "صفحات سجل تسجيلات الدخول",
-      "pageRange": "{from}–{to} من {total}",
+      "pageRange": "<bdi>{from}–{to}</bdi> من <bdi>{total}</bdi>",
       "empty": "لا توجد تسجيلات دخول في هذا العرض."
     },
     "analytics": {

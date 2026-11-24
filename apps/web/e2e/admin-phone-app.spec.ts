@@ -200,6 +200,22 @@ test.describe("team console: icons, trends, Arabic", () => {
     await expect(page.locator("main a[href*='/admin/customers/cus_']").first()).toBeVisible();
     // The demo note's Latin words sit in <bdi>.
     await expect(page.locator("main bdi", { hasText: "example.com" })).toBeVisible();
+    // The sign-in log's pager reads "1–25 من …": the range is isolated left to right, so its first
+    // figure stands on the left of the dash, not "25–1".
+    await page.goto("/ar/admin/security");
+    const range = page.locator("main nav bdi[dir='ltr']").first();
+    await expect(range).toHaveText(/^1–\d+$/);
+    const [one, dash] = await range.evaluate((element) => {
+      const text = element.firstChild;
+      const box = (start: number) => {
+        const r = document.createRange();
+        r.setStart(text as Node, start);
+        r.setEnd(text as Node, start + 1);
+        return r.getBoundingClientRect().left;
+      };
+      return [box(0), box(1)];
+    });
+    expect(one).toBeLessThan(dash);
   });
 });
 

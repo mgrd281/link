@@ -12,3 +12,9 @@ import type { ReactNode } from "react";
 export const bdi = (chunks: ReactNode) => <bdi>{chunks}</bdi>;
 
 export const isolate = (chunks: string) => `⁨${chunks}⁩`;
+
+/**
+ * `ltr` for `t.rich(key, { bdi: ltr })` where an isolated run holds only figures and signs, such as a
+ * range "1–25": with no letter to tell its direction, an Arabic line would show it as "25–1".
+ */
+export const ltr = (chunks: ReactNode) => <bdi dir="ltr">{chunks}</bdi>;

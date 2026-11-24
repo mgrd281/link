@@ -11,7 +11,7 @@ import { Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
 
 import { useConsoleActions } from "./actions";
-import { bdi, isolate } from "./bidi";
+import { bdi, isolate, ltr } from "./bidi";
 import { useCustomers } from "./customers/data";
 import { daysAgo, riskFlags, type Customer, type RiskFlag } from "./customers/model";
 import { DemoNote, DeviceGlyph, DeviceLabel, RiskBadges } from "./customers/ui";
@@ -275,7 +275,7 @@ export function SecurityScreen() {
                   <Button icon={icons.previous} disabled={current === 0} onClick={() => setPage(current - 1)}>
                     {tc("previous")}
                   </Button>
-                  <span className="text-small text-fg-secondary tabular-nums">{t("pageRange", { from: list.length ? current * PAGE_SIZE + 1 : 0, to: current * PAGE_SIZE + shown.length, total: list.length })}</span>
+                  <span className="text-small text-fg-secondary tabular-nums">{t.rich("pageRange", { from: list.length ? current * PAGE_SIZE + 1 : 0, to: current * PAGE_SIZE + shown.length, total: list.length, bdi: ltr })}</span>
                   <Button disabled={current >= pages - 1} onClick={() => setPage(current + 1)} trailing={<Icon icon={icons.next} size="sm" />}>
                     {tc("next")}
                   </Button>
