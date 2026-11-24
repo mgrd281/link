@@ -826,7 +826,13 @@ function PosterBlock({
       }
       return (
         // Photos hold nothing to tab to, so the region itself scrolls and takes focus (arrow keys scroll it).
-        <div role="region" aria-label={t("scroller", { title: block.title ?? t("gallery") })} tabIndex={0} className={cn(railFrame, "snap-x overflow-x-auto")}>
+        // Scroll padding as wide as the gutter puts the first snap point where the first photo starts.
+        <div
+          role="region"
+          aria-label={t("scroller", { title: block.title ?? t("gallery") })}
+          tabIndex={0}
+          className={cn(railFrame, "snap-x scroll-px-creator-gutter overflow-x-auto @prose:scroll-px-0")}
+        >
           <ul className="flex gap-2 px-creator-gutter @prose:px-0">
             {block.images.map((image) => (
               <li key={image.src} className="relative aspect-portrait w-3/5 shrink-0 snap-start overflow-hidden rounded-creator-card">
