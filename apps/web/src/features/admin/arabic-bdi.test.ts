@@ -111,6 +111,13 @@ describe("Arabic team console strings", () => {
     expect(errors).toEqual([]);
   });
 
+  it("name the free plan one way: 'المجانية', as the creator's Plan pane and the pricing page's text do", () => {
+    const named = arabic.filter(([, message]) => /<bdi>Free<\/bdi>|\bFree\b/.test(message)).map(([key]) => key);
+    expect(named).toEqual([]);
+    expect(ar.admin.customers.plans.free).toBe("المجانية");
+    expect(ar.admin.overview.kpi.conversion).toBe(ar.admin.subscriptions.conversion);
+  });
+
   it("render the isolated runs where the console shows them", () => {
     const t = createTranslator({ locale: "ar", messages: ar, namespace: "admin" });
     const tag = (chunks: string) => `[${chunks}]`;

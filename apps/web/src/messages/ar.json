@@ -3770,7 +3770,7 @@
       "title": "العملاء",
       "lead": "كل من لديه حساب في <bdi>Linkyo</bdi>: الخطة والحالة ومكانه وأداء صفحته.",
       "plans": {
-        "free": "مجانية"
+        "free": "المجانية"
       },
       "proForLife": "خطة <bdi>Pro</bdi> مدى الحياة",
       "subscription": {
@@ -3880,7 +3880,7 @@
         "unsuspendTitle": "إعادة تفعيل هذا الحساب؟",
         "unsuspendBody": "سيتمكن من تسجيل الدخول مجددًا وتعود صفحته متاحة.",
         "cancelTitle": "إلغاء الاشتراك؟",
-        "cancelBody": "تنتهي خطة <bdi>Pro</bdi> الآن ولا تتجدد. تبقى الصفحة تعمل على خطة <bdi>Free</bdi>.",
+        "cancelBody": "تنتهي خطة <bdi>Pro</bdi> الآن ولا تتجدد. تبقى الصفحة تعمل على الخطة المجانية.",
         "signoutTitle": "تسجيل الخروج من كل مكان؟",
         "signoutBody": "{count, plural, one {سيحتاج الجهاز} two {سيحتاج الجهازان} few {ستحتاج الأجهزة الـ#} many {ستحتاج الأجهزة الـ#} other {ستحتاج الأجهزة الـ#}} إلى تسجيل الدخول من جديد.",
         "refundTitle": "استرداد هذه الفاتورة؟",
@@ -4059,7 +4059,7 @@
       "proHint": "نطاق خاص، بيع، قائمة بريدية، تحليلات متقدمة",
       "proForLife": "خطة <bdi>Pro</bdi> مدى الحياة (مكافآت): <bdi>{count}</bdi> · ليست إيرادًا",
       "month": "شهريًا",
-      "conversion": "من <bdi>Free</bdi> إلى <bdi>Pro</bdi>",
+      "conversion": "من المجانية إلى <bdi>Pro</bdi>",
       "churn": "الإلغاء (<bdi>30</bdi> يومًا)",
       "list": "خطط <bdi>Pro</bdi>",
       "count": "{count, plural, one {اشتراك واحد} two {اشتراكان} few {# اشتراكات} many {# اشتراكًا} other {# اشتراك}}",
