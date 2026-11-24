@@ -6,6 +6,9 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select no_plan();
 
+-- The console's totals by day have an index of their own (the primary key leads with the page).
+select has_index('public', 'page_stats', 'page_stats_page_day', 'the console reads the page rows by day through an index');
+
 -- Pia and Quinn have public pages; Rae is still in the welcome flow; Tess runs the team; Uli is a viewer.
 insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, raw_app_meta_data, created_at, updated_at, email_confirmed_at) values
   ('a2000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'pia@example.com', '{"username":"pia-stats","locale":"de"}', '{}', now(), now(), now()),

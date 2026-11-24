@@ -38,6 +38,10 @@ create policy "owners read their page stats" on public.page_stats
   for select to authenticated using (profile_id = (select auth.uid()));
 revoke all on public.page_stats from anon;
 revoke insert, update, delete, truncate on public.page_stats from authenticated;
+-- The console's totals (admin_page_stats) read the 'page' rows of every page by day; the primary key
+-- leads with the page, so without this they would scan the whole table on every console load. Every
+-- count bumps the 'page' row too, so those rows alone also give the first counted day.
+create index page_stats_page_day on public.page_stats (day) where dimension = 'page';
 
 -- ── Visitor hashes of the running day (service only; deleted once the day is over) ──────────
 create table public.page_stats_visitors (
@@ -208,7 +212,7 @@ begin
   return jsonb_build_object(
     'from', from_day,
     'to', to_day,
-    'since', (select min(s.day) from public.page_stats s where s.profile_id = me),
+    'since', (select min(s.day) from public.page_stats s where s.profile_id = me and s.dimension = 'page'),
     'days', coalesce((
       select jsonb_agg(jsonb_build_object('day', s.day, 'views', s.views, 'visitors', s.visitors, 'clicks', s.clicks) order by s.day)
       from public.page_stats s
@@ -278,7 +282,7 @@ begin
   return jsonb_build_object(
     'from', from_day,
     'to', to_day,
-    'since', (select min(s.day) from public.page_stats s),
+    'since', (select min(s.day) from public.page_stats s where s.dimension = 'page'),
     'days', coalesce((
       select jsonb_agg(jsonb_build_object('day', t.day, 'views', t.views, 'visitors', t.visitors, 'clicks', t.clicks) order by t.day)
       from (
