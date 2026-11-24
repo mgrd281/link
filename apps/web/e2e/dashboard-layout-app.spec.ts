@@ -153,6 +153,25 @@ test.describe("laptop layout", () => {
     await signedIn(page);
     // The last look is chosen: it sits in the grid's last row.
     await seed(page, { template: "laufbahn" });
+    // Every scroll the picker asks for, with its behaviour: under reduced motion none may be smooth.
+    await page.addInitScript(() => {
+      const calls: string[] = [];
+      (window as unknown as { pickerScrolls: string[] }).pickerScrolls = calls;
+      for (const name of ["scrollIntoView", "scrollBy", "scrollTo"] as const) {
+        const original = Element.prototype[name] as (...args: unknown[]) => void;
+        Object.defineProperty(Element.prototype, name, {
+          configurable: true,
+          writable: true,
+          value(this: Element, ...args: unknown[]) {
+            if (this.querySelector("input[name=poster-template]")) {
+              const options = args[0];
+              calls.push(typeof options === "object" && options !== null ? String((options as { behavior?: string }).behavior ?? "auto") : "auto");
+            }
+            original.apply(this, args);
+          },
+        });
+      }
+    });
     await page.goto("/en/app/design");
     await expect(heading(page)).toHaveText("Design");
     const cards = "#main fieldset label:has(input[name=poster-template])";
@@ -162,9 +181,12 @@ test.describe("laptop layout", () => {
     const perRow = await firstRow(page, cards);
     expect(perRow).toBeGreaterThanOrEqual(3);
     expect(perRow).toBeLessThanOrEqual(4);
-    // The chosen card was brought into the window (instantly: reduced motion).
+    // The chosen card was brought into the window, instantly: reduced motion asks for no smooth scroll.
     const chosen = page.locator(`${cards}:has(input:checked)`);
     await expect(chosen).toBeInViewport({ ratio: 1 });
+    const scrolls = await page.evaluate(() => (window as unknown as { pickerScrolls: string[] }).pickerScrolls);
+    expect(scrolls.length, "the picker scrolled the chosen card into view").toBeGreaterThan(0);
+    expect(scrolls.filter((behavior) => behavior === "smooth")).toEqual([]);
     // No second set of Design tabs: only the card's.
     await expect(page.getByRole("tab", { name: "Color", exact: true })).toHaveCount(1);
 
@@ -230,6 +252,18 @@ test.describe("Arbeiten", () => {
     await views.getByRole("link", { name: m.app.editor.blocks }).click();
     await page.waitForURL("**/en/app/editor");
     await expect(page.getByRole("navigation", { name: m.app.work.viewsLabel }).getByRole("link", { name: m.app.editor.blocks })).toHaveAttribute("aria-current", "page");
+  });
+
+  test("four covers side by side on a laptop (1024, 1280, 1440), two on a phone", async ({ page, isMobile }) => {
+    await signedIn(page);
+    // More covers than a row holds, so three columns and four can be told apart.
+    await seed(page, { kind: "photographer", projects: 6, links: 0 });
+    for (const width of isMobile ? [0] : [1024, 1280, 1440]) {
+      if (width) await page.setViewportSize({ width, height: 900 });
+      await page.goto("/en/app/work");
+      await expect(page.locator("#main ul[aria-label] > li")).toHaveCount(6);
+      expect(await firstRow(page, "#main ul[aria-label] > li"), `${String(width || "phone")}`).toBe(isMobile ? 2 : 4);
+    }
   });
 
   test("a portfolio's empty page starts with its first project", async ({ page }) => {
