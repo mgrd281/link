@@ -184,3 +184,14 @@ describe("Logbuch", () => {
     expect(body(markup)).toContain("@work:sticky @work:top-16");
   });
 });
+
+describe("section titles beside their content on the canvas", () => {
+  it.each(["grundriss", "logbuch", "folio", "werkbogen", "tiefdruck"])("%s: every title beside its content stands at the top of its section", (template) => {
+    const markup = body(html(template, portfolioSample("de")));
+    // The numbered, rule and mono titles centre their parts (items-center); in a stretched grid cell
+    // that put the title halfway down a long list.
+    const beside = [...markup.matchAll(/<h2 [^>]*class="[^"]*@work:col-span-4[^"]*"|<div class="flex min-w-0 items-baseline justify-between gap-4 @work:col-span-4[^"]*"/g)].map((match) => match[0]);
+    expect(beside.length, template).toBeGreaterThan(0);
+    for (const title of beside) expect(title, template).toContain("@work:self-start");
+  });
+});

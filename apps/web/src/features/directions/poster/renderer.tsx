@@ -548,7 +548,7 @@ function PosterSection({
         )}
       >
         {title === null ? null : marker ? (
-          <div className={cn("flex min-w-0 items-baseline justify-between gap-4", beside && "@work:col-span-4")}>
+          <div className={cn("flex min-w-0 items-baseline justify-between gap-4", beside && "@work:col-span-4 @work:self-start")}>
             <h2 id={id} className={heading.className} style={heading.style} {...aiMark(ai)}>
               <span aria-hidden className="text-creator-accent-text tabular-nums">
                 {count}
@@ -560,7 +560,9 @@ function PosterSection({
             {projects > 0 ? <p className="shrink-0 text-small text-creator-fg-muted tabular-nums">{t("portfolio.projectCount", { count: projects })}</p> : null}
           </div>
         ) : (
-          <h2 id={id} className={cn(heading.className, beside && "@work:col-span-4")} style={heading.style} {...aiMark(ai)}>
+          // Beside its content a title stands at the top of the section, not in the middle of a long list
+          // (the numbered, rule and mono titles centre their own parts with items-center).
+          <h2 id={id} className={cn(heading.className, beside && "@work:col-span-4 @work:self-start")} style={heading.style} {...aiMark(ai)}>
             {headings === "headline" || headings === "numbered" ? (
               // The number is a small figure in the body face, whatever the title's own face.
               <span aria-hidden className={cn("text-creator-accent-text tabular-nums", headings === "headline" && "font-creator-body text-small font-semibold tracking-normal")}>

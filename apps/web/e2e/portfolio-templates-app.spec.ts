@@ -130,6 +130,23 @@ test.describe("on the laptop", () => {
     await expect(facts).toContainText("milaaurel/rasterblick");
   });
 
+  test("a section title beside its content stands at the top of the section, not in its middle (Logbuch, Grundriss)", async ({ page }) => {
+    for (const template of ["logbuch", "grundriss"]) {
+      await open(page, sample("de", template));
+      const offsets = await page.locator("main section > h2").evaluateAll((titles) =>
+        titles.flatMap((title) => {
+          const content = title.parentElement?.lastElementChild;
+          const box = title.getBoundingClientRect();
+          // Only titles beside their content (the content starts to the side of the title, not below it).
+          if (!content || content === title || content.getBoundingClientRect().top >= box.bottom) return [];
+          return [Math.round(box.top - content.getBoundingClientRect().top)];
+        }),
+      );
+      expect(offsets.length, template).toBeGreaterThan(0);
+      for (const offset of offsets) expect(Math.abs(offset), `${template}: ${offsets.join(", ")}`).toBeLessThanOrEqual(8);
+    }
+  });
+
   test("a text-only hero fills both halves of the first screen (P-08): Naya in Arabic and Tobin", async ({ page }) => {
     for (const path of ["/ar/p/naya-aldabbas", "/en/p/tobin-achterberg"]) {
       await open(page, path);
