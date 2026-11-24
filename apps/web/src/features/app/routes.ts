@@ -84,6 +84,16 @@ export function routeInfo(pathname: string): RouteInfo {
   return { title: "nav.home", tab: "home", parent: null, section: "home" };
 }
 
+/**
+ * The tab the phone's tab bar marks: the tab being opened (tapped, its screen still loading), else
+ * the screen's own tab. A pushed screen (Settings, its panes, Invite) belongs to no tab, so the bar
+ * marks none: it does not claim that Settings is "Stats" because Settings was opened from there.
+ * Back still leads to that tab (`RouteInfo.parent`).
+ */
+export function markedTab(pathname: string, pendingTab?: TabKey | null): TabKey | null {
+  return pendingTab ?? routeInfo(pathname).tab;
+}
+
 /** The Design screen's tabs, in order. The selected one lives in the URL (`?tab=`). */
 export const DESIGN_TABS = ["color", "fonts", "buttons"] as const;
 export type DesignTab = (typeof DESIGN_TABS)[number];

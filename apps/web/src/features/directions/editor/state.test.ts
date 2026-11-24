@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { detectLink, MAX_PROJECTS, pageSchema, type Block } from "@linkyo/blocks";
+import { blockSchema, detectLink, MAX_PROJECTS, pageSchema, type Block } from "@linkyo/blocks";
 
-import { blockFromDetection, editorReducer, initialEditorState } from "./state";
+import { blockFromDetection, editorReducer, initialEditorState, isShowDate, showsFromTickets, withDatedShows } from "./state";
 
 const labels = { video: "Video", music: "New release", event: "Event" };
 
@@ -81,10 +81,55 @@ describe("editor reducer", () => {
   });
 
   it("creates valid optimistic blocks from smart detect", () => {
-    for (const url of ["https://youtu.be/abc", "https://open.spotify.com/track/x", "https://www.eventim.de/e/1", "https://example.com"]) {
+    for (const url of ["https://youtu.be/abc", "https://open.spotify.com/track/x", "https://example.com"]) {
       const detection = detectLink(url);
       expect(detection).not.toBeNull();
       if (detection) expect(blockFromDetection(detection, labels).type).toBe(detection.type === "shorts" ? "link" : detection.type);
     }
+  });
+});
+
+describe("ticket links", () => {
+  const TICKETS = [
+    "https://www.eventbrite.de/e/release-night-tickets-123456789",
+    "https://www.eventbrite.com/e/open-mic-tickets-987654321",
+    "https://www.eventim.de/event/mila-aurel-123",
+    "https://www.eventim.com/event/x-1",
+    "https://www.ticketmaster.de/event/mila-aurel-tickets/555",
+    "https://www.ticketmaster.com/event/0A00",
+  ];
+
+  it.each(TICKETS)("%s never yields a date or a city", (url) => {
+    const detection = detectLink(url);
+    expect(detection?.type).toBe("events");
+    if (!detection) return;
+    const block = blockFromDetection(detection, labels);
+    // A button to the ticket shop: valid as it is, and no show with an invented date or city.
+    expect(block).toMatchObject({ type: "link", url: detection.url });
+    expect(JSON.stringify(block)).not.toMatch(/"(date|city|venue)"/);
+    expect(blockSchema.safeParse(block).success).toBe(true);
+  });
+
+  it("opens the Events form with the ticket addresses and nothing else filled in", () => {
+    const detections = TICKETS.flatMap((url) => detectLink(url) ?? []);
+    const shows = showsFromTickets(detections);
+    expect(shows.items).toHaveLength(TICKETS.length);
+    for (const [index, item] of shows.items.entries()) {
+      expect(item).toEqual({ date: "", city: "", venue: "", url: detections[index]?.url, status: "onsale" });
+    }
+    // Not a block the page can take until each show has a date.
+    expect(blockSchema.safeParse(shows).success).toBe(false);
+    const dated = { ...shows, items: shows.items.map((item) => ({ ...item, date: "2027-05-01", city: "Leipzig" })) };
+    expect(blockSchema.safeParse(dated).success).toBe(true);
+  });
+
+  it("keeps shows without a date off the page", () => {
+    const shows = showsFromTickets([detectLink(TICKETS[0] ?? "")].flatMap((d) => d ?? []));
+    expect(withDatedShows(shows)).toBeNull();
+    const one = { ...shows, items: [{ ...shows.items[0], date: "2027-05-01" }, { ...shows.items[0], date: "" }] } as Block;
+    expect(withDatedShows(one)).toMatchObject({ items: [{ date: "2027-05-01" }] });
+    const link = { id: "l", type: "link", title: "A", url: "https://example.com", visible: true, highlight: false } as Block;
+    expect(withDatedShows(link)).toBe(link);
+    expect([isShowDate("2027-05-01"), isShowDate(""), isShowDate("2027-02-30"), isShowDate("2027-5-1")]).toEqual([true, false, false, false]);
   });
 });

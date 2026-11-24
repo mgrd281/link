@@ -32,10 +32,21 @@ function random(seed: string) {
   };
 }
 
-const CLICKABLE = new Set(["link", "card", "music", "video", "product", "events", "live", "shorts", "newsletter"]);
+/** Blocks a visitor can tap (a button, a player, a project's card, the way to get in touch). */
+const CLICKABLE = new Set(["link", "card", "music", "video", "product", "events", "live", "shorts", "newsletter", "app", "repo", "project", "contact"]);
 
+/** What a visitor can tap on the page: visible blocks of those types, and social icons with an address. */
+export const clickableBlocks = (blocks: readonly Block[]): Block[] =>
+  blocks.filter((block) => block.visible && (CLICKABLE.has(block.type) || (block.type === "socials" && block.items.some((item) => item.url))));
+
+/**
+ * Sample numbers, never impossible ones: a page with nothing to tap has views but no clicks (an
+ * empty page showed 1,890 clicks while Home said there was nothing on it yet).
+ */
 export function sampleStats(seed: string, blocks: Block[], range: number, today = new Date()): SampleStats {
   const rand = random(`${seed}:${range}`);
+  const clickable = clickableBlocks(blocks);
+  const tappable = clickable.length > 0;
   const base = 60 + Math.round(rand() * 140);
   const spike = Math.floor(range * (0.35 + rand() * 0.4));
   const days: DayStat[] = Array.from({ length: range }, (_, i) => {
@@ -45,7 +56,9 @@ export function sampleStats(seed: string, blocks: Block[], range: number, today 
     const bump = i >= spike && i < spike + 3 ? 2.4 - (i - spike) * 0.45 : 1;
     const trend = 0.85 + (i / range) * 0.3;
     const views = Math.round(base * weekend * bump * trend * (0.85 + rand() * 0.3));
-    const clicks = Math.round(views * (0.32 + rand() * 0.12));
+    // Drawn either way, so the views stay the same once something tappable is added.
+    const share = 0.32 + rand() * 0.12;
+    const clicks = tappable ? Math.round(views * share) : 0;
     return { date: date.toISOString().slice(0, 10), views, clicks };
   });
   const views = days.reduce((sum, day) => sum + day.views, 0);
@@ -57,7 +70,6 @@ export function sampleStats(seed: string, blocks: Block[], range: number, today 
     return keys.map((key, i) => ({ key, share: (weights[i] ?? 0) / total })).sort((a, b) => b.share - a.share);
   };
 
-  const clickable = blocks.filter((block) => block.visible && CLICKABLE.has(block.type));
   const weights = clickable.map((block, i) => (block.highlight ? 2.2 : 1) * (1 / (1 + i * 0.35)) * (0.6 + rand() * 0.8));
   const totalWeight = weights.reduce((sum, w) => sum + w, 0) || 1;
   const links = clickable

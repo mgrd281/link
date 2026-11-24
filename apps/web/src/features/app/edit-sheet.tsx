@@ -6,12 +6,62 @@ import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
-import { BlockEditorFields, useBlockEditor } from "./block-editor";
+import { isShowDate } from "@/features/directions/editor/state";
+
+import { BlockEditorFields, useBlockEditor, type BlockEditor } from "./block-editor";
 import { PreviewButton } from "./preview";
 import { releasedAddresses } from "./project-form";
 import { useShellChrome } from "./screen";
 import { Sheet } from "./sheet";
 import { useSite } from "./site-context";
+import { validateBlock, type FieldErrors } from "./validate";
+
+/**
+ * What a show needs before it goes on the page: a date and a city. Nothing fills them in for the
+ * owner (a pasted ticket link knows neither), so an Events form starts with both empty and asks.
+ */
+export function showProblems(block: Block | null): FieldErrors | null {
+  if (block?.type !== "events") return null;
+  const errors: FieldErrors = {};
+  block.items.forEach((item, index) => {
+    if (!isShowDate(item.date)) errors[`items.${String(index)}.date`] = item.date ? "invalid" : "required";
+    if (!item.city.trim()) errors[`items.${String(index)}.city`] = "required";
+  });
+  return Object.keys(errors).length > 0 ? errors : null;
+}
+
+/**
+ * A block's editor with the rules for shows on top. The schema asks for a date but leaves the city
+ * open (older pages have shows without one), so the form asks for both here, in the same words as
+ * any other field, and saves only once each show has them. Other blocks pass through unchanged.
+ */
+export function useShowRules<S extends Block | null>(editor: BlockEditor<S>): BlockEditor<S> {
+  // Save attempts per block: another block in the same sheet (the Add sheet's next form) starts afresh.
+  const key = editor.draft?.id ?? null;
+  const [tries, setTries] = useState({ key, count: 0 });
+  if (tries.key !== key) setTries({ key, count: 0 });
+  const tried = tries.key === key ? tries.count : 0;
+  // After a save that needs fixes, the first field to fix takes focus once it shows its error.
+  useEffect(() => {
+    if (tried > 0) document.querySelector<HTMLElement>("[role=dialog] [aria-invalid=true]")?.focus();
+  }, [tried]);
+  if (editor.draft?.type !== "events") return editor;
+  const draft: Block = editor.draft;
+  // Once a save was tried, every problem shows and updates as it is fixed.
+  const errors = tried > 0 || editor.errors ? { ...(validateBlock(draft) ?? {}), ...(showProblems(draft) ?? {}) } : null;
+  return {
+    ...editor,
+    errors,
+    failedSaves: editor.failedSaves + tried,
+    save: () => {
+      if (showProblems(draft)) {
+        setTries((current) => ({ key: draft.id, count: (current.key === draft.id ? current.count : 0) + 1 }));
+        return false;
+      }
+      return editor.save();
+    },
+  };
+}
 
 /** The one place blocks are edited (and created, except from the Add sheet): a sheet with the form, the page live beside it. */
 export function EditSheet() {
@@ -43,7 +93,7 @@ function EditForm({ source, creating, index, onDone }: { source: Block; creating
   const tTypes = useTranslations("dashboard.types");
   const { removeBlock } = useSite();
   const inShell = useShellChrome();
-  const editor = useBlockEditor({ source, creating, index });
+  const editor = useShowRules(useBlockEditor({ source, creating, index }));
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const type = tTypes(source.type);
 

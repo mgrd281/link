@@ -5,7 +5,12 @@ import type { Legal } from "@/features/account/types";
 
 import { legalStatus } from "../legal";
 import type { SiteDoc } from "../site-context";
-import { ESSENTIALS, HOME_TASKS, homeProgress, homeTasksDone } from "./progress";
+import ar from "@/messages/ar.json";
+import de from "@/messages/de.json";
+import en from "@/messages/en.json";
+
+import { KINDS, PORTFOLIO_KINDS } from "../kinds";
+import { ESSENTIALS, HOME_TASKS, homeProgress, homeTasks, homeTasksDone, linkHint, PORTFOLIO_ESSENTIALS, PORTFOLIO_TASKS } from "./progress";
 
 type Doc = Pick<SiteDoc, "blocks" | "profile" | "theme">;
 type Blocks = SiteDoc["blocks"];
@@ -98,5 +103,69 @@ describe("home progress", () => {
   it("keeps the steps in their order, with links, photo and bio as the essentials", () => {
     expect(HOME_TASKS).toEqual(["links", "photo", "bio", "socials", "look", "legal"]);
     expect([...ESSENTIALS]).toEqual(["links", "photo", "bio"]);
+  });
+});
+
+const project = (id: string) => ({ id, type: "project", slug: id, title: `Project ${id}`, summary: "A sentence.", visible: true, highlight: false });
+const contact = () => ({ id: "c", type: "contact", title: "Let's talk", primary: { label: "E-mail", url: "mailto:hello@example.com" }, visible: true, highlight: false });
+
+describe("home progress on a page that shows work", () => {
+  it("offers its work first, then the way to reach its owner, and no '3 things'", () => {
+    for (const kind of PORTFOLIO_KINDS) {
+      expect(homeTasks({ legal: noLegal, kind })).toEqual(["projects", "contact", "photo", "bio", "look", "legal"]);
+    }
+    // Every other kind, and a page without one, keeps the link-in-bio steps.
+    for (const kind of KINDS.filter((candidate) => !(PORTFOLIO_KINDS as readonly string[]).includes(candidate))) {
+      expect(homeTasks({ legal: noLegal, kind })).toEqual(HOME_TASKS);
+    }
+    expect(homeTasks({ legal: noLegal })).toEqual(HOME_TASKS);
+    expect(PORTFOLIO_TASKS).toEqual(["projects", "contact", "photo", "bio", "look", "legal"]);
+  });
+
+  it("a designer's fresh page has exactly one first step: three pieces of work", () => {
+    const site = { legal: noLegal, kind: "designer" };
+    const done = homeTasksDone(doc(), site);
+    expect(homeTasks(site).find((key) => !done[key])).toBe("projects");
+    expect(homeProgress(doc(), site)).toEqual({ ready: false, complete: false, done: 0, total: 6 });
+  });
+
+  it("counts three projects as the work and a contact block as the way in", () => {
+    const site = { legal: noLegal, kind: "photographer" };
+    expect(homeTasksDone(doc({ blocks: [project("a"), project("b")] }), site).projects).toBe(false);
+    expect(homeTasksDone(doc({ blocks: [project("a"), project("b"), project("c")] }), site).projects).toBe(true);
+    // Three links are not work.
+    expect(homeTasksDone(doc({ blocks: [link("a"), link("b"), link("c")] }), site).projects).toBe(false);
+    expect(homeTasksDone(doc({ blocks: [contact()] }), site).contact).toBe(true);
+    // After the work, the next step is the contact.
+    const done = homeTasksDone(doc({ blocks: [project("a"), project("b"), project("c")] }), site);
+    expect(homeTasks(site).find((key) => !done[key])).toBe("contact");
+  });
+
+  it("is ready to share with work, a way in, a photo and a bio; complete with a look and a legal notice too", () => {
+    const site = { legal: noLegal, kind: "developer" };
+    const almost = doc({ blocks: [project("a"), project("b"), project("c")], avatar: "/a.jpg", bio: "Hi" });
+    expect(homeProgress(almost, site).ready).toBe(false);
+    const ready = doc({ blocks: [project("a"), project("b"), project("c"), contact()], avatar: "/a.jpg", bio: "Hi" });
+    expect(homeProgress(ready, site)).toEqual({ ready: true, complete: false, done: 4, total: 6 });
+    const all = doc({ blocks: [project("a"), project("b"), project("c"), contact()], avatar: "/a.jpg", bio: "Hi", theme: { template: "werkbogen" } });
+    expect(homeProgress(all, { legal: fullLegal, kind: "developer" })).toEqual({ ready: true, complete: true, done: 6, total: 6 });
+    expect([...PORTFOLIO_ESSENTIALS]).toEqual(["projects", "contact", "photo", "bio"]);
+  });
+});
+
+describe("what '3 things' suggests", () => {
+  it("fits the kind of page, and every hint has its words in de, en and ar", () => {
+    expect(linkHint("music")).toBe("music");
+    expect(linkHint("youtube")).toBe("video");
+    expect(linkHint("shop")).toBe("sell");
+    expect(linkHint("coach")).toBe("business");
+    expect(linkHint("writer")).toBe("work");
+    expect(linkHint("other")).toBe("other");
+    expect(linkHint(undefined)).toBe("other");
+    expect(linkHint("toString")).toBe("other");
+    for (const messages of [de, en, ar]) {
+      const hints = messages.app.home.checklist.linkHints as Record<string, string>;
+      for (const kind of [...KINDS, undefined]) expect(hints[linkHint(kind)]).toMatch(/\S/);
+    }
   });
 });

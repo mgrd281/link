@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Dialog } from "radix-ui";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { themeStyle } from "@/features/creator/theme";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { Link } from "@/i18n/navigation";
 
@@ -115,15 +116,19 @@ export function PhonePreview({ className, hint = false }: { className?: string; 
     <PhoneFrame className={className}>
       <div
         ref={scroller}
-        // The edited block gets an outline (never a shadow) in the page's own accent, which the theme
-        // engine keeps readable on the page's background, dark or light.
-        className="absolute inset-0 overflow-y-auto overscroll-contain [&_[data-editing]]:rounded-creator-card [&_[data-editing]]:[--color-focus:var(--creator-accent-text)] [&_[data-editing]]:focus-ring"
+        // The screen is the page's own colour from top to bottom: a short page fills it (the page grows
+        // to the screen's height) instead of leaving the frame's black below it, and so does the
+        // overscroll. The edited block gets an outline (never a shadow) in the page's own accent, which
+        // the theme engine keeps readable on the page's background, dark or light.
+        style={themeStyle(theme)}
+        className="absolute inset-0 overflow-y-auto overscroll-contain bg-creator-bg [&_[data-editing]]:rounded-creator-card [&_[data-editing]]:[--color-focus:var(--creator-accent-text)] [&_[data-editing]]:focus-ring"
         tabIndex={0}
         role="region"
         aria-label={t("region", { name: previewPage.profile.displayName })}
         aria-describedby={hint ? hintId : undefined}
       >
-        <div ref={content} inert>
+        {/* A grid that is at least the screen's height: the page in it stretches to fill it. */}
+        <div ref={content} inert className="grid min-h-full">
           <PosterRenderer
             page={previewPage}
             theme={theme}

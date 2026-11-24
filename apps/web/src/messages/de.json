@@ -1571,7 +1571,8 @@
       },
       "asProject": "Als Projekt hinzufügen",
       "photosAsGallery": "Als Galerie",
-      "photosAsProject": "Als Projekt"
+      "photosAsProject": "Als Projekt",
+      "ticketNotice": "{count, plural, one {Ein Ticket-Link sagt nicht, wann und wo. Trag Datum und Stadt ein, dann erscheint der Termin auf deiner Seite.} other {Ticket-Links sagen nicht, wann und wo. Trag für jeden Termin Datum und Stadt ein, dann erscheinen sie auf deiner Seite.}}"
     },
     "editor": {
       "title": "Seite",
@@ -1683,9 +1684,27 @@
           "legal": {
             "title": "Impressum hinzufügen",
             "hint": "In Deutschland Pflicht für geschäftliche Seiten."
+          },
+          "projects": {
+            "title": "Zeig drei Arbeiten",
+            "hint": "Projekte mit Bildern und ein paar Sätzen dazu."
+          },
+          "contact": {
+            "title": "Kontakt festlegen",
+            "hint": "Wie dich Kunden erreichen: E-Mail, Telefon oder ein Link für Anfragen."
           }
         },
-        "showDone": "Erledigte anzeigen ({count})"
+        "showDone": "Erledigte anzeigen ({count})",
+        "linkHints": {
+          "music": "Dein neuester Song, ein Video, dein Shop.",
+          "podcast": "Deine neueste Folge, ein Video, dein Newsletter.",
+          "video": "Dein neuestes Video, dein Kanal, dein Shop.",
+          "sell": "Ein Produkt, dein Shop, ein Angebot.",
+          "business": "Deine Website, ein Angebot, ein Termin.",
+          "apps": "Deine App, ein Video, deine Website.",
+          "work": "Eine Arbeit, ein Artikel, deine Website.",
+          "other": "Deine Website, ein Video, ein Beitrag."
+        }
       },
       "stats": {
         "title": "Letzte 7 Tage",
@@ -1717,7 +1736,9 @@
           "links": "Link hinzufügen",
           "socials": "Profile verlinken",
           "look": "Design öffnen",
-          "legal": "Impressum ausfüllen"
+          "legal": "Impressum ausfüllen",
+          "projects": "Projekt hinzufügen",
+          "contact": "Kontakt festlegen"
         }
       },
       "open": {

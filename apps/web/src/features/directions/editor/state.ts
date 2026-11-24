@@ -167,7 +167,10 @@ export function blockFromDetection(detection: Detection, labels: { video: string
         links: [{ platform: asPlatform(detection.platform), url: detection.url }],
       };
     case "events":
-      return { ...base, type: "events", title: labels.event, items: [{ date: "2027-03-20", city: "Berlin", venue: detection.label, url: detection.url, status: "onsale" }] };
+      // A ticket link says nothing about when or where: it never becomes a show of its own (that
+      // would publish a made-up date and city). It is a button to the ticket shop; the dashboard's
+      // Add sheet asks for the show instead (`showsFromTickets`).
+      return { ...base, type: "link", title: `${labels.event} · ${detection.label}`, url: detection.url };
     case "image":
       return { ...base, type: "image", image: { src: detection.url.startsWith("blob:") ? detection.url : "sample:gallery-1", alt: "" } };
     case "product":
@@ -199,4 +202,41 @@ export function blockFromDetection(detection: Detection, labels: { video: string
     default:
       return { ...base, type: "link", title: detection.label, url: detection.url };
   }
+}
+
+/** A page holds at most this many shows in one Events block (the schema's limit). */
+const MAX_SHOWS = 50;
+
+/**
+ * The Events form pasted ticket links open with: one show per link, its ticket address filled in,
+ * date, city and venue left empty for the owner to fill in (a link knows none of them), and no title
+ * (the page then names the section itself). It is not valid until each show has a date, so it
+ * reaches the page only then.
+ */
+export function showsFromTickets(tickets: readonly Detection[]): BlockOf<"events"> {
+  return {
+    id: newId("events"),
+    visible: true,
+    highlight: false,
+    type: "events",
+    items: tickets.slice(0, MAX_SHOWS).map((ticket) => ({ date: "", city: "", venue: "", url: ticket.url, status: "onsale" as const })),
+  };
+}
+
+/** A show's date as the schema takes it: YYYY-MM-DD and a real day (no 30 February). */
+export function isShowDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const time = Date.parse(`${value}T00:00:00Z`);
+  return !Number.isNaN(time) && new Date(time).toISOString().startsWith(value);
+}
+
+/**
+ * A block as the page may show it: an Events block keeps only the shows that have a date (a form
+ * still being filled in, or a pasted ticket link), and is left out while it has none.
+ */
+export function withDatedShows(block: Block): Block | null {
+  if (block.type !== "events") return block;
+  const items = block.items.filter((item) => isShowDate(item.date));
+  if (items.length === block.items.length) return block;
+  return items.length > 0 ? { ...block, items } : null;
 }

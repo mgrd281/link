@@ -19,6 +19,8 @@ describe("detectLink", () => {
     ["https://instagram.com/milaaurel", "link", "instagram", undefined],
     ["https://www.twitch.tv/milaaurel", "live", "twitch", "milaaurel"],
     ["https://www.eventim.de/event/mila-aurel-123", "events", "eventim", undefined],
+    ["https://www.eventbrite.de/e/release-night-tickets-123456789", "events", "eventbrite", undefined],
+    ["https://www.ticketmaster.de/event/mila-aurel-tickets/555", "events", "ticketmaster", undefined],
     ["https://shop.example.com/products/nachtstrom-vinyl", "product", "shopify", undefined],
     ["https://cdn.example.com/press/photo.jpg", "image", "image", undefined],
     ["https://example.com/presskit.pdf", "link", "pdf", undefined],
@@ -39,6 +41,19 @@ describe("detectLink", () => {
     expect(detection?.type).toBe(type);
     expect(detection?.platform).toBe(platform);
     if (id) expect(detection?.id).toBe(id);
+  });
+
+  it("knows only the address of a ticket link: never a date, a city or a venue", () => {
+    for (const url of [
+      "https://www.eventbrite.com/e/open-mic-tickets-987654321?aff=ig",
+      "https://www.eventim.de/event/mila-aurel-123",
+      "https://www.ticketmaster.com/event/0A00",
+    ]) {
+      const detection = detectLink(url);
+      expect(detection?.type).toBe("events");
+      expect(Object.keys(detection ?? {}).sort()).toEqual(["label", "platform", "type", "url"]);
+      expect(JSON.stringify(detection)).not.toMatch(/\d{4}-\d{2}-\d{2}|Berlin/);
+    }
   });
 
   it("strips tracking parameters and upgrades to https", () => {

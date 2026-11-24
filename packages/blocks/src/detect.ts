@@ -109,6 +109,8 @@ export function detectLink(input: string): Detection | null {
   }
   if (h === "twitch.tv" && segments[0]) return { type: "live", platform: "twitch", id: segments[0], url: href, label: "Twitch" };
 
+  // Ticket shops: the address is all a link tells. When and where a show is, only its owner can say,
+  // so a detection never carries a date, a city or a venue (the app asks for them).
   if (h.endsWith("eventbrite.com") || h.endsWith("eventbrite.de")) return { type: "events", platform: "eventbrite", url: href, label: "Eventbrite" };
   if (h.endsWith("eventim.de") || h.endsWith("eventim.com")) return { type: "events", platform: "eventim", url: href, label: "Eventim" };
   if (h.endsWith("ticketmaster.de") || h.endsWith("ticketmaster.com")) return { type: "events", platform: "ticketmaster", url: href, label: "Ticketmaster" };

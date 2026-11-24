@@ -16,7 +16,7 @@ import { AddSheet } from "./add-sheet";
 import { useHasUnsavedDraft } from "./drafts";
 import { EditSheet } from "./edit-sheet";
 import { modified, NavRail, SectionPanel } from "./nav";
-import { LAST_APP_PATH_KEY, ORIGIN_TAB_KEY, routeInfo, SETTINGS_HREF, TAB_HREF, TABS, type TabKey } from "./routes";
+import { LAST_APP_PATH_KEY, markedTab, ORIGIN_TAB_KEY, routeInfo, SETTINGS_HREF, TAB_HREF, TABS, type TabKey } from "./routes";
 import { BackLink, ShellBackContext, ShellChromeContext } from "./screen";
 import { useSite } from "./site-context";
 import { useScrolled } from "./use-scrolled";
@@ -242,7 +242,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Linkyo team members also see the way into the team area.
   const onTeam = useOnTeam(account.email);
   const info = routeInfo(pathname);
-  // Settings, its panes and Invite are pushed over a tab (phones): that tab stays marked meanwhile.
+  // Settings, its panes and Invite are pushed over a tab (phones): they belong to no tab, so none is marked.
   const pushedScreen = info.tab === null;
   const titleAway = useTitleScrolledAway(pathname);
   const scrolled = useScrolled();
@@ -253,7 +253,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [route, setRoute] = useState({ path: pathname, navigated: false, pop: false, fromNav: false });
   // The place just tapped shows as selected at once, before its screen has loaded.
   const [pending, setPending] = useState<string | null>(null);
-  // The tab Settings was opened from: it stays marked under Settings, and "‹ back" names it.
+  // The tab Settings was opened from: "‹ back" leads there and names it (the bar does not mark it).
   const [origin, setOrigin] = useState<TabKey>(readOriginTab);
   if (route.path !== pathname) {
     // A move to the route just tapped in the chrome (rail, panel, tab bar) is a nav move: its item
@@ -378,7 +378,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   // can say what they see (WCAG 2.5.3). A name without letters shows a person glyph and no initials.
   const avatarName = !photo && initials ? t("settingsButtonInitials", { initials }) : t("settingsButton");
   const pendingTab = NAV.find((item) => TAB_HREF[item.key] === pending)?.key;
-  const selectedTab = pendingTab ?? info.tab ?? (pushedScreen ? origin : null);
+  // A pushed screen (Settings, Invite) marks no tab: it belongs to none (`markedTab`).
+  const selectedTab = markedTab(pathname, pendingTab);
   const backTarget = info.parent === "origin" ? { href: TAB_HREF[origin], label: t(`nav.${origin}`) } : info.parent ? { href: info.parent, label: t("nav.settings") } : null;
 
   return (
@@ -510,9 +511,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 /**
  * A tab. As on iOS, the chosen tab is marked by the tint alone (no pill behind it). Under a pushed
- * screen (Settings, its panes, Invite) the tab it was opened from stays marked (`data-origin`),
- * without claiming to be the current page. Tapping the current tab again scrolls its screen back to
- * the top.
+ * screen (Settings, its panes, Invite) no tab is marked: the tab it was opened from only carries
+ * `data-origin` (where "‹ back" leads), so the bar never claims Settings is "Stats". Tapping the
+ * current tab again scrolls its screen back to the top.
  */
 function TabLink({
   item,

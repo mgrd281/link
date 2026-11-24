@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
 
 import { accountStore } from "@/features/account/store";
+import { showsFromTickets } from "@/features/directions/editor/state";
 import { blockIcon } from "@/features/directions/editor/ui";
 import { canReadClipboard, readText } from "@/lib/clipboard";
 import { linkOnlyPlatform } from "@/lib/link-metadata";
@@ -14,6 +15,7 @@ import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { ADD_PRESETS, addGroups, blankBlock, blockFromLink, insertAt, newBlockId, presetBlock, type AddPreset } from "./blocks";
+import { useShowRules } from "./edit-sheet";
 import { ImageError, pickFiles, prepareAndStore, projectPictureLimit, storedImage, workImageKind } from "./images";
 import { isPortfolioKind, titleKeys } from "./kinds";
 import { useMediaOwner } from "./media-owner";
@@ -87,7 +89,8 @@ export function AddSheet() {
   const [shown, setShown] = useState(current);
   if (addOpen && shown !== current) setShown(current);
   const step = addOpen ? current : shown;
-  const editor = useBlockEditor({ source: step?.block ?? null, creating: true, index: step?.index });
+  // A show is added only with its date and city (see `useShowRules`).
+  const editor = useShowRules(useBlockEditor({ source: step?.block ?? null, creating: true, index: step?.index }));
   const [discard, setDiscard] = useState<"back" | "close" | null>(null);
   // The sheet can close without asking (Back to another screen closes it): its question goes with it.
   if (!addOpen && discard !== null) setDiscard(null);
@@ -126,11 +129,25 @@ export function AddSheet() {
       document.getElementById(inputId)?.focus();
       return;
     }
-    addBlocks(
-      found.map((d) => blockFromLink(d, labels, doc.profile.displayName)),
-      { index: addIndex },
-    );
-    close();
+    // A ticket link knows no date and no city, so it never becomes a show by itself: it opens the
+    // Events form with its address filled in and the rest for the owner (one show per ticket link).
+    // Every other link is added right away, as before.
+    const tickets = found.filter((detection) => detection.type === "events");
+    const rest = found.filter((detection) => detection.type !== "events");
+    if (rest.length > 0) {
+      addBlocks(
+        rest.map((d) => blockFromLink(d, labels, doc.profile.displayName)),
+        // While the Events form stays open, the toast offers no "Edit": it would drop that form.
+        { index: addIndex, ...(tickets.length > 0 ? { open: false } : {}) },
+      );
+    }
+    if (tickets.length === 0) {
+      close();
+      return;
+    }
+    setValue("");
+    setError(false);
+    create(showsFromTickets(tickets), t("ticketNotice", { count: tickets.length }));
   };
 
   // One tap instead of long-press and Paste. iOS asks once with its own Paste button; when reading is
@@ -160,7 +177,10 @@ export function AddSheet() {
     }
     // A new portfolio section starts with the kind's title and, for quotes, one quote to fill in.
     const blank = blankBlock(type, { artist: doc.profile.displayName, newsletter: tFields("newsletterDefault") });
-    create(startedBlock(blank, kind, (key) => tPortfolio(key as "sentence")));
+    const started = startedBlock(blank, kind, (key) => tPortfolio(key as "sentence"));
+    // A new show starts without a date, like one from a ticket link: a day filled in for the owner
+    // could go on the page unchecked.
+    create(started.type === "events" ? { ...started, items: started.items.map((item) => ({ ...item, date: "" })) } : started);
   };
 
   const pickPreset = (preset: AddPreset) => create(presetBlock(preset, { clients: tPortfolio(titleKeys(kind).clients) }));
