@@ -74,7 +74,7 @@ select is(public.username_status('widerruf'), 'reservedUsername', 'widerruf is r
 select is(public.username_status('service'), 'reservedUsername', 'service is reserved');
 reset role;
 
-select is((select count(*)::int from public.reserved_usernames), 56, 'the 33 first names and the 23 of v7 are reserved');
+select is((select count(*)::int from public.reserved_usernames), 69, 'the 33 first names, the 23 of v7 and the 13 of Stage 1 are reserved');
 
 -- ── 5–6. The legal notice reaches visitors only when it is complete ─────────────────────────
 -- Every new page is seeded with the sign-up e-mail in its notice; the form saves unfinished entries.
