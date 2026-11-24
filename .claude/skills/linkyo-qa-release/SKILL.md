@@ -49,6 +49,50 @@ PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --project desktop
 - **Look at it:** take Playwright screenshots at 390 × 844 for the changed pages, in each language
   that changed. Check RTL on Arabic pages.
 
+## Picture baselines (existing pages never change)
+
+`e2e/portfolio-baseline.review.spec.ts` compares full-page captures byte for byte with a stored set
+(same machine, same browser). Two sets, chosen with `BASELINE_SET`:
+
+| Set | Folder | Captures |
+|---|---|---|
+| unset or `v8` (the default) | `/root/linkyo-v8-baseline` | 50: eleven templates, de and ar, three `/p` pages; 390 and 1440 wide |
+| `s2` | `/root/linkyo-s2-baseline` | 78: all fourteen templates, de and ar; the four portfolio templates also on the portfolio sample; the same three `/p` pages; 390 and 1440 wide |
+
+Run on the demo build (no Supabase variables), from `apps/web`, on your own port. Compare against a
+copy: a difference writes `<name>.actual.png` into the folder.
+
+```bash
+unset ANTHROPIC_BASE_URL ANTHROPIC_API_KEY PW_REUSE_SERVER
+cp -r /root/linkyo-s2-baseline "$SCRATCH/s2-copy"
+PORT=$PORT BASELINE_SET=s2 V8_BASELINE_DIR="$SCRATCH/s2-copy" PW_CHROMIUM_PATH=/opt/pw-browsers/chromium \
+  npx playwright test e2e/portfolio-baseline.review.spec.ts --project review --trace off --reporter=line
+```
+
+- Look at both pictures of every difference (`<name>.png` and `<name>.actual.png`) and name the change
+  that intends it; anything else is a defect.
+- `V8_BASELINE=write` stores a set. Write only into a new folder, from an integrated tree, never over a
+  stored baseline; then add a `README.md` (tree, commit, runs) and `SHA256SUMS` next to the pictures.
+- Without `V8_BASELINE_DIR` every capture is skipped, so `pnpm review` is unaffected.
+- The `s2` set holds IntersectionObserver callbacks once a page is at rest at the top: a full-page
+  capture itself made Laufbahn's app bar appear in one of two captures. The `v8` set is captured as it
+  was written.
+
+## Lighthouse (mobile)
+
+On the demo build, with your own `next start -p $PORT` running (Lighthouse is not a dependency; npx
+fetches a pinned version into its cache):
+
+```bash
+CHROME_PATH=/opt/pw-browsers/chromium npx -y lighthouse@13.6.0 "http://localhost:$PORT/de/p/ronja-feldkamp" \
+  --only-categories=performance,accessibility --output=json --output-path=lh-de.json \
+  --chrome-flags="--headless=new --no-sandbox" --quiet
+```
+
+Report performance, accessibility, `total-byte-weight` and the font requests from `network-requests`
+(resource type Font). A German page must request no Arabic face. `/ar/p/<german example>` answers 308
+to the German page, so measure an Arabic example (for example `/ar/p/naya-aldabbas`) for Arabic fonts.
+
 ## Database changes (supabase/)
 
 When migrations, the account store, the console's data layer, AI, payments, e-mail or public pages
