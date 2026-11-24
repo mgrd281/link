@@ -3182,7 +3182,7 @@
         },
         "locale": "Sprache der Seite",
         "email": "E-Mail des Creators (optional)",
-        "emailHint": "Mit dieser E-Mail (Google oder normal) übernimmt der Creator die Seite.",
+        "emailHint": "Mit dieser E-Mail übernimmt der Creator die Seite.",
         "emailInvalid": "Diese E-Mail sieht nicht richtig aus."
       }
     },
@@ -3245,7 +3245,7 @@
       },
       "invites": {
         "title": "Einladungen",
-        "body": "Wer sich mit einer dieser E-Mails anmeldet (Google oder normal), bekommt die Seite fertig in sein Konto.",
+        "body": "Wer sich mit einer dieser E-Mails registriert, bekommt die Seite fertig in sein Konto.",
         "none": "Noch keine E-Mail – ohne sie kann niemand die Seite übernehmen.",
         "noneNew": "Keine neuen E-Mails.",
         "published": "{count, plural, one {# bereits veröffentlichte Einladung bleibt gültig.} other {# bereits veröffentlichte Einladungen bleiben gültig.}}",

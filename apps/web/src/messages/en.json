@@ -3182,7 +3182,7 @@
         },
         "locale": "Page language",
         "email": "Creator's email (optional)",
-        "emailHint": "With this email (Google or regular) the creator takes the page over.",
+        "emailHint": "With this email the creator takes the page over.",
         "emailInvalid": "This email doesn't look right."
       }
     },
@@ -3245,7 +3245,7 @@
       },
       "invites": {
         "title": "Invites",
-        "body": "Whoever signs up with one of these emails (Google or regular) gets the page ready in their account.",
+        "body": "Whoever signs up with one of these emails gets the page ready in their account.",
         "none": "No email yet; without one nobody can take the page over.",
         "noneNew": "No new emails.",
         "published": "{count, plural, one {# invite already published stays valid.} other {# invites already published stay valid.}}",
