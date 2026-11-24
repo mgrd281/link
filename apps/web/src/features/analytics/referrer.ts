@@ -14,11 +14,16 @@ const HOSTS: readonly [ReferrerGroup, readonly string[]][] = [
   ["facebook", ["facebook.com", "fb.com", "fb.me", "messenger.com"]],
   ["x", ["x.com", "twitter.com", "t.co"]],
   ["linkedin", ["linkedin.com", "lnkd.in"]],
-  ["search", ["bing.com", "duckduckgo.com", "ecosia.org", "startpage.com", "qwant.com", "search.brave.com", "yandex.com", "yandex.ru", "baidu.com"]],
+  ["search", ["bing.com", "duckduckgo.com", "ecosia.org", "startpage.com", "qwant.com", "search.brave.com", "baidu.com"]],
 ];
 
-/** Search engines with a country domain of their own ("google.de", "google.co.uk", "de.search.yahoo.com"). */
-const SEARCH = /^(?:[a-z0-9-]+\.)*(?:google|yahoo|yandex)\.[a-z]{2,3}(?:\.[a-z]{2})?$/;
+/**
+ * Search engines with a country domain of their own, by their search front ends only ("google.de",
+ * "www.google.co.uk", "de.search.yahoo.com", "yandex.ru"): Gmail, Google Docs, Sites, News and Drive,
+ * Yahoo Mail and Yandex Mail are not searches and stay "other".
+ */
+const TLD = String.raw`[a-z]{2,3}(?:\.[a-z]{2})?`;
+const SEARCH = new RegExp(String.raw`^(?:www\.)?(?:google|yandex)\.${TLD}$|(?:^|\.)search\.yahoo\.${TLD}$`);
 
 const within = (host: string, domain: string) => host === domain || host.endsWith(`.${domain}`);
 

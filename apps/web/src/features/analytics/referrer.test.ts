@@ -24,8 +24,13 @@ describe("referrer groups", () => {
   });
 
   it("put search engines together, with their country domains", () => {
-    for (const host of ["www.google.de", "google.com", "www.google.co.uk", "www.bing.com", "duckduckgo.com", "www.ecosia.org", "search.brave.com", "de.search.yahoo.com", "search.yahoo.com"])
+    for (const host of ["www.google.de", "google.com", "www.google.co.uk", "www.bing.com", "duckduckgo.com", "www.ecosia.org", "search.brave.com", "de.search.yahoo.com", "search.yahoo.com", "yandex.ru", "www.yandex.com"])
       expect(referrerGroup(host, OWN), host).toBe("search");
+  });
+
+  it("never call mail, documents or news of a search company a search", () => {
+    for (const host of ["mail.google.com", "docs.google.com", "sites.google.com", "news.google.com", "drive.google.com", "calendar.google.com", "mail.yahoo.com", "de.mail.yahoo.com", "mail.yandex.ru"])
+      expect(referrerGroup(host, OWN), host).toBe("other");
   });
 
   it("call a visit without a referrer direct (typed in, a bookmark, a messenger)", () => {
