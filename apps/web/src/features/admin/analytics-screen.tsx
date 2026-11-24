@@ -7,8 +7,8 @@ import { Panel, Screen } from "@/features/app/screen";
 
 import { CohortGrid, ColumnChart, RankedBars } from "./charts";
 import { useCustomers } from "./customers/data";
-import { DAY } from "./customers/model";
-import { cohorts, funnel, lastDevice, shares, signupsPerDay } from "./customers/stats";
+import { DAY, viewsMeasured } from "./customers/model";
+import { cohorts, funnel, lastDevice, REST, shares, signupsPerDay, visitedCount } from "./customers/stats";
 import { DemoNote } from "./customers/ui";
 import { count, country, percent } from "./format";
 
@@ -30,7 +30,8 @@ export function AdminAnalyticsScreen() {
   const steps = useMemo(() => funnel(customers), [customers]);
   const grid = useMemo(() => cohorts(customers, now, 8), [customers, now]);
   const unknown = tc("unknownCountry");
-  const label = (key: string, map: (key: string) => string) => (key === "other" ? t("other") : map(key));
+  // Everything past the top entries folds into REST, never into a value such as the page kind "other".
+  const label = (key: string, map: (key: string) => string) => (key === REST ? t("rest") : map(key));
   const breakdown = (values: string[], map: (key: string) => string, top = 6) => shares(values, top).map((share) => ({ key: share.key, label: label(share.key, map), value: share.value }));
   const total = customers.length || 1;
   const asShare = (value: number) => percent(value / total, locale);
@@ -65,6 +66,10 @@ export function AdminAnalyticsScreen() {
                 })}
               </ol>
               <p className="text-caption text-fg-tertiary">{t("funnelNote")}</p>
+              {/* Visits are no step: "On Pro" must not hang on a number real accounts do not measure yet. */}
+              <p data-visits className="text-small text-fg-secondary">
+                {viewsMeasured ? t("visited", { count: count(visitedCount(customers), locale) }) : t("visitedNotMeasured")}
+              </p>
             </Panel>
           </div>
 

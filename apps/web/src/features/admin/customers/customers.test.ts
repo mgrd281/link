@@ -1,12 +1,16 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { parseUserAgent } from "@/features/account/device";
 import type { LoginEvent } from "@/features/account/types";
+import { PRICES } from "@/features/payments/prices";
 
-import { can, PERMISSIONS, ROLE_PERMISSIONS } from "../types";
-import { DAY, hasPro, isPaying, monthlyRevenue, PLAN_PRICE, riskFlags, withRewards, type Customer } from "./model";
+import { can, PERMISSIONS, ROLE_PERMISSIONS, ROLES } from "../types";
+import { DAY, hasPro, isPaying, monthlyRevenue, PLAN_PRICE, revenueAt, riskFlags, subscriptionSource, withRewards, type Customer } from "./model";
 import { sampleCustomers } from "./sample";
-import { cohorts, funnel, kpis, mrrByMonth, signupsPerDay } from "./stats";
+import { cohorts, csvCell, customersCsv, funnel, kpis, mrrAt, mrrByMonth, REST, shares, signupsPerDay, visitedCount } from "./stats";
 
 const NOW = Date.UTC(2026, 10, 19, 12);
 const login = (overrides: Partial<LoginEvent>): LoginEvent => ({
@@ -40,7 +44,7 @@ describe("sample customers", () => {
 
   it("add up: revenue, conversion, sign-ups, cohorts and funnel", () => {
     const numbers = kpis(customers, NOW, 30);
-    expect(numbers.mrr).toBe(customers.reduce((sum, customer) => sum + monthlyRevenue(customer), 0));
+    expect(numbers.mrr).toBe(customers.reduce((sum, customer) => sum + monthlyRevenue(customer, NOW), 0));
     expect(numbers.paying).toBeGreaterThan(0);
     expect(numbers.conversion).toBeCloseTo(numbers.paying / customers.length);
     const days = signupsPerDay(customers, NOW, 30);
@@ -56,15 +60,140 @@ describe("sample customers", () => {
 });
 
 describe("revenue", () => {
-  it("counts active and overdue paid plans, never trials or canceled", () => {
-    const [customer] = sampleCustomers(NOW, 1);
-    if (!customer) throw new Error("no sample");
-    const as = (status: "active" | "trialing" | "past_due" | "canceled") =>
-      monthlyRevenue({ ...customer, subscription: { ...customer.subscription, plan: "pro", status } });
-    expect(as("active")).toBe(PLAN_PRICE.pro);
-    expect(as("past_due")).toBe(PLAN_PRICE.pro);
-    expect(as("trialing")).toBe(0);
-    expect(as("canceled")).toBe(0);
+  const [sample] = sampleCustomers(NOW, 1);
+  if (!sample) throw new Error("no sample");
+  const startedAt = new Date(NOW - 40 * DAY).toISOString();
+  const stripePro = (status: "active" | "trialing" | "past_due" | "canceled", extra: Partial<Customer["subscription"]> = {}): Customer => ({
+    ...sample,
+    subscription: { ...sample.subscription, plan: "pro", status, source: "stripe", startedAt, ...extra },
+  });
+
+  it("counts active and overdue Stripe plans, never trials or canceled ones", () => {
+    expect(monthlyRevenue(stripePro("active"), NOW)).toBe(PLAN_PRICE.pro);
+    expect(monthlyRevenue(stripePro("past_due"), NOW)).toBe(PLAN_PRICE.pro);
+    expect(monthlyRevenue(stripePro("trialing"), NOW)).toBe(0);
+    expect(monthlyRevenue(stripePro("canceled", { canceledAt: new Date(NOW - DAY).toISOString() }), NOW)).toBe(0);
+    expect(monthlyRevenue(stripePro("canceled"), NOW)).toBe(0);
+  });
+
+  it("takes the price from the one price list", () => {
+    expect(PLAN_PRICE.pro).toBe(PRICES["pro-monthly"].amountCents);
+    expect(PLAN_PRICE.free).toBe(0);
+  });
+
+  it("never counts Pro the team gave by hand: no money comes in", () => {
+    const team: Customer = { ...sample, subscription: { plan: "pro", status: "active", source: "team", startedAt, invoices: [] } };
+    expect(subscriptionSource(team)).toBe("team");
+    expect(monthlyRevenue(team, NOW)).toBe(0);
+    expect(isPaying(team, NOW)).toBe(false);
+    expect(hasPro(team)).toBe(true);
+    // Without the database's word (demo, older database): invoices come only from Stripe.
+    const unsaid = { ...team, subscription: { ...team.subscription, source: undefined } };
+    expect(subscriptionSource(unsaid)).toBe("team");
+    const invoiced = { ...unsaid, subscription: { ...unsaid.subscription, invoices: [{ id: "in_1", at: startedAt, amount: 800, status: "paid" as const }] } };
+    expect(subscriptionSource(invoiced)).toBe("stripe");
+    expect(monthlyRevenue(invoiced, NOW)).toBe(PLAN_PRICE.pro);
+  });
+
+  it("follows a plan through time: from its start until it was canceled", () => {
+    const canceled = stripePro("canceled", { canceledAt: new Date(NOW - 10 * DAY).toISOString() });
+    expect(revenueAt(canceled, NOW - 41 * DAY)).toBe(0);
+    expect(revenueAt(canceled, NOW - 20 * DAY)).toBe(PLAN_PRICE.pro);
+    expect(revenueAt(canceled, NOW - 10 * DAY)).toBe(0);
+    // No start date on record: the account's sign-up stands in for it.
+    const undated = stripePro("active", { startedAt: undefined });
+    expect(revenueAt(undated, Date.parse(sample.createdAt) - DAY)).toBe(0);
+    expect(revenueAt(undated, NOW)).toBe(PLAN_PRICE.pro);
+  });
+});
+
+describe("one MRR for the tile and the chart", () => {
+  const customers = sampleCustomers(NOW);
+
+  it("the MRR tile equals the chart's last bar at now, in every range", () => {
+    for (const range of [7, 30, 90]) {
+      const tile = kpis(customers, NOW, range).mrr;
+      for (const months of [6, 12]) expect(mrrByMonth(customers, NOW, months).at(-1)?.value).toBe(tile);
+      expect(tile).toBe(mrrAt(customers, NOW));
+    }
+  });
+
+  it("also for the cases that used to differ: a stale trial, a future cancellation, a plan without a start", () => {
+    const [base] = customers;
+    if (!base) throw new Error("no sample");
+    const tricky: Customer[] = [
+      // A trial past its end date that nobody updated: trials pay nothing, on both.
+      { ...base, id: "t1", subscription: { plan: "pro", status: "trialing", source: "stripe", startedAt: new Date(NOW - 30 * DAY).toISOString(), trialEndsAt: new Date(NOW - 16 * DAY).toISOString(), invoices: [] } },
+      // Canceled, with the end still ahead: it pays until then, on both.
+      { ...base, id: "t2", subscription: { plan: "pro", status: "canceled", source: "stripe", startedAt: new Date(NOW - 30 * DAY).toISOString(), canceledAt: new Date(NOW + 5 * DAY).toISOString(), invoices: [] } },
+      // Paying, but no start date on record.
+      { ...base, id: "t3", subscription: { plan: "pro", status: "active", source: "stripe", invoices: [] } },
+      // Overdue: still counted until Stripe gives up.
+      { ...base, id: "t4", subscription: { plan: "pro", status: "past_due", source: "stripe", startedAt: new Date(NOW - 3 * DAY).toISOString(), invoices: [] } },
+    ];
+    const tile = kpis(tricky, NOW, 30).mrr;
+    expect(mrrByMonth(tricky, NOW, 6).at(-1)?.value).toBe(tile);
+    expect(tile).toBe(3 * PLAN_PRICE.pro);
+  });
+});
+
+describe("shares", () => {
+  it("fold the rest into their own key, which never collides with the page kind \"other\"", () => {
+    const values = ["a", "a", "b", "c", "d", "other", "other", "e", "f", "g"];
+    const result = shares(values, 3);
+    expect(result.map((share) => share.key)).toEqual(["a", "other", "b", REST]);
+    expect(result.filter((share) => share.key === "other")).toHaveLength(1);
+    expect(result.find((share) => share.key === REST)?.value).toBe(5);
+    expect(REST).not.toBe("other");
+    expect(shares(["other", "a"], 6).map((share) => share.key)).not.toContain(REST);
+  });
+});
+
+describe("funnel", () => {
+  const [base] = sampleCustomers(NOW, 1);
+  if (!base) throw new Error("no sample");
+  const person = (id: string, views30: number, plan: "free" | "pro"): Customer => ({
+    ...base,
+    id,
+    usage: { ...base.usage, onboarded: true, blocks: 4, views30, clicks30: 0 },
+    subscription: plan === "pro" ? { plan, status: "active", source: "stripe", invoices: [] } : { plan, status: null, invoices: [] },
+  });
+
+  it("counts Pro without asking for views (real accounts have none yet)", () => {
+    const unmeasured = [person("p1", 0, "pro"), person("p2", 0, "pro"), person("p3", 0, "free")];
+    const measured = unmeasured.map((customer) => ({ ...customer, usage: { ...customer.usage, views30: 120 } }));
+    expect(funnel(unmeasured).find((step) => step.key === "paid")?.value).toBe(2);
+    expect(funnel(measured)).toEqual(funnel(unmeasured));
+    expect(funnel(unmeasured).map((step) => step.key)).toEqual(["signedUp", "onboarded", "built", "paid"]);
+    expect(visitedCount(measured)).toBe(3);
+    expect(visitedCount(unmeasured)).toBe(0);
+  });
+
+  it("does not count a canceled plan as Pro", () => {
+    const canceled = { ...person("p4", 0, "pro"), subscription: { plan: "pro" as const, status: "canceled" as const, source: "stripe" as const, invoices: [] } };
+    expect(funnel([canceled]).find((step) => step.key === "paid")?.value).toBe(0);
+  });
+});
+
+describe("CSV export", () => {
+  it("starts every cell a spreadsheet would run as a formula with an apostrophe", () => {
+    for (const start of ["=", "+", "-", "@", "\t", "\r"]) expect(csvCell(`${start}HYPERLINK("x")`)).toBe(`"'${start}HYPERLINK(""x"")"`);
+    expect(csvCell("=1+1")).toBe(`"'=1+1"`);
+    expect(csvCell("Mila Berg")).toBe(`"Mila Berg"`);
+    expect(csvCell('say "hi"')).toBe(`"say ""hi"""`);
+    expect(csvCell(12)).toBe(`"12"`);
+    expect(csvCell("a=b")).toBe(`"a=b"`);
+  });
+
+  it("writes one safe row per customer; views only where they are measured", () => {
+    const [base] = sampleCustomers(NOW, 1);
+    if (!base) throw new Error("no sample");
+    const evil: Customer = { ...base, name: "=cmd|' /C calc'!A0", email: "@evil@example.com" };
+    const csv = customersCsv([evil], NOW, { views: false });
+    const [header, row] = csv.split("\n");
+    expect(header).not.toContain("views_30d");
+    expect(row?.startsWith(`"'=cmd|' /C calc'!A0","'@evil@example.com"`)).toBe(true);
+    expect(customersCsv([evil], NOW, { views: true }).split("\n")[0]).toContain("views_30d");
   });
 });
 
@@ -76,8 +205,8 @@ describe("Pro for life", () => {
   const rewarded: Customer = { ...free, rewards: { proForLife } };
 
   it("never counts Pro for life as revenue", () => {
-    expect(monthlyRevenue(rewarded)).toBe(0);
-    expect(isPaying(rewarded)).toBe(false);
+    expect(monthlyRevenue(rewarded, NOW)).toBe(0);
+    expect(isPaying(rewarded, NOW)).toBe(false);
     expect(hasPro(rewarded)).toBe(true);
     expect(hasPro(free)).toBe(false);
 
@@ -115,7 +244,7 @@ describe("Pro for life", () => {
     expect(merged.rewards).toEqual({ proForLife });
     expect(merged.subscription).toEqual(free.subscription);
     expect(hasPro(merged)).toBe(true);
-    expect(monthlyRevenue(merged)).toBe(0);
+    expect(monthlyRevenue(merged, NOW)).toBe(0);
 
     const removed: Customer = { ...free, rewards: { proForLife: { ...proForLife, revokedAt: new Date(NOW).toISOString() } } };
     expect(hasPro(removed)).toBe(false);
@@ -187,5 +316,24 @@ describe("roles", () => {
     expect(can("viewer", "security.view")).toBe(true);
     expect(can("viewer", "security.manage")).toBe(false);
     expect(can("editor", "billing.view")).toBe(false);
+  });
+
+  it("editors work on orders without seeing customers; only owners and admins export", () => {
+    expect(can("editor", "orders.view")).toBe(true);
+    expect(can("editor", "customers.view")).toBe(false);
+    expect(can("viewer", "orders.view")).toBe(true);
+    expect(can("viewer", "customers.view")).toBe(true);
+    expect(ROLES.filter((role) => can(role, "customers.export"))).toEqual(["owner", "admin"]);
+    expect(ROLES.filter((role) => can(role, "orders.view"))).toEqual(["owner", "admin", "editor", "viewer"]);
+  });
+
+  it("match the role table of the database (supabase/migrations)", () => {
+    const migrations = join(process.cwd(), "../../supabase/migrations");
+    const team = readFileSync(join(migrations, "20261119100200_team.sql"), "utf8");
+    const money = readFileSync(join(migrations, "20261124100100_admin_money.sql"), "utf8");
+    // Every permission the app knows is granted somewhere in the database.
+    for (const permission of PERMISSIONS) expect(`${team}\n${money}`).toContain(`'${permission}'`);
+    expect(money).toContain("delete from public.role_permissions where role = 'editor' and permission = 'customers.view'");
+    expect(Object.fromEntries(ROLES.map((role) => [role, ROLE_PERMISSIONS[role].length]))).toEqual({ owner: 18, admin: 16, editor: 5, viewer: 6 });
   });
 });

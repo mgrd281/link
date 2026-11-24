@@ -39,12 +39,15 @@ import { Panel, Screen } from "@/features/app/screen";
 import { referralTeam, useCustomerReferrals } from "@/features/referrals/team";
 import type { CustomerReferrals, ReferralState, RewardKind } from "@/features/referrals/types";
 import { Link, useRouter } from "@/i18n/navigation";
+import { paymentsEnabled } from "@/lib/flags";
 import { pageAddress } from "@/lib/page-url";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { useConsoleActions } from "./actions";
+import { billingActions, scheduledEnd, type BillingAnswer } from "./billing";
+import { CustomersHidden } from "./customers-list-screen";
 import { sessionsOf, useCustomers } from "./customers/data";
-import { DAY, hasProForLife, isPaying, monthlyRevenue, PLAN_PRICE, riskFlags, type Customer } from "./customers/model";
+import { DAY, hasProForLife, isPaying, monthlyRevenue, riskFlags, subscriptionSource, viewsMeasured, type Customer } from "./customers/model";
 import { DemoNote, DeviceLabel, PlanBadge, RiskBadges, StatusBadges } from "./customers/ui";
 import { count, country, date, dateTime, money, timeAgo } from "./format";
 import { bare, CustomerLink, ProfileLinks, SignalChips, useReasonLabel, WHY_MAX } from "./referrals-screen";
@@ -52,8 +55,8 @@ import { useAdmin } from "./session";
 
 type Tab = "overview" | "billing" | "security" | "notes" | "invites";
 type Pending =
-  | { kind: "suspend" | "cancel" | "signoutAll" | "delete" }
-  | { kind: "refund"; invoice: string }
+  | { kind: "suspend" | "cancel" | "stripeCancel" | "stripeResume" | "signoutAll" | "delete" }
+  | { kind: "refund"; invoice: string; amount: number }
   | { kind: "block"; ip: string }
   | null;
 
@@ -89,6 +92,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const noteId = useId();
   const blocked = useMemo(() => new Set(blockedIps.map((entry) => entry.ip)), [blockedIps]);
 
+  // Editors see no customers (and no e-mail addresses), also when the address is typed in.
+  if (!can("customers.view")) return <CustomersHidden />;
   if (!ready) return <Screen title={t("loading")}>{null}</Screen>;
   if (!customer) {
     return (
@@ -103,10 +108,25 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const unknown = tc("unknownCountry");
   const sub = customer.subscription;
   const devices = sessionsOf(customer, signedOut(customer.id));
+  // What may happen to this customer's money, and how: Stripe through our server, the team's own Pro
+  // by hand, the demo in this browser.
+  const money_ = billingActions(customer, { live: supabaseEnabled, payments: paymentsEnabled, manage: can("billing.manage") });
+  const source = subscriptionSource(customer);
+  const ends = scheduledEnd(customer);
   /** Runs a console action, then says how it went. */
   const run = async (work: Promise<boolean>, message: string) => {
     if (await work) toast({ title: message, tone: "success" });
     else toast({ title: t("toast.failed"), tone: "danger" });
+  };
+  /** A money action: "done" only once Stripe did it and it is on record; otherwise why not. */
+  const runBilling = async (work: Promise<BillingAnswer>, message: (answer: BillingAnswer & { ok: true }) => string, mails: boolean) => {
+    const answer = await work;
+    if (!answer.ok) {
+      toast({ title: t(`billingErrors.${answer.error}`), tone: "danger" });
+      return;
+    }
+    toast({ title: message(answer), tone: "success" });
+    if (mails && !answer.mailed) toast({ title: t("toast.notMailed"), tone: "neutral" });
   };
   const kindLabel = (kind: string) => (tk.has(`${kind}.label`) ? tk(`${kind}.label`) : kind);
 
@@ -148,13 +168,21 @@ export function CustomerDetailScreen({ id }: { id: string }) {
         actions.subscription(customer, "cancel", { subscriptionStatus: "canceled", canceledAt: new Date(now).toISOString() }),
         t("toast.canceled"),
       );
+    } else if (pending.kind === "stripeCancel") {
+      void runBilling(
+        actions.stripeSubscription(customer, "cancel"),
+        (answer) => (answer.endsAt ? t("toast.cancelScheduled", { date: date(answer.endsAt, locale) }) : t("toast.canceled")),
+        true,
+      );
+    } else if (pending.kind === "stripeResume") {
+      void runBilling(actions.stripeSubscription(customer, "resume"), () => t("toast.resumed"), false);
     } else if (pending.kind === "signoutAll") {
       void run(
         actions.signOut(customer, devices.map((device) => device.deviceId), signedOut(customer.id)),
         t("toast.signedOutAll"),
       );
     } else if (pending.kind === "refund") {
-      void run(actions.refund(customer, pending.invoice), t("toast.refunded"));
+      void runBilling(actions.refund(customer, pending.invoice), () => t("toast.refunded"), money_.refund === "stripe");
     } else if (pending.kind === "block") {
       void run(actions.blockIp(pending.ip, customer.username), t("toast.blocked", { ip: pending.ip }));
     } else {
@@ -168,23 +196,17 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   };
 
   const menu: MenuItem[] = [
-    ...(can("billing.manage")
-      ? [
-          { label: t("actions.trial"), icon: CalendarPlus, onSelect: extendTrial },
-          ...(sub.status === "canceled"
-            ? [{ label: t("actions.resume"), icon: CreditCard, onSelect: resume }]
-            : sub.plan === "pro"
-              ? [
-                  {
-                    label: t("actions.cancel"),
-                    icon: CreditCard,
-                    destructive: true,
-                    onSelect: () => setPending({ kind: "cancel" }),
-                  },
-                ]
-              : []),
-        ]
-      : []),
+    ...(money_.trial ? [{ label: t("actions.trial"), icon: CalendarPlus, onSelect: extendTrial }] : []),
+    ...(money_.resume === "stripe"
+      ? [{ label: t("actions.resumeStripe"), icon: CreditCard, onSelect: () => setPending({ kind: "stripeResume" }) }]
+      : money_.resume
+        ? [{ label: t("actions.resume"), icon: CreditCard, onSelect: resume }]
+        : []),
+    ...(money_.cancel === "stripe"
+      ? [{ label: t("actions.cancelStripe"), icon: CreditCard, destructive: true, onSelect: () => setPending({ kind: "stripeCancel" }) }]
+      : money_.cancel
+        ? [{ label: t("actions.cancel"), icon: CreditCard, destructive: true, onSelect: () => setPending({ kind: "cancel" }) }]
+        : []),
     ...(can("customers.manage")
       ? [
           {
@@ -245,18 +267,38 @@ export function CustomerDetailScreen({ id }: { id: string }) {
           label: t("actions.cancel"),
           destructive: true,
         },
+        stripeCancel: {
+          title: t("confirm.cancelStripeTitle"),
+          body: t("confirm.cancelStripeBody"),
+          label: t("actions.cancelStripe"),
+          destructive: true,
+        },
+        stripeResume: {
+          title: t("confirm.resumeStripeTitle"),
+          body: t("confirm.resumeStripeBody"),
+          label: t("actions.resumeStripe"),
+          destructive: false,
+        },
         signoutAll: {
           title: t("confirm.signoutTitle"),
           body: t("confirm.signoutBody", { count: devices.length }),
           label: t("actions.signoutAll"),
           destructive: false,
         },
-        refund: {
-          title: t("confirm.refundTitle"),
-          body: t("confirm.refundBody", { amount: money(PLAN_PRICE.pro, locale, true) }),
-          label: t("actions.refund"),
-          destructive: true,
-        },
+        refund:
+          money_.refund === "stripe"
+            ? {
+                title: t("confirm.refundStripeTitle"),
+                body: t("confirm.refundStripeBody", { amount: money(pending.kind === "refund" ? pending.amount : 0, locale, true) }),
+                label: t("actions.refund"),
+                destructive: true,
+              }
+            : {
+                title: t("confirm.refundTitle"),
+                body: t("confirm.refundBody", { amount: money(pending.kind === "refund" ? pending.amount : 0, locale, true) }),
+                label: t("actions.refund"),
+                destructive: true,
+              },
         block: {
           title: t("confirm.blockTitle", { ip: pending.kind === "block" ? pending.ip : "" }),
           body: t("confirm.blockBody"),
@@ -277,7 +319,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
       title={customer.name}
       lead={
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span dir="ltr">{customer.email}</span>
+          {customer.email ? <span dir="ltr">{customer.email}</span> : null}
           <span dir="ltr">{pageAddress(customer.username)}</span>
         </span>
       }
@@ -306,7 +348,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
           </Badge>
         ) : null}
         <div className="ms-auto flex flex-wrap items-center gap-2">
-          {can("billing.manage") ? (
+          {/* By hand only without a Stripe subscription: the team's Pro is free of charge. */}
+          {money_.manualPlan ? (
             <Menu
               trigger={
                 <Button variant="primary" icon={CreditCard}>
@@ -314,8 +357,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                 </Button>
               }
               items={[
-                { label: `${tc("plans.free")} · ${money(0, locale)}`, onSelect: () => setPlan("free") },
-                { label: `Pro · ${money(PLAN_PRICE.pro, locale, true)}`, onSelect: () => setPlan("pro") },
+                { label: tc("plans.free"), onSelect: () => setPlan("free") },
+                { label: t("actions.givePro"), onSelect: () => setPlan("pro") },
               ]}
             />
           ) : null}
@@ -404,8 +447,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                 ],
                 [t("facts.blocks"), count(customer.usage.blocks, locale)],
                 [t("facts.onboarded"), customer.usage.onboarded ? t("yes") : t("no")],
-                [t("facts.views"), count(customer.usage.views30, locale)],
-                [t("facts.clicks"), count(customer.usage.clicks30, locale)],
+                [t("facts.views"), viewsMeasured ? count(customer.usage.views30, locale) : t("notMeasured")],
+                [t("facts.clicks"), viewsMeasured ? count(customer.usage.clicks30, locale) : t("notMeasured")],
               ]}
             />
           </Panel>
@@ -417,19 +460,22 @@ export function CustomerDetailScreen({ id }: { id: string }) {
           <Panel title={t("subscription")} id="subscription-title">
             <Facts
               items={[
+                [t("facts.plan"), sub.plan === "pro" ? "Pro" : tc("plans.free")],
                 [
-                  t("facts.plan"),
-                  sub.plan === "pro"
-                    ? `Pro · ${money(PLAN_PRICE.pro, locale, true)} / ${t("month")}`
-                    : `${tc("plans.free")} · ${money(0, locale)}`,
+                  t("facts.planSource"),
+                  <span key="source" data-plan-source={source ?? (hasProForLife(customer) ? "reward" : "none")}>
+                    {source ? t(`sources.${source}`) : hasProForLife(customer) ? t("sources.reward") : "–"}
+                  </span>,
                 ],
                 [t("facts.status"), sub.status ? tc(`subscription.${sub.status}`) : "–"],
-                [t("facts.mrr"), money(monthlyRevenue(customer), locale, true)],
+                [t("facts.mrr"), money(monthlyRevenue(customer, now), locale, true)],
                 [t("facts.started"), sub.startedAt ? date(sub.startedAt, locale) : "–"],
-                [
-                  t("facts.renews"),
-                  sub.renewsAt && sub.status !== "canceled" ? date(sub.renewsAt, locale) : "–",
-                ],
+                ends
+                  ? [t("facts.endsAt"), <span key="ends" data-ends-at>{date(ends, locale)}</span>]
+                  : [
+                      t("facts.renews"),
+                      sub.renewsAt && sub.status !== "canceled" ? date(sub.renewsAt, locale) : "–",
+                    ],
                 [
                   t("facts.trialEnds"),
                   sub.trialEndsAt && sub.status === "trialing" ? date(sub.trialEndsAt, locale) : "–",
@@ -439,6 +485,13 @@ export function CustomerDetailScreen({ id }: { id: string }) {
             />
             {/* "Demo: no money moves" is true only in the demo. */}
             {supabaseEnabled ? null : <p className="text-caption text-fg-tertiary">{t("billingNote")}</p>}
+            {money_.waitingForPayments ? (
+              <p role="note" data-stripe-waiting className="text-small text-fg-secondary">
+                {t("stripeWaiting")}
+              </p>
+            ) : supabaseEnabled && source === "stripe" ? (
+              <p className="text-caption text-fg-tertiary">{t("stripeNote")}</p>
+            ) : null}
           </Panel>
           <Panel title={t("invoices")} id="invoices-title">
             {sub.invoices.length === 0 ? (
@@ -448,19 +501,19 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                 <table className="text-small w-full">
                   <thead className="text-caption text-fg-secondary">
                     <tr>
-                      <th scope="col" className="py-2 text-start font-medium">
+                      <th scope="col" className="py-2 pe-4 text-start font-medium">
                         {t("invoice.date")}
                       </th>
-                      <th scope="col" className="py-2 text-start font-medium">
+                      <th scope="col" className="py-2 pe-4 text-start font-medium">
                         {t("invoice.number")}
                       </th>
-                      <th scope="col" className="py-2 text-start font-medium">
+                      <th scope="col" className="py-2 pe-4 text-start font-medium">
                         {t("invoice.status")}
                       </th>
                       <th scope="col" className="py-2 text-end font-medium">
                         {t("invoice.amount")}
                       </th>
-                      {can("billing.manage") ? (
+                      {money_.refund ? (
                         <th scope="col" className="py-2">
                           <span className="sr-only">{t("invoice.actions")}</span>
                         </th>
@@ -470,11 +523,14 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                   <tbody>
                     {[...sub.invoices].reverse().map((invoice) => (
                       <tr key={invoice.id} className="border-line border-t">
-                        <td className="py-2 whitespace-nowrap">{date(invoice.at, locale)}</td>
-                        <td className="text-caption py-2 font-mono" dir="ltr">
-                          {invoice.id}
+                        <td className="py-2 pe-4 whitespace-nowrap">{date(invoice.at, locale)}</td>
+                        {/* The id reads left to right; the cell keeps the page's side (start in Arabic too). */}
+                        <td className="text-caption py-2 pe-4 text-start">
+                          <span dir="ltr" className="font-mono">
+                            {invoice.id}
+                          </span>
                         </td>
-                        <td className="py-2">
+                        <td className="py-2 pe-4">
                           <Badge
                             size="sm"
                             tone={
@@ -489,14 +545,14 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                           </Badge>
                         </td>
                         <td className="py-2 text-end tabular-nums">{money(invoice.amount, locale, true)}</td>
-                        {can("billing.manage") ? (
+                        {money_.refund ? (
                           <td className="py-2 text-end">
                             {invoice.status === "paid" ? (
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 icon={ReceiptText}
-                                onClick={() => setPending({ kind: "refund", invoice: invoice.id })}
+                                onClick={() => setPending({ kind: "refund", invoice: invoice.id, amount: invoice.amount })}
                               >
                                 {t("actions.refund")}
                               </Button>
@@ -719,7 +775,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
       ) : null}
 
       {/* Mounted only while open: the invite program is loaded when someone looks at it. */}
-      {tab === "invites" ? <InvitesTab customer={customer} /> : null}
+      {tab === "invites" ? <InvitesTab customer={customer} now={now} /> : null}
 
       <DemoNote />
 
@@ -794,7 +850,7 @@ function rewardsOf(customer: Customer): Rewards {
  * billing.manage, the verification review customers.manage) and the accounts they invited. Mounted
  * only while its tab is open, so the program is loaded only when someone looks at it.
  */
-function InvitesTab({ customer }: { customer: Customer }) {
+function InvitesTab({ customer, now }: { customer: Customer; now: number }) {
   const t = useTranslations("admin.customer");
   const tc = useTranslations("admin.customers");
   const tr = useTranslations("admin.referrals");
@@ -918,7 +974,7 @@ function InvitesTab({ customer }: { customer: Customer }) {
         </Panel>
 
         <Panel title={t("invites.rewards")} id="rewards-title">
-          {proForLife && !proForLife.revokedAt && isPaying(customer) ? (
+          {proForLife && !proForLife.revokedAt && isPaying(customer, now) ? (
             <p className="bg-warning-subtle text-small text-warning-strong flex items-start gap-2 rounded-md px-3 py-2">
               <Icon icon={AlertTriangle} size="sm" className="mt-0.5 shrink-0" />
               <span>{t("invites.paysAndPro")}</span>

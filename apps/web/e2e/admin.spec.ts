@@ -218,7 +218,8 @@ test.describe("customer console", () => {
     await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
 
     await page.getByRole("button", { name: "Change plan" }).click();
-    await page.getByRole("menuitem", { name: /^Pro/ }).click();
+    // By hand the team gives Pro free of charge (a paid plan changes only through Stripe).
+    await page.getByRole("menuitem", { name: "Give Pro (team)" }).click();
     await expect(page.getByText("Plan changed to Pro").first()).toBeVisible();
     await page.getByRole("button", { name: "Actions" }).click();
     await page.getByRole("menuitem", { name: "Suspend account" }).click();
@@ -255,6 +256,48 @@ test.describe("customer console", () => {
     await page.goto("/en/app/settings/account");
     await expect(page.getByRole("heading", { name: "Recent sign-ins" })).toBeVisible();
     await expect(page.getByText("This device").first()).toBeVisible();
+  });
+
+  test("only owners and admins export customers; editors see no customers at all", async ({ page, isMobile }) => {
+    await owner(page);
+    await go(page, "Customers");
+    await expect(page.getByRole("button", { name: "Export CSV" })).toBeVisible();
+    // "View as" sits in the sidebar, and on phones at the top of the overview.
+    const viewAs = async (role: "viewer" | "editor") => {
+      if (isMobile) await nav(page).getByRole("link", { name: "Overview", exact: true }).click();
+      await page.getByLabel("View as").locator("visible=true").selectOption(role);
+    };
+
+    // A viewer: the list, no export.
+    await viewAs("viewer");
+    await expect(page.getByText("You're viewing the team area as Viewer.")).toBeVisible();
+    await go(page, "Customers");
+    await expect(page.getByRole("heading", { level: 1, name: "Customers" })).toBeVisible();
+    await expect(page.locator("main a[href*='/admin/customers/cus_']").locator("visible=true").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Export CSV" })).toHaveCount(0);
+
+    // An editor: no customers, no addresses, no export, on any screen.
+    await viewAs("editor");
+    await expect(page.getByText("You're viewing the team area as Editor.")).toBeVisible();
+    if (!isMobile) {
+      // The customer list that was open turns into the notice.
+      await expect(page.getByRole("heading", { level: 1, name: "Customers aren't visible to your role" })).toBeVisible();
+      await expect(page.locator("main")).not.toContainText("@example.com");
+      await nav(page).getByRole("link", { name: "Overview", exact: true }).click();
+    }
+    await expect(nav(page).getByRole("link", { name: "Customers", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 2, name: "Newest customers" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Export CSV" })).toHaveCount(0);
+  });
+
+  test("without payments the money routes send nothing to Stripe and say so", async ({ request }) => {
+    for (const action of ["refund", "cancel", "resume"]) {
+      const response = await request.post(`/api/admin/customers/00000000-0000-4000-8000-000000000001/billing/${action}`, { data: { invoice: "in_1" } });
+      expect(response.status()).toBe(409);
+      const body = (await response.json()) as { ok: boolean; error: string; message: string };
+      expect(body).toMatchObject({ ok: false, error: "paymentsOff" });
+      expect(body.message).toContain("nothing was sent to Stripe");
+    }
   });
 
   test("viewers see revenue and customers but can't change anything", async ({ page }) => {

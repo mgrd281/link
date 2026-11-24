@@ -4,6 +4,7 @@ import { accessToken } from "@/lib/supabase/access-token";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { browserSupabase } from "@/lib/supabase/browser";
 
+import { missingFunction, sendBilling, type BillingAnswer, type BillingDeps } from "./billing";
 import { sendCustomerStatus } from "./customer-status";
 import type { AccountStatus, Customer } from "./customers/model";
 import { overrides, type CustomerPatch } from "./customers/overrides";
@@ -15,9 +16,12 @@ import type { ActivityEvent, Member, Role } from "./types";
 /**
  * Every console action in one place. Demo: the change is kept in this browser and logged there.
  * Real accounts: a team-only database function checks the permission, makes the change and writes
- * the activity log; then the console reloads. Each action answers whether it worked.
+ * the activity log; then the console reloads. Money (refunds, a Stripe subscription) goes through
+ * our server and Stripe instead (`billing.ts`). Each action answers whether it worked.
  */
 export type SubscriptionAction = "plan" | "trial" | "cancel" | "resume";
+
+const billingDeps: BillingDeps = { token: accessToken, send: (path, init) => fetch(path, init) };
 
 const ok = async (call: PromiseLike<{ error: unknown }>): Promise<boolean> => {
   const { error } = await call;
@@ -32,7 +36,10 @@ export function useConsoleActions() {
   const supabase = () => browserSupabase();
 
   return {
-    /** Plan, trial, cancel or resume: `patch` says what changes, the rest stays as it is. */
+    /**
+     * Plan, trial, cancel or resume by hand: `patch` says what changes, the rest stays as it is. Only
+     * for Pro the team gives (no money); a Stripe subscription changes through `stripeSubscription`.
+     */
     async subscription(customer: Customer, action: SubscriptionAction, patch: CustomerPatch): Promise<boolean> {
       if (!supabaseEnabled) {
         overrides.patch(customer.id, patch);
@@ -59,14 +66,40 @@ export function useConsoleActions() {
       );
     },
 
-    async refund(customer: Customer, invoice: string): Promise<boolean> {
+    /**
+     * Refunds a paid invoice. Real accounts: through our server and Stripe (never a database-only
+     * "refunded"); the answer says "ok" only once Stripe refunded and it is on record. Demo: in this browser.
+     */
+    async refund(customer: Customer, invoice: string): Promise<BillingAnswer> {
       if (!supabaseEnabled) {
         const refunded = customer.subscription.invoices.filter((entry) => entry.status === "refunded").map((entry) => entry.id);
         overrides.patch(customer.id, { refunded: [...refunded, invoice] });
         record("customer.refund", customer.username);
-        return true;
+        return { ok: true, mailed: false };
       }
-      return ok(supabase().rpc("admin_refund_invoice", { invoice }));
+      const answer = await sendBilling(customer.id, "refund", { invoice }, billingDeps);
+      // A refund Stripe made but we could not record yet shows as soon as it is on record.
+      await refreshLive();
+      return answer;
+    },
+
+    /** Cancels a Stripe subscription at the end of its paid period, or takes that back (real accounts only). */
+    async stripeSubscription(customer: Customer, action: "cancel" | "resume"): Promise<BillingAnswer> {
+      if (!supabaseEnabled) return { ok: false, error: "paymentsOff" };
+      const answer = await sendBilling(customer.id, action, {}, billingDeps);
+      await refreshLive();
+      return answer;
+    },
+
+    /**
+     * Logs a CSV export of the customer list (`customer.export`, with the row count) before the file
+     * is made. A database without the export function yet: the export works as before, unlogged.
+     */
+    async exported(rows: number): Promise<boolean> {
+      if (!supabaseEnabled) return true;
+      const { error } = await supabase().rpc("admin_customers_exported", { row_count: rows });
+      if (!error) return true;
+      return missingFunction(error);
     },
 
     async status(customer: Customer, next: AccountStatus): Promise<boolean> {

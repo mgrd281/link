@@ -2,8 +2,8 @@ import type { Page } from "@linkyo/blocks";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 /**
- * The team area. Roles map to permissions in one place, so the UI (and, in Phase 1, the database's
- * row-level security policies) enforce exactly the same rules.
+ * The team area. Roles map to permissions in one place, so the UI and the database's team functions
+ * and row-level security policies enforce exactly the same rules.
  */
 export const ROLES = ["owner", "admin", "editor", "viewer"] as const;
 export type Role = (typeof ROLES)[number];
@@ -18,8 +18,10 @@ export const PERMISSIONS = [
   "team.manage",
   "activity.view",
   "customers.view",
+  "customers.export",
   "customers.manage",
   "customers.delete",
+  "orders.view",
   "billing.view",
   "billing.manage",
   "security.view",
@@ -28,12 +30,17 @@ export const PERMISSIONS = [
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
-/** Owners can do everything; admins everything but the team itself and deleting customers. */
+/**
+ * Owners can do everything; admins everything but the team itself and deleting customers. Editors
+ * build pages and work on page-service orders without seeing customers (no e-mail addresses);
+ * viewers read everything but export nothing. Mirrored in `public.role_permissions`
+ * (supabase/migrations/…_team.sql and …_admin_money.sql; the pgTAP matrix compares the counts).
+ */
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   owner: PERMISSIONS,
   admin: PERMISSIONS.filter((permission) => permission !== "team.manage" && permission !== "customers.delete"),
-  editor: ["pages.create", "pages.edit", "activity.view", "customers.view", "analytics.view"],
-  viewer: ["activity.view", "customers.view", "billing.view", "security.view", "analytics.view"],
+  editor: ["pages.create", "pages.edit", "activity.view", "orders.view", "analytics.view"],
+  viewer: ["activity.view", "customers.view", "orders.view", "billing.view", "security.view", "analytics.view"],
 };
 
 export const can = (role: Role | null, permission: Permission) => role !== null && ROLE_PERMISSIONS[role].includes(permission);

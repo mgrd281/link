@@ -24,7 +24,8 @@
 //                                      on a monthly subscription that never met a shorter month. Register
 //                                      it to test one that did (anchor on the 31st, period end 28 Feb).
 //   POST   /__invoices/:id             registers an invoice (JSON: { subscription, profileId, paymentIntent, amount })
-//   GET    /__requests?method=&path=&profile=&prefix=   recorded requests (each test filters by its own ids)
+//   GET    /__requests?method=&path=&profile=&prefix=   recorded requests, each with its idempotencyKey (each
+//                                      test filters by its own ids)
 
 export const port = Number(process.env.MOCK_STRIPE_PORT ?? 54398);
 
@@ -213,7 +214,17 @@ export async function handle(req, res) {
         (!prefix || entry.path.startsWith(prefix)) &&
         (!profile || entry.body?.metadata?.profile_id === profile),
     );
-    json(res, 200, { count: list.length, requests: list.map(({ method: m, path: p, query, body }) => ({ method: m, path: p, query, body })) });
+    // With each request's Idempotency-Key, so a test can prove a refund or update is sent with one.
+    json(res, 200, {
+      count: list.length,
+      requests: list.map(({ method: m, path: p, query, body, headers }) => ({
+        method: m,
+        path: p,
+        query,
+        body,
+        idempotencyKey: typeof headers?.["idempotency-key"] === "string" ? headers["idempotency-key"] : null,
+      })),
+    });
     return;
   }
   const failing = /^\/__refund_failures\/([\w-]+)$/.exec(url.pathname);
