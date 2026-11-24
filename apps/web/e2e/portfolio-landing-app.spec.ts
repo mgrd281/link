@@ -48,7 +48,7 @@ test("the opening shows Ronja's real page; every template starts sign-up with it
   await expect(page.getByText("Ronja Feldkamp ist erfunden: eine Beispielseite in der Vorlage Werkbogen.")).toBeVisible();
   // The templates come from the portfolio pages: Werkbogen and Tiefdruck first.
   const row = page.getByRole("region", { name: "Vorlagen für Portfolios" });
-  await expect(row.getByRole("heading", { level: 3 })).toHaveText(["Werkbogen", "Tiefdruck", "Folio"]);
+  await expect(row.getByRole("heading", { level: 3 })).toHaveText(["Werkbogen", "Tiefdruck", "Folio", "Leuchttisch", "Grundriss", "Logbuch"]);
   await expect(row.getByRole("link", { name: "Mit Werkbogen starten" })).toHaveAttribute("href", "/de/signup?kind=photographer&look=ronja-feldkamp");
   await expect(row.getByRole("link", { name: "Mit Tiefdruck starten" })).toHaveAttribute("href", "/de/signup?kind=developer&look=tobin-achterberg");
   // The field's tab offers the same start.
