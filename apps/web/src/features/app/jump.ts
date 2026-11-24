@@ -1,4 +1,4 @@
-import { NAV_ANCHORS, type DesignTab } from "./routes";
+import type { DesignTab } from "./routes";
 
 /*
  * What the section panel does on a plain click: it moves within the screen and never touches the
@@ -18,17 +18,6 @@ export const rowAnchor = (blockId: string) => `row-${blockId}`;
 export function jumpTo(target: HTMLElement, { instant = false }: { instant?: boolean } = {}) {
   target.scrollIntoView({ block: "start", behavior: instant || reducedMotion() ? "auto" : "smooth" });
   target.focus({ preventScroll: true });
-}
-
-/**
- * Writes the Design tab to the URL (`?tab=`), then brings the tab row into view and focuses the tab.
- * Radix tabs activate on focus, and the Design screen reads its tab from the URL, so both agree.
- */
-export function selectDesignTab(tab: DesignTab) {
-  setDesignTabUrl(tab);
-  const row = document.getElementById(NAV_ANCHORS.designCustomize);
-  row?.scrollIntoView({ block: "start", behavior: reducedMotion() ? "auto" : "smooth" });
-  document.querySelector<HTMLElement>(`[data-tab="${tab}"]`)?.focus({ preventScroll: true });
 }
 
 /**
