@@ -96,6 +96,9 @@ reports unknown classes.
   selectors). So: **never** add `rtl:-scale-x-100`, never
   `[&_svg]:rtl:-scale-x-100` on a button, and never flip a button or a wrapper around an icon (a second
   flip undoes the first). For a glyph that must keep its screen direction pass `mirror={false}`.
+  Draw a directional glyph through `Icon` (or `Button`/`IconButton`), never as lucide JSX: `Icon` marks
+  it `data-icon-dir`, and `e2e/icons-rtl-app.spec.ts` checks on the main Arabic screens that each one
+  is flipped exactly once (add a screen there when you build a new one with arrows).
 - **Arabic companions of the creator faces (C-03).** Each pairing in `tokens.json` has
   `creator.pairing.<id>.$extensions["app.linkyo"].arabic` (`display` and `body`: family, face,
   weight); a template can override it with its own `arabic` (Nocturne: Rakkas) or keep the Arabic

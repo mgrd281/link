@@ -128,6 +128,13 @@ reverse: every face is one token and one `localFont` call; the founder may overr
   surface; Laufbahn's type does not change).
 - Until the codemod: 6 IconButtons flipped as a whole (scroll-row.tsx, examples/gallery.tsx) show their
   chevrons unmirrored in Arabic; the alias rule warns on 15 imports.
+- S2.Z codemod (done): the aliases are replaced by the registry's meanings and the rule is an error;
+  every hand-written `rtl:-scale-x-100` on a directional glyph, on its button and in `[&_svg]` parent
+  classes is gone (Laufbahn keeps its two, on the same element); playback glyphs are `solid`; the
+  `size-3` overrides are `xs`. `Icon` marks directional glyphs with `data-icon-dir` ("mirror" or
+  "fixed"), and `e2e/icons-rtl-app.spec.ts` counts each one's flips on the main screens in Arabic
+  (computed `scale`, `rotate` and `transform` of the svg and everything above it): exactly one right
+  to left, none in a left-to-right page or island.
 - WP2.5's Arabic name-fit test must be re-run on these faces at S2.Z.
 - Adding a face: the token, a `localFont` with the Arabic unicode-range and no metric fallback, the
   files and licence copied from `npm pack`, and the companions test.

@@ -38,7 +38,8 @@ python3 .claude/skills/linkyo-ux-audit/scripts/sheet.py <out-dir>
   link metadata did not arrive (see `linkyo-link-metadata`).
 - **Overlays covering content:** privacy notice, docks, the preview label. Check that taps reach
   the page (`pointer-events-none` wrappers).
-- **RTL:** order of words, icons that point the wrong way (`rtl:-scale-x-100`), prices in
+- **RTL:** order of words, icons that point the wrong way (`Icon` mirrors directional glyphs itself;
+  a hand-written `rtl:-scale-x-100` on top flips them back), prices in
   `<bdi dir="ltr">`.
 - **Empty states and new accounts:** a brand-new page must still look finished (monogram, starter
   blocks).
