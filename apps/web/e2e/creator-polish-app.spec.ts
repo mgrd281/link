@@ -267,10 +267,17 @@ test("/ar/app/preview: 14-letter Latin and Arabic names stay inside the hero in 
           const range = document.createRange();
           range.selectNodeContents(element);
           const text = range.getBoundingClientRect();
-          return { scroll: element.scrollWidth, client: element.clientWidth, left: text.left, right: text.right, width: document.documentElement.clientWidth };
+          // The lines the name itself takes: the tops of its text boxes (a break mid-word adds one).
+          const words = document.createRange();
+          words.selectNodeContents(element.querySelector("bdi") ?? element);
+          const tops = new Set(Array.from(words.getClientRects(), (rect) => Math.round(rect.top)));
+          return { scroll: element.scrollWidth, client: element.clientWidth, left: text.left, right: text.right, width: document.documentElement.clientWidth, lines: tops.size };
         });
         const inside = fit.scroll <= fit.client && fit.left >= -0.5 && fit.right <= fit.width + 0.5;
         if (!inside) misfits.push(`${template} @${String(width)} "${name}": scroll ${String(fit.scroll)} > client ${String(fit.client)} or text ${fit.left.toFixed(1)}–${fit.right.toFixed(1)} outside 0–${String(fit.width)}`);
+        // The one-word Latin name is sized to fit its line (nameEms); `wrap-anywhere` breaking it in
+        // the middle of the word would also pass the box check above, so its line count is checked too.
+        if (!name.includes(" ") && fit.lines !== 1) misfits.push(`${template} @${String(width)} "${name}": ${String(fit.lines)} lines, the word was broken`);
       }
     }
   }
