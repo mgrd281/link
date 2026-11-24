@@ -209,7 +209,7 @@ export function EditorProvider({
   const history = useRef<{ past: number; future: number; previous: SiteDoc | undefined }>({ past: 0, future: 0, previous: undefined });
   useEffect(() => {
     history.current = { past: state.past.length, future: state.future.length, previous: state.past.at(-1) };
-  }, [state.past]);
+  }, [state.past, state.future.length]);
 
   /**
    * Every change goes through here, wherever it comes from (a button, ⌘Z, the edit sheet, a toast).

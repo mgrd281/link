@@ -146,10 +146,10 @@ test.describe("picture viewer", () => {
       for (const proto of [Window.prototype, Document.prototype, Element.prototype, HTMLElement.prototype]) {
         delete (proto as unknown as Record<string, unknown>).onscrollend;
       }
-      const add = EventTarget.prototype.addEventListener;
+      const add = Object.getOwnPropertyDescriptor(EventTarget.prototype, "addEventListener")?.value as (this: EventTarget, ...args: unknown[]) => void;
       EventTarget.prototype.addEventListener = function (this: EventTarget, type: string, ...rest: unknown[]) {
         if (type === "scrollend") return;
-        (add as (this: EventTarget, ...args: unknown[]) => void).call(this, type, ...rest);
+        add.call(this, type, ...rest);
       };
     });
     await load(page, HAFENLICHT);

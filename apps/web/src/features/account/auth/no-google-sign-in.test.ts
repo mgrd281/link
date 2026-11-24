@@ -24,7 +24,7 @@ describe("no text promises a Google sign-in", () => {
     ["en", en],
     ["ar", ar],
   ])("%s", (_, messages) => {
-    const mentions = strings(messages).filter(([, text]) => /Google/.test(text.replace(OTHER_PRODUCTS, "")));
+    const mentions = strings(messages).filter(([, text]) => text.replace(OTHER_PRODUCTS, "").includes("Google"));
     expect(mentions).toEqual([]);
   });
 });

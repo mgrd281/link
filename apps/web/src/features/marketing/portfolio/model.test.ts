@@ -86,8 +86,9 @@ describe("the Portfolio section", () => {
     expect(startExample("tiefdruck")).toBe("tobin-achterberg");
     for (const template of portfolioTemplates()) {
       const slug = startExample(template.id);
-      expect(slug && template.examples).toContain(slug);
-      expect(templateStartHref(template.id)).toBe(startHref(slug as LookId));
+      if (!slug) throw new Error(`no start for ${template.id}`);
+      expect(template.examples).toContain(slug);
+      expect(templateStartHref(template.id)).toBe(startHref(slug));
     }
   });
 
@@ -114,8 +115,11 @@ describe("the Portfolio section", () => {
     expect(t.markup("hero.open", { name: "Ronja", bdi: tag })).toContain("[Ronja]");
     expect(t.markup("fields.start", { name: "Folio", bdi: tag })).toContain("[Folio]");
     expect(t.markup("templates.start", { name: "Folio", bdi: tag })).toContain("[Folio]");
-    const answer = t.markup as unknown as (key: string, values: Record<string, (chunks: unknown) => string>) => string;
-    for (const index of [0, 1, 2, 3, 4]) expect(answer(`faq.items.${String(index)}.a`, { bdi: tag }).length).toBeGreaterThan(0);
+    // The FAQ answers are read by index (faq.items.<n>.a), with <bdi> in Arabic.
+    for (const index of [0, 1, 2, 3, 4]) {
+      const key = `faq.items.${String(index)}.a` as "hero.caption";
+      expect(t.markup(key, { name: "", template: "", bdi: tag }).length).toBeGreaterThan(0);
+    }
     expect(t.markup("hero.caption", { name: "Ronja", template: "Werkbogen", bdi: (chunks) => `[${chunks}]` })).toContain("[Werkbogen]");
     expect(t.raw("faq.items")).toHaveLength(5);
   });
