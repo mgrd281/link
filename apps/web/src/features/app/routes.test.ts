@@ -6,6 +6,7 @@ import {
   INVITE_HREF,
   isReturnPath,
   isSettingsPath,
+  markedTab,
   NAV_ANCHORS,
   routeInfo,
   SECTION_HREF,
@@ -58,6 +59,26 @@ describe("dashboard routes", () => {
   it("still lets Fertig return to Invite but never to the own page", () => {
     expect(isReturnPath("/app/invite")).toBe(true);
     expect(isReturnPath("/app/preview")).toBe(false);
+  });
+});
+
+describe("the tab bar's marked tab", () => {
+  it("marks the screen's own tab", () => {
+    for (const tab of TABS) expect(markedTab(TAB_HREF[tab])).toBe(tab);
+    expect(markedTab("/app/")).toBe("home");
+  });
+
+  it("marks no tab on a pushed screen, wherever it was opened from", () => {
+    for (const path of [SETTINGS_HREF, "/app/settings/account", "/app/settings/address", "/app/settings/legal", "/app/settings/unknown", INVITE_HREF]) {
+      expect(markedTab(path)).toBeNull();
+      expect(markedTab(`${path}/`)).toBeNull();
+    }
+  });
+
+  it("marks a tab just tapped at once, before its screen has loaded", () => {
+    expect(markedTab(SETTINGS_HREF, "analytics")).toBe("analytics");
+    expect(markedTab("/app", "page")).toBe("page");
+    expect(markedTab(INVITE_HREF, null)).toBeNull();
   });
 });
 

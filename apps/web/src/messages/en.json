@@ -1573,7 +1573,8 @@
       },
       "asProject": "Add as a project",
       "photosAsGallery": "As a gallery",
-      "photosAsProject": "As a project"
+      "photosAsProject": "As a project",
+      "ticketNotice": "{count, plural, one {A ticket link doesn't say when or where. Add the date and city, and the show appears on your page.} other {Ticket links don't say when or where. Add a date and city for each show, and they appear on your page.}}"
     },
     "editor": {
       "title": "Page",
@@ -1685,9 +1686,27 @@
           "legal": {
             "title": "Add your legal notice",
             "hint": "Required in Germany for business pages (Impressum)."
+          },
+          "projects": {
+            "title": "Show three pieces of work",
+            "hint": "Projects with pictures and a few sentences each."
+          },
+          "contact": {
+            "title": "Set up contact",
+            "hint": "How clients reach you: e-mail, phone or a link for enquiries."
           }
         },
-        "showDone": "Show done ({count})"
+        "showDone": "Show done ({count})",
+        "linkHints": {
+          "music": "Your latest song, a video, your shop.",
+          "podcast": "Your latest episode, a video, your newsletter.",
+          "video": "Your latest video, your channel, your shop.",
+          "sell": "A product, your shop, an offer.",
+          "business": "Your website, an offer, an event.",
+          "apps": "Your app, a video, your website.",
+          "work": "A piece of work, an article, your website.",
+          "other": "Your website, a video, a post."
+        }
       },
       "stats": {
         "title": "Last 7 days",
@@ -1719,7 +1738,9 @@
           "links": "Add a link",
           "socials": "Link your profiles",
           "look": "Open Design",
-          "legal": "Fill in legal notice"
+          "legal": "Fill in legal notice",
+          "projects": "Add a project",
+          "contact": "Set up contact"
         }
       },
       "open": {

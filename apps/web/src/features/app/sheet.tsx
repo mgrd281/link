@@ -1,11 +1,11 @@
 "use client";
 
 import { tokens } from "@linkyo/tokens";
-import { Button, cn, IconButton } from "@linkyo/ui";
+import { Button, cn, IconButton, toast } from "@linkyo/ui";
 import { ChevronLeft, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useLocale } from "next-intl";
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode, type RefObject } from "react";
 
 import { isRtl } from "@/i18n/routing";
 import { haptic } from "@/lib/haptics";
@@ -104,6 +104,55 @@ export function useDragToDismiss(onClose: () => void) {
   };
 }
 
+/** The sheets open right now (one closing while the next opens counts twice for a moment). */
+const openSheets = new Set<HTMLElement>();
+
+/**
+ * Where toasts may go while sheets are open (see `Toaster`): the root carries `data-sheet-open`, and
+ * on wide screens `--sheet-inline` is how much of the width the panels (and the preview beside them)
+ * take from the end of the line, so a toast stays in the space before them.
+ */
+function publishSheets() {
+  const root = document.documentElement;
+  if (openSheets.size === 0) {
+    delete root.dataset.sheetOpen;
+    root.style.removeProperty("--sheet-inline");
+    return;
+  }
+  root.dataset.sheetOpen = "";
+  const rtl = getComputedStyle(root).direction === "rtl";
+  // Layout positions (a fixed element's offsets are the window's), so the sliding-in animation does not count.
+  const taken = Math.max(...[...openSheets].map((sheet) => (rtl ? sheet.offsetLeft + sheet.offsetWidth : root.clientWidth - sheet.offsetLeft)));
+  root.style.setProperty("--sheet-inline", `${String(Math.max(0, Math.round(taken)))}px`);
+}
+
+/**
+ * An open sheet closes the toasts already showing (a toast over its form would hide its controls,
+ * the "Feature" switch at the bottom, for one) and keeps later ones clear of it while it stays open.
+ */
+function useToastsClear(open: boolean, content: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    if (!open) return;
+    toast.dismiss();
+    let sheet: HTMLElement | null = null;
+    // The content mounts with the open state: measured on the next frame, once it is laid out.
+    const frame = requestAnimationFrame(() => {
+      sheet = content.current;
+      if (!sheet) return;
+      openSheets.add(sheet);
+      publishSheets();
+    });
+    const onResize = () => publishSheets();
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", onResize);
+      if (sheet) openSheets.delete(sheet);
+      publishSheets();
+    };
+  }, [open, content]);
+}
+
 /** With a mouse, start in the first field. On touch screens, don't pop the keyboard up uninvited. */
 function focusStart(sheet: HTMLElement) {
   const field = sheet.querySelector<HTMLElement>("[data-sheet-body] :is(input:not([type=hidden]), textarea, select)");
@@ -165,6 +214,7 @@ export function Sheet({
   detent?: "fit" | "large";
 }) {
   const { content, overlay, handle } = useDragToDismiss(() => onOpenChange(false));
+  useToastsClear(open, content);
   const rtl = isRtl(useLocale());
   // Where focus was when the sheet opened, so it can go back there when the sheet closes. Most sheets
   // open from state rather than from a Dialog.Trigger, so Radix has no trigger of its own to return to.

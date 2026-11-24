@@ -18,6 +18,8 @@ export interface HomeTask {
   icon: LucideIcon;
   done: boolean;
   run: () => void;
+  /** The line under the step's title when it depends on the page (what "3 things" are, by kind). */
+  hint?: string | undefined;
 }
 
 /** A step as a row: its icon, its title, a chevron. Done steps are ticked and struck through. */
@@ -41,7 +43,8 @@ export function TaskRow({ task }: { task: HomeTask }) {
 /**
  * While the page is still being built: the one thing to do now, with the screen's only primary
  * button, then the steps after it as quiet rows, and what is done folded away. The steps keep their
- * order (`tasks` comes in it), so the next one is always the first that is still open.
+ * order (`tasks` comes in it), so the next one is always the first that is still open. This card is
+ * Home's only next step, and the one place that says how far along the page is ("2 of 6").
  */
 export function NextStep({ tasks }: { tasks: readonly HomeTask[] }) {
   const t = useTranslations("app.home");
@@ -73,7 +76,7 @@ export function NextStep({ tasks }: { tasks: readonly HomeTask[] }) {
           <h2 className="text-title rtl:tracking-normal">
             {t(`checklist.items.${step.key}.title`)}
           </h2>
-          <p className="text-small font-regular text-fg-secondary">{t(`checklist.items.${step.key}.hint`)}</p>
+          <p className="text-small font-regular text-fg-secondary">{step.hint ?? t(`checklist.items.${step.key}.hint`)}</p>
         </div>
       </div>
       <Button variant="primary" size="lg" icon={step.icon} className="w-full sm:w-auto sm:justify-self-start" onClick={step.run}>

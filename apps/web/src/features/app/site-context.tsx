@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 
 import { accountStore, useAccount, useSignedIn } from "@/features/account/store";
 import type { Account, AuthError, Result, Site } from "@/features/account/types";
-import { editorReducer, initialEditorState, type EditorAction, type EditorDoc, type EditorState } from "@/features/directions/editor/state";
+import { editorReducer, initialEditorState, withDatedShows, type EditorAction, type EditorDoc, type EditorState } from "@/features/directions/editor/state";
 import { blockTitle } from "@/features/directions/editor/use-editor";
 import { isRtl } from "@/i18n/routing";
 
@@ -217,6 +217,9 @@ export function EditorProvider({
    */
   const dispatch = useCallback(
     (action: SiteAction) => {
+      // An undone or redone change also takes its toast away: its Undo or Edit would now act on a
+      // page that has moved on (⌘Z after "Link added · Edit" leaves nothing to edit).
+      if ((action.type === "undo" && history.current.past > 0) || (action.type === "redo" && history.current.future > 0)) toast.dismiss("undoable");
       if (action.type === "undo" && history.current.past > 0) announce(t("editor.undone"));
       if (action.type === "redo" && history.current.future > 0) announce(t("editor.redone"));
       reduce(action);
@@ -333,6 +336,7 @@ export function EditorProvider({
       toast({
         title: blocks.length > 1 ? t("added.many", { count: blocks.length }) : t("added.one", { type: tTypes(first.type) }),
         tone: "success",
+        undoable: true,
         ...(action ? { action } : {}),
       });
     },
@@ -349,6 +353,7 @@ export function EditorProvider({
       // flipped while the toast was still showing).
       toast({
         title: t("removed", { title: isolate(label(block), rtl) }),
+        undoable: true,
         action: {
           label: t("undo"),
           onAction: () => {
@@ -371,13 +376,17 @@ export function EditorProvider({
   // Where a new block will go: the only thing the preview needs from the edit panel (opening or closing
   // a panel does not redraw the page on its own).
   const createIndex = editing?.mode === "create" ? editing.index : undefined;
+  // A show without a date stays off the page until it has one (a pasted ticket link opens the form
+  // with the date empty): the preview never shows a show that is not there yet, or a made-up day.
   const previewPage = useMemo<Page>(() => {
     const profile = { ...(profileDraft ?? doc.profile), username: account.username };
+    const shown = draft ? withDatedShows(draft) : null;
     if (!draft) return { profile, blocks: doc.blocks };
     const exists = doc.blocks.some((block) => block.id === draft.id);
-    if (exists) return { profile, blocks: doc.blocks.map((block) => (block.id === draft.id ? draft : block)) };
+    if (exists) return { profile, blocks: doc.blocks.flatMap((block) => (block.id !== draft.id ? [block] : shown ? [shown] : [])) };
+    if (!shown) return { profile, blocks: doc.blocks };
     const blocks = [...doc.blocks];
-    blocks.splice(createIndex ?? blocks.length, 0, draft);
+    blocks.splice(createIndex ?? blocks.length, 0, shown);
     return { profile, blocks };
   }, [account.username, createIndex, doc.blocks, doc.profile, draft, profileDraft]);
 

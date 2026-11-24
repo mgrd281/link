@@ -1,8 +1,8 @@
 "use client";
 
-import { nextPageStep, type CreatorKind } from "@linkyo/blocks";
+import type { CreatorKind } from "@linkyo/blocks";
 import { Badge, Icon } from "@linkyo/ui";
-import { ArrowRight, AtSign, ChartNoAxesColumn, Gift, HandHeart, ImagePlus, Palette, Plus, Scale, TextQuote, X } from "lucide-react";
+import { ArrowRight, AtSign, ChartNoAxesColumn, FolderKanban, Gift, HandHeart, ImagePlus, Palette, Plus, Scale, Send, TextQuote, X, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type CSSProperties } from "react";
 
@@ -14,7 +14,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { blankBlock } from "./blocks";
 import { LinkCard } from "./home/link-card";
 import { NextStep, TaskRow, type HomeTask } from "./home/next-step";
-import { homeProgress, homeTasksDone } from "./home/progress";
+import { homeProgress, homeTasks, homeTasksDone, linkHint, type HomeTaskKey } from "./home/progress";
 import { ProposalCard } from "./home/proposal-card";
 import { ListGroup, ListRow } from "./list";
 import { ProfileSheet } from "./profile-form";
@@ -29,39 +29,53 @@ import { statsSource } from "./stats";
  * Home answers one question: what is my next step to get visitors? While the page is being built,
  * that step is the one primary action. Once the essentials are there, sharing the link is, with the
  * remaining steps as quiet rows. Sample stats appear only then: an empty page has nothing to count.
- * Which steps are done, and when the page counts as ready, comes from `homeProgress` (the section
- * panel reads it too, so it lists exactly the parts shown here).
+ * Which steps are offered (a portfolio starts with its work, then the way to reach its owner), which
+ * are done, and when the page counts as ready, comes from `home/progress` (the section panel reads
+ * it too, so it lists exactly the parts shown here).
  */
 export function HomeScreen() {
   const t = useTranslations("app.home");
   const tInvite = useTranslations("app.invite");
+  const tPortfolio = useTranslations("app.portfolio");
   const router = useRouter();
   const { doc, site, account, setAddOpen, edit } = useSite();
   const [profileOpen, setProfileOpen] = useState(false);
   const name = doc.profile.displayName;
+  const kind = site.kind as CreatorKind | undefined;
 
   const isDone = homeTasksDone(doc, site);
-  // Content first: a page without links has nothing to tap (the order of HOME_TASKS).
-  const tasks: HomeTask[] = [
-    { key: "links", icon: Plus, done: isDone.links, run: () => setAddOpen(true) },
-    { key: "photo", icon: ImagePlus, done: isDone.photo, run: () => setProfileOpen(true) },
-    { key: "bio", icon: TextQuote, done: isDone.bio, run: () => setProfileOpen(true) },
-    {
-      key: "socials",
+  const steps: Record<HomeTaskKey, { icon: LucideIcon; run: () => void; hint?: string }> = {
+    // Content first: a page without links has nothing to tap. What "3 things" suggests depends on the kind.
+    links: { icon: Plus, run: () => setAddOpen(true), hint: t(`checklist.linkHints.${linkHint(kind)}`) },
+    // Work first on a portfolio: the Add sheet offers a project from photos, a link or a blank form.
+    projects: { icon: FolderKanban, run: () => setAddOpen(true) },
+    contact: {
+      icon: Send,
+      run: () => {
+        // A page has one contact block, and it closes the page: a new one starts with the kind's closing line, at the end.
+        const existing = doc.blocks.find((block) => block.type === "contact");
+        edit(existing ? { mode: "edit", id: existing.id } : { mode: "create", block: startedBlock(blankBlock("contact", { artist: "", newsletter: "" }), kind, (key) => tPortfolio(key as "sentence")) });
+      },
+    },
+    photo: { icon: ImagePlus, run: () => setProfileOpen(true) },
+    bio: { icon: TextQuote, run: () => setProfileOpen(true) },
+    socials: {
       icon: AtSign,
-      done: isDone.socials,
       run: () => {
         const existing = doc.blocks.find((block) => block.type === "socials");
         edit(existing ? { mode: "edit", id: existing.id } : { mode: "create", block: blankBlock("socials", { artist: name, newsletter: "" }), index: 0 });
       },
     },
-    { key: "look", icon: Palette, done: isDone.look, run: () => router.push("/app/design") },
-    { key: "legal", icon: Scale, done: isDone.legal, run: () => router.push("/app/settings/legal") },
-  ];
+    look: { icon: Palette, run: () => router.push("/app/design") },
+    legal: { icon: Scale, run: () => router.push("/app/settings/legal") },
+  };
+  const tasks: HomeTask[] = homeTasks(site).map((key) => ({ key, done: isDone[key], ...steps[key] }));
   const { ready, complete, done, total } = homeProgress(doc, site);
   const open = tasks.filter((task) => !task.done);
 
-  const lead = complete ? t("leadComplete") : ready ? t("leadReady") : t("leadProgress", { done, total });
+  // While the next-step card is showing, it already says how far along the page is ("2 of 6"): the
+  // line under the title would only repeat it, so it is left out until the page is ready.
+  const lead = complete ? t("leadComplete") : ready ? t("leadReady") : undefined;
 
   return (
     <Screen title={t("title", { name })} lead={lead} preview>
@@ -107,7 +121,6 @@ export function HomeScreen() {
 
       {/* Real accounts with the page service: a proposal from the team comes first. */}
       <ProposalCard />
-      <PortfolioStep />
       {ready ? null : <AiHomeCard ready={false} />}
       {ready ? null : <NextStep tasks={tasks} />}
       <LinkCard username={account.username} ready={ready} />
@@ -140,45 +153,6 @@ export function HomeScreen() {
 
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </Screen>
-  );
-}
-
-/**
- * A page that shows work gets one next step for it (a way to reach you, more work, a client's
- * words, something recent). One line that starts it; no score, no percentage.
- */
-function PortfolioStep() {
-  const t = useTranslations("app.portfolio");
-  const router = useRouter();
-  const { doc, site, setAddOpen, edit } = useSite();
-  if (!doc.blocks.some((block) => block.type === "project")) return null;
-  const step = nextPageStep(doc);
-  if (!step) return null;
-  const start = (type: "contact" | "quotes") => {
-    // The contact block closes the page: a client's words go in before it, not after it.
-    const before = type === "quotes" ? doc.blocks.findIndex((block) => block.type === "contact") : -1;
-    edit({
-      mode: "create",
-      block: startedBlock(blankBlock(type, { artist: "", newsletter: "" }), site.kind as CreatorKind | undefined, (key) => t(key as "sentence")),
-      ...(before >= 0 ? { index: before } : {}),
-    });
-  };
-  const run = () => {
-    if (step === "contact") start("contact");
-    else if (step === "quote") start("quotes");
-    else if (step === "secondProject") setAddOpen(true);
-    else router.push("/app/editor");
-  };
-  return (
-    <button
-      type="button"
-      data-portfolio-step={step}
-      onClick={run}
-      className="flex min-h-touch-target items-center gap-2 justify-self-start rounded-xs text-start text-body font-semibold text-fg transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
-    >
-      <Icon icon={ArrowRight} size="md" className="shrink-0 rtl:-scale-x-100" />
-      {t(`page.${step}`)}
-    </button>
   );
 }
 

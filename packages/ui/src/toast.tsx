@@ -14,6 +14,13 @@ export interface ToastInput {
   tone?: "neutral" | "success" | "danger";
   /** e.g. { label: "Undo", onAction: restore } — verb first. */
   action?: { label: string; onAction: () => void; altText?: string };
+  /**
+   * The toast is about the last change in an undo history ("Link added · Edit", "Removed · Undo"):
+   * once that change is undone or redone some other way (⌘Z), its action would act on a page that
+   * has moved on, so `toast.dismiss("undoable")` closes it. Leave it off when the action still has
+   * work after ⌘Z (an import's Undo also restores what the history does not hold).
+   */
+  undoable?: boolean;
 }
 interface ToastItem extends ToastInput {
   id: number;
@@ -47,6 +54,14 @@ export function toast(input: ToastInput): () => void {
     dismiss(id);
   };
 }
+/**
+ * Closes open toasts: every one, or (`"undoable"`) only those about the last change of an undo
+ * history. A sheet that opens closes them all, so none covers its controls; the dashboard closes a
+ * change's toast once that change is undone or redone, by whatever route.
+ */
+toast.dismiss = (which: "all" | "undoable" = "all") => {
+  for (const item of items) if (item.open && (which === "all" || item.undoable)) dismiss(item.id);
+};
 function dismiss(id: number) {
   if (!items.some((item) => item.id === id && item.open)) return;
   items = items.map((item) => (item.id === id ? { ...item, open: false } : item));
@@ -72,6 +87,11 @@ const serverSnapshot = () => NONE;
  * The toasts sit over the content column: `--toast-start` and `--toast-end` (set in the app's
  * stylesheet) keep them clear of the dashboard's sidebar and live preview, and they are centred in the
  * space left, at most a prose column wide. `--toast-offset` lifts them above a bottom tab bar.
+ *
+ * While a sheet is open (the root carries `data-sheet-open`), a toast never covers its controls: on
+ * phones, where the sheet rises from the bottom, toasts move to the top of the screen; on wide
+ * screens, where it is a panel at the end, they stay in the space before it (`--sheet-inline` is
+ * the width the panel and anything beside it take from the end).
  */
 export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regionLabel?: string }) {
   const list = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
@@ -126,7 +146,12 @@ export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regio
       ))}
       <T.Viewport
         {...(regionLabel ? { label: regionLabel } : {})}
-        className="layer-toast fixed start-(--toast-start) end-(--toast-end) bottom-(--toast-offset) mx-auto flex max-w-prose flex-col gap-2 p-4 pb-[max(var(--spacing-4),var(--toast-inset,env(safe-area-inset-bottom)))] outline-none"
+        className={cn(
+          "layer-toast fixed start-(--toast-start) end-(--toast-end) bottom-(--toast-offset) mx-auto flex max-w-prose flex-col gap-2 p-4 pb-[max(var(--spacing-4),var(--toast-inset,env(safe-area-inset-bottom)))] outline-none",
+          // An open sheet: on phones at the top, above the sheet; on wide screens in the space before its panel.
+          "max-lg:in-data-sheet-open:top-0 max-lg:in-data-sheet-open:bottom-auto max-lg:in-data-sheet-open:p-2 max-lg:in-data-sheet-open:pt-[max(var(--spacing-2),env(safe-area-inset-top))]",
+          "lg:in-data-sheet-open:start-0 lg:in-data-sheet-open:end-(--sheet-inline)",
+        )}
       />
     </T.Provider>
   );
