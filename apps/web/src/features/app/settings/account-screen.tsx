@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Button, cn, ConfirmDialog, Icon, toast } from "@linkyo/ui";
-import { Laptop, Mail, Smartphone, Tablet, Trash2 } from "lucide-react";
+import { Download, Laptop, Mail, Smartphone, Tablet, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState, useSyncExternalStore, type SubmitEvent } from "react";
 
@@ -14,6 +14,7 @@ import { Disclosure } from "../disclosure";
 import { TextInput } from "../form";
 import { FieldGroup, FormActions } from "../list";
 import { Screen } from "../screen";
+import { useExportData } from "../settings-screen";
 import { useSite } from "../site-context";
 
 /** Keeps an address or email in one left-to-right run inside a sentence in any direction. */
@@ -239,13 +240,29 @@ function SignInsGroup() {
   );
 }
 
-/** Deleting the account: last on the screen and alone, behind a dialog that asks for the address. */
+/**
+ * Deleting the account: last on the screen and alone, behind a dialog that asks for the address.
+ * The dialog offers the export first (D-16): what goes is gone, so the file is one tap away.
+ */
 function DeleteGroup() {
   const t = useTranslations("app.settings");
+  const tShare = useTranslations("app.share");
   const tAuth = useTranslations("auth");
   const { account } = useSite();
+  const exportData = useExportData();
   const [confirm, setConfirm] = useState(false);
   const [typed, setTyped] = useState("");
+  // The file the export made while this dialog is open (its name, said under the button).
+  const [exported, setExported] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const exportFirst = async () => {
+    setExporting(true);
+    try {
+      setExported(await exportData());
+    } finally {
+      setExporting(false);
+    }
+  };
   return (
     <FieldGroup description={accountStore.demo ? t("deleteHint") : t("deleteHintReal")}>
       <Button
@@ -262,6 +279,7 @@ function DeleteGroup() {
         onOpenChange={(open) => {
           setConfirm(open);
           setTyped("");
+          setExported(null);
         }}
         title={t("deleteTitle")}
         description={t("deleteBody")}
@@ -276,6 +294,14 @@ function DeleteGroup() {
           });
         }}
       >
+        <div className="grid justify-items-start gap-2">
+          <Button variant="tinted" size="md" icon={Download} loading={exporting} className="pointer-coarse:h-control-lg" onClick={() => void exportFirst()}>
+            {tShare("exportFirst")}
+          </Button>
+          <p role="status" className="text-small text-fg-secondary empty:hidden">
+            {exported ? tShare.rich("exported", { file: exported, bdi: (chunks) => <bdi>{chunks}</bdi> }) : null}
+          </p>
+        </div>
         <TextInput
           label={t("deleteType", { name: account.username })}
           ltr

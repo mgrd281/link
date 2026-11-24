@@ -1,6 +1,6 @@
 "use client";
 
-import { ConfirmDialog, Icon, toast } from "@linkyo/ui";
+import { ConfirmDialog, Icon, icons, toast } from "@linkyo/ui";
 import {
   Check,
   CircleUserRound,
@@ -40,6 +40,7 @@ import { ListGroup, ListRow, PickerRow, SegmentedRow } from "./list";
 import { ProfileSheet } from "./profile-form";
 import { INVITE_HREF } from "./routes";
 import { Screen } from "./screen";
+import { PlanRow } from "./settings/plan-screen";
 import { ProfileAvatar } from "./shell";
 import { useSite, type SiteDoc } from "./site-context";
 
@@ -90,10 +91,30 @@ function useOldHashes(openProfile: () => void) {
   }, [router, openProfile]);
 }
 
+/**
+ * Downloads everything the account holds as one JSON file (Settings › Data, and the delete dialog's
+ * "export first"), and answers the file's name. A change still waiting for autosave goes in too.
+ */
+export function useExportData(): () => Promise<string> {
+  const { account, flush } = useSite();
+  return useCallback(async () => {
+    flush();
+    const name = `linkyo-${account.username}-export.json`;
+    const blob = new Blob([await accountStore.exportData()], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    return name;
+  }, [account.username, flush]);
+}
+
 /** Export and import: the page as a file, and a page back from such a file (undoable, the legal notice too). */
 function DataGroup() {
   const t = useTranslations("app.settings");
-  const { account, site, doc, dispatch, flush, latest } = useSite();
+  const { account, site, doc, dispatch, latest } = useSite();
+  const exportData = useExportData();
   const [legalDraft, setLegalDraft] = useLegalDraft(account.id);
   const [incoming, setIncoming] = useState<ImportedSite | null>(null);
   const chooseImport = async () => {
@@ -140,16 +161,6 @@ function DataGroup() {
         },
       },
     });
-  };
-  const exportData = async () => {
-    // A change still waiting for autosave goes into the file too.
-    flush();
-    const blob = new Blob([await accountStore.exportData()], { type: "application/json" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `linkyo-${account.username}-export.json`;
-    link.click();
-    URL.revokeObjectURL(link.href);
   };
   return (
     <>
@@ -242,6 +253,11 @@ export function SettingsScreen() {
     <Screen title={t("title")} preview>
       {/* One grouped list: the group headers already set the groups apart, so they sit closer than the cards of other screens. */}
       <div className="grid grid-cols-1 gap-4">
+        {/* The plan first (D-03): what the account has, AI drafts left, and payments where they exist. */}
+        <ListGroup>
+          <PlanRow icon={icons.billing} />
+        </ListGroup>
+
         <ListGroup title={t("groups.page")} titleId="page" footer={t("footers.pageLanguage")}>
           <ListRow
             leading={<ProfileAvatar size="sm" />}

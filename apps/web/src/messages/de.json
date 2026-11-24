@@ -1904,7 +1904,15 @@
       "qrLead": "Für Flyer, Plakate, Merch und die Bühnenleinwand.",
       "qrLabel": "QR-Code für {url}",
       "download": "PNG herunterladen",
-      "close": "Schließen"
+      "close": "Schließen",
+      "downloadSvg": "SVG herunterladen",
+      "qrAccent": "In der Farbe deiner Seite. Als SVG bleibt er in jeder Größe scharf.",
+      "addToSocials": "Zu Social-Icons hinzufügen",
+      "addedToSocials": "Zu den Social-Icons hinzugefügt",
+      "socialsHas": "Ist schon in deinen Social-Icons",
+      "socialsFull": "Deine Social-Icons sind voll ({count}). Entferne erst eins.",
+      "exportFirst": "Erst Daten exportieren",
+      "exported": "Datei erstellt: {file}"
     },
     "design": {
       "title": "Design",
@@ -2225,7 +2233,68 @@
       },
       "legalDiscard": "Verwerfen",
       "legalUnsaved": "Nicht gespeichert",
-      "demoNote": "Demo: Deine Daten liegen nur in diesem Browser."
+      "demoNote": "Demo: Deine Daten liegen nur in diesem Browser.",
+      "plan": {
+        "groups": {
+          "plan": "Dein Plan",
+          "includes": "Das ist enthalten",
+          "ai": "KI-Entwürfe",
+          "billing": "Zahlung"
+        },
+        "name": {
+          "free": "Kostenlos",
+          "pro": "Linkyo Pro"
+        },
+        "source": {
+          "free": "Ohne Kosten und ohne Ablauf",
+          "stripe": "Abo über Stripe, {price} im Monat",
+          "team": "Vom Linkyo-Team freigeschaltet",
+          "reward": "Pro für immer, aus dem Einladungsprogramm"
+        },
+        "status": {
+          "active": "Aktiv",
+          "pastDue": "Zahlung offen",
+          "ending": "Gekündigt",
+          "reserved": "Reserviert"
+        },
+        "renews": "Verlängert sich am {date}",
+        "ends": "Endet am {date}",
+        "trial": "Testphase bis {date}",
+        "pastDue": "Die letzte Zahlung ging nicht durch. Stripe versucht es noch einmal. Prüf deine Zahlungsart unter „Zahlungen und Rechnungen“.",
+        "soon": "Pro kommt mit dem Start.",
+        "rewardSoon": "Pro für immer gehört dir. Pro kommt bald, und du zahlst nie dafür.",
+        "includes": {
+          "page": "Deine Seite mit allen Designs",
+          "blocks": "Links, Videos, Musik, Termine und Projekte",
+          "freeDrafts": "{count, plural, one {# KI-Entwurf} other {# KI-Entwürfe}} kostenlos, einmal pro Konto",
+          "everything": "Alles aus „Kostenlos“",
+          "proDrafts": "Bis zu {count} KI-Entwürfe im Monat"
+        },
+        "ai": {
+          "left": "Noch {left} von {allowance}",
+          "label": "KI-Entwürfe übrig",
+          "resets": "Neue Entwürfe ab {date}",
+          "once": "Einmal pro Konto, ohne Ablauf",
+          "demo": "KI-Entwürfe gibt es nur mit echten Konten.",
+          "disabled": "KI-Entwürfe sind gerade abgeschaltet.",
+          "failed": "Die KI-Entwürfe konnten nicht geladen werden."
+        },
+        "retry": "Erneut versuchen",
+        "failed": "Dein Plan konnte nicht geladen werden.",
+        "portal": "Zahlungen und Rechnungen",
+        "portalHint": "Öffnet Stripe, unseren Zahlungsdienst",
+        "portalNoCustomer": "Für dein Konto gibt es bei unserem Zahlungsdienst noch keine Zahlungen.",
+        "portalFailed": "Der Zahlungsdienst ist gerade nicht erreichbar. Versuch es gleich noch einmal.",
+        "upgrade": "Pro holen",
+        "upgradeHint": "{price} im Monat, bis zu {count} KI-Entwürfe",
+        "invoice": {
+          "title": "Rechnung vom {date}",
+          "paid": "Bezahlt",
+          "failed": "Fehlgeschlagen",
+          "refunded": "Erstattet"
+        },
+        "open": "Was dein Plan enthält"
+      }
     },
     "welcome": {
       "skip": "Später",
