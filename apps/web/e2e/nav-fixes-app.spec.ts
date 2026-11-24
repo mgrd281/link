@@ -242,17 +242,29 @@ test.describe("dashboard navigation", () => {
 
   test("the live preview column and the desk layout switch at the same width", async ({ page, isMobile }) => {
     test.skip(isMobile, "a phone is narrower than the desk breakpoint");
-    const desk = tokens.breakpoint.desk;
+    const { lg, desk } = tokens.breakpoint;
     await signedIn(page);
     await page.goto("/en/app/design");
     const aside = page.locator("[data-preview-aside]");
     const inline = page.locator("[data-sticky-preview]");
-    // Below the breakpoint the Design screen keeps its own copy of the page; from it the column shows.
-    await page.setViewportSize({ width: desk - 1, height: 900 });
+    const button = page.locator("#main").getByRole("button", { name: "Preview", exact: true });
+    // Phones and tablets: the Design screen keeps its own copy of the page under the bar.
+    await page.setViewportSize({ width: lg - 1, height: 900 });
     await expect(inline).toBeVisible();
     await expect(aside).toHaveCount(0);
+    // Laptops below desk (dashboard on laptops): no copy over the template grid; the toolbar's button
+    // opens the page. Script and style switch at the same width.
+    await page.setViewportSize({ width: lg, height: 900 });
+    await expect(inline).toHaveCount(0);
+    await expect(aside).toHaveCount(0);
+    await expect(button).toBeVisible();
+    await page.setViewportSize({ width: desk - 1, height: 900 });
+    await expect(inline).toHaveCount(0);
+    await expect(button).toBeVisible();
+    // From desk the column shows.
     await page.setViewportSize({ width: desk, height: 900 });
     await expect(aside).toBeVisible();
     await expect(inline).toHaveCount(0);
+    await expect(button).toBeHidden();
   });
 });

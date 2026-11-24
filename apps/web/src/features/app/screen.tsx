@@ -17,12 +17,14 @@ import { useScrolled } from "./use-scrolled";
  * loaded; `pop`: that last move came from the browser's history (Back, Safari's edge swipe);
  * `fromNav`: it came from the chrome (the rail, the section panel, the tab bar), whose tapped item
  * stays where it is and keeps focus. Outside the shell (the team area) there is none, and screens
- * keep their own simple header.
+ * keep their own simple header. `panel`: the place shows the section panel on wide screens (the
+ * screen then starts beside it; without one it is centred in the room it has).
  */
 export interface ShellChrome {
   navigated: boolean;
   pop: boolean;
   fromNav: boolean;
+  panel: boolean;
 }
 
 export const ShellChromeContext = createContext<ShellChrome | null>(null);
@@ -88,7 +90,7 @@ interface ScreenProps {
   children: ReactNode;
   /** The live page beside the screen (from the desk breakpoint). */
   preview?: boolean;
-  /** A wider column (Statistik). */
+  /** A wider column (Statistik, Home's two columns, Invite). */
   wide?: boolean;
   /** A pushed screen (a Settings pane): the desktop toolbar leads with "‹ label". */
   back?: { href: string; label: string } | undefined;
@@ -101,8 +103,9 @@ export function Screen(props: ScreenProps) {
 }
 
 /**
- * Content and toolbar share the start edge on every wide screen, whatever the place: x = 288 with the
- * section panel open (rail 64 + panel 184 + 40), x = 104 with it folded (rail 64 + 40).
+ * Content and toolbar share one column on every wide screen. Beside the section panel the column
+ * starts at its edge, as a detail pane does: x = 288 with the panel open (rail 64 + panel 184 + 40),
+ * x = 104 with it folded (rail 64 + 40). Places without a panel centre the column in their room.
  */
 const gutters =
   "pl-[max(var(--spacing-4),env(safe-area-inset-left))] pr-[max(var(--spacing-4),env(safe-area-inset-right))] md:pl-[max(var(--spacing-8),env(safe-area-inset-left))] md:pr-[max(var(--spacing-8),env(safe-area-inset-right))] lg:ps-10 lg:pe-8";
@@ -124,7 +127,10 @@ function ShellScreen({ title, lead, actions, children, preview = false, wide = f
   useEffect(() => {
     if (pushed) heading.current?.focus({ preventScroll: true });
   }, [pushed]);
-  const column = wide ? "max-w-content" : "max-w-prose";
+  // Phones and tablets keep the reading width; laptops get the wide column (layout.column-wide).
+  const column = wide ? "max-w-content" : "max-w-prose lg:max-w-column-wide";
+  // Beside the section panel the column hugs it (a detail pane); alone, it is centred.
+  const align = chrome.panel ? "lg:mx-0" : null;
   return (
     <div className="flex min-w-0">
       <div
@@ -140,7 +146,7 @@ function ShellScreen({ title, lead, actions, children, preview = false, wide = f
             "pt-6 lg:layer-sticky lg:sticky lg:top-0 lg:h-16 lg:border-b lg:border-transparent lg:bg-canvas-muted lg:pt-0 lg:transition-colors lg:duration-micro lg:data-[scrolled]:border-line",
           )}
         >
-          <div className={cn("mx-auto flex items-end gap-3 lg:mx-0 lg:h-full lg:items-center", column)}>
+          <div className={cn("mx-auto flex items-end gap-3 lg:h-full lg:items-center", align, column)}>
             {back ? <BackLink href={back.href} label={back.label} variant="toolbar" className="max-lg:hidden" /> : null}
             <h1
               ref={heading}
@@ -153,7 +159,7 @@ function ShellScreen({ title, lead, actions, children, preview = false, wide = f
           </div>
         </header>
         <div className={cn(gutters, "pt-4 pb-10 lg:pt-2")}>
-          <div className={cn("mx-auto grid grid-cols-1 gap-6 lg:mx-0", column)}>
+          <div data-screen-column className={cn("mx-auto grid grid-cols-1 gap-6", align, column)}>
             {lead ? <div className="text-small font-regular text-fg-secondary">{lead}</div> : null}
             {children}
           </div>

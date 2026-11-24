@@ -20,6 +20,7 @@ Claude Code loads these skills automatically in this repository. They come in tw
 | `linkyo-ai-builder` | The AI page builder: run pipeline, SSE events, PagePlan v1, limits and quota, the Claude call, provenance, the local mock; adding a source, changing the prompt, re-recording |
 | `linkyo-payments` | Selling under German law: service packages and Pro, the § 312j checkout, statutory labels, webhook, `/widerruf`, `/kuendigen`, contract e-mails; testing without any Stripe account |
 | `linkyo-team-console` | The team console (`/admin`): roles and permissions, demo vs real-account actions, the activity log, money only through Stripe server routes, safe CSV export, honest numbers, phone layouts |
+| `linkyo-creator-dashboard` | The creator dashboard (`/app`): black-and-grey palette, screen anatomy, tab bar, rail and section panel, laptop widths, real template previews, Arbeiten, demo vs real, toasts, button shapes, a new block type's silent places |
 
 ## Vendored skills (open source, with their licenses)
 

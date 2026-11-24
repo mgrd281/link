@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Fragment, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
+import { accountStore } from "@/features/account/store";
 import { useAiQuota } from "@/features/ai/quota";
 import { SortableBlocks, blockIcon, useSortableRow } from "@/features/directions/editor/ui";
 import { thumbSizes } from "@/features/directions/editor/use-dashboard";
@@ -21,6 +22,7 @@ import { haptic } from "@/lib/haptics";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { blankBlock } from "./blocks";
+import { isPortfolioKind } from "./kinds";
 import { PreviewButton } from "./preview";
 import { projectRuns } from "./project-runs";
 import { ProfileSheet } from "./profile-form";
@@ -31,6 +33,7 @@ import { ProfileAvatar } from "./shell";
 import { useSite } from "./site-context";
 import { useFlip } from "./use-flip";
 import { validatePage } from "./validate";
+import { AddWorkWays, PageViews } from "./work-screen";
 
 /** ⌥↑ / ⌥↓ moves a row (brand §7: keyboard reordering). */
 const reorderKey = (onMove: (delta: number) => void) => (event: KeyboardEvent<HTMLElement>) => {
@@ -57,6 +60,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   const inShell = useShellChrome();
   const tPortfolio = useTranslations("app.portfolio");
   const tDesign = useTranslations("app.design.projects");
+  const tWork = useTranslations("app.work");
   const { doc, dispatch, edit, setAddOpen, label, announce, justAdded, account, site } = useSite();
   const wanted = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: doc.profile.locale === "ar" }).layout.projects, [doc.theme, doc.profile.locale]);
   const runs = useMemo(() => projectRuns(doc.blocks, wanted), [doc.blocks, wanted]);
@@ -86,6 +90,8 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   const arranging = reorder && doc.blocks.length > 1;
   const last = doc.blocks.length - 1;
   const empty = doc.blocks.length === 0;
+  // A page made to show work starts with its first project (P-03), not with a link.
+  const portfolio = isPortfolioKind(site.kind as CreatorKind | undefined);
 
   // A drop with the mouse is animated by the drag itself; every other move glides here.
   const dropped = useRef(false);
@@ -174,6 +180,8 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
         </>
       }
     >
+      {/* "Inhalte | Arbeiten" for pages that show work. */}
+      {inShell ? <PageViews current="content" /> : null}
       {inShell ? <div className="rounded-lg bg-group lg:border lg:border-line">{profile}</div> : profile}
 
       <section aria-labelledby="blocks-title" className="grid grid-cols-1 gap-3">
@@ -201,16 +209,26 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
           </Button>
         ) : null}
 
-        {empty ? (
+        {empty && portfolio && inShell ? (
+          // A portfolio's first step is its work: the three ways to add a project, right here.
+          <>
+            <div className="grid justify-items-center gap-1 rounded-lg border border-dashed border-line-strong p-8 text-center">
+              <p className="text-title rtl:tracking-normal">{tWork("empty.title")}</p>
+              <p className="max-w-prose text-small font-regular text-fg-secondary">{tWork("empty.body")}</p>
+            </div>
+            <AddWorkWays />
+          </>
+        ) : empty ? (
           <div className="grid justify-items-center gap-4 rounded-lg border border-dashed border-line-strong p-8 text-center">
             <span className="grid size-control-xl place-items-center rounded-full bg-selected text-selected-fg">
               <Icon icon={LayoutList} size="lg" />
             </span>
             <div className="grid grid-cols-1 gap-1">
-              <p className="text-title rtl:tracking-normal">{t("emptyTitle")}</p>
-              <p className="max-w-prose text-small font-regular text-fg-secondary">{t("emptyBody")}</p>
+              <p className="text-title rtl:tracking-normal">{portfolio ? tWork("empty.title") : t("emptyTitle")}</p>
+              <p className="max-w-prose text-small font-regular text-fg-secondary">{portfolio ? tWork("empty.body") : t("emptyBody")}</p>
             </div>
-            <Button variant="primary" size="cta" icon={Plus} onClick={() => setAddOpen(true)}>
+            {/* In a card, so rounded like every in-card button; the pill is for flow footers only. */}
+            <Button variant="primary" size="lg" icon={Plus} onClick={() => setAddOpen(true)}>
               {t("addFirst")}
             </Button>
           </div>
@@ -591,6 +609,8 @@ function BlockRow({
         {/* Not part of the button's name (it describes it): taps go through to the row. */}
         <span id={metaId} className="pointer-events-none flex min-w-0 items-center gap-2 text-small text-fg-secondary">
           {!block.visible ? <Badge size="sm">{t("hidden")}</Badge> : null}
+          {/* Real accounts have no e-mail list yet: public pages leave the block out (D-07). */}
+          {block.type === "newsletter" && !accountStore.demo ? <Badge size="sm">{t("newsletterHidden")}</Badge> : null}
           {/* Written by the AI and not edited since (an edit makes it the owner's: "ai-edited"). */}
           {block.origin === "ai" ? (
             <Badge size="sm">

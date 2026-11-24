@@ -1274,7 +1274,8 @@
       "invite": "Invite",
       "settings": "Settings",
       "add": "Add",
-      "panel": "Sidebar"
+      "panel": "Sidebar",
+      "work": "Work"
     },
     "navPanel": {
       "sources": "Sources"
@@ -1584,7 +1585,14 @@
       "asProject": "Add as a project",
       "photosAsGallery": "As a gallery",
       "photosAsProject": "As a project",
-      "ticketNotice": "{count, plural, one {A ticket link doesn't say when or where. Add the date and city, and the show appears on your page.} other {Ticket links don't say when or where. Add a date and city for each show, and they appear on your page.}}"
+      "ticketNotice": "{count, plural, one {A ticket link doesn't say when or where. Add the date and city, and the show appears on your page.} other {Ticket links don't say when or where. Add a date and city for each show, and they appear on your page.}}",
+      "work": {
+        "title": "Project from a link",
+        "lead": "Paste the link to your work. We fill in what the link tells us; you add the rest.",
+        "label": "Link to your work",
+        "placeholder": "GitHub, Behance, an article…",
+        "submit": "Create project"
+      }
     },
     "editor": {
       "title": "Page",
@@ -1617,7 +1625,8 @@
       "reorderHint": "Drag a row by its handle to its new place.",
       "gripTip": "Drag to move",
       "withAi": "With AI",
-      "aiTag": "Drafted by AI"
+      "aiTag": "Drafted by AI",
+      "newsletterHidden": "Not visible yet"
     },
     "profile": {
       "title": "Profile",
@@ -1887,6 +1896,11 @@
         "rail": "Row",
         "railHint": "For a short series",
         "forced": "There are not enough pictures or projects for this yet, so the list is shown."
+      },
+      "filter": {
+        "label": "Show templates",
+        "all": "All",
+        "portfolio": "Portfolio"
       }
     },
     "analytics": {
@@ -2937,6 +2951,41 @@
         "clients": {
           "default": "Clients"
         }
+      }
+    },
+    "work": {
+      "title": "Work",
+      "viewsLabel": "Page view",
+      "count": "{count, plural, =0 {No projects yet} one {# project} other {# projects}}",
+      "hidden": "{count} hidden",
+      "altMissing": "{count, plural, one {# picture without a description} other {# pictures without a description}}",
+      "nextLabel": "Next step",
+      "next": {
+        "address": "Choose an address",
+        "alt": "Describe the picture",
+        "codeOrStory": "Add code or the story",
+        "resultOrPicture": "Add a result or a picture",
+        "storyOrLink": "Add the story or a link",
+        "year": "Add the year"
+      },
+      "complete": "All there",
+      "untitled": "Untitled",
+      "open": "Edit {title}",
+      "moveEarlier": "Move {title} earlier",
+      "moveLater": "Move {title} later",
+      "moved": "{title}: position {position} of {count}",
+      "add": {
+        "title": "New project",
+        "type": "Type it",
+        "typeHint": "A title and one sentence will do",
+        "photos": "From photos",
+        "photosHint": "The first becomes the cover",
+        "link": "From a link",
+        "linkHint": "GitHub, Behance, an article"
+      },
+      "empty": {
+        "title": "Add your first project",
+        "body": "Show what you have worked on: a title, a sentence and, if you like, pictures."
       }
     }
   },

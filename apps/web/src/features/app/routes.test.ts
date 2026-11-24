@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DESIGN_TABS,
   designTabFrom,
+  hasSectionPanel,
   INVITE_HREF,
   isReturnPath,
   isSettingsPath,
@@ -13,6 +14,7 @@ import {
   SETTINGS_HREF,
   TAB_HREF,
   TABS,
+  WORK_HREF,
 } from "./routes";
 
 describe("dashboard routes", () => {
@@ -25,6 +27,16 @@ describe("dashboard routes", () => {
     expect(routeInfo("/app/settings/account")).toEqual({ title: "settings.panes.account", tab: null, parent: SETTINGS_HREF, section: "settings" });
     expect(routeInfo("/app/settings/address")).toEqual({ title: "settings.panes.address", tab: null, parent: SETTINGS_HREF, section: "settings" });
     expect(routeInfo("/app/settings/legal")).toEqual({ title: "settings.panes.legal", tab: null, parent: SETTINGS_HREF, section: "settings" });
+  });
+
+  it("shows Arbeiten as a view of the Page tab: Page stays marked, nothing to go back to", () => {
+    expect(WORK_HREF).toBe("/app/work");
+    expect(routeInfo("/app/work")).toEqual({ title: "nav.work", tab: "page", parent: null, section: "page" });
+    expect(routeInfo("/app/work/")).toEqual(routeInfo("/app/work"));
+    expect(markedTab("/app/work")).toBe("page");
+    expect(isReturnPath("/app/work")).toBe(true);
+    // The tab's own address stays the content list.
+    expect(TAB_HREF.page).toBe("/app/editor");
   });
 
   it("pushes Invite over Settings in its own section", () => {
@@ -79,6 +91,26 @@ describe("the tab bar's marked tab", () => {
     expect(markedTab(SETTINGS_HREF, "analytics")).toBe("analytics");
     expect(markedTab("/app", "page")).toBe("page");
     expect(markedTab(INVITE_HREF, null)).toBeNull();
+  });
+});
+
+describe("the section panel", () => {
+  it("lists parts only for places with four or more of them, or with panes", () => {
+    for (const counted of [true, false]) {
+      expect(hasSectionPanel("home", counted)).toBe(false);
+      expect(hasSectionPanel("page", counted)).toBe(false);
+      expect(hasSectionPanel("design", counted)).toBe(false);
+      expect(hasSectionPanel("invite", counted)).toBe(true);
+      expect(hasSectionPanel("settings", counted)).toBe(true);
+    }
+    // Stats has five parts with numbers; real accounts see one empty state (nothing to point at).
+    expect(hasSectionPanel("analytics", true)).toBe(true);
+    expect(hasSectionPanel("analytics", false)).toBe(false);
+  });
+
+  it("follows the route: Arbeiten and every Settings pane belong to their place", () => {
+    expect(hasSectionPanel(routeInfo(WORK_HREF).section, true)).toBe(false);
+    expect(hasSectionPanel(routeInfo("/app/settings/legal").section, false)).toBe(true);
   });
 });
 

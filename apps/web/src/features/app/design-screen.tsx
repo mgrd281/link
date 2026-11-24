@@ -1,7 +1,7 @@
 "use client";
 
-import { creatorTokens, type CreatorButtonShape, type CreatorButtonStyle, type CreatorTemplateId } from "@linkyo/tokens";
-import { BUTTON_SHAPES, BUTTON_STYLES, PAIRING_IDS, PROJECTS_STYLES, resolveCreatorTheme, type CreatorThemeConfig, type ProjectsStyle } from "@linkyo/tokens/creator";
+import { creatorTokens, tokens, type CreatorButtonShape, type CreatorButtonStyle, type CreatorTemplateId } from "@linkyo/tokens";
+import { BUTTON_SHAPES, BUTTON_STYLES, PAIRING_IDS, resolveCreatorTheme, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { Button, cn, Icon, Segmented, toast } from "@linkyo/ui";
 import { Check, Moon, PaintBucket, RotateCcw, Sun, SwatchBook } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -13,14 +13,14 @@ import { linkStyleClasses } from "@/features/creator/link-button";
 import { displayStyle } from "@/features/directions/poster/styles";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
 
-import { projectRuns } from "./project-runs";
 import { setDesignTabUrl } from "./jump";
 import { PhonePreview, PreviewButton } from "./preview";
 import { DESIGN_TABS, designTabFrom, NAV_ANCHORS, type DesignTab } from "./routes";
 import { Panel, Screen, UndoRedo, useShellChrome } from "./screen";
 import { useSite } from "./site-context";
 import { Tabs } from "./tabs";
-import { DESK_QUERY, useMediaQuery } from "./use-media-query";
+import { useMediaQuery } from "./use-media-query";
+import { WorkLayoutControl } from "./work-screen";
 
 /**
  * Twelve accents that look different from each other, by hue, each with a name people recognise. (The
@@ -31,6 +31,9 @@ type SwatchName = (typeof NAMED)[number];
 const SWATCHES = NAMED.map((name) => ({ name, hex: creatorTokens.swatches[name].toUpperCase() }));
 
 type Mode = "light" | "dark" | "vivid";
+
+/** The `lg` breakpoint token, in rem like the generated CSS, so script and `lg:` switch together. */
+const WIDE_QUERY = `(width >= ${tokens.breakpoint.lg / 16}rem)`;
 
 /** One color chip: a native radio (arrow keys, screen readers) drawn as a disc, with a mark when chosen. */
 function Swatch({ name, hex, checked, label, onChange }: { name: string; hex: string; checked: boolean; label: string; onChange: () => void }) {
@@ -73,18 +76,20 @@ function Choice({ name, checked, onChange, children, label }: { name: string; ch
 }
 
 /**
- * Design: the template first (the main decision), then "Customize" in three tabs: color (with the
- * background), fonts and buttons. Every combination is checked by the theme engine, so text always
- * stays readable (WCAG AA).
+ * Design: the template first (the main decision: real previews, a grid on laptops), then
+ * "Customize" in three tabs: color (with the background), fonts and buttons. The tabs live in the
+ * card at every width (the section panel does not repeat them). Every combination is checked by the
+ * theme engine, so text always stays readable (WCAG AA).
  */
 export function DesignScreen() {
   const t = useTranslations("app.design");
   const { doc, dispatch } = useSite();
   const id = useId();
   const inShell = useShellChrome();
-  // From the desk breakpoint the shell shows the page in its own column; below it a small copy stays
-  // in sight under the bar. Only the one that shows is mounted, so the page is not rendered twice.
-  const desk = useMediaQuery(DESK_QUERY);
+  // Phones keep a small copy of the page in sight under the bar. Laptops do not: from the desk
+  // breakpoint the shell shows the page in its own column, and between lg and desk the toolbar's
+  // preview button opens it, so the template grid is never covered. Only what shows is mounted.
+  const wide = useMediaQuery(WIDE_QUERY);
   // "Customize" has three tabs (DESIGN_TABS; the background lives with the color). In the dashboard the
   // tab is in the URL (`?tab=`), so the section panel can open one and a reload keeps it. The team
   // area's creator view keeps it in local state and never writes the URL.
@@ -208,49 +213,8 @@ export function DesignScreen() {
     </div>
   );
 
-  // The work layout: the template's choice ("Automatic") or the owner's. A choice the content cannot
-  // fill falls back to the list on the page; one line says why.
+  // The work layout (also on Arbeiten): only for pages that show work.
   const hasProjects = doc.blocks.some((block) => block.type === "project");
-  const projects: ProjectsStyle = theme.projects ?? "auto";
-  // As the page shows it: hidden and scheduled projects do not count.
-  const forced = projects !== "auto" && projectRuns(doc.blocks, projects).layouts.some((layout) => layout !== projects);
-  const work = (
-    <Panel title={t("projects.label")} id={`${id}-projects`}>
-      <fieldset className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
-        <legend className="sr-only">{t("projects.label")}</legend>
-        {PROJECTS_STYLES.map((style) => {
-          const checked = projects === style;
-          return (
-            <label
-              key={style}
-              className={cn(
-                "relative flex min-h-control-xl cursor-pointer items-start gap-3 rounded-lg border p-3 transition-[background-color,border-color] duration-micro has-[:focus-visible]:focus-ring",
-                checked ? "border-focus bg-selected" : "border-line bg-surface hover:border-line-input",
-              )}
-            >
-              <input
-                type="radio"
-                name={`${id}-projects`}
-                value={style}
-                checked={checked}
-                onChange={() => setTheme({ projects: style === "auto" ? undefined : style })}
-                className="sr-only"
-              />
-              <span className="grid min-w-0 flex-1 gap-0.5">
-                <span className="text-small font-semibold">{t(`projects.${style}`)}</span>
-                <span className="text-caption text-fg-secondary">{t(`projects.${style}Hint`)}</span>
-              </span>
-              {checked ? <Icon icon={Check} size="sm" className="mt-0.5 shrink-0" /> : null}
-            </label>
-          );
-        })}
-      </fieldset>
-      {/* Always there, so the line is read out when a choice makes it appear. */}
-      <p role="status" className="text-small font-regular text-fg-secondary empty:hidden">
-        {forced ? t("projects.forced") : null}
-      </p>
-    </Panel>
-  );
 
   const buttons = () => (
     <div className="grid min-w-0 grid-cols-1 gap-6">
@@ -284,16 +248,16 @@ export function DesignScreen() {
       actions={
         <>
           <UndoRedo />
-          {/* In the shell the page is under the bar on phones and beside the screen from desk. */}
+          {/* In the shell the page is under the bar on phones, behind this button from lg and beside the screen from desk. */}
           <PreviewButton className={inShell ? "hidden lg:inline-grid desk:hidden" : "xl:hidden"} />
         </>
       }
     >
       {inShell ? (
-        desk ? null : (
+        wide ? null : (
           // The page stays in sight while you change it: flush under the bar, on the solid ground. On short
           // phone screens the bar scrolls away, so the page sticks to the top (no gap to see through).
-          <div data-sticky-preview className="sticky top-16 layer-raised -mx-4 bg-canvas-muted px-4 pb-3 max-lg:short:top-0 md:-mx-8 md:px-8 desk:hidden">
+          <div data-sticky-preview className="sticky top-16 layer-raised -mx-4 bg-canvas-muted px-4 pb-3 max-lg:short:top-0 md:-mx-8 md:px-8 lg:hidden">
             <PhonePreview className="h-[30svh]" />
           </div>
         )
@@ -309,7 +273,7 @@ export function DesignScreen() {
         <TemplatePicker still value={theme.template} profile={doc.profile} onChange={pickTemplate} />
       </Panel>
 
-      {hasProjects ? work : null}
+      {hasProjects ? <WorkLayoutControl /> : null}
 
       <Panel title={t("customize")} id={NAV_ANCHORS.designCustomize}>
         <Tabs<DesignTab> label={t("tabsLabel")} value={group} onValueChange={setGroup} tabs={DESIGN_TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))}>

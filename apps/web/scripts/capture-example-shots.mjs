@@ -16,15 +16,25 @@
  *   node scripts/capture-example-shots.mjs concept:taylor-swift one concept page, three languages
  *   node scripts/capture-example-shots.mjs laptop:ronja-feldkamp the first screen of a laptop (1440 × 810)
  *   node scripts/capture-example-shots.mjs project:ronja-feldkamp/hafenlicht a project page on a phone
+ *   node scripts/capture-example-shots.mjs templates            the first screen of every template
+ *   node scripts/capture-example-shots.mjs template:werkbogen   one template
  *   BASE_URL=http://localhost:3100 node scripts/capture-example-shots.mjs
  *
  * Laptop and project pictures belong to the Portfolio page and go to
  * src/features/marketing/portfolio/shots/ (<slug>.laptop.jpg, <slug>.<project>.jpg).
  *
+ * Template previews (the pickers in the dashboard, the welcome flow and the team area) go to
+ * src/assets/templates/<id>.webp: the top of a phone's first screen (9:16, the cards' ratio) of the
+ * Poster prototype in that template, always with the fictional sample creator (Mila Aurel), never a
+ * real person's page. Templates made for portfolios (tokens: `use`) show the portfolio sample, the
+ * others the link-in-bio sample. The list comes from tokens.json, so a new template is captured
+ * without changing this script; `templates` is never part of the default run (no argument).
+ *
  * A new picture also needs its line in src/features/marketing/examples.ts (or, for the Portfolio
- * page's pictures, in src/features/marketing/portfolio/shots.ts).
+ * page's pictures, in src/features/marketing/portfolio/shots.ts). A new template preview needs its
+ * import in src/features/directions/poster/template-previews.ts (its unit test lists what is missing).
  */
-import { readdirSync, readFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -34,6 +44,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.resolve(HERE, "../src/assets/marketing/examples");
 const OUT_CONCEPTS = path.resolve(HERE, "../src/assets/marketing/concepts");
 const OUT_PORTFOLIO = path.resolve(HERE, "../src/features/marketing/portfolio/shots");
+const OUT_TEMPLATES = path.resolve(HERE, "../src/assets/templates");
 const LOCALES = ["de", "en", "ar"];
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
 const PHONE = { width: 390, height: 844 };
@@ -42,6 +53,21 @@ const LAPTOP = { width: 1440, height: 810 };
 const PICTURE_WIDTH = 640;
 /** Tall pictures stop after this many screens, so every page scrolls at a calm speed. */
 const TALL_SCREENS = 2.5;
+/**
+ * Template previews: the top of the phone screen at 9:16 (the picker cards' ratio, `aspect-short`):
+ * the hero, the name and the first row below it, which is where the templates differ. 1.5 × for sharp cards.
+ */
+const TEMPLATE_CLIP = { width: PHONE.width, height: Math.round((PHONE.width * 16) / 9) };
+const TEMPLATE_SCALE = 1.5;
+const TEMPLATE_QUALITY = 0.8;
+
+/** Every template and what it is made for, from the tokens (so new templates need no change here). */
+const templateTokens = JSON.parse(readFileSync(path.resolve(HERE, "../../../packages/tokens/tokens.json"), "utf8")).creator.template;
+const TEMPLATES = Object.fromEntries(
+  Object.entries(templateTokens)
+    .filter(([id, entry]) => !id.startsWith("$") && entry && typeof entry === "object")
+    .map(([id, entry]) => [id, entry.$extensions?.["app.linkyo"]?.use ?? ["link-in-bio"]]),
+);
 
 /** Each example page lives in its own language: read it from the catalog of looks. */
 const looks = readFileSync(path.resolve(HERE, "../src/features/examples/looks.ts"), "utf8");
@@ -67,12 +93,27 @@ const project = (address) => {
   const [slug, work] = address.split("/");
   jobs.push([localeOf(slug), slug, path.join(OUT_PORTFOLIO, `${slug}.${work}.jpg`), false, PHONE, `${slug}/${work}`]);
 };
+/**
+ * A template's preview: the Poster prototype (`?chrome=0`, as visitors see it) in German with the
+ * fictional sample; portfolio templates show the portfolio sample. Saved as WebP, so `tall` is unused.
+ */
+const template = (id) => {
+  if (!TEMPLATES[id]) {
+    console.error(`✖ template ${id}: not in packages/tokens/tokens.json`);
+    process.exitCode = 1;
+    return;
+  }
+  const portfolio = TEMPLATES[id].includes("portfolio") ? "&page=portfolio" : "";
+  jobs.push(["de", `template:${id}`, path.join(OUT_TEMPLATES, `${id}.webp`), false, PHONE, `directions/poster?template=${id}${portfolio}&chrome=0`]);
+};
 const asked = process.argv.slice(2);
 if (asked.length > 0) {
   for (const name of asked) {
     if (name.startsWith("concept:")) concept(name.slice("concept:".length));
     else if (name.startsWith("laptop:")) laptop(name.slice("laptop:".length));
     else if (name.startsWith("project:")) project(name.slice("project:".length));
+    else if (name === "templates") Object.keys(TEMPLATES).forEach(template);
+    else if (name.startsWith("template:")) template(name.slice("template:".length));
     else example(name);
   }
 } else {
@@ -86,6 +127,30 @@ if (asked.length > 0) {
 }
 
 const browser = await chromium.launch(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {});
+
+/**
+ * PNG → WebP in the browser itself (Chromium encodes WebP on a canvas), so no image package is
+ * needed. Returns the file's bytes.
+ */
+async function toWebp(png) {
+  const page = await browser.newPage();
+  const data = await page.evaluate(
+    async ([base64, quality]) => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${base64}`;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      canvas.getContext("2d").drawImage(image, 0, 0);
+      return canvas.toDataURL("image/webp", quality).split(",")[1];
+    },
+    [png.toString("base64"), TEMPLATE_QUALITY],
+  );
+  await page.close();
+  return Buffer.from(data, "base64");
+}
+
 let failed = 0;
 for (const [locale, slug, file, tall, viewport, address] of jobs) {
   if (!locale) {
@@ -93,11 +158,12 @@ for (const [locale, slug, file, tall, viewport, address] of jobs) {
     failed += 1;
     continue;
   }
-  // Phone pictures are saved 640 px wide; a laptop's at its own size.
-  const scale = viewport === PHONE ? PICTURE_WIDTH / PHONE.width : 1;
+  const isTemplate = slug.startsWith("template:");
+  // Phone pictures are saved 640 px wide; a laptop's at its own size; template previews at 1.5 ×.
+  const scale = isTemplate ? TEMPLATE_SCALE : viewport === PHONE ? PICTURE_WIDTH / PHONE.width : 1;
   const context = await browser.newContext({ viewport, deviceScaleFactor: scale, reducedMotion: "reduce" });
   const page = await context.newPage();
-  const response = await page.goto(`${BASE}/${locale}/p/${address}`, { waitUntil: "networkidle" });
+  const response = await page.goto(isTemplate ? `${BASE}/${locale}/${address}` : `${BASE}/${locale}/p/${address}`, { waitUntil: "networkidle" });
   if (!response?.ok()) {
     console.error(`✖ ${slug} (${locale}): ${response?.status() ?? "no response"}`);
     failed += 1;
@@ -129,7 +195,12 @@ for (const [locale, slug, file, tall, viewport, address] of jobs) {
   }
   // Let pictures finish decoding and the note leave before the picture is taken.
   await page.waitForTimeout(600);
-  await page.screenshot({ path: file, type: "jpeg", quality: tall ? 80 : 84, fullPage: tall, clip: { x: 0, y: 0, width: viewport.width, height } });
+  if (isTemplate) {
+    mkdirSync(OUT_TEMPLATES, { recursive: true });
+    writeFileSync(file, await toWebp(await page.screenshot({ type: "png", clip: { x: 0, y: 0, ...TEMPLATE_CLIP } })));
+  } else {
+    await page.screenshot({ path: file, type: "jpeg", quality: tall ? 80 : 84, fullPage: tall, clip: { x: 0, y: 0, width: viewport.width, height } });
+  }
   await context.close();
   console.log(`✔ ${address} (${locale}${viewport === LAPTOP ? ", laptop" : ""})`);
 }
