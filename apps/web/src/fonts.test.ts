@@ -38,7 +38,7 @@ const faces: Face[] = [...source.matchAll(/export const (\w+) = localFont\(\{([\
 const faceById = new Map(faces.map((face) => [face.id, face]));
 
 const inRange = (face: Face, cp: number) => face.range === null || face.range.some(([start, end]) => cp >= start && cp <= end);
-const isArabicFace = (face: Face | undefined) => Boolean(face && face.range && inRange(face, 0x0628));
+const isArabicFace = (face: Face | undefined) => Boolean(face?.range && inRange(face, 0x0628));
 
 /** WOFF2 table tags by their 6-bit index (the WOFF2 spec's "known table tags"). */
 // prettier-ignore
