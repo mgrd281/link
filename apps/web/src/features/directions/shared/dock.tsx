@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { Link } from "@/i18n/navigation";
 
+import { pastHero } from "./dock-state";
 import { useInGalleryPreview } from "./privacy";
 
 const CLOSED = "linkyo.dock.closed";
@@ -19,7 +20,7 @@ function usePastHero(): boolean {
     let frame = 0;
     const check = () => {
       frame = 0;
-      setPast(sentinel.getBoundingClientRect().top < window.innerHeight * 0.45);
+      setPast(pastHero(sentinel.getBoundingClientRect().top, window.innerHeight, window.scrollY));
     };
     const onScroll = () => {
       frame ||= window.requestAnimationFrame(check);
