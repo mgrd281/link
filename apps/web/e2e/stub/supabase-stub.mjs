@@ -14,8 +14,8 @@ const PORT = Number(process.env.STUB_SUPABASE_PORT ?? 55103);
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 const WEBP = Buffer.from("UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==", "base64");
 
-/** @type {{ users: Record<string, { id: string, email: string }>, profiles: Record<string, any>, sites: Record<string, any>, orders: Record<string, any>, calls: string[] }} */
-let state = { users: {}, profiles: {}, sites: {}, orders: {}, calls: [] };
+/** @type {{ users: Record<string, { id: string, email: string }>, profiles: Record<string, any>, sites: Record<string, any>, orders: Record<string, any>, entitlements: Record<string, any>, calls: string[] }} */
+let state = { users: {}, profiles: {}, sites: {}, orders: {}, entitlements: {}, calls: [] };
 
 const CORS = {
   "access-control-allow-origin": "*",
@@ -126,11 +126,11 @@ const server = http.createServer(async (req, res) => {
   // Test control: replace or extend the data, and read which functions were called.
   if (path === "/__stub/seed" && req.method === "POST") {
     const seed = await readBody(req);
-    for (const key of ["users", "profiles", "sites", "orders"]) Object.assign(state[key], seed[key] ?? {});
+    for (const key of ["users", "profiles", "sites", "orders", "entitlements"]) Object.assign(state[key], seed[key] ?? {});
     return send(res, 200, { ok: true });
   }
   if (path === "/__stub/reset" && req.method === "POST") {
-    state = { users: {}, profiles: {}, sites: {}, orders: {}, calls: [] };
+    state = { users: {}, profiles: {}, sites: {}, orders: {}, entitlements: {}, calls: [] };
     return send(res, 200, { ok: true });
   }
   if (path === "/__stub/calls") return send(res, 200, state.calls);
@@ -162,6 +162,8 @@ const server = http.createServer(async (req, res) => {
       }
     }
     if (table === "orders" && req.method === "GET") return rows(req, res, matching(Object.values(state.orders), url));
+    // An owner's Pro entitlements (the Plan pane's portal route reads its Stripe customer from them).
+    if (table === "entitlements" && req.method === "GET") return rows(req, res, matching(Object.values(state.entitlements), url));
     // Every other table is empty; writes are accepted and forgotten.
     return req.method === "GET" ? rows(req, res, []) : send(res, 204);
   }
