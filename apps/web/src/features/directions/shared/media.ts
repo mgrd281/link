@@ -88,3 +88,13 @@ export function remoteImageProps(resolved: StaticImageData | string) {
 export function resolveMedia(src: string): StaticImageData | string {
   return src in sampleMedia ? sampleMedia[src as SampleKey] : src;
 }
+
+/**
+ * An address a plain `<img>` can load (the dashboard's avatar): a sample picture's file, else the
+ * address itself; an unknown `sample:` key has no file and gives none (the avatar then shows initials).
+ */
+export function plainImageSrc(src: string): string | undefined {
+  const resolved = resolveMedia(src);
+  if (typeof resolved !== "string") return resolved.src;
+  return resolved.startsWith("sample:") ? undefined : resolved;
+}

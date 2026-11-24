@@ -7,6 +7,7 @@ import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, LayoutLis
 import { useTranslations } from "next-intl";
 import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
+import { plainImageSrc } from "@/features/directions/shared/media";
 import { haptic } from "@/lib/haptics";
 import { useAccount } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
@@ -47,7 +48,8 @@ const HISTORY_CAP = 50;
 export function ProfileAvatar({ size = "md", className }: { size?: "sm" | "md" | "lg" | "xl"; className?: string }) {
   const { doc } = useSite();
   const avatar = doc.profile.avatar;
-  return <Avatar name={doc.profile.displayName} src={hasImage(avatar) ? avatar.src : undefined} size={size} className={className} />;
+  // A sample picture (a starter's or an example's) is a key, not an address: resolve it to its file.
+  return <Avatar name={doc.profile.displayName} src={hasImage(avatar) ? plainImageSrc(avatar.src) : undefined} size={size} className={className} />;
 }
 
 /** "Saving…" shows only once a save has taken this long: local saves finish sooner and never flash. */
