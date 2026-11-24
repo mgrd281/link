@@ -70,6 +70,7 @@ const ICONS: Record<ActivityEvent["action"], LucideIcon> = {
   "customer.signout": LogOut,
   "customer.note": NotebookPen,
   "customer.delete": Trash2,
+  "customer.export": Download,
   "ip.block": Ban,
   "ip.unblock": ShieldOff,
   "referral.release": UserPlus,

@@ -3431,6 +3431,7 @@
         "customer_signout": "{actor} hat Geräte von {target} abgemeldet",
         "customer_note": "{actor} hat eine Notiz zu {target} hinzugefügt",
         "customer_delete": "{actor} hat den Kunden {target} gelöscht",
+        "customer_export": "{actor} hat die Kundenliste exportiert ({target} Zeilen)",
         "ip_block": "{actor} hat {target} gesperrt",
         "ip_unblock": "{actor} hat {target} entsperrt",
         "referral_release": "{actor} hat eine Einladung von {target} gezählt",

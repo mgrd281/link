@@ -3431,6 +3431,7 @@
         "customer_signout": "سجّل {actor} خروج أجهزة {target}",
         "customer_note": "أضاف {actor} ملاحظة إلى {target}",
         "customer_delete": "حذف {actor} العميل {target}",
+        "customer_export": "صدّر {actor} قائمة العملاء ({target} صفًا)",
         "ip_block": "حظر {actor} العنوان {target}",
         "ip_unblock": "رفع {actor} الحظر عن {target}",
         "referral_release": "احتسب {actor} دعوة لـ {target}",

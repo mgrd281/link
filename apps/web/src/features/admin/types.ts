@@ -112,6 +112,8 @@ export interface ActivityEvent {
     | "customer.signout"
     | "customer.note"
     | "customer.delete"
+    // The CSV export of the customer list (target: the row count), written only by the database.
+    | "customer.export"
     | "ip.block"
     | "ip.unblock"
     // The invite program (ADR 0064): the database writes the same names on real accounts.

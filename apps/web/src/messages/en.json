@@ -3431,6 +3431,7 @@
         "customer_signout": "{actor} signed out devices of {target}",
         "customer_note": "{actor} added a note to {target}",
         "customer_delete": "{actor} deleted the customer {target}",
+        "customer_export": "{actor} exported the customer list ({target} rows)",
         "ip_block": "{actor} blocked {target}",
         "ip_unblock": "{actor} unblocked {target}",
         "referral_release": "{actor} counted an invite for {target}",
