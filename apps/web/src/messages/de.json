@@ -2229,6 +2229,12 @@
           "title": "Füg deine Links hinzu",
           "lead": "Deine Profile und die Links, die gerade am wichtigsten sind."
         },
+        "proof": {
+          "short": "Arbeit"
+        },
+        "action": {
+          "short": "Kontakt"
+        },
         "done": {
           "short": "Fertig",
           "title": "Deine Seite steht, {name}",
@@ -2599,7 +2605,13 @@
           "phone": "Telefon"
         },
         "actionAddress": "Adresse oder Nummer",
-        "actionLabel": "Beschriftung des Buttons"
+        "actionLabel": "Beschriftung des Buttons",
+        "actionLead": "Ein Button für Anfragen, dazu deine Profile.",
+        "doneTitle": "Dein Portfolio steht, {name}",
+        "doneLead": "Setz den Link in deine E-Mail-Signatur und auf LinkedIn. Weitere Arbeiten fügst du jederzeit hinzu.",
+        "made": "Auf deiner Seite",
+        "madeProjects": "{count, plural, one {# Projekt} other {# Projekte}}",
+        "madeContact": "Button „<bdi>{label}</bdi>“ am Ende der Seite"
       }
     },
     "ownPage": {

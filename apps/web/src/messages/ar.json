@@ -2229,6 +2229,12 @@
           "title": "أضف روابطك",
           "lead": "حساباتك والروابط الأهم الآن."
         },
+        "proof": {
+          "short": "الأعمال"
+        },
+        "action": {
+          "short": "التواصل"
+        },
         "done": {
           "short": "تم",
           "title": "صفحتك جاهزة يا {name}",
@@ -2599,7 +2605,13 @@
           "phone": "الهاتف"
         },
         "actionAddress": "الرابط أو الرقم",
-        "actionLabel": "نص الزر"
+        "actionLabel": "نص الزر",
+        "actionLead": "زرّ واحد للطلبات، ومعه حساباتك.",
+        "doneTitle": "معرض أعمالك جاهز يا {name}",
+        "doneLead": "ضع الرابط في توقيع بريدك الإلكتروني وعلى <bdi>LinkedIn</bdi>. يمكنك إضافة أعمال أخرى في أي وقت.",
+        "made": "على صفحتك",
+        "madeProjects": "{count, plural, one {مشروع واحد} two {مشروعان} few {# مشاريع} many {# مشروعًا} other {# مشروع}}",
+        "madeContact": "زرّ «<bdi>{label}</bdi>» في آخر الصفحة"
       }
     },
     "ownPage": {
