@@ -304,16 +304,20 @@ test("the owner finds a customer, suspends them, writes a note and blocks an add
   await page.getByRole("button", { name: "Save note" }).click();
   await expect(page.getByText("Asked us to pause the account.")).toBeVisible();
 
-  // The customer's sign-in from the first test is in the security log, with its address.
+  // The customer's sign-in from the first test is in the security log, with its address (the log is
+  // the kit's DataList: one item per sign-in, cards on a phone and aligned columns from md).
   await page.goto("/en/admin/security");
-  const row = page.getByRole("row").filter({ hasText: customerShown }).first();
+  const row = page.getByRole("list", { name: "Sign-in log" }).getByRole("listitem").filter({ hasText: customerShown }).first();
   await expect(row).toContainText("127.0.0.1");
   await row.getByRole("button", { name: "Block 127.0.0.1" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Block", exact: true }).click();
-  await expect(page.getByRole("region", { name: "Blocked addresses" }).getByText("127.0.0.1", { exact: true })).toBeVisible();
+  // The blocked addresses are a pane of the log (its "Blocked" filter), with their Unblock buttons.
+  await page.getByRole("radio", { name: /^Blocked/ }).click();
+  const blocked = page.getByRole("list", { name: "Blocked addresses" });
+  await expect(blocked.getByText("127.0.0.1", { exact: true })).toBeVisible();
   expect((await admin().from("blocked_ips").select("ip")).data?.map((entry) => entry.ip)).toContain("127.0.0.1");
-  await page.getByRole("region", { name: "Blocked addresses" }).getByRole("button", { name: "Unblock" }).click();
-  await expect(page.getByRole("region", { name: "Blocked addresses" }).getByText("127.0.0.1", { exact: true })).toHaveCount(0);
+  await blocked.getByRole("button", { name: "Unblock" }).click();
+  await expect(blocked.getByText("127.0.0.1", { exact: true })).toHaveCount(0);
 
   // Every action is in the database's activity log, by the owner.
   const { data: log } = await admin()
@@ -412,11 +416,12 @@ test("a friend who signs up through an invite link in another browser counts; th
   await ownerPage.getByLabel("Search").fill(inviterName);
   await ownerPage.locator("main a[href*='/admin/customers/']").locator("visible=true").first().click();
   await ownerPage.getByRole("radio", { name: "Invites" }).click();
-  const row = ownerPage.locator("#main").getByRole("row").filter({ hasText: "Counts" });
+  const invites = ownerPage.locator("#main").getByRole("list", { name: "Invited accounts" });
+  const row = invites.getByRole("listitem").filter({ hasText: "Counts" });
   await expect(row).toHaveCount(1);
   await row.getByRole("button", { name: "Remove", exact: true }).click();
   await ownerPage.getByRole("alertdialog").getByRole("button", { name: "Remove", exact: true }).click();
-  await expect(ownerPage.locator("#main").getByRole("row").filter({ hasText: "Removed" })).toHaveCount(1);
+  await expect(invites.getByRole("listitem").filter({ hasText: "Removed" })).toHaveCount(1);
   await ownerPage.context().close();
 
   // The inviter's count drops, on the screen and in the database; the activity log names the owner.
