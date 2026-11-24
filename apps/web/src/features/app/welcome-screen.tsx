@@ -1,6 +1,6 @@
 "use client";
 
-import { detectMany } from "@linkyo/blocks";
+import { detectMany, slugWord, type BlockOf } from "@linkyo/blocks";
 import { TEMPLATE_IDS } from "@linkyo/tokens/creator";
 import { Badge, Button, cn, Icon, Logo, Skeleton, TextField, toast } from "@linkyo/ui";
 import {
@@ -15,6 +15,7 @@ import {
   DraftingCompass,
   Feather,
   Footprints,
+  Gamepad2,
   GraduationCap,
   Laptop,
   Lightbulb,
@@ -55,14 +56,36 @@ import { ImportBox, useImport } from "./import-box";
 import { changeAddress } from "@/features/creator/refresh";
 
 import { sortImported } from "./import-links";
-import { isKind, KINDS, SOCIAL_PREFIX, STARTERS, starterBlocks, type CreatorKind, type SocialPlatform, type StarterField } from "./kinds";
+import {
+  isKind,
+  isPortfolioKind,
+  KINDS,
+  lookOrder,
+  proofProblem,
+  SOCIAL_PREFIX,
+  STARTERS,
+  starterBlocks,
+  starterFields,
+  titleKeys,
+  welcomeSteps,
+  type CreatorKind,
+  type ProofRow,
+  type SocialPlatform,
+  type StarterField,
+  type WelcomeStep,
+} from "./kinds";
 import { PhonePreview, PreviewButton } from "./preview";
 import { ProfileFields, useProfileDraft } from "./profile-form";
+import { ReachInput, type ReachValue } from "./reach-input";
 import { QrButton, ShareButtons } from "./share-tools";
 import { useSite } from "./site-context";
+import { asksForCovers, emptyProof, PortfolioMade, proofField, ProofStep, type Made } from "./welcome-portfolio";
 
-const STEPS = ["kind", "you", "look", "links", "done"] as const;
-type Step = (typeof STEPS)[number];
+/** The steps every kind shares, each with its own title and lead (`app.welcome.steps.*`). */
+type SharedStep = Exclude<WelcomeStep, "proof" | "action">;
+
+/** Progress labels: six for portfolio kinds, five for everyone else (class names stay whole for Tailwind). */
+const PROGRESS_COLUMNS: Record<number, string> = { 5: "grid-cols-5", 6: "grid-cols-6" };
 
 const KIND_ICONS: Partial<Record<CreatorKind, LucideIcon>> = {
   podcast: Mic,
@@ -84,12 +107,17 @@ const KIND_ICONS: Partial<Record<CreatorKind, LucideIcon>> = {
   student: GraduationCap,
   warehouse: Warehouse,
   music: Music,
+  // A streamer is not only on Twitch: the kind gets an outline glyph, not a platform's logo.
+  streamer: Gamepad2,
   other: Shapes,
 };
 
+/**
+ * Brand logos only for the platform kinds, drawn a step smaller (icon-md) than the outline icons
+ * (icon-lg) in the same tile: a solid logo carries more weight, so both read alike.
+ */
 function KindIcon({ kind }: { kind: CreatorKind }): ReactNode {
-  if (kind === "tiktok" || kind === "instagram" || kind === "youtube") return <PlatformGlyph platform={kind} size="lg" />;
-  if (kind === "streamer") return <PlatformGlyph platform="twitch" size="lg" />;
+  if (kind === "tiktok" || kind === "instagram" || kind === "youtube") return <PlatformGlyph platform={kind} size="md" />;
   const icon = KIND_ICONS[kind];
   return icon ? <Icon icon={icon} size="lg" /> : null;
 }
@@ -111,6 +139,8 @@ const TEXT_FIELDS: Partial<Record<StarterField, { multiline?: boolean; type?: "u
  * Welcome: five short steps from an empty account to a page worth sharing, with the page building
  * itself in the phone next to the form. It starts with what the page is for (TikTok, shop, writer …):
  * that picks a fitting template and the few questions that matter. Every step can be skipped.
+ * Portfolio kinds (designer, photographer, developer, engineer, freelancer) get six: instead of links
+ * they are asked for three pieces of work and one way to reach them, and end on a filled portfolio.
  */
 export function WelcomeScreen() {
   const t = useTranslations("app.welcome");
@@ -119,6 +149,7 @@ export function WelcomeScreen() {
   const tKinds = useTranslations("app.welcome.kinds");
   const tFields = useTranslations("app.welcome.fields");
   const tBlocks = useTranslations("app.welcome.blocks");
+  const tPortfolio = useTranslations("app.portfolio");
   const tApp = useTranslations("app");
   const tAi = useTranslations("app.ai");
   const { doc, dispatch, account, site, enrich, latest } = useSite();
@@ -134,7 +165,7 @@ export function WelcomeScreen() {
   const asking = !fromAi && !manual && !started;
   const showStart = asking && ai.enabled;
   const waitingForAi = asking && ai.status === "loading";
-  const [step, setStep] = useState<Step>(fromAi ? "you" : "kind");
+  const [step, setStep] = useState<WelcomeStep>(fromAi ? "you" : "kind");
   const profile = useProfileDraft();
   const tAuth = useTranslations("auth");
   const [address, setAddress] = useState<string | null>(null);
@@ -155,13 +186,25 @@ export function WelcomeScreen() {
   }, [profile, account.username, provisional]);
   const [kind, setKind] = useState<CreatorKind | null>(isKind(site.kind) ? site.kind : null);
   const starter = STARTERS[kind ?? "other"];
+  const steps = welcomeSteps(kind);
+  const portfolio = kind !== null && isPortfolioKind(kind);
+  // Real accounts have no newsletter yet: the switch is not offered (as in the Add sheet).
+  const fields = starterFields(kind ?? "other", { newsletter: accountStore.demo });
+  // The questions asked as fields of their own (the work and the contact are steps of their own).
+  const extras = fields.filter((field) => field !== "proof" && field !== "action");
   const [handles, setHandles] = useState<Partial<Record<SocialPlatform, string>>>({});
   const [values, setValues] = useState<Partial<Record<StarterField, string>>>({});
   const [switches, setSwitches] = useState<Partial<Record<StarterField, boolean>>>({});
+  // Portfolio kinds: three pieces of work, then the page's one button.
+  const [proof, setProof] = useState<ProofRow[]>(emptyProof);
+  const [proofProblems, setProofProblems] = useState<("title" | "summary" | null)[]>([]);
+  const [reach, setReach] = useState<ReachValue>({ label: "", url: "" });
+  // What the flow put on the page, for the done step's honest list.
+  const [made, setMade] = useState<Made | null>(null);
   // Coming from the homepage playground: its links wait in the links step, its look stays.
   const [tried] = useState(readTryDraft);
   const [links, setLinks] = useState(() => tried?.links.join("\n") ?? "");
-  const index = STEPS.indexOf(step);
+  const index = Math.max(0, steps.indexOf(step));
   const importer = useImport({
     onLinks: (found) => {
       const sorted = sortImported(found, starter.socials, handles);
@@ -243,9 +286,42 @@ export function WelcomeScreen() {
         return;
       }
     }
-    if (step === "links") {
+    if (step === "proof") {
+      // A started piece of work needs its title and its sentence; the first gap gets the focus.
+      const problems = proof.map(proofProblem);
+      setProofProblems(problems);
+      const first = problems.findIndex((problem) => problem !== null);
+      const problem = problems[first];
+      if (problem) {
+        proofField(first, problem)?.focus();
+        return;
+      }
+    }
+    if (step === "action") {
+      // An address typed that leads nowhere is not dropped quietly: the field says why (reach-input).
+      const typed = document.querySelector<HTMLInputElement>("#welcome-reach [id$='-address']");
+      if (typed && typed.value.trim() !== "" && !reach.url) {
+        typed.focus();
+        return;
+      }
+    }
+    // The last step with questions makes the page.
+    if (step === steps[steps.length - 2]) {
+      const who = kind ?? "other";
       const blocks = starterBlocks(
-        { kind: kind ?? "other", handles, values, switches, links },
+        {
+          kind: who,
+          handles,
+          values,
+          switches,
+          links,
+          proof,
+          // A page has one contact block: one that is already there stays the only one.
+          reach: doc.blocks.some((block) => block.type === "contact") ? undefined : reach,
+          taken: doc.blocks.flatMap((block) => (block.type === "project" ? [block.slug, ...(block.was ?? [])] : [])),
+          slugWord: slugWord(doc.profile.locale),
+          newsletter: accountStore.demo,
+        },
         {
           directions: (address) => tBlocks("directions", { address }),
           call: tBlocks("call"),
@@ -260,27 +336,146 @@ export function WelcomeScreen() {
           liveTitle: tBlocks("liveTitle"),
           detection: labels,
           artist: doc.profile.displayName,
+          work: tPortfolio(titleKeys(who).work),
+          closing: tPortfolio("contact.closing"),
         },
       ).filter((block) => block.type !== "socials" || !doc.blocks.some((existing) => existing.type === "socials"));
-      blocks.forEach((block, i) => dispatch({ type: "add", block, index: i }));
+      const contact = blocks.find((block): block is BlockOf<"contact"> => block.type === "contact");
+      blocks.filter((block) => block !== contact).forEach((block, i) => dispatch({ type: "add", block, index: i }));
+      // The contact block closes the page, below anything that was there before.
+      if (contact) dispatch({ type: "add", block: contact });
       // The starter page is not a fresh addition: the editor opens without a highlight.
       dispatch({ type: "select", id: null });
       // Songs and videos get their real title and picture a moment later.
       enrich(blocks);
+      setMade({ projects: blocks.filter((block) => block.type === "project").length, contact: contact?.primary.label ?? null });
     }
-    const following = STEPS[index + 1];
+    const following = steps[index + 1];
     if (following) {
       setStep(following);
       setMoved(true);
     }
   };
   const back = () => {
-    const previous = STEPS[index - 1];
+    const previous = steps[index - 1];
     if (previous) {
       setStep(previous);
       setMoved(true);
     }
   };
+
+  // The step's title and lead: the shared steps have their own; a portfolio's work, contact and
+  // done steps use the portfolio's words.
+  const name = doc.profile.displayName;
+  const shared = (key: SharedStep) => ({ title: t(`steps.${key}.title`, { name }), lead: t(`steps.${key}.lead`, { designs: TEMPLATE_IDS.length }) as ReactNode });
+  const bdi = (chunks: ReactNode) => <bdi>{chunks}</bdi>;
+  const heading =
+    step === "proof"
+      ? { title: t("portfolio.proofTitle"), lead: t(kind && asksForCovers(kind) ? "portfolio.proofLeadVisual" : "portfolio.proofLead") }
+      : step === "action"
+        ? { title: t("portfolio.actionTitle"), lead: t("portfolio.actionLead") }
+        : step === "done" && portfolio
+          ? { title: t("portfolio.doneTitle", { name }), lead: t.rich("portfolio.doneLead", { bdi }) }
+          : shared(step);
+
+  // Shared by the links step and a portfolio's contact step.
+  const socialsFieldset = (
+    <fieldset className="grid min-w-0 grid-cols-1 gap-3">
+      <legend className="mb-3 text-body font-semibold">{t("socials")}</legend>
+      {starter.socials.map((platform) => (
+        <label key={platform} className="grid grid-cols-1 gap-2">
+          <span className="text-small">{t(`platforms.${platform}`)}</span>
+          <span dir="ltr" className="flex h-control-lg items-center gap-2 rounded-md border border-line-input bg-surface-elevated px-3 focus-within:border-focus focus-within:focus-field">
+            {/* The platform's glyph leads its field, as in the Add sheet and the editor. */}
+            <PlatformGlyph platform={platform} size="sm" className="text-fg-secondary" />
+            <span className="shrink-0 text-fg-tertiary select-none">{SOCIAL_PREFIX[platform]}</span>
+            <input
+              value={handles[platform] ?? ""}
+              onChange={(event) => setHandles((current) => ({ ...current, [platform]: event.target.value }))}
+              autoCapitalize="none"
+              spellCheck={false}
+              inputMode={platform === "whatsapp" ? "tel" : undefined}
+              className="h-full min-w-0 flex-1 bg-transparent text-body outline-none"
+            />
+          </span>
+        </label>
+      ))}
+    </fieldset>
+  );
+  const extrasFieldset = extras.length ? (
+    <fieldset className="grid min-w-0 grid-cols-1 gap-4">
+      <legend className="mb-3 text-body font-semibold">{tKinds(`${kind ?? "other"}.extras`)}</legend>
+      {extras.map((field) => {
+        const spec = TEXT_FIELDS[field];
+        // A hint with no words (the website's) is not rendered at all.
+        const hint = tFields(`${field}.hint`) || undefined;
+        if (!spec) {
+          return (
+            <SwitchRow
+              key={field}
+              label={tFields(`${field}.label`)}
+              description={hint}
+              checked={switches[field] ?? false}
+              onChecked={(checked) => setSwitches((current) => ({ ...current, [field]: checked }))}
+            />
+          );
+        }
+        if (spec.multiline) {
+          return (
+            <TextArea
+              key={field}
+              label={tFields(`${field}.label`)}
+              hint={hint}
+              value={values[field] ?? ""}
+              onValue={(value) => setValues((current) => ({ ...current, [field]: value }))}
+              max={600}
+              rows={3}
+            />
+          );
+        }
+        return (
+          <TextInput
+            key={field}
+            label={tFields(`${field}.label`)}
+            hint={hint}
+            value={values[field] ?? ""}
+            onValue={(value) => setValues((current) => ({ ...current, [field]: value }))}
+            type={spec.type}
+            ltr={spec.type !== undefined}
+            inputMode={spec.type}
+            autoCapitalize={spec.type ? "none" : undefined}
+            spellCheck={spec.type ? false : undefined}
+            maxLength={field === "address" ? 100 : 200}
+          />
+        );
+      })}
+    </fieldset>
+  ) : null;
+  const linksField = (
+    // The links field: Linktree's "paste your links" answer brings focus here.
+    <div id="welcome-links" className="grid grid-cols-1 gap-2">
+      <TextArea
+        label={tKinds(`${kind ?? "other"}.links`)}
+        hint={tKinds(`${kind ?? "other"}.linksHint`)}
+        value={links}
+        onValue={setLinks}
+        max={2000}
+        rows={4}
+        dir="ltr"
+        placeholder="https://"
+      />
+      {detected.length ? (
+        <ul className="flex flex-wrap gap-2" aria-label={t("found")}>
+          {detected.map((detection) => (
+            <li key={detection.url} className="inline-flex h-control-sm items-center gap-2 rounded-full bg-selected px-3 text-small text-selected-fg">
+              <Icon icon={Check} size="sm" />
+              {tTypes(detection.type === "shorts" ? "link" : detection.type)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
 
   return (
     // data-console="frame": the welcome flow is part of the dashboard, black and grey (ADR 0062).
@@ -346,12 +541,13 @@ export function WelcomeScreen() {
           ) : (
             <>
           {fromAi ? null : (
-          <ol aria-label={t("progress")} className="grid grid-cols-5 gap-2">
-            {STEPS.map((key, i) => (
+          <ol aria-label={t("progress")} className={cn("grid gap-2", PROGRESS_COLUMNS[steps.length])}>
+            {steps.map((key, i) => (
               <li key={key} className="grid grid-cols-1 gap-2">
                 <span aria-hidden className={cn("h-1 rounded-full transition-colors duration-standard", i <= index ? "bg-primary" : "bg-line-strong")} />
                 <span className={cn("flex items-center gap-1 text-caption font-medium", i === index ? "text-fg" : "text-fg-tertiary")} aria-current={i === index ? "step" : undefined}>
-                  {i < index ? <Icon icon={Check} size="sm" className="text-success-strong" /> : null}
+                  {/* Six labels share a phone's width: there the filled bar alone marks a step as done. */}
+                  {i < index ? <Icon icon={Check} size="sm" className={cn("text-success-strong", steps.length > 5 && "max-sm:hidden")} /> : null}
                   {t(`steps.${key}.short`)}
                 </span>
               </li>
@@ -366,13 +562,13 @@ export function WelcomeScreen() {
                 {t("fromAi.lead")}
               </p>
             ) : (
-              <p className="text-small font-medium text-fg-secondary">{t("stepOf", { n: index + 1, total: STEPS.length })}</p>
+              <p className="text-small font-medium text-fg-secondary">{t("stepOf", { n: index + 1, total: steps.length })}</p>
             )}
             <h1 id="welcome-step" tabIndex={-1} className="text-h1 tracking-tight outline-none">
-              {t(`steps.${step}.title`, { name: doc.profile.displayName })}
+              {heading.title}
             </h1>
             {/* The look step counts the designs from the tokens, so the sentence never goes stale. */}
-            <p className="text-body text-fg-secondary">{t(`steps.${step}.lead`, { designs: TEMPLATE_IDS.length })}</p>
+            <p className="text-body text-fg-secondary">{heading.lead}</p>
           </div>
 
           {step === "kind" ? (
@@ -389,7 +585,7 @@ export function WelcomeScreen() {
                   >
                     <input type="radio" name="kind" value={option} checked={kind === option} onChange={() => choose(option)} className="sr-only" />
                     <span className="flex items-center justify-between gap-2">
-                      <span className={cn("grid size-control-lg place-items-center rounded-md", kind === option ? "bg-surface-elevated text-selected-fg" : "bg-canvas-muted text-fg")}>
+                      <span className={cn("grid size-control-md place-items-center rounded-md", kind === option ? "bg-surface-elevated text-selected-fg" : "bg-canvas-muted text-fg")}>
                         <KindIcon kind={option} />
                       </span>
                       {kind === option ? <Icon icon={Check} size="md" className="text-link" /> : null}
@@ -449,7 +645,13 @@ export function WelcomeScreen() {
 
           {step === "look" ? (
             <div className="grid grid-cols-1 gap-3">
-              <TemplatePicker value={doc.theme.template} profile={doc.profile} onChange={(template) => dispatch({ type: "theme", theme: { template } })} />
+              {/* The kind's starter first, then the looks the tokens suggest for it, then every other look. */}
+              <TemplatePicker
+                value={doc.theme.template}
+                profile={doc.profile}
+                order={kind ? lookOrder(kind) : undefined}
+                onChange={(template) => dispatch({ type: "theme", theme: { template } })}
+              />
               {kind && doc.theme.template === STARTERS[kind].theme.template ? (
                 <p className="flex items-center gap-2 text-small font-medium text-link">
                   <Icon icon={Lightbulb} size="sm" />
@@ -462,121 +664,59 @@ export function WelcomeScreen() {
           {step === "links" ? (
             <div className="grid grid-cols-1 gap-6">
               <ImportBox importer={importer} onPasteOnly={() => document.querySelector<HTMLElement>("#welcome-links textarea")?.focus()} />
-              <fieldset className="grid min-w-0 grid-cols-1 gap-3">
-                <legend className="mb-3 text-body font-semibold">{t("socials")}</legend>
-                {starter.socials.map((platform) => (
-                  <label key={platform} className="grid grid-cols-1 gap-2">
-                    <span className="text-small">{t(`platforms.${platform}`)}</span>
-                    <span dir="ltr" className="flex h-control-lg items-center rounded-md border border-line-input bg-surface-elevated px-3 focus-within:border-focus focus-within:focus-field">
-                      <span className="shrink-0 text-fg-tertiary select-none">{SOCIAL_PREFIX[platform]}</span>
-                      <input
-                        value={handles[platform] ?? ""}
-                        onChange={(event) => setHandles((current) => ({ ...current, [platform]: event.target.value }))}
-                        autoCapitalize="none"
-                        spellCheck={false}
-                        inputMode={platform === "whatsapp" ? "tel" : undefined}
-                        className="h-full min-w-0 flex-1 bg-transparent text-body outline-none"
-                      />
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
-              {starter.fields.length ? (
-                <fieldset className="grid min-w-0 grid-cols-1 gap-4">
-                  <legend className="mb-3 text-body font-semibold">{tKinds(`${kind ?? "other"}.extras`)}</legend>
-                  {starter.fields.map((field) => {
-                    const spec = TEXT_FIELDS[field];
-                    if (!spec) {
-                      return (
-                        <SwitchRow
-                          key={field}
-                          label={tFields(`${field}.label`)}
-                          description={tFields(`${field}.hint`)}
-                          checked={switches[field] ?? false}
-                          onChecked={(checked) => setSwitches((current) => ({ ...current, [field]: checked }))}
-                        />
-                      );
-                    }
-                    if (spec.multiline) {
-                      return (
-                        <TextArea
-                          key={field}
-                          label={tFields(`${field}.label`)}
-                          hint={tFields(`${field}.hint`)}
-                          value={values[field] ?? ""}
-                          onValue={(value) => setValues((current) => ({ ...current, [field]: value }))}
-                          max={600}
-                          rows={3}
-                        />
-                      );
-                    }
-                    return (
-                      <TextInput
-                        key={field}
-                        label={tFields(`${field}.label`)}
-                        hint={tFields(`${field}.hint`)}
-                        value={values[field] ?? ""}
-                        onValue={(value) => setValues((current) => ({ ...current, [field]: value }))}
-                        type={spec.type}
-                        ltr={spec.type !== undefined}
-                        inputMode={spec.type}
-                        autoCapitalize={spec.type ? "none" : undefined}
-                        spellCheck={spec.type ? false : undefined}
-                        maxLength={field === "address" ? 100 : 200}
-                      />
-                    );
-                  })}
-                </fieldset>
-              ) : null}
-              {/* The links field: Linktree's "paste your links" answer brings focus here. */}
-              <div id="welcome-links" className="grid grid-cols-1 gap-2">
-                <TextArea
-                  label={tKinds(`${kind ?? "other"}.links`)}
-                  hint={tKinds(`${kind ?? "other"}.linksHint`)}
-                  value={links}
-                  onValue={setLinks}
-                  max={2000}
-                  rows={4}
-                  dir="ltr"
-                  placeholder="https://"
+              {socialsFieldset}
+              {extrasFieldset}
+              {linksField}
+            </div>
+          ) : null}
+
+          {step === "proof" && kind ? (
+            <ProofStep
+              kind={kind}
+              rows={proof}
+              onRows={(rows) => {
+                setProof(rows);
+                // A gap that was filled in stops being pointed out.
+                setProofProblems((current) => current.map((problem, i) => (problem && rows[i] && proofProblem(rows[i]) === null ? null : problem)));
+              }}
+              problems={proofProblems}
+              real={!accountStore.demo}
+            />
+          ) : null}
+
+          {step === "action" && kind ? (
+            <div className="grid grid-cols-1 gap-6">
+              {/* The page's one button: its way, its address and its words, in the page's language. */}
+              {/* The welcome's column is narrower than the editor's sheet: the four ways stay in two rows,
+                  so "Buchungslink" is never broken inside the word. */}
+              <div id="welcome-reach" className="sm:[&_[role=radiogroup]]:grid-cols-2">
+                <ReachInput
+                  value={reach}
+                  onValue={setReach}
+                  kind={kind}
+                  locale={doc.profile.locale}
+                  labels={{ address: t("portfolio.actionAddress"), label: t("portfolio.actionLabel") }}
                 />
-                {detected.length ? (
-                  <ul className="flex flex-wrap gap-2" aria-label={t("found")}>
-                    {detected.map((detection) => (
-                      <li key={detection.url} className="inline-flex h-control-sm items-center gap-2 rounded-full bg-selected px-3 text-small text-selected-fg">
-                        <Icon icon={Check} size="sm" />
-                        {tTypes(detection.type === "shorts" ? "link" : detection.type)}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
               </div>
+              {extrasFieldset}
+              {socialsFieldset}
+              {linksField}
             </div>
           ) : null}
 
           {step === "done" ? (
-            <div className="grid grid-cols-1 gap-6">
-              <div className="grid justify-items-start gap-4 rounded-xl border border-line bg-surface p-5">
-                <span className="grid size-control-xl place-items-center rounded-full bg-success-subtle text-success-strong">
-                  <Icon icon={PartyPopper} size="lg" />
-                </span>
-                <p dir="ltr" className="text-h3 font-semibold">
-                  <span className="text-fg-secondary">{CREATOR_DOMAIN}/</span>
-                  {account.username}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <ShareButtons username={account.username} compact />
-                  <QrButton username={account.username} compact />
-                </div>
-              </div>
-              {/* The pill of sign-up carries through to the end of the flow: one shape for its big buttons. */}
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Button variant="primary" size="cta" onClick={() => finish("/app/editor")}>
-                  {t("toEditor")}
-                </Button>
-                <Button variant="tinted" size="cta" onClick={() => finish("/app")}>
-                  {t("toDashboard")}
-                </Button>
+            <div className="grid justify-items-start gap-4 rounded-xl border border-line bg-surface p-5">
+              <span className="grid size-control-xl place-items-center rounded-full bg-success-subtle text-success-strong">
+                <Icon icon={PartyPopper} size="lg" />
+              </span>
+              <p dir="ltr" className="text-h3 font-semibold">
+                <span className="text-fg-secondary">{CREATOR_DOMAIN}/</span>
+                {account.username}
+              </p>
+              {portfolio && made ? <PortfolioMade made={made} /> : null}
+              <div className="flex flex-wrap gap-2">
+                <ShareButtons username={account.username} compact />
+                <QrButton username={account.username} compact />
               </div>
             </div>
           ) : null}
@@ -584,36 +724,50 @@ export function WelcomeScreen() {
           )}
         </main>
 
-        {step !== "done" && !waitingForAi ? (
-          <footer className="layer-sticky sticky bottom-0 border-t border-line bg-canvas px-5 pt-3 pb-[max(var(--spacing-3),env(safe-area-inset-bottom))] md:px-10">
-            <div className="mx-auto flex max-w-prose items-center gap-2">
-              {index > 0 && !showStart && !fromAi ? (
-                <Button variant="ghost" size="lg" icon={ArrowLeft} onClick={back} className="[&_svg]:rtl:-scale-x-100">
-                  {t("back")}
+        {!waitingForAi ? (
+          // The bar's buttons line up with the step above: the same width and inner padding as <main>.
+          <footer className="layer-sticky sticky bottom-0 border-t border-line bg-canvas px-5 pt-3 pb-[max(var(--spacing-3),env(safe-area-inset-bottom))] md:px-0">
+            {step === "done" ? (
+              // The flow's last two ways on: pills, as every step's footer (in-card buttons stay rounded).
+              // Keyed: new buttons, not the step's Back and Continue fading into other colours.
+              <div key="done" className="mx-auto grid max-w-prose grid-cols-1 gap-2 sm:grid-cols-2 md:px-10">
+                <Button variant="primary" size="cta" onClick={() => finish("/app/editor")}>
+                  {t("toEditor")}
                 </Button>
-              ) : null}
-              <Button
-                variant="primary"
-                size="cta"
-                className="ms-auto min-w-0 flex-1 sm:flex-none"
-                onClick={() => {
-                  if (!showStart) {
-                    void next();
-                    return;
-                  }
-                  if (start === "ai") {
-                    router.push("/app/build?from=welcome");
-                    return;
-                  }
-                  // The five steps, from the first; focus goes to its title.
-                  setStarted(true);
-                  setMoved(true);
-                }}
-                trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}
-              >
-                {showStart ? t("start.continue") : fromAi ? t("fromAi.finish") : step === "links" ? t("finish") : t("continue")}
-              </Button>
-            </div>
+                <Button variant="tinted" size="cta" onClick={() => finish("/app")}>
+                  {t("toDashboard")}
+                </Button>
+              </div>
+            ) : (
+              <div key="steps" className="mx-auto flex max-w-prose items-center gap-2 md:px-10">
+                {index > 0 && !showStart && !fromAi ? (
+                  <Button variant="ghost" size="lg" icon={ArrowLeft} onClick={back} className="[&_svg]:rtl:-scale-x-100">
+                    {t("back")}
+                  </Button>
+                ) : null}
+                <Button
+                  variant="primary"
+                  size="cta"
+                  className="ms-auto min-w-0 flex-1 sm:flex-none"
+                  onClick={() => {
+                    if (!showStart) {
+                      void next();
+                      return;
+                    }
+                    if (start === "ai") {
+                      router.push("/app/build?from=welcome");
+                      return;
+                    }
+                    // The five steps, from the first; focus goes to its title.
+                    setStarted(true);
+                    setMoved(true);
+                  }}
+                  trailing={<Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />}
+                >
+                  {showStart ? t("start.continue") : fromAi ? t("fromAi.finish") : step === steps[steps.length - 2] ? t("finish") : t("continue")}
+                </Button>
+              </div>
+            )}
           </footer>
         ) : null}
       </div>

@@ -2152,6 +2152,12 @@
           "title": "Add your links",
           "lead": "Your profiles and the links that matter most right now."
         },
+        "proof": {
+          "short": "Work"
+        },
+        "action": {
+          "short": "Contact"
+        },
         "done": {
           "short": "Done",
           "title": "Your page is ready, {name}",
@@ -2522,7 +2528,13 @@
           "phone": "Phone"
         },
         "actionAddress": "Address or number",
-        "actionLabel": "Button label"
+        "actionLabel": "Button label",
+        "actionLead": "One button for enquiries, plus your profiles.",
+        "doneTitle": "Your portfolio is ready, {name}",
+        "doneLead": "Put the link in your e-mail signature and on LinkedIn. You can add more work any time.",
+        "made": "On your page",
+        "madeProjects": "{count, plural, one {# project} other {# projects}}",
+        "madeContact": "“<bdi>{label}</bdi>” button at the end of the page"
       }
     },
     "ownPage": {
