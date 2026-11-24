@@ -6,6 +6,8 @@
  */
 export const PROXIED_IMAGE_HOSTS = [
   "i.ytimg.com",
+  // Channel avatars (a creator's YouTube profile picture).
+  "yt3.googleusercontent.com",
   "i.scdn.co",
   "image-cdn-ak.spotifycdn.com",
   "image-cdn-fa.spotifycdn.com",
@@ -41,6 +43,20 @@ export function isStorageImage(src: string, env: { supabaseUrl?: string | undefi
   } catch {
     return false;
   }
+}
+
+/** An address on another server: http(s), or protocol-relative ("//host", and "/\host" as browsers read it). */
+const ABSOLUTE = /^(?:https?:)?[/\\]{2}/i;
+
+/**
+ * A picture that would make the visitor's browser talk to someone else's server: an address on
+ * another host that our optimizer does not re-serve (not on the list above, not our own Storage).
+ * Creator pages never load it (`MediaImage` shows a calm tile instead). Our own files, sample
+ * assets, `data:` and `blob:` pictures are not foreign.
+ */
+export function isForeignImage(src: string): boolean {
+  const address = src.trim();
+  return ABSOLUTE.test(address) && !isProxiedImage(address);
 }
 
 export function isProxiedImage(src: string): boolean {

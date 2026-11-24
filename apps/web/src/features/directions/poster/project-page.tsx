@@ -28,6 +28,7 @@ import { CopyButton } from "../shared/copy-button";
 import { CreatorFooter, MediaImage, mediaSizes, useCreatorFormat, type CreatorFooterLinks } from "../shared/creator-kit";
 import { LinkIconGlyph } from "../shared/link-icons";
 import { resolveMedia } from "../shared/media";
+import { PictureViewer } from "../shared/picture-viewer";
 import { CodeBox } from "./code-box";
 import { ContactBand } from "./portfolio-sections";
 import { ProjectCover, projectNumber } from "./projects";
@@ -67,7 +68,7 @@ function hostOf(url: string): string {
 
 /**
  * The largest file our own image optimizer serves for a picture: what a picture link opens without
- * script (WP8's viewer opens the same file). Sample pictures and uploads go through the optimizer;
+ * script (the viewer shows the same file). Sample pictures and uploads go through the optimizer;
  * the address never leaves our origin.
  */
 export function largePictureHref(src: string): string {
@@ -120,7 +121,7 @@ interface Places {
  * wide canvas the header splits into the words (eight columns) and the figures and facts (four),
  * the story's labels stand beside their text, and pictures follow their ratios across the canvas.
  *
- * Everything is server HTML; script only adds the share and copy buttons (and later the viewer).
+ * Everything is server HTML; script only adds the share and copy buttons and the picture viewer.
  * In a preview (the dashboard, the AI draft) the way back is a button and the page sits inside the
  * dashboard's own <main>.
  */
@@ -223,6 +224,8 @@ export function ProjectPage({
         {/* With a Linkyo bar at the bottom, the footer drops its own Linkyo credit (one is enough). */}
         <CreatorFooter className={cn("px-creator-gutter", dock ? "pb-24" : undefined)} credit={!dock} links={footerLinks} />
       </div>
+      {/* The viewer waits for a press on a picture and only then loads (shared/picture-viewer.tsx). */}
+      {pictures.length > 0 ? <PictureViewer /> : null}
       {dock}
     </div>
   );
@@ -726,7 +729,7 @@ function PictureFigure({
           {projectNumber(n)}
         </span>
         {picture.caption?.trim() ? (
-          <span dir="auto" className="min-w-0 break-words">
+          <span dir="auto" data-caption className="min-w-0 break-words">
             {picture.caption}
           </span>
         ) : null}

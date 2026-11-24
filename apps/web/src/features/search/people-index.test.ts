@@ -42,8 +42,11 @@ describe("people index", () => {
       if (person.photo === null) continue;
       expect(person.photo.startsWith("/") || isProxiedImage(person.photo), `${person.slug}: ${person.photo}`).toBe(true);
     }
-    // A prepared preview's picture lives on a platform we do not re-serve: initials instead.
-    expect(people.find((person) => person.slug === "nizar")?.photo).toBeNull();
+    // A prepared preview's channel avatar is re-served by our optimizer (yt3 is on PROXIED_IMAGE_HOSTS
+    // since C-01), so the result shows it; the browser still only talks to Linkyo.
+    const nizar = people.find((person) => person.slug === "nizar")?.photo ?? "";
+    expect(nizar).toMatch(/^https:\/\/yt3\.googleusercontent\.com\//);
+    expect(isProxiedImage(nizar)).toBe(true);
   });
 
   it("says what every result is, and leads with the people on the homepage", () => {

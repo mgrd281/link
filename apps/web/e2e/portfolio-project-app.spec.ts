@@ -79,7 +79,8 @@ test.describe("example pages", () => {
     expect(response?.status()).toBe(404);
     const back = page.locator("[data-project-back]");
     await expect(back).toHaveAttribute("href", "/de/p/ronja-feldkamp");
-    await expect(back).toContainText("Zur Seite");
+    // The example's owner by name (W-14), not an address.
+    await expect(back).toHaveText("Zurück zu Ronja Feldkamp");
     await back.click();
     await expect(page).toHaveURL(/\/de\/p\/ronja-feldkamp$/);
     await expect(page.locator("h1").first()).toBeVisible();
