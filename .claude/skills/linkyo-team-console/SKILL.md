@@ -7,7 +7,9 @@ description: How Linkyo's team console (/[locale]/admin/*) works and how to chan
 
 Decision records: ADR 0016 (team area), 0028 (console v2), 0030 (real accounts), 0073 (team money through
 Stripe). Data layer: the `linkyo-supabase` skill. Selling flows: the `linkyo-payments` skill. The console is part of
-the team area: **teal**, not the dashboard's black and grey.
+the team area: **teal**, not the dashboard's black and grey. Never put `data-console` anywhere under
+`features/admin/**` or `app/[locale]/admin/**` (it would switch the screen to the dashboard's palette); the guard
+`features/design-system/team-area-guard.test.ts` fails if it appears there.
 
 ## Map
 

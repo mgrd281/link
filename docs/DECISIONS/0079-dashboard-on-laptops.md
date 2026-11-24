@@ -53,10 +53,10 @@ dashboard that uses a laptop screen "at 10".
 - `e2e/nav-panel-app.spec.ts` now expects no panel on Home, Page and Design and tests folding on
   Settings; `e2e/dashboard-layout-app.spec.ts` covers the widths, the grid, the filter, Arbeiten and
   the tab bar.
-- The loading splash (`features/app/gate.tsx`) still draws the panel and a 640 px column on every
-  route; until it follows `hasSectionPanel` and the wide column, Home, Page and Design shift once when
-  the shell mounts. Toasts are centred as if the panel were there (`--toast-start` in `globals.css`);
-  the shell marks panel-less places with `data-panel="none"` for that rule.
+- The loading splash (`features/app/gate.tsx`) follows the place being opened: the panel (and its fold
+  toggle) only where `sectionPanelShown`, and the same column classes as `Screen`, so nothing shifts
+  when the shell mounts. Toasts on places without a panel skip only the rail (`data-panel="none"`,
+  `globals.css`). Both were done at the Stage 2 integration (e2e in `nav-panel-app.spec.ts`).
 - A new template needs its capture and one import in `template-previews.ts`; its unit test fails until
   both exist, and the picker falls back to the template's colours meanwhile.
 - Reversible: `hasSectionPanel` and the column classes in `Screen` are the two switches.
