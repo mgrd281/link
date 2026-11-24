@@ -629,14 +629,21 @@ test.describe("private previews", () => {
     await expect(cta).toBeHidden();
   });
 
-  test("newsletter sign-up confirms with a double opt-in note", async ({ page }) => {
+  test("newsletter sign-up on an example says that nothing was sent, and sends nothing", async ({ page }) => {
     await page.goto("/en/p/journalist");
     // The form submits through React: wait until the page is hydrated (flaky under full-suite load).
     await page.waitForLoadState("networkidle");
+    const posts: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() !== "GET") posts.push(`${request.method()} ${request.url()}`);
+    });
     const form = page.getByRole("region", { name: "Investigations newsletter, every Friday" });
     await form.getByLabel("Your email").fill("reader@example.com");
     await form.getByRole("button", { name: "Subscribe" }).click();
-    await expect(form.getByRole("status")).toContainText("Almost there!");
+    await expect(form.getByRole("status")).toContainText("Just an example");
+    await expect(form.getByRole("status")).toContainText("Nothing is sent");
+    await expect(form.getByText("We've sent you an email")).toHaveCount(0);
+    expect(posts).toEqual([]);
   });
 
   test("the earlier long link still leads to the short one", async ({ page }) => {

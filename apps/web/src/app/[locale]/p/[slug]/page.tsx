@@ -1,6 +1,6 @@
 import { colorSchemeOf, resolveCreatorTheme } from "@linkyo/tokens/creator";
 import type { Metadata, Viewport } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PosterRenderer } from "@/features/directions/poster/renderer";
@@ -9,6 +9,8 @@ import { previewPage, PREVIEWS } from "@/features/previews/registry";
 import { rotationTurn, withRotationClip } from "@/features/previews/rotation";
 import { RotationAddress } from "@/features/previews/rotation-address";
 import { ROTATION_PARAM } from "@/features/previews/rotation-param";
+
+import "../../../creator-motion.css";
 
 /** The page's language as Open Graph names it (language_TERRITORY). */
 const OG_LOCALES: Record<string, string> = { de: "de_DE", en: "en_US", ar: "ar_AR" };
@@ -24,9 +26,23 @@ export function generateStaticParams() {
   );
 }
 
-export const dynamicParams = false;
+// Other addresses are rendered on request: an example asked for in another language answers with a
+// permanent redirect to its own (below), anything else "not found".
+export const dynamicParams = true;
 // Re-rendered every few minutes so day-relative details (tonight's live) stay current.
 export const revalidate = 300;
+
+/**
+ * Where an example page lives when it is asked for in a language it does not have (W-09): examples
+ * exist in their own language only, so /en/p/ronja-feldkamp leads to /de/p/ronja-feldkamp. Only
+ * examples move: a private preview stays "not found" in other languages.
+ */
+function exampleHome(slug: string, locale: string): string | null {
+  const preview = Object.hasOwn(PREVIEWS, slug) ? PREVIEWS[slug] : undefined;
+  if (!preview?.sample || preview.pages[locale as keyof typeof preview.pages]) return null;
+  const own = Object.keys(preview.pages)[0];
+  return own ? `/${own}/p/${slug}` : null;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
@@ -72,7 +88,11 @@ export async function generateViewport({ params }: Props): Promise<Viewport> {
 export default async function PreviewRoute({ params, searchParams }: Props) {
   const { locale, slug } = await params;
   const found = previewPage(slug, locale);
-  if (!found) notFound();
+  if (!found) {
+    const home = exampleHome(slug, locale);
+    if (home) permanentRedirect(home);
+    notFound();
+  }
   setRequestLocale(locale);
   const theme = resolveCreatorTheme(found.preview.theme, { rtlScript: locale === "ar" });
   // Linkyo's label (with the photographers' credit on a portfolio) and dock: features/previews/preview-chrome.tsx.

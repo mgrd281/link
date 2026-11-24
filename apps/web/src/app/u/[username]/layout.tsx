@@ -10,6 +10,7 @@ import { isRtl } from "@/i18n/routing";
 import { siteUrl } from "@/lib/site-url";
 
 import "../../globals.css";
+import "../../creator-motion.css";
 
 /** The words of `creator.portfolio` that client islands read; the rest is server-rendered text. */
 const ISLAND_WORDS = ["pictureOf", "previousPicture", "nextPicture", "viewer", "closeViewer", "railBack", "railOn", "copyCodeSample", "toPage", "projectMissing"] as const;

@@ -2,8 +2,10 @@ import type { Page } from "@linkyo/blocks";
 
 /**
  * Private preview prepared for Nizar Alkrizma to look at before he decides on a Linkyo page.
- * Text and links come from his public YouTube and TikTok profiles; pictures are loaded from his own
- * YouTube channel (not copied). The verified look and the live status/time are examples, said so on
+ * Text and links come from his public YouTube and TikTok profiles; pictures are his own YouTube
+ * channel's (not copied), re-served by our image optimizer (yt3.googleusercontent.com and i.ytimg.com
+ * are on PROXIED_IMAGE_HOSTS), so a visitor's browser never contacts Google before consenting to
+ * YouTube. The verified look and the live status/time are examples, said so on
  * the page. Not listed anywhere, not indexed, removed on request.
  */
 export const nizarDe: Page = {

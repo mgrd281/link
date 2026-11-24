@@ -20,6 +20,7 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { MediaImage, mediaSizes, useCreatorFormat } from "../shared/creator-kit";
+import { RailButtons } from "../shared/rail-buttons";
 import { linkDestination } from "./sections";
 import { displayStyle, pageSide, pressable, railFrame, railTrack } from "./styles";
 
@@ -98,21 +99,30 @@ export function ProjectsGroup({
           ))}
         </div>
       ) : layout === "rail" ? (
-        // Like every row to swipe on the page: the region scrolls and takes focus, cards snap.
-        <div role="region" aria-label={t("scroller", { title: t("portfolio.work") })} tabIndex={0} className={railFrame}>
-          <ol
-            className={cn(
-              "grid grid-flow-col auto-cols-[80%] gap-3 pt-1",
-              wide ? "@prose:auto-cols-[40%] @prose:gap-4 @work:auto-cols-[calc((100%-2*var(--spacing-6))/3)] @work:gap-6" : "@prose:auto-cols-[40%]",
-              railTrack,
-            )}
-          >
-            {shown.map((entry) => (
-              <li key={entry.project.id} id={entry.project.slug} className="grid min-w-0 snap-start scroll-mt-16">
-                <Card entry={entry} cover={{ phone: "aspect-portrait", wide: null, sizes: wide ? mediaSizes.workRail : mediaSizes.rail }} lead={false} {...shared} />
-              </li>
-            ))}
-          </ol>
+        // Like every row to swipe on the page: the region scrolls and takes focus, cards snap. A row
+        // always shows that it goes on (the next card peeks in at the end), and from the column on
+        // back and on buttons page it for a mouse (shared/rail-buttons.tsx).
+        <div data-rail-group className="grid min-w-0 gap-3">
+          <div role="region" aria-label={t("scroller", { title: t("portfolio.work") })} tabIndex={0} className={railFrame}>
+            <ol
+              data-rail-track
+              className={cn(
+                "grid grid-flow-col auto-cols-[80%] gap-3 pt-1",
+                // Three cards fill the canvas; with more, each gives up a little so the fourth peeks in.
+                wide
+                  ? "@prose:auto-cols-[40%] @prose:gap-4 @work:auto-cols-[calc((100%-2*var(--spacing-6))/3)] @work:gap-6 @work:has-[>li:nth-child(4)]:auto-cols-[calc((100%-3*var(--spacing-6))/3.25)]"
+                  : "@prose:auto-cols-[40%]",
+                railTrack,
+              )}
+            >
+              {shown.map((entry) => (
+                <li key={entry.project.id} id={entry.project.slug} className="grid min-w-0 snap-start scroll-mt-16">
+                  <Card entry={entry} cover={{ phone: "aspect-portrait", wide: null, sizes: wide ? mediaSizes.workRail : mediaSizes.rail }} lead={false} {...shared} />
+                </li>
+              ))}
+            </ol>
+          </div>
+          <RailButtons />
         </div>
       ) : (
         <ol start={shown[0]?.position} className="border-t border-creator-line">

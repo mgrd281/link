@@ -477,6 +477,10 @@
       "readLetterWhole": "Ganzes Anschreiben lesen",
       "readMore": "Weiterlesen",
       "readLess": "Weniger anzeigen"
+    },
+    "newsletter": {
+      "exampleTitle": "Nur ein Beispiel",
+      "exampleBody": "Auf dieser Beispielseite wird nichts gesendet. Deine E-Mail-Adresse wurde nicht gespeichert."
     }
   },
   "directions": {
@@ -4024,7 +4028,9 @@
       "play": "Seite automatisch scrollen"
     },
     "previewGlide": "Die Seite scrollt langsam von selbst. Jede Taste oder Berührung hält sie an.",
-    "previewHint": "Mit den Pfeiltasten blätterst du zur nächsten Vorlage."
+    "previewHint": "Mit den Pfeiltasten blätterst du zur nächsten Vorlage.",
+    "notFoundBack": "Zurück zur Seite",
+    "notFoundBackTo": "Zurück zu {name}"
   },
   "search": {
     "open": "Personen suchen",

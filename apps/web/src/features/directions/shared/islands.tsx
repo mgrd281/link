@@ -2,7 +2,7 @@
 
 import { cn, Icon } from "@linkyo/ui";
 import type { VideoPlayback } from "@linkyo/blocks";
-import { ArrowRight, ArrowUpRight, AtSign, Check, Play, ShieldCheck } from "lucide-react";
+import { ArrowRight, ArrowUpRight, AtSign, Info, Play, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
@@ -184,22 +184,26 @@ export function ClickToLoad({
 
 /**
  * Newsletter sign-up: one field, one button in the creator's accent, a promise underneath. Stacks on
- * phones (a thumb-wide button), sits side by side on wide screens. Double opt-in: the confirmation
- * says to check the inbox, as the law (and good manners) require.
+ * phones (a thumb-wide button), sits side by side on wide screens.
+ *
+ * There is no newsletter service yet, so the form only appears where nothing could be sent anyway
+ * (example pages, previews and samples; real pages leave newsletter blocks out, public-page.ts). It
+ * never claims a send: submitting says plainly that this is an example and that nothing was sent or
+ * kept. No request leaves the page.
  */
 export function NewsletterForm() {
   const t = useTranslations("creator");
   const id = useId();
-  const [state, setState] = useState<"idle" | "sending" | "done">("idle");
-  if (state === "done") {
+  const [example, setExample] = useState(false);
+  if (example) {
     return (
-      <div role="status" className="flex items-start gap-3 rounded-creator-button bg-creator-bg p-4">
-        <span className="grid size-control-md shrink-0 place-items-center rounded-full bg-creator-accent text-creator-accent-fg">
-          <Icon icon={Check} size="md" />
+      <div role="status" data-newsletter-example className="flex items-start gap-3 rounded-creator-button border border-creator-line bg-creator-bg p-4">
+        <span className="grid size-control-md shrink-0 place-items-center rounded-full border border-creator-line-strong text-creator-fg">
+          <Icon icon={Info} size="md" />
         </span>
         <span className="grid min-w-0 gap-0.5">
-          <span className="text-body font-semibold">{t("subscribedTitle")}</span>
-          <span className="text-small text-creator-fg-muted">{t("subscribedBody")}</span>
+          <span className="text-body font-semibold">{t("newsletter.exampleTitle")}</span>
+          <span className="text-small text-creator-fg-muted">{t("newsletter.exampleBody")}</span>
         </span>
       </div>
     );
@@ -207,10 +211,9 @@ export function NewsletterForm() {
   return (
     <form
       onSubmit={(event) => {
+        // Nothing is sent: the browser has checked the address, the page says what happens to it.
         event.preventDefault();
-        setState("sending");
-        // Demo: the real request goes to the newsletter service in Phase 1.
-        window.setTimeout(() => setState("done"), 500);
+        setExample(true);
       }}
       className="grid grid-cols-1 gap-3"
     >
@@ -234,8 +237,7 @@ export function NewsletterForm() {
         </label>
         <button
           type="submit"
-          disabled={state === "sending"}
-          className="inline-flex h-control-lg w-full items-center justify-center gap-2 rounded-creator-button bg-creator-accent px-6 text-body font-semibold text-creator-accent-fg transition-[scale,opacity] duration-micro focus-visible:focus-ring active:scale-pressed disabled:opacity-secondary @prose:w-auto"
+          className="inline-flex h-control-lg w-full items-center justify-center gap-2 rounded-creator-button bg-creator-accent px-6 text-body font-semibold text-creator-accent-fg transition-[scale,opacity] duration-micro focus-visible:focus-ring active:scale-pressed @prose:w-auto"
         >
           {t("subscribe")}
           <Icon icon={ArrowRight} size="md" className="rtl:-scale-x-100" />

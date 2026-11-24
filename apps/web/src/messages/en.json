@@ -477,6 +477,10 @@
       "readLetterWhole": "Read the whole letter",
       "readMore": "Read more",
       "readLess": "Show less"
+    },
+    "newsletter": {
+      "exampleTitle": "Just an example",
+      "exampleBody": "Nothing is sent from this example page. Your email address was not stored."
     }
   },
   "directions": {
@@ -4024,7 +4028,9 @@
       "play": "Auto-scroll the page"
     },
     "previewGlide": "The page scrolls slowly by itself. Any key or touch stops it.",
-    "previewHint": "Use the arrow keys to move to the next template."
+    "previewHint": "Use the arrow keys to move to the next template.",
+    "notFoundBack": "Back to the page",
+    "notFoundBackTo": "Back to {name}"
   },
   "search": {
     "open": "Search people",

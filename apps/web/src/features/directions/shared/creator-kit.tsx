@@ -10,7 +10,7 @@ import { creatorOrigin } from "@/lib/page-url";
 import { resolveMedia } from "./media";
 import { mediaSizes, PlatformGlyph, platformName } from "./platforms";
 import { PrivacySettingsLink } from "./privacy";
-import { isProxiedImage } from "./remote-images";
+import { isForeignImage } from "./remote-images";
 
 export { mediaSizes, PlatformGlyph, platformName };
 
@@ -31,8 +31,10 @@ export function MediaImage({
   /** Where the subject is (0-1, 0-1): cropping keeps it in view. Centered when not given. */
   focal?: readonly [number, number] | undefined;
 }) {
-  if (!hasImage({ src })) {
-    // No picture yet (new creators, links pasted before metadata arrives): a calm tile, never a broken image.
+  // No picture yet (new creators, links pasted before metadata arrives), or one on someone else's
+  // server that our optimizer does not re-serve: a calm tile, never a broken image and never a
+  // request from the visitor's browser to a third party (creator pages load nothing from elsewhere).
+  if (!hasImage({ src }) || isForeignImage(src)) {
     return (
       <span
         role={alt ? "img" : undefined}
@@ -57,9 +59,8 @@ export function MediaImage({
       fetchPriority={priority ? "high" : "auto"}
       loading={priority ? "eager" : "lazy"}
       placeholder={typeof resolved === "string" ? "empty" : "blur"}
-      // Platform pictures (thumbnails, covers) go through our optimizer, so visitors never contact the
-      // platform; other remote pictures are shown as they are, without a referrer.
-      unoptimized={typeof resolved === "string" && /^https?:/.test(resolved) && !isProxiedImage(resolved)}
+      // Platform pictures (thumbnails, covers) and Storage uploads go through our optimizer, so
+      // visitors never contact the platform; foreign addresses never get here (above).
       referrerPolicy="no-referrer"
       {...(focal ? { style: { objectPosition: `${focal[0] * 100}% ${focal[1] * 100}%` } } : {})}
       className={cn("object-cover", className)}

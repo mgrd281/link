@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { isProxiedImage, isStorageImage } from "./remote-images";
+import { isForeignImage, isProxiedImage, isStorageImage } from "./remote-images";
 
 const HOSTED = "https://abcd.supabase.co";
 const LOCAL = "http://127.0.0.1:54321";
@@ -35,5 +35,34 @@ describe("pictures in our own Storage", () => {
     expect(isProxiedImage(`${HOSTED}/storage/v1/object/public/media/u/2026/a.jpg`)).toBe(true);
     expect(isProxiedImage("https://i.ytimg.com/vi/x/hqdefault.jpg")).toBe(true);
     expect(isProxiedImage("https://example.com/a.jpg")).toBe(false);
+  });
+});
+
+describe("pictures from someone else's server", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("re-serves YouTube channel avatars instead of letting the browser fetch them", () => {
+    const avatar = "https://yt3.googleusercontent.com/abc=s1080-c-k-c0x00ffffff-no-rj";
+    expect(isProxiedImage(avatar)).toBe(true);
+    expect(isForeignImage(avatar)).toBe(false);
+    // Exact hosts only: a look-alike is someone else's server.
+    expect(isForeignImage("https://yt3.googleusercontent.com.evil.example/a.jpg")).toBe(true);
+    expect(isForeignImage("https://lh3.googleusercontent.com/a.jpg")).toBe(true);
+  });
+
+  it("names every address on another host that the optimizer does not serve", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", HOSTED);
+    for (const src of ["https://tracker.example/p.gif", "http://tracker.example/p.gif", "HTTPS://tracker.example/p.gif", "//tracker.example/p.gif", "/\\tracker.example/p.gif", " https://tracker.example/p.gif", "http://i.ytimg.com/vi/x/hqdefault.jpg"]) {
+      expect(isForeignImage(src), src).toBe(true);
+    }
+  });
+
+  it("leaves our own files, sample assets, Storage and in-browser pictures alone", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", HOSTED);
+    for (const src of ["/samples/a.jpg", "sample:mix-01", "ex:ronja-feldkamp-01", "data:image/png;base64,iVBORw0KGgo=", "blob:http://localhost/1", `${HOSTED}/storage/v1/object/public/media/u/a.jpg`, "https://i.scdn.co/image/ab67"]) {
+      expect(isForeignImage(src), src).toBe(false);
+    }
   });
 });

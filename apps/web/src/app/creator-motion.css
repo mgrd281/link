@@ -1,0 +1,20 @@
+/*
+ * The page cross-fade of creator pages (C-09): going from a portfolio to a project and back is a
+ * document navigation (plain links), and between two documents that both carry this rule the browser
+ * fades instead of flashing white. Opacity only (the default root cross-fade), no shared-element
+ * flight, timed by the motion token; nothing at all with reduced motion.
+ *
+ * Imported only by the creator routes (app/u/[username]/layout.tsx and the two example routes under
+ * app/[locale]/p/[slug]), never by globals.css: sign-in, checkout and language changes do not fade.
+ * Both documents must opt in, so leaving a creator page for the website never fades either.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--duration-standard);
+  }
+}

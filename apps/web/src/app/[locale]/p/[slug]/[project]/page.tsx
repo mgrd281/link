@@ -9,6 +9,8 @@ import { previewChrome } from "@/features/previews/preview-chrome";
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
 import { NOINDEX } from "@/lib/seo";
 
+import "../../../../creator-motion.css";
+
 interface Props {
   params: Promise<{ locale: string; slug: string; project: string }>;
 }
