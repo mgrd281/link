@@ -20,4 +20,4 @@ export function localeAlternates(path: string, locale: string) {
 }
 
 /** The public pages listed in the sitemap, each in every language. */
-export const PUBLIC_PATHS = ["", "/templates", "/signup"] as const;
+export const PUBLIC_PATHS = ["", "/templates", "/portfolio", "/signup"] as const;

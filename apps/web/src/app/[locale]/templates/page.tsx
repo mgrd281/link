@@ -1,4 +1,3 @@
-import { TEMPLATE_IDS } from "@linkyo/tokens/creator";
 import { Button, Icon, LogoGlyph } from "@linkyo/ui";
 import { ArrowDown, ArrowRight, Info, LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
@@ -6,7 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { ExampleGallery } from "@/features/examples/gallery";
 import { galleryItems, visitorFirst } from "@/features/examples/gallery-items";
-import { LOOKS, PEOPLE_LOOKS } from "@/features/examples/looks";
+import { SITE_COUNTS } from "@/features/examples/looks";
 import { MarketingFooter } from "@/features/marketing/footer";
 import { MarketingHeader } from "@/features/marketing/header";
 import { PageWall } from "@/features/marketing/page-wall";
@@ -20,10 +19,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "examples.meta" });
-  const count = Object.keys(LOOKS).length + Object.keys(PEOPLE_LOOKS).length;
   return {
     title: { absolute: t("title") },
-    description: t("description", { count }),
+    // "14 Designs · 91 Beispielseiten": both numbers come from code (SITE_COUNTS).
+    description: t("description", SITE_COUNTS),
     alternates: localeAlternates("/templates", locale),
   };
 }
@@ -41,14 +40,16 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
   const examples = visitorFirst(all, locale);
   const items = [...examples, ...people];
 
+  // One vocabulary everywhere: designs (the templates) and example pages (the cards below).
   const stats = [
-    { value: TEMPLATE_IDS.length, label: t("stats.designs", { count: TEMPLATE_IDS.length }) },
+    { value: SITE_COUNTS.designs, label: t("stats.designs", { count: SITE_COUNTS.designs }) },
+    { value: SITE_COUNTS.pages, label: t("stats.examples", { count: SITE_COUNTS.pages }) },
     { value: 3, label: t("stats.languages", { count: 3 }) },
   ];
 
   return (
     <>
-      <MarketingHeader edge={false} />
+      <MarketingHeader edge={false} current="templates" />
       <main id="main" className="max-w-content mx-auto grid grid-cols-1 gap-16 px-5 pt-12 md:px-10">
         <ExampleGallery
           items={items}
@@ -71,7 +72,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
                 {t("eyebrow")}
               </p>
               <h1 className="text-h1 md:text-display lg:text-display-sm tracking-tight text-balance">
-                {t("title", { count: items.length })}
+                {t("title", { count: SITE_COUNTS.pages })}
               </h1>
               <p className="text-body text-fg-secondary md:text-body-lg max-w-prose text-pretty">
                 {t("lead")}
@@ -109,7 +110,8 @@ export default async function TemplatesPage({ params }: { params: Promise<{ loca
                   </a>
                 </Button>
               </div>
-              <ul aria-label={t("stats.label")} className="border-line flex gap-8 border-t pt-5 sm:pt-6">
+              {/* Three figures: on a narrow phone the last one wraps instead of running off the screen. */}
+              <ul aria-label={t("stats.label")} className="border-line flex flex-wrap gap-x-6 gap-y-2 border-t pt-5 sm:gap-x-8 sm:pt-6">
                 {stats.map((stat) => (
                   <li key={stat.label} className="flex items-baseline gap-2">
                     <span className="text-h2 tracking-tight tabular-nums">{stat.value}</span>

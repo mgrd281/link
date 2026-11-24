@@ -3,6 +3,8 @@ export const DIRECTIONS = ["poster", "gallery", "stage", "mosaic"] as const;
 
 export const ROUTES = [
   "",
+  // The Portfolio section of the website (§4.1 a): its landing page, in every language.
+  "/portfolio",
   "/design",
   "/directions",
   "/signup",

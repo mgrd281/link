@@ -1,5 +1,5 @@
 import { creatorTokens } from "@linkyo/tokens";
-import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
+import { TEMPLATE_IDS, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import type { CreatorKind } from "@/features/app/kinds";
 import { STAR_LOOKS } from "@/features/previews/stars-looks";
@@ -13,7 +13,7 @@ import { STAR_LOOKS } from "@/features/previews/stars-looks";
 const SW = creatorTokens.swatches;
 
 /** In the order of the filter chips: the biggest audiences first. */
-export const CATEGORIES = ["creators", "music", "local", "online", "sport", "tech", "business", "careers", "film", "public", "people"] as const;
+export const CATEGORIES = ["creators", "portfolio", "music", "local", "online", "sport", "tech", "business", "careers", "film", "public", "people"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export interface Look {
@@ -31,18 +31,20 @@ export interface Look {
 
 export const LOOKS = {
   // Portfolios on the two portfolio templates: a photographer, an engineer, a coach and a carpenter.
-  "ronja-feldkamp": { kind: "photographer", category: "local", locale: "de", theme: { template: "werkbogen" }, credit: "Paul Einerhand, Metin Ozer, Bob van Aubel, Declan Sun, Peyman Shojaei (Unsplash)" },
-  "tobin-achterberg": { kind: "developer", category: "tech", locale: "en", theme: { template: "tiefdruck" }, credit: "Vitaly Gariev (Unsplash)" },
-  "naya-aldabbas": { kind: "coach", category: "careers", locale: "ar", theme: { template: "werkbogen", accent: SW.oxblood }, credit: "Lisa Marie Theck (Unsplash)" },
+  // With the two portfolios on Folio (an architecture photographer, an open-source author) they make
+  // the gallery's "Portfolio" category, which the /portfolio page and the homepage band read.
+  "ronja-feldkamp": { kind: "photographer", category: "portfolio", locale: "de", theme: { template: "werkbogen" }, credit: "Paul Einerhand, Metin Ozer, Bob van Aubel, Declan Sun, Peyman Shojaei (Unsplash)" },
+  "tobin-achterberg": { kind: "developer", category: "portfolio", locale: "en", theme: { template: "tiefdruck" }, credit: "Vitaly Gariev (Unsplash)" },
+  "naya-aldabbas": { kind: "coach", category: "portfolio", locale: "ar", theme: { template: "werkbogen", accent: SW.oxblood }, credit: "Lisa Marie Theck (Unsplash)" },
   // Brass, not an orange: the page's one accent on a warm black ground. The owner chose the grid over the template's list.
-  "jorinde-ahlfeld": { kind: "freelancer", category: "local", locale: "de", theme: { template: "tiefdruck", accent: SW.brass, projects: "bento" }, credit: "Caroline Badran, Josh Davies, Bailey Alexander, mahdi chaghari (Unsplash)" },
+  "jorinde-ahlfeld": { kind: "freelancer", category: "portfolio", locale: "de", theme: { template: "tiefdruck", accent: SW.brass, projects: "bento" }, credit: "Caroline Badran, Josh Davies, Bailey Alexander, mahdi chaghari (Unsplash)" },
   // Apps and skills (ADR 0055): an app explainer and a skills author, first in the gallery.
   "merve-aksoy": { kind: "apps", category: "tech", locale: "de", theme: { template: "aura", accent: SW.sky } },
-  "arjun-mehta": { kind: "developer", category: "tech", locale: "en", theme: { template: "folio", accent: SW["ink-blue"] } },
+  "arjun-mehta": { kind: "developer", category: "portfolio", locale: "en", theme: { template: "folio", accent: SW["ink-blue"] } },
   // The five newer templates, one example each (ADR 0054): first in the gallery.
   lenz: { kind: "music", category: "music", locale: "de", theme: { template: "studio" } },
   "mira-sol": { kind: "coach", category: "creators", locale: "en", theme: { template: "aura" } },
-  "jonas-ek": { kind: "designer", category: "tech", locale: "de", theme: { template: "folio" } },
+  "jonas-ek": { kind: "designer", category: "portfolio", locale: "de", theme: { template: "folio" } },
   "rina-vex": { kind: "streamer", category: "creators", locale: "en", theme: { template: "signal" } },
   "dana-issa": { kind: "business", category: "local", locale: "ar", theme: { template: "bloom" } },
   // Spotlight: magazine-style pages of people, first in the gallery. Full-colour portraits on templates
@@ -155,6 +157,16 @@ export const PEOPLE_LOOKS: Record<string, { kind: CreatorKind; theme: CreatorThe
   ...STAR_LOOKS,
   nizar: { kind: "tiktok", theme: { template: "nocturne" } },
 };
+
+/**
+ * The two numbers the website quotes, one vocabulary in every language: designs are the templates
+ * in the tokens, example pages every page the gallery lists. Copy takes them as placeholders
+ * ({designs}, {pages}), so a new template or example never touches a sentence.
+ */
+export const SITE_COUNTS = {
+  designs: TEMPLATE_IDS.length,
+  pages: Object.keys(LOOKS).length + Object.keys(PEOPLE_LOOKS).length,
+} as const;
 
 /** The look behind a gallery card: an example's, or a well-known person's page. */
 export function findLook(value: string | null): { kind: CreatorKind; theme: CreatorThemeConfig } | null {

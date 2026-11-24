@@ -10,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type Dispatch,
   type KeyboardEvent,
@@ -236,6 +237,16 @@ function useAutoScroll(
 const STEP = 12;
 
 /**
+ * A link may name a category ("/templates?category=portfolio#gallery", from the Portfolio page): the
+ * gallery opens with that chip chosen. Read in the browser only, so the page stays static.
+ */
+const askedCategory = (): Category | null => {
+  const asked = new URLSearchParams(window.location.search).get("category");
+  return CATEGORIES.find((key) => key === asked) ?? null;
+};
+const stayPut = () => () => undefined;
+
+/**
  * The gallery: the still wall of pages next to the intro, then search, language and category filters
  * over a grid of cards. A card opens a phone-sized preview to flip through (buttons or arrow keys),
  * use as a template (sign-up starts with exactly that look) or open in full. On phones the preview is
@@ -247,7 +258,10 @@ const STEP = 12;
 export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; intro: ReactNode; wall: ReactNode }) {
   const t = useTranslations("examples");
   const locale = useLocale();
-  const [category, setCategory] = useState<Category | "all">("all");
+  // The chip the visitor chose; until then the one the address names, else "all".
+  const asked = useSyncExternalStore(stayPut, askedCategory, () => null);
+  const [chosen, setCategory] = useState<Category | "all" | null>(null);
+  const category = chosen ?? asked ?? "all";
   const [language, setLanguage] = useState<Language>("all");
   const [query, setQuery] = useState("");
   // The grid follows the search once typing pauses: the results come in as one wave, not card by card.
@@ -289,6 +303,18 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
   useEffect(() => {
     if (open) lastShown.current = open.slug;
   }, [open]);
+
+  // A chip chosen by the address may sit past the edge of the sideways row: bring it to the middle
+  // of the row (the row scrolls, the page does not).
+  useEffect(() => {
+    if (!asked) return;
+    const chip = document.querySelector<HTMLElement>('#gallery [role="group"] button[aria-pressed="true"]');
+    const row = chip?.parentElement;
+    if (!chip || !row) return;
+    const at = chip.getBoundingClientRect();
+    const frame = row.getBoundingClientRect();
+    row.scrollBy({ left: (at.left + at.right) / 2 - (frame.left + frame.right) / 2, behavior: "auto" });
+  }, [asked]);
 
   const label = (item: GalleryItem) => (item.badge ? t(`badges.${item.badge}`) : t(`categories.${item.category}`));
   const haystack = useMemo(
