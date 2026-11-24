@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { LinkyoDock } from "@/features/directions/shared/dock";
 import { Link } from "@/i18n/navigation";
 
+import { labelInFlow } from "./label-flow";
 import type { Preview } from "./registry";
 
 /** Each language in its own name, so people find theirs whatever the page is in. */
@@ -22,8 +23,8 @@ export interface PreviewChrome {
   /** The label laid over the top of a classic hero (the renderer places it). */
   overlay: ReactNode;
   /**
-   * The label in the page's flow, above the page, for the two portfolio heroes: laid over them it
-   * would cover the round avatar (statement) or the plate's corner (plate). Null otherwise.
+   * The label in the page's flow, above the page, for the portfolio heroes (`labelInFlow`): laid over
+   * them it would cover the round avatar, the plate's corner or the name. Null otherwise.
    */
   above: ReactNode;
   /** The label for a project page, which places it in its flow right under its bar. */
@@ -146,9 +147,7 @@ export async function previewChrome({
     />
   );
 
-  // The two portfolio heroes start with the avatar (statement) or the plate (plate) right at the top:
-  // their label stands in the flow above the page instead of over it.
-  const inFlow = theme.layout.hero === "plate" || theme.layout.hero === "statement";
+  const inFlow = labelInFlow(theme.layout.hero);
   return {
     overlay: inFlow ? undefined : badge,
     above: inFlow ? (

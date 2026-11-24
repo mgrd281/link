@@ -94,6 +94,19 @@ for (const person of PEOPLE) {
   });
 }
 
+test("on a phone the example label never covers the name: it stands above the strip, the title block and the README", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const person of PEOPLE) {
+    await open(page, `/${person.locale}/p/${person.slug}`);
+    const [label, name] = await Promise.all([page.locator("[data-preview-badge]").first().boundingBox(), page.getByRole("heading", { level: 1 }).boundingBox()]);
+    expect(label, person.slug).not.toBeNull();
+    expect(name, person.slug).not.toBeNull();
+    if (!label || !name) continue;
+    const overlaps = label.x < name.x + name.width && name.x < label.x + label.width && label.y < name.y + name.height && name.y < label.y + label.height;
+    expect(overlaps, `${person.slug}: label ${JSON.stringify(label)}, name ${JSON.stringify(name)}`).toBe(false);
+  }
+});
+
 test("Merle's lead series: after its cover, thirteen pictures, each a numbered link on our own origin for the viewer", async ({ page }) => {
   await open(page, "/de/p/merle-kastorf/nachbild");
   const pictures = page.locator("a[data-viewer]");
