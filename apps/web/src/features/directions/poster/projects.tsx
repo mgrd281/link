@@ -398,7 +398,7 @@ export function ProjectStrip({
       <ol
         data-scroll-track
         style={{ "--strip": sum } as CSSProperties}
-        className={cn(railTrack, "flex items-end gap-2 @work:max-w-[calc(70svh*var(--strip))] @work:snap-none @work:items-start @work:gap-3 @work:overflow-visible")}
+        className={cn(railTrack, "flex items-start gap-2 @work:max-w-[calc(70svh*var(--strip))] @work:snap-none @work:gap-3 @work:overflow-visible")}
       >
         {frames.map(({ project, picture, ratio, position }, index) => {
           const entry: Entry = { project, position, target: targetOf(project, quotes, base, suffix, onOpen) };

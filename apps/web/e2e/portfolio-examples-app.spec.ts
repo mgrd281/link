@@ -105,6 +105,11 @@ test("on a phone the example label never covers the name: it stands above the st
     const overlaps = label.x < name.x + name.width && name.x < label.x + label.width && label.y < name.y + name.height && name.y < label.y + label.height;
     expect(overlaps, `${person.slug}: label ${JSON.stringify(label)}, name ${JSON.stringify(name)}`).toBe(false);
   }
+  // Merle's strip starts right under her name: a landscape cover beside an upright one stands at the
+  // top of the row, not at its foot with the rest of the first screen left empty above it.
+  await open(page, "/de/p/merle-kastorf");
+  const first = await page.locator("header [data-plate]").first().boundingBox();
+  expect(first?.y ?? Infinity).toBeLessThanOrEqual(300);
 });
 
 test("Merle's lead series: after its cover, thirteen pictures, each a numbered link on our own origin for the viewer", async ({ page }) => {
