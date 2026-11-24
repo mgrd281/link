@@ -182,19 +182,24 @@ test.describe("on a phone", () => {
     await fits(page);
   });
 
-  test("no row of social icons ends with a single icon", async ({ page }) => {
-    for (const template of ["nocturne", "signal", "bloom", "tiefdruck", "leuchttisch", "grundriss", "logbuch"]) {
-      await open(page, sample("de", template, false));
-      const rows = await page.locator("header ul[data-block] > li").evaluateAll((items) => {
-        const tops = new Map<number, number>();
-        for (const item of items) {
-          const top = Math.round(item.getBoundingClientRect().top);
-          tops.set(top, (tops.get(top) ?? 0) + 1);
-        }
-        return [...tops.values()];
-      });
-      expect(rows.length, template).toBeGreaterThan(0);
-      if (rows.length > 1) expect(rows.at(-1), `${template}: ${rows.join(" + ")}`).toBeGreaterThan(1);
+  test("no row of social icons ends with a single icon, on any common phone width", async ({ page }) => {
+    test.setTimeout(120_000);
+    // 360 (many Androids), 375 (iPhone SE and mini), 390, 430 and 440 (the large iPhones).
+    for (const width of [360, 375, 390, 430, 440]) {
+      await page.setViewportSize({ width, height: 844 });
+      for (const template of ["nocturne", "signal", "bloom", "tiefdruck", "leuchttisch", "grundriss", "logbuch"]) {
+        await open(page, sample("de", template, false));
+        const rows = await page.locator("header ul[data-block] > li").evaluateAll((items) => {
+          const tops = new Map<number, number>();
+          for (const item of items) {
+            const top = Math.round(item.getBoundingClientRect().top);
+            tops.set(top, (tops.get(top) ?? 0) + 1);
+          }
+          return [...tops.values()];
+        });
+        expect(rows.length, template).toBeGreaterThan(0);
+        if (rows.length > 1) expect(rows.at(-1), `${template} at ${String(width)} px: ${rows.join(" + ")}`).toBeGreaterThan(1);
+      }
     }
   });
 

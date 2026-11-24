@@ -149,15 +149,29 @@ export function socialsPerRow(width: number, plain: boolean, start: boolean): nu
   return Math.max(1, Math.floor((room + gap) / (item + gap)));
 }
 
+/** Whether `count` icons in rows of `perRow` leave the last one alone on its row. */
+const orphans = (count: number, perRow: number) => count > perRow && count % perRow === 1;
+
 /**
- * Icons per row on a phone `width` wide so that no row ends with a single icon: null when the icons
- * fit one row or wrap without such an orphan, else the count that makes the rows even (6 tiles: 3 + 3
- * instead of 5 + 1; 11: 4 + 4 + 3).
+ * Icons per row for every phone from `from` up to (not including) `to` px wide, so that at no width in
+ * that range a row ends with a single icon: null when no width there leaves one alone (the icons wrap
+ * as they fit), else one count that the narrowest phone holds and that leaves no icon alone, used at
+ * every width of the range (6 tiles from 320 to 639: 3 + 3, where 375 would give 5 + 1; 9 tiles from
+ * 390: 5 + 4, where 600 would give 8 + 1). The rows are as even as the narrowest phone allows: 11
+ * icons where a row holds 5 are 4 + 4 + 3.
  */
-export function balancedRow(count: number, width: number, plain: boolean, start: boolean): number | null {
-  const perRow = socialsPerRow(width, plain, start);
-  if (count <= perRow || count % perRow !== 1) return null;
-  return Math.ceil(count / Math.ceil(count / perRow));
+export function balancedRow(count: number, from: number, to: number, plain: boolean, start: boolean): number | null {
+  const narrowest = socialsPerRow(from, plain, start);
+  const widest = socialsPerRow(to - 1, plain, start);
+  // Between the narrowest and the widest phone a row holds every count in between (one more per step).
+  let alone = false;
+  for (let perRow = narrowest; perRow <= widest; perRow++) alone ||= orphans(count, perRow);
+  if (!alone) return null;
+  for (let rows = Math.ceil(count / narrowest); rows <= count; rows++) {
+    const perRow = Math.ceil(count / rows);
+    if (!orphans(count, perRow)) return perRow;
+  }
+  return null;
 }
 
 /** The width of `count` icons in a row, in tokens. */
@@ -170,13 +184,15 @@ const rowWidth = (count: number, plain: boolean): string =>
  * (C-07); every hero here passes it. Laufbahn's hero calls this without it and keeps its outline pair.
  *
  * `balance` (every hero but Laufbahn's): on phones no row ends with one icon alone. Where the icons
- * would leave one on a row of its own, the list is narrowed to the balanced count (`balancedRow`), for
- * the reference phone (layout.preview, 390) and for narrower ones (layout.preview-compact, 320); the
+ * would leave one on a row of its own at any phone width, the list is narrowed to a balanced count
+ * (`balancedRow`) for the whole of that width range: from layout.preview-compact (320) to
+ * layout.preview (390), and from there to layout.prose (640), where the page becomes the column. The
  * column and wider screens are unchanged.
  */
 export function Socials({ block, plain, start = false, solid = false, balance = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean; solid?: boolean; balance?: boolean }) {
-  const phone = balance ? balancedRow(block.items.length, tokens.layout.preview, plain, start) : null;
-  const narrow = balance ? balancedRow(block.items.length, tokens.layout.previewCompact, plain, start) : null;
+  const { preview, previewCompact, prose } = tokens.layout;
+  const phone = balance ? balancedRow(block.items.length, preview, prose, plain, start) : null;
+  const narrow = balance ? balancedRow(block.items.length, previewCompact, preview, plain, start) : null;
   const style = {
     ...(phone ? { "--socials-row": rowWidth(phone, plain) } : {}),
     ...(narrow ? { "--socials-row-narrow": rowWidth(narrow, plain) } : {}),

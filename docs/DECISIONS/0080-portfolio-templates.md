@@ -57,9 +57,11 @@ fix below is meant to change it (the picture baseline lists each difference).
   check of a template's id (`airy` in renderer.tsx), because no layout value says "came onto the canvas
   later". Laufbahn and Folio now share six layout keys; the layout-difference test names that one pair
   (Laufbahn may not change).
-- **Social rows** (every hero but Laufbahn's): on a phone of 390 px (and of 320 px) no row ends with a
-  single icon; where one would, the list is narrowed to the balanced count (`balancedRow`: six tiles
-  are 3 + 3, not 5 + 1).
+- **Social rows** (every hero but Laufbahn's): on no phone from 320 to 639 px does a row end with a
+  single icon. Where one would at any width of a range (320–389 and 390–639, the two ranges the
+  container variants name), the list is narrowed for that whole range to one balanced count that the
+  narrowest phone holds (`balancedRow`: six tiles are 3 + 3, not 5 + 1 at 375 or 390). A unit test
+  checks every width and count up to twelve; the e2e checks 360, 375, 390, 430 and 440 px.
 
 **Consequences.**
 

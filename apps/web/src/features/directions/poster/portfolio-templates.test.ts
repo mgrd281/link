@@ -1,5 +1,6 @@
 import type { Block, BlockOf, Page } from "@linkyo/blocks";
-import { resolveCreatorTheme } from "@linkyo/tokens/creator";
+import { tokens } from "@linkyo/tokens";
+import { resolveCreatorTheme, TEMPLATE_IDS } from "@linkyo/tokens/creator";
 import { NextIntlClientProvider } from "next-intl";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -45,23 +46,56 @@ describe("social rows on phones", () => {
   });
 
   it.each([
-    [6, 390, false, false, 3],
-    [5, 390, false, false, null],
-    [11, 390, false, false, 4],
-    [10, 390, false, false, null],
-    [7, 390, true, false, 4],
-    [6, 390, true, false, null],
-    [8, 390, true, true, 4],
-    [5, 320, false, false, 3],
-    [1, 320, false, false, null],
-  ] as const)("%i icons at %i px (plain %s, start %s): %s per row", (count, width, plain, start, expected) => {
-    const row = balancedRow(count, width, plain, start);
+    // From 390 to 639 px.
+    [6, 390, 640, false, false, 3],
+    [5, 390, 640, false, false, null],
+    [11, 390, 640, false, false, 4],
+    [10, 390, 640, false, false, null],
+    [7, 390, 640, true, false, 4],
+    [6, 390, 640, true, false, null],
+    [8, 390, 640, true, true, 4],
+    // 9 tiles hold 5 + 4 at 390 but 8 + 1 at 600: 5 a row on every phone of the range.
+    [9, 390, 640, false, false, 5],
+    // From 320 to 389 px: 6 tiles are 4 + 2 at 320 but 5 + 1 at 375.
+    [6, 320, 390, false, false, 3],
+    [5, 320, 390, false, false, 3],
+    [7, 320, 390, true, true, 4],
+    [1, 320, 390, false, false, null],
+  ] as const)("%i icons from %i to %i px (plain %s, start %s): %s per row", (count, from, to, plain, start, expected) => {
+    const row = balancedRow(count, from, to, plain, start);
     expect(row).toBe(expected);
     if (row !== null) {
-      // No row ends with one icon, and the balanced row fits the phone.
+      // No row ends with one icon, and the balanced row fits the narrowest phone.
       expect(count % row === 0 || count % row > 1).toBe(true);
-      expect(row).toBeLessThanOrEqual(socialsPerRow(width, plain, start));
+      expect(row).toBeLessThanOrEqual(socialsPerRow(from, plain, start));
     }
+  });
+
+  it("leaves no icon alone at any phone width from 320 to 639 px, for every count and every hero", () => {
+    const platforms = ["instagram", "tiktok", "youtube", "spotify", "soundcloud", "email", "website", "x", "facebook", "linkedin", "github", "twitch"] as const;
+    const clamp = (markup: string, name: string) => {
+      const match = new RegExp(`--${name}:calc\\((\\d+) \\* var`).exec(markup);
+      return match ? Number(match[1]) : Infinity;
+    };
+    const alone: string[] = [];
+    for (const template of TEMPLATE_IDS.filter((id) => id !== "laufbahn")) {
+      for (let count = 2; count <= platforms.length; count++) {
+        const socials: Block = { ...base, id: "s", type: "socials", items: platforms.slice(0, count).map((platform) => ({ platform, url: `https://example.com/${platform}` })) };
+        const page: Page = { profile: { username: "mila", displayName: "Mila", bio: "", avatar: { src: "none:", alt: "" }, verified: false, locale: "de" }, blocks: [socials] };
+        const list = /<ul data-block="s"[^>]*>/.exec(hero(html(template, page)))?.[0];
+        if (!list) continue;
+        // Bare glyphs sit 8 px apart (gap-2), tiles 12 (gap-3); a row at the reading start is pulled out.
+        const plain = /\bgap-2\b/.test(list);
+        const start = list.includes("justify-start");
+        for (let width = tokens.layout.previewCompact; width < tokens.layout.prose; width++) {
+          // The page's CSS: below layout.preview the narrow count, from there to layout.prose the phone's.
+          const limit = width < tokens.layout.preview ? clamp(list, "socials-row-narrow") : clamp(list, "socials-row");
+          const perRow = Math.min(limit, socialsPerRow(width, plain, start));
+          if (count > perRow && count % perRow === 1) alone.push(`${template}: ${String(count)} at ${String(width)} px`);
+        }
+      }
+    }
+    expect(alone).toEqual([]);
   });
 
   it("narrows the list where an icon would stand alone, and never on Laufbahn", () => {
