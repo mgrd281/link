@@ -1371,6 +1371,7 @@ export type Database = {
       admin_contract_requests: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_customer_referrals: { Args: { customer: string }; Returns: Json };
       admin_customers: { Args: Record<PropertyKey, never>; Returns: Json };
+      admin_customers_exported: { Args: { row_count: number }; Returns: undefined };
       admin_delete_customer: { Args: { customer: string }; Returns: undefined };
       admin_deliver_proposal: { Args: { proposal: string }; Returns: Json };
       admin_mark_contract_handled: {
@@ -1381,6 +1382,8 @@ export type Database = {
       admin_order: { Args: { target: string }; Returns: Json };
       admin_order_refund_target: { Args: { target: string }; Returns: Json };
       admin_orders: { Args: { scope?: string }; Returns: Json };
+      admin_pro_refund_target: { Args: { customer: string; invoice: string }; Returns: Json };
+      admin_pro_subscription_target: { Args: { action: string; customer: string }; Returns: Json };
       admin_referral_queue: { Args: Record<PropertyKey, never>; Returns: Json };
       admin_refund_invoice: { Args: { invoice: string }; Returns: undefined };
       admin_refund_order: { Args: { target: string }; Returns: Json };
