@@ -296,8 +296,8 @@ select is_empty($$ select 1 from public.ai_budget_days where day < (now() at tim
   'budget days go after 90 days');
 select isnt((select jobid from cron.job where jobname = 'linkyo-ai-cleanup'), null, 'every 5 minutes');
 select is((select array_agg(jobname::text order by jobname) from cron.job where jobname like 'linkyo-%'),
-  array['linkyo-ai-cleanup', 'linkyo-purge-form-limits', 'linkyo-purge-sign-ins', 'linkyo-purge-unconfirmed',
-    'linkyo-service-maintenance', 'linkyo-settle-referrals'], 'six nightly or frequent jobs in all');
+  array['linkyo-ai-cleanup', 'linkyo-purge-form-limits', 'linkyo-purge-page-stats', 'linkyo-purge-sign-ins', 'linkyo-purge-unconfirmed',
+    'linkyo-service-maintenance', 'linkyo-settle-referrals'], 'seven nightly or frequent jobs in all');
 
 select * from finish();
 rollback;

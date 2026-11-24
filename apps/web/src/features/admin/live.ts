@@ -2,6 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 
+import { parseConsoleStats, type ConsoleStats } from "@/features/analytics/answer";
+import { measured, withPageStats } from "@/features/analytics/console";
 import { browserSupabase } from "@/lib/supabase/browser";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { fromJson } from "@/lib/supabase/json";
@@ -32,6 +34,15 @@ export interface LiveCustomers {
   blockedIps: BlockedIp[];
   /** Whether admin_customers() was called for this member, and how old the database is. */
   access: CustomerAccess;
+  /**
+   * Whether page views are counted (cookie-free statistics, `admin_page_stats`): only then do
+   * `usage.views30` and `usage.clicks30` hold measured numbers. False on a database without the
+   * statistics and while nothing has been counted anywhere (the server switch is off): the console
+   * then says "not measured yet", never 0.
+   */
+  viewsMeasured: boolean;
+  /** The last 30 days' totals (views per day for a chart), when measured. */
+  pageViews: ConsoleStats | null;
 }
 
 function liveStore<T>(initial: T, load: () => Promise<T>) {
@@ -88,22 +99,34 @@ const team = liveStore<LiveTeam>({ status: "loading" }, async () => {
   };
 });
 
-const customers = liveStore<LiveCustomers>({ ready: false, now: 0, customers: [], blockedIps: [], access: { legacy: false, withheld: false } }, async () => {
+const NO_CUSTOMERS: LiveCustomers = { ready: false, now: 0, customers: [], blockedIps: [], access: { legacy: false, withheld: false }, viewsMeasured: false, pageViews: null };
+
+const customers = liveStore<LiveCustomers>(NO_CUSTOMERS, async () => {
   const supabase = browserSupabase();
   // First the member's role and the database's permissions: on a database without
   // 20261124100100_admin_money.sql, admin_customers() would hand editors people (customers/access.ts).
   const me = await supabase.rpc("admin_me");
   const access = customerAccess(me.error ? null : me.data);
-  if (access.withheld) return { ready: true, now: Date.now(), customers: [], blockedIps: [], access };
-  const [list, blocked] = await Promise.all([supabase.rpc("admin_customers"), supabase.rpc("admin_blocked_ips")]);
-  const rows = fromJson<Omit<Customer, "source">[] | null>(list.data ?? null) ?? [];
+  if (access.withheld) return { ...NO_CUSTOMERS, ready: true, now: Date.now(), access };
+  const [list, blocked, stats] = await Promise.all([
+    supabase.rpc("admin_customers"),
+    supabase.rpc("admin_blocked_ips"),
+    // Page views and taps (20261125100000_page_stats.sql). A database without it refuses (function
+    // not found): views stay "not measured", as before.
+    supabase.rpc("admin_page_stats", { days: 30 }),
+  ]);
+  const rows = (fromJson<Omit<Customer, "source">[] | null>(list.data ?? null) ?? []).map((row) => ({ ...row, source: "live" as const }));
+  const pageViews = stats.error ? null : parseConsoleStats(stats.data);
+  const counted = measured(pageViews);
   return {
     ready: true,
     now: Date.now(),
-    customers: rows.map((row) => ({ ...row, source: "live" as const })),
+    customers: counted ? withPageStats(rows, pageViews) : rows,
     // Without "security.view" the database refuses; the console then shows no blocked addresses.
     blockedIps: blocked.error ? [] : (fromJson<BlockedIp[] | null>(blocked.data ?? null) ?? []),
     access,
+    viewsMeasured: counted,
+    pageViews: counted ? pageViews : null,
   };
 });
 
