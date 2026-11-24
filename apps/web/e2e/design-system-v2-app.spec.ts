@@ -213,7 +213,7 @@ test.describe("Arabic companions (C-03)", () => {
         if (which === "body" && element.closest("h1, h2, h3")) continue;
         // Only Arabic words and spaces in its own text, so every face it draws with is an answer.
         const texts = Array.from(element.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? "").trim() !== "");
-        const pure = texts.every((node) => /^[؀-ۿ  ‌-‏]+$/.test((node.textContent ?? "").trim()));
+        const pure = texts.every((node) => /^[\u0600-\u06FF\u0020\u00A0\u200C-\u200F]+$/.test((node.textContent ?? "").trim()));
         if (!pure || !texts.some((node) => twoWords.test(node.textContent ?? ""))) continue;
         element.setAttribute("data-drawn-probe", which);
         return true;

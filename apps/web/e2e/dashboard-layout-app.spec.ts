@@ -158,14 +158,14 @@ test.describe("laptop layout", () => {
       const calls: string[] = [];
       (window as unknown as { pickerScrolls: string[] }).pickerScrolls = calls;
       for (const name of ["scrollIntoView", "scrollBy", "scrollTo"] as const) {
-        const original = Element.prototype[name] as (...args: unknown[]) => void;
+        const original = Object.getOwnPropertyDescriptor(Element.prototype, name)?.value as (this: Element, ...args: unknown[]) => void;
         Object.defineProperty(Element.prototype, name, {
           configurable: true,
           writable: true,
           value(this: Element, ...args: unknown[]) {
             if (this.querySelector("input[name=poster-template]")) {
               const options = args[0];
-              calls.push(typeof options === "object" && options !== null ? String((options as { behavior?: string }).behavior ?? "auto") : "auto");
+              calls.push(typeof options === "object" && options !== null ? ((options as { behavior?: string }).behavior ?? "auto") : "auto");
             }
             original.apply(this, args);
           },
@@ -266,7 +266,7 @@ test.describe("Arbeiten", () => {
       if (width) await page.setViewportSize({ width, height: 900 });
       await page.goto("/en/app/work");
       await expect(page.locator("#main ul[aria-label] > li")).toHaveCount(6);
-      expect(await firstRow(page, "#main ul[aria-label] > li"), `${String(width || "phone")}`).toBe(isMobile ? 2 : 4);
+      expect(await firstRow(page, "#main ul[aria-label] > li"), String(width || "phone")).toBe(isMobile ? 2 : 4);
     }
   });
 
