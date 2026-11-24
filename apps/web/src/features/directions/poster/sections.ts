@@ -1,5 +1,6 @@
 import type { Block, BlockOf } from "@linkyo/blocks";
 import { selfTitle } from "@linkyo/blocks/project";
+import { hasImage } from "@linkyo/blocks/rules";
 
 /**
  * Poster pages are read as titled sections. Creators never build containers: a "header" block
@@ -47,12 +48,18 @@ export { selfTitle };
 
 /**
  * Blocks whose content takes the whole width of the wide canvas: the work, pictures in a grid, the
- * about section with its portrait, quotes, clients and the contact band. Everything else is read in
- * the column beside its title.
+ * about section with a portrait or facts to stand beside its words, quotes, clients and the contact
+ * band. Everything else, an about of words alone included (P-09), is read in the column beside its
+ * title, so the section still spans the canvas.
  */
-const WIDE_BLOCKS: ReadonlySet<Block["type"]> = new Set<Block["type"]>(["gallery", "about", "quotes", "brands", "contact"]);
+const WIDE_BLOCKS: ReadonlySet<Block["type"]> = new Set<Block["type"]>(["gallery", "quotes", "brands", "contact"]);
 
-const itemSpan = (item: PosterItem): PosterSection["span"] => (item.kind === "projects" || (item.kind === "block" && WIDE_BLOCKS.has(item.block.type)) ? "wide" : "text");
+/** An about section draws a grid of its own on the canvas only with a portrait or facts beside its words. */
+export const aboutSpansCanvas = (block: BlockOf<"about">): boolean => hasImage(block.portrait) || (block.facts?.length ?? 0) > 0;
+
+const wideBlock = (block: Block): boolean => WIDE_BLOCKS.has(block.type) || (block.type === "about" && aboutSpansCanvas(block));
+
+const itemSpan = (item: PosterItem): PosterSection["span"] => (item.kind === "projects" || (item.kind === "block" && wideBlock(item.block)) ? "wide" : "text");
 
 export function groupSections(blocks: readonly Block[], featured?: string): PosterSection[] {
   const sections: PosterSection[] = [{ id: "top", title: null, items: [], span: "text" }];

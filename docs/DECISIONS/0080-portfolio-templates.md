@@ -52,7 +52,9 @@ fix below is meant to change it (the picture baseline lists each difference).
   project also when it has no picture: its result figures (up to two) or its title set large on a fill
   step, at 3:2, with the usual caption. Phones show that plate too (the run goes on with the second
   project, as with a picture), so the page reads the same at every width.
-- **P-09.** About without a portrait: the words in columns 1–8, the facts beside them in 9–12.
+- **P-09.** About without a portrait: the words in columns 1–8, the facts beside them in 9–12. Without
+  a portrait and without facts, About is read like any text section: the title in columns 1–4, the
+  words beside it in the reading column.
 - **C-06.** Folio moves onto the wide canvas (`canvas: "wide"`): its picture in the last six columns
   beside the name, its sections in the canvas's grid. Below layout.work it keeps the column's spacing
   (the portfolio templates breathe more), so its phone pages do not change; this is the renderer's one

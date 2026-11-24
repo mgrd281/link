@@ -9,7 +9,7 @@ import { useId, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
 import { LinkIconGlyph } from "../shared/link-icons";
-import { linkDestination, paragraphs } from "./sections";
+import { aboutSpansCanvas, linkDestination, paragraphs } from "./sections";
 import { displayStyle, pageSide, pressable } from "./styles";
 
 /**
@@ -37,9 +37,11 @@ const portraitSizes = (wide: boolean): string =>
  * The lead is set in the display face where the template's face suits running text (`lead`), in the
  * body face otherwise. Wide canvas: the portrait takes the start columns, the words the rest; without
  * a portrait the words take the first eight columns and the facts stand beside them in the last four,
- * one under the other (P-09), so the section spans the canvas.
+ * one under the other (P-09), so the section spans the canvas. Words alone are read in the column
+ * beside the section's title (`aboutSpansCanvas`) and drawn as in a column.
  */
-export function AboutSection({ block, wide, lead = "body" }: { block: BlockOf<"about">; wide: boolean; lead?: "display" | "body" | undefined }): ReactNode {
+export function AboutSection({ block, wide: canvas, lead = "body" }: { block: BlockOf<"about">; wide: boolean; lead?: "display" | "body" | undefined }): ReactNode {
+  const wide = canvas && aboutSpansCanvas(block);
   const [first, ...rest] = paragraphs(block.text);
   const portrait = hasImage(block.portrait) ? block.portrait : undefined;
   const facts = block.facts ?? [];

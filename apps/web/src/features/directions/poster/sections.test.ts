@@ -158,14 +158,15 @@ describe("portfolio blocks", () => {
     ]);
   });
 
-  it("spans the wide canvas with work, pictures, about, quotes, clients and contact; everything else reads beside its title", () => {
+  it("spans the wide canvas with work, pictures, quotes, clients and contact; everything else reads beside its title", () => {
     const gallery: Block = { ...base, id: "gallery", type: "gallery", title: "Pictures", images: [{ src: "sample:gallery-1", alt: "" }] };
     const brands: Block = { ...base, id: "clients", type: "brands", title: "Clients", columns: 3, items: [{ name: "A bakery" }] };
     const span = (blocks: Block[]) => groupSections(blocks).map((section) => [section.title, section.span]);
     expect(span([link("x"), header("h", "Work"), project("a"), about("About me"), tools("Tech stack"), timeline, quotes, brands, gallery, header("l", "Links"), link("y"), video("v"), contact])).toEqual([
       [null, "text"],
       ["Work", "wide"],
-      ["About me", "wide"],
+      // Words alone (no portrait, no facts): beside the title, see below.
+      ["About me", "text"],
       ["Tech stack", "text"],
       ["Experience", "text"],
       ["What clients say", "wide"],
@@ -179,6 +180,14 @@ describe("portfolio blocks", () => {
     expect(span([link("x"), project("a")])).toEqual([[null, "wide"]]);
     // A freshly added title without blocks is a text section.
     expect(span([header("h", "New")])).toEqual([["New", "text"]]);
+  });
+
+  it("reads an about of words alone beside its title, and spans the canvas with a portrait or facts (P-09)", () => {
+    const span = (block: Block) => groupSections([block]).map((section) => section.span);
+    // `about("About me")` has neither a portrait nor facts: the title in columns 1–4, the words beside it.
+    expect(span(about("About me"))).toEqual(["text"]);
+    expect(span({ ...about("About me"), facts: [{ label: "Based in", value: "Berlin" }] } as Block)).toEqual(["wide"]);
+    expect(span({ ...about("About me"), portrait: { src: "sample:avatar-1", alt: "" } } as Block)).toEqual(["wide"]);
   });
 });
 
