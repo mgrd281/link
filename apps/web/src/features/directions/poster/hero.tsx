@@ -461,8 +461,9 @@ export function PosterHero({
     const line = contact ? contactStatus(contact, now ?? new Date()) : null;
     // The wide canvas (P-08): the name across it, then the role line and the sentence in columns 1–7
     // and the numbers, the action and the profiles in 8–12, so the first screen is filled on both
-    // sides. Those three are one box only there (below it, `contents`: no box, the same order); the
-    // grid packs it back up beside the role line (dense).
+    // sides. Each side is one box only there (below it, `contents`: no box, the same order); the grid
+    // packs the second back up beside the first (dense). The words share one box so that a taller
+    // box beside them grows their row, not the space between the role line and the sentence.
     return (
       // The live pill (a link, the header's only one) spans the canvas like the name.
       <header className="poster-hero-timeline grid grid-cols-1 justify-items-start gap-4 px-creator-gutter pt-10 text-start @prose:px-0 @work:grid-flow-row-dense @work:grid-cols-12 @work:gap-x-6 @work:gap-y-5 @work:pt-6 @work:[&>a]:col-span-12">
@@ -476,17 +477,21 @@ export function PosterHero({
         <div className={cn("w-full min-w-0 @work:col-span-12", rise(1).className)} style={rise(1).style}>
           <Name profile={profile} isRtl={isRtl} theme={theme} scale="statement" />
         </div>
-        {profile.tagline ? (
-          <p dir="auto" className={cn(pageSide, "w-full max-w-prose text-h3 leading-snug text-balance break-words @work:col-span-7", rise(2).className)} style={rise(2).style} {...aiText(profile, "tagline")}>
-            {profile.tagline}
-          </p>
+        {profile.tagline || profile.bio ? (
+          <div className="contents @work:col-span-7 @work:grid @work:content-start @work:gap-5">
+            {profile.tagline ? (
+              <p dir="auto" className={cn(pageSide, "w-full max-w-prose text-h3 leading-snug text-balance break-words", rise(2).className)} style={rise(2).style} {...aiText(profile, "tagline")}>
+                {profile.tagline}
+              </p>
+            ) : null}
+            {profile.bio ? (
+              <p dir="auto" className={cn(pageSide, "w-full max-w-prose text-body-lg text-pretty break-words text-creator-fg-muted", rise(3).className)} style={rise(3).style} {...aiText(profile, "bio")}>
+                {profile.bio}
+              </p>
+            ) : null}
+          </div>
         ) : null}
-        {profile.bio ? (
-          <p dir="auto" className={cn(pageSide, "w-full max-w-prose text-body-lg text-pretty break-words text-creator-fg-muted @work:col-span-7", rise(3).className)} style={rise(3).style} {...aiText(profile, "bio")}>
-            {profile.bio}
-          </p>
-        ) : null}
-        <div className={cn("contents @work:col-span-5 @work:col-start-8 @work:grid @work:content-start @work:justify-items-start @work:gap-5 @work:justify-self-stretch", profile.tagline && profile.bio && "@work:row-span-2")}>
+        <div className="contents @work:col-span-5 @work:col-start-8 @work:grid @work:content-start @work:justify-items-start @work:gap-5 @work:justify-self-stretch">
           {profile.stats?.length ? <Stats stats={profile.stats} start /> : null}
           {actions("start", 4, false)}
           {socials ? (

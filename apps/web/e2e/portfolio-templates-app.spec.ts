@@ -168,6 +168,14 @@ test.describe("on the laptop", () => {
       expect(halves, path).toEqual({ start: true, end: true });
       await fits(page);
     }
+    // Tobin's statement hero: the sentence follows the role line at the header's gap (20 px), however
+    // tall the numbers, the action and the profiles beside them are.
+    const gap = await page.locator("header p.text-h3").first().evaluate((role) => {
+      const sentence = role.nextElementSibling;
+      return sentence ? sentence.getBoundingClientRect().top - role.getBoundingClientRect().bottom : null;
+    });
+    expect(gap).not.toBeNull();
+    expect(gap ?? 0).toBeLessThanOrEqual(24);
   });
 
   test("About spans at least ten of the twelve columns (P-09), and Folio uses the wide canvas (C-06)", async ({ page }) => {

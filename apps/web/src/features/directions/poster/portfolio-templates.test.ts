@@ -204,6 +204,18 @@ describe("Logbuch", () => {
   });
 });
 
+describe("the statement hero on the canvas (P-08)", () => {
+  it("keeps the role line and the sentence together in one box, so a taller box beside them grows their row, not the gap", () => {
+    const sample = portfolioSample("en");
+    expect(sample.profile.tagline && sample.profile.bio).toBeTruthy();
+    const header = hero(html("tiefdruck", sample));
+    // The words: one box in columns 1–7 on the canvas (no box below it), the role line first.
+    expect(header).toMatch(/<div class="contents @work:col-span-7 @work:grid @work:content-start @work:gap-5"><p dir="auto"[^>]*>[^<]*<\/p><p dir="auto"/);
+    // The numbers, the action and the profiles beside them span that one row only.
+    expect(header).not.toContain("@work:row-span-2");
+  });
+});
+
 describe("section titles beside their content on the canvas", () => {
   it.each(["grundriss", "logbuch", "folio", "werkbogen", "tiefdruck"])("%s: every title beside its content stands at the top of its section", (template) => {
     const markup = body(html(template, portfolioSample("de")));
