@@ -204,11 +204,12 @@ export function EditorProvider({
   // The same words twice in a row are still read out: a trailing no-break space makes them new.
   const announce = useCallback((text: string) => setAnnouncement((current) => (current === text ? `${text}\u00a0` : text)), []);
 
-  // How much there is to undo and redo, so "Undone" is never announced when nothing changed.
-  const history = useRef({ past: 0, future: 0 });
+  // How much there is to undo and redo, so "Undone" is never announced when nothing changed, and
+  // the document an undo brings back (its change's toasts go with it).
+  const history = useRef<{ past: number; future: number; previous: SiteDoc | undefined }>({ past: 0, future: 0, previous: undefined });
   useEffect(() => {
-    history.current = { past: state.past.length, future: state.future.length };
-  }, [state.past.length, state.future.length]);
+    history.current = { past: state.past.length, future: state.future.length, previous: state.past.at(-1) };
+  }, [state.past]);
 
   /**
    * Every change goes through here, wherever it comes from (a button, ⌘Z, the edit sheet, a toast).
@@ -217,9 +218,13 @@ export function EditorProvider({
    */
   const dispatch = useCallback(
     (action: SiteAction) => {
-      // An undone or redone change also takes its toast away: its Undo or Edit would now act on a
-      // page that has moved on (⌘Z after "Link added · Edit" leaves nothing to edit).
-      if ((action.type === "undo" && history.current.past > 0) || (action.type === "redo" && history.current.future > 0)) toast.dismiss("undoable");
+      // An undone change takes its own toast away: its Undo or Edit would now act on a page that has
+      // moved on (⌘Z after "Link added · Edit" leaves nothing to edit). Other toasts stay: a removed
+      // block's Undo still puts that block back. Any other change closes the toasts whose action is a
+      // plain "undo the last change" (it would now undo that change instead).
+      const { previous } = history.current;
+      if (action.type === "undo" && history.current.past > 0 && previous) toast.settle({ undone: previous });
+      else if (action.type !== "undo" && action.type !== "select" && action.type !== "enrich") toast.settle({ moved: true });
       if (action.type === "undo" && history.current.past > 0) announce(t("editor.undone"));
       if (action.type === "redo" && history.current.future > 0) announce(t("editor.redone"));
       reduce(action);
@@ -323,6 +328,8 @@ export function EditorProvider({
     (blocks: Block[], options: { open?: boolean; index?: number | undefined } = {}) => {
       const first = blocks[0];
       if (!first) return;
+      // The document this change is made from: an undo that brings it back closes the toast.
+      const before = docRef.current;
       dispatch({ type: "addMany", blocks, index: options.index ?? insertAt(doc.blocks) });
       enrich(blocks);
       const ids = blocks.map((block) => block.id);
@@ -336,7 +343,7 @@ export function EditorProvider({
       toast({
         title: blocks.length > 1 ? t("added.many", { count: blocks.length }) : t("added.one", { type: tTypes(first.type) }),
         tone: "success",
-        undoable: true,
+        undoable: { before },
         ...(action ? { action } : {}),
       });
     },
@@ -347,13 +354,14 @@ export function EditorProvider({
     (block: Block) => {
       const index = doc.blocks.findIndex((candidate) => candidate.id === block.id);
       const next = doc.blocks[index + 1]?.id;
+      const before = docRef.current;
       dispatch({ type: "remove", id: block.id });
       // Undo puts this block back where it was (before the block that followed it, if that is still
       // there), and only once. A plain "undo" could take back a later change instead (a switch
       // flipped while the toast was still showing).
       toast({
         title: t("removed", { title: isolate(label(block), rtl) }),
-        undoable: true,
+        undoable: { before },
         action: {
           label: t("undo"),
           onAction: () => {

@@ -97,6 +97,8 @@ public enum LinkyoTokens {
         public static let prose: CGFloat = 640
         /// Menus and popovers (min width).
         public static let menu: CGFloat = 224
+        /// The narrowest free space beside an open panel that toasts are placed in (a toast with an action needs it).
+        public static let toast: CGFloat = 320
     }
 
     public enum Icon {

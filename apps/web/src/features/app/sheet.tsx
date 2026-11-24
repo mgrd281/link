@@ -109,21 +109,34 @@ const openSheets = new Set<HTMLElement>();
 
 /**
  * Where toasts may go while sheets are open (see `Toaster`): the root carries `data-sheet-open`, and
- * on wide screens `--sheet-inline` is how much of the width the panels (and the preview beside them)
- * take from the end of the line, so a toast stays in the space before them.
+ * on wide screens `--sheet-toast-start` and `--sheet-toast-end` mark the free space a toast stays in.
+ * That is the space before the panels while it is wide enough for a toast with an action
+ * (`layout.toast`); on laptops where the panel and the live preview beside it leave less (1200 to
+ * about 1400 px), it is the space after the panel, over the preview; failing both, the wider one.
  */
 function publishSheets() {
   const root = document.documentElement;
   if (openSheets.size === 0) {
     delete root.dataset.sheetOpen;
-    root.style.removeProperty("--sheet-inline");
+    root.style.removeProperty("--sheet-toast-start");
+    root.style.removeProperty("--sheet-toast-end");
     return;
   }
   root.dataset.sheetOpen = "";
   const rtl = getComputedStyle(root).direction === "rtl";
+  const width = root.clientWidth;
   // Layout positions (a fixed element's offsets are the window's), so the sliding-in animation does not count.
-  const taken = Math.max(...[...openSheets].map((sheet) => (rtl ? sheet.offsetLeft + sheet.offsetWidth : root.clientWidth - sheet.offsetLeft)));
-  root.style.setProperty("--sheet-inline", `${String(Math.max(0, Math.round(taken)))}px`);
+  // In inline terms: where the panels begin and end, measured from the start of the line.
+  const sheets = [...openSheets];
+  const startOf = (sheet: HTMLElement) => (rtl ? width - sheet.offsetLeft - sheet.offsetWidth : sheet.offsetLeft);
+  const panelStart = Math.max(0, Math.min(...sheets.map(startOf)));
+  const panelEnd = Math.min(width, Math.max(...sheets.map((sheet) => startOf(sheet) + sheet.offsetWidth)));
+  const before = panelStart;
+  const after = width - panelEnd;
+  const useBefore = before >= tokens.layout.toast || before >= after;
+  const px = (value: number) => `${String(Math.max(0, Math.round(value)))}px`;
+  root.style.setProperty("--sheet-toast-start", px(useBefore ? 0 : panelEnd));
+  root.style.setProperty("--sheet-toast-end", px(useBefore ? width - panelStart : 0));
 }
 
 /**

@@ -15,12 +15,19 @@ export interface ToastInput {
   /** e.g. { label: "Undo", onAction: restore } — verb first. */
   action?: { label: string; onAction: () => void; altText?: string };
   /**
-   * The toast is about the last change in an undo history ("Link added · Edit", "Removed · Undo"):
-   * once that change is undone or redone some other way (⌘Z), its action would act on a page that
-   * has moved on, so `toast.dismiss("undoable")` closes it. Leave it off when the action still has
+   * The toast is about one change in an undo history ("Link added · Edit", "Removed · Undo"):
+   * `before` is the document the change was made from (compared by identity). Once that change is
+   * undone some other way (⌘Z), its action would act on a page that has moved on, so
+   * `toast.settle({ undone: before })` closes it, and only it. `latestOnly`: the action is a plain
+   * "undo the last change", right only while no other change followed, so any later change
+   * (`toast.settle({ moved: true })`) closes it too. Leave `undoable` off when the action still has
    * work after ⌘Z (an import's Undo also restores what the history does not hold).
    */
-  undoable?: boolean;
+  undoable?: UndoableChange;
+}
+export interface UndoableChange {
+  before: object;
+  latestOnly?: boolean;
 }
 interface ToastItem extends ToastInput {
   id: number;
@@ -54,13 +61,22 @@ export function toast(input: ToastInput): () => void {
     dismiss(id);
   };
 }
+/** Closes every open toast: a sheet that opens closes them all, so none covers its controls. */
+toast.dismiss = () => {
+  for (const item of items) if (item.open) dismiss(item.id);
+};
 /**
- * Closes open toasts: every one, or (`"undoable"`) only those about the last change of an undo
- * history. A sheet that opens closes them all, so none covers its controls; the dashboard closes a
- * change's toast once that change is undone or redone, by whatever route.
+ * Closes the toasts of changes that no longer stand as they did. `undone`: an undo brought this
+ * document back, so the toasts of the change made from it go (no other toast: a removed block's
+ * "Undo" still puts that block back after a later change was undone). `moved`: the document changed
+ * in another way, so a toast whose action is a plain "undo the last change" would now undo that one
+ * instead (`latestOnly`).
  */
-toast.dismiss = (which: "all" | "undoable" = "all") => {
-  for (const item of items) if (item.open && (which === "all" || item.undoable)) dismiss(item.id);
+toast.settle = (event: { undone: object } | { moved: true }) => {
+  for (const item of items) {
+    if (!item.open || !item.undoable) continue;
+    if ("undone" in event ? item.undoable.before === event.undone : item.undoable.latestOnly) dismiss(item.id);
+  }
 };
 function dismiss(id: number) {
   if (!items.some((item) => item.id === id && item.open)) return;
@@ -90,8 +106,8 @@ const serverSnapshot = () => NONE;
  *
  * While a sheet is open (the root carries `data-sheet-open`), a toast never covers its controls: on
  * phones, where the sheet rises from the bottom, toasts move to the top of the screen; on wide
- * screens, where it is a panel at the end, they stay in the space before it (`--sheet-inline` is
- * the width the panel and anything beside it take from the end).
+ * screens, where it is a panel, they stay in the free space the app names with `--sheet-toast-start`
+ * and `--sheet-toast-end` (before the panel, or after it when the space before is too narrow).
  */
 export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regionLabel?: string }) {
   const list = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
@@ -150,7 +166,7 @@ export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regio
           "layer-toast fixed start-(--toast-start) end-(--toast-end) bottom-(--toast-offset) mx-auto flex max-w-prose flex-col gap-2 p-4 pb-[max(var(--spacing-4),var(--toast-inset,env(safe-area-inset-bottom)))] outline-none",
           // An open sheet: on phones at the top, above the sheet; on wide screens in the space before its panel.
           "max-lg:in-data-sheet-open:top-0 max-lg:in-data-sheet-open:bottom-auto max-lg:in-data-sheet-open:p-2 max-lg:in-data-sheet-open:pt-[max(var(--spacing-2),env(safe-area-inset-top))]",
-          "lg:in-data-sheet-open:start-0 lg:in-data-sheet-open:end-(--sheet-inline)",
+          "lg:in-data-sheet-open:start-(--sheet-toast-start) lg:in-data-sheet-open:end-(--sheet-toast-end)",
         )}
       />
     </T.Provider>

@@ -147,6 +147,34 @@ test.describe("a pasted ticket link", () => {
   });
 });
 
+test.describe("a toast beside the Events form on a 1280 px laptop", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test("has room for its words and its Undo, and covers no part of the panel", async ({ page, isMobile }) => {
+    test.skip(isMobile, "The panel beside the preview is a laptop layout.");
+    const { m } = await signedIn(page);
+    const sheet = await openAdd(page, m);
+    await paste(sheet, m, `https://example.com/press https://example.org/shop ${TICKET}`);
+    const form = eventsForm(page, m);
+    await expect(form).toBeVisible();
+    const toast = toasts(page);
+    await expect(toast).toHaveCount(1);
+    await expect(toast.getByRole("button", { name: m.app.undo })).toBeVisible();
+    const box = await toast.boundingBox();
+    const panel = await form.boundingBox();
+    // The words' box (the one that grows): it shrank to nothing when the space before the panel was ~180 px.
+    const title = await toast.locator("div.flex-1").first().boundingBox();
+    expect(box && panel && title).toBeTruthy();
+    if (box && panel && title) {
+      // Wide enough for a toast with an action (layout.toast, less the viewport's padding) ...
+      expect(box.width).toBeGreaterThanOrEqual(280);
+      expect(title.width).toBeGreaterThan(40);
+      // ... and beside the panel, before or after it.
+      expect(box.x + box.width <= panel.x + 1 || box.x >= panel.x + panel.width - 1).toBe(true);
+    }
+  });
+});
+
 test.describe("toasts", () => {
   test("close when a sheet opens, and when their change is undone", async ({ page }) => {
     const { m } = await signedIn(page);
@@ -179,6 +207,61 @@ test.describe("toasts", () => {
     await page.keyboard.press("Control+y");
     await expect(page.locator("main").getByText("example.org", { exact: true }).first()).toBeVisible();
     await expect(toasts(page)).toHaveCount(0);
+  });
+
+  test("a template's toast goes with Ctrl+Z, and its Undo never takes back a later change", async ({ page }) => {
+    const { m } = await signedIn(page);
+    await page.goto("/en/app/design");
+    const template = () => page.locator("input[name=poster-template]:checked");
+    const before = await template().getAttribute("value");
+    const pick = before === "daylight" ? "Mono" : "Daylight";
+    await page.getByText(pick, { exact: true }).click();
+    await expect(toasts(page)).toHaveCount(1);
+    await expect(toasts(page)).toContainText(fill(m.app.design.applied, { name: pick }));
+    // Undone by the keyboard: its "Undo" would now take back the change before it.
+    await page.locator("main").click({ position: { x: 1, y: 1 } });
+    await page.keyboard.press("Control+z");
+    await expect(template()).toHaveAttribute("value", before ?? "");
+    await expect(toasts(page)).toHaveCount(0);
+
+    // Applied again, then another change: the template's plain "Undo" would undo that one instead.
+    await page.getByText(pick, { exact: true }).click();
+    await expect(toasts(page)).toHaveCount(1);
+    await page.getByRole("tab", { name: "Buttons" }).click();
+    await page.getByText("Outline", { exact: true }).click();
+    await expect(toasts(page).filter({ hasText: fill(m.app.design.applied, { name: pick }) })).toHaveCount(0);
+  });
+
+  test("Ctrl+Z of a later change leaves a removed block's Undo in place", async ({ page }) => {
+    const { m } = await signedIn(page);
+    await page.getByRole("link", { name: m.app.nav.page, exact: true }).locator("visible=true").first().click();
+    await page.waitForURL("**/en/app/editor");
+    let sheet = await openAdd(page, m);
+    await paste(sheet, m, "https://example.com/one");
+    await expect(sheet).toBeHidden();
+    sheet = await openAdd(page, m);
+    await paste(sheet, m, "https://example.net/two");
+    await expect(sheet).toBeHidden();
+    await page.locator("main").click({ position: { x: 1, y: 1 } });
+    await expect(page.locator("main").getByText("example.net", { exact: true }).first()).toBeVisible();
+
+    // Delete the first link: "“example.com” deleted · Undo".
+    await page.getByRole("button", { name: fill(m.app.editor.more, { title: "example.com" }) }).click();
+    await page.getByRole("menuitem", { name: m.app.editor.delete }).click();
+    await expect(page.locator("main").getByText("example.com", { exact: true })).toHaveCount(0);
+    const removed = toasts(page).filter({ hasText: "example.com" });
+    await expect(removed).toHaveCount(1);
+
+    // A later change, undone with Ctrl+Z: the deletion was not undone, so its toast stays.
+    const shown = page.getByRole("switch", { name: fill(m.app.editor.visible, { title: "example.net" }) });
+    await shown.click();
+    await expect(shown).not.toBeChecked();
+    await page.locator("main").click({ position: { x: 1, y: 1 } });
+    await page.keyboard.press("Control+z");
+    await expect(shown).toBeChecked();
+    await expect(removed).toHaveCount(1);
+    await removed.getByRole("button", { name: m.app.undo }).click();
+    await expect(page.locator("main").getByText("example.com", { exact: true }).first()).toBeVisible();
   });
 });
 

@@ -115,7 +115,13 @@ export function DesignScreen() {
     startTransition(() => {
       dispatch({ type: "theme", theme: { template } });
     });
-    toast({ title: t("applied", { name: creatorTokens.templates[template].label }), tone: "success", action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) } });
+    // Its Undo takes back the last change: right only while this one is the last (latestOnly).
+    toast({
+      title: t("applied", { name: creatorTokens.templates[template].label }),
+      tone: "success",
+      undoable: { before: doc, latestOnly: true },
+      action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) },
+    });
   };
 
   const color = () => (
@@ -316,8 +322,9 @@ export function DesignScreen() {
               variant="ghost"
               icon={RotateCcw}
               onClick={() => {
+                const before = doc;
                 dispatch({ type: "theme", theme: { template: theme.template } });
-                toast({ title: t("resetDone"), action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) } });
+                toast({ title: t("resetDone"), undoable: { before, latestOnly: true }, action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) } });
               }}
             >
               {t("resetAll")}

@@ -75,7 +75,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
       return;
     }
     dispatch({ type: "replace", doc: { ...doc, blocks } });
-    toast({ title: tPortfolio("orderApplied"), action: { label: tDash("undo"), onAction: () => dispatch({ type: "undo" }) } });
+    toast({ title: tPortfolio("orderApplied"), undoable: { before: doc, latestOnly: true }, action: { label: tDash("undo"), onAction: () => dispatch({ type: "undo" }) } });
   };
   // Rebuilding with AI: the owner's own page only (not the team area), while the AI is on for them.
   const ai = useAiQuota({ account: account.id });
