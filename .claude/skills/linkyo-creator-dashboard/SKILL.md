@@ -87,9 +87,11 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
 
 ## Demo vs real
 
-- `accountStore.demo` is the browser demo; real accounts run on Supabase. Stats: `statsSource()`
-  ("sample" numbers labelled as such, or "none" with an honest empty state). Never invent numbers,
-  dates or cities; never say "saved" when nothing was saved.
+- `accountStore.demo` is the browser demo; real accounts run on Supabase. Stats: the demo shows
+  sample numbers labelled as such; real accounts read their own counted numbers (`stats.ts`,
+  `/api/collect`, ADR 0081, skill `linkyo-analytics`), and while the switch is off or the database
+  has no statistics they keep the honest "kommt bald" state. Never invent numbers, dates or cities;
+  never say "saved" when nothing was saved.
 - Real accounts have no newsletter backend: the Add sheet does not offer it, public pages drop it, and
   the editor marks existing newsletter blocks "Noch nicht sichtbar".
 

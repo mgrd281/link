@@ -119,7 +119,9 @@ with frame 0 as the hero picture (no focal point: the clip is centred).
 1. Copy the files to `apps/web/src/assets/examples/ex<N>-<name>.jpg` (the next free series
    number).
 2. Run `python3 .claude/skills/linkyo-media-assets/scripts/media_index.py`. It rebuilds
-   `features/examples/media.ts`, where each file becomes `sample:ex<N>-<name>`.
+   `features/examples/media.ts`, where each file becomes `sample:ex<N>-<name>`. It drops the
+   `portfolioMedia` table (sizes and focal points of portfolio pictures, which `h.picture` reads):
+   add those rows back by hand afterwards (linkyo-portfolio, linkyo-example-page).
 3. Add one row per file to the table in `apps/web/src/assets/examples/CREDITS.md`, in file-name
    order: `| file | photographer (and what we changed) | photo page | license |`. Original
    covers say "Linkyo cover design on a photo by …" and name the typefaces.

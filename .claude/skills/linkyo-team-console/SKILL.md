@@ -102,8 +102,10 @@ without name, e-mail, city and notes).
 
 ## Honest numbers
 
-- No invented numbers. Real accounts have no view counter yet: show "not measured yet" (`viewsMeasured`), hide the
-  views column and sort, leave views out of the CSV. A funnel step never depends on an unmeasured number.
+- No invented numbers. Real views and clicks exist only once the page statistics count (ADR 0081): read
+  `viewsMeasured` from `useCustomers()` (true for the demo's samples, `live.viewsMeasured` on real accounts, never a
+  build-time constant); while it is false show "not measured yet", hide the views column and sort, leave views out
+  of the CSV. A funnel step never depends on an unmeasured number.
 - Folds use the key `REST` (`__rest`, "All others"), never a word a value can be.
 - Prices come from `features/payments/prices.ts` (`PLAN_PRICE`).
 
