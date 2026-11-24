@@ -146,10 +146,11 @@ export function DesignScreen() {
               onChange={() => setTheme({ accent: swatch.hex })}
             />
           ))}
-          {/* A color of your own that is none of the twelve marks this pill as the chosen one. */}
+          {/* A color of your own that is none of the twelve marks this control as the chosen one. In a
+              card, so rounded like every in-card button: the pill is for flow footers only (D-14). */}
           <label
             className={cn(
-              "relative inline-flex h-control-lg cursor-pointer items-center gap-2 rounded-full border px-3 text-small font-medium transition-[background-color,scale] duration-micro has-[:focus-visible]:focus-ring active:scale-pressed motion-reduce:active:scale-none",
+              "relative inline-flex h-control-lg cursor-pointer items-center gap-2 rounded-md border px-3 text-small font-medium transition-[background-color,scale] duration-micro has-[:focus-visible]:focus-ring active:scale-pressed motion-reduce:active:scale-none",
               accent && !named ? "border-focus bg-selected text-selected-fg" : "border-line-strong hover:bg-hover",
             )}
           >

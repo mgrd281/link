@@ -189,6 +189,10 @@ test.describe("laptop layout", () => {
     expect(scrolls.filter((behavior) => behavior === "smooth")).toEqual([]);
     // No second set of Design tabs: only the card's.
     await expect(page.getByRole("tab", { name: "Color", exact: true })).toHaveCount(1);
+    // D-14: the colour of your own is a control in a card, rounded like the buttons beside it, no pill.
+    const custom = page.locator("#main label").filter({ has: page.locator('input[type="color"]') });
+    await expect(custom).toBeVisible();
+    expect(parseFloat(await custom.evaluate((element) => getComputedStyle(element).borderTopLeftRadius))).toBeLessThanOrEqual(16);
 
     // Portfolio: the looks made for portfolios, from the tokens.
     await page.getByRole("radio", { name: "Portfolio", exact: true }).click();
