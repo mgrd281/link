@@ -24,6 +24,10 @@
 //                                      on a monthly subscription that never met a shorter month. Register
 //                                      it to test one that did (anchor on the 31st, period end 28 Feb).
 //   POST   /__invoices/:id             registers an invoice (JSON: { subscription, profileId, paymentIntent, amount })
+//   POST   /v1/billing_portal/sessions 400 unless customer (cus_…) and an http(s) return_url. Answers a
+//                                      session whose url is this stand-in's own portal page.
+//   GET    /__portal/:session          the stand-in portal: a small page that names the customer and
+//                                      links back to the session's return_url (as Stripe's portal does)
 //   GET    /__requests?method=&path=&profile=&prefix=   recorded requests, each with its idempotencyKey (each
 //                                      test filters by its own ids)
 
@@ -38,6 +42,8 @@ const refunds = new Map();
 /** How many of the next refunds of a payment intent fail (POST /__refund_failures/:pi). */
 const refundFailures = new Map();
 const invoices = new Map();
+/** Customer portal sessions by id: { customer, returnUrl }. */
+const portals = new Map();
 
 const DAY = 86_400;
 const now = () => Math.floor(Date.now() / 1000);
@@ -233,6 +239,23 @@ export async function handle(req, res) {
     json(res, 200, { ok: true });
     return;
   }
+  // The stand-in portal page a portal session leads to (Stripe's would be on billing.stripe.com).
+  const portalPage = /^\/__portal\/([\w-]+)$/.exec(url.pathname);
+  if (portalPage && req.method === "GET") {
+    const session = portals.get(portalPage[1]);
+    if (!session) {
+      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+      res.end("mock: no such portal session");
+      return;
+    }
+    const escape = (text) => String(text).replace(/[&<>"']/g, (char) => `&#${String(char.charCodeAt(0))};`);
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.end(
+      `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Stripe portal (mock)</title></head><body><main><h1>Stripe portal (mock)</h1><p data-customer="${escape(session.customer)}">Customer ${escape(session.customer)}</p><a href="${escape(session.returnUrl)}">Return to Linkyo</a></main></body></html>`,
+    );
+    return;
+  }
+
   const register = /^\/__(subscriptions|invoices)\/([\w-]+)$/.exec(url.pathname);
   if (register && req.method === "POST") {
     const data = text ? JSON.parse(text) : {};
@@ -266,6 +289,30 @@ export async function handle(req, res) {
       return_url: body.return_url,
       amount_total: Number(body.line_items?.[0]?.price_data?.unit_amount ?? 0),
       currency: "eur",
+    });
+    return;
+  }
+
+  if (url.pathname === "/v1/billing_portal/sessions" && req.method === "POST") {
+    if (!/^cus_[\w-]+$/.test(body.customer ?? "")) {
+      invalid(res, "mock: customer is required", "customer");
+      return;
+    }
+    if (!/^https?:\/\//.test(body.return_url ?? "")) {
+      invalid(res, "mock: return_url is required", "return_url");
+      return;
+    }
+    const sessionId = id("bps");
+    portals.set(sessionId, { customer: body.customer, returnUrl: body.return_url });
+    json(res, 200, {
+      id: sessionId,
+      object: "billing_portal.session",
+      customer: body.customer,
+      locale: body.locale ?? null,
+      return_url: body.return_url,
+      livemode: false,
+      // This stand-in's own page, on the host the client reached it at.
+      url: `http://${String(req.headers.host ?? "127.0.0.1")}/__portal/${sessionId}`,
     });
     return;
   }

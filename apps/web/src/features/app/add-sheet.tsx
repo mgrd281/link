@@ -1,6 +1,6 @@
 "use client";
 
-import { detectLink, detectMany, normalizeUrl, slugWord, type Block, type BlockType, type CreatorKind } from "@linkyo/blocks";
+import { detectLink, detectMany, normalizeUrl, slugWord, type Block, type BlockOf, type BlockType, type CreatorKind, type Detection, type Platform } from "@linkyo/blocks";
 import { Badge, Button, cn, ConfirmDialog, Icon, toast } from "@linkyo/ui";
 import { Building2, CircleAlert, ClipboardPaste, FolderKanban, ImagePlus, Images, Link2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -50,6 +50,39 @@ export function addEntries(types: readonly BlockType[], presets: readonly AddPre
   return [...types.slice(0, cut).map((type) => ({ type })), ...presets.map((preset) => ({ preset })), ...types.slice(cut).map((type) => ({ type }))];
 }
 
+/** Platforms whose profile address belongs in the page's Social icons row. */
+const SOCIAL_PLATFORMS: ReadonlySet<string> = new Set<Platform>(["instagram", "tiktok", "x", "threads", "bluesky", "discord", "whatsapp", "telegram", "facebook", "linkedin", "github", "youtube", "twitch"]);
+/** Paths on those platforms that are one post, not a profile. */
+const POST_PATHS: ReadonlySet<string> = new Set(["status", "post", "posts", "feed", "pulse", "p", "reel", "video"]);
+/** The Social icons row holds at most this many (the socials block's schema). */
+export const SOCIALS_MAX = 12;
+
+/**
+ * A pasted address that is a profile on a social platform (instagram.com/mila, a YouTube or Twitch
+ * channel, a GitHub account) as an item of the Social icons row; null for anything else: a post, a
+ * song, a shop, a platform's front page.
+ */
+export function socialProfile(detection: Detection | null): { platform: Platform; url: string } | null {
+  if (!detection?.platform || !SOCIAL_PLATFORMS.has(detection.platform)) return null;
+  const kind = detection.type === "link" || (detection.platform === "youtube" && detection.type === "shorts") || (detection.platform === "twitch" && detection.type === "live");
+  const segments = new URL(detection.url).pathname.split("/").filter(Boolean);
+  if (!kind || segments.length === 0 || segments.some((segment) => POST_PATHS.has(segment.toLowerCase()))) return null;
+  return { platform: detection.platform as Platform, url: detection.url };
+}
+
+/** A profile address without what does not tell profiles apart: "www.", a trailing slash, letter case. */
+const profileKey = (address: string) => {
+  try {
+    const url = new URL(address);
+    return `${url.hostname.replace(/^(www|m)\./, "")}${url.pathname.replace(/\/+$/, "")}`.toLowerCase();
+  } catch {
+    return address.toLowerCase();
+  }
+};
+
+/** Two addresses of the same profile ("https://www.instagram.com/Mila/" and "https://instagram.com/mila"). */
+export const sameProfile = (a: string, b: string) => profileKey(a) === profileKey(b);
+
 /**
  * The door the sheet was opened at. "all": everything (the rail, the tab bar, a row's "Add below").
  * "workLink": straight at a project from a link (Arbeiten's "From a link"): only the link field,
@@ -63,7 +96,9 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
   const tTypes = useTranslations("dashboard.types");
   const tFields = useTranslations("app.fields");
   const tPortfolio = useTranslations("app.portfolio");
-  const { addOpen, setAddOpen, addIndex, addBlocks, edit, editing, doc, site } = useSite();
+  const tShare = useTranslations("app.share");
+  const tApp = useTranslations("app");
+  const { addOpen, setAddOpen, addIndex, addBlocks, edit, editing, doc, site, dispatch, latest } = useSite();
   const kind = site.kind as CreatorKind | undefined;
   // While the sheet slides away it keeps showing the door it was opened at.
   const [shownEntry, setShownEntry] = useState(entry);
@@ -82,6 +117,8 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
   const [uploading, setUploading] = useState(false);
   const canPaste = useSyncExternalStore(never, canReadClipboard, () => false);
   const detection = useMemo(() => (value.trim() ? detectLink(value.trim()) : null), [value]);
+  // One profile on a social platform in the field: it can go to the Social icons row instead (D-16).
+  const social = useMemo(() => (detectMany(value).length === 1 ? socialProfile(detection) : null), [value, detection]);
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
   // Real accounts have no newsletter backend yet: the block is not offered (public pages drop it too).
   // A group's presets (Portfolio: "Clients") stand right after its quotes, else at its end.
@@ -161,12 +198,18 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
     create(showsFromTickets(tickets), t("ticketNotice", { count: tickets.length }));
   };
 
+  // A single pasted link that has a second home waits in the field for the owner's choice: on a page
+  // that shows work it can become a project, and a social profile can go to the Social icons row.
+  const waits = (text: string) => {
+    const found = detectMany(text);
+    return found.length === 1 && (portfolio || socialProfile(found[0] ?? null) !== null);
+  };
+
   // One tap instead of long-press and Paste. iOS asks once with its own Paste button; when reading is
-  // refused or the clipboard is empty, the field takes focus so the usual paste still works. On a page
-  // that shows work one link waits in the field, so it can still become a project.
+  // refused or the clipboard is empty, the field takes focus so the usual paste still works.
   const paste = async () => {
     const text = await readText();
-    if (text && (workLink || (portfolio && detectMany(text).length === 1))) setValue(text.trim());
+    if (text && (workLink || waits(text))) setValue(text.trim());
     else if (text) addText(text);
     else document.getElementById(inputId)?.focus();
   };
@@ -176,6 +219,36 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
   const create = (block: Block, line: string | null = null) => {
     setNotice(line);
     edit({ mode: "create", block: inPage(block, doc.blocks), index: placeFor(block.type), inAddSheet: true });
+  };
+
+  // A profile into the Social icons row: the row there is grows by one (one step to undo), or a new
+  // row starts with it. A profile already in the row, or a full row, is said, never added twice.
+  const addToSocials = () => {
+    if (!social) return;
+    const row = doc.blocks.find((block): block is BlockOf<"socials"> => block.type === "socials");
+    if (!row) {
+      addBlocks([{ id: newBlockId("socials"), type: "socials", visible: true, highlight: false, items: [social] }], { index: placeFor("socials") });
+      close();
+      return;
+    }
+    if (row.items.some((item) => sameProfile(item.url, social.url))) {
+      toast({ title: tShare("socialsHas") });
+      close();
+      return;
+    }
+    if (row.items.length >= SOCIALS_MAX) {
+      toast({ title: tShare("socialsFull", { count: SOCIALS_MAX }), tone: "danger" });
+      return;
+    }
+    const before = latest();
+    dispatch({ type: "update", id: row.id, patch: { items: [...row.items, social] } });
+    toast({
+      title: tShare("addedToSocials"),
+      tone: "success",
+      undoable: { before, latestOnly: true },
+      action: { label: tApp("undo"), onAction: () => dispatch({ type: "undo" }) },
+    });
+    close();
   };
 
   const pick = (type: BlockType) => {
@@ -350,9 +423,10 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
                   }}
                   onPaste={(event) => {
                     const text = event.clipboardData.getData("text");
-                    // One link on a page that shows work waits in the field: it may become a project. At
-                    // Arbeiten's door every link waits: it becomes a project when sent.
-                    if (workLink || (portfolio && detectMany(text).length === 1)) return;
+                    // One link on a page that shows work, or one social profile, waits in the field: it
+                    // may become a project or a social icon. At Arbeiten's door every link waits: it
+                    // becomes a project when sent.
+                    if (workLink || waits(text)) return;
                     if (!value && detectMany(text).length > 0) {
                       event.preventDefault();
                       addText(text);
@@ -392,11 +466,17 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
                   t("pasteHint")
                 )}
               </p>
-              {/* Under the detected block: the same link as a piece of work. */}
+              {/* Under the detected block: a social profile into the Social icons row, any other link as a piece of work. */}
               {detection && value.trim() && !workLink ? (
-                <Button type="button" variant="ghost" icon={FolderKanban} loading={linking} className="justify-self-start" onClick={() => void linkAsProject()}>
-                  {t("asProject")}
-                </Button>
+                social ? (
+                  <Button type="button" variant="ghost" icon={blockIcon.socials} className="justify-self-start" onClick={addToSocials}>
+                    {tShare("addToSocials")}
+                  </Button>
+                ) : (
+                  <Button type="button" variant="ghost" icon={FolderKanban} loading={linking} className="justify-self-start" onClick={() => void linkAsProject()}>
+                    {t("asProject")}
+                  </Button>
+                )
               ) : null}
             </form>
 

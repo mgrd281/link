@@ -1929,7 +1929,15 @@
       "qrLead": "For flyers, posters, merch and the stage screen.",
       "qrLabel": "QR code for {url}",
       "download": "Download PNG",
-      "close": "Close"
+      "close": "Close",
+      "downloadSvg": "Download SVG",
+      "qrAccent": "In your page's color. As SVG it stays sharp at any size.",
+      "addToSocials": "Add to social icons",
+      "addedToSocials": "Added to your social icons",
+      "socialsHas": "Already in your social icons",
+      "socialsFull": "Your social icons are full ({count}). Remove one first.",
+      "exportFirst": "Export your data first",
+      "exported": "File created: {file}"
     },
     "design": {
       "title": "Design",
@@ -2276,7 +2284,68 @@
       },
       "legalDiscard": "Discard",
       "legalUnsaved": "Not saved yet",
-      "demoNote": "Demo: your data stays in this browser."
+      "demoNote": "Demo: your data stays in this browser.",
+      "plan": {
+        "groups": {
+          "plan": "Your plan",
+          "includes": "What's included",
+          "ai": "AI drafts",
+          "billing": "Payment"
+        },
+        "name": {
+          "free": "Free",
+          "pro": "Linkyo Pro"
+        },
+        "source": {
+          "free": "No cost, no end date",
+          "stripe": "Subscription through Stripe, {price} a month",
+          "team": "Turned on by the Linkyo team",
+          "reward": "Pro for life, from the invite program"
+        },
+        "status": {
+          "active": "Active",
+          "pastDue": "Payment due",
+          "ending": "Canceled",
+          "reserved": "Reserved"
+        },
+        "renews": "Renews on {date}",
+        "ends": "Ends on {date}",
+        "trial": "Trial until {date}",
+        "pastDue": "Your last payment didn't go through. Stripe will try again. Check your payment method under “Payments and invoices”.",
+        "soon": "Pro arrives with the launch.",
+        "rewardSoon": "Pro for life is yours. Pro is coming soon, and you'll never pay for it.",
+        "includes": {
+          "page": "Your page with every design",
+          "blocks": "Links, videos, music, shows and projects",
+          "freeDrafts": "{count, plural, one {# AI draft} other {# AI drafts}} free, once per account",
+          "everything": "Everything in Free",
+          "proDrafts": "Up to {count} AI drafts a month"
+        },
+        "ai": {
+          "left": "{left} of {allowance} left",
+          "label": "AI drafts left",
+          "resets": "New drafts from {date}",
+          "once": "Once per account, no end date",
+          "demo": "AI drafts come with real accounts only.",
+          "disabled": "AI drafts are switched off right now.",
+          "failed": "Your AI drafts couldn't be loaded."
+        },
+        "retry": "Try again",
+        "failed": "Your plan couldn't be loaded.",
+        "portal": "Payments and invoices",
+        "portalHint": "Opens Stripe, our payment provider",
+        "portalNoCustomer": "Our payment provider has no payments for your account yet.",
+        "portalFailed": "The payment provider can't be reached right now. Try again in a moment.",
+        "upgrade": "Get Pro",
+        "upgradeHint": "{price} a month, up to {count} AI drafts",
+        "invoice": {
+          "title": "Invoice of {date}",
+          "paid": "Paid",
+          "failed": "Failed",
+          "refunded": "Refunded"
+        },
+        "open": "What your plan includes"
+      }
     },
     "welcome": {
       "skip": "Skip for now",
