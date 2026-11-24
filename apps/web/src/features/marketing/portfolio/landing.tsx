@@ -157,7 +157,10 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
               </Button>
               {lead ? (
                 <Button asChild variant="tinted" size="cta">
-                  <a href={pageHref(lead)}>{t.rich("hero.open", { name: nameOf(lead), bdi })}</a>
+                  <a href={pageHref(lead)}>
+                    {/* One flex item: the button's gap would otherwise open around the <bdi>. */}
+                    <span>{t.rich("hero.open", { name: nameOf(lead), bdi })}</span>
+                  </a>
                 </Button>
               ) : null}
             </div>
@@ -275,7 +278,9 @@ export async function PortfolioLanding({ locale }: { locale: string }) {
                     </ul>
                   </div>
                   <Button asChild variant="tinted" size="lg" className="mt-auto rounded-full font-semibold">
-                    <Link href={start}>{t.rich("templates.start", { name: label(template.id), bdi })}</Link>
+                    <Link href={start}>
+                      <span>{t.rich("templates.start", { name: label(template.id), bdi })}</span>
+                    </Link>
                   </Button>
                 </div>
               </li>

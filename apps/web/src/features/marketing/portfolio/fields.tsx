@@ -65,7 +65,8 @@ export function PortfolioFields({ tabs, label, chip }: { tabs: FieldTab[]; label
                   href={template.start}
                   className="group -mx-2 inline-flex min-h-touch-target items-center gap-2 rounded-full px-2 text-body font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed"
                 >
-                  {template.startLabel}
+                  {/* One flex item, so the link's gap does not open around the name's <bdi>. */}
+                  <span>{template.startLabel}</span>
                   <Icon icon={ArrowRight} size="sm" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
                 </Link>
               </li>
