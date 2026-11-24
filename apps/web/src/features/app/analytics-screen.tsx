@@ -347,7 +347,7 @@ function useDelta(range: StatsRange) {
       change: rounded,
       text: new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0, signDisplay: "exceptZero" }).format(rounded / 100),
       label: rounded > 0 ? tKpi("up") : rounded < 0 ? tKpi("down") : tKpi("flat"),
-      context: t("vsPrevious", { days: String(range) }),
+      context: t("vsPrevious", { days: range }),
     };
   };
 }
@@ -418,7 +418,7 @@ function StatsView({ data, range, onRange, busy }: { data: ScreenStats | null; r
           value={`${range}`}
           onValueChange={(value) => onRange(Number(value) as StatsRange)}
           className="w-full bg-tinted *:flex-1 pointer-coarse:h-control-lg sm:w-auto sm:*:flex-none"
-          options={STATS_RANGES.map((value) => ({ value: `${value}` as const, label: t("days", { days: String(value) }) }))}
+          options={STATS_RANGES.map((value) => ({ value: `${value}` as const, label: t("days", { days: value }) }))}
         />
       </div>
 
