@@ -1,7 +1,6 @@
 import type { LoginEvent } from "@/features/account/types";
 import { PRICES } from "@/features/payments/prices";
 import type { RewardRow } from "@/features/referrals/types";
-import { supabaseEnabled } from "@/lib/supabase/config";
 
 /**
  * Customers as the team sees them: account, page, subscription and security. One shape for the
@@ -97,7 +96,7 @@ export interface Customer {
     template: string;
     blocks: number;
     onboarded: boolean;
-    /** 0 on real accounts, where views are not measured yet (`viewsMeasured`). */
+    /** 0 where views are not measured (`viewsMeasured` of `useCustomers()`). */
     views30: number;
     clicks30: number;
   };
@@ -109,13 +108,6 @@ export interface Customer {
    */
   rewards?: { verificationReview?: RewardRecord | undefined; proForLife?: RewardRecord | undefined } | undefined;
 }
-
-/**
- * Views and clicks: the demo's sample customers carry made-up numbers; real accounts have no
- * counter yet (cookie-free analytics comes later), so the console says "not measured yet" there
- * instead of showing 0.
- */
-export const viewsMeasured = !supabaseEnabled;
 
 /**
  * Where a paid plan comes from. The database says it; without that (the demo, or a database before

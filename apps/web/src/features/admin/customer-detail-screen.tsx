@@ -48,7 +48,7 @@ import { bdi, isolate } from "./bidi";
 import { billingActions, scheduledEnd, type BillingAnswer } from "./billing";
 import { CustomersHidden } from "./customers-list-screen";
 import { sessionsOf, useCustomers } from "./customers/data";
-import { DAY, hasProForLife, isPaying, monthlyRevenue, riskFlags, subscriptionSource, viewsMeasured, type Customer } from "./customers/model";
+import { DAY, hasProForLife, isPaying, monthlyRevenue, riskFlags, subscriptionSource, type Customer } from "./customers/model";
 import { DemoNote, DeviceLabel, PlanBadge, RiskBadges, StatusBadges } from "./customers/ui";
 import { count, date, dateTime, money, timeAgo } from "./format";
 import { bare, CustomerLink, ProfileLinks, SignalChips, useReasonLabel, WHY_MAX } from "./referrals-screen";
@@ -85,7 +85,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const router = useRouter();
   const { can, db } = useAdmin();
   const actions = useConsoleActions();
-  const { customers, now, ready, blockedIps, signedOut } = useCustomers();
+  const { customers, now, ready, blockedIps, signedOut, viewsMeasured } = useCustomers();
   const customer = customers.find((candidate) => candidate.id === id);
   const [tab, setTab] = useState<Tab>("overview");
   const [pending, setPending] = useState<Pending>(null);

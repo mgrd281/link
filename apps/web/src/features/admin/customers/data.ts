@@ -152,6 +152,9 @@ function useDemoCustomers() {
     signedOut: (id: string) => db.patches[id]?.signedOut ?? [],
     // The demo has every customer in this browser: nothing is withheld.
     withheld: (_role: Role) => false,
+    // The sample customers carry made-up views and clicks (labelled as sample data on every screen).
+    viewsMeasured: true,
+    pageViews: null,
   };
 }
 
@@ -174,5 +177,10 @@ function useLiveCustomerData() {
   };
 }
 
-/** Every customer the team can see (demo: this device's accounts and sample customers; real: the database). */
+/**
+ * Every customer the team can see (demo: this device's accounts and sample customers; real: the
+ * database). `viewsMeasured` says whether views and clicks are numbers: always in the demo; on real
+ * accounts only once the page statistics count (ADR 0081, live.ts), else the screens say "not
+ * measured" instead of showing 0.
+ */
 export const useCustomers = supabaseEnabled ? useLiveCustomerData : useDemoCustomers;

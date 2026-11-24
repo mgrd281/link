@@ -35,6 +35,19 @@ describe("team console controls", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("reads whether views are measured from the data, never from a constant of the build", () => {
+    // Real accounts get measured views once the page statistics count (live.ts, ADR 0081); a module
+    // constant (`!supabaseEnabled`) kept every real console at "not measured" whatever the database held.
+    const model = readFileSync(join(ROOT, "customers/model.ts"), "utf8");
+    expect(model).not.toMatch(/export const viewsMeasured/);
+    const screens = files.filter((file) => /viewsMeasured/.test(readFileSync(file, "utf8")) && /-screen\.tsx$/.test(file));
+    expect(screens.map((file) => relative(ROOT, file)).sort()).toEqual(["analytics-screen.tsx", "customer-detail-screen.tsx", "customers-list-screen.tsx", "overview-screen.tsx"]);
+    for (const file of screens) expect(readFileSync(file, "utf8"), relative(ROOT, file)).toMatch(/\bviewsMeasured\b[^}]*\} = useCustomers\(\)/);
+    // The demo's sample customers carry numbers; the live data says itself.
+    expect(readFileSync(join(ROOT, "customers/data.ts"), "utf8")).toContain("viewsMeasured: true");
+    expect(readFileSync(join(ROOT, "live.ts"), "utf8")).toMatch(/viewsMeasured: counted/);
+  });
+
   it("uses the kit's KPI tile, select, filter sheet, data list and chart table", () => {
     const all = files.map((file) => readFileSync(file, "utf8")).join("\n");
     for (const component of ["KpiTile", "Select", "FilterSheet", "DataList", "ChartTable"]) expect(all, component).toMatch(new RegExp(`import \\{[^}]*\\b${component}\\b[^}]*\\} from "@linkyo/ui"`));

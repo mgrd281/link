@@ -14,7 +14,7 @@ import { ActivityList } from "./activity-screen";
 import { bdi, isolate } from "./bidi";
 import { ColumnChart, RankedBars } from "./charts";
 import { useCustomers } from "./customers/data";
-import { daysAgo, riskFlags, viewsMeasured } from "./customers/model";
+import { daysAgo, riskFlags } from "./customers/model";
 import { kpis, lastDevice, mrrByMonth, REST, shares, signupsPerDay } from "./customers/stats";
 import { kpiTrends, revenueThisMonth } from "./customers/trends";
 import { DemoNote, FiguresWithheld, PlanBadge, StatusBadges } from "./customers/ui";
@@ -74,7 +74,7 @@ export function OverviewScreen() {
   const ui = useTranslations("ui");
   const locale = useLocale();
   const { db, me, can, role } = useAdmin();
-  const { customers, now, ready, blockedIps, withheld } = useCustomers();
+  const { customers, now, ready, blockedIps, withheld, viewsMeasured } = useCustomers();
   const queues = useQueues();
   const [rangeKey, setRange] = useState<(typeof RANGES)[number]>("30");
   const range = Number(rangeKey);

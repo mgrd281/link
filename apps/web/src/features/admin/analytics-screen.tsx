@@ -9,7 +9,7 @@ import { Panel, Screen } from "@/features/app/screen";
 import { bdi, isolate } from "./bidi";
 import { CohortGrid, ColumnChart, RankedBars } from "./charts";
 import { useCustomers } from "./customers/data";
-import { DAY, viewsMeasured } from "./customers/model";
+import { DAY } from "./customers/model";
 import { cohorts, funnel, lastDevice, REST, shares, signupsPerDay, visitedCount } from "./customers/stats";
 import { DemoNote, FiguresWithheld } from "./customers/ui";
 import { count, country, percent } from "./format";
@@ -22,7 +22,7 @@ export function AdminAnalyticsScreen() {
   const tk = useTranslations("app.welcome.kinds");
   const locale = useLocale();
   const { role } = useAdmin();
-  const { customers, now, ready, withheld } = useCustomers();
+  const { customers, now, ready, withheld, viewsMeasured } = useCustomers();
 
   const weekly = useMemo(() => {
     const days = signupsPerDay(customers, now, 84);

@@ -14,7 +14,7 @@ import { Link } from "@/i18n/navigation";
 import { useConsoleActions } from "./actions";
 import { bdi, isolate } from "./bidi";
 import { useCustomers } from "./customers/data";
-import { hasProForLife, monthlyRevenue, viewsMeasured, type Customer } from "./customers/model";
+import { hasProForLife, monthlyRevenue, type Customer } from "./customers/model";
 import { customersCsv } from "./customers/stats";
 import { DemoNote, PlanBadge, StatusBadges } from "./customers/ui";
 import { count, country, date, money, PAGE_SIZE, timeAgo } from "./format";
@@ -25,7 +25,8 @@ type Status = (typeof STATUSES)[number];
 const PLANS = ["free", "pro"] as const;
 type PlanFilter = (typeof PLANS)[number];
 // Views sort only where they are measured (the demo's sample customers).
-const SORTS = ["newest", "lastSeen", "revenue", ...(viewsMeasured ? (["views"] as const) : [])] as const;
+/** The orders of the list; by views only where views are measured (`viewsMeasured`). */
+const SORTS = ["newest", "lastSeen", "revenue", "views"] as const;
 type Sort = (typeof SORTS)[number];
 
 const matchesStatus = (customer: Customer, status: Status) => {
@@ -89,13 +90,16 @@ function CustomersList() {
   const params = useSearchParams();
   const { can } = useAdmin();
   const actions = useConsoleActions();
-  const { customers, now, ready } = useCustomers();
+  const { customers, now, ready, viewsMeasured } = useCustomers();
+  const sorts = SORTS.filter((value) => value !== "views" || viewsMeasured);
   const initialStatus = STATUSES.find((status) => status === params.get("status"));
   const [query, setQuery] = useState("");
   const [plans, setPlans] = useState<ReadonlySet<PlanFilter>>(new Set());
   const [statuses, setStatuses] = useState<ReadonlySet<Status>>(new Set(initialStatus ? [initialStatus] : []));
   const [place, setPlace] = useState("");
-  const [sort, setSort] = useState<Sort>("newest");
+  const [chosenSort, setSort] = useState<Sort>("newest");
+  // Views stop being an order where they are not measured (a database without the statistics).
+  const sort: Sort = chosenSort === "views" && !viewsMeasured ? "newest" : chosenSort;
   const [page, setPage] = useState(0);
   const unknown = t("unknownCountry");
   // A phone's card shows what tells customers apart at a glance; from md every column has room.
@@ -217,7 +221,7 @@ function CustomersList() {
               options={countries.map((code) => ({ value: code, label: country(code, locale, unknown) }))}
               size="auto"
             />
-            <Select label={t("sort")} value={sort} onValueChange={changed(setSort)} options={SORTS.map((value) => ({ value, label: t(`sorts.${value}`) }))} size="auto" />
+            <Select label={t("sort")} value={sort} onValueChange={changed(setSort)} options={sorts.map((value) => ({ value, label: t(`sorts.${value}`) }))} size="auto" />
           </FilterSheet>
         </div>
         <ActiveFilters label={ui("filter.activeList")} filters={active} removeLabel={(filter) => ui("filter.remove", { filter })} clearLabel={ui("filter.clear")} onClear={clear} />
