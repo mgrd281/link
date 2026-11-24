@@ -61,9 +61,8 @@
 - **Stripe idempotency:** Stripe keeps the answer to an idempotency key for 24 hours, errors included. A refund Stripe
   refused (for example for lack of balance) gives the same refusal when sent again within that time; the team then
   refunds in the Stripe dashboard. The same holds for the existing order and withdrawal refunds.
-- **Still open:** the activity screen needs a sentence and an icon for `customer.export` (it shows the raw name until
-  then); `admin_deliver_proposal` still returns the customer's address to any `pages.edit` caller for the delivery
-  e-mail (the deliver route could read it with the service client instead).
+- **Still open:** `admin_deliver_proposal` still returns the customer's address to any `pages.edit` caller for the
+  delivery e-mail (the deliver route could read it with the service client instead).
 
 **Alternatives considered.** A masked e-mail view for editors (rejected: an editor never needs any part of it);
 dropping `customers.view` without `orders.view` (rejected: it breaks the page service, plan critique 2).

@@ -1,14 +1,23 @@
+import { randomUUID } from "node:crypto";
+
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+
+import { createRealAccount, seedPage, uniqueName } from "./real";
 
 /**
  * Dead ends (WP1.2): every unknown or gated address answers with a real 404 and Linkyo's own page in
  * the visitor's language (lang, dir, a localized h1, the way back), with zero axe violations; sign-up
  * and log-in show no button that does nothing; the legal pages say which text is binding. Runs in the
- * demo build (no real accounts, no payments) on the laptop and the phone.
+ * demo build (no real accounts, no payments) on the laptop and the phone; the order cases are
+ * demo-only. With real accounts and payments on (the stub build of stub-app.spec.ts with E2E_STUB=1,
+ * or the local stack with E2E_SUPABASE=1) the last block checks that a creator page and an order
+ * address are not turned into a 404 by the gates' address check.
  */
 
 const realEnabled = Boolean(process.env.E2E_SUPABASE);
+const stubEnabled = process.env.E2E_STUB === "1";
+const STUB = `http://127.0.0.1:${process.env.STUB_SUPABASE_PORT ?? "55103"}`;
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 const TITLE = { de: "Diese Seite gibt es nicht", en: "This page doesn't exist", ar: "هذه الصفحة غير موجودة" } as const;
@@ -22,9 +31,10 @@ const ACTIONS = {
 type Locale = keyof typeof TITLE;
 type Area = "site" | "app" | "admin";
 
-/** `tab`: the page's title says "not found" (the addresses whose metadata this work owns; the example
- * route and the team area's order screens keep their own title until their pages share the rule). */
-const CASES: { path: string; locale: Locale; area: Area; tab?: true }[] = [
+/** `tab`: the page's title says "not found" (every address here but the example route, which keeps
+ * its own title).
+ * `demo`: an order address that is missing only because payments are off in the demo build. */
+const CASES: { path: string; locale: Locale; area: Area; tab?: true; demo?: true }[] = [
   { path: "/de/nope", locale: "de", area: "site", tab: true },
   { path: "/en/nope", locale: "en", area: "site", tab: true },
   { path: "/ar/nope", locale: "ar", area: "site", tab: true },
@@ -35,8 +45,8 @@ const CASES: { path: string; locale: Locale; area: Area; tab?: true }[] = [
   { path: "/de/app/orders/x1", locale: "de", area: "app", tab: true },
   { path: "/en/app/proposals/x1", locale: "en", area: "app", tab: true },
   { path: "/de/admin/xyz", locale: "de", area: "admin", tab: true },
-  { path: "/de/admin/orders", locale: "de", area: "admin" },
-  { path: "/ar/admin/orders/x1", locale: "ar", area: "admin" },
+  { path: "/de/admin/orders", locale: "de", area: "admin", tab: true, demo: true },
+  { path: "/ar/admin/orders/x1", locale: "ar", area: "admin", tab: true },
 ];
 
 async function axeViolations(page: Page): Promise<string[]> {
@@ -52,10 +62,9 @@ async function noUnderlines(page: Page) {
 }
 
 test.describe("not found", () => {
-  test.skip(realEnabled, "The demo build: no payments, so the order addresses cannot exist.");
-
-  for (const { path, locale, area, tab } of CASES) {
+  for (const { path, locale, area, tab, demo } of CASES) {
     test(`${path} answers 404 with Linkyo's page in its language`, async ({ page }) => {
+      test.skip(Boolean(demo) && (realEnabled || stubEnabled), "With payments on, the order list exists.");
       await page.emulateMedia({ reducedMotion: "reduce" });
       const response = await page.goto(path);
       expect(response?.status(), path).toBe(404);
@@ -90,6 +99,7 @@ test.describe("not found", () => {
   }
 
   test("an order address in the demo says orders need a real account, and the gate does not send to log-in", async ({ page }) => {
+    test.skip(realEnabled || stubEnabled, "The demo build: no payments, so the order addresses cannot exist.");
     const response = await page.goto("/de/app/orders/3f2a9c1e-7b4d-4e8a-9c2f-1a2b3c4d5e6f");
     expect(response?.status()).toBe(404);
     await expect(page.getByRole("main")).toContainText("Aufträge und Vorschläge gibt es nur mit einem echten Konto");
@@ -161,5 +171,55 @@ test.describe("legal pages", () => {
     await expect(page.getByRole("main")).not.toContainText("Verbindlich ist die deutsche Fassung");
     // Still drafts in this build: the banner stays until the review (a launch build fails meanwhile).
     await expect(page.getByRole("main").getByRole("note")).toBeVisible();
+  });
+});
+
+/** A creator with a page: through the stand-in (stub build) or on the local stack (real build). */
+async function creatorPage(): Promise<string> {
+  if (stubEnabled) {
+    const id = randomUUID();
+    const username = `nf-${randomUUID().replaceAll("-", "").slice(0, 8)}`;
+    const response = await fetch(`${STUB}/__stub/seed`, {
+      method: "POST",
+      body: JSON.stringify({
+        users: { [id]: { id, email: `${username}@example.com` } },
+        profiles: { [id]: { id, username, locale: "de", status: "active", created_at: "2026-11-01T00:00:00Z" } },
+        sites: {
+          [id]: {
+            profile_id: id,
+            kind: null,
+            onboarded: true,
+            prepared: null,
+            page: { profile: { username, displayName: "Mila Berg", bio: "", avatar: { src: "none:", alt: "" }, verified: false, locale: "de" }, blocks: [] },
+            theme: { template: "nocturne" },
+            legal: { name: "", address: "", email: `${username}@example.com`, phone: "" },
+            updated_at: "2026-11-20T10:00:00Z",
+          },
+        },
+      }),
+    });
+    expect(response.ok).toBe(true);
+    return username;
+  }
+  const { username, email } = uniqueName("nf");
+  await createRealAccount({ email, username, locale: "de", onboarded: true, page: seedPage(username, "de", { displayName: "Mila Berg" }) });
+  return username;
+}
+
+test.describe("not found with real accounts and payments on", () => {
+  test.skip(!stubEnabled && !realEnabled, "Needs real accounts: the stub build (E2E_STUB=1) or the local stack (E2E_SUPABASE=1).");
+
+  test("a creator page answers 200, an unknown address 404, and an order address is no 404 @real", async ({ page }) => {
+    const username = await creatorPage();
+    const creator = await page.goto(`/${username}`);
+    expect(creator?.status(), `/${username}`).toBe(200);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Mila Berg");
+    expect((await page.goto("/de/nope"))?.status()).toBe(404);
+    expect((await page.goto("/de/app/orders/x1"))?.status()).toBe(404);
+    // A well-formed order address passes the gates' address check (the order screen decides the rest).
+    for (const path of ["/de/app/orders/3f2a9c1e-7b4d-4e8a-9c2f-1a2b3c4d5e6f", "/ar/app/orders/3f2a9c1e-7b4d-4e8a-9c2f-1a2b3c4d5e6f", "/de/admin/orders"]) {
+      const response = await page.goto(path);
+      expect(response?.status(), path).toBe(200);
+    }
   });
 });
