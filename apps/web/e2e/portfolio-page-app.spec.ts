@@ -85,7 +85,8 @@ test.describe("first screen", () => {
       await open(page, url(locale, "tiefdruck"), { width: 390, height: 844 });
       const name = await box(page, "header h1");
       expect(name.y + name.height).toBeLessThanOrEqual(844);
-      const role = await box(page, "header h1 >> xpath=../following-sibling::p[1]");
+      // The role line: the first paragraph after the name (on the canvas it shares a box with the sentence).
+      const role = await box(page, "header h1 >> xpath=../following::p[1]");
       expect(role.y + role.height).toBeLessThanOrEqual(844);
       const button = await box(page, "[data-hero-actions] a");
       expect(button.y + button.height).toBeLessThanOrEqual(844);

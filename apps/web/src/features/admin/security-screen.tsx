@@ -203,19 +203,18 @@ export function SecurityScreen() {
             <KpiTile
               label={t("kpi.blocked")}
               value={count(blockedIps.length, locale)}
+              // The way to the blocked addresses, in the footer's one line (the page stays within its height
+              // budget); at least 24 px tall, the WCAG target size.
               footer={
-                <span className="grid justify-items-start gap-1">
-                  {t("kpi.blockedHint")}
-                  <button
-                    type="button"
-                    data-show-blocked
-                    onClick={showBlocked}
-                    className="-ms-1 inline-flex min-h-touch-target items-center gap-1 rounded-xs px-1 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
-                  >
-                    {t("kpi.manageBlocked")}
-                    <Icon icon={icons.next} size="sm" />
-                  </button>
-                </span>
+                <button
+                  type="button"
+                  data-show-blocked
+                  onClick={showBlocked}
+                  className="-ms-1 inline-flex min-h-6 items-center gap-1 rounded-xs px-1 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
+                >
+                  {t("kpi.manageBlocked")}
+                  <Icon icon={icons.next} size="sm" />
+                </button>
               }
             />
           </dl>

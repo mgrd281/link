@@ -114,7 +114,8 @@ test.describe("plan and share tools (demo)", () => {
   test("Settings opens with the plan; the demo is Free, says Pro comes with the launch and offers no payment", async ({ page }) => {
     await signedIn(page, "de");
     await page.goto("/de/app/settings");
-    const row = page.getByRole("link", { name: /^Plan/ }).first();
+    // The Settings list's row (on a laptop the section panel lists Plan too).
+    const row = page.locator("#main").getByRole("link", { name: /^Plan/ }).first();
     await expect(row).toContainText("Kostenlos");
     // At the top: above the page's own rows (Profil, Seitenadresse).
     const [plan, profile] = await Promise.all([row.boundingBox(), page.getByRole("button", { name: /^Profil/ }).first().boundingBox()]);
