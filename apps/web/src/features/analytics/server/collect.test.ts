@@ -4,11 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 interface State {
   accounts: boolean;
+  /** How often the route asked Supabase Auth who is signed in. */
+  authCalls: number;
   rpc: { name: string; args: unknown }[];
   answer: { data: unknown; error: { code?: string; message?: string } | null };
 }
 
-const state = vi.hoisted((): State => ({ accounts: true, rpc: [], answer: { data: null, error: null } }));
+const state = vi.hoisted((): State => ({ accounts: true, authCalls: 0, rpc: [], answer: { data: null, error: null } }));
 const SALT = "5".repeat(64);
 
 vi.mock("@/lib/supabase/config", () => ({
@@ -35,6 +37,7 @@ vi.mock("@/lib/supabase/server", async () => {
 
 vi.mock("@/lib/server/user", () => ({
   requireUser: (request: Request) => {
+    state.authCalls += 1;
     if (request.headers.get("authorization") !== "Bearer good-token") return Promise.resolve(Response.json({ ok: false, error: "unauthorized" }, { status: 401 }));
     return Promise.resolve({
       user: { id: "user-1", email: "mila@example.com" },
@@ -74,6 +77,7 @@ const recorded = () => state.rpc.filter((call) => call.name === "page_stats_reco
 
 beforeEach(() => {
   state.accounts = true;
+  state.authCalls = 0;
   state.rpc = [];
   state.answer = { data: null, error: null };
   forgetSalt();
@@ -163,6 +167,14 @@ describe("GET /api/collect (the owner's numbers)", () => {
     const response = await ask("30");
     expect(await response.json()).toEqual({ counting: false });
     expect(state.rpc).toEqual([]);
+  });
+
+  it("while the switch is off, asks Supabase Auth nothing, so a failing sign-in check cannot turn 'coming soon' into an error", async () => {
+    vi.stubEnv("LINKYO_ANALYTICS", undefined);
+    const response = await ask("30", "bad");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ counting: false });
+    expect(state.authCalls).toBe(0);
   });
 
   it("says nothing is counted on a database without the statistics (the hosted one today)", async () => {

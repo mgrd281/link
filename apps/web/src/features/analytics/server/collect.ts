@@ -127,9 +127,12 @@ export const STATS_DAYS = [7, 30, 90] as const;
  */
 export async function ownerStats(request: Request): Promise<Response> {
   if (!supabaseEnabled) return json({ ok: false, error: "notFound" }, 404);
+  // The switch first: while it is off (production today) the answer is the same for everyone, so no
+  // round trip to Supabase Auth, and a failing one cannot turn "kommt bald" into an error. Whether the
+  // switch is on is no secret (a creator page shows it by carrying the counter or not).
+  if (!analyticsEnabled()) return json({ counting: false });
   const signedIn = await requireUser(request);
   if (signedIn instanceof Response) return signedIn;
-  if (!analyticsEnabled()) return json({ counting: false });
   const days = Number(new URL(request.url).searchParams.get("days"));
   if (!(STATS_DAYS as readonly number[]).includes(days)) return json({ ok: false, error: "invalid" }, 400);
   const to = berlinDay();
