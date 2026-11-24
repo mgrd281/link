@@ -143,8 +143,9 @@ test.describe("picture viewer", () => {
     const touch = testInfo.project.name === "mobile";
     // The engine as iOS browsers had it: no `onscrollend`, no `scrollend` event.
     await page.addInitScript(() => {
-      for (const proto of [Window.prototype, Document.prototype, Element.prototype, HTMLElement.prototype]) {
-        delete (proto as unknown as Record<string, unknown>).onscrollend;
+      // The window's own handler attributes live on the global object itself (Window is [Global]).
+      for (const holder of [window, Window.prototype, Document.prototype, Element.prototype, HTMLElement.prototype]) {
+        delete (holder as unknown as Record<string, unknown>).onscrollend;
       }
       const add = Object.getOwnPropertyDescriptor(EventTarget.prototype, "addEventListener")?.value as (this: EventTarget, ...args: unknown[]) => void;
       EventTarget.prototype.addEventListener = function (this: EventTarget, type: string, ...rest: unknown[]) {

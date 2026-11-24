@@ -159,7 +159,8 @@ test.describe("a toast beside the Events form on a 1280 px laptop", () => {
     await expect(form).toBeVisible();
     const toast = toasts(page);
     await expect(toast).toHaveCount(1);
-    await expect(toast.getByRole("button", { name: m.app.undo })).toBeVisible();
+    // Found by markup: the modal sheet hides the page (and the toast) from the accessibility tree.
+    await expect(toast.locator("button", { hasText: m.app.undo })).toBeVisible();
     const box = await toast.boundingBox();
     const panel = await form.boundingBox();
     // The words' box (the one that grows): it shrank to nothing when the space before the panel was ~180 px.
