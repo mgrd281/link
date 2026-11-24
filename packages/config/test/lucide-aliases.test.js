@@ -23,6 +23,16 @@ describe("lucide alias ban (S-01)", () => {
     expect(messages.map((message) => message.message).join("\n")).toMatch(/TriangleAlert \(icons\.warning\)[\s\S]*Ellipsis \(icons\.more\)[\s\S]*ChartNoAxesColumn \(icons\.analytics\)/);
   });
 
+  it("flags every export name of an alias: the bare name, <name>Icon and Lucide<name>", () => {
+    for (const alias of Object.keys(LUCIDE_ALIASES)) {
+      for (const name of [alias, `${alias}Icon`, `Lucide${alias}`]) {
+        expect(lint(`import { ${name} } from "lucide-react";`), name).toHaveLength(1);
+      }
+    }
+    expect(lint(`import { AlertTriangleIcon as Warn, LucideMoreHorizontal, BarChart3Icon } from "lucide-react";`)).toHaveLength(3);
+    expect(lint(`import { TriangleAlertIcon, LucideEllipsis, ChartNoAxesColumnIcon } from "lucide-react";`)).toEqual([]);
+  });
+
   it("flags the other duplicates the codemod replaces, and leaves the registry's own names alone", () => {
     expect(lint(`import { ChartColumn, Music2, Briefcase } from "lucide-react";`)).toHaveLength(3);
     expect(lint(`import { TriangleAlert, Ellipsis, ChartNoAxesColumn, Music, BriefcaseBusiness } from "lucide-react";`)).toEqual([]);
