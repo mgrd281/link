@@ -118,7 +118,8 @@ phones.
 - **The page outline repeats the creator's section titles** in the panel. New e2e text queries
   scope to `#main`.
 
-**Status.** Accepted.
+**Status.** Accepted. Its width rule ("with the panel open every screen keeps exactly its old width") is
+superseded by [ADR 0079](0079-dashboard-on-laptops.md); the rail, the fold and the panel's look stand.
 
 [ADR 0064]: README.md
 

@@ -1,7 +1,7 @@
-# draft — Design system v2: Arabic companion faces, one icon set, a shared UI kit
+# 0076 — Design system v2: Arabic companion faces, one icon set, a shared UI kit
 
-**Status.** Proposed (Stage 2, WP2.3, 2026-11-24). The integrator numbers it. The choice of faces is a
-lead decision, cheap to reverse: every face is one token and one `localFont` call.
+**Status.** Accepted (Stage 2, WP2.3, 2026-11-24). The choice of faces is a lead decision, cheap to
+reverse: every face is one token and one `localFont` call; the founder may override it.
 
 **Context.** Three findings of the November audit (plan.md §2.5, §2.7, §2.4):
 

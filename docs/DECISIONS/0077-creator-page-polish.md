@@ -1,7 +1,7 @@
-# draft — Creator pages open calm: a one-line privacy bar, the owner's preview without it, solid social glyphs, names that fit in Arabic
+# 0077 — Creator pages open calm: a one-line privacy bar, the owner's preview without it, solid social glyphs, names that fit in Arabic
 
-**Status.** Draft (Stage 2, WP2.5, 2026-11-24). The integrator numbers it. The privacy bar's wording goes
-to the founder and the lawyer (F2) for confirmation; it is reversible and reuses the existing strings.
+**Status.** Accepted (Stage 2, WP2.5, 2026-11-24). The privacy bar's wording goes to the founder and the
+lawyer (F2) for confirmation; it is reversible and reuses the existing strings.
 
 **Context.** The audit (plan §2.5, §2.3) found four things that make a creator page look unfinished on a
 phone. The privacy notice covered 35–40 % of the first screen on every page with a player, although

@@ -1,6 +1,7 @@
-# draft — A portfolio-aware welcome flow, and the portfolio kinds' starters
+# 0078 — A portfolio-aware welcome flow, and the portfolio kinds' starters
 
-**Status.** Proposed (Stage 2, WP2.2, 2026-11-24). The integrator gives it its number.
+**Status.** Accepted (Stage 2, WP2.2, 2026-11-24). The starters are a lead decision (G2), reversible;
+the founder may override them.
 
 **Context.** Portfolio v1 gave Linkyo project blocks, project pages, a contact block and two
 wide-canvas templates (Werkbogen and Tiefdruck), but the welcome flow still treated every new account

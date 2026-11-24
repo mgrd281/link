@@ -1,6 +1,6 @@
-# Draft — The dashboard on laptops, real template previews and the "Arbeiten" view
+# 0079 — The dashboard on laptops, real template previews and the "Arbeiten" view
 
-Status: proposed (Stage 2, WP2.4). The integrator numbers it after the highest existing ADR. It
+**Status.** Accepted (Stage 2, WP2.4, 2026-11-24). It
 **supersedes the width rule of [ADR 0063](0063-two-level-sidebar.md)** ("with the panel open every
 screen keeps exactly its old width"); the rail, the fold and the panel's look stay as ADR 0063 says.
 
