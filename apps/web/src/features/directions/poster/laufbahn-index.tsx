@@ -91,6 +91,33 @@ export function IndexList({ entries, className }: { entries: readonly IndexEntry
 }
 
 /**
+ * When the app bar shows (Laufbahn), as an app's navigation bar does: once the large name has passed
+ * under it, and not before. An IntersectionObserver on the name (`[data-lb-name]`, else the hero)
+ * sets `data-lb-shown` on the bar; the bar then fades in over a short, fixed time (lb-bar), so it is
+ * never caught half visible when the page stops, and it never slides with the scroll. Renders nothing
+ * of its own. Without this script the bar stays away: the page has everything it needs without it.
+ */
+export function BarReveal(): ReactNode {
+  const marker = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const bar = marker.current?.closest<HTMLElement>(".poster-bar");
+    const name = document.querySelector("[data-lb-name]") ?? document.querySelector(".poster-hero-timeline");
+    if (!bar || !name) return;
+    const height = bar.getBoundingClientRect().height;
+    const watch = new IntersectionObserver(
+      ([entry]) => {
+        // Gone above the bar's foot (not merely below the screen, as it may be on a short screen).
+        bar.toggleAttribute("data-lb-shown", entry !== undefined && !entry.isIntersecting && entry.boundingClientRect.top < height);
+      },
+      { rootMargin: `-${String(Math.round(height))}px 0% 0% 0%` },
+    );
+    watch.observe(name);
+    return () => watch.disconnect();
+  }, []);
+  return <span ref={marker} hidden />;
+}
+
+/**
  * The app bar's title on a signposted page (Laufbahn), as in a native app: the owner's name and,
  * once a section is being read, that section under it with a chevron. Pressed, it opens the
  * contents as a sheet (a native modal dialog: focus moves in and stays, Escape and a tap outside
@@ -165,7 +192,7 @@ export function SectionSwitcher({ entries, name, ai }: { entries: readonly Index
               <Icon icon={X} size="md" />
             </button>
           </div>
-          <ol className="grid overflow-hidden rounded-creator-card border border-creator-line bg-creator-surface">
+          <ol className="grid overflow-hidden rounded-creator-card bg-creator-surface">
             {entries.map((entry, index) => (
               <li key={entry.anchor} className="min-w-0 not-first:border-t not-first:border-creator-line">
                 <a

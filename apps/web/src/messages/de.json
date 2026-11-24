@@ -1636,6 +1636,9 @@
       "motionStop": "{name} anhalten",
       "motionClips": {
         "barcode-scannen": "Barcode scannen",
+        "hochregal": "Hochregal",
+        "stapler-fahren": "Stapler fahren",
+        "hubwagen": "Hubwagen ziehen",
         "lagerarbeit": "Lagerarbeit",
         "palette-packen": "Palette packen",
         "ware-scannen": "Scannen von Waren"

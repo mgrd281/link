@@ -1636,6 +1636,9 @@
       "motionStop": "أوقف {name}",
       "motionClips": {
         "barcode-scannen": "مسح الباركود",
+        "hochregal": "الرفوف العالية",
+        "stapler-fahren": "قيادة الرافعة الشوكية",
+        "hubwagen": "سحب رافعة المنصات",
         "lagerarbeit": "عمل المستودع",
         "palette-packen": "تجهيز منصة البضائع",
         "ware-scannen": "مسح البضائع"

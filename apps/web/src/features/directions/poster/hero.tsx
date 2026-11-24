@@ -10,7 +10,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from "../shared/creator-kit";
 import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
-import { SectionSwitcher, type IndexEntry } from "./laufbahn-index";
+import { BarReveal, SectionSwitcher, type IndexEntry } from "./laufbahn-index";
 import { HeroLive } from "./live";
 import { plateFrame, plateRatio } from "./projects";
 import { ShareButton } from "./share";
@@ -524,10 +524,11 @@ export function PosterHero({
  * Compact bar that slides in once the hero has scrolled away: avatar, name, share; on a page with a
  * contact block also its primary action, as a small filled button before the share button.
  * Driven by the hero's view timeline; browsers without scroll-driven animations never show it.
- * `solid`: on the page's own ground instead of glass (Laufbahn), with a thin line along its foot that
- * fills with the accent as the page is read; there, where scroll-driven animations are missing, it
- * stands at the top from the start (lb-bar). `sections`: a page with contents (Laufbahn) makes the
- * name a title that names the section being read and opens the contents as a sheet.
+ * `solid` (Laufbahn): an app's navigation bar on the page's own ground instead of glass, one hairline at
+ * its foot; it fades in over a short, fixed time once the large name has passed under it (BarReveal,
+ * lb-bar) instead of sliding with the scroll, its share button a soft round one. `sections`: a page with
+ * contents (Laufbahn) makes the name a title that names the section being read and opens the contents
+ * as a sheet.
  */
 export function PosterBar({
   profile,
@@ -570,9 +571,8 @@ export function PosterBar({
             </span>
           </a>
         ) : null}
-        <ShareButton title={profile.displayName} />
-        {/* How far the page has been read: a line along the bar's foot that fills with the accent. Decorative. */}
-        {solid ? <span aria-hidden className="lb-progress absolute inset-x-0 -bottom-px h-0.5 bg-creator-accent" /> : null}
+        <ShareButton title={profile.displayName} {...(solid ? { className: "bg-creator-surface-2 hover:bg-creator-line" } : {})} />
+        {solid ? <BarReveal /> : null}
       </div>
     </div>
   );

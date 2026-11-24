@@ -329,7 +329,7 @@ test.describe("Laufbahn", () => {
     await page.context().close();
   });
 
-  test("phones: skills are a grouped list: an icon and the whole label in each row, no hyphenation, nothing broken", async ({ browser }) => {
+  test("phones: skills are a list on one soft sheet: an icon and the whole label in each row, no lines, no hyphenation, nothing broken", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const skills = page.getByRole("region", { name: "Was ich mitbringe" });
@@ -338,12 +338,16 @@ test.describe("Laufbahn", () => {
     for (const row of await rows.all()) await expect(row.locator("svg.lucide")).toHaveCount(1);
     await expect(skills).not.toContainText(/\b0\d\b/);
     expect(await skills.locator("li span[dir]").first().evaluate((label) => getComputedStyle(label).hyphens)).toBe("manual");
-    // One skill a row, each row the list's full width, the icon beside its label.
-    const list = await skills.getByRole("list").boundingBox();
+    // One skill a row, each row the sheet's full inner width, the icon beside its label; no rule or frame anywhere.
+    const sheet = skills.getByRole("list");
+    const list = await sheet.boundingBox();
+    const inner = await sheet.evaluate((element) => element.clientWidth - parseFloat(getComputedStyle(element).paddingInlineStart) - parseFloat(getComputedStyle(element).paddingInlineEnd));
+    expect(await sheet.evaluate((element) => getComputedStyle(element).borderTopWidth)).toBe("0px");
     for (const row of await rows.all()) {
       const [box, icon, label] = [await row.boundingBox(), await row.locator("svg").boundingBox(), await row.locator("span[dir]").boundingBox()];
-      expect(box && list && Math.abs(box.width - list.width) <= 2).toBe(true);
+      expect(box && Math.abs(box.width - inner) <= 2).toBe(true);
       expect(icon && label && label.x > icon.x + icon.width && label.y < icon.y + icon.height).toBe(true);
+      expect(await row.evaluate((element) => [getComputedStyle(element).borderTopWidth, getComputedStyle(element).borderBottomWidth])).toEqual(["0px", "0px"]);
     }
     // Every label whole on one line at 390 px: no word broken, nothing cut.
     for (const label of await skills.locator("li span[dir]").all()) {
@@ -358,7 +362,7 @@ test.describe("Laufbahn", () => {
     }
     // Twelve skills in under 600 px.
     expect(list?.height).toBeLessThan(600);
-    // The facts are a grouped list as well, every value whole on its row.
+    // The facts are on one soft sheet as well, every value whole on its row.
     const facts = page.getByRole("region", { name: "Über mich" }).locator("dl");
     for (const value of await facts.locator("dd").all()) {
       const lines = await value.evaluate((element) => {
@@ -466,13 +470,14 @@ test.describe("Laufbahn", () => {
     await page.context().close();
   });
 
-  test("with reduced motion nothing moves; without it the sections, the picture and the rail are animated", async ({ browser }) => {
+  test("with reduced motion nothing moves; without it only the hero's lines, the header's drift and the rail move: no section rises", async ({ browser }) => {
     const names = (page: Page) =>
       page.evaluate(() => ({
-        reveal: getComputedStyle(document.querySelector(".lb-reveal") ?? document.body).animationName,
         rise: getComputedStyle(document.querySelector(".poster-rise") ?? document.body).animationName,
-        zoom: getComputedStyle(document.querySelector(".lb-zoom") ?? document.body).animationName,
+        drift: getComputedStyle(document.querySelector(".lb-parallax") ?? document.body).animationName,
         rail: getComputedStyle(document.querySelector(".lb-step") ?? document.body, "::after").animationName,
+        // Nothing in the content rises, zooms or fills a reading line as the page scrolls.
+        rising: document.querySelectorAll(".lb-reveal, .lb-zoom, .lb-progress, .poster-reveal").length,
         running: document
           .getAnimations()
           .filter((animation) => animation.playState === "running" && animation.timeline === document.timeline)
@@ -480,15 +485,31 @@ test.describe("Laufbahn", () => {
       }));
     const still = await phone(browser, { reducedMotion: "reduce" });
     await still.goto(SEVAG);
-    expect(await names(still)).toEqual({ reveal: "none", rise: "none", zoom: "none", rail: "none", running: [] });
+    expect(await names(still)).toEqual({ rise: "none", drift: "none", rail: "none", rising: 0, running: [] });
     // The rail is drawn in full without its animation.
     expect(await still.locator(".lb-step").first().evaluate((step) => getComputedStyle(step, "::after").scale)).toBe("none");
     await still.context().close();
     const moving = await phone(browser, { reducedMotion: "no-preference" });
     await moving.goto(SEVAG);
     const live = await names(moving);
-    expect([live.reveal, live.rise, live.zoom, live.rail]).toEqual(["lb-rise", "poster-rise", "lb-zoom", "lb-fill"]);
+    expect([live.rise, live.drift, live.rail, live.rising]).toEqual(["poster-rise", "lb-parallax", "lb-fill", 0]);
     await moving.context().close();
+  });
+
+  test("phones: the app bar stays away while the name is on screen and fades in, whole, once it has passed under it", async ({ browser }) => {
+    const page = await phone(browser);
+    await page.goto(SEVAG);
+    await page.waitForLoadState("networkidle");
+    const bar = page.locator(".poster-bar");
+    await expect(bar).toBeHidden();
+    // The name passes under the bar: the bar comes, after a short fixed fade (not tied to the scroll).
+    await page.getByRole("heading", { level: 1 }).evaluate((name) => window.scrollBy({ top: name.getBoundingClientRect().bottom, behavior: "instant" }));
+    await expect(bar).toBeVisible();
+    await expect.poll(() => bar.evaluate((element) => getComputedStyle(element).opacity)).toBe("1");
+    // Back up to the name: the bar goes again.
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await expect(bar).toBeHidden();
+    await page.context().close();
   });
 
   test("axe finds nothing on phone and desktop, with and without a contact block", async ({ page, browser }) => {
@@ -524,10 +545,10 @@ test.describe("Laufbahn", () => {
       const page = await context.newPage();
       for (const url of [SEVAG, SAMPLE("en")]) {
         await page.goto(url);
-        // Wait until the hero's lines have risen in.
+        // Wait until the hero's lines have risen in; nothing else on the page fades or rises.
         await expect.poll(() => page.evaluate(() => [...document.querySelectorAll(".poster-rise")].every((element) => getComputedStyle(element).opacity === "1"))).toBe(true);
         const faded = await page.evaluate(() =>
-          [...document.querySelectorAll(".lb-reveal")].filter((element) => element.getBoundingClientRect().top < innerHeight && Number(getComputedStyle(element).opacity) < 1).length,
+          [...document.querySelectorAll("main :is(section, h2, p, ul, ol, dl)")].filter((element) => element.getBoundingClientRect().top < innerHeight && Number(getComputedStyle(element).opacity) < 1).length,
         );
         expect(faded, `${url} at ${String(viewport.width)}`).toBe(0);
         expect(await axe(page), `${url} at ${String(viewport.width)}`).toEqual([]);

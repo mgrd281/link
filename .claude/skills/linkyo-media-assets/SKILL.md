@@ -29,6 +29,14 @@ competitor's page or a brand's assets.
   `hd_1920_1080`), and the web-fetch agent reads the clip page for creator and license. Credit the
   creator in CREDITS.md anyway. Clips for the motion library show no identifiable face (crop it
   out): a library clip may stand for any creator, and nobody should be taken for someone else.
+- **Real footage into a seamless loop.** Look at a contact sheet of frames first (faces, brand names on
+  boxes, shirts and trucks rule a clip out), choose a 7 to 9 s stretch and a 4:5 crop that keeps every
+  face out for the whole stretch (a crop may pan: `crop=864:1080:'min(1056,682+107*t)':0`), then let
+  the end dissolve into the start:
+  `ffmpeg -nostdin -ss <start> -t <L> -i clip.mp4 -filter_complex "[0:v]crop=<w>:<h>:<x>:<y>,scale=864:1080:flags=lanczos,eq=saturation=0.9:contrast=1.03,fps=<fps>,setsar=1,split[x][y];[x]trim=start=0.7,setpts=PTS-STARTPTS[a];[y]trim=end=0.7,setpts=PTS-STARTPTS[b];[a][b]xfade=transition=fade:duration=0.7:offset=<L-1.4>,format=yuv420p[v]" -map "[v]" -c:v libx264 -preset veryslow -crf 30 -movflags +faststart -an <key>.mp4`
+  (0.9 to 1.3 MB; `-crf 32` for a moving camera). The still is the source frame at `<start> + 0.7` s with
+  the same crop, saved at the crop's own size (at most 1080 × 1350), JPEG quality 82. In a shell loop,
+  ffmpeg needs `-nostdin` or it eats the loop's input.
 - **Real people** (concept pages): Wikimedia Commons free licenses only, credited on the page (see
   `linkyo-concept-page`).
 
@@ -72,7 +80,10 @@ hero picture. Never show a real person's face in an illustration of a real custo
 Original loops that fit more than one person go into Linkyo's motion library
 (`apps/web/src/features/creator/motion-library.ts`): today "Barcode scannen" (real footage, Tiger Lily
 on Pexels: two takes of a hand scanner on a wrapped pallet, cropped 4:5 without the face, joined with
-dissolves where no scanner is in frame, 5.7 s), "Lagerarbeit" (`reach-truck-scene.html`),
+dissolves where no scanner is in frame, 5.7 s), "Hochregal" (real footage, Rolan Muradov on Pexels: a
+reach truck at a high-bay rack, 6.3 s), "Stapler fahren" (real footage, Paul Cruz on Pexels: a forklift
+carries a pallet down a long aisle, the crop pans with it, 7.8 s), "Hubwagen ziehen" (real footage,
+Tiger Lily on Pexels: a worker seen from behind pulls a pallet truck through the aisles, 8.3 s), "Lagerarbeit" (`reach-truck-scene.html`),
 "Palette packen" (`pallet-scene.html`: the worker raises a pistol-grip scanner (silver body, rubber
 grip, trigger, a screen at the back) and scans each carton's label; a card beside his head types out
 the EAN-13 it read and confirms it (in-store numbers, prefix 20, valid check digits; DM Mono at 24 px

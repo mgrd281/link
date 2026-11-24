@@ -112,7 +112,7 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(sevag).toMatch(/<\/h1><\/div><p class="[^"]*text-body[^"]*"[^>]*><span dir="auto"[^>]*>Lagerist · Staplerfahrer mit Flurförderzeugschein<\/span><\/p>/);
     expect(sevag).not.toContain("lb-chip");
     // The reach-truck illustration is the large picture, with its description.
-    expect(sevag).toContain('alt="Illustration: Ein Lagerist scannt jeden Karton mit dem Handscanner, die EAN erscheint; er packt die Palette und sichert sie mit Stretchfolie"');
+    expect(sevag).toContain('alt="Video: Ein Schubmaststapler arbeitet vor einem Hochregal voller Paletten in einer Lagerhalle"');
   });
 
   it("asks for the picture as wide as it is drawn: a 4:5 picture covers the tall plate", () => {
@@ -122,7 +122,7 @@ describe("Sevag's application page on Laufbahn", () => {
 
   it("sets the white words on a veil tied to them, and caps the name by the screen's height", () => {
     expect(sevag).toMatch(/class="relative [^"]*lb-veil text-white @work:text-creator-fg @work:before:hidden"/);
-    expect(sevag).toMatch(/<h1 class="[^"]*\blb-name\b/);
+    expect(sevag).toMatch(/<h1 [^>]*class="[^"]*\blb-name\b/);
     expect(sevag).not.toContain("lb-scrim");
   });
 
@@ -146,9 +146,12 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(sheet).toMatch(/aria-labelledby="([^"]+)"[\s\S]*<h2 id="\1"[^>]*>Inhalt<\/h2>/);
     expect([...sheet.matchAll(/<a href="#([^"]+)"/g)].map((match) => match[1])).toEqual(targets);
     expect(sheet).toContain('aria-label="Schließen"');
-    // The bar is solid, with the reading line along its foot.
+    // The bar is solid, shows once the large name has passed under it (BarReveal watches the name),
+    // has no reading line and a soft round share button.
     expect(bar).toMatch(/class="poster-bar [^"]*lb-bar bg-creator-bg"/);
-    expect(sevag).toMatch(/<\/dialog>[\s\S]*?<span aria-hidden="true" class="lb-progress /);
+    expect(sevag).not.toContain("lb-progress");
+    expect(sevag).toMatch(/<h1 data-lb-name="true"/);
+    expect(sevag).toMatch(/<\/dialog><button type="button" aria-label="Seite teilen" class="[^"]*rounded-full[^"]*bg-creator-surface-2/);
   });
 
   it("without a contact block: the hero leads to his cover letter, with 'Teilen' beside it", () => {
@@ -157,13 +160,14 @@ describe("Sevag's application page on Laufbahn", () => {
     const actions = /<div data-hero-actions[\s\S]*?<\/button>/.exec(sevag)?.[0] ?? "";
     const lead = /<a href="#section-letter-title"[^>]*>[\s\S]*?<\/a>/.exec(actions)?.[0] ?? "";
     expect(text(lead)).toBe("Anschreiben lesen");
-    // One filled button (the first action) and the outlined share button, both 48 px with the page's button radius.
+    // One filled button (the first action) and the share button in a soft grey fill (no outline), both 48 px pills.
     expect(lead).toMatch(/bg-creator-accent[^"]*text-creator-accent-fg/);
     const share = /<button[^>]*>[\s\S]*?<\/button>/.exec(actions)?.[0] ?? "";
     // Its visible label is its name, and stays "Teilen" while the address is copied (WCAG 2.5.3).
     expect(share).not.toContain("aria-label");
     expect(text(share)).toBe("Teilen");
-    expect(share).toContain("border-creator-line-strong");
+    expect(share).toContain("bg-creator-surface-2");
+    expect(share).not.toMatch(/\bborder\b/);
     for (const control of [lead, share]) expect(control).toMatch(/min-h-control-lg[^"]*rounded-creator-button|rounded-creator-button[^"]*min-h-control-lg/);
     expect(count(/<header[\s\S]*?<\/header>/.exec(sevag)?.[0] ?? "", /<a [^>]*bg-creator-accent/g)).toBe(1);
     // A polite live region announces the copied link where the page has no share sheet.
@@ -192,18 +196,20 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(toning).not.toContain("<details");
   });
 
-  it("lists the skills like a settings screen: one a row on phones, an icon and the whole label, nothing that looks pressable", () => {
+  it("lists the skills on one soft sheet without lines: one a row on phones, an icon and the whole label, nothing that looks pressable", () => {
     const skills = /<section id="section-skills"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
     const list = /<ul class="([^"]*)"/.exec(skills)?.[1] ?? "";
-    expect(list).toMatch(/^grid min-w-0 grid-cols-1 gap-px [^"]*rounded-creator-card border border-creator-line bg-creator-line @prose:grid-cols-2/);
+    // One sheet in the surface colour (a step in the fill): no frame, no rules between the rows.
+    expect(list).toMatch(/^grid min-w-0 grid-cols-1 [^"]*rounded-creator-card bg-creator-surface [^"]*@prose:grid-cols-2/);
+    expect(list).not.toMatch(/\bborder\b|\bgap-px\b|bg-creator-line/);
     const rows = [...skills.matchAll(/<li class="([^"]*)"[^>]*>([\s\S]*?)<\/li>/g)];
     const items = sevagDe.blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")?.items ?? [];
     expect(rows.map(([, , inner]) => text(inner ?? ""))).toEqual(items);
     for (const [, classes, inner] of rows) {
       expect(inner).toMatch(/^<svg[^>]*class="lucide lucide-/);
-      // A row of the list: no frame of its own, no hover, at least 48 px.
-      expect(classes).toMatch(/\bflex\b[^"]*\bmin-h-control-lg\b[^"]*\bbg-creator-surface\b/);
-      expect(classes).not.toMatch(/\bborder\b|hover:/);
+      // A row of the list: no frame or rule of its own, no hover, at least 48 px.
+      expect(classes).toMatch(/\bflex\b[^"]*\bmin-h-control-lg\b/);
+      expect(classes).not.toMatch(/\bborder|hover:/);
     }
     // Whole words: no soft hyphens put in, no automatic hyphenation, never numbered.
     expect(skills).not.toContain("\u00AD");
@@ -212,17 +218,25 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(skills).not.toMatch(/>0\d</);
   });
 
-  it("sets the facts as a grouped list with whole words, and the timeline's licence on its node", () => {
+  it("sets the facts on one soft sheet without lines, with whole words, and the timeline's licence on its node", () => {
     const facts = /<dl class="([^"]*)"[\s\S]*?<\/dl>/.exec(/<section id="section-about"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "");
-    expect(facts?.[1]).toMatch(/^grid min-w-0 grid-cols-1 gap-px [^"]*@prose:grid-cols-2/);
+    expect(facts?.[1]).toMatch(/^grid min-w-0 grid-cols-1 [^"]*rounded-creator-card bg-creator-surface [^"]*@prose:grid-cols-2/);
+    expect(facts?.[0]).not.toMatch(/\bborder|\bgap-px\b|bg-creator-line/);
     expect(facts?.[0]).not.toContain("\u00AD");
     expect(text(facts?.[0] ?? "")).toContain("vor allem Seitenschubstapler");
     const timeline = /<section id="section-path"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
     expect([...timeline.matchAll(/class="lucide lucide-([a-z-]+)/g)].map((match) => match[1])).toEqual(["id-card", "briefcase"]);
   });
 
-  it("is flat and unlined: no shadow, no underline", () => {
+  it("is flat and unlined: no shadow, no underline, no rule above the sections or between the hero's numbers", () => {
     expect(sevag).not.toMatch(/\b(?:shadow-(?!none)|drop-shadow|underline|decoration-)/);
+    for (const section of sevag.match(/<section id="[^"]*"[^>]*class="[^"]*"/g) ?? []) expect(section).not.toMatch(/\bborder-t\b/);
+    const numbers = /<header[\s\S]*?<\/header>/.exec(sevag)?.[0].match(/<dl class="[^"]*"[\s\S]*?<\/dl>/)?.[0] ?? "";
+    expect(numbers).toContain("seit 2018");
+    expect(numbers).not.toMatch(/\bborder/);
+    // One soft sheet for the three numbers; no hyphen is ever put into a label.
+    expect(numbers).toMatch(/^<dl class="[^"]*rounded-creator-card bg-creator-surface/);
+    expect(numbers).not.toContain("hyphens-auto");
   });
 });
 
@@ -335,26 +349,22 @@ describe("a page whose first blocks have no title", () => {
 });
 
 describe("motion", () => {
-  const skillList = (markup: string) => /<ul class="(grid min-w-0 grid-cols-1 gap-px[^"]*)">([\s\S]*?)<\/ul>/.exec(markup);
-  const rows = (markup: string) => [...(skillList(markup)?.[2] ?? "").matchAll(/<li class="([^"]*)"/g)].map((match) => match[1] ?? "");
-
-  it("skills in a section of their own rise in once, as one list", () => {
-    expect(rows(sevag)).toHaveLength(12);
-    expect(skillList(sevag)?.[1]).toContain("lb-reveal");
-    expect(rows(sevag).some((row) => row.includes("lb-reveal"))).toBe(false);
-  });
-
-  it("skills sharing a section with other blocks rise once with the section, never twice", () => {
+  it("nothing in the content moves as the page scrolls: no rising sections, rows or steps, no zooming picture", () => {
     const blocks: Block[] = [
       { ...base, id: "skills", type: "header", title: "Können" },
       { ...base, id: "note", type: "text", text: "Was ich am liebsten tue." },
       { ...base, id: "tools", type: "tools", items: ["Stapler", "SAP"] },
     ];
-    const markup = render({ ...sevagDe, blocks });
-    expect(rows(markup)).toHaveLength(2);
-    expect(skillList(markup)?.[1]).not.toContain("lb-reveal");
-    expect(rows(markup).some((row) => row.includes("lb-reveal"))).toBe(false);
-    expect(markup).toMatch(/<div class="grid min-w-0 grid-cols-1 gap-6 lb-reveal">/);
+    for (const markup of [sevag, render({ ...sevagDe, blocks })]) {
+      expect(markup).not.toMatch(/\blb-(?:reveal|zoom|progress)\b/);
+      expect(markup).not.toMatch(/\bposter-reveal\b/);
+    }
+  });
+
+  it("the header's picture and clip drift a little slower than the page, as an app's header does", () => {
+    const plate = /<div data-hero-plate="true"[^>]*>([\s\S]*?)<\/div>/.exec(sevag)?.[1] ?? "";
+    expect(plate).toMatch(/^<div class="lb-parallax absolute/);
+    expect(plate).toContain("<video");
   });
 });
 

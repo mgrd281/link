@@ -18,8 +18,9 @@ import { displayStyle, pageSide } from "./styles";
  * titled section opens under a hairline with its title, and the titles form the page's contents: on
  * phones the app bar names the section being read and opens the contents as a sheet; chips that wrap
  * on tablets; a sticky list beside the sections on the wide canvas, marking the section being read.
- * Facts and skills are grouped lists (the rows of a settings screen), never tiles that look like
- * buttons, and no word is ever broken: a label too long for its row wraps between words.
+ * Facts and skills are calm lists on one soft sheet (a step in the fill, no frame and no rules), never
+ * tiles that look like buttons, and no word is ever broken: a label too long for its row wraps between
+ * words. Sections stand apart by space and their titles alone: no hairline above each one.
  *
  * The section frame takes every kind of block; about, skills, experience and text have their own
  * calm renderers here, everything else keeps the renderer it has in every template. Server HTML with
@@ -67,27 +68,25 @@ export function SignpostIndex({ entries }: { entries: readonly Signpost[] }): Re
 }
 
 /**
- * One section: a hairline across, the title, then the content. An untitled run of blocks (before the
- * first title, or the contact band) has no heading. With motion "reveal" the title and the content
- * rise in once as they enter the screen (`reveal: "self"`: the content's own rows and steps rise in
- * one by one instead).
+ * One section: the title, then the content; sections stand apart by space alone (no hairline, no
+ * rule), as the screens of an app do, and nothing moves as they scroll in: the page scrolls, the
+ * content stays still. An untitled run of blocks (before the first title, or the contact band) has no
+ * heading.
  */
 export function SignpostSection({
   entry,
   blockIds,
   ai,
-  reveal,
   children,
 }: {
   entry: Signpost | undefined;
   blockIds?: string | undefined;
   /** The title comes from an AI-written block. */
   ai: boolean;
-  reveal: "none" | "section" | "self";
   children: ReactNode;
 }): ReactNode {
   const id = useId();
-  const content = cn("grid min-w-0 grid-cols-1 gap-6", reveal === "section" && "lb-reveal");
+  const content = "grid min-w-0 grid-cols-1 gap-6";
   if (!entry) {
     return (
       <div data-block-ids={blockIds} className={content}>
@@ -96,11 +95,11 @@ export function SignpostSection({
     );
   }
   return (
-    <section id={entry.anchor} aria-labelledby={id} data-block-ids={blockIds} className="lb-section grid min-w-0 grid-cols-1 gap-6 border-t border-creator-line pt-8 @prose:gap-8 @work:pt-10">
+    <section id={entry.anchor} aria-labelledby={id} data-block-ids={blockIds} className="lb-section grid min-w-0 grid-cols-1 gap-5 @prose:gap-6">
       <h2
         id={id}
         dir="auto"
-        className={cn(pageSide, "min-w-0 font-creator-display text-h2 leading-tight text-balance break-words @work:text-h1 rtl:leading-snug", reveal !== "none" && "lb-reveal")}
+        className={cn(pageSide, "min-w-0 font-creator-display text-h2 leading-tight text-balance break-words @work:text-h1 rtl:leading-snug")}
         style={displayStyle}
         {...(ai ? { "data-ai-generated": "true" } : {})}
       >
@@ -156,12 +155,12 @@ export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode
         </div>
       ) : null}
       {facts.length > 0 ? (
-        // A grouped list, as on a settings screen: one fact a row on phones (the label above its value),
-        // two a row from tablets on, hairlines between. Words stay whole: a value wraps between words, and
-        // only a word wider than the whole row (320 px, 400 % zoom) may break (WCAG 1.4.10).
-        <dl className="grid min-w-0 grid-cols-1 gap-px overflow-hidden rounded-creator-card border border-creator-line bg-creator-line @prose:grid-cols-2">
+        // One soft sheet (a step in the fill, no frame, no rules): one fact a row on phones (the label
+        // above its value), two a row from tablets on, space between. Words stay whole: a value wraps
+        // between words, and only a word wider than the whole row (320 px, 400 % zoom) may break (WCAG 1.4.10).
+        <dl className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-4 @prose:grid-cols-2 @prose:gap-y-5 @prose:p-6">
           {facts.map((fact) => (
-            <div key={`${fact.label}-${fact.value}`} className="grid min-w-0 grid-cols-1 content-start gap-1 bg-creator-surface px-4 py-3 @prose:px-5 @prose:py-4 @prose:odd:last:col-span-2">
+            <div key={`${fact.label}-${fact.value}`} className="grid min-w-0 grid-cols-1 content-start gap-1">
               <dt dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>
                 {fact.label}
               </dt>
@@ -186,18 +185,18 @@ export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode
 }
 
 /**
- * Skills and tools as a grouped list, as on a settings screen: one skill a row on phones, two a row
- * from tablets on, hairlines between. Each row is the skill's icon in the accent (from the skill's own
- * words by a curated map, laufbahn-content.ts; a neutral check where nothing fits) and its label, whole:
- * no automatic hyphenation and no breaks inside words, a long label wraps between words. Nothing about
- * a row says "press me" (no frame of its own, no hover), because nothing happens on a press. No numbers.
- * The list rises in once as it enters the screen (motion "reveal").
+ * Skills and tools as a list on one soft sheet (a step in the fill, no frame and no rules between the
+ * rows): one skill a row on phones, two a row from tablets on. Each row is the skill's icon in the
+ * accent (from the skill's own words by a curated map, laufbahn-content.ts; a neutral check where
+ * nothing fits) and its label, whole: no automatic hyphenation and no breaks inside words, a long label
+ * wraps between words. Nothing about a row says "press me" (no frame of its own, no hover), because
+ * nothing happens on a press. No numbers, and nothing moves as it scrolls in.
  */
-export function LaufbahnSkills({ block, locale, reveal }: { block: BlockOf<"tools">; locale: Profile["locale"]; reveal: boolean }): ReactNode {
+export function LaufbahnSkills({ block, locale }: { block: BlockOf<"tools">; locale: Profile["locale"] }): ReactNode {
   return (
-    <ul className={cn("grid min-w-0 grid-cols-1 gap-px overflow-hidden rounded-creator-card border border-creator-line bg-creator-line @prose:grid-cols-2", reveal && "lb-reveal")}>
+    <ul className="grid min-w-0 grid-cols-1 gap-x-6 rounded-creator-card bg-creator-surface px-4 py-2 @prose:grid-cols-2 @prose:px-6 @prose:py-3">
       {block.items.map((item) => (
-        <li key={item} className="flex min-h-control-lg min-w-0 items-center gap-3 bg-creator-surface px-4 py-2 @prose:odd:last:col-span-2">
+        <li key={item} className="flex min-h-control-lg min-w-0 items-center gap-3 py-1">
           <Icon icon={iconFor(item, locale) ?? CircleCheck} size="md" className="shrink-0 text-creator-accent-text" />
           <span dir="auto" className={cn(pageSide, "min-w-0 text-body leading-snug font-medium text-pretty hyphens-manual break-words rtl:leading-normal")}>
             {item}
@@ -215,7 +214,7 @@ export function LaufbahnSkills({ block, locale, reveal }: { block: BlockOf<"tool
  * between the nodes fills with the accent as the steps scroll by (drawn in full without scroll-driven
  * animations and with reduced motion). Logical sides: it mirrors in Arabic.
  */
-export function LaufbahnTimeline({ block, locale, reveal }: { block: BlockOf<"timeline">; locale: Profile["locale"]; reveal: boolean }): ReactNode {
+export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">; locale: Profile["locale"] }): ReactNode {
   const t = useTranslations("creator");
   return (
     <ol className="grid min-w-0 grid-cols-1">
@@ -224,7 +223,7 @@ export function LaufbahnTimeline({ block, locale, reveal }: { block: BlockOf<"ti
         const icon = named && CREDENTIAL_ICONS.includes(named) ? named : Briefcase;
         const ongoing = item.years.to === "now";
         return (
-          <li key={`${item.role}-${String(item.years.from)}-${item.org ?? ""}`} className={cn("lb-step grid min-w-0 justify-items-start gap-1 ps-12 pb-8 last:pb-0", reveal && "lb-reveal")}>
+          <li key={`${item.role}-${String(item.years.from)}-${item.org ?? ""}`} className="lb-step grid min-w-0 justify-items-start gap-1 ps-12 pb-8 last:pb-0">
             <span
               aria-hidden
               className={cn(
@@ -280,8 +279,9 @@ const readingParagraph = cn(pageSide, "max-w-prose text-body whitespace-pre-line
 
 /**
  * A text block in its paragraphs (a single line break stays one), set by its length:
- * - a short note (under 320 characters) is a callout: a flat tile with a hairline and an icon in a
- *   soft accent square, chosen from the section's title by the skills' map (a light bulb otherwise);
+ * - a short note (under 320 characters) is a callout: a soft tile (a step in the fill, no frame) with
+ *   an icon in a soft accent square, chosen from the section's title by the skills' map (a light bulb
+ *   otherwise);
  * - a long read (a cover letter) is a reading tile under a quiet line with its reading time; over
  *   900 characters it opens on phones with its first two paragraphs and a native disclosure for the
  *   rest ("Read the whole letter", or "Read more" when it is not a letter), keyboard and screen
@@ -295,7 +295,7 @@ export function LaufbahnText({ text, title, letter, locale }: { text: string; ti
   const kind = textKind(text);
   if (kind === "note") {
     return (
-      <div className="flex min-w-0 items-start gap-4 rounded-creator-card border border-creator-line bg-creator-surface p-5 @prose:gap-5 @prose:p-6">
+      <div className="flex min-w-0 items-start gap-4 rounded-creator-card bg-creator-surface p-5 @prose:gap-5 @prose:p-6">
         <IconSquare icon={(title ? iconFor(title, locale) : undefined) ?? Lightbulb} size="md" />
         <div className="grid min-w-0 flex-1 gap-4 pt-2">
           {parts.map((part) => (
@@ -321,7 +321,7 @@ export function LaufbahnText({ text, title, letter, locale }: { text: string; ti
   const short = opensShort(text);
   const [head, rest] = short ? [parts.slice(0, 2), parts.slice(2)] : [parts, []];
   return (
-    <div className="grid min-w-0 gap-4 rounded-creator-card border border-creator-line bg-creator-surface p-5 @prose:gap-6 @prose:p-10">
+    <div className="grid min-w-0 gap-4 rounded-creator-card bg-creator-surface p-5 @prose:gap-6 @prose:p-10">
       <p className="inline-flex items-center gap-2 text-small font-medium text-creator-fg-muted">
         <Icon icon={Clock} size="sm" className="shrink-0" />
         {t("laufbahn.readingTime", { minutes: readingMinutes(text) })}

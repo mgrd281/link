@@ -87,6 +87,8 @@ function BleedName({ profile, theme, isRtl }: { profile: Profile; theme: Resolve
   ) : null;
   return (
     <h1
+      // The app bar appears once the name has passed under it, as an app's large title does (BarReveal).
+      data-lb-name
       className={cn(
         "font-creator-display text-balance break-words",
         // Over the picture: fitted to the width and capped by the screen's height (lb-name); on the wide canvas: fitted to the words' columns.
@@ -111,15 +113,16 @@ function BleedName({ profile, theme, isRtl }: { profile: Profile; theme: Resolve
  * they keep AA however short the picture is. When the picture is the portrait itself (no separate
  * hero picture), it rides high in a square and fades into an ink ground, so the words stand below the
  * face, never across it. Below it, on the page: the sentence, then two actions where the thumb is
- * (LaufbahnActions: the page's first action, filled, and "Share", outlined), on a phone's first screen,
- * then the numbers in a row between hairlines. Without any picture the picture's place is an accent
- * field with the initials, never an empty box.
+ * (LaufbahnActions: the page's first action, filled, and "Share" in a soft fill, both pills), on a
+ * phone's first screen, then the numbers side by side on one soft sheet (no rules). Without any picture the
+ * picture's place is an accent field with the initials, never an empty box.
  *
  * The wide canvas: one composition on twelve columns. The words on the first five (the name on two
  * lines when it has two words), the picture as a tall rounded plate on the last six.
  *
- * One DOM for every width (the name and the actions exist once). The lines rise in once; the picture
- * eases in a little as the hero scrolls away; neither with reduced motion.
+ * One DOM for every width (the name and the actions exist once). The lines rise in once when the
+ * page opens; as the page scrolls, the picture (or clip) drifts a little slower than the words over
+ * it, as an app's header does (lb-parallax, phones and tablets); neither with reduced motion.
  */
 export function BleedHero({
   profile,
@@ -171,8 +174,8 @@ export function BleedHero({
       >
         {picture ? (
           // A portrait: a square at the top on phones, fading into the ink ground; the whole plate on the wide canvas.
-          <div className={cn("absolute", portrait ? "inset-x-0 top-0 aspect-square mask-b-from-60% mask-b-to-100% @work:inset-0 @work:aspect-auto @work:mask-none" : "inset-0")}>
-            <MediaImage src={picture.src} focal={picture.focal} alt={picture.alt} sizes={plateSizes(picture, portrait)} priority={!preview} className="lb-zoom" />
+          <div className={cn("lb-parallax absolute", portrait ? "inset-x-0 top-0 aspect-square mask-b-from-60% mask-b-to-100% @work:inset-0 @work:aspect-auto @work:mask-none" : "inset-0")}>
+            <MediaImage src={picture.src} focal={picture.focal} alt={picture.alt} sizes={plateSizes(picture, portrait)} priority={!preview} />
             {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}
           </div>
         ) : (
@@ -224,15 +227,16 @@ export function BleedHero({
         ) : null}
         <LaufbahnActions profile={profile} action={action} lead={lead} now={now} className={rise(3).className} style={rise(3).style} />
         {profile.stats?.length ? (
-          <dl className={cn("grid auto-cols-fr grid-flow-col border-y border-creator-line py-4", rise(4).className)} style={rise(4).style}>
+          <dl className={cn("grid auto-cols-fr grid-flow-col gap-x-3 rounded-creator-card bg-creator-surface p-3 @prose:gap-x-6 @prose:p-5", rise(4).className)} style={rise(4).style}>
             {profile.stats.map((stat) => (
-              // The label first for screen readers, the value on top for the eye; the first number on the reading edge.
-              <div key={stat.label} className="flex min-w-0 flex-col-reverse justify-end gap-1 px-3 first:ps-0 last:pe-0 not-first:border-s not-first:border-creator-line @prose:px-5">
-                <dt dir="auto" className={cn(pageSide, "text-caption text-balance hyphens-auto text-creator-fg-muted")}>
+              // The label first for screen readers, the value on top for the eye: one soft sheet for all of them,
+              // space between, no rules. Words wrap between words only (no hyphen put in), even at 320 px.
+              <div key={stat.label} className="flex min-w-0 flex-col-reverse justify-end gap-1">
+                <dt dir="auto" className={cn(pageSide, "text-caption text-balance hyphens-manual break-words text-creator-fg-muted")}>
                   {stat.label}
                 </dt>
                 {/* "40+" stays "40+" on an Arabic page; a figure in Arabic words runs right to left. On the
-                    narrowest screens (320) a value of two words may take two lines rather than run into the hairline. */}
+                    narrowest screens a value of two words may take two lines rather than leave its column. */}
                 <dd
                   dir={RTL_LETTERS.test(stat.value) ? "rtl" : "ltr"}
                   className={cn(pageSide, "text-title leading-none font-semibold tabular-nums rtl:tracking-normal @prose:text-h3 @prose:rtl:tracking-normal")}
@@ -263,9 +267,9 @@ export interface Lead {
 }
 
 /**
- * Both hero buttons: the same height, radius and press as every button on the page (48 px, the
- * template's button radius, scale on press, the focus ring). On phones they share a row when both
- * labels fit (the first action takes the larger part) and stack at full width when they do not.
+ * Both hero buttons: the same height, shape and press as every button on the page (48 px, the
+ * template's pill, scale on press, the focus ring). On phones they share a row when both labels fit
+ * (the first action takes the larger part) and stack at full width when they do not.
  */
 const heroButton = cn(
   "inline-flex min-h-control-lg max-w-full min-w-0 basis-auto items-center justify-center gap-2 rounded-creator-button px-3 text-center text-body leading-snug font-semibold @prose:flex-none @prose:px-6",
@@ -275,8 +279,9 @@ const heroButton = cn(
 /**
  * The hero's actions: the page's first action as the one filled button (the contact block's primary
  * action when there is one, else "Read the letter" on an application with a cover letter, else "Read
- * on" to the first section) and "Share" beside it, outlined: the native share sheet, or the address
- * copied and announced. With a contact block its availability line stands above and its CV below.
+ * on" to the first section) and "Share" beside it in a soft grey fill (no outline): the native share
+ * sheet, or the address copied and announced. With a contact block its availability line stands above
+ * and its CV below.
  */
 function LaufbahnActions({
   profile,
@@ -319,7 +324,7 @@ function LaufbahnActions({
             <span>{t(lead.kind === "letter" ? "laufbahn.readLetter" : "laufbahn.jump")}</span>
           </a>
         ) : null}
-        <ShareAction title={profile.displayName} label={t("laufbahn.share")} className={cn(heroButton, "grow border border-creator-line-strong bg-creator-surface text-creator-fg")} />
+        <ShareAction title={profile.displayName} label={t("laufbahn.share")} className={cn(heroButton, "grow bg-creator-surface-2 text-creator-fg")} />
       </div>
       {cv ? (
         <a

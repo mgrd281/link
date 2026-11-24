@@ -11,7 +11,7 @@ import { enterDemoCode } from "./auth";
 
 const STORAGE_KEY = "linkyo.demo.v1";
 /** Linkyo's clips in the picker (features/creator/motion-library.ts); "None" and "Own link" come on top. */
-const MOTION_CLIPS = 4;
+const MOTION_CLIPS = 7;
 
 let counter = 0;
 const unique = () => `${Date.now().toString(36)}${(counter++).toString(36)}`;
@@ -129,7 +129,8 @@ test.describe("profile: moving header from Linkyo's clips", () => {
     const sheet = await openPicker(page, "ar");
     const group = sheet.getByRole("radiogroup", { name: "واجهة متحركة" });
     await expect(group.getByRole("radio", { name: /مسح البضائع/ })).toHaveCount(1);
-    await expect(group.getByText("8 ثوانٍ")).toBeVisible();
+    // Three clips run 8 seconds: scanning goods, the forklift in the aisle and the pallet truck.
+    await expect(group.getByText("8 ثوانٍ")).toHaveCount(3);
     await expect(sheet.getByRole("button", { name: "شاهد عمل المستودع" })).toBeVisible();
     const results = await new AxeBuilder({ page }).include("[role=dialog]").analyze();
     expect(results.violations.map((v) => v.id)).toEqual([]);

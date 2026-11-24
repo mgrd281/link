@@ -78,7 +78,7 @@ test("a page prepared from a person's own application letter reads as his own pa
   // still for reduced motion.
   const clip = page.locator("video").first();
   const src = (await clip.getAttribute("src")) ?? "";
-  expect(src).toMatch(/^\/media\/motion\/(palette-packen|barcode-scannen|lagerarbeit|ware-scannen)\.mp4$/);
+  expect(src).toMatch(/^\/media\/motion\/(hochregal|barcode-scannen|stapler-fahren|hubwagen)\.mp4$/);
   const key = /motion\/([a-z-]+)\.mp4/.exec(src)?.[1] ?? "";
   await expect(page.locator("[data-hero-plate] img").first()).toHaveAttribute("src", new RegExp(`ex-motion-${key}`));
   expect(await clip.evaluate((video: HTMLVideoElement) => video.paused)).toBe(true);
@@ -95,15 +95,15 @@ test("a page prepared from a person's own application letter reads as his own pa
   expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
 });
 
-const ROTATION = ["palette-packen", "barcode-scannen", "lagerarbeit", "ware-scannen"];
+const ROTATION = ["hochregal", "barcode-scannen", "stapler-fahren", "hubwagen"];
 
 test("his page shows the clip its address names, each with its own still; a first visit shows his own", async ({ request }) => {
   const clipOf = (html: string) => /\/media\/motion\/([a-z-]+)\.mp4/.exec(html)?.[1] ?? "";
   // A first visit (and a link preview, a shared link) without a clip in the address: his own clip.
-  expect(clipOf(await (await request.get("/de/p/sevag-ghazarian-2131af")).text())).toBe("palette-packen");
+  expect(clipOf(await (await request.get("/de/p/sevag-ghazarian-2131af")).text())).toBe("hochregal");
   for (const key of [...ROTATION, "not-a-clip"]) {
     const html = await (await request.get(`/de/p/sevag-ghazarian-2131af?clip=${key}`)).text();
-    const shown = key === "not-a-clip" ? "palette-packen" : key;
+    const shown = key === "not-a-clip" ? "hochregal" : key;
     expect(clipOf(html)).toBe(shown);
     // The still is that clip's own first frame, never another one's.
     expect(html).toContain(`ex-motion-${shown}`);
@@ -125,10 +125,10 @@ test("every refresh of his page shows the next of his four clips, and the addres
   }
   // A section chosen in the page stays where it is across a refresh; only the clip moves on.
   await page.goto("/de/p/sevag-ghazarian-2131af#section-letter-title");
-  await expect(page).toHaveURL(/\?clip=barcode-scannen#section-letter-title$/);
+  await expect(page).toHaveURL(new RegExp(`\\?clip=${ROTATION[1] ?? ""}#section-letter-title$`));
   await page.reload();
-  await expect(clip).toHaveAttribute("src", "/media/motion/barcode-scannen.mp4");
-  await expect(page).toHaveURL(/\?clip=lagerarbeit#section-letter-title$/);
+  await expect(clip).toHaveAttribute("src", `/media/motion/${ROTATION[1] ?? ""}.mp4`);
+  await expect(page).toHaveURL(new RegExp(`\\?clip=${ROTATION[2] ?? ""}#section-letter-title$`));
   // The back button does not gain a step from it.
   expect(await page.evaluate(() => history.length)).toBeLessThanOrEqual(3);
 });

@@ -519,14 +519,17 @@
 }
 
 /*
- * Laufbahn (ADR 0069): the picture from edge to edge on phones, signposted sections, a timeline whose
- * rail fills as it is read. Transform and opacity only (nothing shifts the layout), all of it off with
+ * Laufbahn (ADR 0069): the picture from edge to edge on phones, drifting a little slower than the page;
+ * sections that stand still as the page scrolls (as in an app); a timeline whose rail fills as it is
+ * read. Transform and opacity only (nothing shifts the layout), all of it off with
  * prefers-reduced-motion, and absent where scroll-driven animations are not supported: there the page
- * is complete as it stands (the rail drawn in full, every section visible).
+ * is complete as it stands (the rail drawn in full).
  */
-@keyframes lb-zoom {
+
+/* The header's picture or clip drifting a little slower than the page (parallax), as in an app's header. */
+@keyframes lb-parallax {
   to {
-    scale: 1.08;
+    translate: 0 25%;
   }
 }
 
@@ -541,36 +544,6 @@
   from {
     opacity: 0;
     translate: 0 calc(var(--spacing-2) * -1);
-  }
-}
-
-/* Laufbahn's app bar: down from above the screen, opaque all the way. */
-@keyframes lb-bar-enter {
-  from {
-    translate: 0 -100%;
-    visibility: hidden;
-  }
-
-  to {
-    translate: 0 0;
-    visibility: visible;
-  }
-}
-
-@keyframes lb-bar-enter-still {
-  from {
-    visibility: hidden;
-  }
-
-  to {
-    visibility: visible;
-  }
-}
-
-/* The reading line along the app bar's foot. */
-@keyframes lb-progress {
-  to {
-    scale: 1 1;
   }
 }
 
@@ -591,13 +564,6 @@
 @keyframes lb-veil-in {
   from {
     opacity: 0;
-  }
-}
-
-/* A section or tile rising into place: movement only, so nothing ever rests faded at the fold. */
-@keyframes lb-rise {
-  from {
-    translate: 0 var(--spacing-6);
   }
 }
 
@@ -655,25 +621,21 @@
   background-color: var(--color-ink);
 }
 
-/* The picture eases in a little as the hero scrolls away. */
-@utility lb-zoom {
+/* The header's picture (and its clip) drifts a little slower than the words over it as the page
+   scrolls, as an app's header does: at most a quarter of its height over the hero's whole exit, so its
+   top edge never comes into view. Phones and tablets only: on the wide canvas the picture is a plate
+   beside the words, wholly on screen, where a drift would show its edge. Nothing else on the page moves
+   with the scroll except the timeline's rail. Off with reduced motion and without scroll timelines. */
+@utility lb-parallax {
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
-      animation: lb-zoom linear both;
+      animation: lb-parallax linear both;
       animation-timeline: --poster-hero;
       animation-range: exit 0% exit 100%;
-    }
-  }
-}
 
-/* Sections and tiles rise in once, within the first 8 rem of entering the screen, whatever their height.
-   Movement only, no fade: content resting at the fold of a large screen is always fully legible. */
-@utility lb-reveal {
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      animation: lb-rise linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry var(--spacing-32);
+      @variant @work {
+        animation: none;
+      }
     }
   }
 }
@@ -703,10 +665,10 @@
 
 /* stylelint-disable nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
 
-/* Laufbahn's app bar (PosterBar, solid): it slides down whole as the hero leaves, never half
-   transparent, so nothing of the page ever shows through it or crosses its words (with reduced motion
-   it simply appears). Where scroll-driven animations are missing it never slides in, so it stands at
-   the top from the start, as an app's bar does; nothing is ever out of reach. */
+/* Laufbahn's app bar (PosterBar, solid), as an app's navigation bar: away while the large name is on
+   screen, there once the name has passed under it (BarReveal sets data-lb-shown). It fades in and settles
+   over a short, fixed time, never tied to the scroll, so it is never caught half there when the page
+   stops; with reduced motion it simply appears. Without the script it stays away. */
 @utility lb-bar {
   /* The bar's own controls sit inside the band the document keeps clear for the bar (its scroll
      padding), where the browser would scroll the page to "reveal" them on every focus, in vain: a
@@ -715,38 +677,28 @@
     scroll-margin-block-start: calc((var(--spacing-control-xl) + var(--spacing-4)) * -1);
   }
 
-  @supports (animation-timeline: view()) {
+  &:is(.poster-bar) {
+    animation: none;
+    visibility: hidden;
+    opacity: 0;
+    translate: 0 calc(var(--spacing-2) * -1);
+    transition:
+      opacity var(--duration-standard) var(--ease-standard),
+      translate var(--duration-standard) var(--ease-standard),
+      visibility 0s linear var(--duration-standard);
+  }
+
+  &:is(.poster-bar)[data-lb-shown] {
+    visibility: visible;
+    opacity: 1;
+    translate: 0 0;
+    transition-delay: 0s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
     &:is(.poster-bar) {
-      animation-name: lb-bar-enter;
-
-      @media (prefers-reduced-motion: reduce) {
-        animation-name: lb-bar-enter-still;
-      }
-    }
-  }
-
-  @supports not (animation-timeline: view()) {
-    &:is(.poster-bar) {
-      visibility: visible;
-    }
-  }
-}
-
-/* How far the page has been read: the line along the app bar's foot fills from the reading start
-   with the page's scroll (scroll-driven, no script). Absent where that is not supported and with
-   reduced motion: the bar is complete without it. */
-@utility lb-progress {
-  transform-origin: left;
-  scale: 0 1;
-
-  &:dir(rtl) {
-    transform-origin: right;
-  }
-
-  @supports (animation-timeline: scroll()) {
-    @media (prefers-reduced-motion: no-preference) {
-      animation: lb-progress linear both;
-      animation-timeline: scroll(root block);
+      translate: none;
+      transition: none;
     }
   }
 }

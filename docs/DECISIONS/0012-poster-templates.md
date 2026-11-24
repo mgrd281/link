@@ -25,7 +25,7 @@ our own expression; no code, text, images or marks are copied.
    | Folio (ADR 0054) | warm paper, ruled titles, rows with hairlines, work in a grid | framed picture, name at the reading start |
    | Signal (ADR 0054) | night blue, lime, a fine grid, monospace details | square picture in corner marks |
    | Bloom (ADR 0054) | cream and rose, round bold type, filled pills | portrait in an arch with an outline arch behind |
-   | Laufbahn (ADR 0069) | a very light canvas, cobalt, Inter, plain section titles, a contents sheet in the app bar, lists with icons | the picture from edge to edge with the name on it; a tall rounded plate beside the words on wide screens |
+   | Laufbahn (ADR 0069) | a very light canvas, cobalt, Inter, pill buttons, plain section titles, a contents sheet in the app bar, lists with icons on soft sheets without rules | the picture from edge to edge with the name on it; a tall rounded plate beside the words on wide screens |
 
 2. **Vivid mode** in the palette engine: the background is the seed hue at the lightest lightness where white text
    still reaches 7:1 on every surface; buttons become near-white with a dark label in the same hue. Property-tested

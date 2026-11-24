@@ -218,4 +218,46 @@ feels like a real app. Everything is template-level again, and every other templ
   need a gesture script for little gain. With a native modal dialog, Tab may step from its last row
   to the browser's own controls (the page behind stays inert).
 
+## Round 4: real footage, one line, modern buttons, calm scrolling (the founder's review of round 3)
+
+The founder looked at round 3 on his phone and asked for four things: videos that look real ("no
+design"), no line repeated over and over while scrolling, modern buttons, and scroll motion that is
+modern and fitting. Template-level again (Sevag's clips aside); every other template renders as before
+(the portfolio baseline review: 51 of 51 byte-equal).
+
+- **Real footage only on Sevag's page.** Three new real clips in the motion library, all under the
+  Pexels License, cropped to 4:5 so that no face can be identified, cut into seamless loops (the end
+  dissolves into the start) with a light, calm grade: "Hochregal" (a reach truck at a high-bay rack,
+  Rolan Muradov), "Stapler fahren" (a forklift carrying a pallet of cartons down a long aisle, Paul
+  Cruz; the crop pans with it) and "Hubwagen ziehen" (a worker, seen from behind, pulling a pallet
+  truck through the aisles, Tiger Lily). With "Barcode scannen" they are his rotation, and his own clip
+  (a first visit, the link preview) is "Hochregal". About 0.9 to 1.3 MB each. The drawn clips stay in
+  the library for whoever wants them. Rejected on the way: clips with brand names on boxes, shirts or
+  the truck, and clips whose face could not be cropped out.
+- **One line where there were many.** No hairline above each section: space and the title separate
+  them, as on an app's screen. The facts, the skills, the hero's numbers, the note and the letter stand
+  on soft sheets (a step in the fill, rounded) without a frame and without rules between their rows.
+  The app bar keeps one hairline at its foot; the reading line is gone. Only the contents sheet keeps
+  separators, between the rows of its menu.
+- **Modern buttons.** The template's buttons are pills now (`buttonShape: "pill"`; its cards round off
+  at 20 px): the first action filled with its icon, "Teilen" a soft grey pill instead of an outlined
+  one, the bar's action a compact pill and its share button a soft round one. 44 to 48 px, a scale on
+  press, the focus ring.
+- **Calm, app-like scrolling.** Nothing in the content moves with the scroll any more: no section, list
+  or step rises in, and the picture no longer zooms. The app bar no longer slides in with the scroll:
+  it stays away while the large name is on screen and fades in over a short, fixed time once the name
+  has passed under it, as an app's large title hands over to its bar (BarReveal: an
+  IntersectionObserver on the name sets `data-lb-shown`), so it is never caught half there; with
+  reduced motion it simply appears, and without the script it stays away. The header's picture or clip
+  drifts a little slower than the words over it (lb-parallax: at most a quarter of its height over the
+  hero's exit, so its edge never shows; phones and tablets only). The timeline's rail still fills as it
+  is read, so the template's description stays true. All of it is off with reduced motion.
+- **Whole words in the numbers too.** The hero's numbers still had automatic hyphenation:
+  "Staplerschein" broke as "Stapler-schein" at 360 px. The three now share one sheet (more room for
+  each) and wrap between words only; at 320 px a single long word may still break, without a hyphen,
+  rather than run off the screen.
+- **Measured** on the local production build at 390 px (iPhone 13): the bar 56 px and opaque; the skills
+  sheet 592 px with all twelve labels on one line; the facts sheet 260 px with every value on one line;
+  each number and its label on one line at 390 and 360 px.
+
 **Status.** Accepted.

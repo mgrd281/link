@@ -284,16 +284,13 @@ export function PosterRenderer({
             {/* Beside the index in the last eight columns; without an index in the first eight, under the hero's words. */}
             <div className={cn("relative grid min-w-0 grid-cols-1 gap-12 @work:col-span-8 @work:gap-16", signposts.length > 1 ? "@work:col-start-5" : "@work:col-start-1")}>
               {sections.map((section) => {
-                // Skills and experience rise in tile by tile and step by step; the rest section by section
-                // (then the tiles and steps inside do not rise a second time).
-                const reveal = layout.motion !== "reveal" ? "none" : section.items.every((item) => item.kind === "block" && (item.block.type === "tools" || item.block.type === "timeline")) ? "self" : "section";
+                // Nothing rises in as it scrolls: the page scrolls, the content stays still (as in an app).
                 return (
                   <SignpostSection
                     key={section.id}
                     entry={signposts.find((sign) => sign.id === section.id)}
                     blockIds={preview && section.title !== null ? section.id : undefined}
                     ai={isAiBlock(blocks.find((block) => block.id === section.id))}
-                    reveal={reveal}
                   >
                     {section.items.map((item) => (
                       <PosterItemView
@@ -305,7 +302,7 @@ export function PosterRenderer({
                         nested={section.title !== null}
                         gallery={layout.gallery}
                         featured={featured}
-                        portfolio={{ ...portfolio, section: { title: section.title, letter: letter?.block }, ...(reveal === "self" ? {} : { revealItems: false }) }}
+                        portfolio={{ ...portfolio, section: { title: section.title, letter: letter?.block } }}
                         preview={preview}
                       />
                     ))}
@@ -509,8 +506,6 @@ interface PortfolioContext {
   onOpen: ((id: string) => void) | undefined;
   now: Date;
   wide: boolean;
-  /** Signposted templates: false when the whole section rises in, so its tiles and steps do not rise again. */
-  revealItems?: boolean;
   /** Signposted templates: the section's title (a note's icon comes from it) and the page's cover letter block. */
   section?: { title: string | null; letter: string | undefined };
 }
@@ -619,11 +614,10 @@ function PosterBlock({
   const t = useTranslations("creator");
   // Signposted templates (Laufbahn) read about, skills, experience and text in their own calm way.
   const signposted = portfolio.theme.layout.headings === "signpost";
-  const reveal = portfolio.theme.layout.motion === "reveal" && portfolio.revealItems !== false;
   if (signposted) {
     if (block.type === "about") return <LaufbahnAbout block={block} />;
-    if (block.type === "tools") return <LaufbahnSkills block={block} locale={portfolio.locale} reveal={reveal} />;
-    if (block.type === "timeline") return <LaufbahnTimeline block={block} locale={portfolio.locale} reveal={reveal} />;
+    if (block.type === "tools") return <LaufbahnSkills block={block} locale={portfolio.locale} />;
+    if (block.type === "timeline") return <LaufbahnTimeline block={block} locale={portfolio.locale} />;
     if (block.type === "text") {
       return <LaufbahnText text={block.text} title={portfolio.section?.title ?? null} letter={portfolio.section?.letter === block.id} locale={portfolio.locale} />;
     }
