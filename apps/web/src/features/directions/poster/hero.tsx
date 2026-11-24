@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
 import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from "../shared/creator-kit";
-import { LinkIconGlyph } from "../shared/link-icons";
+import { LinkIconGlyph, linkGlyph, type LinkGlyphChoice } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
 import { BarReveal, SectionSwitcher, type IndexEntry } from "./laufbahn-index";
 import { HeroLive } from "./live";
@@ -31,6 +31,34 @@ export const aiText = (profile: Profile, field: AiProfileField) => (profile.aiFi
 export const GLYPH_WIDTH: Record<string, number> = { classic: 0.53, stage: 0.47, editorial: 0.46, modern: 0.49, bold: 0.48, elegant: 0.5, tech: 0.52, arabic: 0.47 };
 
 /**
+ * Latin letters on an Arabic page (audit C-04). The Arabic face has no Latin letters, so a Latin name
+ * there is set, bold, in whatever sans face the device falls back to, and those are much wider than
+ * the Arabic average: "Ardmwtzzmol" ran past the column. Advance per letter class in em, measured on
+ * bold system sans faces (Inter, Roboto, Helvetica-like) and rounded up, so the estimate errs on the
+ * small side. Every other character (Arabic letters, spaces, marks) keeps the Arabic average.
+ */
+const LATIN_ON_ARABIC: readonly (readonly [RegExp, number])[] = [
+  [/[ijlI.,'’:;!|]/, 0.3],
+  [/[frt]/, 0.42],
+  [/[mw]/, 0.92],
+  [/[MW]/, 1.04],
+  [/[A-Z]/, 0.74],
+  [/[a-z0-9]/, 0.62],
+  // Latin letters with accents (é, ł, ß …): as wide as a capital, to stay on the safe side.
+  [/[\u00C0-\u024F]/, 0.74],
+  [/[-_&+/]/, 0.42],
+];
+
+/** The name's estimated width in em: per character on Arabic pages, the face's average elsewhere. */
+export function nameEms(name: string, pairing: string, rtlScript: boolean): number {
+  const average = GLYPH_WIDTH[pairing] ?? GLYPH_WIDTH.classic ?? 0.53;
+  const characters = Array.from(name);
+  if (!rtlScript) return characters.length * average;
+  const arabic = GLYPH_WIDTH.arabic ?? average;
+  return characters.reduce((sum, character) => sum + (LATIN_ON_ARABIC.find(([pattern]) => pattern.test(character))?.[1] ?? arabic), 0);
+}
+
+/**
  * The name's sizes in the two portfolio heroes, fitted like every name. The plate keeps it quiet on
  * phones (the work is the loudest thing) and lets it grow beside the plate; the statement sets it as
  * large as the screen allows. Arabic: the plate's light weight reads one step larger on phones, and
@@ -50,7 +78,7 @@ const NAME_SCALE = {
 function Name({ profile, isRtl, theme, compact = false, scale }: { profile: Profile; isRtl: boolean; theme: ResolvedCreatorTheme; compact?: boolean; scale?: keyof typeof NAME_SCALE }) {
   const t = useTranslations("creator");
   const pairing = PAIRING_IDS.find((id) => creatorTokens.pairings[id] === theme.pairing) ?? "classic";
-  const ems = Array.from(profile.displayName).length * (GLYPH_WIDTH[pairing] ?? 0.53);
+  const ems = nameEms(profile.displayName, pairing, isRtl);
   // Room for the name: the column minus the gutters (and the verified badge), shared by its characters.
   const room = profile.verified
     ? "min(100cqi, var(--container-creator)) - 2 * var(--spacing-creator-gutter) - var(--spacing-icon-lg) - var(--spacing-2)"
@@ -63,7 +91,9 @@ function Name({ profile, isRtl, theme, compact = false, scale }: { profile: Prof
   return (
     <h1
       className={cn(
-        "font-creator-display text-balance break-words",
+        // A word longer than the line at the smallest size breaks rather than running past the column
+        // (`anywhere`, unlike `break-word`, also lets the heading's box shrink to the column).
+        "font-creator-display text-balance wrap-anywhere",
         // Never larger than the display size, never smaller than a headline; long names still wrap.
         // Compact (portfolios): a headline, so the work stays the loudest thing.
         scale
@@ -520,6 +550,16 @@ export function PosterHero({
   );
 }
 
+/** The bar's action on phones: the icon the owner chose, else what its address says (mail, phone, a platform …). */
+function BarActionGlyph({ primary }: { primary: NonNullable<Primary> }) {
+  const glyph: LinkGlyphChoice = primary.icon ? { kind: "icon", icon: primary.icon } : linkGlyph(primary.url);
+  return glyph.kind === "platform" ? (
+    <PlatformGlyph platform={glyph.platform} size="md" className="@prose:hidden" />
+  ) : (
+    <LinkIconGlyph icon={glyph.icon} size="md" className="@prose:hidden" />
+  );
+}
+
 /**
  * Compact bar that slides in once the hero has scrolled away: avatar, name, share; on a page with a
  * contact block also its primary action, as a small filled button before the share button.
@@ -559,7 +599,7 @@ export function PosterBar({
             {profile.displayName}
           </p>
         )}
-        {primary ? (
+        {primary && solid ? (
           // The label may be cut short here; the link's name is still the whole label.
           <a
             href={primary.url}
@@ -567,6 +607,22 @@ export function PosterBar({
             className={cn("inline-flex min-h-touch-target max-w-2/5 shrink-0 items-center rounded-creator-button bg-creator-accent px-4 text-small font-semibold text-creator-accent-fg", pressable)}
           >
             <span dir="auto" className="truncate">
+              {primary.label}
+            </span>
+          </a>
+        ) : primary ? (
+          // Phones (audit C-08): the action's icon in a filled touch target, named by its whole label, so
+          // neither the name nor the action is cut short; wider: the label itself.
+          <a
+            href={primary.url}
+            data-bar-action
+            className={cn(
+              "inline-flex min-h-touch-target w-touch-target shrink-0 items-center justify-center rounded-creator-button bg-creator-accent text-small font-semibold text-creator-accent-fg @prose:w-auto @prose:max-w-2/5 @prose:px-4",
+              pressable,
+            )}
+          >
+            <BarActionGlyph primary={primary} />
+            <span dir="auto" className="@max-prose:sr-only @prose:truncate">
               {primary.label}
             </span>
           </a>

@@ -9,6 +9,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "rea
 
 import { themeStyle } from "@/features/creator/theme";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
+import { OwnerPreview } from "@/features/directions/shared/privacy";
 import { Link } from "@/i18n/navigation";
 
 import { useSite } from "./site-context";
@@ -129,13 +130,15 @@ export function PhonePreview({ className, hint = false }: { className?: string; 
       >
         {/* A grid that is at least the screen's height: the page in it stretches to fill it. */}
         <div ref={content} inert className="grid min-h-full">
-          <PosterRenderer
-            page={previewPage}
-            theme={theme}
-            preview
-            openProject={opened ? { id: opened, onBack: () => setOpened(null) } : undefined}
-            onOpenProject={setOpened}
-          />
+          <OwnerPreview>
+            <PosterRenderer
+              page={previewPage}
+              theme={theme}
+              preview
+              openProject={opened ? { id: opened, onBack: () => setOpened(null) } : undefined}
+              onOpenProject={setOpened}
+            />
+          </OwnerPreview>
         </div>
       </div>
       {hint ? (

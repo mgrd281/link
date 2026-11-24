@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 import { PosterRenderer } from "@/features/directions/poster/renderer";
-import { usePrivacyNoticeOpen } from "@/features/directions/shared/privacy";
+import { OwnerPreview, usePrivacyNoticeOpen } from "@/features/directions/shared/privacy";
 import { externalProviders } from "@/features/directions/shared/providers";
 import { Link } from "@/i18n/navigation";
 
@@ -58,7 +58,9 @@ export function OwnPageScreen() {
 
   return (
     <>
-      <PosterRenderer page={previewPage} theme={theme} openProject={opened ? { id: opened, onBack: () => setOpened(null) } : undefined} onOpenProject={setOpened} />
+      <OwnerPreview bar>
+        <PosterRenderer page={previewPage} theme={theme} openProject={opened ? { id: opened, onBack: () => setOpened(null) } : undefined} onOpenProject={setOpened} />
+      </OwnerPreview>
       {/* The bar is dashboard chrome (black and grey); the creator's page under it keeps its own colours (ADR 0062). */}
       <nav
         data-console="local"

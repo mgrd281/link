@@ -1,7 +1,6 @@
 import type { Platform } from "@linkyo/blocks";
 import { tokens } from "@linkyo/tokens";
-import { Icon, PlatformIcon } from "@linkyo/ui";
-import { Globe, Mail } from "lucide-react";
+import { PlatformIcon } from "@linkyo/ui";
 import type { SimpleIcon } from "simple-icons";
 import {
   siApplemusic,
@@ -26,7 +25,7 @@ import {
   siYoutubemusic,
 } from "simple-icons";
 
-import { LINKEDIN_GLYPH } from "./link-icons";
+import { GLOBE_GLYPH, LINKEDIN_GLYPH, MAIL_GLYPH } from "./link-icons";
 
 /**
  * Platform glyphs and names, and the `sizes` hints for pictures: small and free of the page
@@ -54,6 +53,9 @@ const SIMPLE: Partial<Record<Platform, SimpleIcon>> = {
   facebook: siFacebook,
   github: siGithub,
   linkedin: LINKEDIN_GLYPH,
+  // Drawn for Linkyo, solid like the brand glyphs, so a social row never mixes filled and outline.
+  email: MAIL_GLYPH,
+  website: GLOBE_GLYPH,
 };
 
 const px = (n: number): string => `${n}px`;
@@ -98,9 +100,7 @@ export const mediaSizes = {
   rail: `${narrow} 80vw, ${px(Math.round((tokens.layout.creator * 2) / 5))}`,
 } as const;
 
-export const platformName = (platform: Platform): string =>
-  SIMPLE[platform]?.title ??
-  (platform === "email" ? "Email" : platform === "linkedin" ? "LinkedIn" : "Website");
+export const platformName = (platform: Platform): string => SIMPLE[platform]?.title ?? "Website";
 
 export function PlatformGlyph({
   platform,
@@ -111,8 +111,7 @@ export function PlatformGlyph({
   size?: "sm" | "md" | "lg";
   className?: string | undefined;
 }) {
-  const simple = SIMPLE[platform];
-  if (simple) return <PlatformIcon icon={simple} size={size} className={className} />;
-  return <Icon icon={platform === "email" ? Mail : Globe} size={size} className={className} />;
+  // Anything unknown (older stored data) is a website: the solid globe, never an outline icon.
+  return <PlatformIcon icon={SIMPLE[platform] ?? GLOBE_GLYPH} size={size} className={className} />;
 }
 
