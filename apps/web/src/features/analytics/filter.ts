@@ -7,10 +7,12 @@
 /**
  * Crawlers, link-preview fetchers, uptime monitors, headless browsers and HTTP libraries. Real people
  * in an app's own browser stay counted: Instagram's and Facebook's in-app browsers say "Instagram" and
- * "FBAN", LinkedIn's "LinkedInApp", TikTok's "BytedanceWebview", none of which is listed here.
+ * "FBAN", LinkedIn's "LinkedInApp", TikTok's "BytedanceWebview", Pinterest's "[Pinterest/iOS]", none of
+ * which is listed here. Pinterest's crawlers are caught all the same: "Pinterestbot/" by the bot rule,
+ * "Pinterest/0.2 (+…)" because it does not start with "Mozilla/".
  */
 const BOT =
-  /bot[/;)+-]|\bbot\b|crawl|spider|slurp|mediapartners|facebookexternalhit|facebookcatalog|embedly|quora link preview|outbrain|pinterest\/|vkshare|w3c_validator|whatsapp|skypeuripreview|nuzzel|baiduspider|bingpreview|petalbot|semrush|ahrefs|headless|phantomjs|lighthouse|pingdom|uptime|statuscake|gtmetrix|pagespeed|google-inspectiontool|\bpreview\b|monitor|curl\/|wget|python-|aiohttp|httpx|axios|node-fetch|undici|go-http-client|java\/|okhttp|libwww|scrapy|postman|insomnia/i;
+  /bot[/;)+-]|\bbot\b|crawl|spider|slurp|mediapartners|facebookexternalhit|facebookcatalog|embedly|quora link preview|outbrain|vkshare|w3c_validator|whatsapp|skypeuripreview|nuzzel|baiduspider|bingpreview|petalbot|semrush|ahrefs|headless|phantomjs|lighthouse|pingdom|uptime|statuscake|gtmetrix|pagespeed|google-inspectiontool|\bpreview\b|monitor|curl\/|wget|python-|aiohttp|httpx|axios|node-fetch|undici|go-http-client|java\/|okhttp|libwww|scrapy|postman|insomnia/i;
 
 /** A user agent that is no person's browser, or none at all. */
 export function isBot(userAgent: string | null | undefined): boolean {

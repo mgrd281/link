@@ -7,12 +7,16 @@ const CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KH
 const ANDROID_CUBOT = "Mozilla/5.0 (Linux; Android 12; CUBOT X50 Build/SP1A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 const INSTAGRAM_APP = `${IPHONE} Instagram 356.0.0.21.106 (iPhone15,2; iOS 18_1; de_DE; de; scale=3.00; 1179x2556; 657226584)`;
 const FACEBOOK_APP = `${IPHONE} [FBAN/FBIOS;FBAV/488.0.0.51.110;FBBV/668118580;FBDV/iPhone15,2;FBMD/iPhone;FBSN/iOS;FBSV/18.1;FBSS/3;FBID/phone;FBLC/de_DE;FBOP/5]`;
+// Pinterest's in-app browser adds its name to the system browser's user agent (photographers' and
+// designers' pages get much of their traffic there).
+const PINTEREST_IOS = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [Pinterest/iOS]";
+const PINTEREST_ANDROID = `${ANDROID_CUBOT} [Pinterest/Android]`;
 
 const headers = (entries: Record<string, string>) => new Headers(entries);
 
 describe("the bot filter", () => {
   it("lets people's browsers through, in-app browsers included", () => {
-    for (const ua of [IPHONE, CHROME, ANDROID_CUBOT, INSTAGRAM_APP, FACEBOOK_APP]) expect(isBot(ua), ua).toBe(false);
+    for (const ua of [IPHONE, CHROME, ANDROID_CUBOT, INSTAGRAM_APP, FACEBOOK_APP, PINTEREST_IOS, PINTEREST_ANDROID]) expect(isBot(ua), ua).toBe(false);
   });
 
   it("stops crawlers, link previews, monitors, headless browsers and scripts", () => {
@@ -21,6 +25,8 @@ describe("the bot filter", () => {
       "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm) Chrome/116.0.1938.76 Safari/537.36",
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/600.2.5 (KHTML, like Gecko) Version/8.0.2 Safari/600.2.5 (Applebot/0.1; +http://www.apple.com/go/applebot)",
       "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+      "Pinterest/0.2 (+https://www.pinterest.com/bot.html)",
+      "Mozilla/5.0 (compatible; Pinterestbot/1.0; +https://www.pinterest.com/bot.html)",
       "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)",
       "WhatsApp/2.23.20.0 A",
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.0.0 Safari/537.36",
