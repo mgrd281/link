@@ -21,11 +21,12 @@ import { newProvisionalUsername } from "../username";
 import { AuthHeading } from "./auth-shell";
 import { CodeStep } from "./code-step";
 import { DraftThumbnail } from "./draft-thumbnail";
-import { FormError, OrDivider } from "./fields";
-import { SocialButtons, useLeaveWhenSignedIn, useSearchParam, useUsernameStatus } from "./shared";
+import { FormError } from "./fields";
+import { useLeaveWhenSignedIn, useSearchParam, useUsernameStatus } from "./shared";
 
 type Field = "username" | "email";
-type Errors = Partial<Record<Field, AuthError | undefined>>;
+/** "required" is the form's own: an empty email field. */
+type Errors = Partial<Record<Field, AuthError | "required" | undefined>>;
 const FIELD_OF: Partial<Record<AuthError, Field>> = {
   invalidUsername: "username",
   reservedUsername: "username",
@@ -64,6 +65,8 @@ async function freeProvisionalUsername(): Promise<string> {
 }
 
 const emailOk = (email: string) => z.email().safeParse(email.trim()).success;
+/** An empty field says what is missing; only a typed address that is not one "looks incomplete". */
+const emailError = (email: string): "required" | "invalidEmail" | undefined => (email.trim() === "" ? "required" : emailOk(email) ? undefined : "invalidEmail");
 const locales = ["de", "en", "ar"] as const;
 const focusLater = (id: string) => window.setTimeout(() => document.getElementById(id)?.focus(), 0);
 /** Stands in for a name while a message is formatted (messages take plain values). */
@@ -186,7 +189,7 @@ export function SignupForm() {
       const nameStatus = await accountStore.usernameStatus(username);
       if (nameStatus !== "ok") next.username = nameStatus;
     }
-    if (!emailOk(email)) next.email = "invalidEmail";
+    next.email = emailError(email);
     setErrors(next);
     setBanner(null);
     const first = (["username", "email"] as const).find((field) => next[field]);
@@ -358,9 +361,6 @@ export function SignupForm() {
           </p>
         ) : null}
       </form>
-      <OrDivider label={t("social.or")} />
-      <SocialButtons emailField="signup-email" />
-      {invite ? <p className="-mt-3 text-caption text-fg-secondary">{t("signup.preparedGoogle")}</p> : null}
       <p className="text-center text-small text-fg-secondary">
         {t("signup.haveAccount")}{" "}
         <Link href="/login" className="-mx-2 inline-flex min-h-touch-target items-center rounded-full px-2 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed">

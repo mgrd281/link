@@ -1128,11 +1128,6 @@
       "title": "Demo:",
       "body": "Your account and page stay in this browser and are sent nowhere. No email is sent: your code is shown on screen."
     },
-    "social": {
-      "google": "Continue with Google",
-      "or": "or",
-      "soonNote": "Google sign-in arrives at launch. Until then, use your email: it takes a minute."
-    },
     "fields": {
       "username": "Your address",
       "usernameHint": "Lowercase letters, numbers and dashes, 3–30 characters.",
@@ -1167,14 +1162,13 @@
     },
     "signup": {
       "title": "Sign up for free",
-      "lead": "Ready to be linkyo?",
+      "lead": "Just your email, no password. You set up your page right after.",
       "submit": "Sign up",
       "terms": "By creating an account you accept the <terms>terms of use</terms> and confirm the <privacy>privacy policy</privacy>.",
       "haveAccount": "Already have an account?",
       "login": "Sign in",
       "preparedTitle": "Your page is ready",
       "preparedLead": "The Linkyo team prepared it for you. Sign up with the email you gave us and everything is there right away.",
-      "preparedGoogle": "At launch this works with Google too: same email, same page.",
       "fromTemplate": "Your template is set. You'll add your photo, name and links next.",
       "invitedBy": "Invited by {name}",
       "invited": "You were invited to Linkyo",
@@ -4225,7 +4219,7 @@
       "cancellationPolicy": "Right of withdrawal"
     },
     "draft": "Draft: a lawyer reviews this text before launch. Details in square brackets are still missing.",
-    "german": "We currently make contracts in German only. This is the German text.",
+    "german": "This text is available in German only for now. The German version is the binding one.",
     "testMode": "Test mode: no real money moves.",
     "print": "Save as PDF",
     "errors": {
@@ -4472,6 +4466,36 @@
       "cancellationEnded": "We accepted your extraordinary cancellation. Linkyo Pro ends with immediate effect on {date}.",
       "cancellationRejected": "We can't accept your extraordinary cancellation. Reason: {note} You can cancel ordinarily at any time under \"Cancel contracts here\"; Pro then ends at the end of the paid month.",
       "resumed": "As you asked, we undid your cancellation. Linkyo Pro continues; next charge on {date}."
+    }
+  },
+  "errors": {
+    "meta": {
+      "notFound": "Page not found"
+    },
+    "notFound": {
+      "title": "This page doesn't exist",
+      "body": "Check the address for typos, or start again from the home page.",
+      "appBody": "There's no such place in the dashboard. Check the address or go back to your dashboard.",
+      "teamBody": "There's no such view in the team area. Check the address or go back to the overview.",
+      "ordersDemo": "Orders and proposals only exist with a real account, not in the demo."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "body": "This page couldn't load just now. Please try again.",
+      "reference": "Error reference"
+    },
+    "actions": {
+      "retry": "Try again",
+      "home": "Go to the home page",
+      "templates": "See templates",
+      "dashboard": "Go to the dashboard",
+      "team": "Go to the team area"
+    },
+    "languages": {
+      "label": "Language",
+      "de": "Deutsch",
+      "en": "English",
+      "ar": "العربية"
     }
   }
 }
