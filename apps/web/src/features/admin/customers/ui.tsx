@@ -8,6 +8,7 @@ import type { DeviceInfo } from "@/features/account/types";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import type { Customer, RiskFlag } from "./model";
+import { bdi } from "../bidi";
 
 export function PlanBadge({ customer }: { customer: Customer }) {
   const t = useTranslations("admin.customers");
@@ -83,6 +84,12 @@ const DEVICE_ICONS: Record<DeviceInfo["type"], LucideIcon> = {
   desktop: Laptop,
 };
 
+/** The device as its glyph alone, named for screen readers ("Handy · iOS · Safari"): for a phone's compact rows. */
+export function DeviceGlyph({ device }: { device: DeviceInfo }) {
+  const t = useTranslations("admin.security.devices");
+  return <Icon icon={DEVICE_ICONS[device.type]} size="sm" label={`${t(device.type)} · ${device.os} · ${device.browser}`} className="text-fg-tertiary" />;
+}
+
 export function DeviceLabel({ device }: { device: DeviceInfo }) {
   const t = useTranslations("admin.security.devices");
   return (
@@ -127,7 +134,7 @@ export function DemoNote() {
   return (
     <p className="bg-canvas-muted text-small text-fg-secondary flex items-start gap-2 rounded-md px-3 py-2">
       <Icon icon={FlaskConical} size="sm" className="mt-0.5 shrink-0" />
-      <span>{t("demoNote")}</span>
+      <span>{t.rich("demoNote", { bdi })}</span>
     </p>
   );
 }

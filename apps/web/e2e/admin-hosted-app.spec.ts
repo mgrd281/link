@@ -191,7 +191,9 @@ test.describe("team console on the hosted database", () => {
 
     // Viewing as an editor on this database shows what an editor sees: no figures.
     await page.goto("/de/admin");
-    await page.getByLabel(de.admin.shell.viewAs).locator("visible=true").selectOption("editor");
+    // "View as" is in the account menu since Stage 3 (WP3.4, A-11).
+    await page.getByRole("button", { name: new RegExp(`^${de.admin.shell.account}`) }).locator("visible=true").first().click();
+    await page.getByRole("menuitemradio", { name: de.admin.roles.editor.name }).click();
     await expect(page.getByRole("heading", { level: 2, name: de.admin.customers.figuresWithheldTitle })).toBeVisible();
     if (!isMobile) await expectAccessible(page);
   });

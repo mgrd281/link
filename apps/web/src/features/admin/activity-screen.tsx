@@ -38,6 +38,7 @@ import { Screen } from "@/features/app/screen";
 import { useNow } from "@/features/directions/poster/live";
 
 import { timeAgo } from "./format";
+import { bdi } from "./bidi";
 import { useAdmin } from "./session";
 import type { ActivityEvent } from "./types";
 
@@ -122,7 +123,7 @@ export function ActivityList({ events, now }: { events: ActivityEvent[]; now: nu
   // The database may write an action this build has no sentence for yet: show its raw name, never crash.
   const describe = (event: ActivityEvent) => {
     const key = `actions.${event.action.replace(".", "_")}`;
-    return t.has(key) ? t(key, { actor: who(event.actor), target: event.target }) : `${who(event.actor)} · ${event.action} · ${event.target}`;
+    return t.has(key) ? t.rich(key, { actor: who(event.actor), target: event.target, bdi }) : `${who(event.actor)} · ${event.action} · ${event.target}`;
   };
   return (
     <ol className="grid grid-cols-1 gap-1">
@@ -181,7 +182,7 @@ export function ActivityScreen() {
           </section>
         ))
       )}
-      <p className="text-caption text-fg-tertiary">{t("note")}</p>
+      <p className="text-caption text-fg-tertiary">{t.rich("note", { bdi })}</p>
     </Screen>
   );
 }

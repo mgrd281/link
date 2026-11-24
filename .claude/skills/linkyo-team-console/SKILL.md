@@ -24,7 +24,7 @@ the team area: **teal**, not the dashboard's black and grey. Never put `data-con
 | Money | `features/admin/billing.ts` (what may happen, the browser call, the server's orchestration) and `app/api/admin/customers/[id]/billing/{refund,cancel,resume}/route.ts` |
 | Orders, contracts, AI switch | `features/admin/orders/**`, `app/api/admin/orders/**`, `app/api/admin/contracts/**` |
 | Messages | `admin.*` in `src/messages/{de,en,ar}.json`; Arabic Latin names and numbers in `<bdi>` (`bidi.tsx`, `arabic-bdi.test.ts`) |
-| Tests | `features/admin/**/*.test.ts`, `supabase/tests/{access,admin_money,billing,referrals}.test.sql`, `e2e/admin.spec.ts` (demo), `e2e/admin-money-app.spec.ts`, `orders-app.spec.ts`, `team-fixes-app.spec.ts`, `contracts-app.spec.ts` (`@real`) |
+| Tests | `features/admin/**/*.test.ts`, `supabase/tests/{access,admin_money,billing,referrals}.test.sql`, `e2e/admin.spec.ts` and `e2e/admin-phone-app.spec.ts` (demo; phone layout, axe on 15 routes in en and ar), `e2e/admin-orders-phone-app.spec.ts` (stub build, payments=test: the orders screens at 390 px), `e2e/admin-money-app.spec.ts`, `orders-app.spec.ts`, `team-fixes-app.spec.ts`, `contracts-app.spec.ts` (`@real`) |
 
 ## Adding a permission or a screen
 
@@ -122,17 +122,62 @@ without name, e-mail, city and notes).
   `customers.view`, gets no `admin_customers()` call; Overview and Analytics show `FiguresWithheld`. An owner
   viewing as an editor sees the same. Remove the interim once the migration is on production (ADR 0073).
 
-## Phone patterns (current and planned)
+## Phone patterns (Stage 3, WP3.4)
 
-- Today: card rows below `md` on the customer list, tab strips that scroll sideways inside the page, the bottom tab
-  bar with "More", "View as" at the top of the overview on phones.
-- Planned (Stage 3, WP3.4): card rows for every table, a Filter sheet with chips, paging at 25, "View as" in the
-  account menu. Stage 5 adds MFA and step-up before delete, refund and role changes; Stage 2 moves prepared pages to the
-  database. Update this skill when they land.
+Every console screen works with one thumb at 390 px; laptops keep their columns. The kit in `@linkyo/ui` does most
+of it; reach for it before writing a one-off (`console-controls.test.ts` fails on a native `<select>`, `<details>` or
+`<summary>` anywhere in `features/admin/**`).
+
+- **Lists are `DataList`** (customers, subscriptions, a customer's invoices, sign-ins and invited accounts): a card per
+  record below `md`, aligned columns from `md`, no table that scrolls sideways or cuts a column off. Pass `linkAs={Link}`
+  for rows that open something; actions go in `trailing` (it sits above the row's link). On a phone give a card only
+  the fields that tell records apart (`useMediaQuery` with `tokens.breakpoint.md`, as the customer list does).
+- **Very long logs get their own compact row** when a card per row would be too tall: Security's sign-ins are two lines
+  on a phone (who, result, when; address, place, device glyph, warnings) and the same elements become columns from `md`
+  through `md:contents` (one DOM, one link per row). Security must stay under about 2,500 px at 390 px
+  (`admin-phone-app.spec.ts`).
+- **Paging at 25** (`PAGE_SIZE` in `format.ts`), with a `nav` of Zurück/Weiter and "1–25 von 312".
+- **Filters in a `FilterSheet`** behind one button next to the search, with `FilterChip`s for few choices (plan,
+  status) and the kit's `Select` for many (country, order); the filters that are on show above the list as
+  `ActiveFilters`. The search band is `sticky top-16` (flush under the phone header, `lg:top-0`) on `bg-canvas`, and a
+  `grid grid-cols-1` so its row never grows past the screen.
+- **`grid` needs `grid-cols-1`** around anything wide (a search row, a segmented strip): an implicit `auto` column takes
+  the content's min-width and pushes the page sideways by a few pixels (the overflow check in `admin-phone-app.spec.ts`
+  catches it).
+- **Segments never wrap**: `Segmented` with `count` for the numbers ("Alle 14"), never "Alle · 14" in the label; panes
+  that belong together are segments (Security: Alle, Fehlgeschlagen, Auffällig, Gesperrt).
+- **The editor's header**: who and the status on the first row, the tabs on a row of their own below `md`.
+- **"View as" is in the account menu** (a radio group under the account's name), on phones and laptops alike; the
+  warning strip under the header says which role is in view.
+- **Tab selection (S-05)**: no pill; the chosen tab is tinted, its icon `strong` and its label semibold, in the tab bar,
+  the "More" menu and the sidebar, as in the dashboard.
+- **Navigation glyphs come from the registry** (`icons.customers` Contact, `icons.creators` SquareUser, `icons.team`
+  UsersRound, `icons.invite` Gift, `icons.orders`, `icons.billing`, `icons.security`, `icons.analytics`,
+  `icons.activity`, `icons.templates`).
+- **Count badges (A-17)** come from `queues.tsx` (`QueuesProvider` in the shell, read once per move, shared with the
+  overview's "Braucht Aufmerksamkeit"): open orders and withdrawals/cancellations without a decision on Aufträge (red
+  when a withdrawal waits), open verification requests and held invites on Empfehlungen. A queue that does not exist
+  here (no payments, no permission) is `off`; one that failed shows no number (a dash on the overview), never 0. The
+  number is `aria-hidden`; its words are the link's `aria-describedby`, so the link's name stays its label.
+- **KPI tiles are the kit's `KpiTile`** inside a `<dl>`, with a delta (arrow, signed text and the direction in words from
+  `ui.kpi.*`) and a sparkline, from `customers/trends.ts` (`kpiTrends`, `revenueThisMonth`). A figure the records cannot
+  give for a past moment (active this week, page views) gets no delta, never an invented one. Shares change in
+  percentage points (`kpi.points`). Keep tile labels short enough for half a phone (the kit truncates them).
+- **"Umsatz im Monat"** is `revenueThisMonth`: paid Pro invoices dated this month plus page-service orders paid this
+  month, minus what was refunded this month (`orders/money.ts` reads each order's price and its `refunded` event; more
+  than 120 orders in the window fails rather than leaving some out). Without payments the footer says it is Pro
+  invoices only. It is compared with the same stretch of last month.
+- **Charts** keep their numbers one tap away through `ChartTable` (in `ColumnChart`).
+- **Arabic**: every Latin name and figure in an `admin.*` message sits in `<bdi>` (the whole namespace except
+  `admin.gate` is in `arabic-bdi.test.ts`), rendered with `t.rich(…, { bdi })` or, where only text fits (a label, a
+  toast, a placeholder), `t.markup(…, { bdi: isolate })`. Names in the greeting, city names (`Place` in
+  `security-screen.tsx`) and customer names are isolated too. Back links are `min-h-touch-target`.
+- Stage 5 adds MFA and step-up before delete, refund and role changes. Update this skill when it lands.
 
 ## Checklist before calling a console change done
 
-- `pnpm lint`, `pnpm typecheck`, `pnpm test`, the demo build, `e2e/admin.spec.ts` on desktop and mobile with axe.
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, the demo build, `e2e/admin.spec.ts` and `e2e/admin-phone-app.spec.ts` on
+  desktop and mobile with axe; orders screens: `e2e/admin-orders-phone-app.spec.ts` on the stub build (E2E_STUB=1).
 - Database changes: `pnpm db:reset && pnpm db:test && pnpm db:lint`, `pnpm db:types`, then the `@real` specs that touch
   the console (`admin-money-app`, `orders-app`, `team-fixes-app`, `contracts-app`) as the `linkyo-qa-release` skill
   describes.

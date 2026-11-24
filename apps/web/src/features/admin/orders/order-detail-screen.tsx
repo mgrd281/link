@@ -15,6 +15,7 @@ import { Link } from "@/i18n/navigation";
 import { browserSupabase } from "@/lib/supabase/browser";
 import { useSignedUrls } from "@/lib/supabase/signed";
 
+import { bdi, isolate } from "../bidi";
 import { useAdmin } from "../session";
 
 import { SlaBadge } from "./contracts-panel";
@@ -215,7 +216,7 @@ function RefundButton({ order, onDone }: { order: TeamOrder; onDone: () => void 
           title={t("actions.refund")}
           description={
             <span className="grid gap-2">
-              <span>{t("actions.refundConfirm", { price: formatEuro(order.amountCents, locale), number: order.number })}</span>
+              <span>{t.rich("actions.refundConfirm", { price: formatEuro(order.amountCents, locale), number: order.number, bdi })}</span>
               {voluntaryUsed ? <span data-voluntary-used className="font-semibold text-fg">{t("actions.refundVoluntaryUsed")}</span> : null}
             </span>
           }
@@ -312,7 +313,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
       toast(answer.mailed === false ? { title: t("deliveredNoMail"), tone: "danger" } : { title: t("delivered"), tone: "success" });
       await refresh();
     } catch (error) {
-      toast({ title: error instanceof ApiError && error.code === "incomplete" ? t("kit.incomplete") : tErrors("server"), tone: "danger" });
+      toast({ title: error instanceof ApiError && error.code === "incomplete" ? t.markup("kit.incomplete", { bdi: isolate }) : tErrors("server"), tone: "danger" });
     } finally {
       setBusy(null);
     }
@@ -399,7 +400,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
           {t("actions.refundLocked")}
         </p>
       ) : null}
-      {incomplete ? <p className="text-small text-fg-secondary">{t("kit.incomplete")}</p> : null}
+      {incomplete ? <p className="text-small text-fg-secondary">{t.rich("kit.incomplete", { bdi })}</p> : null}
       {confirmAi ? (
         <ConfirmDialog
           open

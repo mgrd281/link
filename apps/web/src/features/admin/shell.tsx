@@ -2,24 +2,7 @@
 
 import { tokens } from "@linkyo/tokens";
 import { Avatar, Badge, cn, Icon, icons, Logo } from "@linkyo/ui";
-import {
-  ArrowLeftRight,
-  BadgeCheck,
-  CreditCard,
-  Ellipsis,
-  Eye,
-  History,
-  Inbox,
-  LayoutDashboard,
-  LayoutTemplate,
-  LayoutList,
-  LogOut,
-  ShieldAlert,
-  PenTool,
-  ShieldCheck,
-  UsersRound,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowLeftRight, Check, Eye, LayoutDashboard, LayoutList, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DropdownMenu } from "radix-ui";
 import { useId, type ReactNode } from "react";
@@ -28,6 +11,7 @@ import { accountStore } from "@/features/account/store";
 import { Link, usePathname } from "@/i18n/navigation";
 import { paymentsEnabled } from "@/lib/flags";
 
+import { countOf, QueuesProvider, useQueues, waitingContract } from "./queues";
 import { useAdmin } from "./session";
 import { ROLES, type Permission, type Role } from "./types";
 
@@ -39,29 +23,33 @@ interface NavItem {
   permission?: Permission;
 }
 
-/** Two groups: the business (customers and money) and the team's own work (prepared pages). */
+/**
+ * Two groups: the business (customers and money) and the team's own work (prepared pages). Every
+ * glyph is the registry's meaning (A-20): customers a contact card, creators a person in a square, the
+ * team a group of people, referrals the invite program's gift, as in the dashboard.
+ */
 const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
   {
     key: "business",
     items: [
       { key: "overview", href: "/admin", icon: LayoutDashboard },
-      { key: "customers", href: "/admin/customers", icon: UsersRound, permission: "customers.view" },
+      { key: "customers", href: "/admin/customers", icon: icons.customers, permission: "customers.view" },
       // Page-service orders exist only where contracts can be made (NEXT_PUBLIC_PAYMENTS).
-      ...(paymentsEnabled ? [{ key: "orders" as const, href: "/admin/orders", icon: Inbox, permission: "orders.view" as const }] : []),
-      { key: "subscriptions", href: "/admin/subscriptions", icon: CreditCard, permission: "billing.view" },
-      { key: "security", href: "/admin/security", icon: ShieldAlert, permission: "security.view" },
+      ...(paymentsEnabled ? [{ key: "orders" as const, href: "/admin/orders", icon: icons.orders, permission: "orders.view" as const }] : []),
+      { key: "subscriptions", href: "/admin/subscriptions", icon: icons.billing, permission: "billing.view" },
+      { key: "security", href: "/admin/security", icon: icons.security, permission: "security.view" },
       { key: "analytics", href: "/admin/analytics", icon: icons.analytics, permission: "analytics.view" },
     ],
   },
   {
     key: "teamWork",
     items: [
-      { key: "creators", href: "/admin/creators", icon: PenTool },
-      { key: "templates", href: "/admin/templates", icon: LayoutTemplate },
+      { key: "creators", href: "/admin/creators", icon: icons.creators },
+      { key: "templates", href: "/admin/templates", icon: icons.templates },
       // The invite program: verification requests and held invites (ADR 0064).
-      { key: "referrals", href: "/admin/referrals", icon: BadgeCheck, permission: "orders.view" },
-      { key: "team", href: "/admin/team", icon: ShieldCheck },
-      { key: "activity", href: "/admin/activity", icon: History },
+      { key: "referrals", href: "/admin/referrals", icon: icons.invite, permission: "orders.view" },
+      { key: "team", href: "/admin/team", icon: icons.team },
+      { key: "activity", href: "/admin/activity", icon: icons.activity },
     ],
   },
 ];
@@ -79,32 +67,95 @@ export function RoleBadge({ role, size = "sm" }: { role: Role; size?: "sm" | "md
   );
 }
 
-/** Owners can look at every screen with another role's permissions (to check what a teammate sees). */
-function ViewAs() {
+/** How many things wait behind a navigation item: open orders, decisions on withdrawals, requests to check. */
+interface Waiting {
+  /** The number on the badge. */
+  count: number;
+  /** A withdrawal or cancellation waits (a statutory deadline): the badge is set apart, and says so in words. */
+  urgent: boolean;
+  /** The words for the number ("3 offene Aufträge"), read as the item's description. */
+  label: string;
+}
+
+/** The count badges of the navigation (A-17), from the queues the shell reads once. */
+function useWaiting(): Partial<Record<NavItem["key"], Waiting>> {
+  const t = useTranslations("admin.nav.waiting");
+  const queues = useQueues();
+  const orders = countOf(queues.orders, (list) => list.length) ?? 0;
+  const contracts = countOf(queues.contracts, (list) => list.filter(waitingContract).length) ?? 0;
+  const referrals = countOf(queues.referrals, (data) => data.verifications + data.held) ?? 0;
+  const waiting: Partial<Record<NavItem["key"], Waiting>> = {};
+  if (orders + contracts > 0) {
+    waiting.orders = {
+      count: orders + contracts,
+      urgent: contracts > 0,
+      label: contracts > 0 ? t("ordersAndContracts", { orders, contracts }) : t("orders", { count: orders }),
+    };
+  }
+  if (referrals > 0) waiting.referrals = { count: referrals, urgent: false, label: t("referrals", { count: referrals }) };
+  return waiting;
+}
+
+/**
+ * The count after a navigation item. The number is for the eye; its words are the link's description
+ * (`aria-describedby`), so the item's name stays its visible label (WCAG 2.5.3).
+ */
+function WaitingBadge({ waiting, id, className }: { waiting: Waiting | undefined; id: string; className?: string }) {
+  if (!waiting) return null;
+  return (
+    <>
+      <span
+        aria-hidden
+        data-waiting={waiting.count}
+        className={cn(
+          "grid h-5 min-w-5 place-items-center rounded-full px-1 text-caption font-semibold tabular-nums",
+          waiting.urgent ? "bg-danger-subtle text-danger-strong" : "bg-selected text-selected-fg",
+          className,
+        )}
+      >
+        {waiting.count}
+      </span>
+      <span id={id} hidden>
+        {waiting.label}
+      </span>
+    </>
+  );
+}
+
+/**
+ * "View as" for owners, inside the account menu (A-11: not on top of the overview): every screen with
+ * another role's permissions, to check what a teammate sees. The chosen role carries a check and a
+ * semibold label, never colour alone.
+ */
+function ViewAsItems() {
   const t = useTranslations("admin.shell");
   const tRoles = useTranslations("admin.roles");
   const { me, viewAs, setViewAs } = useAdmin();
-  const id = useId();
   if (me.role !== "owner") return null;
   return (
-    <div className="grid grid-cols-1 gap-1">
-      <label htmlFor={id} className="flex items-center gap-2 px-1 text-caption font-medium text-fg-secondary">
+    <>
+      <DropdownMenu.Separator className="my-1 border-t border-line" />
+      <DropdownMenu.Label className="flex items-center gap-2 px-3 py-1 text-caption font-semibold text-fg-secondary">
         <Icon icon={Eye} size="sm" />
         {t("viewAs")}
-      </label>
-      <select
-        id={id}
-        value={viewAs ?? "owner"}
-        onChange={(event) => setViewAs(event.target.value === "owner" ? null : (event.target.value as Role))}
-        className="h-control-sm rounded-sm border border-line-input bg-surface-elevated px-2 text-body sm:text-small text-fg outline-none hover:border-fg-tertiary focus-visible:border-focus focus-visible:focus-ring"
-      >
+      </DropdownMenu.Label>
+      <DropdownMenu.RadioGroup value={viewAs ?? "owner"} onValueChange={(value) => setViewAs(value === "owner" ? null : (value as Role))}>
         {ROLES.map((role) => (
-          <option key={role} value={role}>
+          <DropdownMenu.RadioItem
+            key={role}
+            value={role}
+            className="flex h-control-md cursor-default items-center gap-3 rounded-sm px-3 text-small outline-none data-highlighted:bg-hover data-[state=checked]:font-semibold"
+          >
+            <span className="grid size-icon-sm shrink-0 place-items-center">
+              <DropdownMenu.ItemIndicator>
+                <Icon icon={Check} size="sm" strong />
+              </DropdownMenu.ItemIndicator>
+            </span>
             {tRoles(`${role}.name`)}
-          </option>
+          </DropdownMenu.RadioItem>
         ))}
-      </select>
-    </div>
+      </DropdownMenu.RadioGroup>
+    </>
   );
 }
 
@@ -135,9 +186,10 @@ function AccountMenu({ trigger }: { trigger: ReactNode }) {
               {t("toApp")}
             </Link>
           </DropdownMenu.Item>
+          <ViewAsItems />
           <DropdownMenu.Separator className="my-1 border-t border-line" />
           <DropdownMenu.Item className={item} onSelect={() => accountStore.logOut()}>
-            <Icon icon={LogOut} size="sm" />
+            <Icon icon={icons.signOut} size="sm" />
             {t("logout")}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
@@ -158,7 +210,7 @@ function ViewAsBanner() {
         <Icon icon={Eye} size="sm" />
         {t("viewingAs", { role: tRoles(`${viewAs}.name`) })}
       </span>
-      <button type="button" onClick={() => setViewAs(null)} className="rounded-xs font-semibold transition-opacity duration-micro hover:opacity-secondary focus-visible:focus-ring">
+      <button type="button" onClick={() => setViewAs(null)} className="min-h-touch-target rounded-xs font-semibold transition-opacity duration-micro hover:opacity-secondary focus-visible:focus-ring">
         {t("viewAsEnd")}
       </button>
     </div>
@@ -170,15 +222,28 @@ function ViewAsBanner() {
  * marked "Team" so nobody confuses the two. Phones get the same bottom tab bar.
  */
 export function AdminShell({ children }: { children: ReactNode }) {
+  return (
+    <QueuesProvider>
+      <Frame>{children}</Frame>
+    </QueuesProvider>
+  );
+}
+
+function Frame({ children }: { children: ReactNode }) {
   const t = useTranslations("admin.shell");
   const tNav = useTranslations("admin.nav");
   const pathname = usePathname();
   const { me, role, can } = useAdmin();
+  const waiting = useWaiting();
+  const ids = useId();
   const groups = GROUPS.map((group) => ({ ...group, items: group.items.filter((item) => !item.permission || can(item.permission)) })).filter((group) => group.items.length > 0);
   const all = groups.flatMap((group) => group.items);
   const tabs = all.filter((item) => PHONE_TABS.includes(item.key));
   const more = all.filter((item) => !PHONE_TABS.includes(item.key));
   const moreActive = more.some((item) => isActive(pathname, item.href));
+  const moreWaiting = more.reduce((sum, item) => sum + (waiting[item.key]?.count ?? 0), 0);
+  const moreUrgent = more.some((item) => waiting[item.key]?.urgent);
+  const describe = (key: NavItem["key"], place: string) => (waiting[key] ? `${ids}-${place}-${key}` : undefined);
 
   return (
     <div className="flex min-h-dvh bg-canvas text-fg">
@@ -207,23 +272,28 @@ export function AdminShell({ children }: { children: ReactNode }) {
           {groups.map((group) => (
             <div key={group.key} className="grid grid-cols-1 gap-0.5">
               <p className="px-3 pb-1 text-caption font-semibold tracking-wide text-fg-tertiary uppercase">{tNav(`groups.${group.key}`)}</p>
-              {group.items.map((item) => (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  aria-current={isActive(pathname, item.href) ? "page" : undefined}
-                  className="flex h-control-md items-center gap-3 rounded-sm px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring aria-[current=page]:bg-selected aria-[current=page]:text-fg"
-                >
-                  <Icon icon={item.icon} size="sm" />
-                  {tNav(item.key)}
-                </Link>
-              ))}
+              {group.items.map((item) => {
+                const active = isActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    aria-describedby={describe(item.key, "side")}
+                    // Chosen: the fill, a strong stroke and a semibold label (S-05), as in the dashboard.
+                    className="flex h-control-md items-center gap-3 rounded-sm px-3 text-small font-medium text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring aria-[current=page]:bg-selected aria-[current=page]:font-semibold aria-[current=page]:text-fg"
+                  >
+                    <Icon icon={item.icon} size="sm" strong={active} />
+                    <span className="min-w-0 flex-1 truncate">{tNav(item.key)}</span>
+                    <WaitingBadge waiting={waiting[item.key]} id={`${ids}-side-${item.key}`} />
+                  </Link>
+                );
+              })}
             </div>
           ))}
         </nav>
         <div className="mt-auto grid gap-4">
-          <ViewAs />
-          <Link href="/app" className="inline-flex h-control-md items-center gap-2 rounded-sm px-3 text-small font-medium text-link hover:bg-hover focus-visible:focus-ring">
+          <Link href="/app" className="inline-flex h-control-md items-center gap-2 rounded-sm px-3 text-small font-semibold text-link transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring">
             <Icon icon={ArrowLeftRight} size="sm" />
             {t("toApp")}
           </Link>
@@ -264,12 +334,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           />
         </header>
         <ViewAsBanner />
-        {me.role === "owner" && pathname === "/admin" ? (
-          <div className="border-b border-line px-4 py-2 lg:hidden">
-            <ViewAs />
-          </div>
-        ) : null}
-        <main id="main" tabIndex={-1} className="min-w-0 flex-1 pb-24 outline-none lg:pb-0">
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 pb-20 outline-none lg:pb-0">
           {children}
         </main>
       </div>
@@ -280,13 +345,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
             const active = isActive(pathname, item.href);
             return (
               <li key={item.key} className="grid">
+                {/* As in the dashboard's tab bar (S-05): no pill; the chosen tab is tinted, its icon strong and its label semibold. */}
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className="grid content-center justify-items-center gap-1 text-caption font-medium text-fg-secondary transition-colors duration-micro focus-visible:focus-ring aria-[current=page]:text-link"
+                  className="grid content-center justify-items-center gap-1 text-caption font-medium text-fg-secondary transition-colors duration-micro focus-visible:focus-ring aria-[current=page]:font-semibold aria-[current=page]:text-link"
                 >
-                  <span className={cn("grid h-control-sm w-12 place-items-center rounded-full transition-colors duration-micro", active && "bg-selected")}>
-                    <Icon icon={item.icon} size="md" />
+                  <span className="grid h-control-sm w-12 place-items-center">
+                    <Icon icon={item.icon} size="lg" strong={active} />
                   </span>
                   {tNav(item.key)}
                 </Link>
@@ -299,10 +365,18 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   aria-current={moreActive ? "page" : undefined}
-                  className="grid content-center justify-items-center gap-1 text-caption font-medium text-fg-secondary transition-colors duration-micro focus-visible:focus-ring aria-[current=page]:text-link"
+                  aria-describedby={moreWaiting > 0 ? `${ids}-more` : undefined}
+                  className="grid content-center justify-items-center gap-1 text-caption font-medium text-fg-secondary transition-colors duration-micro focus-visible:focus-ring aria-[current=page]:font-semibold aria-[current=page]:text-link"
                 >
-                  <span className={cn("grid h-control-sm w-12 place-items-center rounded-full transition-colors duration-micro", moreActive && "bg-selected")}>
-                    <Icon icon={Ellipsis} size="md" />
+                  <span className="relative grid h-control-sm w-12 place-items-center">
+                    <Icon icon={icons.more} size="lg" strong={moreActive} />
+                    {moreWaiting > 0 ? (
+                      <WaitingBadge
+                        waiting={{ count: moreWaiting, urgent: moreUrgent, label: tNav("waiting.more", { count: moreWaiting }) }}
+                        id={`${ids}-more`}
+                        className="absolute -top-1 end-0"
+                      />
+                    ) : null}
                   </span>
                   {tNav("more")}
                 </button>
@@ -315,14 +389,22 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   collisionPadding={tokens.spacing["2"]}
                   className="layer-popover grid min-w-menu gap-0.5 rounded-md border border-line bg-surface-elevated p-1 text-fg motion-safe:animate-pop-in"
                 >
-                  {more.map((item) => (
-                    <DropdownMenu.Item key={item.key} asChild className="flex h-control-md cursor-default items-center gap-3 rounded-sm px-3 text-small outline-none data-highlighted:bg-hover aria-[current=page]:bg-selected">
-                      <Link href={item.href} aria-current={isActive(pathname, item.href) ? "page" : undefined}>
-                        <Icon icon={item.icon} size="sm" />
-                        {tNav(item.key)}
-                      </Link>
-                    </DropdownMenu.Item>
-                  ))}
+                  {more.map((item) => {
+                    const active = isActive(pathname, item.href);
+                    return (
+                      <DropdownMenu.Item
+                        key={item.key}
+                        asChild
+                        className="flex h-control-lg cursor-default items-center gap-3 rounded-sm px-3 text-body outline-none data-highlighted:bg-hover aria-[current=page]:bg-selected aria-[current=page]:font-semibold"
+                      >
+                        <Link href={item.href} aria-current={active ? "page" : undefined} aria-describedby={describe(item.key, "more")}>
+                          <Icon icon={item.icon} size="md" strong={active} />
+                          <span className="min-w-0 flex-1">{tNav(item.key)}</span>
+                          <WaitingBadge waiting={waiting[item.key]} id={`${ids}-more-${item.key}`} />
+                        </Link>
+                      </DropdownMenu.Item>
+                    );
+                  })}
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
             </DropdownMenu.Root>

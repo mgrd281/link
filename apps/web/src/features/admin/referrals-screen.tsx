@@ -14,6 +14,7 @@ import type { DeclineReason, HeldInvite, QueueVerification, ReferralReason, Refe
 import { Link } from "@/i18n/navigation";
 
 import { count, date } from "./format";
+import { bdi, isolate } from "./bidi";
 import { useAdmin } from "./session";
 
 /*
@@ -180,7 +181,7 @@ function DecidedList({ requests }: { requests: QueueVerification[] }) {
   const t = useTranslations("admin.referrals");
   const locale = useLocale();
   return (
-    <Panel title={t("verifications.decided")} id="decided-title">
+    <Panel title={t.markup("verifications.decided", { bdi: isolate })} id="decided-title">
       <ul className="grid grid-cols-1 gap-2">
         {requests.map((request) => (
           <li key={request.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-md border border-line p-3">
@@ -195,7 +196,7 @@ function DecidedList({ requests }: { requests: QueueVerification[] }) {
             </span>
             <span className="flex flex-wrap items-center gap-2">
               {request.state === "declined" && request.declineReason ? (
-                <span className="text-caption text-fg-secondary">{t(`declineReasons.${request.declineReason}`)}</span>
+                <span className="text-caption text-fg-secondary">{t.rich(`declineReasons.${request.declineReason}`, { bdi })}</span>
               ) : null}
               <Badge size="sm" tone={request.state === "approved" ? "success" : "neutral"}>
                 {request.state === "approved" ? t("verifications.approved") : t("verifications.declined")}
@@ -352,7 +353,7 @@ export function ReferralsScreen() {
   })();
 
   return (
-    <Screen title={t("title")} lead={t("lead")} wide>
+    <Screen title={t("title")} lead={t.rich("lead", { bdi })} wide>
       <Segmented
         label={t("title")}
         value={pane}
@@ -423,7 +424,7 @@ export function ReferralsScreen() {
               label={t("verifications.reason")}
               value={declineReason}
               onValue={setDeclineReason}
-              options={DECLINE_REASONS.map((value) => ({ value, label: t(`declineReasons.${value}`) }))}
+              options={DECLINE_REASONS.map((value) => ({ value, label: t.markup(`declineReasons.${value}`, { bdi: isolate }) }))}
             />
           ) : pending.kind === "qualified" || pending.kind === "revoked" ? (
             <TextArea label={t("held.why")} value={why} onValue={setWhy} max={WHY_MAX} rows={2} />
