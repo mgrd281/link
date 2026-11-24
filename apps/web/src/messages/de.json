@@ -1351,7 +1351,8 @@
       "invite": "Einladen",
       "settings": "Einstellungen",
       "add": "Hinzufügen",
-      "panel": "Seitenleiste"
+      "panel": "Seitenleiste",
+      "work": "Arbeiten"
     },
     "navPanel": {
       "sources": "Herkunft"
@@ -1661,7 +1662,14 @@
       "asProject": "Als Projekt hinzufügen",
       "photosAsGallery": "Als Galerie",
       "photosAsProject": "Als Projekt",
-      "ticketNotice": "{count, plural, one {Ein Ticket-Link sagt nicht, wann und wo. Trag Datum und Stadt ein, dann erscheint der Termin auf deiner Seite.} other {Ticket-Links sagen nicht, wann und wo. Trag für jeden Termin Datum und Stadt ein, dann erscheinen sie auf deiner Seite.}}"
+      "ticketNotice": "{count, plural, one {Ein Ticket-Link sagt nicht, wann und wo. Trag Datum und Stadt ein, dann erscheint der Termin auf deiner Seite.} other {Ticket-Links sagen nicht, wann und wo. Trag für jeden Termin Datum und Stadt ein, dann erscheinen sie auf deiner Seite.}}",
+      "work": {
+        "title": "Projekt aus einem Link",
+        "lead": "Füg den Link zu deiner Arbeit ein. Was der Link verrät, tragen wir ein; den Rest ergänzt du.",
+        "label": "Link zu deiner Arbeit",
+        "placeholder": "GitHub, Behance, ein Artikel …",
+        "submit": "Projekt anlegen"
+      }
     },
     "editor": {
       "title": "Seite",
@@ -1694,7 +1702,8 @@
       "reorderHint": "Zieh eine Zeile am Griff an ihren neuen Platz.",
       "gripTip": "Ziehen zum Verschieben",
       "withAi": "Mit KI",
-      "aiTag": "Von KI entworfen"
+      "aiTag": "Von KI entworfen",
+      "newsletterHidden": "Noch nicht sichtbar"
     },
     "profile": {
       "title": "Profil",
@@ -1964,6 +1973,11 @@
         "rail": "Reihe",
         "railHint": "Für eine kurze Serie",
         "forced": "Dafür fehlen noch Bilder oder Projekte, deshalb wird die Liste gezeigt."
+      },
+      "filter": {
+        "label": "Vorlagen zeigen",
+        "all": "Alle",
+        "portfolio": "Portfolio"
       }
     },
     "analytics": {
@@ -3026,6 +3040,41 @@
         "clients": {
           "default": "Kunden"
         }
+      }
+    },
+    "work": {
+      "title": "Arbeiten",
+      "viewsLabel": "Ansicht der Seite",
+      "count": "{count, plural, =0 {Noch keine Projekte} one {# Projekt} other {# Projekte}}",
+      "hidden": "{count} versteckt",
+      "altMissing": "{count, plural, one {# Bild ohne Beschreibung} other {# Bilder ohne Beschreibung}}",
+      "nextLabel": "Nächster Schritt",
+      "next": {
+        "address": "Adresse wählen",
+        "alt": "Bild beschreiben",
+        "codeOrStory": "Code oder Geschichte ergänzen",
+        "resultOrPicture": "Ergebnis oder Bild ergänzen",
+        "storyOrLink": "Geschichte oder Link ergänzen",
+        "year": "Jahr ergänzen"
+      },
+      "complete": "Alles da",
+      "untitled": "Ohne Titel",
+      "open": "{title} bearbeiten",
+      "moveEarlier": "{title} nach vorn",
+      "moveLater": "{title} nach hinten",
+      "moved": "{title}: Platz {position} von {count}",
+      "add": {
+        "title": "Neues Projekt",
+        "type": "Eintippen",
+        "typeHint": "Titel und ein Satz genügen",
+        "photos": "Aus Fotos",
+        "photosHint": "Das erste wird das Titelbild",
+        "link": "Aus einem Link",
+        "linkHint": "GitHub, Behance, ein Artikel"
+      },
+      "empty": {
+        "title": "Füg dein erstes Projekt hinzu",
+        "body": "Zeig, woran du gearbeitet hast: ein Titel, ein Satz und, wenn du magst, Bilder."
       }
     }
   },

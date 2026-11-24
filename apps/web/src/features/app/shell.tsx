@@ -5,17 +5,17 @@ import { tokens } from "@linkyo/tokens";
 import { Avatar, cn, Icon, initialsOf, Spinner } from "@linkyo/ui";
 import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, LayoutList, Palette, Plus, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { haptic } from "@/lib/haptics";
 import { useAccount } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 
-import { AddSheet } from "./add-sheet";
+import { AddSheet, type AddDoor } from "./add-sheet";
 import { useHasUnsavedDraft } from "./drafts";
 import { EditSheet } from "./edit-sheet";
-import { modified, NavRail, SectionPanel } from "./nav";
+import { modified, NavRail, SectionPanel, sectionPanelShown, useJumpToHash } from "./nav";
 import { LAST_APP_PATH_KEY, markedTab, ORIGIN_TAB_KEY, routeInfo, SETTINGS_HREF, TAB_HREF, TABS, type TabKey } from "./routes";
 import { BackLink, ShellBackContext, ShellChromeContext } from "./screen";
 import { useSite } from "./site-context";
@@ -28,6 +28,12 @@ const NAV: readonly { key: TabKey; icon: LucideIcon }[] = [
   { key: "design", icon: Palette },
   { key: "analytics", icon: ChartNoAxesColumn },
 ];
+
+/**
+ * Opens the Add sheet at one of its doors (`AddDoor`): "Arbeiten" opens it straight at a project
+ * from a link. `index` is where the new block goes. Set by the shell; null outside it (the team area).
+ */
+export const OpenAddContext = createContext<((entry: AddDoor, index?: number) => void) | null>(null);
 
 /** Where the legal notice is edited (its unsaved draft links there). */
 const LEGAL_HREF = "/app/settings/legal";
@@ -238,10 +244,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations("app");
   const pathname = usePathname();
   const router = useRouter();
-  const { doc, account, setAddOpen, edit } = useSite();
+  const { doc, account, setAddOpen, addOpen, edit } = useSite();
   // Linkyo team members also see the way into the team area.
   const onTeam = useOnTeam(account.email);
   const info = routeInfo(pathname);
+  // Wide screens: the section panel only where the place has four or more parts (or panes).
+  const panel = sectionPanelShown(info.section);
   // Settings, its panes and Invite are pushed over a tab (phones): they belong to no tab, so none is marked.
   const pushedScreen = info.tab === null;
   const titleAway = useTitleScrolledAway(pathname);
@@ -265,6 +273,21 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (info.tab && info.tab !== origin) setOrigin(info.tab);
 
   useEffect(() => remember(LAST_APP_PATH_KEY, pathname), [pathname]);
+  // A part of a screen named in the address (#…) is jumped to, panel or not.
+  useJumpToHash(pathname);
+
+  // The door the Add sheet was opened at. Every other way in (the rail, the tab bar, a row's "Add
+  // below") opens the whole sheet: the door is forgotten once the sheet has closed (the sheet keeps
+  // showing it while it slides away).
+  const [addEntry, setAddEntry] = useState<AddDoor>("all");
+  if (!addOpen && addEntry !== "all") setAddEntry("all");
+  const openAdd = useCallback(
+    (entry: AddDoor, index?: number) => {
+      setAddEntry(entry);
+      setAddOpen(true, index);
+    },
+    [setAddOpen],
+  );
   useEffect(() => remember(ORIGIN_TAB_KEY, origin), [origin]);
 
   // A route change closes the Add and edit sheets (Back, the edge swipe, any link): a sheet never
@@ -370,7 +393,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [unsaved]);
 
-  const chrome = useMemo(() => ({ navigated: route.navigated, pop: route.pop, fromNav: route.fromNav }), [route.navigated, route.pop, route.fromNav]);
+  const chrome = useMemo(
+    () => ({ navigated: route.navigated, pop: route.pop, fromNav: route.fromNav, panel: sectionPanelShown(routeInfo(pathname).section) }),
+    [route.navigated, route.pop, route.fromNav, pathname],
+  );
 
   const photo = hasImage(doc.profile.avatar);
   const initials = initialsOf(doc.profile.displayName);
@@ -381,10 +407,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   // A pushed screen (Settings, Invite) marks no tab: it belongs to none (`markedTab`).
   const selectedTab = markedTab(pathname, pendingTab);
   const backTarget = info.parent === "origin" ? { href: TAB_HREF[origin], label: t(`nav.${origin}`) } : info.parent ? { href: info.parent, label: t("nav.settings") } : null;
+  // "page" on the tab's own screen; "true" on another view of it (Arbeiten under Page).
+  const tabCurrent = (key: TabKey): "page" | "true" | undefined => (info.tab !== key ? undefined : pathname === TAB_HREF[key] ? "page" : "true");
 
   return (
     <ShellChromeContext.Provider value={chrome}>
       <ShellBackContext.Provider value={goBack}>
+        <OpenAddContext.Provider value={openAdd}>
         {/* data-console="frame": the dashboard and everything it opens (sheets, menus, toasts) are black and grey (ADR 0062). */}
         <div data-grouped data-console="frame" className="group/app flex min-h-dvh bg-canvas-muted text-fg">
           <a
@@ -394,12 +423,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             {t("skip")}
           </a>
 
-          {/* Wide screens: the rail and the section panel. A plain box, not an <aside>: it holds the
-              main navigation, which is named. The panel's width is CSS only (nav-folded:), set before
-              paint, so the frame never shifts. */}
-          <div data-nav className="sticky top-0 hidden h-dvh shrink-0 lg:flex">
-            <NavRail pathname={pathname} pending={pending} onNavigate={setPending} onTeam={onTeam} status={<SaveStatus layout="compact" />} />
-            <SectionPanel pathname={pathname} pending={pending} onNavigate={setPending} status={<SaveStatus layout="panel" />} />
+          {/* Wide screens: the rail and, where the place has one, the section panel. A plain box, not an
+              <aside>: it holds the main navigation, which is named. The panel's width is CSS only
+              (nav-folded:), set before paint, so the frame never shifts. data-panel="none" marks a
+              place without it (toasts then centre beside the rail alone). */}
+          <div data-nav data-panel={panel ? undefined : "none"} className="sticky top-0 hidden h-dvh shrink-0 lg:flex">
+            <NavRail pathname={pathname} pending={pending} onNavigate={setPending} onTeam={onTeam} status={<SaveStatus layout="compact" />} panel={panel} />
+            {panel ? <SectionPanel pathname={pathname} pending={pending} onNavigate={setPending} status={<SaveStatus layout="panel" />} /> : null}
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col">
@@ -456,7 +486,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.key}
                   item={item}
                   label={t(`nav.${item.key}`)}
-                  current={info.tab === item.key}
+                  current={tabCurrent(item.key)}
                   origin={pushedScreen && origin === item.key}
                   pending={pendingTab === item.key}
                   selected={selectedTab === item.key}
@@ -488,7 +518,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.key}
                   item={item}
                   label={t(`nav.${item.key}`)}
-                  current={info.tab === item.key}
+                  current={tabCurrent(item.key)}
                   origin={pushedScreen && origin === item.key}
                   pending={pendingTab === item.key}
                   selected={selectedTab === item.key}
@@ -501,19 +531,30 @@ export function AppShell({ children }: { children: ReactNode }) {
             </ul>
           </nav>
 
-          <AddSheet />
+          <AddSheet entry={addEntry} />
           <EditSheet />
         </div>
+        </OpenAddContext.Provider>
       </ShellBackContext.Provider>
     </ShellChromeContext.Provider>
   );
 }
 
 /**
- * A tab. As on iOS, the chosen tab is marked by the tint alone (no pill behind it). Under a pushed
- * screen (Settings, its panes, Invite) no tab is marked: the tab it was opened from only carries
- * `data-origin` (where "‹ back" leads), so the bar never claims Settings is "Stats". Tapping the
- * current tab again scrolls its screen back to the top.
+ * A tab's icon: the brand stroke, and the strong stroke (icon.stroke-strong) once the tab is chosen,
+ * so the choice never rests on colour alone (WCAG 1.4.1). Drawn here rather than through Icon until
+ * Icon takes a `strong` prop (design system v2), then `<Icon strong>` replaces it.
+ */
+function TabGlyph({ icon: Glyph, strong }: { icon: LucideIcon; strong: boolean }) {
+  return <Glyph aria-hidden focusable="false" className="size-icon-lg shrink-0" strokeWidth={strong ? tokens.icon.strokeStrong : tokens.icon.stroke} />;
+}
+
+/**
+ * A tab. As on iOS, the chosen tab has no pill behind it: its tint, a stronger icon stroke and a
+ * semibold label mark it. Under a pushed screen (Settings, its panes, Invite) no tab is marked: the
+ * tab it was opened from only carries `data-origin` (where "‹ back" leads), so the bar never claims
+ * Settings is "Stats". Tapping the current tab again scrolls its screen back to the top; on another
+ * view of the tab (Arbeiten) it opens the tab's own screen.
  */
 function TabLink({
   item,
@@ -526,7 +567,7 @@ function TabLink({
 }: {
   item: { key: TabKey; icon: LucideIcon };
   label: string;
-  current: boolean;
+  current: "page" | "true" | undefined;
   origin: boolean;
   pending: boolean;
   selected: boolean;
@@ -539,13 +580,13 @@ function TabLink({
         href={href}
         // Each tab restores its own scroll position (see AppShell).
         scroll={false}
-        aria-current={current ? "page" : undefined}
+        aria-current={current}
         data-origin={origin ? "" : undefined}
         data-pending={pending ? "" : undefined}
         data-selected={selected ? "" : undefined}
         onClick={(event) => {
           if (modified(event)) return;
-          if (current) {
+          if (current === "page") {
             event.preventDefault();
             const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
             window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
@@ -558,7 +599,7 @@ function TabLink({
       >
         {/* A press dips the icon like a native tab: in fast, back out on the spring. */}
         <span className="grid h-control-sm w-12 place-items-center transition-[scale] duration-spring ease-spring group-active:scale-pressed group-active:duration-micro motion-reduce:group-active:scale-none">
-          <Icon icon={item.icon} size="lg" />
+          <TabGlyph icon={item.icon} strong={selected} />
         </span>
         {label}
       </Link>

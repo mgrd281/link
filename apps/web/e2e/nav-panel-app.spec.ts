@@ -5,9 +5,11 @@ import { enterDemoCode } from "./auth";
 
 /**
  * The two-level sidebar on wide screens (ADR 0063): the icon rail, the section panel and its fold.
- * Every panel item leads somewhere real; the fold is remembered and never shifts the layout; Design
- * tabs live in the URL without a history entry; Arabic mirrors. The last test is the phone's way
- * into Invite. Demo mode: everything lives in this browser's storage.
+ * The panel shows only where a place has four or more parts or panes of its own (Stats, Invite,
+ * Settings); Home, Page, Arbeiten and Design give its width to their content ("dashboard on
+ * laptops"). Every panel item leads somewhere real; the fold is remembered and never shifts the
+ * layout; Design tabs live in the URL without a history entry; Arabic mirrors. The last test is the
+ * phone's way into Invite. Demo mode: everything lives in this browser's storage.
  */
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -106,28 +108,31 @@ async function walkPanel(page: Page, expected: string[]) {
   }
 }
 
+/** Opens Settings from the rail: a place with a panel. */
+async function toSettings(page: Page, name = "Settings") {
+  await place(page, name).click();
+  await page.waitForURL(/\/app\/settings$/);
+  await expect(heading(page)).toBeVisible();
+}
+
 test.describe("the section panel", () => {
   test.beforeEach(({ isMobile }) => {
     test.skip(isMobile, "the rail and the panel are for wide screens; phones keep the tab bar");
   });
 
-  test("every panel item leads somewhere real", async ({ page }) => {
+  test("shows only where a place has four or more parts, and every item leads somewhere real", async ({ page }) => {
     await signedIn(page);
-    // A fresh page is being built: the next step, then the link.
-    await expect(page.locator("#nav-panel-title")).toHaveText("Home");
-    await walkPanel(page, ["Next step", "Your link"]);
-    // Ready (three links, a photo, a bio): the link, what is still open, the week.
+    // Home, Page and Design (two or three parts each) have no panel and nothing to fold.
+    await expect(panel(page)).toHaveCount(0);
+    await expect(toggle(page)).toHaveCount(0);
     await seed(page);
-    await walkPanel(page, ["Your link", "Still to do", "Last 7 days"]);
-
+    await expect(panel(page)).toHaveCount(0);
     await place(page, "Page").click();
     await expect(heading(page)).toHaveText("Page");
-    // The page's outline: one row per section, nested under Content.
-    await walkPanel(page, ["Profile", "Content", "Tour 2027", "Listen"]);
-
+    await expect(panel(page)).toHaveCount(0);
     await place(page, "Design").click();
     await expect(heading(page)).toHaveText("Design");
-    await walkPanel(page, ["Template", "Color", "Font", "Buttons"]);
+    await expect(panel(page)).toHaveCount(0);
 
     await place(page, "Stats").click();
     await expect(heading(page)).toHaveText("Stats");
@@ -146,6 +151,7 @@ test.describe("the section panel", () => {
 
   test("folding is remembered and never shifts the layout", async ({ page }) => {
     await signedIn(page);
+    await toSettings(page);
     await expect(toggle(page)).toHaveAttribute("aria-expanded", "true");
     expect(await h1X(page)).toBe(288);
     // No width animation: the panel shows and hides at once.
@@ -184,6 +190,7 @@ test.describe("the section panel", () => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await signedIn(page);
+    await toSettings(page);
     await page.addInitScript(() => {
       // The demo account still loads (the store reads its own key first); only the panel's key throws.
       const descriptors = Object.getOwnPropertyDescriptors(Storage.prototype);
@@ -208,18 +215,19 @@ test.describe("the section panel", () => {
     expect(errors).toEqual([]);
   });
 
-  test("Design tabs live in the URL, without a history entry", async ({ page }) => {
+  test("Design tabs live in the URL, without a history entry, in the card only", async ({ page }) => {
     await signedIn(page);
     await place(page, "Design").click();
     await expect(heading(page)).toHaveText("Design");
+    // One set of tabs: the card's (no panel repeats them).
+    await expect(panel(page)).toHaveCount(0);
+    await expect(page.getByRole("tab", { name: "Font", exact: true })).toHaveCount(1);
     const length = await historyLength(page);
-    const font = panelLinks(page).filter({ hasText: "Font" });
-    await font.click();
-    await expect(page).toHaveURL(/\/en\/app\/design\?tab=fonts$/);
     const fontTab = page.locator("#main").getByRole("tab", { name: "Font", exact: true });
+    await fontTab.click();
+    await expect(page).toHaveURL(/\/en\/app\/design\?tab=fonts$/);
     await expect(fontTab).toHaveAttribute("aria-selected", "true");
     await expect(fontTab).toBeFocused();
-    await expect(font).toHaveAttribute("aria-current", "true");
     expect(await historyLength(page)).toBe(length);
 
     await page.reload();
@@ -227,7 +235,6 @@ test.describe("the section panel", () => {
 
     await page.locator("#main").getByRole("tab", { name: "Buttons", exact: true }).click();
     await expect(page).toHaveURL(/\?tab=buttons$/);
-    await expect(panelLinks(page).filter({ hasText: "Buttons" })).toHaveAttribute("aria-current", "true");
     expect(await historyLength(page)).toBe(length);
   });
 
@@ -250,6 +257,7 @@ test.describe("the section panel", () => {
 
   test("Arabic mirrors the frame: rail at the right edge, toggle flipped, tooltips to the left", async ({ page }) => {
     await signedIn(page, "ar");
+    await toSettings(page, "الإعدادات");
     const box = await rail(page).boundingBox();
     // The page's right edge, inside the scrollbar gutter. (With `scrollbar-gutter: stable` Chromium
     // reports documentElement.clientWidth as the whole window, gutter included; the root box is exact.)
@@ -281,13 +289,19 @@ test.describe("the section panel", () => {
     await expect(page.locator("#nav-panel-title")).toHaveText("Stats");
   });
 
-  test("folded, the save status moves to the rail: one visible status", async ({ page }) => {
+  test("folded, or on a place without a panel, the save status is in the rail: one visible status", async ({ page }) => {
     await signedIn(page);
     await page.goto("/en/app/settings/legal");
     await page.getByLabel("Full name or company").fill("Mila Aurel");
+    const unsaved = page.getByRole("link", { name: "Legal notice not saved" }).locator("visible=true");
+    // Home has no panel: the rail carries the status.
     await place(page, "Home").click();
     await expect(heading(page)).toBeVisible();
-    const unsaved = page.getByRole("link", { name: "Legal notice not saved" }).locator("visible=true");
+    await expect(unsaved).toHaveCount(1);
+    await expect(rail(page).getByRole("link", { name: "Legal notice not saved" })).toBeVisible();
+    // Settings has one: the status sits at its foot, then in the rail once it is folded.
+    await place(page, "Settings").click();
+    await page.waitForURL(/\/en\/app\/settings$/);
     await expect(unsaved).toHaveCount(1);
     await expect(panel(page).getByRole("link", { name: "Legal notice not saved" })).toBeVisible();
     await toggle(page).click();
@@ -308,6 +322,7 @@ test.describe("the section panel", () => {
   for (const locale of ["en", "ar"] as const) {
     test(`axe: open and folded, light and dark (${locale})`, async ({ page }) => {
       await signedIn(page, locale);
+      await toSettings(page, locale === "ar" ? "الإعدادات" : "Settings");
       const name = locale === "ar" ? "الشريط الجانبي" : "Sidebar";
       for (const scheme of ["light", "dark"] as const) {
         await page.emulateMedia({ colorScheme: scheme, reducedMotion: "reduce" });

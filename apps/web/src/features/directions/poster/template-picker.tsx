@@ -1,43 +1,39 @@
 "use client";
 
-import { hasImage, type Page } from "@linkyo/blocks";
+import type { Page } from "@linkyo/blocks";
 import { creatorTokens, type CreatorTemplateId } from "@linkyo/tokens";
-import { orderTemplates, resolveCreatorTheme, TEMPLATE_IDS, type HeroStyle } from "@linkyo/tokens/creator";
-import { cn, Icon } from "@linkyo/ui";
+import { orderTemplates, resolveCreatorTheme, TEMPLATE_IDS, templatesFor } from "@linkyo/tokens/creator";
+import { cn, Icon, Segmented } from "@linkyo/ui";
 import { Check } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
 
-import { thumbSizes } from "../editor/use-dashboard";
-import { initials } from "../shared/creator-kit";
-import { resolveMedia } from "../shared/media";
 import { displayStyle } from "./styles";
+import { TEMPLATE_PREVIEW_SIZES, TEMPLATE_PREVIEWS } from "./template-previews";
 
-/** Where each newer template puts the picture in its card (the others: the top, fading into the page). */
-const PICTURE: Partial<Record<HeroStyle, string>> = {
-  cinema: "inset-0 mask-b-from-40% mask-b-to-95%",
-  halo: "top-4 left-1/2 aspect-square w-1/2 -translate-x-1/2 rounded-full",
-  inset: "inset-x-2 top-2 h-1/2 rounded-sm",
-  frame: "top-4 left-1/2 aspect-square w-1/2 -translate-x-1/2 rounded-xs border-emphasis border-creator-accent",
-  arch: "top-3 left-1/2 h-1/2 w-3/5 -translate-x-1/2 rounded-t-full rounded-b-xs",
-  // Werkbogen: a plate from edge to edge under a quiet top line. Tiefdruck: no large picture, a small round portrait.
-  plate: "inset-x-0 top-4 h-2/5",
-  statement: "start-3 top-3 size-8 rounded-full",
-  // Laufbahn: the picture from edge to edge, the name in white at its foot (drawn inside it, below).
-  bleed: "inset-x-0 top-0 h-3/5",
-};
+type Filter = "all" | "portfolio";
 
 /**
- * Template picker: fourteen looks, each previewed with the creator's own photo and name in that
- * template's real colors and fonts (resolved by the theme engine, so every swatch is AA).
+ * Template picker: every look, each shown by its real first screen (a capture of the template with
+ * the fictional sample creator, see template-previews.ts), so the choice is made on the real thing.
  * Native radio inputs: arrow keys move between templates, screen readers announce the choice.
- * `still` (the dashboard's Design screen) stops the thumbnails' ambient loops, so nothing moves while
- * the creator compares looks (the live preview shows the real motion), and keeps the phone's single
- * scrolling row at every width. `order` puts those template ids first (a kind's default and suggestions,
- * see `suggestedTemplates`); every other look follows in token order, so none is hidden.
+ *
+ * - Phones: one row that scrolls sideways. Laptops (lg): a grid, three or four columns by the room
+ *   it has (container queries), so every look is in sight at once.
+ * - "Alle · Portfolio" narrows the looks to those made for portfolios (tokens: `use`), so a template
+ *   added later appears there without code.
+ * - The chosen look is brought into view when the picker opens and when the filter changes: inside
+ *   the row (the page does not move), or, in the grid, by scrolling the page just enough when it is
+ *   below the window. Instantly under reduced motion.
+ * - `still`: the picker sits in a dashboard panel (Design), so the row runs to the panel's edges.
+ * - `order` puts those template ids first (a kind's default and suggestions, see
+ *   `suggestedTemplates`); every other look follows in token order, so none is hidden.
+ *
+ * `profile` decides the script the colours are resolved for (cards without a capture fall back to
+ * the template's colours and its display face).
  */
 export function TemplatePicker({
   value,
@@ -54,37 +50,64 @@ export function TemplatePicker({
 }) {
   const t = useTranslations("dashboard");
   const tTemplates = useTranslations("templates");
+  const tFilter = useTranslations("app.design.filter");
   const rtlScript = profile.locale === "ar";
+  const [filter, setFilter] = useState<Filter>("all");
   const orderKey = order?.join(",") ?? "";
-  const themes = useMemo(
-    () => (orderKey ? orderTemplates(orderKey.split(",")) : TEMPLATE_IDS).map((id) => ({ id, theme: resolveCreatorTheme({ template: id }, { rtlScript }) })),
-    [rtlScript, orderKey],
-  );
-  const photo = hasImage(profile.avatar) ? profile.avatar : hasImage(profile.hero) ? profile.hero : null;
-  const avatar = photo ? resolveMedia(photo.src) : null;
-  const row = useRef<HTMLDivElement>(null);
-  // A still picker is one row at every width, so the screen around it stays short. The chosen look is
-  // brought into the row's view once, before the first paint, without moving the page. scrollBy is
-  // relative, so this works the same in both reading directions.
+  const ids = useMemo(() => {
+    const all = orderKey ? orderTemplates(orderKey.split(",")) : [...TEMPLATE_IDS];
+    if (filter === "all") return all;
+    const portfolio = new Set<CreatorTemplateId>(templatesFor("portfolio"));
+    return all.filter((id) => portfolio.has(id));
+  }, [orderKey, filter]);
+  const box = useRef<HTMLDivElement>(null);
+  const opened = useRef(false);
+
   useLayoutEffect(() => {
-    const box = row.current;
-    const chosen = still ? box?.querySelector("input:checked")?.closest("label") : null;
-    if (!box || !chosen) return;
-    const outer = box.getBoundingClientRect();
-    const card = chosen.getBoundingClientRect();
-    if (card.left >= outer.left && card.right <= outer.right) return;
-    box.scrollBy({ left: card.left + card.width / 2 - (outer.left + outer.width / 2) });
-  }, [still]);
+    const scroller = box.current;
+    const chosen = scroller?.querySelector("input:checked")?.closest("label");
+    // The first run is the picker opening: in the row it happens before the first paint.
+    const first = !opened.current;
+    opened.current = true;
+    if (!scroller || !chosen) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (scroller.scrollWidth > scroller.clientWidth) {
+      // The row: centre the card in it. scrollBy is relative, so this works in both reading directions.
+      const outer = scroller.getBoundingClientRect();
+      const card = chosen.getBoundingClientRect();
+      if (card.left >= outer.left && card.right <= outer.right) return;
+      scroller.scrollBy({ left: card.left + card.width / 2 - (outer.left + outer.width / 2), behavior: first || reduced ? "instant" : "smooth" });
+      return;
+    }
+    // The grid: once the dashboard has placed the page (its own scroll memory runs after this), and
+    // only when the card is below the window: a page scrolled up on purpose stays where it is.
+    const frame = window.requestAnimationFrame(() => {
+      if (chosen.getBoundingClientRect().bottom > window.innerHeight) chosen.scrollIntoView({ block: "nearest", behavior: reduced ? "instant" : "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [filter]);
 
   return (
-    <fieldset data-still={still ? "" : undefined} className="grid min-w-0 gap-3">
+    <fieldset data-still={still ? "" : undefined} className="@container grid min-w-0 gap-3">
       <legend className="sr-only">{t("template")}</legend>
-      {/* Still: the row runs to the edges of the dashboard panel around it (its p-4, lg:p-6), never past them.
-          A scroller clips what is outside it: pt-1 (taken back by -mt-1) and pb-1 keep the focus ring whole. */}
-      <div ref={row} className={cn("-mt-1 overflow-x-auto pt-1 pb-1", still ? "-mx-4 px-4 lg:-mx-6 lg:px-6" : "-mx-5 px-5 lg:mx-0 lg:overflow-visible lg:px-0")}>
-        <div className={cn("grid auto-cols-[42%] grid-flow-col gap-3 sm:auto-cols-[28%]", !still && "lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-4")}>
-          {themes.map(({ id, theme }) => {
+      <Segmented<Filter>
+        label={tFilter("label")}
+        value={filter}
+        onValueChange={setFilter}
+        className="justify-self-start pointer-coarse:h-control-lg"
+        options={[
+          { value: "all", label: tFilter("all") },
+          { value: "portfolio", label: tFilter("portfolio") },
+        ]}
+      />
+      {/* Phones: the row runs to the edges of what is around it (a dashboard panel's p-4, or the page's
+          gutter), never past them. A scroller clips what is outside it: pt-1 (taken back by -mt-1) and
+          pb-1 keep the focus ring whole. Laptops: a grid in place, nothing to scroll. */}
+      <div ref={box} className={cn("-mt-1 overflow-x-auto pt-1 pb-1 lg:overflow-visible", still ? "-mx-4 px-4 lg:mx-0 lg:px-0" : "-mx-5 px-5 lg:mx-0 lg:px-0")}>
+        <div className="grid auto-cols-[38%] grid-flow-col gap-3 sm:auto-cols-[26%] lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3 lg:@prose:grid-cols-4">
+          {ids.map((id) => {
             const selected = id === value;
+            const preview = TEMPLATE_PREVIEWS[id];
             return (
               <label
                 key={id}
@@ -95,68 +118,18 @@ export function TemplatePicker({
                 )}
               >
                 <input type="radio" name="poster-template" value={id} checked={selected} onChange={() => onChange(id)} className="sr-only" />
-                <span
-                  aria-hidden
-                  style={themeStyle(theme)}
-                  className={cn(
-                    "relative grid aspect-portrait content-end gap-2 overflow-hidden rounded-md border bg-creator-bg p-3 font-creator-body text-creator-fg",
-                    selected ? "border-focus border-emphasis" : "border-line",
-                  )}
-                >
-                  {theme.layout.backdrop === "grid" ? <span className="poster-grid absolute inset-0 mask-b-from-10% mask-b-to-90%" /> : null}
-                  {theme.layout.backdrop === "aurora" ? <span className="poster-glow poster-glow-1" /> : null}
-                  {/* The picture in the template's own shape: full, round with a halo, framed, in corner marks or in an arch. */}
-                  <span
-                    className={cn(
-                      "absolute overflow-hidden",
-                      PICTURE[theme.layout.hero] ?? "inset-x-0 top-0 h-3/5 mask-b-from-30% mask-b-to-100%",
-                    )}
-                  >
-                    {theme.layout.hero === "halo" ? <span className="poster-halo absolute inset-0" /> : null}
-                    <span className={cn("absolute overflow-hidden", theme.layout.hero === "halo" ? "inset-1 rounded-full" : "inset-0")}>
-                      {avatar ? (
-                        <Image
-                          src={avatar}
-                          alt=""
-                          fill
-                          sizes={thumbSizes}
-                          className={cn("object-cover", theme.layout.hero === "duotone" && "grayscale mix-blend-screen", theme.layout.hero === "mono" && "grayscale", theme.layout.hero === "logo" && "blur-glass")}
-                          unoptimized={typeof avatar === "string"}
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <span className="absolute inset-0 grid place-items-center bg-creator-surface-2 font-creator-display text-h2 text-creator-fg">{initials(profile.displayName)}</span>
-                      )}
-                    </span>
-                    {/* Laufbahn sets the name in white over a veil at the foot of the picture, as its hero does on phones. */}
-                    {theme.layout.hero === "bleed" ? (
-                      <>
-                        <span className="lb-scrim absolute inset-0" />
-                        <span className="absolute inset-x-3 bottom-2 truncate font-creator-display text-body leading-none text-white" style={displayStyle}>
-                          {profile.displayName}
-                        </span>
-                      </>
-                    ) : null}
-                  </span>
-                  {/* Tiefdruck sets the name large: its card does too. Laufbahn's stands on its picture. */}
-                  {theme.layout.hero === "bleed" ? null : (
-                    <span className={cn("relative truncate font-creator-display leading-none", theme.layout.hero === "statement" ? "text-h3" : "text-body")} style={displayStyle}>
-                      {profile.displayName}
+                <span aria-hidden className={cn("relative block aspect-short overflow-hidden rounded-md border", selected ? "border-focus border-emphasis" : "border-line")}>
+                  {preview ? (
+                    <Image src={preview} alt="" fill sizes={TEMPLATE_PREVIEW_SIZES} className="object-cover object-top" />
+                  ) : (
+                    // No capture yet (a template just added): its own colours and display face.
+                    <span
+                      style={themeStyle(resolveCreatorTheme({ template: id }, { rtlScript }))}
+                      className="absolute inset-0 grid place-items-center bg-creator-bg p-3 text-center font-creator-display text-h3 leading-none text-creator-fg"
+                    >
+                      <span style={displayStyle}>{creatorTokens.templates[id].label}</span>
                     </span>
                   )}
-                  <span className="relative grid gap-1">
-                    {/* Laufbahn's signature: lists whose rows lead with an icon in the accent. */}
-                    {theme.layout.headings === "signpost" ? (
-                      <span className="flex items-center gap-1">
-                        <span className="size-4 shrink-0 rounded-xs bg-creator-accent" />
-                        <span className="h-2 flex-1 rounded-xs bg-creator-surface-2" />
-                      </span>
-                    ) : (
-                      <span className="h-2 rounded-xs bg-creator-surface-2" />
-                    )}
-                    <span className="h-2 w-3/4 rounded-xs bg-creator-surface-2" />
-                    <span className="h-3 w-1/2 rounded-full bg-creator-accent" />
-                  </span>
                   {selected ? (
                     <span className="absolute end-2 top-2 grid size-6 place-items-center rounded-full bg-primary text-primary-fg">
                       <Icon icon={Check} size="sm" />
@@ -164,7 +137,7 @@ export function TemplatePicker({
                   ) : null}
                 </span>
                 <span className="grid gap-0.5 px-1">
-                  <span className="text-small font-semibold">{creatorTokens.templates[id].label}</span>
+                  <span className={cn("text-small", selected ? "font-semibold" : "font-medium")}>{creatorTokens.templates[id].label}</span>
                   <span className="line-clamp-2 text-caption text-fg-secondary">{tTemplates(`${id}.description`)}</span>
                 </span>
               </label>

@@ -2,7 +2,7 @@
  * The dashboard's places, in one table: the name each screen shows in the bars, the tab it belongs
  * to, where "back" leads and the rail place (section) it lives under. Settings is pushed over the
  * tab it was opened from (its "origin"), and its three panes and Invite are pushed over Settings, as
- * in iOS.
+ * in iOS. "Arbeiten" (/app/work) is a second view of the Page tab, beside the content list.
  */
 
 export type TabKey = "home" | "page" | "design" | "analytics";
@@ -18,6 +18,9 @@ export const TAB_HREF: Record<TabKey, string> = {
 
 export const SETTINGS_HREF = "/app/settings";
 
+/** "Arbeiten": the page's projects as covers, a second view of the Page tab (beside "Inhalte"). */
+export const WORK_HREF = "/app/work";
+
 /** The invite program's screen. Code, data and URLs say "referral"; only the copy says "invite". */
 export const INVITE_HREF = "/app/invite";
 
@@ -32,6 +35,7 @@ export type RouteTitle =
   | "nav.page"
   | "nav.design"
   | "nav.analytics"
+  | "nav.work"
   | "nav.settings"
   | "settings.panes.account"
   | "settings.panes.address"
@@ -51,6 +55,8 @@ export interface RouteInfo {
 const ROUTES: Record<string, RouteInfo> = {
   "/app": { title: "nav.home", tab: "home", parent: null, section: "home" },
   "/app/editor": { title: "nav.page", tab: "page", parent: null, section: "page" },
+  // A view of the Page tab, not a pushed screen: the tab bar and the rail keep Page marked, no back link.
+  "/app/work": { title: "nav.work", tab: "page", parent: null, section: "page" },
   "/app/design": { title: "nav.design", tab: "design", parent: null, section: "design" },
   "/app/analytics": { title: "nav.analytics", tab: "analytics", parent: null, section: "analytics" },
   "/app/settings": { title: "nav.settings", tab: null, parent: "origin", section: "settings" },
@@ -92,6 +98,18 @@ export function routeInfo(pathname: string): RouteInfo {
  */
 export function markedTab(pathname: string, pendingTab?: TabKey | null): TabKey | null {
   return pendingTab ?? routeInfo(pathname).tab;
+}
+
+/**
+ * The places whose parts the section panel lists on wide screens (ADR 0063, narrowed by the
+ * "dashboard on laptops" decision): only places with four or more parts, or with parts that are
+ * pages of their own (Settings). Home, Page (with Arbeiten) and Design have two or three parts and
+ * use the width for their content instead; Design keeps its own tabs in its card. Stats lists its
+ * parts only while there are numbers to show (`counted`).
+ */
+export function hasSectionPanel(section: SectionKey, counted: boolean): boolean {
+  if (section === "analytics") return counted;
+  return section === "invite" || section === "settings";
 }
 
 /** The Design screen's tabs, in order. The selected one lives in the URL (`?tab=`). */

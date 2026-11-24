@@ -30,8 +30,12 @@ import { statsSource } from "./stats";
  * that step is the one primary action. Once the essentials are there, sharing the link is, with the
  * remaining steps as quiet rows. Sample stats appear only then: an empty page has nothing to count.
  * Which steps are offered (a portfolio starts with its work, then the way to reach its owner), which
- * are done, and when the page counts as ready, comes from `home/progress` (the section panel reads
- * it too, so it lists exactly the parts shown here).
+ * are done, and when the page counts as ready, comes from `home/progress`.
+ *
+ * On a laptop Home is a dashboard, not a stretched phone: once its column has room for two
+ * (`layout.column-wide`), the cards stand in two columns. CSS columns keep the phone's order: reading
+ * and focus run down the first column, then the second. While the page is being built the link starts
+ * the second column; once it is ready the week's numbers do.
  */
 export function HomeScreen() {
   const t = useTranslations("app.home");
@@ -78,7 +82,7 @@ export function HomeScreen() {
   const lead = complete ? t("leadComplete") : ready ? t("leadReady") : undefined;
 
   return (
-    <Screen title={t("title", { name })} lead={lead} preview>
+    <Screen title={t("title", { name })} lead={lead} preview wide>
       {site.prepared && !site.prepared.seen ? (
         // The banner is teal: its focus rings are drawn in the color on teal, or they would not show.
         <section aria-labelledby="prepared-title" className="relative grid gap-3 overflow-hidden rounded-lg bg-primary p-5 text-primary-fg [--color-focus:var(--color-primary-fg)]">
@@ -121,9 +125,13 @@ export function HomeScreen() {
 
       {/* Real accounts with the page service: a proposal from the team comes first. */}
       <ProposalCard />
+      <div className="@container">
+        <div className="-mb-6 *:mb-6 *:break-inside-avoid @column-wide:columns-2 @column-wide:gap-6">
       {ready ? null : <AiHomeCard ready={false} />}
       {ready ? null : <NextStep tasks={tasks} />}
-      <LinkCard username={account.username} ready={ready} />
+      <div className={ready ? undefined : "@column-wide:break-before-column"}>
+        <LinkCard username={account.username} ready={ready} />
+      </div>
       {ready ? <AiHomeCard ready /> : null}
       {ready && !complete ? (
         <ListGroup
@@ -136,7 +144,11 @@ export function HomeScreen() {
           ))}
         </ListGroup>
       ) : null}
-      {ready ? <WeekStats /> : null}
+      {ready ? (
+        <div className="@column-wide:break-before-column">
+          <WeekStats />
+        </div>
+      ) : null}
       {/* Once the page is worth sharing, the invite program (the rail's Invite on wide screens). The
           subtitle names the rewards, never a count: no request, no numbers to load. */}
       {ready ? (
@@ -150,6 +162,8 @@ export function HomeScreen() {
           />
         </ListGroup>
       ) : null}
+        </div>
+      </div>
 
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </Screen>

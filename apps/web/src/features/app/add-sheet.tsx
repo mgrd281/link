@@ -50,7 +50,14 @@ export function addEntries(types: readonly BlockType[], presets: readonly AddPre
   return [...types.slice(0, cut).map((type) => ({ type })), ...presets.map((preset) => ({ preset })), ...types.slice(cut).map((type) => ({ type }))];
 }
 
-export function AddSheet() {
+/**
+ * The door the sheet was opened at. "all": everything (the rail, the tab bar, a row's "Add below").
+ * "workLink": straight at a project from a link (Arbeiten's "From a link"): only the link field,
+ * and what is pasted there becomes a project, never a plain block.
+ */
+export type AddDoor = "all" | "workLink";
+
+export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
   const t = useTranslations("app.add");
   const tEdit = useTranslations("app.edit");
   const tTypes = useTranslations("dashboard.types");
@@ -58,6 +65,10 @@ export function AddSheet() {
   const tPortfolio = useTranslations("app.portfolio");
   const { addOpen, setAddOpen, addIndex, addBlocks, edit, editing, doc, site } = useSite();
   const kind = site.kind as CreatorKind | undefined;
+  // While the sheet slides away it keeps showing the door it was opened at.
+  const [shownEntry, setShownEntry] = useState(entry);
+  if (addOpen && shownEntry !== entry) setShownEntry(entry);
+  const workLink = (addOpen ? entry : shownEntry) === "workLink";
   // Pages that show work: a pasted link can become a project, so pasting waits for the choice.
   const portfolio = isPortfolioKind(kind);
   // Photos picked for a choice ("as a gallery" or "as a project"), and the line a new project opens with.
@@ -155,7 +166,7 @@ export function AddSheet() {
   // that shows work one link waits in the field, so it can still become a project.
   const paste = async () => {
     const text = await readText();
-    if (text && portfolio && detectMany(text).length === 1) setValue(text.trim());
+    if (text && (workLink || (portfolio && detectMany(text).length === 1))) setValue(text.trim());
     else if (text) addText(text);
     else document.getElementById(inputId)?.focus();
   };
@@ -276,8 +287,8 @@ export function AddSheet() {
         onOpenChange={(open) => (open ? setAddOpen(true, addIndex) : requestClose())}
         step={step ? "form" : "pick"}
         detent="large"
-        title={step ? tEdit("addTitle", { type }) : t("title")}
-        description={step ? tEdit(`hints.${step.block.type}`) : t("lead")}
+        title={step ? tEdit("addTitle", { type }) : workLink ? t("work.title") : t("title")}
+        description={step ? tEdit(`hints.${step.block.type}`) : workLink ? t("work.lead") : t("lead")}
         closeLabel={t("close")}
         besidePreview
         back={step ? { label: tEdit("back"), onBack: back } : undefined}
@@ -312,12 +323,14 @@ export function AddSheet() {
               onSubmit={(event) => {
                 event.preventDefault();
                 if (!value.trim()) return;
-                addText(value);
+                // From Arbeiten the link becomes a project; anywhere else, the block it is.
+                if (workLink) void linkAsProject();
+                else addText(value);
               }}
               className="grid grid-cols-1 gap-3"
             >
               <label htmlFor={inputId} className="text-small font-semibold">
-                {t("pasteLabel")}
+                {workLink ? t("work.label") : t("pasteLabel")}
               </label>
               <div
                 className={cn(
@@ -337,8 +350,9 @@ export function AddSheet() {
                   }}
                   onPaste={(event) => {
                     const text = event.clipboardData.getData("text");
-                    // One link on a page that shows work waits in the field: it may become a project.
-                    if (portfolio && detectMany(text).length === 1) return;
+                    // One link on a page that shows work waits in the field: it may become a project. At
+                    // Arbeiten's door every link waits: it becomes a project when sent.
+                    if (workLink || (portfolio && detectMany(text).length === 1)) return;
                     if (!value && detectMany(text).length > 0) {
                       event.preventDefault();
                       addText(text);
@@ -349,7 +363,7 @@ export function AddSheet() {
                   autoComplete="off"
                   autoCapitalize="none"
                   spellCheck={false}
-                  placeholder={t("pastePlaceholder")}
+                  placeholder={workLink ? t("work.placeholder") : t("pastePlaceholder")}
                   aria-invalid={error || undefined}
                   aria-describedby={`${inputId}-hint`}
                   className="h-control-xl min-w-0 flex-1 bg-transparent text-body-lg outline-none placeholder:text-fg-tertiary"
@@ -360,8 +374,8 @@ export function AddSheet() {
                     {t("paste")}
                   </Button>
                 ) : (
-                  <Button type="submit" variant="primary" size="sm" disabled={!value.trim()}>
-                    {t("addButton")}
+                  <Button type="submit" variant="primary" size="sm" disabled={!value.trim()} loading={workLink && linking}>
+                    {workLink ? t("work.submit") : t("addButton")}
                   </Button>
                 )}
               </div>
@@ -372,20 +386,21 @@ export function AddSheet() {
                     <Icon icon={CircleAlert} size="sm" className="mt-0.5 shrink-0" />
                     {t("invalid")}
                   </span>
-                ) : detection ? (
+                ) : workLink ? null : detection ? (
                   <Badge tone="primary">{t("detected", { type: tTypes(detection.type === "shorts" ? "link" : detection.type) })}</Badge>
                 ) : (
                   t("pasteHint")
                 )}
               </p>
               {/* Under the detected block: the same link as a piece of work. */}
-              {detection && value.trim() ? (
+              {detection && value.trim() && !workLink ? (
                 <Button type="button" variant="ghost" icon={FolderKanban} loading={linking} className="justify-self-start" onClick={() => void linkAsProject()}>
                   {t("asProject")}
                 </Button>
               ) : null}
             </form>
 
+            {workLink ? null : (
             <div className="grid grid-cols-1 gap-2">
               <Button variant="tinted" size="lg" block icon={ImagePlus} loading={uploading && photos === null} onClick={() => void upload()}>
                 {t("photos")}
@@ -404,8 +419,9 @@ export function AddSheet() {
                 <p className="text-caption text-fg-secondary">{t("photosHint")}</p>
               )}
             </div>
+            )}
 
-            {groups.map((group) => (
+            {(workLink ? [] : groups).map((group) => (
               <section key={group.key} aria-labelledby={`${inputId}-${group.key}`} className="grid grid-cols-1 gap-2">
                 <h3 id={`${inputId}-${group.key}`} className="text-small font-semibold text-fg-secondary">
                   {t(`groups.${group.key}`)}

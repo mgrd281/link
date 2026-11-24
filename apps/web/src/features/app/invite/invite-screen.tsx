@@ -97,7 +97,11 @@ export function InviteScreen() {
   );
 
   return (
-    <Screen title={t("title")} lead={lead}>
+    <Screen title={t("title")} lead={lead} wide>
+      {/* Laptops: two columns once the column has room for them (CSS columns keep the phone's order):
+          the link and the rewards, then the people and the rules. */}
+      <div className="@container">
+        <div className="-mb-6 *:mb-6 *:break-inside-avoid @column-wide:columns-2 @column-wide:gap-6">
       <InviteLinkCard code={data?.code ?? null} error={data ? undefined : error} />
 
       <ListGroup
@@ -118,16 +122,19 @@ export function InviteScreen() {
         )}
       </ListGroup>
 
-      {/* With an error the screen says so once, in the card; the people are simply not listed. */}
-      {failed && !data ? null : <PeopleList people={data?.invited ?? null} />}
-
-      <Rules />
+      <div className="grid gap-6 @column-wide:break-before-column">
+        {/* With an error the screen says so once, in the card; the people are simply not listed. */}
+        {failed && !data ? null : <PeopleList people={data?.invited ?? null} />}
+        <Rules />
+      </div>
 
       {data?.invitedBy ? (
         <p className="text-small font-regular text-fg-secondary">
           <WithName message={(name) => t("invitedBy", { name })} name={data.invitedBy.name} />
         </p>
       ) : null}
+        </div>
+      </div>
 
       {data ? (
         <VerificationSheet
