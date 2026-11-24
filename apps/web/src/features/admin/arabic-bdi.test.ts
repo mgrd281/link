@@ -25,10 +25,11 @@ function strings(tree: Tree | string, prefix: string): [string, string][] {
 const at = (messages: unknown, key: string): Tree | string => key.split(".").reduce<unknown>((node, part) => (node as Tree)[part], messages) as Tree | string;
 
 /**
- * The namespaces and keys the rule covers: since Stage 3 (WP3.4) every namespace of the console's
- * screens. Left out: `admin.gate` (the team-code screen, rendered by session.tsx, which keeps `t()`).
+ * The namespaces and keys the rule covers: since Stage 3 every namespace of the console, the
+ * team-code screen (`admin.gate`, session.tsx) included.
  */
 const SCOPE = [
+  "admin.gate",
   "admin.meta",
   "admin.nav",
   "admin.shell",
@@ -56,7 +57,7 @@ const SCOPE = [
 it("leaves out only the namespaces it names", () => {
   const admin = Object.keys(ar.admin);
   const covered = new Set(SCOPE.map((key) => key.split(".")[1]));
-  expect(admin.filter((key) => !covered.has(key))).toEqual(["gate"]);
+  expect(admin.filter((key) => !covered.has(key))).toEqual([]);
 });
 
 /**

@@ -11,6 +11,7 @@ import { BrandSplash } from "@/features/app/gate";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
+import { bdi } from "./bidi";
 import { refreshLive, useLiveTeam } from "./live";
 import { adminStore, useAdminDb } from "./store";
 import { can, type AdminDb, type Member, type Permission, type Role } from "./types";
@@ -195,7 +196,7 @@ function TeamSetup({ account }: { account: Account }) {
           onChange={(event) => setCode(event.target.value)}
           autoComplete="off"
           spellCheck={false}
-          hint={t("codeHint")}
+          hint={t.rich("codeHint", { bdi })}
           error={error === "code" ? t("codeWrong") : error === "network" ? t("network") : undefined}
         />
         <Button type="submit" variant="primary" size="xl" block loading={busy} trailing={<Icon icon={ArrowRight} size="md" />}>
