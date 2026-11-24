@@ -277,7 +277,8 @@ test.describe("team console and proposal review: failures and second clicks @rea
     // Meanwhile the customer's withdrawal arrives (another tab): the request can no longer succeed.
     await withdraw(owner, order.number);
     await page.getByRole("button", { name: "Änderungen senden" }).click();
-    await expect(page.getByText("Das geht gerade nicht. Wir haben den Stand neu geladen.")).toBeVisible();
+    // exact: Radix also reads the toast out in a hidden live region ("Notification …") for a moment.
+    await expect(page.getByText("Das geht gerade nicht. Wir haben den Stand neu geladen.", { exact: true })).toBeVisible();
     await expect(page.locator('[data-revise-state="paused"]')).toHaveText("Dein Widerruf wird gerade geprüft. Bis dahin ruht der Auftrag.");
     await expect(page.getByText("Das hat nicht geklappt. Versuch es noch mal.")).toHaveCount(0);
     expect((await service().from("orders").select("revisions_used").eq("id", order.id).single()).data?.revisions_used).toBe(0);

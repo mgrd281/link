@@ -58,7 +58,7 @@ for (const { path, title, text } of PAGES) {
       const german = main.locator('[lang="de"]');
       await expect(german).toHaveAttribute("dir", "ltr");
       await expect(german.getByText(text).first()).toBeVisible();
-      if (locale === "de") await expect(main.getByText("Verträge schließen wir derzeit nur auf Deutsch")).toHaveCount(0);
+      if (locale === "de") await expect(main.getByText("Verbindlich ist die deutsche Fassung")).toHaveCount(0);
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
       await noUnderlines(main);
     });
