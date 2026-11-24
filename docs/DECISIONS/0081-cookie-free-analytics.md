@@ -17,7 +17,8 @@ only after the lawyer's review (F2).
 1. **What is counted.** Per creator page and Berlin day: views (a page opened from outside: one per full page
    load, not per step inside the page), different visitors, and taps on blocks (a link or button inside an element
    with `data-block`, the renderer's block marks from S3.0). Views are split by referrer group (instagram, tiktok,
-   youtube, facebook, x, linkedin, search, qr, direct, other; a step inside the same site adds none), country
+   youtube, facebook, x, linkedin, search, qr, direct, other; a step inside the page, from the page or one of
+   its project pages, adds none, and any other page on Linkyo's host counts as other), country
    (the host's own geolocation header, `x-vercel-ip-country`, two letters only) and device class (mobile, tablet,
    desktop). Nothing else.
 2. **The island.** A few lines of inline script (`features/analytics/beacon-script.ts`) that the creator layout

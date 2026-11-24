@@ -24,13 +24,14 @@ import { visitorHash } from "../visitor";
 const json = (body: object, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const nothing = () => new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
 
-/** The beacon's body: { p: page name, t: "v" (view) | "c" (tap), b: block id, r: referring host, s: "qr" }. */
+/** The beacon's body: { p: page name, t: "v" (view) | "c" (tap), b: block id, r: referring host, s: "qr" | "page" }. */
 export interface Beacon {
   page: string;
   kind: "view" | "click";
   block?: string | undefined;
   referrer: string;
-  source?: "qr" | undefined;
+  /** "qr": the address carried `?src=qr`; "page": a step inside the page (from the page or one of its projects). */
+  source?: "qr" | "page" | undefined;
 }
 
 const PAGE = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])$/i;
@@ -50,7 +51,7 @@ export function parseBeacon(text: string): Beacon | null {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
   const { p, t, b, r, s } = raw as Record<string, unknown>;
   if (typeof p !== "string" || !PAGE.test(p)) return null;
-  if (t === "v") return { page: p, kind: "view", referrer: typeof r === "string" ? r.slice(0, 253) : "", ...(s === "qr" ? { source: "qr" as const } : {}) };
+  if (t === "v") return { page: p, kind: "view", referrer: typeof r === "string" ? r.slice(0, 253) : "", ...(s === "qr" || s === "page" ? { source: s } : {}) };
   if (t === "c" && typeof b === "string" && BLOCK.test(b)) return { page: p, kind: "click", block: b, referrer: "" };
   return null;
 }

@@ -31,15 +31,18 @@ export function cleanHost(value: unknown): string {
 
 /**
  * The group of a visit: `referrer` is the referring host ("" when the browser sent none), `own` the
- * page's own host and `source` a marker the page address carried (`?src=qr`). null means a step inside
- * the same site (from the page to one of its projects): a view, but no new source.
+ * page's own host and `source` a marker: `qr` when the page address carried `?src=qr`, `page` when
+ * the beacon saw a step inside the page (from the page or one of its project pages). null means that
+ * step: a view, but no new source. Every other page on Linkyo's host (another creator's page, the
+ * owner's "Öffnen" in the dashboard, the people search) is a source like any site: "other".
  */
 export function referrerGroup(referrer: string, own: string, source?: string | null): ReferrerGroup | null {
   if (source === "qr") return "qr";
+  if (source === "page") return null;
   const host = cleanHost(referrer);
   // No referrer: typed in, a bookmark, or an app that does not pass one on (WhatsApp, Telegram, Mail).
   if (!host) return "direct";
-  if (host === cleanHost(own)) return null;
+  if (host === cleanHost(own)) return "other";
   for (const [group, domains] of HOSTS) if (domains.some((domain) => within(host, domain))) return group;
   if (SEARCH.test(host)) return "search";
   return "other";

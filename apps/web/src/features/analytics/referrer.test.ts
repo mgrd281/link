@@ -39,9 +39,14 @@ describe("referrer groups", () => {
     expect(referrerGroup("", OWN, "poster")).toBe("direct");
   });
 
-  it("count a step inside the same site as no new source", () => {
-    expect(referrerGroup("linkyo.app", OWN)).toBeNull();
-    expect(referrerGroup("LINKYO.APP", "linkyo.app:443")).toBeNull();
+  it("count a step inside the page (from the page or one of its projects) as no new source", () => {
+    expect(referrerGroup("linkyo.app", OWN, "page")).toBeNull();
+    expect(referrerGroup("LINKYO.APP", "linkyo.app:443", "page")).toBeNull();
+  });
+
+  it("count a visit from another page on Linkyo's host (another creator, the dashboard) as other, not as nothing", () => {
+    expect(referrerGroup("linkyo.app", OWN)).toBe("other");
+    expect(referrerGroup("LINKYO.APP", "linkyo.app:443")).toBe("other");
   });
 
   it("put everything else under other, never a host name of its own", () => {

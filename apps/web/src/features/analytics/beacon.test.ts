@@ -32,7 +32,7 @@ interface Browser {
 }
 
 /** Runs the script for page "mila" in a fake browser and answers what it sent. */
-function run({ gpc = false, dnt = null as string | null, visibility = "visible", prerendering = false, referrer = "", search = "", beacon = true } = {}): Browser {
+function run({ gpc = false, dnt = null as string | null, visibility = "visible", prerendering = false, referrer = "", search = "", beacon = true, host = "linkyo.app" } = {}): Browser {
   const listeners = new Map<string, ((event: object) => void)[]>();
   const sent: Record<string, string>[] = [];
   const browser: Browser = {
@@ -68,7 +68,7 @@ function run({ gpc = false, dnt = null as string | null, visibility = "visible",
   // Runs the very text the page carries, with the fakes in place of the browser's globals.
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- that text is what is under test
   const page = new Function("navigator", "document", "location", "fetch", beaconScript("mila")) as (...globals: unknown[]) => void;
-  page(navigator, document, { search }, fetch);
+  page(navigator, document, { search, host }, fetch);
   return browser;
 }
 
@@ -78,6 +78,15 @@ describe("the counter in the page", () => {
     expect(browser.sent).toEqual([{ t: "v", r: "l.instagram.com", p: "mila" }]);
     browser.fire("visibilitychange");
     expect(browser.sent).toHaveLength(1);
+  });
+
+  it("marks a step inside the page, and only that, as no new source", () => {
+    // From the page itself or one of its project pages: same host, the page's own first path segment.
+    expect(run({ referrer: "https://linkyo.app/mila" }).sent).toEqual([{ t: "v", r: "linkyo.app", s: "page", p: "mila" }]);
+    expect(run({ referrer: "https://linkyo.app/mila/hafenlicht?x=1" }).sent).toEqual([{ t: "v", r: "linkyo.app", s: "page", p: "mila" }]);
+    // Another creator's page, the dashboard, a page whose name starts the same: a source of its own.
+    for (const referrer of ["https://linkyo.app/other-creator", "https://linkyo.app/app/home", "https://linkyo.app/milan", "https://example.com/mila"])
+      expect(run({ referrer }).sent[0]?.s, referrer).toBeUndefined();
   });
 
   it("marks a QR code", () => {
