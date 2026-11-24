@@ -44,6 +44,18 @@ test.describe("/design: icons", () => {
       for (const fill of await section.locator('[data-icon-group="media"] svg').evaluateAll((svgs) => svgs.map((svg) => svg.getAttribute("fill")))) {
         expect(fill).toBe("currentColor");
       }
+      // Every code name stays whole, on one line: eight tiles to a row on a laptop broke "sidebarClose"
+      // and "notifications" in the middle of the word.
+      const broken = await section.locator("[data-icon-group] li code").evaluateAll((codes) =>
+        codes
+          .filter((code) => {
+            const range = document.createRange();
+            range.selectNodeContents(code);
+            return new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top))).size > 1;
+          })
+          .map((code) => code.textContent),
+      );
+      expect(broken).toEqual([]);
       // The same row in both directions: left to right nothing flips; right to left every glyph
       // flips once (the flip follows the row's own direction, also inside a page of the other one).
       const ltr = await scales(page, '[data-direction="ltr"]');

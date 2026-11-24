@@ -140,7 +140,9 @@ export function IconSection() {
           {(Object.keys(ICON_GROUPS) as (keyof typeof ICON_GROUPS)[]).map((group) => (
             <div key={group} className="grid gap-3">
               <h4 className="text-small font-semibold text-fg-secondary">{t(`groups.${group}`)}</h4>
-              <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8" data-icon-group={group}>
+              {/* At most six to a row: the section's column is about 784 px wide, and eight tiles of about 90 px
+                  broke the longest names ("sidebarClose", "notifications") in the middle of the word. */}
+              <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6" data-icon-group={group}>
                 {ICON_GROUPS[group].map((meaning) => (
                   <li key={meaning} className="grid min-w-0 justify-items-center gap-2 rounded-md border border-line bg-surface px-1 py-3 text-fg">
                     <Icon icon={icons[meaning]} size="md" solid={group === "media"} />
