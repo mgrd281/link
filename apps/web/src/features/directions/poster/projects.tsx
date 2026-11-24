@@ -98,6 +98,11 @@ export function ProjectsGroup({
   const layout = chosen === "rail" && shown.length < 2 ? "list" : chosen;
   const rest = entries.slice(FEATURED_PROJECTS);
   const shared = { numbered, loud, wide, locale, onOpen };
+  // The full canvas (Leuchttisch) gives its width to pictures only: rows of words (the list a run of
+  // few pictures falls back to, and the projects after the sixth) keep the creator column, drawn as
+  // in a column.
+  const full = theme.layout.canvas === "full";
+  const rowShared = full ? { ...shared, wide: false } : shared;
   if (shown.length === 0 && rest.length === 0) return null;
 
   return (
@@ -146,22 +151,22 @@ export function ProjectsGroup({
           <RailButtons />
         </div>
       ) : (
-        <ol start={shown[0]?.position} className="border-t border-creator-line">
+        <ol start={shown[0]?.position} className={cn("border-t border-creator-line", full && "@work:max-w-creator")}>
           {shown.map((entry) => (
-            <Row key={entry.project.id} entry={entry} compact={false} {...shared} />
+            <Row key={entry.project.id} entry={entry} compact={false} {...rowShared} />
           ))}
         </ol>
       )}
       {rest.length > 0 ? (
         // More than six: the others open in place, without script.
-        <details className="group/more">
+        <details className={cn("group/more", full && "@work:max-w-creator")}>
           <summary className="inline-flex min-h-touch-target cursor-pointer list-none items-center gap-2 rounded-xs text-small font-semibold text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring [&::-webkit-details-marker]:hidden">
             {t("portfolio.allProjects", { count: blocks.length })}
             <Icon icon={ChevronDown} size="sm" className="transition-transform duration-standard ease-standard group-open/more:rotate-180 motion-reduce:transition-none" />
           </summary>
           <ol start={rest[0]?.position} className="mt-2 border-t border-creator-line">
             {rest.map((entry) => (
-              <Row key={entry.project.id} entry={entry} compact {...shared} />
+              <Row key={entry.project.id} entry={entry} compact {...rowShared} />
             ))}
           </ol>
         </details>

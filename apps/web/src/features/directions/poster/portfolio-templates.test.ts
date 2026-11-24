@@ -145,6 +145,25 @@ describe("Leuchttisch", () => {
     expect(markup).toContain("@work:max-w-wall");
     expect(body(markup)).not.toContain("@work:col-span-6 @work:col-start-6");
   });
+
+  it("keeps words in the creator column inside a section of work too: an intro, the list fallback, the projects after the sixth", () => {
+    const { profile } = portfolioSample("de");
+    const header: Block = { ...base, id: "work", type: "header", title: "Arbeiten" };
+    const intro: Block = { ...base, id: "intro", type: "text", text: "Serien aus dem Hafen, aus Bädern und Werkhallen, jede Aufnahme unbeschnitten." };
+    const plain = (id: string): BlockOf<"project"> => ({ ...base, id, type: "project", slug: id, title: id, summary: "One sentence." });
+    // Eight pictures: the strip takes three, the rows the next three, the last two open in place.
+    const pictures = Array.from({ length: 8 }, (_, index) => shot(`w${String(index)}`, 1500, 1000));
+    const markup = body(html("leuchttisch", { profile, blocks: [header, intro, ...pictures] }));
+    expect(markup).toMatch(/<div data-column-item="true" class="min-w-0 @work:max-w-creator"><div class="contents" data-block="intro"><p /);
+    expect(markup).toContain('<details class="group/more @work:max-w-creator">');
+    // The rows drawn as in a column: no twelve-column row on the wall.
+    expect(markup).not.toContain("@work:grid-cols-12 @work:items-center");
+    // Mostly words: the run falls back to a list, which keeps the column as well.
+    const words = body(html("leuchttisch", { profile, blocks: [header, plain("a"), plain("b"), plain("c"), shot("d", 1500, 1000)] }));
+    expect(words).toContain('<ol start="1" class="border-t border-creator-line @work:max-w-creator">');
+    // The work itself still runs across the wall.
+    expect(markup).not.toMatch(/data-column-item[^>]*><ul/);
+  });
 });
 
 describe("Grundriss", () => {

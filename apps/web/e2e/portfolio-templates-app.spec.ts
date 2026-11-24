@@ -90,6 +90,11 @@ test.describe("on the laptop", () => {
     const widest = await page.locator("main p, header p").evaluateAll((paragraphs) => Math.max(...paragraphs.filter((p) => !p.closest("li")?.querySelector("[data-plate]")).map((p) => p.getBoundingClientRect().width)));
     expect(widest).toBeLessThanOrEqual(560.5);
     await fits(page);
+    // Merle's page (Leuchttisch): the same on a real portfolio, quotes and About included.
+    await open(page, "/de/p/merle-kastorf");
+    const longest = await page.locator("main p").evaluateAll((paragraphs) => Math.max(...paragraphs.filter((p) => !p.closest("li")?.querySelector("[data-plate], [data-cover]")).map((p) => p.getBoundingClientRect().width)));
+    expect(longest).toBeLessThanOrEqual(560.5);
+    await fits(page);
   });
 
   test("Grundriss: the title block beside the lead cover, column guides behind the canvas, sheets with their facts", async ({ page }) => {

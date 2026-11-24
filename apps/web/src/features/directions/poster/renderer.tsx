@@ -209,9 +209,10 @@ export function PosterRenderer({
         })
       : grouped;
   // The full canvas gives its width to pictures only: a section of work or pictures runs across it, every
-  // other section keeps its words in the creator column beside its title.
-  const spanOf = (section: Section): Section["span"] =>
-    full ? (section.items.some((item) => item.kind === "projects" || (item.kind === "block" && item.block.type === "gallery")) ? "wide" : "text") : section.span;
+  // other section keeps its words in the creator column beside its title. Inside a section of work,
+  // everything but the work and the pictures keeps the creator column too (an intro, links, a quote).
+  const spanOf = (section: Section): Section["span"] => (full ? (section.items.some(isPictureItem) ? "wide" : "text") : section.span);
+  const inColumn = (section: Section, item: PosterItem) => full && spanOf(section) === "wide" && !isPictureItem(item);
   // Numbered titles count the titled sections: 01, 02 …
   const titled = sections.filter((section) => section.title !== null);
   // Signposted templates (Laufbahn) list the titled sections as the page's contents.
@@ -445,20 +446,29 @@ export function PosterRenderer({
                 // A section of work says how many projects it holds, the hero plate's project included.
                 projects={section.items.reduce((count, item) => (item.kind === "projects" ? count + item.blocks.length : count), 0)}
               >
-                {section.items.map((item) => (
-                  <PosterItemView
-                    key={itemKey(item)}
-                    item={item}
-                    linkStyle={linkStyle}
-                    surface={surface}
-                    label={section.title ?? profile.displayName}
-                    nested={section.title !== null}
-                    gallery={layout.gallery}
-                    featured={featured}
-                    portfolio={portfolio}
-                    preview={preview}
-                  />
-                ))}
+                {section.items.map((item) => {
+                  const view = (
+                    <PosterItemView
+                      key={itemKey(item)}
+                      item={item}
+                      linkStyle={linkStyle}
+                      surface={surface}
+                      label={section.title ?? profile.displayName}
+                      nested={section.title !== null}
+                      gallery={layout.gallery}
+                      featured={featured}
+                      portfolio={portfolio}
+                      preview={preview}
+                    />
+                  );
+                  return inColumn(section, item) ? (
+                    <div key={itemKey(item)} data-column-item className="min-w-0 @work:max-w-creator">
+                      {view}
+                    </div>
+                  ) : (
+                    view
+                  );
+                })}
               </PosterSection>
             ))}
           </Main>
@@ -480,6 +490,9 @@ export function PosterRenderer({
 }
 
 const itemKey = (item: PosterItem): string => (item.kind === "block" ? item.block.id : `${item.kind}-${item.blocks[0]?.id ?? ""}`);
+
+/** Work or pictures: what the full canvas (Leuchttisch) lets run across layout.wall. */
+const isPictureItem = (item: PosterItem): boolean => item.kind === "projects" || (item.kind === "block" && item.block.type === "gallery");
 
 /** Written by an AI draft, edited afterwards or not (machine-readable marking, AI Act Art. 50(2)). */
 const isAiBlock = (block: Block | undefined): boolean => block?.origin === "ai" || block?.origin === "ai-edited";

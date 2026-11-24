@@ -33,7 +33,9 @@ fix below is meant to change it (the picture baseline lists each difference).
   280 px: 4). The breaks and fillers are `aria-hidden` list items; the list counts only its pictures.
 - **The full canvas.** From layout.work the page grows to layout.wall. Only sections of work or
   pictures run across it; every other section keeps its words in the creator column beside its title,
-  so a line never grows past 560 px.
+  so a line never grows past 560 px. Inside a section of work, only the work and the pictures take
+  the wall: an intro, links, the list a run of few pictures falls back to and the projects after the
+  sixth keep the creator column, drawn as in a column.
 - **The strip** takes the run's first covers with a picture, in a row, five at most; of three or more it
   takes the count whose ratios come closest to a canvas row. The run below starts after them, as it
   starts after Werkbogen's plate.
