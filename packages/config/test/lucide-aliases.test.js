@@ -40,9 +40,11 @@ describe("lucide alias ban (S-01)", () => {
     expect(Object.keys(LUCIDE_ALIASES)).toEqual(expect.arrayContaining(["AlertTriangle", "MoreHorizontal", "BarChart3"]));
   });
 
-  it("warns until the S2.Z codemod, then the integrator makes it an error", () => {
-    expect(LUCIDE_ALIAS_SEVERITY).toBe("warn");
-    expect(lint(`import { AlertTriangle } from "lucide-react";`)[0]?.severity).toBe(1);
+  it("fails lint since the S2.Z codemod replaced the last aliases", () => {
+    expect(LUCIDE_ALIAS_SEVERITY).toBe("error");
+    for (const name of ["AlertTriangle", "MoreHorizontalIcon", "LucideBarChart3"]) {
+      expect(lint(`import { ${name} } from "lucide-react";`)[0]?.severity, name).toBe(2);
+    }
   });
 
   it("is part of the shared config, and off for Laufbahn's files only", () => {
