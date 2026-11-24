@@ -2,8 +2,8 @@
 
 import type { Block, Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
-import { Badge, Button, cn, Icon, IconButton, Kbd, LogoGlyph, Menu, Switch, toast } from "@linkyo/ui";
-import { ArrowDown, ArrowUp, Command as CommandIcon, Copy, Eye, GripVertical, MoreHorizontal, Plus, Share2, Trash2 } from "lucide-react";
+import { Badge, Button, cn, Icon, IconButton, icons, Kbd, LogoGlyph, Menu, Switch, toast } from "@linkyo/ui";
+import { ArrowDown, ArrowUp, Command as CommandIcon, Copy, Eye, GripVertical, Plus, Share2, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { copyText } from "@/lib/clipboard";
@@ -265,7 +265,7 @@ function StageRow({
       <span className="hidden w-16 shrink-0 text-end font-mono text-caption text-fg-secondary md:inline">{sampleClicks(block.id)}</span>
       <Switch checked={block.visible} onCheckedChange={onToggle} label={t("toggleVisibility", { title: label })} />
       <Menu
-        trigger={<IconButton icon={MoreHorizontal} label={t("moreFor", { title: label })} size="sm" />}
+        trigger={<IconButton icon={icons.more} label={t("moreFor", { title: label })} size="sm" />}
         items={[
           ...(first ? [] : [{ label: t("moveUp"), icon: ArrowUp, shortcut: "⌥↑", onSelect: () => onMove(-1) }]),
           ...(last ? [] : [{ label: t("moveDown"), icon: ArrowDown, shortcut: "⌥↓", onSelect: () => onMove(1) }]),

@@ -2,8 +2,8 @@
 
 import type { Block, Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
-import { Badge, Button, cn, Icon, IconButton, Kbd, Logo, Menu, Switch, toast } from "@linkyo/ui";
-import { ArrowDown, ArrowUp, Copy, Eye, Gem, GripVertical, Heading, MoreHorizontal, Plus, Share2, Trash2 } from "lucide-react";
+import { Badge, Button, cn, Icon, IconButton, icons, Kbd, Logo, Menu, Switch, toast } from "@linkyo/ui";
+import { ArrowDown, ArrowUp, Copy, Eye, Gem, GripVertical, Heading, Plus, Share2, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
@@ -216,7 +216,7 @@ function RowMenu({ label, first, last, onMove, onDuplicate, onRemove }: Pick<Row
   const t = useTranslations("dashboard");
   return (
     <Menu
-      trigger={<IconButton icon={MoreHorizontal} label={t("moreFor", { title: label })} />}
+      trigger={<IconButton icon={icons.more} label={t("moreFor", { title: label })} />}
       items={[
         ...(first ? [] : [{ label: t("moveUp"), icon: ArrowUp, shortcut: "⌥↑", onSelect: () => onMove(-1) }]),
         ...(last ? [] : [{ label: t("moveDown"), icon: ArrowDown, shortcut: "⌥↓", onSelect: () => onMove(1) }]),

@@ -19,11 +19,10 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { Block, BlockType } from "@linkyo/blocks";
 import { creatorTokens, type CreatorPresetId } from "@linkyo/tokens";
-import { cn, Icon, Kbd, LogoGlyph } from "@linkyo/ui";
+import { cn, Icon, icons, Kbd, LogoGlyph } from "@linkyo/ui";
 import { Command } from "cmdk";
 import {
   AtSign,
-  BarChart3,
   CalendarDays,
   Clapperboard,
   ExternalLink,
@@ -41,7 +40,6 @@ import {
   Mail,
   Milestone,
   Minus,
-  Music2,
   Palette,
   PanelsTopLeft,
   Plus,
@@ -74,7 +72,7 @@ export const blockIcon: Record<BlockType, LucideIcon> = {
   gallery: Images,
   video: Video,
   shorts: Clapperboard,
-  music: Music2,
+  music: icons.music,
   events: CalendarDays,
   product: ShoppingBag,
   newsletter: Mail,
@@ -103,7 +101,7 @@ export const NAV = [
   { key: "page", icon: Smartphone },
   { key: "content", icon: LayoutGrid },
   { key: "design", icon: Palette },
-  { key: "analytics", icon: BarChart3 },
+  { key: "analytics", icon: icons.analytics },
   { key: "mediaKit", icon: FileText },
   { key: "inbox", icon: Inbox },
   { key: "settings", icon: Settings },

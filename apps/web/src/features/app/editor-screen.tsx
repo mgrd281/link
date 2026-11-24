@@ -2,8 +2,8 @@
 
 import { coverImage, FEATURED_PROJECTS, hasImage, MAX_PROJECTS, slugWord, suggestBlockOrder, type Block, type CreatorKind } from "@linkyo/blocks";
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
-import { Badge, Button, cn, Icon, IconButton, initialsOf, Menu, Switch, toast, Tooltip } from "@linkyo/ui";
-import { ArrowDown, ArrowRight, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, Heading, LayoutList, ListOrdered, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Badge, Button, cn, Icon, IconButton, icons, initialsOf, Menu, Switch, toast, Tooltip } from "@linkyo/ui";
+import { ArrowDown, ArrowRight, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, Heading, LayoutList, ListOrdered, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Fragment, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
@@ -522,7 +522,7 @@ function BlockRow({
         className="layer-raised"
       />
       <Menu
-        trigger={<IconButton icon={MoreHorizontal} label={t("more", { title: label })} className="layer-raised" />}
+        trigger={<IconButton icon={icons.more} label={t("more", { title: label })} className="layer-raised" />}
         items={[
           { label: t("edit"), icon: Pencil, onSelect: () => edit({ mode: "edit", id: block.id }) },
           { label: t("addBelow"), icon: Plus, onSelect: () => setAddOpen(true, index + 1) },

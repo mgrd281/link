@@ -1,11 +1,10 @@
 "use client";
 
 import { tokens } from "@linkyo/tokens";
-import { Avatar, Badge, cn, Icon, Logo } from "@linkyo/ui";
+import { Avatar, Badge, cn, Icon, icons, Logo } from "@linkyo/ui";
 import {
   ArrowLeftRight,
   BadgeCheck,
-  ChartColumn,
   CreditCard,
   Ellipsis,
   Eye,
@@ -51,7 +50,7 @@ const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
       ...(paymentsEnabled ? [{ key: "orders" as const, href: "/admin/orders", icon: Inbox, permission: "orders.view" as const }] : []),
       { key: "subscriptions", href: "/admin/subscriptions", icon: CreditCard, permission: "billing.view" },
       { key: "security", href: "/admin/security", icon: ShieldAlert, permission: "security.view" },
-      { key: "analytics", href: "/admin/analytics", icon: ChartColumn, permission: "analytics.view" },
+      { key: "analytics", href: "/admin/analytics", icon: icons.analytics, permission: "analytics.view" },
     ],
   },
   {

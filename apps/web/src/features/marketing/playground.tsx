@@ -4,7 +4,7 @@ import type { Platform } from "@linkyo/blocks";
 import { detectLink, type Detection } from "@linkyo/blocks/detect";
 import type { CreatorButtonStyle } from "@linkyo/tokens";
 import type { CreatorThemeConfig, HeroStyle } from "@linkyo/tokens/creator";
-import { cn, Icon, PlatformIcon } from "@linkyo/ui";
+import { cn, Icon, icons, PlatformIcon } from "@linkyo/ui";
 import {
   ArrowRight,
   Camera,
@@ -16,7 +16,6 @@ import {
   Link2,
   MousePointer2,
   MousePointerClick,
-  Music2,
   Palette,
   Play,
   Plus,
@@ -104,7 +103,7 @@ const TABS: readonly Tab[] = ["name", "links", "look"];
 /** With the AI tab (a real recording exists): AI first and selected. */
 const AI_TABS: readonly Tab[] = ["ai", "name", "links", "look"];
 
-const TYPE_ICONS: Record<string, LucideIcon> = { music: Music2, video: Video, shorts: Clapperboard, events: Ticket, product: ShoppingBag, live: Radio, image: ImageIcon, app: Smartphone, repo: FolderGit2 };
+const TYPE_ICONS: Record<string, LucideIcon> = { music: icons.music, video: Video, shorts: Clapperboard, events: Ticket, product: ShoppingBag, live: Radio, image: ImageIcon, app: Smartphone, repo: FolderGit2 };
 const KNOWN = new Set(["music", "video", "shorts", "events", "product", "live", "image", "card", "link", "app", "repo"]);
 /** Profiles that become an icon under the name, as in the welcome flow (songs, videos and channels stay blocks). */
 const ICON_PROFILES: readonly SocialPlatform[] = ["instagram", "tiktok", "x", "threads", "linkedin", "facebook", "github", "whatsapp", "discord"];

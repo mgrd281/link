@@ -6,13 +6,13 @@ import {
   Button,
   ConfirmDialog,
   Icon,
+  icons,
   Menu,
   Segmented,
   toast,
   type MenuItem,
 } from "@linkyo/ui";
 import {
-  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Ban,
@@ -22,7 +22,6 @@ import {
   ExternalLink,
   Gift,
   LogOut,
-  MoreHorizontal,
   ReceiptText,
   RotateCcw,
   Trash2,
@@ -366,7 +365,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
           {menu.length ? (
             <Menu
               trigger={
-                <Button icon={MoreHorizontal} aria-label={t("actions.more")}>
+                <Button icon={icons.more} aria-label={t("actions.more")}>
                   {t("actions.more")}
                 </Button>
               }
@@ -983,7 +982,7 @@ function InvitesTab({ customer, now }: { customer: Customer; now: number }) {
         <Panel title={t("invites.rewards")} id="rewards-title">
           {proForLife && !proForLife.revokedAt && isPaying(customer, now) ? (
             <p className="bg-warning-subtle text-small text-warning-strong flex items-start gap-2 rounded-md px-3 py-2">
-              <Icon icon={AlertTriangle} size="sm" className="mt-0.5 shrink-0" />
+              <Icon icon={icons.warning} size="sm" className="mt-0.5 shrink-0" />
               <span>{t.rich("invites.paysAndPro", { bdi })}</span>
             </p>
           ) : null}

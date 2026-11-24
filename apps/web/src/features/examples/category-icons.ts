@@ -1,4 +1,4 @@
-import { Briefcase, Clapperboard, CodeXml, FolderKanban, GraduationCap, Landmark, Music, ShoppingBag, Sparkles, Star, Store, Trophy, type LucideIcon } from "lucide-react";
+import { BriefcaseBusiness, Clapperboard, CodeXml, FolderKanban, GraduationCap, Landmark, Music, ShoppingBag, Sparkles, Star, Store, Trophy, type LucideIcon } from "lucide-react";
 
 import type { Category } from "./looks";
 
@@ -12,7 +12,7 @@ export const CATEGORY_ICONS: Record<Category, LucideIcon> = {
   music: Music,
   sport: Trophy,
   film: Clapperboard,
-  business: Briefcase,
+  business: BriefcaseBusiness,
   public: Landmark,
   local: Store,
   careers: GraduationCap,

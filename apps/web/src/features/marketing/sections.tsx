@@ -1,5 +1,5 @@
-import { Badge, Button, cn, Icon, LogoGlyph } from "@linkyo/ui";
-import { ArrowRight, CalendarClock, ChartColumn, Check, EyeOff, Gift, Globe, Mail, PenTool, Plus, Server, ShieldCheck, ShoppingBag } from "lucide-react";
+import { Badge, Button, cn, Icon, icons, LogoGlyph } from "@linkyo/ui";
+import { ArrowRight, CalendarClock, Check, EyeOff, Gift, Globe, Mail, PenTool, Plus, Server, ShieldCheck, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
@@ -120,7 +120,7 @@ export function Templates() {
   );
 }
 
-const PRO_ICONS = [Globe, ShoppingBag, Mail, ChartColumn, EyeOff] as const;
+const PRO_ICONS = [Globe, ShoppingBag, Mail, icons.analytics, EyeOff] as const;
 
 /** The Free card's analytics line (index in `free.features`), qualified while nothing is counted yet. */
 const FREE_ANALYTICS = 3;

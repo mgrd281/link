@@ -1,9 +1,8 @@
 "use client";
 
-import { Avatar, Button, Icon, Segmented } from "@linkyo/ui";
+import { Avatar, Button, Icon, icons, Segmented } from "@linkyo/ui";
 import {
   Activity,
-  AlertTriangle,
   ArrowRight,
   Euro,
   CalendarClock,
@@ -288,7 +287,7 @@ export function OverviewScreen() {
               <ul className="grid grid-cols-1 gap-1">
                 {can("billing.view") ? (
                   <Attention
-                    icon={AlertTriangle}
+                    icon={icons.warning}
                     label={t("pastDue")}
                     value={numbers.pastDue}
                     href="/admin/subscriptions?status=past_due"

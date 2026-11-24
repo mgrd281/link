@@ -2,8 +2,8 @@
 
 import type { Block, BlockType, Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
-import { Badge, Button, cn, Icon, IconButton, Kbd, Logo, Menu, Switch, toast } from "@linkyo/ui";
-import { ArrowDown, ArrowUp, Copy, Eye, GripVertical, MoreHorizontal, Plus, Share2, Sparkles, Trash2 } from "lucide-react";
+import { Badge, Button, cn, Icon, IconButton, icons, Kbd, Logo, Menu, Switch, toast } from "@linkyo/ui";
+import { ArrowDown, ArrowUp, Copy, Eye, GripVertical, Plus, Share2, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import type { KeyboardEvent } from "react";
@@ -251,7 +251,7 @@ function GalleryRow({
       <span className="hidden shrink-0 font-mono text-small text-fg-secondary md:inline">{t("clicks", { count: sampleClicks(block.id) })}</span>
       <Switch checked={block.visible} onCheckedChange={onToggle} label={t("toggleVisibility", { title: label })} />
       <Menu
-        trigger={<IconButton icon={MoreHorizontal} label={t("moreFor", { title: label })} />}
+        trigger={<IconButton icon={icons.more} label={t("moreFor", { title: label })} />}
         items={[
           ...(first ? [] : [{ label: t("moveUp"), icon: ArrowUp, shortcut: "⌥↑", onSelect: () => onMove(-1) }]),
           ...(last ? [] : [{ label: t("moveDown"), icon: ArrowDown, shortcut: "⌥↓", onSelect: () => onMove(1) }]),

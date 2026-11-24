@@ -1,7 +1,7 @@
 "use client";
 
-import { Avatar, Badge, Icon, Segmented } from "@linkyo/ui";
-import { AlertTriangle, CalendarClock, CreditCard, Euro, Gift, Repeat, TrendingDown, UserRound } from "lucide-react";
+import { Avatar, Badge, Icon, icons, Segmented } from "@linkyo/ui";
+import { CalendarClock, CreditCard, Euro, Gift, Repeat, TrendingDown, UserRound } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -49,7 +49,7 @@ export function SubscriptionsScreen() {
             <KpiTile icon={Euro} label={t("mrr")} value={money(numbers.mrr, locale)} hint={t("arr", { arr: money(numbers.mrr * 12, locale) })} />
             <KpiTile icon={UserRound} label={t("paying")} value={count(numbers.paying, locale)} hint={t("arpu", { arpu: money(arpu, locale, true) })} />
             <KpiTile icon={CalendarClock} label={t("trialing")} value={count(numbers.trialing, locale)} hint={t.rich("trialingHint", { bdi })} />
-            <KpiTile icon={AlertTriangle} label={t("pastDue")} value={count(numbers.pastDue, locale)} hint={t("pastDueHint")} tone={numbers.pastDue ? "danger" : "neutral"} />
+            <KpiTile icon={icons.warning} label={t("pastDue")} value={count(numbers.pastDue, locale)} hint={t("pastDueHint")} tone={numbers.pastDue ? "danger" : "neutral"} />
           </div>
           <p className="-mt-2 flex items-center gap-2 text-small text-fg-secondary">
             <Icon icon={Gift} size="sm" className="shrink-0" />
