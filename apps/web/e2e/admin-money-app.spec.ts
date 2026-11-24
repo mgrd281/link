@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 
 import { createClient } from "@supabase/supabase-js";
 
+import { parseConsoleStats } from "../src/features/analytics/answer";
+import { measured } from "../src/features/analytics/console";
 import type { Database, Json } from "../src/lib/supabase/database.types";
 
 import { addTeamMember, createRealAccount, expect, readCapturedMail, realEnabled, seedPage, service, signIn, test, uniqueName, type RealAccount } from "./real";
@@ -122,7 +124,8 @@ test.describe("team money through Stripe @real", () => {
 
     // Stripe refuses once: nothing is refunded, nothing says so.
     await fetch(`${MOCK_STRIPE}/__refund_failures/${pro.paymentIntent}`, { method: "POST", body: JSON.stringify({ count: 1 }) });
-    const row = page.getByRole("row").filter({ hasText: pro.invoice });
+    // The invoices are the kit's DataList: one item per invoice (cards on a phone, columns from md).
+    const row = page.getByRole("list", { name: "Rechnungen" }).getByRole("listitem").filter({ hasText: pro.invoice });
     await row.getByRole("button", { name: "Erstatten" }).click();
     const dialog = page.getByRole("alertdialog");
     await expect(dialog).toContainText("Diese Rechnung über Stripe erstatten?");
@@ -323,7 +326,11 @@ test.describe("team money through Stripe @real", () => {
     const csv = await readFile(file, "utf8");
     expect(csv.split("\n")).toHaveLength(2);
     expect(csv).toContain(`"'=SUM(1,2)","${owner.email}","${owner.username}"`);
-    expect(csv.split("\n")[0]).not.toContain("views_30d");
+    // Views and clicks are columns only while the console measures them (anything counted by the
+    // cookie-free statistics, ADR 0081); before that they are left out, never written as 0.
+    const stats = await (await clientAs(admin.email)).rpc("admin_page_stats", { days: 30 });
+    const viewsMeasured = measured(stats.error ? null : parseConsoleStats(stats.data));
+    expect(csv.split("\n")[0]?.includes("views_30d")).toBe(viewsMeasured);
     const { data: log } = await service().from("audit_log").select("actor, target, details").eq("action", "customer.export").eq("actor", admin.email);
     expect(log).toEqual([{ actor: admin.email, target: "1", details: { rows: 1 } }]);
   });
