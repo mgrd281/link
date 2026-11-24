@@ -10,10 +10,10 @@ const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 test.describe("template gallery", () => {
   test("shows all templates, filters by category and is accessible", async ({ page }) => {
     await page.goto("/en/templates");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(/among \d+ templates/);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/among \d+ example pages/);
     const cards = page.getByRole("button", { name: /^Preview / });
     // The grid shows the first twelve; the line under it counts them all.
-    const total = Number((await page.getByText(/^12 of \d+ templates$/).textContent())?.match(/of (\d+)/)?.[1]);
+    const total = Number((await page.getByText(/^12 of \d+ example pages$/).textContent())?.match(/of (\d+)/)?.[1]);
     expect(total).toBeGreaterThanOrEqual(40);
     await page.getByRole("button", { name: /^Local businesses/ }).click();
     await expect(page.getByRole("button", { name: /^Local businesses/ })).toHaveAttribute("aria-pressed", "true");
@@ -57,13 +57,13 @@ test.describe("template gallery", () => {
     const grid = page.locator("#gallery ul").first();
     const cards = grid.getByRole("button", { name: /^Preview / });
     await expect(cards).toHaveCount(12);
-    const progress = page.getByText(/^12 of \d+ templates$/);
+    const progress = page.getByText(/^12 of \d+ example pages$/);
     await expect(progress).toBeVisible();
     const total = Number((await progress.textContent())?.match(/of (\d+)/)?.[1]);
     expect(total).toBeGreaterThan(24);
-    await page.getByRole("button", { name: "Show 12 more templates" }).click();
+    await page.getByRole("button", { name: "Show 12 more example pages" }).click();
     await expect(cards).toHaveCount(24);
-    await expect(page.getByText(`24 of ${total} templates`)).toBeVisible();
+    await expect(page.getByText(`24 of ${total} example pages`)).toBeVisible();
     // Keyboards carry on at the first new card.
     await expect(cards.nth(12)).toBeFocused();
     // A filter starts over at twelve (or fewer).
@@ -71,9 +71,9 @@ test.describe("template gallery", () => {
     expect(await cards.count()).toBeLessThanOrEqual(12);
     // To the end: no button once everything is shown.
     await page.getByRole("radiogroup", { name: "Page language" }).getByRole("radio", { name: "All languages" }).click();
-    for (let shown = 12; shown < total; shown += 12) await page.getByRole("button", { name: /^Show \d+ more templates?$/ }).click();
+    for (let shown = 12; shown < total; shown += 12) await page.getByRole("button", { name: /^Show \d+ more example pages?$/ }).click();
     await expect(cards).toHaveCount(total);
-    await expect(page.getByRole("button", { name: /^Show \d+ more templates?$/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Show \d+ more example pages?$/ })).toHaveCount(0);
   });
 
   test("the preview flips through the examples and closes with Escape", async ({ page }) => {
@@ -136,10 +136,10 @@ test.describe("template gallery", () => {
   test("well-known people are listed too, labelled as concepts, and start with their look", async ({ page }) => {
     await page.goto("/en/templates");
     await page.getByRole("button", { name: /^Famous people/ }).click();
-    const found = Number((await page.getByText(/^\d+ templates$/).textContent())?.match(/\d+/)?.[0]);
+    const found = Number((await page.getByText(/^\d+ example pages?$/).textContent())?.match(/\d+/)?.[0]);
     expect(found).toBeGreaterThanOrEqual(13);
     // Twelve at first, the rest one tap away.
-    await page.getByRole("button", { name: /^Show \d+ more templates?$/ }).click();
+    await page.getByRole("button", { name: /^Show \d+ more example pages?$/ }).click();
     await page.getByRole("button", { name: /^Preview Lionel Messi – / }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator('iframe[title="Page preview: Lionel Messi"]')).toHaveAttribute("src", "/en/p/messi");
@@ -164,6 +164,24 @@ test.describe("template gallery", () => {
     await enterDemoCode(page);
     await page.waitForURL("**/en/app/welcome");
     await expect(page.getByRole("radio", { name: /^Local shop/ })).toBeChecked();
+  });
+
+  test("a Portfolio chip holds the portfolio pages; a link can open the gallery on it; the counts use one vocabulary", async ({ page }) => {
+    await page.goto("/de/templates?category=portfolio#gallery");
+    const chip = page.getByRole("button", { name: /^Portfolio/ });
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+    expect(Number(await chip.locator("span").last().textContent())).toBeGreaterThanOrEqual(6);
+    const cards = page.getByRole("button", { name: /^.+ ansehen – Portfolio, Seite auf / });
+    expect(await cards.count()).toBeGreaterThanOrEqual(6);
+    await expect(page.getByRole("button", { name: /^Ronja Feldkamp ansehen – Portfolio/ }).first()).toBeVisible();
+    // "14 Designs · 91 Beispielseiten": designs and example pages, never "Vorlagen" for either.
+    const stats = page.getByRole("list", { name: "Auf einen Blick" });
+    await expect(stats).toContainText(/\d+\s*Designs/);
+    await expect(stats).toContainText(/\d+\s*Beispielseiten/);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /^\d+ Designs und \d+ Beispielseiten/);
+    // The example page names its category on its chip.
+    await page.goto("/de/p/ronja-feldkamp");
+    await expect(page.getByText("Beispiel · Portfolio").first()).toBeVisible();
   });
 
   test("example pages are labelled as examples and not indexed", async ({ page }) => {

@@ -5,22 +5,34 @@ import { LocaleSwitch } from "@/components/locale-switch";
 import { PeopleSearch } from "@/features/search/people-search";
 import { Link } from "@/i18n/navigation";
 
-import { HeaderSignup } from "./header-signup";
-import { MobileMenu, type MenuItem } from "./mobile-menu";
+import { HeaderAuth, HeaderPhoneAction, MobileMenu, type MenuItem } from "./mobile-menu";
 
 /**
- * A flat bar: logo, in-page links, the people search, language, a quiet "log in" and one action in
- * Linkyo Teal. On phones: logo, search and menu; sign-up joins them once the hero's own sign-up has
- * been passed (`signupAfter`, the id of that block).
+ * A flat bar: logo, the places on the site, the people search, language, a quiet "log in" and one
+ * action in Linkyo Teal. On phones: logo, search and menu; sign-up joins them once the hero's own
+ * sign-up has been passed (`signupAfter`, the id of that block). A visitor who is signed in gets
+ * their avatar and "To the dashboard" instead of sign-up and log-in.
  */
-export function MarketingHeader({ signupAfter, edge = true }: { signupAfter?: string; /** A hairline under the bar once content scrolls beneath it (off where a band below draws its own). */ edge?: boolean } = {}) {
+export function MarketingHeader({
+  signupAfter,
+  edge = true,
+  current,
+}: {
+  signupAfter?: string;
+  /** A hairline under the bar once content scrolls beneath it (off where a band below draws its own). */
+  edge?: boolean;
+  /** The place this page is: marked in the bar and in the menu. */
+  current?: MenuItem["key"];
+} = {}) {
   const t = useTranslations("marketing");
   const common = useTranslations("common");
   const locale = useLocale();
-  // Absolute links, so the menu also works from other pages (the template gallery).
+  // Absolute links, so the menu also works from other pages (the template gallery). Portfolio sits
+  // between the gallery and the prices: it is a part of the product, not a section of the homepage.
   const items: MenuItem[] = [
     { key: "features", href: `/${locale}#features`, label: t("nav.features"), hint: t("nav.hints.features") },
     { key: "templates", href: `/${locale}/templates`, label: t("nav.templates"), hint: t("nav.hints.templates") },
+    { key: "portfolio", href: `/${locale}/portfolio`, label: t("nav.portfolio"), hint: t("nav.hints.portfolio") },
     { key: "pricing", href: `/${locale}#pricing`, label: t("nav.pricing"), hint: t("nav.hints.pricing") },
     { key: "faq", href: `/${locale}#faq`, label: t("nav.faq"), hint: t("nav.hints.faq") },
   ];
@@ -44,33 +56,25 @@ export function MarketingHeader({ signupAfter, edge = true }: { signupAfter?: st
             <a
               key={item.href}
               href={item.href}
-              className="rounded-full px-3 py-2 text-small font-medium text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring"
+              aria-current={item.key === current ? "page" : undefined}
+              className="rounded-full px-3 py-2 text-small font-medium text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring aria-[current=page]:bg-selected aria-[current=page]:text-selected-fg"
             >
               {item.label}
             </a>
           ))}
         </nav>
         <div className="ms-auto flex items-center gap-1">
-          {/* Phones: sign-up, once the hero's own has been passed. */}
-          <HeaderSignup label={t("nav.startShort")} after={signupAfter} />
+          {/* Phones: sign-up, once the hero's own has been passed; signed in, the avatar. */}
+          <HeaderPhoneAction signupLabel={t("nav.startShort")} after={signupAfter} />
           {/* Find a person: a name, a profession, a place (Ctrl/⌘ K). */}
           <PeopleSearch />
           <div className="hidden items-center gap-1 sm:flex">
             <LocaleSwitch />
           </div>
-          {/* One switch for both: the teal highlight sits on "sign up" and slides to "log in" under the pointer. */}
-          <div className="hidden md:block">
-            <div className="mk-auth-switch h-control-md text-small font-semibold">
-              <Link href="/login" data-login className="rounded-full px-4 focus-visible:focus-ring">
-                {login.label}
-              </Link>
-              <Link href="/signup" data-signup className="rounded-full px-4 focus-visible:focus-ring">
-                {t("nav.startShort")}
-              </Link>
-            </div>
-          </div>
+          <HeaderAuth login={{ href: "/login", label: login.label }} signup={{ href: "/signup", label: t("nav.startShort") }} />
           <MobileMenu
             items={items}
+            current={current}
             home={`/${locale}`}
             cta={cta}
             login={login}

@@ -354,7 +354,15 @@ test.describe("marketing home", () => {
     await expect(page.locator("#start").getByRole("textbox", { name: "Choose your page address" })).toBeVisible();
     // The site's footer (the page in the playground's phone has its own).
     const footer = page.getByRole("contentinfo");
-    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link")).toHaveText(["Features", "Templates", "Pricing", "FAQ"]);
+    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link")).toHaveText(["Features", "Templates", "Portfolio", "Pricing"]);
+    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link", { name: "Portfolio" })).toHaveAttribute("href", "/en/portfolio");
+    // Resources lead to the real product only: the editor to try, the figures, the questions.
+    const resources = footer.getByRole("navigation", { name: "Resources" }).getByRole("link");
+    await expect(resources).toHaveText(["Try the editor", "Analytics", "FAQ"]);
+    await expect(resources.first()).toHaveAttribute("href", "/en#try");
+    // The design system and the prototypes stay reachable by address, but nothing here leads there.
+    await expect(footer.locator('a[href*="/directions"], a[href$="/design"]')).toHaveCount(0);
+    await expect(footer).not.toContainText(/prototype/i);
     await expect(footer).toContainText("Imprint");
   });
 
@@ -416,8 +424,10 @@ test("phone menu: a full screen with the places, the language, sign-up, and logg
   // It covers the screen, like a screen in an app.
   const box = await menu.boundingBox();
   expect(box && [Math.round(box.width), Math.round(box.height)]).toEqual([390, 844]);
-  // Every place says what is there.
+  // Every place says what is there; Portfolio sits between the templates and the prices.
   await expect(menu.getByRole("link", { name: /Templates/ })).toContainText("Browse them and start with one");
+  await expect(menu.getByRole("navigation", { name: "Menu" }).getByRole("link")).toHaveText([/^Features/, /^Templates/, /^Portfolio/, /^Pricing/, /^FAQ/]);
+  await expect(menu.getByRole("link", { name: /Portfolio/ })).toHaveAttribute("href", "/en/portfolio");
   // The language, written out; the current one is marked.
   await expect(menu.getByRole("link", { name: "English" })).toHaveAttribute("aria-current", "true");
   await expect(menu.getByRole("link", { name: "العربية" })).toHaveAttribute("href", "/ar");
@@ -433,6 +443,22 @@ test("phone menu: a full screen with the places, the language, sign-up, and logg
   await menu.getByRole("button", { name: "Close menu" }).click();
   await expect(menu).toBeHidden();
   await context.close();
+});
+
+test("the header names Portfolio between the templates and the prices, in every language", async ({ page }) => {
+  const names = {
+    de: ["Funktionen", "Vorlagen", "Portfolio", "Preise", "FAQ"],
+    en: ["Features", "Templates", "Portfolio", "Pricing", "FAQ"],
+    ar: ["المزايا", "القوالب", "معرض الأعمال", "الأسعار", "الأسئلة"],
+  } as const;
+  for (const locale of ["de", "en", "ar"] as const) {
+    await page.goto(`/${locale}/templates`);
+    const nav = page.getByRole("banner").getByRole("navigation").first();
+    await expect(nav.getByRole("link")).toHaveText([...names[locale]]);
+    await expect(nav.getByRole("link", { name: names[locale][2] })).toHaveAttribute("href", `/${locale}/portfolio`);
+    // The page you are on is marked.
+    await expect(nav.getByRole("link", { name: names[locale][1] })).toHaveAttribute("aria-current", "page");
+  }
 });
 
 test("on phones a visitor first learns what Linkyo is and sees pages, then meets sign-up", async ({ browser }) => {

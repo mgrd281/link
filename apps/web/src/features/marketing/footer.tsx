@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { LegalLinks } from "@/features/legal/legal-links";
 import { Link } from "@/i18n/navigation";
+import { paymentsEnabled } from "@/lib/flags";
 
 // Phones: each link is a 44 px row, as in an app's list, and gives way under the finger; wide screens: compact.
 const linkClass =
@@ -12,7 +13,9 @@ const groupTitle = "mb-2 text-caption font-semibold text-fg";
 
 /**
  * The footer: the logo and its line, two short groups side by side, then one quiet band with the
- * rights, the legal pages and the light/dark switch. The legal pages become links with the company
+ * rights, the legal pages and the light/dark switch. Every link leads to the real product: the
+ * design system and the design prototypes stay reachable by their address, not from here. The page
+ * service joins once it can be booked (payments on). The legal pages become links with the company
  * details (or in a payments test build); until then they are named only (LegalLinks).
  */
 export function MarketingFooter() {
@@ -33,26 +36,28 @@ export function MarketingFooter() {
             <Link href="/templates" className={linkClass}>
               {t("templates")}
             </Link>
+            <Link href="/portfolio" className={linkClass}>
+              {t("portfolio")}
+            </Link>
             <Link href="/#pricing" className={linkClass}>
               {t("pricing")}
             </Link>
-            <Link href="/#faq" className={linkClass}>
-              {t("faq")}
-            </Link>
+            {paymentsEnabled ? (
+              <Link href="/service" className={linkClass}>
+                {t("service")}
+              </Link>
+            ) : null}
           </nav>
           <nav aria-label={t("resources")} className="grid content-start gap-1">
             <p className={groupTitle}>{t("resources")}</p>
-            <Link href="/directions/poster/dashboard" className={linkClass}>
+            <Link href="/#try" className={linkClass}>
               {t("editor")}
             </Link>
             <Link href="/#analytics" className={linkClass}>
               {t("analytics")}
             </Link>
-            <Link href="/design" className={linkClass}>
-              {t("designSystem")}
-            </Link>
-            <Link href="/directions" className={linkClass}>
-              {t("directions")}
+            <Link href="/#faq" className={linkClass}>
+              {t("faq")}
             </Link>
           </nav>
         </div>

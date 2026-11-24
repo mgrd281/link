@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Linkyo",
-    "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: vierzehn Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
+    "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: Designs mit Charakter, Portfolios mit Projektseiten, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
   },
   "common": {
     "close": "Schließen",
@@ -712,7 +712,7 @@
   "marketing": {
     "meta": {
       "title": "Linkyo — Ein Link. Alles, was du erschaffst.",
-      "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: vierzehn Vorlagen, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
+      "description": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: {designs} Designs und {pages} Beispielseiten, Portfolios, Musik, Shows, Shop und Analytics ohne Cookies. Kostenlos starten, Daten in Frankfurt."
     },
     "nav": {
       "features": "Funktionen",
@@ -730,8 +730,13 @@
         "features": "Was deine Seite alles kann",
         "templates": "Ansehen und mit einer loslegen",
         "pricing": "Kostenlos, Pro kommt später",
-        "faq": "Kurze Antworten auf deine Fragen"
-      }
+        "faq": "Kurze Antworten auf deine Fragen",
+        "portfolio": "Arbeiten zeigen, jede mit eigener Seite"
+      },
+      "portfolio": "Portfolio",
+      "dashboard": "Zum Dashboard",
+      "editPage": "Meine Seite bearbeiten",
+      "signedIn": "Angemeldet als <bdi>{name}</bdi>"
     },
     "hero": {
       "kicker": "Für Creator, Artists und die Teams dahinter",
@@ -956,15 +961,15 @@
       "analytics": "Analytics",
       "pricing": "Preise",
       "faq": "FAQ",
-      "designSystem": "Designsystem",
-      "directions": "Design-Richtungen (Prototyp)",
       "editor": "Editor ausprobieren",
       "imprint": "Impressum",
       "privacy": "Datenschutz",
       "terms": "AGB",
       "made": "Gemacht in Deutschland · Gehostet in Frankfurt",
       "rights": "© 2026 Linkyo",
-      "features": "Funktionen"
+      "features": "Funktionen",
+      "portfolio": "Portfolio",
+      "service": "Seitenservice"
     },
     "skip": "Zum Inhalt springen",
     "trust": {
@@ -1109,12 +1114,19 @@
       }
     },
     "real": {
-      "metaDescription": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: vierzehn Vorlagen, Musik, Shows und Shop. Kostenlos starten, Daten in Frankfurt.",
+      "metaDescription": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: Designs mit Charakter, Portfolios mit Projektseiten, Musik, Shows und Shop. Kostenlos starten, Daten in Frankfurt.",
       "analyticsBadge": "In Arbeit",
       "freeAnalytics": "Analytics ohne Cookies (in Arbeit)",
       "faqFree": "Ja. Vorlagen, unbegrenzte Links und Abschnitte bleiben kostenlos; Analytics ohne Cookies ist in Arbeit. Nichts, was heute gratis ist, wird kostenpflichtig.",
       "faqFreePaid": "Ja. Vorlagen, unbegrenzte Links und Abschnitte bleiben kostenlos. Pro enthält KI-Entwürfe; eigene Domain, Verkauf und E-Mail-Liste sind geplant. Nichts, was heute gratis ist, wird kostenpflichtig.",
       "trustFree": "Vorlagen und unbegrenzte Links bleiben kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist."
+    },
+    "portfolio": {
+      "title": "Portfolios mit Projektseiten",
+      "lead": "Für Fotografie, Design und Entwicklung: Jede Arbeit bekommt ihre eigene Seite mit Bildern, Kennzahlen und der Geschichte dahinter.",
+      "cta": "Portfolios ansehen",
+      "label": "Portfolio-Beispiele",
+      "template": "Vorlage <bdi>{name}</bdi>"
     }
   },
   "auth": {
@@ -3938,10 +3950,10 @@
   "examples": {
     "meta": {
       "title": "Vorlagen & Beispiele · Linkyo",
-      "description": "{count} Vorlagen für deine Seite zum Link in der Bio: Creator, Musik, Shops, Läden, Praxen und Berufe. Ansehen und kostenlos mit dem Design starten."
+      "description": "{designs} Designs und {pages} Beispielseiten für deine Seite zum Link in der Bio: Creator, Portfolios, Musik, Shops, Läden, Praxen und Berufe. Ansehen und kostenlos mit dem Design starten."
     },
     "eyebrow": "Alle Vorlagen kostenlos",
-    "title": "Finde deinen Look unter {count} Vorlagen",
+    "title": "Finde deinen Look unter {count} Beispielseiten",
     "lead": "Öffne eine Vorlage, sieh sie dir an und starte mit ihrem Design – mit deinem Foto und deinen Links.",
     "count": "{count} Beispiele",
     "filter": "Nach Kategorie filtern",
@@ -3957,7 +3969,8 @@
       "public": "Politik & Vereine",
       "local": "Läden & Praxen",
       "careers": "Beruf & Karriere",
-      "people": "Prominente"
+      "people": "Prominente",
+      "portfolio": "Portfolio"
     },
     "languages": {
       "de": "Deutsch",
@@ -3972,7 +3985,7 @@
     "fictional": "Personen und Firmen in den Vorlagen sind erfunden (Fotos von Unsplash); Ähnlichkeiten mit echten Personen sind zufällig. Seiten von Prominenten sind inoffizielle Konzepte aus öffentlichen Quellen, ohne Verbindung zu den Personen; Fotos von Wikimedia Commons.",
     "useHint": "Du übernimmst das Design. Foto, Name und Links trägst du selbst ein.",
     "ctaButton": "Kostenlos registrieren",
-    "seeAll": "Alle {count} Vorlagen ansehen",
+    "seeAll": "Alle {count} Beispielseiten ansehen",
     "featured": "Ausgewählte Beispiele",
     "badges": {
       "concept": "Konzept",
@@ -3985,7 +3998,7 @@
     "browse": "Vorlagen ansehen",
     "stats": {
       "label": "Auf einen Blick",
-      "examples": "{count, plural, one {Vorlage} other {Vorlagen}}",
+      "examples": "{count, plural, one {Beispielseite} other {Beispielseiten}}",
       "designs": "{count, plural, one {Design} other {Designs}}",
       "languages": "{count, plural, one {Sprache} other {Sprachen}}"
     },
@@ -3996,7 +4009,7 @@
       "clear": "Suche leeren",
       "shortcut": "Taste / springt zur Suche"
     },
-    "results": "{count, plural, =0 {Keine Vorlage gefunden} one {# Vorlage} other {# Vorlagen}}",
+    "results": "{count, plural, =0 {Keine Seite gefunden} one {# Beispielseite} other {# Beispielseiten}}",
     "empty": {
       "title": "Keine passende Vorlage",
       "text": "Probier einen Beruf wie „Coach“ oder „Musik“ – oder sieh dir alle Vorlagen an.",
@@ -4013,8 +4026,8 @@
     "prev": "Vorherige Vorlage",
     "next": "Nächste Vorlage",
     "position": "{index} von {total}",
-    "more": "{count, plural, one {Eine weitere Vorlage} other {# weitere Vorlagen}}",
-    "shownOf": "{shown} von {total} Vorlagen",
+    "more": "{count, plural, one {Eine weitere Beispielseite} other {# weitere Beispielseiten}}",
+    "shownOf": "{shown} von {total} Beispielseiten",
     "newTab": "(öffnet in neuem Tab)",
     "ctaTitle": "Nichts Passendes dabei?",
     "ctaLead": "Sag uns, was du machst – wir wählen ein Design, du passt es an.",
@@ -4429,5 +4442,101 @@
       "cancellationRejected": "Wir können deine außerordentliche Kündigung nicht annehmen. Grund: {note} Ordentlich kündigen kannst du jederzeit unter „Verträge hier kündigen“; Pro endet dann am Ende des bezahlten Monats.",
       "resumed": "Wie von dir gewünscht, haben wir deine Kündigung zurückgenommen. Linkyo Pro läuft weiter; nächste Abbuchung am {date}."
     }
+  },
+  "portfolioLanding": {
+    "meta": {
+      "title": "Portfolio · Linkyo",
+      "description": "Zeig deine Arbeit auf einer Seite: Projekte mit Bildern, Kennzahlen und Geschichte, jedes unter eigener Adresse. Für Fotografie, Design, Architektur, Entwicklung und Handwerk. Kostenlos starten."
+    },
+    "hero": {
+      "eyebrow": "Portfolio",
+      "title1": "Deine Arbeit zuerst.",
+      "title2": "Jedes Projekt mit eigener Seite.",
+      "lead": "Bilder, Kennzahlen und die Geschichte dahinter, auf dem Handy wie am Laptop. Für Fotografie, Design, Architektur, Entwicklung und Handwerk.",
+      "start": "Portfolio kostenlos anlegen",
+      "open": "Seite von {name} öffnen",
+      "frames": "Die Seite von {name} auf einem Laptop und einem Handy",
+      "caption": "<bdi>{name}</bdi> ist erfunden: eine Beispielseite in der Vorlage <bdi>{template}</bdi>."
+    },
+    "fields": {
+      "title": "Eine Vorlage für dein Fach",
+      "lead": "Jede Beispielseite ist erfunden und echt gebaut. Öffne sie und klick dich durch die Projekte.",
+      "label": "Fach wählen",
+      "photography": "Fotografie",
+      "design": "Design & Architektur",
+      "build": "Entwicklung & Handwerk",
+      "template": "Vorlage <bdi>{name}</bdi>",
+      "view": "Seite von {name} ansehen",
+      "start": "Mit {name} starten"
+    },
+    "project": {
+      "title": "Was eine Projektseite kann",
+      "lead": "Jedes Projekt bekommt eine eigene Seite unter deiner Adresse. Du füllst aus, was du hast; was leer bleibt, sieht niemand.",
+      "open": "Projektseite „{title}“ öffnen",
+      "items": {
+        "figures": {
+          "title": "Kennzahlen",
+          "body": "Bis zu drei Zahlen in deinen Worten, nur solche, hinter denen du stehst."
+        },
+        "story": {
+          "title": "Die Geschichte",
+          "body": "Worum es ging, die Aufgabe, deine Lösung und was daraus wurde."
+        },
+        "pictures": {
+          "title": "Bilder",
+          "body": "Bis zu 20 Bilder mit Bildunterschrift, angeordnet nach ihrem Format."
+        },
+        "large": {
+          "title": "Groß ansehen",
+          "body": "Ein Tipp auf ein Bild öffnet es in voller Größe."
+        },
+        "address": {
+          "title": "Eigene Adresse",
+          "body": "Ein Link pro Projekt zum Verschicken. Änderst du ihn, führt der alte weiter dorthin."
+        },
+        "confidential": {
+          "title": "Vertrauliche Kunden",
+          "body": "Statt des Namens steht „Vertraulich“. Den Namen speichern wir gar nicht erst."
+        }
+      }
+    },
+    "templates": {
+      "title": "Vorlagen für Portfolios",
+      "lead": "Alle kostenlos. Du übernimmst das Design; Bilder, Texte und Projekte trägst du selbst ein.",
+      "examples": "Beispielseiten",
+      "start": "Mit {name} starten",
+      "gallery": "Alle Portfolio-Beispiele in der Galerie"
+    },
+    "faq": {
+      "title": "Fragen zum Portfolio",
+      "items": [
+        {
+          "q": "Darf ich Arbeiten für Kunden zeigen?",
+          "a": "Das regelt deine Abmachung mit dem Kunden. Zeig nur, was du zeigen darfst; für erkennbare Personen und Stockbilder brauchst du die Erlaubnis."
+        },
+        {
+          "q": "Und wenn ein Kunde nicht genannt werden will?",
+          "a": "Schalte beim Projekt „Vertraulich, ohne Namen“ ein. Auf deiner Seite steht dann „Vertraulich“, und den Namen speichern wir nicht: Was in einer Seite steht, ist öffentlich lesbar."
+        },
+        {
+          "q": "Kann ich Projekte von GitHub zeigen?",
+          "a": "Ja. Füg den Link zu einem Repository ein: Sterne, Sprache und Lizenz liest Linkyo einmal von GitHub und zeigt sie am Projekt. Dazu passt ein Codebeispiel mit höchstens 30 Zeilen."
+        },
+        {
+          "q": "Kann ich meinen Lebenslauf verlinken?",
+          "a": "Ja, als Link, etwa zu einem PDF in deiner Cloud. Für Bewerbungen gibt es außerdem die Vorlage Laufbahn mit Werdegang und Inhaltsmenü."
+        },
+        {
+          "q": "Was kostet ein Portfolio?",
+          "a": "Nichts. Alle Vorlagen und bis zu 24 Projekte pro Seite gehören zum kostenlosen Plan."
+        }
+      ]
+    },
+    "final": {
+      "title": "Leg dein Portfolio an",
+      "lead": "Kostenlos und ohne Kreditkarte. Starte mit einer Vorlage und trag deine erste Arbeit ein.",
+      "cta": "Kostenlos registrieren"
+    },
+    "fictional": "Personen, Firmen und Projekte auf den Beispielseiten sind erfunden; die Fotos stammen von Unsplash."
   }
 }

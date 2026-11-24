@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Linkyo",
-    "description": "The creator page that looks premium in five minutes: fourteen templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
+    "description": "The creator page that looks premium in five minutes: designs with character, portfolios with project pages, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
   },
   "common": {
     "close": "Close",
@@ -712,7 +712,7 @@
   "marketing": {
     "meta": {
       "title": "Linkyo — One link. Everything you create.",
-      "description": "The creator page that looks premium in five minutes: fourteen templates, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
+      "description": "The creator page that looks premium in five minutes: {designs} designs and {pages} example pages, portfolios, music, shows, shop and cookie-free analytics. Free to start, data stored in Frankfurt."
     },
     "nav": {
       "features": "Features",
@@ -730,8 +730,13 @@
         "features": "Everything your page can do",
         "templates": "Browse them and start with one",
         "pricing": "Free, Pro comes later",
-        "faq": "Short answers to your questions"
-      }
+        "faq": "Short answers to your questions",
+        "portfolio": "Show your work, each piece on its own page"
+      },
+      "portfolio": "Portfolio",
+      "dashboard": "Go to dashboard",
+      "editPage": "Edit my page",
+      "signedIn": "Signed in as <bdi>{name}</bdi>"
     },
     "hero": {
       "kicker": "For creators, artists and the teams behind them",
@@ -956,15 +961,15 @@
       "analytics": "Analytics",
       "pricing": "Pricing",
       "faq": "FAQ",
-      "designSystem": "Design system",
-      "directions": "Design directions (prototype)",
       "editor": "Try the editor",
       "imprint": "Imprint",
       "privacy": "Privacy",
       "terms": "Terms",
       "made": "Made in Germany · Hosted in Frankfurt",
       "rights": "© 2026 Linkyo",
-      "features": "Features"
+      "features": "Features",
+      "portfolio": "Portfolio",
+      "service": "Page service"
     },
     "skip": "Skip to content",
     "trust": {
@@ -1109,12 +1114,19 @@
       }
     },
     "real": {
-      "metaDescription": "The creator page that looks premium in five minutes: fourteen templates, music, shows and a shop. Free to start, data stored in Frankfurt.",
+      "metaDescription": "The creator page that looks premium in five minutes: designs with character, portfolios with project pages, music, shows and a shop. Free to start, data stored in Frankfurt.",
       "analyticsBadge": "In the works",
       "freeAnalytics": "Cookie-free analytics (in the works)",
       "faqFree": "Yes. Templates, unlimited links and sections stay free; cookie-free analytics is in the works. Nothing that is free today becomes paid.",
       "faqFreePaid": "Yes. Templates, unlimited links and sections stay free. Pro includes AI drafts; your own domain, selling and an email list are planned. Nothing that is free today becomes paid.",
       "trustFree": "Templates and unlimited links stay free. No credit card, no notice period."
+    },
+    "portfolio": {
+      "title": "Portfolios with project pages",
+      "lead": "For photography, design and development: every piece of work gets its own page with pictures, figures and the story behind it.",
+      "cta": "See portfolios",
+      "label": "Portfolio examples",
+      "template": "<bdi>{name}</bdi> template"
     }
   },
   "auth": {
@@ -3938,10 +3950,10 @@
   "examples": {
     "meta": {
       "title": "Templates & examples · Linkyo",
-      "description": "{count} templates for your link-in-bio page: creators, music, online stores, local shops and careers. Browse them and start free with the design you like."
+      "description": "{designs} designs and {pages} example pages for your link-in-bio page: creators, portfolios, music, online stores, local shops and careers. Browse them and start free with the design you like."
     },
     "eyebrow": "Every template is free",
-    "title": "Find your look among {count} templates",
+    "title": "Find your look among {count} example pages",
     "lead": "Open a template, look around, then start with its design – with your own photo and links.",
     "count": "{count} examples",
     "filter": "Filter by category",
@@ -3957,7 +3969,8 @@
       "public": "Politics & non-profits",
       "local": "Local businesses",
       "careers": "Careers",
-      "people": "Famous people"
+      "people": "Famous people",
+      "portfolio": "Portfolio"
     },
     "languages": {
       "de": "German",
@@ -3972,7 +3985,7 @@
     "fictional": "People and businesses in the templates are fictional (photos from Unsplash); any resemblance to real people is coincidental. Pages of famous people are unofficial concepts from public sources, not affiliated with them; photos from Wikimedia Commons.",
     "useHint": "You get the design; the photo, name and links are yours.",
     "ctaButton": "Sign up for free",
-    "seeAll": "See all {count} templates",
+    "seeAll": "See all {count} example pages",
     "featured": "Featured examples",
     "badges": {
       "concept": "Concept",
@@ -3985,7 +3998,7 @@
     "browse": "Browse templates",
     "stats": {
       "label": "At a glance",
-      "examples": "{count, plural, one {template} other {templates}}",
+      "examples": "{count, plural, one {example page} other {example pages}}",
       "designs": "{count, plural, one {design} other {designs}}",
       "languages": "{count, plural, one {language} other {languages}}"
     },
@@ -3996,7 +4009,7 @@
       "clear": "Clear search",
       "shortcut": "Press / to search"
     },
-    "results": "{count, plural, =0 {No templates found} one {# template} other {# templates}}",
+    "results": "{count, plural, =0 {No pages found} one {# example page} other {# example pages}}",
     "empty": {
       "title": "No matching template",
       "text": "Try a field like “coach” or “music”, or see all templates.",
@@ -4013,8 +4026,8 @@
     "prev": "Previous template",
     "next": "Next template",
     "position": "{index} of {total}",
-    "more": "{count, plural, one {Show 1 more template} other {Show # more templates}}",
-    "shownOf": "{shown} of {total} templates",
+    "more": "{count, plural, one {Show 1 more example page} other {Show # more example pages}}",
+    "shownOf": "{shown} of {total} example pages",
     "newTab": "(opens in a new tab)",
     "ctaTitle": "Nothing quite right?",
     "ctaLead": "Tell us what you do – we'll pick a design, you fine-tune it.",
@@ -4429,5 +4442,101 @@
       "cancellationRejected": "We can't accept your extraordinary cancellation. Reason: {note} You can cancel ordinarily at any time under \"Cancel contracts here\"; Pro then ends at the end of the paid month.",
       "resumed": "As you asked, we undid your cancellation. Linkyo Pro continues; next charge on {date}."
     }
+  },
+  "portfolioLanding": {
+    "meta": {
+      "title": "Portfolio · Linkyo",
+      "description": "Show your work on one page: projects with pictures, figures and the story behind them, each at its own address. For photography, design, architecture, development and crafts. Free to start."
+    },
+    "hero": {
+      "eyebrow": "Portfolio",
+      "title1": "Your work comes first.",
+      "title2": "Every project gets its own page.",
+      "lead": "Pictures, figures and the story behind them, on a phone and on a laptop. For photography, design, architecture, development and crafts.",
+      "start": "Create your portfolio for free",
+      "open": "Open {name}'s page",
+      "frames": "{name}'s page on a laptop and on a phone",
+      "caption": "<bdi>{name}</bdi> is made up: an example page in the <bdi>{template}</bdi> template."
+    },
+    "fields": {
+      "title": "A template for your field",
+      "lead": "Every example page is made up and really built. Open one and click through its projects.",
+      "label": "Choose your field",
+      "photography": "Photography",
+      "design": "Design & architecture",
+      "build": "Development & crafts",
+      "template": "<bdi>{name}</bdi> template",
+      "view": "See {name}'s page",
+      "start": "Start with {name}"
+    },
+    "project": {
+      "title": "What a project page can do",
+      "lead": "Every project gets its own page at your address. Fill in what you have; whatever stays empty, nobody sees.",
+      "open": "Open the project page “{title}”",
+      "items": {
+        "figures": {
+          "title": "Figures",
+          "body": "Up to three numbers in your own words, only ones you can stand behind."
+        },
+        "story": {
+          "title": "The story",
+          "body": "What it was about, the task, your solution and what came of it."
+        },
+        "pictures": {
+          "title": "Pictures",
+          "body": "Up to 20 pictures with captions, laid out by their shape."
+        },
+        "large": {
+          "title": "See them large",
+          "body": "A tap on a picture opens it at full size."
+        },
+        "address": {
+          "title": "Its own address",
+          "body": "One link per project to send around. If you change it, the old one still leads there."
+        },
+        "confidential": {
+          "title": "Confidential clients",
+          "body": "“Confidential” shows in place of the name. We never store the name at all."
+        }
+      }
+    },
+    "templates": {
+      "title": "Templates for portfolios",
+      "lead": "All free. You take the design; pictures, words and projects are yours to add.",
+      "examples": "Example pages",
+      "start": "Start with {name}",
+      "gallery": "All portfolio examples in the gallery"
+    },
+    "faq": {
+      "title": "Questions about portfolios",
+      "items": [
+        {
+          "q": "May I show work I did for clients?",
+          "a": "That is up to your agreement with the client. Only show what you may show; for recognisable people and stock pictures you need permission."
+        },
+        {
+          "q": "What if a client doesn't want to be named?",
+          "a": "Turn on “Confidential, no name” for the project. Your page then says “Confidential”, and we don't store the name: whatever is on a page can be read by anyone."
+        },
+        {
+          "q": "Can I show projects from GitHub?",
+          "a": "Yes. Paste the link to a repository: Linkyo reads its stars, language and licence from GitHub once and shows them with the project. A code sample of up to 30 lines fits in too."
+        },
+        {
+          "q": "Can I link my CV?",
+          "a": "Yes, as a link, for example to a PDF in your cloud storage. For job applications there is also the Laufbahn template, with a career path and a table of contents."
+        },
+        {
+          "q": "What does a portfolio cost?",
+          "a": "Nothing. Every template and up to 24 projects per page are part of the free plan."
+        }
+      ]
+    },
+    "final": {
+      "title": "Create your portfolio",
+      "lead": "Free, no credit card. Start with a template and add your first piece of work.",
+      "cta": "Sign up for free"
+    },
+    "fictional": "The people, companies and projects on the example pages are made up; the photos are from Unsplash."
   }
 }

@@ -152,10 +152,11 @@ describe("example gallery", () => {
 describe("portfolio examples", () => {
   it("four pages on the two portfolio templates, in their categories, with palettes that pass the audit", () => {
     const expected: Record<(typeof PORTFOLIOS)[number], [template: string, category: Look["category"], locale: Look["locale"]]> = {
-      "ronja-feldkamp": ["werkbogen", "local", "de"],
-      "tobin-achterberg": ["tiefdruck", "tech", "en"],
-      "naya-aldabbas": ["werkbogen", "careers", "ar"],
-      "jorinde-ahlfeld": ["tiefdruck", "local", "de"],
+      // All four in the gallery's Portfolio category (the /portfolio page reads it).
+      "ronja-feldkamp": ["werkbogen", "portfolio", "de"],
+      "tobin-achterberg": ["tiefdruck", "portfolio", "en"],
+      "naya-aldabbas": ["werkbogen", "portfolio", "ar"],
+      "jorinde-ahlfeld": ["tiefdruck", "portfolio", "de"],
     };
     for (const slug of PORTFOLIOS) {
       const look: Look = LOOKS[slug];

@@ -28,6 +28,8 @@ import studioMira from "@/assets/marketing/examples/studio-mira.jpg";
 import lenaVogt from "@/assets/marketing/examples/lena-vogt.jpg";
 import karimAlmansour from "@/assets/marketing/examples/karim-almansour.jpg";
 import trattoriaLucia from "@/assets/marketing/examples/trattoria-lucia.jpg";
+import ronjaFeldkamp from "@/assets/marketing/examples/ronja-feldkamp.jpg";
+import tobinAchterberg from "@/assets/marketing/examples/tobin-achterberg.jpg";
 import alshamiAr from "@/assets/marketing/concepts/alshami.ar.jpg";
 import alshamiDe from "@/assets/marketing/concepts/alshami.de.jpg";
 import alshamiEn from "@/assets/marketing/concepts/alshami.en.jpg";
@@ -69,7 +71,8 @@ import taylorSwiftFace from "@/assets/marketing/concepts/faces/taylor-swift.jpg"
  * Phone captures of our own fictional example pages (390 × 844, the top of each page), taken from
  * the running product: `node scripts/capture-example-shots.mjs` retakes them all (after a change to
  * the pages or to Linkyo's chip on them). The photos are the examples' own (Unsplash, see CREDITS.md).
- * Used on the marketing home: the hero's page stack and the strip of example pages.
+ * Used on the marketing home: the hero's page stack, the strip of example pages and the Portfolio
+ * band; and on the Portfolio page.
  */
 export const EXAMPLE_SHOTS = {
   "lou-ferreira": louFerreira,
@@ -100,6 +103,9 @@ export const EXAMPLE_SHOTS = {
   "lena-vogt": lenaVogt,
   "karim-almansour": karimAlmansour,
   "trattoria-lucia": trattoriaLucia,
+  // The two portfolio templates (the homepage's Portfolio band and the Portfolio page).
+  "ronja-feldkamp": ronjaFeldkamp,
+  "tobin-achterberg": tobinAchterberg,
 } satisfies Record<string, StaticImageData>;
 
 export type ExampleShot = keyof typeof EXAMPLE_SHOTS;
