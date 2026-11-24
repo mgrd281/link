@@ -23,6 +23,7 @@ describe("Icon: mirroring in right-to-left text (S-04)", () => {
       const svg = svgOf(renderToStaticMarkup(<Icon icon={glyph} />));
       expect(svg, glyph.displayName).toContain(MIRROR);
       expect(svg, glyph.displayName).toContain("data-mirror");
+      expect(svg, glyph.displayName).toContain('data-icon-dir="mirror"');
     }
   });
 
@@ -35,13 +36,20 @@ describe("Icon: mirroring in right-to-left text (S-04)", () => {
       const svg = svgOf(renderToStaticMarkup(<Icon icon={glyph} />));
       expect(svg, glyph.displayName).not.toContain("scale-x");
       expect(svg).not.toContain("data-mirror");
+      expect(svg).not.toContain("data-icon-dir");
     }
     for (const glyph of MEDIA_TRANSPORT) expect(DIRECTIONAL.has(glyph), glyph.displayName).toBe(false);
   });
 
   it("can be told not to mirror, or to mirror a glyph the set does not know", () => {
-    expect(svgOf(renderToStaticMarkup(<Icon icon={ChevronLeft} mirror={false} />))).not.toContain(MIRROR);
-    expect(svgOf(renderToStaticMarkup(<Icon icon={Plus} mirror />))).toContain(MIRROR);
+    const fixed = svgOf(renderToStaticMarkup(<Icon icon={ChevronLeft} mirror={false} />));
+    expect(fixed).not.toContain(MIRROR);
+    // Still marked as a directional glyph, so the e2e check expects no flip for it.
+    expect(fixed).toContain('data-icon-dir="fixed"');
+    const forced = svgOf(renderToStaticMarkup(<Icon icon={Plus} mirror />));
+    expect(forced).toContain(MIRROR);
+    expect(forced).toContain("data-mirror");
+    expect(forced).not.toContain("data-icon-dir");
   });
 
   it("mirrors once: the flip sits on the svg, never on the button around it", () => {

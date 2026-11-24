@@ -78,9 +78,14 @@ export interface IconProps {
  * A lucide glyph at a token size with Linkyo's stroke (see `iconStroke`). DIRECTIONAL glyphs mirror in
  * right-to-left text (`MIRROR_IN_RTL`), so a left-to-right island inside an
  * Arabic page (a German page in a preview) keeps its arrows as they are.
+ *
+ * `data-icon-dir` marks every DIRECTIONAL glyph: "mirror" when it mirrors, "fixed" when a caller told
+ * it not to. The right-to-left e2e check (e2e/icons-rtl-app.spec.ts) reads it to count each glyph's
+ * flips on the real screens.
  */
 export function Icon({ icon: Glyph, size = "md", className, label, strong = false, solid = false, mirror }: IconProps) {
-  const mirrored = mirror ?? DIRECTIONAL.has(Glyph);
+  const directional = DIRECTIONAL.has(Glyph);
+  const mirrored = mirror ?? directional;
   return (
     <Glyph
       className={cn("shrink-0", sizeClass[size], mirrored && MIRROR_IN_RTL, className)}
@@ -91,6 +96,7 @@ export function Icon({ icon: Glyph, size = "md", className, label, strong = fals
       role={label ? "img" : undefined}
       focusable="false"
       data-mirror={mirrored ? "" : undefined}
+      data-icon-dir={directional ? (mirrored ? "mirror" : "fixed") : undefined}
     />
   );
 }
