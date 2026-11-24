@@ -25,8 +25,8 @@ import {
   EyeOff,
   Italic,
   Link2,
+  Ellipsis,
   Monitor,
-  MoreHorizontal,
   Plus,
   RefreshCw,
   Search,
@@ -41,6 +41,7 @@ import { useState } from "react";
 import milaAvatar from "@/assets/samples/mila-avatar.jpg";
 
 import { Section, Specimen, SubSection } from "./section";
+import { DataKit, SelectionKit } from "./ui-kit";
 
 const VARIANTS = ["primary", "secondary", "ghost", "destructive"] as const;
 const SIZES = ["sm", "md", "lg", "xl"] as const;
@@ -230,6 +231,7 @@ export function ControlsSection() {
           />
         </Specimen>
       </SubSection>
+      <SelectionKit />
       <SubSection title={t("badges")}>
         <Specimen>
           <Badge>{t("draft")}</Badge>
@@ -255,7 +257,7 @@ export function ControlsSection() {
           <Avatar name="Mila Aurel" size="xl" src={milaAvatar.src} />
           <Menu
             trigger={
-              <IconButton icon={MoreHorizontal} label={t("moreActions")} variant="secondary" />
+              <IconButton icon={Ellipsis} label={t("moreActions")} variant="secondary" />
             }
             items={[
               { label: t("duplicate"), icon: Copy, shortcut: "⌘D", onSelect: () => toast({ title: t("duplicated") }) },
@@ -337,6 +339,7 @@ export function StatesSection() {
           </div>
         </div>
       </div>
+      <DataKit />
     </Section>
   );
 }

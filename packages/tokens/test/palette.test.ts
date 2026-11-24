@@ -277,13 +277,24 @@ describe("presets", () => {
     });
   });
 
-  it("Arabic pages: the display weight is 400 on Werkbogen and 700 everywhere else", () => {
+  // Stage 2 (C-03): Arabic pages set each pairing's Arabic companion at that companion's weight; the
+  // template's own `arabicDisplayWeight` still wins (Werkbogen 400, Laufbahn 700, as before).
+  it("Arabic pages: the display weight is the companion's, and a template's arabicDisplayWeight wins", () => {
     const weight = (template: (typeof TEMPLATE_IDS)[number] | undefined, rtlScript: boolean) => resolveCreatorTheme(template ? { template } : {}, { rtlScript }).cssVars["--creator-display-weight"];
     expect(weight("werkbogen", true)).toBe("400");
-    expect(weight("tiefdruck", true)).toBe("700");
     expect(weight("laufbahn", true)).toBe("700");
-    for (const template of OLD_TEMPLATES) expect(weight(template, true), template).toBe("700");
-    expect(weight(undefined, true)).toBe("700");
+    for (const template of TEMPLATE_IDS) {
+      const t = creatorTokens.templates[template] as { pairing: keyof typeof creatorTokens.pairings; arabicDisplayWeight?: number; arabic?: { display?: { weight: number } } };
+      const companion = (creatorTokens.pairings[t.pairing] as { arabic?: { display?: { weight: number } } }).arabic?.display?.weight;
+      expect(weight(template, true), template).toBe(String(t.arabicDisplayWeight ?? t.arabic?.display?.weight ?? companion));
+    }
+    // Stage templates set Lalezar or Rakkas, which come in one heavy 400; Bricolage's companion is Changa 700.
+    expect(weight("nocturne", true)).toBe("400");
+    expect(weight("tiefdruck", true)).toBe("700");
+    expect(weight("folio", true)).toBe("700");
+    // Without a template the preset's pairing brings its companion.
+    const presetPairing = creatorTokens.presets.paper.pairing;
+    expect(weight(undefined, true)).toBe(String((creatorTokens.pairings[presetPairing] as { arabic?: { display?: { weight: number } } }).arabic?.display?.weight));
     // Left to right nothing changes: the weight is the pairing's.
     for (const template of TEMPLATE_IDS) {
       const theme = resolveCreatorTheme({ template });

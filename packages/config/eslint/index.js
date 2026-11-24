@@ -6,6 +6,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+import { LUCIDE_ALIAS_SEVERITY, lucideAliasOptions } from "./lucide-aliases.js";
 import linkyo from "./plugin.js";
 
 const TEST_FILES = ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}", "**/e2e/**", "**/test/**", "**/__tests__/**"];
@@ -51,7 +52,14 @@ export function createConfig({ react = false, next = false, tailwindEntry, tscon
         "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: { attributes: false } }],
         "no-console": ["error", { allow: ["warn", "error"] }],
         eqeqeq: ["error", "always"],
+        // One glyph per meaning: no lucide alias of a glyph the icon registry already names (S-01).
+        "no-restricted-imports": [LUCIDE_ALIAS_SEVERITY, lucideAliasOptions],
       },
+    },
+    {
+      // Laufbahn's rendering stays exactly as it is (Stage 2 rules): its glyphs are not swapped.
+      files: ["**/features/directions/poster/laufbahn*"],
+      rules: { "no-restricted-imports": "off" },
     },
     react
       ? [
