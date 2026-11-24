@@ -3240,7 +3240,8 @@
       "concept": "{name} · تصوّر على Linkyo",
       "prepared": "{name} على Linkyo"
     },
-    "samplePictures": "الصور من أعمال المصوّرين المذكورين."
+    "samplePictures": "الصور من أعمال المصوّرين المذكورين.",
+    "samplePicturesDrawn": "الصور الفوتوغرافية من أعمال المصوّرين المذكورين، أما الرسومات والشاشات فرسمها فريق Linkyo لهذا المثال."
   },
   "admin": {
     "meta": {

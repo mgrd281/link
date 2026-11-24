@@ -3240,7 +3240,8 @@
       "concept": "{name} · Concept on Linkyo",
       "prepared": "{name} on Linkyo"
     },
-    "samplePictures": "The pictures are by the credited photographers."
+    "samplePictures": "The pictures are by the credited photographers.",
+    "samplePicturesDrawn": "The photos are by the credited photographers; Linkyo drew the drawings and screens for this example."
   },
   "admin": {
     "meta": {

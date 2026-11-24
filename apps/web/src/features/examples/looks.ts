@@ -27,6 +27,11 @@ export interface Look {
    * licences).
    */
   credit?: string;
+  /**
+   * Some of the page's pictures are original Linkyo drawings (boards, plans, screens), not
+   * photographs: the note then says so instead of crediting every picture to the photographers.
+   */
+  drawings?: true;
 }
 
 export const LOOKS = {
@@ -34,7 +39,7 @@ export const LOOKS = {
   // With the two portfolios on Folio (an architecture photographer, an open-source author) they make
   // the gallery's "Portfolio" category, which the /portfolio page and the homepage band read.
   "ronja-feldkamp": { kind: "photographer", category: "portfolio", locale: "de", theme: { template: "werkbogen" }, credit: "Paul Einerhand, Metin Ozer, Bob van Aubel, Declan Sun, Peyman Shojaei (Unsplash)" },
-  "tobin-achterberg": { kind: "developer", category: "portfolio", locale: "en", theme: { template: "tiefdruck" }, credit: "Vitaly Gariev (Unsplash)" },
+  "tobin-achterberg": { kind: "developer", category: "portfolio", locale: "en", theme: { template: "tiefdruck" }, credit: "Vitaly Gariev (Unsplash)", drawings: true },
   "naya-aldabbas": { kind: "coach", category: "portfolio", locale: "ar", theme: { template: "werkbogen", accent: SW.oxblood }, credit: "Lisa Marie Theck (Unsplash)" },
   // Brass, not an orange: the page's one accent on a warm black ground. The owner chose the grid over the template's list.
   "jorinde-ahlfeld": { kind: "freelancer", category: "portfolio", locale: "de", theme: { template: "tiefdruck", accent: SW.brass, projects: "bento" }, credit: "Caroline Badran, Josh Davies, Bailey Alexander, mahdi chaghari (Unsplash)" },
@@ -42,8 +47,8 @@ export const LOOKS = {
   // photographer on Leuchttisch, an architect in Amman on Grundriss, a firmware developer and hardware
   // maker on Logbuch. Merle's work is photographs (credited); Rana's and Ines's are original drawings.
   "merle-kastorf": { kind: "photographer", category: "portfolio", locale: "de", theme: { template: "leuchttisch" }, credit: "Ahmad Odeh, Samantha Weisburg, Hossein Nasr, Kazuo ota, Marissa Lewis (Unsplash)" },
-  "rana-al-khatib": { kind: "designer", category: "portfolio", locale: "ar", theme: { template: "grundriss" }, credit: "kilarov (Unsplash)" },
-  "ines-vasconcelos": { kind: "engineer", category: "portfolio", locale: "en", theme: { template: "logbuch" }, credit: "ThisisEngineering (Unsplash)" },
+  "rana-al-khatib": { kind: "designer", category: "portfolio", locale: "ar", theme: { template: "grundriss" }, credit: "kilarov (Unsplash)", drawings: true },
+  "ines-vasconcelos": { kind: "engineer", category: "portfolio", locale: "en", theme: { template: "logbuch" }, credit: "ThisisEngineering (Unsplash)", drawings: true },
   // Apps and skills (ADR 0055): an app explainer and a skills author, first in the gallery.
   "merve-aksoy": { kind: "apps", category: "tech", locale: "de", theme: { template: "aura", accent: SW.sky } },
   "arjun-mehta": { kind: "developer", category: "portfolio", locale: "en", theme: { template: "folio", accent: SW["ink-blue"] } },

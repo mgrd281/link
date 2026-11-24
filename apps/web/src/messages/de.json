@@ -3240,7 +3240,8 @@
       "concept": "{name} · Konzept auf Linkyo",
       "prepared": "{name} auf Linkyo"
     },
-    "samplePictures": "Die Bilder stammen von den genannten Fotograf:innen."
+    "samplePictures": "Die Bilder stammen von den genannten Fotograf:innen.",
+    "samplePicturesDrawn": "Die Fotos stammen von den genannten Fotograf:innen, die Zeichnungen und Screens hat Linkyo für dieses Beispiel gezeichnet."
   },
   "admin": {
     "meta": {

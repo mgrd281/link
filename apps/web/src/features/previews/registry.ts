@@ -65,6 +65,8 @@ export interface Preview {
     look?: string;
     /** Who took the page's photographs (a portfolio shows pictures as work, so its example says whose they are). */
     credit?: string;
+    /** Some pictures are original Linkyo drawings, which the note names as such. */
+    drawings?: boolean;
   };
   /**
    * A concept for a well-known person: how their page could look, built from public facts with links
@@ -187,7 +189,7 @@ const HAND_MADE: Record<string, Preview> = {
     Object.entries(EXAMPLES).flatMap(([slug, page]): [string, Preview][] => {
       if (!isLook(slug)) return [];
       const look: Look = LOOKS[slug];
-      const sample = { kind: look.kind, category: look.category, look: slug, ...(look.credit ? { credit: look.credit } : {}) };
+      const sample = { kind: look.kind, category: look.category, look: slug, ...(look.credit ? { credit: look.credit } : {}), ...("drawings" in look && look.drawings ? { drawings: true } : {}) };
       return [[slug, { name: { [look.locale]: page.profile.displayName }, username: slug, theme: look.theme, pages: { [look.locale]: page }, sample }]];
     }),
   ),

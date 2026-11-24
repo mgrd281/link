@@ -65,7 +65,7 @@ export async function previewChrome({
   const label = sample ? t("sampleBadge", { kind }) : concept ? t("conceptBadge", { name }) : t("badge", { name });
   const portfolio = page.blocks.some((block) => block.type === "project");
   const notes = sample
-    ? [t("sampleNote", { name, kind }), ...(portfolio && sample.credit ? [t("samplePictures"), t("photoCredit", { credit: sample.credit })] : [])]
+    ? [t("sampleNote", { name, kind }), ...(portfolio && sample.credit ? [t(sample.drawings ? "samplePicturesDrawn" : "samplePictures"), t("photoCredit", { credit: sample.credit })] : [])]
     : concept
       ? [t("conceptNote", { name }), concept.credit ? t("photoCredit", { credit: concept.credit }) : null].filter(Boolean)
       : [preview.fromOwner ? t("ownNote", { name }) : t("note"), page.profile.verified ? t("verifiedNote") : null, page.blocks.some((block) => block.type === "live") ? t("liveNote") : null].filter(Boolean);
