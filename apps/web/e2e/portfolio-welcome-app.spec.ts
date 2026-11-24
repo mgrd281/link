@@ -143,6 +143,7 @@ async function done(page: Page, m: Messages, locale: Locale, displayName: string
 const PORTFOLIO_SHAPE = ["header", "project", "project", "project"];
 
 test.describe("portfolio kinds end on a filled portfolio", () => {
+  test.skip(stubEnabled, "Runs on the demo build: it signs in with the demo code.");
   test("de · designer, no pictures: Werkbogen, three projects under „Arbeiten“, the contact block last; axe on every step", async ({ page }) => {
     const m = await signUp(page, "de");
     const looks = await kindYouLook(page, m, "designer", "Mila Berg", "werkbogen", true);
@@ -305,6 +306,7 @@ test.describe("portfolio kinds end on a filled portfolio", () => {
 });
 
 test.describe("the welcome runs once", () => {
+  test.skip(stubEnabled, "Runs on the demo build: it signs in with the demo code.");
   test("de · the page is made, so leaving on the done step does not run the welcome again", async ({ page }) => {
     const m = await signUp(page, "de");
     await kindYouLook(page, m, "designer", "Mara Holt", "werkbogen");
@@ -329,6 +331,7 @@ test.describe("the welcome runs once", () => {
 });
 
 test.describe("the contact step keeps what was typed", () => {
+  test.skip(stubEnabled, "Runs on the demo build: it signs in with the demo code.");
   test("de · photographer: an address whose button words were cleared is pointed out, not dropped", async ({ page }) => {
     const m = await signUp(page, "de");
     await kindYouLook(page, m, "photographer", "Ilka Brandt", "werkbogen");
@@ -351,6 +354,7 @@ test.describe("the contact step keeps what was typed", () => {
 });
 
 test.describe("everyone else keeps the five steps", () => {
+  test.skip(stubEnabled, "Runs on the demo build: it signs in with the demo code.");
   test("de · coach: links step with booking, newsletter (demo) and e-mail; the done step speaks of the bio", async ({ page }) => {
     const m = await signUp(page, "de");
     await kindYouLook(page, m, "coach", "Ada Stern", "daylight");
@@ -396,6 +400,7 @@ test.describe("everyone else keeps the five steps", () => {
 
 /** Saves the three portfolio steps as a photographer sees them: phone and laptop, de and ar. */
 test.describe("screenshots", () => {
+  test.skip(stubEnabled, "Runs on the demo build: it signs in with the demo code.");
   test.skip(!SHOTS, "Set WELCOME_SHOTS=<dir> to save the screenshots.");
 
   /** The screen as it is seen (the sticky bar where it sits): from the top, and scrolled to the end. */
