@@ -174,7 +174,9 @@ describe("a hostile page of 1 MiB", () => {
   const timed = <T>(name: string, work: () => T): T => {
     const started = performance.now();
     const result = work();
-    expect(performance.now() - started, name).toBeLessThan(200);
+    // Linear work takes a few milliseconds; the regression took tens of seconds. Two seconds still
+    // catches it and no longer fails on a loaded machine (200 ms measured 217–429 ms under load).
+    expect(performance.now() - started, name).toBeLessThan(2000);
     return result;
   };
 
