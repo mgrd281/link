@@ -200,9 +200,19 @@ test.describe("team console: icons, trends, Arabic", () => {
     await expect(page.locator("main a[href*='/admin/customers/cus_']").first()).toBeVisible();
     // The demo note's Latin words sit in <bdi>.
     await expect(page.locator("main bdi", { hasText: "example.com" })).toBeVisible();
+    // An e-mail address truncates by itself, left to right, so the ellipsis falls at its end.
+    const email = page.locator("main li span[dir='ltr']", { hasText: "@" }).first();
+    await expect(email).toHaveCSS("direction", "ltr");
+    await expect(email).toHaveCSS("text-overflow", "ellipsis");
     // The sign-in log's pager reads "1–25 من …": the range is isolated left to right, so its first
     // figure stands on the left of the dash, not "25–1".
     await page.goto("/ar/admin/security");
+    // A Latin city on a sign-in row truncates by itself too (its start stays).
+    const city = page.locator("main [data-sign-ins] bdi[data-city]").first();
+    if ((await city.count()) > 0) {
+      await expect(city).toHaveCSS("direction", "ltr");
+      await expect(city).toHaveCSS("text-overflow", "ellipsis");
+    }
     const range = page.locator("main nav bdi[dir='ltr']").first();
     await expect(range).toHaveText(/^1–\d+$/);
     const [one, dash] = await range.evaluate((element) => {

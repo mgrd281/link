@@ -247,7 +247,13 @@ function CustomersList() {
             id: customer.id,
             href: `/admin/customers/${customer.id}`,
             title: <bdi>{customer.name}</bdi>,
-            subtitle: customer.email ? <span dir="ltr">{customer.email}</span> : undefined,
+            // The address truncates itself, left to right: in Arabic the ellipsis then falls at its end
+            // ("mila.k…"), not at the line's end, which would cut off its start ("…ample.com").
+            subtitle: customer.email ? (
+              <span dir="ltr" className="block truncate text-start rtl:text-end">
+                {customer.email}
+              </span>
+            ) : undefined,
             leading: <Avatar name={customer.name} size="sm" />,
             trailing: (
               <span className="flex flex-wrap justify-end gap-1">

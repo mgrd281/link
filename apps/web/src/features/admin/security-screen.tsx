@@ -48,6 +48,27 @@ export function Place({ code, city, unknown }: { code: string; city?: string | u
 }
 
 /**
+ * The place on a sign-in row: the country, then the city in its own isolate that truncates by
+ * itself, so a Latin city in an Arabic row keeps its start ("Abu Dh…", not "…bi").
+ */
+function PlaceLine({ code, city, unknown }: { code: string; city?: string | undefined; unknown: string }) {
+  const locale = useLocale();
+  return (
+    <span className="flex min-w-0 items-center gap-1">
+      <span className="min-w-0 truncate">{country(code, locale, unknown)}</span>
+      {city ? (
+        <>
+          <span className="shrink-0">·</span>
+          <bdi data-city className="min-w-0 flex-1 truncate">
+            {city}
+          </bdi>
+        </>
+      ) : null}
+    </span>
+  );
+}
+
+/**
  * One sign-in as a compact card on a phone (who and the result, then when, where, with what) and as
  * a row of aligned columns from md (A-11: nothing is cut off at the side). Blocking the address is
  * the row's one action, at its end.
@@ -82,9 +103,7 @@ function LogRow({ row, now, canBlock, onBlock }: { row: Row; now: number; canBlo
           <span dir="ltr" data-ip className="shrink-0 font-mono text-caption">
             {login.ip || "–"}
           </span>
-          <span className="min-w-0 truncate">
-            <Place code={login.country ?? ""} city={login.city} unknown={tc("unknownCountry")} />
-          </span>
+          <PlaceLine code={login.country ?? ""} city={login.city} unknown={tc("unknownCountry")} />
           <span className="min-w-0 truncate max-md:hidden">
             <DeviceLabel device={login.device} />
           </span>
