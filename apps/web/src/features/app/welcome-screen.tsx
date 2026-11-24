@@ -357,6 +357,9 @@ export function WelcomeScreen() {
       // Songs and videos get their real title and picture a moment later.
       enrich(blocks);
       setMade({ projects: blocks.filter((block) => block.type === "project").length, contact: contact?.primary.label ?? null });
+      // The page exists now: an owner who closes the tab on the done step is not sent through the
+      // welcome again, which would put a second work header and more projects on the page.
+      accountStore.updateSite((site) => (site.onboarded ? site : { ...site, onboarded: true }));
     }
     const following = steps[index + 1];
     if (following) {

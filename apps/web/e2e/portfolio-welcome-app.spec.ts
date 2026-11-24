@@ -304,6 +304,30 @@ test.describe("portfolio kinds end on a filled portfolio", () => {
   });
 });
 
+test.describe("the welcome runs once", () => {
+  test("de · the page is made, so leaving on the done step does not run the welcome again", async ({ page }) => {
+    const m = await signUp(page, "de");
+    await kindYouLook(page, m, "designer", "Mara Holt", "werkbogen");
+    await fillWork(page, m, [{ title: "Leitsystem", summary: "Wegweiser für ein Museum." }]);
+    await continueButton(page, m).click();
+    await fillContact(page, m, "email", "mara@example.com");
+    await finishButton(page, m).click();
+    await expect(stepTitle(page)).toHaveText(m.app.welcome.portfolio.doneTitle.replace("{name}", "Mara Holt"));
+    // No footer button pressed: the account already counts as welcomed.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const db = JSON.parse(window.localStorage.getItem("linkyo.demo.v1") ?? "{}") as { session?: { accountId: string }; sites?: Record<string, { onboarded?: boolean }> };
+          return db.session ? db.sites?.[db.session.accountId]?.onboarded : undefined;
+        }),
+      )
+      .toBe(true);
+    // A later visit lands where it was going (the gate would send an unwelcomed account back).
+    await page.goto("/de/app/editor");
+    expect(await editorTypes(page, "de")).toEqual(["header", "project", "contact"]);
+  });
+});
+
 test.describe("the contact step keeps what was typed", () => {
   test("de · photographer: an address whose button words were cleared is pointed out, not dropped", async ({ page }) => {
     const m = await signUp(page, "de");
