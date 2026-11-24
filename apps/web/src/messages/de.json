@@ -3432,7 +3432,7 @@
       "teamWork": "Team-Arbeit",
       "rest": "Alle anderen",
       "contractsWaiting": "Widerrufe und Kündigungen warten",
-      "ordersDue": "Aufträge fällig in {hours} Stunden",
+      "ordersDue": "Aufträge überfällig oder in {hours} Stunden fällig",
       "verificationsWaiting": "Verifizierungen warten"
     },
     "creators": {

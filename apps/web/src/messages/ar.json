@@ -3432,7 +3432,7 @@
       "teamWork": "عمل الفريق",
       "rest": "البقية",
       "contractsWaiting": "طلبات انسحاب وإلغاء تنتظر",
-      "ordersDue": "طلبات مستحقة خلال {hours} ساعة",
+      "ordersDue": "طلبات متأخرة أو مستحقة خلال {hours} ساعة",
       "verificationsWaiting": "طلبات توثيق تنتظر"
     },
     "creators": {

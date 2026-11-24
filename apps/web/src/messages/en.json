@@ -3432,7 +3432,7 @@
       "teamWork": "Team work",
       "rest": "All others",
       "contractsWaiting": "Withdrawals and cancellations waiting",
-      "ordersDue": "Orders due within {hours} hours",
+      "ordersDue": "Orders overdue or due within {hours} hours",
       "verificationsWaiting": "Verification requests waiting"
     },
     "creators": {

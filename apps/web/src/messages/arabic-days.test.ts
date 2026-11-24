@@ -2,6 +2,8 @@ import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 
 import ar from "./ar.json";
+import de from "./de.json";
+import en from "./en.json";
 
 /**
  * The 7/30/90-day ranges in Arabic: the noun follows the number's rule (3–10 take the plural "أيام",
@@ -23,6 +25,12 @@ describe("Arabic day ranges", () => {
     expect(overview("kpi.vsStart", { days: 7 })).toBe("خلال 7 أيام");
     expect(overview("kpi.vsStart", { days: 30 })).toBe("خلال 30 يومًا");
     expect(overview("kpi.trend", { days: 7 })).toBe("الاتجاه خلال آخر 7 أيام");
+  });
+
+  it("names overdue orders in the row that counts them (dueOrders counts a passed deadline too)", () => {
+    expect(overview("ordersDue", { hours: 24 })).toBe("طلبات متأخرة أو مستحقة خلال 24 ساعة");
+    expect(createTranslator({ locale: "de", messages: de, namespace: "admin.overview" })("ordersDue", { hours: 24 })).toBe("Aufträge überfällig oder in 24 Stunden fällig");
+    expect(createTranslator({ locale: "en", messages: en, namespace: "admin.overview" })("ordersDue", { hours: 24 })).toBe("Orders overdue or due within 24 hours");
   });
 
   it("puts the unit of a change in points with its words, not in the left-to-right chip", () => {
