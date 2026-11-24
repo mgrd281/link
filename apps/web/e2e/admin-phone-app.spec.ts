@@ -127,8 +127,15 @@ test.describe("team console on a phone", () => {
     await expect(page.locator("[data-sign-ins] > li")).toHaveCount(25);
     const height = await page.evaluate(() => document.documentElement.scrollHeight);
     expect(height).toBeLessThanOrEqual(2500);
-    await page.getByRole("radio", { name: new RegExp(`^${de.admin.security.filters.blocked}`) }).click();
+    // The blocked addresses are reachable from the first screen: the KPI tile opens their pane (its
+    // segment may sit past the edge of the sideways strip on a phone).
+    const manage = page.getByRole("button", { name: de.admin.security.kpi.manageBlocked });
+    const box = await manage.boundingBox();
+    expect(box && box.y + box.height <= 844 && box.x >= 0 && box.x + box.width <= 390).toBe(true);
+    await manage.click();
+    await expect(page.getByRole("radio", { name: new RegExp(`^${de.admin.security.filters.blocked}`) })).toBeChecked();
     await expect(page.getByRole("button", { name: de.admin.security.block, exact: true })).toBeVisible();
+    await expect(page.getByRole("radio", { name: new RegExp(`^${de.admin.security.filters.blocked}`) })).toBeFocused();
   });
 
   test("the editor's header: the tabs have a row of their own and cover nothing", async ({ page, isMobile }) => {

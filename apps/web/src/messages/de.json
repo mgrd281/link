@@ -4112,6 +4112,7 @@
         "last24": "Letzte {hours} Stunden",
         "last7": "Letzte {days} Tage",
         "blockedHint": "Gilt für alle Konten",
+        "manageBlocked": "Gesperrte verwalten",
         "burst": "Auffällig viele"
       },
       "logTitle": "Anmeldeprotokoll",

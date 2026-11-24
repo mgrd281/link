@@ -4112,6 +4112,7 @@
         "last24": "Last {hours} hours",
         "last7": "Last {days} days",
         "blockedHint": "For every account",
+        "manageBlocked": "Manage blocked",
         "burst": "Unusually many"
       },
       "logTitle": "Sign-in log",

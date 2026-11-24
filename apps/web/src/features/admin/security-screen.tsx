@@ -4,7 +4,7 @@ import { Badge, Button, cn, ConfirmDialog, Icon, icons, KpiTile, Segmented, Text
 import { Ban, KeyRound, ShieldAlert, ShieldCheck, ShieldOff } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import type { LoginEvent } from "@/features/account/types";
 import { Screen } from "@/features/app/screen";
@@ -143,6 +143,22 @@ export function SecurityScreen() {
   const [ipError, setIpError] = useState<string | undefined>();
   const [pending, setPending] = useState<string | null>(null);
   const blocked = useMemo(() => new Set(blockedIps.map((entry) => entry.ip)), [blockedIps]);
+  const log = useRef<HTMLElement>(null);
+  /**
+   * The blocked addresses from the KPI tile on the first screen: on a phone the pane's segment can sit
+   * past the edge of the sideways strip. Opens the pane, brings it into view and puts focus on its
+   * segment, so a keyboard continues there.
+   */
+  const showBlocked = () => {
+    setPane("blocked");
+    setPage(0);
+    requestAnimationFrame(() => {
+      const section = log.current;
+      if (!section) return;
+      section.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      section.querySelector<HTMLElement>("[role=radio][aria-checked=true]")?.focus({ preventScroll: true });
+    });
+  };
 
   const rows = useMemo<Row[]>(
     () =>
@@ -184,10 +200,27 @@ export function SecurityScreen() {
               footer={burst ? <span className="font-semibold text-danger-strong">{t("kpi.burst")}</span> : t("kpi.last24", { hours: 24 })}
             />
             <KpiTile label={t("kpi.newDevices")} value={count(newDevices, locale)} footer={t("kpi.last7", { days: 7 })} />
-            <KpiTile label={t("kpi.blocked")} value={count(blockedIps.length, locale)} footer={t("kpi.blockedHint")} />
+            <KpiTile
+              label={t("kpi.blocked")}
+              value={count(blockedIps.length, locale)}
+              footer={
+                <span className="grid justify-items-start gap-1">
+                  {t("kpi.blockedHint")}
+                  <button
+                    type="button"
+                    data-show-blocked
+                    onClick={showBlocked}
+                    className="-ms-1 inline-flex min-h-touch-target items-center gap-1 rounded-xs px-1 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
+                  >
+                    {t("kpi.manageBlocked")}
+                    <Icon icon={icons.next} size="sm" />
+                  </button>
+                </span>
+              }
+            />
           </dl>
 
-          <section aria-labelledby="log-title" className="grid grid-cols-1 gap-4">
+          <section ref={log} aria-labelledby="log-title" className="grid scroll-mt-16 grid-cols-1 gap-4">
             <h2 id="log-title" className="sr-only">
               {t.markup("logTitle", { bdi: isolate })}
             </h2>
