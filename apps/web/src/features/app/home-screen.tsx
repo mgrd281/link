@@ -1,7 +1,7 @@
 "use client";
 
 import type { CreatorKind } from "@linkyo/blocks";
-import { Badge, Icon } from "@linkyo/ui";
+import { Badge, Icon, Skeleton } from "@linkyo/ui";
 import { ArrowRight, AtSign, ChartNoAxesColumn, FolderKanban, Gift, HandHeart, ImagePlus, Palette, Plus, Scale, Send, TextQuote, X, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type CSSProperties } from "react";
@@ -23,7 +23,7 @@ import { INVITE_HREF, NAV_ANCHORS } from "./routes";
 import { sampleStats, totals } from "./sample-stats";
 import { Panel, Screen } from "./screen";
 import { useSite } from "./site-context";
-import { statsSource } from "./stats";
+import { statsSource, useLiveStats, type StatsDay } from "./stats";
 
 /**
  * Home answers one question: what is my next step to get visitors? While the page is being built,
@@ -172,13 +172,21 @@ export function HomeScreen() {
 
 /**
  * The last seven days at a glance, with the way to the full view. The demo shows labelled sample
- * numbers; real accounts are not counted yet, so they see that, and no invented numbers.
+ * numbers; a real account its own cookie-free counts once counting is on, and until then that its
+ * numbers are coming (no invented numbers, no unmeasured zeros). On a laptop, where Home stands in
+ * two columns, the card also names the most tapped blocks and where visitors came from, so the second
+ * column carries the week instead of empty space.
  */
 function WeekStats() {
-  return statsSource() === "sample" ? <SampleWeekStats /> : <WeekStatsEmpty />;
+  return statsSource() === "sample" ? <SampleWeekStats /> : <LiveWeekStats />;
 }
 
 function WeekStatsEmpty() {
+  const t = useTranslations("app.home");
+  return <WeekNotice title={t("stats.empty.title")} body={t("stats.empty.body")} />;
+}
+
+function WeekNotice({ title, body, more = false }: { title: string; body: string; more?: boolean }) {
   const t = useTranslations("app.home");
   return (
     <Panel title={t("stats.title")} id={NAV_ANCHORS.homeWeek}>
@@ -187,34 +195,117 @@ function WeekStatsEmpty() {
           <Icon icon={ChartNoAxesColumn} size="md" />
         </span>
         <div className="grid min-w-0 gap-1">
-          <p className="text-body font-semibold">{t("stats.empty.title")}</p>
-          <p className="text-small font-regular text-fg-secondary">{t("stats.empty.body")}</p>
+          <p className="text-body font-semibold">{title}</p>
+          <p className="text-small font-regular text-fg-secondary">{body}</p>
         </div>
       </div>
+      {more ? <MoreLink /> : null}
     </Panel>
   );
 }
 
-function SampleWeekStats() {
+function MoreLink() {
   const t = useTranslations("app.home");
-  const locale = useLocale();
-  const { doc, account } = useSite();
+  return (
+    <Link
+      href="/app/analytics"
+      className="inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
+    >
+      {t("stats.more")}
+      <Icon icon={ArrowRight} size="sm" />
+    </Link>
+  );
+}
+
+function LiveWeekStats() {
+  const t = useTranslations("app.home");
+  const tStats = useTranslations("app.analytics");
+  const { account, doc, label } = useSite();
+  const state = useLiveStats(account.id, 7);
+  if (state.status === "off") return <WeekStatsEmpty />;
+  if (state.status === "error") return <WeekNotice title={t("stats.error.title")} body={t("stats.error.body")} more />;
+  if (state.status === "loading")
+    return (
+      <Panel title={t("stats.title")} id={NAV_ANCHORS.homeWeek}>
+        <div aria-busy className="grid gap-4">
+          <p role="status" className="sr-only">
+            {tStats("loading")}
+          </p>
+          <Skeleton className="h-control-lg w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </Panel>
+    );
+  const { stats } = state;
+  if (stats.since === null) return <WeekNotice title={t("stats.nothingYet.title")} body={t("stats.nothingYet.body")} />;
+  const blocks = new Map(doc.blocks.map((block) => [block.id, block]));
+  const referred = stats.referrers.reduce((sum, item) => sum + item.count, 0) || 1;
+  return (
+    <WeekCard
+      days={stats.days}
+      views={stats.totals.views}
+      clicks={stats.totals.clicks}
+      links={stats.blocks.map((item) => {
+        const block = blocks.get(item.key);
+        return { key: item.key, label: block ? label(block) : tStats("removedBlock"), clicks: item.count };
+      })}
+      sources={stats.referrers.map((item) => ({
+        key: item.key,
+        label: tStats.has(`sourceNames.${item.key}`) ? tStats(`sourceNames.${item.key}` as "sourceNames.other") : tStats("sourceNames.other"),
+        share: item.count / referred,
+      }))}
+      sample={false}
+    />
+  );
+}
+
+function SampleWeekStats() {
+  const t = useTranslations("app.analytics");
+  const { doc, account, label } = useSite();
   const stats = useMemo(() => sampleStats(account.username, doc.blocks, 7), [account.username, doc.blocks]);
   const week = totals(stats.days);
-  const max = Math.max(...stats.days.map((day) => day.views), 1);
+  return (
+    <WeekCard
+      days={stats.days.map((day) => ({ date: day.date, views: day.views, visitors: null, clicks: day.clicks }))}
+      views={week.views}
+      clicks={week.clicks}
+      links={stats.links.map(({ block, clicks }) => ({ key: block.id, label: label(block), clicks }))}
+      sources={stats.sources.map((source) => ({ key: source.key, label: t(`sourceNames.${source.key}` as "sourceNames.other"), share: source.share }))}
+      sample
+    />
+  );
+}
+
+interface WeekCardProps {
+  days: StatsDay[];
+  views: number;
+  clicks: number;
+  links: { key: string; label: string; clicks: number }[];
+  sources: { key: string; label: string; share: number }[];
+  sample: boolean;
+}
+
+function WeekCard({ days, views, clicks, links, sources, sample }: WeekCardProps) {
+  const t = useTranslations("app.home");
+  const locale = useLocale();
+  const max = Math.max(...days.map((day) => day.views ?? 0), 1);
   const number = (n: number) => new Intl.NumberFormat(locale).format(n);
+  const percent = (n: number) => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(n);
   const weekday = (iso: string) => new Intl.DateTimeFormat(locale, { weekday: "narrow", timeZone: "UTC" }).format(new Date(iso));
+  const longDay = (iso: string) => new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" }).format(new Date(iso));
+  const topLinks = links.filter((link) => link.clicks > 0).slice(0, 3);
+  const topSources = sources.slice(0, 3);
 
   return (
-    <Panel title={t("stats.title")} id={NAV_ANCHORS.homeWeek} action={<Badge size="sm">{t("stats.sample")}</Badge>}>
+    <Panel title={t("stats.title")} id={NAV_ANCHORS.homeWeek} action={sample ? <Badge size="sm">{t("stats.sample")}</Badge> : undefined}>
       <dl className="grid grid-cols-3">
         {[
-          { key: "views", value: number(week.views) },
-          { key: "clicks", value: number(week.clicks) },
-          { key: "ctr", value: new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(week.ctr) },
+          { key: "views", value: number(views) },
+          { key: "clicks", value: number(clicks) },
+          { key: "ctr", value: percent(views ? clicks / views : 0) },
         ].map((item, index) => (
           <div key={item.key} className={index === 0 ? "grid gap-1" : "grid gap-1 border-s border-line ps-3"}>
-            <dt className="text-caption text-fg-secondary">{t(`stats.${item.key}`)}</dt>
+            <dt className="text-caption text-fg-secondary">{t(`stats.${item.key}` as "stats.views")}</dt>
             <dd className="text-h3 tabular-nums md:text-h2">{item.value}</dd>
           </div>
         ))}
@@ -222,15 +313,20 @@ function SampleWeekStats() {
       <figure className="grid grid-cols-1 gap-2">
         <figcaption className="sr-only">{t("stats.chartLabel")}</figcaption>
         <ol className="grid h-24 grid-cols-7 items-end gap-2">
-          {stats.days.map((day) => (
+          {days.map((day) => (
             <li key={day.date} className="grid h-full grid-rows-[1fr_auto] gap-1">
               <span className="flex items-end">
-                <span
-                  className="h-(--h) w-full rounded-sm bg-link"
-                  style={{ "--h": `${Math.max(4, (day.views / max) * 100)}%` } as CSSProperties}
-                  aria-label={t("stats.dayLabel", { day: weekday(day.date), views: number(day.views) })}
-                  role="img"
-                />
+                {day.views === null ? (
+                  // Before counting began: no column, and it says so (never a 0).
+                  <span role="img" aria-label={t("stats.notCounted", { day: longDay(day.date) })} className="h-1 w-full rounded-sm border border-dashed border-line" />
+                ) : (
+                  <span
+                    className="h-(--h) w-full rounded-sm bg-link"
+                    style={{ "--h": `${Math.max(4, (day.views / max) * 100)}%` } as CSSProperties}
+                    aria-label={t("stats.dayLabel", { day: weekday(day.date), views: number(day.views) })}
+                    role="img"
+                  />
+                )}
               </span>
               <span aria-hidden className="text-center text-caption text-fg-tertiary">
                 {weekday(day.date)}
@@ -239,13 +335,32 @@ function SampleWeekStats() {
           ))}
         </ol>
       </figure>
-      <Link
-        href="/app/analytics"
-        className="inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
-      >
-        {t("stats.more")}
-        <Icon icon={ArrowRight} size="sm" />
-      </Link>
+      {/* Laptops: Home has two columns, and the week fills its own with what it found. */}
+      {topLinks.length > 0 || topSources.length > 0 ? (
+        <div className="hidden gap-4 border-t border-line pt-4 @column-wide:grid @column-wide:grid-cols-2">
+          {topLinks.length > 0 ? <WeekList title={t("stats.topLinks")} items={topLinks.map((link) => ({ key: link.key, label: link.label, value: number(link.clicks) }))} /> : null}
+          {topSources.length > 0 ? <WeekList title={t("stats.sources")} items={topSources.map((source) => ({ key: source.key, label: source.label, value: percent(source.share) }))} /> : null}
+        </div>
+      ) : null}
+      <MoreLink />
     </Panel>
+  );
+}
+
+function WeekList({ title, items }: { title: string; items: { key: string; label: string; value: string }[] }) {
+  return (
+    <div className="grid content-start gap-2">
+      <h3 className="text-caption font-semibold text-fg-secondary">{title}</h3>
+      <ol className="grid gap-1">
+        {items.map((item) => (
+          <li key={item.key} className="flex items-baseline justify-between gap-3 text-small">
+            <span dir="auto" className="min-w-0 truncate">
+              {item.label}
+            </span>
+            <span className="shrink-0 text-fg-secondary tabular-nums">{item.value}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

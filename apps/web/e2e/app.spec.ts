@@ -442,7 +442,8 @@ test.describe("dashboard", () => {
     await expect(chart).toHaveAttribute("aria-valuenow", "2");
     await page.getByRole("radio", { name: "7 days" }).click();
     await page.getByText("Show as table").click();
-    await expect(page.getByRole("region", { name: "Show as table" }).getByRole("row")).toHaveCount(8);
+    // The numbers behind the chart (ChartTable, Stage 3): a region named after what it holds.
+    await expect(page.getByRole("region", { name: "Numbers per day" }).getByRole("row")).toHaveCount(8);
   });
 });
 

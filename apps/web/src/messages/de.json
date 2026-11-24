@@ -1839,7 +1839,18 @@
         "empty": {
           "title": "Zahlen kommen bald",
           "body": "Wir bauen gerade eine Zählung ohne Cookies. Bis dahin zeigen wir keine erfundenen Zahlen."
-        }
+        },
+        "nothingYet": {
+          "title": "Noch keine Besuche",
+          "body": "Sobald jemand deine Seite öffnet, erscheint es hier."
+        },
+        "error": {
+          "title": "Zahlen gerade nicht verfügbar",
+          "body": "Wir konnten die Woche nicht laden. Unter „Alle Zahlen“ kannst du es noch einmal versuchen."
+        },
+        "notCounted": "{day}: noch nicht gezählt",
+        "topLinks": "Am meisten angeklickt",
+        "sources": "Woher sie kommen"
       },
       "preparedTitle": "Willkommen, {name}! Deine Seite ist fertig.",
       "preparedBody": "Das Linkyo-Team hat sie für dich vorbereitet. Schau sie dir an und ändere, was du möchtest – alles gehört dir.",
@@ -2015,7 +2026,6 @@
       "vsPrevious": "ggü. den {days} Tagen davor",
       "viewsPerDay": "Aufrufe pro Tag",
       "chartKeys": "{label}. Mit den Pfeiltasten jeden Tag ablesen.",
-      "table": "Als Tabelle zeigen",
       "date": "Datum",
       "topLinks": "Top-Links",
       "noLinks": "Füg Links zu deiner Seite hinzu, um zu sehen, welche angetippt werden.",
@@ -2026,7 +2036,11 @@
         "direct": "Direkt & Messenger",
         "youtube": "YouTube",
         "qr": "QR-Code",
-        "other": "Andere"
+        "other": "Andere",
+        "facebook": "Facebook",
+        "x": "X",
+        "linkedin": "LinkedIn",
+        "search": "Suchmaschinen"
       },
       "countries": "Länder",
       "devices": "Geräte",
@@ -2041,7 +2055,30 @@
         "title": "Zahlen kommen bald",
         "body": "Bis dahin zeigen wir hier keine erfundenen Zahlen."
       },
-      "leadReal": "Wir bauen gerade eine Zählung ohne Cookies und ohne Einwilligungsbanner."
+      "leadReal": "Wir bauen gerade eine Zählung ohne Cookies und ohne Einwilligungsbanner.",
+      "visitors": "Besucher",
+      "dailyTable": "Zahlen pro Tag",
+      "csv": "CSV laden",
+      "csvFile": "linkyo-statistik-{from}-{to}.csv",
+      "csvFileSample": "linkyo-beispieldaten-{from}-{to}.csv",
+      "leadLive": "Echte Besuche und Klicks deiner Seite, gezählt ohne Cookies.",
+      "loading": "Zahlen werden geladen …",
+      "nothingYet": {
+        "title": "Noch keine Besuche",
+        "body": "Sobald jemand deine Seite öffnet, siehst du es hier. Teil deinen Link, dann geht es los."
+      },
+      "error": {
+        "title": "Zahlen nicht geladen",
+        "body": "Gerade konnten wir deine Zahlen nicht laden. Versuch es gleich noch einmal."
+      },
+      "retry": "Noch einmal versuchen",
+      "notCounted": "Noch nicht gezählt",
+      "removedBlock": "Entfernter Block",
+      "noData": "In diesem Zeitraum noch nichts.",
+      "visitorsNote": "Besucher zählen pro Tag: Wer an drei Tagen kommt, zählt dreimal.",
+      "blockClicks": "{count, plural, one {# Klick} other {# Klicks}} in den letzten {days} Tagen",
+      "blockClicksSince": "{count, plural, one {# Klick} other {# Klicks}} seit dem {date}",
+      "blockClicksSample": "{count, plural, one {# Klick} other {# Klicks}} in {days} Tagen · Beispieldaten"
     },
     "invite": {
       "title": "Freund:innen einladen",

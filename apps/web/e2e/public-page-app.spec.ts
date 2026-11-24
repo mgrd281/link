@@ -171,7 +171,9 @@ test.describe("public creator page @real", () => {
     const { email } = await publicAccount("pub-honest", "en");
     await signIn(page, email, "/en/app/analytics");
     await page.waitForURL("**/en/app/analytics");
-    await expect(page.getByRole("heading", { name: "Stats are coming soon" })).toBeVisible();
+    // Honest either way (Stage 3, cookie-free analytics): "coming soon" while nothing is counted (the
+    // switch off, or a database without the statistics), "no visits yet" once counting is on.
+    await expect(page.getByRole("heading", { name: /^(Stats are coming soon|No visits yet)$/ })).toBeVisible();
     await expect(page.getByText("Sample data")).toHaveCount(0);
     await page.goto("/en/app/editor");
     await page.getByRole("button", { name: "Add", exact: true }).first().click();

@@ -19,7 +19,10 @@ export interface Kpis {
   conversion: number;
   /** Paid subscriptions canceled in the range ÷ paid at its start (0–1). */
   churn: number;
+  /** Page views of the last 30 days, all customers (measured only where `viewsMeasured`). */
   views: number;
+  /** Taps on the customers' blocks in the last 30 days (as `views`). */
+  clicks: number;
   suspended: number;
 }
 
@@ -52,6 +55,7 @@ export function kpis(customers: readonly Customer[], now: number, rangeDays: num
     conversion: all.length ? paying / all.length : 0,
     churn: paidAtStart ? canceled / paidAtStart : 0,
     views: all.reduce((sum, customer) => sum + customer.usage.views30, 0),
+    clicks: all.reduce((sum, customer) => sum + customer.usage.clicks30, 0),
     suspended: all.filter((customer) => customer.status === "suspended").length,
   };
 }
@@ -146,9 +150,10 @@ export function cohorts(
 }
 
 /**
- * From sign-up to Pro, each step a subset of the one before. Page views are not a step: real
- * accounts have no view counter yet, and a Pro count must never hang on a number nobody measured.
- * "paid" is a running Pro plan (not canceled); rewards are not a plan.
+ * From sign-up to Pro, each step a subset of the one before. Page views are not a step: the Pro step
+ * is counted from the plans alone, so it is right whether or not views are measured (the cookie-free
+ * statistics feed `views30` only where the database has them and counting is on; `visitedCount`
+ * says how many pages had visitors). "paid" is a running Pro plan (not canceled); rewards are not a plan.
  */
 export function funnel(customers: readonly Customer[]): Share[] {
   const onboarded = customers.filter((customer) => customer.usage.onboarded);
@@ -183,7 +188,7 @@ export function csvCell(value: string | number): string {
   return `"${safe.replace(/"/g, '""')}"`;
 }
 
-/** The customer list as CSV, one row per customer; views only where they are measured. */
+/** The customer list as CSV, one row per customer; views and taps only where they are measured. */
 export function customersCsv(customers: readonly Customer[], now: number, options: { views: boolean }): string {
   const header = [
     "name",
@@ -196,7 +201,7 @@ export function customersCsv(customers: readonly Customer[], now: number, option
     "created",
     "last_seen",
     "mrr_eur",
-    ...(options.views ? ["views_30d"] : []),
+    ...(options.views ? ["views_30d", "clicks_30d"] : []),
   ];
   const lines = customers.map((customer) =>
     [
@@ -210,7 +215,7 @@ export function customersCsv(customers: readonly Customer[], now: number, option
       customer.createdAt,
       customer.lastSeenAt,
       (revenueAt(customer, now) / 100).toFixed(2),
-      ...(options.views ? [customer.usage.views30] : []),
+      ...(options.views ? [customer.usage.views30, customer.usage.clicks30] : []),
     ]
       .map(csvCell)
       .join(","),

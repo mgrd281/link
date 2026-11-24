@@ -730,6 +730,94 @@ export type Database = {
           },
         ];
       };
+      page_stats: {
+        Row: {
+          clicks: number;
+          day: string;
+          dimension: string;
+          key: string;
+          profile_id: string;
+          views: number;
+          visitors: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          clicks?: number;
+          day: string;
+          dimension: string;
+          key?: string;
+          profile_id: string;
+          views?: number;
+          visitors?: number;
+        };
+        Update: {
+          clicks?: number;
+          day?: string;
+          dimension?: string;
+          key?: string;
+          profile_id?: string;
+          views?: number;
+          visitors?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "page_stats_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      page_stats_salts: {
+        Row: {
+          day: string;
+          salt: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          day: string;
+          salt: string;
+        };
+        Update: {
+          day?: string;
+          salt?: string;
+        };
+        Relationships: [];
+      };
+      page_stats_visitors: {
+        Row: {
+          clicks: number;
+          day: string;
+          profile_id: string;
+          views: number;
+          visitor: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          clicks?: number;
+          day: string;
+          profile_id: string;
+          views?: number;
+          visitor: string;
+        };
+        Update: {
+          clicks?: number;
+          day?: string;
+          profile_id?: string;
+          views?: number;
+          visitor?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "page_stats_visitors_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           created_at: string;
@@ -1382,6 +1470,7 @@ export type Database = {
       admin_order: { Args: { target: string }; Returns: Json };
       admin_order_refund_target: { Args: { target: string }; Returns: Json };
       admin_orders: { Args: { scope?: string }; Returns: Json };
+      admin_page_stats: { Args: { days?: number }; Returns: Json };
       admin_pro_money_done: { Args: { action: string; customer: string; ref: string }; Returns: boolean };
       admin_pro_refund_target: { Args: { customer: string; invoice: string }; Returns: Json };
       admin_pro_subscription_target: { Args: { action: string; customer: string }; Returns: Json };
@@ -1519,6 +1608,7 @@ export type Database = {
       my_ai_quota: { Args: Record<PropertyKey, never>; Returns: Json };
       my_order: { Args: { target: string }; Returns: Json };
       my_orders: { Args: Record<PropertyKey, never>; Returns: Json };
+      my_page_stats: { Args: { from_day: string; to_day: string }; Returns: Json };
       my_proposals: { Args: Record<PropertyKey, never>; Returns: Json };
       my_referrals: { Args: Record<PropertyKey, never>; Returns: Json };
       my_team_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["team_role"] };
@@ -1526,6 +1616,32 @@ export type Database = {
       new_referral_code: { Args: Record<PropertyKey, never>; Returns: string };
       order_event: { Args: { details?: Json; kind: string; target: string }; Returns: undefined };
       page_has_ai: { Args: { page: Json }; Returns: boolean };
+      page_stats_bump: {
+        Args: {
+          add_clicks: number;
+          add_views: number;
+          add_visitors: number;
+          dim: string;
+          dim_key: string;
+          on_day: string;
+          page: string;
+        };
+        Returns: undefined;
+      };
+      page_stats_purge: { Args: Record<PropertyKey, never>; Returns: number };
+      page_stats_record: {
+        Args: {
+          block?: string;
+          country?: string;
+          device?: string;
+          handle: string;
+          kind: string;
+          referrer?: string;
+          visitor: string;
+        };
+        Returns: string;
+      };
+      page_stats_salt: { Args: Record<PropertyKey, never>; Returns: Json };
       proposal_kit_complete: { Args: { extras: Json; story_paths: string[] }; Returns: boolean };
       public_page: { Args: { handle: string }; Returns: Json };
       purge_form_limits: { Args: Record<PropertyKey, never>; Returns: number };

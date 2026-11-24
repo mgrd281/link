@@ -4,9 +4,11 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { Providers } from "@/components/providers";
+import { beaconScript } from "@/features/analytics/beacon-script";
 import { loadPublicPage } from "@/features/creator/public-page";
 import { fontVariables } from "@/fonts";
 import { isRtl } from "@/i18n/routing";
+import { analyticsEnabled } from "@/lib/flags";
 import { siteUrl } from "@/lib/site-url";
 
 import "../../globals.css";
@@ -24,7 +26,8 @@ export function generateMetadata(): Metadata {
  * The root layout of public creator pages (`/<username>`, rewritten here by proxy.ts). A second root
  * beside `[locale]`: the whole document speaks the page's own language — `lang`, `dir`, the privacy
  * notice, the footer and the 404 — whatever language the visitor's browser prefers. No theme script,
- * no analytics, no third party, no cookie.
+ * no third party, no cookie. The only counting is our own and cookie-free (features/analytics), and
+ * only while the server switch is on: otherwise the page carries no counting code at all.
  */
 export default async function CreatorLayout({ children, params }: { children: ReactNode; params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -47,6 +50,8 @@ export default async function CreatorLayout({ children, params }: { children: Re
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
+        {/* The cookie-free counter, only while the switch is on: inline, so with it off no byte of it ships. */}
+        {found && analyticsEnabled() ? <script data-beacon dangerouslySetInnerHTML={{ __html: beaconScript(found.page.profile.username) }} /> : null}
       </body>
     </html>
   );

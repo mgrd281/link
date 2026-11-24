@@ -1,13 +1,16 @@
 "use client";
 
 import type { Block } from "@linkyo/blocks";
-import { Button } from "@linkyo/ui";
+import { Button, Icon, icons } from "@linkyo/ui";
 import { Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { BlockForm } from "./block-form";
+import { clickableBlocks, sampleStats } from "./sample-stats";
+import { useShellChrome } from "./screen";
 import { useSite } from "./site-context";
+import { statsSource, useLiveStats } from "./stats";
 import { validateBlock, type FieldErrors } from "./validate";
 
 export interface BlockEditor<S extends Block | null> {
@@ -106,6 +109,7 @@ export function BlockEditorFields({
           {t("fixErrors", { count })}
         </p>
       ) : null}
+      {creating ? null : <BlockTaps block={editor.draft} />}
       <BlockForm block={editor.draft} onChange={editor.change} errors={editor.errors ?? {}} creating={creating} />
       {!creating && onRemove ? (
         <Button variant="destructive" size="lg" block icon={Trash2} className="lg:hidden" onClick={onRemove}>
@@ -115,4 +119,54 @@ export function BlockEditorFields({
       <button type="submit" hidden aria-hidden tabIndex={-1} />
     </form>
   );
+}
+
+/** The range the editor's count chip looks back over. */
+const CHIP_DAYS = 30;
+const bdi = (chunks: ReactNode) => <bdi>{chunks}</bdi>;
+
+/**
+ * How often visitors tapped this block lately, on top of its form: the demo's sample number (labelled),
+ * or a real page's cookie-free count once counting is on. Nothing while nothing is counted, for blocks
+ * nobody can tap (a title, a text, a divider), and outside the creator's own dashboard (the team edits
+ * prepared pages with this form, and those have no visitors of their own).
+ */
+function BlockTaps({ block }: { block: Block }) {
+  const inShell = useShellChrome();
+  const tappable = clickableBlocks([block]).length > 0;
+  if (!inShell || !tappable) return null;
+  return statsSource() === "sample" ? <SampleTaps block={block} /> : <LiveTaps block={block} />;
+}
+
+function TapChip({ children }: { children: ReactNode }) {
+  return (
+    <p data-block-taps className="flex w-fit items-center gap-2 rounded-full border border-line px-3 py-1 text-caption text-fg-secondary">
+      <Icon icon={icons.analytics} size="xs" className="shrink-0" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+function SampleTaps({ block }: { block: Block }) {
+  const t = useTranslations("app.analytics");
+  const { account, doc } = useSite();
+  const count = useMemo(() => sampleStats(account.username, doc.blocks, CHIP_DAYS).links.find((link) => link.block.id === block.id)?.clicks ?? 0, [account.username, doc.blocks, block.id]);
+  return <TapChip>{t.rich("blockClicksSample", { count, days: String(CHIP_DAYS), bdi })}</TapChip>;
+}
+
+function LiveTaps({ block }: { block: Block }) {
+  const t = useTranslations("app.analytics");
+  const locale = useLocale();
+  const { account } = useSite();
+  const state = useLiveStats(account.id, CHIP_DAYS);
+  if (state.status !== "ready") return null;
+  const { since, from, blocks } = state.stats;
+  if (since === null) return null;
+  const count = blocks.find((item) => item.key === block.id)?.count ?? 0;
+  // Counting began inside the range: say since when, so a young count does not read as 30 days.
+  if (since > from) {
+    const date = new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(since));
+    return <TapChip>{t.rich("blockClicksSince", { count, date, bdi })}</TapChip>;
+  }
+  return <TapChip>{t.rich("blockClicks", { count, days: String(CHIP_DAYS), bdi })}</TapChip>;
 }
