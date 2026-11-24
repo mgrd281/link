@@ -22,6 +22,7 @@ import { haptic } from "@/lib/haptics";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { blankBlock } from "./blocks";
+import { emptyPageAsk } from "./editor-empty";
 import { isPortfolioKind } from "./kinds";
 import { PreviewButton } from "./preview";
 import { projectRuns } from "./project-runs";
@@ -209,7 +210,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
           </Button>
         ) : null}
 
-        {empty && portfolio && inShell ? (
+        {empty && emptyPageAsk(portfolio, inShell) === "work" ? (
           // A portfolio's first step is its work: the three ways to add a project, right here.
           <>
             <div className="grid justify-items-center gap-1 rounded-lg border border-dashed border-line-strong p-8 text-center">
@@ -224,8 +225,9 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
               <Icon icon={LayoutList} size="lg" />
             </span>
             <div className="grid grid-cols-1 gap-1">
-              <p className="text-title rtl:tracking-normal">{portfolio ? tWork("empty.title") : t("emptyTitle")}</p>
-              <p className="max-w-prose text-small font-regular text-fg-secondary">{portfolio ? tWork("empty.body") : t("emptyBody")}</p>
+              {/* Its one button adds a link, so the words ask for one (a portfolio outside the dashboard too). */}
+              <p className="text-title rtl:tracking-normal">{t("emptyTitle")}</p>
+              <p className="max-w-prose text-small font-regular text-fg-secondary">{t("emptyBody")}</p>
             </div>
             {/* In a card, so rounded like every in-card button; the pill is for flow footers only. */}
             <Button variant="primary" size="lg" icon={Plus} onClick={() => setAddOpen(true)}>
