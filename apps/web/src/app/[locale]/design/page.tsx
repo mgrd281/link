@@ -7,6 +7,7 @@ import { use } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { AiRunSection } from "@/features/design-system/ai-run-specimen";
 import { ButtonSection, ControlsSection, StatesSection } from "@/features/design-system/components-showcase";
+import { UI_COMPONENT_MODULES } from "@/features/design-system/stats";
 import { CreatorThemesSection } from "@/features/design-system/creator-playground";
 import { BrandSection, ColorSection, LayoutSection, TypeSection } from "@/features/design-system/foundations";
 import { IconSection, MotionSection } from "@/features/design-system/motion-icons";
@@ -34,7 +35,7 @@ export default function DesignPage({ params }: { params: Promise<{ locale: strin
   const aiIndex = String(SECTIONS.length + 1).padStart(2, "0");
   const stats = [
     { value: countLeaves(tokens).toLocaleString(locale), label: t("stats.tokens") },
-    { value: "18", label: t("stats.components") },
+    { value: String(UI_COMPONENT_MODULES), label: t("stats.components") },
     { value: (4000 * 19).toLocaleString(locale), label: t("stats.pairs") },
     { value: "3", label: t("stats.locales") },
   ];
@@ -66,7 +67,8 @@ export default function DesignPage({ params }: { params: Promise<{ locale: strin
         </aside>
         <main id="main" className="min-w-0 flex-1 pb-24">
           <header className="grid gap-6 py-16">
-            <h1 className="text-display tracking-display">{t("title")}</h1>
+            {/* One step smaller on phones: "Designsystem" at the display size is wider than a 390 px screen. */}
+            <h1 className="text-display-sm tracking-display sm:text-display">{t("title")}</h1>
             <p className="max-w-prose text-body-lg text-fg-secondary">{t("lead")}</p>
             <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-4">
               {stats.map((stat) => (

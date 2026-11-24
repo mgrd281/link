@@ -19,6 +19,16 @@ async function axe(page: Page, include?: string) {
 const scales = (page: Page, selector: string) =>
   page.locator(`${selector} svg`).evaluateAll((svgs) => svgs.map((svg) => getComputedStyle(svg).scale));
 
+test("/design never scrolls sideways on a 390 px phone (the title fits)", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const locale of ["de", "en", "ar"] as const) {
+    await page.goto(`/${locale}/design`);
+    await expect(page.locator("h1").first()).toBeVisible();
+    const sideways = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(sideways, locale).toBeLessThanOrEqual(0);
+  }
+});
+
 test.describe("/design: icons", () => {
   for (const locale of ["de", "ar"] as const) {
     test(`${locale}: the registry, and directional glyphs mirrored exactly once by writing direction`, async ({ page }) => {
