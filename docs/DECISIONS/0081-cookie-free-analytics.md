@@ -101,3 +101,18 @@ after the four migrations waiting before it (F0). (2) The lawyer approves the pa
 `features/legal/texts.ts` in de, en and ar (F2). (3) Set `LINKYO_ANALYTICS=on` for production on Vercel (a server
 variable, never `NEXT_PUBLIC_`) and redeploy, since a deployment keeps the variables it was made with; cached
 creator pages pick the island up within their minute.
+
+**Update 2026-11-25 (the founder has no lawyer and told us to go ahead).** Of the four migrations the plan thought
+were waiting, only `reserved_portfolio` and `admin_money` were (`review_fixes` and `team_fixes` were already live);
+the founder said to apply them, they are applied and checked, and `page_stats` follows the same way. The statistics
+paragraph is not left to a lawyer: it is in `features/legal/texts.ts` (German only, like every legal text), worded
+from what the code does (the facts above) and marked `[vom Anwalt zu prüfen]`. It appears on the page only while
+`LINKYO_ANALYTICS=on` (`datenschutz({ statistics })`, the page passes `analyticsEnabled()`); with the switch off the
+page still says that no visits are counted, so the text never says more or less than happens. The launch guard
+(`legalDocs()` in `live-guard.ts`) reads the fullest form, so a `LAUNCH=1` build still fails while that marker
+stays: the founder's decision turns the counting on, not the legal drafts into final texts. The open question above
+(§ 25 TDDDG and the referrer the script reads) is not settled by anyone with the training to settle it; the founder
+carries that risk and can turn the counting off by removing `LINKYO_ANALYTICS` and redeploying. Today's exposure is
+small: examples are code, not database pages, so they are not counted, and the hosted project holds one account.
+The "in Arbeit" wording of the pricing page and the FAQ (real accounts) is changed in a follow-up once the counting
+runs, with its stub and real-account specs.

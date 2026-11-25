@@ -28,8 +28,11 @@ the `linkyo-supabase` skill. Dashboard screens: `linkyo-creator-dashboard`. Cons
   so a component would ship with the switch off. Keep it plain ES2015, no imports.
 - **Off in production behind `LINKYO_ANALYTICS`** (`lib/flags.ts`, server only, exactly `on`). Off: no island on
   `/u` (zero bytes), `/api/collect` answers 204 and stores nothing, Stats keep "coming soon". Tests set it on
-  (`playwright.config.ts`). It goes on only after the founder applied the migration (F0) and the lawyer approved
-  the Datenschutz paragraph (F2, ADR 0081 holds the proposal).
+  (`playwright.config.ts`). It goes on only after the migration is on the hosted project (F0) and the Datenschutz
+  paragraph is published. The founder has no lawyer and decided on 2026-11-25 to go ahead without F2 (ADR 0081,
+  "Update"): the paragraph is `statistik()` in `features/legal/texts.ts`, shown only while the switch is on
+  (`datenschutz({ statistics })`), worded from what the code does and marked `[vom Anwalt zu prüfen]`. Change that
+  text in the same commit as any change to what is counted, and keep ADR 0081's description in step with it.
 - **Never fake.** The demo's numbers are samples, labelled "Beispieldaten" (also the CSV's file name). A real
   account sees measured numbers only: days before counting began (`since`) are gaps and empty CSV cells, never 0;
   a change against the period before shows only when that period was counted from its first day; a failure is a
