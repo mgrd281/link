@@ -147,14 +147,17 @@ export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regio
             <T.Action
               altText={item.action.altText ?? item.action.label}
               onClick={item.action.onAction}
-              className="h-control-sm shrink-0 rounded-sm px-3 text-small font-semibold text-fg-inverse [--color-focus:var(--color-fg-inverse)] hover:bg-hover-inverse focus-visible:focus-ring"
+              // 32 px to see, a 48 px tall target on touch screens (the hit area grows 8 px above and below).
+              className="relative h-control-sm shrink-0 rounded-sm px-3 text-small font-semibold text-fg-inverse before:absolute before:inset-x-0 before:-inset-y-2 pointer-fine:before:hidden [--color-focus:var(--color-fg-inverse)] hover:bg-hover-inverse focus-visible:focus-ring"
             >
               {item.action.label}
             </T.Action>
           ) : null}
           <T.Close
             aria-label={closeLabel}
-            className="grid size-control-sm shrink-0 place-items-center rounded-sm opacity-secondary [--color-focus:var(--color-fg-inverse)] hover:opacity-100 focus-visible:opacity-100 focus-visible:focus-ring"
+            // 32 px to see, 48 × 48 px on touch screens: the hit area grows 8 px on every side, and stays
+            // clear of the action beside it (12 px away).
+            className="relative grid size-control-sm shrink-0 place-items-center rounded-sm opacity-secondary before:absolute before:-inset-2 pointer-fine:before:hidden [--color-focus:var(--color-fg-inverse)] hover:opacity-100 focus-visible:opacity-100 focus-visible:focus-ring"
           >
             <Icon icon={X} size="sm" />
           </T.Close>

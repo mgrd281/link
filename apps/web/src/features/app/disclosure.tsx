@@ -32,7 +32,8 @@ export function Disclosure({
         aria-controls={contentId}
         onClick={() => setOpen((current) => !current)}
         className={cn(
-          "inline-flex min-h-control-md items-center gap-2 justify-self-start rounded-sm text-small font-semibold text-link",
+          // 40 px to see, a 44 px tall target on touch screens (the hit area grows 2 px above and below).
+          "relative inline-flex min-h-control-md items-center gap-2 justify-self-start rounded-sm text-small font-semibold text-link before:absolute before:inset-x-0 before:-inset-y-0.5 pointer-fine:before:hidden",
           "transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring",
           triggerClassName,
         )}

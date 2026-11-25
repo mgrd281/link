@@ -46,7 +46,8 @@ export const buttonVariants = cva(
       size: {
         /** 32 px to see, a 48 px tall target on touch screens (the hit area grows past the edges). */
         sm: "h-control-sm rounded-sm px-3 text-small before:absolute before:inset-x-0 before:-inset-y-2 pointer-fine:before:hidden",
-        md: "h-control-md px-4 text-small",
+        /** 40 px to see, a 44 px tall target on touch screens (the hit area grows 2 px above and below). */
+        md: "h-control-md px-4 text-small before:absolute before:inset-x-0 before:-inset-y-0.5 pointer-fine:before:hidden",
         lg: "h-control-lg px-5 text-body",
         xl: "h-control-xl px-6 text-body",
         /** A lone primary action on the website (sign-up, keep this page, see all): one shape everywhere. */

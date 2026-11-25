@@ -209,3 +209,142 @@ test.describe("D2: the pinned preview on a phone", () => {
     await expect.poll(() => scroller.evaluate((area) => area.scrollTop)).toBe(0);
   });
 });
+
+// ─── D3: targets and symmetry on phones ────────────────────────────────────────────────────────
+
+interface Target {
+  tag: string;
+  name: string;
+  drawn: [number, number];
+  /** What a finger reaches: the run of points around the centre that land on the element (its `::before` counts). */
+  hit: [number, number];
+}
+
+/**
+ * Every control in `scope` (the page, or a sheet) with its drawn size and its hit area. The hit area is
+ * measured the way a finger meets it: `elementFromPoint` along the centre lines, so a `::before` that
+ * grows a small control counts, and a neighbour that takes the area over does not.
+ */
+function probeTargets(scopeSelector: string): Target[] {
+  const scope = document.querySelector(scopeSelector);
+  if (!scope) throw new Error(`no ${scopeSelector}`);
+  const interactive =
+    "a[href], button, summary, select, textarea, input:not([type=hidden]), [role=button], [role=tab], [role=switch], [role=radio], [role=checkbox], [role=menuitem], [role=link], label:has(input), [tabindex]:not([tabindex='-1'])";
+  const reach = 40;
+  const found: Target[] = [];
+  const hits = (element: Element, x: number, y: number) => {
+    const hit = document.elementFromPoint(x, y);
+    return !!hit && (hit === element || element.contains(hit) || (element.tagName === "LABEL" && hit.closest("label") === element));
+  };
+  const run = (element: Element, cx: number, cy: number, horizontal: boolean, limit: number): number => {
+    const at = (d: number) => (horizontal ? hits(element, cx + d, cy) : hits(element, cx, cy + d));
+    if (!at(0)) return 0;
+    let low = 0;
+    let high = 0;
+    while (low > -limit && at(low - 1)) low--;
+    while (high < limit && at(high + 1)) high++;
+    return high - low + 1;
+  };
+  for (const element of scope.querySelectorAll(interactive)) {
+    // The preview is a picture of the page, and a sr-only skip link is not a target.
+    if (element.closest("[inert], [aria-hidden=true], [data-sticky-preview], [data-preview-aside]")) continue;
+    if (element.matches(":disabled, [aria-disabled=true]")) continue;
+    const style = getComputedStyle(element);
+    if (style.visibility === "hidden" || style.display === "none" || style.pointerEvents === "none") continue;
+    if (element.getBoundingClientRect().width <= 2 || element.getBoundingClientRect().height <= 2) continue;
+    // A radio, a checkbox or a colour input inside a label: the label is the target.
+    if (element.tagName === "INPUT" && element.closest("label") && !element.matches("[type=text],[type=email],[type=url],[type=tel],[type=search],[type=password],[type=number]")) continue;
+    element.scrollIntoView({ block: "center", inline: "nearest" });
+    const box = element.getBoundingClientRect();
+    const cx = box.left + box.width / 2;
+    const cy = box.top + box.height / 2;
+    if (cy < 0 || cy > innerHeight || cx < 0 || cx > innerWidth) continue;
+    found.push({
+      tag: element.tagName.toLowerCase() + (element.getAttribute("role") ? `[${element.getAttribute("role") ?? ""}]` : ""),
+      name: (element.getAttribute("aria-label") ?? element.textContent).replace(/\s+/g, " ").trim().slice(0, 40),
+      drawn: [Math.round(box.width), Math.round(box.height)],
+      hit: [run(element, cx, cy, true, Math.ceil(box.width / 2 + reach)), run(element, cx, cy, false, Math.ceil(box.height / 2 + reach))],
+    });
+  }
+  return found;
+}
+
+/** The few controls that are allowed to stay under 44 px, and why. Nothing else is. */
+const SMALL_ALLOWED: { name: RegExp; why: string }[] = [];
+
+async function expectBigTargets(page: Page, label: string, scope = "body") {
+  const small = (await page.evaluate(probeTargets, scope)).filter((target) => (target.hit[0] < 44 || target.hit[1] < 44) && !SMALL_ALLOWED.some((entry) => entry.name.test(target.name)));
+  // Soft: one run lists the small controls of every screen, not only of the first one.
+  expect.soft(
+    small.map((target) => `${target.tag} "${target.name}" is drawn ${target.drawn.join("×")} and reached at ${target.hit.join("×")}`),
+    `${label}: controls under 44 × 44 px`,
+  ).toEqual([]);
+}
+
+test.describe("D3: targets and symmetry on phones", () => {
+  test.use(PHONE);
+
+  test("Home, Seite, Arbeiten, Design and Settings: every control is reached at 44 × 44 px", async ({ page }) => {
+    await signedIn(page);
+    // A page that is not ready yet (Home's next step with its finished steps behind a button) and projects (Arbeiten).
+    await seed(page, { kind: "designer", template: "werkbogen", projects: 3 });
+    await expectBigTargets(page, "Home, building");
+    for (const [label, path] of [
+      ["Seite", "/en/app/editor"],
+      ["Arbeiten", "/en/app/work"],
+      ["Settings", "/en/app/settings"],
+    ] as const) {
+      await page.goto(path);
+      await expect(heading(page)).toBeVisible();
+      await page.waitForLoadState("networkidle");
+      await expectBigTargets(page, label);
+    }
+    // Design, with a change made, so Undo is on and offered too, in the screen and in the toast it brings.
+    await page.goto("/en/app/design");
+    await expect(heading(page)).toBeVisible();
+    await page.locator("#main fieldset label:has(input[name=poster-template])").nth(1).click();
+    await expect(page.getByRole("button", { name: "Undo" }).first()).toBeEnabled();
+    const toasts = page.locator("[role=region][aria-label$='(F8)']");
+    await expect(toasts.locator("li[data-state=open]")).toHaveCount(1);
+    // The toast's own Undo and close, while it shows; then the screen without it (a toast covers what is under it).
+    await expectBigTargets(page, "the toast of a change", "[role=region][aria-label$='(F8)']");
+    await toasts.getByRole("button", { name: "Close" }).click();
+    await expect(toasts.locator("li")).toHaveCount(0);
+    await expectBigTargets(page, "Design");
+    // Home when the page is ready: the link card, the week, the invite.
+    await page.goto("/en/app");
+    await seed(page, { kind: "music", template: "nocturne", links: 4 });
+    await expectBigTargets(page, "Home, ready");
+  });
+
+  for (const locale of ["en", "ar"] as const) {
+    test(`a sheet's header: Cancel and Save sit at the same margin from their edges (${locale})`, async ({ page }) => {
+      await signedIn(page, locale);
+      await seed(page, { kind: "designer", template: "werkbogen", projects: 2 });
+      await page.goto(`/${locale}/app/work`);
+      await page.locator("#main ul[aria-label] > li button[aria-label]").first().click();
+      const sheet = page.getByRole("dialog");
+      await expect(sheet).toBeVisible();
+      await expect.poll(() => sheet.evaluate((element) => element.getAnimations().filter((a) => a.playState === "running").length)).toBe(0);
+      const margins = await sheet.evaluate((element) => {
+        const buttons = [...element.querySelectorAll("header button")].filter((button) => button.getBoundingClientRect().width > 0);
+        const edge = (button: Element, filled: boolean) => {
+          const range = document.createRange();
+          range.selectNodeContents(button);
+          // What shows: a filled button's own edge, a quiet button's word.
+          const shown = filled ? button.getBoundingClientRect() : range.getBoundingClientRect();
+          return { start: shown.left, end: innerWidth - shown.right };
+        };
+        const quiet = buttons.find((button) => getComputedStyle(button).backgroundColor === "rgba(0, 0, 0, 0)");
+        const filled = buttons.find((button) => getComputedStyle(button).backgroundColor !== "rgba(0, 0, 0, 0)");
+        if (!quiet || !filled) throw new Error("the sheet's header has no Cancel and Save");
+        const a = edge(quiet, false);
+        const b = edge(filled, true);
+        const rtl = getComputedStyle(element).direction === "rtl";
+        // Cancel is on the start side, Save on the end side: in Arabic the other way round on the screen.
+        return { cancel: rtl ? a.end : a.start, save: rtl ? b.start : b.end };
+      });
+      expect(Math.abs(margins.cancel - margins.save), `Cancel ${String(margins.cancel)} px, Save ${String(margins.save)} px`).toBeLessThanOrEqual(1);
+    });
+  }
+});

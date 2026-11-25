@@ -347,10 +347,11 @@ function WorkCard({ project, position, count }: { project: Project; position: nu
         ) : null}
       </span>
       {count > 1 ? (
-        // Earlier and later in reading order: the arrows point the other way in Arabic.
+        // Earlier and later in reading order: the arrows point the other way in Arabic. 40 px to see, a
+        // 44 px target each on touch screens; the 4 px between them keeps the two hit areas side by side.
         <span className="layer-raised relative flex justify-end gap-1">
-          <IconButton icon={ChevronLeft} size="sm" label={t("moveEarlier", { title })} disabled={position === 0} onClick={() => move(-1)} />
-          <IconButton icon={ChevronRight} size="sm" label={t("moveLater", { title })} disabled={position === count - 1} onClick={() => move(1)} />
+          <IconButton icon={ChevronLeft} label={t("moveEarlier", { title })} disabled={position === 0} onClick={() => move(-1)} />
+          <IconButton icon={ChevronRight} label={t("moveLater", { title })} disabled={position === count - 1} onClick={() => move(1)} />
         </span>
       ) : null}
     </li>

@@ -298,21 +298,24 @@ export function Sheet({
             <div aria-hidden className="mx-auto mt-2 h-1 w-10 rounded-full bg-line-strong lg:hidden" />
             {confirm ? (
               // One title on every screen size (one id names the dialog); only the buttons around it change.
-              <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-line pt-1 pr-[max(var(--spacing-2),env(safe-area-inset-right))] pb-2 pl-[max(var(--spacing-2),env(safe-area-inset-left))] lg:flex lg:items-start lg:gap-3 lg:px-5 lg:pt-5 lg:pb-4">
+              // On phones both ends sit at the body's own gutter (`edges`): the ghost button on the start
+              // side pulls its 12 px of padding back (-ms-3), so its word starts where the filled button's
+              // edge ends on the other side, 20 px in, in either reading direction.
+              <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-line pt-1 pr-[max(var(--spacing-5),env(safe-area-inset-right))] pb-2 pl-[max(var(--spacing-5),env(safe-area-inset-left))] lg:flex lg:items-start lg:gap-3 lg:px-5 lg:pt-5 lg:pb-4">
                 {back ? (
                   <>
-                    <Button variant="ghost" size="sm" icon={ChevronLeft} className="justify-self-start lg:hidden" onClick={back.onBack}>
+                    <Button variant="ghost" size="sm" icon={ChevronLeft} className="-ms-3 justify-self-start lg:hidden" onClick={back.onBack}>
                       {back.label}
                     </Button>
                     <IconButton variant="tinted" icon={ChevronLeft} label={back.label} className="rounded-full max-lg:hidden" onClick={back.onBack} />
                   </>
                 ) : cancel ? (
-                  <Button variant="ghost" size="sm" className="justify-self-start lg:hidden" onClick={cancel.onCancel}>
+                  <Button variant="ghost" size="sm" className="-ms-3 justify-self-start lg:hidden" onClick={cancel.onCancel}>
                     {cancel.label}
                   </Button>
                 ) : (
                   <Dialog.Close asChild>
-                    <Button variant="ghost" size="sm" className="justify-self-start lg:hidden">
+                    <Button variant="ghost" size="sm" className="-ms-3 justify-self-start lg:hidden">
                       {closeLabel}
                     </Button>
                   </Dialog.Close>

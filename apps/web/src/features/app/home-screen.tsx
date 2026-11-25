@@ -209,7 +209,8 @@ function MoreLink() {
   return (
     <Link
       href="/app/analytics"
-      className="inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
+      // A line of text to see, a 44 px tall target on touch screens (the hit area grows 12 px above and below).
+      className="relative inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-link before:absolute before:inset-x-0 before:-inset-y-3 pointer-fine:before:hidden transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
     >
       {t("stats.more")}
       <Icon icon={ArrowRight} size="sm" />
