@@ -63,6 +63,8 @@ export function StoryPicture({ art, photo, faces }: { art: StoryArt; photo: stri
       const displayWeight = getComputedStyle(displayProbe).fontWeight;
       const body = getComputedStyle(bodyProbe).fontFamily;
       const [image] = await Promise.all([loadImage(photo), loadFaces(display, displayWeight, body)]);
+      // The probes have just appeared: every face they asked for is there before the picture is drawn.
+      await document.fonts.ready;
       if (cancelled) return;
       drawShareArt(canvas, "story", { ...art, photo: image, display, displayWeight, body });
       // Lets tests (and people inspecting the page) tell a drawn picture from the empty box.
