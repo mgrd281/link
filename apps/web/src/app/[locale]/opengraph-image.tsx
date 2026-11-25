@@ -6,7 +6,7 @@ import { OG_SIZE } from "@/features/share/og-card";
 
 /** The link preview of the site: home, gallery and every page without its own card. */
 export const size = OG_SIZE;
-export const contentType = "image/png";
+export const contentType = "image/jpeg";
 export const alt = "Linkyo";
 
 export function generateStaticParams() {

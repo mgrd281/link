@@ -11,7 +11,7 @@ import { pageAddress } from "@/lib/page-url";
 
 /** The link preview of an example's project: its cover, result or title in the example's template, labelled as an example. */
 export const size = OG_SIZE;
-export const contentType = "image/png";
+export const contentType = "image/jpeg";
 export const alt = "Linkyo";
 
 export function generateStaticParams() {

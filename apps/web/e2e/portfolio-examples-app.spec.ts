@@ -43,11 +43,14 @@ async function previewCard(page: Page, route: string): Promise<void> {
   expect(og, route).toContain(`${route}/opengraph-image`);
   const image = await page.request.get(new URL(og ?? "", page.url()).pathname);
   expect(image.status(), route).toBe(200);
-  expect(image.headers()["content-type"], route).toBe("image/png");
-  // A real card, not an error picture: PNG signature and the Open Graph size (1200 × 630).
+  expect(image.headers()["content-type"], route).toBe("image/jpeg");
+  // A real card, not an error picture: a JPEG (its start of image, then its frame header) in the Open
+  // Graph size (1200 × 630), under the 300 KB WhatsApp still shows (E-07).
   const body = await image.body();
-  expect(body.subarray(1, 4).toString("ascii")).toBe("PNG");
-  expect([body.readUInt32BE(16), body.readUInt32BE(20)]).toEqual([1200, 630]);
+  expect([...body.subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
+  const frame = body.indexOf(Buffer.from([0xff, 0xc0]));
+  expect([body.readUInt16BE(frame + 7), body.readUInt16BE(frame + 5)]).toEqual([1200, 630]);
+  expect(body.length, route).toBeLessThan(300_000);
 }
 
 for (const person of PEOPLE) {

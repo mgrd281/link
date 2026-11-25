@@ -8,7 +8,7 @@ import { pageAddress } from "@/lib/page-url";
 
 /** The link preview of a project: its cover (or its result, or its title) in the page's own template. */
 export const size = OG_SIZE;
-export const contentType = "image/png";
+export const contentType = "image/jpeg";
 export const alt = "Linkyo";
 export const revalidate = 60;
 

@@ -13,6 +13,14 @@ See ADR 0027. Two renderers, two rule sets.
 | Site preview card | `src/app/[locale]/opengraph-image.tsx` → `features/share/brand-card.tsx` | Satori, at build time |
 | Story 9:16 and post 4:5 | `features/app/share-image.tsx` → `features/share/story-card.ts` | `<canvas>` in the browser |
 
+## Format and size
+
+- **Page, project and site cards are JPEG** at quality 80 (`jpegCard` in `features/share/jpeg.ts`, which reads
+  next/og's PNG back and writes a baseline JPEG; no image library). With a photo a PNG weighed 400–1000 KB, and
+  WhatsApp skips previews over about 300 KB. The routes export `contentType = "image/jpeg"`.
+- The /portfolio card stays PNG (phones on teal, about 230 KB).
+- Every prerendered card stays under 300 KB: `scripts/check-route-budgets.mjs` fails the build otherwise (CI).
+
 ## Satori rules (learned the hard way)
 
 - **Fonts must be TTF or WOFF**, never WOFF2.
@@ -60,7 +68,7 @@ See ADR 0027. Two renderers, two rule sets.
 ```bash
 cd apps/web && npx next build   # must print no "Dynamic filesystem access" warning
 curl -s localhost:3100/de/p/nela-voss | grep -o '<meta property="og:image[^>]*>'
-curl -s -o card.png localhost:3100/ar/p/adam-nour/opengraph-image   # then look at it
+curl -s -o card.jpg localhost:3100/ar/p/adam-nour/opengraph-image   # then look at it
 PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test -g "link previews|picture to post" --project desktop --project mobile --trace off
 ```
 

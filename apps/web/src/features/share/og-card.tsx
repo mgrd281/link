@@ -10,6 +10,7 @@ import { ImageResponse } from "next/og";
 
 import { isProxiedImage, isStorageImage, PROXIED_IMAGE_HOSTS } from "@/features/directions/shared/remote-images";
 
+import { jpegCard } from "./jpeg";
 import { drawablePicture, isDrawableHeader, MAX_PHOTO_BYTES } from "./og-picture";
 import { initials } from "./story-card";
 
@@ -18,6 +19,8 @@ import { initials } from "./story-card";
  * Linkyo address is shared. Drawn on the server from the page itself (photo, name, line, address)
  * in its template's colors and display face, so every share looks like the page it leads to.
  * Satori lays the card out; its style objects are pixels on a fixed 1200 × 630 canvas, not UI.
+ * Page and project cards are served as JPEG (`./jpeg.ts`): with a photo, a PNG weighed up to 1 MB,
+ * and WhatsApp skips previews over about 300 KB (E-07).
  */
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 const PHOTO_WIDTH = 470;
@@ -348,14 +351,16 @@ export async function ogProjectCard({
       <Words text={figure.label} rtl={rtl} size={32} width={OG_SIZE.width / 2 - 128} style={{ color: palette.fgMuted }} />
     </div>
   ) : null;
-  return new ImageResponse(
-    (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: rtl ? "row-reverse" : "row", background: palette.bg, color: palette.fg, fontFamily: "Geist" }}>
-        {words}
-        {end}
-      </div>
+  return jpegCard(
+    new ImageResponse(
+      (
+        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: rtl ? "row-reverse" : "row", background: palette.bg, color: palette.fg, fontFamily: "Geist" }}>
+          {words}
+          {end}
+        </div>
+      ),
+      { ...OG_SIZE, fonts: await Promise.resolve(fonts) },
     ),
-    { ...OG_SIZE, fonts: await Promise.resolve(fonts) },
   );
 }
 
@@ -378,7 +383,7 @@ export async function ogCard({ page, theme, address, badge }: { page: Page; them
   const nameSize = Math.round(Math.min(124, Math.max(56, (column * (rtl ? 0.95 : 1.85)) / (chars * display.width))));
   const line = profile.tagline ?? profile.bio;
 
-  return new ImageResponse(
+  const card = new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: rtl ? "row-reverse" : "row", background: palette.bg, color: palette.fg, fontFamily: "Geist" }}>
         {photo ? (
@@ -453,4 +458,5 @@ export async function ogCard({ page, theme, address, badge }: { page: Page; them
     ),
     { ...OG_SIZE, fonts: await Promise.resolve(fonts) },
   );
+  return jpegCard(card);
 }

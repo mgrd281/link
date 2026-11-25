@@ -120,7 +120,7 @@ test.describe("public creator page @real", () => {
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", new RegExp(`/u/${username}/opengraph-image`));
     const image = await page.request.get(`/u/${username}/opengraph-image`);
     expect(image.status()).toBe(200);
-    expect(image.headers()["content-type"]).toBe("image/png");
+    expect(image.headers()["content-type"]).toBe("image/jpeg");
   });
 
   test("marks AI-written blocks and AI-written profile texts @real", async ({ page }) => {
@@ -396,7 +396,7 @@ test.describe("project pages @real", () => {
     expect(ld).not.toContain(name);
     const card = await page.request.get(`/u/${owner.username}/harbour-system/opengraph-image`);
     expect(card.status()).toBe(200);
-    expect(card.headers()["content-type"]).toBe("image/png");
+    expect(card.headers()["content-type"]).toBe("image/jpeg");
     expect((await card.body()).toString("latin1")).not.toContain(name);
   });
 
@@ -409,7 +409,7 @@ test.describe("project pages @real", () => {
     expect(og).toMatch(new RegExp(`/u/${username}/harbour-light/opengraph-image`));
     const image = await page.request.get(new URL(og ?? "").pathname);
     expect(image.status()).toBe(200);
-    expect(image.headers()["content-type"]).toBe("image/png");
+    expect(image.headers()["content-type"]).toBe("image/jpeg");
     const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
   });

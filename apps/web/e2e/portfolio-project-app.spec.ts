@@ -57,7 +57,7 @@ test.describe("example pages", () => {
       expect(og).toBeTruthy();
       const image = await page.request.get(new URL(og ?? "", page.url()).pathname);
       expect(image.status()).toBe(200);
-      expect(image.headers()["content-type"]).toBe("image/png");
+      expect(image.headers()["content-type"]).toBe("image/jpeg");
       // Back: to the portfolio, at the card this project came from.
       await page.locator("[data-project-bar] a").first().click();
       await expect(page).toHaveURL(new RegExp(`/${example.locale}/p/${example.slug}#${example.project}$`));

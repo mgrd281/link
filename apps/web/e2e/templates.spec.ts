@@ -368,11 +368,13 @@ test.describe("link previews", () => {
     await expect(page.locator('meta[property="og:description"]')).toHaveAttribute("content", /\S/);
     const response = await request.get(new URL(image ?? "", page.url()).pathname);
     expect(response.status()).toBe(200);
-    expect(response.headers()["content-type"]).toBe("image/png");
+    // A JPEG (E-07): with the photo it is larger than a card with initials, and under WhatsApp's 300 KB.
+    expect(response.headers()["content-type"]).toBe("image/jpeg");
     expect((await response.body()).length).toBeGreaterThan(50_000);
+    expect((await response.body()).length).toBeLessThan(300_000);
     // The site itself has a card too.
     const home = await request.get("/de/opengraph-image");
-    expect(home.headers()["content-type"]).toBe("image/png");
+    expect(home.headers()["content-type"]).toBe("image/jpeg");
   });
 });
 
