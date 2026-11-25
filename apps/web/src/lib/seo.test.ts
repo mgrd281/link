@@ -9,7 +9,7 @@ import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
-import { PAGE_DESCRIPTIONS, PAID_PATHS, PUBLIC_PATHS, publicPaths, sitemapEntries, type PublicPath } from "./seo";
+import { PAGE_DESCRIPTIONS, PAGE_DESCRIPTIONS_UNCOUNTED, pageDescription, PAID_PATHS, PUBLIC_PATHS, publicPaths, sitemapEntries, type PublicPath } from "./seo";
 
 const FILES = { de, en, ar } as const;
 const base = new URL("https://linkyo.example");
@@ -51,26 +51,46 @@ describe("the sitemap", () => {
 describe("meta descriptions", () => {
   const paths = publicPaths({ payments: true });
 
+  /** The cookie-free statistics, as each language names them: never in a build that counts no page. */
+  const STATISTICS = { de: /Analytics|Statistik/, en: /analytics|stats/i, ar: /إحصاء/ } as const;
+
   for (const locale of routing.locales) {
-    it(`${locale}: every public page has one of its own, and no two are the same`, () => {
-      const t = createTranslator({ locale, messages: FILES[locale] });
-      const price = (id: "service-start" | "service-premium") => formatEuro(PRICES[id].amountCents, locale);
-      const values = { ...SITE_COUNTS, start: price("service-start"), premium: price("service-premium") };
-      const described = new Map<string, PublicPath[]>();
-      for (const path of paths) {
-        const text = t(PAGE_DESCRIPTIONS[path] as never, values as never);
-        expect(text.trim().length, `${path} has a description`).toBeGreaterThan(50);
-        expect(text, `${path}: formatted`).not.toMatch(/[{}<>]/);
-        described.set(text, [...(described.get(text) ?? []), path]);
-      }
-      const duplicates = [...described.values()].filter((list) => list.length > 1);
-      expect(duplicates).toEqual([]);
-      // The site-wide default (the layout's) is no page's own description either.
-      expect([...described.keys()]).not.toContain(t("meta.description"));
-    });
+    for (const statistics of [true, false]) {
+      it(`${locale}, ${statistics ? "pages counted" : "nothing counted"}: every public page has one of its own, and no two are the same`, () => {
+        const t = createTranslator({
+          locale,
+          messages: FILES[locale],
+          onError: (error) => {
+            throw error;
+          },
+        });
+        const price = (id: "service-start" | "service-premium") => formatEuro(PRICES[id].amountCents, locale);
+        const values = { ...SITE_COUNTS, start: price("service-start"), premium: price("service-premium") };
+        const described = new Map<string, PublicPath[]>();
+        for (const path of paths) {
+          const text = t(pageDescription(path, { statistics }) as never, values as never);
+          expect(text.trim().length, `${path} has a description`).toBeGreaterThan(50);
+          expect(text, `${path}: formatted`).not.toMatch(/[{}<>]/);
+          if (!statistics && path in PAGE_DESCRIPTIONS_UNCOUNTED) expect(text, `${path} names no statistics`).not.toMatch(STATISTICS[locale]);
+          described.set(text, [...(described.get(text) ?? []), path]);
+        }
+        const duplicates = [...described.values()].filter((list) => list.length > 1);
+        expect(duplicates).toEqual([]);
+        // The site-wide default (the layout's) is no page's own description either.
+        expect([...described.keys()]).not.toContain(t("meta.description"));
+      });
+    }
   }
 
   it("names a description for every public path, the paid one included", () => {
     expect(Object.keys(PAGE_DESCRIPTIONS).sort()).toEqual([...paths].sort());
+  });
+
+  it("a build that counts pages describes them with the statistics, one that does not without", () => {
+    expect(pageDescription("/funktionen", { statistics: true })).toBe(PAGE_DESCRIPTIONS["/funktionen"]);
+    expect(pageDescription("/funktionen", { statistics: false })).toBe("sitePages.features.meta.descriptionOff");
+    expect(pageDescription("/changelog", { statistics: false })).toBe("sitePages.changelog.meta.descriptionOff");
+    expect(pageDescription("", { statistics: false })).toBe("marketing.real.metaDescription");
+    expect(pageDescription("/hilfe", { statistics: false })).toBe(PAGE_DESCRIPTIONS["/hilfe"]);
   });
 });

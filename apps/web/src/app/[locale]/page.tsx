@@ -8,19 +8,19 @@ import { billingQuestions, faqQuestions, type MessageRef } from "@/features/mark
 import { siteState } from "@/features/marketing/site-state";
 import { homeStructuredData } from "@/features/marketing/structured-data";
 import { jsonLd } from "@/lib/json-ld";
-import { localeAlternates } from "@/lib/seo";
+import { localeAlternates, pageDescription } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
 
 type Locale = "de" | "en" | "ar";
 
 /**
- * The home page's description. Where creator pages are not counted (real accounts with the counter
- * off), it promises no analytics. The counts ("14 Designs · 91 Beispielseiten") come from code, so a
- * new template never touches the copy.
+ * The home page's description (lib/seo.ts `pageDescription`). Where creator pages are not counted
+ * (real accounts with the counter off), it promises no analytics. The counts ("14 Designs · 91
+ * Beispielseiten") come from code, so a new template never touches the copy.
  */
 async function description(locale: string): Promise<string> {
-  const t = await getTranslations({ locale, namespace: "marketing" });
-  return siteState().statistics ? t("meta.description", SITE_COUNTS) : t("real.metaDescription");
+  const t = await getTranslations({ locale });
+  return t(pageDescription("", siteState()), SITE_COUNTS);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {

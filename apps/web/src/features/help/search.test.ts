@@ -1,31 +1,38 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 
-import { SITE_COUNTS } from "@/features/examples/looks";
+import { SITE_NUMBERS } from "@/features/marketing/pages/numbers";
+import { plainTags } from "@/features/marketing/pages/text";
 import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
-import { HELP_ARTICLES, HELP_GROUPS, HELP_SLUGS, helpHref, isHelpSlug } from "./articles";
+import { articleKeys, HELP_ARTICLES, HELP_GROUPS, HELP_SLUGS, helpHref, isHelpSlug } from "./articles";
 import { helpFold, matchArticles, queryWords, type SearchableArticle } from "./search";
 
 /**
  * The help articles as data (stable slugs, every article in three languages) and their search, read
- * as the help page reads them: the words of each article with the `<bdi>` markup taken out.
+ * as the help page reads them: the words of each article with the `<bdi>` markup taken out, the numbers
+ * from code (SITE_NUMBERS), as a build that counts pages (`statistics`) or not. A message that does
+ * not format (a missing number, a broken tag) fails here instead of showing its key.
  */
 const FILES = { de, en, ar } as const;
 type Locale = keyof typeof FILES;
 
-function articlesIn(locale: Locale): SearchableArticle[] {
-  const t = createTranslator({ locale, messages: FILES[locale], namespace: "help.articles" });
-  const values = { designs: SITE_COUNTS.designs, domain: "linkyo.app", bdi: (chunks: string) => chunks };
-  const plain = (key: string) => t.markup(key as never, values as never);
-  return HELP_ARTICLES.map(({ slug }) => ({
-    slug,
-    title: plain(`${slug}.title`),
-    summary: plain(`${slug}.summary`),
-    body: (t.raw(`${slug}.body` as never) as string[]).map((_, index) => plain(`${slug}.body.${String(index)}`)),
-  }));
+function articlesIn(locale: Locale, statistics = true): SearchableArticle[] {
+  const t = createTranslator({
+    locale,
+    messages: FILES[locale],
+    onError: (error) => {
+      throw error;
+    },
+  });
+  const plain = (key: string) => t.markup(key as never, { ...SITE_NUMBERS, ...plainTags } as never);
+  return HELP_ARTICLES.map((article) => {
+    const base = `help.articles.${article.slug}`;
+    const { summary, body } = articleKeys(article, (t.raw(`${base}.body` as never) as string[]).length, statistics);
+    return { slug: article.slug, title: plain(`${base}.title`), summary: plain(summary), body: body.map(plain) };
+  });
 }
 
 describe("help articles", () => {
@@ -56,7 +63,33 @@ describe("help articles", () => {
         expect(article.body.length, article.slug).toBe(articlesIn("de").find((entry) => entry.slug === article.slug)?.body.length);
       }
     });
+
+    it(`${locale}: while no page is counted, the statistics article says so first, and the QR count is left out`, () => {
+      const find = (list: SearchableArticle[], slug: string) => list.find((article) => article.slug === slug);
+      const [on, off] = [articlesIn(locale, true), articlesIn(locale, false)];
+      expect(find(off, "statistik")?.body.length).toBe((find(on, "statistik")?.body.length ?? 0) + 1);
+      expect(find(off, "statistik")?.summary).not.toBe(find(on, "statistik")?.summary);
+      expect(find(on, "teilen")?.body.length).toBe((find(off, "teilen")?.body.length ?? 0) + 1);
+      for (const article of off) for (const paragraph of [article.summary, ...article.body]) expect(paragraph, article.slug).not.toMatch(/[{}<>]/);
+    });
   }
+
+  it("puts the QR count right after the paragraph about the QR code, only while pages are counted", () => {
+    const teilen = HELP_ARTICLES.find((article) => article.slug === "teilen");
+    if (!teilen) throw new Error("no teilen article");
+    const body = (index: number) => `help.articles.teilen.body.${String(index)}`;
+    expect(articleKeys(teilen, 4, true).body).toEqual([body(0), body(1), body(2), "help.articles.teilen.counting", body(3)]);
+    expect(articleKeys(teilen, 4, false).body).toEqual([body(0), body(1), body(2), body(3)]);
+  });
+
+  it("names the numbers the code sets: address length, welcome steps, pictures per project, statistics ranges", () => {
+    const find = (slug: string) => articlesIn("de").find((article) => article.slug === slug);
+    expect(find("seitenadresse")?.body[0]).toContain(`${String(SITE_NUMBERS.min)} bis ${String(SITE_NUMBERS.max)} Zeichen`);
+    expect(find("willkommen")?.summary).toContain(`${String(SITE_NUMBERS.steps)} kurze Schritte`);
+    expect(find("willkommen")?.summary).toContain(`bei Portfolios ${String(SITE_NUMBERS.portfolioSteps)}`);
+    expect(find("projekte")?.body[0]).toContain(`bis zu ${String(SITE_NUMBERS.pictures)} Bilder`);
+    expect(find("statistik")?.body[0]).toContain(`${String(SITE_NUMBERS.week)}, ${String(SITE_NUMBERS.month)} oder ${String(SITE_NUMBERS.quarter)} Tage`);
+  });
 });
 
 describe("help search", () => {

@@ -135,7 +135,7 @@ test.describe("help", () => {
     await page.goto("/de/hilfe#konto-loeschen");
     const article = page.locator('[data-help-article="konto-loeschen"]');
     await expect(article).toHaveAttribute("open", "");
-    await expect(article.getByText("„Meine Daten exportieren“ lädt alles als JSON-Datei.")).toBeVisible();
+    await expect(article.getByText(de.help.articles["konto-loeschen"].body[0] ?? "")).toBeVisible();
     await expect(page.locator("details[open]")).toHaveCount(1);
   });
 });

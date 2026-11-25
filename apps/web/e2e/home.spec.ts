@@ -441,9 +441,9 @@ test.describe("marketing home", () => {
   });
 
   test("FAQ answers open in place", async ({ page }) => {
-    const answer = page.getByText("Creator pages set no cookies and load no trackers.");
+    const answer = page.getByText("Creator pages set no cookies and load no trackers, so they show no cookie banner.");
     await expect(answer).toBeHidden();
-    await page.getByText("Do I need a cookie banner?").click();
+    await page.getByText("Does my page show a cookie banner?").click();
     await expect(answer).toBeVisible();
   });
 

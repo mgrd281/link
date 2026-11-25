@@ -58,6 +58,21 @@ export const PAGE_DESCRIPTIONS: Record<PublicPath, string> = {
 };
 
 /**
+ * The descriptions for a build that counts no pages (`siteState().statistics` false): the pages whose
+ * description names the cookie-free statistics say what is on them without it.
+ */
+export const PAGE_DESCRIPTIONS_UNCOUNTED: Partial<Record<PublicPath, string>> = {
+  "": "marketing.real.metaDescription",
+  "/funktionen": "sitePages.features.meta.descriptionOff",
+  "/changelog": "sitePages.changelog.meta.descriptionOff",
+};
+
+/** A public page's description (a message key) as this build counts pages. */
+export function pageDescription(path: PublicPath, { statistics }: { statistics: boolean }): string {
+  return (statistics ? undefined : PAGE_DESCRIPTIONS_UNCOUNTED[path]) ?? PAGE_DESCRIPTIONS[path];
+}
+
+/**
  * The sitemap: every public page in German, English and Arabic, each entry naming its language
  * versions (and German as the default for other languages).
  */

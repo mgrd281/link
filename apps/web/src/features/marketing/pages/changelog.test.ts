@@ -4,7 +4,7 @@ import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
-import { CHANGELOG, formatDay } from "./changelog";
+import { CHANGELOG, changelogEntries, formatDay } from "./changelog";
 
 /**
  * The changelog holds real, dated entries from the stages that shipped: each date is a day of the
@@ -45,6 +45,13 @@ describe("changelog", () => {
       const text = JSON.stringify(entries(locale));
       expect(text, locale).not.toMatch(/Stripe|Checkout|KI-Entw|AI draft|الذكاء الاصطناعي/);
     }
+  });
+
+  it("shows the cookie-free statistics only in a build that counts pages", () => {
+    const keys = (statistics: boolean) => changelogEntries({ statistics }).map((entry) => entry.key);
+    expect(keys(true)).toContain("statistics");
+    expect(keys(false)).not.toContain("statistics");
+    expect(keys(false)).toHaveLength(CHANGELOG.length - 1);
   });
 
   it("writes days in each language with Western digits", () => {

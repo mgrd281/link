@@ -3,20 +3,22 @@ import { getTranslations } from "next-intl/server";
 
 import { SITE_COUNTS } from "@/features/examples/looks";
 import { pageCard } from "@/features/share/page-card";
-import { localeAlternates, PAGE_DESCRIPTIONS } from "@/lib/seo";
+import { localeAlternates, pageDescription } from "@/lib/seo";
 
+import { siteState } from "../site-state";
 import { SITE_PAGES, type SitePageKey } from "./site-pages";
 
 /**
  * A site page's title, description and language versions. The description is the one lib/seo.ts
- * names for the path (`PAGE_DESCRIPTIONS`), so the uniqueness test reads what the page says.
+ * names for the path as this build counts pages (`pageDescription`), so the uniqueness test reads
+ * what the page says.
  */
 export async function sitePageMetadata(locale: string, page: SitePageKey): Promise<Metadata> {
   const path = SITE_PAGES[page];
   const t = await getTranslations({ locale });
   return {
     title: { absolute: t(`sitePages.${page}.meta.title`) },
-    description: t(PAGE_DESCRIPTIONS[path], SITE_COUNTS),
+    description: t(pageDescription(path, siteState()), SITE_COUNTS),
     alternates: localeAlternates(path, locale),
   };
 }

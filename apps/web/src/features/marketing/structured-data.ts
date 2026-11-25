@@ -1,4 +1,4 @@
-import { PRICES } from "@/features/payments/prices";
+import { PRICES, VAT_MODE } from "@/features/payments/prices";
 
 import type { SiteState } from "./pricing";
 
@@ -15,7 +15,8 @@ export interface QuestionAndAnswer {
  * the page with `jsonLd()` (lib/json-ld.ts). Pure, so lib tests parse what the page writes.
  *
  * Offers name only what can be had today: the free plan always; Pro only once payments are on (the
- * page service is a service, not the software). No contact data: the Impressum carries it.
+ * page service is a service, not the software), its VAT as the price configuration shows it
+ * (`VAT_MODE`). No contact data: the Impressum carries it.
  */
 export interface StructuredDataInput {
   /** The site's origin, e.g. https://linkyo.app. */
@@ -57,7 +58,7 @@ export function homeStructuredData({ base, locale, description, names, faq, stat
       price: euros(pro.amountCents),
       priceCurrency: pro.currency,
       url: at(`/${locale}/checkout/pro`),
-      priceSpecification: { "@type": "UnitPriceSpecification", price: euros(pro.amountCents), priceCurrency: pro.currency, valueAddedTaxIncluded: true, unitCode: "MON" },
+      priceSpecification: { "@type": "UnitPriceSpecification", price: euros(pro.amountCents), priceCurrency: pro.currency, valueAddedTaxIncluded: VAT_MODE === "standard19", unitCode: "MON" },
     });
   }
   const application = {

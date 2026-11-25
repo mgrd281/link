@@ -834,7 +834,7 @@
         "templates": "Ansehen und mit einer loslegen",
         "pricing": "Kostenlos, Pro kommt später",
         "portfolio": "Arbeiten zeigen, jede mit eigener Seite",
-        "help": "Antworten zu allem, was Linkyo kann"
+        "help": "Kurze Antworten zu den wichtigsten Fragen"
       },
       "portfolio": "Portfolio",
       "dashboard": "Zum Dashboard",
@@ -977,7 +977,7 @@
     },
     "pricing": {
       "title": "Kostenlos starten. Kostenlos bleiben.",
-      "lead": "Free bleibt dauerhaft kostenlos, ohne Kreditkarte. Pro und der Seitenservice kommen mit dem Start.",
+      "lead": "Free kostet nichts und braucht keine Kreditkarte. Pro und der Seitenservice kommen mit dem Start.",
       "free": {
         "name": "Free",
         "price": "0 €",
@@ -986,7 +986,7 @@
         "lead": "Alles, was deine Seite braucht.",
         "lines": {
           "templates": "Alle Vorlagen",
-          "links": "Unbegrenzt Links und Abschnitte",
+          "links": "Links und Abschnitte ohne Aufpreis",
           "media": "Musik, Shows, Videos, Shop-Links",
           "statistics": "Analytics ohne Cookies",
           "imprint": "Impressum für deine Seite"
@@ -1002,7 +1002,7 @@
           "list": "E-Mail-Liste"
         }
       },
-      "leadPaid": "Free bleibt dauerhaft kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist.",
+      "leadPaid": "Free kostet nichts. Ohne Kreditkarte, ohne Kündigungsfrist.",
       "proLive": {
         "per": "pro Monat",
         "vat": "inkl. MwSt.",
@@ -1022,8 +1022,8 @@
         "from": "ab {start}",
         "once": "einmalig",
         "lines": {
-          "start": "Start, {start}: Unsere KI entwirft, ein Mensch aus unserem Team prüft und verfeinert. 1 Änderungsrunde.",
-          "premium": "Premium, {premium}: Ein Mensch aus unserem Team gestaltet deine Seite, mit Marketing-Paket. 3 Änderungsrunden."
+          "start": "Start, {start}: Unsere KI entwirft, ein Mensch aus unserem Team prüft und verfeinert. {startRounds, plural, one {# Änderungsrunde} other {# Änderungsrunden}}.",
+          "premium": "Premium, {premium}: Ein Mensch aus unserem Team gestaltet deine Seite, mit Marketing-Paket. {premiumRounds, plural, one {# Änderungsrunde} other {# Änderungsrunden}}."
         },
         "cta": "Zum Seitenservice"
       },
@@ -1032,19 +1032,19 @@
         "items": {
           "card": {
             "q": "Brauche ich eine Kreditkarte?",
-            "a": "Nein. Für Free gibst du nur deine E-Mail-Adresse an, keine Zahlungsdaten."
+            "a": "Nein. Zum Registrieren brauchst du nur deine E-Mail-Adresse, keine Zahlungsdaten."
           },
           "when": {
             "q": "Ab wann kann ich Pro buchen?",
-            "a": "Mit dem Start. Bis dahin kann man bei Linkyo nichts kaufen, und alles, was es gibt, ist kostenlos. Pro kostet dann {price} im Monat, inklusive Mehrwertsteuer."
+            "a": "Mit dem Start. Bis dahin kann man bei Linkyo nichts kaufen, und alles, was es gibt, ist kostenlos. Pro wird dann {price} im Monat kosten{vat, select, standard19 {, inklusive Mehrwertsteuer} other {}}."
           },
           "pay": {
             "q": "Wie bezahle ich Pro?",
-            "a": "Monatlich über Stripe, auf unserer Bestellseite. Die erste Abbuchung ist am Tag der Bestellung, danach jeden Monat am selben Tag."
+            "a": "Monatlich über Stripe, auf unserer Bestellseite. Die erste Abbuchung ist am Tag der Bestellung, danach jeden Monat am selben Tag, in kürzeren Monaten am Monatsletzten."
           },
           "cancel": {
             "q": "Wie kündige ich Pro?",
-            "aOff": "Pro läuft jeweils einen Monat und ist jederzeit zum Ende des bezahlten Monats kündbar, auch ohne Anmeldung.",
+            "aOff": "Pro wird jeweils einen Monat laufen und jederzeit zum Ende des bezahlten Monats kündbar sein, auch ohne Anmeldung.",
             "aOn": "Jederzeit zum Ende des bezahlten Monats, auch ohne Anmeldung: über „Verträge hier kündigen“ unten auf jeder Seite der Website oder in den Einstellungen."
           },
           "ends": {
@@ -1053,8 +1053,8 @@
           },
           "service": {
             "q": "Was kostet der Seitenservice?",
-            "aOff": "Start kostet {start}, Premium {premium}, jeweils einmalig und inklusive Mehrwertsteuer, ohne Abo. Buchen kannst du ihn mit dem Start.",
-            "aOn": "Start kostet {start}, Premium {premium}, jeweils einmalig und inklusive Mehrwertsteuer, ohne Abo. Alles Weitere steht auf der Seite zum Seitenservice."
+            "aOff": "Start wird {start} kosten, Premium {premium}, jeweils einmalig{vat, select, standard19 { und inklusive Mehrwertsteuer} other {}}, ohne Abo. Buchen kannst du ihn mit dem Start.",
+            "aOn": "Start kostet {start}, Premium {premium}, jeweils einmalig{vat, select, standard19 { und inklusive Mehrwertsteuer} other {}}, ohne Abo. Alles Weitere steht auf der Seite zum Seitenservice."
           }
         }
       }
@@ -1064,19 +1064,19 @@
       "items": [
         {
           "q": "Ist Linkyo wirklich kostenlos?",
-          "a": "Ja. Vorlagen, unbegrenzte Links und Abschnitte und Analytics ohne Cookies bleiben kostenlos. Pro kommt mit dem Start, mit KI-Entwürfen für deine Seite. Nichts, was heute gratis ist, wird kostenpflichtig."
+          "a": "Ja. Alle Vorlagen, Links, Abschnitte und Analytics ohne Cookies kosten nichts. Pro kommt mit dem Start, mit KI-Entwürfen für deine Seite."
         },
         {
-          "q": "Brauche ich ein Cookie-Banner?",
-          "a": "Nein. Creator-Seiten setzen keine Cookies und laden keine Tracker. Videos von YouTube oder TikTok laden erst nach einem Tippen – es gibt also nichts zuzustimmen."
+          "q": "Zeigt meine Seite ein Cookie-Banner?",
+          "a": "Nein. Creator-Seiten setzen keine Cookies und laden keine Tracker, deshalb zeigen sie kein Cookie-Banner. Seiten mit Videos zeigen eine schmale Leiste zu externen Inhalten; ein YouTube-Video lädt erst, wenn jemand darauf tippt."
         },
         {
           "q": "Wo liegen meine Daten?",
-          "a": "In Frankfurt am Main. Wir wählen zuerst Anbieter aus der EU und nennen jeden Auftragsverarbeiter in unserer Datenschutzerklärung."
+          "a": "Konten, Seiten und Bilder liegen bei Supabase in Frankfurt am Main. Die Datenschutzerklärung beschreibt, wer Daten für uns verarbeitet."
         },
         {
           "q": "Kann ich eigene Fotos, Farben und Schriften nutzen?",
-          "a": "Ja. Starte mit einer Vorlage und ändere danach Farben, Schriften und Buttons. Linkyo prüft jedes Farbpaar – Text bleibt immer lesbar."
+          "a": "Ja, eigene Fotos und Farben; Schriften wählst du aus unseren Schriftpaaren. Starte mit einer Vorlage und ändere danach Farben, Schriften und Buttons. Linkyo passt die Farbtöne an, damit Text lesbar bleibt."
         },
         {
           "q": "Funktioniert es auf Arabisch und in anderen Sprachen von rechts nach links?",
@@ -1133,7 +1133,7 @@
         },
         {
           "title": "Dauerhaft kostenlos",
-          "body": "Vorlagen, unbegrenzte Links und Analytics bleiben kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist."
+          "body": "Vorlagen, Links und Analytics ohne Cookies kosten nichts. Ohne Kreditkarte, ohne Kündigungsfrist."
         }
       ]
     },
@@ -1264,9 +1264,9 @@
     "real": {
       "metaDescription": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: Designs mit Charakter, Portfolios mit Projektseiten, Musik, Shows und Shop. Kostenlos starten, Daten in Frankfurt.",
       "analyticsBadge": "In Arbeit",
-      "faqFree": "Ja. Vorlagen, unbegrenzte Links und Abschnitte bleiben kostenlos; Analytics ohne Cookies ist in Arbeit. Nichts, was heute gratis ist, wird kostenpflichtig.",
-      "faqFreePaid": "Ja. Vorlagen, unbegrenzte Links und Abschnitte bleiben kostenlos. Pro enthält KI-Entwürfe; eigene Domain, Verkauf und E-Mail-Liste sind geplant. Nichts, was heute gratis ist, wird kostenpflichtig.",
-      "trustFree": "Vorlagen und unbegrenzte Links bleiben kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist."
+      "faqFree": "Ja. Alle Vorlagen, Links und Abschnitte kosten nichts. Analytics ohne Cookies ist geplant.",
+      "faqFreePaid": "Ja. Alle Vorlagen, Links und Abschnitte kosten nichts. Pro enthält KI-Entwürfe; eigene Domain, Verkauf und E-Mail-Liste sind geplant.",
+      "trustFree": "Vorlagen und Links kosten nichts. Ohne Kreditkarte, ohne Kündigungsfrist."
     },
     "portfolio": {
       "title": "Portfolios mit Projektseiten",
@@ -5041,7 +5041,7 @@
       },
       "eyebrow": "Hilfe",
       "title": "Wie können wir helfen?",
-      "lead": "Kurze Antworten zu allem, was Linkyo heute kann. Such nach einem Wort oder blätter durch die Themen.",
+      "lead": "Kurze Antworten zu den wichtigsten Fragen rund um Linkyo. Such nach einem Wort oder blätter durch die Themen.",
       "groups": {
         "start": "Loslegen",
         "page": "Deine Seite",
@@ -5086,11 +5086,12 @@
     "features": {
       "meta": {
         "title": "Funktionen · Linkyo",
-        "description": "Was du mit Linkyo bekommst: eine Seite für alle deine Links, Portfolios mit Projektseiten, {designs} Designs, Analytics ohne Cookies und Datenschutz ab Werk."
+        "description": "Was du mit Linkyo bekommst: eine Seite für alle deine Links, Portfolios mit Projektseiten, {designs} Designs, Analytics ohne Cookies und Datenschutz ab Werk.",
+        "descriptionOff": "Was du mit Linkyo bekommst: eine Seite für alle deine Links, Portfolios mit Projektseiten, {designs} Designs und Datenschutz ab Werk."
       },
       "eyebrow": "Funktionen",
       "title": "Alles, was deine Seite kann.",
-      "lead": "Eine Seite für deine Links, deine Arbeit und deine Termine. Das gibt es heute, in fünf Gruppen.",
+      "lead": "Eine Seite für deine Links, deine Arbeit und deine Termine. Das gibt es heute; was noch nicht läuft, ist markiert.",
       "nav": "Funktionen nach Gruppen",
       "planned": "Geplant",
       "groups": {
@@ -5098,7 +5099,7 @@
           "title": "Deine Seite",
           "lead": "Füg einen Link ein, Linkyo macht den passenden Block daraus: Musik, Videos, Termine, Produkte und mehr.",
           "points": [
-            "Über 30 Plattformen erkannt, auch mehrere Links auf einmal",
+            "Links von Spotify, YouTube, TikTok, Instagram und vielen weiteren Diensten erkannt, auch mehrere auf einmal",
             "Blöcke von Link, Video und Musik bis Termine, Produkt und Kontakt",
             "Teilen mit Link-Vorschau, QR-Code und Bild für Story und Beitrag"
           ],
@@ -5107,9 +5108,9 @@
         },
         "portfolio": {
           "title": "Portfolio",
-          "lead": "Jedes Projekt bekommt eine eigene Seite mit Bildern, Kennzahlen und der Geschichte dahinter.",
+          "lead": "Jedes Projekt hat eine eigene Adresse. Zeigt es mehr als seine Karte, etwa Bilder, Kennzahlen oder die Geschichte dahinter, führt die Karte auf seine Seite.",
           "points": [
-            "Bis zu 20 Bilder pro Projekt, ein Tipp öffnet sie in voller Größe",
+            "Bis zu {pictures} Bilder pro Projekt, ein Tipp öffnet sie in voller Größe",
             "Eine eigene Adresse pro Projekt; änderst du sie, führt die alte weiter",
             "Vertrauliche Kunden ohne Namen"
           ],
@@ -5118,7 +5119,7 @@
         },
         "design": {
           "title": "Design",
-          "lead": "{designs} Designs mit eigenem Aufbau. Farbe, Schrift und Buttons passt du an.",
+          "lead": "{designs} Designs, jedes mit eigenem Look. Farbe, Schrift und Buttons passt du an.",
           "points": [
             "Jede Farbe lesbar, geprüft nach WCAG AA",
             "Hell, dunkel oder ganz in deiner Farbe",
@@ -5130,15 +5131,15 @@
           "title": "Analytics ohne Cookies",
           "lead": "Sieh, wie oft deine Seite aufgerufen wird, woher Besucher kommen und welche Blöcke sie antippen.",
           "points": [
-            "Aufrufe, Besucher, Klicks und Klickrate für 7, 30 oder 90 Tage",
-            "Herkunft, Länder und Geräte, als CSV zum Laden",
-            "Keine Cookies, nichts auf dem Gerät deiner Besucher"
+            "Aufrufe, Besucher, Klicks und Klickrate für {week}, {month} oder {quarter} Tage",
+            "Herkunft, Länder und Geräte im Überblick, die Zahlen pro Tag als CSV",
+            "Keine Cookies; die Zählung speichert nichts auf dem Gerät deiner Besucher"
           ],
           "action": "So zählt Linkyo"
         },
         "privacy": {
           "title": "Datenschutz ab Werk",
-          "lead": "Deine Seite setzt keine Cookies und lädt nichts von anderen Anbietern, solange Besucher es nicht erlauben.",
+          "lead": "Deine Seite setzt keine Cookies und lädt von sich aus nichts von anderen Anbietern; ein YouTube-Video spielt erst nach einem Tipp.",
           "facts": {
             "cookies": {
               "label": "Cookies",
@@ -5149,7 +5150,7 @@
               "value": "keine"
             },
             "embeds": {
-              "label": "Videos und Musik",
+              "label": "YouTube-Videos",
               "value": "erst nach einem Tipp"
             },
             "hosting": {
@@ -5165,7 +5166,7 @@
     "about": {
       "meta": {
         "title": "Über uns · Linkyo",
-        "description": "Warum es Linkyo gibt und wofür es steht: ruhiges, flaches Design, Datenschutz ab Werk, drei Sprachen und Hosting in Frankfurt am Main."
+        "description": "Warum es Linkyo gibt und wofür es steht: ruhiges, flaches Design, Datenschutz ab Werk, drei Sprachen und Daten in Frankfurt am Main."
       },
       "eyebrow": "Über uns",
       "title": "Eine Seite für alles, was du machst.",
@@ -5186,7 +5187,8 @@
           },
           "privacy": {
             "title": "Datenschutz ab Werk",
-            "body": "Creator-Seiten setzen keine Cookies und laden nichts von anderen Anbietern, solange Besucher es nicht erlauben. Die Statistik zählt ohne Cookies."
+            "body": "Creator-Seiten setzen keine Cookies und laden von sich aus nichts von anderen Anbietern; ein YouTube-Video spielt erst nach einem Tipp.",
+            "counting": "Die Statistik zählt ohne Cookies."
           },
           "languages": {
             "title": "Drei Sprachen",
@@ -5194,7 +5196,7 @@
           },
           "hosting": {
             "title": "Gehostet in Frankfurt",
-            "body": "Website und Seiten laufen bei Vercel in Frankfurt am Main. Konten, Seiten und Bilder liegen bei Supabase in Frankfurt."
+            "body": "Die Server-Funktionen laufen bei Vercel in Frankfurt am Main, ausgeliefert wird über das weltweite Netz von Vercel. Konten, Seiten und Bilder liegen bei Supabase in Frankfurt."
           },
           "honest": {
             "title": "Ehrlich",
@@ -5211,7 +5213,8 @@
     "changelog": {
       "meta": {
         "title": "Changelog · Linkyo",
-        "description": "Was sich bei Linkyo geändert hat, mit Datum: Statistik ohne Cookies, neue Vorlagen, Portfolios mit Projektseiten und mehr. Neueste Änderungen zuerst."
+        "description": "Was sich bei Linkyo geändert hat, mit Datum: Statistik ohne Cookies, neue Vorlagen, Portfolios mit Projektseiten und mehr. Neueste Änderungen zuerst.",
+        "descriptionOff": "Was sich bei Linkyo geändert hat, mit Datum: neue Vorlagen, Portfolios mit Projektseiten, ein neues Dashboard und mehr. Neueste Änderungen zuerst."
       },
       "eyebrow": "Changelog",
       "title": "Was neu ist.",
@@ -5221,8 +5224,8 @@
         "statistics": {
           "title": "Analytics ohne Cookies",
           "items": [
-            "Creator-Seiten zählen Aufrufe, Besucher und Tipps auf Blöcke, ohne Cookies und ohne etwas auf dem Gerät zu speichern.",
-            "Im Dashboard unter „Statistik“: Zahlen für 7, 30 oder 90 Tage, Herkunft, Länder und Geräte, als CSV zum Laden.",
+            "Creator-Seiten zählen Aufrufe, Besucher und Tipps auf Blöcke ohne Cookies; die Zählung speichert nichts auf dem Gerät.",
+            "Im Dashboard unter „Statistik“: Zahlen für 7, 30 oder 90 Tage, Herkunft, Länder und Geräte im Überblick, die Zahlen pro Tag als CSV.",
             "Scans deines QR-Codes zählen als eigene Herkunft „QR-Code“.",
             "Die Datenschutzerklärung beschreibt, wie gezählt wird."
           ]
@@ -5305,15 +5308,15 @@
         "pages": {
           "title": "Creator-Seiten",
           "items": {
-            "cookies": "Creator-Seiten setzen keine Cookies und speichern nichts auf dem Gerät deiner Besucher.",
-            "thirdParty": "Sie laden nichts von anderen Anbietern: keine Tracker, keine Werbung, keine fremden Schriften. Bilder, auch die Cover von Spotify oder YouTube, liefern wir selbst aus.",
-            "embeds": "Videos und Musik von YouTube, Spotify und anderen Diensten laden erst, wenn ein Besucher sie antippt oder externe Inhalte erlaubt. YouTube läuft dann im erweiterten Datenschutzmodus."
+            "cookies": "Creator-Seiten setzen keine Cookies. Auf dem Gerät gespeichert wird nur, ob ein Besucher externe Inhalte erlaubt hat; die Zählung speichert dort nichts.",
+            "thirdParty": "Von sich aus laden sie nichts von anderen Anbietern: keine Tracker, keine Werbung, keine fremden Schriften. Bilder, auch die Cover von Spotify oder YouTube, liefern wir selbst aus.",
+            "embeds": "Ein YouTube-Video spielt auf der Seite erst nach einem Tipp, im erweiterten Datenschutzmodus (youtube-nocookie.com). Videos von TikTok, Instagram und Vimeo lädt die Seite nicht, und Musik-Blöcke sind Links zu den Diensten. „Externe Inhalte erlauben“ blendet nur den Hinweis am Player aus; geladen wird trotzdem erst nach einem Tipp."
           }
         },
         "hosting": {
           "title": "Wo die Daten liegen",
           "items": {
-            "vercel": "Website und Creator-Seiten laufen bei Vercel in der Region Frankfurt am Main (fra1).",
+            "vercel": "Die Server-Funktionen von Website und Creator-Seiten laufen bei Vercel in Frankfurt am Main (fra1); ausgeliefert werden die Seiten über das weltweite Netz von Vercel.",
             "supabase": "Konten, Seiten, hochgeladene Bilder und die Statistik liegen bei Supabase in Frankfurt.",
             "noSale": "Wir verkaufen keine Daten."
           }
@@ -5322,9 +5325,9 @@
           "title": "Analytics ohne Cookies",
           "items": {
             "what": "Gezählt werden Aufrufe, verschiedene Besucher pro Tag und Tipps auf Blöcke, dazu grob die Herkunft (zum Beispiel Instagram oder Suchmaschinen), das Land und die Geräteart.",
-            "script": "Das Zählskript liest nur, von welcher Website ein Besucher kam (den Domainnamen), und ob der Browser „Do Not Track“ oder „Global Privacy Control“ meldet; meldet er es, zählt das Skript nicht.",
-            "how": "Damit eine Person an einem Tag nur einmal zählt, bildet unser Server aus Netzwerkadresse und Browserangabe mit einem täglich neuen Zufallsschlüssel einen Prüfwert (<term>HMAC-SHA-256</term>). Adresse und Browserangabe speichern wir nicht. Schlüssel und Prüfwerte löschen wir, sobald der Tag vorbei ist; dauerhaft bleiben nur Tageszahlen.",
-            "access": "Die Zahlen einer Seite sieht nur ihr Creator. Unser Team sieht nur Summen, nie Herkunft, Land oder Gerät.",
+            "script": "Bei einem Aufruf sendet das Zählskript die Seite, den Domainnamen der Website, von der ein Besucher kam, und ob er über den QR-Code oder von der Seite selbst kam; bei einem Tipp sendet es, welcher Block angetippt wurde. Meldet der Browser „Do Not Track“ oder „Global Privacy Control“, sendet es nichts.",
+            "how": "Damit eine Person an einem Tag nur einmal zählt, bildet unser Server aus Netzwerkadresse und Browserangabe mit einem täglich neuen Zufallsschlüssel einen Prüfwert (<term>HMAC-SHA-256</term>). Adresse und Browserangabe speichern wir nicht. Schlüssel und Prüfwerte löschen wir in der ersten Stunde nach Ende des Tages (Berliner Zeit); dauerhaft bleiben nur Tageszahlen.",
+            "access": "Alle Zahlen einer Seite sieht ihr Creator. Unser Team sieht je Seite nur die Summe der Aufrufe und Tipps der letzten 30 Tage, nie Herkunft, Land oder Gerät.",
             "noBanner": "Creator-Seiten zeigen für diese Zählung kein Einwilligungsbanner."
           },
           "off": "Auf dieser Website ist die Zählung im Moment ausgeschaltet."
@@ -5350,7 +5353,7 @@
           "title": "Dein Konto",
           "items": {
             "code": "Du meldest dich mit einem 6-stelligen Code an, den wir an deine E-Mail-Adresse schicken.",
-            "signIns": "Unter „Einstellungen“ › „Konto“ siehst du deine Anmeldungen der letzten 30 Tage mit IP-Adresse, ungefährem Ort und Gerät.",
+            "signIns": "Unter „Einstellungen“ › „Konto“ siehst du deine letzten Anmeldungen mit IP-Adresse, ungefährem Ort und Gerät. Wir speichern sie 30 Tage.",
             "delete": "Löschst du dein Konto, löschen wir Konto, Seite, hochgeladene Bilder und Statistik."
           }
         },
@@ -5387,11 +5390,11 @@
       },
       "willkommen": {
         "title": "Die ersten Schritte",
-        "summary": "Nach der Registrierung führen dich fünf kurze Schritte zu einer fertigen Seite.",
+        "summary": "Nach der Registrierung führen dich {steps} kurze Schritte zu einer fertigen Seite, bei Portfolios {portfolioSteps}.",
         "body": [
           "Zuerst wählst du, was dich am besten beschreibt, zum Beispiel TikToker, Musik, Ladengeschäft oder Fotografie. Dazu wählen wir eine passende Vorlage und fragen nur, was du wirklich brauchst.",
           "Dann folgen dein Name, ein Foto und deine Adresse, der Look und deine Links. Die Vorschau zeigt deine Seite bei jedem Schritt. Jeden Schritt kannst du überspringen und alles später ändern.",
-          "Für Fotografie, Design, Entwicklung und ähnliche Berufe sind es sechs Schritte: Statt nach Links fragen wir nach drei Arbeiten und einem Weg, dich zu erreichen.",
+          "Für Fotografie, Design, Entwicklung und ähnliche Berufe sind es {portfolioSteps} Schritte: Statt nach Links fragen wir nach bis zu drei Arbeiten und einem Weg, dich zu erreichen.",
           "Hast du schon eine Link-Seite bei Beacons, bio.link, lnk.bio oder Carrd? Füg ihre Adresse ein, dann übernehmen wir deine Profile und Links, wenn die Seite das Auslesen erlaubt."
         ]
       },
@@ -5399,7 +5402,7 @@
         "title": "Deine Seitenadresse",
         "summary": "Deine Seite liegt unter {domain}/deinname. Den Namen wählst du selbst.",
         "body": [
-          "Erlaubt sind Kleinbuchstaben, Zahlen und Bindestriche, 3 bis 30 Zeichen. Manche Namen sind für Linkyo reserviert.",
+          "Erlaubt sind Kleinbuchstaben, Zahlen und Bindestriche, {min} bis {max} Zeichen. Manche Namen sind für Linkyo reserviert.",
           "Ändern kannst du die Adresse unter „Einstellungen“ › „Seitenadresse“. Danach funktioniert die alte Adresse nicht mehr; aktualisiere also den Link in deinen Profilen.",
           "Projekte mit eigener Seite liegen unter deiner Adresse, zum Beispiel {domain}/deinname/projekt.",
           "Eine eigene Domain ist geplant."
@@ -5409,19 +5412,19 @@
         "title": "Inhalte hinzufügen",
         "summary": "Alles auf deiner Seite ist ein Block: ein Link, ein Video, Musik, Termine, ein Produkt und vieles mehr.",
         "body": [
-          "Tipp auf „Hinzufügen“ und füg einen Link ein. Linkyo erkennt über 30 Plattformen, etwa Spotify, YouTube oder TikTok, und macht daraus den passenden Block. Mehrere Links auf einmal gehen auch.",
+          "Tipp auf „Hinzufügen“ und füg einen Link ein. Linkyo erkennt Links von Spotify, YouTube, TikTok, Instagram und vielen weiteren Diensten und macht daraus den passenden Block. Mehrere Links auf einmal gehen auch.",
           "Oder wähl einen Block aus der Liste: von Link, Text und Bild über Video, Musik und Events bis zu Produkt, Projekt und Kontakt & Anfrage.",
-          "Fotos lädst du als JPG, PNG oder WebP bis 25 MB hoch. Ein Foto wird ein Bild, mehrere werden eine Galerie.",
+          "Fotos lädst du als JPG, PNG oder WebP bis 25 MB hoch. Ein Foto wird ein Bild; bei mehreren fragt Linkyo zuerst, ob sie eine Galerie oder ein Projekt werden sollen.",
           "Ein Ticket-Link sagt nicht, wann und wo: Trag Datum und Stadt ein, dann erscheint der Termin auf deiner Seite.",
           "Unter „Seite“ ordnest, bearbeitest und löschst du deine Blöcke. Eine Änderung nimmst du mit „Rückgängig“ zurück."
         ]
       },
       "projekte": {
         "title": "Portfolio: Projekte mit eigener Seite",
-        "summary": "Zeig deine Arbeit als Projekte. Gibt es mehr zu erzählen, bekommt ein Projekt eine eigene Seite.",
+        "summary": "Zeig deine Arbeit als Projekte. Gibt es mehr zu erzählen, führt die Karte auf die eigene Seite des Projekts.",
         "body": [
-          "Füg einen Block „Projekt“ hinzu: einen Titel, einen Satz dazu und, wenn du eins hast, ein Bild. Dazu kommt, was du hast: bis zu drei Kennzahlen, die Geschichte, bis zu 20 Bilder mit Bildunterschrift, Links und ein Code-Beispiel.",
-          "Ein Projekt mit mehr Inhalt bekommt eine eigene Adresse unter deiner Seite. Änderst du sie, führt die alte weiter dorthin.",
+          "Füg einen Block „Projekt“ hinzu: einen Titel, einen Satz dazu und, wenn du eins hast, ein Bild. Dazu kommt, was du hast: bis zu drei Kennzahlen, die Geschichte, bis zu {pictures} Bilder mit Bildunterschrift, Links und ein Code-Beispiel.",
+          "Jedes Projekt hat eine eigene Adresse unter deiner Seite. Seine Karte auf deiner Seite führt dorthin, sobald das Projekt mehr zeigt als die Karte, etwa eine Geschichte, Kennzahlen, Code oder mehrere Bilder; sonst führt sie zum ersten Link des Projekts, falls es einen hat. Änderst du die Adresse, führt die alte weiter dorthin.",
           "Ein Tipp auf ein Bild öffnet es in voller Größe.",
           "Für Kundenarbeit gibt es „Vertraulich, ohne Namen“: Auf deiner Seite steht dann „Vertraulich“, und den Namen speichern wir nicht.",
           "Im Dashboard zeigt die Ansicht „Arbeiten“ alle Projekte als Bilder. Zeig nur Arbeiten, die du zeigen darfst."
@@ -5429,10 +5432,10 @@
       },
       "vorlagen": {
         "title": "Vorlagen wechseln",
-        "summary": "{designs} Designs, jedes mit eigenem Aufbau. Wechseln geht jederzeit, deine Inhalte bleiben.",
+        "summary": "{designs} Designs, jedes mit eigenem Look. Wechseln geht jederzeit, deine Inhalte bleiben.",
         "body": [
           "Unter „Design“ wählst du zuerst die Vorlage. Deine Blöcke, dein Foto und deine Texte bleiben dabei; nur das Aussehen ändert sich. Mit „Rückgängig“ kommst du zur vorigen Vorlage zurück.",
-          "In der Galerie siehst du jedes Design an Beispielseiten. „Diese Vorlage nutzen“ nimmt den Look mit in die Registrierung.",
+          "In der Galerie siehst du die Designs an Beispielseiten. „Diese Vorlage nutzen“ nimmt den Look mit in die Registrierung.",
           "Für Portfolios gibt es eigene Vorlagen; unter „Design“ zeigt der Filter „Portfolio“ nur diese."
         ]
       },
@@ -5460,26 +5463,29 @@
         "body": [
           "Unter „Start“ findest du deinen Link mit „Link kopieren“, „Teilen“, dem QR-Code und „Bild für Story & Post“.",
           "Schickst du den Link in WhatsApp, iMessage oder LinkedIn, zeigt die Vorschau dein Foto oder deine Initialen, deinen Namen und deine Zeile.",
-          "Den QR-Code gibt es als PNG und als SVG in der Farbe deiner Seite; als SVG bleibt er in jeder Größe scharf. Scans zählt die Statistik als „QR-Code“.",
+          "Den QR-Code gibt es als PNG und als SVG in der Farbe deiner Seite; als SVG bleibt er in jeder Größe scharf.",
           "Das Bild für Story und Beitrag zeigt Foto, Name und Adresse in deinem Look, im Format 9:16 oder 4:5."
-        ]
+        ],
+        "counting": "Scans zählt die Statistik als eigene Herkunft „QR-Code“."
       },
       "statistik": {
         "title": "Statistik: wie Linkyo zählt",
         "summary": "Aufrufe, Besucher und Tipps auf deine Blöcke, gezählt ohne Cookies.",
         "body": [
-          "Unter „Statistik“ siehst du Aufrufe, Besucher, Klicks und die Klickrate für 7, 30 oder 90 Tage, dazu woher Besucher kommen, aus welchem Land und mit welchem Gerät. Die Zahlen pro Tag lädst du als CSV.",
-          "Die Seite speichert nichts auf dem Gerät deiner Besucher. Damit eine Person an einem Tag nur einmal zählt, bildet unser Server aus Netzwerkadresse und Browserangabe mit einem täglich neuen Schlüssel einen Prüfwert. Adresse und Browserangabe speichern wir nicht, und die Prüfwerte löschen wir, sobald der Tag vorbei ist. Dauerhaft bleiben nur Tageszahlen.",
+          "Unter „Statistik“ siehst du Aufrufe, Besucher, Klicks und die Klickrate für {week}, {month} oder {quarter} Tage, dazu woher Besucher kommen, aus welchem Land und mit welchem Gerät. Die Zahlen pro Tag lädst du als CSV.",
+          "Die Zählung speichert nichts auf dem Gerät deiner Besucher. Damit eine Person an einem Tag nur einmal zählt, bildet unser Server aus Netzwerkadresse und Browserangabe mit einem täglich neuen Schlüssel einen Prüfwert. Adresse und Browserangabe speichern wir nicht, und die Prüfwerte löschen wir in der ersten Stunde nach Ende des Tages. Dauerhaft bleiben nur Tageszahlen.",
           "Wer „Do Not Track“ oder „Global Privacy Control“ eingeschaltet hat, wird nicht gezählt, Roboter und Vorabrufe auch nicht. Deine eigenen Besuche zählen mit.",
-          "Im Editor zeigt jeder Block, wie oft er in den letzten 30 Tagen angetippt wurde. Deine Zahlen siehst nur du; unser Team sieht nur Summen."
-        ]
+          "Im Editor zeigt jeder Block, den man antippen kann, wie oft er in den letzten 30 Tagen angetippt wurde. Alle Zahlen deiner Seite siehst du; unser Team sieht je Seite nur die Summe der Aufrufe und Tipps der letzten 30 Tage, nie Herkunft, Land oder Gerät."
+        ],
+        "summaryOff": "Wie Linkyo Aufrufe, Besucher und Tipps ohne Cookies zählt. Im Moment ist die Zählung ausgeschaltet.",
+        "off": "Auf dieser Website ist die Zählung im Moment ausgeschaltet: Creator-Seiten tragen dann kein Zählskript, und es wird nichts gezählt. So zählt Linkyo, wenn sie eingeschaltet ist:"
       },
       "datenschutz-seite": {
         "title": "Datenschutz auf deiner Seite",
-        "summary": "Deine Seite setzt keine Cookies und lädt nichts von anderen Anbietern, solange Besucher es nicht erlauben.",
+        "summary": "Deine Seite setzt keine Cookies und lädt von sich aus nichts von anderen Anbietern.",
         "body": [
-          "Creator-Seiten setzen keine Cookies und laden keine Tracker. Bilder, auch die Cover von Spotify oder YouTube, liefern wir selbst aus.",
-          "Videos und Musik von YouTube, Spotify und anderen Diensten laden erst, wenn ein Besucher sie antippt oder externe Inhalte erlaubt. YouTube läuft dann im erweiterten Datenschutzmodus.",
+          "Creator-Seiten setzen keine Cookies und laden keine Tracker. Auf dem Gerät eines Besuchers gespeichert wird nur, ob er externe Inhalte erlaubt hat. Bilder, auch die Cover von Spotify oder YouTube, liefern wir selbst aus.",
+          "Ein YouTube-Video spielt auf deiner Seite erst, wenn ein Besucher darauf tippt, und dann im erweiterten Datenschutzmodus. Videos von TikTok, Instagram und Vimeo lädt deine Seite nicht, und Musik-Blöcke sind Links zu den Diensten.",
           "Unten verlinkt deine Seite den Datenschutzhinweis von Linkyo und, sobald du es ausgefüllt hast, dein Impressum."
         ]
       },
@@ -5493,9 +5499,9 @@
       },
       "konto-loeschen": {
         "title": "Daten exportieren und Konto löschen",
-        "summary": "In den Einstellungen lädst du alle Daten als Datei und löschst dein Konto.",
+        "summary": "In den Einstellungen lädst du deine Daten als JSON-Datei und löschst dein Konto.",
         "body": [
-          "„Meine Daten exportieren“ lädt alles als JSON-Datei.",
+          "„Meine Daten exportieren“ lädt eine JSON-Datei mit deinem Konto, deiner Seite und deinen letzten Anmeldungen, dazu, falls vorhanden, Abo, Rechnungen und Einladungen.",
           "„Konto löschen“ findest du unter „Einstellungen“ › „Konto“. Zur Bestätigung gibst du den Namen aus deiner Seitenadresse ein. Gelöscht werden dein Konto, deine Seite, deine hochgeladenen Bilder und deine Statistik; das lässt sich nicht rückgängig machen.",
           "Danach ist deine Adresse nicht mehr erreichbar."
         ]

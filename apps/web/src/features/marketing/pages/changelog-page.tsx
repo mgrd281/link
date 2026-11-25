@@ -3,20 +3,22 @@ import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 
-import { CHANGELOG, formatDay } from "./changelog";
+import { siteState } from "../site-state";
+import { changelogEntries, formatDay } from "./changelog";
 import { SitePage, standaloneLink } from "./site-page";
 import { bdi, term } from "./text";
 
 /**
  * /changelog: what reached the live site, newest first, each entry under its day (changelog.ts holds
- * the dates from the git history). On laptops the day stands beside the entry, like a timeline.
+ * the dates from the git history; an entry of a switched-off part leaves out). On laptops the day
+ * stands beside the entry, like a timeline.
  */
 export async function ChangelogPage({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "sitePages.changelog" });
   return (
     <SitePage icon={icons.activity} eyebrow={t("eyebrow")} title={t("title")} lead={t("lead")}>
       <ol className="mx-auto grid w-full max-w-content gap-4 px-5 md:px-10">
-        {CHANGELOG.map((entry) => {
+        {changelogEntries(siteState()).map((entry) => {
           const items = (t.raw(`entries.${entry.key}.items`) as unknown[]).map((_, index) => `entries.${entry.key}.items.${String(index)}`);
           return (
             <li key={entry.key} data-changelog={entry.key} className="grid gap-4 rounded-xl bg-canvas-muted p-6 md:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:gap-10">
@@ -35,7 +37,7 @@ export async function ChangelogPage({ locale }: { locale: string }) {
                     </li>
                   ))}
                 </ul>
-                {"href" in entry ? (
+                {entry.href ? (
                   <Link href={entry.href} aria-describedby={`changelog-${entry.key}`} className={standaloneLink}>
                     {t("more")}
                     <Icon icon={icons.next} size="sm" />

@@ -1,4 +1,4 @@
-import { formatEuro, PRICES, PRO_DRAFTS } from "@/features/payments/prices";
+import { formatEuro, PRICES, PRO_DRAFTS, REVISIONS, VAT_MODE } from "@/features/payments/prices";
 
 /**
  * What the website may say about plans, prices and counting, as data: the pricing comparison, its
@@ -81,13 +81,20 @@ export function pricingPlans(state: SiteState): Plan[] {
   ];
 }
 
-/** The values every pricing message may use: the prices (gross, VAT included; ADR 0066) and Pro's AI drafts. */
+/**
+ * The values every pricing message may use, all from the price configuration (ADR 0066): the prices
+ * (gross), Pro's AI drafts, the revision rounds of each service package, and how VAT is shown
+ * (`vat`: "standard19" says "VAT included", a small business says nothing about VAT).
+ */
 export function pricingValues(locale: "de" | "en" | "ar"): Record<string, string | number> {
   return {
     price: formatEuro(PRICES["pro-monthly"].amountCents, locale),
     start: formatEuro(PRICES["service-start"].amountCents, locale),
     premium: formatEuro(PRICES["service-premium"].amountCents, locale),
     count: PRO_DRAFTS,
+    startRounds: REVISIONS.start,
+    premiumRounds: REVISIONS.premium,
+    vat: VAT_MODE,
   };
 }
 
@@ -123,7 +130,7 @@ export function billingQuestions(state: SiteState, locale: "de" | "en" | "ar"): 
 /**
  * The FAQ's questions, in order (`count`: how many `marketing.faq.items` there are). The first answer
  * ("Is Linkyo really free?") names the cookie-free statistics as free only where pages are counted
- * (otherwise it says they are being built), and, where Pro can be bought, what Pro holds.
+ * (otherwise it says they are planned), and, where Pro can be bought, what Pro holds.
  */
 export function faqQuestions(state: SiteState, count: number): QuestionRef[] {
   const first = state.payments ? "real.faqFreePaid" : state.statistics ? "faq.items.0.a" : "real.faqFree";

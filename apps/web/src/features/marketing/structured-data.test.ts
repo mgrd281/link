@@ -1,6 +1,7 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 
+import { VAT_MODE } from "@/features/payments/prices";
 import { jsonLd } from "@/lib/json-ld";
 import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
@@ -81,7 +82,8 @@ describe("home page structured data", () => {
       price: "8.00",
       priceCurrency: "EUR",
       url: "https://linkyo.example/de/checkout/pro",
-      priceSpecification: { "@type": "UnitPriceSpecification", price: "8.00", unitCode: "MON", valueAddedTaxIncluded: true },
+      // VAT as the price configuration shows it (VAT_MODE): included with the standard rate.
+      priceSpecification: { "@type": "UnitPriceSpecification", price: "8.00", unitCode: "MON", valueAddedTaxIncluded: VAT_MODE === "standard19" },
     });
   });
 });

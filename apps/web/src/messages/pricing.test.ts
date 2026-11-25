@@ -2,7 +2,7 @@ import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 
 import { billingQuestions, faqQuestions, freeTrustBody, pricingPlans, pricingValues, type MessageRef, type SiteState } from "@/features/marketing/pricing";
-import { VAT_MODE } from "@/features/payments/prices";
+import { REVISIONS, VAT_MODE } from "@/features/payments/prices";
 
 import ar from "./ar.json";
 import de from "./de.json";
@@ -29,7 +29,15 @@ interface Loose {
 }
 
 const plain = (locale: Locale) => {
-  const t = createTranslator({ locale, messages: FILES[locale], namespace: "marketing" }) as unknown as Loose;
+  // A sentence that does not format (a value missing, a broken tag) fails the test instead of showing its key.
+  const t = createTranslator({
+    locale,
+    messages: FILES[locale],
+    namespace: "marketing",
+    onError: (error) => {
+      throw error;
+    },
+  }) as unknown as Loose;
   return ({ key, values }: MessageRef) => t.markup(key, { ...values, bdi: (chunks: string) => chunks });
 };
 
@@ -129,8 +137,24 @@ describe("pricing messages", () => {
     expect(ar.marketing.faq.items.at(-1)?.a).toMatch(/iOS/);
   });
 
-  it("names prices with VAT included, as the price configuration says (ADR 0066)", () => {
-    // The billing answers say "inklusive Mehrwertsteuer": they would need new words without VAT.
-    expect(VAT_MODE).toBe("standard19");
-  });
+  /** Words that say VAT is included, in each language. */
+  const VAT_WORDS = { de: /Mehrwertsteuer/, en: /VAT/, ar: /ضريبة/ } as const;
+
+  for (const locale of LOCALES) {
+    it(`${locale}: the answers name VAT as the price configuration shows it (VAT_MODE), never otherwise`, () => {
+      const answers = (vat: string) =>
+        [false, true].flatMap((payments) => billingQuestions({ payments, statistics: true }, locale).map(({ a }) => plain(locale)({ key: a.key, values: { ...a.values, vat } }))).join(" ");
+      expect(answers("standard19")).toMatch(VAT_WORDS[locale]);
+      expect(answers("kleinunternehmer")).not.toMatch(VAT_WORDS[locale]);
+      expect(pricingValues(locale).vat).toBe(VAT_MODE);
+    });
+
+    it(`${locale}: the page service's revision rounds come from prices.ts`, () => {
+      const lines = ["pricing.service.lines.start", "pricing.service.lines.premium"].map((key) => plain(locale)({ key, values: pricingValues(locale) }));
+      const rounds = { de: ["1 Änderungsrunde", `${String(REVISIONS.premium)} Änderungsrunden`], en: ["1 round of changes", `${String(REVISIONS.premium)} rounds of changes`], ar: ["جولة تعديل واحدة", `${String(REVISIONS.premium)} جولات تعديل`] }[locale];
+      expect(REVISIONS.start).toBe(1);
+      expect(lines[0]).toContain(rounds[0]);
+      expect(lines[1]).toContain(rounds[1]);
+    });
+  }
 });

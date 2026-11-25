@@ -4,7 +4,6 @@ import Image, { type StaticImageData } from "next/image";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
-import { SITE_COUNTS } from "@/features/examples/looks";
 import { Link } from "@/i18n/navigation";
 
 import { phoneSizes } from "../assets";
@@ -14,6 +13,7 @@ import { SECTION_TITLE } from "../headings";
 import { PROJECT_SHOTS } from "../portfolio/shots";
 import { FinalCta } from "../sections";
 import { siteState } from "../site-state";
+import { SITE_NUMBERS } from "./numbers";
 import { SitePage, standaloneLink } from "./site-page";
 import { bdi } from "./text";
 
@@ -116,7 +116,7 @@ export async function FeaturesPage({ locale }: { locale: string }) {
                   </h2>
                   {planned ? <Badge tone="outline">{t("planned")}</Badge> : null}
                 </div>
-                <p className="max-w-prose text-body-lg text-pretty text-fg-secondary">{t.rich(`groups.${group.key}.lead`, { ...SITE_COUNTS, bdi })}</p>
+                <p className="max-w-prose text-body-lg text-pretty text-fg-secondary">{t.rich(`groups.${group.key}.lead`, { ...SITE_NUMBERS, bdi })}</p>
                 {points ? (
                   <ul className="grid gap-2">
                     {points.map((_, point) => (
@@ -124,7 +124,7 @@ export async function FeaturesPage({ locale }: { locale: string }) {
                         <span aria-hidden className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-selected text-selected-fg">
                           <Icon icon={icons.confirm} size="sm" />
                         </span>
-                        <span className="min-w-0">{t.rich(`groups.${group.key}.points.${String(point)}`, { bdi })}</span>
+                        <span className="min-w-0">{t.rich(`groups.${group.key}.points.${String(point)}`, { ...SITE_NUMBERS, bdi })}</span>
                       </li>
                     ))}
                   </ul>

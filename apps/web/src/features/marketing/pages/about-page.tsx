@@ -6,13 +6,17 @@ import { legalLinksVisible } from "@/features/legal/company";
 import { Link } from "@/i18n/navigation";
 
 import { FinalCta } from "../sections";
+import { siteState } from "../site-state";
 import { SitePage, SiteSection, standaloneLink } from "./site-page";
 import { bdi } from "./text";
 
-/** What Linkyo stands for, each with its glyph. */
-const VALUES: { key: "flat" | "privacy" | "languages" | "hosting" | "honest"; icon: LucideIcon }[] = [
+/**
+ * What Linkyo stands for, each with its glyph. Privacy adds its sentence about the cookie-free counting
+ * (`counting`) only while pages are counted (`siteState()`).
+ */
+const VALUES: { key: "flat" | "privacy" | "languages" | "hosting" | "honest"; icon: LucideIcon; counting?: true }[] = [
   { key: "flat", icon: icons.design },
-  { key: "privacy", icon: icons.security },
+  { key: "privacy", icon: icons.security, counting: true },
   { key: "languages", icon: icons.website },
   { key: "hosting", icon: icons.place },
   { key: "honest", icon: icons.success },
@@ -20,13 +24,14 @@ const VALUES: { key: "flat" | "privacy" | "languages" | "hosting" | "honest"; ic
 
 /**
  * /ueber-uns: why Linkyo exists and what it stands for (flat design, privacy by default, three
- * languages, hosting in Frankfurt, saying what is planned as planned). It names no team, no numbers,
+ * languages, data in Frankfurt, saying what is planned as planned). It names no team, no numbers,
  * no investors and no quotes: who runs Linkyo is in the Impressum, linked where the footer links it.
  */
 export async function AboutPage({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "sitePages.about" });
   const common = await getTranslations({ locale, namespace: "sitePages.common" });
   const why = (t.raw("why.body") as unknown[]).map((_, index) => `why.body.${String(index)}`);
+  const { statistics } = siteState();
   return (
     <SitePage icon={icons.info} eyebrow={t("eyebrow")} title={t("title")} lead={t.rich("lead", { bdi })}>
       <SiteSection id="warum" title={t("why.title")}>
@@ -46,7 +51,10 @@ export async function AboutPage({ locale }: { locale: string }) {
                 <Icon icon={value.icon} size="md" />
               </span>
               <h3 className="text-h3 text-balance">{t(`values.items.${value.key}.title`)}</h3>
-              <p className="text-body text-pretty text-fg-secondary">{t.rich(`values.items.${value.key}.body`, { bdi })}</p>
+              <p className="text-body text-pretty text-fg-secondary">
+                {t.rich(`values.items.${value.key}.body`, { bdi })}
+                {value.counting && statistics ? <> {t.rich(`values.items.${value.key}.counting`, { bdi })}</> : null}
+              </p>
             </li>
           ))}
         </ul>
