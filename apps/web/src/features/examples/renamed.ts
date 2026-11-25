@@ -19,11 +19,18 @@ export interface PermanentRedirect {
   permanent: true;
 }
 
-/** The permanent redirects for next.config.ts: `/<any language>/p/<old>[/…]` → `/<its language>/p/<new>[/…]`. */
+/**
+ * The permanent redirects for next.config.ts: `/<any language>/p/<old>[/…]` → `/<its language>/p/<new>[/…]`.
+ * Two rules per person: with one optional-rest rule, Vercel leaves a trailing slash on the page's
+ * own address (`/ar/p/<new>/`), which costs a second redirect.
+ */
 export function renamedExampleRedirects(locales: readonly string[]): PermanentRedirect[] {
-  return Object.entries(RENAMED_EXAMPLES).map(([old, next]) => ({
-    source: `/:locale(${locales.join("|")})/p/${old}/:rest*`,
-    destination: `/${next.locale}/p/${next.slug}/:rest*`,
-    permanent: true,
-  }));
+  const language = `:locale(${locales.join("|")})`;
+  return Object.entries(RENAMED_EXAMPLES).flatMap(([old, next]) => {
+    const target = `/${next.locale}/p/${next.slug}`;
+    return [
+      { source: `/${language}/p/${old}`, destination: target, permanent: true as const },
+      { source: `/${language}/p/${old}/:rest+`, destination: `${target}/:rest+`, permanent: true as const },
+    ];
+  });
 }

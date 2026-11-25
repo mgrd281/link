@@ -18,10 +18,12 @@ describe("renamed example pages", () => {
     }
   });
 
-  it("are permanent redirects for the page and each project page, from every language", () => {
+  it("are permanent redirects for the page and each project page, from every language, never to a trailing slash", () => {
     expect(renamedExampleRedirects(routing.locales)).toEqual([
-      { source: "/:locale(de|en|ar)/p/rana-al-khatib/:rest*", destination: "/ar/p/freya-nilsen/:rest*", permanent: true },
-      { source: "/:locale(de|en|ar)/p/naya-aldabbas/:rest*", destination: "/ar/p/elena-novak/:rest*", permanent: true },
+      { source: "/:locale(de|en|ar)/p/rana-al-khatib", destination: "/ar/p/freya-nilsen", permanent: true },
+      { source: "/:locale(de|en|ar)/p/rana-al-khatib/:rest+", destination: "/ar/p/freya-nilsen/:rest+", permanent: true },
+      { source: "/:locale(de|en|ar)/p/naya-aldabbas", destination: "/ar/p/elena-novak", permanent: true },
+      { source: "/:locale(de|en|ar)/p/naya-aldabbas/:rest+", destination: "/ar/p/elena-novak/:rest+", permanent: true },
     ]);
   });
 
