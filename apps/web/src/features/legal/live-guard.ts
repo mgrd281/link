@@ -1,3 +1,5 @@
+import { infoPageMarkers } from "../marketing/pages/review";
+
 import { agb, datenschutz, impressum, widerrufsbelehrung, type LegalDoc } from "./texts";
 
 /**
@@ -25,6 +27,15 @@ export function legalDocs(): LegalDoc[] {
 }
 
 /**
+ * Every review marker a launch must not leave behind: the legal documents' own, and the one shown
+ * after each legal promise on the informational pages (Sicherheit & Datenschutz;
+ * features/marketing/pages/review.ts), once each.
+ */
+export function launchMarkers(): string[] {
+  return [...new Set([...reviewMarkers(legalDocs()), ...infoPageMarkers()])];
+}
+
+/**
  * The legal pages are drafts (and show the "Entwurf" banner) until the company data is real, a lawyer
  * has reviewed them (LEGAL_REVIEWED=1) and no bracketed marker is left.
  */
@@ -37,7 +48,8 @@ export function legalIsDraft({ legalReady, reviewed, markers }: { legalReady: bo
  * `legalReady` (company.ts), LEGAL_REVIEWED, EMAIL_TRANSPORT and LAUNCH.
  *
  * - Launch (`LAUNCH=1`): the legal pages must be final. A build fails while the texts still hold a
- *   bracketed marker or the "Entwurf" banner would still show (missing company data, no review).
+ *   bracketed marker or the "Entwurf" banner would still show (missing company data, no review),
+ *   and while an informational page still marks a legal promise for the lawyer (`launchMarkers`).
  * - Live payments: real company data, a lawyer's review and a transport that really delivers e-mail,
  *   so a build that would take real money with placeholder legal texts, or without sending the order
  *   confirmation, the withdrawal information and the receipts the law asks for (§ 312f, § 356a,
@@ -53,14 +65,14 @@ export function assertLiveReady({
   reviewed,
   emailTransport,
   launch,
-  markers = reviewMarkers(legalDocs()),
+  markers = launchMarkers(),
 }: {
   payments: string | undefined;
   legalReady: boolean;
   reviewed: string | undefined;
   emailTransport: string | undefined;
   launch?: string | undefined;
-  /** The markers left in the legal texts; read from the texts themselves unless given (tests). */
+  /** The markers left in the legal texts and on the informational pages; read from them unless given (tests). */
   markers?: readonly string[];
 }): void {
   if (launch === "1" && legalIsDraft({ legalReady, reviewed, markers })) {

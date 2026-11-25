@@ -1,3 +1,5 @@
+import type { MetadataRoute } from "next";
+
 import { routing } from "@/i18n/routing";
 
 /**
@@ -19,5 +21,56 @@ export function localeAlternates(path: string, locale: string) {
   };
 }
 
-/** The public pages listed in the sitemap, each in every language. */
-export const PUBLIC_PATHS = ["", "/templates", "/portfolio", "/signup"] as const;
+/**
+ * The public pages, each in every language: the sitemap lists them (app/sitemap.ts), e2e/routes.ts
+ * checks them, and each has a description of its own (`PAGE_DESCRIPTIONS`).
+ */
+export const PUBLIC_PATHS = ["", "/templates", "/portfolio", "/funktionen", "/hilfe", "/kontakt", "/ueber-uns", "/changelog", "/sicherheit", "/signup"] as const;
+
+/** Public only where contracts can be made (payments on): the page service. */
+export const PAID_PATHS = ["/service"] as const;
+
+export type PublicPath = (typeof PUBLIC_PATHS)[number] | (typeof PAID_PATHS)[number];
+
+/** The public pages of this build: the page service joins once payments are on. */
+export function publicPaths({ payments }: { payments: boolean }): PublicPath[] {
+  return [...PUBLIC_PATHS, ...(payments ? PAID_PATHS : [])];
+}
+
+/**
+ * Where each public page's meta description lives (a message key): every page says what is on it
+ * in its own words, never the home page's (W-05). `{ designs, pages }` are the counts from code
+ * (SITE_COUNTS); the page service's takes its prices. lib/seo.test.ts fails on a missing or repeated
+ * description in any language.
+ */
+export const PAGE_DESCRIPTIONS: Record<PublicPath, string> = {
+  "": "marketing.meta.description",
+  "/templates": "examples.meta.description",
+  "/portfolio": "portfolioLanding.meta.description",
+  "/funktionen": "sitePages.features.meta.description",
+  "/hilfe": "sitePages.help.meta.description",
+  "/kontakt": "sitePages.contact.meta.description",
+  "/ueber-uns": "sitePages.about.meta.description",
+  "/changelog": "sitePages.changelog.meta.description",
+  "/sicherheit": "sitePages.security.meta.description",
+  "/signup": "sitePages.signup.description",
+  "/service": "service.meta.description",
+};
+
+/**
+ * The sitemap: every public page in German, English and Arabic, each entry naming its language
+ * versions (and German as the default for other languages).
+ */
+export function sitemapEntries({ base, payments }: { base: URL; payments: boolean }): MetadataRoute.Sitemap {
+  const url = (locale: string, path: string) => new URL(`/${locale}${path}`, base).toString();
+  return publicPaths({ payments }).flatMap((path) =>
+    routing.locales.map((locale) => ({
+      url: url(locale, path),
+      changeFrequency: "weekly" as const,
+      priority: path === "" ? 1 : 0.7,
+      alternates: {
+        languages: { ...Object.fromEntries(routing.locales.map((code) => [code, url(code, path)])), "x-default": url(routing.defaultLocale, path) },
+      },
+    })),
+  );
+}

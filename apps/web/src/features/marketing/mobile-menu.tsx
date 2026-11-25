@@ -1,7 +1,7 @@
 "use client";
 
-import { Avatar, Button, cn, Icon, Logo } from "@linkyo/ui";
-import { ArrowRight, Blocks, ChevronRight, CircleHelp, FolderKanban, LayoutDashboard, LayoutTemplate, Menu, Tag, X, type LucideIcon } from "lucide-react";
+import { Avatar, Button, cn, Icon, icons, Logo } from "@linkyo/ui";
+import type { LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSyncExternalStore, type CSSProperties, type MouseEvent } from "react";
 
@@ -19,13 +19,13 @@ export interface NavItem {
 
 /** A place on the site, with the line under it that says what is there. */
 export interface MenuItem extends NavItem {
-  key: "features" | "templates" | "portfolio" | "pricing" | "faq";
+  key: "features" | "templates" | "portfolio" | "pricing" | "help";
   hint: string;
 }
 
-// Blocks, not a grid, for the features: the grid is the templates' glyph (two grids side by side
-// read as one thing twice). Portfolio takes the project block's icon.
-const ICONS: Record<MenuItem["key"], LucideIcon> = { features: Blocks, templates: LayoutTemplate, portfolio: FolderKanban, pricing: Tag, faq: CircleHelp };
+// Every glyph comes from the registry (packages/ui/src/icons.ts): blocks for the features (the grid
+// is the templates' glyph), the project block's folder for Portfolio, the price tag for the prices.
+const ICONS: Record<MenuItem["key"], LucideIcon> = { features: icons.features, templates: icons.templates, portfolio: icons.portfolio, pricing: icons.plan, help: icons.help };
 
 // ─── Who is signed in ───────────────────────────────────────────────────────────────────────────
 
@@ -156,7 +156,7 @@ export function MobileMenu({
         aria-label={labels.menu}
         className="relative grid size-control-md place-items-center rounded-full text-fg transition-[background-color,scale] duration-micro before:absolute before:inset-0 hover:bg-hover focus-visible:focus-ring active:scale-pressed active:bg-pressed pointer-coarse:before:-inset-0.5 lg:hidden"
       >
-        <Icon icon={Menu} size="md" />
+        <Icon icon={icons.menu} size="md" />
       </button>
       <div
         id="mk-menu"
@@ -177,7 +177,7 @@ export function MobileMenu({
               aria-label={labels.close}
               className="grid size-control-md place-items-center rounded-full bg-canvas-muted text-fg transition-[background-color,scale] duration-micro hover:bg-hover focus-visible:focus-ring active:scale-pressed"
             >
-              <Icon icon={X} size="md" />
+              <Icon icon={icons.close} size="md" />
             </button>
           </div>
 
@@ -204,7 +204,7 @@ export function MobileMenu({
                   <span className="text-small text-fg-secondary">{item.hint}</span>
                 </span>
                 <Icon
-                  icon={ChevronRight}
+                  icon={icons.next}
                   size="sm"
                   className="shrink-0 text-fg-tertiary transition-[color,translate] duration-micro group-hover:translate-x-0.5 group-hover:text-fg rtl:group-hover:-translate-x-0.5"
                 />
@@ -224,7 +224,7 @@ export function MobileMenu({
                   <Avatar name={account.name} src={account.avatar} size="sm" />
                   <span className="min-w-0 truncate">{t.rich("signedIn", { name: account.name, bdi: (chunks) => <bdi>{chunks}</bdi> })}</span>
                 </p>
-                <Button asChild variant="primary" size="cta" block trailing={<Icon icon={ArrowRight} size="md" />}>
+                <Button asChild variant="primary" size="cta" block trailing={<Icon icon={icons.forward} size="md" />}>
                   <a href={`/${locale}/app/editor`} onClick={close}>
                     {t("editPage")}
                   </a>
@@ -235,14 +235,14 @@ export function MobileMenu({
                     onClick={close}
                     className="-mx-2 inline-flex min-h-touch-target items-center gap-2 rounded-full px-2 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed"
                   >
-                    <Icon icon={LayoutDashboard} size="sm" />
+                    <Icon icon={icons.overview} size="sm" />
                     {t("dashboard")}
                   </a>
                 </p>
               </>
             ) : (
               <>
-                <Button asChild variant="primary" size="cta" block trailing={<Icon icon={ArrowRight} size="md" />}>
+                <Button asChild variant="primary" size="cta" block trailing={<Icon icon={icons.forward} size="md" />}>
                   <a href={cta.href} onClick={close}>
                     {cta.label}
                   </a>

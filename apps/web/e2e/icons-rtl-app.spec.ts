@@ -235,6 +235,22 @@ test.describe("directional icons mirror exactly once in Arabic", () => {
     }
   });
 
+  test("the website's own pages: help, contact, features, about, changelog, security", async ({ page }, info) => {
+    test.setTimeout(150_000);
+    for (const [label, url] of [
+      ["help", "/ar/hilfe"],
+      ["contact", "/ar/kontakt"],
+      ["features", "/ar/funktionen"],
+      ["about", "/ar/ueber-uns"],
+      ["changelog", "/ar/changelog"],
+      ["security", "/ar/sicherheit"],
+    ] as const) {
+      await page.goto(url);
+      await expect(page.locator("h1").first()).toBeVisible();
+      await expectMirroredOnce(page, label, info.project.name);
+    }
+  });
+
   test("creator pages and their project pages, in the page's own direction", async ({ page }, info) => {
     test.setTimeout(150_000);
     // Ronja writes in German: /ar/p/ronja-feldkamp opens her page in German (a page is shown in its

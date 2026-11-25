@@ -5,6 +5,13 @@ export const ROUTES = [
   "",
   // The Portfolio section of the website (§4.1 a): its landing page, in every language.
   "/portfolio",
+  // The website's own pages (Stage 4, WP4.2): features, help, contact, about, changelog, security.
+  "/funktionen",
+  "/hilfe",
+  "/kontakt",
+  "/ueber-uns",
+  "/changelog",
+  "/sicherheit",
   "/design",
   "/directions",
   "/signup",

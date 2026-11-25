@@ -22,19 +22,20 @@ export function MarketingHeader({
   /** A hairline under the bar once content scrolls beneath it (off where a band below draws its own). */
   edge?: boolean;
   /** The place this page is: marked in the bar and in the menu. */
-  current?: MenuItem["key"];
+  current?: MenuItem["key"] | undefined;
 } = {}) {
   const t = useTranslations("marketing");
   const common = useTranslations("common");
   const locale = useLocale();
   // Absolute links, so the menu also works from other pages (the template gallery). Portfolio sits
   // between the gallery and the prices: it is a part of the product, not a section of the homepage.
+  // The features and the help have pages of their own; the homepage's questions stay in the footer.
   const items: MenuItem[] = [
-    { key: "features", href: `/${locale}#features`, label: t("nav.features"), hint: t("nav.hints.features") },
+    { key: "features", href: `/${locale}/funktionen`, label: t("nav.features"), hint: t("nav.hints.features") },
     { key: "templates", href: `/${locale}/templates`, label: t("nav.templates"), hint: t("nav.hints.templates") },
     { key: "portfolio", href: `/${locale}/portfolio`, label: t("nav.portfolio"), hint: t("nav.hints.portfolio") },
     { key: "pricing", href: `/${locale}#pricing`, label: t("nav.pricing"), hint: t("nav.hints.pricing") },
-    { key: "faq", href: `/${locale}#faq`, label: t("nav.faq"), hint: t("nav.hints.faq") },
+    { key: "help", href: `/${locale}/hilfe`, label: t("nav.help"), hint: t("nav.hints.help") },
   ];
   const cta = { href: `/${locale}/signup`, label: t("nav.start") };
   const login = { href: `/${locale}/login`, label: t("nav.login") };

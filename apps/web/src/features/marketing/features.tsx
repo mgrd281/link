@@ -165,7 +165,7 @@ function SharePreview() {
 }
 
 /** Three languages, both directions: the same word, set as each language sets it. */
-function Languages() {
+export function Languages() {
   return (
     <div aria-hidden className="grid gap-1 font-bold">
       <p lang="de" className="text-h1 tracking-tight">
@@ -179,6 +179,11 @@ function Languages() {
       </p>
     </div>
   );
+}
+
+/** The "every color readable" tile's swatches: four very different accents through the theme engine. */
+export function ReadableColors() {
+  return <Readable swatches={READABLE.map((accent) => resolveCreatorTheme({ accent, mode: "vivid" }).cssVars)} />;
 }
 
 /** Four very different accents, each with the text color the engine picked for it. */
@@ -207,7 +212,7 @@ const LINKS = [46, 31, 23] as const;
  * Step 4: cookie-free analytics, with clearly marked sample numbers. The figures count up and the
  * bars grow the first time the card scrolls in.
  */
-function AnalyticsCard() {
+export function AnalyticsCard() {
   const t = useTranslations("marketing.analytics");
   const locale = useLocale();
   const days = t.raw("days") as string[];
@@ -343,7 +348,7 @@ export function Features() {
         <Tile title={t("more.colors.title")} body={t("more.colors.body")}>
           <Readable swatches={swatches} />
         </Tile>
-        {/* The footer links here as "/#analytics". */}
+        {/* Its anchor ("/#analytics") stays for links shared before the footer led to /funktionen instead. */}
         <Tile
           id="analytics"
           wide

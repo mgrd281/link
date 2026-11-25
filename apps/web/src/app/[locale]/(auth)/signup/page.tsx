@@ -7,7 +7,9 @@ import { localeAlternates } from "@/lib/seo";
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "auth" });
-  return { title: t("meta.signup"), alternates: localeAlternates("/signup", locale) };
+  // A public page with a description of its own (lib/seo.ts PAGE_DESCRIPTIONS), not the site's default.
+  const seo = await getTranslations({ locale, namespace: "sitePages.signup" });
+  return { title: t("meta.signup"), description: seo("description"), alternates: localeAlternates("/signup", locale) };
 }
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {

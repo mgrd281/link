@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import { EMAIL_TRANSPORTS, LIVE_EMAIL_TRANSPORT } from "@/features/email/send";
 
 import { COMPANY, legalReady } from "./company";
-import { assertLiveReady, legalDocs, legalIsDraft, reviewMarkers } from "./live-guard";
+import { infoPageMarkers } from "../marketing/pages/review";
+
+import { assertLiveReady, launchMarkers, legalDocs, legalIsDraft, reviewMarkers } from "./live-guard";
 import { REVIEW, type LegalDoc } from "./texts";
 
 const message = "NEXT_PUBLIC_PAYMENTS=live needs the real company data and LEGAL_REVIEWED=1";
@@ -79,12 +81,21 @@ describe("launch gate (LAUNCH=1)", () => {
     expect(() => assertLiveReady({ ...final, launch: "1", payments: "live", emailTransport: "console" })).toThrow(mailMessage);
   });
 
-  it("reads the markers from the texts themselves when none are given", () => {
-    const left = reviewMarkers(legalDocs());
+  it("reads the markers from the texts and the informational pages themselves when none are given", () => {
+    const left = launchMarkers();
     // While the lawyer's notes are in the texts, a launch build fails on its own (no list passed in).
     const launch = () => assertLiveReady({ payments: undefined, legalReady: true, reviewed: "1", emailTransport: undefined, launch: "1" });
     if (left.length > 0) expect(launch).toThrow(launchMessage);
     else expect(launch).not.toThrow();
+  });
+
+  it("counts a legal promise on an informational page as a marker of its own (Sicherheit & Datenschutz)", () => {
+    // The security page marks its legal promises for the lawyer: the launch gate sees them even where
+    // the legal documents themselves hold no marker any more.
+    expect(infoPageMarkers().length).toBeGreaterThan(0);
+    expect(new Set(infoPageMarkers())).toEqual(new Set([REVIEW.check]));
+    expect(launchMarkers()).toEqual(expect.arrayContaining([...reviewMarkers(legalDocs()), REVIEW.check]));
+    expect(() => assertLiveReady({ ...final, launch: "1", markers: infoPageMarkers() })).toThrow(launchMessage);
   });
 
   it("finds every bracketed text in headings, paragraphs, lists and lines, once each", () => {

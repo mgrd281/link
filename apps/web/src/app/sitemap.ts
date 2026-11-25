@@ -1,19 +1,13 @@
 import type { MetadataRoute } from "next";
 
-import { routing } from "@/i18n/routing";
+import { paymentsEnabled } from "@/lib/flags";
+import { sitemapEntries } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
-import { PUBLIC_PATHS } from "@/lib/seo";
 
-/** The public pages, each in German, English and Arabic, with their language versions linked. */
+/**
+ * Every public page (lib/seo.ts `PUBLIC_PATHS`, plus the page service where it can be booked), each
+ * in German, English and Arabic, with its language versions linked.
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = siteUrl();
-  const url = (locale: string, path: string) => new URL(`/${locale}${path}`, base).toString();
-  return PUBLIC_PATHS.flatMap((path) =>
-    routing.locales.map((locale) => ({
-      url: url(locale, path),
-      changeFrequency: "weekly" as const,
-      priority: path === "" ? 1 : 0.7,
-      alternates: { languages: Object.fromEntries(routing.locales.map((code) => [code, url(code, path)])) },
-    })),
-  );
+  return sitemapEntries({ base: siteUrl(), payments: paymentsEnabled });
 }

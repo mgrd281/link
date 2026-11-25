@@ -822,7 +822,6 @@
       "features": "Funktionen",
       "templates": "Vorlagen",
       "pricing": "Preise",
-      "faq": "FAQ",
       "login": "Anmelden",
       "start": "Kostenlos registrieren",
       "menu": "Menü",
@@ -834,13 +833,14 @@
         "features": "Was deine Seite alles kann",
         "templates": "Ansehen und mit einer loslegen",
         "pricing": "Kostenlos, Pro kommt später",
-        "faq": "Kurze Antworten auf deine Fragen",
-        "portfolio": "Arbeiten zeigen, jede mit eigener Seite"
+        "portfolio": "Arbeiten zeigen, jede mit eigener Seite",
+        "help": "Antworten zu allem, was Linkyo kann"
       },
       "portfolio": "Portfolio",
       "dashboard": "Zum Dashboard",
       "editPage": "Meine Seite bearbeiten",
-      "signedIn": "Angemeldet als <bdi>{name}</bdi>"
+      "signedIn": "Angemeldet als <bdi>{name}</bdi>",
+      "help": "Hilfe"
     },
     "hero": {
       "kicker": "Für Creator, Artists und die Teams dahinter",
@@ -1058,10 +1058,8 @@
     "footer": {
       "tagline": "Ein Link. Alles, was du erschaffst.",
       "product": "Produkt",
-      "resources": "Ressourcen",
       "legal": "Rechtliches",
       "templates": "Vorlagen",
-      "analytics": "Analytics",
       "pricing": "Preise",
       "faq": "FAQ",
       "editor": "Editor ausprobieren",
@@ -1072,7 +1070,14 @@
       "rights": "© 2026 Linkyo",
       "features": "Funktionen",
       "portfolio": "Portfolio",
-      "service": "Seitenservice"
+      "service": "Seitenservice",
+      "help": "Hilfe",
+      "contact": "Kontakt",
+      "about": "Über uns",
+      "changelog": "Changelog",
+      "security": "Sicherheit & Datenschutz",
+      "support": "Hilfe & Kontakt",
+      "company": "Über Linkyo"
     },
     "skip": "Zum Inhalt springen",
     "trust": {
@@ -4979,6 +4984,483 @@
       "up": "Gestiegen",
       "down": "Gesunken",
       "flat": "Unverändert"
+    }
+  },
+  "sitePages": {
+    "signup": {
+      "description": "Leg deine kostenlose Linkyo-Seite an: nur deine E-Mail-Adresse, kein Passwort. Danach wählst du deinen Look und fügst deine Links hinzu."
+    },
+    "common": {
+      "related": "Mehr dazu",
+      "imprint": "Zum Impressum",
+      "privacy": "Zur Datenschutzerklärung"
+    },
+    "help": {
+      "meta": {
+        "title": "Hilfe · Linkyo",
+        "description": "Antworten zu Linkyo: registrieren, Blöcke, Vorlagen, Projekte im Portfolio, Design, Statistik ohne Cookies, Seitenadresse, Teilen, Datenschutz und Konto löschen."
+      },
+      "eyebrow": "Hilfe",
+      "title": "Wie können wir helfen?",
+      "lead": "Kurze Antworten zu allem, was Linkyo heute kann. Such nach einem Wort oder blätter durch die Themen.",
+      "groups": {
+        "start": "Loslegen",
+        "page": "Deine Seite",
+        "share": "Teilen und Statistik",
+        "account": "Konto und Daten"
+      },
+      "more": {
+        "title": "Keine Antwort gefunden?",
+        "lead": "Schreib uns eine E-Mail, oder lies die häufigen Fragen auf der Startseite.",
+        "contact": "Kontakt",
+        "faq": "Häufige Fragen"
+      }
+    },
+    "contact": {
+      "meta": {
+        "title": "Kontakt · Linkyo",
+        "description": "So erreichst du Linkyo: per E-Mail. Wer Linkyo betreibt, mit Anschrift und allen Angaben zum Anbieter, steht im Impressum."
+      },
+      "eyebrow": "Kontakt",
+      "title": "Schreib uns.",
+      "lead": "Eine Frage zu deinem Konto, ein Fehler oder eine Idee: Schreib uns eine E-Mail.",
+      "email": {
+        "title": "E-Mail",
+        "lead": "Für alles rund um Linkyo.",
+        "missing": "Die Kontaktadresse wird gerade eingerichtet."
+      },
+      "help": {
+        "title": "Erst nachlesen?",
+        "body": "Viele Antworten stehen schon in der Hilfe.",
+        "action": "Zur Hilfe"
+      },
+      "report": {
+        "title": "Einen Inhalt melden",
+        "body": "Du hältst einen Inhalt auf einer Creator-Seite für rechtswidrig? Wie du ihn meldest, steht im Impressum.",
+        "action": "So meldest du einen Inhalt"
+      },
+      "imprint": {
+        "title": "Anbieter",
+        "body": "Wer Linkyo betreibt, mit Name, Anschrift und allen Angaben zum Anbieter, steht im Impressum."
+      }
+    },
+    "features": {
+      "meta": {
+        "title": "Funktionen · Linkyo",
+        "description": "Was du mit Linkyo bekommst: eine Seite für alle deine Links, Portfolios mit Projektseiten, {designs} Designs, Analytics ohne Cookies und Datenschutz ab Werk."
+      },
+      "eyebrow": "Funktionen",
+      "title": "Alles, was deine Seite kann.",
+      "lead": "Eine Seite für deine Links, deine Arbeit und deine Termine. Das gibt es heute, in fünf Gruppen.",
+      "nav": "Funktionen nach Gruppen",
+      "planned": "Geplant",
+      "groups": {
+        "page": {
+          "title": "Deine Seite",
+          "lead": "Füg einen Link ein, Linkyo macht den passenden Block daraus: Musik, Videos, Termine, Produkte und mehr.",
+          "points": [
+            "Über 30 Plattformen erkannt, auch mehrere Links auf einmal",
+            "Blöcke von Link, Video und Musik bis Termine, Produkt und Kontakt",
+            "Teilen mit Link-Vorschau, QR-Code und Bild für Story und Beitrag"
+          ],
+          "action": "Beispielseiten ansehen",
+          "picture": "Die Beispielseite von Juno Kade auf einem Handy"
+        },
+        "portfolio": {
+          "title": "Portfolio",
+          "lead": "Jedes Projekt bekommt eine eigene Seite mit Bildern, Kennzahlen und der Geschichte dahinter.",
+          "points": [
+            "Bis zu 20 Bilder pro Projekt, ein Tipp öffnet sie in voller Größe",
+            "Eine eigene Adresse pro Projekt; änderst du sie, führt die alte weiter",
+            "Vertrauliche Kunden ohne Namen"
+          ],
+          "action": "Portfolio ansehen",
+          "picture": "Eine Projektseite der Beispielseite von Ronja Feldkamp auf einem Handy"
+        },
+        "design": {
+          "title": "Design",
+          "lead": "{designs} Designs mit eigenem Aufbau. Farbe, Schrift und Buttons passt du an.",
+          "points": [
+            "Jede Farbe lesbar, geprüft nach WCAG AA",
+            "Hell, dunkel oder ganz in deiner Farbe",
+            "Deutsch, Englisch und Arabisch, von rechts nach links mit passender Schrift"
+          ],
+          "action": "Alle Designs ansehen"
+        },
+        "statistics": {
+          "title": "Analytics ohne Cookies",
+          "lead": "Sieh, wie oft deine Seite aufgerufen wird, woher Besucher kommen und welche Blöcke sie antippen.",
+          "points": [
+            "Aufrufe, Besucher, Klicks und Klickrate für 7, 30 oder 90 Tage",
+            "Herkunft, Länder und Geräte, als CSV zum Laden",
+            "Keine Cookies, nichts auf dem Gerät deiner Besucher"
+          ],
+          "action": "So zählt Linkyo"
+        },
+        "privacy": {
+          "title": "Datenschutz ab Werk",
+          "lead": "Deine Seite setzt keine Cookies und lädt nichts von anderen Anbietern, solange Besucher es nicht erlauben.",
+          "facts": {
+            "cookies": {
+              "label": "Cookies",
+              "value": "keine"
+            },
+            "trackers": {
+              "label": "Tracker und Werbung",
+              "value": "keine"
+            },
+            "embeds": {
+              "label": "Videos und Musik",
+              "value": "erst nach einem Tipp"
+            },
+            "hosting": {
+              "label": "Daten",
+              "value": "in Frankfurt am Main"
+            }
+          },
+          "caption": "Eine Creator-Seite beim Öffnen",
+          "action": "Sicherheit & Datenschutz"
+        }
+      }
+    },
+    "about": {
+      "meta": {
+        "title": "Über uns · Linkyo",
+        "description": "Warum es Linkyo gibt und wofür es steht: ruhiges, flaches Design, Datenschutz ab Werk, drei Sprachen und Hosting in Frankfurt am Main."
+      },
+      "eyebrow": "Über uns",
+      "title": "Eine Seite für alles, was du machst.",
+      "lead": "Ein Link in der Bio muss viel tragen: Musik, Videos, Termine, einen Shop, deine Arbeit. Linkyo macht daraus eine Seite, die fertig aussieht, ohne dass du sie gestalten musst.",
+      "why": {
+        "title": "Warum es Linkyo gibt",
+        "body": [
+          "Wer etwas macht, ist an vielen Orten: auf Instagram, TikTok und YouTube, in einem Shop, auf einer Ticketseite. In die Bio passt ein Link. Linkyo ist die Seite hinter diesem Link.",
+          "Sie soll schnell nach dir aussehen und dabei leicht zu lesen und respektvoll zu deinen Besuchern bleiben: ohne Cookies, ohne Tracker, in deiner Sprache."
+        ]
+      },
+      "values": {
+        "title": "Wofür Linkyo steht",
+        "items": {
+          "flat": {
+            "title": "Ruhig und flach",
+            "body": "Keine Schatten, keine Effekte um der Effekte willen: Linien, Flächen und Farbe. Jede Farbe, die du wählst, bleibt lesbar."
+          },
+          "privacy": {
+            "title": "Datenschutz ab Werk",
+            "body": "Creator-Seiten setzen keine Cookies und laden nichts von anderen Anbietern, solange Besucher es nicht erlauben. Die Statistik zählt ohne Cookies."
+          },
+          "languages": {
+            "title": "Drei Sprachen",
+            "body": "Deutsch, Englisch und Arabisch von Anfang an. Arabische Seiten lesen sich von rechts nach links, mit einer Schrift, die zu ihrer Vorlage passt."
+          },
+          "hosting": {
+            "title": "Gehostet in Frankfurt",
+            "body": "Website und Seiten laufen bei Vercel in Frankfurt am Main. Konten, Seiten und Bilder liegen bei Supabase in Frankfurt."
+          },
+          "honest": {
+            "title": "Ehrlich",
+            "body": "Was geplant ist, nennen wir geplant. Beispielseiten sind als Beispiel gekennzeichnet, ihre Zahlen als Beispieldaten."
+          }
+        }
+      },
+      "who": {
+        "title": "Wer dahintersteht",
+        "body": "Wer Linkyo betreibt, steht mit Name und Anschrift im Impressum. Erreichen kannst du uns per E-Mail.",
+        "contact": "Kontakt"
+      }
+    },
+    "changelog": {
+      "meta": {
+        "title": "Changelog · Linkyo",
+        "description": "Was sich bei Linkyo geändert hat, mit Datum: Statistik ohne Cookies, neue Vorlagen, Portfolios mit Projektseiten und mehr. Neueste Änderungen zuerst."
+      },
+      "eyebrow": "Changelog",
+      "title": "Was neu ist.",
+      "lead": "Was auf der Website, auf den Seiten und im Dashboard neu ist, mit Datum. Neueste Änderungen zuerst.",
+      "more": "Mehr dazu",
+      "entries": {
+        "statistics": {
+          "title": "Analytics ohne Cookies",
+          "items": [
+            "Creator-Seiten zählen Aufrufe, Besucher und Tipps auf Blöcke, ohne Cookies und ohne etwas auf dem Gerät zu speichern.",
+            "Im Dashboard unter „Statistik“: Zahlen für 7, 30 oder 90 Tage, Herkunft, Länder und Geräte, als CSV zum Laden.",
+            "Scans deines QR-Codes zählen als eigene Herkunft „QR-Code“.",
+            "Die Datenschutzerklärung beschreibt, wie gezählt wird."
+          ]
+        },
+        "polish": {
+          "title": "Feinschliff",
+          "items": [
+            "Auf dem Handy haben die Bedienelemente der Website, der Seiten und der wichtigsten Dashboard-Bildschirme mindestens <term>44 × 44</term> Pixel zum Antippen.",
+            "Das Dashboard nutzt auf dem Laptop die Breite und beginnt auf jedem Bildschirm an derselben Kante.",
+            "Die Vorschau im Dashboard folgt auf dem Handy dem Teil, den du gerade änderst.",
+            "Rechtliche Seiten lassen sich auf dem Handy nicht mehr zur Seite schieben."
+          ]
+        },
+        "portfolioTemplates": {
+          "title": "Drei neue Vorlagen für Portfolios",
+          "items": [
+            "Leuchttisch für Fotografie: Bilder unbeschnitten in Reihen, auf großen Bildschirmen über die ganze Breite.",
+            "Grundriss für Design und Architektur: ein Blatt pro Projekt, die Fakten neben der Arbeit.",
+            "Logbuch für Entwicklung und Handwerk: die Arbeiten als Logbuch, nach Jahren.",
+            "Zu jeder neuen Vorlage gibt es eine Beispielseite in der Galerie.",
+            "Den QR-Code deiner Seite gibt es auch als SVG in der Farbe deiner Seite, und in den Einstellungen siehst du deinen Plan."
+          ]
+        },
+        "arabicAndLaptops": {
+          "title": "Arabische Schriften und Portfolios ab dem ersten Schritt",
+          "items": [
+            "Arabische Seiten behalten den Charakter ihrer Vorlage: Jede Vorlage hat eine passende arabische Schrift.",
+            "Wer Fotografie, Design oder Entwicklung wählt, wird beim Start nach drei Arbeiten und einem Kontakt gefragt und bekommt ein gefülltes Portfolio.",
+            "Im Dashboard auf dem Laptop: echte Vorschaubilder der Vorlagen und die Ansicht „Arbeiten“ mit allen Projekten.",
+            "Creator-Seiten öffnen ruhiger: ein einzeiliger Hinweis zu externen Inhalten statt eines großen Fensters.",
+            "Symbole zeigen auf Arabisch in die richtige Richtung."
+          ]
+        },
+        "portfolioSection": {
+          "title": "Portfolio auf der Website, Bilder in voller Größe",
+          "items": [
+            "Die Seite „Portfolio“ zeigt Vorlagen und Beispiele für Fotografie, Design, Architektur und Entwicklung; die Galerie hat eine Kategorie „Portfolio“.",
+            "Ein Tipp auf ein Projektbild öffnet es in voller Größe.",
+            "Reihen von Projekten haben auf dem Laptop Knöpfe für vor und zurück.",
+            "Eine Adresse, die es nicht gibt, zeigt eine Seite von Linkyo in deiner Sprache, mit einem Weg zurück.",
+            "Ein eingefügter Ticket-Link erfindet keinen Termin mehr: Datum und Stadt trägst du selbst ein."
+          ]
+        },
+        "projects": {
+          "title": "Projekte mit eigener Seite",
+          "items": [
+            "Der Block „Projekt“: Jede Arbeit kann eine eigene Seite unter deiner Adresse bekommen, mit Bildern, Kennzahlen und der Geschichte dahinter.",
+            "Werkbogen und Tiefdruck, die ersten Vorlagen für Portfolios, mit Beispielseiten in der Galerie.",
+            "Neue Abschnitte für Portfolios: Über mich, Kenntnisse & Werkzeuge, Erfahrung, Kundenstimmen und Kontakt & Anfrage."
+          ]
+        },
+        "realAccounts": {
+          "title": "Echte Konten",
+          "items": [
+            "Seiten echter Konten sind öffentlich unter ihrer eigenen Adresse erreichbar.",
+            "Fotos, die du hochlädst, speichern wir in Frankfurt und liefern sie selbst aus."
+          ]
+        },
+        "dashboard": {
+          "title": "Ein neues Dashboard",
+          "items": [
+            "Das Dashboard ist jetzt schwarz und grau; deine Seite in der Vorschau behält ihre eigenen Farben.",
+            "Auf dem Laptop: eine schmale Leiste mit Symbolen und daneben die Teile des Bereichs, in dem du gerade bist.",
+            "„Einladen“: Mit deinem persönlichen Link lädst du andere zu Linkyo ein."
+          ]
+        }
+      }
+    },
+    "security": {
+      "meta": {
+        "title": "Sicherheit & Datenschutz · Linkyo",
+        "description": "Was Linkyo mit Daten macht: Creator-Seiten ohne Cookies und Tracker, Hosting in Frankfurt, Statistik ohne Cookies, keine Fotos an die KI und Zahlungen nur über Stripe."
+      },
+      "eyebrow": "Sicherheit & Datenschutz",
+      "title": "Was Linkyo mit Daten macht.",
+      "lead": "Hier steht, was der Code heute tut. Rechtlich verbindlich ist die Datenschutzerklärung.",
+      "review": "Sätze mit dem Vermerk <marker>{text}</marker> hat noch kein Anwalt geprüft.",
+      "nav": "Auf dieser Seite",
+      "sections": {
+        "pages": {
+          "title": "Creator-Seiten",
+          "items": {
+            "cookies": "Creator-Seiten setzen keine Cookies und speichern nichts auf dem Gerät deiner Besucher.",
+            "thirdParty": "Sie laden nichts von anderen Anbietern: keine Tracker, keine Werbung, keine fremden Schriften. Bilder, auch die Cover von Spotify oder YouTube, liefern wir selbst aus.",
+            "embeds": "Videos und Musik von YouTube, Spotify und anderen Diensten laden erst, wenn ein Besucher sie antippt oder externe Inhalte erlaubt. YouTube läuft dann im erweiterten Datenschutzmodus."
+          }
+        },
+        "hosting": {
+          "title": "Wo die Daten liegen",
+          "items": {
+            "vercel": "Website und Creator-Seiten laufen bei Vercel in der Region Frankfurt am Main (fra1).",
+            "supabase": "Konten, Seiten, hochgeladene Bilder und die Statistik liegen bei Supabase in Frankfurt.",
+            "noSale": "Wir verkaufen keine Daten."
+          }
+        },
+        "statistics": {
+          "title": "Analytics ohne Cookies",
+          "items": {
+            "what": "Gezählt werden Aufrufe, verschiedene Besucher pro Tag und Tipps auf Blöcke, dazu grob die Herkunft (zum Beispiel Instagram oder Suchmaschinen), das Land und die Geräteart.",
+            "script": "Das Zählskript liest nur, von welcher Website ein Besucher kam (den Domainnamen), und ob der Browser „Do Not Track“ oder „Global Privacy Control“ meldet; meldet er es, zählt das Skript nicht.",
+            "how": "Damit eine Person an einem Tag nur einmal zählt, bildet unser Server aus Netzwerkadresse und Browserangabe mit einem täglich neuen Zufallsschlüssel einen Prüfwert (<term>HMAC-SHA-256</term>). Adresse und Browserangabe speichern wir nicht. Schlüssel und Prüfwerte löschen wir, sobald der Tag vorbei ist; dauerhaft bleiben nur Tageszahlen.",
+            "access": "Die Zahlen einer Seite sieht nur ihr Creator. Unser Team sieht nur Summen, nie Herkunft, Land oder Gerät.",
+            "noBanner": "Creator-Seiten zeigen für diese Zählung kein Einwilligungsbanner."
+          },
+          "off": "Auf dieser Website ist die Zählung im Moment ausgeschaltet."
+        },
+        "ai": {
+          "title": "KI und Fotos",
+          "items": {
+            "off": "Der KI-Assistent, der aus deinen Links einen Entwurf für deine Seite macht, ist im Moment ausgeschaltet.",
+            "on": "Der KI-Assistent macht aus deinen Links einen Entwurf für deine Seite.",
+            "photos": "Der KI-Anbieter bekommt keine Fotos. E-Mail-Adressen und Telefonnummern entfernen wir aus jedem Text, bevor er gesendet wird.",
+            "publish": "Die KI veröffentlicht nichts: Was auf deine Seite kommt, entscheidest du."
+          }
+        },
+        "payments": {
+          "title": "Zahlungen",
+          "items": {
+            "off": "Zahlungen sind noch nicht eingeschaltet: Bei Linkyo kann man im Moment nichts kaufen.",
+            "stripe": "Bezahlt wird über Stripe. Das Skript von Stripe lädt nur auf unseren Bestellseiten, auf keiner anderen Seite.",
+            "data": "Karten- und Kontodaten gibst du in Stripes Formular ein; sie gehen an Stripe, nicht an uns."
+          }
+        },
+        "account": {
+          "title": "Dein Konto",
+          "items": {
+            "code": "Du meldest dich mit einem 6-stelligen Code an, den wir an deine E-Mail-Adresse schicken.",
+            "signIns": "Unter „Einstellungen“ › „Konto“ siehst du deine Anmeldungen der letzten 30 Tage mit IP-Adresse, ungefährem Ort und Gerät.",
+            "delete": "Löschst du dein Konto, löschen wir Konto, Seite, hochgeladene Bilder und Statistik."
+          }
+        },
+        "report": {
+          "title": "Eine Lücke gefunden?",
+          "body": "Wenn dir bei Linkyo eine Sicherheitslücke auffällt, schreib uns bitte, bevor du sie öffentlich machst.",
+          "action": "Kontakt"
+        }
+      }
+    },
+    "og": {
+      "site": "linkyo"
+    }
+  },
+  "help": {
+    "search": {
+      "label": "Hilfe durchsuchen",
+      "placeholder": "z. B. Statistik, Adresse, löschen",
+      "results": "{count, plural, =0 {Kein Artikel} one {# Artikel} other {# Artikel}}",
+      "empty": "Kein Artikel passt zu „{query}“.",
+      "emptyHint": "Probier ein anderes Wort, oder schreib uns.",
+      "clear": "Suche leeren",
+      "contact": "Kontakt"
+    },
+    "articles": {
+      "registrieren": {
+        "title": "Registrieren und anmelden",
+        "summary": "Mit deiner E-Mail-Adresse und einem 6-stelligen Code, ohne Passwort.",
+        "body": [
+          "Tipp auf „Kostenlos registrieren“ und gib deine E-Mail-Adresse ein. Wir schicken dir einen 6-stelligen Code. Gib ihn ein oder tipp auf den Link in der E-Mail, dann ist dein Konto da.",
+          "Kommt nichts an, schau in deinen Spam-Ordner. Nach einer kurzen Wartezeit kannst du einen neuen Code anfordern; es gilt immer nur der neueste.",
+          "Zum Anmelden gehst du genauso vor: E-Mail-Adresse eingeben, Code eingeben."
+        ]
+      },
+      "willkommen": {
+        "title": "Die ersten Schritte",
+        "summary": "Nach der Registrierung führen dich fünf kurze Schritte zu einer fertigen Seite.",
+        "body": [
+          "Zuerst wählst du, was dich am besten beschreibt, zum Beispiel TikToker, Musik, Ladengeschäft oder Fotografie. Dazu wählen wir eine passende Vorlage und fragen nur, was du wirklich brauchst.",
+          "Dann folgen dein Name, ein Foto und deine Adresse, der Look und deine Links. Die Vorschau zeigt deine Seite bei jedem Schritt. Jeden Schritt kannst du überspringen und alles später ändern.",
+          "Für Fotografie, Design, Entwicklung und ähnliche Berufe sind es sechs Schritte: Statt nach Links fragen wir nach drei Arbeiten und einem Weg, dich zu erreichen.",
+          "Hast du schon eine Link-Seite bei Beacons, bio.link, lnk.bio oder Carrd? Füg ihre Adresse ein, dann übernehmen wir deine Profile und Links, wenn die Seite das Auslesen erlaubt."
+        ]
+      },
+      "seitenadresse": {
+        "title": "Deine Seitenadresse",
+        "summary": "Deine Seite liegt unter {domain}/deinname. Den Namen wählst du selbst.",
+        "body": [
+          "Erlaubt sind Kleinbuchstaben, Zahlen und Bindestriche, 3 bis 30 Zeichen. Manche Namen sind für Linkyo reserviert.",
+          "Ändern kannst du die Adresse unter „Einstellungen“ › „Seitenadresse“. Danach funktioniert die alte Adresse nicht mehr; aktualisiere also den Link in deinen Profilen.",
+          "Projekte mit eigener Seite liegen unter deiner Adresse, zum Beispiel {domain}/deinname/projekt.",
+          "Eine eigene Domain ist geplant."
+        ]
+      },
+      "bloecke": {
+        "title": "Inhalte hinzufügen",
+        "summary": "Alles auf deiner Seite ist ein Block: ein Link, ein Video, Musik, Termine, ein Produkt und vieles mehr.",
+        "body": [
+          "Tipp auf „Hinzufügen“ und füg einen Link ein. Linkyo erkennt über 30 Plattformen, etwa Spotify, YouTube oder TikTok, und macht daraus den passenden Block. Mehrere Links auf einmal gehen auch.",
+          "Oder wähl einen Block aus der Liste: von Link, Text und Bild über Video, Musik und Events bis zu Produkt, Projekt und Kontakt & Anfrage.",
+          "Fotos lädst du als JPG, PNG oder WebP bis 25 MB hoch. Ein Foto wird ein Bild, mehrere werden eine Galerie.",
+          "Ein Ticket-Link sagt nicht, wann und wo: Trag Datum und Stadt ein, dann erscheint der Termin auf deiner Seite.",
+          "Unter „Seite“ ordnest, bearbeitest und löschst du deine Blöcke. Eine Änderung nimmst du mit „Rückgängig“ zurück."
+        ]
+      },
+      "projekte": {
+        "title": "Portfolio: Projekte mit eigener Seite",
+        "summary": "Zeig deine Arbeit als Projekte. Gibt es mehr zu erzählen, bekommt ein Projekt eine eigene Seite.",
+        "body": [
+          "Füg einen Block „Projekt“ hinzu: einen Titel, einen Satz dazu und, wenn du eins hast, ein Bild. Dazu kommt, was du hast: bis zu drei Kennzahlen, die Geschichte, bis zu 20 Bilder mit Bildunterschrift, Links und ein Code-Beispiel.",
+          "Ein Projekt mit mehr Inhalt bekommt eine eigene Adresse unter deiner Seite. Änderst du sie, führt die alte weiter dorthin.",
+          "Ein Tipp auf ein Bild öffnet es in voller Größe.",
+          "Für Kundenarbeit gibt es „Vertraulich, ohne Namen“: Auf deiner Seite steht dann „Vertraulich“, und den Namen speichern wir nicht.",
+          "Im Dashboard zeigt die Ansicht „Arbeiten“ alle Projekte als Bilder. Zeig nur Arbeiten, die du zeigen darfst."
+        ]
+      },
+      "vorlagen": {
+        "title": "Vorlagen wechseln",
+        "summary": "{designs} Designs, jedes mit eigenem Aufbau. Wechseln geht jederzeit, deine Inhalte bleiben.",
+        "body": [
+          "Unter „Design“ wählst du zuerst die Vorlage. Deine Blöcke, dein Foto und deine Texte bleiben dabei; nur das Aussehen ändert sich. Mit „Rückgängig“ kommst du zur vorigen Vorlage zurück.",
+          "In der Galerie siehst du jedes Design an Beispielseiten. „Diese Vorlage nutzen“ nimmt den Look mit in die Registrierung.",
+          "Für Portfolios gibt es eigene Vorlagen; unter „Design“ zeigt der Filter „Portfolio“ nur diese."
+        ]
+      },
+      "design": {
+        "title": "Farben, Schriften und Buttons",
+        "summary": "Wähl eine Farbe, einen hellen, dunklen oder farbigen Hintergrund, Schriften und Buttons.",
+        "body": [
+          "Unter „Design“ › „Farbe“ wählst du eine Farbe aus der Auswahl oder eine eigene. Linkyo passt die Töne an, damit Text und Buttons lesbar bleiben, nach dem Kontrast-Standard WCAG AA.",
+          "Der Hintergrund ist hell, dunkel oder ganz in deiner Farbe. Unter „Schrift“ und „Buttons“ stellst du die Schriften, den Stil der Buttons und ihre Ecken ein.",
+          "„Auf Vorlage zurücksetzen“ holt den Look der Vorlage zurück."
+        ]
+      },
+      "sprachen": {
+        "title": "Sprachen: Deutsch, Englisch, Arabisch",
+        "summary": "Das Dashboard und deine Seite gibt es auf Deutsch, Englisch und Arabisch.",
+        "body": [
+          "„Sprache der Seite“ in den Einstellungen bestimmt, in welcher Sprache Knöpfe, Daten und Hinweise auf deiner Seite erscheinen. Deine eigenen Texte schreibst du in der Sprache, die du willst.",
+          "Auf Arabisch liest sich die Seite von rechts nach links, mit einer arabischen Schrift, die zu ihrer Vorlage passt.",
+          "„Sprache der App“ gilt nur für dich, in diesem Browser."
+        ]
+      },
+      "teilen": {
+        "title": "Deine Seite teilen",
+        "summary": "Link kopieren, QR-Code laden oder ein Bild für Story und Beitrag machen.",
+        "body": [
+          "Unter „Start“ findest du deinen Link mit „Link kopieren“, „Teilen“, dem QR-Code und „Bild für Story & Post“.",
+          "Schickst du den Link in WhatsApp, iMessage oder LinkedIn, zeigt die Vorschau dein Foto oder deine Initialen, deinen Namen und deine Zeile.",
+          "Den QR-Code gibt es als PNG und als SVG in der Farbe deiner Seite; als SVG bleibt er in jeder Größe scharf. Scans zählt die Statistik als „QR-Code“.",
+          "Das Bild für Story und Beitrag zeigt Foto, Name und Adresse in deinem Look, im Format 9:16 oder 4:5."
+        ]
+      },
+      "statistik": {
+        "title": "Statistik: wie Linkyo zählt",
+        "summary": "Aufrufe, Besucher und Tipps auf deine Blöcke, gezählt ohne Cookies.",
+        "body": [
+          "Unter „Statistik“ siehst du Aufrufe, Besucher, Klicks und die Klickrate für 7, 30 oder 90 Tage, dazu woher Besucher kommen, aus welchem Land und mit welchem Gerät. Die Zahlen pro Tag lädst du als CSV.",
+          "Die Seite speichert nichts auf dem Gerät deiner Besucher. Damit eine Person an einem Tag nur einmal zählt, bildet unser Server aus Netzwerkadresse und Browserangabe mit einem täglich neuen Schlüssel einen Prüfwert. Adresse und Browserangabe speichern wir nicht, und die Prüfwerte löschen wir, sobald der Tag vorbei ist. Dauerhaft bleiben nur Tageszahlen.",
+          "Wer „Do Not Track“ oder „Global Privacy Control“ eingeschaltet hat, wird nicht gezählt, Roboter und Vorabrufe auch nicht. Deine eigenen Besuche zählen mit.",
+          "Im Editor zeigt jeder Block, wie oft er in den letzten 30 Tagen angetippt wurde. Deine Zahlen siehst nur du; unser Team sieht nur Summen."
+        ]
+      },
+      "datenschutz-seite": {
+        "title": "Datenschutz auf deiner Seite",
+        "summary": "Deine Seite setzt keine Cookies und lädt nichts von anderen Anbietern, solange Besucher es nicht erlauben.",
+        "body": [
+          "Creator-Seiten setzen keine Cookies und laden keine Tracker. Bilder, auch die Cover von Spotify oder YouTube, liefern wir selbst aus.",
+          "Videos und Musik von YouTube, Spotify und anderen Diensten laden erst, wenn ein Besucher sie antippt oder externe Inhalte erlaubt. YouTube läuft dann im erweiterten Datenschutzmodus.",
+          "Unten verlinkt deine Seite den Datenschutzhinweis von Linkyo und, sobald du es ausgefüllt hast, dein Impressum."
+        ]
+      },
+      "impressum": {
+        "title": "Impressum für deine Seite",
+        "summary": "Unter „Einstellungen“ › „Impressum deiner Seite“ trägst du Name, Anschrift, E-Mail-Adresse und Telefon ein.",
+        "body": [
+          "Vollständig ist es mit Name, Anschrift und einer gültigen E-Mail-Adresse; die Telefonnummer ist freiwillig.",
+          "Sobald du es ausgefüllt hast, verlinkt deine Seite es unten als „Impressum“."
+        ]
+      },
+      "konto-loeschen": {
+        "title": "Daten exportieren und Konto löschen",
+        "summary": "In den Einstellungen lädst du alle Daten als Datei und löschst dein Konto.",
+        "body": [
+          "„Meine Daten exportieren“ lädt alles als JSON-Datei.",
+          "„Konto löschen“ findest du unter „Einstellungen“ › „Konto“. Zur Bestätigung gibst du den Namen aus deiner Seitenadresse ein. Gelöscht werden dein Konto, deine Seite, deine hochgeladenen Bilder und deine Statistik; das lässt sich nicht rückgängig machen.",
+          "Danach ist deine Adresse nicht mehr erreichbar."
+        ]
+      }
     }
   }
 }

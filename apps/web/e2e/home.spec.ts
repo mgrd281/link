@@ -417,12 +417,15 @@ test.describe("marketing home", () => {
     await expect(page.locator("#start").getByRole("textbox", { name: "Choose your page address" })).toBeVisible();
     // The site's footer (the page in the playground's phone has its own).
     const footer = page.getByRole("contentinfo");
-    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link")).toHaveText(["Features", "Templates", "Portfolio", "Pricing"]);
+    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link")).toHaveText(["Features", "Templates", "Portfolio", "Pricing", "Changelog"]);
     await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link", { name: "Portfolio" })).toHaveAttribute("href", "/en/portfolio");
-    // Resources lead to the real product only: the editor to try, the figures, the questions.
-    const resources = footer.getByRole("navigation", { name: "Resources" }).getByRole("link");
-    await expect(resources).toHaveText(["Try the editor", "Analytics", "FAQ"]);
-    await expect(resources.first()).toHaveAttribute("href", "/en#try");
+    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link", { name: "Features" })).toHaveAttribute("href", "/en/funktionen");
+    // Help and contact lead to the real product only: the help pages, the questions, the editor to try, the contact.
+    const resources = footer.getByRole("navigation", { name: "Help & contact" }).getByRole("link");
+    await expect(resources).toHaveText(["Help", "FAQ", "Try the editor", "Contact"]);
+    await expect(resources.first()).toHaveAttribute("href", "/en/hilfe");
+    await expect(resources.nth(2)).toHaveAttribute("href", "/en#try");
+    await expect(footer.getByRole("navigation", { name: "About Linkyo" }).getByRole("link")).toHaveText(["About", "Security & privacy"]);
     // The design system and the prototypes stay reachable by address, but nothing here leads there.
     await expect(footer.locator('a[href*="/directions"], a[href$="/design"]')).toHaveCount(0);
     await expect(footer).not.toContainText(/prototype/i);
@@ -489,7 +492,8 @@ test("phone menu: a full screen with the places, the language, sign-up, and logg
   expect(box && [Math.round(box.width), Math.round(box.height)]).toEqual([390, 844]);
   // Every place says what is there; Portfolio sits between the templates and the prices.
   await expect(menu.getByRole("link", { name: /Templates/ })).toContainText("Browse them and start with one");
-  await expect(menu.getByRole("navigation", { name: "Menu" }).getByRole("link")).toHaveText([/^Features/, /^Templates/, /^Portfolio/, /^Pricing/, /^FAQ/]);
+  await expect(menu.getByRole("navigation", { name: "Menu" }).getByRole("link")).toHaveText([/^Features/, /^Templates/, /^Portfolio/, /^Pricing/, /^Help/]);
+  await expect(menu.getByRole("link", { name: /^Help/ })).toHaveAttribute("href", "/en/hilfe");
   await expect(menu.getByRole("link", { name: /Portfolio/ })).toHaveAttribute("href", "/en/portfolio");
   // The language, written out; the current one is marked.
   await expect(menu.getByRole("link", { name: "English" })).toHaveAttribute("aria-current", "true");
@@ -510,9 +514,9 @@ test("phone menu: a full screen with the places, the language, sign-up, and logg
 
 test("the header names Portfolio between the templates and the prices, in every language", async ({ page }) => {
   const names = {
-    de: ["Funktionen", "Vorlagen", "Portfolio", "Preise", "FAQ"],
-    en: ["Features", "Templates", "Portfolio", "Pricing", "FAQ"],
-    ar: ["المزايا", "القوالب", "معرض الأعمال", "الأسعار", "الأسئلة"],
+    de: ["Funktionen", "Vorlagen", "Portfolio", "Preise", "Hilfe"],
+    en: ["Features", "Templates", "Portfolio", "Pricing", "Help"],
+    ar: ["المزايا", "القوالب", "معرض الأعمال", "الأسعار", "المساعدة"],
   } as const;
   for (const locale of ["de", "en", "ar"] as const) {
     await page.goto(`/${locale}/templates`);
