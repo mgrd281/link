@@ -56,12 +56,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   setRequestLocale(locale);
   const blocks = await structuredData(locale);
   return (
-    <>
-      {blocks.map(({ type, json }) => (
+    <MarketingHome
+      structuredData={blocks.map(({ type, json }) => (
         // The JSON is serialised by jsonLd(): nothing in it can end the script element.
         <script key={type} type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />
       ))}
-      <MarketingHome />
-    </>
+    />
   );
 }
