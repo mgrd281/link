@@ -149,11 +149,12 @@ test.describe("laptop layout", () => {
     expect(Math.abs(before - after)).toBeLessThanOrEqual(48);
   });
 
-  test("Design at 1440: real previews in a grid of 3 or 4, All · Portfolio, the chosen look in view", async ({ page }) => {
+  test("Design at 1440: real previews in a grid of 3 or 4, All · Portfolio, the chosen look marked and the page left alone", async ({ page }) => {
     await signedIn(page);
     // The last look is chosen: it sits in the grid's last row.
     await seed(page, { template: "laufbahn" });
-    // Every scroll the picker asks for, with its behaviour: under reduced motion none may be smooth.
+    // Every scroll the picker asks for: on laptops it has no scroller of its own, so it asks for none
+    // (the page used to move by itself, see dashboard-polish.spec.ts).
     await page.addInitScript(() => {
       const calls: string[] = [];
       (window as unknown as { pickerScrolls: string[] }).pickerScrolls = calls;
@@ -181,12 +182,11 @@ test.describe("laptop layout", () => {
     const perRow = await firstRow(page, cards);
     expect(perRow).toBeGreaterThanOrEqual(3);
     expect(perRow).toBeLessThanOrEqual(4);
-    // The chosen card was brought into the window, instantly: reduced motion asks for no smooth scroll.
+    // One card is chosen (frame, tick, fill), and nothing was scrolled to show it: the page stays at its top.
     const chosen = page.locator(`${cards}:has(input:checked)`);
-    await expect(chosen).toBeInViewport({ ratio: 1 });
-    const scrolls = await page.evaluate(() => (window as unknown as { pickerScrolls: string[] }).pickerScrolls);
-    expect(scrolls.length, "the picker scrolled the chosen card into view").toBeGreaterThan(0);
-    expect(scrolls.filter((behavior) => behavior === "smooth")).toEqual([]);
+    await expect(chosen).toHaveCount(1);
+    expect(await page.evaluate(() => (window as unknown as { pickerScrolls: string[] }).pickerScrolls)).toEqual([]);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
     // No second set of Design tabs: only the card's.
     await expect(page.getByRole("tab", { name: "Color", exact: true })).toHaveCount(1);
     // D-14: the colour of your own is a control in a card, rounded like the buttons beside it, no pill.
@@ -197,7 +197,8 @@ test.describe("laptop layout", () => {
     // Portfolio: the looks made for portfolios, from the tokens.
     await page.getByRole("radio", { name: "Portfolio", exact: true }).click();
     await expect(page.locator(cards)).toHaveCount(templatesFor("portfolio").length);
-    await expect(chosen).toBeInViewport();
+    await expect(chosen).toHaveCount(1);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
     await page.getByRole("radio", { name: "All", exact: true }).click();
     await expect(page.locator(cards)).toHaveCount(TEMPLATE_IDS.length);
   });

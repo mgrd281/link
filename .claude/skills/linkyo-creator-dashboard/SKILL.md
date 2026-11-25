@@ -69,8 +69,10 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
   `template-previews.ts` (WebP in `src/assets/templates`, captured with
   `node scripts/capture-example-shots.mjs templates` against a running build, from the Poster
   prototype with the fictional sample, never a real person's page). A row on phones, a grid of 3–4 on
-  laptops, "Alle · Portfolio" from the tokens' `use`, the chosen card brought into view. `order` (the
-  welcome flow) puts a kind's starter and suggestions first.
+  laptops, "Alle · Portfolio" from the tokens' `use`. The chosen card is centred in the row on phones;
+  the grid never scrolls the page (it moved by 472 px at 1440 and put the title and the filter under
+  the bar): a card below the window stays there, marked by its frame, tick and fill.
+  `order` (the welcome flow) puts a kind's starter and suggestions first.
 - A new template: capture it (`template:<id>`), add its import, run `template-previews.test.ts`.
 - The live page on Design: a copy under the bar below `lg`, the toolbar's preview button from `lg`
   to `desk`, the preview column from `desk`.
