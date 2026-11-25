@@ -93,10 +93,15 @@ export function TryPhone({
     };
   }, []);
 
+  // Each request is carried out once, as soon as the screen has its size: a phone that arrives after
+  // the request (its code loads when the playground comes near) is not scrollable before that, and
+  // the request would be lost.
+  const revealed = useRef(0);
   useEffect(() => {
     const element = scroller.current;
-    if (!element || reveal.at === 0) return;
+    if (!element || reveal.at === 0 || scale === null || revealed.current === reveal.at) return;
     const frame = requestAnimationFrame(() => {
+      revealed.current = reveal.at;
       const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const { to } = reveal;
       let top = to === "top" ? 0 : element.scrollHeight;
@@ -110,7 +115,7 @@ export function TryPhone({
     return () => {
       cancelAnimationFrame(frame);
     };
-  }, [reveal]);
+  }, [reveal, scale]);
 
   // The page in the phone scrolls when asked: dragged with a mouse (it moves under the pointer; the
   // page is scaled, the pointer is not) and with the keys a scrolling page answers to.
