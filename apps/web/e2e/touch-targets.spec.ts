@@ -174,6 +174,22 @@ test.describe("on a phone", () => {
       expect(names, `${name} was measured`).toContain(name);
     }
   });
+
+  test("the measure counts a link's row-covering ::after (the row is positioned, the link is not), as the console's guard does", async ({ page }) => {
+    // A list row as the dashboard and the console draw them: the link's own box is its words, its
+    // `::after` covers the whole row. Plain CSS, so the measure is tested on its own.
+    await page.setContent(`<!doctype html><html><head><style>
+      body { margin: 0; font: 14px/1.2 sans-serif; }
+      ul { margin: 0; padding: 0; list-style: none; width: 320px; }
+      li { position: relative; display: flex; align-items: center; height: 56px; padding: 0 16px; }
+      a { display: inline-flex; color: inherit; }
+      a::after { content: ""; position: absolute; inset: 0; }
+    </style></head><body><ul><li><a href="#row">Ein Eintrag</a></li></ul></body></html>`);
+    const [row] = await targets(page);
+    expect(row?.own.h, "the link's own box is only its words").toBeLessThan(44);
+    expect(row?.hit, "the hit area is the row").toEqual({ w: 320, h: 56, extended: true });
+    expect(row?.reachable, "a finger on the row reaches the link").toBe(true);
+  });
 });
 
 test.describe("on a laptop", () => {
