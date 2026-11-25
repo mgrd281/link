@@ -5,7 +5,7 @@ import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { LinkyoDock } from "@/features/directions/shared/dock";
-import { Link } from "@/i18n/navigation";
+import { localePath } from "@/lib/locale-path";
 
 import { labelInFlow } from "./label-flow";
 import type { Preview } from "./registry";
@@ -106,9 +106,9 @@ export async function previewChrome({
             <ul className="grid gap-1">
               {languages.map((language) => (
                 <li key={language}>
-                  <Link
-                    href={`/p/${slug}${path}`}
-                    locale={language}
+                  {/* A plain link (the same address the router's link renders): the page carries no router link code for it (ADR 0008). */}
+                  <a
+                    href={localePath(`/p/${slug}${path}`, language)}
                     hrefLang={language}
                     lang={language}
                     aria-current={language === locale ? "page" : undefined}
@@ -116,7 +116,7 @@ export async function previewChrome({
                   >
                     {LANGUAGE_NAMES[language] ?? language}
                     {language === locale ? <Icon icon={Check} size="sm" /> : null}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>

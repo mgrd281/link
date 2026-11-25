@@ -16,7 +16,8 @@ import type { ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { tokens, type CreatorButtonStyle } from "@linkyo/tokens";
 import { cn, Icon } from "@linkyo/ui";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Scale, Star } from "lucide-react";
-import { getImageProps } from "next/image";
+// next/image's attributes from its own module: `next/image` would bring its client component into the page (ADR 0008).
+import { getImageProps } from "next/dist/shared/lib/image-external-get-image-props";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -29,6 +30,7 @@ import { CreatorFooter, MediaImage, mediaSizes, useCreatorFormat, type CreatorFo
 import { LinkIconGlyph } from "../shared/link-icons";
 import { resolveMedia } from "../shared/media";
 import { PictureViewer } from "../shared/picture-viewer";
+import { Unblur } from "../shared/unblur";
 import { BarActionGlyph } from "./bar-action-glyph";
 import { CodeBox } from "./code-box";
 import { ContactBand } from "./portfolio-sections";
@@ -197,6 +199,7 @@ export function ProjectPage({
     >
       {/* Tabbing never leaves the focused element under the bar (WCAG 2.4.11). */}
       {preview ? null : <style>{"html{scroll-padding-top:var(--spacing-16)}"}</style>}
+      <Unblur />
       {preview ? null : <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structuredData(page, project)) }} />}
       <ProjectBar profile={profile} primary={primary} backHref={backHref} onBack={onBack} />
       {/* Linkyo's own label on example pages, in the flow right under the bar: it never covers the page. */}

@@ -1,20 +1,25 @@
 import { hasImage } from "@linkyo/blocks/rules";
 import { cn, Icon, LogoSymbol } from "@linkyo/ui";
 import { Image as ImageIcon } from "lucide-react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import { initials } from "@/features/share/story-card";
 import { creatorOrigin } from "@/lib/page-url";
 
 import { resolveMedia } from "./media";
+import { PlainImage } from "./plain-image";
 import { mediaSizes, PlatformGlyph, platformName } from "./platforms";
 import { PrivacySettingsLink } from "./privacy";
 import { isForeignImage } from "./remote-images";
 
 export { mediaSizes, PlatformGlyph, platformName };
 
-/** next/image for sample assets (blur placeholder) and remote URLs. Always fills its box (no CLS). */
+/**
+ * A picture for sample assets (resolved here, on the server for a public page, so no picture records
+ * reach the visitor's browser) and remote URLs, through our image optimizer. Always fills its box (no
+ * CLS). next/image's attributes without its client code (`PlainImage`, ADR 0008); a bundled picture
+ * keeps next/image's blur placeholder while it loads, and `Unblur` takes it away once it has.
+ */
 export function MediaImage({
   src,
   alt,
@@ -50,7 +55,7 @@ export function MediaImage({
   }
   const resolved = resolveMedia(src);
   return (
-    <Image
+    <PlainImage
       src={resolved}
       alt={alt}
       fill

@@ -11,7 +11,9 @@ import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from ".
 import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
 import { BarActionGlyph } from "./bar-action-glyph";
-import { BarReveal, SectionSwitcher, type IndexEntry } from "./laufbahn-index";
+// Laufbahn's bar parts load with Laufbahn's pages only (a client module that splits them off, ADR 0008).
+import { BarReveal, SectionSwitcher } from "./signposted-bar";
+import type { IndexEntry } from "./laufbahn-index";
 import { HeroLive } from "./live";
 import { plateFrame, plateRatio } from "./projects";
 import { ShareButton } from "./share";

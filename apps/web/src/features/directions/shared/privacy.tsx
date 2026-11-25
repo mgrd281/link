@@ -1,9 +1,9 @@
 "use client";
 
-import { cn, Icon } from "@linkyo/ui";
-import { ShieldCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { createContext, use, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+
+import { cx } from "./cx";
 
 /**
  * Privacy notice on creator pages. The pages set no cookies and track nothing; the only thing that
@@ -14,6 +14,9 @@ import { createContext, use, useEffect, useId, useRef, useState, useSyncExternal
  * sentence and the choice per category sit behind "Settings".
  *
  * The choice is kept in localStorage: storing a consent decision is strictly necessary (TTDSG § 25 (2)).
+ *
+ * A client island of the page (ADR 0008): its icons are drawn where the page is rendered and passed in
+ * (`privacy-notice.tsx`), so the visitor's browser loads no icon kit for it.
  */
 type Choice = "media" | "essential";
 const KEY = "linkyo.privacy.v1";
@@ -102,14 +105,14 @@ function ThemedSwitch({ checked, onChange, label, disabled = false }: { checked:
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange?.(!checked)}
-      className={cn(
+      className={cx(
         "relative inline-flex h-control-sm w-12 shrink-0 items-center rounded-full p-0.5 transition-colors duration-micro focus-visible:focus-ring disabled:opacity-secondary",
         checked ? "bg-creator-accent" : "bg-creator-line-strong",
       )}
     >
       <span
         aria-hidden
-        className={cn(
+        className={cx(
           "size-6 rounded-full transition-transform duration-micro ease-standard",
           checked ? "translate-x-5 bg-creator-accent-fg rtl:-translate-x-5" : "bg-creator-surface",
         )}
@@ -160,13 +163,40 @@ export function OwnerPreview({ children, bar = false }: { children: ReactNode; b
 export const SETTINGS_SHEET_BG = "bg-creator-surface";
 export const SETTINGS_CARD_BG = "bg-creator-bg";
 
-const barButton = cn(
+const BAR_BUTTON = [
   "relative inline-flex h-control-md min-w-0 items-center justify-center gap-2 rounded-creator-button px-3 text-center text-caption leading-tight font-semibold text-balance",
   "transition-[scale,background-color,color] duration-micro focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none",
-  "before:absolute before:inset-0 pointer-coarse:before:-inset-0.5 @prose:px-4 @prose:text-small",
+  "before:absolute before:inset-0",
+] as const;
+/** Touch grows each button's target by 2 px around it (the bordered one by its border too, below). */
+const BAR_TOUCH = "pointer-coarse:before:-inset-0.5";
+const BAR_WIDE = "@prose:px-4 @prose:text-small";
+export const barButton = cx(...BAR_BUTTON, BAR_TOUCH, BAR_WIDE);
+/** "Only necessary": bordered; its 1 px border is outside the extension's box, so the extension reaches 3 px. */
+export const essentialButton = cx(
+  ...BAR_BUTTON,
+  BAR_WIDE,
+  "border border-creator-accent-text text-creator-accent-text hover:bg-creator-surface-2 pointer-coarse:before:-inset-[calc(var(--spacing-0_5)_+_var(--border-width-hairline))]",
 );
+export const manageButton = cx(barButton, "me-auto shrink-0 text-creator-fg-muted hover:text-creator-fg @max-prose:w-control-md @max-prose:px-0 @column-wide:me-0");
+export const allowButton = cx(barButton, "bg-creator-accent text-creator-accent-fg");
 const sheetButton =
   "min-h-control-lg w-full rounded-creator-button px-4 py-2 text-body font-semibold leading-tight text-balance transition-[scale,background-color] duration-micro focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none";
+export const saveButton = cx(sheetButton, "bg-creator-accent text-creator-accent-fg");
+export const settingsSheet = cx("layer-overlay fixed inset-x-0 bottom-0 max-h-dvh overflow-y-auto overscroll-contain border-t border-creator-line text-creator-fg", SETTINGS_SHEET_BG);
+export const settingsCard = cx("flex items-start gap-3 rounded-creator-card p-3", SETTINGS_CARD_BG);
+export const noticeBar = cx(
+  "layer-overlay fixed inset-x-0 bottom-0 border-t border-creator-line bg-creator-surface pb-[env(safe-area-inset-bottom)] text-creator-fg motion-safe:animate-rise-in",
+  // Above the Linkyo bar while it is shown: its pill, the pill's padding and border, its own padding.
+  "transition-[bottom] duration-standard ease-standard motion-reduce:transition-none",
+  "[[data-shown]~&]:bottom-[calc(var(--spacing-control-md)+2*var(--spacing-1)+2*var(--border-width-hairline)+max(var(--spacing-3),env(safe-area-inset-bottom)))] [[data-shown]~&]:pb-0",
+);
+
+/** The notice's shield, drawn where the page is rendered: in the titles, and on the phone's "Settings" button. */
+export interface PrivacyNoticeIcons {
+  shield: ReactNode;
+  manage: ReactNode;
+}
 
 /**
  * One slim bar across the bottom of the page in the creator's own colors (their surface, a hairline
@@ -176,7 +206,7 @@ const sheetButton =
  * filled with the creator's accent. Honest copy: there are no tracking cookies here. While the Linkyo
  * bar (dock) is shown under it, the bar sits right above it instead of covering it.
  */
-export function PrivacyNotice({ providers }: { providers: string[] }) {
+export function PrivacyNotice({ providers, icons }: { providers: string[]; icons: PrivacyNoticeIcons }) {
   const t = useTranslations("creator");
   const locale = useLocale();
   const choice = usePrivacyChoice();
@@ -230,11 +260,7 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
 
   if (details) {
     return (
-      <section
-        aria-label={t("privacyLabel")}
-        data-privacy-notice="settings"
-        className={cn("layer-overlay fixed inset-x-0 bottom-0 max-h-dvh overflow-y-auto overscroll-contain border-t border-creator-line text-creator-fg", SETTINGS_SHEET_BG)}
-      >
+      <section aria-label={t("privacyLabel")} data-privacy-notice="settings" className={settingsSheet}>
         <div className="mx-auto grid max-w-creator gap-4 px-5 pt-5 pb-[max(var(--spacing-5),env(safe-area-inset-bottom))]">
           <div className="grid gap-2">
             {/* Not a heading: the notice is no part of the creator's page outline (the region is labelled). */}
@@ -243,20 +269,20 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
               tabIndex={-1}
               className="flex items-center gap-2 justify-self-start rounded-xs text-h3 font-semibold text-creator-accent-text focus-visible:focus-ring"
             >
-              <Icon icon={ShieldCheck} size="md" />
+              {icons.shield}
               {t("privacySettings")}
             </p>
             <p className="text-small text-pretty text-creator-fg-muted">{sentence}</p>
           </div>
           <ul className="grid gap-2">
-            <li className={cn("flex items-start gap-3 rounded-creator-card p-3", SETTINGS_CARD_BG)}>
+            <li className={settingsCard}>
               <span className="grid min-w-0 flex-1 gap-0.5">
                 <span className="text-body font-semibold">{t("privacyNecessary")}</span>
                 <span className="text-small text-creator-fg-muted">{t("privacyNecessaryBody")}</span>
               </span>
               <span className="shrink-0 pt-0.5 text-small font-medium text-creator-fg-muted">{t("privacyAlwaysOn")}</span>
             </li>
-            <li className={cn("flex items-start gap-3 rounded-creator-card p-3", SETTINGS_CARD_BG)}>
+            <li className={settingsCard}>
               <span className="grid min-w-0 flex-1 gap-0.5">
                 <span className="text-body font-semibold">{t("privacyMedia")}</span>
                 <span className="text-small text-creator-fg-muted">{t("privacyMediaBody", { providers: list })}</span>
@@ -265,7 +291,7 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
             </li>
           </ul>
           <div className="grid gap-2">
-            <button type="button" onClick={() => decide(media ? "media" : "essential")} className={cn(sheetButton, "bg-creator-accent text-creator-accent-fg")}>
+            <button type="button" onClick={() => decide(media ? "media" : "essential")} className={saveButton}>
               {t("privacySave")}
             </button>
             <button
@@ -285,43 +311,22 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
     <>
       {/* Room after the footer, so the bar never covers the page's last line. */}
       <div aria-hidden className="h-[calc(var(--spacing-control-lg)+env(safe-area-inset-bottom))]" />
-      <section
-        aria-label={t("privacyLabel")}
-        data-privacy-notice="bar"
-        className={cn(
-          "layer-overlay fixed inset-x-0 bottom-0 border-t border-creator-line bg-creator-surface pb-[env(safe-area-inset-bottom)] text-creator-fg motion-safe:animate-rise-in",
-          // Above the Linkyo bar while it is shown: its pill, the pill's padding and border, its own padding.
-          "transition-[bottom] duration-standard ease-standard motion-reduce:transition-none",
-          "[[data-shown]~&]:bottom-[calc(var(--spacing-control-md)+2*var(--spacing-1)+2*var(--border-width-hairline)+max(var(--spacing-3),env(safe-area-inset-bottom)))] [[data-shown]~&]:pb-0",
-        )}
-      >
+      <section aria-label={t("privacyLabel")} data-privacy-notice="bar" className={noticeBar}>
         <div className="mx-auto flex h-control-lg max-w-work items-center gap-2 px-3 @prose:px-creator-gutter">
           <p className="hidden min-w-0 flex-1 items-center gap-2 text-small font-semibold text-creator-accent-text @column-wide:flex">
-            <Icon icon={ShieldCheck} size="md" />
+            {icons.shield}
             <span className="truncate">{t("privacyTitle")}</span>
           </p>
           {/* Phones: the shield alone, named "Settings"; wider screens: the word (with the shield until the title carries it). */}
-          <button
-            ref={manage}
-            type="button"
-            onClick={() => showDetails(true)}
-            className={cn(barButton, "me-auto shrink-0 text-creator-fg-muted hover:text-creator-fg @max-prose:w-control-md @max-prose:px-0 @column-wide:me-0")}
-          >
-            <Icon icon={ShieldCheck} size="md" className="text-creator-accent-text @column-wide:hidden" />
+          <button ref={manage} type="button" onClick={() => showDetails(true)} className={manageButton}>
+            {icons.manage}
             <span className="@max-prose:sr-only">{t("privacyManage")}</span>
           </button>
           {/* Its 1 px border is outside the extension's box: the extension reaches 3 px (not 2) so the target is 44 px like the others. */}
-          <button
-            type="button"
-            onClick={() => decide("essential")}
-            className={cn(
-              barButton,
-              "border border-creator-accent-text text-creator-accent-text hover:bg-creator-surface-2 pointer-coarse:before:-inset-[calc(var(--spacing-0_5)_+_var(--border-width-hairline))]",
-            )}
-          >
+          <button type="button" onClick={() => decide("essential")} className={essentialButton}>
             {t("privacyEssential")}
           </button>
-          <button type="button" onClick={() => decide("media")} aria-describedby={sentenceId} className={cn(barButton, "bg-creator-accent text-creator-accent-fg")}>
+          <button type="button" onClick={() => decide("media")} aria-describedby={sentenceId} className={allowButton}>
             {t("privacyAllow")}
           </button>
         </div>

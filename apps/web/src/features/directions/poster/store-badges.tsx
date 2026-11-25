@@ -1,7 +1,7 @@
 import type { AppStore, BlockOf } from "@linkyo/blocks";
 import { cn, Icon } from "@linkyo/ui";
 import { Globe } from "lucide-react";
-import Image, { type StaticImageData } from "next/image";
+import type { StaticImageData } from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 
 import appStoreAr from "@/assets/badges/app-store-ar.svg";
@@ -11,6 +11,7 @@ import googlePlayAr from "@/assets/badges/google-play-ar.png";
 import googlePlayDe from "@/assets/badges/google-play-de.png";
 import googlePlayEn from "@/assets/badges/google-play-en.png";
 
+import { PlainImage } from "../shared/plain-image";
 import { pressable } from "./styles";
 
 type Store = BlockOf<"app">["stores"][number];
@@ -48,7 +49,7 @@ export function StoreBadges({ title, stores, className }: { title: string; store
         const id = store.store as BadgeStore;
         return (
           <a key={id} href={store.url} aria-label={`${t(`badges.${id}`)}: ${title}`} className="rounded-sm focus-visible:focus-ring">
-            <Image src={BADGES[id][language]} alt={t(`badges.${id}`)} unoptimized className="h-touch-target w-auto" />
+            <PlainImage src={BADGES[id][language]} alt={t(`badges.${id}`)} unoptimized className="h-touch-target w-auto" />
           </a>
         );
       })}
