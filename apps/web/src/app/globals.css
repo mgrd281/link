@@ -51,6 +51,10 @@
     --toast-start: 0;
     --toast-end: 0;
     --preview-column: 0;
+
+    /* Arbeiten's cover tiles never grow past 352 px (2.75 × the 128 px step of the spacing scale):
+       three projects fill a laptop's column, one or two stay tile-sized instead of filling it. */
+    --work-tile-max: calc(var(--spacing-32) * 2.75);
   }
 
   :root:has([data-tabbar]) {

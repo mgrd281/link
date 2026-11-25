@@ -54,10 +54,17 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
 
 ## Widths on laptops
 
-- Single column: `max-w-prose lg:max-w-column-wide` (840 px from `lg`). Home and Invite: `wide`
+- Single column: `max-w-prose lg:max-w-column-wide` (840 px from `lg`): a form (Seitenadresse, Impressum, the
+  Settings list). Screens that have the room (`grow`: Page, Arbeiten, Design, and the Plan and Konto panes;
+  the list is `isGrownPath` in `routes.ts`, which the loading frame reads too) take `layout.content` from
+  `lg`, so they start at Home's edge and leave no dead gutters at 1920. Home and Invite: `wide`
   (`layout.content`) with two columns once the column is at least `column-wide`
-  (`@container` + `@column-wide:columns-2`). CSS columns keep the phone's order for reading and focus;
+  (`@container` + `@column-wide:columns-2`; `ColumnGroups` in `screen.tsx` does it for independent groups,
+  as Plan and Konto use it). CSS columns keep the phone's order for reading and focus;
   put `break-before-column` on the item that starts the second column, `break-inside-avoid` on items.
+- Arbeiten's covers: two across on a phone, three from a 560 px room, from 640 px up to four across
+  that stretch to fill the row when there are fewer (never past `--work-tile-max`, 352 px). A card is a
+  flex column and its arrows sit at its foot (`mt-auto`), so a row shows them on one line.
 - Beside the panel a column starts at the panel's edge (x = 288, folded 104); without a panel it is
   centred. `ShellChrome.panel` tells `Screen` which.
 - Check at 390, 1024, 1440 and 1920: at 1920 the main column is at least 760 px, or Home is two
@@ -68,8 +75,8 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
 - `features/directions/poster/template-picker.tsx`: real first screens from
   `template-previews.ts` (WebP in `src/assets/templates`, captured with
   `node scripts/capture-example-shots.mjs templates` against a running build, from the Poster
-  prototype with the fictional sample, never a real person's page). A row on phones, a grid of 3–4 on
-  laptops, "Alle · Portfolio" from the tokens' `use`. The chosen card is centred in the row on phones;
+  prototype with the fictional sample, never a real person's page). A row on phones, a grid of 3–5 on
+  laptops (five from a room of `column-wide`), "Alle · Portfolio" from the tokens' `use`. The chosen card is centred in the row on phones;
   the grid never scrolls the page (it moved by 472 px at 1440 and put the title and the filter under
   the bar): a card below the window stays there, marked by its frame, tick and fill.
   `order` (the welcome flow) puts a kind's starter and suggestions first.

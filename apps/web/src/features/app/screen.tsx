@@ -92,6 +92,13 @@ interface ScreenProps {
   preview?: boolean;
   /** A wider column (Statistik, Home's two columns, Invite). */
   wide?: boolean;
+  /**
+   * From the laptop width (`lg`) the column takes the content width as `wide` does, while phones and
+   * tablets keep the reading width. For a screen that has the room (a grid, a list, groups that stand in
+   * two columns): it shares its edges with Home, and no dead gutters are left at 1920. Without it the
+   * column stops at `layout.column-wide`, as a form should.
+   */
+  grow?: boolean;
   /** A pushed screen (a Settings pane): the desktop toolbar leads with "‹ label". */
   back?: { href: string; label: string } | undefined;
 }
@@ -115,7 +122,7 @@ const gutters =
  * name). Wide screens: a sticky 64 px toolbar with the title and the screen's actions, on the solid
  * ground; its hairline appears only once content scrolls under it. One h1 either way.
  */
-function ShellScreen({ title, lead, actions, children, preview = false, wide = false, back, chrome }: ScreenProps & { chrome: ShellChrome }) {
+function ShellScreen({ title, lead, actions, children, preview = false, wide = false, grow = false, back, chrome }: ScreenProps & { chrome: ShellChrome }) {
   const scrolled = useScrolled();
   const rtl = isRtl(useLocale());
   const heading = useRef<HTMLHeadingElement>(null);
@@ -127,8 +134,9 @@ function ShellScreen({ title, lead, actions, children, preview = false, wide = f
   useEffect(() => {
     if (pushed) heading.current?.focus({ preventScroll: true });
   }, [pushed]);
-  // Phones and tablets keep the reading width; laptops get the wide column (layout.column-wide).
-  const column = wide ? "max-w-content" : "max-w-prose lg:max-w-column-wide";
+  // Phones and tablets keep the reading width; laptops get the wide column (layout.column-wide), or
+  // the content width where the screen has the room for it (`grow`, `wide`): one start edge for all.
+  const column = wide ? "max-w-content" : cn("max-w-prose", grow ? "lg:max-w-content" : "lg:max-w-column-wide");
   // Beside the section panel the column hugs it (a detail pane); alone, it is centred.
   const align = chrome.panel ? "lg:mx-0" : null;
   return (
@@ -187,6 +195,20 @@ function PlainScreen({ title, lead, actions, children, preview = false, wide = f
         </div>
       </div>
       {preview ? <PlainPreviewAside /> : null}
+    </div>
+  );
+}
+
+/**
+ * Independent groups that stand in two columns once the screen's column has the room for two
+ * (`layout.column-wide`, a container query), as Home's cards do, and in one column below that. CSS
+ * columns keep the phone's order: reading and focus run down the first column, then the second. Every
+ * direct child is one group and is never split between the columns.
+ */
+export function ColumnGroups({ children }: { children: ReactNode }) {
+  return (
+    <div className="@container">
+      <div className="-mb-6 *:mb-6 *:break-inside-avoid @column-wide:columns-2 @column-wide:gap-6">{children}</div>
     </div>
   );
 }

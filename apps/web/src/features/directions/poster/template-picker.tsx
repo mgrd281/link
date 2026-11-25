@@ -21,8 +21,9 @@ type Filter = "all" | "portfolio";
  * the fictional sample creator, see template-previews.ts), so the choice is made on the real thing.
  * Native radio inputs: arrow keys move between templates, screen readers announce the choice.
  *
- * - Phones: one row that scrolls sideways. Laptops (lg): a grid, three or four columns by the room
- *   it has (container queries), so every look is in sight at once.
+ * - Phones: one row that scrolls sideways. Laptops (lg): a grid, three, four or five columns by the
+ *   room it has (container queries; five from a room of `layout.column-wide`, so the cards stay
+ *   about 200 px wide in the wide column of a 1920 px screen), every look in sight at once.
  * - "Alle · Portfolio" narrows the looks to those made for portfolios (tokens: `use`), so a template
  *   added later appears there without code.
  * - The chosen look is brought into view when the picker opens and when the filter changes, inside
@@ -98,7 +99,7 @@ export function TemplatePicker({
           gutter), never past them. A scroller clips what is outside it: pt-1 (taken back by -mt-1) and
           pb-1 keep the focus ring whole. Laptops: a grid in place, nothing to scroll. */}
       <div ref={box} className={cn("-mt-1 overflow-x-auto pt-1 pb-1 lg:overflow-visible", still ? "-mx-4 px-4 lg:mx-0 lg:px-0" : "-mx-5 px-5 lg:mx-0 lg:px-0")}>
-        <div className="grid auto-cols-[38%] grid-flow-col gap-3 sm:auto-cols-[26%] lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3 lg:@prose:grid-cols-4">
+        <div className="grid auto-cols-[38%] grid-flow-col gap-3 sm:auto-cols-[26%] lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3 lg:@prose:grid-cols-4 lg:@column-wide:grid-cols-5">
           {ids.map((id) => {
             const selected = id === value;
             const preview = TEMPLATE_PREVIEWS[id];

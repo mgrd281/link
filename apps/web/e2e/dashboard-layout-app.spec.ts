@@ -122,10 +122,17 @@ test.describe("laptop layout", () => {
       await expect(heading(page)).toBeVisible();
       await expect(page.locator("#nav-panel"), name).toHaveCount(panel ? 1 : 0);
     }
-    // At 1440 the Page column is the wide column (840), no longer a phone's 640.
+    // At 1440 the Page column is as wide as Home's and starts where it starts (polish pass: it used to
+    // stop at the 840 px column-wide and sit 14 px to the right of Home's edge), no longer a phone's 640.
+    await place(page, "Home").click();
+    await expect(heading(page)).toHaveText(/^Hi /);
+    const home = await column(page).boundingBox();
     await place(page, "Page").click();
     await expect(heading(page)).toHaveText("Page");
-    expect(Math.round((await column(page).boundingBox())?.width ?? 0)).toBe(tokens.layout.columnWide);
+    const pageColumn = await column(page).boundingBox();
+    expect(Math.round(pageColumn?.width ?? 0)).toBe(Math.round(home?.width ?? -1));
+    expect(Math.round(pageColumn?.x ?? 0)).toBe(Math.round(home?.x ?? -1));
+    expect(pageColumn?.width ?? 0).toBeGreaterThanOrEqual(tokens.layout.columnWide);
   });
 
   test("at 1920 the column is wide and Home stands in two columns", async ({ page }) => {

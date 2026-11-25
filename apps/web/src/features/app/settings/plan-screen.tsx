@@ -17,7 +17,7 @@ import { supabaseEnabled } from "@/lib/supabase/config";
 import { ListGroup, ListRow } from "../list";
 import { ProgressBar } from "../progress-bar";
 import { SETTINGS_HREF } from "../routes";
-import { Screen } from "../screen";
+import { ColumnGroups, Screen } from "../screen";
 import { useSite } from "../site-context";
 
 // ─── What the account's plan is ──────────────────────────────────────────────────────────────
@@ -383,8 +383,9 @@ export function PlanScreen() {
   const { state, retry } = usePlan(account.id);
   const quota = useAiQuota({ account: account.id, fresh: true });
   return (
-    <Screen title={t("panes.plan")} back={{ href: SETTINGS_HREF, label: tApp("nav.settings") }}>
-      <div className="grid grid-cols-1 gap-6">
+    <Screen title={t("panes.plan")} back={{ href: SETTINGS_HREF, label: tApp("nav.settings") }} grow>
+      {/* The groups stand in two columns where the column has the room (laptops), one below that. */}
+      <ColumnGroups>
         {state.status === "ready" ? (
           <>
             <PlanGroup view={state.view} />
@@ -395,7 +396,7 @@ export function PlanScreen() {
         ) : (
           <PlanPlaceholder failed={state.status === "failed"} retry={retry} />
         )}
-      </div>
+      </ColumnGroups>
     </Screen>
   );
 }

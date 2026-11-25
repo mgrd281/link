@@ -9,6 +9,7 @@ import {
   designTabFrom,
   hasSectionPanel,
   INVITE_HREF,
+  isGrownPath,
   isReturnPath,
   isSettingsPath,
   markedTab,
@@ -31,6 +32,18 @@ describe("dashboard routes", () => {
     expect(routeInfo("/app/settings/account")).toEqual({ title: "settings.panes.account", tab: null, parent: SETTINGS_HREF, section: "settings" });
     expect(routeInfo("/app/settings/address")).toEqual({ title: "settings.panes.address", tab: null, parent: SETTINGS_HREF, section: "settings" });
     expect(routeInfo("/app/settings/legal")).toEqual({ title: "settings.panes.legal", tab: null, parent: SETTINGS_HREF, section: "settings" });
+  });
+
+  it("names the screens that take the content width on laptops (Screen `grow`), forms excluded", () => {
+    // Page, Arbeiten, Design and the Plan and Account panes start at Home's edge; the loading frame reads this list.
+    for (const path of ["/app/editor", "/app/work", "/app/design", "/app/settings/plan", "/app/settings/account"]) {
+      expect(isGrownPath(path), path).toBe(true);
+      expect(isGrownPath(`${path}/`), `${path}/`).toBe(true);
+      // A place of its own, not the fallback an unknown path gets (Start).
+      expect(routeInfo(path).title, path).not.toBe("nav.home");
+    }
+    // Home and Invite are `wide` already; the form panes keep the narrower column.
+    for (const path of ["/app", "/app/invite", "/app/analytics", "/app/settings", "/app/settings/address", "/app/settings/legal"]) expect(isGrownPath(path), path).toBe(false);
   });
 
   it("pushes the Plan pane over Settings, titled by its own message", () => {

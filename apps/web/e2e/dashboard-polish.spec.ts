@@ -49,10 +49,12 @@ interface Seed {
   projects?: number;
   links?: number;
   ready?: boolean;
+  /** The number of a project whose cover has no description: its card on Arbeiten has one row more than the others. */
+  noAlt?: number;
 }
 
 /** A demo page: links and projects (a cover each), and (ready) a photo and a bio. */
-async function seed(page: Page, { kind, template, projects = 0, links = 3, ready = true }: Seed) {
+async function seed(page: Page, { kind, template, projects = 0, links = 3, ready = true, noAlt = -1 }: Seed) {
   await page.evaluate(
     ([key, options]) => {
       const db = JSON.parse(window.localStorage.getItem(key) ?? "{}") as {
@@ -72,7 +74,7 @@ async function seed(page: Page, { kind, template, projects = 0, links = 3, ready
             title: `Arbeit ${i + 1}`,
             summary: "Ein Satz über diese Arbeit.",
             year: { from: 2020 + i },
-            cover: cover(`Bild ${i + 1}`),
+            cover: cover(i === options.noAlt ? "" : `Bild ${i + 1}`),
           }),
         ),
       ];
@@ -85,7 +87,7 @@ async function seed(page: Page, { kind, template, projects = 0, links = 3, ready
       if (options.template) site.theme = { template: options.template };
       window.localStorage.setItem(key, JSON.stringify(db));
     },
-    [STORAGE_KEY, { kind, template, projects, links, ready }] as const,
+    [STORAGE_KEY, { kind, template, projects, links, ready, noAlt }] as const,
   );
   await page.reload();
   await expect(heading(page)).toBeVisible();
@@ -116,9 +118,10 @@ test.describe("D1: Design keeps the page where it is", () => {
       await expect(chosen).toHaveCount(1);
       await page.waitForTimeout(1000);
       const scrolled = await page.evaluate(() => window.scrollY);
-      // The chosen look lies below the window (its place in the page, not where the window now is):
-      // that is what made the old picker scroll.
-      expect(((await chosen.boundingBox())?.y ?? 0) + scrolled, "the chosen look is below the window").toBeGreaterThan(height);
+      // The chosen look does not fit in the window (its place in the page, not where the window now is):
+      // its bottom edge is below it, which is what made the old picker scroll.
+      const place = await chosen.boundingBox();
+      expect((place?.y ?? 0) + (place?.height ?? 0) + scrolled, "the chosen look reaches below the window").toBeGreaterThan(height);
       expect(scrolled, "the page scrolled by itself").toBe(0);
       // A smooth scroll that starts late (a busy page) is caught too.
       await page.waitForTimeout(1500);
@@ -401,4 +404,90 @@ test("D4: on a laptop the rail shows the same sheet for Seite", async ({ page })
   await page.setViewportSize({ width: 1440, height: 900 });
   await signedIn(page);
   expect(await glyphOf(page.locator("[data-nav] a[href$='/app/editor'] svg")), "Seite in the rail").toContain("lucide-file");
+});
+
+// ─── D5: no dead areas on laptops ──────────────────────────────────────────────────────────────
+
+const column = (page: Page) => page.locator("#main [data-screen-column]").first();
+
+test.describe("D5: dead areas on laptops", () => {
+  for (const [width, height] of [
+    [1440, 900],
+    [1920, 1080],
+  ] as const) {
+    test(`at ${String(width)}: one start edge, the editor uses the width, Arbeiten fills its column, Plan and Konto stand in columns`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await signedIn(page);
+      await seed(page, { kind: "designer", template: "werkbogen", projects: 3, noAlt: 1 });
+
+      // Home, Seite, Arbeiten and Design start at the same edge and are as wide as one another.
+      const columns: Record<string, { x: number; w: number }> = {};
+      for (const [name, path] of [
+        ["Home", "/en/app"],
+        ["Seite", "/en/app/editor"],
+        ["Arbeiten", "/en/app/work"],
+        ["Design", "/en/app/design"],
+      ] as const) {
+        await page.goto(path);
+        await expect(heading(page)).toBeVisible();
+        const box = await column(page).boundingBox();
+        if (!box) throw new Error(`no column on ${name}`);
+        columns[name] = { x: Math.round(box.x), w: Math.round(box.width) };
+      }
+      expect(new Set(Object.values(columns).map((box) => box.x)).size, `start edges ${JSON.stringify(columns)}`).toBe(1);
+      expect(new Set(Object.values(columns).map((box) => box.w)).size, `widths ${JSON.stringify(columns)}`).toBe(1);
+      // At 1920 the column is the content width (1120), not the 840 px one with 290 px of nothing on both sides.
+      if (width === 1920) {
+        expect(columns.Seite?.w, "the editor's column at 1920").toBeGreaterThanOrEqual(1100);
+        const rail = await page.locator("[data-nav]").boundingBox();
+        expect((columns.Seite?.x ?? 0) - ((rail?.x ?? 0) + (rail?.width ?? 0)), "the gutter between the rail and the editor").toBeLessThanOrEqual(200);
+      }
+
+      // Arbeiten: three covers fill their column (a quarter of it was empty).
+      await page.goto("/en/app/work");
+      await expect(page.locator("#main ul[aria-label] > li")).toHaveCount(3);
+      const row = await page.locator("#main ul[aria-label] > li").evaluateAll((items) => {
+        const boxes = items.map((item) => item.getBoundingClientRect());
+        return { left: Math.min(...boxes.map((b) => b.left)), right: Math.max(...boxes.map((b) => b.right)), widest: Math.max(...boxes.map((b) => b.width)), tops: new Set(boxes.map((b) => Math.round(b.top))).size };
+      });
+      const work = columns.Arbeiten;
+      expect(row.tops, "three covers in one row").toBe(1);
+      expect((row.right - row.left) / (work?.w ?? 1), "the share of its column the covers fill").toBeGreaterThanOrEqual(width === 1440 ? 0.99 : 0.95);
+      // Never huge: a tile stops at 352 px (--work-tile-max).
+      expect(row.widest).toBeLessThanOrEqual(352 + 1);
+      // The arrows stand at the cards' feet, on one line however much text sits above them (one card has an extra row).
+      const feet = await page.locator("#main ul[aria-label] > li").evaluateAll((items) => items.map((item) => Math.round([...item.querySelectorAll("button")].at(-1)?.getBoundingClientRect().bottom ?? 0)));
+      expect(new Set(feet).size, `where the arrows end: ${JSON.stringify(feet)}`).toBe(1);
+
+      // Plan and Konto: their groups stand in two columns where the column has the room, and use the width.
+      for (const [name, path] of [
+        ["Plan", "/en/app/settings/plan"],
+        ["Konto", "/en/app/settings/account"],
+      ] as const) {
+        await page.goto(path);
+        await expect(heading(page)).toBeVisible();
+        await page.waitForLoadState("networkidle");
+        const info = await page.evaluate(() => {
+          const area = document.querySelector("#main [data-screen-column]");
+          const groups = [...(area?.querySelectorAll(":scope > .\\@container > div > *") ?? [])].map((group) => group.getBoundingClientRect());
+          const aside = document.querySelector("[data-preview-aside]")?.getBoundingClientRect();
+          const box = area?.getBoundingClientRect();
+          return {
+            columns: new Set(groups.map((g) => Math.round(g.left))).size,
+            groups: groups.length,
+            column: box ? { x: box.left, w: box.width, right: box.right } : null,
+            reach: groups.length ? Math.max(...groups.map((g) => g.right)) : 0,
+            asideLeft: aside ? aside.left : innerWidth,
+          };
+        });
+        expect(info.groups, `${name}: groups on the screen`).toBeGreaterThanOrEqual(2);
+        if ((info.column?.w ?? 0) >= 840) {
+          expect(info.columns, `${name}: two columns in a column ${String(Math.round(info.column?.w ?? 0))} px wide`).toBe(2);
+          expect(info.reach, `${name}: the second column runs to the column's end`).toBeGreaterThanOrEqual((info.column?.right ?? 0) - 2);
+        }
+        // Nothing but a gutter is left between the column and the live page beside it, where there is one (Plan has none).
+        if (name === "Konto") expect(info.asideLeft - (info.column?.right ?? 0), `${name}: the gap before the live page`).toBeLessThanOrEqual(width === 1440 ? 40 : 120);
+      }
+    });
+  }
 });

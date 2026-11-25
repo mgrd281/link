@@ -167,6 +167,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
       title={title ?? t("title")}
       lead={lead}
       preview
+      grow
       actions={
         <>
           <UndoRedo />

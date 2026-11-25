@@ -256,6 +256,7 @@ export function DesignScreen() {
     <Screen
       title={t("title")}
       preview
+      grow
       actions={
         <>
           <UndoRedo />

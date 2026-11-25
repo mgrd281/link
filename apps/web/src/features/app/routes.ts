@@ -115,6 +115,16 @@ export function hasSectionPanel(section: SectionKey, counted: boolean): boolean 
   return section === "invite" || section === "settings";
 }
 
+/**
+ * The screens that take the content width from the laptop width on (`Screen`'s `grow`): a list, a
+ * grid or groups that have the room for it, so they start at Home's edge and no dead gutters are
+ * left at 1920. The loading frame (`AppSplash`) draws the same column for them, so nothing moves
+ * when the screen arrives. Forms (Page address, Legal notice) keep the narrower column.
+ */
+const GROWN_PATHS: ReadonlySet<string> = new Set(["/app/editor", "/app/work", "/app/design", "/app/settings/plan", "/app/settings/account"]);
+
+export const isGrownPath = (pathname: string): boolean => GROWN_PATHS.has(pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname);
+
 /** The Design screen's tabs, in order. The selected one lives in the URL (`?tab=`). */
 export const DESIGN_TABS = ["color", "fonts", "buttons"] as const;
 export type DesignTab = (typeof DESIGN_TABS)[number];
