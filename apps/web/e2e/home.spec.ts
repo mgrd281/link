@@ -345,6 +345,65 @@ test.describe("marketing home", () => {
     await expect(page.locator("#analytics").getByRole("listitem").filter({ hasText: "No cookies, no fingerprinting" })).toBeVisible();
   });
 
+  /**
+   * The sample tile's three figures sit side by side in a card that is only about 290 px wide at
+   * laptop width. "Click rate" was cut to "Click ra…" (the label was truncated), and "12,480" stuck out of
+   * its cell. Every label and figure must lie whole inside its own cell, in every language and width, and
+   * the cells must not overlap.
+   */
+  test("step 4: no label or figure of the sample tile is cut or sticks out of its cell", async ({ page }) => {
+    test.setTimeout(150_000);
+    // No count-up and no entrance animation: the figures are measured as they rest.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 800],
+      [1024, 768],
+      [768, 1024],
+      [390, 844],
+      [360, 740],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      for (const locale of ["en", "de", "ar"] as const) {
+        await page.goto(`/${locale}`);
+        await page.locator("#analytics").scrollIntoViewIfNeeded();
+        const cells = await page.evaluate(() =>
+          [...document.querySelectorAll("#analytics dl > div")].map((cell) => {
+            const box = cell.getBoundingClientRect();
+            const inside = (element: Element) => {
+              const range = document.createRange();
+              range.selectNodeContents(element);
+              const text = range.getBoundingClientRect();
+              return text.left >= box.left - 0.5 && text.right <= box.right + 0.5;
+            };
+            const label = cell.querySelector("dt");
+            const figure = cell.querySelector("dd [aria-hidden]");
+            return {
+              label: label?.textContent ?? "",
+              cut: label ? label.scrollWidth > label.clientWidth : true,
+              labelInside: label ? inside(label) : false,
+              figureInside: figure ? inside(figure) : false,
+              box: { left: box.left, right: box.right, top: box.top, bottom: box.bottom },
+            };
+          }),
+        );
+        const where = `${locale} at ${String(width)} px`;
+        expect(cells.length, where).toBe(3);
+        for (const cell of cells) {
+          expect.soft(cell.cut, `${where}: the label "${cell.label}" is cut`).toBe(false);
+          expect.soft(cell.labelInside, `${where}: the label "${cell.label}" sticks out of its cell`).toBe(true);
+          expect.soft(cell.figureInside, `${where}: the figure under "${cell.label}" sticks out of its cell`).toBe(true);
+        }
+        for (const [index, a] of cells.entries()) {
+          for (const b of cells.slice(index + 1)) {
+            const apart = a.box.right <= b.box.left + 0.5 || b.box.right <= a.box.left + 0.5 || a.box.bottom <= b.box.top + 0.5 || b.box.bottom <= a.box.top + 0.5;
+            expect.soft(apart, `${where}: the cells "${a.label}" and "${b.label}" overlap`).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
   test("pricing, questions, the last word and the footer", async ({ page }) => {
     const pricing = page.locator("#pricing");
     await expect(pricing.getByRole("heading", { level: 3 })).toHaveText(["Free", /Pro/]);
