@@ -139,7 +139,9 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
       data-paused={!rotating}
       className="mx-auto grid w-full max-w-creator grid-cols-1 justify-items-center gap-6 md:gap-8"
     >
-      {/* Room above the phones for the address; the phones share the front phone's box. */}
+      {/* Room above the phones for the address; the phones share the front phone's box. The pages
+          settle in place without fading: the page in front is the first screen's largest picture (its
+          Largest Contentful Paint), and a picture that starts transparent only counts once it shows. */}
       <div
         aria-live={rotating ? "off" : "polite"}
         onPointerDown={(event) => {
@@ -171,7 +173,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
           event.preventDefault();
           event.stopPropagation();
         }}
-        className="mk-phone-in relative w-full touch-pan-y touch-pinch-zoom pt-16"
+        className="mk-settle relative w-full touch-pan-y touch-pinch-zoom pt-16"
       >
         <div className="relative mx-auto w-1/2 md:w-5/12 lg:mk-deck-fit">
           <div aria-hidden className="mk-deck-halo w-[260%] border border-line" />
