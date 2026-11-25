@@ -9,6 +9,7 @@ import { STARS } from "@/features/previews/stars-data";
 import { ClaimForm } from "./claim-form";
 import { CONCEPT_FACES, CONCEPT_SHOTS, type ConceptShot } from "./examples";
 import { HeroDeck, type DeckPage } from "./hero-deck";
+import { source } from "./picture-source";
 
 export const order = (n: number) => ({ "--i": n }) as CSSProperties;
 
@@ -49,14 +50,15 @@ export function Hero() {
   const promises = t.raw("hero.pills") as string[];
   const current = useLocale();
   const locale = LOCALES.find((code) => code === current) ?? "de";
-  // Concept pages exist in every language: link to, and show, the visitor's own.
+  // Concept pages exist in every language: link to, and show, the visitor's own. The deck gets each
+  // picture's address and size only: its blurred preview would travel in the page for nothing.
   const pages: DeckPage[] = STACK.map((slug) => ({
     slug,
     concept: true,
-    face: CONCEPT_FACES[slug],
+    face: source(CONCEPT_FACES[slug]),
     name: STARS.find((star) => star.slug === slug)?.name[locale] ?? slug,
     href: `/${locale}/p/${slug}`,
-    shot: CONCEPT_SHOTS[slug][locale],
+    shot: source(CONCEPT_SHOTS[slug][locale]),
   }));
   return (
     // Clipped at every width: the deck's queued cards wait, invisible, beyond its column, and from

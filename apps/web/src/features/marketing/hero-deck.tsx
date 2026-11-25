@@ -3,25 +3,26 @@
 import { tokens } from "@linkyo/tokens";
 import { cn, Icon, LogoSymbol } from "@linkyo/ui";
 import { ArrowUpRight } from "lucide-react";
-import Image, { type StaticImageData } from "next/image";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 
 import { pageAddress } from "@/lib/page-url";
 
 import { faceSize, phoneSizes } from "./assets";
+import { Picture } from "./picture";
+import type { PictureSource } from "./picture-source";
 
 export interface DeckPage {
   slug: string;
   name: string;
   href: string;
   /** The face on the page's button under the deck. */
-  face: StaticImageData;
+  face: PictureSource;
   /**
    * The picture of the page, in the visitor's language where the page has one. A picture taller
    * than the screen scrolls by itself while the page is in front.
    */
-  shot: StaticImageData;
+  shot: PictureSource;
   /** An unofficial concept page of a well-known person: its address carries a "Concept" tag. */
   concept?: boolean;
 }
@@ -71,6 +72,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
   const [active, setActive] = useState(0);
   const [turns, setTurns] = useState(0);
   const [chosen, setChosen] = useState(false);
+  const [first, setFirst] = useState(false);
   const [warm, setWarm] = useState(false);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const row = useRef<HTMLDivElement | null>(null);
@@ -99,14 +101,22 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
   }, [active, reduced]);
 
   /**
-   * The first picture is there: now the pages still out of sight fetch theirs, quietly, so a tap on
-   * any face shows its page at once. Not when the browser asks to save data: there a picture loads
-   * when its page comes near.
+   * The first picture is there: now the two pages about to come into view fetch theirs, and the pages
+   * still out of sight too, quietly, so a tap on any face shows its page at once. Not those when the
+   * browser asks to save data: there a picture loads when its page comes near.
    */
-  const warmUp = () => {
+  const warmUp = useCallback(() => {
+    setFirst(true);
     const { connection } = navigator as Navigator & { connection?: { saveData?: boolean } };
     if (!connection?.saveData) setWarm(true);
-  };
+  }, []);
+  /** The first picture can be there before the page's code runs (no load event to hear then). */
+  const warmIfLoaded = useCallback(
+    (picture: HTMLImageElement | null) => {
+      if (picture?.complete && picture.naturalWidth > 0) warmUp();
+    },
+    [warmUp],
+  );
 
   const advance = () => {
     setActive((current) => (current + 1) % count);
@@ -131,7 +141,9 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
       data-paused={!rotating}
       className="mx-auto grid w-full max-w-creator grid-cols-1 justify-items-center gap-6 md:gap-8"
     >
-      {/* Room above the phones for the address; the phones share the front phone's box. */}
+      {/* Room above the phones for the address; the phones share the front phone's box. The pages
+          settle in place without fading: the page in front is the first screen's largest picture (its
+          Largest Contentful Paint), and a picture that starts transparent only counts once it shows. */}
       <div
         aria-live={rotating ? "off" : "polite"}
         onPointerDown={(event) => {
@@ -163,7 +175,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
           event.preventDefault();
           event.stopPropagation();
         }}
-        className="mk-phone-in relative w-full touch-pan-y touch-pinch-zoom pt-16"
+        className="mk-settle relative w-full touch-pan-y touch-pinch-zoom pt-16"
       >
         <div className="relative mx-auto w-1/2 md:w-5/12 lg:mk-deck-fit">
           <div aria-hidden className="mk-deck-halo w-[260%] border border-line" />
@@ -175,9 +187,10 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
             const slot = slotOf(index, active, count);
             const front = slot === "front";
             const beside = slot === "next" || slot === "prev";
-            // Pictures load for the pages in view and the two about to come into view; the others
-            // follow once the first is there (warmUp).
-            const near = [0, 1, 2, count - 2, count - 1].includes((index - active + count) % count);
+            // Pictures load for the pages in view; the two about to come into view and the others follow
+            // once the first is there (warmUp), so nothing hidden competes with the page in front.
+            const offset = (index - active + count) % count;
+            const near = [0, 1, count - 1].includes(offset) || (first && [2, count - 2].includes(offset));
             return (
               <div
                 key={page.slug}
@@ -189,18 +202,19 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                 data-slot={slot}
                 className="mk-deck-card group absolute inset-x-0 top-0"
               >
-                {/* The page itself, edge to edge: no bezel, no frame. In front, it scrolls by itself. */}
+                {/* The page itself, edge to edge: no bezel, no frame. In front, it scrolls by itself. Until
+                    its picture is there the screen shows its own colour (no blurred preview in the page). */}
                 <div className="mk-deck-screen aspect-phone overflow-hidden rounded-xl bg-canvas-muted">
                   {near || warm ? (
-                    <Image
+                    <Picture
                       src={page.shot}
                       alt=""
                       sizes={phoneSizes.hero}
-                      placeholder="blur"
                       preload={index === 0}
                       fetchPriority={index === 0 ? "high" : near ? "auto" : "low"}
                       loading={index === 0 || !beside ? "eager" : "lazy"}
                       onLoad={index === 0 ? warmUp : undefined}
+                      ref={index === 0 ? warmIfLoaded : undefined}
                       data-tour={front && rotating ? "" : undefined}
                       onAnimationEnd={front && rotating ? advance : undefined}
                       className={cn("h-auto w-full", front && rotating && "mk-deck-scroll")}
@@ -293,7 +307,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                   <circle key={rotating ? active : "full"} cx="22" cy="22" r="21" pathLength="1" data-ring data-running={rotating ? "" : undefined} className="mk-deck-ring" />
                 ) : null}
               </svg>
-              <Image src={page.face} alt="" sizes={faceSize} className="size-full rounded-full object-cover" />
+              <Picture src={page.face} alt="" sizes={faceSize} className="size-full rounded-full object-cover" />
             </button>
           );
         })}

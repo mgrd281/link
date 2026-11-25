@@ -1,7 +1,6 @@
 import { creatorTokens } from "@linkyo/tokens";
 import { Button, cn, Icon } from "@linkyo/ui";
 import { ArrowRight, FolderKanban } from "lucide-react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import { EXAMPLES } from "@/features/examples/catalog";
@@ -11,6 +10,8 @@ import { Link } from "@/i18n/navigation";
 import { phoneSizes } from "../assets";
 import { EXAMPLE_SHOTS, type ExampleShot } from "../examples";
 import { SECTION_TITLE } from "../headings";
+import { Picture } from "../picture";
+import { source } from "../picture-source";
 import { pageHref, portfolioExamples } from "./model";
 
 const hasShot = (slug: LookId): slug is LookId & ExampleShot => slug in EXAMPLE_SHOTS;
@@ -56,7 +57,8 @@ export function PortfolioBand() {
                   className="group block rounded-xl focus-visible:focus-ring"
                 >
                   <span className="relative block aspect-short overflow-hidden rounded-xl border border-line bg-surface transition-[translate] duration-standard ease-standard group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
-                    <Image src={EXAMPLE_SHOTS[slug]} alt="" fill sizes={phoneSizes.side} placeholder="blur" className="object-cover object-top" />
+                    {/* The phone's own colour shows until its picture is there (no blurred preview in the page). */}
+                    <Picture src={source(EXAMPLE_SHOTS[slug])} alt="" fill sizes={phoneSizes.side} className="object-cover object-top" />
                   </span>
                 </a>
                 <p className="grid gap-0.5 px-1 text-small">

@@ -765,6 +765,13 @@ export function Playground({ looks, rtl, ai = false }: { looks: [LookOption, ...
       tab === entry ? "opacity-100" : "invisible opacity-0",
     ),
   });
+  /**
+   * What a panel out of sight holds is drawn once the playground comes near (a screen ahead, as the
+   * phone) or its tab is chosen. Until then the page carries the first panel only: the home page's
+   * HTML stays small (ADR 0008), and the looks' typefaces load with the playground, not with the
+   * first screen. The panels share one cell of a fixed height, so nothing moves when they fill.
+   */
+  const drawn = (entry: Tab) => near || tab === entry;
   // Fields sit in one soft group, their label inside, as in an app's settings; focus shows as the
   // same calm teal frame as every field on the site (never a ring around a frame).
   const FIELD =
@@ -955,224 +962,232 @@ export function Playground({ looks, rtl, ai = false }: { looks: [LookOption, ...
 
           {/* Links: paste one (or pick an example); below, what is on the page. */}
           <div {...panel("links")}>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                add(draft);
-              }}
-              className="grid shrink-0 grid-cols-1 gap-2"
-            >
-              <label htmlFor={`${id}-link`} className="sr-only">
-                {tPaste("label")}
-              </label>
-              <div
-                className={cn(
-                  "flex h-control-lg items-center gap-2 rounded-lg border border-transparent bg-canvas-muted ps-4 pe-1 transition-[border-color,background-color] duration-micro ease-standard hover:border-line-strong has-[input:focus-visible]:border-focus has-[input:focus-visible]:bg-surface has-[input:focus-visible]:focus-field",
-                  demoFocus === "link" && FIELD_ON,
-                )}
-              >
-                <Icon icon={Link2} size="md" className="shrink-0 text-fg-tertiary" />
-                <input
-                  ref={linkTarget}
-                  id={`${id}-link`}
-                  value={draft}
-                  onChange={(event) => {
-                    setDraft(event.target.value);
-                    setError(null);
+            {drawn("links") ? (
+              <>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    add(draft);
                   }}
-                  onFocus={(event) => {
-                    const input = event.currentTarget;
-                    if (EXAMPLES.some((example) => example.url === input.value)) input.select();
-                  }}
-                  onPaste={(event) => {
-                    const text = event.clipboardData.getData("text");
-                    if (detectLink(text.trim())) {
-                      event.preventDefault();
-                      add(text);
-                    }
-                  }}
-                  // An address reads left to right; the empty field's hint follows the page's language.
-                  dir={draft ? "ltr" : undefined}
-                  inputMode="url"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  placeholder={tPaste("placeholder")}
-                  aria-invalid={error === "invalid" || undefined}
-                  aria-describedby={`${id}-link-hint`}
-                  className="h-full min-w-0 flex-1 bg-transparent text-body outline-hidden placeholder:text-fg-tertiary"
-                />
-                {/* Quiet until there is a link to add; then the one filled button in the panel. */}
-                <button
-                  ref={addTarget}
-                  type="submit"
-                  aria-label={tPaste("add")}
-                  className={cn(
-                    "grid size-control-md shrink-0 place-items-center rounded-full transition-[background-color,color,scale] duration-micro focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none",
-                    detection ? "bg-primary text-primary-fg hover:bg-primary-hover" : "bg-tinted text-tinted-fg hover:bg-tinted-hover",
-                  )}
+                  className="grid shrink-0 grid-cols-1 gap-2"
                 >
-                  <Icon icon={Plus} size="md" />
-                </button>
-              </div>
-              {/* One slot: the examples while the field is empty, else what the field says (the field's
-                  description, not a live region: the demo types here too; the visitor's own additions
-                  and errors are said through the status line). */}
-              <div className="grid min-h-control-sm shrink-0">
-                <p
-                  id={`${id}-link-hint`}
-                  className={cn("col-start-1 row-start-1 flex min-h-control-sm items-center gap-2 px-4 text-small", error ? "text-danger-strong" : "text-link")}
-                >
-                  {error === "invalid" ? (
-                    tPaste("invalid")
-                  ) : error === "limit" ? (
-                    t("limit")
-                  ) : detection ? (
-                    <span key={detection.type} className="inline-flex items-center gap-2 font-semibold motion-safe:animate-fade-in">
-                      <Icon icon={CircleCheck} size="sm" />
-                      {tPaste("detected", { type: draftProfile ? platformName(draftProfile.platform) : typeLabel(typeKey(detection)) })}
-                    </span>
-                  ) : null}
-                </p>
-                {showExamples ? (
+                  <label htmlFor={`${id}-link`} className="sr-only">
+                    {tPaste("label")}
+                  </label>
                   <div
-                    role="group"
-                    aria-label={tPaste("examples")}
-                    className="mk-no-scrollbar col-start-1 row-start-1 -mx-4 -my-1 flex gap-2 overflow-x-auto px-4 py-1 motion-safe:animate-fade-in sm:-mx-6 sm:px-6 lg:m-0 lg:flex-wrap lg:overflow-visible lg:p-0"
+                    className={cn(
+                      "flex h-control-lg items-center gap-2 rounded-lg border border-transparent bg-canvas-muted ps-4 pe-1 transition-[border-color,background-color] duration-micro ease-standard hover:border-line-strong has-[input:focus-visible]:border-focus has-[input:focus-visible]:bg-surface has-[input:focus-visible]:focus-field",
+                      demoFocus === "link" && FIELD_ON,
+                    )}
                   >
-                    {EXAMPLES.filter((example) => example.chip).map((example) => (
-                      <button
-                        key={example.id}
-                        type="button"
-                        onClick={() => {
-                          add(example.url, true);
-                        }}
-                        className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full border border-line bg-surface ps-2 pe-3 text-small font-medium text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none"
-                      >
-                        {example.icon ? <PlatformIcon icon={example.icon} size="sm" /> : <Icon icon={ShoppingBag} size="sm" />}
-                        {example.label}
-                      </button>
-                    ))}
+                    <Icon icon={Link2} size="md" className="shrink-0 text-fg-tertiary" />
+                    <input
+                      ref={linkTarget}
+                      id={`${id}-link`}
+                      value={draft}
+                      onChange={(event) => {
+                        setDraft(event.target.value);
+                        setError(null);
+                      }}
+                      onFocus={(event) => {
+                        const input = event.currentTarget;
+                        if (EXAMPLES.some((example) => example.url === input.value)) input.select();
+                      }}
+                      onPaste={(event) => {
+                        const text = event.clipboardData.getData("text");
+                        if (detectLink(text.trim())) {
+                          event.preventDefault();
+                          add(text);
+                        }
+                      }}
+                      // An address reads left to right; the empty field's hint follows the page's language.
+                      dir={draft ? "ltr" : undefined}
+                      inputMode="url"
+                      autoComplete="off"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      placeholder={tPaste("placeholder")}
+                      aria-invalid={error === "invalid" || undefined}
+                      aria-describedby={`${id}-link-hint`}
+                      className="h-full min-w-0 flex-1 bg-transparent text-body outline-hidden placeholder:text-fg-tertiary"
+                    />
+                    {/* Quiet until there is a link to add; then the one filled button in the panel. */}
+                    <button
+                      ref={addTarget}
+                      type="submit"
+                      aria-label={tPaste("add")}
+                      className={cn(
+                        "grid size-control-md shrink-0 place-items-center rounded-full transition-[background-color,color,scale] duration-micro focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none",
+                        detection ? "bg-primary text-primary-fg hover:bg-primary-hover" : "bg-tinted text-tinted-fg hover:bg-tinted-hover",
+                      )}
+                    >
+                      <Icon icon={Plus} size="md" />
+                    </button>
                   </div>
-                ) : null}
-              </div>
-            </form>
-            {/* On your page: a row of tinted tokens on phones, a plain list on wide screens. */}
-            <section aria-labelledby={`${id}-added`} className="flex min-h-0 flex-1 flex-col gap-1">
-              <div className="flex shrink-0 items-baseline justify-between gap-3 px-1 text-caption text-fg-secondary">
-                <h3 id={`${id}-added`} className="font-semibold">
-                  {t("added")}
-                </h3>
-                <span className="font-semibold tabular-nums">{t("count", { count: items.length, max: MAX_LINKS })}</span>
-              </div>
-              {items.length > 0 ? (
-                <ul
-                  ref={list}
-                  aria-label={t("added")}
-                  // Phones: one row of whole titles that scrolls sideways, starting inside the card's padding;
-                  // a chip brought into view (its remove button focused) keeps the same air at the edges.
-                  className="mk-no-scrollbar -mx-4 -my-1 flex scroll-px-4 gap-2 overflow-x-auto px-4 py-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:m-0 lg:grid lg:min-h-0 lg:flex-1 lg:content-start lg:gap-1 lg:overflow-x-hidden lg:overflow-y-auto lg:p-1"
-                >
-                  {items.map((item) => {
-                    const about = describe(item);
-                    return (
-                      <li
-                        key={item.key}
-                        className="flex h-control-sm max-w-full shrink-0 items-center gap-2 rounded-full bg-tinted ps-1 text-tinted-fg motion-safe:animate-pop-in lg:h-auto lg:min-h-control-lg lg:gap-3 lg:rounded-none lg:bg-transparent lg:ps-0 lg:text-fg"
-                      >
-                        <ItemThumb item={item} />
-                        <span className="grid min-w-0 lg:flex-1">
-                          <span className="truncate text-small font-semibold">{about.title}</span>
-                          <span className="truncate text-caption text-fg-secondary max-lg:hidden">
-                            <bdi>{about.detail}</bdi>
-                          </span>
+                  {/* One slot: the examples while the field is empty, else what the field says (the field's
+                      description, not a live region: the demo types here too; the visitor's own additions
+                      and errors are said through the status line). */}
+                  <div className="grid min-h-control-sm shrink-0">
+                    <p
+                      id={`${id}-link-hint`}
+                      className={cn("col-start-1 row-start-1 flex min-h-control-sm items-center gap-2 px-4 text-small", error ? "text-danger-strong" : "text-link")}
+                    >
+                      {error === "invalid" ? (
+                        tPaste("invalid")
+                      ) : error === "limit" ? (
+                        t("limit")
+                      ) : detection ? (
+                        <span key={detection.type} className="inline-flex items-center gap-2 font-semibold motion-safe:animate-fade-in">
+                          <Icon icon={CircleCheck} size="sm" />
+                          {tPaste("detected", { type: draftProfile ? platformName(draftProfile.platform) : typeLabel(typeKey(detection)) })}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            remove(item.key);
-                          }}
-                          aria-label={tPaste("remove", { title: about.title })}
-                          className="grid size-control-sm shrink-0 place-items-center rounded-full transition-colors duration-micro hover:bg-tinted-hover focus-visible:focus-ring lg:size-touch-target lg:text-fg-secondary lg:hover:bg-hover lg:hover:text-fg"
-                        >
-                          <Icon icon={X} size="sm" />
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="flex h-control-sm shrink-0 items-center px-1 text-small text-fg-tertiary lg:h-auto lg:py-2">{t("editor.empty")}</p>
-              )}
-            </section>
+                      ) : null}
+                    </p>
+                    {showExamples ? (
+                      <div
+                        role="group"
+                        aria-label={tPaste("examples")}
+                        className="mk-no-scrollbar col-start-1 row-start-1 -mx-4 -my-1 flex gap-2 overflow-x-auto px-4 py-1 motion-safe:animate-fade-in sm:-mx-6 sm:px-6 lg:m-0 lg:flex-wrap lg:overflow-visible lg:p-0"
+                      >
+                        {EXAMPLES.filter((example) => example.chip).map((example) => (
+                          <button
+                            key={example.id}
+                            type="button"
+                            onClick={() => {
+                              add(example.url, true);
+                            }}
+                            className="inline-flex h-control-sm shrink-0 items-center gap-2 rounded-full border border-line bg-surface ps-2 pe-3 text-small font-medium text-fg transition-[border-color,background-color,scale] duration-micro hover:border-line-strong hover:bg-hover focus-visible:focus-ring active:scale-pressed motion-reduce:active:scale-none"
+                          >
+                            {example.icon ? <PlatformIcon icon={example.icon} size="sm" /> : <Icon icon={ShoppingBag} size="sm" />}
+                            {example.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </form>
+                {/* On your page: a row of tinted tokens on phones, a plain list on wide screens. */}
+                <section aria-labelledby={`${id}-added`} className="flex min-h-0 flex-1 flex-col gap-1">
+                  <div className="flex shrink-0 items-baseline justify-between gap-3 px-1 text-caption text-fg-secondary">
+                    <h3 id={`${id}-added`} className="font-semibold">
+                      {t("added")}
+                    </h3>
+                    <span className="font-semibold tabular-nums">{t("count", { count: items.length, max: MAX_LINKS })}</span>
+                  </div>
+                  {items.length > 0 ? (
+                    <ul
+                      ref={list}
+                      aria-label={t("added")}
+                      // Phones: one row of whole titles that scrolls sideways, starting inside the card's padding;
+                      // a chip brought into view (its remove button focused) keeps the same air at the edges.
+                      className="mk-no-scrollbar -mx-4 -my-1 flex scroll-px-4 gap-2 overflow-x-auto px-4 py-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:m-0 lg:grid lg:min-h-0 lg:flex-1 lg:content-start lg:gap-1 lg:overflow-x-hidden lg:overflow-y-auto lg:p-1"
+                    >
+                      {items.map((item) => {
+                        const about = describe(item);
+                        return (
+                          <li
+                            key={item.key}
+                            className="flex h-control-sm max-w-full shrink-0 items-center gap-2 rounded-full bg-tinted ps-1 text-tinted-fg motion-safe:animate-pop-in lg:h-auto lg:min-h-control-lg lg:gap-3 lg:rounded-none lg:bg-transparent lg:ps-0 lg:text-fg"
+                          >
+                            <ItemThumb item={item} />
+                            <span className="grid min-w-0 lg:flex-1">
+                              <span className="truncate text-small font-semibold">{about.title}</span>
+                              <span className="truncate text-caption text-fg-secondary max-lg:hidden">
+                                <bdi>{about.detail}</bdi>
+                              </span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                remove(item.key);
+                              }}
+                              aria-label={tPaste("remove", { title: about.title })}
+                              className="grid size-control-sm shrink-0 place-items-center rounded-full transition-colors duration-micro hover:bg-tinted-hover focus-visible:focus-ring lg:size-touch-target lg:text-fg-secondary lg:hover:bg-hover lg:hover:text-fg"
+                            >
+                              <Icon icon={X} size="sm" />
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="flex h-control-sm shrink-0 items-center px-1 text-small text-fg-tertiary lg:h-auto lg:py-2">{t("editor.empty")}</p>
+                  )}
+                </section>
+              </>
+            ) : null}
           </div>
 
           {/* Look: every look as a little page in its own colors, type and buttons, and any color.
               Phones: one row that scrolls sideways; wide screens: a grid that fills the panel. */}
           <div {...panel("look")}>
-            <div
-              ref={strip}
-              className="mk-no-scrollbar -mx-4 flex shrink-0 snap-x snap-mandatory scroll-px-4 gap-2 overflow-x-auto px-4 py-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:m-0 lg:grid lg:min-h-0 lg:flex-1 lg:snap-none lg:grid-cols-3 lg:grid-rows-2 lg:overflow-visible lg:p-0"
-            >
-              <div role="radiogroup" aria-label={tLook("choose")} className="flex shrink-0 gap-2 lg:col-span-full lg:row-span-full lg:grid lg:grid-cols-3 lg:grid-rows-2">
-                {looks.map((option, index) => {
-                  const selected = !accent && index === lookIndex;
-                  return (
-                    <button
-                      key={option.id}
-                      ref={(node) => {
-                        radios.current[index] = node;
+            {drawn("look") ? (
+              <>
+                <div
+                  ref={strip}
+                  className="mk-no-scrollbar -mx-4 flex shrink-0 snap-x snap-mandatory scroll-px-4 gap-2 overflow-x-auto px-4 py-1 sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:m-0 lg:grid lg:min-h-0 lg:flex-1 lg:snap-none lg:grid-cols-3 lg:grid-rows-2 lg:overflow-visible lg:p-0"
+                >
+                  <div role="radiogroup" aria-label={tLook("choose")} className="flex shrink-0 gap-2 lg:col-span-full lg:row-span-full lg:grid lg:grid-cols-3 lg:grid-rows-2">
+                    {looks.map((option, index) => {
+                      const selected = !accent && index === lookIndex;
+                      return (
+                        <button
+                          key={option.id}
+                          ref={(node) => {
+                            radios.current[index] = node;
+                          }}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          aria-label={option.name}
+                          tabIndex={index === lookIndex ? 0 : -1}
+                          onClick={() => {
+                            chooseLook(index);
+                          }}
+                          onKeyDown={onLookKey}
+                          className={cn(lookCard(selected), "w-24 shrink-0 snap-start focus-visible:focus-ring lg:w-auto")}
+                        >
+                          <span className="relative grid min-h-0">
+                            <LookPreview vars={option.vars} button={option.button} hero={option.hero} photo={previewPhoto} name={previewName} />
+                            {selected ? <Chosen /> : null}
+                          </span>
+                          <span className="truncate px-1 text-small font-semibold text-fg max-sm:text-caption">{option.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Any color, on the look that is showing (in the free cell after the five looks). */}
+                  <label
+                    className={cn(lookCard(accent !== null), "relative w-24 shrink-0 cursor-pointer snap-start has-[input:focus-visible]:focus-ring lg:col-start-3 lg:row-start-2 lg:w-auto")}
+                  >
+                    <input
+                      type="color"
+                      aria-label={tLook("custom")}
+                      onChange={(event) => {
+                        pickColor(event.target.value);
                       }}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      aria-label={option.name}
-                      tabIndex={index === lookIndex ? 0 : -1}
-                      onClick={() => {
-                        chooseLook(index);
-                      }}
-                      onKeyDown={onLookKey}
-                      className={cn(lookCard(selected), "w-24 shrink-0 snap-start focus-visible:focus-ring lg:w-auto")}
-                    >
-                      <span className="relative grid min-h-0">
-                        <LookPreview vars={option.vars} button={option.button} hero={option.hero} photo={previewPhoto} name={previewName} />
-                        {selected ? <Chosen /> : null}
-                      </span>
-                      <span className="truncate px-1 text-small font-semibold text-fg max-sm:text-caption">{option.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {/* Any color, on the look that is showing (in the free cell after the five looks). */}
-              <label
-                className={cn(lookCard(accent !== null), "relative w-24 shrink-0 cursor-pointer snap-start has-[input:focus-visible]:focus-ring lg:col-start-3 lg:row-start-2 lg:w-auto")}
-              >
-                <input
-                  type="color"
-                  aria-label={tLook("custom")}
-                  onChange={(event) => {
-                    pickColor(event.target.value);
-                  }}
-                  className="absolute inset-0 size-full cursor-pointer opacity-0"
-                />
-                <span className="pointer-events-none relative grid min-h-0">
-                  {accent && customVars ? (
-                    <LookPreview vars={customVars} button={base.button} hero={base.hero} photo={previewPhoto} name={previewName} />
-                  ) : (
-                    <span className="grid place-items-center rounded-md border border-line bg-canvas-muted text-fg-secondary max-lg:aspect-portrait">
-                      <Icon icon={Palette} size="lg" />
+                      className="absolute inset-0 size-full cursor-pointer opacity-0"
+                    />
+                    <span className="pointer-events-none relative grid min-h-0">
+                      {accent && customVars ? (
+                        <LookPreview vars={customVars} button={base.button} hero={base.hero} photo={previewPhoto} name={previewName} />
+                      ) : (
+                        <span className="grid place-items-center rounded-md border border-line bg-canvas-muted text-fg-secondary max-lg:aspect-portrait">
+                          <Icon icon={Palette} size="lg" />
+                        </span>
+                      )}
+                      {accent ? <Chosen /> : null}
                     </span>
-                  )}
-                  {accent ? <Chosen /> : null}
-                </span>
-                <span className="pointer-events-none truncate px-1 text-small font-semibold text-fg max-sm:text-caption">{tLook("custom")}</span>
-              </label>
-            </div>
-            {/* What the look is: read with the panel, not announced (the demo picks a look too). */}
-            <p className="shrink-0 text-small text-pretty max-lg:sr-only">
-              <span className="font-semibold text-fg">{look.name}</span>
-              <span className="text-fg-secondary"> · {look.description}</span>
-            </p>
+                    <span className="pointer-events-none truncate px-1 text-small font-semibold text-fg max-sm:text-caption">{tLook("custom")}</span>
+                  </label>
+                </div>
+                {/* What the look is: read with the panel, not announced (the demo picks a look too). */}
+                <p className="shrink-0 text-small text-pretty max-lg:sr-only">
+                  <span className="font-semibold text-fg">{look.name}</span>
+                  <span className="text-fg-secondary"> · {look.description}</span>
+                </p>
+              </>
+            ) : null}
           </div>
         </div>
 

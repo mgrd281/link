@@ -1,5 +1,33 @@
 import type { AbstractIntlMessages } from "next-intl";
 
+import { TRY_AI_ANY } from "@/features/marketing/try-ai";
+
+/**
+ * What a creator page's islands read: the picture viewer, the rail buttons, the code sample's copy
+ * button, the way back from a missing project, the privacy notice and the players. Of a portfolio's
+ * words only those travel; the rest is rendered on the server.
+ */
+const CREATOR_ISLANDS = [
+  "creator",
+  "!creator.portfolio",
+  "creator.portfolio.pictureOf",
+  "creator.portfolio.previousPicture",
+  "creator.portfolio.nextPicture",
+  "creator.portfolio.viewer",
+  "creator.portfolio.closeViewer",
+  "creator.portfolio.railBack",
+  "creator.portfolio.railOn",
+  "creator.portfolio.copyCodeSample",
+  "creator.portfolio.toPage",
+  "creator.portfolio.projectMissing",
+] as const;
+
+/**
+ * The playground's AI tab (try-ai-panel.tsx) reads the AI run's words. The tab shows only where a real
+ * recording exists (`TRY_AI_ANY`, none in phase 1); without it these words stay out of the page.
+ */
+const TRY_AI = TRY_AI_ANY ? (["ai.run", "app.ai.platform", "app.ai.review.topics"] as const) : (["!marketing.try.ai"] as const);
+
 /**
  * What the website's client components read: the root layout of `/<locale>` passes it to the home page
  * and to every page without a group of its own below (templates, portfolio, service, the example pages
@@ -11,16 +39,17 @@ const SITE = [
   "search",
   // The people search's filters and badges, the template gallery, the way back from a missing example.
   "examples",
-  // The example pages under /p, and the live page in the home page's playground.
-  "creator",
-  // The home page's islands: the menu, the claim form, the hero deck, the playground and its AI run.
+  // The example pages under /p (their islands, as on creator pages), and the live page in the home
+  // page's playground (a page of links: it reads none of a portfolio's server-rendered words).
+  ...CREATOR_ISLANDS,
+  // The home page's islands: the menu, the claim form, the hero deck, the playground (and its AI tab
+  // where it shows, TRY_AI).
   "marketing.nav",
   "marketing.claim",
   "marketing.hero",
   "marketing.try",
   "marketing.paste",
   "marketing.features.look",
-  "ai.run",
   // The playground edits a page with the dashboard's own parts (site-context, preview, forms, use-editor).
   "app.form",
   "app.preview",
@@ -29,14 +58,13 @@ const SITE = [
   "app.undo",
   "app.added",
   "app.removed",
-  "app.ai.platform",
-  "app.ai.review.topics",
   "dashboard.types",
   "dashboard.added",
   "dashboard.addedShort",
   "dashboard.deleted",
   "dashboard.invalid",
   "dashboard.undo",
+  ...TRY_AI,
 ] as const;
 
 /**
@@ -72,23 +100,8 @@ export const CLIENT_NAMESPACES = {
   admin: ["*", "!email"],
   design: ["*", "!admin", "!email"],
   directions: ["*", "!admin", "!email"],
-  creator: [
-    "creator",
-    // Of a portfolio's words only those its islands read travel: the picture viewer, the rail buttons,
-    // the code sample's copy button, the way back from a missing project. The rest is server-rendered.
-    "!creator.portfolio",
-    "creator.portfolio.pictureOf",
-    "creator.portfolio.previousPicture",
-    "creator.portfolio.nextPicture",
-    "creator.portfolio.viewer",
-    "creator.portfolio.closeViewer",
-    "creator.portfolio.railBack",
-    "creator.portfolio.railOn",
-    "creator.portfolio.copyCodeSample",
-    "creator.portfolio.toPage",
-    "creator.portfolio.projectMissing",
-    "common",
-  ],
+  // Of a portfolio's words only those its islands read travel (CREATOR_ISLANDS). The rest is server-rendered.
+  creator: [...CREATOR_ISLANDS, "common"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type ClientGroup = keyof typeof CLIENT_NAMESPACES;

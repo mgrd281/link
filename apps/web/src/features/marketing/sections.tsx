@@ -1,6 +1,5 @@
 import { Badge, Button, cn, Icon, icons, LogoGlyph } from "@linkyo/ui";
 import { Check, Gift, Plus, Server, ShieldCheck } from "lucide-react";
-import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
@@ -15,6 +14,8 @@ import { EXAMPLE_SHOTS, STRIP, type ExampleShot } from "./examples";
 import { SECTION_TITLE } from "./headings";
 import { order } from "./hero";
 import { bdi } from "./pages/text";
+import { Picture } from "./picture";
+import { source } from "./picture-source";
 import { billingQuestions, faqQuestions, freeTrustBody, pricingPlans, pricingValues, type Plan, type PlanLine, type SiteState } from "./pricing";
 import { siteState } from "./site-state";
 
@@ -96,13 +97,13 @@ export function Templates() {
                 aria-label={t("open", { name: nameOf(slug) })}
                 className="group block overflow-hidden rounded-xl border border-line bg-surface transition-[translate,scale] duration-standard ease-standard hover:-translate-y-1 focus-visible:focus-ring active:scale-pressed active:duration-micro motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-none"
               >
+                {/* The card's own colour shows until its picture is there (no blurred preview in the page). */}
                 <span className="relative block aspect-short">
-                  <Image
-                    src={EXAMPLE_SHOTS[slug]}
+                  <Picture
+                    src={source(EXAMPLE_SHOTS[slug])}
                     alt=""
                     fill
                     sizes={phoneSizes.rail}
-                    placeholder="blur"
                     className="object-cover object-top transition-transform duration-slow ease-standard group-hover:scale-lift motion-reduce:transition-none"
                   />
                 </span>
