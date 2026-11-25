@@ -29,7 +29,6 @@ import { ChipsInput } from "./chips-input";
 import { FocalInput } from "./focal-input";
 import { ImageInput, Repeater, SelectField, SwitchRow, TextArea, TextInput, UrlInput, type ImageValue } from "./form";
 import { ImageError, pickFiles, prepareAndStore, projectPictureLimit, storedImage, workImageKind, type PreparedImage } from "./images";
-import { titleKeys } from "./kinds";
 import { useMediaOwner } from "./media-owner";
 import { fetchLinkMetadata, type LinkMetadata } from "./metadata";
 import { useSite } from "./site-context";
@@ -171,28 +170,8 @@ export function projectFromPictures(id: string, prepared: readonly PreparedImage
   return addPictures(project, rest, real);
 }
 
-/**
- * A new portfolio section as the owner first sees it: the kind's title (always editable), the closing
- * line of a contact block, and one quote to fill in (it is saved only once its owner confirms they
- * may publish it). `text` reads a key under app.portfolio.
- */
-export function startedBlock(block: Block, kind: CreatorKind | undefined, text: (key: string) => string): Block {
-  const titles = titleKeys(kind);
-  switch (block.type) {
-    case "about":
-      return { ...block, title: text(titles.about) };
-    case "tools":
-      return { ...block, title: text(titles.tools) };
-    case "timeline":
-      return { ...block, title: text(titles.timeline) };
-    case "quotes":
-      return { ...block, title: text(titles.quotes), items: block.items.length > 0 ? block.items : [{ text: "", name: "", role: "", consent: false as unknown as true }] };
-    case "contact":
-      return { ...block, title: block.title || text("contact.closing") };
-    default:
-      return block;
-  }
-}
+/** A new portfolio section as the owner first sees it (`./project-start.ts`). */
+export { startedBlock } from "./project-start";
 
 // ─── The sheet ────────────────────────────────────────────────────────────────────────────────
 

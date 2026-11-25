@@ -27,7 +27,8 @@ const AI_EXCEPT = "features/ai/recordings/";
 /** Rule 3 allowances: a phone bezel and a QR code drawn on paper, which must look the same everywhere. */
 const PALETTE_ALLOWED: Record<string, readonly string[]> = {
   "features/app/preview.tsx": ["bg-ink"],
-  "features/app/share-tools.tsx": ["bg-white", "text-ink", "fill-white", "fill-ink"],
+  // The QR code and its sheet (loaded the first time a QR sheet opens).
+  "features/app/share-qr.tsx": ["bg-white", "text-ink", "fill-white", "fill-ink"],
 };
 
 /** Rule 5: the files the creator page renderer is made of. */
@@ -36,8 +37,10 @@ const RENDERER_EXCEPTIONS = new Set([
   // Dashboard chrome around the renderer, not part of the page.
   "features/directions/poster/template-picker.tsx",
   "features/directions/poster/dashboard.tsx",
-  // Linkyo's own sign-up bar on public pages, mounted by the page routes, never by the renderer.
+  // Linkyo's own sign-up bar on public pages, mounted by the page routes, never by the renderer (its
+  // server part and its island).
   "features/directions/shared/dock.tsx",
+  "features/directions/shared/dock-island.tsx",
 ]);
 const RENDERER_FORBIDDEN = ["bg-primary", "text-link", "bg-selected", "bg-tinted", "bg-canvas-muted"];
 

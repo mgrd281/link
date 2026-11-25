@@ -3,16 +3,20 @@
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Button, cn, Icon, IconButton } from "@linkyo/ui";
 import { Eye, Smartphone, X } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { Dialog } from "radix-ui";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
-import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { Link } from "@/i18n/navigation";
 
 import { useSite } from "./site-context";
 import { DESK_QUERY, useMediaQuery } from "./use-media-query";
+
+// The creator page's renderer (every block, every template) comes in its own chunk, loaded when a
+// preview first shows: the dashboard's first load does not carry it (ADR 0008).
+const PosterRenderer = dynamic(() => import("@/features/directions/poster/renderer").then((module) => module.PosterRenderer));
 
 /** How far down an element sits inside a scroller's content (layout positions, so transforms don't count). */
 function offsetWithin(element: HTMLElement, scroller: HTMLElement): number {

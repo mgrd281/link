@@ -2,20 +2,20 @@
 
 import { useSyncExternalStore } from "react";
 
-import { browserSupabase } from "@/lib/supabase/browser";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
+import { DeferredAccountStore } from "./deferred-store";
 import { LocalAccountStore } from "./local-store";
-import { browserDevice, browserLoginContext } from "./login-context";
-import { SupabaseAccountStore } from "./supabase-store";
+import { browserLoginContext } from "./login-context";
 import type { AccountStore, Site } from "./types";
 
 /**
  * The app's account store: real accounts when Supabase is configured (ADR 0030), otherwise the
- * demo that keeps everything in this browser.
+ * demo that keeps everything in this browser. Real accounts load their store and Supabase's client
+ * when first asked for (`./deferred-store.ts`), so a demo build ships neither (ADR 0008).
  */
 export const accountStore: AccountStore = supabaseEnabled
-  ? new SupabaseAccountStore(browserSupabase, browserDevice)
+  ? new DeferredAccountStore()
   : new LocalAccountStore(() => (typeof window === "undefined" ? null : window.localStorage), browserLoginContext);
 
 /** Current session and site; `loading` during server render and hydration. */

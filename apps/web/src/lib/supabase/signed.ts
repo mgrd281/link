@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { browserSupabase } from "./browser";
+import { loadBrowserSupabase } from "./browser";
 
 /**
  * Signed addresses of private pictures (briefing photos, Premium story pictures). An address works
@@ -26,7 +26,7 @@ export function isStale(signedAt: number | null, now: number): boolean {
 /** Signed addresses by path; an empty map when signing failed. `download` makes them save, not open. */
 export async function signPaths(bucket: PrivateBucket, paths: readonly string[], download = false): Promise<Map<string, string>> {
   if (paths.length === 0) return new Map();
-  const { data, error } = await browserSupabase()
+  const { data, error } = await (await loadBrowserSupabase())
     .storage.from(bucket)
     .createSignedUrls([...paths], SIGNED_SECONDS, download ? { download: true } : undefined);
   if (error) return new Map();

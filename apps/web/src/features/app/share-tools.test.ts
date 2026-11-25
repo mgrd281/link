@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { pageAddress, pageUrl, qrPageUrl } from "@/lib/page-url";
 
-import { qrInk, qrModules, qrSvg } from "./share-tools";
+import { qrInk, qrModules, qrSvg } from "./share-qr";
 
 /**
  * D-16: the QR code downloads as a vector file in the page's accent colour, and that colour still

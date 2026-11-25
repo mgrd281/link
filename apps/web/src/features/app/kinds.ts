@@ -1,4 +1,7 @@
-import { detectMany, hasImage, slugFor, type Block, type BlockOf, type CreatorKind, type LinkIcon, type Platform } from "@linkyo/blocks";
+import type { Block, BlockOf, CreatorKind, LinkIcon, Platform } from "@linkyo/blocks";
+import { detectMany } from "@linkyo/blocks/detect";
+import { slugFor } from "@linkyo/blocks/project";
+import { hasImage } from "@linkyo/blocks/rules";
 import { creatorTokens, type CreatorTemplateId } from "@linkyo/tokens";
 import { suggestedTemplates, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 
@@ -6,7 +9,7 @@ import { blockFromLink, newBlockId } from "./blocks";
 
 // What kind of page someone is making: the list moved to @linkyo/blocks (the AI page plan offers the
 // same kinds); re-exported here so every importer keeps working.
-export { KINDS, isKind, type CreatorKind } from "@linkyo/blocks";
+export { KINDS, isKind, type CreatorKind } from "@linkyo/blocks/kinds";
 
 /** Profiles asked for in the welcome flow, with what goes in front of the handle. */
 export const SOCIAL_PREFIX = {
