@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Button, cn, ConfirmDialog, Icon, icons, KpiTile, Segmented, TextField, toast } from "@linkyo/ui";
-import { Ban, KeyRound, ShieldAlert, ShieldCheck, ShieldOff } from "lucide-react";
+import { KeyRound, ShieldAlert, ShieldCheck, ShieldOff } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
@@ -14,7 +14,7 @@ import { useConsoleActions } from "./actions";
 import { bdi, isolate, ltr } from "./bidi";
 import { useCustomers } from "./customers/data";
 import { daysAgo, riskFlags, type Customer, type RiskFlag } from "./customers/model";
-import { DemoNote, DeviceGlyph, DeviceLabel, RiskBadges } from "./customers/ui";
+import { BlockButton, DemoNote, DeviceGlyph, DeviceLabel, RiskBadges } from "./customers/ui";
 import { count, country, dateTime, PAGE_SIZE, timeAgo } from "./format";
 import { useAdmin } from "./session";
 
@@ -64,7 +64,8 @@ function PlaceLine({ code, city, unknown }: { code: string; city?: string | unde
   const locale = useLocale();
   const name = country(code, locale, unknown);
   return (
-    <span className="flex min-w-0 items-center gap-1" title={city ? `${name} · ${city}` : name}>
+    // On a phone's second line it starts at 64 px and takes the room left; the notes wrap below it.
+    <span className="flex min-w-0 grow basis-16 items-center gap-1" title={city ? `${name} · ${city}` : name}>
       <span className="min-w-0 truncate">{name}</span>
       {city ? (
         <>
@@ -89,16 +90,18 @@ function LogRow({ row, now, canBlock, onBlock }: { row: Row; now: number; canBlo
   const locale = useLocale();
   const { login, customer, flags } = row;
   // Phones: two lines (who, the result and when; then the address, the place, the device and any
-  // warning). From xl the same elements become the cells of one row of the log's grid (`xl:contents`
-  // here, the row a subgrid). The row's edges are its first and last cells' margins (a subgrid's own
-  // padding would widen only its own first and last columns).
+  // warning, which takes a third line rather than running under the block button). The name's link
+  // covers the row there, a target as tall as the row; the block button sits above it. From xl the
+  // same elements become the cells of one row of the log's grid (`xl:contents` here, the row a
+  // subgrid), and only the name is the link. The row's edges are its first and last cells' margins
+  // (a subgrid's own padding would widen only its own first and last columns).
   return (
-    <li data-login={login.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 px-4 py-2 xl:col-span-full xl:grid-cols-subgrid xl:gap-x-3 xl:px-0 xl:py-3">
+    <li data-login={login.id} className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 px-4 py-1 xl:col-span-full xl:grid-cols-subgrid xl:gap-x-3 xl:px-0 xl:py-3">
       <div className="grid min-w-0 gap-0.5 xl:contents">
         <p className="flex min-w-0 items-center gap-2 xl:contents">
           <Link
             href={`/admin/customers/${customer.id}`}
-            className="block min-w-0 rounded-xs text-small font-semibold text-fg transition-colors duration-micro hover:text-link focus-visible:focus-ring xl:ms-4"
+            className="block min-w-0 rounded-xs text-small font-semibold text-fg transition-colors duration-micro hover:text-link focus-visible:focus-ring max-xl:after:absolute max-xl:after:inset-0 xl:ms-4"
           >
             {/* Cut in its own direction (a Latin name in an Arabic row keeps its start), on the row's side. */}
             <bdi title={customer.name} className="block truncate text-left [[dir=rtl]_&]:text-right">
@@ -114,7 +117,7 @@ function LogRow({ row, now, canBlock, onBlock }: { row: Row; now: number; canBlo
             {timeAgo(login.at, now, locale)}
           </time>
         </p>
-        <p className="flex min-w-0 items-center gap-2 text-caption text-fg-secondary xl:contents xl:text-small">
+        <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption text-fg-secondary xl:contents xl:text-small">
           <span dir="ltr" data-ip className="shrink-0 whitespace-nowrap text-start font-mono text-caption rtl:text-end">
             {login.ip || "–"}
           </span>
@@ -130,13 +133,7 @@ function LogRow({ row, now, canBlock, onBlock }: { row: Row; now: number; canBlo
           </span>
         </p>
       </div>
-      {canBlock ? (
-        <Button size="sm" variant="ghost" icon={Ban} onClick={() => onBlock(login.ip)} aria-label={t("blockIp", { ip: login.ip })} className="text-danger-strong xl:me-4">
-          <span className="max-xl:sr-only">{t("block")}</span>
-        </Button>
-      ) : (
-        <span className="xl:me-4" />
-      )}
+      {canBlock ? <BlockButton ip={login.ip} onBlock={onBlock} className="xl:me-4" /> : <span className="xl:me-4" />}
     </li>
   );
 }
@@ -272,7 +269,7 @@ export function SecurityScreen() {
                   >
                     <TextField label={t.markup("ipLabel", { bdi: isolate })} value={ip} onChange={(event) => setIp(event.target.value)} error={ipError} ltr placeholder="203.0.113.7" />
                     <TextField label={t("reasonLabel")} value={reason} onChange={(event) => setReason(event.target.value)} />
-                    <Button type="submit" variant="primary" icon={Ban}>
+                    <Button type="submit" variant="primary" icon={icons.block}>
                       {t("block")}
                     </Button>
                   </form>

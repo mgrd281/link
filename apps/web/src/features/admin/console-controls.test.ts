@@ -48,6 +48,15 @@ describe("team console controls", () => {
     expect(readFileSync(join(ROOT, "live.ts"), "utf8")).toMatch(/viewsMeasured: counted/);
   });
 
+  it("draws the shell's glyphs from the icon registry, not straight from lucide (polish pass, K3)", () => {
+    // One glyph per meaning (S-01): the navigation, the account menu and the view-as strip name a
+    // meaning (`icons.overview`, `icons.switchArea`, …); a lucide name here would bypass the registry.
+    const shell = readFileSync(join(ROOT, "shell.tsx"), "utf8");
+    const imported = [...shell.matchAll(/import \{([^}]*)\} from "lucide-react"/g)].flatMap((match) => (match[1] ?? "").split(","));
+    expect(imported.map((name) => name.trim()).filter((name) => name !== "" && !name.startsWith("type "))).toEqual([]);
+    expect(shell).not.toMatch(/import [A-Z]\w* from "lucide-react"/);
+  });
+
   it("uses the kit's KPI tile, select, filter sheet, data list and chart table", () => {
     const all = files.map((file) => readFileSync(file, "utf8")).join("\n");
     for (const component of ["KpiTile", "Select", "FilterSheet", "DataList", "ChartTable"]) expect(all, component).toMatch(new RegExp(`import \\{[^}]*\\b${component}\\b[^}]*\\} from "@linkyo/ui"`));

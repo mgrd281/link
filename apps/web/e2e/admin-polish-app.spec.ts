@@ -12,6 +12,8 @@ import { enterDemoCode } from "./auth";
  * - K1: the sign-in log on laptops: no two cells overlap, chips keep a gap, and text that does not
  *   fit ends in an ellipsis, has a title and keeps its start (Latin names in Arabic rows).
  * - K2: the customers list uses the room it has: no name, e-mail or country is cut at 1440 or 1920.
+ * - K3: the block button of a sign-in row says what it does on a phone (and nothing runs under it),
+ *   and opening a sheet pops no tooltip up.
  *
  * Every test sets its own window (and a touch phone where it says so), so the file runs once, on the
  * desktop project. The account is a demo sign-up with the demo team code, as in admin-phone-app.spec.ts.
@@ -217,4 +219,53 @@ test.describe("K2: the customers list on laptops", () => {
       expect(widths[1] ?? 0).toBeGreaterThan((widths[0] ?? 0) + 300);
     });
   }
+});
+
+test.describe("K3: a phone's sign-in rows and sheets", () => {
+  for (const locale of ["de", "ar"] as const) {
+    test(`${locale}: the block button shows its word and is 44 × 44 px; a sheet opens without a tooltip`, async ({ browser, baseURL }, info) => {
+      test.skip(info.project.name !== "desktop", "sets its own windows");
+      test.setTimeout(120_000);
+      const words = MESSAGES[locale].admin.security;
+      const state = await owner(browser, baseURL, locale);
+      const { context, page } = await open(browser, baseURL, state, "phone");
+      await page.goto(`/${locale}/admin/security`);
+      await settle(page);
+      const block = page.locator("[data-sign-ins] > li").first().getByRole("button");
+      // Its name contains the word it shows ("127.0.0.1 sperren"; WCAG 2.5.3).
+      await expect(block).toHaveAccessibleName(new RegExp(words.block, "i"));
+      // The word is on the screen, not only read out.
+      const shown = await block.getByText(words.block, { exact: true }).boundingBox();
+      expect(shown && shown.width > 8 && shown.height > 8).toBe(true);
+      const box = await block.boundingBox();
+      expect(box && box.width >= 44 && box.height >= 44, `block button ${String(box?.width)}×${String(box?.height)}`).toBe(true);
+      // Nothing of a row runs under its block button (a warning chip took a third line instead).
+      expect(await page.evaluate(logProblems)).toEqual([]);
+
+      // A sheet opened with a finger takes focus itself: no tooltip pops up over its close button.
+      await page.goto(`/${locale}/admin/customers`);
+      await settle(page);
+      await page.getByRole("button", { name: MESSAGES[locale].ui.filter.title, exact: true }).tap();
+      const sheet = page.getByRole("dialog", { name: MESSAGES[locale].ui.filter.title });
+      await expect(sheet).toBeVisible();
+      // Longer than the tooltip's delay (motion.delay.tooltip, 400 ms).
+      await page.waitForTimeout(800);
+      await expect(page.getByRole("tooltip")).toHaveCount(0);
+      await expect(sheet).toBeFocused();
+      await context.close();
+    });
+  }
+
+  test("a laptop opens the sheet with the mouse without a tooltip as well", async ({ browser, baseURL }, info) => {
+    test.skip(info.project.name !== "desktop", "sets its own windows");
+    const state = await owner(browser, baseURL, "de");
+    const { context, page } = await open(browser, baseURL, state, "laptop");
+    await page.goto("/de/admin/customers");
+    await settle(page);
+    await page.getByRole("button", { name: de.ui.filter.title, exact: true }).click();
+    await expect(page.getByRole("dialog", { name: de.ui.filter.title })).toBeVisible();
+    await page.waitForTimeout(800);
+    await expect(page.getByRole("tooltip")).toHaveCount(0);
+    await context.close();
+  });
 });

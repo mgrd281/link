@@ -71,6 +71,13 @@ export function FilterSheet({ title, activeCount, activeLabel, resetLabel, doneL
         <Dialog.Overlay className="layer-modal fixed inset-0 bg-scrim motion-safe:animate-scrim-in data-[state=closed]:motion-safe:animate-fade-out" />
         <Dialog.Content
           aria-describedby={undefined}
+          // The sheet itself takes focus when it opens (its title is read out), not its close button:
+          // focus put there by the sheet popped the button's tooltip up ("Schließen") the moment the
+          // sheet opened, also after a tap. Tab goes on to the close button, whose tooltip shows then.
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            (event.currentTarget as HTMLElement).focus();
+          }}
           className={cn(
             // Phones: a sheet from the bottom; wide screens: a panel from the end of the line.
             "layer-modal fixed inset-x-0 bottom-0 flex max-h-[92dvh] flex-col rounded-t-xl border border-line bg-surface-elevated text-fg outline-none",

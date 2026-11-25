@@ -2,8 +2,10 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import {
+  ArrowLeftRight,
   ArrowUpRight,
   BadgeCheck,
+  Ban,
   Blocks,
   ChartNoAxesColumn,
   CircleAlert,
@@ -14,6 +16,7 @@ import {
   Gamepad2,
   Gift,
   Heading,
+  LayoutDashboard,
   LayoutList,
   LayoutTemplate,
   Music,
@@ -26,6 +29,7 @@ import {
   TriangleAlert,
   Undo2,
   UsersRound,
+  UserStar,
 } from "lucide-react";
 import { describe, expect, it } from "vitest";
 
@@ -47,7 +51,7 @@ describe("icon registry (S-01)", () => {
       undo: Undo2,
       music: Music,
       team: UsersRound,
-      creators: SquareUser,
+      creators: UserStar,
       customers: Contact,
       features: Blocks,
       portfolio: FolderKanban,
@@ -64,6 +68,18 @@ describe("icon registry (S-01)", () => {
     expect(icons.section).not.toBe(Heading);
     // The template glyph keeps its own meaning.
     expect(icons.templates).toBe(LayoutTemplate);
+  });
+
+  it("tells the team console's customers and creators apart, and names the console's own glyphs (polish pass)", () => {
+    // A contact card and a person with a star: the person in a square that creators wore was the
+    // contact card's twin at 16 px (side by side in the console's navigation and its tab bar).
+    expect(icons.customers).toBe(Contact);
+    expect(icons.creators).toBe(UserStar);
+    expect(icons.creators).not.toBe(SquareUser);
+    // The console's shell draws these through the registry, no longer straight from lucide.
+    expect(icons).toMatchObject({ overview: LayoutDashboard, switchArea: ArrowLeftRight, block: Ban });
+    // Both ways at once: the switch between the team area and the dashboard never mirrors.
+    expect(DIRECTIONAL.has(icons.switchArea)).toBe(false);
   });
 
   it("gives every meaning its own glyph: no glyph means two things", () => {

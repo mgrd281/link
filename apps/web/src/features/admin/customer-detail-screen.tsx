@@ -16,7 +16,6 @@ import {
 import {
   ArrowLeft,
   ArrowRight,
-  Ban,
   BadgeCheck,
   CalendarPlus,
   CreditCard,
@@ -49,7 +48,7 @@ import { billingActions, scheduledEnd, type BillingAnswer } from "./billing";
 import { CustomersHidden } from "./customers-list-screen";
 import { sessionsOf, useCustomers } from "./customers/data";
 import { DAY, hasProForLife, isPaying, monthlyRevenue, riskFlags, subscriptionSource, type Customer } from "./customers/model";
-import { DemoNote, DeviceLabel, PlanBadge, RiskBadges, StatusBadges } from "./customers/ui";
+import { BlockButton, DemoNote, DeviceLabel, PlanBadge, RiskBadges, StatusBadges } from "./customers/ui";
 import { count, date, dateTime, money, timeAgo } from "./format";
 import { bare, CustomerLink, ProfileLinks, SignalChips, useReasonLabel, WHY_MAX } from "./referrals-screen";
 import { Place } from "./security-screen";
@@ -594,15 +593,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
                     <Badge size="sm" tone={login.result === "success" ? "success" : "danger"}>
                       {ts(`result.${login.result}`)}
                     </Badge>
-                    {can("security.manage") && login.ip && !blocked.has(login.ip) ? (
-                      <button
-                        type="button"
-                        onClick={() => setPending({ kind: "block", ip: login.ip })}
-                        className="relative grid size-control-sm place-items-center rounded-sm text-fg-tertiary hover:bg-hover hover:text-danger-strong focus-visible:focus-ring before:absolute before:-inset-2 pointer-fine:before:hidden"
-                      >
-                        <Icon icon={Ban} size="sm" label={t("actions.blockIp", { ip: login.ip })} />
-                      </button>
-                    ) : null}
+                    {/* The glyph with its name and a tooltip: the card's date keeps its time beside it. */}
+                    {can("security.manage") && login.ip && !blocked.has(login.ip) ? <BlockButton compact ip={login.ip} onBlock={(ip) => setPending({ kind: "block", ip })} /> : null}
                   </span>
                 ),
                 fields: [

@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Icon } from "@linkyo/ui";
+import { Badge, Button, cn, Icon, icons, Tooltip } from "@linkyo/ui";
 import { EyeOff, FlaskConical, Laptop, Smartphone, Tablet, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -109,6 +109,52 @@ export function DeviceLabel({ device }: { device: DeviceInfo }) {
       />
       <bdi className="min-w-0 truncate">{name}</bdi>
     </span>
+  );
+}
+
+/**
+ * Blocking an address from a sign-in row. On the Security log it shows its word: a red glyph alone
+ * on every row read like a status, not like an action. Phones and tablets get the glyph over the
+ * word in a 44 × 44 px button; laptops the glyph beside it. It sits above a row whose link covers the
+ * row (`layer-raised`). Its name says which address ("127.0.0.1 sperren"), with the word it shows.
+ *
+ * `compact` (a customer's sign-in cards, where the word would push the time out of the date): the
+ * glyph alone, its name as a tooltip too, and a 48 px target on touch screens.
+ */
+export function BlockButton({ ip, onBlock, compact = false, className }: { ip: string; onBlock: (ip: string) => void; compact?: boolean; className?: string | undefined }) {
+  const t = useTranslations("admin.security");
+  if (compact) {
+    return (
+      <Tooltip content={t("blockIp", { ip })}>
+        <button
+          type="button"
+          onClick={() => onBlock(ip)}
+          aria-label={t("blockIp", { ip })}
+          className={cn(
+            "relative layer-raised grid size-control-sm place-items-center rounded-sm text-fg-tertiary transition-colors duration-micro hover:bg-hover hover:text-danger-strong focus-visible:focus-ring before:absolute before:-inset-2 pointer-fine:before:hidden",
+            className,
+          )}
+        >
+          <Icon icon={icons.block} size="sm" />
+        </button>
+      </Tooltip>
+    );
+  }
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      icon={icons.block}
+      onClick={() => onBlock(ip)}
+      aria-label={t("blockIp", { ip })}
+      className={cn(
+        "layer-raised text-danger-strong",
+        "max-xl:h-auto max-xl:min-h-touch-target max-xl:min-w-touch-target max-xl:flex-col max-xl:gap-0.5 max-xl:px-1 max-xl:py-1 max-xl:text-caption max-xl:before:hidden",
+        className,
+      )}
+    >
+      {t("block")}
+    </Button>
   );
 }
 

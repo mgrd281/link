@@ -4,6 +4,7 @@ import {
   ArrowDownLeft,
   ArrowDownRight,
   ArrowLeft,
+  ArrowLeftRight,
   ArrowLeftToLine,
   ArrowRight,
   ArrowRightToLine,
@@ -11,6 +12,7 @@ import {
   ArrowUpLeft,
   ArrowUpRight,
   BadgeCheck,
+  Ban,
   Bell,
   Blocks,
   BriefcaseBusiness,
@@ -60,6 +62,7 @@ import {
   IndentDecrease,
   IndentIncrease,
   Info,
+  LayoutDashboard,
   LayoutTemplate,
   Link2,
   List,
@@ -111,7 +114,6 @@ import {
   Sparkles,
   Square,
   SquareArrowOutUpRight,
-  SquareUser,
   StepBack,
   StepForward,
   Tag,
@@ -126,6 +128,7 @@ import {
   Upload,
   UserRound,
   UsersRound,
+  UserStar,
   Video,
   X,
   type LucideIcon,
@@ -163,6 +166,8 @@ export const icons = {
   hide: EyeOff,
   settings: Settings,
   confirm: Check,
+  // Turning an address away (the team's sign-in log): a circle crossed through.
+  block: Ban,
   // Ways through the product
   back: ArrowLeft,
   forward: ArrowRight,
@@ -176,6 +181,8 @@ export const icons = {
   signOut: LogOut,
   sidebarOpen: PanelLeftOpen,
   sidebarClose: PanelLeftClose,
+  // Between the team area and the creator dashboard, both ways: it points both ways, so it never mirrors.
+  switchArea: ArrowLeftRight,
   // States
   success: CircleCheck,
   warning: TriangleAlert,
@@ -200,8 +207,12 @@ export const icons = {
   work: BriefcaseBusiness,
   invite: Gift,
   team: UsersRound,
-  creators: SquareUser,
+  // The creators the team prepares pages for: a person with a star. It was a person in a square,
+  // which at 16 px could not be told from the customers' contact card beside it.
+  creators: UserStar,
   customers: Contact,
+  // The team's overview: a board of figures.
+  overview: LayoutDashboard,
   account: UserRound,
   billing: CreditCard,
   // A plan and its price: a price tag. The free plan wore the template glyph, which says nothing about cost.
@@ -244,10 +255,10 @@ export const ICON_MEANINGS = Object.keys(icons) as IconMeaning[];
 
 /** The registry's groups, for the /design page. */
 export const ICON_GROUPS = {
-  actions: ["add", "edit", "delete", "copy", "share", "close", "search", "filter", "sort", "more", "undo", "redo", "upload", "download", "refresh", "reorder", "send", "preview", "hide", "settings", "confirm"],
-  navigation: ["back", "forward", "next", "previous", "external", "expand", "home", "menu", "signIn", "signOut", "sidebarOpen", "sidebarClose"],
+  actions: ["add", "edit", "delete", "copy", "share", "close", "search", "filter", "sort", "more", "undo", "redo", "upload", "download", "refresh", "reorder", "send", "preview", "hide", "settings", "confirm", "block"],
+  navigation: ["back", "forward", "next", "previous", "external", "expand", "home", "menu", "signIn", "signOut", "sidebarOpen", "sidebarClose", "switchArea"],
   states: ["success", "warning", "error", "info", "help", "verified", "locked", "notifications", "live", "increase", "decrease", "unchanged"],
-  areas: ["page", "analytics", "design", "templates", "features", "portfolio", "work", "invite", "team", "creators", "customers", "account", "billing", "plan", "orders", "security", "activity", "ai", "shop", "link", "qrCode", "inbox"],
+  areas: ["page", "analytics", "design", "templates", "features", "portfolio", "work", "invite", "team", "creators", "customers", "overview", "account", "billing", "plan", "orders", "security", "activity", "ai", "shop", "link", "qrCode", "inbox"],
   content: ["music", "video", "image", "event", "place", "email", "phone", "website", "photography", "gaming", "document", "section"],
   media: ["play", "pause", "stop", "skipForward", "skipBack"],
 } as const satisfies Record<string, readonly IconMeaning[]>;

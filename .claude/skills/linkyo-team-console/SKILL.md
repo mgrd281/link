@@ -135,9 +135,15 @@ of it; reach for it before writing a one-off (`console-controls.test.ts` fails o
   for rows that open something; actions go in `trailing` (it sits above the row's link). On a phone give a card only
   the fields that tell records apart (`useMediaQuery` with `tokens.breakpoint.md`, as the customer list does).
 - **Very long logs get their own compact row** when a card per row would be too tall: Security's sign-ins are two lines
-  on a phone (who, result, when; address, place, device glyph, warnings) and the same elements become columns from `md`
-  through `md:contents` (one DOM, one link per row). Security must stay under about 2,500 px at 390 px
+  below xl (who, result, when; address, place, device glyph, warnings, which wrap to a third line rather than run under
+  the block button; the name's link covers the row) and the same elements become cells from `xl` through
+  `xl:contents` (one DOM, one link per row). From xl the log is one grid whose header and rows are subgrids: result,
+  time, address, notes and action are as wide as their values, customer, place and device share the rest (at least
+  `spacing-16`) and end in an ellipsis with a title; Latin names truncate inside their own `<bdi>`
+  (`admin-polish-app.spec.ts` measures it). Security must stay under about 2,500 px at 390 px
   (`admin-phone-app.spec.ts`).
+- **Wide screens grow at 2xl** to `layout.content-wide` (`PlainScreen`), and the customers list sizes its columns to
+  its values from xl (`DataList sizing="content"`; the country is a `wrap` field), so nothing is cut at 1440 or 1920.
 - **Paging at 25** (`PAGE_SIZE` in `format.ts`), with a `nav` of Zurück/Weiter and "1–25 von 312".
 - **Filters in a `FilterSheet`** behind one button next to the search, with `FilterChip`s for few choices (plan,
   status) and the kit's `Select` for many (country, order); the filters that are on show above the list as
@@ -153,9 +159,15 @@ of it; reach for it before writing a one-off (`console-controls.test.ts` fails o
   warning strip under the header says which role is in view.
 - **Tab selection (S-05)**: no pill; the chosen tab is tinted, its icon `strong` and its label semibold, in the tab bar,
   the "More" menu and the sidebar, as in the dashboard.
-- **Navigation glyphs come from the registry** (`icons.customers` Contact, `icons.creators` SquareUser, `icons.team`
-  UsersRound, `icons.invite` Gift, `icons.orders`, `icons.billing`, `icons.security`, `icons.analytics`,
-  `icons.activity`, `icons.templates`).
+- **Navigation glyphs come from the registry** (`icons.overview` LayoutDashboard, `icons.customers` Contact,
+  `icons.creators` UserStar (a person in a square was the contact card's twin at 16 px), `icons.team` UsersRound,
+  `icons.invite` Gift, `icons.orders`, `icons.billing`, `icons.security`, `icons.analytics`, `icons.activity`,
+  `icons.templates`; `icons.switchArea` for the way to the dashboard, `icons.block` for blocking an address).
+  `shell.tsx` imports no lucide glyph (`console-controls.test.ts`).
+- **Blocking from a sign-in row** is `BlockButton` (`customers/ui.tsx`): on the Security log it shows its word
+  (glyph over word, 44 × 44 px below xl); on a customer's sign-in cards it is `compact` (glyph, name and tooltip).
+- **Sheets take focus themselves when they open** (`FilterSheet`, the dashboard's `Sheet`), never their close
+  button: its tooltip would pop up at once.
 - **Count badges (A-17)** come from `queues.tsx` (`QueuesProvider` in the shell, read once per move, shared with the
   overview's "Braucht Aufmerksamkeit"): open orders and withdrawals/cancellations without a decision on Aufträge (red
   when a withdrawal waits), open verification requests and held invites on Empfehlungen. A queue that does not exist
