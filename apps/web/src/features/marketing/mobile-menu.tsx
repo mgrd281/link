@@ -97,7 +97,10 @@ export function HeaderAuth({ login, signup }: { login: NavItem; signup: NavItem 
         data-header-dashboard
         className="hidden h-control-md items-center gap-2 rounded-full bg-primary ps-1 pe-4 text-small font-semibold text-primary-fg transition-[background-color,scale] duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none md:inline-flex"
       >
-        <Avatar name={account.name} src={account.avatar} size="sm" />
+        {/* On the teal pill the avatar takes the pill's own pair the other way round: its default
+            (bg-selected, a translucent teal in dark mode) over teal left the initials of an account
+            without a photo at about 3:1. */}
+        <Avatar name={account.name} src={account.avatar} size="sm" className="bg-primary-fg text-primary" />
         {t("dashboard")}
       </Link>
     );
