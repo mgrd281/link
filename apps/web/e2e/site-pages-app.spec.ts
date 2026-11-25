@@ -186,6 +186,17 @@ test("search engines find the site pages in every language", async ({ request })
   expect(sitemap).not.toContain("/service</loc>");
 });
 
+test("the home page carries Organization, WebSite, SoftwareApplication (the free plan) and FAQPage as JSON-LD", async ({ page }) => {
+  await page.goto("/de");
+  const blocks = await page.locator('script[type="application/ld+json"]').evaluateAll((scripts) => scripts.map((script) => JSON.parse(script.textContent) as Record<string, unknown>));
+  expect(blocks.map((block) => block["@type"])).toEqual(["Organization", "WebSite", "SoftwareApplication", "FAQPage"]);
+  const application = blocks[2] as { offers: { price: string; name: string }[] };
+  expect(application.offers).toEqual([expect.objectContaining({ name: "Free", price: "0", priceCurrency: "EUR" })]);
+  const faq = blocks[3] as { mainEntity: { name: string }[] };
+  // The questions are the ones the page shows.
+  for (const { name } of faq.mainEntity) expect(await page.locator("#faq, #pricing").getByText(name, { exact: true }).count(), name).toBeGreaterThan(0);
+});
+
 test.describe("pricing", () => {
   test("Free now, Pro and the page service with the start: prices from ADR 0066, nothing to buy, no feature 'in Arbeit' that is live", async ({ page }) => {
     await page.goto("/de");
