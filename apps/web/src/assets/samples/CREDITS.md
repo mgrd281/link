@@ -5,7 +5,9 @@ and must be replaced with real creator content (with permission) before any publ
 
 | File | Source | License |
 |---|---|---|
-| mila-avatar.jpg, mila-hero.jpg, mila-wide.jpg, short-3.jpg, gear-headphones.jpg | Photo by Johanneke Kroesbergen-Kamps on Unsplash (`photo-1650379058468`) | Unsplash License |
+| mila-avatar.jpg, mila-hero.jpg, short-3.jpg | Photo by Igor Rand on Unsplash (photo-1653443658457, kQxE3QzIlmw) | Unsplash License |
+| mila-wide.jpg | Photo by Igor Rand on Unsplash (photo-1653443667522, 3U7tctomfx4) | Unsplash License |
+| gear-headphones.jpg | Photo by Jason Leung on Unsplash (photo-1599669454699, xR4JHzr69Og) | Unsplash License |
 | event-berlin.jpg, short-1.jpg | Photo by Marcel Strauß on Unsplash (`photo-1758550445758`) | Unsplash License |
 | event-hamburg.jpg, short-2.jpg, video-live.jpg | Photo by Adrià Sánchez Roqué on Unsplash (`photo-1666289186874`) | Unsplash License |
 | nour-avatar.jpg, nour-hero.jpg | Photo by Vitaly Gariev on Unsplash (`photo-1758600435719`) | Unsplash License |
