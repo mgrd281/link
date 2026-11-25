@@ -59,12 +59,14 @@ export const PAGE_DESCRIPTIONS: Record<PublicPath, string> = {
 
 /**
  * The descriptions for a build that counts no pages (`siteState().statistics` false): the pages whose
- * description names the cookie-free statistics say what is on them without it.
+ * description names the cookie-free statistics say what is on them without it. The help page keeps
+ * its own: it lists the answers, and the one on the statistics says when nothing is counted.
  */
 export const PAGE_DESCRIPTIONS_UNCOUNTED: Partial<Record<PublicPath, string>> = {
   "": "marketing.real.metaDescription",
   "/funktionen": "sitePages.features.meta.descriptionOff",
   "/changelog": "sitePages.changelog.meta.descriptionOff",
+  "/sicherheit": "sitePages.security.meta.descriptionOff",
 };
 
 /** A public page's description (a message key) as this build counts pages. */

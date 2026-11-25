@@ -55,7 +55,10 @@ hand-listed paths, no structured data and descriptions copied from the home page
    titles grow to 40 px on laptops (`md:text-h1 lg:text-display-sm`, `features/marketing/headings.ts`).
 6. **SEO from the route list** (`lib/seo.ts`): `PUBLIC_PATHS` (and `/service` only with payments on) feed the sitemap,
    each entry with its language versions and `x-default`; `PAGE_DESCRIPTIONS` names each public page's own
-   description, and a unit test fails on a missing or repeated one in any language. The home page carries four JSON-LD
+   description, and a unit test fails on a missing or repeated one in any language. Where no page is counted,
+   `PAGE_DESCRIPTIONS_UNCOUNTED` gives the home page, `/funktionen`, `/changelog` and `/sicherheit` one without the
+   statistics, and the test fails on any other description that names them (the help page's list of answers aside,
+   whose statistics answer says when nothing is counted). The home page carries four JSON-LD
    blocks (Organization, WebSite, SoftwareApplication, FAQPage) through `jsonLd()`; the offers name only what can be had
    today (the free plan; Pro only once payments are on), and FAQPage holds exactly the questions the page shows.
 7. **The way there.** Header and phone menu: Funktionen leads to `/funktionen`, and Hilfe (`/hilfe`) takes the FAQ's

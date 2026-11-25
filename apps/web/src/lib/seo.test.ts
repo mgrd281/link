@@ -51,8 +51,13 @@ describe("the sitemap", () => {
 describe("meta descriptions", () => {
   const paths = publicPaths({ payments: true });
 
-  /** The cookie-free statistics, as each language names them: never in a build that counts no page. */
+  /**
+   * The cookie-free statistics, as each language names them: no description names them in a build that
+   * counts no page. The help page's lists its answers, and the one on the statistics is there in both
+   * states (it says when nothing is counted).
+   */
   const STATISTICS = { de: /Analytics|Statistik/, en: /analytics|stats/i, ar: /إحصاء/ } as const;
+  const TOPICS: ReadonlySet<PublicPath> = new Set<PublicPath>(["/hilfe"]);
 
   for (const locale of routing.locales) {
     for (const statistics of [true, false]) {
@@ -71,7 +76,7 @@ describe("meta descriptions", () => {
           const text = t(pageDescription(path, { statistics }) as never, values as never);
           expect(text.trim().length, `${path} has a description`).toBeGreaterThan(50);
           expect(text, `${path}: formatted`).not.toMatch(/[{}<>]/);
-          if (!statistics && path in PAGE_DESCRIPTIONS_UNCOUNTED) expect(text, `${path} names no statistics`).not.toMatch(STATISTICS[locale]);
+          if (!statistics && !TOPICS.has(path)) expect(text, `${path} names no statistics`).not.toMatch(STATISTICS[locale]);
           described.set(text, [...(described.get(text) ?? []), path]);
         }
         const duplicates = [...described.values()].filter((list) => list.length > 1);
@@ -90,7 +95,9 @@ describe("meta descriptions", () => {
     expect(pageDescription("/funktionen", { statistics: true })).toBe(PAGE_DESCRIPTIONS["/funktionen"]);
     expect(pageDescription("/funktionen", { statistics: false })).toBe("sitePages.features.meta.descriptionOff");
     expect(pageDescription("/changelog", { statistics: false })).toBe("sitePages.changelog.meta.descriptionOff");
+    expect(pageDescription("/sicherheit", { statistics: false })).toBe("sitePages.security.meta.descriptionOff");
     expect(pageDescription("", { statistics: false })).toBe("marketing.real.metaDescription");
     expect(pageDescription("/hilfe", { statistics: false })).toBe(PAGE_DESCRIPTIONS["/hilfe"]);
+    for (const [path, key] of Object.entries(PAGE_DESCRIPTIONS_UNCOUNTED)) expect(key, `${path}: a description of its own`).not.toBe(PAGE_DESCRIPTIONS[path as PublicPath]);
   });
 });

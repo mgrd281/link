@@ -5297,7 +5297,8 @@
     "security": {
       "meta": {
         "title": "Security & privacy · Linkyo",
-        "description": "What Linkyo does with data: creator pages without cookies or trackers, hosting in Frankfurt, cookie-free stats, no photos for the AI and payments only through Stripe."
+        "description": "What Linkyo does with data: creator pages without cookies or trackers, data in Frankfurt, cookie-free stats, no photos for the AI and payments only through Stripe.",
+        "descriptionOff": "What Linkyo does with data: creator pages without cookies or trackers, data in Frankfurt, no photos for the AI and payments only through Stripe."
       },
       "eyebrow": "Security & privacy",
       "title": "What Linkyo does with data.",
