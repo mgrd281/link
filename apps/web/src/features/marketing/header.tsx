@@ -17,8 +17,11 @@ export function MarketingHeader({
   signupAfter,
   edge = true,
   current,
+  wide = false,
 }: {
   signupAfter?: string;
+  /** The home page: from 2xl the bar spans the hero's wide column, so the logo stands over the words. */
+  wide?: boolean;
   /** A hairline under the bar once content scrolls beneath it (off where a band below draws its own). */
   edge?: boolean;
   /** The place this page is: marked in the bar and in the menu. */
@@ -48,7 +51,7 @@ export function MarketingHeader({
       >
         {t("skip")}
       </a>
-      <div className="mx-auto flex h-16 max-w-content items-center gap-2 px-5 md:px-10">
+      <div className={cn("mx-auto flex h-16 max-w-content items-center gap-2 px-5 md:px-10", wide && "2xl:max-w-content-wide")}>
         {/* The logo is 24 px tall: its link reaches 12 px above and below it (invisible), 48 px in all, inside the 64 px bar. */}
         <Link href="/" className="relative rounded-xs before:absolute before:inset-x-0 before:-inset-y-3 focus-visible:focus-ring" aria-label="Linkyo">
           <Logo className="h-6" title="Linkyo" />

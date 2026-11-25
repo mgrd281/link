@@ -253,3 +253,27 @@ test.describe("the way there: header, menu and footer", () => {
     await context.close();
   });
 });
+
+test.describe("laptop type", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+  test.skip(({ isMobile }) => isMobile, "laptop widths, measured once on the laptop project");
+
+  test("the hero's promise is at least 56 px at 1440 and fills the first screen; section titles grow too", async ({ page }) => {
+    await page.goto("/de");
+    const size = await page.locator("#hero-title").evaluate((element) => parseFloat(getComputedStyle(element).fontSize));
+    expect(size).toBeGreaterThanOrEqual(56);
+    // The hero fills the first screen under the header.
+    const hero = await page.locator("#hero-title").evaluate((element) => element.closest("section")?.getBoundingClientRect().height ?? 0);
+    expect(hero).toBeGreaterThanOrEqual(900 - 64 - 1);
+    expect(await page.locator("#pricing-title").evaluate((element) => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(40);
+  });
+
+  test("at 1920 the hero uses the wide column, and its sentence keeps a reading measure", async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto("/de");
+    const width = await page.locator("#hero-title").evaluate((element) => element.closest("section > div")?.getBoundingClientRect().width ?? 0);
+    expect(width).toBeGreaterThan(1500);
+    const lead = await page.locator("#hero-title + p").evaluate((element) => element.getBoundingClientRect().width);
+    expect(lead).toBeLessThanOrEqual(640);
+  });
+});

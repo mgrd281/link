@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation";
 import { phoneSizes } from "./assets";
 import { ClaimForm } from "./claim-form";
 import { EXAMPLE_SHOTS, STRIP, type ExampleShot } from "./examples";
+import { SECTION_TITLE } from "./headings";
 import { order } from "./hero";
 import { bdi } from "./pages/text";
 import { billingQuestions, faqQuestions, freeTrustBody, pricingPlans, pricingValues, type Plan, type PlanLine, type SiteState } from "./pricing";
@@ -20,7 +21,7 @@ import { siteState } from "./site-state";
 function SectionHeader({ id, title, lead, center = false }: { id: string; title: string; lead?: string; center?: boolean }) {
   return (
     <header className={cn("mk-reveal grid gap-4", center ? "max-w-prose md:mx-auto md:justify-items-center md:text-center" : "max-w-prose")}>
-      <h2 id={id} className="text-h2 tracking-tight text-balance md:text-h1">
+      <h2 id={id} className={SECTION_TITLE}>
         {title}
       </h2>
       {lead ? <p className="text-body-lg text-pretty text-fg-secondary">{lead}</p> : null}
@@ -308,7 +309,7 @@ export function Faq() {
   return (
     <Shell id="faq" labelledBy="faq-title" className="grid grid-cols-1 gap-8 py-12 md:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
       <header className="mk-reveal grid content-start justify-items-start gap-3 lg:sticky lg:top-24 lg:self-start">
-        <h2 id="faq-title" className="text-h2 tracking-tight text-balance md:text-h1">
+        <h2 id="faq-title" className={SECTION_TITLE}>
           {t("faq.title")}
         </h2>
         <p className="text-body-lg text-pretty text-fg-secondary">{t("faq.lead")}</p>

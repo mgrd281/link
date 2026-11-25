@@ -18,6 +18,7 @@ import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 import { phoneSizes } from "./assets";
 import { CountUp } from "./count-up";
 import { Playground, TryEyebrow, type LookOption } from "./playground";
+import { SECTION_TITLE } from "./headings";
 import { siteState } from "./site-state";
 import { StoryPicture, type StoryArt } from "./story-picture";
 import { TRY_LOOKS } from "./try-looks";
@@ -303,7 +304,7 @@ export function TryIt() {
     <section id="try" aria-labelledby="try-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-12 md:px-10 md:py-24">
       <header className="mk-reveal grid max-w-prose gap-4 md:mx-auto md:justify-items-center md:text-center">
         <TryEyebrow ai={aiTab}>{aiTab ? t("try.ai.eyebrow") : t("try.eyebrow")}</TryEyebrow>
-        <h2 id="try-title" className="text-h2 tracking-tight text-balance md:text-h1">
+        <h2 id="try-title" className={SECTION_TITLE}>
           <span className="block">{t("try.title1")}</span>
           <span className="block text-link">{t("try.title2")}</span>
         </h2>
@@ -332,7 +333,7 @@ export function Features() {
   return (
     <section id="features" aria-labelledby="features-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-12 md:px-10 md:py-24">
       <header className="mk-reveal grid max-w-prose md:mx-auto md:justify-items-center md:text-center">
-        <h2 id="features-title" className="text-h2 tracking-tight text-balance md:text-h1">
+        <h2 id="features-title" className={SECTION_TITLE}>
           <span className="block text-fg-tertiary">{t("more.title1")}</span>
           <span className="block">{t("more.title2")}</span>
         </h2>

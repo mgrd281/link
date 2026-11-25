@@ -433,10 +433,13 @@ test.describe("marketing home", () => {
     await expect(footer).toContainText("Imprint");
   });
 
-  test("the promise sits on two lines and the sentence under it on two at most", async ({ page }) => {
+  test("the promise breaks only before its last word beside the pages, and the sentence under it takes two lines at most", async ({ page }) => {
     const lines = (selector: string) =>
       page.locator(selector).evaluate((element) => Math.round(element.getBoundingClientRect().height / parseFloat(getComputedStyle(element).lineHeight)));
-    expect(await lines("#hero-title")).toBe(2);
+    // At 72 px beside the pages (W-11) the second line may take two, broken before "create." only.
+    expect(await lines("#hero-title")).toBeLessThanOrEqual(3);
+    await expect(page.locator("#hero-title .whitespace-nowrap")).toHaveText("Everything you");
+    expect(await lines("#hero-title .whitespace-nowrap")).toBe(1);
     expect(await lines("#hero-title + p")).toBeLessThanOrEqual(2);
   });
 
