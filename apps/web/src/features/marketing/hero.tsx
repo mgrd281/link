@@ -28,22 +28,6 @@ const PROMISE_ICONS: LucideIcon[] = [Gift, ShieldCheck, MapPin];
 const BIO_PLATFORMS = [siInstagram, siTiktok, siYoutube];
 
 /**
- * A line of the promise that may break only before its last word: where the column is too narrow for
- * it (laptops up to 1535 px, at 56 and 72 px) it reads "Alles, was du / erschaffst.", never the
- * "Alles, was / du erschaffst." that ADR 0038 removed. The words stay plain text for search and copy.
- */
-function BreakBeforeLastWord({ text }: { text: string }) {
-  const at = text.lastIndexOf(" ");
-  if (at <= 0) return text;
-  return (
-    <>
-      <span className="whitespace-nowrap">{text.slice(0, at)}</span>
-      {text.slice(at)}
-    </>
-  );
-}
-
-/**
  * The first screen, in the order a visitor needs it (ADR 0049):
  *
  * 1. What it is: a line that names the thing ("your page for the link in your bio", with the bios
@@ -54,10 +38,11 @@ function BreakBeforeLastWord({ text }: { text: string }) {
  * Phones and tablets read it top to bottom in exactly that order. Wide screens put the pages beside
  * the words and the action, and the hero fills the first screen.
  *
- * Laptops (W-11): the promise is 56 px from tablets and 72 px from 1280 px (`text-balance`). Beside
- * the pages its second line takes two lines up to 1535 px, broken before its last word; from 1536 px
- * the hero (and the header above it) takes the wide column, where the promise is two lines again and a
- * 1920 screen is used instead of leaving a gutter on each side. The sentence keeps its reading measure.
+ * The promise is two lines at every width (ADR 0038). Laptops (W-11): beside the pages it is 40 px
+ * from 1024 px (the words get 1.15 : 1 of the row, as ADR 0038 has it); from 1280 px the hero (and the
+ * header above it) takes the wide column, the words get 1.6 : 1, and the promise grows to 56 px, and to
+ * 72 px from 1536 px. Each step is where its second line still fits on one line beside the pages
+ * (e2e/home.spec.ts measures it from 1024 to 1920 px). The sentence keeps its reading measure.
  */
 export function Hero() {
   const t = useTranslations("marketing");
@@ -74,8 +59,10 @@ export function Hero() {
     shot: CONCEPT_SHOTS[slug][locale],
   }));
   return (
-    <section aria-labelledby="hero-title" className="overflow-x-clip xl:overflow-x-visible">
-      <div className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-10 px-5 pt-6 pb-12 md:px-10 md:pt-12 lg:mk-hero-fit lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:grid-rows-2 lg:gap-x-10 lg:gap-y-8 lg:py-8 2xl:max-w-content-wide 2xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] 2xl:gap-x-16">
+    // Clipped at every width: the deck's queued cards wait, invisible, beyond its column, and from
+    // 1280 px the wide column brings them past the screen's edge (a sideways scroll up to 1599 px).
+    <section aria-labelledby="hero-title" className="overflow-x-clip">
+      <div className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-10 px-5 pt-6 pb-12 md:px-10 md:pt-12 lg:mk-hero-fit lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:grid-rows-2 lg:gap-x-10 lg:gap-y-8 lg:py-8 xl:max-w-content-wide xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] xl:gap-x-16">
         {/* 1. What it is. */}
         <div className="grid min-w-0 grid-cols-1 justify-items-start gap-5 md:gap-6 lg:self-end">
           <p className="mk-rise inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary" style={order(0)}>
@@ -88,12 +75,12 @@ export function Hero() {
             </span>
             <span className="truncate">{t("hero.eyebrow")}</span>
           </p>
-          <h1 id="hero-title" className="max-w-full text-h2 tracking-display text-balance md:text-display lg:text-display xl:text-display-xl">
+          <h1 id="hero-title" className="max-w-full text-h2 tracking-display text-balance md:text-display lg:text-display-sm xl:text-display 2xl:text-display-xl">
             <span className="mk-rise block" style={order(1)}>
               {t("hero.title1")}
             </span>
             <span className="mk-rise block text-link" style={order(2)}>
-              <BreakBeforeLastWord text={t("hero.title2")} />
+              {t("hero.title2")}
             </span>
           </h1>
           <p className="mk-rise max-w-prose text-body text-balance text-fg-secondary md:text-body-lg" style={order(3)}>

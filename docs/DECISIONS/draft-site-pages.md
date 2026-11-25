@@ -1,7 +1,7 @@
 # Draft — The website's own pages, one pricing comparison, SEO from the route list, laptop type
 
-**Status.** Draft (Stage 4, WP4.2). The integrator numbers it. Amends [ADR 0038](0038-hero-two-lines.md) for laptops
-(see 5).
+**Status.** Draft (Stage 4, WP4.2). The integrator numbers it. Amends [ADR 0038](0038-hero-two-lines.md) only in the
+promise's size from 1280 px; its two lines stay at every width (see 5).
 
 **Context.** The audit (plan §2) found the website without the pages a complete product site has (W-04: help,
 contact, features, about, changelog), without a security page (W-10), with a pricing section that left the page service
@@ -37,13 +37,16 @@ hand-listed paths, no structured data and descriptions copied from the home page
    (`siteState()`). The comparison, the questions about paying and cancelling under it, the FAQ and the structured data
    all read this model. Static pages read the switches while they are built (`LINKYO_ANALYTICS` is a build variable
    in turbo.json); the security page re-renders hourly, because it also names the AI switch, which a build may not see.
-5. **Laptop type (amends ADR 0038 for 1024–1535 px).** The promise is 28 px on phones, 56 px on tablets and from
-   1024 px, 72 px from 1280 px, balanced. Beside the pages its second line may take two lines up to 1535 px; it breaks
-   only before its last word ("Alles, was du / erschaffst."), never as the "Alles, was / du erschaffst." that ADR 0038
-   removed. From 1536 px the hero and the home page's header take `layout.content-wide`, the text column gets 1.6 of
-   2.6 parts, and the promise is two lines again (measured: the German second line needs 830 px at 72 px, the column
-   has 857 px at 1536 and 896 px at 1920). Phones and tablets keep two lines. Section titles grow to 40 px on laptops
-   (`md:text-h1 lg:text-display-sm`, `features/marketing/headings.ts`).
+5. **Laptop type (amends ADR 0038 for the size only).** The promise stays on two lines at every width, as ADR 0038
+   decided ("Ein Link." / "Alles, was du erschaffst."); only its size grows on wide laptops. Phones (28 px) and tablets
+   (56 px) are as before; from 1024 px it is 40 px (`display-sm`) beside the pages, with ADR 0038's 1.15 : 1. From
+   1280 px the hero and the home page's header take `layout.content-wide`, the words get 1.6 of 2.6 parts and the
+   promise is 56 px (`display`); from 1536 px it is 72 px (`display-xl`). Each step starts where the longest second
+   line, the German one, fits on one line beside the pages (measured: 461 px at 40 px in a 484 px column at 1024;
+   646 px at 56 px in 699 px at 1280; 830 px at 72 px in 857 px at 1536; English and Arabic are shorter). The pages
+   beside it never grow smaller than at 1024 px (the front card is 175 px wide there, 182 px at 1280, 233 px at 1920),
+   and the hero is clipped sideways at every width, so the deck's queued cards never make the page scroll. Section
+   titles grow to 40 px on laptops (`md:text-h1 lg:text-display-sm`, `features/marketing/headings.ts`).
 6. **SEO from the route list** (`lib/seo.ts`): `PUBLIC_PATHS` (and `/service` only with payments on) feed the sitemap,
    each entry with its language versions and `x-default`; `PAGE_DESCRIPTIONS` names each public page's own
    description, and a unit test fails on a missing or repeated one in any language. The home page carries four JSON-LD

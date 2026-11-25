@@ -433,13 +433,10 @@ test.describe("marketing home", () => {
     await expect(footer).toContainText("Imprint");
   });
 
-  test("the promise breaks only before its last word beside the pages, and the sentence under it takes two lines at most", async ({ page }) => {
+  test("the promise sits on two lines and the sentence under it on two at most", async ({ page }) => {
     const lines = (selector: string) =>
       page.locator(selector).evaluate((element) => Math.round(element.getBoundingClientRect().height / parseFloat(getComputedStyle(element).lineHeight)));
-    // At 72 px beside the pages (W-11) the second line may take two, broken before "create." only.
-    expect(await lines("#hero-title")).toBeLessThanOrEqual(3);
-    await expect(page.locator("#hero-title .whitespace-nowrap")).toHaveText("Everything you");
-    expect(await lines("#hero-title .whitespace-nowrap")).toBe(1);
+    expect(await lines("#hero-title")).toBe(2);
     expect(await lines("#hero-title + p")).toBeLessThanOrEqual(2);
   });
 
@@ -635,6 +632,59 @@ test("on phones too the promise sits on two lines", async ({ browser }) => {
     .evaluate((element) => Math.round(element.getBoundingClientRect().height / parseFloat(getComputedStyle(element).lineHeight)));
   expect(lines).toBe(2);
   await context.close();
+});
+
+/**
+ * Laptop type (W-11) inside ADR 0038: the promise stays on two lines at every laptop width (40 px beside
+ * the pages from 1024 px, 56 px with the wide column from 1280 px, 72 px from 1536 px), the pages
+ * beside it (cards, their address chips, the faces) never reach into the column of the words, and the
+ * page does not scroll sideways. The deck's decorative rings behind the phones are not counted.
+ * Common laptop screens, each at its height.
+ */
+test.describe("laptop type", () => {
+  const SCREENS = [
+    { width: 1024, height: 768 },
+    { width: 1280, height: 800 },
+    { width: 1366, height: 768 },
+    { width: 1440, height: 900 },
+    { width: 1536, height: 864 },
+    { width: 1920, height: 1080 },
+  ] as const;
+
+  for (const locale of ["de", "ar"] as const) {
+    test(`/${locale}: the promise is two lines from 1024 to 1920 px, at least 56 px at 1440, and the pages beside it stay out of its column`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      for (const screen of SCREENS) {
+        await page.setViewportSize(screen);
+        await page.goto(`/${locale}`);
+        await page.evaluate(() => document.fonts.ready);
+        const hero = await page.evaluate(() => {
+          const title = document.getElementById("hero-title");
+          const deck = document.querySelector("[data-deck]");
+          if (!title?.parentElement || !deck) return null;
+          const column = title.parentElement.getBoundingClientRect();
+          const visible = [...deck.querySelectorAll("[data-slot]:not([data-slot='hidden']), .mk-deck-chip, [role='tablist']")].filter(
+            (part) => getComputedStyle(part).visibility !== "hidden" && parseFloat(getComputedStyle(part).opacity) > 0,
+          );
+          const boxes = visible.map((part) => part.getBoundingClientRect()).filter((box) => box.width > 0);
+          const rtl = document.documentElement.dir === "rtl";
+          return {
+            size: parseFloat(getComputedStyle(title).fontSize),
+            lines: Math.round(title.getBoundingClientRect().height / parseFloat(getComputedStyle(title).lineHeight)),
+            // The room between the words' column and the nearest visible part of the deck.
+            gap: rtl ? column.left - Math.max(...boxes.map((box) => box.right)) : Math.min(...boxes.map((box) => box.left)) - column.right,
+            // The deck's queued cards wait beyond its column: they must not make the page scroll sideways.
+            sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          };
+        });
+        expect(hero, `${String(screen.width)} px: the hero is there`).not.toBeNull();
+        expect(hero?.lines, `${String(screen.width)} px: lines of the promise`).toBe(2);
+        expect(hero?.gap ?? -1, `${String(screen.width)} px: room between the words and the pages`).toBeGreaterThanOrEqual(0);
+        expect(hero?.sideways, `${String(screen.width)} px: no sideways scroll`).toBe(0);
+        if (screen.width === 1440) expect(hero?.size, "1440 px: the promise's size").toBeGreaterThanOrEqual(56);
+      }
+    });
+  }
 });
 
 test("the hero pages follow the reading direction in Arabic", async ({ page }) => {
