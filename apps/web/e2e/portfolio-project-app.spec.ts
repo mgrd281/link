@@ -21,7 +21,7 @@ const sample = (locale: string, template: string, slug: string) => `/${locale}/d
 const EXAMPLES = [
   { locale: "de", slug: "ronja-feldkamp", project: "die-schneiderinnen", title: "Die Schneiderinnen" },
   { locale: "en", slug: "tobin-achterberg", project: "plotweft", title: "Plotweft" },
-  { locale: "ar", slug: "naya-aldabbas", project: "accountant-to-analyst", title: "من محاسبة إلى محللة بيانات في 8 أشهر" },
+  { locale: "ar", slug: "elena-novak", project: "accountant-to-analyst", title: "من محاسبة إلى محللة بيانات في 8 أشهر" },
 ] as const;
 
 async function load(page: Page, path: string) {
@@ -66,11 +66,11 @@ test.describe("example pages", () => {
   }
 
   test("a thin project's card opens its own link, and its address still answers", async ({ page }) => {
-    await load(page, "/ar/p/naya-aldabbas");
+    await load(page, "/ar/p/elena-novak");
     const card = page.locator('[id="cv-is-not-your-story"]');
     const href = await card.locator("a").first().getAttribute("href");
     expect(href).toMatch(/^https:\/\/example\.com\//);
-    await load(page, "/ar/p/naya-aldabbas/cv-is-not-your-story");
+    await load(page, "/ar/p/elena-novak/cv-is-not-your-story");
     await expect(page.locator("h1")).toHaveText("Your CV Is Not Your Story");
   });
 

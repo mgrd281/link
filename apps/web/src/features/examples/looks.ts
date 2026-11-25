@@ -40,14 +40,14 @@ export const LOOKS = {
   // the gallery's "Portfolio" category, which the /portfolio page and the homepage band read.
   "ronja-feldkamp": { kind: "photographer", category: "portfolio", locale: "de", theme: { template: "werkbogen" }, credit: "Paul Einerhand, Metin Ozer, Bob van Aubel, Declan Sun, Peyman Shojaei (Unsplash)" },
   "tobin-achterberg": { kind: "developer", category: "portfolio", locale: "en", theme: { template: "tiefdruck" }, credit: "Vitaly Gariev (Unsplash)", drawings: true },
-  "naya-aldabbas": { kind: "coach", category: "portfolio", locale: "ar", theme: { template: "werkbogen", accent: SW.oxblood }, credit: "Lisa Marie Theck (Unsplash)" },
+  "elena-novak": { kind: "coach", category: "portfolio", locale: "ar", theme: { template: "werkbogen", accent: SW.oxblood }, credit: "Vitaly Gariev (Unsplash)" },
   // Brass, not an orange: the page's one accent on a warm black ground. The owner chose the grid over the template's list.
   "jorinde-ahlfeld": { kind: "freelancer", category: "portfolio", locale: "de", theme: { template: "tiefdruck", accent: SW.brass, projects: "bento" }, credit: "Caroline Badran, Josh Davies, Bailey Alexander, mahdi chaghari (Unsplash)" },
   // The three Stage 3 portfolio templates as they come, one person each (catalog-i.ts): a dance and stage
   // photographer on Leuchttisch, an architect in Amman on Grundriss, a firmware developer and hardware
-  // maker on Logbuch. Merle's work is photographs (credited); Rana's and Ines's are original drawings.
+  // maker on Logbuch. Merle's work is photographs (credited); Freya's and Ines's are original drawings.
   "merle-kastorf": { kind: "photographer", category: "portfolio", locale: "de", theme: { template: "leuchttisch" }, credit: "Ahmad Odeh, Samantha Weisburg, Hossein Nasr, Kazuo ota, Marissa Lewis (Unsplash)" },
-  "rana-al-khatib": { kind: "designer", category: "portfolio", locale: "ar", theme: { template: "grundriss" }, credit: "kilarov (Unsplash)", drawings: true },
+  "freya-nilsen": { kind: "designer", category: "portfolio", locale: "ar", theme: { template: "grundriss" }, credit: "Sarah Rodriguez (Unsplash)", drawings: true },
   "ines-vasconcelos": { kind: "engineer", category: "portfolio", locale: "en", theme: { template: "logbuch" }, credit: "ThisisEngineering (Unsplash)", drawings: true },
   // Apps and skills (ADR 0055): an app explainer and a skills author, first in the gallery.
   "merve-aksoy": { kind: "apps", category: "tech", locale: "de", theme: { template: "aura", accent: SW.sky } },
@@ -149,7 +149,7 @@ export type LookId = keyof typeof LOOKS;
 export const GALLERY_LEAD: readonly LookId[] = [
   "lou-ferreira", "juno-kade", "salma-rahhal", "fenja-roth", "kai-moreno", "layal-mansour", "lenz", "nico-hale",
   "yazan-khoury", "tomas-reyes", "rina-vex", "dana-issa", "merve-aksoy", "arjun-mehta", "mira-sol", "jonas-ek",
-  "ronja-feldkamp", "merle-kastorf", "rana-al-khatib", "ines-vasconcelos",
+  "ronja-feldkamp", "merle-kastorf", "freya-nilsen", "ines-vasconcelos",
 ];
 
 /** Pages of well-known people, those creators know best first. */

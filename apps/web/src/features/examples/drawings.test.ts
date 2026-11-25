@@ -17,7 +17,7 @@ describe("example pages with drawings", () => {
   const drawn = new Set([...credits.matchAll(/^\| (ex-pf-[a-z]+)-\d+\.jpg \| Original Linkyo/gm)].map((match) => match[1]));
 
   it("finds the drawn pictures in the credits", () => {
-    expect([...drawn].sort()).toEqual(["ex-pf-ines", "ex-pf-rana", "ex-pf-tobin"]);
+    expect([...drawn].sort()).toEqual(["ex-pf-freya", "ex-pf-ines", "ex-pf-tobin"]);
   });
 
   it("mark exactly the looks whose pictures include Linkyo drawings", () => {

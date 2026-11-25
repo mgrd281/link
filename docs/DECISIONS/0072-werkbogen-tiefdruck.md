@@ -14,7 +14,7 @@ work is pictures, and a loud one for people whose work is code, products or numb
 1. **Werkbogen** (photographers, designers, freelancers): light, `neutral #DDE3EA`, one red accent `#C2361B` (OKLCH
    hue 33°: red, not orange), the editorial pairing, `hero: "plate"` (the first project's cover as a large plate
    under a quiet name), `headings: "marker"` (a small numbered caption), minimal square buttons, plain social
-   glyphs, calm motion, `projects: "auto"`, `canvas: "wide"`. Example: Ronja Feldkamp (de), Naya Al-Dabbas (ar,
+   glyphs, calm motion, `projects: "auto"`, `canvas: "wide"`. Example: Ronja Feldkamp (de), Elena Novak (ar,
    in oxblood and without a single work picture: figures and titles are the covers).
 2. **Tiefdruck** (developers, engineers, designers): dark (`neutral #2A211A`), one electric blue `#3D5AFE`, the bold
    pairing, `hero: "statement"` (the name as large as the screen allows), `headings: "headline"`, filled pills,
@@ -35,4 +35,4 @@ work is pictures, and a loud one for people whose work is code, products or numb
 template is a token entry, a renderer for any new layout value, and an example page. Stage 3 added Leuchttisch
 (photographers: uncropped series, the full canvas), Grundriss (architects and designers: a title block and drawing
 sheets) and Logbuch (developers and makers: a README and a build log), each with its example person (Merle
-Kastorf, Rana Al-Khatib, Ines Vasconcelos; `features/examples/catalog-i.ts`).
+Kastorf, Freya Nilsen, Ines Vasconcelos; `features/examples/catalog-i.ts`).

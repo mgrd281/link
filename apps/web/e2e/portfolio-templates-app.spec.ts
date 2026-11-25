@@ -155,8 +155,8 @@ test.describe("on the laptop", () => {
     }
   });
 
-  test("a text-only hero fills both halves of the first screen (P-08): Naya in Arabic and Tobin", async ({ page }) => {
-    for (const path of ["/ar/p/naya-aldabbas", "/en/p/tobin-achterberg"]) {
+  test("a text-only hero fills both halves of the first screen (P-08): Elena in Arabic and Tobin", async ({ page }) => {
+    for (const path of ["/ar/p/elena-novak", "/en/p/tobin-achterberg"]) {
       await open(page, path);
       const halves = await page.evaluate(() => {
         const middle = window.innerWidth / 2;

@@ -92,7 +92,7 @@ CHROME_PATH=/opt/pw-browsers/chromium npx -y lighthouse@13.6.0 "http://localhost
 
 Report performance, accessibility, `total-byte-weight` and the font requests from `network-requests`
 (resource type Font). A German page must request no Arabic face. `/ar/p/<german example>` answers 308
-to the German page, so measure an Arabic example (for example `/ar/p/naya-aldabbas`) for Arabic fonts.
+to the German page, so measure an Arabic example (for example `/ar/p/elena-novak`) for Arabic fonts.
 
 ## Database changes (supabase/)
 

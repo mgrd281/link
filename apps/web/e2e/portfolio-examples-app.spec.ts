@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 /**
  * The three Stage 3 example people (WP3.3), one per new portfolio template: Merle Kastorf (Leuchttisch, de),
- * Rana Al-Khatib (Grundriss, ar) and Ines Vasconcelos (Logbuch, en). Every page and every project page
+ * Freya Nilsen (Grundriss, ar) and Ines Vasconcelos (Logbuch, en). Every page and every project page
  * answers 200 in its own language and direction, is axe-clean (WCAG 2.2 AA), fits the screen, loads nothing
  * from another origin, sets no cookie and has its own link preview. The gallery's Portfolio filter and the
  * /portfolio page list all three. Runs on the laptop and the phone project.
@@ -15,7 +15,7 @@ const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 const PEOPLE = [
   { slug: "merle-kastorf", locale: "de", name: "Merle Kastorf", template: "Leuchttisch", kind: "photographer", projects: ["nachbild", "gegenlicht", "nathan-portraets", "spielzeitkampagne"] },
-  { slug: "rana-al-khatib", locale: "ar", name: "رنا الخطيب", template: "Grundriss", kind: "designer", projects: ["school-extension", "stairwell-retrofit", "housing-study", "library-competition"] },
+  { slug: "freya-nilsen", locale: "ar", name: "فريا نيلسن", template: "Grundriss", kind: "designer", projects: ["school-extension", "stairwell-retrofit", "housing-study", "library-competition"] },
   { slug: "ines-vasconcelos", locale: "en", name: "Ines Vasconcelos", template: "Logbuch", kind: "engineer", projects: ["nevoa", "remendo-log", "sardinha-split", "bike-light-mount"] },
 ] as const;
 
@@ -122,8 +122,8 @@ test("Merle's lead series: after its cover, thirteen pictures, each a numbered l
   }
 });
 
-test("Rana's page keeps Latin figures in Arabic text and never uses Arabic-Indic digits", async ({ page }) => {
-  await open(page, "/ar/p/rana-al-khatib/school-extension");
+test("Freya's page keeps Latin figures in Arabic text and never uses Arabic-Indic digits", async ({ page }) => {
+  await open(page, "/ar/p/freya-nilsen/school-extension");
   const text = await page.locator("main").innerText();
   expect(text).toContain("1,240");
   expect(text).not.toMatch(/[٠-٩۰-۹]/);

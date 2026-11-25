@@ -414,15 +414,22 @@ test.describe("rows of project cards", () => {
 });
 
 test.describe("addresses of example pages", () => {
-  test("an example asked for in another language leads to its own (308); a private preview does not", async ({ page }) => {
+  test("an example asked for in another language, or at the address of the person it replaced, leads to its own (308); a private preview does not", async ({ page }) => {
     for (const [path, target] of [
       ["/en/p/ronja-feldkamp", "/de/p/ronja-feldkamp"],
       ["/ar/p/ronja-feldkamp", "/de/p/ronja-feldkamp"],
       ["/de/p/tobin-achterberg", "/en/p/tobin-achterberg"],
-      ["/en/p/naya-aldabbas", "/ar/p/naya-aldabbas"],
+      ["/en/p/elena-novak", "/ar/p/elena-novak"],
+      // Replaced example people (features/examples/renamed.ts): page and project pages, from any language.
+      ["/ar/p/naya-aldabbas", "/ar/p/elena-novak"],
+      ["/de/p/rana-al-khatib", "/ar/p/freya-nilsen"],
+      ["/ar/p/naya-aldabbas/accountant-to-analyst", "/ar/p/elena-novak/accountant-to-analyst"],
+      ["/en/p/rana-al-khatib/school-extension", "/ar/p/freya-nilsen/school-extension"],
     ] as const) {
       const response = await page.request.get(path, { maxRedirects: 0 });
       expect(response.status(), path).toBe(308);
+      // One Location header (a redirect thrown from a cached render sends it twice).
+      expect(response.headersArray().filter((header) => header.name.toLowerCase() === "location"), path).toHaveLength(1);
       expect(new URL(response.headers().location ?? "", "http://x").pathname, path).toBe(target);
     }
     // An example that exists in every language stays where it is; a preview for one person is not moved.

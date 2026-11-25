@@ -51,7 +51,7 @@ describe("the website's counts (one vocabulary, fed from code)", () => {
 describe("the Portfolio section", () => {
   it("is a gallery category with at least the six portfolio pages", () => {
     expect(CATEGORIES).toContain("portfolio");
-    expect(portfolioExamples()).toEqual(expect.arrayContaining(["ronja-feldkamp", "tobin-achterberg", "naya-aldabbas", "jorinde-ahlfeld", "jonas-ek", "arjun-mehta"]));
+    expect(portfolioExamples()).toEqual(expect.arrayContaining(["ronja-feldkamp", "tobin-achterberg", "elena-novak", "jorinde-ahlfeld", "jonas-ek", "arjun-mehta"]));
     for (const locale of LOCALES) expect(MESSAGES[locale].examples.categories.portfolio).toBeTruthy();
   });
 

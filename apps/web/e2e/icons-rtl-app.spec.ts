@@ -239,12 +239,12 @@ test.describe("directional icons mirror exactly once in Arabic", () => {
     test.setTimeout(150_000);
     // Ronja writes in German: /ar/p/ronja-feldkamp opens her page in German (a page is shown in its
     // creator's language), left to right, and its arrows are not mirrored; so is her project page.
-    // Naya writes in Arabic: her page and her project pages run right to left.
+    // Elena writes in Arabic: her page and her project pages run right to left.
     for (const [label, url, lands, direction] of [
       ["ronja", "/ar/p/ronja-feldkamp", "/de/p/ronja-feldkamp", "ltr"],
       ["ronja project", "/de/p/ronja-feldkamp/hafenlicht", "/de/p/ronja-feldkamp/hafenlicht", "ltr"],
-      ["naya", "/ar/p/naya-aldabbas", "/ar/p/naya-aldabbas", "rtl"],
-      ["naya project", "/ar/p/naya-aldabbas/accountant-to-analyst", "/ar/p/naya-aldabbas/accountant-to-analyst", "rtl"],
+      ["elena", "/ar/p/elena-novak", "/ar/p/elena-novak", "rtl"],
+      ["elena project", "/ar/p/elena-novak/accountant-to-analyst", "/ar/p/elena-novak/accountant-to-analyst", "rtl"],
     ] as const) {
       await page.goto(url);
       await expect(page).toHaveURL((address) => address.pathname === lands);

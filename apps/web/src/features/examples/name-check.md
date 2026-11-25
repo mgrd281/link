@@ -19,7 +19,7 @@ How to check (the way the rows below were made):
 | Name on the page | City and profession | Queries | Result | Decision |
 |---|---|---|---|---|
 | Merle Kastorf | Dresden, dance and stage photographer | `"Merle Kastorf" Fotografin Dresden`; `"Merle Kastorf"` | No result for the name. Hits were other people named Merle (Merle Fräbel, Merle Homeier, Merle Kröger, Merle Schwietert), none with this surname. | Used. |
-| Rana Al-Khatib (رنا الخطيب) | Amman, architect for schools and housing | `"Rana Al-Khatib" architect Amman`; `"Rana Khatib" OR "Rana Alkhatib" OR "رنا الخطيب" architect` | No architect of that name found. Nearby names: Nadeen AlKhateeb, Judy Elkhatib, Ayah Alkhatib (architects with other first names), Rana Beiruti (curator, Amman). Al-Khatib is a common family name, so private people of this name surely exist; no public architect does. | Used. The page invents no client, firm or prize: clients appear as "a public primary school" or "the owners' association". |
+| Rana Al-Khatib (رنا الخطيب) | Amman, architect for schools and housing | `"Rana Al-Khatib" architect Amman`; `"Rana Khatib" OR "Rana Alkhatib" OR "رنا الخطيب" architect` | No architect of that name found. Nearby names: Nadeen AlKhateeb, Judy Elkhatib, Ayah Alkhatib (architects with other first names), Rana Beiruti (curator, Amman). Al-Khatib is a common family name, so private people of this name surely exist; no public architect does. | Used until 2026-11-25, then replaced by Freya Nilsen (below); the old address redirects. The page invents no client, firm or prize: clients appear as "a public primary school" or "the owners' association". |
 | Ines Vasconcelos | Porto, firmware developer and hardware maker | `"Ines Vasconcelos" firmware engineer Porto`; `"Inês Vasconcelos" engineer hardware OR firmware OR embedded` | No firmware, embedded or hardware engineer of that name found. Hits were other people (Ana Vasconcelos, Miguel Vasconcelos, Inês Monteiro, Inês A. Ribeiro). | Used. |
 
 Repositories and packages on Ines's page (owner `vasconcelos.example`, which cannot exist on GitHub):
@@ -36,6 +36,19 @@ Repositories and packages on Ines's page (owner `vasconcelos.example`, which can
 | `sleep-check` (first idea) | 126 repositories (sleep trackers) | not found | Rejected as too common. |
 | `deep-sleep-audit` | 0 (repositories and code search) | not found | Used for the agent skill in the repo block. |
 
-The project names on Merle's and Rana's pages ("Nachbild", "Gegenlicht", "Spielzeitkampagne", "توسعة مدرسة
+The project names on Merle's and Freya's pages ("Nachbild", "Gegenlicht", "Spielzeitkampagne", "توسعة مدرسة
 ابتدائية" …) are descriptive titles, not products or companies. Merle's "Nathan, Porträts" names Lessing's public
 domain play, not a production or a theatre.
+
+## Replacements (2026-11-25)
+
+At the founder's request the two Arabic portfolio pages show other people: the architect on Grundriss
+(`/ar/p/freya-nilsen`, before `rana-al-khatib`) and the career coach on Werkbogen (`/ar/p/elena-novak`, before
+`naya-aldabbas`). The pages stay in Arabic, with their projects, drawings and project addresses; the old addresses
+redirect (`renamed.ts`).
+
+| Name on the page | City and profession | Queries | Result | Decision |
+|---|---|---|---|---|
+| Astrid Holm (first idea) | architect | `"Astrid Holm"` | Two notable Danish historical figures carry the name. | Rejected. |
+| Freya Nilsen (فريا نيلسن) | Amman, architect for schools and housing (from Oslo) | `"Freya Nilsen" architect`; `"Freya Nilsen" architect Amman`; `"Freya Nilsen"` | No architect of that name, in Amman or anywhere. Nearby names: Freja Bak Josias (architect, Copenhagen), Freyja Lehnen (Glasgow), Freya Alston, Freya Cameron. The name alone: no public person; the closest hit is an actress credited once as "Freya Neilsen" (TV, 2007). | Used. |
+| Elena Novak (إيلينا نوفاك) | Dubai, career coach (from Ljubljana) | `"Elena Novak" career coach`; `"Elena Novak" career coach Dubai`; `"Elena Novak"` | No career coach of that name, in Dubai or anywhere. Other coaches named Elena (Giorgetti, Boluda, Vsevolodova, Taleski) have other surnames. The name alone: an insurance manager in Croatia and Bulgaria, a mezzo-soprano at the Bolshoi Theatre, a writer in Moscow; Novak is the most common Slovenian surname. None of them coaches. | Used. The page names no employer: a hotel group and a technology company. |

@@ -19,8 +19,8 @@ const ROUTES = [
   { path: "/de/p/ronja-feldkamp/hafenlicht", lang: "de" },
   { path: "/en/p/tobin-achterberg", lang: "en" },
   { path: "/en/p/tobin-achterberg/plotweft", lang: "en" },
-  { path: "/ar/p/naya-aldabbas", lang: "ar" },
-  { path: "/ar/p/naya-aldabbas/accountant-to-analyst", lang: "ar" },
+  { path: "/ar/p/elena-novak", lang: "ar" },
+  { path: "/ar/p/elena-novak/accountant-to-analyst", lang: "ar" },
   { path: "/de/p/jorinde-ahlfeld", lang: "de" },
   { path: "/de/p/jorinde-ahlfeld/sechs-stuehle", lang: "de" },
 ] as const;

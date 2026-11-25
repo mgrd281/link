@@ -58,8 +58,8 @@ labelled "Example · {category}" and is `noindex`. See ADR 0019, 0021, 0022 and 
 ## Portfolio examples (people who show work)
 
 The gallery's `portfolio` category (it feeds `/portfolio` and the homepage band) holds one fictional
-person per portfolio template: Ronja, Tobin, Naya, Jorinde (`catalog-h.ts`, Werkbogen and Tiefdruck),
-Jonas and Arjun (Folio), Merle Kastorf, Rana Al-Khatib and Ines Vasconcelos (`catalog-i.ts`:
+person per portfolio template: Ronja, Tobin, Elena, Jorinde (`catalog-h.ts`, Werkbogen and Tiefdruck),
+Jonas and Arjun (Folio), Merle Kastorf, Freya Nilsen and Ines Vasconcelos (`catalog-i.ts`:
 Leuchttisch, Grundriss, Logbuch). The full checklist is in `linkyo-portfolio` ("Add an example
 person"); the essentials:
 

@@ -2,8 +2,10 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 import { PROXIED_IMAGE_HOSTS, STORAGE_MEDIA_PATH } from "./src/features/directions/shared/remote-images";
+import { renamedExampleRedirects } from "./src/features/examples/renamed";
 import { legalReady } from "./src/features/legal/company";
 import { assertLiveReady } from "./src/features/legal/live-guard";
+import { routing } from "./src/i18n/routing";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -62,6 +64,9 @@ const config: NextConfig = {
     ...(storage?.local ? { dangerouslyAllowLocalIP: true } : {}),
   },
   headers: () => Promise.resolve([{ source: "/:path*", headers: securityHeaders }]),
+  // The addresses of example people who gave way to others lead to the new pages (308), before any
+  // route renders (features/examples/renamed.ts).
+  redirects: () => Promise.resolve(renamedExampleRedirects(routing.locales)),
   experimental: {
     // app/global-not-found.tsx is Linkyo's page for an address no route matches at all (the app has
     // several root layouts, [locale] and u/[username], so there is no single not-found). Today no

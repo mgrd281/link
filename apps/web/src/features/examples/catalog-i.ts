@@ -12,9 +12,10 @@ import { examplePage } from "./build";
  *
  * Merle's photographs are the work of the Unsplash photographers credited in
  * assets/examples/CREDITS.md, one photographer per series; her page names them in its "Example"
- * note (`credit` in looks.ts). Rana's drawings and Ines's boards and screens are original Linkyo
+ * note (`credit` in looks.ts). Freya's drawings and Ines's boards and screens are original Linkyo
  * drawings made with Pillow; only their portraits are photographs. The texts were written to what
- * the pictures show.
+ * the pictures show. Freya took the place of an earlier architect on 2026-11-25 (her old address
+ * redirects, renamed.ts); her drawings and projects stayed.
  */
 export const CATALOG_I: Record<string, Page> = {
   // Leuchttisch: the covers of the four series open the page in one row, every picture uncropped.
@@ -158,16 +159,18 @@ export const CATALOG_I: Record<string, Page> = {
   ),
 
   // Grundriss in Arabic: the title block opens with the school's drawing; every sheet has a fact table.
-  "rana-al-khatib": examplePage(
-    "rana-al-khatib",
+  // A Norwegian architect who has worked in Amman since 2010 and writes her page in Arabic. The
+  // drawings were made for Amman (the sun angles in the section are those of latitude 32°).
+  "freya-nilsen": examplePage(
+    "freya-nilsen",
     "ar",
     {
-      name: "رنا الخطيب",
+      name: "فريا نيلسن",
       tagline: "معمارية · مدارس ومساكن · عمّان",
       bio: "أصمّم مدارس ومباني سكنية تبقى باردة في الصيف ومضيئة في الشتاء، وأرمّم ما يستحق أن يبقى.",
       location: "عمّان",
-      photo: "ex-pf-rana-01",
-      focal: [0.52, 0.5],
+      photo: "ex-pf-freya-01",
+      focal: [0.5, 0.46],
       portraitOnly: true,
     },
     (h) => {
@@ -177,7 +180,7 @@ export const CATALOG_I: Record<string, Page> = {
         role: "التصميم والإشراف على التنفيذ",
         year: { from: 2024 },
         tags: ["مدارس", "تظليل", "خرسانة"],
-        cover: ["ex-pf-rana-02", "رسم محوري يُظهر المدرسة القائمة على شكل حرف L والجناح الجديد باللون الأخضر حول ساحة فيها أربع أشجار"],
+        cover: ["ex-pf-freya-02", "رسم محوري يُظهر المدرسة القائمة على شكل حرف L والجناح الجديد باللون الأخضر حول ساحة فيها أربع أشجار"],
         results: [
           ["1,240 م²", "مساحة التوسعة"],
           ["12", "صفًا دراسيًا"],
@@ -190,8 +193,8 @@ export const CATALOG_I: Record<string, Page> = {
           result: "افتُتح الجناح في أيلول 2024. أُزيلت الغرف المتنقلة، وبقيت الأشجار الأربع في مكانها.",
         },
         pictures: [
-          { key: "ex-pf-rana-03", alt: "مسقط الطابق الأرضي: ستة صفوف متساوية على ممر مفتوح، والساحة بأشجارها الأربع، والمبنى القائم مظلل بخطوط مائلة", caption: "المسقط الأرضي: كل صف 58 مترًا مربعًا وله نافذتان." },
-          { key: "ex-pf-rana-04", alt: "مقطع عرضي في الساحة يبيّن زاوية شمس الصيف 81 درجة وزاوية شمس الشتاء 34 درجة عند واجهة الصفوف", caption: "المظلة تحجب شمس حزيران وتُدخل شمس كانون الأول." },
+          { key: "ex-pf-freya-03", alt: "مسقط الطابق الأرضي: ستة صفوف متساوية على ممر مفتوح، والساحة بأشجارها الأربع، والمبنى القائم مظلل بخطوط مائلة", caption: "المسقط الأرضي: كل صف 58 مترًا مربعًا وله نافذتان." },
+          { key: "ex-pf-freya-04", alt: "مقطع عرضي في الساحة يبيّن زاوية شمس الصيف 81 درجة وزاوية شمس الشتاء 34 درجة عند واجهة الصفوف", caption: "المظلة تحجب شمس حزيران وتُدخل شمس كانون الأول." },
         ],
       });
       const stair = h.project("تأهيل درج عمارة سكنية", "درج ضيق في عمارة من عام 1978 صار أعرض وأكثر أمانًا، ومعه مصعد ونافذة سقفية، دون المساس بالشقق.", {
@@ -200,7 +203,7 @@ export const CATALOG_I: Record<string, Page> = {
         role: "التصميم والإشراف",
         year: { from: 2025 },
         tags: ["ترميم", "إتاحة الوصول"],
-        cover: ["ex-pf-rana-05", "مقطع رأسي في بيت الدرج: أربعة طوابق، ومصعد جديد بالأخضر إلى جانب الدرج، ونافذة سقفية في الأعلى"],
+        cover: ["ex-pf-freya-05", "مقطع رأسي في بيت الدرج: أربعة طوابق، ومصعد جديد بالأخضر إلى جانب الدرج، ونافذة سقفية في الأعلى"],
         results: [
           ["4", "طوابق"],
           ["11", "أسبوعًا للتنفيذ"],
@@ -213,7 +216,7 @@ export const CATALOG_I: Record<string, Page> = {
           result: "بقيت العائلات في شققها طوال مدة العمل، أحد عشر أسبوعًا.",
         },
         pictures: [
-          { key: "ex-pf-rana-06", alt: "مسقطان لبيت الدرج قبل التأهيل وبعده: درج ضيق بلا مصعد، ثم درج أعرض مع مصعد وبسطة", caption: "الجدران نفسها والمساحة نفسها: تختفي الدرجات الدائرية ويتسع المكان لمصعد." },
+          { key: "ex-pf-freya-06", alt: "مسقطان لبيت الدرج قبل التأهيل وبعده: درج ضيق بلا مصعد، ثم درج أعرض مع مصعد وبسطة", caption: "الجدران نفسها والمساحة نفسها: تختفي الدرجات الدائرية ويتسع المكان لمصعد." },
         ],
       });
       const housing = h.project("دراسة إسكان", "أربعة بدائل لكتل سكنية على أرض مساحتها 3,100 متر مربع، أعددتها لمطوّر عقاري.", {
@@ -222,7 +225,7 @@ export const CATALOG_I: Record<string, Page> = {
         role: "دراسة معمارية أولية",
         year: { from: 2025 },
         tags: ["إسكان", "دراسة"],
-        cover: ["ex-pf-rana-07", "أربعة نماذج محورية لكتل سكنية، والبديل المقترح، وهو كتل متدرجة، ملوّن بالأخضر"],
+        cover: ["ex-pf-freya-07", "أربعة نماذج محورية لكتل سكنية، والبديل المقترح، وهو كتل متدرجة، ملوّن بالأخضر"],
         results: [["40", "شقة في البديل المقترح"]],
         story: {
           about:
@@ -250,12 +253,12 @@ export const CATALOG_I: Record<string, Page> = {
         competition,
         h.about(
           "نبذة عني",
-          "درستُ العمارة في عمّان، وعملت تسع سنوات في مكتب يصمّم المدارس قبل أن أفتح مكتبي الصغير عام 2019. نحن ثلاثة: معماريتان ومهندس إنشائي يعمل معنا في كل مشروع.\n\nيهمّني ما يستخدمه الناس كل يوم: الصفوف والأدراج والممرات. وأرى أن الظل والتهوية يأتيان قبل المكيّف.",
+          "درستُ العمارة في أوسلو، وجئتُ إلى عمّان عام 2010 للعمل في مكتب يصمّم المدارس. بقيت فيه تسع سنوات، وتعلّمت العربية في مواقع البناء، ثم فتحت مكتبي الصغير عام 2019. نحن ثلاثة: معماريتان ومهندس إنشائي يعمل معنا في كل مشروع.\n\nيهمّني ما يستخدمه الناس كل يوم: الصفوف والأدراج والممرات. وأرى أن الظل والتهوية يأتيان قبل المكيّف.",
           {
             facts: [
               ["المكتب", "عمّان، الأردن"],
-              ["الخبرة", "14 عامًا"],
-              ["اللغات", "العربية والإنجليزية"],
+              ["في عمّان منذ", "2010"],
+              ["اللغات", "النرويجية والإنجليزية والعربية"],
               ["نطاق العمل", "في الأردن كله"],
             ],
           },
@@ -270,8 +273,8 @@ export const CATALOG_I: Record<string, Page> = {
         ]),
         h.timeline("المسيرة", [
           { role: "مكتبي الخاص", years: { from: 2019, to: "now" }, note: "مدارس ومساكن وترميم" },
-          { role: "معمارية", org: "مكتب تصميم مدارس", years: { from: 2010, to: 2019 } },
-          { role: "بكالوريوس العمارة", years: { from: 2005, to: 2010 } },
+          { role: "معمارية", org: "مكتب تصميم مدارس في عمّان", years: { from: 2010, to: 2019 } },
+          { role: "دراسة العمارة في أوسلو", years: { from: 2005, to: 2010 } },
         ]),
         h.tools("الأدوات", ["Revit", "Rhino", "رسم باليد", "AutoCAD", "نماذج من الكرتون"]),
         h.contact(

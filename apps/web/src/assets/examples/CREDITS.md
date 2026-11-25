@@ -218,7 +218,7 @@ picture are original Linkyo designs: the apps and the skills are fictional.
 
 ## Portfolio examples (ex-pf-*)
 
-Pictures for the four portfolio examples (Ronja Feldkamp, Jorinde Ahlfeld, Tobin Achterberg, Naya Al-Dabbas).
+Pictures for the four portfolio examples (Ronja Feldkamp, Jorinde Ahlfeld, Tobin Achterberg, Elena Novak).
 Photos from the Unsplash CDN's free library, each license checked on the photo's own page on 2026-11-23, none
 from Unsplash+. All were resized (2240 px on the long side for the nine that run full width, 1600 px for the
 rest) and saved as JPEG; other changes are named per file. Small lettering that named a brand was retouched.
@@ -238,14 +238,14 @@ one photographer, who is named in the page's credit:
 | Jorinde Ahlfeld | Chairs (cover 08, pictures 09 and 10) | ex-pf-jorinde-08 to -10 | Bailey Alexander |
 | Tobin Achterberg | Avatar | ex-pf-tobin-01 | Vitaly Gariev |
 | Tobin Achterberg | Two interface drawings | ex-pf-tobin-02, -03 | Original Linkyo artwork |
-| Naya Al-Dabbas | Avatar | ex-pf-naya-01 | Lisa Marie Theck |
+| Elena Novak | Avatar (since 2026-11-25, license checked that day) | ex-pf-elena-01 | Vitaly Gariev |
 
-Pictures for the three Stage 3 portfolio examples (Merle Kastorf on Leuchttisch, Rana Al-Khatib on Grundriss,
+Pictures for the three Stage 3 portfolio examples (Merle Kastorf on Leuchttisch, Freya Nilsen on Grundriss,
 Ines Vasconcelos on Logbuch). Photos from the Unsplash CDN's free library, each license checked on the photo's
 own page on 2026-11-24, none from Unsplash+; resized to 2240 px on the long side for the series that run full
 width (Leuchttisch shows them uncropped and wider than the text), 1600 px or 1200 px (portraits, cropped square)
 for the rest. People in the photos are performers, models or anonymous; they have no connection to the
-fictional names. Rana's architectural drawings and Ines's screens, boards and technical drawings are original
+fictional names. Freya's architectural drawings and Ines's screens, boards and technical drawings are original
 Linkyo drawings made with Pillow (DM Mono, Work Sans, JetBrains Mono; all SIL Open Font License); a project
 never mixes a photographer and a drawing:
 
@@ -256,13 +256,21 @@ never mixes a photographer and a drawing:
 | Merle Kastorf | Gegenlicht (cover 16, pictures 17 to 19) | ex-pf-merle-16 to -19 | Samantha Weisburg |
 | Merle Kastorf | Nathan, Porträts (cover 20, pictures 21 and 22) | ex-pf-merle-20 to -22 | Hossein Nasr |
 | Merle Kastorf | Spielzeitkampagne (cover) | ex-pf-merle-23 | Kazuo ota |
-| Rana Al-Khatib | Avatar | ex-pf-rana-01 | kilarov |
-| Rana Al-Khatib | School extension, stairwell retrofit, housing study | ex-pf-rana-02 to -07 | Original Linkyo drawings |
+| Freya Nilsen | Avatar (since 2026-11-25, license checked that day) | ex-pf-freya-01 | Sarah Rodriguez |
+| Freya Nilsen | School extension, stairwell retrofit, housing study | ex-pf-freya-02 to -07 | Original Linkyo drawings |
 | Ines Vasconcelos | Avatar and the About portrait | ex-pf-ines-01, -02 | ThisisEngineering |
 | Ines Vasconcelos | Névoa, remendo-log, sardinha-split, bike-light mount | ex-pf-ines-03 to -09 | Original Linkyo drawings |
 
 | File | Photographer / source | Photo page | License |
 |---|---|---|---|
+| ex-pf-elena-01.jpg | Vitaly Gariev (cropped square from the landscape original) | https://unsplash.com/photos/young-woman-with-long-brown-hair-smiling-6CFMxa8M7Gs | Unsplash License |
+| ex-pf-freya-01.jpg | Sarah Rodriguez (cropped square, head and shoulders) | https://unsplash.com/photos/woman-in-white-shirt-smiling-k4TE7Z-nK8M | Unsplash License |
+| ex-pf-freya-02.jpg | Original Linkyo drawing (axonometric of the school extension; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-freya-03.jpg | Original Linkyo drawing (ground floor plan of the school extension; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-freya-04.jpg | Original Linkyo drawing (section through the school courtyard; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-freya-05.jpg | Original Linkyo drawing (section through the stairwell; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-freya-06.jpg | Original Linkyo drawing (stair core before and after; Pillow, DM Mono; OFL) | – | Original artwork |
+| ex-pf-freya-07.jpg | Original Linkyo drawing (four massing options; Pillow, DM Mono; OFL) | – | Original artwork |
 | ex-pf-ines-01.jpg | ThisisEngineering (cropped square) | https://unsplash.com/photos/a-woman-working-on-a-project-with-a-magnifying-glass-193e0Bmkd_E | Unsplash License |
 | ex-pf-ines-02.jpg | ThisisEngineering | https://unsplash.com/photos/a-woman-working-on-a-circuit-board-with-a-magnifying-glass-lAbYmLWrT9o | Unsplash License |
 | ex-pf-ines-03.jpg | Original Linkyo drawing (the e-paper weather display on a shelf; Pillow, Work Sans, JetBrains Mono; OFL) | – | Original artwork |
@@ -305,14 +313,6 @@ never mixes a photographer and a drawing:
 | ex-pf-merle-21.jpg | Hossein Nasr | https://unsplash.com/photos/a-man-with-a-beard-and-a-white-robe-h3OCqY_2RBA | Unsplash License |
 | ex-pf-merle-22.jpg | Hossein Nasr | https://unsplash.com/photos/a-man-standing-in-the-dark-holding-a-baseball-mitt-aOi3swqkZUg | Unsplash License |
 | ex-pf-merle-23.jpg | Kazuo ota | https://unsplash.com/photos/a-silhouette-of-a-woman-in-a-black-leotard-bYmzfvZ8Izk | Unsplash License |
-| ex-pf-naya-01.jpg | Lisa Marie Theck (cropped square) | https://unsplash.com/photos/a-woman-in-a-headscarf-smiles-at-the-camera-6awpFbYse3o | Unsplash License |
-| ex-pf-rana-01.jpg | kilarov (cropped square) | https://unsplash.com/photos/woman-in-black-scarf-and-brown-button-up-long-sleeved-top-under-trees-i1U5s5GkKxY | Unsplash License |
-| ex-pf-rana-02.jpg | Original Linkyo drawing (axonometric of the school extension; Pillow, DM Mono; OFL) | – | Original artwork |
-| ex-pf-rana-03.jpg | Original Linkyo drawing (ground floor plan of the school extension; Pillow, DM Mono; OFL) | – | Original artwork |
-| ex-pf-rana-04.jpg | Original Linkyo drawing (section through the school courtyard; Pillow, DM Mono; OFL) | – | Original artwork |
-| ex-pf-rana-05.jpg | Original Linkyo drawing (section through the stairwell; Pillow, DM Mono; OFL) | – | Original artwork |
-| ex-pf-rana-06.jpg | Original Linkyo drawing (stair core before and after; Pillow, DM Mono; OFL) | – | Original artwork |
-| ex-pf-rana-07.jpg | Original Linkyo drawing (four massing options; Pillow, DM Mono; OFL) | – | Original artwork |
 | ex-pf-ronja-01.jpg | Peyman Shojaei (lettering on the camera retouched) | https://unsplash.com/photos/woman-looking-through-a-camera-viewfinder-AnlwDY2COY4 | Unsplash License |
 | ex-pf-ronja-02.jpg | Paul Einerhand (a sticker on a bin and lettering on a jacket retouched) | https://unsplash.com/photos/people-in-boat-on-water-during-daytime-QEV0iyd09MY | Unsplash License |
 | ex-pf-ronja-03.jpg | Paul Einerhand | https://unsplash.com/photos/black-and-brown-boat-on-dock-during-daytime-GCWX2zdk4lY | Unsplash License |

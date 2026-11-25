@@ -11,8 +11,8 @@ designs and the 91 example pages.
 **Decision.**
 
 1. **A gallery category, not a list of categories.** `CATEGORIES` gains `"portfolio"` (second, after
-   creators; icon FolderKanban, the project block's glyph). Ronja Feldkamp, Tobin Achterberg, Naya
-   Aldabbas, Jorinde Ahlfeld, Jonas Ek and Arjun Mehta move into it. All six show their own work:
+   creators; icon FolderKanban, the project block's glyph). Ronja Feldkamp, Tobin Achterberg, Elena
+   Novak, Jorinde Ahlfeld, Jonas Ek and Arjun Mehta move into it. All six show their own work:
    four with project pages, Jonas Ek as a gallery of architecture photographs, Arjun Mehta as his
    open-source repositories. `category` stays a single value, so the readers (preview chip, OG card,
    gallery, search, team console) needed no change beyond the new label and icon. A page that should

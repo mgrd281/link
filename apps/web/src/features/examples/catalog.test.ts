@@ -60,9 +60,9 @@ const addressLike = (value: unknown): string[] => {
  */
 const EXAMPLE_ADDRESS = /^(https:\/\/example\.com\/|mailto:[a-z]+@example\.com$|tel:\+49300000000$|https:\/\/github\.com\/[a-z0-9-]+\.example\/[a-z0-9-]+$)/;
 
-const PORTFOLIOS = ["ronja-feldkamp", "tobin-achterberg", "naya-aldabbas", "jorinde-ahlfeld"] as const;
+const PORTFOLIOS = ["ronja-feldkamp", "tobin-achterberg", "elena-novak", "jorinde-ahlfeld"] as const;
 /** One example person per Stage 3 template (catalog-i.ts). */
-const STAGE3 = ["merle-kastorf", "rana-al-khatib", "ines-vasconcelos"] as const;
+const STAGE3 = ["merle-kastorf", "freya-nilsen", "ines-vasconcelos"] as const;
 const ALL_PORTFOLIOS = [...PORTFOLIOS, ...STAGE3] as const;
 const SW = creatorTokens.swatches;
 
@@ -130,7 +130,7 @@ describe("example gallery", () => {
     expect(seen("project")).toContain("https://example.com/tobin-achterberg/plotweft/docs");
     expect(seen("project")).toContain("https://github.com/achterberg.example/plotweft");
     // The primary action and the other ways to reach someone.
-    expect(seen("contact")).toContain("https://example.com/naya-aldabbas/booking");
+    expect(seen("contact")).toContain("https://example.com/elena-novak/booking");
     expect(seen("contact")).toContain("mailto:hello@example.com");
     expect(seen("contact")).toContain("tel:+49300000000");
     expect(seen("contact")).toContain("https://example.com/ronja-feldkamp/vita.pdf");
@@ -158,7 +158,7 @@ describe("portfolio examples", () => {
       // All four in the gallery's Portfolio category (the /portfolio page reads it).
       "ronja-feldkamp": ["werkbogen", "portfolio", "de"],
       "tobin-achterberg": ["tiefdruck", "portfolio", "en"],
-      "naya-aldabbas": ["werkbogen", "portfolio", "ar"],
+      "elena-novak": ["werkbogen", "portfolio", "ar"],
       "jorinde-ahlfeld": ["tiefdruck", "portfolio", "de"],
     };
     for (const slug of PORTFOLIOS) {
@@ -217,17 +217,17 @@ describe("portfolio examples", () => {
     expect(projectsOf(tobin).some((project) => !coverImage(project) && (project.results?.length ?? 0) > 0)).toBe(true);
     expect(projectsOf(tobin).some((project) => !coverImage(project) && !project.results)).toBe(true);
 
-    const naya = example("naya-aldabbas");
+    const elena = example("elena-novak");
     // Werkbogen without a single work picture; the first story's cover is its figure.
-    expect(projectsOf(naya).some((project) => coverImage(project))).toBe(false);
-    expect(projectsOf(naya)[0]?.results?.[0]).toEqual({ value: "8", label: "أشهر" });
+    expect(projectsOf(elena).some((project) => coverImage(project))).toBe(false);
+    expect(projectsOf(elena)[0]?.results?.[0]).toEqual({ value: "8", label: "أشهر" });
     // The talk is a thin project: a title, a sentence and a link, so its card opens the link.
-    const talk = projectsOf(naya).find((project) => project.slug === "cv-is-not-your-story");
-    expect(talk && hasDetail(talk, quotesOf(naya))).toBe(false);
+    const talk = projectsOf(elena).find((project) => project.slug === "cv-is-not-your-story");
+    expect(talk && hasDetail(talk, quotesOf(elena))).toBe(false);
     expect(talk?.links).toHaveLength(1);
-    expect(naya.blocks.find((block): block is BlockOf<"contact"> => block.type === "contact")?.steps).toHaveLength(3);
+    expect(elena.blocks.find((block): block is BlockOf<"contact"> => block.type === "contact")?.steps).toHaveLength(3);
     // Latin digits everywhere, also in Arabic text.
-    expect(JSON.stringify(naya)).not.toMatch(/[٠-٩۰-۹]/);
+    expect(JSON.stringify(elena)).not.toMatch(/[٠-٩۰-۹]/);
 
     const jorinde = example("jorinde-ahlfeld");
     expect(projectsOf(jorinde)).toHaveLength(3);
@@ -240,7 +240,7 @@ describe("portfolio examples", () => {
   it("the three project pages the performance budgets name have something to read", () => {
     const pages: [slug: (typeof PORTFOLIOS)[number], project: string][] = [
       ["ronja-feldkamp", "hafenlicht"],
-      ["naya-aldabbas", "accountant-to-analyst"],
+      ["elena-novak", "accountant-to-analyst"],
       ["tobin-achterberg", "plotweft"],
     ];
     for (const [slug, address] of pages) {
@@ -281,7 +281,7 @@ describe("Stage 3 portfolio examples (one person per new template)", () => {
   it("each sits on its template as it comes, in the Portfolio category, in its language, with an audited palette", () => {
     const expected: Record<(typeof STAGE3)[number], [template: string, kind: Look["kind"], locale: Look["locale"]]> = {
       "merle-kastorf": ["leuchttisch", "photographer", "de"],
-      "rana-al-khatib": ["grundriss", "designer", "ar"],
+      "freya-nilsen": ["grundriss", "designer", "ar"],
       "ines-vasconcelos": ["logbuch", "engineer", "en"],
     };
     for (const slug of STAGE3) {
@@ -331,18 +331,18 @@ describe("Stage 3 portfolio examples (one person per new template)", () => {
     expect(merle.blocks.find((block): block is BlockOf<"contact"> => block.type === "contact")?.primary.label).toBe("Probenbesuch anfragen");
   });
 
-  it("Rana (Grundriss): an architect's sheets with figures, a confidential study and a title cover, Latin digits in Arabic", () => {
-    const rana = example("rana-al-khatib");
-    const projects = projectsOf(rana);
+  it("Freya (Grundriss): an architect's sheets with figures, a confidential study and a title cover, Latin digits in Arabic", () => {
+    const freya = example("freya-nilsen");
+    const projects = projectsOf(freya);
     expect(projects.map((project) => coverMode(project))).toEqual(["picture", "picture", "picture", "title"]);
     expect(projects[0]?.results?.[0]).toEqual({ value: "1,240 م²", label: "مساحة التوسعة" });
     expect(projects[0]?.year).toEqual({ from: 2024 });
     expect(projects.filter((project) => project.confidential).map((project) => project.slug)).toEqual(["housing-study"]);
     // Latin digits everywhere, also in Arabic text (Grundriss isolates them in <bdi>).
-    expect(JSON.stringify(rana)).not.toMatch(/[٠-٩۰-۹]/);
-    expect(rana.blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")?.items).toEqual(expect.arrayContaining(["Revit", "Rhino"]));
-    expect(rana.blocks.find((block): block is BlockOf<"contact"> => block.type === "contact")?.primary.label).toBe("احجز موعدًا");
-    expect(rana.blocks.some((block) => block.type === "timeline")).toBe(true);
+    expect(JSON.stringify(freya)).not.toMatch(/[٠-٩۰-۹]/);
+    expect(freya.blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")?.items).toEqual(expect.arrayContaining(["Revit", "Rhino"]));
+    expect(freya.blocks.find((block): block is BlockOf<"contact"> => block.type === "contact")?.primary.label).toBe("احجز موعدًا");
+    expect(freya.blocks.some((block) => block.type === "timeline")).toBe(true);
   });
 
   it("Ines (Logbuch): a build log over three years, running and done, with sources, a code sample and a repo block", () => {
@@ -366,9 +366,9 @@ describe("Stage 3 portfolio examples (one person per new template)", () => {
   it("their names and repository names were web-checked and recorded in name-check.md", () => {
     for (const slug of STAGE3) {
       const name = EXAMPLES[slug]?.profile.displayName ?? "";
-      const latin = { "merle-kastorf": "Merle Kastorf", "rana-al-khatib": "Rana Al-Khatib", "ines-vasconcelos": "Ines Vasconcelos" }[slug];
+      const latin = { "merle-kastorf": "Merle Kastorf", "freya-nilsen": "Freya Nilsen", "ines-vasconcelos": "Ines Vasconcelos" }[slug];
       expect(NAME_CHECK, slug).toContain(latin);
-      if (slug === "rana-al-khatib") expect(NAME_CHECK).toContain(name);
+      if (slug === "freya-nilsen") expect(NAME_CHECK).toContain(name);
     }
     for (const repo of ["nevoa-epd", "remendo-log", "sardinha-split", "deep-sleep-audit"]) expect(NAME_CHECK, repo).toContain(repo);
   });

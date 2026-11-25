@@ -34,6 +34,14 @@ import exMotionPalettePacken from "@/assets/examples/ex-motion-palette-packen.jp
 import exMotionWareScannen from "@/assets/examples/ex-motion-ware-scannen.jpg";
 import exNgo from "@/assets/examples/ex-ngo.jpg";
 import exPainter from "@/assets/examples/ex-painter.jpg";
+import exPfElena01 from "@/assets/examples/ex-pf-elena-01.jpg";
+import exPfFreya01 from "@/assets/examples/ex-pf-freya-01.jpg";
+import exPfFreya02 from "@/assets/examples/ex-pf-freya-02.jpg";
+import exPfFreya03 from "@/assets/examples/ex-pf-freya-03.jpg";
+import exPfFreya04 from "@/assets/examples/ex-pf-freya-04.jpg";
+import exPfFreya05 from "@/assets/examples/ex-pf-freya-05.jpg";
+import exPfFreya06 from "@/assets/examples/ex-pf-freya-06.jpg";
+import exPfFreya07 from "@/assets/examples/ex-pf-freya-07.jpg";
 import exPfInes01 from "@/assets/examples/ex-pf-ines-01.jpg";
 import exPfInes02 from "@/assets/examples/ex-pf-ines-02.jpg";
 import exPfInes03 from "@/assets/examples/ex-pf-ines-03.jpg";
@@ -76,14 +84,6 @@ import exPfMerle20 from "@/assets/examples/ex-pf-merle-20.jpg";
 import exPfMerle21 from "@/assets/examples/ex-pf-merle-21.jpg";
 import exPfMerle22 from "@/assets/examples/ex-pf-merle-22.jpg";
 import exPfMerle23 from "@/assets/examples/ex-pf-merle-23.jpg";
-import exPfNaya01 from "@/assets/examples/ex-pf-naya-01.jpg";
-import exPfRana01 from "@/assets/examples/ex-pf-rana-01.jpg";
-import exPfRana02 from "@/assets/examples/ex-pf-rana-02.jpg";
-import exPfRana03 from "@/assets/examples/ex-pf-rana-03.jpg";
-import exPfRana04 from "@/assets/examples/ex-pf-rana-04.jpg";
-import exPfRana05 from "@/assets/examples/ex-pf-rana-05.jpg";
-import exPfRana06 from "@/assets/examples/ex-pf-rana-06.jpg";
-import exPfRana07 from "@/assets/examples/ex-pf-rana-07.jpg";
 import exPfRonja01 from "@/assets/examples/ex-pf-ronja-01.jpg";
 import exPfRonja02 from "@/assets/examples/ex-pf-ronja-02.jpg";
 import exPfRonja03 from "@/assets/examples/ex-pf-ronja-03.jpg";
@@ -300,6 +300,14 @@ export const exampleMedia = {
   "sample:ex-motion-ware-scannen": exMotionWareScannen,
   "sample:ex-ngo": exNgo,
   "sample:ex-painter": exPainter,
+  "sample:ex-pf-elena-01": exPfElena01,
+  "sample:ex-pf-freya-01": exPfFreya01,
+  "sample:ex-pf-freya-02": exPfFreya02,
+  "sample:ex-pf-freya-03": exPfFreya03,
+  "sample:ex-pf-freya-04": exPfFreya04,
+  "sample:ex-pf-freya-05": exPfFreya05,
+  "sample:ex-pf-freya-06": exPfFreya06,
+  "sample:ex-pf-freya-07": exPfFreya07,
   "sample:ex-pf-ines-01": exPfInes01,
   "sample:ex-pf-ines-02": exPfInes02,
   "sample:ex-pf-ines-03": exPfInes03,
@@ -342,14 +350,6 @@ export const exampleMedia = {
   "sample:ex-pf-merle-21": exPfMerle21,
   "sample:ex-pf-merle-22": exPfMerle22,
   "sample:ex-pf-merle-23": exPfMerle23,
-  "sample:ex-pf-naya-01": exPfNaya01,
-  "sample:ex-pf-rana-01": exPfRana01,
-  "sample:ex-pf-rana-02": exPfRana02,
-  "sample:ex-pf-rana-03": exPfRana03,
-  "sample:ex-pf-rana-04": exPfRana04,
-  "sample:ex-pf-rana-05": exPfRana05,
-  "sample:ex-pf-rana-06": exPfRana06,
-  "sample:ex-pf-rana-07": exPfRana07,
   "sample:ex-pf-ronja-01": exPfRonja01,
   "sample:ex-pf-ronja-02": exPfRonja02,
   "sample:ex-pf-ronja-03": exPfRonja03,
@@ -537,6 +537,14 @@ export const exampleMedia = {
  * put it back after running that script.
  */
 export const portfolioMedia = {
+  "sample:ex-pf-elena-01": { width: 1200, height: 1200, focal: [0.54, 0.42] },
+  "sample:ex-pf-freya-01": { width: 1200, height: 1200, focal: [0.5, 0.46] },
+  "sample:ex-pf-freya-02": { width: 2400, height: 1600, focal: [0.5, 0.55] },
+  "sample:ex-pf-freya-03": { width: 2400, height: 1600, focal: [0.5, 0.5] },
+  "sample:ex-pf-freya-04": { width: 2400, height: 1200, focal: [0.6, 0.6] },
+  "sample:ex-pf-freya-05": { width: 1600, height: 2000, focal: [0.45, 0.5] },
+  "sample:ex-pf-freya-06": { width: 2400, height: 1400, focal: [0.5, 0.45] },
+  "sample:ex-pf-freya-07": { width: 2400, height: 1600, focal: [0.5, 0.5] },
   "sample:ex-pf-ines-01": { width: 1200, height: 1200, focal: [0.5, 0.45] },
   "sample:ex-pf-ines-02": { width: 1600, height: 1067, focal: [0.42, 0.42] },
   "sample:ex-pf-ines-03": { width: 2400, height: 1600, focal: [0.5, 0.45] },
@@ -579,14 +587,6 @@ export const portfolioMedia = {
   "sample:ex-pf-merle-21": { width: 898, height: 1600, focal: [0.5, 0.3] },
   "sample:ex-pf-merle-22": { width: 1600, height: 1066, focal: [0.55, 0.55] },
   "sample:ex-pf-merle-23": { width: 1493, height: 2240, focal: [0.45, 0.55] },
-  "sample:ex-pf-naya-01": { width: 1600, height: 1600, focal: [0.5, 0.38] },
-  "sample:ex-pf-rana-01": { width: 1200, height: 1200, focal: [0.52, 0.5] },
-  "sample:ex-pf-rana-02": { width: 2400, height: 1600, focal: [0.5, 0.55] },
-  "sample:ex-pf-rana-03": { width: 2400, height: 1600, focal: [0.5, 0.5] },
-  "sample:ex-pf-rana-04": { width: 2400, height: 1200, focal: [0.6, 0.6] },
-  "sample:ex-pf-rana-05": { width: 1600, height: 2000, focal: [0.45, 0.5] },
-  "sample:ex-pf-rana-06": { width: 2400, height: 1400, focal: [0.5, 0.45] },
-  "sample:ex-pf-rana-07": { width: 2400, height: 1600, focal: [0.5, 0.5] },
   "sample:ex-pf-ronja-01": { width: 1600, height: 1067, focal: [0.62, 0.45] },
   "sample:ex-pf-ronja-02": { width: 2240, height: 1493, focal: [0.3, 0.55] },
   "sample:ex-pf-ronja-03": { width: 1067, height: 1600, focal: [0.5, 0.55] },

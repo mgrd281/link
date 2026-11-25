@@ -408,7 +408,7 @@ describe("the physical-direction guard", () => {
 });
 
 describe("the four portfolio examples", () => {
-  const SLUGS = ["ronja-feldkamp", "tobin-achterberg", "naya-aldabbas", "jorinde-ahlfeld"] as const;
+  const SLUGS = ["ronja-feldkamp", "tobin-achterberg", "elena-novak", "jorinde-ahlfeld"] as const;
 
   it.each(SLUGS)("%s renders in its language: no form, no embed, no shadow, no line under a link", (slug) => {
     const page = EXAMPLES[slug];
