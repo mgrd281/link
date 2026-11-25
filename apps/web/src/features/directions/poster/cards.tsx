@@ -15,7 +15,7 @@ import { linkGlyph, LinkIconGlyph } from "../shared/link-icons";
 import { providerOf } from "../shared/providers";
 import { LiveNextRow } from "./live";
 import { linkDestination, RAIL_THRESHOLD, type RowBlock } from "./sections";
-import { displayStyle, pageSide, pressable, railFrame, railTrack, type HeadingTag } from "./styles";
+import { cardHover, displayStyle, pageSide, pressable, railFrame, railTrack, type HeadingTag } from "./styles";
 
 /** Paid or commission links are labelled as advertising (DE: "Anzeige"). */
 export function AdLabel({ className }: { className?: string }) {
@@ -393,7 +393,8 @@ export function TextLink({ block, style }: { block: BlockOf<"link">; style: Crea
         tone,
         !primary && style === "minimal" && "ps-0 pe-1",
         pressable,
-        !primary && style === "minimal" && "after:hidden",
+        cardHover,
+        !primary && style === "minimal" && "before:hidden after:hidden",
       )}
     >
       {/* Icon tile, tinted from the button's own color so it works on every theme. */}
