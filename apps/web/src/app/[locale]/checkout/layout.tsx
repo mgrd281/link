@@ -10,6 +10,7 @@ import { MarketingFooter } from "@/features/marketing/footer";
 import { GermanOnlyLink } from "@/features/payments/checkout-summary";
 import { StripeLeaveGuard } from "@/features/payments/stripe-js";
 import { TestBanner } from "@/features/payments/test-banner";
+import { ClientMessages } from "@/i18n/client-messages-provider";
 import { Link } from "@/i18n/navigation";
 import { paymentsEnabled } from "@/lib/flags";
 import { NOINDEX } from "@/lib/seo";
@@ -35,7 +36,8 @@ export default async function CheckoutLayout({ children, params }: { children: R
   const tAuth = await getTranslations({ locale, namespace: "auth" });
   const contractLocale = (LEGAL_TEXT_LOCALES as readonly string[]).includes(locale);
   return (
-    <>
+    // The checkouts read the `checkout` words in the browser (`CLIENT_NAMESPACES.checkout`).
+    <ClientMessages group="checkout">
       {/* Stripe.js stays on these pages: once it is loaded, leaving the checkout is a full page load. */}
       <StripeLeaveGuard />
       <header className="layer-sticky sticky top-0 bg-canvas">
@@ -69,6 +71,6 @@ export default async function CheckoutLayout({ children, params }: { children: R
         )}
       </main>
       <MarketingFooter />
-    </>
+    </ClientMessages>
   );
 }

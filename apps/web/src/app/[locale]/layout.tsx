@@ -2,11 +2,12 @@ import { tokens } from "@linkyo/tokens";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 
-import { Providers } from "@/components/providers";
+import { PageDirection } from "@/components/page-direction";
 import { fontVariables } from "@/fonts";
+import { clientMessages } from "@/i18n/client-messages";
 import { isRtl, routing } from "@/i18n/routing";
 import { navPanelInitScript } from "@/lib/nav-panel-script";
 import { siteUrl } from "@/lib/site-url";
@@ -50,20 +51,28 @@ export const viewport: Viewport = {
   ],
 };
 
+/**
+ * The root of every page under a language. It carries only what every page needs in the browser: the
+ * words of the website's client components (`CLIENT_NAMESPACES.site`; the dashboard, the team console
+ * and the other areas pass their own in their layouts) and the page's direction. Tooltips and toasts
+ * come with the areas that show them (`components/providers.tsx`), so the example creator pages under
+ * /p load none of that (ADR 0008).
+ */
 export default async function LocaleLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
+  const dir = isRtl(locale) ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} dir={isRtl(locale) ? "rtl" : "ltr"} className={fontVariables} suppressHydrationWarning>
+    <html lang={locale} dir={dir} className={fontVariables} suppressHydrationWarning>
       <head>
         {/* Before paint: the stored theme, and the dashboard's folded section panel (no layout shift). */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript + navPanelInitScript }} />
       </head>
       <body className="min-h-dvh bg-canvas text-fg">
-        <NextIntlClientProvider>
-          <Providers>{children}</Providers>
+        <NextIntlClientProvider messages={clientMessages(await getMessages(), "site")}>
+          <PageDirection dir={dir}>{children}</PageDirection>
         </NextIntlClientProvider>
       </body>
     </html>

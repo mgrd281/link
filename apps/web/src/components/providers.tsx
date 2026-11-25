@@ -7,6 +7,12 @@ import type { ReactNode } from "react";
 
 import { isRtl } from "@/i18n/routing";
 
+/**
+ * Tooltips and toasts, for the parts of Linkyo that show them: the dashboard, the team console, the
+ * design system and the design prototypes put this in their layouts. The root layout carries only the
+ * page's direction (`./page-direction.tsx`), so a page without tooltips or toasts (a creator page)
+ * loads none of their code (ADR 0008).
+ */
 export function Providers({ children }: { children: ReactNode }) {
   const t = useTranslations("common");
   const locale = useLocale();
