@@ -39,6 +39,19 @@ describe("KpiTile (A-19)", () => {
     expect(tile(0)).toContain('data-tone="neutral"');
   });
 
+  it("lets a long label take a second line, and keeps its row's figures level (K4)", () => {
+    const html = renderToStaticMarkup(
+      <dl>
+        <KpiTile label="Zahlung fehlgeschlagen" value="1" />
+      </dl>,
+    );
+    // Two lines before an ellipsis, not one ("Zahlung fehlgeschl…" on half a phone).
+    expect(html).toMatch(/<dt class="[^"]*line-clamp-2[^"]*">Zahlung fehlgeschlagen<\/dt>/);
+    expect(html).not.toMatch(/<dt class="[^"]*\btruncate\b/);
+    // The label and the figure take two rows shared with the tiles beside it.
+    expect(html).toMatch(/class="[^"]*row-span-2[^"]*grid-rows-subgrid/);
+  });
+
   it("draws a sparkline in the palette's primary role that mirrors with the reading direction", () => {
     const html = renderToStaticMarkup(
       <dl>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon, Segmented } from "@linkyo/ui";
+import { cn, Icon, Segmented } from "@linkyo/ui";
 import {
   Ban,
   BadgeCheck,
@@ -36,6 +36,7 @@ import { useState } from "react";
 
 import { Screen } from "@/features/app/screen";
 import { useNow } from "@/features/directions/poster/live";
+import { touchSegmented } from "@/lib/touch";
 
 import { timeAgo } from "./format";
 import { bdi } from "./bidi";
@@ -166,7 +167,7 @@ export function ActivityScreen() {
         label={t("filter")}
         value={filter}
         onValueChange={setFilter}
-        className="justify-self-start"
+        className={cn("justify-self-start", touchSegmented)}
         options={(["all", "customers", "pages", "team"] as const).map((value) => ({ value, label: t(`filters.${value}`) }))}
       />
       {groups.length === 0 ? (

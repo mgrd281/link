@@ -9,6 +9,7 @@ import { useState, type CSSProperties } from "react";
 import { Screen } from "@/features/app/screen";
 import { TEMPLATE_PREVIEW_SIZES, TEMPLATE_PREVIEWS } from "@/features/directions/poster/template-previews";
 import { CardFace, type GalleryItem } from "@/features/examples/gallery-card";
+import { touchSegmented } from "@/lib/touch";
 
 /**
  * A design's thumbnail: its captured first screen (template-previews.ts); a design without one yet
@@ -74,6 +75,7 @@ export function TemplatesScreen({
           label={t("filterLabel")}
           value={filter}
           onValueChange={setFilter}
+          className={touchSegmented}
           options={[
             { value: "designs", label: t("designs", { count: designs.length }) },
             { value: "examples", label: t("examples", { count: examples.length }) },

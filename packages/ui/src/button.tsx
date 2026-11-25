@@ -58,6 +58,8 @@ export const buttonVariants = cva(
     compoundVariants: [
       // Only the website's lone call to action lifts on hover; buttons inside the product stay put.
       { variant: "primary", size: "cta", class: "hover:-translate-y-0.5 active:translate-y-0 motion-reduce:hover:translate-y-0" },
+      // A framed button's extension starts inside its 1 px frame, so 2 px reached 42 px: 4 px reach 46.
+      { variant: "secondary", size: "md", class: "before:-inset-y-1" },
     ],
     defaultVariants: { variant: "secondary", size: "md" },
   },

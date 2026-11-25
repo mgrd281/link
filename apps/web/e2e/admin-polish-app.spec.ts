@@ -14,6 +14,8 @@ import { enterDemoCode } from "./auth";
  * - K2: the customers list uses the room it has: no name, e-mail or country is cut at 1440 or 1920.
  * - K3: the block button of a sign-in row says what it does on a phone (and nothing runs under it),
  *   and opening a sheet pops no tooltip up.
+ * - K4: a customer's header leaves the first screen to the content, tile labels are whole, the
+ *   search placeholders fit, and every control of the team area is 44 × 44 px to a finger.
  *
  * Every test sets its own window (and a touch phone where it says so), so the file runs once, on the
  * desktop project. The account is a demo sign-up with the demo team code, as in admin-phone-app.spec.ts.
@@ -268,4 +270,158 @@ test.describe("K3: a phone's sign-in rows and sheets", () => {
     await expect(page.getByRole("tooltip")).toHaveCount(0);
     await context.close();
   });
+});
+
+/**
+ * Runs in the page (serialised: no outside names). The hit area of every live control inside `scope`,
+ * as e2e/touch-targets.spec.ts measures it: its box united with its `::before`/`::after`, which only
+ * counts where it is not clipped or covered. Disabled controls are not targets. A positioned pseudo-
+ * element is placed in its containing block: the control itself when it is positioned, else its
+ * nearest positioned ancestor (a link that covers its row with `after:inset-0`, as DataList's do).
+ */
+const smallTargets = (scope: string): string[] => {
+  const SEL = 'a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=tab], [role=switch], [role=checkbox], [role=radio], [role=menuitem], [role=link], [tabindex]:not([tabindex="-1"])';
+  const live = (element: Element) => {
+    const style = getComputedStyle(element);
+    const box = element.getBoundingClientRect();
+    if (style.visibility === "hidden" || style.display === "none" || box.width === 0 || box.height === 0) return false;
+    if (element.matches(":disabled, [aria-disabled=true]")) return false;
+    return element.closest('[inert], [aria-hidden="true"], [hidden]') === null;
+  };
+  const containingBlock = (element: Element): Element => {
+    let block: Element | null = element;
+    while (block && block !== document.documentElement && getComputedStyle(block).position === "static") block = block.parentElement;
+    return block ?? document.documentElement;
+  };
+  const out: string[] = [];
+  for (const element of new Set(document.querySelectorAll(SEL))) {
+    if (element.closest(scope) === null || !live(element)) continue;
+    element.scrollIntoView({ block: "center", inline: "center" });
+    const box = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    let { left, top, right, bottom } = box;
+    for (const pseudo of ["::before", "::after"] as const) {
+      const extra = getComputedStyle(element, pseudo);
+      if (extra.content === "none" || extra.content === "normal" || extra.position !== "absolute" || extra.pointerEvents === "none") continue;
+      const [x, y, w, h] = [extra.left, extra.top, extra.width, extra.height].map(parseFloat);
+      if (x === undefined || y === undefined || w === undefined || h === undefined || [x, y, w, h].some(Number.isNaN)) continue;
+      const block = containingBlock(element);
+      const frame = block.getBoundingClientRect();
+      const blockStyle = getComputedStyle(block);
+      const originX = frame.left + parseFloat(blockStyle.borderLeftWidth);
+      const originY = frame.top + parseFloat(blockStyle.borderTopWidth);
+      left = Math.min(left, originX + x);
+      top = Math.min(top, originY + y);
+      right = Math.max(right, originX + x + w);
+      bottom = Math.max(bottom, originY + y + h);
+    }
+    // An extension counts on each side only where a finger reaches it: the middle of the extended side
+    // must hit the control or another control. Where it is clipped or covered (a raised slot of the
+    // row), that side of the hit area is the control's own edge.
+    const reaches = (x: number, y: number) => {
+      if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return true;
+      const hit = document.elementFromPoint(x, y);
+      return hit !== null && (hit === element || element.contains(hit) || hit.closest(SEL) !== null);
+    };
+    const middleX = (box.left + box.right) / 2;
+    const middleY = (box.top + box.bottom) / 2;
+    if (left < box.left - 0.5 && !reaches((left + box.left) / 2, middleY)) left = box.left;
+    if (right > box.right + 0.5 && !reaches((right + box.right) / 2, middleY)) right = box.right;
+    if (top < box.top - 0.5 && !reaches(middleX, (top + box.top) / 2)) top = box.top;
+    if (bottom > box.bottom + 0.5 && !reaches(middleX, (bottom + box.bottom) / 2)) bottom = box.bottom;
+    // A link inside a sentence may stay its words (WCAG 2.5.8).
+    const inline = element.tagName === "A" && style.display === "inline" && element.closest("p, li, dd, dt") !== null;
+    const name = (element.getAttribute("aria-label") ?? element.textContent).trim().replace(/\s+/g, " ").slice(0, 28) || (element.getAttribute("placeholder") ?? element.tagName);
+    const tag = element.tagName.toLowerCase() + (element.getAttribute("role") ? `[${element.getAttribute("role") ?? ""}]` : "");
+    if (!inline && (right - left < 44 || bottom - top < 44)) out.push(`${tag} "${name}": ${String(Math.round(right - left))}×${String(Math.round(bottom - top))} to a finger`);
+  }
+  return out;
+};
+
+/** Runs in the page. KPI tile labels that are cut (on one line or after their second). */
+const cutTileLabels = (): string[] =>
+  [...document.querySelectorAll("main [data-kpis] dt")].filter((label) => label.scrollWidth > label.clientWidth || label.scrollHeight > label.clientHeight + 1).map((label) => label.textContent.trim());
+
+/** Runs in the page. The search field's placeholder, measured in the field's own font, against its room. */
+const placeholderFits = (): { text: string; width: number; room: number } | null => {
+  const input = document.querySelector<HTMLInputElement>("main input[type=search]");
+  if (!input) return null;
+  const style = getComputedStyle(input);
+  const context = document.createElement("canvas").getContext("2d");
+  if (!context) return null;
+  context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+  const text = input.placeholder;
+  return { text, width: Math.ceil(context.measureText(text).width), room: Math.floor(input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)) };
+};
+
+test.describe("K4: the team console on a phone", () => {
+  for (const locale of ["de", "ar"] as const) {
+    test(`${locale}: a customer's content starts high, tile labels are whole, the search hints fit`, async ({ browser, baseURL }, info) => {
+      test.skip(info.project.name !== "desktop", "sets its own windows");
+      test.setTimeout(150_000);
+      const state = await owner(browser, baseURL, locale);
+      const { context, page } = await open(browser, baseURL, state, "phone");
+      // The customers' search hint fits its field on a 390 px phone, and on a 360 px one.
+      for (const width of [390, 360]) {
+        await page.setViewportSize({ width, height: 844 });
+        await page.goto(`/${locale}/admin/customers`);
+        await settle(page);
+        const hint = await page.evaluate(placeholderFits);
+        expect(hint && hint.text.length > 0 && hint.width <= hint.room, `${String(width)}: "${hint?.text ?? ""}" ${String(hint?.width)} px in ${String(hint?.room)} px`).toBe(true);
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
+      // A customer: the way back, the name, the addresses, the plan and the two actions take less than
+      // the first 360 px; the first card starts below them (it was at 443 px of 844) and the tabs are in view.
+      await page.goto(`/${locale}/admin/customers`);
+      await settle(page);
+      await page.locator("main a[href*='/admin/customers/cus_']").first().click();
+      await settle(page);
+      const card = page.locator("main section").first();
+      await expect(card).toBeVisible();
+      const top = await card.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
+      expect(top, "first card").toBeLessThanOrEqual(360);
+      // Compact, not crowded: the way back, the name, the addresses, the chips and the buttons never overlap.
+      const crowded = await page.evaluate(() => {
+        const parts = [...document.querySelectorAll("main header :is(a, h1, span[dir=ltr], [data-customer-chips], button)")].map((element) => ({ name: (element.textContent || element.tagName).trim().slice(0, 24), box: element.getBoundingClientRect() }));
+        const out: string[] = [];
+        for (const [i, a] of parts.entries()) {
+          for (const b of parts.slice(i + 1)) {
+            const across = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
+            const down = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
+            if (across > 0.5 && down > 0.5) out.push(`${a.name} × ${b.name}`);
+          }
+        }
+        return out;
+      });
+      expect(crowded).toEqual([]);
+      await expect(page.getByRole("radiogroup", { name: MESSAGES[locale].admin.customer.tabs.label })).toBeInViewport({ ratio: 1 });
+      // Tile labels wrap to a second line instead of being cut ("Zahlung fehlgeschl…").
+      for (const route of ["/admin", "/admin/subscriptions", "/admin/analytics", "/admin/security"]) {
+        await page.goto(`/${locale}${route}`);
+        await settle(page);
+        await expect(page.locator("main [data-kpis] dt").first()).toBeVisible();
+        expect(await page.evaluate(cutTileLabels), route).toEqual([]);
+      }
+      await context.close();
+    });
+
+    test(`${locale}: every control of the team area is 44 × 44 px to a finger`, async ({ browser, baseURL }, info) => {
+      test.skip(info.project.name !== "desktop", "sets its own windows");
+      test.setTimeout(240_000);
+      const state = await owner(browser, baseURL, locale);
+      const { context, page } = await open(browser, baseURL, state, "phone");
+      await page.goto(`/${locale}/admin/customers`);
+      await settle(page);
+      const customer = (await page.locator("main a[href*='/admin/customers/cus_']").first().getAttribute("href"))?.replace(/^\/(de|en|ar)/, "") ?? "";
+      const routes = ["/admin", "/admin/customers", customer, "/admin/subscriptions", "/admin/security", "/admin/analytics", "/admin/creators", "/admin/templates", "/admin/referrals", "/admin/team", "/admin/activity"];
+      const small: string[] = [];
+      for (const route of routes) {
+        await page.goto(`/${locale}${route}`);
+        await settle(page);
+        for (const line of await page.evaluate(smallTargets, "main")) small.push(`${route}: ${line}`);
+      }
+      expect(small).toEqual([]);
+      await context.close();
+    });
+  }
 });

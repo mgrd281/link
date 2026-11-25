@@ -176,7 +176,12 @@ of it; reach for it before writing a one-off (`console-controls.test.ts` fails o
 - **KPI tiles are the kit's `KpiTile`** inside a `<dl>`, with a delta (arrow, signed text and the direction in words from
   `ui.kpi.*`) and a sparkline, from `customers/trends.ts` (`kpiTrends`, `revenueThisMonth`). A figure the records cannot
   give for a past moment (active this week, page views) gets no delta, never an invented one. Shares change in
-  percentage points (`kpi.points`). Keep tile labels short enough for half a phone (the kit truncates them).
+  percentage points (`kpi.points`). A tile label takes up to two lines on half a phone (then it is cut), and the
+  tiles of a row share their label and figure rows (a subgrid), so the figures stay level.
+- **44 px to a finger** on every console control (`admin-polish-app.spec.ts` measures 11 screens at 390 in de and
+  ar): `Segmented` takes `touchSegmented` (`lib/touch.ts`) at its call site, search fields are `TextField
+  size="auto"` (48 px on touch screens), small text buttons and links grow with a `before:` extension that only
+  touch screens get. A pushed screen (one customer) passes `back` to `Screen`: "‹ Alle Kunden" above the title.
 - **"Umsatz im Monat"** is `revenueThisMonth`: paid Pro invoices dated this month plus page-service orders paid this
   month, minus what was refunded this month (`orders/money.ts` reads each order's price and its `refunded` event; more
   than 120 orders in the window fails rather than leaving some out). Without payments the footer says it is Pro

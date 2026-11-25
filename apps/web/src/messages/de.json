@@ -3785,7 +3785,7 @@
       "unknownCountry": "Unbekannt",
       "export": "CSV exportieren",
       "search": "Suchen",
-      "searchHint": "Name, E-Mail, Adresse oder IP",
+      "searchHint": "Name, E-Mail, Seite, IP",
       "plan": "Plan",
       "all": "Alle",
       "status": "Status",

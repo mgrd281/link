@@ -21,6 +21,7 @@ import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { Link, useRouter } from "@/i18n/navigation";
 import { copyText } from "@/lib/clipboard";
 import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
+import { touchSegmented } from "@/lib/touch";
 
 import { StatusBadge } from "./creators-screen";
 import { bdi, isolate } from "./bidi";
@@ -183,7 +184,7 @@ function PublishedView({ page }: { page: PublishedPage }) {
           <CreatorLinks slug={page.slug} username={page.username} locales={locales} live />
         </div>
         <div className="grid grid-cols-1 content-start gap-3">
-          {locales.length > 1 ? <Segmented label={t("language")} value={locale} onValueChange={setLocale} options={locales.map((value) => ({ value, label: tLocales(value) }))} /> : null}
+          {locales.length > 1 ? <Segmented label={t("language")} value={locale} onValueChange={setLocale} options={locales.map((value) => ({ value, label: tLocales(value) }))} className={touchSegmented} /> : null}
           {shown ? <StaticPhone page={shown} theme={page.theme} className="aspect-short" /> : null}
         </div>
       </div>
@@ -272,9 +273,9 @@ function DraftEditor({ draft, server }: { draft: PreparedDraft; server: Publishe
             </p>
           </div>
           <div className="col-span-full flex min-w-0 flex-wrap items-center gap-2 md:col-auto">
-            <Segmented label={t("tabsLabel")} value={tab} onValueChange={setTab} options={tabs} className="max-md:flex-1 max-md:[&>*]:flex-1" />
+            <Segmented label={t("tabsLabel")} value={tab} onValueChange={setTab} options={tabs} className={cn("max-md:flex-1 max-md:[&>*]:flex-1", touchSegmented)} />
             {locales.length > 1 ? (
-              <Segmented size="sm" label={t("language")} value={locale} onValueChange={setChosen} options={locales.map((value) => ({ value, label: tLocales(value) }))} />
+              <Segmented size="sm" label={t("language")} value={locale} onValueChange={setChosen} options={locales.map((value) => ({ value, label: tLocales(value) }))} className={touchSegmented} />
             ) : null}
           </div>
         </div>
@@ -369,6 +370,7 @@ function PublishPanel({ draft }: { draft: PreparedDraft }) {
           value={draft.status}
           onValueChange={(status) => adminStore.updateDraft(me.email, draft.slug, (current) => ({ ...current, status }), status === "ready" ? "page.ready" : "page.draft")}
           options={(["draft", "ready"] as const).map((value) => ({ value, label: tStatus(value) }))}
+          className={touchSegmented}
         />
       ) : (
         <div className="flex items-center gap-2">

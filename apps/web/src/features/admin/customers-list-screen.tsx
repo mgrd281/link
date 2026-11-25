@@ -191,6 +191,9 @@ function CustomersList() {
             placeholder={t.markup("searchHint", { bdi: isolate })}
             type="search"
             autoComplete="off"
+            // 48 px tall to a finger, 40 with a mouse on a laptop. The hint is short enough for the
+            // field beside the filter button on a 360 px phone ("Name, E-Mail, Seite, IP").
+            size="auto"
             className="min-w-0 flex-1"
           />
           <FilterSheet
@@ -201,7 +204,8 @@ function CustomersList() {
             doneLabel={t("showResults", { count: filtered.length })}
             closeLabel={ui("filter.close")}
             onReset={clear}
-            className="shrink-0"
+            // As tall as the search field beside it (48 px, 40 with a mouse on a laptop).
+            className="h-control-lg shrink-0 lg:pointer-fine:h-control-md"
           >
             <FilterGroup legend={t("plan")}>
               {PLANS.map((plan) => (

@@ -14,6 +14,7 @@ import { useNow } from "@/features/directions/poster/live";
 import { resolveMedia } from "@/features/directions/shared/media";
 import { Link, useRouter } from "@/i18n/navigation";
 import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
+import { touchSegmented } from "@/lib/touch";
 
 import { useCreatorRows, usePublished, type CreatorRow } from "./data";
 import { isolate } from "./bidi";
@@ -118,12 +119,14 @@ export function CreatorsScreen() {
         ) : null
       }
     >
+      {/* A finger gets 44 px: the field is 48 px tall on touch screens ("auto"), the segments 44 (touchSegmented). */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto] md:items-end">
-        <TextField id="creators-search" label={t("search")} icon={Search} value={query} onChange={(event) => setQuery(event.target.value)} type="search" autoComplete="off" />
+        <TextField id="creators-search" label={t("search")} icon={Search} value={query} onChange={(event) => setQuery(event.target.value)} type="search" autoComplete="off" size="auto" />
         <Segmented
           label={t("filter")}
           value={filter}
           onValueChange={setFilter}
+          className={touchSegmented}
           // The count is the segment's badge: one line, never "Alle ·" over "14" (A-11).
           formatCount={(value) => new Intl.NumberFormat(locale).format(value)}
           options={(["all", "draft", "ready", "published"] as const).map((value) => ({

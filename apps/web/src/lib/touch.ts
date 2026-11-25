@@ -1,5 +1,6 @@
 /**
- * Touch targets on the public website (e2e/touch-targets.spec.ts).
+ * Touch targets on the public website (e2e/touch-targets.spec.ts) and in the team area
+ * (e2e/admin-polish-app.spec.ts).
  *
  * A `Segmented` (packages/ui) that a finger uses on a phone: on a touch screen every segment is at
  * least 44 × 44 px and the track grows around the segments. The usual way to a 44 px target, an invisible

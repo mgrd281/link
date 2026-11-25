@@ -3785,7 +3785,7 @@
       "unknownCountry": "غير معروف",
       "export": "تصدير <bdi>CSV</bdi>",
       "search": "بحث",
-      "searchHint": "الاسم أو البريد أو العنوان أو <bdi>IP</bdi>",
+      "searchHint": "الاسم، البريد، الصفحة، <bdi>IP</bdi>",
       "plan": "الخطة",
       "all": "الكل",
       "status": "الحالة",

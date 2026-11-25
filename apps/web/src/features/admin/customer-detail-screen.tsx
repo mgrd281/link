@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  Avatar,
   Badge,
   Button,
+  cn,
   ConfirmDialog,
   DataList,
   Icon,
@@ -41,6 +41,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { paymentsEnabled } from "@/lib/flags";
 import { pageAddress } from "@/lib/page-url";
 import { supabaseEnabled } from "@/lib/supabase/config";
+import { touchSegmented } from "@/lib/touch";
 
 import { useConsoleActions } from "./actions";
 import { bdi, isolate } from "./bidi";
@@ -315,75 +316,75 @@ export function CustomerDetailScreen({ id }: { id: string }) {
       }[pending.kind]
     : null;
 
+  // The header says who, how to reach them and where they stand, and offers the two actions, in as
+  // little height as a phone can give it (K4: the first card stood at 443 px of 844): the way back
+  // above the name, the addresses under it, then one row with the plan and status chips at its start
+  // and the two actions at its end. The initials of an avatar repeated the name.
   return (
     <Screen
       title={customer.name}
+      back={{ href: "/admin/customers", label: t("back") }}
       lead={
-        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          {customer.email ? <span dir="ltr">{customer.email}</span> : null}
-          <span dir="ltr">{pageAddress(customer.username)}</span>
+        <span className="grid gap-2">
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {customer.email ? <span dir="ltr">{customer.email}</span> : null}
+            <span dir="ltr">{pageAddress(customer.username)}</span>
+          </span>
+          <span className="flex flex-wrap items-center gap-2">
+            <span data-customer-chips className="flex flex-wrap items-center gap-2">
+              <PlanBadge customer={customer} />
+              {hasProForLife(customer) ? (
+                <Badge size="sm" tone="outline">
+                  {tc.rich("proForLife", { bdi })}
+                </Badge>
+              ) : null}
+              <StatusBadges customer={customer} />
+              {customer.verified ? (
+                <Badge size="sm" tone="primary">
+                  <Icon icon={BadgeCheck} size="sm" />
+                  {t("verified")}
+                </Badge>
+              ) : null}
+            </span>
+            <span className="ms-auto flex flex-wrap items-center gap-2">
+              {/* By hand only without a Stripe subscription: the team's Pro is free of charge. */}
+              {money_.manualPlan ? (
+                <Menu
+                  trigger={
+                    <Button variant="primary" icon={CreditCard}>
+                      {t("actions.plan")}
+                    </Button>
+                  }
+                  items={[
+                    { label: tc("plans.free"), onSelect: () => setPlan("free") },
+                    { label: t.markup("actions.givePro", { bdi: isolate }), onSelect: () => setPlan("pro") },
+                  ]}
+                />
+              ) : null}
+              {menu.length ? (
+                <Menu
+                  trigger={
+                    <Button icon={icons.more} aria-label={t("actions.more")}>
+                      {t("actions.more")}
+                    </Button>
+                  }
+                  items={menu}
+                />
+              ) : null}
+            </span>
+          </span>
         </span>
       }
       wide
     >
-      <Link
-        href="/admin/customers"
-        className="text-small text-link focus-visible:focus-ring inline-flex min-h-touch-target items-center gap-1 justify-self-start rounded-sm font-semibold hover:text-fg transition-colors duration-micro"
-      >
-        <Icon icon={ArrowLeft} size="sm" />
-        {t("back")}
-      </Link>
-      <div className="flex flex-wrap items-center gap-3">
-        <Avatar name={customer.name} size="md" />
-        <PlanBadge customer={customer} />
-        {hasProForLife(customer) ? (
-          <Badge size="sm" tone="outline">
-            {tc.rich("proForLife", { bdi })}
-          </Badge>
-        ) : null}
-        <StatusBadges customer={customer} />
-        {customer.verified ? (
-          <Badge size="sm" tone="primary">
-            <Icon icon={BadgeCheck} size="sm" />
-            {t("verified")}
-          </Badge>
-        ) : null}
-        <div className="ms-auto flex flex-wrap items-center gap-2">
-          {/* By hand only without a Stripe subscription: the team's Pro is free of charge. */}
-          {money_.manualPlan ? (
-            <Menu
-              trigger={
-                <Button variant="primary" icon={CreditCard}>
-                  {t("actions.plan")}
-                </Button>
-              }
-              items={[
-                { label: tc("plans.free"), onSelect: () => setPlan("free") },
-                { label: t.markup("actions.givePro", { bdi: isolate }), onSelect: () => setPlan("pro") },
-              ]}
-            />
-          ) : null}
-          {menu.length ? (
-            <Menu
-              trigger={
-                <Button icon={icons.more} aria-label={t("actions.more")}>
-                  {t("actions.more")}
-                </Button>
-              }
-              items={menu}
-            />
-          ) : null}
-        </div>
-      </div>
-
       {/* Five tabs are wider than a phone: the strip scrolls sideways from edge to edge (the page never
-          does), with room around it for the focus ring. */}
+          does), with room around it for the focus ring. 44 px segments to a finger (touchSegmented). */}
       <div className="-mx-4 -my-1 overflow-x-auto px-4 py-1 md:mx-0 md:px-0">
         <Segmented
           label={t("tabs.label")}
           value={tab}
           onValueChange={setTab}
-          className="whitespace-nowrap"
+          className={cn("whitespace-nowrap", touchSegmented)}
           options={(["overview", "billing", "security", "notes", "invites"] as const)
             .filter((key) =>
               key === "billing"
@@ -432,7 +433,8 @@ export function CustomerDetailScreen({ id }: { id: string }) {
             action={
               <Link
                 href={`/p/${customer.username}`}
-                className="text-small text-link focus-visible:focus-ring inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro"
+                // 20 px to see beside the panel's title, 44 px to a finger.
+                className="text-small text-link focus-visible:focus-ring relative inline-flex items-center gap-1 rounded-sm font-medium hover:text-fg transition-colors duration-micro before:absolute before:inset-x-0 before:-inset-y-3 pointer-fine:before:hidden"
               >
                 {t("openPage")}
                 <Icon icon={ExternalLink} size="sm" />

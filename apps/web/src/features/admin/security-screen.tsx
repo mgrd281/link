@@ -9,6 +9,7 @@ import { useMemo, useRef, useState } from "react";
 import type { LoginEvent } from "@/features/account/types";
 import { Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
+import { touchSegmented } from "@/lib/touch";
 
 import { useConsoleActions } from "./actions";
 import { bdi, isolate, ltr } from "./bidi";
@@ -216,13 +217,13 @@ export function SecurityScreen() {
               label={t("kpi.blocked")}
               value={count(blockedIps.length, locale)}
               // The way to the blocked addresses, in the footer's one line (the page stays within its height
-              // budget); at least 24 px tall, the WCAG target size.
+              // budget); at least 24 px tall, the WCAG target size, and 44 px to a finger.
               footer={
                 <button
                   type="button"
                   data-show-blocked
                   onClick={showBlocked}
-                  className="-ms-1 inline-flex min-h-6 items-center gap-1 rounded-xs px-1 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
+                  className="relative -ms-1 inline-flex min-h-6 items-center gap-1 rounded-xs px-1 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring before:absolute before:inset-x-0 before:-inset-y-3 pointer-fine:before:hidden"
                 >
                   {t("kpi.manageBlocked")}
                   <Icon icon={icons.next} size="sm" />
@@ -243,7 +244,7 @@ export function SecurityScreen() {
                 setPane(next);
                 setPage(0);
               }}
-              className="justify-self-start"
+              className={cn("justify-self-start", touchSegmented)}
               formatCount={(value) => count(value, locale)}
               options={PANES.map((value) => ({ value, label: t(`filters.${value}`), count: value === "blocked" ? blockedIps.length : lists[value].length }))}
             />
