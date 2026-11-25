@@ -243,6 +243,8 @@ function CustomersList() {
         <DataList
           label={t("title")}
           linkAs={Link}
+          // Laptops: each column as wide as its values (names and addresses whole), the rest shared out.
+          sizing="content"
           items={shown.map((customer) => ({
             id: customer.id,
             href: `/admin/customers/${customer.id}`,
@@ -263,7 +265,8 @@ function CustomersList() {
             ),
             fields: [
               { label: t("columns.status"), value: customer.subscription.status || customer.status === "suspended" || customer.source === "device" ? <StatusBadges customer={customer} /> : "–" },
-              { label: t("columns.country"), value: country(customer.country, locale, unknown) },
+              // A long country ("Vereinigte Arabische Emirate") takes a second line rather than being cut.
+              { label: t("columns.country"), value: country(customer.country, locale, unknown), wrap: true },
               ...(wide ? [{ label: t("columns.since"), value: date(customer.createdAt, locale) }] : []),
               { label: t("columns.lastSeen"), value: timeAgo(customer.lastSeenAt, now, locale) },
               ...(viewsMeasured && (wide || !can("billing.view")) ? [{ label: t.markup("columns.views", { bdi: isolate }), value: count(customer.usage.views30, locale), numeric: true }] : []),

@@ -1,5 +1,9 @@
 import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
+import ar from "../src/messages/ar.json" with { type: "json" };
+import de from "../src/messages/de.json" with { type: "json" };
+import en from "../src/messages/en.json" with { type: "json" };
+
 import { enterDemoCode } from "./auth";
 
 /**
@@ -7,13 +11,15 @@ import { enterDemoCode } from "./auth";
  *
  * - K1: the sign-in log on laptops: no two cells overlap, chips keep a gap, and text that does not
  *   fit ends in an ellipsis, has a title and keeps its start (Latin names in Arabic rows).
+ * - K2: the customers list uses the room it has: no name, e-mail or country is cut at 1440 or 1920.
  *
  * Every test sets its own window (and a touch phone where it says so), so the file runs once, on the
  * desktop project. The account is a demo sign-up with the demo team code, as in admin-phone-app.spec.ts.
  */
 
 const TEAM_CODE = "linkyo-team-4827";
-type Locale = "de" | "en" | "ar";
+const MESSAGES = { de, en, ar };
+type Locale = keyof typeof MESSAGES;
 type Size = "phone" | "laptop" | "desktop";
 type State = Awaited<ReturnType<BrowserContext["storageState"]>>;
 
@@ -166,6 +172,49 @@ test.describe("K1: the sign-in log on laptops", () => {
         expect(await page.evaluate(logProblems), `${locale} ${size}`).toEqual([]);
         await context.close();
       }
+    });
+  }
+});
+
+/** Runs in the page. Names, e-mail addresses and countries of the customers list that are cut. */
+const cutCustomerCells = (country: string): string[] => {
+  const list = document.querySelector("main ul[aria-label] > li dl")?.closest("ul");
+  if (!list) return ["no list"];
+  const header = list.parentElement?.querySelector(":scope > [aria-hidden]");
+  const column = [...(header?.children ?? [])].findIndex((element) => element.textContent.trim() === country);
+  if (column < 1) return ["no country column"];
+  const cut = (element: Element | null | undefined) => element !== null && element !== undefined && (element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight + 1);
+  const out: string[] = [];
+  for (const row of list.querySelectorAll(":scope > li")) {
+    const name = row.querySelector("a")?.closest(".truncate");
+    const email = row.querySelector("span[dir=ltr]");
+    const place = row.querySelectorAll("dl > div > dd")[column - 1];
+    for (const [what, element] of [["name", name], ["e-mail", email], ["country", place]] as const) {
+      if (cut(element)) out.push(`${what}: ${element?.textContent.trim() ?? ""}`);
+    }
+  }
+  return out;
+};
+
+test.describe("K2: the customers list on laptops", () => {
+  for (const locale of ["de", "en", "ar"] as const) {
+    test(`${locale}: no name, e-mail or country is cut at 1440 and 1920, and 1920 gives the list more room`, async ({ browser, baseURL }, info) => {
+      test.skip(info.project.name !== "desktop", "sets its own windows");
+      test.setTimeout(120_000);
+      const state = await owner(browser, baseURL, locale);
+      const widths: number[] = [];
+      for (const size of ["laptop", "desktop"] as const) {
+        const { context, page } = await open(browser, baseURL, state, size);
+        await page.goto(`/${locale}/admin/customers`);
+        await settle(page);
+        const list = page.getByRole("list", { name: MESSAGES[locale].admin.customers.title });
+        await expect(list.locator("> li")).toHaveCount(25);
+        expect(await page.evaluate(cutCustomerCells, MESSAGES[locale].admin.customers.columns.country), `${locale} ${size}`).toEqual([]);
+        widths.push((await list.boundingBox())?.width ?? 0);
+        await context.close();
+      }
+      // The column grows at 1920: the list is not held at the laptop's width with 300 px left on each side.
+      expect(widths[1] ?? 0).toBeGreaterThan((widths[0] ?? 0) + 300);
     });
   }
 });

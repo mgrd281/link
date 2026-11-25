@@ -178,12 +178,16 @@ function ShellScreen({ title, lead, actions, children, preview = false, wide = f
   );
 }
 
-/** Outside the shell (the team area): the title in the column, as it always was. */
+/**
+ * Outside the shell (the team area): the title in the column, as it always was. A wide screen (lists,
+ * logs, tiles) grows to `layout.content-wide` from 2xl, so its tables use the room a large screen has
+ * instead of stopping at `content` with 300 px unused on each side at 1920.
+ */
 function PlainScreen({ title, lead, actions, children, preview = false, wide = false }: ScreenProps) {
   return (
     <div className="flex min-w-0">
       <div className="min-w-0 flex-1">
-        <div className={cn("mx-auto grid grid-cols-1 gap-6 px-4 pt-6 pb-10 md:px-8 lg:pt-10", wide ? "max-w-content" : "max-w-prose")}>
+        <div className={cn("mx-auto grid grid-cols-1 gap-6 px-4 pt-6 pb-10 md:px-8 lg:pt-10", wide ? "max-w-content 2xl:max-w-content-wide" : "max-w-prose")}>
           <header className="flex flex-wrap items-end gap-3">
             <div className="grid min-w-0 flex-1 gap-1">
               <h1 className="text-h2 tracking-tight">{title}</h1>
