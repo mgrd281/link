@@ -18,3 +18,5 @@ A centred hero, with the example pages beside the headline, was tried (commit 8c
 
 **Status.** Applied. Tests: two lines on desktop and on a 390 px phone, the sentence at most two lines, and the
 existing deck, Arabic and axe tests.
+
+**Amended by [ADR 0084](0084-site-pages.md) (2026-11-25), in size only:** beside the pages the promise is 56 px from 1280 px (with the wide column and a 1.6 : 1 split) and 72 px from 1536 px; 40 px stays at 1024–1279 px. It is still two lines at every width.

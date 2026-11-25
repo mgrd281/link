@@ -7,11 +7,11 @@ import type { ReactNode } from "react";
 
 import { PageDirection } from "@/components/page-direction";
 import { fontVariables } from "@/fonts";
+import { siteState } from "@/features/marketing/site-state";
 import { clientMessages } from "@/i18n/client-messages";
 import { isRtl, routing } from "@/i18n/routing";
 import { navPanelInitScript } from "@/lib/nav-panel-script";
 import { siteUrl } from "@/lib/site-url";
-import { supabaseEnabled } from "@/lib/supabase/config";
 import { themeInitScript } from "@/lib/theme-script";
 
 import "../globals.css";
@@ -23,8 +23,10 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "meta" });
-  // With real accounts nothing is counted yet: the description promises no analytics.
-  const description = supabaseEnabled ? (await getTranslations({ locale, namespace: "marketing.real" }))("metaDescription") : t("description");
+  // The default for pages without their own (sign-in, the legal pages): it names the cookie-free
+  // statistics only where pages are counted (the demo's sample numbers, or real accounts with the
+  // counter on), like the home page and the pricing (siteState(), ADR 0084).
+  const description = siteState().statistics ? t("description") : (await getTranslations({ locale, namespace: "marketing.real" }))("metaDescription");
   return {
     metadataBase: siteUrl(),
     title: { default: t("title"), template: `%s · Linkyo` },

@@ -1,6 +1,6 @@
-# Draft — The website's own pages, one pricing comparison, SEO from the route list, laptop type
+# 0084 — The website's own pages, one pricing comparison, SEO from the route list, laptop type
 
-**Status.** Draft (Stage 4, WP4.2). The integrator numbers it. Amends [ADR 0038](0038-hero-two-lines.md) only in the
+**Status.** Accepted (Stage 4, WP4.2, 2026-11-25). Amends [ADR 0038](0038-hero-two-lines.md) only in the
 promise's size from 1280 px; its two lines stay at every width (see 5).
 
 **Context.** The audit (plan §2) found the website without the pages a complete product site has (W-04: help,

@@ -62,6 +62,9 @@ const SITE = [
  */
 export const CLIENT_NAMESPACES = {
   site: SITE,
+  // The help page (/hilfe): its search island reads `help.search` in the browser; the articles are
+  // rendered on the server. A group of its own keeps those words off every other site page.
+  help: [...SITE, "help.search"],
   auth: [...SITE, "auth"],
   legal: [...SITE, "legal", "orders.package"],
   checkout: [...SITE, "checkout", "orders.package", "service"],

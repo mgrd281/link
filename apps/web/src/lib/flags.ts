@@ -23,9 +23,9 @@ export const aiTryPublic: boolean = process.env.NEXT_PUBLIC_AI_TRY === "1";
 
 /**
  * Cookie-free page analytics (Stage 3): a server switch, read on each request. Only the exact value
- * "on" turns it on. Unset (production, until the founder applies the analytics migrations and the
- * lawyer approves the privacy wording) means creator pages render no beacon island, /api/collect
- * answers 204 and stores nothing, and real-mode Stats keep their "coming soon" state. Never
+ * "on" turns it on; production has had it on since 2026-11-25 (ADR 0081, "Update"). Unset means
+ * creator pages render no beacon island, /api/collect answers 204 and stores nothing, and real-mode
+ * Stats keep their "coming soon" state; removing the variable and redeploying switches it off. Never
  * NEXT_PUBLIC_: the browser learns of it only through the island being on the page.
  */
 export function analyticsEnabled(): boolean {
