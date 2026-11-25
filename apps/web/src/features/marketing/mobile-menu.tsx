@@ -67,14 +67,18 @@ export function HeaderPhoneAction({ signupLabel, after }: { signupLabel: string;
   const t = useTranslations("marketing.nav");
   const account = useHeaderAccount();
   if (!account) return <HeaderSignup label={signupLabel} after={after} />;
+  // Named by its hidden text, not by aria-label: until the photo loads the avatar shows the visitor's
+  // initials, and visible letters that are not in an aria-label break "label in name" (WCAG 2.5.3,
+  // axe label-content-name-mismatch). The avatar's initials are aria-hidden, so the name stays
+  // "Dashboard".
   return (
     <Link
       href="/app"
-      aria-label={t("dashboard")}
       data-header-dashboard
       className="relative grid size-control-md place-items-center rounded-full transition-[scale] duration-micro before:absolute before:inset-0 focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none pointer-coarse:before:-inset-0.5 md:hidden"
     >
       <Avatar name={account.name} src={account.avatar} size="sm" />
+      <span className="sr-only">{t("dashboard")}</span>
     </Link>
   );
 }
