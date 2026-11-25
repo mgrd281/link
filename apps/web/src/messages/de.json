@@ -977,47 +977,86 @@
     },
     "pricing": {
       "title": "Kostenlos starten. Kostenlos bleiben.",
-      "lead": "Alles hier bleibt dauerhaft kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist.",
+      "lead": "Free bleibt dauerhaft kostenlos, ohne Kreditkarte. Pro und der Seitenservice kommen mit dem Start.",
       "free": {
         "name": "Free",
         "price": "0 €",
         "per": "für immer",
-        "features": [
-          "Alle Vorlagen",
-          "Unbegrenzt Links und Abschnitte",
-          "Musik, Shows, Videos, Shop-Links",
-          "Analytics ohne Cookies",
-          "Assistent für Impressum und Datenschutz"
-        ],
         "cta": "Kostenlos registrieren",
-        "lead": "Alles, was deine Seite braucht."
+        "lead": "Alles, was deine Seite braucht.",
+        "lines": {
+          "templates": "Alle Vorlagen",
+          "links": "Unbegrenzt Links und Abschnitte",
+          "media": "Musik, Shows, Videos, Shop-Links",
+          "statistics": "Analytics ohne Cookies",
+          "imprint": "Impressum für deine Seite"
+        }
       },
       "pro": {
         "name": "Pro",
-        "badge": "Bald",
-        "features": [
-          "Eigene Domain",
-          "Produkte und Downloads verkaufen",
-          "E-Mail-Liste und Automationen",
-          "Erweiterte Analytics",
-          "Linkyo-Hinweis entfernen"
-        ],
-        "cta": "Später benachrichtigen",
-        "lead": "Für alle, die verkaufen und wachsen wollen."
+        "lines": {
+          "drafts": "KI-Entwürfe für deine Seite: bis zu {count} im Monat",
+          "free": "Alles aus Free",
+          "domain": "Eigene Domain",
+          "selling": "Produkte und Downloads verkaufen",
+          "list": "E-Mail-Liste"
+        }
       },
       "leadPaid": "Free bleibt dauerhaft kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist.",
       "proLive": {
         "per": "pro Monat",
         "vat": "inkl. MwSt.",
         "lead": "KI-Entwürfe für deine Seite, Monat für Monat.",
-        "features": [
-          "KI-Entwürfe für deine Seite: bis zu 5 im Monat",
-          "Alles aus Free"
-        ],
-        "planned": "Geplant: eigene Domain, Verkauf, E-Mail-Liste",
         "terms": "Jederzeit kündbar; Pro endet am Ende des bezahlten Monats.",
-        "cta": "Pro bestellen",
-        "service": "Lieber gestalten lassen? Seitenservice ab {price}"
+        "cta": "Pro bestellen"
+      },
+      "compare": "Die Pläne im Vergleich",
+      "when": {
+        "now": "Jetzt",
+        "launch": "Kommt mit dem Start",
+        "planned": "Geplant"
+      },
+      "service": {
+        "name": "Seitenservice",
+        "lead": "Wir gestalten deine Seite für dich.",
+        "from": "ab {start}",
+        "once": "einmalig",
+        "lines": {
+          "start": "Start, {start}: Unsere KI entwirft, ein Mensch aus unserem Team prüft und verfeinert. 1 Änderungsrunde.",
+          "premium": "Premium, {premium}: Ein Mensch aus unserem Team gestaltet deine Seite, mit Marketing-Paket. 3 Änderungsrunden."
+        },
+        "cta": "Zum Seitenservice"
+      },
+      "billing": {
+        "title": "Fragen zu Preisen und Kündigung",
+        "items": {
+          "card": {
+            "q": "Brauche ich eine Kreditkarte?",
+            "a": "Nein. Für Free gibst du nur deine E-Mail-Adresse an, keine Zahlungsdaten."
+          },
+          "when": {
+            "q": "Ab wann kann ich Pro buchen?",
+            "a": "Mit dem Start. Bis dahin kann man bei Linkyo nichts kaufen, und alles, was es gibt, ist kostenlos. Pro kostet dann {price} im Monat, inklusive Mehrwertsteuer."
+          },
+          "pay": {
+            "q": "Wie bezahle ich Pro?",
+            "a": "Monatlich über Stripe, auf unserer Bestellseite. Die erste Abbuchung ist am Tag der Bestellung, danach jeden Monat am selben Tag."
+          },
+          "cancel": {
+            "q": "Wie kündige ich Pro?",
+            "aOff": "Pro läuft jeweils einen Monat und ist jederzeit zum Ende des bezahlten Monats kündbar, auch ohne Anmeldung.",
+            "aOn": "Jederzeit zum Ende des bezahlten Monats, auch ohne Anmeldung: über „Verträge hier kündigen“ unten auf jeder Seite der Website oder in den Einstellungen."
+          },
+          "ends": {
+            "q": "Was passiert mit meiner Seite, wenn Pro endet?",
+            "a": "Sie bleibt, wie sie ist, mit allem aus Free. Es fallen nur die Pro-Funktionen weg."
+          },
+          "service": {
+            "q": "Was kostet der Seitenservice?",
+            "aOff": "Start kostet {start}, Premium {premium}, jeweils einmalig und inklusive Mehrwertsteuer, ohne Abo. Buchen kannst du ihn mit dem Start.",
+            "aOn": "Start kostet {start}, Premium {premium}, jeweils einmalig und inklusive Mehrwertsteuer, ohne Abo. Alles Weitere steht auf der Seite zum Seitenservice."
+          }
+        }
       }
     },
     "faq": {
@@ -1025,7 +1064,7 @@
       "items": [
         {
           "q": "Ist Linkyo wirklich kostenlos?",
-          "a": "Ja. Vorlagen, unbegrenzte Links, Abschnitte und Analytics bleiben kostenlos. Pro bringt Verkauf und Power-Funktionen – nichts, was heute gratis ist, wird kostenpflichtig."
+          "a": "Ja. Vorlagen, unbegrenzte Links und Abschnitte und Analytics ohne Cookies bleiben kostenlos. Pro kommt mit dem Start, mit KI-Entwürfen für deine Seite. Nichts, was heute gratis ist, wird kostenpflichtig."
         },
         {
           "q": "Brauche ich ein Cookie-Banner?",
@@ -1048,7 +1087,8 @@
           "a": "Eine native iOS-App ist in Arbeit: Seite bearbeiten, Links über das Teilen-Menü hinzufügen und Zahlen im Widget sehen."
         }
       ],
-      "lead": "Kurz und ehrlich beantwortet."
+      "lead": "Kurz und ehrlich beantwortet.",
+      "more": "Mehr Antworten in der Hilfe"
     },
     "final": {
       "title": "Leg los. Kostet nichts.",
@@ -1224,7 +1264,6 @@
     "real": {
       "metaDescription": "Die Creator-Seite, die in fünf Minuten nach Premium aussieht: Designs mit Charakter, Portfolios mit Projektseiten, Musik, Shows und Shop. Kostenlos starten, Daten in Frankfurt.",
       "analyticsBadge": "In Arbeit",
-      "freeAnalytics": "Analytics ohne Cookies (in Arbeit)",
       "faqFree": "Ja. Vorlagen, unbegrenzte Links und Abschnitte bleiben kostenlos; Analytics ohne Cookies ist in Arbeit. Nichts, was heute gratis ist, wird kostenpflichtig.",
       "faqFreePaid": "Ja. Vorlagen, unbegrenzte Links und Abschnitte bleiben kostenlos. Pro enthält KI-Entwürfe; eigene Domain, Verkauf und E-Mail-Liste sind geplant. Nichts, was heute gratis ist, wird kostenpflichtig.",
       "trustFree": "Vorlagen und unbegrenzte Links bleiben kostenlos. Ohne Kreditkarte, ohne Kündigungsfrist."

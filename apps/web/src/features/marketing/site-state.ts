@@ -1,12 +1,7 @@
 import { analyticsEnabled, paymentsEnabled } from "@/lib/flags";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
-export interface SiteState {
-  /** Contracts can be made (NEXT_PUBLIC_PAYMENTS test or live, with real accounts). */
-  payments: boolean;
-  /** Creator pages are counted (the demo's sample numbers, or real accounts with LINKYO_ANALYTICS=on). */
-  statistics: boolean;
-}
+import type { SiteState } from "./pricing";
 
 /**
  * The switches the website's words depend on, as this build runs: whether Pro and the page service

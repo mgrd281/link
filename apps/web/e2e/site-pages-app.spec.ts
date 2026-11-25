@@ -186,6 +186,32 @@ test("search engines find the site pages in every language", async ({ request })
   expect(sitemap).not.toContain("/service</loc>");
 });
 
+test.describe("pricing", () => {
+  test("Free now, Pro and the page service with the start: prices from ADR 0066, nothing to buy, no feature 'in Arbeit' that is live", async ({ page }) => {
+    await page.goto("/de");
+    const pricing = page.locator("#pricing");
+    const card = (plan: string) => pricing.locator(`[data-plan="${plan}"]`);
+    await expect(card("free").locator("[data-when-badge]")).toHaveText(de.marketing.pricing.when.now);
+    await expect(card("pro").locator("[data-when-badge]")).toHaveText(de.marketing.pricing.when.launch);
+    await expect(card("service").locator("[data-when-badge]")).toHaveText(de.marketing.pricing.when.launch);
+    // Each card's price line: Free, Pro's month and the page service's first package (ADR 0066).
+    await expect(card("free").locator("[data-price]")).toContainText(/0\s€/);
+    await expect(card("pro").locator("[data-price]")).toContainText(/8,00\s€/);
+    await expect(card("service").locator("[data-price]")).toContainText(/ab 24,99\s€/);
+    await expect(card("service")).toContainText(/79,99\s€/);
+    await expect(card("pro")).toContainText(de.marketing.pricing.when.planned);
+    // Only Free leads somewhere: there is nothing to buy yet.
+    await expect(card("free").getByRole("link", { name: de.marketing.pricing.free.cta })).toHaveAttribute("href", "/de/signup");
+    await expect(card("pro").getByRole("link")).toHaveCount(0);
+    await expect(card("service").getByRole("link")).toHaveCount(0);
+    await expect(pricing).not.toContainText("in Arbeit");
+    await expect(card("free")).toContainText(de.marketing.pricing.free.lines.statistics);
+    // The questions about paying and cancelling, as the code answers them before the start.
+    await expect(pricing.getByRole("heading", { level: 3, name: de.marketing.pricing.billing.title })).toBeVisible();
+    await expect(pricing).toContainText(de.marketing.pricing.billing.items.when.q);
+  });
+});
+
 test.describe("the way there: header, menu and footer", () => {
   test("the footer leads to the six site pages", async ({ page }) => {
     await page.goto("/en");

@@ -977,47 +977,86 @@
     },
     "pricing": {
       "title": "Start free. Stay free.",
-      "lead": "Everything here stays free for good. No card, no notice period.",
+      "lead": "Free stays free for good, no credit card. Pro and the page service come with the launch.",
       "free": {
         "name": "Free",
         "price": "0 €",
         "per": "forever",
-        "features": [
-          "All templates",
-          "Unlimited links and sections",
-          "Music, shows, videos, shop links",
-          "Cookie-free analytics",
-          "Imprint and privacy page helper"
-        ],
         "cta": "Sign up for free",
-        "lead": "Everything your page needs."
+        "lead": "Everything your page needs.",
+        "lines": {
+          "templates": "All templates",
+          "links": "Unlimited links and sections",
+          "media": "Music, shows, videos, shop links",
+          "statistics": "Cookie-free analytics",
+          "imprint": "An imprint for your page"
+        }
       },
       "pro": {
         "name": "Pro",
-        "badge": "Coming soon",
-        "features": [
-          "Your own domain",
-          "Sell products and downloads",
-          "Email list and automations",
-          "Advanced analytics",
-          "Remove the Linkyo credit"
-        ],
-        "cta": "Notify me later",
-        "lead": "For everyone who wants to sell and grow."
+        "lines": {
+          "drafts": "AI drafts for your page: up to {count} a month",
+          "free": "Everything in Free",
+          "domain": "Your own domain",
+          "selling": "Sell products and downloads",
+          "list": "Email list"
+        }
       },
       "leadPaid": "Free stays free for good. No card, no notice period.",
       "proLive": {
         "per": "a month",
         "vat": "incl. VAT",
         "lead": "AI drafts for your page, month after month.",
-        "features": [
-          "AI drafts for your page: up to 5 a month",
-          "Everything in Free"
-        ],
-        "planned": "Planned: own domain, selling, email list",
         "terms": "Cancel any time; Pro ends at the end of the paid month.",
-        "cta": "Order Pro",
-        "service": "Rather have it designed? Page service from {price}"
+        "cta": "Order Pro"
+      },
+      "compare": "The plans side by side",
+      "when": {
+        "now": "Now",
+        "launch": "Comes with the launch",
+        "planned": "Planned"
+      },
+      "service": {
+        "name": "Page service",
+        "lead": "We design your page for you.",
+        "from": "from {start}",
+        "once": "one-off",
+        "lines": {
+          "start": "Start, {start}: our AI drafts it, a person from our team checks and refines it. 1 round of changes.",
+          "premium": "Premium, {premium}: a person from our team designs your page, with a marketing kit. 3 rounds of changes."
+        },
+        "cta": "See the page service"
+      },
+      "billing": {
+        "title": "Questions about prices and cancelling",
+        "items": {
+          "card": {
+            "q": "Do I need a credit card?",
+            "a": "No. For Free you only give your email address, no payment details."
+          },
+          "when": {
+            "q": "When can I get Pro?",
+            "a": "With the launch. Until then nothing can be bought on Linkyo, and everything there is is free. Pro will then cost {price} a month, VAT included."
+          },
+          "pay": {
+            "q": "How do I pay for Pro?",
+            "a": "Monthly through Stripe, on our order page. The first payment is on the day you order, then on the same day each month."
+          },
+          "cancel": {
+            "q": "How do I cancel Pro?",
+            "aOff": "Pro runs one month at a time and can be cancelled any time to the end of the paid month, even without signing in.",
+            "aOn": "Any time, to the end of the paid month, even without signing in: through “Cancel contracts here” at the bottom of every page of the website, or in Settings."
+          },
+          "ends": {
+            "q": "What happens to my page when Pro ends?",
+            "a": "It stays as it is, with everything in Free. Only the Pro features go away."
+          },
+          "service": {
+            "q": "What does the page service cost?",
+            "aOff": "Start costs {start} and Premium {premium}, each one-off and VAT included, no subscription. You can book it with the launch.",
+            "aOn": "Start costs {start} and Premium {premium}, each one-off and VAT included, no subscription. Everything else is on the page service's page."
+          }
+        }
       }
     },
     "faq": {
@@ -1025,7 +1064,7 @@
       "items": [
         {
           "q": "Is Linkyo really free?",
-          "a": "Yes. Templates, unlimited links, sections and analytics stay free. Pro will add selling and power features, and nothing that is free today becomes paid."
+          "a": "Yes. Templates, unlimited links and sections and cookie-free analytics stay free. Pro comes with the launch, with AI drafts for your page. Nothing that is free today becomes paid."
         },
         {
           "q": "Do I need a cookie banner?",
@@ -1048,7 +1087,8 @@
           "a": "A native iOS app is in the works: edit your page, add links from the share sheet and see your stats in a widget."
         }
       ],
-      "lead": "Short, honest answers."
+      "lead": "Short, honest answers.",
+      "more": "More answers in the help center"
     },
     "final": {
       "title": "Get started. It's free.",
@@ -1224,7 +1264,6 @@
     "real": {
       "metaDescription": "The creator page that looks premium in five minutes: designs with character, portfolios with project pages, music, shows and a shop. Free to start, data stored in Frankfurt.",
       "analyticsBadge": "In the works",
-      "freeAnalytics": "Cookie-free analytics (in the works)",
       "faqFree": "Yes. Templates, unlimited links and sections stay free; cookie-free analytics is in the works. Nothing that is free today becomes paid.",
       "faqFreePaid": "Yes. Templates, unlimited links and sections stay free. Pro includes AI drafts; your own domain, selling and an email list are planned. Nothing that is free today becomes paid.",
       "trustFree": "Templates and unlimited links stay free. No credit card, no notice period."

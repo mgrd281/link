@@ -14,11 +14,11 @@ import { LOOKS } from "@/features/examples/looks";
 import { journalistAr, journalistDe, journalistEn } from "@/features/previews/journalist";
 import { aiTryPublic } from "@/lib/flags";
 import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
-import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { phoneSizes } from "./assets";
 import { CountUp } from "./count-up";
 import { Playground, TryEyebrow, type LookOption } from "./playground";
+import { siteState } from "./site-state";
 import { StoryPicture, type StoryArt } from "./story-picture";
 import { TRY_LOOKS } from "./try-looks";
 
@@ -353,9 +353,10 @@ export function Features() {
           id="analytics"
           wide
           title={t("analytics.title")}
-          // Real accounts have no analytics yet: the title says so (the demo keeps its sample numbers).
+          // Where real accounts are not counted (the counter switched off), the title says it is being
+          // built; where pages are counted (or in the demo, with its sample numbers) there is no badge.
           badge={
-            supabaseEnabled ? (
+            !siteState().statistics ? (
               <Badge tone="outline" size="sm">
                 {t("real.analyticsBadge")}
               </Badge>

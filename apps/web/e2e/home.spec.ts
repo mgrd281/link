@@ -406,14 +406,15 @@ test.describe("marketing home", () => {
 
   test("pricing, questions, the last word and the footer", async ({ page }) => {
     const pricing = page.locator("#pricing");
-    await expect(pricing.getByRole("heading", { level: 3 })).toHaveText(["Free", /Pro/]);
+    await expect(pricing.locator("[data-plan]").getByRole("heading", { level: 3 })).toHaveText(["Free", "Pro", "Page service"]);
     // The Free plan lists what exists today: the app that is still being built is no included feature.
-    const free = pricing.locator("article").first();
+    const free = pricing.locator('[data-plan="free"]');
     await expect(free.getByRole("listitem")).toHaveCount(5);
     await expect(free).not.toContainText(/iOS|coming|soon|in the works/i);
     await expect(pricing.getByRole("link", { name: "Sign up for free" })).toHaveAttribute("href", "/en/signup");
-    // Pro is not for sale yet: no button.
-    await expect(pricing.locator("article").last().getByRole("link")).toHaveCount(0);
+    // Pro and the page service are not for sale yet: no button.
+    await expect(pricing.locator('[data-plan="pro"]').getByRole("link")).toHaveCount(0);
+    await expect(pricing.locator('[data-plan="service"]').getByRole("link")).toHaveCount(0);
     await expect(page.locator("#start").getByRole("textbox", { name: "Choose your page address" })).toBeVisible();
     // The site's footer (the page in the playground's phone has its own).
     const footer = page.getByRole("contentinfo");

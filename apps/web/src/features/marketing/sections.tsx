@@ -1,20 +1,21 @@
 import { Badge, Button, cn, Icon, icons, LogoGlyph } from "@linkyo/ui";
-import { ArrowRight, CalendarClock, Check, EyeOff, Gift, Globe, Mail, PenTool, Plus, Server, ShieldCheck, ShoppingBag } from "lucide-react";
+import { Check, Gift, Plus, Server, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { EXAMPLES } from "@/features/examples/catalog";
 import { LOOKS, PEOPLE_LOOKS } from "@/features/examples/looks";
-import { formatEuro, PRICES } from "@/features/payments/prices";
+import { VAT_MODE } from "@/features/payments/prices";
 import { Link } from "@/i18n/navigation";
-import { paymentsEnabled } from "@/lib/flags";
-import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { phoneSizes } from "./assets";
 import { ClaimForm } from "./claim-form";
 import { EXAMPLE_SHOTS, STRIP, type ExampleShot } from "./examples";
 import { order } from "./hero";
+import { bdi } from "./pages/text";
+import { billingQuestions, faqQuestions, freeTrustBody, pricingPlans, pricingValues, type Plan, type PlanLine, type SiteState } from "./pricing";
+import { siteState } from "./site-state";
 
 function SectionHeader({ id, title, lead, center = false }: { id: string; title: string; lead?: string; center?: boolean }) {
   return (
@@ -40,9 +41,10 @@ const TRUST_ICONS = [Server, ShieldCheck, Gift] as const;
 /** Three plain promises on soft cards, each with its icon in Linkyo Teal. */
 export function Trust() {
   const t = useTranslations("marketing.trust");
-  const real = useTranslations("marketing.real");
-  // With real accounts nothing is counted yet: the "free for good" promise names no analytics.
-  const items = (t.raw("items") as { title: string; body: string }[]).map((item, index) => (supabaseEnabled && index === 2 ? { ...item, body: real("trustFree") } : item));
+  const marketing = useTranslations("marketing");
+  // Where pages are not counted, the "free for good" promise names no analytics.
+  const third = freeTrustBody(siteState());
+  const items = (t.raw("items") as { title: string; body: string }[]).map((item, index) => (index === 2 ? { ...item, body: marketing(third.key) } : item));
   return (
     <Shell labelledBy="trust-title" className="w-full pb-12 md:pb-24">
       <h2 id="trust-title" className="sr-only">
@@ -112,7 +114,7 @@ export function Templates() {
         <Button asChild variant="primary" size="cta" className="group">
           <Link href="/templates">
             {tExamples("seeAll", { count: Object.keys(LOOKS).length + Object.keys(PEOPLE_LOOKS).length })}
-            <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
+            <Icon icon={icons.forward} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
           </Link>
         </Button>
       </div>
@@ -120,156 +122,215 @@ export function Templates() {
   );
 }
 
-const PRO_ICONS = [Globe, ShoppingBag, Mail, icons.analytics, EyeOff] as const;
-
-/** The Free card's analytics line (index in `free.features`), qualified while nothing is counted yet. */
-const FREE_ANALYTICS = 3;
+/** The words a plan card shows above its lines (Pro's line is `ProLive`). */
+const PLAN_TEXT = {
+  free: { name: "pricing.free.name", lead: "pricing.free.lead" },
+  pro: { name: "pricing.pro.name", lead: null },
+  service: { name: "pricing.service.name", lead: "pricing.service.lead" },
+} as const;
 
 /**
- * Two plans. Free is the offer: the price, everything in it, one button. Pro is what comes later,
- * quieter, as a list of what it will add (no button: there is nothing to buy yet). Where Pro can be
- * bought (payments on), the Pro card names only what ships (AI drafts), the planned features as
- * planned, its price and terms, and leads to its checkout; the page service is one quiet line below.
+ * Pro's line under its name: what Pro holds when it is sold (AI drafts), in both states. Never the old
+ * coming-soon promise to sell and grow: selling is planned, and listed as planned below it.
  */
-export function Pricing() {
+function ProLive() {
   const t = useTranslations("marketing.pricing");
-  const real = useTranslations("marketing.real");
-  const free = (t.raw("free.features") as string[]).map((feature, index) => (supabaseEnabled && index === FREE_ANALYTICS ? real("freeAnalytics") : feature));
-  const pro = t.raw("pro.features") as string[];
+  return <p className="text-body text-pretty text-fg-secondary">{t("proLive.lead")}</p>;
+}
+
+/** One line of a plan: a check where it is part of the plan, a calendar where it is planned. */
+function PlanLineItem({ line, children }: { line: PlanLine; children: ReactNode }) {
+  const planned = line.when === "planned";
   return (
-    <Shell id="pricing" labelledBy="pricing-title" className="grid w-full grid-cols-1 gap-10 py-12 md:gap-12 md:py-24">
-      <SectionHeader id="pricing-title" title={t("title")} lead={paymentsEnabled ? t("leadPaid") : t("lead")} center />
-      <div className="mx-auto grid w-full max-w-content gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <article className="mk-reveal grid content-start gap-6 rounded-xl border border-line bg-surface-elevated p-6 md:p-10">
-          <header className="grid gap-1">
-            <h3 className="text-h3">{t("free.name")}</h3>
-            <p className="text-body text-fg-secondary">{t("free.lead")}</p>
-          </header>
-          <p className="flex items-baseline gap-2">
-            <span className="text-display font-extrabold tracking-display tabular-nums">{t("free.price")}</span>
-            <span className="text-body font-medium text-fg-secondary">{t("free.per")}</span>
-          </p>
-          <ul className="grid gap-3 border-t border-line pt-6 sm:grid-cols-2 sm:gap-x-6">
-            {free.map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-body">
-                <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-selected text-selected-fg">
-                  <Icon icon={Check} size="sm" />
-                </span>
-                {feature}
-              </li>
-            ))}
-          </ul>
-          <Button asChild variant="primary" size="cta" className="group text-center whitespace-normal">
-            <Link href="/signup">
-              {t("free.cta")}
-              <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
-            </Link>
-          </Button>
-        </article>
-        {paymentsEnabled ? (
-          <ProLive />
-        ) : (
-          <article className="mk-reveal grid content-start gap-5 rounded-xl bg-canvas-muted p-6 md:p-10">
-            <header className="grid gap-1">
-              <h3 className="flex items-center gap-3 text-h3">
-                {t("pro.name")}
-                <Badge tone="primary" dot>
-                  {t("pro.badge")}
-                </Badge>
-              </h3>
-              <p className="text-body text-fg-secondary">{t("pro.lead")}</p>
-            </header>
-            {/* One grouped list, as in an app's settings: rows with hairlines, not separate buttons. */}
-            <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface">
-              {pro.map((feature, index) => (
-                <li key={feature} className="flex min-h-12 items-center gap-3 px-4 py-2 text-body">
-                  <Icon icon={PRO_ICONS[index] ?? Plus} size="md" className="shrink-0 text-fg-secondary" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </article>
-        )}
-      </div>
-    </Shell>
+    <li data-when={line.when} className="flex items-start gap-3 text-body">
+      <span aria-hidden className={cn("mt-0.5 grid size-6 shrink-0 place-items-center rounded-full", planned ? "bg-canvas-muted text-fg-secondary" : "bg-selected text-selected-fg")}>
+        <Icon icon={planned ? icons.event : Check} size="sm" />
+      </span>
+      <span className={cn("min-w-0", planned && "text-fg-secondary")}>{children}</span>
+    </li>
   );
 }
 
-/** Pro as it can be bought: the monthly price, what ships, what is planned, the terms and its checkout. */
-function ProLive() {
-  const t = useTranslations("marketing.pricing");
+/**
+ * A plan as a card: its name and whether it is there now or comes with the start, its price, what it
+ * holds, and what is planned for it under its own heading. Only a plan that can be had today leads
+ * somewhere: Free to sign-up; Pro to its checkout and the page service to its page once payments are on.
+ */
+function PlanCard({ plan, state }: { plan: Plan; state: SiteState }) {
+  const t = useTranslations("marketing");
   const locale = useLocale() as "de" | "en" | "ar";
-  const features = t.raw("proLive.features") as string[];
+  const values = pricingValues(locale);
+  const text = (key: string) => t.rich(key, { ...values, bdi });
+  const current = plan.lines.filter((line) => line.when !== "planned");
+  const planned = plan.lines.filter((line) => line.when === "planned");
+  const vat = VAT_MODE === "standard19" ? t("pricing.proLive.vat") : null;
+  const titleId = `plan-${plan.id}`;
+  const free = plan.id === "free";
+  const lead = PLAN_TEXT[plan.id].lead;
   return (
-    <article className="mk-reveal grid content-start gap-5 rounded-xl bg-canvas-muted p-6 md:p-10">
-      <header className="grid gap-1">
-        <h3 className="text-h3">{t("pro.name")}</h3>
-        {/* Only what Pro holds today: the coming-soon card's line (selling, growing) is not for a card with a buy button. */}
-        <p className="text-body text-fg-secondary">{t("proLive.lead")}</p>
+    <article
+      aria-labelledby={titleId}
+      data-plan={plan.id}
+      data-when={plan.when}
+      className={cn(
+        "mk-reveal grid content-start gap-6 rounded-xl p-6 md:p-8",
+        free ? "border border-line bg-surface-elevated md:col-span-2 lg:col-span-1" : "bg-canvas-muted",
+      )}
+    >
+      <header className="grid gap-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h3 id={titleId} className="text-h3">
+            {t(PLAN_TEXT[plan.id].name)}
+          </h3>
+          <Badge tone={plan.when === "now" ? "primary" : "outline"} dot={plan.when === "now"} data-when-badge>
+            {t(`pricing.when.${plan.when}`)}
+          </Badge>
+        </div>
+        {lead === null ? <ProLive /> : <p className="text-body text-pretty text-fg-secondary">{t(lead)}</p>}
       </header>
-      <p className="flex flex-wrap items-baseline gap-x-2">
-        <span className="text-display-sm font-extrabold tracking-display tabular-nums">{formatEuro(PRICES["pro-monthly"].amountCents, locale)}</span>
-        <span className="text-body font-medium text-fg-secondary">{t("proLive.per")}</span>
-        <span className="text-small text-fg-secondary">{t("proLive.vat")}</span>
+      <p data-price className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        {free ? (
+          <>
+            <span className="text-display-sm font-extrabold tracking-display tabular-nums">{t("pricing.free.price")}</span>
+            <span className="text-body font-medium text-fg-secondary">{t("pricing.free.per")}</span>
+          </>
+        ) : plan.id === "pro" ? (
+          <>
+            <bdi className="text-display-sm font-extrabold tracking-display tabular-nums">{values.price}</bdi>
+            <span className="text-body font-medium text-fg-secondary">{t("pricing.proLive.per")}</span>
+            {vat ? <span className="text-small text-fg-secondary">{vat}</span> : null}
+          </>
+        ) : (
+          <>
+            <span className="text-display-sm font-extrabold tracking-display tabular-nums">{text("pricing.service.from")}</span>
+            <span className="text-body font-medium text-fg-secondary">{t("pricing.service.once")}</span>
+            {vat ? <span className="text-small text-fg-secondary">{vat}</span> : null}
+          </>
+        )}
       </p>
-      <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface">
-        {features.map((feature) => (
-          <li key={feature} className="flex min-h-12 items-center gap-3 px-4 py-2 text-body">
-            <Icon icon={Check} size="md" className="shrink-0 text-fg-secondary" />
-            {feature}
-          </li>
+      <ul className="grid gap-3 border-t border-line pt-6">
+        {current.map((line) => (
+          <PlanLineItem key={line.key} line={line}>
+            {text(line.key)}
+          </PlanLineItem>
         ))}
       </ul>
-      <p className="flex items-start gap-2 text-small text-fg-secondary">
-        <Icon icon={CalendarClock} size="sm" className="mt-0.5 shrink-0" />
-        {t("proLive.planned")}
-      </p>
-      <p className="text-small text-fg-secondary">{t("proLive.terms")}</p>
-      <Button asChild variant="primary" size="cta" className="group text-center whitespace-normal">
-        <Link href="/checkout/pro">
-          {t("proLive.cta")}
-          <Icon icon={ArrowRight} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
-        </Link>
-      </Button>
-      <Link
-        href="/service"
-        className="inline-flex min-h-touch-target items-center gap-2 self-start rounded-sm text-small font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
-      >
-        <Icon icon={PenTool} size="sm" />
-        {t("proLive.service", { price: formatEuro(PRICES["service-start"].amountCents, locale) })}
-      </Link>
+      {planned.length > 0 ? (
+        <div className="grid gap-3">
+          <p className="text-caption font-semibold text-fg-secondary">{t("pricing.when.planned")}</p>
+          <ul className="grid gap-3">
+            {planned.map((line) => (
+              <PlanLineItem key={line.key} line={line}>
+                {text(line.key)}
+              </PlanLineItem>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {free ? (
+        <Button asChild variant="primary" size="cta" className="group text-center whitespace-normal">
+          <Link href="/signup">
+            {t("pricing.free.cta")}
+            <Icon icon={icons.forward} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
+          </Link>
+        </Button>
+      ) : null}
+      {plan.id === "pro" && state.payments ? (
+        <div className="grid gap-3">
+          <p className="text-small text-fg-secondary">{t("pricing.proLive.terms")}</p>
+          <Button asChild variant="primary" size="cta" className="group text-center whitespace-normal">
+            <Link href="/checkout/pro">
+              {t("pricing.proLive.cta")}
+              <Icon icon={icons.forward} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+      {plan.id === "service" && state.payments ? (
+        <Button asChild variant="tinted" size="lg" className="group justify-self-start">
+          <Link href="/service">
+            {t("pricing.service.cta")}
+            <Icon icon={icons.forward} size="md" className="transition-transform duration-micro group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
+          </Link>
+        </Button>
+      ) : null}
     </article>
+  );
+}
+
+/**
+ * Free, Pro and the page service in one comparison that keeps "now" apart from "with the start"
+ * (W-06): each card says which it is, its price (ADR 0066), what it holds and what is planned for it.
+ * Free is the offer today. While payments are off, Pro and the page service carry their prices as
+ * "comes with the start" and lead nowhere: there is nothing to buy yet. Under the cards, the questions
+ * about paying and cancelling, answered with what the code does.
+ */
+export function Pricing() {
+  const t = useTranslations("marketing");
+  const locale = useLocale() as "de" | "en" | "ar";
+  const state = siteState();
+  const plans = pricingPlans(state);
+  const questions = billingQuestions(state, locale);
+  return (
+    <Shell id="pricing" labelledBy="pricing-title" className="grid w-full grid-cols-1 gap-10 py-12 md:gap-12 md:py-24">
+      <SectionHeader id="pricing-title" title={t("pricing.title")} lead={state.payments ? t("pricing.leadPaid") : t("pricing.lead")} center />
+      <div role="group" aria-label={t("pricing.compare")} className="mx-auto grid w-full max-w-content gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {plans.map((plan) => (
+          <PlanCard key={plan.id} plan={plan} state={state} />
+        ))}
+      </div>
+      <section aria-labelledby="billing-title" className="mk-reveal mx-auto grid w-full max-w-content gap-6 border-t border-line pt-8 md:pt-10">
+        <h3 id="billing-title" className="text-h3">
+          {t("pricing.billing.title")}
+        </h3>
+        <dl className="grid gap-x-10 gap-y-6 md:grid-cols-2">
+          {questions.map(({ q, a }) => (
+            <div key={q.key} className="grid content-start gap-1">
+              <dt className="text-body font-semibold text-balance">{t.rich(q.key, { ...q.values, bdi })}</dt>
+              <dd className="text-body text-pretty text-fg-secondary">{t.rich(a.key, { ...a.values, bdi })}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    </Shell>
   );
 }
 
 /**
  * Questions as a calm list: hairlines between them, a round button that turns into a cross, and the
  * answer that opens smoothly in place (where the browser can animate it; it simply opens elsewhere).
+ * The first answer follows the build (`faqQuestions`): it names the cookie-free statistics only where
+ * pages are counted, and what Pro holds once it can be bought. Under the title, the way to the help pages.
  */
 export function Faq() {
-  const t = useTranslations("marketing.faq");
-  const real = useTranslations("marketing.real");
-  // With real accounts the first answer names no analytics yet (and, with payments, what Pro holds).
-  const first = paymentsEnabled ? real("faqFreePaid") : real("faqFree");
-  const items = (t.raw("items") as { q: string; a: string }[]).map((item, index) => (supabaseEnabled && index === 0 ? { ...item, a: first } : item));
+  const t = useTranslations("marketing");
+  const items = faqQuestions(siteState(), (t.raw("faq.items") as unknown[]).length);
   return (
     <Shell id="faq" labelledBy="faq-title" className="grid grid-cols-1 gap-8 py-12 md:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
-      <header className="mk-reveal grid content-start gap-3 lg:sticky lg:top-24 lg:self-start">
+      <header className="mk-reveal grid content-start justify-items-start gap-3 lg:sticky lg:top-24 lg:self-start">
         <h2 id="faq-title" className="text-h2 tracking-tight text-balance md:text-h1">
-          {t("title")}
+          {t("faq.title")}
         </h2>
-        <p className="text-body-lg text-pretty text-fg-secondary">{t("lead")}</p>
+        <p className="text-body-lg text-pretty text-fg-secondary">{t("faq.lead")}</p>
+        <Link
+          href="/hilfe"
+          className="-mx-2 inline-flex min-h-touch-target items-center gap-2 rounded-md px-2 text-body font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed"
+        >
+          <Icon icon={icons.help} size="md" />
+          {t("faq.more")}
+          <Icon icon={icons.next} size="sm" />
+        </Link>
       </header>
       <div className="divide-y divide-line border-y border-line">
-        {items.map((item) => (
-          <details key={item.q} className="group mk-faq">
+        {items.map(({ q, a }) => (
+          <details key={q.key} className="group mk-faq">
             <summary className="-mx-3 flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-md px-3 py-4 text-body-lg font-semibold text-balance outline-none transition-colors duration-micro focus-visible:focus-ring active:bg-pressed [&::-webkit-details-marker]:hidden">
-              {item.q}
+              {t.rich(q.key, { bdi })}
               <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-canvas-muted text-fg-secondary transition-[rotate,background-color,color] duration-standard ease-standard group-open:rotate-45 group-open:bg-primary group-open:text-primary-fg motion-reduce:transition-none">
                 <Icon icon={Plus} size="sm" />
               </span>
             </summary>
-            <p className="pe-12 pb-5 text-body text-pretty text-fg-secondary">{item.a}</p>
+            <p className="pe-12 pb-5 text-body text-pretty text-fg-secondary">{t.rich(a.key, { bdi })}</p>
           </details>
         ))}
       </div>

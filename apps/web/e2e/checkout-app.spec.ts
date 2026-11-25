@@ -382,29 +382,36 @@ test.describe("page service and checkout @real", () => {
     expect(requests.filter((url) => url.includes("js.stripe.com"))).toEqual([]);
   });
 
-  test("the homepage in a paid real build: Pro to buy, qualified analytics, no Stripe.js anywhere @real", async ({ page }) => {
+  test("the homepage in a paid real build: Pro to buy, the page service linked, the statistics as the build counts them, no Stripe.js anywhere @real", async ({ page }) => {
     const requests = recordRequests(page);
     await page.goto("/de");
     const pricing = page.locator("#pricing");
-    await expect(pricing).toContainText("Analytics ohne Cookies (in Arbeit)");
-    await expect(pricing).toContainText(/8,00\s€/);
-    await expect(pricing.getByRole("link", { name: "Pro bestellen" })).toHaveAttribute("href", "/de/checkout/pro");
-    await expect(pricing.getByRole("link", { name: /Seitenservice ab/ })).toHaveAttribute("href", "/de/service");
+    const card = (plan: string) => pricing.locator(`[data-plan="${plan}"]`);
+    await expect(card("pro").locator("[data-price]")).toContainText(/8,00\s€/);
+    await expect(card("pro").getByRole("link", { name: "Pro bestellen" })).toHaveAttribute("href", "/de/checkout/pro");
+    await expect(card("service").getByRole("link", { name: "Zum Seitenservice" })).toHaveAttribute("href", "/de/service");
     await expect(page.locator("#faq")).toContainText("Pro enthält KI-Entwürfe; eigene Domain, Verkauf und E-Mail-Liste sind geplant.");
-    // "Analytics ohne Cookies" only qualified, or as the analytics section's own title.
-    const unqualified = await page.evaluate(() => {
-      const clone = document.body.cloneNode(true) as HTMLElement;
-      clone.querySelectorAll("#analytics h2, #analytics h3, script, style").forEach((node) => node.remove());
-      const text = clone.textContent;
-      const phrase = "Analytics ohne Cookies";
-      let count = 0;
-      for (let at = text.indexOf(phrase); at !== -1; at = text.indexOf(phrase, at + phrase.length)) {
-        const rest = text.slice(at + phrase.length, at + phrase.length + 14);
-        if (!rest.startsWith(" (in Arbeit)") && !rest.startsWith(" ist in Arbeit")) count += 1;
-      }
-      return count;
-    });
-    expect(unqualified).toBe(0);
+    // The cookie-free statistics: a Free line that is there today where the build counts pages
+    // (LINKYO_ANALYTICS), listed as planned where it does not; never "in Arbeit" beside a live line.
+    const statistics = card("free").locator("li", { hasText: "Analytics ohne Cookies" });
+    await expect(statistics).toHaveCount(1);
+    await expect(pricing).not.toContainText("in Arbeit");
+    if ((await statistics.getAttribute("data-when")) !== "now") {
+      // Not counted: "Analytics ohne Cookies" only as planned or qualified, or as the analytics section's own title.
+      const unqualified = await page.evaluate(() => {
+        const clone = document.body.cloneNode(true) as HTMLElement;
+        clone.querySelectorAll('#analytics h2, #analytics h3, [data-when="planned"], script, style').forEach((node) => node.remove());
+        const text = clone.textContent;
+        const phrase = "Analytics ohne Cookies";
+        let count = 0;
+        for (let at = text.indexOf(phrase); at !== -1; at = text.indexOf(phrase, at + phrase.length)) {
+          const rest = text.slice(at + phrase.length, at + phrase.length + 14);
+          if (!rest.startsWith(" (in Arbeit)") && !rest.startsWith(" ist in Arbeit")) count += 1;
+        }
+        return count;
+      });
+      expect(unqualified).toBe(0);
+    }
     for (const path of ["/de/templates", "/de/impressum", "/de/datenschutz", "/de/agb", "/de/widerrufsbelehrung", "/de/widerruf", "/de/kuendigen"]) await page.goto(path);
     const { username, email } = uniqueName("co-public");
     await createRealAccount({ email, username, locale: "de", onboarded: true });
