@@ -349,11 +349,13 @@ function WeekCard({ days, views, clicks, links, sources, sample }: WeekCardProps
 
 function WeekList({ title, items }: { title: string; items: { key: string; label: string; value: string }[] }) {
   return (
-    <div className="grid content-start gap-2">
+    // min-w-0 and one shrinkable track: a long block title is cut with an ellipsis inside its own
+    // column instead of widening the list (an auto track would size to the longest unbroken title).
+    <div className="grid min-w-0 grid-cols-1 content-start gap-2">
       <h3 className="text-caption font-semibold text-fg-secondary">{title}</h3>
-      <ol className="grid gap-1">
+      <ol className="grid min-w-0 grid-cols-1 gap-1">
         {items.map((item) => (
-          <li key={item.key} className="flex items-baseline justify-between gap-3 text-small">
+          <li key={item.key} className="flex min-w-0 items-baseline justify-between gap-3 text-small">
             <span dir="auto" className="min-w-0 truncate">
               {item.label}
             </span>
