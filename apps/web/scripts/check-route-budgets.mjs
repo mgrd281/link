@@ -26,7 +26,7 @@
  *   page code at most 35 KB;
  * - the dashboard (`/<locale>/app`): first load (framework and page code) at most 350 KB, and in a demo build
  *   (no `NEXT_PUBLIC_SUPABASE_URL`) no Supabase code in any `/app` chunk;
- * - the home page (`/de`): its HTML at most 60 KB (the target; the gate holds 75 KB for now, see BUDGETS);
+ * - the home page (`/de`): its HTML at most 60 KB;
  * - every prerendered link preview card (`opengraph-image`): at most 300 KB.
  */
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -41,10 +41,7 @@ const KB = 1000;
 export const BUDGETS = Object.freeze({
   creatorPageCode: 35 * KB,
   appFirstLoad: 350 * KB,
-  // The target is 60 KB (ADR 0008). Stage 4 step 1 measured 72.2 KB (demo) and 73.4 KB (real accounts)
-  // once the site pages were merged; until the home page's own content is lighter (WP4.3b) the gate
-  // holds that plus a small margin, so it still fails on any growth. Lower it back to 60 with WP4.3b.
-  homeHtml: 75 * KB,
+  homeHtml: 60 * KB,
   ogImage: 300 * KB,
 });
 

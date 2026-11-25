@@ -893,18 +893,6 @@
   }
 }
 
-@keyframes mk-phone-in {
-  from {
-    opacity: 0;
-    translate: 0 var(--spacing-24);
-  }
-
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-
 @keyframes mk-float {
   50% {
     translate: 0 calc(var(--spacing-3) * -1);
@@ -1115,15 +1103,6 @@
 
 @utility mk-tap {
   animation: mk-tap var(--duration-slow) var(--ease-standard) both;
-}
-
-@utility mk-phone-in {
-  animation: mk-phone-in calc(var(--duration-reveal) * 1.4) var(--ease-standard) both;
-  animation-delay: calc(var(--duration-slow) + var(--i, 0) * var(--duration-standard));
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
 }
 
 @utility mk-float {

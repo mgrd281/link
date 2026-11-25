@@ -1,6 +1,6 @@
-# draft — The home page loads fast on phones
+# 0085 — The home page loads fast on phones
 
-**Status.** Proposed (Stage 4, WP4.3b, 2026-11-25). Completes [ADR 0008](0008-public-page-rendering.md)'s
+**Status.** Accepted (Stage 4, WP4.3b, 2026-11-25). Completes [ADR 0008](0008-public-page-rendering.md)'s
 revision for the home page: its HTML is under the 60 KB budget again, and 0008's consequence "`/de` is over its
 budget at this revision" no longer holds.
 
