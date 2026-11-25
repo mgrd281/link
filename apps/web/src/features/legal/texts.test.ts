@@ -76,6 +76,37 @@ describe("legal texts (drafts)", () => {
     expect(DOCS.datenschutz?.some((block) => block.kind === "h2" && block.id === "creator-pages")).toBe(true);
   });
 
+  it("says no visits are counted while the counting is off, and describes it fully while it runs", () => {
+    const off = textOf(datenschutz());
+    expect(off).toContain("Wir zählen derzeit keine Besuche.");
+    expect(off).not.toContain("Reichweitenmessung");
+    expect(datenschutz().some((block) => block.kind === "h2" && block.id === "statistik")).toBe(false);
+
+    const doc = datenschutz({ statistics: true });
+    const on = textOf(doc);
+    expect(on).not.toContain("Wir zählen derzeit keine Besuche.");
+    for (const needle of [
+      "Reichweitenmessung auf Creator-Seiten",
+      "ohne Cookies",
+      "ohne etwas auf Ihrem Gerät zu speichern",
+      "Do Not Track",
+      "Global Privacy Control",
+      "HMAC-SHA-256",
+      "Tagesschlüssel",
+      "Europe/Berlin",
+      "Art. 6 Abs. 1 lit. f DSGVO",
+      "Art. 21 DSGVO",
+      "Zählung der Creator-Seiten: Prüfwerte und Tagesschlüssel bis zum Ende des jeweiligen Tages",
+    ]) {
+      expect(on, needle).toContain(needle);
+    }
+    expect(doc.some((block) => block.kind === "h2" && block.id === "statistik")).toBe(true);
+    // It never promises what the code does not do: no "anonym" for hashed values, no claim of no processing at all.
+    expect(on).not.toMatch(/anonym|keinerlei|gar keine/i);
+    // Brackets in the counting text are review notes or company data only.
+    for (const bracket of on.match(/\[[^\]]*\]/g) ?? []) expect(ALLOWED_PLACEHOLDERS, bracket).toContain(bracket);
+  });
+
   it("says Arbeitstag, never Werktag, and keeps the money-back promise to once per account", () => {
     for (const doc of Object.values(DOCS)) expect(textOf(doc)).not.toMatch(/werktag/i);
     expect(textOf(DOCS.agb ?? [])).toContain("Arbeitstag (Mo–Fr, außer bundesweite Feiertage)");

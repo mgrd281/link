@@ -82,8 +82,51 @@ export function impressum(): LegalDoc {
   ];
 }
 
-/** Datenschutzerklärung (Art. 13 DSGVO), including creator pages, the AI provider and the paid service. */
-export function datenschutz(): LegalDoc {
+/**
+ * The counting of visits on creator pages (ADR 0081), as the code does it: what is kept, for how long,
+ * on which basis. Part of the privacy statement only while the counting runs (`LINKYO_ANALYTICS`), so
+ * the text never says more or less than what happens. Facts to keep in step with
+ * features/analytics (beacon-script.ts, visitor.ts, server/collect.ts) and page_stats.sql.
+ */
+function statistik(): LegalBlock[] {
+  return [
+    h2("Reichweitenmessung auf Creator-Seiten", "statistik"),
+    p(
+      "Damit Creator sehen, wie ihre Seite genutzt wird, zählen wir Besuche und Tipps auf Links. " +
+        "Das geschieht ohne Cookies und ohne etwas auf Ihrem Gerät zu speichern. " +
+        "Ein kurzes Skript der Seite liest dafür nur, von welcher Internetseite Sie kamen (den Domainnamen) und ob Ihr Browser „Do Not Track“ oder „Global Privacy Control“ meldet.",
+    ),
+    p("Wir zählen:"),
+    list(
+      "dass eine Seite geöffnet wurde und wie viele verschiedene Besucher es an einem Tag waren;",
+      "welchen Link oder welche Schaltfläche in welchem Abschnitt Sie antippen;",
+      "eine grobe Herkunft: Der Domainname der Seite, von der Sie kamen, wird einer Gruppe zugeordnet (zum Beispiel Instagram, Suche oder direkt); die vollständige Adresse speichern wir nie;",
+      "das Land als Länderkürzel, das uns die Hosting-Plattform nennt;",
+      "die Geräteart (Smartphone, Tablet oder Computer) aus der Browserangabe.",
+    ),
+    p(
+      "Ihre IP-Adresse und die Browserangabe verarbeiten wir dafür nur kurz im Arbeitsspeicher des Servers und speichern sie nicht (die technisch nötige Verarbeitung durch den Hosting-Anbieter steht oben unter „Hosting“). " +
+        "Aus ihnen berechnen wir mit einem zufälligen Tagesschlüssel einen Prüfwert (HMAC-SHA-256), damit eine Person an einem Tag nur einmal als Besucher zählt. " +
+        "Ein Löschlauf prüft stündlich und entfernt den Tagesschlüssel und alle Prüfwerte, sobald der Tag (Zeitzone Europe/Berlin) vorbei ist. " +
+        "Danach lässt sich keine Zählung einer Person mehr zuordnen. Dauerhaft bleiben nur Tageszahlen je Seite.",
+    ),
+    p("Wer „Do Not Track“ oder „Global Privacy Control“ eingeschaltet hat, wird nicht gezählt. Auch Roboter und Vorabrufe zählen wir nicht."),
+    p("Die Zahlen einer Seite sieht der Creator in seinem Konto. Unser Team sieht nur Summen (Ansichten und Tipps), nie die Aufteilung nach Herkunft, Land oder Gerät."),
+    p(
+      "Rechtsgrundlage ist unser berechtigtes Interesse und das der Creator, die Nutzung ihrer Seiten zu verstehen (Art. 6 Abs. 1 lit. f DSGVO). " +
+        "Sie können dieser Verarbeitung jederzeit widersprechen (Art. 21 DSGVO), am einfachsten, indem Sie „Do Not Track“ oder „Global Privacy Control“ in Ihrem Browser einschalten: " +
+        `Dann senden wir nichts und zählen nichts. ${REVIEW.check}`,
+    ),
+  ];
+}
+
+/**
+ * Datenschutzerklärung (Art. 13 DSGVO), including creator pages, the AI provider and the paid service.
+ * `statistics`: the cookie-free counting of creator-page visits runs (the server switch), so the text
+ * describes it; otherwise it says that no visits are counted.
+ */
+export function datenschutz(options: { statistics?: boolean } = {}): LegalDoc {
+  const counting = options.statistics === true;
   return [
     h2("Verantwortlicher"),
     lines(COMPANY.name, COMPANY.address, `E-Mail: ${COMPANY.email}`),
@@ -124,9 +167,10 @@ export function datenschutz(): LegalDoc {
       "Creator-Seiten auf Linkyo gehören den Creatorn, die sie gestalten; für ihre Inhalte sind sie selbst verantwortlich. " +
         "Beim Besuch einer Creator-Seite setzen wir keine Cookies und laden nichts von Dritten: Bilder liefern wir über unseren eigenen Server aus. " +
         "Eingebettete Videos oder Musik von Plattformen wie YouTube oder Spotify laden erst, wenn Sie es auf der Seite erlauben; Ihre Auswahl bleibt nur auf Ihrem Gerät gespeichert. " +
-        "Wir zählen derzeit keine Besuche.",
+        (counting ? "Wie wir Besuche ohne Cookies zählen, steht im nächsten Abschnitt." : "Wir zählen derzeit keine Besuche."),
     ),
     p("Rechtswidrige Inhalte auf einer Creator-Seite können Sie uns über den im Impressum beschriebenen Weg melden."),
+    ...(counting ? statistik() : []),
 
     h2("KI-Funktionen"),
     p(
@@ -163,6 +207,9 @@ export function datenschutz(): LegalDoc {
       "Bestell- und Rechnungsdaten: 10 Jahre (§ 147 Abgabenordnung).",
       "KI-Entwürfe: 7 Tage; Protokoll der KI-Läufe ohne Inhalte: 30 Tage.",
       "Anmeldeprotokolle: 30 Tage.",
+      ...(counting
+        ? ["Zählung der Creator-Seiten: Prüfwerte und Tagesschlüssel bis zum Ende des jeweiligen Tages (Europe/Berlin); Tageszahlen je Seite, solange das Konto besteht."]
+        : []),
       "Alles Übrige, auch alle Bilder Ihres Kontos: bis Sie Ihr Konto löschen. Beim Löschen entfernen wir Ihre Bilder aus dem Dateispeicher.",
     ),
 

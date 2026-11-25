@@ -15,9 +15,13 @@ export function reviewMarkers(docs: readonly LegalDoc[]): string[] {
   return [...found];
 }
 
-/** All of Linkyo's legal documents, as the pages render them (the site address does not change any marker). */
+/**
+ * All of Linkyo's legal documents, as the pages render them (the site address does not change any marker).
+ * The privacy statement counts in its fullest form, with the statistics section, so a launch build still
+ * fails while that section holds a review marker, whether or not the counting runs at that moment.
+ */
 export function legalDocs(): LegalDoc[] {
-  return [impressum(), datenschutz(), agb(), widerrufsbelehrung("https://linkyo.app")];
+  return [impressum(), datenschutz({ statistics: true }), agb(), widerrufsbelehrung("https://linkyo.app")];
 }
 
 /**
