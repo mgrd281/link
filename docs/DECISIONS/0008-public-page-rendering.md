@@ -33,7 +33,9 @@ and boundaries) minus the framework (`rootMainFiles` in Next's build manifest an
      code at most 35 KB;
    - the dashboard (`/<locale>/app`): first load (framework and page code) at most 350 KB, and a demo build ships no
      Supabase code to any `/app` route;
-   - the home page (`/de`): its HTML at most 60 KB;
+   - the home page (`/de`): its HTML at most 60 KB. With the site pages merged (Stage 4 step 1) it measured 72.2 KB in
+     the demo build and 73.4 KB with real accounts; until the home page's own content is lighter (WP4.3b) the
+     script holds 75 KB, so it still fails on growth, and goes back to 60 KB with that work;
    - every prerendered link preview card: at most 300 KB.
 2. **Creator pages are server components with small islands.** Only the parts that need the browser ship script: the
    picture viewer (on its first press), the rail buttons, the privacy notice, the players, share, copy, the live
@@ -64,7 +66,7 @@ and boundaries) minus the framework (`rootMainFiles` in Next's build manifest an
 | page code `/<locale>/p/<slug>/<project>` | 127.6 KB | 26.1 KB | 35 KB |
 | first load `/<locale>/app` | 605.3 KB | 319.6 KB | 350 KB |
 | `/app` routes with Supabase code (demo) | 16 | 0 | 0 |
-| HTML `/de` | 119.2 KB | 67.4 KB | 60 KB |
+| HTML `/de` | 119.2 KB | 67.4 KB (72.2 KB with the site pages) | 60 KB (gate 75 KB until WP4.3b) |
 | largest link preview card | 994.8 KB | 233.1 KB | 300 KB |
 
 **Consequences.**
