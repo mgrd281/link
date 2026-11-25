@@ -30,7 +30,6 @@ import {
   FolderGit2,
   FolderKanban,
   Handshake,
-  Heading,
   Image as ImageIcon,
   Images,
   Inbox,
@@ -63,7 +62,8 @@ import { useEffect, useState, type CSSProperties, type KeyboardEvent as ReactKey
 export const blockIcon: Record<BlockType, LucideIcon> = {
   link: Link2,
   card: PanelsTopLeft,
-  header: Heading,
+  // A titled part of the page. Not the letter H: that read as a letter, not as a heading.
+  header: icons.section,
   // Not FileText: that one stands for documents (PDF links, the media kit).
   text: LetterText,
   divider: Minus,

@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Icon, icons, Skeleton, Spinner, toast } from "@linkyo/ui";
-import { CalendarClock, Check, FileX, LayoutTemplate, type LucideIcon } from "lucide-react";
+import { CalendarClock, Check, FileX, type LucideIcon } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
@@ -209,7 +209,7 @@ function PlanGroup({ view }: { view: PlanView }) {
   return (
     <ListGroup title={t("groups.plan")} titleId="plan-current" footer={footer}>
       <ListRow
-        icon={view.plan === "pro" ? icons.ai : LayoutTemplate}
+        icon={view.plan === "pro" ? icons.ai : icons.plan}
         title={<span className="font-semibold">{t.rich(`name.${view.plan}`, bdi)}</span>}
         subtitle={t.rich(`source.${view.source}`, { ...bdi, price })}
         subtitleWrap

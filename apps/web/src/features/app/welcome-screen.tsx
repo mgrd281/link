@@ -11,12 +11,14 @@ import {
   Camera,
   Check,
   CircleCheck,
+  Clapperboard,
   CodeXml,
   DraftingCompass,
   Feather,
   Footprints,
   Gamepad2,
   GraduationCap,
+  Images,
   Laptop,
   Lightbulb,
   Megaphone,
@@ -31,6 +33,7 @@ import {
   ShoppingBag,
   Smartphone,
   Sparkles,
+  SquarePlay,
   Store,
   Warehouse,
   type LucideIcon,
@@ -87,7 +90,15 @@ type SharedStep = Exclude<WelcomeStep, "proof" | "action">;
 /** Progress labels: six for portfolio kinds, five for everyone else (class names stay whole for Tailwind). */
 const PROGRESS_COLUMNS: Record<number, string> = { 5: "grid-cols-5", 6: "grid-cols-6" };
 
-const KIND_ICONS: Partial<Record<CreatorKind, LucideIcon>> = {
+/**
+ * One outline glyph per kind, so the grid is one style: the three platform kinds used to wear the
+ * platform's filled logo beside everyone else's line drawing. A new kind must name its glyph here.
+ */
+const KIND_ICONS: Record<CreatorKind, LucideIcon> = {
+  // Short videos, pictures and long videos, drawn as what they are, not as the platform's mark.
+  tiktok: Clapperboard,
+  instagram: Images,
+  youtube: SquarePlay,
   podcast: Mic,
   affiliate: BadgePercent,
   marketing: Megaphone,
@@ -112,14 +123,9 @@ const KIND_ICONS: Partial<Record<CreatorKind, LucideIcon>> = {
   other: Shapes,
 };
 
-/**
- * Brand logos only for the platform kinds, drawn a step smaller (icon-md) than the outline icons
- * (icon-lg) in the same tile: a solid logo carries more weight, so both read alike.
- */
+/** The kind's glyph in its tile: every kind the same outline, at the same size. */
 function KindIcon({ kind }: { kind: CreatorKind }): ReactNode {
-  if (kind === "tiktok" || kind === "instagram" || kind === "youtube") return <PlatformGlyph platform={kind} size="md" />;
-  const icon = KIND_ICONS[kind];
-  return icon ? <Icon icon={icon} size="lg" /> : null;
+  return <Icon icon={KIND_ICONS[kind]} size="lg" />;
 }
 
 /** Text fields per question (switches are rendered as switch rows). */

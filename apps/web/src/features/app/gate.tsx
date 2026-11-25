@@ -1,7 +1,7 @@
 "use client";
 
-import { cn, Icon, LogoSymbol, Skeleton, Spinner } from "@linkyo/ui";
-import { ChartNoAxesColumn, Eye, Gift, House, LayoutList, Palette, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
+import { cn, Icon, icons, LogoSymbol, Skeleton, Spinner } from "@linkyo/ui";
+import { ChartNoAxesColumn, Eye, Gift, House, Palette, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, type ReactNode } from "react";
 
@@ -29,7 +29,7 @@ export function BrandSplash() {
 /** The rail's places, as in the shell (nav.tsx). */
 const SPLASH_NAV = [
   { key: "home", icon: House },
-  { key: "page", icon: LayoutList },
+  { key: "page", icon: icons.page },
   { key: "design", icon: Palette },
   { key: "analytics", icon: ChartNoAxesColumn },
   { key: "invite", icon: Gift },

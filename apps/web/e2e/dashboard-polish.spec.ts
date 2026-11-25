@@ -348,3 +348,57 @@ test.describe("D3: targets and symmetry on phones", () => {
     });
   }
 });
+
+// ─── D4: icons that say what they mean ─────────────────────────────────────────────────────────
+
+/** lucide draws every glyph with its own class (`lucide-file`); aliases add theirs. */
+const glyphOf = (locator: Locator) => locator.first().evaluate((svg) => [...svg.classList].filter((name) => name.startsWith("lucide-")));
+
+test.describe("D4: icons", () => {
+  test.use(PHONE);
+
+  test("the welcome kind grid is one style: every kind an outline glyph of its own", async ({ page }) => {
+    const name = `dp-${unique()}`;
+    await page.goto(`/en/signup?name=${name}`);
+    await page.waitForLoadState("networkidle");
+    await page.locator("#signup-email").fill(`${name}@example.com`);
+    await page.locator("form button[type=submit]").click();
+    await enterDemoCode(page);
+    await page.waitForURL("**/en/app/welcome");
+    const tiles = page.locator("fieldset label:has(input[name=kind]) span.size-control-md svg");
+    await expect(tiles).toHaveCount(24);
+    const drawn = await tiles.evaluateAll((svgs) =>
+      svgs.map((svg) => ({
+        // lucide draws a line (fill none, stroke); a platform's logo is a filled shape.
+        outline: svg.classList.contains("lucide") && svg.getAttribute("fill") === "none" && svg.getAttribute("stroke") === "currentColor",
+        glyph: [...svg.classList].find((name) => name.startsWith("lucide-") && !name.startsWith("lucide-svg")) ?? "(a logo)",
+        size: Math.round(svg.getBoundingClientRect().width),
+      })),
+    );
+    expect(drawn.filter((item) => !item.outline).map((item) => item.glyph), "kinds drawn as a filled logo").toEqual([]);
+    expect(new Set(drawn.map((item) => item.size)).size, "one size for all").toBe(1);
+    expect(new Set(drawn.map((item) => item.glyph)).size, "a glyph of its own per kind").toBe(drawn.length);
+  });
+
+  test("Seite is a sheet, the free plan a price tag, a section a split box (not a task list, a template, the letter H)", async ({ page }) => {
+    await signedIn(page);
+    await seed(page, { kind: "music", template: "nocturne", links: 3 });
+    // The tab bar and, below, the rail.
+    expect(await glyphOf(page.locator("[data-tabbar] a[href$='/app/editor'] svg")), "Seite in the tab bar").toContain("lucide-file");
+    await page.goto("/en/app/settings/plan");
+    await expect(heading(page)).toBeVisible();
+    expect(await glyphOf(page.locator("#main svg.lucide-tag")), "the free plan's row").toContain("lucide-tag");
+    await page.goto("/en/app/editor");
+    await expect(heading(page)).toBeVisible();
+    expect(await glyphOf(page.getByRole("button", { name: "Add section" }).locator("svg")), "Add section").toContain("lucide-rows-2");
+    // The Add sheet's tile for a section carries the same glyph.
+    await page.locator("[data-tabbar] button").first().click();
+    expect(await glyphOf(page.getByRole("dialog").locator('[data-type="header"] svg')), "the Add sheet's section tile").toContain("lucide-rows-2");
+  });
+});
+
+test("D4: on a laptop the rail shows the same sheet for Seite", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await signedIn(page);
+  expect(await glyphOf(page.locator("[data-nav] a[href$='/app/editor'] svg")), "Seite in the rail").toContain("lucide-file");
+});

@@ -9,13 +9,19 @@ import {
   CircleAlert,
   Contact,
   Ellipsis,
+  File as FileIcon,
   FolderKanban,
   Gamepad2,
   Gift,
+  Heading,
+  LayoutList,
+  LayoutTemplate,
   Music,
   Pencil,
+  Rows2,
   Share,
   SquareUser,
+  Tag,
   Trash2,
   TriangleAlert,
   Undo2,
@@ -48,6 +54,16 @@ describe("icon registry (S-01)", () => {
       // §5 row 4: the streamer kind is a game pad, not a platform's logo.
       gaming: Gamepad2,
     });
+  });
+
+  it("says what it means: the page is a sheet, a plan is a price tag, a section is a split box (polish pass)", () => {
+    expect(icons).toMatchObject({ page: FileIcon, plan: Tag, section: Rows2 });
+    // The glyphs they replaced said something else: a task list, the template layout, the letter H.
+    expect(icons.page).not.toBe(LayoutList);
+    expect(icons.plan).not.toBe(LayoutTemplate);
+    expect(icons.section).not.toBe(Heading);
+    // The template glyph keeps its own meaning.
+    expect(icons.templates).toBe(LayoutTemplate);
   });
 
   it("gives every meaning its own glyph: no glyph means two things", () => {

@@ -375,13 +375,14 @@ test.describe("everyone else keeps the five steps", () => {
     expect(await editorTypes(page, "de")).toEqual(["link"]);
   });
 
-  test("de · the kind grid: brand logos only for platform kinds, a step smaller in the same tile; Streamer has a gamepad", async ({ page }) => {
+  test("de · the kind grid: one outline style at one size, in the same tile; Streamer has a gamepad", async ({ page }) => {
     const m = await signUp(page, "de");
     const tile = (kind: Kind) => page.locator("label").filter({ has: page.getByRole("radio", { name: new RegExp(`^${escape(m.app.welcome.kinds[kind].label)}`) }) });
     const glyph = (kind: Kind) => tile(kind).locator("svg").first();
     const width = async (kind: Kind) => (await glyph(kind).boundingBox())?.width ?? 0;
-    // Platform logos at icon-md (20 px), outline icons at icon-lg (24 px), in a 40 px tile.
-    expect(await width("tiktok")).toBe(20);
+    // The platform kinds are outline glyphs too (a clapperboard, pictures, a play button, not brand logos at 20 px):
+    // every kind at icon-lg (24 px), in a 40 px tile. dashboard-polish.spec.ts checks all of them.
+    expect(await width("tiktok")).toBe(24);
     expect(await width("photographer")).toBe(24);
     expect((await glyph("tiktok").locator("..").boundingBox())?.width).toBe(40);
     await expect(tile("streamer").locator("svg.lucide-gamepad-2")).toHaveCount(1);

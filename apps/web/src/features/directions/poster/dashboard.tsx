@@ -3,7 +3,7 @@
 import type { Block, Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
 import { Badge, Button, cn, Icon, IconButton, icons, Kbd, Logo, Menu, Switch, toast } from "@linkyo/ui";
-import { ArrowDown, ArrowUp, Copy, Eye, Gem, GripVertical, Heading, Plus, Share2, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Eye, Gem, GripVertical, Plus, Share2, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
@@ -142,7 +142,7 @@ export function PosterDashboard({ initial, profile, pageHref }: { initial: Edito
               </h2>
               <div className="flex items-center gap-3">
                 <p className="text-small text-fg-secondary">{t("blockCount", { count: doc.blocks.length })}</p>
-                <Button size="sm" icon={Heading} onClick={addSection}>
+                <Button size="sm" icon={icons.section} onClick={addSection}>
                   {t("addSection")}
                 </Button>
               </div>
@@ -271,7 +271,7 @@ function SectionRow({ block, label, count, focus, first, last, onToggle, onRenam
     >
       <DragHandle sortable={sortable} label={label} onMove={onMove} />
       <span className="grid size-control-md shrink-0 place-items-center rounded-md bg-selected text-selected-fg">
-        <Icon icon={Heading} size="sm" />
+        <Icon icon={icons.section} size="sm" />
       </span>
       <input
         ref={inputRef}
