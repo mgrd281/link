@@ -72,6 +72,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
   const [active, setActive] = useState(0);
   const [turns, setTurns] = useState(0);
   const [chosen, setChosen] = useState(false);
+  const [first, setFirst] = useState(false);
   const [warm, setWarm] = useState(false);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const row = useRef<HTMLDivElement | null>(null);
@@ -100,11 +101,12 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
   }, [active, reduced]);
 
   /**
-   * The first picture is there: now the pages still out of sight fetch theirs, quietly, so a tap on
-   * any face shows its page at once. Not when the browser asks to save data: there a picture loads
-   * when its page comes near.
+   * The first picture is there: now the two pages about to come into view fetch theirs, and the pages
+   * still out of sight too, quietly, so a tap on any face shows its page at once. Not those when the
+   * browser asks to save data: there a picture loads when its page comes near.
    */
   const warmUp = useCallback(() => {
+    setFirst(true);
     const { connection } = navigator as Navigator & { connection?: { saveData?: boolean } };
     if (!connection?.saveData) setWarm(true);
   }, []);
@@ -185,9 +187,10 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
             const slot = slotOf(index, active, count);
             const front = slot === "front";
             const beside = slot === "next" || slot === "prev";
-            // Pictures load for the pages in view and the two about to come into view; the others
-            // follow once the first is there (warmUp).
-            const near = [0, 1, 2, count - 2, count - 1].includes((index - active + count) % count);
+            // Pictures load for the pages in view; the two about to come into view and the others follow
+            // once the first is there (warmUp), so nothing hidden competes with the page in front.
+            const offset = (index - active + count) % count;
+            const near = [0, 1, count - 1].includes(offset) || (first && [2, count - 2].includes(offset));
             return (
               <div
                 key={page.slug}
