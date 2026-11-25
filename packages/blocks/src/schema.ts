@@ -1,37 +1,13 @@
 import { z } from "zod";
 
-import { MAX_PROJECTS, PROJECT_SLUG, PROJECT_SLUG_MAX, PROJECT_SLUG_MIN, RESERVED_PROJECT_SLUGS, USERNAME_MAX, USERNAME_MIN, USERNAME_PATTERN } from "./rules";
+import { MAX_PROJECTS, PLATFORMS, PROJECT_SLUG, PROJECT_SLUG_MAX, PROJECT_SLUG_MIN, RESERVED_PROJECT_SLUGS, USERNAME_MAX, USERNAME_MIN, USERNAME_PATTERN } from "./rules";
 
 /**
  * Block schemas — shared by the editor, the renderer and the API (and mirrored in Swift).
  * `config` lives in Postgres as jsonb and is validated with these schemas on every write.
  */
 
-export const PLATFORMS = [
-  "youtube",
-  "youtubemusic",
-  "spotify",
-  "applemusic",
-  "soundcloud",
-  "deezer",
-  "tidal",
-  "bandcamp",
-  "tiktok",
-  "instagram",
-  "twitch",
-  "kick",
-  "x",
-  "threads",
-  "bluesky",
-  "discord",
-  "whatsapp",
-  "telegram",
-  "facebook",
-  "linkedin",
-  "github",
-  "email",
-  "website",
-] as const;
+/** The platform list itself is in ./rules (`PLATFORMS`), so the browser can read it without Zod. */
 export const platformSchema = z.enum(PLATFORMS);
 
 /**
