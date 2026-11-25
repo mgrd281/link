@@ -14,11 +14,12 @@ import { LOOKS } from "@/features/examples/looks";
 import { journalistAr, journalistDe, journalistEn } from "@/features/previews/journalist";
 import { aiTryPublic } from "@/lib/flags";
 import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
-import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { phoneSizes } from "./assets";
 import { CountUp } from "./count-up";
 import { Playground, TryEyebrow, type LookOption } from "./playground";
+import { SECTION_TITLE } from "./headings";
+import { siteState } from "./site-state";
 import { StoryPicture, type StoryArt } from "./story-picture";
 import { TRY_LOOKS } from "./try-looks";
 
@@ -165,7 +166,7 @@ function SharePreview() {
 }
 
 /** Three languages, both directions: the same word, set as each language sets it. */
-function Languages() {
+export function Languages() {
   return (
     <div aria-hidden className="grid gap-1 font-bold">
       <p lang="de" className="text-h1 tracking-tight">
@@ -179,6 +180,11 @@ function Languages() {
       </p>
     </div>
   );
+}
+
+/** The "every color readable" tile's swatches: four very different accents through the theme engine. */
+export function ReadableColors() {
+  return <Readable swatches={READABLE.map((accent) => resolveCreatorTheme({ accent, mode: "vivid" }).cssVars)} />;
 }
 
 /** Four very different accents, each with the text color the engine picked for it. */
@@ -207,7 +213,7 @@ const LINKS = [46, 31, 23] as const;
  * Step 4: cookie-free analytics, with clearly marked sample numbers. The figures count up and the
  * bars grow the first time the card scrolls in.
  */
-function AnalyticsCard() {
+export function AnalyticsCard() {
   const t = useTranslations("marketing.analytics");
   const locale = useLocale();
   const days = t.raw("days") as string[];
@@ -298,7 +304,7 @@ export function TryIt() {
     <section id="try" aria-labelledby="try-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-12 md:px-10 md:py-24">
       <header className="mk-reveal grid max-w-prose gap-4 md:mx-auto md:justify-items-center md:text-center">
         <TryEyebrow ai={aiTab}>{aiTab ? t("try.ai.eyebrow") : t("try.eyebrow")}</TryEyebrow>
-        <h2 id="try-title" className="text-h2 tracking-tight text-balance md:text-h1">
+        <h2 id="try-title" className={SECTION_TITLE}>
           <span className="block">{t("try.title1")}</span>
           <span className="block text-link">{t("try.title2")}</span>
         </h2>
@@ -327,7 +333,7 @@ export function Features() {
   return (
     <section id="features" aria-labelledby="features-title" className="mx-auto w-full max-w-content scroll-mt-16 px-5 py-12 md:px-10 md:py-24">
       <header className="mk-reveal grid max-w-prose md:mx-auto md:justify-items-center md:text-center">
-        <h2 id="features-title" className="text-h2 tracking-tight text-balance md:text-h1">
+        <h2 id="features-title" className={SECTION_TITLE}>
           <span className="block text-fg-tertiary">{t("more.title1")}</span>
           <span className="block">{t("more.title2")}</span>
         </h2>
@@ -343,14 +349,15 @@ export function Features() {
         <Tile title={t("more.colors.title")} body={t("more.colors.body")}>
           <Readable swatches={swatches} />
         </Tile>
-        {/* The footer links here as "/#analytics". */}
+        {/* Its anchor ("/#analytics") stays for links shared before the footer led to /funktionen instead. */}
         <Tile
           id="analytics"
           wide
           title={t("analytics.title")}
-          // Real accounts have no analytics yet: the title says so (the demo keeps its sample numbers).
+          // Where real accounts are not counted (the counter switched off), the title says it is being
+          // built; where pages are counted (or in the demo, with its sample numbers) there is no badge.
           badge={
-            supabaseEnabled ? (
+            !siteState().statistics ? (
               <Badge tone="outline" size="sm">
                 {t("real.analyticsBadge")}
               </Badge>

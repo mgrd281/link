@@ -17,24 +17,28 @@ export function MarketingHeader({
   signupAfter,
   edge = true,
   current,
+  wide = false,
 }: {
   signupAfter?: string;
+  /** The home page: from 1280 px (xl) the bar spans the hero's wide column, so the logo stands over the words. */
+  wide?: boolean;
   /** A hairline under the bar once content scrolls beneath it (off where a band below draws its own). */
   edge?: boolean;
   /** The place this page is: marked in the bar and in the menu. */
-  current?: MenuItem["key"];
+  current?: MenuItem["key"] | undefined;
 } = {}) {
   const t = useTranslations("marketing");
   const common = useTranslations("common");
   const locale = useLocale();
   // Absolute links, so the menu also works from other pages (the template gallery). Portfolio sits
   // between the gallery and the prices: it is a part of the product, not a section of the homepage.
+  // The features and the help have pages of their own; the homepage's questions stay in the footer.
   const items: MenuItem[] = [
-    { key: "features", href: `/${locale}#features`, label: t("nav.features"), hint: t("nav.hints.features") },
+    { key: "features", href: `/${locale}/funktionen`, label: t("nav.features"), hint: t("nav.hints.features") },
     { key: "templates", href: `/${locale}/templates`, label: t("nav.templates"), hint: t("nav.hints.templates") },
     { key: "portfolio", href: `/${locale}/portfolio`, label: t("nav.portfolio"), hint: t("nav.hints.portfolio") },
     { key: "pricing", href: `/${locale}#pricing`, label: t("nav.pricing"), hint: t("nav.hints.pricing") },
-    { key: "faq", href: `/${locale}#faq`, label: t("nav.faq"), hint: t("nav.hints.faq") },
+    { key: "help", href: `/${locale}/hilfe`, label: t("nav.help"), hint: t("nav.hints.help") },
   ];
   const cta = { href: `/${locale}/signup`, label: t("nav.start") };
   const login = { href: `/${locale}/login`, label: t("nav.login") };
@@ -47,7 +51,7 @@ export function MarketingHeader({
       >
         {t("skip")}
       </a>
-      <div className="mx-auto flex h-16 max-w-content items-center gap-2 px-5 md:px-10">
+      <div className={cn("mx-auto flex h-16 max-w-content items-center gap-2 px-5 md:px-10", wide && "xl:max-w-content-wide")}>
         {/* The logo is 24 px tall: its link reaches 12 px above and below it (invisible), 48 px in all, inside the 64 px bar. */}
         <Link href="/" className="relative rounded-xs before:absolute before:inset-x-0 before:-inset-y-3 focus-visible:focus-ring" aria-label="Linkyo">
           <Logo className="h-6" title="Linkyo" />

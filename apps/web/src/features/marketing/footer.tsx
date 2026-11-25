@@ -11,12 +11,50 @@ const linkClass =
   "-mx-3 inline-flex min-h-touch-target items-center self-start rounded-md px-3 text-body text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring active:bg-pressed md:min-h-0 md:py-1 md:text-small";
 const groupTitle = "mb-2 text-caption font-semibold text-fg";
 
+type FooterKey = "features" | "templates" | "portfolio" | "pricing" | "service" | "changelog" | "help" | "faq" | "editor" | "contact" | "about" | "security";
+
 /**
- * The footer: the logo and its line, two short groups side by side, then one quiet band with the
- * rights, the legal pages and the light/dark switch. Every link leads to the real product: the
- * design system and the design prototypes stay reachable by their address, not from here. The page
- * service joins once it can be booked (payments on). The legal pages become links with the company
- * details (or in a payments test build); until then they are named only (LegalLinks).
+ * The footer's three groups. Every link leads to the real product: the design system and the design
+ * prototypes stay reachable by their address, not from here. The page service joins once it can be
+ * booked (payments on).
+ */
+function groups(payments: boolean): { key: "product" | "support" | "company"; links: { key: FooterKey; href: string }[] }[] {
+  return [
+    {
+      key: "product",
+      links: [
+        { key: "features", href: "/funktionen" },
+        { key: "templates", href: "/templates" },
+        { key: "portfolio", href: "/portfolio" },
+        { key: "pricing", href: "/#pricing" },
+        ...(payments ? [{ key: "service" as const, href: "/service" }] : []),
+        { key: "changelog", href: "/changelog" },
+      ],
+    },
+    {
+      key: "support",
+      links: [
+        { key: "help", href: "/hilfe" },
+        { key: "faq", href: "/#faq" },
+        { key: "editor", href: "/#try" },
+        { key: "contact", href: "/kontakt" },
+      ],
+    },
+    {
+      key: "company",
+      links: [
+        { key: "about", href: "/ueber-uns" },
+        { key: "security", href: "/sicherheit" },
+      ],
+    },
+  ];
+}
+
+/**
+ * The footer: the logo and its line, three short groups (the product, help and contact, Linkyo
+ * itself), then one quiet band with the rights, the legal pages and the light/dark switch. The legal
+ * pages become links with the company details (or in a payments test build); until then they are
+ * named only (LegalLinks).
  */
 export function MarketingFooter() {
   const t = useTranslations("marketing.footer");
@@ -27,39 +65,17 @@ export function MarketingFooter() {
           <Logo className="h-8" title="Linkyo" />
           <p className="max-w-prose text-small text-pretty text-fg-secondary">{t("tagline")}</p>
         </div>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10">
-          <nav aria-label={t("product")} className="grid content-start gap-1">
-            <p className={groupTitle}>{t("product")}</p>
-            <Link href="/#features" className={linkClass}>
-              {t("features")}
-            </Link>
-            <Link href="/templates" className={linkClass}>
-              {t("templates")}
-            </Link>
-            <Link href="/portfolio" className={linkClass}>
-              {t("portfolio")}
-            </Link>
-            <Link href="/#pricing" className={linkClass}>
-              {t("pricing")}
-            </Link>
-            {paymentsEnabled ? (
-              <Link href="/service" className={linkClass}>
-                {t("service")}
-              </Link>
-            ) : null}
-          </nav>
-          <nav aria-label={t("resources")} className="grid content-start gap-1">
-            <p className={groupTitle}>{t("resources")}</p>
-            <Link href="/#try" className={linkClass}>
-              {t("editor")}
-            </Link>
-            <Link href="/#analytics" className={linkClass}>
-              {t("analytics")}
-            </Link>
-            <Link href="/#faq" className={linkClass}>
-              {t("faq")}
-            </Link>
-          </nav>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3">
+          {groups(paymentsEnabled).map((group) => (
+            <nav key={group.key} aria-label={t(group.key)} className="grid content-start gap-1">
+              <p className={groupTitle}>{t(group.key)}</p>
+              {group.links.map((link) => (
+                <Link key={link.key} href={link.href} className={linkClass}>
+                  {t(link.key)}
+                </Link>
+              ))}
+            </nav>
+          ))}
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-line pt-6 text-small text-fg-secondary md:text-caption">

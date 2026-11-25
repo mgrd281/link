@@ -531,6 +531,14 @@ test.describe("texts where contracts can be made (stub)", () => {
       const old = locale === "de" ? "Für alle, die verkaufen und wachsen wollen." : "لكل من يريد أن يبيع وينمو.";
       await expect(pricing.getByText(lead, { exact: true })).toBeVisible();
       await expect(pricing.getByText(old, { exact: true })).toHaveCount(0);
+      // With payments on, Pro and the page service are there now and lead to their checkout and page.
+      const plan = (id: string) => pricing.locator(`[data-plan="${id}"]`);
+      const now = locale === "de" ? "Jetzt" : "متاح الآن";
+      await expect(plan("pro").locator("[data-when-badge]")).toHaveText(now);
+      await expect(plan("service").locator("[data-when-badge]")).toHaveText(now);
+      await expect(plan("pro").getByRole("link", { name: locale === "de" ? "Pro bestellen" : "اطلب Pro" })).toHaveAttribute("href", `/${locale}/checkout/pro`);
+      await expect(plan("service").getByRole("link", { name: locale === "de" ? "Zum Seitenservice" : "إلى خدمة الصفحة" })).toHaveAttribute("href", `/${locale}/service`);
+      await expect(pricing).not.toContainText(locale === "de" ? "in Arbeit" : "قيد التطوير");
       if (SHOTS) {
         // The Pro card alone, once it has faded in.
         const card = pricing.locator("article").filter({ hasText: lead });

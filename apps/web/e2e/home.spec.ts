@@ -406,23 +406,27 @@ test.describe("marketing home", () => {
 
   test("pricing, questions, the last word and the footer", async ({ page }) => {
     const pricing = page.locator("#pricing");
-    await expect(pricing.getByRole("heading", { level: 3 })).toHaveText(["Free", /Pro/]);
+    await expect(pricing.locator("[data-plan]").getByRole("heading", { level: 3 })).toHaveText(["Free", "Pro", "Page service"]);
     // The Free plan lists what exists today: the app that is still being built is no included feature.
-    const free = pricing.locator("article").first();
+    const free = pricing.locator('[data-plan="free"]');
     await expect(free.getByRole("listitem")).toHaveCount(5);
     await expect(free).not.toContainText(/iOS|coming|soon|in the works/i);
     await expect(pricing.getByRole("link", { name: "Sign up for free" })).toHaveAttribute("href", "/en/signup");
-    // Pro is not for sale yet: no button.
-    await expect(pricing.locator("article").last().getByRole("link")).toHaveCount(0);
+    // Pro and the page service are not for sale yet: no button.
+    await expect(pricing.locator('[data-plan="pro"]').getByRole("link")).toHaveCount(0);
+    await expect(pricing.locator('[data-plan="service"]').getByRole("link")).toHaveCount(0);
     await expect(page.locator("#start").getByRole("textbox", { name: "Choose your page address" })).toBeVisible();
     // The site's footer (the page in the playground's phone has its own).
     const footer = page.getByRole("contentinfo");
-    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link")).toHaveText(["Features", "Templates", "Portfolio", "Pricing"]);
+    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link")).toHaveText(["Features", "Templates", "Portfolio", "Pricing", "Changelog"]);
     await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link", { name: "Portfolio" })).toHaveAttribute("href", "/en/portfolio");
-    // Resources lead to the real product only: the editor to try, the figures, the questions.
-    const resources = footer.getByRole("navigation", { name: "Resources" }).getByRole("link");
-    await expect(resources).toHaveText(["Try the editor", "Analytics", "FAQ"]);
-    await expect(resources.first()).toHaveAttribute("href", "/en#try");
+    await expect(footer.getByRole("navigation", { name: "Product" }).getByRole("link", { name: "Features" })).toHaveAttribute("href", "/en/funktionen");
+    // Help and contact lead to the real product only: the help pages, the questions, the editor to try, the contact.
+    const resources = footer.getByRole("navigation", { name: "Help & contact" }).getByRole("link");
+    await expect(resources).toHaveText(["Help", "FAQ", "Try the editor", "Contact"]);
+    await expect(resources.first()).toHaveAttribute("href", "/en/hilfe");
+    await expect(resources.nth(2)).toHaveAttribute("href", "/en#try");
+    await expect(footer.getByRole("navigation", { name: "About Linkyo" }).getByRole("link")).toHaveText(["About", "Security & privacy"]);
     // The design system and the prototypes stay reachable by address, but nothing here leads there.
     await expect(footer.locator('a[href*="/directions"], a[href$="/design"]')).toHaveCount(0);
     await expect(footer).not.toContainText(/prototype/i);
@@ -437,9 +441,9 @@ test.describe("marketing home", () => {
   });
 
   test("FAQ answers open in place", async ({ page }) => {
-    const answer = page.getByText("Creator pages set no cookies and load no trackers.");
+    const answer = page.getByText("Creator pages set no cookies and load no trackers, so they show no cookie banner.");
     await expect(answer).toBeHidden();
-    await page.getByText("Do I need a cookie banner?").click();
+    await page.getByText("Does my page show a cookie banner?").click();
     await expect(answer).toBeVisible();
   });
 
@@ -489,7 +493,8 @@ test("phone menu: a full screen with the places, the language, sign-up, and logg
   expect(box && [Math.round(box.width), Math.round(box.height)]).toEqual([390, 844]);
   // Every place says what is there; Portfolio sits between the templates and the prices.
   await expect(menu.getByRole("link", { name: /Templates/ })).toContainText("Browse them and start with one");
-  await expect(menu.getByRole("navigation", { name: "Menu" }).getByRole("link")).toHaveText([/^Features/, /^Templates/, /^Portfolio/, /^Pricing/, /^FAQ/]);
+  await expect(menu.getByRole("navigation", { name: "Menu" }).getByRole("link")).toHaveText([/^Features/, /^Templates/, /^Portfolio/, /^Pricing/, /^Help/]);
+  await expect(menu.getByRole("link", { name: /^Help/ })).toHaveAttribute("href", "/en/hilfe");
   await expect(menu.getByRole("link", { name: /Portfolio/ })).toHaveAttribute("href", "/en/portfolio");
   // The language, written out; the current one is marked.
   await expect(menu.getByRole("link", { name: "English" })).toHaveAttribute("aria-current", "true");
@@ -510,9 +515,9 @@ test("phone menu: a full screen with the places, the language, sign-up, and logg
 
 test("the header names Portfolio between the templates and the prices, in every language", async ({ page }) => {
   const names = {
-    de: ["Funktionen", "Vorlagen", "Portfolio", "Preise", "FAQ"],
-    en: ["Features", "Templates", "Portfolio", "Pricing", "FAQ"],
-    ar: ["المزايا", "القوالب", "معرض الأعمال", "الأسعار", "الأسئلة"],
+    de: ["Funktionen", "Vorlagen", "Portfolio", "Preise", "Hilfe"],
+    en: ["Features", "Templates", "Portfolio", "Pricing", "Help"],
+    ar: ["المزايا", "القوالب", "معرض الأعمال", "الأسعار", "المساعدة"],
   } as const;
   for (const locale of ["de", "en", "ar"] as const) {
     await page.goto(`/${locale}/templates`);
@@ -627,6 +632,59 @@ test("on phones too the promise sits on two lines", async ({ browser }) => {
     .evaluate((element) => Math.round(element.getBoundingClientRect().height / parseFloat(getComputedStyle(element).lineHeight)));
   expect(lines).toBe(2);
   await context.close();
+});
+
+/**
+ * Laptop type (W-11) inside ADR 0038: the promise stays on two lines at every laptop width (40 px beside
+ * the pages from 1024 px, 56 px with the wide column from 1280 px, 72 px from 1536 px), the pages
+ * beside it (cards, their address chips, the faces) never reach into the column of the words, and the
+ * page does not scroll sideways. The deck's decorative rings behind the phones are not counted.
+ * Common laptop screens, each at its height.
+ */
+test.describe("laptop type", () => {
+  const SCREENS = [
+    { width: 1024, height: 768 },
+    { width: 1280, height: 800 },
+    { width: 1366, height: 768 },
+    { width: 1440, height: 900 },
+    { width: 1536, height: 864 },
+    { width: 1920, height: 1080 },
+  ] as const;
+
+  for (const locale of ["de", "ar"] as const) {
+    test(`/${locale}: the promise is two lines from 1024 to 1920 px, at least 56 px at 1440, and the pages beside it stay out of its column`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      for (const screen of SCREENS) {
+        await page.setViewportSize(screen);
+        await page.goto(`/${locale}`);
+        await page.evaluate(() => document.fonts.ready);
+        const hero = await page.evaluate(() => {
+          const title = document.getElementById("hero-title");
+          const deck = document.querySelector("[data-deck]");
+          if (!title?.parentElement || !deck) return null;
+          const column = title.parentElement.getBoundingClientRect();
+          const visible = [...deck.querySelectorAll("[data-slot]:not([data-slot='hidden']), .mk-deck-chip, [role='tablist']")].filter(
+            (part) => getComputedStyle(part).visibility !== "hidden" && parseFloat(getComputedStyle(part).opacity) > 0,
+          );
+          const boxes = visible.map((part) => part.getBoundingClientRect()).filter((box) => box.width > 0);
+          const rtl = document.documentElement.dir === "rtl";
+          return {
+            size: parseFloat(getComputedStyle(title).fontSize),
+            lines: Math.round(title.getBoundingClientRect().height / parseFloat(getComputedStyle(title).lineHeight)),
+            // The room between the words' column and the nearest visible part of the deck.
+            gap: rtl ? column.left - Math.max(...boxes.map((box) => box.right)) : Math.min(...boxes.map((box) => box.left)) - column.right,
+            // The deck's queued cards wait beyond its column: they must not make the page scroll sideways.
+            sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          };
+        });
+        expect(hero, `${String(screen.width)} px: the hero is there`).not.toBeNull();
+        expect(hero?.lines, `${String(screen.width)} px: lines of the promise`).toBe(2);
+        expect(hero?.gap ?? -1, `${String(screen.width)} px: room between the words and the pages`).toBeGreaterThanOrEqual(0);
+        expect(hero?.sideways, `${String(screen.width)} px: no sideways scroll`).toBe(0);
+        if (screen.width === 1440) expect(hero?.size, "1440 px: the promise's size").toBeGreaterThanOrEqual(56);
+      }
+    });
+  }
 });
 
 test("the hero pages follow the reading direction in Arabic", async ({ page }) => {

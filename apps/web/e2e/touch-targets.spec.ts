@@ -9,7 +9,9 @@ import { legalReady } from "../src/features/legal/company";
  * is its own box plus an invisible extension (`::before`, 2 px on every side for a 40 px control).
  *
  * The measure is the element's box united with its `::before`/`::after` box when that is positioned
- * over it and takes pointer events. An extension only counts when it is real: the middle of each
+ * and takes pointer events, placed in its containing block (the control, or the nearest positioned
+ * ancestor: a link that covers its whole row with `after:inset-0` counts that row, as the console's
+ * guard measures it). An extension only counts when it is real: the middle of each
  * extended side must hit the control or another control (a scroller that clips the extension, or
  * something laid over it, shows there). Controls a finger cannot press are skipped: the skip link
  * (visible only on focus) and the phone mock-ups on the pages (`inert`, `aria-hidden`).
@@ -43,20 +45,29 @@ const collectTargets = (scope?: string): TargetRow[] => {
     // Not pressable: the skip link until it is focused, anything inert or hidden from assistive technology (the phone mock-ups).
     return element.closest('[inert], [aria-hidden="true"], [hidden]') === null && !(element.tagName === "A" && element.classList.contains("sr-only"));
   };
+  // A positioned pseudo-element is placed in its containing block: the control itself when it is
+  // positioned, else its nearest positioned ancestor (a link that covers its row with `after:inset-0`).
+  const containingBlock = (element: Element): Element => {
+    let block: Element | null = element;
+    while (block && block !== document.documentElement && getComputedStyle(block).position === "static") block = block.parentElement;
+    return block ?? document.documentElement;
+  };
   const hitBox = (element: Element) => {
     const box = element.getBoundingClientRect();
-    const style = getComputedStyle(element);
     let left = box.left;
     let top = box.top;
     let right = box.right;
     let bottom = box.bottom;
     for (const pseudo of ["::before", "::after"] as const) {
       const extra = getComputedStyle(element, pseudo);
-      if (extra.content === "none" || extra.content === "normal" || extra.position !== "absolute" || style.position === "static" || extra.pointerEvents === "none") continue;
+      if (extra.content === "none" || extra.content === "normal" || extra.position !== "absolute" || extra.pointerEvents === "none") continue;
       const [x, y, w, h] = [extra.left, extra.top, extra.width, extra.height].map(parseFloat);
       if ([x, y, w, h].some((value) => value === undefined || Number.isNaN(value))) continue;
-      const originX = box.left + parseFloat(style.borderLeftWidth);
-      const originY = box.top + parseFloat(style.borderTopWidth);
+      const block = containingBlock(element);
+      const frame = block.getBoundingClientRect();
+      const blockStyle = getComputedStyle(block);
+      const originX = frame.left + parseFloat(blockStyle.borderLeftWidth);
+      const originY = frame.top + parseFloat(blockStyle.borderTopWidth);
       left = Math.min(left, originX + (x ?? 0));
       top = Math.min(top, originY + (y ?? 0));
       right = Math.max(right, originX + (x ?? 0) + (w ?? 0));
@@ -129,6 +140,10 @@ test.describe("on a phone", () => {
     { name: "the home page", path: "/de" },
     { name: "the template gallery", path: "/de/templates" },
     { name: "a creator page", path: "/de/p/messi" },
+    // The website's own pages (Stage 4): the help search and its articles, the features, the contact.
+    { name: "the help page", path: "/de/hilfe" },
+    { name: "the features page", path: "/de/funktionen" },
+    { name: "the contact page", path: "/de/kontakt" },
   ] as const;
 
   for (const entry of PAGES) {
@@ -158,6 +173,22 @@ test.describe("on a phone", () => {
     for (const name of ["Sprache wählen", "Mehr zur Vorschau", "Kostenlos registrieren", "Leiste schließen", "Nur notwendige", "Einstellungen"]) {
       expect(names, `${name} was measured`).toContain(name);
     }
+  });
+
+  test("the measure counts a link's row-covering ::after (the row is positioned, the link is not), as the console's guard does", async ({ page }) => {
+    // A list row as the dashboard and the console draw them: the link's own box is its words, its
+    // `::after` covers the whole row. Plain CSS, so the measure is tested on its own.
+    await page.setContent(`<!doctype html><html><head><style>
+      body { margin: 0; font: 14px/1.2 sans-serif; }
+      ul { margin: 0; padding: 0; list-style: none; width: 320px; }
+      li { position: relative; display: flex; align-items: center; height: 56px; padding: 0 16px; }
+      a { display: inline-flex; color: inherit; }
+      a::after { content: ""; position: absolute; inset: 0; }
+    </style></head><body><ul><li><a href="#row">Ein Eintrag</a></li></ul></body></html>`);
+    const [row] = await targets(page);
+    expect(row?.own.h, "the link's own box is only its words").toBeLessThan(44);
+    expect(row?.hit, "the hit area is the row").toEqual({ w: 320, h: 56, extended: true });
+    expect(row?.reachable, "a finger on the row reaches the link").toBe(true);
   });
 });
 

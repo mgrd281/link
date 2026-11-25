@@ -822,7 +822,6 @@
       "features": "Features",
       "templates": "Templates",
       "pricing": "Pricing",
-      "faq": "FAQ",
       "login": "Log in",
       "start": "Sign up for free",
       "menu": "Menu",
@@ -834,13 +833,14 @@
         "features": "Everything your page can do",
         "templates": "Browse them and start with one",
         "pricing": "Free, Pro comes later",
-        "faq": "Short answers to your questions",
-        "portfolio": "Show your work, each piece on its own page"
+        "portfolio": "Show your work, each piece on its own page",
+        "help": "Short answers to the main questions"
       },
       "portfolio": "Portfolio",
       "dashboard": "Go to dashboard",
       "editPage": "Edit my page",
-      "signedIn": "Signed in as <bdi>{name}</bdi>"
+      "signedIn": "Signed in as <bdi>{name}</bdi>",
+      "help": "Help"
     },
     "hero": {
       "kicker": "For creators, artists and the teams behind them",
@@ -977,47 +977,86 @@
     },
     "pricing": {
       "title": "Start free. Stay free.",
-      "lead": "Everything here stays free for good. No card, no notice period.",
+      "lead": "Free costs nothing and needs no credit card. Pro and the page service come with the launch.",
       "free": {
         "name": "Free",
         "price": "0 €",
         "per": "forever",
-        "features": [
-          "All templates",
-          "Unlimited links and sections",
-          "Music, shows, videos, shop links",
-          "Cookie-free analytics",
-          "Imprint and privacy page helper"
-        ],
         "cta": "Sign up for free",
-        "lead": "Everything your page needs."
+        "lead": "Everything your page needs.",
+        "lines": {
+          "templates": "All templates",
+          "links": "Links and sections at no extra cost",
+          "media": "Music, shows, videos, shop links",
+          "statistics": "Cookie-free analytics",
+          "imprint": "An imprint for your page"
+        }
       },
       "pro": {
         "name": "Pro",
-        "badge": "Coming soon",
-        "features": [
-          "Your own domain",
-          "Sell products and downloads",
-          "Email list and automations",
-          "Advanced analytics",
-          "Remove the Linkyo credit"
-        ],
-        "cta": "Notify me later",
-        "lead": "For everyone who wants to sell and grow."
+        "lines": {
+          "drafts": "AI drafts for your page: up to {count} a month",
+          "free": "Everything in Free",
+          "domain": "Your own domain",
+          "selling": "Sell products and downloads",
+          "list": "Email list"
+        }
       },
-      "leadPaid": "Free stays free for good. No card, no notice period.",
+      "leadPaid": "Free costs nothing. No card, no notice period.",
       "proLive": {
         "per": "a month",
         "vat": "incl. VAT",
         "lead": "AI drafts for your page, month after month.",
-        "features": [
-          "AI drafts for your page: up to 5 a month",
-          "Everything in Free"
-        ],
-        "planned": "Planned: own domain, selling, email list",
         "terms": "Cancel any time; Pro ends at the end of the paid month.",
-        "cta": "Order Pro",
-        "service": "Rather have it designed? Page service from {price}"
+        "cta": "Order Pro"
+      },
+      "compare": "The plans side by side",
+      "when": {
+        "now": "Now",
+        "launch": "Comes with the launch",
+        "planned": "Planned"
+      },
+      "service": {
+        "name": "Page service",
+        "lead": "We design your page for you.",
+        "from": "from {start}",
+        "once": "one-off",
+        "lines": {
+          "start": "Start, {start}: our AI drafts it, a person from our team checks and refines it. {startRounds, plural, one {# round of changes} other {# rounds of changes}}.",
+          "premium": "Premium, {premium}: a person from our team designs your page, with a marketing kit. {premiumRounds, plural, one {# round of changes} other {# rounds of changes}}."
+        },
+        "cta": "See the page service"
+      },
+      "billing": {
+        "title": "Questions about prices and cancelling",
+        "items": {
+          "card": {
+            "q": "Do I need a credit card?",
+            "a": "No. To sign up you only need your email address, no payment details."
+          },
+          "when": {
+            "q": "When can I get Pro?",
+            "a": "With the launch. Until then nothing can be bought on Linkyo, and everything there is is free. Pro will then cost {price} a month{vat, select, standard19 {, VAT included} other {}}."
+          },
+          "pay": {
+            "q": "How do I pay for Pro?",
+            "a": "Monthly through Stripe, on our order page. The first payment is on the day you order, then on the same day each month, or on the last day of shorter months."
+          },
+          "cancel": {
+            "q": "How do I cancel Pro?",
+            "aOff": "Pro will run one month at a time and can then be cancelled any time to the end of the paid month, even without signing in.",
+            "aOn": "Any time, to the end of the paid month, even without signing in: through “Cancel contracts here” at the bottom of every page of the website, or in Settings."
+          },
+          "ends": {
+            "q": "What happens to my page when Pro ends?",
+            "a": "It stays as it is, with everything in Free. Only the Pro features go away."
+          },
+          "service": {
+            "q": "What does the page service cost?",
+            "aOff": "Start will cost {start} and Premium {premium}, each one-off{vat, select, standard19 { and VAT included} other {}}, no subscription. You can book it with the launch.",
+            "aOn": "Start costs {start} and Premium {premium}, each one-off{vat, select, standard19 { and VAT included} other {}}, no subscription. Everything else is on the page service's page."
+          }
+        }
       }
     },
     "faq": {
@@ -1025,19 +1064,19 @@
       "items": [
         {
           "q": "Is Linkyo really free?",
-          "a": "Yes. Templates, unlimited links, sections and analytics stay free. Pro will add selling and power features, and nothing that is free today becomes paid."
+          "a": "Yes. All templates, links, sections and cookie-free analytics cost nothing. Pro comes with the launch, with AI drafts for your page."
         },
         {
-          "q": "Do I need a cookie banner?",
-          "a": "No. Creator pages set no cookies and load no trackers. Videos from YouTube or TikTok load only after a visitor taps, so there is nothing to consent to."
+          "q": "Does my page show a cookie banner?",
+          "a": "No. Creator pages set no cookies and load no trackers, so they show no cookie banner. Pages with videos show a slim bar about external content; a YouTube video loads only once someone taps it."
         },
         {
           "q": "Where is my data stored?",
-          "a": "In Frankfurt, Germany. We pick EU providers first and list every processor in our privacy policy."
+          "a": "Accounts, pages and pictures are stored at Supabase in Frankfurt, Germany. The privacy policy describes who processes data for us."
         },
         {
           "q": "Can I use my own photos, colors and fonts?",
-          "a": "Yes. Start from a template, then change colors, fonts and buttons. Linkyo checks every color pair, so text always stays readable."
+          "a": "Yes, your own photos and colors; fonts you pick from our font pairings. Start from a template, then change colors, fonts and buttons. Linkyo adjusts the shades so that text stays readable."
         },
         {
           "q": "Does it work in Arabic and other right-to-left languages?",
@@ -1048,7 +1087,8 @@
           "a": "A native iOS app is in the works: edit your page, add links from the share sheet and see your stats in a widget."
         }
       ],
-      "lead": "Short, honest answers."
+      "lead": "Short, honest answers.",
+      "more": "More answers in the help center"
     },
     "final": {
       "title": "Get started. It's free.",
@@ -1058,10 +1098,8 @@
     "footer": {
       "tagline": "One link. Everything you create.",
       "product": "Product",
-      "resources": "Resources",
       "legal": "Legal",
       "templates": "Templates",
-      "analytics": "Analytics",
       "pricing": "Pricing",
       "faq": "FAQ",
       "editor": "Try the editor",
@@ -1072,7 +1110,14 @@
       "rights": "© 2026 Linkyo",
       "features": "Features",
       "portfolio": "Portfolio",
-      "service": "Page service"
+      "service": "Page service",
+      "help": "Help",
+      "contact": "Contact",
+      "about": "About",
+      "changelog": "Changelog",
+      "security": "Security & privacy",
+      "support": "Help & contact",
+      "company": "About Linkyo"
     },
     "skip": "Skip to content",
     "trust": {
@@ -1088,7 +1133,7 @@
         },
         {
           "title": "Free for good",
-          "body": "Templates, unlimited links and analytics stay free. No credit card, no notice period."
+          "body": "Templates, links and cookie-free analytics cost nothing. No credit card, no notice period."
         }
       ]
     },
@@ -1219,10 +1264,9 @@
     "real": {
       "metaDescription": "The creator page that looks premium in five minutes: designs with character, portfolios with project pages, music, shows and a shop. Free to start, data stored in Frankfurt.",
       "analyticsBadge": "In the works",
-      "freeAnalytics": "Cookie-free analytics (in the works)",
-      "faqFree": "Yes. Templates, unlimited links and sections stay free; cookie-free analytics is in the works. Nothing that is free today becomes paid.",
-      "faqFreePaid": "Yes. Templates, unlimited links and sections stay free. Pro includes AI drafts; your own domain, selling and an email list are planned. Nothing that is free today becomes paid.",
-      "trustFree": "Templates and unlimited links stay free. No credit card, no notice period."
+      "faqFree": "Yes. All templates, links and sections cost nothing. Cookie-free analytics is planned.",
+      "faqFreePaid": "Yes. All templates, links and sections cost nothing. Pro includes AI drafts; your own domain, selling and an email list are planned.",
+      "trustFree": "Templates and links cost nothing. No credit card, no notice period."
     },
     "portfolio": {
       "title": "Portfolios with project pages",
@@ -4979,6 +5023,490 @@
       "up": "Up",
       "down": "Down",
       "flat": "Unchanged"
+    }
+  },
+  "sitePages": {
+    "signup": {
+      "description": "Create your free Linkyo page: just your email address, no password. Then pick your look and add your links."
+    },
+    "common": {
+      "related": "Read more",
+      "imprint": "Go to the imprint",
+      "privacy": "Go to the privacy policy"
+    },
+    "help": {
+      "meta": {
+        "title": "Help · Linkyo",
+        "description": "Answers about Linkyo: signing up, blocks, templates, portfolio projects, design, cookie-free stats, your page address, sharing, privacy and deleting your account."
+      },
+      "eyebrow": "Help",
+      "title": "How can we help?",
+      "lead": "Short answers to the main questions about Linkyo. Search for a word or browse the topics.",
+      "groups": {
+        "start": "Getting started",
+        "page": "Your page",
+        "share": "Sharing and stats",
+        "account": "Account and data"
+      },
+      "more": {
+        "title": "Didn’t find an answer?",
+        "lead": "Send us an email, or read the frequently asked questions on the home page.",
+        "contact": "Contact",
+        "faq": "Frequently asked questions"
+      }
+    },
+    "contact": {
+      "meta": {
+        "title": "Contact · Linkyo",
+        "description": "How to reach Linkyo: by email. Who runs Linkyo, with the address and every detail about the provider, is in the imprint."
+      },
+      "eyebrow": "Contact",
+      "title": "Write to us.",
+      "lead": "A question about your account, a bug or an idea: send us an email.",
+      "email": {
+        "title": "Email",
+        "lead": "For anything about Linkyo.",
+        "missing": "The contact address is being set up."
+      },
+      "help": {
+        "title": "Look it up first?",
+        "body": "Many answers are already in the help center.",
+        "action": "Go to help"
+      },
+      "report": {
+        "title": "Report content",
+        "body": "Do you think something on a creator page is illegal? How to report it is in the imprint.",
+        "action": "How to report content"
+      },
+      "imprint": {
+        "title": "Provider",
+        "body": "Who runs Linkyo, with name, address and every detail about the provider, is in the imprint."
+      }
+    },
+    "features": {
+      "meta": {
+        "title": "Features · Linkyo",
+        "description": "What you get with Linkyo: one page for all your links, portfolios with project pages, {designs} designs, cookie-free analytics and privacy by default.",
+        "descriptionOff": "What you get with Linkyo: one page for all your links, portfolios with project pages, {designs} designs and privacy by default."
+      },
+      "eyebrow": "Features",
+      "title": "Everything your page can do.",
+      "lead": "One page for your links, your work and your dates. This is what there is today; whatever is not running yet is marked.",
+      "nav": "Features by group",
+      "planned": "Planned",
+      "groups": {
+        "page": {
+          "title": "Your page",
+          "lead": "Paste a link and Linkyo turns it into the right block: music, videos, dates, products and more.",
+          "points": [
+            "Links from Spotify, YouTube, TikTok, Instagram and many more services recognized, several at once too",
+            "Blocks from link, video and music to dates, product and contact",
+            "Sharing with a link preview, a QR code and a picture for stories and posts"
+          ],
+          "action": "See example pages",
+          "picture": "Juno Kade’s example page on a phone"
+        },
+        "portfolio": {
+          "title": "Portfolio",
+          "lead": "Every project has an address of its own. When it shows more than its card, such as pictures, figures or the story behind it, the card leads to its page.",
+          "points": [
+            "Up to {pictures} pictures per project; a tap opens them full size",
+            "An address of its own for each project; change it and the old one still leads there",
+            "Confidential clients without their name"
+          ],
+          "action": "See portfolios",
+          "picture": "A project page of Ronja Feldkamp’s example page on a phone"
+        },
+        "design": {
+          "title": "Design",
+          "lead": "{designs} designs, each with its own look. You adjust color, type and buttons.",
+          "points": [
+            "Every color readable, checked against WCAG AA",
+            "Light, dark or all in your color",
+            "German, English and Arabic, right to left with a fitting typeface"
+          ],
+          "action": "See all designs"
+        },
+        "statistics": {
+          "title": "Cookie-free analytics",
+          "lead": "See how often your page is opened, where visitors come from and which blocks they tap.",
+          "points": [
+            "Views, visitors, clicks and click rate for {week}, {month} or {quarter} days",
+            "Sources, countries and devices at a glance, the daily numbers as a CSV",
+            "No cookies; the counting stores nothing on your visitors’ devices"
+          ],
+          "action": "How Linkyo counts"
+        },
+        "privacy": {
+          "title": "Privacy by default",
+          "lead": "Your page sets no cookies and loads nothing from other providers on its own; a YouTube video plays only after a tap.",
+          "facts": {
+            "cookies": {
+              "label": "Cookies",
+              "value": "none"
+            },
+            "trackers": {
+              "label": "Trackers and ads",
+              "value": "none"
+            },
+            "embeds": {
+              "label": "YouTube videos",
+              "value": "only after a tap"
+            },
+            "hosting": {
+              "label": "Data",
+              "value": "in Frankfurt, Germany"
+            }
+          },
+          "caption": "A creator page as it opens",
+          "action": "Security & privacy"
+        }
+      }
+    },
+    "about": {
+      "meta": {
+        "title": "About · Linkyo",
+        "description": "Why Linkyo exists and what it stands for: calm, flat design, privacy by default, three languages and data in Frankfurt, Germany."
+      },
+      "eyebrow": "About",
+      "title": "One page for everything you make.",
+      "lead": "A link in a bio has a lot to carry: music, videos, dates, a shop, your work. Linkyo turns it into a page that looks finished without you having to design it.",
+      "why": {
+        "title": "Why Linkyo exists",
+        "body": [
+          "People who make things are in many places: on Instagram, TikTok and YouTube, in a shop, on a ticket page. A bio has room for one link. Linkyo is the page behind that link.",
+          "It should look like you quickly and stay easy to read and respectful to your visitors: no cookies, no trackers, in your language."
+        ]
+      },
+      "values": {
+        "title": "What Linkyo stands for",
+        "items": {
+          "flat": {
+            "title": "Calm and flat",
+            "body": "No shadows, no effects for their own sake: lines, surfaces and color. Every color you pick stays readable."
+          },
+          "privacy": {
+            "title": "Privacy by default",
+            "body": "Creator pages set no cookies and load nothing from other providers on their own; a YouTube video plays only after a tap.",
+            "counting": "The stats count without cookies."
+          },
+          "languages": {
+            "title": "Three languages",
+            "body": "German, English and Arabic from the start. Arabic pages read right to left, with a typeface that fits their template."
+          },
+          "hosting": {
+            "title": "Hosted in Frankfurt",
+            "body": "The server functions run at Vercel in Frankfurt, Germany, and pages are delivered through Vercel’s global network. Accounts, pages and pictures are stored at Supabase in Frankfurt."
+          },
+          "honest": {
+            "title": "Honest",
+            "body": "What is planned, we call planned. Example pages are marked as examples, and their numbers as sample data."
+          }
+        }
+      },
+      "who": {
+        "title": "Who is behind it",
+        "body": "Who runs Linkyo is in the imprint, with name and address. You can reach us by email.",
+        "contact": "Contact"
+      }
+    },
+    "changelog": {
+      "meta": {
+        "title": "Changelog · Linkyo",
+        "description": "What has changed on Linkyo, with dates: cookie-free analytics, new templates, portfolios with project pages and more. Newest changes first.",
+        "descriptionOff": "What has changed on Linkyo, with dates: new templates, portfolios with project pages, a new dashboard and more. Newest changes first."
+      },
+      "eyebrow": "Changelog",
+      "title": "What’s new.",
+      "lead": "What is new on the website, on the pages and in the dashboard, with dates. Newest changes first.",
+      "more": "Read more",
+      "entries": {
+        "statistics": {
+          "title": "Cookie-free analytics",
+          "items": [
+            "Creator pages count views, visitors and taps on blocks without cookies; the counting stores nothing on the device.",
+            "In the dashboard under “Stats”: numbers for 7, 30 or 90 days, sources, countries and devices at a glance, the daily numbers as a CSV.",
+            "Scans of your QR code count as a source of their own, “QR code”.",
+            "The privacy policy describes how the counting works."
+          ]
+        },
+        "polish": {
+          "title": "Polish",
+          "items": [
+            "On phones, the controls of the website, the pages and the main dashboard screens have at least <term>44 × 44</term> pixels to tap.",
+            "On laptops the dashboard uses the width and starts at the same edge on every screen.",
+            "On phones the dashboard’s preview follows the part you are changing.",
+            "Legal pages no longer move sideways on phones."
+          ]
+        },
+        "portfolioTemplates": {
+          "title": "Three new templates for portfolios",
+          "items": [
+            "Leuchttisch for photography: pictures uncropped in rows, across the full width on large screens.",
+            "Grundriss for design and architecture: one sheet per project, the facts beside the work.",
+            "Logbuch for development and crafts: your work as a log, by year.",
+            "Each new template comes with an example page in the gallery.",
+            "Your page’s QR code also comes as an SVG in your page’s color, and Settings shows your plan."
+          ]
+        },
+        "arabicAndLaptops": {
+          "title": "Arabic typefaces and portfolios from the first step",
+          "items": [
+            "Arabic pages keep the character of their template: every template has a fitting Arabic typeface.",
+            "If you choose photography, design or development, the first steps ask for three pieces of work and one way to reach you, and you get a filled portfolio.",
+            "In the dashboard on laptops: real preview pictures of the templates and the “Work” view with all your projects.",
+            "Creator pages open more calmly: a one-line note about external content instead of a large panel.",
+            "Icons point the right way in Arabic."
+          ]
+        },
+        "portfolioSection": {
+          "title": "Portfolio on the website, pictures full size",
+          "items": [
+            "The “Portfolio” page shows templates and examples for photography, design, architecture and development; the gallery has a “Portfolio” category.",
+            "A tap on a project picture opens it full size.",
+            "Rows of projects have previous and next buttons on laptops.",
+            "An address that does not exist shows a Linkyo page in your language, with a way back.",
+            "A pasted ticket link no longer invents a date: you enter the date and the city yourself."
+          ]
+        },
+        "projects": {
+          "title": "Projects with a page of their own",
+          "items": [
+            "The “Project” block: every piece of work can get a page of its own at your address, with pictures, figures and the story behind it.",
+            "Werkbogen and Tiefdruck, the first templates for portfolios, with example pages in the gallery.",
+            "New sections for portfolios: About me, Skills & tools, Experience, Testimonials and Contact & enquiry."
+          ]
+        },
+        "realAccounts": {
+          "title": "Real accounts",
+          "items": [
+            "Pages of real accounts are public at their own address.",
+            "Photos you upload are stored in Frankfurt and served by us."
+          ]
+        },
+        "dashboard": {
+          "title": "A new dashboard",
+          "items": [
+            "The dashboard is now black and grey; your page in the preview keeps its own colors.",
+            "On laptops: a slim bar of icons, and beside it the parts of the area you are in.",
+            "“Invite”: with your personal link you invite others to Linkyo."
+          ]
+        }
+      }
+    },
+    "security": {
+      "meta": {
+        "title": "Security & privacy · Linkyo",
+        "description": "What Linkyo does with data: creator pages without cookies or trackers, data in Frankfurt, cookie-free stats, no photos for the AI and payments only through Stripe.",
+        "descriptionOff": "What Linkyo does with data: creator pages without cookies or trackers, data in Frankfurt, no photos for the AI and payments only through Stripe."
+      },
+      "eyebrow": "Security & privacy",
+      "title": "What Linkyo does with data.",
+      "lead": "This page says what the code does today. The privacy policy is the legally binding text.",
+      "review": "Sentences marked <marker>{text}</marker> have not been checked by a lawyer yet.",
+      "nav": "On this page",
+      "sections": {
+        "pages": {
+          "title": "Creator pages",
+          "items": {
+            "cookies": "Creator pages set no cookies. The only thing stored on a visitor’s device is whether they allowed external content; the counting stores nothing there.",
+            "thirdParty": "On their own they load nothing from other providers: no trackers, no ads, no outside fonts. Pictures, including Spotify and YouTube covers, are served by us.",
+            "embeds": "A YouTube video plays on the page only after a tap, in its privacy-enhanced mode (youtube-nocookie.com). The page does not load videos from TikTok, Instagram or Vimeo, and music blocks are links to the services. “Allow external content” only hides the note on the player; nothing loads before a tap all the same."
+          }
+        },
+        "hosting": {
+          "title": "Where the data is",
+          "items": {
+            "vercel": "The server functions of the website and the creator pages run at Vercel in Frankfurt (fra1); the pages are delivered through Vercel’s global network.",
+            "supabase": "Accounts, pages, uploaded pictures and the stats are stored at Supabase in Frankfurt.",
+            "noSale": "We do not sell data."
+          }
+        },
+        "statistics": {
+          "title": "Cookie-free analytics",
+          "items": {
+            "what": "We count views, different visitors per day and taps on blocks, plus a rough source (for example Instagram or search engines), the country and the kind of device.",
+            "script": "On a view the counting script sends the page, the domain name of the website a visitor came from, and whether they came by QR code or from the page itself; on a tap it sends which block was tapped. If the browser sends “Do Not Track” or “Global Privacy Control”, it sends nothing.",
+            "how": "So that a person counts only once a day, our server makes a check value from the network address and the browser string with a random key that is new every day (<term>HMAC-SHA-256</term>). We do not store the address or the browser string. Keys and check values are deleted within the first hour after the day ends (Berlin time); only daily totals remain.",
+            "access": "A page’s creator sees all its numbers. Our team sees, per page, only the total views and taps of the last 30 days, never sources, countries or devices.",
+            "noBanner": "Creator pages show no consent banner for this counting."
+          },
+          "off": "On this website the counting is switched off right now."
+        },
+        "ai": {
+          "title": "AI and photos",
+          "items": {
+            "off": "The AI assistant, which drafts a page from your links, is switched off right now.",
+            "on": "The AI assistant drafts a page from your links.",
+            "photos": "The AI provider gets no photos. Email addresses and phone numbers are removed from every text before it is sent.",
+            "publish": "The AI publishes nothing: you decide what goes on your page."
+          }
+        },
+        "payments": {
+          "title": "Payments",
+          "items": {
+            "off": "Payments are not switched on yet: nothing can be bought on Linkyo right now.",
+            "stripe": "Payments go through Stripe. Stripe’s script loads only on our order pages, on no other page.",
+            "data": "You enter card and account details in Stripe’s form; they go to Stripe, not to us."
+          }
+        },
+        "account": {
+          "title": "Your account",
+          "items": {
+            "code": "You sign in with a 6-digit code that we send to your email address.",
+            "signIns": "Under “Settings” › “Account” you see your latest sign-ins, with IP address, approximate place and device. We keep them for 30 days.",
+            "delete": "If you delete your account, we delete the account, the page, uploaded pictures and the stats."
+          }
+        },
+        "report": {
+          "title": "Found a vulnerability?",
+          "body": "If you notice a security problem on Linkyo, please write to us before you make it public.",
+          "action": "Contact"
+        }
+      }
+    },
+    "og": {
+      "site": "linkyo"
+    }
+  },
+  "help": {
+    "search": {
+      "label": "Search help",
+      "placeholder": "e.g. stats, address, delete",
+      "results": "{count, plural, =0 {No articles} one {# article} other {# articles}}",
+      "empty": "No article matches “{query}”.",
+      "emptyHint": "Try another word, or write to us.",
+      "clear": "Clear search",
+      "contact": "Contact"
+    },
+    "articles": {
+      "registrieren": {
+        "title": "Signing up and signing in",
+        "summary": "With your email address and a 6-digit code, no password.",
+        "body": [
+          "Tap “Sign up for free” and enter your email address. We send you a 6-digit code. Enter it or tap the link in the email, and your account is there.",
+          "If nothing arrives, check your spam folder. After a short wait you can ask for a new code; only the newest one works.",
+          "Signing in works the same way: enter your email address, enter the code."
+        ]
+      },
+      "willkommen": {
+        "title": "Your first steps",
+        "summary": "After signing up, {steps} short steps lead you to a finished page, {portfolioSteps} for portfolios.",
+        "body": [
+          "First you choose what describes you best, for example TikToker, Music, Local shop or Photographer. We pick a fitting template and ask only what you really need.",
+          "Then come your name, a photo and your address, the look and your links. The preview shows your page at every step. You can skip any step and change everything later.",
+          "For photography, design, development and similar work there are {portfolioSteps} steps: instead of links we ask for up to three pieces of work and one way to reach you.",
+          "Already have a link page on Beacons, bio.link, lnk.bio or Carrd? Paste its address and we take over your profiles and links, if that page allows it to be read."
+        ]
+      },
+      "seitenadresse": {
+        "title": "Your page address",
+        "summary": "Your page is at {domain}/yourname. You choose the name.",
+        "body": [
+          "Lowercase letters, numbers and hyphens are allowed, {min} to {max} characters. Some names are reserved for Linkyo.",
+          "You change the address under “Settings” › “Page address”. After that the old address stops working, so update the link in your profiles.",
+          "Projects with a page of their own sit under your address, for example {domain}/yourname/project.",
+          "Your own domain is planned."
+        ]
+      },
+      "bloecke": {
+        "title": "Adding content",
+        "summary": "Everything on your page is a block: a link, a video, music, dates, a product and much more.",
+        "body": [
+          "Tap “Add” and paste a link. Linkyo recognizes links from Spotify, YouTube, TikTok, Instagram and many more services and turns them into the right block. Several links at once work too.",
+          "Or pick a block from the list: from link, text and image through video, music and events to product, project and contact & enquiry.",
+          "Upload photos as JPG, PNG or WebP up to 25 MB. One photo becomes an image; with several, Linkyo first asks whether they should become a gallery or a project.",
+          "A ticket link does not say when and where: enter the date and the city, and the show appears on your page.",
+          "Under “Page” you reorder, edit and delete your blocks. “Undo” takes a change back."
+        ]
+      },
+      "projekte": {
+        "title": "Portfolio: projects with a page of their own",
+        "summary": "Show your work as projects. When there is more to tell, the card leads to the project’s own page.",
+        "body": [
+          "Add a “Project” block: a title, one sentence about it and, if you have one, a picture. Add what you have: up to three figures, the story, up to {pictures} pictures with captions, links and a code sample.",
+          "Every project has an address of its own under your page. Its card on your page leads there once the project shows more than the card, such as a story, figures, code or several pictures; otherwise it leads to the project’s first link, if it has one. If you change the address, the old one still leads there.",
+          "A tap on a picture opens it full size.",
+          "For client work there is “Confidential, no name”: your page then says “Confidential”, and we do not store the name.",
+          "In the dashboard the “Work” view shows all projects as pictures. Show only work you are allowed to show."
+        ]
+      },
+      "vorlagen": {
+        "title": "Changing templates",
+        "summary": "{designs} designs, each with its own look. Switch any time; your content stays.",
+        "body": [
+          "Under “Design” you choose the template first. Your blocks, your photo and your texts stay; only the look changes. “Undo” takes you back to the template before.",
+          "The gallery shows the designs on example pages. “Use this template” takes the look with you into sign-up.",
+          "Portfolios have templates of their own; under “Design” the “Portfolio” filter shows only those."
+        ]
+      },
+      "design": {
+        "title": "Colors, fonts and buttons",
+        "summary": "Pick a color, a light, dark or colored background, fonts and buttons.",
+        "body": [
+          "Under “Design” › “Color” you pick a color from the selection or your own. Linkyo adjusts the shades so that text and buttons stay readable, to the WCAG AA contrast standard.",
+          "The background is light, dark or all in your color. Under “Font” and “Buttons” you set the fonts, the button style and their corners.",
+          "“Reset to template” brings back the template’s look."
+        ]
+      },
+      "sprachen": {
+        "title": "Languages: German, English, Arabic",
+        "summary": "The dashboard and your page come in German, English and Arabic.",
+        "body": [
+          "“Page language” in Settings decides the language of the buttons, dates and notes on your page. You write your own texts in any language you like.",
+          "In Arabic the page reads right to left, with an Arabic typeface that fits its template.",
+          "“App language” applies only to you, in this browser."
+        ]
+      },
+      "teilen": {
+        "title": "Sharing your page",
+        "summary": "Copy the link, get the QR code or make a picture for stories and posts.",
+        "body": [
+          "Under “Home” you find your link with “Copy link”, “Share”, the QR code and “Image for story & post”.",
+          "When you send the link in WhatsApp, iMessage or LinkedIn, the preview shows your photo or your initials, your name and your line.",
+          "The QR code comes as a PNG and as an SVG in your page’s color; as an SVG it stays sharp at any size.",
+          "The picture for stories and posts shows your photo, name and address in your look, as 9:16 or 4:5."
+        ],
+        "counting": "Stats count scans as a source of their own, “QR code”."
+      },
+      "statistik": {
+        "title": "Stats: how Linkyo counts",
+        "summary": "Views, visitors and taps on your blocks, counted without cookies.",
+        "body": [
+          "Under “Stats” you see views, visitors, clicks and click rate for {week}, {month} or {quarter} days, plus where visitors come from, which country and which device. You download the daily numbers as a CSV.",
+          "The counting stores nothing on your visitors’ devices. So that a person counts only once a day, our server makes a check value from the network address and the browser string with a key that is new every day. We store neither, and the check values are deleted within the first hour after the day ends. Only daily totals remain.",
+          "Visitors who turned on “Do Not Track” or “Global Privacy Control” are not counted, and neither are robots and prefetches. Your own visits count too.",
+          "In the editor every block that can be tapped shows how often it was tapped in the last 30 days. You see all your page’s numbers; our team sees, per page, only the total views and taps of the last 30 days, never sources, countries or devices."
+        ],
+        "summaryOff": "How Linkyo counts views, visitors and taps without cookies. Right now the counting is switched off.",
+        "off": "On this website the counting is switched off right now: creator pages then carry no counting script, and nothing is counted. This is how Linkyo counts once it is switched on:"
+      },
+      "datenschutz-seite": {
+        "title": "Privacy on your page",
+        "summary": "Your page sets no cookies and loads nothing from other providers on its own.",
+        "body": [
+          "Creator pages set no cookies and load no trackers. The only thing stored on a visitor’s device is whether they allowed external content. Pictures, including Spotify and YouTube covers, are served by us.",
+          "A YouTube video plays on your page only once a visitor taps it, and then in its privacy-enhanced mode. Your page does not load videos from TikTok, Instagram or Vimeo, and music blocks are links to the services.",
+          "At the bottom your page links Linkyo’s privacy notice and, once you have filled it in, your imprint."
+        ]
+      },
+      "impressum": {
+        "title": "An imprint for your page",
+        "summary": "Under “Settings” › “Legal notice” you enter your name, address, email address and phone.",
+        "body": [
+          "It is complete with a name, an address and a valid email address; the phone number is optional.",
+          "Once you have filled it in, your page links it at the bottom."
+        ]
+      },
+      "konto-loeschen": {
+        "title": "Exporting your data and deleting your account",
+        "summary": "In Settings you download your data as a JSON file and delete your account.",
+        "body": [
+          "“Export my data” downloads a JSON file with your account, your page and your latest sign-ins, plus, if there are any, your subscription, invoices and invites.",
+          "You find “Delete account” under “Settings” › “Account”. To confirm, you type the name in your page address. Your account, your page, your uploaded pictures and your stats are deleted; this cannot be undone.",
+          "After that your address no longer works."
+        ]
+      }
     }
   }
 }

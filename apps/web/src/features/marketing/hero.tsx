@@ -37,6 +37,12 @@ const BIO_PLATFORMS = [siInstagram, siTiktok, siYoutube];
  *
  * Phones and tablets read it top to bottom in exactly that order. Wide screens put the pages beside
  * the words and the action, and the hero fills the first screen.
+ *
+ * The promise is two lines at every width (ADR 0038). Laptops (W-11): beside the pages it is 40 px
+ * from 1024 px (the words get 1.15 : 1 of the row, as ADR 0038 has it); from 1280 px the hero (and the
+ * header above it) takes the wide column, the words get 1.6 : 1, and the promise grows to 56 px, and to
+ * 72 px from 1536 px. Each step is where its second line still fits on one line beside the pages
+ * (e2e/home.spec.ts measures it from 1024 to 1920 px). The sentence keeps its reading measure.
  */
 export function Hero() {
   const t = useTranslations("marketing");
@@ -53,8 +59,10 @@ export function Hero() {
     shot: CONCEPT_SHOTS[slug][locale],
   }));
   return (
-    <section aria-labelledby="hero-title" className="overflow-x-clip xl:overflow-x-visible">
-      <div className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-10 px-5 pt-6 pb-12 md:px-10 md:pt-12 lg:mk-hero-fit lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:grid-rows-2 lg:gap-x-10 lg:gap-y-8 lg:py-8">
+    // Clipped at every width: the deck's queued cards wait, invisible, beyond its column, and from
+    // 1280 px the wide column brings them past the screen's edge (a sideways scroll up to 1599 px).
+    <section aria-labelledby="hero-title" className="overflow-x-clip">
+      <div className="mx-auto grid w-full max-w-content grid-cols-1 items-center gap-10 px-5 pt-6 pb-12 md:px-10 md:pt-12 lg:mk-hero-fit lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:grid-rows-2 lg:gap-x-10 lg:gap-y-8 lg:py-8 xl:max-w-content-wide xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] xl:gap-x-16">
         {/* 1. What it is. */}
         <div className="grid min-w-0 grid-cols-1 justify-items-start gap-5 md:gap-6 lg:self-end">
           <p className="mk-rise inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-surface py-1 ps-1 pe-3 text-small font-semibold text-fg-secondary" style={order(0)}>
@@ -67,7 +75,7 @@ export function Hero() {
             </span>
             <span className="truncate">{t("hero.eyebrow")}</span>
           </p>
-          <h1 id="hero-title" className="max-w-full text-h2 tracking-display text-balance md:text-display lg:text-display-sm">
+          <h1 id="hero-title" className="max-w-full text-h2 tracking-display text-balance md:text-display lg:text-display-sm xl:text-display 2xl:text-display-xl">
             <span className="mk-rise block" style={order(1)}>
               {t("hero.title1")}
             </span>

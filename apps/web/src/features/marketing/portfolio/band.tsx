@@ -10,6 +10,7 @@ import { Link } from "@/i18n/navigation";
 
 import { phoneSizes } from "../assets";
 import { EXAMPLE_SHOTS, type ExampleShot } from "../examples";
+import { SECTION_TITLE } from "../headings";
 import { pageHref, portfolioExamples } from "./model";
 
 const hasShot = (slug: LookId): slug is LookId & ExampleShot => slug in EXAMPLE_SHOTS;
@@ -32,7 +33,7 @@ export function PortfolioBand() {
           <span aria-hidden className="grid size-control-md place-items-center rounded-full bg-tinted text-tinted-fg">
             <Icon icon={FolderKanban} size="md" />
           </span>
-          <h2 id="portfolio-band-title" className="text-h2 tracking-tight text-balance md:text-h1">
+          <h2 id="portfolio-band-title" className={SECTION_TITLE}>
             {t("title")}
           </h2>
           <p className="max-w-prose text-body-lg text-pretty text-fg-secondary">{t("lead")}</p>

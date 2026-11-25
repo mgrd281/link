@@ -10,7 +10,7 @@ export function MarketingHome() {
   return (
     <>
       {/* On phones, sign-up joins the header once the hero's own sign-up has been passed. */}
-      <MarketingHeader signupAfter="hero-cta" />
+      <MarketingHeader signupAfter="hero-cta" wide />
       <main id="main" className="grid grid-cols-1">
         <Hero />
         <Trust />
