@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { SITE_COUNTS } from "@/features/examples/looks";
@@ -7,11 +9,10 @@ import { plainTags } from "@/features/marketing/pages/text";
 import { billingQuestions, faqQuestions, type MessageRef } from "@/features/marketing/pricing";
 import { siteState } from "@/features/marketing/site-state";
 import { homeStructuredData } from "@/features/marketing/structured-data";
+import { routing, type Locale } from "@/i18n/routing";
 import { jsonLd } from "@/lib/json-ld";
 import { localeAlternates, pageDescription } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
-
-type Locale = "de" | "en" | "ar";
 
 /**
  * The home page's description (lib/seo.ts `pageDescription`). Where creator pages are not counted
@@ -48,8 +49,12 @@ async function structuredData(locale: Locale): Promise<{ type: string; json: str
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
+  // Next also renders this page when a creator address that was served before answers 404 (proxy.ts
+  // serves "/mila" from /u/mila), with the creator's name as the language. The layout answers 404;
+  // the prices below must not be formatted for a "language" like "mila-3f2a" (Intl throws).
+  if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
-  const blocks = await structuredData(locale as Locale);
+  const blocks = await structuredData(locale);
   return (
     <>
       {blocks.map(({ type, json }) => (
