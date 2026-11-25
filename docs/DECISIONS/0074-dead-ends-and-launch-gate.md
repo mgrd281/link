@@ -56,3 +56,13 @@ boundary was not involved.
   `gated-routes.ts`. The shells' own `not-found.tsx` files catch a future screen's `notFound()` inside the frame.
 
 **Status.** Accepted (Stage 1, WP1.2, 2026-11-24).
+
+**Update (Stage 4, WP4.3, 2026-11-25).** The error shell came from Next: a `notFound()` thrown outside any
+Suspense boundary is rendered through its bare error document (`<html id="__next_error__">`, no `lang`, the text
+only once the script runs). The catch-all `app/[locale]/[...rest]` now throws inside a Suspense boundary whose
+fallback is the same not-found screen, and is static (`generateStaticParams` returns no address, so each unknown
+address is rendered once, when first asked for, and kept): its server HTML carries `lang`, `dir`, the title and
+the localized page, and the status stays 404 (`e2e/not-found-app.spec.ts` reads the raw HTML). Still on Next's
+error document: a page's own `notFound()` (an unknown example under /p, an unknown creator under /u, the shells'
+order addresses) and addresses whose first segment is no language (`/x.php`, `/u/a/b/c`); the same boundary in
+those pages, and the proxy or the locale layout for the second group, would carry it further.
