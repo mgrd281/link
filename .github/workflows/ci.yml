@@ -41,6 +41,10 @@ jobs:
       - name: Unit tests (tokens, contrast guard, lint rules, blocks, editor)
         run: pnpm test
       - run: pnpm build
+      # Reads the demo build: creator page code, the dashboard's first load (and no Supabase code in a
+      # demo build), the home page's HTML and every link preview card (ADR 0008).
+      - name: Route budgets
+        run: node apps/web/scripts/check-route-budgets.mjs
 
   e2e:
     name: E2E + accessibility (axe, WCAG 2.2 AA)
@@ -116,6 +120,9 @@ jobs:
         run: pnpm --filter @linkyo/web... build
         env:
           NEXT_PUBLIC_PAYMENTS: test
+      # The same budgets on the build with real accounts (the production configuration, ADR 0008).
+      - name: Route budgets (real accounts)
+        run: node apps/web/scripts/check-route-budgets.mjs
       - run: pnpm --filter @linkyo/web exec playwright install --with-deps chromium
       - run: mkdir -p apps/web/.mail
       # Each invocation starts its own `next start` (CI is set, so no server is reused).
