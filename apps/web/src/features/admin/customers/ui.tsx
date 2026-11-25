@@ -90,19 +90,24 @@ export function DeviceGlyph({ device }: { device: DeviceInfo }) {
   return <Icon icon={DEVICE_ICONS[device.type]} size="sm" label={`${t(device.type)} · ${device.os} · ${device.browser}`} className="text-fg-tertiary" />;
 }
 
+/**
+ * The device's glyph and its system and browser. A flex box (not inline-flex): an inline box that is
+ * too wide is cut by its cell without an ellipsis ("Windows · Chron"). The names are Latin, so they
+ * sit in their own isolate that ends in an ellipsis at their end, also in an Arabic row ("Windows ·
+ * Chr…", never "…dows · Chrome"); the whole name is the title.
+ */
 export function DeviceLabel({ device }: { device: DeviceInfo }) {
   const t = useTranslations("admin.security.devices");
+  const name = `${device.os} · ${device.browser}`;
   return (
-    <span className="inline-flex min-w-0 items-center gap-2">
+    <span className="flex min-w-0 items-center gap-2" title={name}>
       <Icon
         icon={DEVICE_ICONS[device.type]}
         size="sm"
         label={t(device.type)}
         className="text-fg-tertiary shrink-0"
       />
-      <span className="truncate">
-        {device.os} · {device.browser}
-      </span>
+      <bdi className="min-w-0 truncate">{name}</bdi>
     </span>
   );
 }
