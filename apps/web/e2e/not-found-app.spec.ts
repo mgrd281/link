@@ -113,6 +113,23 @@ test.describe("not found", () => {
     await page.waitForURL(/\/de\/login\?next=%2Fapp$/);
   });
 
+  test("the server's HTML of an unknown address already carries its language, direction and text", async ({ request }) => {
+    // Before any script runs (stage 4, WP4.3): not Next's bare error document (<html id="__next_error__">).
+    for (const { path, locale } of [
+      { path: "/de/nope", locale: "de" },
+      { path: "/ar/nope", locale: "ar" },
+      { path: "/en/app/xyz", locale: "en" },
+    ] as const) {
+      const response = await request.get(path);
+      expect(response.status(), path).toBe(404);
+      const html = await response.text();
+      expect(html, path).toContain(`<html lang="${locale}" dir="${locale === "ar" ? "rtl" : "ltr"}"`);
+      expect(html, path).not.toContain("__next_error__");
+      expect(html, path).toContain(`<title>${TAB[locale]}</title>`);
+      expect(html.replaceAll("&#x27;", "'"), path).toContain(TITLE[locale]);
+    }
+  });
+
   test("an unknown first segment still answers 404, never a server error", async ({ page }) => {
     // The language layout answers these itself (its own notFound(): Next's built-in page, see ADR 0074).
     for (const path of ["/u/mila/project/extra", "/missing-file.php", "/api/nope"]) {
