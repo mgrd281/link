@@ -280,10 +280,12 @@ export function Sheet({
             target?.focus({ preventScroll: true });
           }}
           className={cn(
-            // Phones: up from below the screen on a spring, and back down when closed.
-            "layer-modal fixed inset-x-0 bottom-0 flex max-h-[92dvh] flex-col rounded-t-xl border border-line bg-surface-elevated text-fg outline-none",
+            // Phones: up from below the screen on a spring, and back down when closed. It stops 64 px (and
+            // the notch) short of the top: a toast that comes while it is open stands there (see Toaster),
+            // 48 px tall with its margins, so it never reaches the sheet's grabber and its header buttons.
+            "layer-modal fixed inset-x-0 bottom-0 flex max-h-[calc(100dvh-var(--spacing-16)-env(safe-area-inset-top))] flex-col rounded-t-xl border border-line bg-surface-elevated text-fg outline-none",
             "motion-safe:animate-sheet-in data-[state=closed]:motion-safe:animate-sheet-out",
-            detent === "large" && "max-lg:h-[92dvh]",
+            detent === "large" && "max-lg:h-[calc(100dvh-var(--spacing-16)-env(safe-area-inset-top))]",
             // Wide screens: a side panel that comes in from its own edge (the start in Arabic) and fades away.
             "lg:inset-y-0 lg:start-auto lg:end-0 lg:max-h-none lg:w-full lg:max-w-prose lg:rounded-none lg:rounded-s-xl",
             "lg:motion-safe:animate-page-in lg:[animation-duration:var(--duration-slow)] lg:[animation-timing-function:var(--ease-emphasized)]",

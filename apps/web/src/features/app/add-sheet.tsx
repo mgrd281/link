@@ -40,6 +40,16 @@ const never = () => () => undefined;
 /** The icon of a preset entry (a block of an existing type, started for one purpose). */
 const PRESET_ICONS: Record<AddPreset, typeof Building2> = { clients: Building2 };
 
+/**
+ * A type's card. Two across on a phone, the glyph above its name: beside it, a card is 170 px wide and
+ * the name has 92 px, so "Kundenstimmen" (109 px) was cut in two ("Kundenstim-men"). Stacked, the name
+ * has the card's whole 144 px. From `sm` the glyph stands beside the name again (three across).
+ */
+const CARD =
+  "flex flex-col items-start gap-2 rounded-lg border border-line bg-surface p-3 text-start transition-[background-color,border-color,scale] duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed active:bg-pressed motion-reduce:active:scale-none sm:flex-row sm:items-center sm:gap-3";
+/** The name on a card: whole words only. Hyphenation off (it broke "Kundenstimmen" mid-word); `break-words` only as the last resort for a word wider than the card. */
+const CARD_NAME = "text-small font-semibold break-words";
+
 /** One entry of a group in the sheet: a block type, or a preset (a block of a type, already set up). */
 type AddEntry = { type: BlockType; preset?: undefined } | { type?: undefined; preset: AddPreset };
 
@@ -515,13 +525,13 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
                         type="button"
                         data-type={entry.type}
                         onClick={() => pick(entry.type)}
-                        className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3 text-start transition-[background-color,border-color,scale] duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed active:bg-pressed motion-reduce:active:scale-none"
+                        className={CARD}
                       >
                         <span className="grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg">
                           <Icon icon={blockIcon[entry.type]} size="md" />
                         </span>
                         <span className="grid min-w-0">
-                          <span className="text-small font-semibold break-words hyphens-auto">{tTypes(entry.type)}</span>
+                          <span className={CARD_NAME}>{tTypes(entry.type)}</span>
                           <span className="text-caption text-fg-secondary">{t(`desc.${entry.type}`)}</span>
                         </span>
                       </button>
@@ -532,13 +542,13 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
                         type="button"
                         data-preset={entry.preset}
                         onClick={() => pickPreset(entry.preset)}
-                        className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3 text-start transition-[background-color,border-color,scale] duration-micro hover:border-line-input focus-visible:focus-ring active:scale-pressed active:bg-pressed motion-reduce:active:scale-none"
+                        className={CARD}
                       >
                         <span className="grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg">
                           <Icon icon={PRESET_ICONS[entry.preset]} size="md" />
                         </span>
                         <span className="grid min-w-0">
-                          <span className="text-small font-semibold break-words hyphens-auto">{t(`presets.${entry.preset}`)}</span>
+                          <span className={CARD_NAME}>{t(`presets.${entry.preset}`)}</span>
                           <span className="text-caption text-fg-secondary">{t(`desc.${entry.preset}`)}</span>
                         </span>
                       </button>

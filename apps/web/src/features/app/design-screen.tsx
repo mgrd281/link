@@ -271,7 +271,8 @@ export function DesignScreen() {
           // phone screens the bar scrolls away, so the page sticks to the top (no gap to see through).
           // A quarter of the screen with its padding (a hairline frame, no bezel), a little more where
           // the screen is short; it shows the part being changed (`follow`), not only the page's head.
-          <div data-sticky-preview className="sticky top-16 layer-raised -mx-4 bg-canvas-muted px-4 pb-3 max-lg:short:top-0 md:-mx-8 md:px-8 lg:hidden">
+          // It shows what a change did, so a toast does not stand over it (data-toast-avoid).
+          <div data-sticky-preview data-toast-avoid className="sticky top-16 layer-raised -mx-4 bg-canvas-muted px-4 pb-3 max-lg:short:top-0 md:-mx-8 md:px-8 lg:hidden">
             <PhonePreview frame="hairline" focus={follow} className="h-[calc(25svh-var(--spacing-3))] short:h-[30svh]" />
           </div>
         )

@@ -491,3 +491,191 @@ test.describe("D5: dead areas on laptops", () => {
     });
   }
 });
+
+// ─── D6: small craft ───────────────────────────────────────────────────────────────────────────
+
+test.describe("D6: the days under the week chart", () => {
+  for (const [label, locale, size] of [
+    ["a phone", "de", { width: 390, height: 844 }],
+    ["a laptop", "de", { width: 1440, height: 900 }],
+    ["a phone", "en", { width: 390, height: 844 }],
+    ["a phone", "ar", { width: 390, height: 844 }],
+    ["a laptop", "ar", { width: 1440, height: 900 }],
+  ] as const) {
+    test(`${locale} on ${label}: seven names that tell the days apart, each whole inside its column`, async ({ page }) => {
+      await page.setViewportSize(size);
+      await signedIn(page, locale);
+      await seed(page, { kind: "music", template: "nocturne", links: 4 });
+      const names = page.locator("ol.grid-cols-7 li > span[aria-hidden]");
+      await expect(names).toHaveCount(7);
+      const shown = await names.evaluateAll((spans) =>
+        spans.map((span) => ({ text: span.textContent.trim(), whole: span.scrollWidth <= span.clientWidth + 1, column: Math.round(span.getBoundingClientRect().width) })),
+      );
+      const texts = shown.map((day) => day.text);
+      expect(new Set(texts).size, `names ${JSON.stringify(texts)}`).toBe(7);
+      for (const day of shown) {
+        // (Arabic letters are single code units, so the length counts letters.)
+        expect(day.text.length, `"${day.text}" is a lone letter`).toBeGreaterThanOrEqual(2);
+        expect(day.whole, `"${day.text}" does not fit its ${String(day.column)} px column`).toBe(true);
+      }
+      if (locale === "de") for (const text of texts) expect(text).toMatch(/^(Mo|Di|Mi|Do|Fr|Sa|So)$/);
+      // A screen reader hears the whole day, not "D".
+      const bar = page.locator("ol.grid-cols-7 li [role=img]").first();
+      expect((await bar.getAttribute("aria-label"))?.length ?? 0, "the bar's label").toBeGreaterThan(8);
+    });
+  }
+});
+
+test.describe("D6: the Add sheet's cards at 390 px", () => {
+  test.use(PHONE);
+
+  for (const locale of ["de", "en", "ar"] as const) {
+    test(`${locale}: no name broken in the middle of a word, none wider than its card`, async ({ page }) => {
+      await signedIn(page, locale);
+      await seed(page, { kind: "designer", template: "werkbogen", projects: 1 });
+      await page.locator("[data-tabbar] button").first().click();
+      const sheet = page.getByRole("dialog");
+      await expect(sheet).toBeVisible();
+      await expect.poll(() => sheet.evaluate((element) => element.getAnimations().filter((a) => a.playState === "running").length)).toBe(0);
+      const problems = await sheet.evaluate((element) => {
+        const found: string[] = [];
+        for (const name of element.querySelectorAll("[data-type] span.font-semibold, [data-preset] span.font-semibold")) {
+          const text = name.firstChild;
+          if (text?.nodeType !== Node.TEXT_NODE) continue;
+          const words = [...(text.textContent ?? "").matchAll(/\S+/g)];
+          for (const word of words) {
+            const range = document.createRange();
+            range.setStart(text, word.index);
+            range.setEnd(text, word.index + word[0].length);
+            const lines = new Set([...range.getClientRects()].map((rect) => Math.round(rect.top)));
+            if (lines.size > 1) found.push(`"${word[0]}" is split over ${String(lines.size)} lines`);
+          }
+          if (getComputedStyle(name).hyphens === "auto") found.push(`"${text.textContent ?? ""}" may be hyphenated`);
+          if (name.scrollWidth > name.clientWidth + 1) found.push(`"${text.textContent ?? ""}" is wider than its card`);
+        }
+        return found;
+      });
+      expect(problems).toEqual([]);
+    });
+  }
+
+  test("de at 360 and 320: still whole (Kundenstimmen)", async ({ page }) => {
+    await signedIn(page, "de");
+    await seed(page, { kind: "designer", template: "werkbogen", projects: 1 });
+    for (const width of [360, 320]) {
+      await page.setViewportSize({ width, height: 700 });
+      await page.locator("[data-tabbar] button").first().click();
+      const sheet = page.getByRole("dialog");
+      await expect(sheet).toBeVisible();
+      await expect.poll(() => sheet.evaluate((element) => element.getAnimations().filter((a) => a.playState === "running").length)).toBe(0);
+      const quotes = sheet.locator('[data-type="quotes"] span.font-semibold');
+      await quotes.scrollIntoViewIfNeeded();
+      const split = await quotes.evaluate((name) => {
+        const text = name.firstChild;
+        if (text?.nodeType !== Node.TEXT_NODE) return -1;
+        const range = document.createRange();
+        range.selectNodeContents(text);
+        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+      });
+      expect(split, `"Kundenstimmen" at ${String(width)} px is on ${String(split)} lines`).toBe(1);
+      await page.keyboard.press("Escape");
+      await expect(sheet).toBeHidden();
+    }
+  });
+});
+
+// A toast over a control hides what was just pressed, or what is pressed next.
+const boxesOver = (toast: Locator, scopes: string) =>
+  toast.evaluate((element, selector) => {
+    const t = element.getBoundingClientRect();
+    return [...document.querySelectorAll(selector)]
+      .filter((control) => !element.contains(control) && control.getBoundingClientRect().width > 0)
+      .filter((control) => {
+        const c = control.getBoundingClientRect();
+        return c.left < t.right && c.right > t.left && c.top < t.bottom && c.bottom > t.top && c.bottom > 0 && c.top < innerHeight;
+      })
+      .map((control) => (control.getAttribute("aria-label") ?? control.textContent).replace(/\s+/g, " ").trim().slice(0, 40));
+  }, scopes);
+
+test.describe("D6: the toast on a phone", () => {
+  test.use({ ...PHONE, permissions: ["clipboard-read", "clipboard-write"] });
+  const CONTROLS = "#main a[href], #main button, #main summary, #main [role=switch], #main label:has(input), [data-tabbar] a, [data-tabbar] button";
+
+  test("Link copied stands where it covers no row of Home (and none of the tab bar)", async ({ page }) => {
+    await signedIn(page);
+    await seed(page, { kind: "music", template: "nocturne", links: 4 });
+    await page.getByRole("button", { name: "Copy link" }).scrollIntoViewIfNeeded();
+    await page.getByRole("button", { name: "Copy link" }).click();
+    const toast = page.locator('li[data-state="open"]', { hasText: "Link copied" });
+    await expect(toast).toBeVisible();
+    await page.waitForTimeout(500);
+    expect(await boxesOver(toast, CONTROLS), "controls under the toast").toEqual([]);
+    // Not over the top bar either: it stands below it.
+    const bar = await page.locator("header").first().boundingBox();
+    const shown = await toast.boundingBox();
+    expect((shown?.y ?? 0) + 1, "the toast starts under the top bar").toBeGreaterThanOrEqual(bar ? bar.y + bar.height : 0);
+  });
+
+  test("a change on Design: the toast neither covers the card just chosen nor the preview that shows the result", async ({ page }) => {
+    await signedIn(page);
+    await seed(page, { kind: "music", template: "nocturne", links: 4 });
+    await page.goto("/en/app/design");
+    await expect(heading(page)).toBeVisible();
+    const cards = page.locator("#main fieldset label:has(input[name=poster-template])");
+    const card = cards.nth(3);
+    await card.scrollIntoViewIfNeeded();
+    await card.click();
+    const toast = page.locator('li[data-state="open"]').first();
+    await expect(toast).toBeVisible();
+    await page.waitForTimeout(500);
+    const covered = await toast.evaluate((element) => {
+      const t = element.getBoundingClientRect();
+      const hits = (selector: string) => [...document.querySelectorAll(selector)].some((other) => {
+        const o = other.getBoundingClientRect();
+        return o.left < t.right && o.right > t.left && o.top < t.bottom && o.bottom > t.top;
+      });
+      return { preview: hits("[data-sticky-preview]"), chosen: hits("label:has(input[name=poster-template]:checked)") };
+    });
+    expect(covered, "what the toast covers").toEqual({ preview: false, chosen: false });
+  });
+
+  test("with a sheet open the toast stands above it, clear of its header buttons, notch included", async ({ page, context }) => {
+    // A short screen, so the sheet is as tall as it may be and the room above it is the least it gets.
+    await page.setViewportSize({ width: 390, height: 600 });
+    await signedIn(page);
+    await seed(page, { kind: "music", template: "nocturne", links: 4 });
+    // No system share sheet here: "Share" saves the picture and says so in a toast, with the sheet still open.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "share", { value: undefined, configurable: true });
+      Object.defineProperty(navigator, "canShare", { value: undefined, configurable: true });
+    });
+    // A notch: 47 px of safe area on top, as on a recent iPhone.
+    const session = await context.newCDPSession(page);
+    await session.send("Emulation.setSafeAreaInsetsOverride", { insets: { top: 47, bottom: 34, left: 0, right: 0 } });
+    await page.reload();
+    await expect(heading(page)).toBeVisible();
+    await page.getByRole("button", { name: /story/i }).scrollIntoViewIfNeeded();
+    await page.getByRole("button", { name: /story/i }).click();
+    const sheet = page.getByRole("dialog");
+    await expect(sheet).toBeVisible();
+    await expect.poll(() => sheet.evaluate((element) => element.getAnimations().filter((a) => a.playState === "running").length)).toBe(0);
+    await expect(sheet.getByRole("button", { name: "Share" })).toBeEnabled();
+    await sheet.getByRole("button", { name: "Share" }).click();
+    const toast = page.locator('li[data-state="open"]').first();
+    await expect(toast).toBeVisible();
+    await page.waitForTimeout(500);
+    const place = await toast.evaluate((element) => {
+      const t = element.getBoundingClientRect();
+      const dialog = document.querySelector("[role=dialog]");
+      const d = dialog?.getBoundingClientRect();
+      const buttons = [...(dialog?.querySelectorAll("button") ?? [])].map((button) => button.getBoundingClientRect()).filter((b) => b.width > 0);
+      return {
+        toastBottom: Math.round(t.bottom),
+        sheetTop: Math.round(d?.top ?? 0),
+        under: buttons.filter((b) => b.left < t.right && b.right > t.left && b.top < t.bottom && b.bottom > t.top).length,
+      };
+    });
+    expect(place.under, "the sheet's buttons under the toast").toBe(0);
+    expect(place.toastBottom, `the toast ends at ${String(place.toastBottom)}, the sheet starts at ${String(place.sheetTop)}`).toBeLessThanOrEqual(place.sheetTop);
+  });
+});

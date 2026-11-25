@@ -3,10 +3,11 @@
 import { tokens } from "@linkyo/tokens";
 import { X } from "lucide-react";
 import { Toast as T } from "radix-ui";
-import { useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 
 import { Icon } from "./icon";
 import { cn } from "./lib/cn";
+import { pickToastSide, type Box, type ToastSide } from "./toast-placement";
 
 export interface ToastInput {
   title: string;
@@ -96,6 +97,50 @@ const snapshot = () => items;
 const NONE: ToastItem[] = [];
 const serverSnapshot = () => NONE;
 
+/** What a thumb or a key can use: the controls a toast could cover. */
+const CONTROLS =
+  "a[href], button, summary, select, textarea, input:not([type=hidden]), label:has(input), [role=button], [role=tab], [role=switch], [role=radio], [role=checkbox], [role=menuitem], [role=link]";
+
+/** A toast follows a press for this long (ms): the control used within that time is the one it must not cover. */
+const USED_FOR = 5000;
+const PHONE = `(width < ${String(tokens.breakpoint.lg / 16)}rem)`;
+
+/** The control used last, by pointer or by Enter or Space (a module-level note: any press anywhere in the app). */
+let used: { element: Element; at: number } | null = null;
+let noting = false;
+function noteUse() {
+  if (noting) return;
+  noting = true;
+  const note = (event: Event) => {
+    const control = event.target instanceof Element ? event.target.closest(CONTROLS) : null;
+    used = control ? { element: control, at: Date.now() } : null;
+  };
+  document.addEventListener("pointerdown", note, true);
+  document.addEventListener("keydown", (event) => (event.key === "Enter" || event.key === " " ? note(event) : undefined), true);
+}
+
+/** Where the toasts stand now (see Toaster): a store, so the Toaster draws it and the measuring only decides it. */
+let placed: ToastSide = "bottom";
+const sideListeners = new Set<() => void>();
+const placeAt = (next: ToastSide) => {
+  if (placed === next) return;
+  placed = next;
+  for (const listener of sideListeners) listener();
+};
+const subscribeSide = (listener: () => void) => {
+  sideListeners.add(listener);
+  return () => sideListeners.delete(listener);
+};
+
+const boxOf = (element: Element): Box => {
+  const { left, top, right, bottom } = element.getBoundingClientRect();
+  return { left, top, right, bottom };
+};
+const union = (boxes: Box[]): Box | null =>
+  boxes.length === 0
+    ? null
+    : { left: Math.min(...boxes.map((b) => b.left)), top: Math.min(...boxes.map((b) => b.top)), right: Math.max(...boxes.map((b) => b.right)), bottom: Math.max(...boxes.map((b) => b.bottom)) };
+
 /**
  * `regionLabel` names the notification landmark for screen readers, in the page's language; "{hotkey}"
  * stands for the shortcut that jumps there (F8).
@@ -108,11 +153,52 @@ const serverSnapshot = () => NONE;
  * phones, where the sheet rises from the bottom, toasts move to the top of the screen; on wide
  * screens, where it is a panel, they stay in the free space the app names with `--sheet-toast-start`
  * and `--sheet-toast-end` (before the panel, or after it when the space before is too narrow).
+ *
+ * On a phone without a sheet an app that names the top of its screen (`--toast-top`, under its bar)
+ * lets a toast stand there too: it starts at the bottom, above the tab bar, and takes the top when
+ * the bottom would cover the control that was just pressed or more controls than the top, and never
+ * the parts marked `data-toast-avoid` (a preview that shows what the press did). See `pickToastSide`.
  */
 export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regionLabel?: string }) {
   const list = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
+  const side = useSyncExternalStore(subscribeSide, () => placed, () => "bottom" as const);
+  const viewport = useRef<HTMLOListElement>(null);
+  const showing = list.some((item) => item.open);
+  const wasShowing = useRef(false);
+  useEffect(noteUse, []);
+  // Decided once, when the first toast of a run appears and before it is painted: the measuring below
+  // puts the stack at each side in turn and puts it back, so nothing flashes.
+  useLayoutEffect(() => {
+    const fresh = showing && !wasShowing.current;
+    wasShowing.current = showing;
+    if (list.length === 0) placeAt("bottom");
+    const stack = viewport.current;
+    if (!fresh || !stack) return;
+    const root = document.documentElement;
+    const sheet = root.dataset.sheetOpen !== undefined;
+    // Only where the app says its top is free (the dashboard on a phone), and a sheet already has its own rule.
+    if (sheet || !window.matchMedia(PHONE).matches || !getComputedStyle(root).getPropertyValue("--toast-top").trim()) {
+      placeAt("bottom");
+      return;
+    }
+    const band = () => union([...stack.querySelectorAll("li")].map(boxOf));
+    stack.dataset.side = "bottom";
+    const bottom = band();
+    stack.dataset.side = "top";
+    const top = band();
+    stack.dataset.side = placed;
+    if (!bottom || !top) return;
+    const visible = (box: Box) => box.right > box.left && box.bottom > box.top && box.bottom > 0 && box.top < window.innerHeight;
+    const controls = [...document.querySelectorAll(CONTROLS)]
+      .filter((control) => !stack.contains(control) && !control.closest("[inert]"))
+      .map(boxOf)
+      .filter(visible);
+    const lastUsed = used && used.element.isConnected && Date.now() - used.at < USED_FOR ? boxOf(used.element) : null;
+    const keepClear = [...document.querySelectorAll("[data-toast-avoid]")].map(boxOf).filter(visible);
+    placeAt(pickToastSide({ bands: { bottom, top }, controls, used: lastUsed, keepClear }));
+  }, [list, showing]);
   return (
-    <T.Provider swipeDirection="down" duration={tokens.motion.delay.toast}>
+    <T.Provider swipeDirection={side === "top" ? "up" : "down"} duration={tokens.motion.delay.toast}>
       {list.map((item) => (
         <T.Root
           key={item.id}
@@ -164,9 +250,13 @@ export function Toaster({ closeLabel, regionLabel }: { closeLabel: string; regio
         </T.Root>
       ))}
       <T.Viewport
+        ref={viewport}
+        data-side={side}
         {...(regionLabel ? { label: regionLabel } : {})}
         className={cn(
           "layer-toast fixed start-(--toast-start) end-(--toast-end) bottom-(--toast-offset) mx-auto flex max-w-prose flex-col gap-2 p-4 pb-[max(var(--spacing-4),var(--toast-inset,env(safe-area-inset-bottom)))] outline-none",
+          // On a phone, under the app's top bar, when the bottom would cover what was just pressed (see above).
+          "max-lg:data-[side=top]:top-(--toast-top) max-lg:data-[side=top]:bottom-auto max-lg:data-[side=top]:p-2",
           // An open sheet: on phones at the top, above the sheet; on wide screens in the space before its panel.
           "max-lg:in-data-sheet-open:top-0 max-lg:in-data-sheet-open:bottom-auto max-lg:in-data-sheet-open:p-2 max-lg:in-data-sheet-open:pt-[max(var(--spacing-2),env(safe-area-inset-top))]",
           "lg:in-data-sheet-open:start-(--sheet-toast-start) lg:in-data-sheet-open:end-(--sheet-toast-end)",

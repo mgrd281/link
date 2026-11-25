@@ -114,6 +114,14 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
   change is undone or redone by any route, and toasts make room for open sheets
   (`--sheet-toast-start`). On wide screens they centre over the content column (`--toast-start` in
   `globals.css`).
+- On a phone a toast starts above the tab bar and takes the top, under the bar (`--toast-top`), when
+  the bottom would cover the control just pressed or more controls than the top (`pickToastSide` in
+  `packages/ui`), never a part marked `data-toast-avoid`. With a sheet open it stands above the sheet,
+  which stops 64 px (and the notch) short of the top so the two never meet.
+- Targets: the kit grows a small control to 44 px on touch with a `::before` (`pointer-fine:before:hidden`):
+  `Button` md and sm, `IconButton`, `Switch` (46 × 46), the toast's Undo and close. A text link or a
+  toggle of your own does the same (`before:-inset-y-3` for one line of text). `e2e/dashboard-polish.spec.ts`
+  measures every control of Home, Page, Arbeiten, Design and Settings at 390 px by hit-testing.
 
 ## Buttons
 
