@@ -280,10 +280,12 @@ export function Sheet({
             target?.focus({ preventScroll: true });
           }}
           className={cn(
-            // Phones: up from below the screen on a spring, and back down when closed.
-            "layer-modal fixed inset-x-0 bottom-0 flex max-h-[92dvh] flex-col rounded-t-xl border border-line bg-surface-elevated text-fg outline-none",
+            // Phones: up from below the screen on a spring, and back down when closed. It stops 64 px (and
+            // the notch) short of the top: a toast that comes while it is open stands there (see Toaster),
+            // 48 px tall with its margins, so it never reaches the sheet's grabber and its header buttons.
+            "layer-modal fixed inset-x-0 bottom-0 flex max-h-[calc(100dvh-var(--spacing-16)-env(safe-area-inset-top))] flex-col rounded-t-xl border border-line bg-surface-elevated text-fg outline-none",
             "motion-safe:animate-sheet-in data-[state=closed]:motion-safe:animate-sheet-out",
-            detent === "large" && "max-lg:h-[92dvh]",
+            detent === "large" && "max-lg:h-[calc(100dvh-var(--spacing-16)-env(safe-area-inset-top))]",
             // Wide screens: a side panel that comes in from its own edge (the start in Arabic) and fades away.
             "lg:inset-y-0 lg:start-auto lg:end-0 lg:max-h-none lg:w-full lg:max-w-prose lg:rounded-none lg:rounded-s-xl",
             "lg:motion-safe:animate-page-in lg:[animation-duration:var(--duration-slow)] lg:[animation-timing-function:var(--ease-emphasized)]",
@@ -298,21 +300,24 @@ export function Sheet({
             <div aria-hidden className="mx-auto mt-2 h-1 w-10 rounded-full bg-line-strong lg:hidden" />
             {confirm ? (
               // One title on every screen size (one id names the dialog); only the buttons around it change.
-              <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-line pt-1 pr-[max(var(--spacing-2),env(safe-area-inset-right))] pb-2 pl-[max(var(--spacing-2),env(safe-area-inset-left))] lg:flex lg:items-start lg:gap-3 lg:px-5 lg:pt-5 lg:pb-4">
+              // On phones both ends sit at the body's own gutter (`edges`): the ghost button on the start
+              // side pulls its 12 px of padding back (-ms-3), so its word starts where the filled button's
+              // edge ends on the other side, 20 px in, in either reading direction.
+              <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-line pt-1 pr-[max(var(--spacing-5),env(safe-area-inset-right))] pb-2 pl-[max(var(--spacing-5),env(safe-area-inset-left))] lg:flex lg:items-start lg:gap-3 lg:px-5 lg:pt-5 lg:pb-4">
                 {back ? (
                   <>
-                    <Button variant="ghost" size="sm" icon={ChevronLeft} className="justify-self-start lg:hidden" onClick={back.onBack}>
+                    <Button variant="ghost" size="sm" icon={ChevronLeft} className="-ms-3 justify-self-start lg:hidden" onClick={back.onBack}>
                       {back.label}
                     </Button>
                     <IconButton variant="tinted" icon={ChevronLeft} label={back.label} className="rounded-full max-lg:hidden" onClick={back.onBack} />
                   </>
                 ) : cancel ? (
-                  <Button variant="ghost" size="sm" className="justify-self-start lg:hidden" onClick={cancel.onCancel}>
+                  <Button variant="ghost" size="sm" className="-ms-3 justify-self-start lg:hidden" onClick={cancel.onCancel}>
                     {cancel.label}
                   </Button>
                 ) : (
                   <Dialog.Close asChild>
-                    <Button variant="ghost" size="sm" className="justify-self-start lg:hidden">
+                    <Button variant="ghost" size="sm" className="-ms-3 justify-self-start lg:hidden">
                       {closeLabel}
                     </Button>
                   </Dialog.Close>

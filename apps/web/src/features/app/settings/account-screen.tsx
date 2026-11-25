@@ -13,7 +13,7 @@ import { normalizeEmail } from "@/features/account/username";
 import { Disclosure } from "../disclosure";
 import { TextInput } from "../form";
 import { FieldGroup, FormActions } from "../list";
-import { Screen } from "../screen";
+import { ColumnGroups, Screen } from "../screen";
 import { useExportData } from "../settings-screen";
 import { useSite } from "../site-context";
 
@@ -321,10 +321,13 @@ export function AccountScreen() {
   const t = useTranslations("app.settings");
   const tApp = useTranslations("app");
   return (
-    <Screen title={t("panes.account")} back={{ href: "/app/settings", label: tApp("nav.settings") }} preview>
-      <EmailGroup />
-      <SignInsGroup />
-      <DeleteGroup />
+    <Screen title={t("panes.account")} back={{ href: "/app/settings", label: tApp("nav.settings") }} preview grow>
+      {/* Three separate groups: two columns where the column has the room (laptops), one below that. */}
+      <ColumnGroups>
+        <EmailGroup />
+        <SignInsGroup />
+        <DeleteGroup />
+      </ColumnGroups>
     </Screen>
   );
 }

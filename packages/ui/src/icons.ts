@@ -45,6 +45,7 @@ import {
   Eye,
   EyeOff,
   FastForward,
+  File as FileIcon,
   FileText,
   FolderKanban,
   Forward,
@@ -97,6 +98,7 @@ import {
   Reply,
   ReplyAll,
   Rewind,
+  Rows2,
   Search,
   Send,
   SendHorizontal,
@@ -112,6 +114,7 @@ import {
   SquareUser,
   StepBack,
   StepForward,
+  Tag,
   TextAlignEnd,
   TextAlignStart,
   Trash2,
@@ -187,6 +190,8 @@ export const icons = {
   decrease: TrendingDown,
   unchanged: Minus,
   // Areas of the product
+  // The creator's own page ("Seite"): a sheet of paper. It was a list with squares, which read as a task list.
+  page: FileIcon,
   analytics: ChartNoAxesColumn,
   design: Palette,
   templates: LayoutTemplate,
@@ -199,6 +204,8 @@ export const icons = {
   customers: Contact,
   account: UserRound,
   billing: CreditCard,
+  // A plan and its price: a price tag. The free plan wore the template glyph, which says nothing about cost.
+  plan: Tag,
   orders: Receipt,
   security: ShieldCheck,
   activity: History,
@@ -219,6 +226,9 @@ export const icons = {
   photography: Camera,
   gaming: Gamepad2,
   document: FileText,
+  // A titled part of a page ("Abschnitt"): a box split into a title row and its content. The letter H
+  // that stood for it read as a letter, not as a heading.
+  section: Rows2,
   // Media transport: drawn solid (`<Icon solid />`), never mirrored
   play: Play,
   pause: Pause,
@@ -237,8 +247,8 @@ export const ICON_GROUPS = {
   actions: ["add", "edit", "delete", "copy", "share", "close", "search", "filter", "sort", "more", "undo", "redo", "upload", "download", "refresh", "reorder", "send", "preview", "hide", "settings", "confirm"],
   navigation: ["back", "forward", "next", "previous", "external", "expand", "home", "menu", "signIn", "signOut", "sidebarOpen", "sidebarClose"],
   states: ["success", "warning", "error", "info", "help", "verified", "locked", "notifications", "live", "increase", "decrease", "unchanged"],
-  areas: ["analytics", "design", "templates", "features", "portfolio", "work", "invite", "team", "creators", "customers", "account", "billing", "orders", "security", "activity", "ai", "shop", "link", "qrCode", "inbox"],
-  content: ["music", "video", "image", "event", "place", "email", "phone", "website", "photography", "gaming", "document"],
+  areas: ["page", "analytics", "design", "templates", "features", "portfolio", "work", "invite", "team", "creators", "customers", "account", "billing", "plan", "orders", "security", "activity", "ai", "shop", "link", "qrCode", "inbox"],
+  content: ["music", "video", "image", "event", "place", "email", "phone", "website", "photography", "gaming", "document", "section"],
   media: ["play", "pause", "stop", "skipForward", "skipBack"],
 } as const satisfies Record<string, readonly IconMeaning[]>;
 

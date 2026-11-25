@@ -24,6 +24,7 @@ import { sampleStats, totals } from "./sample-stats";
 import { Panel, Screen } from "./screen";
 import { useSite } from "./site-context";
 import { statsSource, useLiveStats, type StatsDay } from "./stats";
+import { weekdayLong, weekdayName } from "./weekday";
 
 /**
  * Home answers one question: what is my next step to get visitors? While the page is being built,
@@ -209,7 +210,8 @@ function MoreLink() {
   return (
     <Link
       href="/app/analytics"
-      className="inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
+      // A line of text to see, a 44 px tall target on touch screens (the hit area grows 12 px above and below).
+      className="relative inline-flex items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-link before:absolute before:inset-x-0 before:-inset-y-3 pointer-fine:before:hidden transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
     >
       {t("stats.more")}
       <Icon icon={ArrowRight} size="sm" />
@@ -291,8 +293,9 @@ function WeekCard({ days, views, clicks, links, sources, sample }: WeekCardProps
   const max = Math.max(...days.map((day) => day.views ?? 0), 1);
   const number = (n: number) => new Intl.NumberFormat(locale).format(n);
   const percent = (n: number) => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(n);
-  const weekday = (iso: string) => new Intl.DateTimeFormat(locale, { weekday: "narrow", timeZone: "UTC" }).format(new Date(iso));
-  const longDay = (iso: string) => new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" }).format(new Date(iso));
+  // Under the bars: a short name that tells the days apart (not one letter); for a screen reader: the whole name.
+  const weekday = (iso: string) => weekdayName(iso, locale);
+  const longDay = (iso: string) => weekdayLong(iso, locale);
   const topLinks = links.filter((link) => link.clicks > 0).slice(0, 3);
   const topSources = sources.slice(0, 3);
 
@@ -323,7 +326,7 @@ function WeekCard({ days, views, clicks, links, sources, sample }: WeekCardProps
                   <span
                     className="h-(--h) w-full rounded-sm bg-link"
                     style={{ "--h": `${Math.max(4, (day.views / max) * 100)}%` } as CSSProperties}
-                    aria-label={t("stats.dayLabel", { day: weekday(day.date), views: number(day.views) })}
+                    aria-label={t("stats.dayLabel", { day: longDay(day.date), views: number(day.views) })}
                     role="img"
                   />
                 )}

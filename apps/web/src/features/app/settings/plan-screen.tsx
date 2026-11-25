@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Icon, icons, Skeleton, Spinner, toast } from "@linkyo/ui";
-import { CalendarClock, Check, FileX, LayoutTemplate, type LucideIcon } from "lucide-react";
+import { CalendarClock, Check, FileX, type LucideIcon } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
@@ -17,7 +17,7 @@ import { supabaseEnabled } from "@/lib/supabase/config";
 import { ListGroup, ListRow } from "../list";
 import { ProgressBar } from "../progress-bar";
 import { SETTINGS_HREF } from "../routes";
-import { Screen } from "../screen";
+import { ColumnGroups, Screen } from "../screen";
 import { useSite } from "../site-context";
 
 // ─── What the account's plan is ──────────────────────────────────────────────────────────────
@@ -209,7 +209,7 @@ function PlanGroup({ view }: { view: PlanView }) {
   return (
     <ListGroup title={t("groups.plan")} titleId="plan-current" footer={footer}>
       <ListRow
-        icon={view.plan === "pro" ? icons.ai : LayoutTemplate}
+        icon={view.plan === "pro" ? icons.ai : icons.plan}
         title={<span className="font-semibold">{t.rich(`name.${view.plan}`, bdi)}</span>}
         subtitle={t.rich(`source.${view.source}`, { ...bdi, price })}
         subtitleWrap
@@ -383,8 +383,9 @@ export function PlanScreen() {
   const { state, retry } = usePlan(account.id);
   const quota = useAiQuota({ account: account.id, fresh: true });
   return (
-    <Screen title={t("panes.plan")} back={{ href: SETTINGS_HREF, label: tApp("nav.settings") }}>
-      <div className="grid grid-cols-1 gap-6">
+    <Screen title={t("panes.plan")} back={{ href: SETTINGS_HREF, label: tApp("nav.settings") }} grow>
+      {/* The groups stand in two columns where the column has the room (laptops), one below that. */}
+      <ColumnGroups>
         {state.status === "ready" ? (
           <>
             <PlanGroup view={state.view} />
@@ -395,7 +396,7 @@ export function PlanScreen() {
         ) : (
           <PlanPlaceholder failed={state.status === "failed"} retry={retry} />
         )}
-      </div>
+      </ColumnGroups>
     </Screen>
   );
 }

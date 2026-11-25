@@ -51,6 +51,10 @@
     --toast-start: 0;
     --toast-end: 0;
     --preview-column: 0;
+
+    /* Arbeiten's cover tiles never grow past 352 px (2.75 × the 128 px step of the spacing scale):
+       three projects fill a laptop's column, one or two stay tile-sized instead of filling it. */
+    --work-tile-max: calc(var(--spacing-32) * 2.75);
   }
 
   :root:has([data-tabbar]) {
@@ -59,6 +63,11 @@
 
       /* The tab bar already clears the home indicator. */
       --toast-inset: var(--spacing-4);
+
+      /* Where a toast may stand instead, flush under the 64 px top bar (set only here: the Toaster
+         takes the top only where the app names it). It does so when the bottom would cover the control
+         that was just pressed, or more controls than the top. */
+      --toast-top: var(--spacing-16);
     }
 
     @variant lg {

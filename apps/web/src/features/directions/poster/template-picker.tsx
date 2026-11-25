@@ -21,13 +21,16 @@ type Filter = "all" | "portfolio";
  * the fictional sample creator, see template-previews.ts), so the choice is made on the real thing.
  * Native radio inputs: arrow keys move between templates, screen readers announce the choice.
  *
- * - Phones: one row that scrolls sideways. Laptops (lg): a grid, three or four columns by the room
- *   it has (container queries), so every look is in sight at once.
+ * - Phones: one row that scrolls sideways. Laptops (lg): a grid, three, four or five columns by the
+ *   room it has (container queries; five from a room of `layout.column-wide`, so the cards stay
+ *   about 200 px wide in the wide column of a 1920 px screen), every look in sight at once.
  * - "Alle · Portfolio" narrows the looks to those made for portfolios (tokens: `use`), so a template
  *   added later appears there without code.
- * - The chosen look is brought into view when the picker opens and when the filter changes: inside
- *   the row (the page does not move), or, in the grid, by scrolling the page just enough when it is
- *   below the window. Instantly under reduced motion.
+ * - The chosen look is brought into view when the picker opens and when the filter changes, inside
+ *   the row (phones), instantly under reduced motion. The page itself never moves: the grid on
+ *   laptops has no scroller of its own, and scrolling the page to a card below the window put the
+ *   screen's title, the filter and the first row under the sticky bar a moment after it opened.
+ *   The chosen card is marked (frame, tick, filled) and named in the line below the grid.
  * - `still`: the picker sits in a dashboard panel (Design), so the row runs to the panel's edges.
  * - `order` puts those template ids first (a kind's default and suggestions, see
  *   `suggestedTemplates`); every other look follows in token order, so none is hidden.
@@ -69,22 +72,14 @@ export function TemplatePicker({
     // The first run is the picker opening: in the row it happens before the first paint.
     const first = !opened.current;
     opened.current = true;
-    if (!scroller || !chosen) return;
+    // Only the row scrolls (sideways, on phones). In the grid there is nothing to scroll: the page stays put.
+    if (!scroller || !chosen || scroller.scrollWidth <= scroller.clientWidth) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (scroller.scrollWidth > scroller.clientWidth) {
-      // The row: centre the card in it. scrollBy is relative, so this works in both reading directions.
-      const outer = scroller.getBoundingClientRect();
-      const card = chosen.getBoundingClientRect();
-      if (card.left >= outer.left && card.right <= outer.right) return;
-      scroller.scrollBy({ left: card.left + card.width / 2 - (outer.left + outer.width / 2), behavior: first || reduced ? "instant" : "smooth" });
-      return;
-    }
-    // The grid: once the dashboard has placed the page (its own scroll memory runs after this), and
-    // only when the card is below the window: a page scrolled up on purpose stays where it is.
-    const frame = window.requestAnimationFrame(() => {
-      if (chosen.getBoundingClientRect().bottom > window.innerHeight) chosen.scrollIntoView({ block: "nearest", behavior: reduced ? "instant" : "smooth" });
-    });
-    return () => window.cancelAnimationFrame(frame);
+    // Centre the card in the row. scrollBy is relative, so this works in both reading directions.
+    const outer = scroller.getBoundingClientRect();
+    const card = chosen.getBoundingClientRect();
+    if (card.left >= outer.left && card.right <= outer.right) return;
+    scroller.scrollBy({ left: card.left + card.width / 2 - (outer.left + outer.width / 2), behavior: first || reduced ? "instant" : "smooth" });
   }, [filter]);
 
   return (
@@ -104,7 +99,7 @@ export function TemplatePicker({
           gutter), never past them. A scroller clips what is outside it: pt-1 (taken back by -mt-1) and
           pb-1 keep the focus ring whole. Laptops: a grid in place, nothing to scroll. */}
       <div ref={box} className={cn("-mt-1 overflow-x-auto pt-1 pb-1 lg:overflow-visible", still ? "-mx-4 px-4 lg:mx-0 lg:px-0" : "-mx-5 px-5 lg:mx-0 lg:px-0")}>
-        <div className="grid auto-cols-[38%] grid-flow-col gap-3 sm:auto-cols-[26%] lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3 lg:@prose:grid-cols-4">
+        <div className="grid auto-cols-[38%] grid-flow-col gap-3 sm:auto-cols-[26%] lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3 lg:@prose:grid-cols-4 lg:@column-wide:grid-cols-5">
           {ids.map((id) => {
             const selected = id === value;
             const preview = TEMPLATE_PREVIEWS[id];

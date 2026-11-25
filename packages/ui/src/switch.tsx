@@ -19,8 +19,9 @@ export function Switch({ className, label, ...props }: SwitchProps) {
         "transition-colors duration-standard ease-standard",
         "data-[state=checked]:border-primary data-[state=checked]:bg-primary",
         "focus-visible:focus-ring disabled:opacity-disabled",
-        // 44 pt hit area on touch screens
-        "before:absolute before:-inset-x-0.5 before:-inset-y-3 pointer-fine:before:hidden",
+        // A 46 × 46 px hit area on touch screens: the track is 40 × 24, and the pseudo-element is placed
+        // from its padding box (38 × 22, inside the 1 px border), so it grows 4 px at the sides and 12 above and below.
+        "before:absolute before:-inset-x-1 before:-inset-y-3 pointer-fine:before:hidden",
         className,
       )}
       {...props}

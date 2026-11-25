@@ -2,8 +2,8 @@
 
 import { hasImage } from "@linkyo/blocks";
 import { tokens } from "@linkyo/tokens";
-import { Avatar, cn, Icon, initialsOf, Spinner } from "@linkyo/ui";
-import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, LayoutList, Palette, Plus, type LucideIcon } from "lucide-react";
+import { Avatar, cn, Icon, icons, initialsOf, Spinner } from "@linkyo/ui";
+import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, Palette, Plus, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
@@ -25,7 +25,7 @@ import { useScrolled } from "./use-scrolled";
 /** The four tabs of the phone tab bar (Add sits in the middle; Settings is the avatar in the top bar). */
 const NAV: readonly { key: TabKey; icon: LucideIcon }[] = [
   { key: "home", icon: House },
-  { key: "page", icon: LayoutList },
+  { key: "page", icon: icons.page },
   { key: "design", icon: Palette },
   { key: "analytics", icon: ChartNoAxesColumn },
 ];

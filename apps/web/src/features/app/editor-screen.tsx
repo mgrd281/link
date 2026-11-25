@@ -3,7 +3,7 @@
 import { coverImage, FEATURED_PROJECTS, hasImage, MAX_PROJECTS, slugWord, suggestBlockOrder, type Block, type CreatorKind } from "@linkyo/blocks";
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Badge, Button, cn, Icon, IconButton, icons, initialsOf, Menu, Switch, toast, Tooltip } from "@linkyo/ui";
-import { ArrowDown, ArrowRight, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, Heading, LayoutList, ListOrdered, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, ListOrdered, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Fragment, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
@@ -167,6 +167,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
       title={title ?? t("title")}
       lead={lead}
       preview
+      grow
       actions={
         <>
           <UndoRedo />
@@ -222,7 +223,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
         ) : empty ? (
           <div className="grid justify-items-center gap-4 rounded-lg border border-dashed border-line-strong p-8 text-center">
             <span className="grid size-control-xl place-items-center rounded-full bg-selected text-selected-fg">
-              <Icon icon={LayoutList} size="lg" />
+              <Icon icon={icons.page} size="lg" />
             </span>
             <div className="grid grid-cols-1 gap-1">
               {/* Its one button adds a link, so the words ask for one (a portfolio outside the dashboard too). */}
@@ -296,7 +297,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
         ) : inShell ? (
           // Adding content has its own door (the sidebar, the tab bar); a section is added here.
           empty ? null : (
-            <Button variant="ghost" icon={Heading} className="justify-self-start" onClick={addSection}>
+            <Button variant="ghost" icon={icons.section} className="justify-self-start" onClick={addSection}>
               {t("addSection")}
             </Button>
           )
@@ -306,7 +307,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
             <Button size="lg" variant="tinted" icon={Plus} onClick={() => setAddOpen(true)}>
               {tNav("add")}
             </Button>
-            <Button size="lg" variant="ghost" icon={Heading} onClick={addSection}>
+            <Button size="lg" variant="ghost" icon={icons.section} onClick={addSection}>
               {t("addSection")}
             </Button>
           </div>
@@ -563,7 +564,7 @@ function BlockRow({
         {arranging ? null : grip}
         {inShell ? null : (
           <span className={cn("grid size-control-md shrink-0 place-items-center rounded-sm bg-tinted text-tinted-fg", dim)}>
-            <Icon icon={Heading} size="md" />
+            <Icon icon={icons.section} size="md" />
           </span>
         )}
         <div className="grid min-w-0 flex-1 rounded-[inherit]">{editButton}</div>

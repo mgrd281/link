@@ -1,8 +1,8 @@
 "use client";
 
 import { tokens } from "@linkyo/tokens";
-import { cn, Icon, LogoSymbol, Tooltip } from "@linkyo/ui";
-import { ChartNoAxesColumn, Eye, Gift, House, LayoutList, Palette, PanelLeftClose, PanelLeftOpen, Plus, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
+import { cn, Icon, icons, LogoSymbol, Tooltip } from "@linkyo/ui";
+import { ChartNoAxesColumn, Eye, Gift, House, Palette, PanelLeftClose, PanelLeftOpen, Plus, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, type MouseEvent, type ReactNode } from "react";
 
@@ -36,7 +36,7 @@ export const modified = (event: MouseEvent) => event.button !== 0 || event.metaK
 /** The places in the rail, in order; Team area and Settings sit at its bottom. */
 const PLACES: readonly { key: SectionKey; icon: LucideIcon }[] = [
   { key: "home", icon: House },
-  { key: "page", icon: LayoutList },
+  { key: "page", icon: icons.page },
   { key: "design", icon: Palette },
   { key: "analytics", icon: ChartNoAxesColumn },
   { key: "invite", icon: Gift },

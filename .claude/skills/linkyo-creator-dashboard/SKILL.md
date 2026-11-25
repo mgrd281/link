@@ -54,10 +54,17 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
 
 ## Widths on laptops
 
-- Single column: `max-w-prose lg:max-w-column-wide` (840 px from `lg`). Home and Invite: `wide`
+- Single column: `max-w-prose lg:max-w-column-wide` (840 px from `lg`): a form (Seitenadresse, Impressum, the
+  Settings list). Screens that have the room (`grow`: Page, Arbeiten, Design, and the Plan and Konto panes;
+  the list is `isGrownPath` in `routes.ts`, which the loading frame reads too) take `layout.content` from
+  `lg`, so they start at Home's edge and leave no dead gutters at 1920. Home and Invite: `wide`
   (`layout.content`) with two columns once the column is at least `column-wide`
-  (`@container` + `@column-wide:columns-2`). CSS columns keep the phone's order for reading and focus;
+  (`@container` + `@column-wide:columns-2`; `ColumnGroups` in `screen.tsx` does it for independent groups,
+  as Plan and Konto use it). CSS columns keep the phone's order for reading and focus;
   put `break-before-column` on the item that starts the second column, `break-inside-avoid` on items.
+- Arbeiten's covers: two across on a phone, three from a 560 px room, from 640 px up to four across
+  that stretch to fill the row when there are fewer (never past `--work-tile-max`, 352 px). A card is a
+  flex column and its arrows sit at its foot (`mt-auto`), so a row shows them on one line.
 - Beside the panel a column starts at the panel's edge (x = 288, folded 104); without a panel it is
   centred. `ShellChrome.panel` tells `Screen` which.
 - Check at 390, 1024, 1440 and 1920: at 1920 the main column is at least 760 px, or Home is two
@@ -68,12 +75,18 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
 - `features/directions/poster/template-picker.tsx`: real first screens from
   `template-previews.ts` (WebP in `src/assets/templates`, captured with
   `node scripts/capture-example-shots.mjs templates` against a running build, from the Poster
-  prototype with the fictional sample, never a real person's page). A row on phones, a grid of 3–4 on
-  laptops, "Alle · Portfolio" from the tokens' `use`, the chosen card brought into view. `order` (the
-  welcome flow) puts a kind's starter and suggestions first.
+  prototype with the fictional sample, never a real person's page). A row on phones, a grid of 3–5 on
+  laptops (five from a room of `column-wide`), "Alle · Portfolio" from the tokens' `use`. The chosen card is centred in the row on phones;
+  the grid never scrolls the page (it moved by 472 px at 1440 and put the title and the filter under
+  the bar): a card below the window stays there, marked by its frame, tick and fill.
+  `order` (the welcome flow) puts a kind's starter and suggestions first.
 - A new template: capture it (`template:<id>`), add its import, run `template-previews.test.ts`.
 - The live page on Design: a copy under the bar below `lg`, the toolbar's preview button from `lg`
-  to `desk`, the preview column from `desk`.
+  to `desk`, the preview column from `desk`. The copy on a phone is a quarter of the screen at most
+  (`25svh` with its padding) in a hairline frame (`PhoneFrame frame="hairline"`; the column and the
+  full-screen preview keep the dark bezel), and `PhonePreview`'s `focus` brings the part being changed
+  into view (the first button for colour and buttons, the top for fonts and a new look; the edit
+  sheet's block does the same by itself). It carries `data-toast-avoid`: a toast never stands over it.
 
 ## Arbeiten (`/app/work`)
 
@@ -101,6 +114,14 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
   change is undone or redone by any route, and toasts make room for open sheets
   (`--sheet-toast-start`). On wide screens they centre over the content column (`--toast-start` in
   `globals.css`).
+- On a phone a toast starts above the tab bar and takes the top, under the bar (`--toast-top`), when
+  the bottom would cover the control just pressed or more controls than the top (`pickToastSide` in
+  `packages/ui`), never a part marked `data-toast-avoid`. With a sheet open it stands above the sheet,
+  which stops 64 px (and the notch) short of the top so the two never meet.
+- Targets: the kit grows a small control to 44 px on touch with a `::before` (`pointer-fine:before:hidden`):
+  `Button` md and sm, `IconButton`, `Switch` (46 × 46), the toast's Undo and close. A text link or a
+  toggle of your own does the same (`before:-inset-y-3` for one line of text). `e2e/dashboard-polish.spec.ts`
+  measures every control of Home, Page, Arbeiten, Design and Settings at 390 px by hit-testing.
 
 ## Buttons
 

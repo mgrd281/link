@@ -1,7 +1,7 @@
 "use client";
 
-import { cn, Icon, LogoSymbol, Skeleton, Spinner } from "@linkyo/ui";
-import { ChartNoAxesColumn, Eye, Gift, House, LayoutList, Palette, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
+import { cn, Icon, icons, LogoSymbol, Skeleton, Spinner } from "@linkyo/ui";
+import { ChartNoAxesColumn, Eye, Gift, House, Palette, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, type ReactNode } from "react";
 
@@ -9,7 +9,7 @@ import { useAccount } from "@/features/account/store";
 import { usePathname, useRouter } from "@/i18n/navigation";
 
 import { sectionPanelShown } from "./nav";
-import { routeInfo } from "./routes";
+import { isGrownPath, routeInfo } from "./routes";
 import { SiteProvider } from "./site-context";
 
 /** The admin console's loading screen: the Linkyo symbol and a spinner (its layout is not the dashboard's). */
@@ -29,7 +29,7 @@ export function BrandSplash() {
 /** The rail's places, as in the shell (nav.tsx). */
 const SPLASH_NAV = [
   { key: "home", icon: House },
-  { key: "page", icon: LayoutList },
+  { key: "page", icon: icons.page },
   { key: "design", icon: Palette },
   { key: "analytics", icon: ChartNoAxesColumn },
   { key: "invite", icon: Gift },
@@ -54,10 +54,12 @@ export function AppSplash() {
   // The place being opened decides the frame, as in the shell and Screen: the section panel only
   // where it has one (and the fold toggle with it), the wide column from lg, centred without a panel.
   // Otherwise Home, Page and Design would jump once the shell mounts.
-  const section = routeInfo(usePathname()).section;
+  const pathname = usePathname();
+  const section = routeInfo(pathname).section;
   const panel = sectionPanelShown(section);
   const wide = section === "home" || section === "invite" || (section === "analytics" && !panel);
-  const column = cn("mx-auto", wide ? "max-w-content" : "max-w-prose lg:max-w-column-wide", panel && "lg:mx-0");
+  // The screens that `grow` take the content width from laptops on (Screen), the forms stop at column-wide.
+  const column = cn("mx-auto", wide ? "max-w-content" : cn("max-w-prose", isGrownPath(pathname) ? "lg:max-w-content" : "lg:max-w-column-wide"), panel && "lg:mx-0");
   return (
     // data-grouped: the same ground and scrollbar gutter as the shell, so nothing shifts when it appears.
     // data-console="frame": black and grey from the first paint, as the shell (ADR 0062).

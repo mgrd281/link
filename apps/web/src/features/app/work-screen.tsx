@@ -6,7 +6,7 @@ import { Badge, cn, Icon, IconButton, initialsOf, Spinner, toast } from "@linkyo
 import { Check, ChevronLeft, ChevronRight, CircleDashed, CircleCheck, ImageOff, ImagePlus, Link2, PencilLine } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useContext, useId, useState } from "react";
+import { useContext, useId, useState, type CSSProperties } from "react";
 
 import { blockIcon } from "@/features/directions/editor/ui";
 import { remoteImageProps, resolveMedia } from "@/features/directions/shared/media";
@@ -224,6 +224,16 @@ export function AddWorkWays() {
 // ─── The screen ───────────────────────────────────────────────────────────────────────────────
 
 /**
+ * The covers' grid. Two across on a phone, three from a room of 560 px, and from 640 px as many as
+ * there are projects up to four (`--n`, set on the list): three projects fill their column instead of
+ * leaving a quarter of it empty (the grid had four tracks for them), and six stand four across and
+ * wrap. The list is as wide as `--n` tiles of `--work-tile-max` (globals.css) at most, so one or two
+ * covers stay tile-sized instead of filling the column.
+ */
+const COVERS =
+  "grid grid-cols-2 gap-3 @creator:grid-cols-3 @prose:grid-cols-[repeat(var(--n),minmax(0,1fr))] @prose:max-w-[calc(var(--n)_*_var(--work-tile-max)_+_(var(--n)_-_1)_*_var(--spacing-3))]";
+
+/**
  * "Arbeiten": every project of the page as a cover (two columns on a phone, four on a laptop) with
  * its title, its years, its one next step and how many of its pictures wait for a description. The
  * arrows change the order (one undo each), a tap opens the project, and the three ways to add and the
@@ -242,6 +252,7 @@ export function WorkScreen() {
       title={t("title")}
       lead={projects.length > 0 ? lead : undefined}
       preview
+      grow
       actions={
         <>
           <UndoRedo />
@@ -261,7 +272,7 @@ export function WorkScreen() {
       ) : (
         <div className="@container">
           {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari (VoiceOver) drops the list semantics without it */}
-          <ul role="list" aria-label={t("title")} className="grid grid-cols-2 gap-3 @creator:grid-cols-3 @prose:grid-cols-4">
+          <ul role="list" aria-label={t("title")} className={COVERS} style={{ "--n": Math.min(projects.length, 4) } as CSSProperties}>
             {projects.map((project, index) => (
               <WorkCard key={project.id} project={project} position={index} count={projects.length} />
             ))}
@@ -306,7 +317,7 @@ function WorkCard({ project, position, count }: { project: Project; position: nu
   };
 
   return (
-    <li className="group relative grid min-w-0 content-start gap-2 rounded-lg bg-group p-2 lg:border lg:border-line">
+    <li className="group relative flex min-w-0 flex-col gap-2 rounded-lg bg-group p-2 lg:border lg:border-line">
       <span className={cn("relative block aspect-portrait overflow-hidden rounded-md bg-canvas-muted", !project.visible && "opacity-secondary")}>
         <Cover project={project} />
       </span>
@@ -347,10 +358,12 @@ function WorkCard({ project, position, count }: { project: Project; position: nu
         ) : null}
       </span>
       {count > 1 ? (
-        // Earlier and later in reading order: the arrows point the other way in Arabic.
-        <span className="layer-raised relative flex justify-end gap-1">
-          <IconButton icon={ChevronLeft} size="sm" label={t("moveEarlier", { title })} disabled={position === 0} onClick={() => move(-1)} />
-          <IconButton icon={ChevronRight} size="sm" label={t("moveLater", { title })} disabled={position === count - 1} onClick={() => move(1)} />
+        // Earlier and later in reading order: the arrows point the other way in Arabic. 40 px to see, a
+        // 44 px target each on touch screens; the 4 px between them keeps the two hit areas side by side.
+        // At the card's foot (mt-auto), so a row of cards shows its arrows on one line.
+        <span className="layer-raised relative mt-auto flex justify-end gap-1">
+          <IconButton icon={ChevronLeft} label={t("moveEarlier", { title })} disabled={position === 0} onClick={() => move(-1)} />
+          <IconButton icon={ChevronRight} label={t("moveLater", { title })} disabled={position === count - 1} onClick={() => move(1)} />
         </span>
       ) : null}
     </li>
