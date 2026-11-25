@@ -310,7 +310,15 @@ export function PrivacyNotice({ providers }: { providers: string[] }) {
             <Icon icon={ShieldCheck} size="md" className="text-creator-accent-text @column-wide:hidden" />
             <span className="@max-prose:sr-only">{t("privacyManage")}</span>
           </button>
-          <button type="button" onClick={() => decide("essential")} className={cn(barButton, "border border-creator-accent-text text-creator-accent-text hover:bg-creator-surface-2")}>
+          {/* Its 1 px border is outside the extension's box: the extension reaches 3 px (not 2) so the target is 44 px like the others. */}
+          <button
+            type="button"
+            onClick={() => decide("essential")}
+            className={cn(
+              barButton,
+              "border border-creator-accent-text text-creator-accent-text hover:bg-creator-surface-2 pointer-coarse:before:-inset-[calc(var(--spacing-0_5)_+_var(--border-width-hairline))]",
+            )}
+          >
             {t("privacyEssential")}
           </button>
           <button type="button" onClick={() => decide("media")} aria-describedby={sentenceId} className={cn(barButton, "bg-creator-accent text-creator-accent-fg")}>

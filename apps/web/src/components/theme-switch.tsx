@@ -1,11 +1,12 @@
 "use client";
 
-import { Segmented } from "@linkyo/ui";
+import { cn, Segmented } from "@linkyo/ui";
 import { Moon, Sun, SunMoon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSyncExternalStore } from "react";
 
 import { THEME_STORAGE_KEY } from "@/lib/theme-script";
+import { touchSegmented } from "@/lib/touch";
 
 type Theme = "light" | "dark";
 type Choice = Theme | "system";
@@ -84,7 +85,8 @@ export function ThemeSwitch({
         label={label ?? t("label")}
         value={theme}
         onValueChange={apply}
-        className={className}
+        // Sun and moon are 44 px targets on a touch screen (they were 34 × 36).
+        className={cn(touchSegmented, className)}
         options={[
           { value: "light", label: t("light"), icon: Sun, iconOnly: true },
           { value: "dark", label: t("dark"), icon: Moon, iconOnly: true },

@@ -38,6 +38,11 @@ reports unknown classes.
     `border-focus`, never `focus-ring` around a framed field. Buttons and links keep `focus-ring`.
   - Grow a small control's tap area on touch with `before:absolute before:inset-0
     pointer-coarse:before:-inset-0.5` (and `relative`), as `IconButton` does.
+  - On a phone every control has a hit area of 44 × 44 px: its own box plus that invisible extension.
+    `e2e/touch-targets.spec.ts` measures it on the home page, the template gallery and a creator page (the
+    box united with its `::before`, and the extension must not be clipped or covered). A control with a
+    border needs a bigger inset (the extension starts inside the border); a `Segmented`, whose track
+    scrolls sideways and so clips an extension, takes `touchSegmented` (`lib/touch.ts`) instead.
 - **Sticky bars sit flush under the header** (`sticky top-16`: the header is `h-16`) on a solid
   `bg-canvas` band, so no content shows between them.
 - **No raw colors, lengths or fonts** in `apps/web` or `packages/ui`. That rules out `#hex`, `rgb()`,
