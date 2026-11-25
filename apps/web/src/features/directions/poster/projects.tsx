@@ -361,8 +361,11 @@ function TextPlate({ project, wide }: { project: Project; wide: boolean }): Reac
 /**
  * Leuchttisch's strip: the first covers of the work at their own ratios, each the link to its project,
  * with a frame number under it ("01/06", tabular figures) and its title. Phones: a strip to swipe, up to
- * 70svh tall, each picture whole on the screen (as tall as 70svh allows, never wider than the column
- * less a peek of the next one), standing on one line so the captions align, snapping picture by picture.
+ * 70svh tall, snapping picture by picture. Every picture stands at one height, as tall as the widest of
+ * them allows when it is whole on the screen (the column less a peek of the next one), never above 70svh;
+ * each width follows its own ratio, so nothing is cropped, the captions stand on one line, and the strip is
+ * one picture plus its caption tall. (Each picture used to be as wide as the column, so a portrait made
+ * the whole strip as tall as itself and left an empty band under the landscape pictures.)
  * The canvas: one justified row across the wall (every picture as tall as the others), never taller
  * than 70svh. No text on a picture; the first picture is the page's one preloaded picture.
  */
@@ -390,6 +393,8 @@ export function ProjectStrip({
     return picture ? [{ project, picture, ratio: pictureRatio(picture), position: index + 1 }] : [];
   });
   const sum = frames.reduce((total_, frame) => total_ + frame.ratio, 0);
+  // The widest picture (the largest ratio) sets the one height of all pictures on a phone.
+  const widest = frames.reduce((most, frame) => Math.max(most, frame.ratio), 0);
   if (frames.length === 0) return null;
   return (
     // A region to scroll on phones; on the canvas, where the row fits, a plain box (ScrollRegion).
@@ -397,7 +402,7 @@ export function ProjectStrip({
       {/* The row is never taller than 70svh on the canvas: its width stops at 70svh times its ratios. */}
       <ol
         data-scroll-track
-        style={{ "--strip": sum } as CSSProperties}
+        style={{ "--strip": sum, "--widest": widest } as CSSProperties}
         className={cn(railTrack, "flex items-start gap-2 @work:max-w-[calc(70svh*var(--strip))] @work:snap-none @work:gap-3 @work:overflow-visible")}
       >
         {frames.map(({ project, picture, ratio, position }, index) => {
@@ -410,7 +415,7 @@ export function ProjectStrip({
               id={project.slug}
               data-block={project.id}
               style={{ "--ratio": ratio } as CSSProperties}
-              className="grid w-[min(calc(100%-var(--spacing-8)),calc(70svh*var(--ratio)))] min-w-0 shrink-0 snap-start scroll-mt-16 @work:w-auto @work:flex-[var(--ratio)_1_0%] @work:shrink"
+              className="grid w-[calc(min(70svh,(100%_-_var(--spacing-8))_/_var(--widest))_*_var(--ratio))] min-w-0 shrink-0 snap-start scroll-mt-16 @work:w-auto @work:flex-[var(--ratio)_1_0%] @work:shrink"
             >
               <Shell entry={entry} onOpen={onOpen} className="grid min-w-0 content-start gap-2">
                 <div data-plate className="relative aspect-(--ratio) w-full overflow-hidden bg-creator-surface-2">
