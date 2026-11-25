@@ -7,6 +7,8 @@ import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
+import { TRY_AI_ANY } from "@/features/marketing/try-ai";
+
 import { CLIENT_NAMESPACES, clientMessages, pickMessages } from "./client-messages";
 
 type Messages = Record<string, unknown>;
@@ -61,10 +63,26 @@ describe("client messages per route group (E-03)", () => {
     const site = clientMessages(DE, "site");
     // What only other areas read stays out: sign-up, legal texts, checkout, the team console, e-mails.
     for (const namespace of ["auth", "legal", "checkout", "service", "admin", "email", "ui", "design"]) expect(has(site, namespace), namespace).toBe(false);
+    // 9 KB: the home page's whole HTML is budgeted at 60 KB (WP4.3b: 7.4 KB in German, 8.4 KB in Arabic).
     for (const locale of ["de", "en", "ar"] as const) {
       const size = gzipSync(JSON.stringify(clientMessages(CATALOGUES[locale], "site"))).length;
-      expect(size, `site words in ${locale}: ${String(size)} bytes gzip`).toBeLessThan(12_000);
+      expect(size, `site words in ${locale}: ${String(size)} bytes gzip`).toBeLessThan(9_000);
     }
+  });
+
+  it("leaves the AI run's words out of the website while no AI tab can show (phase 1: no real recording)", () => {
+    const site = clientMessages(DE, "site");
+    for (const path of ["ai.run", "app.ai.platform", "app.ai.review.topics", "marketing.try.ai"]) expect(has(site, path), path).toBe(TRY_AI_ANY);
+    // The playground's own words stay.
+    expect(has(site, "marketing.try.tabs")).toBe(true);
+  });
+
+  it("gives the example pages and the playground's phone a creator page's island words, not a portfolio's server-rendered ones", () => {
+    const site = clientMessages(DE, "site");
+    expect(has(site, "creator.portfolio.viewer")).toBe(true);
+    expect(has(site, "creator.privacyAllow")).toBe(true);
+    expect(has(site, "creator.portfolio.work")).toBe(false);
+    expect((clientMessages(DE, "site") as { creator: unknown }).creator).toEqual((clientMessages(DE, "creator") as { creator: unknown }).creator);
   });
 
   it("gives creator pages their islands' words and not the portfolio's server-rendered ones", () => {

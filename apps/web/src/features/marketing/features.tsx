@@ -6,12 +6,10 @@ import { Check } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
-import { RECORDINGS, type RecordingLocale } from "@/features/ai/recordings";
 import { initials } from "@/features/directions/shared/creator-kit";
 import { resolveMedia } from "@/features/directions/shared/media";
 import { LOOKS } from "@/features/examples/looks";
 import { journalistAr, journalistDe, journalistEn } from "@/features/previews/journalist";
-import { aiTryPublic } from "@/lib/flags";
 import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 
 import { phoneSizes } from "./assets";
@@ -21,6 +19,8 @@ import { SECTION_TITLE } from "./headings";
 import { Picture } from "./picture";
 import { siteState } from "./site-state";
 import { StoryPicture, type StoryArt } from "./story-picture";
+import { CARD_VARS, FACE_VARS, pickVars } from "./theme-vars";
+import { tryAiTab } from "./try-ai";
 import { TRY_LOOKS } from "./try-looks";
 
 const SW = creatorTokens.swatches;
@@ -159,7 +159,7 @@ function SharePreview() {
       {/* Upright and whole: the picture as it is posted. It arrives just after the chat bubble. */}
       <div className="mk-pop grid w-1/2 gap-2 justify-self-center md:justify-self-start" style={{ "--i": 1 } as CSSProperties}>
         <span className="justify-self-start rounded-full bg-surface px-2 py-0.5 text-caption font-semibold text-fg-secondary">{t("story")}</span>
-        <StoryPicture art={art} photo={typeof media === "string" ? media : media.src} faces={theme.cssVars} />
+        <StoryPicture art={art} photo={typeof media === "string" ? media : media.src} faces={pickVars(theme.cssVars, FACE_VARS)} />
       </div>
     </div>
   );
@@ -286,7 +286,7 @@ export function TryIt() {
   const names = useTranslations("templates");
   const locale = useLocale();
   const rtl = locale === "ar";
-  const aiTab = aiTryPublic && RECORDINGS[locale as RecordingLocale]?.kind === "real";
+  const aiTab = tryAiTab(locale);
   const [head, ...tail]: LookOption[] = TRY_LOOKS.map(({ id, config }) => {
     const template = config.template ?? "nocturne";
     const theme = resolveCreatorTheme(config, { rtlScript: rtl });
@@ -295,7 +295,7 @@ export function TryIt() {
       config,
       name: creatorTokens.templates[template].label,
       description: names(`${template}.description`),
-      vars: theme.cssVars,
+      vars: pickVars(theme.cssVars, CARD_VARS),
       button: theme.buttonStyle,
       hero: theme.layout.hero,
     };
