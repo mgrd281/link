@@ -1,4 +1,5 @@
-import { hasImage, type Block } from "@linkyo/blocks";
+import type { Block } from "@linkyo/blocks";
+import { hasImage } from "@linkyo/blocks/rules";
 
 /** What /api/link-metadata knows about a pasted link (see LinkMetadataResponse in the route). */
 export interface LinkMetadata {

@@ -1,4 +1,5 @@
-import { NO_IMAGE, type Page } from "@linkyo/blocks";
+import type { Page } from "@linkyo/blocks";
+import { NO_IMAGE } from "@linkyo/blocks/rules";
 
 import type { SignUpInput, Site } from "./types";
 import { isProvisionalUsername, nameFromUsername } from "./username";

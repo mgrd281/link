@@ -1,4 +1,5 @@
-import { NO_IMAGE, type Block, type BlockType, type Detection } from "@linkyo/blocks";
+import type { Block, BlockType, Detection } from "@linkyo/blocks";
+import { NO_IMAGE } from "@linkyo/blocks/rules";
 
 import { blockFromDetection } from "@/features/directions/editor/state";
 

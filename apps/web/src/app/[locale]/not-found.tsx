@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { NotFoundScreen } from "@/features/errors/error-screen";
+import { NotFoundScreen } from "@/features/errors/lazy-screens";
 import { NOINDEX } from "@/lib/seo";
 
 /**
@@ -14,7 +14,8 @@ export const metadata: Metadata = { robots: NOINDEX };
 /**
  * An address that does not exist under a language (unknown routes, unknown example pages, and the
  * dashboard's and team area's addresses that can never exist): Linkyo's page in that language, in
- * the colours of the part of Linkyo it belongs to. Answered with status 404.
+ * the colours of the part of Linkyo it belongs to. Answered with status 404. Its code loads with a
+ * not-found page only, not with every page under a language (`lazy-screens.tsx`, ADR 0008).
  */
 export default function LocaleNotFound() {
   return <NotFoundScreen />;

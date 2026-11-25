@@ -37,6 +37,36 @@ export const NO_IMAGE = "none:";
 export const hasImage = (image: { src: string } | undefined | null): image is { src: string } => !!image && image.src !== NO_IMAGE && image.src.length > 0;
 
 /**
+ * The platforms a social profile or a smart link can be on. `platformSchema` (./schema) is built from
+ * this list; it lives here so the dashboard's editor can check a value without loading Zod.
+ */
+export const PLATFORMS = [
+  "youtube",
+  "youtubemusic",
+  "spotify",
+  "applemusic",
+  "soundcloud",
+  "deezer",
+  "tidal",
+  "bandcamp",
+  "tiktok",
+  "instagram",
+  "twitch",
+  "kick",
+  "x",
+  "threads",
+  "bluesky",
+  "discord",
+  "whatsapp",
+  "telegram",
+  "facebook",
+  "linkedin",
+  "github",
+  "email",
+  "website",
+] as const;
+
+/**
  * A project's address part: /<username>/<slug>. 2–48 lowercase letters, numbers and single dashes.
  * Made by code from the title (`slugFor`, ./project), unique on its page, never a reserved word.
  */

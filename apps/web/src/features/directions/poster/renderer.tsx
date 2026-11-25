@@ -10,7 +10,8 @@ import { useId, type CSSProperties, type ReactNode } from "react";
 import { themeStyle } from "@/features/creator/theme";
 
 import { CreatorFooter, MediaImage, mediaSizes, type CreatorFooterLinks } from "../shared/creator-kit";
-import { PrivacyNotice } from "../shared/privacy";
+import { PrivacyNotice } from "../shared/privacy-notice";
+import { Unblur } from "../shared/unblur";
 import { externalProviders } from "../shared/providers";
 import {
   BrandGrid,
@@ -30,18 +31,18 @@ import { AppFeature, AppList, RepoCard } from "./apps";
 import { EventTabs } from "./events";
 import { PosterBar, PosterHero } from "./hero";
 import { JustifiedRows, ratioOf, WIDE_ROW } from "./justified";
-import { LaufbahnAbout, LaufbahnSkills, LaufbahnText, LaufbahnTimeline, SignpostIndex, SignpostSection, signposts as signpostsOf } from "./laufbahn";
+// Laufbahn's index, its contents and the blocks it reads in its own way load with its pages only: these
+// client modules split them off (ADR 0008's page budget). Its bleed hero and its words are plain server code.
+import { LaufbahnAbout, LaufbahnSkills, LaufbahnText, LaufbahnTimeline } from "./signposted-blocks";
 import { isLetter } from "./laufbahn-content";
-import { BleedHero, type Lead } from "./laufbahn-hero";
+import { BleedHero } from "./laufbahn-hero";
+import { SignpostedBody } from "./signposted-lazy";
 import { ReadmeHero, StripHero, TitleBlockHero } from "./portfolio-heroes";
 import { AboutSection, BrandNames, ContactBand, QuotesSection, TimelineSection, ToolsSection } from "./portfolio-sections";
 import { ProjectPage } from "./project-page";
 import { ProjectPlate, ProjectsGroup, ProjectStrip } from "./projects";
 import { featuredApp, groupSections, type PosterItem, type PosterSection as Section } from "./sections";
 import { cardSurface, pageSide, pressable, railFrame, sectionTitle, type HeadingTag } from "./styles";
-
-/** The start of a signposted page's content: "read on" leads here when the first section has no title. */
-const CONTENT_ID = "page-content";
 
 /** Leuchttisch's strip holds the first covers of the work: at most five, at least three when there are three. */
 const STRIP_MAX = 5;
@@ -215,22 +216,10 @@ export function PosterRenderer({
   const inColumn = (section: Section, item: PosterItem) => full && spanOf(section) === "wide" && !isPictureItem(item);
   // Numbered titles count the titled sections: 01, 02 …
   const titled = sections.filter((section) => section.title !== null);
-  // Signposted templates (Laufbahn) list the titled sections as the page's contents.
+  // Signposted templates (Laufbahn) list the titled sections as the page's contents (`./signposted.tsx`).
   const signposted = layout.headings === "signpost";
-  const signposts = signposted ? signpostsOf(sections) : [];
-  const firstSign = signposts[0];
-  // Without a contact block the bleed hero's first action leads to the cover letter when the page has
-  // one, else to the first section when that is titled, else to the start of the content (an untitled
-  // run, a live card or a release first, is never skipped).
+  // Their cover letter: the bleed hero's first action may lead to it, and its text reads as a letter.
   const letter = signposted ? letterOf(sections, profile.locale) : undefined;
-  const letterSign = letter ? signposts.find((sign) => sign.id === letter.section) : undefined;
-  const heroLead: Lead | undefined = letterSign
-    ? { href: `#${letterSign.anchor}`, kind: "letter" }
-    : !firstSign
-      ? undefined
-      : sections[0]?.id === firstSign.id
-        ? { href: `#${firstSign.anchor}`, kind: "section", title: firstSign.title }
-        : { href: `#${CONTENT_ID}`, kind: "content" };
   const projects = blocks.filter((block): block is BlockOf<"project"> => block.type === "project");
   const portfolio: PortfolioContext = {
     theme,
@@ -250,6 +239,81 @@ export function PosterRenderer({
   // The hero's own props, the same for every treatment.
   const heroProps = { profile, socials, live, theme, preview, contact, primary, now };
   const quotes = portfolio.quotes;
+  const banner = overlay !== undefined && overlay !== null;
+  // The bleed hero comes with Laufbahn's body (its first action needs the page's contents); every other
+  // treatment is drawn here.
+  const hero =
+    layout.hero === "bleed" ? (
+      signposted ? null : (
+        <BleedHero
+          profile={profile}
+          socials={socials}
+          live={live}
+          theme={theme}
+          preview={preview}
+          contact={contact}
+          primary={primary}
+          now={now}
+          lead={undefined}
+          banner={banner}
+        />
+      )
+    ) : layout.hero === "strip" ? (
+      <StripHero
+        {...heroProps}
+        strip={
+          strip.length > 0 && firstRun ? (
+            <ProjectStrip projects={strip} total={firstRun.blocks.length} quotes={quotes} base={projectBase} suffix={projectSuffix} onOpen={onOpenProject} priority={!preview} />
+          ) : undefined
+        }
+      />
+    ) : layout.hero === "titleblock" ? (
+      <TitleBlockHero
+        {...heroProps}
+        plate={
+          lead && firstRun ? (
+            <ProjectPlate
+              project={lead}
+              total={firstRun.blocks.length}
+              theme={theme}
+              locale={profile.locale}
+              quotes={quotes}
+              base={projectBase}
+              suffix={projectSuffix}
+              onOpen={onOpenProject}
+              priority={!preview}
+              drawing
+            />
+          ) : undefined
+        }
+      />
+    ) : layout.hero === "readme" ? (
+      <ReadmeHero
+        {...heroProps}
+        tools={blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")}
+        repos={projects.flatMap((project) => (project.source ? [`${project.source.owner}/${project.source.repo}`] : []))}
+      />
+    ) : (
+      <PosterHero
+        {...heroProps}
+        plate={
+          lead && firstRun ? (
+            <ProjectPlate
+              project={lead}
+              total={firstRun.blocks.length}
+              theme={theme}
+              locale={profile.locale}
+              quotes={quotes}
+              base={projectBase}
+              suffix={projectSuffix}
+              onOpen={onOpenProject}
+              priority={!preview}
+            />
+          ) : undefined
+        }
+      />
+    );
+  const itemProps = { linkStyle, surface, gallery: layout.gallery, featured, preview };
 
   return (
     <div
@@ -301,128 +365,47 @@ export function PosterRenderer({
         }
       >
         {overlay ? <div className="pointer-events-none absolute inset-x-0 top-3 layer-raised flex justify-center px-creator-gutter @prose:top-12 *:pointer-events-auto">{overlay}</div> : null}
-        <PosterBar
-          profile={profile}
-          primary={primary}
-          primaryBlock={contact?.id}
-          solid={signposted}
-          sections={signposts.length > 1 ? signposts.map(({ anchor, title }) => ({ anchor, title })) : undefined}
-        />
-        {layout.hero === "bleed" ? (
-          <BleedHero
+        {signposted ? (
+          <SignpostedBody
             profile={profile}
-            socials={socials}
-            live={live}
-            theme={theme}
-            preview={preview}
-            contact={contact}
             primary={primary}
-            now={now}
-            lead={heroLead}
-            banner={overlay !== undefined && overlay !== null}
-          />
-        ) : layout.hero === "strip" ? (
-          <StripHero
-            {...heroProps}
-            strip={
-              strip.length > 0 && firstRun ? (
-                <ProjectStrip projects={strip} total={firstRun.blocks.length} quotes={quotes} base={projectBase} suffix={projectSuffix} onOpen={onOpenProject} priority={!preview} />
-              ) : undefined
-            }
-          />
-        ) : layout.hero === "titleblock" ? (
-          <TitleBlockHero
-            {...heroProps}
-            plate={
-              lead && firstRun ? (
-                <ProjectPlate
-                  project={lead}
-                  total={firstRun.blocks.length}
-                  theme={theme}
-                  locale={profile.locale}
-                  quotes={quotes}
-                  base={projectBase}
-                  suffix={projectSuffix}
-                  onOpen={onOpenProject}
-                  priority={!preview}
-                  drawing
-                />
-              ) : undefined
-            }
-          />
-        ) : layout.hero === "readme" ? (
-          <ReadmeHero
-            {...heroProps}
-            tools={blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")}
-            repos={projects.flatMap((project) => (project.source ? [`${project.source.owner}/${project.source.repo}`] : []))}
+            contact={contact}
+            sections={sections}
+            items={Object.fromEntries(
+              sections.map((section) => [
+                section.id,
+                section.items.map((item) => (
+                  <PosterItemView
+                    key={itemKey(item)}
+                    item={item}
+                    {...itemProps}
+                    label={section.title ?? profile.displayName}
+                    nested={section.title !== null}
+                    portfolio={{ ...portfolio, section: { title: section.title, letter: letter?.block } }}
+                  />
+                )),
+              ]),
+            )}
+            marks={Object.fromEntries(
+              sections.map((section) => [section.id, { blockIds: preview && section.title !== null ? section.id : undefined, ai: isAiBlock(blocks.find((block) => block.id === section.id)) }]),
+            )}
+            letter={letter}
+            heroProps={heroProps}
+            hero={hero}
+            banner={banner}
+            preview={preview}
           />
         ) : (
-          <PosterHero
-            {...heroProps}
-            plate={
-              lead && firstRun ? (
-                <ProjectPlate
-                  project={lead}
-                  total={firstRun.blocks.length}
-                  theme={theme}
-                  locale={profile.locale}
-                  quotes={quotes}
-                  base={projectBase}
-                  suffix={projectSuffix}
-                  onOpen={onOpenProject}
-                  priority={!preview}
-                />
-              ) : undefined
-            }
-          />
+          <>
+            <PosterBar profile={profile} primary={primary} primaryBlock={contact?.id} solid={false} sections={undefined} />
+            {hero}
+            {/* Marks the end of the hero: the Linkyo bar slides in once this has scrolled up. */}
+            <div data-poster-sentinel aria-hidden />
+          </>
         )}
-        {/* Marks the end of the hero: the Linkyo bar slides in once this has scrolled up. */}
-        <div data-poster-sentinel aria-hidden />
 
         {/* A preview sits inside the dashboard, which already has the page's one <main>. */}
-        {signposted ? (
-          // Phones: the sections under the hero (their contents open from the app bar). Tablets: the index's
-          // chips, then the sections, in the reading column. The wide canvas: the index sticky in the first
-          // three columns, the sections in the last eight.
-          <Main
-            id={CONTENT_ID}
-            className="grid grid-cols-1 gap-10 px-creator-gutter pt-10 @prose:mx-auto @prose:max-w-prose @prose:px-0 @work:max-w-none @work:grid-cols-12 @work:gap-x-6 @work:pt-24"
-          >
-            {signposts.length > 1 ? <SignpostIndex entries={signposts} /> : null}
-            {/* Beside the index in the last eight columns; without an index in the first eight, under the hero's words. */}
-            <div className={cn("relative grid min-w-0 grid-cols-1 gap-12 @work:col-span-8 @work:gap-16", signposts.length > 1 ? "@work:col-start-5" : "@work:col-start-1")}>
-              {sections.map((section) => {
-                // Nothing rises in as it scrolls: the page scrolls, the content stays still (as in an app).
-                return (
-                  <SignpostSection
-                    key={section.id}
-                    entry={signposts.find((sign) => sign.id === section.id)}
-                    blockIds={preview && section.title !== null ? section.id : undefined}
-                    ai={isAiBlock(blocks.find((block) => block.id === section.id))}
-                  >
-                    {section.items.map((item) => (
-                      <PosterItemView
-                        key={itemKey(item)}
-                        item={item}
-                        linkStyle={linkStyle}
-                        surface={surface}
-                        label={section.title ?? profile.displayName}
-                        nested={section.title !== null}
-                        gallery={layout.gallery}
-                        featured={featured}
-                        portfolio={{ ...portfolio, section: { title: section.title, letter: letter?.block } }}
-                        preview={preview}
-                      />
-                    ))}
-                  </SignpostSection>
-                );
-              })}
-              {/* The end of the content: once it is on screen, the index marks the last section. Out of the
-                  grid's flow (absolute), so it adds no gap under the last section. */}
-              <div data-lb-end aria-hidden className="absolute inset-x-0 bottom-0 h-px" />
-            </div>
-          </Main>
-        ) : (
+        {signposted ? null : (
           <Main
             className={
               airy
@@ -484,6 +467,7 @@ export function PosterRenderer({
         {dock}
         {/* Over everything, including the claim bar, until the visitor has decided. */}
         {providers.length > 0 ? <PrivacyNotice providers={providers} /> : null}
+        <Unblur />
       </div>
     </div>
   );

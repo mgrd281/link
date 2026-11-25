@@ -1,6 +1,7 @@
 "use client";
 
-import { NO_IMAGE, type Page } from "@linkyo/blocks";
+import type { Page } from "@linkyo/blocks";
+import { NO_IMAGE } from "@linkyo/blocks/rules";
 import { useSyncExternalStore } from "react";
 
 import type { ActivityEvent, AdminDb, Locale, Member, PreparedDraft, Role } from "./types";

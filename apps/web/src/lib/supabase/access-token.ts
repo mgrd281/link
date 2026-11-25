@@ -1,6 +1,6 @@
 "use client";
 
-import { browserSupabase } from "./browser";
+import { loadBrowserSupabase } from "./browser";
 import { supabaseEnabled } from "./config";
 
 /**
@@ -9,6 +9,6 @@ import { supabaseEnabled } from "./config";
  */
 export async function accessToken(): Promise<string | null> {
   if (!supabaseEnabled) return null;
-  const { data } = await browserSupabase().auth.getSession();
+  const { data } = await (await loadBrowserSupabase()).auth.getSession();
   return data.session?.access_token ?? null;
 }

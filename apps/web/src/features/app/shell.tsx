@@ -1,6 +1,6 @@
 "use client";
 
-import { hasImage } from "@linkyo/blocks";
+import { hasImage } from "@linkyo/blocks/rules";
 import { tokens } from "@linkyo/tokens";
 import { Avatar, cn, Icon, icons, initialsOf, Spinner } from "@linkyo/ui";
 import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, Palette, Plus, type LucideIcon } from "lucide-react";
@@ -13,9 +13,10 @@ import { useAccount } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 
-import { AddSheet, type AddDoor } from "./add-sheet";
+import type { AddDoor } from "./add-sheet";
 import { useHasUnsavedDraft } from "./drafts";
-import { EditSheet } from "./edit-sheet";
+// The Add and Edit sheets load the first time one opens (ADR 0008).
+import { AddSheet, EditSheet } from "./sheets-lazy";
 import { modified, NavRail, SectionPanel, sectionPanelShown, useJumpToHash } from "./nav";
 import { LAST_APP_PATH_KEY, markedTab, ORIGIN_TAB_KEY, routeInfo, SETTINGS_HREF, TAB_HREF, TABS, type TabKey } from "./routes";
 import { BackLink, ShellBackContext, ShellChromeContext } from "./screen";

@@ -1,6 +1,8 @@
 "use client";
 
-import { detectLink, detectMany, formatYears, type Block, type BlockType } from "@linkyo/blocks";
+import type { Block, BlockType } from "@linkyo/blocks";
+import { detectLink, detectMany } from "@linkyo/blocks/detect";
+import { formatYears } from "@linkyo/blocks/project";
 import { toast } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ChangeEvent, type ClipboardEvent, type KeyboardEvent } from "react";

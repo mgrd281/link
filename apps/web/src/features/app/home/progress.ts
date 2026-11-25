@@ -1,4 +1,4 @@
-import { hasImage } from "@linkyo/blocks";
+import { hasImage } from "@linkyo/blocks/rules";
 
 import type { Site } from "@/features/account/types";
 

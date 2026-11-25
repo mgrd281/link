@@ -113,6 +113,7 @@ describe("creator-written text on a page", () => {
     expect(marked(poster("renderer.tsx"), "block.text")).toBe(true);
     expect(marked(poster("renderer.tsx"), "title")).toBe(true);
     expect(marked(poster("events.tsx"), "event.name")).toBe(true);
-    expect(marked(poster("live.tsx"), "block.title")).toBe(true);
+    // The live card prints its title in its island (live.tsx renders it on the server).
+    expect(marked(poster("live-island.tsx"), "block.title")).toBe(true);
   });
 });

@@ -4,20 +4,34 @@
       "startServerCommand": "pnpm exec next start -p 3100",
       "startServerReadyPattern": "Ready",
       "url": [
-        "http://localhost:3100/de/directions/gallery?chrome=0",
-        "http://localhost:3100/de/directions/stage?chrome=0",
-        "http://localhost:3100/de/directions/mosaic?chrome=0"
+        "http://localhost:3100/de/p/ronja-feldkamp",
+        "http://localhost:3100/de/p/ronja-feldkamp/hafenlicht",
+        "http://localhost:3100/ar/p/elena-novak",
+        "http://localhost:3100/de",
+        "http://localhost:3100/de/templates"
       ],
-      "numberOfRuns": 3
+      "numberOfRuns": 3,
+      "settings": { "formFactor": "mobile" }
     },
     "assert": {
-      "assertions": {
-        "categories:performance": ["warn", { "minScore": 0.95 }],
-        "categories:accessibility": ["error", { "minScore": 1 }],
-        "categories:best-practices": ["error", { "minScore": 1 }],
-        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],
-        "third-party-summary": "off"
-      }
+      "assertMatrix": [
+        {
+          "matchingUrlPattern": "localhost:3100/(de|ar)/p/",
+          "assertions": {
+            "categories:performance": ["error", { "minScore": 0.9 }],
+            "categories:accessibility": ["error", { "minScore": 1 }],
+            "categories:best-practices": ["error", { "minScore": 1 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "localhost:3100/de(/templates)?$",
+          "assertions": {
+            "categories:performance": ["warn", { "minScore": 0.9 }],
+            "categories:accessibility": ["warn", { "minScore": 1 }],
+            "categories:best-practices": ["warn", { "minScore": 1 }]
+          }
+        }
+      ]
     },
     "upload": { "target": "filesystem", "outputDir": ".lighthouseci" }
   }

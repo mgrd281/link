@@ -4,11 +4,13 @@ import { join } from "node:path";
 import { tokens } from "@linkyo/tokens";
 import { ImageResponse } from "next/og";
 
+import { jpegCard } from "./jpeg";
 import { OG_SIZE, RtlText } from "./og-card";
 
 /**
  * The link preview of linkyo.app itself (home, gallery, sign-up): the promise in the brand colors,
- * next to three example pages. Drawn in pixels on Satori's fixed canvas.
+ * next to three example pages. Drawn in pixels on Satori's fixed canvas, served as JPEG (its photos
+ * made a PNG of over 400 KB, E-07).
  */
 const dataUrl = (data: Buffer, mime: string) => `data:${mime};base64,${data.toString("base64")}`;
 
@@ -42,7 +44,7 @@ export async function brandCard({ kicker, title1, title2, rtl }: { kicker: strin
   const font = rtl ? "Plex Arabic" : "Geist";
   const cardWidth = 230;
   const cardHeight = 340;
-  return new ImageResponse(
+  const card = new ImageResponse(
     (
       <div
         style={{
@@ -124,4 +126,5 @@ export async function brandCard({ kicker, title1, title2, rtl }: { kicker: strin
     ),
     { ...OG_SIZE, fonts },
   );
+  return jpegCard(card);
 }

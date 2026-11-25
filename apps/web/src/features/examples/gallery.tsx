@@ -1,7 +1,7 @@
 "use client";
 
 import { tokens } from "@linkyo/tokens";
-import { Button, cn, Icon, IconButton, Kbd, Segmented, Spinner } from "@linkyo/ui";
+import { Button, cn, Icon, IconButton, Kbd, Segmented, Spinner, TooltipProvider } from "@linkyo/ui";
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Globe, LayoutGrid, Pause, Play, Search, SearchX, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Dialog } from "radix-ui";
@@ -532,7 +532,8 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
   );
 
   return (
-    <>
+    // The gallery's round buttons have tooltips; the website's layout carries no tooltip provider (ADR 0008).
+    <TooltipProvider>
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch lg:gap-12">
         {intro}
         {wall}
@@ -805,6 +806,6 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-    </>
+    </TooltipProvider>
   );
 }

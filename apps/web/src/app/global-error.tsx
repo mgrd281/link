@@ -2,12 +2,48 @@
 
 import "./globals.css";
 
-import { Button, Logo } from "@linkyo/ui";
 import { usePathname } from "next/navigation";
+import { lazy, Suspense } from "react";
 
 import { fontVariables } from "@/fonts";
 import { GLOBAL_COPY, localeOfPath } from "@/features/errors/global-copy";
 import { isRtl } from "@/i18n/routing";
+
+type Copy = (typeof GLOBAL_COPY)[keyof typeof GLOBAL_COPY];
+
+/**
+ * The same words and ways out without the UI kit: what shows while the full screen loads, and for
+ * good when it cannot load (offline, or the failure was a missing file).
+ */
+function PlainScreen({ copy, locale, retry }: { copy: Copy; locale: string; retry: () => void }) {
+  return (
+    <main id="main" className="grid min-h-dvh place-items-center px-4 pt-16 pb-16">
+      <div className="grid w-full max-w-prose justify-items-center gap-8 text-center">
+        <div className="grid gap-3">
+          <h1 className="text-h2 font-semibold text-balance rtl:tracking-normal">{copy.title}</h1>
+          <p className="text-body text-pretty text-fg-secondary">{copy.body}</p>
+        </div>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
+          <button type="button" onClick={retry} className="min-h-touch-target rounded-full px-4 font-semibold text-link hover:text-fg focus-visible:focus-ring">
+            {copy.retry}
+          </button>
+          <a href={`/${locale}`} className="inline-flex min-h-touch-target items-center justify-center rounded-full px-4 font-semibold text-link hover:text-fg focus-visible:focus-ring">
+            {copy.home}
+          </a>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// Linkyo's screen (logo and buttons) loads only once the root layout has failed: the UI kit it draws
+// with is not sent with every page (ADR 0008). If it cannot load, the plain screen stays.
+const Screen = lazy(() =>
+  import("@/features/errors/global-error-screen").then(
+    (module) => ({ default: module.GlobalErrorScreen }),
+    () => ({ default: PlainScreen }),
+  ),
+);
 
 /**
  * The root layout itself failed: this replaces the whole document, so it brings its own <html> in
@@ -21,23 +57,9 @@ export default function GlobalError({ retry }: { error: unknown; retry: () => vo
     <html lang={locale} dir={isRtl(locale) ? "rtl" : "ltr"} className={fontVariables}>
       <body className="min-h-dvh bg-canvas text-fg">
         <title>{copy.title}</title>
-        <main id="main" className="grid min-h-dvh place-items-center px-4 pt-16 pb-16">
-          <div className="grid w-full max-w-prose justify-items-center gap-8 text-center">
-            <Logo className="h-8" />
-            <div className="grid gap-3">
-              <h1 className="text-h2 font-semibold text-balance rtl:tracking-normal">{copy.title}</h1>
-              <p className="text-body text-pretty text-fg-secondary">{copy.body}</p>
-            </div>
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
-              <Button variant="primary" size="cta" className="w-full sm:w-auto" onClick={retry}>
-                {copy.retry}
-              </Button>
-              <Button asChild variant="tinted" size="cta" className="w-full sm:w-auto">
-                <a href={`/${locale}`}>{copy.home}</a>
-              </Button>
-            </div>
-          </div>
-        </main>
+        <Suspense fallback={<PlainScreen copy={copy} locale={locale} retry={retry} />}>
+          <Screen copy={copy} locale={locale} retry={retry} />
+        </Suspense>
       </body>
     </html>
   );

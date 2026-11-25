@@ -8,7 +8,7 @@ import { pageAddress } from "@/lib/page-url";
 
 /** The link preview of a page: its photo, name and address in its own template. */
 export const size = OG_SIZE;
-export const contentType = "image/png";
+export const contentType = "image/jpeg";
 export const alt = "Linkyo";
 
 export function generateStaticParams() {

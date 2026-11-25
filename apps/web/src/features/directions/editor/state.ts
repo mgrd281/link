@@ -1,4 +1,6 @@
-import { MAX_PROJECTS, NO_IMAGE, PLATFORMS, slugFor, type Block, type BlockOf, type Detection, type Platform } from "@linkyo/blocks";
+import type { Block, BlockOf, Detection, Platform } from "@linkyo/blocks";
+import { slugFor } from "@linkyo/blocks/project";
+import { MAX_PROJECTS, NO_IMAGE, PLATFORMS } from "@linkyo/blocks/rules";
 import type { CreatorThemeConfig } from "@linkyo/tokens/creator";
 
 import type { TileSize } from "../mosaic/renderer";

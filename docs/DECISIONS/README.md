@@ -9,7 +9,7 @@
 | [0005](0005-creator-theme-engine.md) | OKLCH palette generator with a WCAG AA guarantee | Accepted |
 | [0006](0006-i18n.md) | next-intl, German default, RTL via logical properties | Accepted |
 | [0007](0007-brand-accessibility-adjustments.md) | Brand color roles adjusted for WCAG 2.2 AA | **Needs founder sign-off** |
-| [0008](0008-public-page-rendering.md) | Zero-runtime renderer for public pages (70 KB budget) | Proposed (Phase 1 spike); beacon note superseded by [0081](0081-cookie-free-analytics.md) |
+| [0008](0008-public-page-rendering.md) | Public page rendering; Stage 4 revision: budgets as page code (creator pages ≤ 35 KB, `/app` first load ≤ 350 KB, `/de` HTML ≤ 60 KB, cards ≤ 300 KB) checked by `scripts/check-route-budgets.mjs` in CI | Revised (Stage 4, WP4.3); beacon note superseded by [0081](0081-cookie-free-analytics.md) |
 | [0009](0009-music-smart-links.md) | Own music-link resolver instead of Odesli | Proposed |
 | [0010](0010-hosting-and-data-residency.md) | Vercel (fra1) + Supabase Frankfurt; EU processors first | Proposed; PostHog on creator pages superseded by [0081](0081-cookie-free-analytics.md) |
 | [0011](0011-poster-direction.md) | Direction D "Poster", built from the founder's references | **Proposed — confirm** |

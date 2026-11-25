@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, IconButton } from "@linkyo/ui";
+import { cn, IconButton, TooltipProvider } from "@linkyo/ui";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -53,20 +53,23 @@ export function ScrollRow({
 
   const edge = cn("pointer-events-none absolute inset-y-0 flex items-center from-50% to-transparent", fade);
   return (
-    <div className={cn("relative min-w-0", className)}>
-      <div ref={scroller} role="group" aria-label={label} className="flex scroll-px-10 gap-2 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none] md:scroll-px-20">
-        {children}
+    // The arrows have tooltips; the website's layout carries no tooltip provider (ADR 0008).
+    <TooltipProvider>
+      <div className={cn("relative min-w-0", className)}>
+        <div ref={scroller} role="group" aria-label={label} className="flex scroll-px-10 gap-2 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none] md:scroll-px-20">
+          {children}
+        </div>
+        {edges.start ? null : (
+          <div className={cn(edge, "start-0 bg-linear-to-r pe-8 rtl:bg-linear-to-l")}>
+            <IconButton icon={ChevronLeft} label={labels.back} size="sm" variant="tinted" onClick={() => page(-1)} className="pointer-events-auto max-md:hidden" />
+          </div>
+        )}
+        {edges.end ? null : (
+          <div className={cn(edge, "end-0 bg-linear-to-l ps-8 rtl:bg-linear-to-r")}>
+            <IconButton icon={ChevronRight} label={labels.next} size="sm" variant="tinted" onClick={() => page(1)} className="pointer-events-auto max-md:hidden" />
+          </div>
+        )}
       </div>
-      {edges.start ? null : (
-        <div className={cn(edge, "start-0 bg-linear-to-r pe-8 rtl:bg-linear-to-l")}>
-          <IconButton icon={ChevronLeft} label={labels.back} size="sm" variant="tinted" onClick={() => page(-1)} className="pointer-events-auto max-md:hidden" />
-        </div>
-      )}
-      {edges.end ? null : (
-        <div className={cn(edge, "end-0 bg-linear-to-l ps-8 rtl:bg-linear-to-r")}>
-          <IconButton icon={ChevronRight} label={labels.next} size="sm" variant="tinted" onClick={() => page(1)} className="pointer-events-auto max-md:hidden" />
-        </div>
-      )}
-    </div>
+    </TooltipProvider>
   );
 }

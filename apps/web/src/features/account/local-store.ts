@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { emailIdentity, isReferralCode, newReferralCode, REFERRAL_RULES } from "@/features/referrals/rules";
 import type {
   CustomerReferrals,
@@ -144,7 +142,11 @@ const EMPTY: Db = { version: 1, accounts: [], sites: {}, session: null };
 const LOADING: AccountSnapshot = { status: "loading" };
 const SIGNED_OUT: AccountSnapshot = { status: "signedOut" };
 
-const emailSchema = z.email();
+/**
+ * Whether `value` is an e-mail address, by Zod's rule (the one the server checks). Zod comes in its own
+ * chunk the first time an address is checked, so it stays out of the dashboard's first load (ADR 0008).
+ */
+const isEmail = async (value: string) => (await import("zod")).z.email().safeParse(value).success;
 const now = () => new Date().toISOString();
 
 function parse(raw: string | null): Db {
@@ -236,19 +238,19 @@ export class LocalAccountStore implements AccountStore {
     return "ok";
   }
 
-  requestCode(input: CodeRequest): Promise<Result> {
+  async requestCode(input: CodeRequest): Promise<Result> {
     const email = normalizeEmail(input.email);
-    if (!emailSchema.safeParse(email).success) return Promise.resolve({ ok: false, error: "invalidEmail" });
+    if (!(await isEmail(email))) return { ok: false, error: "invalidEmail" };
     const known = this.db().accounts.some((account) => account.email === email);
     if (input.signUp && !known) {
       const status = this.usernameStatusNow(input.signUp.username);
-      if (status !== "ok") return Promise.resolve({ ok: false, error: status });
+      if (status !== "ok") return { ok: false, error: status };
     }
     // Coming back with an address that has no account: the same answer, but no code (as real accounts).
-    if (!known && !input.signUp) return Promise.resolve({ ok: true, pending: "code" });
+    if (!known && !input.signUp) return { ok: true, pending: "code" };
     const code = sixDigits();
     this.codes.set(email, { code, until: Date.now() + CODE_MINUTES * 60_000, tries: 0 });
-    return Promise.resolve({ ok: true, pending: "code", demoCode: code });
+    return { ok: true, pending: "code", demoCode: code };
   }
 
   verifyCode(input: CodeRequest & { code: string }): Promise<Result> {
@@ -346,13 +348,13 @@ export class LocalAccountStore implements AccountStore {
     this.write({ ...this.db(), session: null });
   }
 
-  changeEmail(input: string): Promise<Result> {
-    return Promise.resolve(this.changeEmailNow(input));
+  async changeEmail(input: string): Promise<Result> {
+    const email = normalizeEmail(input);
+    if (!(await isEmail(email))) return { ok: false, error: "invalidEmail" };
+    return this.changeEmailNow(email);
   }
 
-  private changeEmailNow(input: string): Result {
-    const email = normalizeEmail(input);
-    if (!emailSchema.safeParse(email).success) return { ok: false, error: "invalidEmail" };
+  private changeEmailNow(email: string): Result {
     const db = this.db();
     const id = this.currentId(db);
     if (!id) return { ok: false, error: "notFound" };
