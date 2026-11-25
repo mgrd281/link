@@ -407,6 +407,10 @@ test.describe("marketing home", () => {
   test("pricing, questions, the last word and the footer", async ({ page }) => {
     const pricing = page.locator("#pricing");
     await expect(pricing.getByRole("heading", { level: 3 })).toHaveText(["Free", /Pro/]);
+    // The Free plan lists what exists today: the app that is still being built is no included feature.
+    const free = pricing.locator("article").first();
+    await expect(free.getByRole("listitem")).toHaveCount(5);
+    await expect(free).not.toContainText(/iOS|coming|soon|in the works/i);
     await expect(pricing.getByRole("link", { name: "Sign up for free" })).toHaveAttribute("href", "/en/signup");
     // Pro is not for sale yet: no button.
     await expect(pricing.locator("article").last().getByRole("link")).toHaveCount(0);
