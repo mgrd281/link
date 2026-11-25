@@ -3,7 +3,6 @@ import { creatorTokens, tokens } from "@linkyo/tokens";
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Badge, cn, Icon } from "@linkyo/ui";
 import { Check } from "lucide-react";
-import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -19,6 +18,7 @@ import { phoneSizes } from "./assets";
 import { CountUp } from "./count-up";
 import { Playground, TryEyebrow, type LookOption } from "./playground";
 import { SECTION_TITLE } from "./headings";
+import { Picture } from "./picture";
 import { siteState } from "./site-state";
 import { StoryPicture, type StoryArt } from "./story-picture";
 import { TRY_LOOKS } from "./try-looks";
@@ -139,7 +139,7 @@ function SharePreview() {
           {/* The card as a messenger shows it: a picture, then the page's own words. Not a link here. */}
           <div className="m-1 overflow-hidden rounded-lg bg-surface text-fg">
             {/* The real link preview of the page (same origin, so nothing is loaded from elsewhere). */}
-            <Image src={`/${locale}/p/${SHARED_SLUG}/opengraph-image`} width={OG_WIDTH} height={OG_HEIGHT} sizes={phoneSizes.story} alt="" className="aspect-og w-full object-cover" />
+            <Picture src={`/${locale}/p/${SHARED_SLUG}/opengraph-image`} width={OG_WIDTH} height={OG_HEIGHT} sizes={phoneSizes.story} alt="" className="aspect-og w-full object-cover" />
             <div className="grid gap-0.5 p-3">
               <p dir="auto" className="truncate text-small font-semibold">
                 {title}

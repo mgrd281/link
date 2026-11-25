@@ -3,25 +3,26 @@
 import { tokens } from "@linkyo/tokens";
 import { cn, Icon, LogoSymbol } from "@linkyo/ui";
 import { ArrowUpRight } from "lucide-react";
-import Image, { type StaticImageData } from "next/image";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 
 import { pageAddress } from "@/lib/page-url";
 
 import { faceSize, phoneSizes } from "./assets";
+import { Picture } from "./picture";
+import type { PictureSource } from "./picture-source";
 
 export interface DeckPage {
   slug: string;
   name: string;
   href: string;
   /** The face on the page's button under the deck. */
-  face: StaticImageData;
+  face: PictureSource;
   /**
    * The picture of the page, in the visitor's language where the page has one. A picture taller
    * than the screen scrolls by itself while the page is in front.
    */
-  shot: StaticImageData;
+  shot: PictureSource;
   /** An unofficial concept page of a well-known person: its address carries a "Concept" tag. */
   concept?: boolean;
 }
@@ -103,10 +104,17 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
    * any face shows its page at once. Not when the browser asks to save data: there a picture loads
    * when its page comes near.
    */
-  const warmUp = () => {
+  const warmUp = useCallback(() => {
     const { connection } = navigator as Navigator & { connection?: { saveData?: boolean } };
     if (!connection?.saveData) setWarm(true);
-  };
+  }, []);
+  /** The first picture can be there before the page's code runs (no load event to hear then). */
+  const warmIfLoaded = useCallback(
+    (picture: HTMLImageElement | null) => {
+      if (picture?.complete && picture.naturalWidth > 0) warmUp();
+    },
+    [warmUp],
+  );
 
   const advance = () => {
     setActive((current) => (current + 1) % count);
@@ -189,18 +197,19 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                 data-slot={slot}
                 className="mk-deck-card group absolute inset-x-0 top-0"
               >
-                {/* The page itself, edge to edge: no bezel, no frame. In front, it scrolls by itself. */}
+                {/* The page itself, edge to edge: no bezel, no frame. In front, it scrolls by itself. Until
+                    its picture is there the screen shows its own colour (no blurred preview in the page). */}
                 <div className="mk-deck-screen aspect-phone overflow-hidden rounded-xl bg-canvas-muted">
                   {near || warm ? (
-                    <Image
+                    <Picture
                       src={page.shot}
                       alt=""
                       sizes={phoneSizes.hero}
-                      placeholder="blur"
                       preload={index === 0}
                       fetchPriority={index === 0 ? "high" : near ? "auto" : "low"}
                       loading={index === 0 || !beside ? "eager" : "lazy"}
                       onLoad={index === 0 ? warmUp : undefined}
+                      ref={index === 0 ? warmIfLoaded : undefined}
                       data-tour={front && rotating ? "" : undefined}
                       onAnimationEnd={front && rotating ? advance : undefined}
                       className={cn("h-auto w-full", front && rotating && "mk-deck-scroll")}
@@ -293,7 +302,7 @@ export function HeroDeck({ pages }: { pages: DeckPage[] }) {
                   <circle key={rotating ? active : "full"} cx="22" cy="22" r="21" pathLength="1" data-ring data-running={rotating ? "" : undefined} className="mk-deck-ring" />
                 ) : null}
               </svg>
-              <Image src={page.face} alt="" sizes={faceSize} className="size-full rounded-full object-cover" />
+              <Picture src={page.face} alt="" sizes={faceSize} className="size-full rounded-full object-cover" />
             </button>
           );
         })}
