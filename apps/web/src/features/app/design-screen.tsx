@@ -14,7 +14,7 @@ import { displayStyle } from "@/features/directions/poster/styles";
 import { TemplatePicker } from "@/features/directions/poster/template-picker";
 
 import { setDesignTabUrl } from "./jump";
-import { PhonePreview, PreviewButton } from "./preview";
+import { PhonePreview, PreviewButton, type PreviewFocus } from "./preview";
 import { DESIGN_TABS, designTabFrom, NAV_ANCHORS, type DesignTab } from "./routes";
 import { Panel, Screen, UndoRedo, useShellChrome } from "./screen";
 import { useSite } from "./site-context";
@@ -98,6 +98,12 @@ export function DesignScreen() {
   const group = inShell ? designTabFrom(params.get("tab")) : localGroup;
   const setGroup = inShell ? setDesignTabUrl : setLocalGroup;
   const theme = doc.theme;
+  // The small page pinned under the bar of a phone shows only a slice of the page, so it moves to the
+  // part being changed: the first button (its style, shape and colour) or the top (the fonts and a
+  // new look). Nothing is asked at first: the page starts at its top, as everywhere.
+  const [follow, setFollow] = useState<PreviewFocus>();
+  const firstButton = doc.blocks.find((block) => block.type === "link" && block.visible)?.id ?? null;
+  const bring = (tab: DesignTab | "look") => setFollow({ block: tab === "buttons" || tab === "color" ? firstButton : null });
   const rtlScript = doc.profile.locale === "ar";
   const resolved = useMemo(() => resolveCreatorTheme(theme, { rtlScript }), [theme, rtlScript]);
   // The accent the page has when no color is chosen: the template's (or the preset's), as the engine resolves it.
@@ -106,8 +112,10 @@ export function DesignScreen() {
     [theme, rtlScript],
   );
   // A cleared choice is dropped, not kept as an empty key: "customized" (and the reset button) reads the keys.
-  const setTheme = (patch: Partial<CreatorThemeConfig>) =>
+  const setTheme = (patch: Partial<CreatorThemeConfig>) => {
     dispatch({ type: "theme", theme: Object.fromEntries(Object.entries({ ...theme, ...patch }).filter(([, value]) => value !== undefined)) });
+    bring(group);
+  };
   const templateColor = () => setTheme({ accent: undefined, neutral: undefined, tint: undefined });
   const customized = Object.keys(theme).some((key) => key !== "template");
   const mode: Mode = resolved.palette.mode;
@@ -120,6 +128,8 @@ export function DesignScreen() {
     startTransition(() => {
       dispatch({ type: "theme", theme: { template } });
     });
+    // A new look shows from its top: the name, the portrait, the way it opens.
+    bring("look");
     // Its Undo takes back the last change: right only while this one is the last (latestOnly).
     toast({
       title: t("applied", { name: creatorTokens.templates[template].label }),
@@ -258,8 +268,10 @@ export function DesignScreen() {
         wide ? null : (
           // The page stays in sight while you change it: flush under the bar, on the solid ground. On short
           // phone screens the bar scrolls away, so the page sticks to the top (no gap to see through).
+          // A quarter of the screen with its padding (a hairline frame, no bezel), a little more where
+          // the screen is short; it shows the part being changed (`follow`), not only the page's head.
           <div data-sticky-preview className="sticky top-16 layer-raised -mx-4 bg-canvas-muted px-4 pb-3 max-lg:short:top-0 md:-mx-8 md:px-8 lg:hidden">
-            <PhonePreview className="h-[30svh]" />
+            <PhonePreview frame="hairline" focus={follow} className="h-[calc(25svh-var(--spacing-3))] short:h-[30svh]" />
           </div>
         )
       ) : (
@@ -277,7 +289,15 @@ export function DesignScreen() {
       {hasProjects ? <WorkLayoutControl /> : null}
 
       <Panel title={t("customize")} id={NAV_ANCHORS.designCustomize}>
-        <Tabs<DesignTab> label={t("tabsLabel")} value={group} onValueChange={setGroup} tabs={DESIGN_TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))}>
+        <Tabs<DesignTab>
+          label={t("tabsLabel")}
+          value={group}
+          onValueChange={(tab) => {
+            setGroup(tab);
+            bring(tab);
+          }}
+          tabs={DESIGN_TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))}
+        >
           {(active) => (active === "color" ? color() : active === "fonts" ? fonts() : buttons())}
         </Tabs>
         {customized ? (
@@ -289,6 +309,7 @@ export function DesignScreen() {
               onClick={() => {
                 const before = doc;
                 dispatch({ type: "theme", theme: { template: theme.template } });
+                bring("look");
                 toast({ title: t("resetDone"), undoable: { before, latestOnly: true }, action: { label: t("undo"), onAction: () => dispatch({ type: "undo" }) } });
               }}
             >

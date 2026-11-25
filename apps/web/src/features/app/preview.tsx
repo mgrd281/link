@@ -26,18 +26,43 @@ function offsetWithin(element: HTMLElement, scroller: HTMLElement): number {
 }
 
 /**
- * A phone around a creator's page: a dark bezel (the same everywhere, so the page's own colours
- * stand out) and a rounded screen. Concentric: the frame's radius (28) is the screen's (20) plus its
- * padding (8). The size comes from `className` (a width cap by default); the screen fills the frame.
+ * What the pinned preview on a phone should show: `block` is the id of a block to bring into view, or
+ * null for the top of the page. A new object asks again (the same one does not), so the preview moves
+ * when the person changes something and stays where it is while they scroll it by hand.
  */
-export function PhoneFrame({ children, className }: { children: ReactNode; className?: string | undefined }) {
+export interface PreviewFocus {
+  block: string | null;
+}
+
+/**
+ * A phone around a creator's page and a rounded screen. The size comes from `className` (a width cap
+ * by default); the screen fills the frame.
+ *
+ * - `bezel` (the default): a dark bezel, the same everywhere, so the page's own colours stand out.
+ *   Concentric: the frame's radius (28) is the screen's (20) plus its padding (8).
+ * - `hairline`: no bezel, only a hairline edge and nothing between it and the page. For the small
+ *   copy pinned under the bar of a phone, where eight dark pixels on every side were the heaviest
+ *   thing on a light screen.
+ */
+export function PhoneFrame({ children, className, frame = "bezel" }: { children: ReactNode; className?: string | undefined; frame?: "bezel" | "hairline" }) {
+  const bezel = frame === "bezel";
   return (
-    <div className={cn("relative mx-auto w-full max-w-preview overflow-hidden rounded-xl border border-line-strong bg-ink p-2", className)}>
-      <div className="relative size-full overflow-hidden rounded-lg" style={{ transform: "translateZ(0)" }}>
+    <div className={cn("relative mx-auto w-full max-w-preview overflow-hidden border border-line-strong", bezel ? "rounded-xl bg-ink p-2" : "rounded-lg", className)}>
+      <div className={cn("relative size-full overflow-hidden", bezel ? "rounded-lg" : "rounded-[inherit]")} style={{ transform: "translateZ(0)" }}>
         {children}
       </div>
     </div>
   );
+}
+
+/**
+ * Moves the preview's own scroller (never the dashboard around it, which `scrollIntoView` would also
+ * move) so `element` sits a third of the way down, or to the top without one. Instantly under
+ * reduced motion.
+ */
+function showInPreview(box: HTMLElement, element: HTMLElement | null) {
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  box.scrollTo({ top: element ? Math.max(0, offsetWithin(element, box) - box.clientHeight / 3) : 0, behavior: reduced ? "auto" : "smooth" });
 }
 
 /**
@@ -46,8 +71,11 @@ export function PhoneFrame({ children, className }: { children: ReactNode; class
  * headings stay out of the way (no navigating the dashboard away, no second h1). The frame itself
  * can still be scrolled, with the keyboard too. With `hint` (only where an "Open" link sits next to
  * it), screen readers are told the frame is view only and "Open" shows the real page.
+ *
+ * The preview follows the block open in the edit sheet. A screen that is not editing a block can ask
+ * for a part with `focus` (Design: the buttons while you change their style, the top for the fonts).
  */
-export function PhonePreview({ className, hint = false }: { className?: string; hint?: boolean }) {
+export function PhonePreview({ className, hint = false, frame, focus }: { className?: string; hint?: boolean; frame?: "bezel" | "hairline"; focus?: PreviewFocus | undefined }) {
   const t = useTranslations("app.preview");
   const tCreator = useTranslations("creator.portfolio");
   const { previewPage, doc, editing } = useSite();
@@ -73,14 +101,18 @@ export function PhonePreview({ className, hint = false }: { className?: string; 
     element.dataset.editing = "";
     if (shown.current !== editingId) {
       shown.current = editingId;
-      // Only the preview's own scroller moves: scrollIntoView would also move the dashboard around it.
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      box.scrollTo({ top: Math.max(0, offsetWithin(element, box) - box.clientHeight / 3), behavior: reduced ? "auto" : "smooth" });
+      showInPreview(box, element);
     }
     return () => {
       delete element.dataset.editing;
     };
   }, [editingId, previewPage]);
+  // A part asked for by the screen (not an edit): moves once per ask, not each time the page changes.
+  useEffect(() => {
+    const box = scroller.current;
+    if (!box || !focus) return;
+    showInPreview(box, focus.block ? box.querySelector<HTMLElement>(`[data-block-ids~="${CSS.escape(focus.block)}"]`) : null);
+  }, [focus]);
   // A project page starts at its top, and so does the portfolio it returns to.
   useEffect(() => {
     scroller.current?.scrollTo({ top: 0 });
@@ -113,7 +145,7 @@ export function PhonePreview({ className, hint = false }: { className?: string; 
   }, [previewPage, tCreator]);
 
   return (
-    <PhoneFrame className={className}>
+    <PhoneFrame className={className} {...(frame ? { frame } : {})}>
       <div
         ref={scroller}
         // The screen is the page's own colour from top to bottom: a short page fills it (the page grows

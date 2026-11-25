@@ -75,7 +75,11 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
   `order` (the welcome flow) puts a kind's starter and suggestions first.
 - A new template: capture it (`template:<id>`), add its import, run `template-previews.test.ts`.
 - The live page on Design: a copy under the bar below `lg`, the toolbar's preview button from `lg`
-  to `desk`, the preview column from `desk`.
+  to `desk`, the preview column from `desk`. The copy on a phone is a quarter of the screen at most
+  (`25svh` with its padding) in a hairline frame (`PhoneFrame frame="hairline"`; the column and the
+  full-screen preview keep the dark bezel), and `PhonePreview`'s `focus` brings the part being changed
+  into view (the first button for colour and buttons, the top for fonts and a new look; the edit
+  sheet's block does the same by itself). It carries `data-toast-avoid`: a toast never stands over it.
 
 ## Arbeiten (`/app/work`)
 

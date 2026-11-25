@@ -1,5 +1,5 @@
 import { TEMPLATE_IDS, templatesFor } from "@linkyo/tokens/creator";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { enterDemoCode } from "./auth";
 
@@ -8,6 +8,15 @@ import { enterDemoCode } from "./auth";
  * measured as geometry so it fails without its fix.
  *
  * - D1: Design never scrolls the page by itself (at 1440 and 1920).
+ * - D2: on a phone the pinned preview is at most a quarter of the screen, framed by a hairline (not
+ *   the black bezel), and follows the part being changed.
+ * - D3: every control of Home, Seite, Arbeiten, Design and Settings is reached at 44 × 44 px on a
+ *   phone (hit-tested, so a `::before` counts), and a sheet's two header buttons sit at one margin.
+ * - D4: the Seite, plan and section glyphs say what they mean; the welcome kinds are one style.
+ * - D5: no dead areas on laptops: one start edge, Arbeiten fills its column, Plan and Konto in columns.
+ * - D6: weekday names that differ, whole words on the Add sheet's cards, toasts that cover nothing.
+ *
+ * Each block below is named after its defect (D1 … D6).
  *
  * Demo mode: everything lives in this browser's storage. The file name keeps it out of the mobile
  * project (see playwright.config.ts): it runs once, in the desktop project, with the viewport (and,
@@ -82,6 +91,9 @@ async function seed(page: Page, { kind, template, projects = 0, links = 3, ready
   await expect(heading(page)).toBeVisible();
 }
 
+/** A phone, as a finger meets it: 390 × 844 with touch (so `pointer: coarse` grows the small targets). */
+const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 } as const;
+
 // ─── D1: Design does not move the page ─────────────────────────────────────────────────────────
 
 test.describe("D1: Design keeps the page where it is", () => {
@@ -125,4 +137,75 @@ test.describe("D1: Design keeps the page where it is", () => {
       expect(await page.evaluate(() => window.scrollY), "the filter scrolled the page back").toBe(0);
     });
   }
+});
+
+// ─── D2: the pinned preview on a phone ─────────────────────────────────────────────────────────
+
+/** The mean brightness (0 black … 1 white) of the outermost pixel ring of an element, corners left out. */
+async function ringBrightness(page: Page, target: Locator): Promise<number> {
+  const picture = (await target.screenshot()).toString("base64");
+  return page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) throw new Error("no canvas");
+    context.drawImage(image, 0, 0);
+    const { width, height } = canvas;
+    const margin = Math.round(Math.min(width, height) * 0.2);
+    const at = (x: number, y: number) => {
+      const [r = 0, g = 0, b = 0] = context.getImageData(x, y, 1, 1).data;
+      return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    };
+    const samples: number[] = [];
+    for (let x = margin; x < width - margin; x += 2) samples.push(at(x, 0), at(x, height - 1));
+    for (let y = margin; y < height - margin; y += 2) samples.push(at(0, y), at(width - 1, y));
+    return samples.reduce((sum, value) => sum + value, 0) / samples.length;
+  }, picture);
+}
+
+test.describe("D2: the pinned preview on a phone", () => {
+  test.use(PHONE);
+
+  test("a quarter of the screen at most, a hairline frame instead of the black bezel, and it follows Buttons and Font", async ({ page }) => {
+    await signedIn(page);
+    await seed(page, { kind: "music", template: "nocturne", links: 3 });
+    await page.goto("/en/app/design");
+    const wrap = page.locator("[data-sticky-preview]");
+    await expect(wrap).toBeVisible();
+    const frame = wrap.locator("> div").first();
+    const outer = await wrap.boundingBox();
+    const box = await frame.boundingBox();
+    if (!outer || !box) throw new Error("no preview");
+    // At most a quarter of the 844 px screen, the page's own room included.
+    expect.soft(box.height, "the frame").toBeLessThanOrEqual(PHONE.viewport.height * 0.25);
+    expect.soft(outer.height, "the pinned band").toBeLessThanOrEqual(PHONE.viewport.height * 0.25);
+    // A hairline frame, not the 8 px black bezel: nothing between the edge and the page, a light edge.
+    const look = await frame.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { border: Number.parseFloat(style.borderTopWidth), padding: Number.parseFloat(style.paddingTop) };
+    });
+    expect.soft(look.border, "border width").toBeLessThanOrEqual(2);
+    expect.soft(look.padding, "padding (the bezel)").toBe(0);
+    expect.soft(await ringBrightness(page, frame), "the frame is not the darkest large area of a light screen").toBeGreaterThan(0.55);
+
+    // The preview shows the part being changed: Buttons brings the first button into view, Font the page head.
+    const scroller = wrap.getByRole("region");
+    const shows = (id: string) =>
+      scroller.evaluate((area, block) => {
+        const part = area.querySelector(`[data-block-ids~="${block}"]`);
+        if (!part) return "not on the page";
+        const a = part.getBoundingClientRect();
+        const b = area.getBoundingClientRect();
+        return a.top >= b.top - 1 && a.bottom <= b.bottom + 1 ? "in view" : `out of view (${String(Math.round(a.top - b.top))} to ${String(Math.round(a.bottom - b.top))} of ${String(Math.round(b.height))})`;
+      }, id);
+    expect(await shows("l-0"), "the first button starts out of view").not.toBe("in view");
+    await page.locator('[data-tab="buttons"]').click();
+    await expect.poll(() => shows("l-0")).toBe("in view");
+    await page.locator('[data-tab="fonts"]').click();
+    await expect.poll(() => scroller.evaluate((area) => area.scrollTop)).toBe(0);
+  });
 });
