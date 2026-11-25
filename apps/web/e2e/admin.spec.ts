@@ -109,9 +109,11 @@ test.describe("team area", () => {
     const username = `lina-${unique()}`;
     await createPage(page, "Lina Beats", username, "Lina@Example.com");
 
-    // The same editor creators use: add a link, it shows up on the page.
+    // The same editor creators use: add a link, it shows up on the page. Its empty state reads about
+    // this page, not to its owner (the team prepares it for someone else).
     await expect(page.getByRole("heading", { name: "Page", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Add your first link" }).click();
+    await expect(page.getByText("This page has no links yet", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Add the first link" }).click();
     const sheet = page.getByRole("dialog", { name: "Add to your page" });
     await sheet.getByLabel("Paste a link").fill("https://www.youtube.com/watch?v=aqz-KE-bpKQ");
     await sheet.getByRole("button", { name: "Add", exact: true }).click();

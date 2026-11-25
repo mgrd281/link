@@ -3578,6 +3578,11 @@
         "cancel": "Cancel"
       }
     },
+    "editor": {
+      "emptyTitle": "This page has no links yet",
+      "emptyBody": "Add the first link, such as a song, a video or a shop. It appears on the page right away.",
+      "addFirst": "Add the first link"
+    },
     "referrals": {
       "title": "Referrals",
       "lead": "Verification requests and invites to check. Pro for life from invites is never revenue.",

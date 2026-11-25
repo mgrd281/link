@@ -16,6 +16,7 @@ import { enterDemoCode } from "./auth";
  *   and opening a sheet pops no tooltip up.
  * - K4: a customer's header leaves the first screen to the content, tile labels are whole, the
  *   search placeholders fit, and every control of the team area is 44 × 44 px to a finger.
+ * - K5: the editor of a page the team prepares for someone else does not speak to its owner.
  *
  * Every test sets its own window (and a touch phone where it says so), so the file runs once, on the
  * desktop project. The account is a demo sign-up with the demo team code, as in admin-phone-app.spec.ts.
@@ -421,6 +422,30 @@ test.describe("K4: the team console on a phone", () => {
         for (const line of await page.evaluate(smallTargets, "main")) small.push(`${route}: ${line}`);
       }
       expect(small).toEqual([]);
+      await context.close();
+    });
+  }
+});
+
+test.describe("K5: the team's editor of someone else's page", () => {
+  for (const locale of ["de", "ar"] as const) {
+    test(`${locale}: an empty prepared page reads about this page, not to its owner`, async ({ browser, baseURL }, info) => {
+      test.skip(info.project.name !== "desktop", "sets its own windows");
+      test.setTimeout(120_000);
+      const words = MESSAGES[locale];
+      const state = await owner(browser, baseURL, locale);
+      const { context, page } = await open(browser, baseURL, state, "laptop");
+      await page.goto(`/${locale}/admin/creators`);
+      await settle(page);
+      const username = `leer-${unique()}`;
+      await page.getByRole("button", { name: words.admin.creators.new }).first().click();
+      await page.locator("#new-name").fill("Lina Beats");
+      await page.locator("#new-username").fill(username);
+      await page.getByRole("button", { name: words.admin.creators.create.submit }).click();
+      await page.waitForURL(`**/admin/creators/${username}`);
+      await expect(page.getByText(words.admin.editor.emptyTitle, { exact: true })).toBeVisible();
+      await expect(page.getByText(words.app.editor.emptyTitle, { exact: true })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: words.admin.editor.addFirst })).toBeVisible();
       await context.close();
     });
   }

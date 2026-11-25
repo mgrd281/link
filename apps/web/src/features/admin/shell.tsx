@@ -3,14 +3,15 @@
 import { tokens } from "@linkyo/tokens";
 import { Avatar, Badge, cn, Icon, icons, Logo } from "@linkyo/ui";
 import type { LucideIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { NextIntlClientProvider, useLocale, useMessages, useTimeZone, useTranslations } from "next-intl";
 import { DropdownMenu } from "radix-ui";
-import { useId, type ReactNode } from "react";
+import { useId, useMemo, type ReactNode } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { Link, usePathname } from "@/i18n/navigation";
 import { paymentsEnabled } from "@/lib/flags";
 
+import { othersPageMessages } from "./editor-words";
 import { countOf, QueuesProvider, useQueues, waitingContract } from "./queues";
 import { useAdmin } from "./session";
 import { ROLES, type Permission, type Role } from "./types";
@@ -225,9 +226,28 @@ function ViewAsBanner() {
  */
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
-    <QueuesProvider>
-      <Frame>{children}</Frame>
-    </QueuesProvider>
+    <OthersPageWords>
+      <QueuesProvider>
+        <Frame>{children}</Frame>
+      </QueuesProvider>
+    </OthersPageWords>
+  );
+}
+
+/**
+ * Every editor in the team area shows someone else's page (a prepared page, a proposal): its empty
+ * state reads about this page, not to its owner (`editor-words.ts`). All other words, the locale and
+ * the time zone stay the page's own.
+ */
+function OthersPageWords({ children }: { children: ReactNode }) {
+  const locale = useLocale();
+  const timeZone = useTimeZone();
+  const messages = useMessages();
+  const words = useMemo(() => othersPageMessages(messages), [messages]);
+  return (
+    <NextIntlClientProvider locale={locale} messages={words} {...(timeZone ? { timeZone } : {})}>
+      {children}
+    </NextIntlClientProvider>
   );
 }
 
