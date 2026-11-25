@@ -150,6 +150,23 @@ describe("Leuchttisch", () => {
     expect(body(markup)).not.toContain("@work:col-span-6 @work:col-start-6");
   });
 
+  it("stands every picture of the strip at one height on phones: the track holds the widest ratio, each picture its own", () => {
+    const { profile } = portfolioSample("de");
+    // Two landscapes (1.5) and a portrait (0.8): the real case of Merle Kastorf, whose strip was as tall as her portraits.
+    const blocks = [shot("a", 1500, 1000), shot("b", 1500, 1000), shot("c", 1000, 1250)];
+    expect(stripProjects(blocks).map((project) => project.id)).toEqual(["a", "b", "c"]);
+    const strip = hero(html("leuchttisch", { profile, blocks }));
+    // The widest picture's ratio is on the track; every picture carries its own.
+    expect(strip).toContain("--widest:1.5");
+    expect([...strip.matchAll(/--ratio:([\d.]+)/g)].map((match) => match[1])).toEqual(["1.5", "1.5", "0.8"]);
+    // A picture's width is the one height (the widest picture whole in the column less a peek, at most 70svh) times its ratio.
+    expect(strip).toContain("w-[calc(min(70svh,(100%_-_var(--spacing-8))_/_var(--widest))_*_var(--ratio))]");
+    // Not the old rule, which made every picture as wide as the column and so a portrait 1.9 times as tall as a landscape.
+    expect(strip).not.toContain("w-[min(calc(100%-var(--spacing-8)),calc(70svh*var(--ratio)))]");
+    // The canvas keeps its justified row (flex by ratio).
+    expect(strip).toContain("@work:flex-[var(--ratio)_1_0%]");
+  });
+
   it("keeps words in the creator column inside a section of work too: an intro, the list fallback, the projects after the sixth", () => {
     const { profile } = portfolioSample("de");
     const header: Block = { ...base, id: "work", type: "header", title: "Arbeiten" };

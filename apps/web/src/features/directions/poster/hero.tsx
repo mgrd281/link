@@ -8,8 +8,9 @@ import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
 import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from "../shared/creator-kit";
-import { LinkIconGlyph, linkGlyph, type LinkGlyphChoice } from "../shared/link-icons";
+import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
+import { BarActionGlyph } from "./bar-action-glyph";
 import { BarReveal, SectionSwitcher, type IndexEntry } from "./laufbahn-index";
 import { HeroLive } from "./live";
 import { plateFrame, plateRatio } from "./projects";
@@ -651,16 +652,6 @@ export function PosterHero({
         {lines}
       </div>
     </header>
-  );
-}
-
-/** The bar's action on phones: the icon the owner chose, else what its address says (mail, phone, a platform …). */
-function BarActionGlyph({ primary }: { primary: NonNullable<Primary> }) {
-  const glyph: LinkGlyphChoice = primary.icon ? { kind: "icon", icon: primary.icon } : linkGlyph(primary.url);
-  return glyph.kind === "platform" ? (
-    <PlatformGlyph platform={glyph.platform} size="md" className="@prose:hidden" />
-  ) : (
-    <LinkIconGlyph icon={glyph.icon} size="md" className="@prose:hidden" />
   );
 }
 

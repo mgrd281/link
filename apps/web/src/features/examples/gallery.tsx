@@ -23,6 +23,7 @@ import { ScrollRow } from "@/components/scroll-row";
 import { Link } from "@/i18n/navigation";
 import { useDragToDismiss } from "@/features/app/sheet";
 import { haptic } from "@/lib/haptics";
+import { touchSegmented } from "@/lib/touch";
 
 import { CardFace, CATEGORY_ICONS, type GalleryItem } from "./gallery-card";
 import { CATEGORIES, type Category } from "./looks";
@@ -78,7 +79,7 @@ function SearchField({
         autoComplete="off"
         enterKeyHint="search"
         aria-keyshortcuts="/"
-        className="h-control-md w-full appearance-none rounded-full border border-transparent bg-canvas-muted ps-10 pe-10 text-body text-fg transition-colors duration-micro placeholder:text-fg-secondary hover:border-line-strong focus-visible:border-focus focus-visible:bg-surface focus-visible:focus-field sm:text-small [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-control-md w-full appearance-none rounded-full border border-transparent bg-canvas-muted ps-10 pe-10 text-body text-fg transition-colors duration-micro placeholder:text-fg-secondary hover:border-line-strong focus-visible:border-focus focus-visible:bg-surface focus-visible:focus-field pointer-coarse:h-touch-target sm:text-small [&::-webkit-search-cancel-button]:appearance-none"
       />
       {value ? (
         <button
@@ -88,7 +89,7 @@ function SearchField({
             ref.current?.focus();
           }}
           aria-label={t("clear")}
-          className="absolute end-1 grid size-control-sm place-items-center rounded-full text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring"
+          className="absolute end-1 grid size-control-sm place-items-center rounded-full text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring pointer-coarse:end-0 pointer-coarse:size-touch-target"
         >
           <Icon icon={X} size="sm" />
         </button>
@@ -134,7 +135,8 @@ function CategoryBar({
               onChange(key);
               event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest", behavior: motion() });
             }}
-            className="group inline-flex h-control-md shrink-0 items-center gap-2 rounded-full bg-canvas-muted ps-3 pe-2 text-small font-medium text-fg-secondary transition-[background-color,color,scale] duration-micro ease-spring hover:bg-selected hover:text-fg focus-visible:focus-ring active:scale-pressed aria-pressed:bg-primary aria-pressed:text-primary-fg aria-pressed:hover:bg-primary-hover aria-pressed:hover:text-primary-fg data-empty:text-fg-tertiary"
+            // A 44 px target on touch: the chip stays 40 px and the invisible extension reaches into the row's own padding.
+            className="group relative inline-flex h-control-md shrink-0 items-center gap-2 rounded-full bg-canvas-muted ps-3 pe-2 text-small font-medium text-fg-secondary transition-[background-color,color,scale] duration-micro ease-spring before:absolute before:inset-0 pointer-coarse:before:-inset-0.5 hover:bg-selected hover:text-fg focus-visible:focus-ring active:scale-pressed aria-pressed:bg-primary aria-pressed:text-primary-fg aria-pressed:hover:bg-primary-hover aria-pressed:hover:text-primary-fg data-empty:text-fg-tertiary"
           >
             <Icon icon={key === "all" ? LayoutGrid : CATEGORY_ICONS[key]} size="sm" />
             {key === "all" ? t("all") : t(`categories.${key}`)}
@@ -510,7 +512,7 @@ export function ExampleGallery({ items, intro, wall }: { items: GalleryItem[]; i
           ariaLabel: `${t(`languages.${code}`)} (${code.toUpperCase()})`,
         })),
       ]}
-      className={cn("shrink-0", className)}
+      className={cn("shrink-0", touchSegmented, className)}
     />
   );
   const playLabel = paused ? t("glide.play") : t("glide.pause");

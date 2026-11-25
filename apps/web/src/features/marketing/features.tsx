@@ -224,11 +224,15 @@ function AnalyticsCard() {
         <span className="text-small font-semibold">{t("week")}</span>
         <Badge size="sm">{t("sample")}</Badge>
       </figcaption>
-      <dl className="grid grid-cols-3 gap-2">
+      {/* The card is only about 290 px wide next to its words, too narrow for three equal columns: "Click rate"
+          was cut to "Click ra…" and "12,480" stuck out of its cell. Each figure is as wide as its own words and
+          number (never cut: the label may wrap, the number stays under it), and a figure that does not fit
+          beside the others goes on to the next line. */}
+      <dl className="flex flex-wrap gap-2">
         {figures.map(([label, value, percent]) => (
-          <div key={label} className="grid gap-1 rounded-lg bg-canvas-muted p-3">
-            <dt className="truncate text-caption font-medium text-fg-secondary">{label}</dt>
-            <dd className="text-h3 tabular-nums">
+          <div key={label} className="grid flex-auto content-between gap-1 rounded-lg bg-canvas-muted px-2 py-3">
+            <dt className="text-caption font-medium text-fg-secondary">{label}</dt>
+            <dd className="text-title tabular-nums">
               <CountUp value={value} percent={percent} />
             </dd>
           </div>

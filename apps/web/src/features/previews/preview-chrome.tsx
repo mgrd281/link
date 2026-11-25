@@ -1,5 +1,5 @@
 import type { ResolvedCreatorTheme } from "@linkyo/tokens/creator";
-import { Icon, LogoGlyph } from "@linkyo/ui";
+import { cn, Icon, LogoGlyph } from "@linkyo/ui";
 import { Check, Eye, Info, Languages } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
@@ -12,6 +12,13 @@ import type { Preview } from "./registry";
 
 /** Each language in its own name, so people find theirs whatever the page is in. */
 const LANGUAGE_NAMES: Record<string, string> = { de: "Deutsch", en: "English", ar: "العربية" };
+
+/**
+ * The label's round buttons (language, more): 32 px to the eye. On a touch screen an invisible extension of
+ * 6 px on every side makes each a 44 px target (the same as `IconButton`'s 2 px around 40, here around 32).
+ */
+const pillButton =
+  "relative size-control-sm text-fg-secondary hover:bg-hover hover:text-fg focus-visible:focus-ring grid place-items-center rounded-full before:absolute before:inset-0 pointer-coarse:before:inset-[calc((var(--spacing-control-sm)_-_var(--spacing-touch-target))_/_2)]";
 
 /** What an example page is an example of: its gallery category, or else its kind of page. */
 export async function sampleLabel(locale: string, sample: { kind: string; category?: string | undefined }): Promise<string> {
@@ -86,7 +93,7 @@ export async function previewChrome({
             type="button"
             popoverTarget="preview-language"
             aria-label={t("languageMenu")}
-            className="size-control-sm text-fg-secondary hover:bg-hover hover:text-fg focus-visible:focus-ring grid place-items-center rounded-full"
+            className={pillButton}
           >
             <Icon icon={Languages} size="sm" />
           </button>
@@ -116,12 +123,8 @@ export async function previewChrome({
           </div>
         </>
       ) : null}
-      <button
-        type="button"
-        popoverTarget="preview-info"
-        aria-label={t("more")}
-        className="size-control-sm text-fg-secondary hover:bg-hover hover:text-fg focus-visible:focus-ring grid place-items-center rounded-full"
-      >
+      {/* After the language button the two sit 12 px apart on a touch screen (8 otherwise), so that their 6 px extensions meet without overlapping. */}
+      <button type="button" popoverTarget="preview-info" aria-label={t("more")} className={cn(pillButton, languages.length > 1 && "pointer-coarse:ms-1")}>
         <Icon icon={Info} size="sm" />
       </button>
       <div

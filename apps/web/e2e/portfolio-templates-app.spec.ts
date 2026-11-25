@@ -215,6 +215,93 @@ test.describe("on a phone", () => {
     await fits(page);
   });
 
+  /**
+   * The strip's pictures all stand at one height (each width follows its own ratio, nothing is
+   * cropped), so a portrait next to a landscape picture no longer makes the whole strip as tall as the
+   * portrait and leaves an empty band under the landscape one. The strip is one picture's height plus its
+   * caption, still swipes sideways and snaps, and in Arabic starts at the right. Merle's page is the real
+   * case (two landscape and two portrait covers); the two samples are the same strip in both directions.
+   */
+  for (const [name, locale, path] of [
+    ["Merle Kastorf (example page)", "de", "/de/p/merle-kastorf"],
+    ["the portfolio sample in German", "de", sample("de", "leuchttisch")],
+    ["the portfolio sample in Arabic", "ar", sample("ar", "leuchttisch")],
+  ] as const) {
+    for (const width of [390, 360]) {
+      test(`Leuchttisch strip, ${name} at ${String(width)} px: one picture height, no empty band, swipes and snaps`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 844 });
+        await open(page, path);
+        const strip = await page.evaluate(() => {
+          const track = document.querySelector<HTMLElement>("[data-scroll-track]");
+          if (!track) return null;
+          const frame = track.getBoundingClientRect();
+          const items = [...track.children].map((item) => {
+            const plate = item.querySelector<HTMLElement>("[data-plate]");
+            const plateBox = plate?.getBoundingClientRect();
+            const caption = plate?.nextElementSibling?.getBoundingClientRect();
+            return {
+              ratio: Number(getComputedStyle(item).getPropertyValue("--ratio")),
+              width: plateBox?.width ?? 0,
+              height: plateBox?.height ?? 0,
+              right: plateBox?.right ?? 0,
+              left: plateBox?.left ?? 0,
+              captionHeight: caption?.height ?? 0,
+              snap: getComputedStyle(item).scrollSnapAlign,
+            };
+          });
+          // The block that follows the strip in the hero: the words under it.
+          const wrapper = track.closest("header > div");
+          const next = wrapper?.nextElementSibling?.getBoundingClientRect();
+          const style = getComputedStyle(track);
+          return {
+            items,
+            top: frame.top,
+            bottom: frame.bottom,
+            height: frame.height,
+            nextTop: next?.top ?? null,
+            scrolls: track.scrollWidth - track.clientWidth,
+            snapType: style.scrollSnapType,
+            direction: style.direction,
+          };
+        });
+        expect(strip, "the strip is on the page").not.toBeNull();
+        if (!strip) return;
+        expect(strip.items.length).toBeGreaterThan(1);
+        const heights = strip.items.map((item) => item.height);
+        const tallest = Math.max(...heights);
+        // One height for every picture.
+        expect(tallest - Math.min(...heights), `heights ${heights.map(Math.round).join(", ")}`).toBeLessThanOrEqual(1);
+        // Each width follows its own picture's ratio, so nothing is cropped or stretched.
+        for (const item of strip.items) expect(Math.abs(item.width / item.height - item.ratio) / item.ratio).toBeLessThan(0.01);
+        // Whole on the screen, and never taller than 70svh.
+        for (const item of strip.items) expect(item.width).toBeLessThanOrEqual(width - 40);
+        expect(tallest).toBeLessThanOrEqual(844 * 0.7 + 1);
+        // The strip is one picture plus its caption (and the gap and padding between them), nothing more.
+        const caption = Math.max(...strip.items.map((item) => item.captionHeight));
+        expect(strip.height, `strip ${Math.round(strip.height)} px, picture ${Math.round(tallest)} px, caption ${Math.round(caption)} px`).toBeLessThanOrEqual(tallest + caption + 16);
+        // And no empty band: the next block follows at the hero's own spacing (20 px).
+        expect(strip.nextTop).not.toBeNull();
+        expect((strip.nextTop ?? 0) - strip.bottom, "the gap before the words under the strip").toBeLessThanOrEqual(24);
+        // It still swipes and snaps, picture by picture.
+        expect(strip.scrolls).toBeGreaterThan(0);
+        expect(strip.snapType).toMatch(/x\s+mandatory/);
+        for (const item of strip.items) expect(item.snap).toBe("start");
+        // Arabic starts at the right: the first picture is the rightmost and sits at the gutter.
+        if (locale === "ar") {
+          expect(strip.direction).toBe("rtl");
+          const [first, ...rest] = strip.items;
+          for (const item of rest) expect(item.right).toBeLessThan(first?.right ?? 0);
+          expect(first?.right ?? 0).toBeGreaterThan(width - 40);
+        } else {
+          const [first, ...rest] = strip.items;
+          for (const item of rest) expect(item.left).toBeGreaterThan(first?.left ?? 0);
+          expect(first?.left ?? width).toBeLessThan(40);
+        }
+        await fits(page);
+      });
+    }
+  }
+
   test("no row of social icons ends with a single icon, on any common phone width", async ({ page }) => {
     test.setTimeout(120_000);
     // 360 (many Androids), 375 (iPhone SE and mini), 390, 430 and 440 (the large iPhones).

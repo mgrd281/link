@@ -56,13 +56,19 @@ function Block({ block }: { block: LegalBlock }) {
  * build fails in that state, live-guard.ts), in English and Arabic a note that the German text is
  * the binding one, then the German text itself (marked `lang="de"`, left to right, also inside an
  * Arabic page).
+ *
+ * The German titles hold words of twenty letters ("Geschäftsbedingungen", "Datenschutzerklärung"), wider
+ * than a 360 or 390 px column at the large title size. So the title is a size smaller on phones (as every
+ * heading of the website is: `text-h2 md:text-h1`), and it may hyphenate and, as a last resort on the
+ * narrowest phones, break inside a word (`wrap-anywhere`) instead of running out of its box and widening
+ * the whole page. The text below breaks long words and addresses the same way.
  */
 export async function LegalPage({ locale, title, doc }: { locale: string; title: LegalTitle; doc: LegalDoc }) {
   const t = await getTranslations({ locale, namespace: "legal" });
   const draft = legalIsDraft({ legalReady, reviewed: process.env.LEGAL_REVIEWED, markers: reviewMarkers([doc]) });
   return (
     <main id="main" className="mx-auto grid w-full max-w-prose grid-cols-1 gap-6 px-4 pt-10 pb-16 md:pt-16">
-      <h1 className="text-h1 text-fg font-semibold text-balance">{t(`titles.${title}`)}</h1>
+      <h1 className="text-h2 md:text-h1 text-fg font-semibold text-balance hyphens-auto wrap-anywhere">{t(`titles.${title}`)}</h1>
       <div className="grid gap-3">
         {draft ? (
           <p role="note" className="border-line bg-surface text-small text-fg flex items-start gap-3 rounded-lg border p-4">
@@ -77,7 +83,7 @@ export async function LegalPage({ locale, title, doc }: { locale: string; title:
           </p>
         )}
       </div>
-      <div lang="de" dir="ltr" className="grid grid-cols-1 gap-4 text-start">
+      <div lang="de" dir="ltr" className="grid grid-cols-1 gap-4 text-start wrap-break-word">
         {doc.map((block, index) => (
           <Block key={`${block.kind}-${String(index)}`} block={block} />
         ))}

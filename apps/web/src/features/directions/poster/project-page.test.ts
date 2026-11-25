@@ -345,6 +345,23 @@ describe("the bar, Linkyo's chrome and the way on", () => {
     expect(text(one(withContact, has("data-bar-action"), "bar action"))).toBe("Schreib mir");
   });
 
+  it("shows the primary action as one 44 px icon button on a phone, named by its whole label", () => {
+    const withContact = render("de", full(), [full(), contact]);
+    const action = one(withContact, has("data-bar-action"), "bar action");
+    const classes = action.attrs.class ?? "";
+    // One 44 px touch target below the column width (the owner's name gets the rest of the bar), the label's own width from there.
+    expect(classes).toMatch(/(^|\s)w-touch-target(\s|$)/);
+    expect(classes).toMatch(/(^|\s)@prose:w-auto(\s|$)/);
+    // The glyph for phones: one icon, hidden from the column width up.
+    expect(all(action, (element) => element.tag === "svg" && (element.attrs.class ?? "").includes("@prose:hidden"))).toHaveLength(1);
+    // The label is in the control (it names the link), visually hidden on phones, the text itself from the column width up.
+    const label = one(action, (element) => element.tag === "span" && (element.attrs.class ?? "").includes("@max-prose:sr-only"), "label");
+    expect(text(label)).toBe("Schreib mir");
+    expect(label.attrs.class).toContain("@prose:truncate");
+    // The old rule let the button take half the bar and cut the name; the name keeps its own flexible box.
+    expect(classes).not.toMatch(/(^|\s)max-w-1\/2(\s|$)/);
+  });
+
   it("with an overlay, the badge follows the bar in the DOM and is not absolutely placed", () => {
     const badge = createElement("aside", { "data-test-badge": "" }, "Beispiel");
     const tree = render("de", full(), [full()], { overlay: badge });

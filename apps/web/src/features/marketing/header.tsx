@@ -48,7 +48,8 @@ export function MarketingHeader({
         {t("skip")}
       </a>
       <div className="mx-auto flex h-16 max-w-content items-center gap-2 px-5 md:px-10">
-        <Link href="/" className="rounded-xs focus-visible:focus-ring" aria-label="Linkyo">
+        {/* The logo is 24 px tall: its link reaches 12 px above and below it (invisible), 48 px in all, inside the 64 px bar. */}
+        <Link href="/" className="relative rounded-xs before:absolute before:inset-x-0 before:-inset-y-3 focus-visible:focus-ring" aria-label="Linkyo">
           <Logo className="h-6" title="Linkyo" />
         </Link>
         <nav aria-label={t("nav.label")} className="ms-6 hidden items-center gap-1 lg:flex">

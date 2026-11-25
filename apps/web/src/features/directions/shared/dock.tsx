@@ -84,9 +84,10 @@ export function LinkyoDock({ title, cta, href, closeLabel }: { title: string; ct
         <Logo className="h-5 shrink-0" title="Linkyo" />
         {/* Phones: logo, button, close. The line of text joins on wider screens, where it fits. */}
         <span className="min-w-0 flex-1 truncate text-small text-fg-secondary max-sm:invisible">{title}</span>
+        {/* Both are 40 px to the eye and 44 px targets on a touch screen (an invisible 2 px around them, as IconButton does). */}
         <Link
           href={href}
-          className="inline-flex h-control-md shrink-0 items-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-colors duration-micro hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
+          className="relative inline-flex h-control-md shrink-0 items-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-fg transition-colors duration-micro before:absolute before:inset-0 pointer-coarse:before:-inset-0.5 hover:bg-primary-hover focus-visible:focus-ring active:scale-pressed"
         >
           {cta}
           <Icon icon={ArrowRight} size="sm" />
@@ -95,7 +96,7 @@ export function LinkyoDock({ title, cta, href, closeLabel }: { title: string; ct
           type="button"
           onClick={close}
           aria-label={closeLabel}
-          className="grid size-control-md shrink-0 place-items-center rounded-full text-fg-secondary transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring"
+          className="relative grid size-control-md shrink-0 place-items-center rounded-full text-fg-secondary transition-colors duration-micro before:absolute before:inset-0 pointer-coarse:before:-inset-0.5 hover:bg-hover hover:text-fg focus-visible:focus-ring"
         >
           <Icon icon={X} size="sm" />
         </button>

@@ -39,6 +39,21 @@ export const pressable = cn(
 );
 
 /**
+ * What a link card adds to `pressable` (put it next to it): under the pointer a frame of 2 px appears
+ * just inside its edge, in the card's own text colour (`currentColor`: it shows on every fill, theme and
+ * photo, as the overlay does) at the token strength `opacity-secondary`. The overlay alone moved a pixel
+ * by about 5 of 255, so a card under the pointer looked like the one beside it. The frame is a
+ * pseudo-element laid over the card, so nothing moves or changes size, and it fades in over the micro
+ * duration, not at all under reduced motion. Keyboard focus keeps `pressable`'s ring (a frame inside it
+ * would only double the line). No shadow, no underline. Not for cards that hold a picture to their edge
+ * (the artwork would cover the frame), nor for the minimal style (a line under the title, no card).
+ */
+export const cardHover = cn(
+  "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border-emphasis before:border-current before:opacity-0",
+  "before:transition-opacity before:duration-micro motion-reduce:before:transition-none hover:before:opacity-secondary",
+);
+
+/**
  * Section titles per template: the display face; the body face in title case or in caps; for the
  * newer templates small caps after a number, before a rule, or after "//"; for portfolios a small
  * numbered caption under a hairline (marker) or the display face set large after a small number

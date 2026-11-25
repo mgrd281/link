@@ -5,8 +5,11 @@ import { paymentsEnabled } from "@/lib/flags";
 
 import { legalLinksVisible } from "./company";
 
+// A phone's finger needs 44 px each way, also for a word as short as "AGB": the link reaches 8 px past its
+// words on each side (padding drawn back by the negative margin, so the words stay where they were). On a laptop
+// the row is 32 px tall (it was 17: under the 24 px of WCAG 2.5.8).
 const linkClass =
-  "inline-flex min-h-touch-target items-center rounded-xs text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring md:min-h-0";
+  "-mx-2 inline-flex min-h-touch-target items-center rounded-xs px-2 text-fg-secondary transition-colors duration-micro hover:text-fg focus-visible:focus-ring md:min-h-control-sm";
 
 const PAGES = [
   { key: "imprint", href: "/impressum" },
@@ -38,7 +41,7 @@ export function LegalLinks({ className }: { className?: string }) {
   if (!legalLinksVisible) {
     // The names only, as before: the pages are drafts until the company data is in.
     return (
-      <p className={cn("text-fg-tertiary flex flex-wrap gap-x-3 gap-y-1", className)}>
+      <p className={cn("text-fg-tertiary flex flex-wrap gap-x-4 gap-y-1", className)}>
         <span className="sr-only">{t("label")}:</span>
         {PAGES.map(({ key }) => (
           <span key={key}>{t(`nav.${key}`)}</span>
@@ -50,7 +53,7 @@ export function LegalLinks({ className }: { className?: string }) {
   const links = paymentsEnabled ? [...PAGES, ...CONTRACTS] : PAGES;
   return (
     <nav aria-label={t("label")} className={className}>
-      <ul className="flex flex-wrap gap-x-3 gap-y-1">
+      <ul className="flex flex-wrap gap-x-4 gap-y-1">
         {links.map(({ key, href }) => (
           <li key={key}>
             <a href={`/${locale}${href}`} className={linkClass}>
