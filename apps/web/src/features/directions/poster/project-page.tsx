@@ -29,6 +29,7 @@ import { CreatorFooter, MediaImage, mediaSizes, useCreatorFormat, type CreatorFo
 import { LinkIconGlyph } from "../shared/link-icons";
 import { resolveMedia } from "../shared/media";
 import { PictureViewer } from "../shared/picture-viewer";
+import { BarActionGlyph } from "./bar-action-glyph";
 import { CodeBox } from "./code-box";
 import { ContactBand } from "./portfolio-sections";
 import { ProjectCover, projectNumber } from "./projects";
@@ -287,14 +288,20 @@ function ProjectBar({
           ) : null}
         </div>
         {primary ? (
-          // The label may be cut short here; the link's name is still the whole label.
+          // Phones: the action's icon in one 44 px touch target, named by its whole label (as on the portfolio's own
+          // bar), so neither the owner's name nor the action is cut short ("Merl…", "Probenbesuch anfrag…");
+          // from the column width up: the label itself (it may be cut short there; the link's name is the whole label).
           <a
             href={primary.url}
             data-bar-action
-            className={cn("inline-flex min-h-touch-target max-w-1/2 shrink-0 items-center gap-2 rounded-creator-button bg-creator-accent px-3 text-small @prose:px-4 font-semibold text-creator-accent-fg", pressable)}
+            className={cn(
+              "inline-flex min-h-touch-target w-touch-target shrink-0 items-center justify-center rounded-creator-button bg-creator-accent text-small font-semibold text-creator-accent-fg @prose:w-auto @prose:max-w-1/2 @prose:gap-2 @prose:px-4",
+              pressable,
+            )}
           >
+            <BarActionGlyph primary={primary} />
             {primary.icon ? <LinkIconGlyph icon={primary.icon} size="sm" className="hidden shrink-0 @prose:block" /> : null}
-            <span dir="auto" className="truncate">
+            <span dir="auto" className="@max-prose:sr-only @prose:truncate">
               {primary.label}
             </span>
           </a>

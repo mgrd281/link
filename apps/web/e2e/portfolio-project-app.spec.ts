@@ -270,3 +270,68 @@ test.describe("project pages of the sample, every template and language", () => 
     expect((await page.goto("/en/directions/gallery/work/rasterblick"))?.status()).toBe(404);
   });
 });
+
+/**
+ * On a phone the project page's top bar keeps the owner's whole name. The page's primary action was
+ * a text button with a long label ("Probenbesuch anfragen", "Book a call") that took up to half the bar
+ * and cut the name to "Merl…" and "Ines Vasconce…"; below the column width it is now one 44 px button
+ * showing the action's icon, named by its whole label, as on the portfolio's own bar. Wider, the label
+ * is the button.
+ */
+test.describe("the project page's top bar on a phone keeps the name whole", () => {
+  const BARS = [
+    { path: "/de/p/merle-kastorf/gegenlicht", name: "Merle Kastorf", action: "Probenbesuch anfragen" },
+    { path: "/en/p/ines-vasconcelos/nevoa", name: "Ines Vasconcelos", action: "Book a call" },
+  ] as const;
+
+  for (const bar of BARS) {
+    for (const width of [390, 360]) {
+      test(`${bar.path} at ${String(width)} px: name whole, action an icon with its name, nothing cut`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 844 });
+        await load(page, bar.path);
+        const measured = await page.evaluate(() => {
+          const root = document.querySelector("[data-project-bar]");
+          const name = root?.querySelector<HTMLElement>("[data-name]");
+          const action = root?.querySelector<HTMLElement>("[data-bar-action]");
+          const box = (element: Element | null | undefined) => {
+            const rect = element?.getBoundingClientRect();
+            return rect ? { left: rect.left, right: rect.right, width: rect.width, height: rect.height } : null;
+          };
+          return {
+            nameText: name?.dataset.name,
+            // The name is drawn from `data-name` (a pseudo-element inside the span): cut text is wider than the span.
+            nameCut: name ? name.scrollWidth > name.clientWidth : true,
+            nameBox: box(name),
+            action: box(action),
+            barRight: root?.getBoundingClientRect().right ?? 0,
+            controls: [...(root?.querySelectorAll("a, button") ?? [])].map((control) => box(control)),
+          };
+        });
+        expect(measured.nameText).toBe(bar.name);
+        expect(measured.nameCut, `the name "${bar.name}" is cut to ${String(Math.round(measured.nameBox?.width ?? 0))} px`).toBe(false);
+        // The action: an icon-only touch target, 44 px square, with the whole label as its name.
+        expect(measured.action).not.toBeNull();
+        expect(measured.action?.width ?? 0).toBeGreaterThanOrEqual(44);
+        expect(measured.action?.width ?? 0).toBeLessThanOrEqual(48);
+        expect(measured.action?.height ?? 0).toBeGreaterThanOrEqual(44);
+        await expect(page.locator("[data-project-bar]").getByRole("link", { name: bar.action, exact: true })).toHaveCount(1);
+        // Nothing runs out of the bar.
+        for (const control of measured.controls) expect(control?.right ?? 0).toBeLessThanOrEqual(width);
+        expect(measured.barRight).toBeLessThanOrEqual(width);
+      });
+    }
+  }
+
+  test("from the column width up the action shows its label", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "laptop width");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await load(page, "/de/p/merle-kastorf/gegenlicht");
+    const action = page.locator("[data-project-bar] [data-bar-action]");
+    await expect(action).toHaveText("Probenbesuch anfragen");
+    const box = await action.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThan(120);
+    // The visible text is the label itself, not a visually hidden copy of it.
+    const label = action.locator("span").last();
+    expect((await label.boundingBox())?.width ?? 0).toBeGreaterThan(100);
+  });
+});
