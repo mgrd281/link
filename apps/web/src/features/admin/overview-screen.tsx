@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, Button, Icon, icons, KpiTile, Segmented, type KpiDelta } from "@linkyo/ui";
+import { Avatar, Button, cn, Icon, icons, KpiTile, Segmented, type KpiDelta } from "@linkyo/ui";
 import { ArrowRight, CalendarClock, CircleCheck, FilePen, Plus, Rocket, UserX, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type ReactNode } from "react";
@@ -9,6 +9,7 @@ import { Panel, Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
 import { paymentsEnabled } from "@/lib/flags";
 import { supabaseEnabled } from "@/lib/supabase/config";
+import { touchSegmented } from "@/lib/touch";
 
 import { ActivityList } from "./activity-screen";
 import { bdi, isolate } from "./bidi";
@@ -201,7 +202,7 @@ export function OverviewScreen() {
             label={t("range")}
             value={rangeKey}
             onValueChange={setRange}
-            className="justify-self-start"
+            className={cn("justify-self-start", touchSegmented)}
             options={RANGES.map((days) => ({ value: days, label: t("days", { days: Number(days) }) }))}
           />
           {/* Nine tiles in three rows on a laptop (four without the money); two per row on a phone. */}

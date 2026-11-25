@@ -158,13 +158,14 @@ test.describe("team console on a phone", () => {
 });
 
 test.describe("team console: icons, trends, Arabic", () => {
-  test("navigation glyphs: Contact, UsersRound, SquareUser, Gift; the chosen tab is strong and semibold", async ({ page, isMobile }) => {
+  test("navigation glyphs: Contact, UsersRound, UserStar, Gift; the chosen tab is strong and semibold", async ({ page, isMobile }) => {
     await owner(page, "en");
     const glyph = (name: string) =>
       page.getByRole("navigation", { name: "Team area" }).locator("visible=true").getByRole("link", { name, exact: true }).first().locator("svg").getAttribute("class");
+    // Customers and creators are two shapes (a contact card, a person with a star), side by side in the tab bar.
     if (isMobile) {
       expect(await glyph("Customers")).toContain("lucide-contact");
-      expect(await glyph("Creators")).toContain("lucide-square-user");
+      expect(await glyph("Creators")).toContain("lucide-user-star");
       await page.getByRole("navigation", { name: "Team area" }).locator("visible=true").getByRole("button", { name: "More" }).click();
       expect(await page.getByRole("menuitem", { name: "Team" }).locator("svg").getAttribute("class")).toContain("lucide-users-round");
       expect(await page.getByRole("menuitem", { name: "Referrals" }).locator("svg").getAttribute("class")).toContain("lucide-gift");
@@ -172,7 +173,7 @@ test.describe("team console: icons, trends, Arabic", () => {
     } else {
       expect(await glyph("Customers")).toContain("lucide-contact");
       expect(await glyph("Team")).toContain("lucide-users-round");
-      expect(await glyph("Creators")).toContain("lucide-square-user");
+      expect(await glyph("Creators")).toContain("lucide-user-star");
       expect(await glyph("Referrals")).toContain("lucide-gift");
     }
     // S-05: the current tab is marked by a strong stroke and a semibold label, never colour alone.

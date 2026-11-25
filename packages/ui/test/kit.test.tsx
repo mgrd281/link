@@ -39,6 +39,19 @@ describe("KpiTile (A-19)", () => {
     expect(tile(0)).toContain('data-tone="neutral"');
   });
 
+  it("lets a long label take a second line, and keeps its row's figures level (K4)", () => {
+    const html = renderToStaticMarkup(
+      <dl>
+        <KpiTile label="Zahlung fehlgeschlagen" value="1" />
+      </dl>,
+    );
+    // Two lines before an ellipsis, not one ("Zahlung fehlgeschl…" on half a phone).
+    expect(html).toMatch(/<dt class="[^"]*line-clamp-2[^"]*">Zahlung fehlgeschlagen<\/dt>/);
+    expect(html).not.toMatch(/<dt class="[^"]*\btruncate\b/);
+    // The label and the figure take two rows shared with the tiles beside it.
+    expect(html).toMatch(/class="[^"]*row-span-2[^"]*grid-rows-subgrid/);
+  });
+
   it("draws a sparkline in the palette's primary role that mirrors with the reading direction", () => {
     const html = renderToStaticMarkup(
       <dl>
@@ -149,6 +162,26 @@ describe("DataList (A-11, A-19)", () => {
     const loading = renderToStaticMarkup(<DataList label="Kunden" items={[]} loading loadingRows={2} />);
     expect(loading).toContain('aria-busy="true"');
     expect(loading.match(/<li/g)).toHaveLength(2);
+  });
+
+  it('"content" sizing: from xl each column is as wide as its values, a wrap field wraps (K2)', () => {
+    const place = [{ id: "1", title: "Omar Haddad", fields: [{ label: "Land", value: "Vereinigte Arabische Emirate", wrap: true }, { label: "Seit", value: "24. Nov. 2026" }] }];
+    const fitted = renderToStaticMarkup(<DataList label="Kunden" items={place} sizing="content" />);
+    // Title, two fields and the trailing slot: four columns sized by their content, the rest shared out.
+    expect(fitted).toContain("--data-list-content:repeat(4, auto)");
+    expect(fitted).toContain("xl:grid-cols-(--data-list-content)");
+    // The title and the fields keep their whole value as their least width from xl, also where the
+    // value truncates (a grid counts a clipping item as 0 wide unless its column starts at it).
+    expect(fitted.match(/xl:min-w-auto/g)).toHaveLength(3);
+    expect(fitted.match(/xl:grid-cols-\[minmax\(min-content,1fr\)\]/g)).toHaveLength(3);
+    // The country wraps; the date stays one cut-free line.
+    expect(fitted).toMatch(/<dd class="[^"]*text-pretty[^"]*">Vereinigte Arabische Emirate<\/dd>/);
+    expect(fitted).toMatch(/<dd class="[^"]*truncate[^"]*">24\. Nov\. 2026<\/dd>/);
+    // The default keeps the shares (2fr for the title, 1fr per field) at every width.
+    const shared = renderToStaticMarkup(<DataList label="Kunden" items={place} />);
+    expect(shared).not.toContain("xl:grid-cols-(--data-list-content)");
+    expect(shared).not.toContain("xl:min-w-auto");
+    expect(shared).not.toContain("minmax(min-content");
   });
 });
 

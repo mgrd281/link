@@ -3578,6 +3578,11 @@
         "cancel": "Abbrechen"
       }
     },
+    "editor": {
+      "emptyTitle": "Diese Seite hat noch keinen Link",
+      "emptyBody": "Füg den ersten Link ein, zum Beispiel einen Song, ein Video oder einen Shop. Er erscheint sofort auf der Seite.",
+      "addFirst": "Ersten Link hinzufügen"
+    },
     "referrals": {
       "title": "Empfehlungen",
       "lead": "Verifizierungsanfragen und Einladungen zur Prüfung. Pro für immer aus Einladungen ist nie Umsatz.",
@@ -3785,7 +3790,7 @@
       "unknownCountry": "Unbekannt",
       "export": "CSV exportieren",
       "search": "Suchen",
-      "searchHint": "Name, E-Mail, Adresse oder IP",
+      "searchHint": "Name, E-Mail, Seite, IP",
       "plan": "Plan",
       "all": "Alle",
       "status": "Status",

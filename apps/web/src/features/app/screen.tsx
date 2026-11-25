@@ -178,18 +178,34 @@ function ShellScreen({ title, lead, actions, children, preview = false, wide = f
   );
 }
 
-/** Outside the shell (the team area): the title in the column, as it always was. */
-function PlainScreen({ title, lead, actions, children, preview = false, wide = false }: ScreenProps) {
+/**
+ * Outside the shell (the team area): the title in the column, as it always was. A wide screen (lists,
+ * logs, tiles) grows to `layout.content-wide` from 2xl, so its tables use the room a large screen has
+ * instead of stopping at `content` with 300 px unused on each side at 1920.
+ */
+function PlainScreen({ title, lead, actions, children, preview = false, wide = false, back }: ScreenProps) {
   return (
     <div className="flex min-w-0">
       <div className="min-w-0 flex-1">
-        <div className={cn("mx-auto grid grid-cols-1 gap-6 px-4 pt-6 pb-10 md:px-8 lg:pt-10", wide ? "max-w-content" : "max-w-prose")}>
-          <header className="flex flex-wrap items-end gap-3">
-            <div className="grid min-w-0 flex-1 gap-1">
-              <h1 className="text-h2 tracking-tight">{title}</h1>
-              {lead ? <div className="text-small text-fg-secondary">{lead}</div> : null}
+        <div className={cn("mx-auto grid grid-cols-1 gap-6 px-4 pb-10 md:px-8", back ? "pt-3 lg:pt-6" : "pt-6 lg:pt-10", wide ? "max-w-content 2xl:max-w-content-wide" : "max-w-prose")}>
+          <header className="grid grid-cols-1 gap-1">
+            {/* A pushed screen (one customer): "‹ Alle Kunden" above its title, where a phone's thumb and a
+                laptop's eye look for the way back; 32 px to see, 48 px to a finger. */}
+            {back ? (
+              <BackLink
+                href={back.href}
+                label={back.label}
+                variant="toolbar"
+                className="relative justify-self-start before:absolute before:inset-x-0 before:-inset-y-2 pointer-fine:before:hidden"
+              />
+            ) : null}
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="grid min-w-0 flex-1 gap-1">
+                <h1 className="text-h2 tracking-tight">{title}</h1>
+                {lead ? <div className="text-small text-fg-secondary">{lead}</div> : null}
+              </div>
+              {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
             </div>
-            {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
           </header>
           {children}
         </div>

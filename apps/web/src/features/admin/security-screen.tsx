@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Button, cn, ConfirmDialog, Icon, icons, KpiTile, Segmented, TextField, toast } from "@linkyo/ui";
-import { Ban, KeyRound, ShieldAlert, ShieldCheck, ShieldOff } from "lucide-react";
+import { KeyRound, ShieldAlert, ShieldCheck, ShieldOff } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
@@ -9,12 +9,13 @@ import { useMemo, useRef, useState } from "react";
 import type { LoginEvent } from "@/features/account/types";
 import { Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
+import { touchSegmented } from "@/lib/touch";
 
 import { useConsoleActions } from "./actions";
 import { bdi, isolate, ltr } from "./bidi";
 import { useCustomers } from "./customers/data";
 import { daysAgo, riskFlags, type Customer, type RiskFlag } from "./customers/model";
-import { DemoNote, DeviceGlyph, DeviceLabel, RiskBadges } from "./customers/ui";
+import { BlockButton, DemoNote, DeviceGlyph, DeviceLabel, RiskBadges } from "./customers/ui";
 import { count, country, dateTime, PAGE_SIZE, timeAgo } from "./format";
 import { useAdmin } from "./session";
 
@@ -26,8 +27,15 @@ interface Row {
   flags: RiskFlag[];
 }
 
-/** The log's columns from md: customer, result, when, address, place, device, warnings, the action. */
-const COLUMNS = "md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1.5fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto]";
+/**
+ * The log's columns on laptops (from xl): customer, result, when, address, place, device, notes, the
+ * action. The header and every row share them (a subgrid), so each column is as wide as its widest
+ * value: the result, the time, the address, the notes and the action take what they need and are
+ * never cut; the customer, the place and the device share the rest, at least `spacing-16` each, and
+ * end in an ellipsis (the whole text is their title) when they are longer. Below xl a sign-in is the
+ * phone's two lines: eight columns do not fit a tablet or a small laptop.
+ */
+const COLUMNS = "xl:grid-cols-[minmax(var(--spacing-16),1fr)_auto_auto_auto_minmax(var(--spacing-16),1fr)_minmax(var(--spacing-16),1fr)_auto_auto]";
 
 const IP = /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$|^[0-9a-f:]{2,39}$/i;
 
@@ -49,17 +57,21 @@ export function Place({ code, city, unknown }: { code: string; city?: string | u
 
 /**
  * The place on a sign-in row: the country, then the city in its own isolate that truncates by
- * itself, so a Latin city in an Arabic row keeps its start ("Abu Dh…", not "…bi").
+ * itself, so a Latin city in an Arabic row keeps its start ("Abu Dh…", not "…bi"). The city takes
+ * the room the country leaves (it is cut first) and stands right after the dot on the row's side,
+ * also in an Arabic row; the whole place is the title of a cut one.
  */
 function PlaceLine({ code, city, unknown }: { code: string; city?: string | undefined; unknown: string }) {
   const locale = useLocale();
+  const name = country(code, locale, unknown);
   return (
-    <span className="flex min-w-0 items-center gap-1">
-      <span className="min-w-0 truncate">{country(code, locale, unknown)}</span>
+    // On a phone's second line it starts at 64 px and takes the room left; the notes wrap below it.
+    <span className="flex min-w-0 grow basis-16 items-center gap-1" title={city ? `${name} · ${city}` : name}>
+      <span className="min-w-0 truncate">{name}</span>
       {city ? (
         <>
           <span className="shrink-0">·</span>
-          <bdi data-city className="min-w-0 flex-1 truncate">
+          <bdi data-city className="min-w-0 flex-1 truncate text-left [[dir=rtl]_&]:text-right">
             {city}
           </bdi>
         </>
@@ -70,7 +82,7 @@ function PlaceLine({ code, city, unknown }: { code: string; city?: string | unde
 
 /**
  * One sign-in as a compact card on a phone (who and the result, then when, where, with what) and as
- * a row of aligned columns from md (A-11: nothing is cut off at the side). Blocking the address is
+ * a row of aligned columns on laptops (A-11: nothing is cut off at the side). Blocking the address is
  * the row's one action, at its end.
  */
 function LogRow({ row, now, canBlock, onBlock }: { row: Row; now: number; canBlock: boolean; onBlock: (ip: string) => void }) {
@@ -79,35 +91,42 @@ function LogRow({ row, now, canBlock, onBlock }: { row: Row; now: number; canBlo
   const locale = useLocale();
   const { login, customer, flags } = row;
   // Phones: two lines (who, the result and when; then the address, the place, the device and any
-  // warning). From md the same elements become the columns of one row (`md:contents`).
+  // warning, which takes a third line rather than running under the block button). The name's link
+  // covers the row there, a target as tall as the row; the block button sits above it. From xl the
+  // same elements become the cells of one row of the log's grid (`xl:contents` here, the row a
+  // subgrid), and only the name is the link. The row's edges are its first and last cells' margins
+  // (a subgrid's own padding would widen only its own first and last columns).
   return (
-    <li data-login={login.id} className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 px-4 py-2 md:gap-x-3 md:py-3", COLUMNS)}>
-      <div className="grid min-w-0 gap-0.5 md:contents">
-        <p className="flex min-w-0 items-center gap-2 md:contents">
+    <li data-login={login.id} className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 px-4 py-1 xl:col-span-full xl:grid-cols-subgrid xl:gap-x-3 xl:px-0 xl:py-3">
+      <div className="grid min-w-0 gap-0.5 xl:contents">
+        <p className="flex min-w-0 items-center gap-2 xl:contents">
           <Link
             href={`/admin/customers/${customer.id}`}
-            className="min-w-0 truncate rounded-xs text-small font-semibold text-fg transition-colors duration-micro hover:text-link focus-visible:focus-ring"
+            className="block min-w-0 rounded-xs text-small font-semibold text-fg transition-colors duration-micro hover:text-link focus-visible:focus-ring max-xl:after:absolute max-xl:after:inset-0 xl:ms-4"
           >
-            <bdi>{customer.name}</bdi>
+            {/* Cut in its own direction (a Latin name in an Arabic row keeps its start), on the row's side. */}
+            <bdi title={customer.name} className="block truncate text-left [[dir=rtl]_&]:text-right">
+              {customer.name}
+            </bdi>
           </Link>
           <span className="shrink-0">
             <Badge size="sm" tone={login.result === "success" ? "success" : "danger"}>
               {t(`result.${login.result}`)}
             </Badge>
           </span>
-          <time dateTime={login.at} title={dateTime(login.at, locale)} className="ms-auto shrink-0 text-caption text-fg-secondary md:ms-0 md:text-small md:text-fg">
+          <time dateTime={login.at} title={dateTime(login.at, locale)} className="ms-auto shrink-0 whitespace-nowrap text-caption text-fg-secondary xl:ms-0 xl:text-small xl:text-fg">
             {timeAgo(login.at, now, locale)}
           </time>
         </p>
-        <p className="flex min-w-0 items-center gap-2 text-caption text-fg-secondary md:contents md:text-small">
-          <span dir="ltr" data-ip className="shrink-0 font-mono text-caption">
+        <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption text-fg-secondary xl:contents xl:text-small">
+          <span dir="ltr" data-ip className="shrink-0 whitespace-nowrap text-start font-mono text-caption rtl:text-end">
             {login.ip || "–"}
           </span>
           <PlaceLine code={login.country ?? ""} city={login.city} unknown={tc("unknownCountry")} />
-          <span className="min-w-0 truncate max-md:hidden">
+          <span className="min-w-0 max-xl:hidden">
             <DeviceLabel device={login.device} />
           </span>
-          <span className="shrink-0 md:hidden">
+          <span className="shrink-0 xl:hidden">
             <DeviceGlyph device={login.device} />
           </span>
           <span className="shrink-0">
@@ -115,13 +134,7 @@ function LogRow({ row, now, canBlock, onBlock }: { row: Row; now: number; canBlo
           </span>
         </p>
       </div>
-      {canBlock ? (
-        <Button size="sm" variant="ghost" icon={Ban} onClick={() => onBlock(login.ip)} aria-label={t("blockIp", { ip: login.ip })} className="text-danger-strong">
-          <span className="max-md:sr-only">{t("block")}</span>
-        </Button>
-      ) : (
-        <span />
-      )}
+      {canBlock ? <BlockButton ip={login.ip} onBlock={onBlock} className="xl:me-4" /> : <span className="xl:me-4" />}
     </li>
   );
 }
@@ -204,13 +217,13 @@ export function SecurityScreen() {
               label={t("kpi.blocked")}
               value={count(blockedIps.length, locale)}
               // The way to the blocked addresses, in the footer's one line (the page stays within its height
-              // budget); at least 24 px tall, the WCAG target size.
+              // budget); at least 24 px tall, the WCAG target size, and 44 px to a finger.
               footer={
                 <button
                   type="button"
                   data-show-blocked
                   onClick={showBlocked}
-                  className="-ms-1 inline-flex min-h-6 items-center gap-1 rounded-xs px-1 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring"
+                  className="relative -ms-1 inline-flex min-h-6 items-center gap-1 rounded-xs px-1 font-semibold text-link transition-colors duration-micro hover:text-fg focus-visible:focus-ring before:absolute before:inset-x-0 before:-inset-y-3 pointer-fine:before:hidden"
                 >
                   {t("kpi.manageBlocked")}
                   <Icon icon={icons.next} size="sm" />
@@ -231,7 +244,7 @@ export function SecurityScreen() {
                 setPane(next);
                 setPage(0);
               }}
-              className="justify-self-start"
+              className={cn("justify-self-start", touchSegmented)}
               formatCount={(value) => count(value, locale)}
               options={PANES.map((value) => ({ value, label: t(`filters.${value}`), count: value === "blocked" ? blockedIps.length : lists[value].length }))}
             />
@@ -257,7 +270,7 @@ export function SecurityScreen() {
                   >
                     <TextField label={t.markup("ipLabel", { bdi: isolate })} value={ip} onChange={(event) => setIp(event.target.value)} error={ipError} ltr placeholder="203.0.113.7" />
                     <TextField label={t("reasonLabel")} value={reason} onChange={(event) => setReason(event.target.value)} />
-                    <Button type="submit" variant="primary" icon={Ban}>
+                    <Button type="submit" variant="primary" icon={icons.block}>
                       {t("block")}
                     </Button>
                   </form>
@@ -297,25 +310,23 @@ export function SecurityScreen() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
-                <div className="overflow-hidden rounded-lg border border-line bg-surface">
+                {/* From xl one grid: the header and every row are subgrids of it, so the columns fit the values of the page. */}
+                <div className={cn("overflow-hidden rounded-lg border border-line bg-surface xl:grid xl:gap-x-3", COLUMNS)}>
                   {/* The column names on wide screens; on a phone every value says what it is by its place and glyph. */}
-                  <div
-                    aria-hidden
-                    className={cn("hidden border-b border-line bg-canvas-muted px-4 py-2 text-caption font-medium text-fg-secondary md:grid md:gap-x-3", COLUMNS)}
-                  >
-                    <span>{t("columns.customer")}</span>
+                  <div aria-hidden className="hidden border-b border-line bg-canvas-muted py-2 text-caption font-medium text-fg-secondary xl:col-span-full xl:grid xl:grid-cols-subgrid xl:gap-x-3">
+                    <span className="ps-4">{t("columns.customer")}</span>
                     <span>{t("columns.result")}</span>
                     <span>{t("columns.when")}</span>
                     <span>{t.markup("columns.ip", { bdi: isolate })}</span>
                     <span>{t("columns.place")}</span>
                     <span>{t("columns.device")}</span>
                     <span>{t("columns.flags")}</span>
-                    <span />
+                    <span className="pe-4" />
                   </div>
                   {shown.length === 0 ? (
-                    <p className="px-4 py-8 text-center text-small text-fg-secondary">{t("empty")}</p>
+                    <p className="px-4 py-8 text-center text-small text-fg-secondary xl:col-span-full">{t("empty")}</p>
                   ) : (
-                    <ul data-sign-ins aria-label={t.markup("logTitle", { bdi: isolate })} className="divide-y divide-line">
+                    <ul data-sign-ins aria-label={t.markup("logTitle", { bdi: isolate })} className="divide-y divide-line xl:col-span-full xl:grid xl:grid-cols-subgrid xl:gap-x-3">
                       {shown.map((row) => (
                         <LogRow key={row.login.id} row={row} now={now} canBlock={can("security.manage") && Boolean(row.login.ip) && !blocked.has(row.login.ip)} onBlock={setPending} />
                       ))}

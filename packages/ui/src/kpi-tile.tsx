@@ -64,9 +64,12 @@ export function KpiTile({ label, value, delta, trend, trendLabel, footer, loadin
   const good = delta?.good ?? "up";
   const tone = !delta || way === 0 || good === "none" ? "neutral" : (way > 0) === (good === "up") ? "good" : "bad";
   return (
-    <div className={cn("grid min-w-0 content-start gap-2 rounded-lg border border-line bg-surface p-4", className)}>
-      <dt className="truncate text-small text-fg-secondary">{label}</dt>
-      <dd className="grid gap-2">
+    // Two rows of its grid, shared with the tiles beside it (a subgrid): a label that takes two lines
+    // moves its row's figures down together, so they stay level. Outside a grid it is a plain grid.
+    <div className={cn("row-span-2 grid min-w-0 grid-rows-subgrid content-start gap-2 rounded-lg border border-line bg-surface p-4", className)}>
+      {/* Two lines before it is cut: half a phone is too narrow for "Zahlung fehlgeschlagen" on one. */}
+      <dt className="line-clamp-2 text-small text-pretty text-fg-secondary">{label}</dt>
+      <dd className="grid content-start gap-2">
         {loading ? (
           <Skeleton className="h-control-sm w-24" />
         ) : (

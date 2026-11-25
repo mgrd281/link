@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Button, ConfirmDialog, Icon, Segmented, Spinner, toast } from "@linkyo/ui";
+import { Badge, Button, cn, ConfirmDialog, Icon, Segmented, Spinner, toast } from "@linkyo/ui";
 import { ArrowRight, BadgeCheck, ExternalLink, Lock, SearchCheck, UserCheck, UserX, X, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
@@ -12,6 +12,7 @@ import { REFERRAL_RULES } from "@/features/referrals/rules";
 import { referralTeam, useReferralQueue } from "@/features/referrals/team";
 import type { DeclineReason, HeldInvite, QueueVerification, ReferralReason, ReferralSignals } from "@/features/referrals/types";
 import { Link } from "@/i18n/navigation";
+import { touchSegmented } from "@/lib/touch";
 
 import { count, date } from "./format";
 import { bdi, isolate } from "./bidi";
@@ -358,7 +359,7 @@ export function ReferralsScreen() {
         label={t("title")}
         value={pane}
         onValueChange={setPane}
-        className="justify-self-start"
+        className={cn("justify-self-start", touchSegmented)}
         options={[
           { value: "verifications", label: t("tabs.verifications", { count: open.length }) },
           { value: "held", label: t("tabs.held", { count: held.length }) },

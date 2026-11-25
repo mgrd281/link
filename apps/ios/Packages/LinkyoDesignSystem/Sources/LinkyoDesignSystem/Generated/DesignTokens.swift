@@ -91,6 +91,8 @@ public enum LinkyoTokens {
         public static let navPanel: CGFloat = 184
         /// Dashboard content (max width).
         public static let content: CGFloat = 1120
+        /// The team area's wide screens from 2xl (lists, logs, tiles): at 1920 a table shows its values whole instead of stopping at content with 300 px unused on each side.
+        public static let contentWide: CGFloat = 1600
         /// Main column of a single-column dashboard or team screen on laptops (Home, editor, Settings): wider than a phone layout, narrower than content.
         public static let columnWide: CGFloat = 840
         /// The wide canvas of creator pages (portfolio templates and every project page). Own name, same value as content.

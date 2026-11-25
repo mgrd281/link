@@ -42,6 +42,7 @@ const SCOPE = [
   "admin.analytics",
   "admin.creators",
   "admin.creator",
+  "admin.editor",
   "admin.templates",
   "admin.referrals",
   "admin.team",

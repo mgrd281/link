@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, Badge, DataList, Icon, icons, KpiTile, Segmented } from "@linkyo/ui";
+import { Avatar, Badge, cn, DataList, Icon, icons, KpiTile, Segmented } from "@linkyo/ui";
 import { CreditCard, Gift, Repeat, TrendingDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 
 import { Panel, Screen } from "@/features/app/screen";
 import { Link } from "@/i18n/navigation";
+import { touchSegmented } from "@/lib/touch";
 
 import { bdi, isolate } from "./bidi";
 import { ColumnChart } from "./charts";
@@ -145,7 +146,7 @@ export function SubscriptionsScreen() {
               label={t("filter")}
               value={filter}
               onValueChange={setFilter}
-              className="justify-self-start"
+              className={cn("justify-self-start", touchSegmented)}
               formatCount={(value) => count(value, locale)}
               options={(["all", ...SUBSCRIPTION_STATUSES] as const).map((value) => ({
                 value,

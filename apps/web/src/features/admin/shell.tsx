@@ -2,15 +2,16 @@
 
 import { tokens } from "@linkyo/tokens";
 import { Avatar, Badge, cn, Icon, icons, Logo } from "@linkyo/ui";
-import { ArrowLeftRight, Check, Eye, LayoutDashboard, LayoutList, type LucideIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import type { LucideIcon } from "lucide-react";
+import { NextIntlClientProvider, useLocale, useMessages, useTimeZone, useTranslations } from "next-intl";
 import { DropdownMenu } from "radix-ui";
-import { useId, type ReactNode } from "react";
+import { useId, useMemo, type ReactNode } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { Link, usePathname } from "@/i18n/navigation";
 import { paymentsEnabled } from "@/lib/flags";
 
+import { othersPageMessages } from "./editor-words";
 import { countOf, QueuesProvider, useQueues, waitingContract } from "./queues";
 import { useAdmin } from "./session";
 import { ROLES, type Permission, type Role } from "./types";
@@ -25,14 +26,15 @@ interface NavItem {
 
 /**
  * Two groups: the business (customers and money) and the team's own work (prepared pages). Every
- * glyph is the registry's meaning (A-20): customers a contact card, creators a person in a square, the
- * team a group of people, referrals the invite program's gift, as in the dashboard.
+ * glyph is the registry's meaning (A-20): customers a contact card, creators a person with a star
+ * (not a second framed person beside the card), the team a group of people, referrals the invite
+ * program's gift, as in the dashboard.
  */
 const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
   {
     key: "business",
     items: [
-      { key: "overview", href: "/admin", icon: LayoutDashboard },
+      { key: "overview", href: "/admin", icon: icons.overview },
       { key: "customers", href: "/admin/customers", icon: icons.customers, permission: "customers.view" },
       // Page-service orders exist only where contracts can be made (NEXT_PUBLIC_PAYMENTS).
       ...(paymentsEnabled ? [{ key: "orders" as const, href: "/admin/orders", icon: icons.orders, permission: "orders.view" as const }] : []),
@@ -136,7 +138,7 @@ function ViewAsItems() {
     <>
       <DropdownMenu.Separator className="my-1 border-t border-line" />
       <DropdownMenu.Label className="flex items-center gap-2 px-3 py-1 text-caption font-semibold text-fg-secondary">
-        <Icon icon={Eye} size="sm" />
+        <Icon icon={icons.preview} size="sm" />
         {t("viewAs")}
       </DropdownMenu.Label>
       <DropdownMenu.RadioGroup value={viewAs ?? "owner"} onValueChange={(value) => setViewAs(value === "owner" ? null : (value as Role))}>
@@ -148,7 +150,7 @@ function ViewAsItems() {
           >
             <span className="grid size-icon-sm shrink-0 place-items-center">
               <DropdownMenu.ItemIndicator>
-                <Icon icon={Check} size="sm" strong />
+                <Icon icon={icons.confirm} size="sm" strong />
               </DropdownMenu.ItemIndicator>
             </span>
             {tRoles(`${role}.name`)}
@@ -182,7 +184,8 @@ function AccountMenu({ trigger }: { trigger: ReactNode }) {
           <DropdownMenu.Separator className="my-1 border-t border-line" />
           <DropdownMenu.Item asChild className={item}>
             <Link href="/app">
-              <Icon icon={LayoutList} size="sm" />
+              {/* The same way to the dashboard as the sidebar's link, so the same glyph. */}
+              <Icon icon={icons.switchArea} size="sm" />
               {t("toApp")}
             </Link>
           </DropdownMenu.Item>
@@ -207,7 +210,7 @@ function ViewAsBanner() {
   return (
     <div role="status" className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-line bg-warning-subtle px-4 py-2 text-small text-warning-strong">
       <span className="inline-flex items-center gap-2">
-        <Icon icon={Eye} size="sm" />
+        <Icon icon={icons.preview} size="sm" />
         {t("viewingAs", { role: tRoles(`${viewAs}.name`) })}
       </span>
       <button type="button" onClick={() => setViewAs(null)} className="min-h-touch-target rounded-xs font-semibold transition-opacity duration-micro hover:opacity-secondary focus-visible:focus-ring">
@@ -223,9 +226,28 @@ function ViewAsBanner() {
  */
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
-    <QueuesProvider>
-      <Frame>{children}</Frame>
-    </QueuesProvider>
+    <OthersPageWords>
+      <QueuesProvider>
+        <Frame>{children}</Frame>
+      </QueuesProvider>
+    </OthersPageWords>
+  );
+}
+
+/**
+ * Every editor in the team area shows someone else's page (a prepared page, a proposal): its empty
+ * state reads about this page, not to its owner (`editor-words.ts`). All other words, the locale and
+ * the time zone stay the page's own.
+ */
+function OthersPageWords({ children }: { children: ReactNode }) {
+  const locale = useLocale();
+  const timeZone = useTimeZone();
+  const messages = useMessages();
+  const words = useMemo(() => othersPageMessages(messages), [messages]);
+  return (
+    <NextIntlClientProvider locale={locale} messages={words} {...(timeZone ? { timeZone } : {})}>
+      {children}
+    </NextIntlClientProvider>
   );
 }
 
@@ -294,7 +316,7 @@ function Frame({ children }: { children: ReactNode }) {
         </nav>
         <div className="mt-auto grid gap-4">
           <Link href="/app" className="inline-flex h-control-md items-center gap-2 rounded-sm px-3 text-small font-semibold text-link transition-colors duration-micro hover:bg-hover hover:text-fg focus-visible:focus-ring">
-            <Icon icon={ArrowLeftRight} size="sm" />
+            <Icon icon={icons.switchArea} size="sm" />
             {t("toApp")}
           </Link>
           <AccountMenu

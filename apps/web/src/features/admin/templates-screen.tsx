@@ -9,6 +9,7 @@ import { useState, type CSSProperties } from "react";
 import { Screen } from "@/features/app/screen";
 import { TEMPLATE_PREVIEW_SIZES, TEMPLATE_PREVIEWS } from "@/features/directions/poster/template-previews";
 import { CardFace, type GalleryItem } from "@/features/examples/gallery-card";
+import { touchSegmented } from "@/lib/touch";
 
 /**
  * A design's thumbnail: its captured first screen (template-previews.ts); a design without one yet
@@ -74,6 +75,7 @@ export function TemplatesScreen({
           label={t("filterLabel")}
           value={filter}
           onValueChange={setFilter}
+          className={touchSegmented}
           options={[
             { value: "designs", label: t("designs", { count: designs.length }) },
             { value: "examples", label: t("examples", { count: examples.length }) },
@@ -81,8 +83,9 @@ export function TemplatesScreen({
           ]}
         />
 
+        {/* One more card a row where the wide screen grows (2xl, layout.content-wide): cards keep their size. */}
         {filter === "designs" ? (
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
             {designs.map((design) => (
               <li key={design.id}>
                 <a
@@ -106,7 +109,7 @@ export function TemplatesScreen({
             ))}
           </ul>
         ) : (
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {pages.map((item) => (
               <li key={item.slug}>
                 <a
