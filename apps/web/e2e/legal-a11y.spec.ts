@@ -1,11 +1,19 @@
 import { expect, test, type Locator } from "@playwright/test";
 
 import { legalReady } from "../src/features/legal/company";
+import { ROUTES } from "./routes";
 
 /**
  * Linkyo's legal pages and the footer links to them, in a demo build (no accounts, no payments).
  * Axe for the three pages runs in a11y.spec.ts (routes.ts) on every locale and colour scheme.
  */
+
+/**
+ * The legal pages a demo build has: the three the routes list names. The withdrawal policy
+ * (/widerrufsbelehrung) and "Vertrag widerrufen" (/widerruf) only exist where contracts can be made,
+ * so without payments they answer 404 and are not listed.
+ */
+const LEGAL_ROUTES = ROUTES.filter((route) => ["/impressum", "/datenschutz", "/agb"].includes(route));
 
 const NAMES = {
   de: ["Impressum", "Datenschutz", "AGB"],
@@ -68,4 +76,47 @@ for (const { path, title, text } of PAGES) {
 test("the withdrawal policy does not exist without payments", async ({ page }) => {
   const response = await page.goto("/de/widerrufsbelehrung");
   expect(response?.status()).toBe(404);
+});
+
+/**
+ * On a phone no legal page scrolls sideways and no title is wider than its box. The German titles
+ * hold words of 20 letters ("Geschäftsbedingungen", "Datenschutzerklärung") that at the large title
+ * size are wider than a 360 or 390 px column: the title was clipped and the whole page grew to 405 px.
+ * 320 px is the narrowest phone still in use; the same rule must hold there, where the longest word is
+ * wider than the column even at the phone's title size and has to break.
+ */
+test.describe("on a phone, no legal page scrolls sideways or clips its title", () => {
+  test.skip(({ isMobile }) => isMobile, "sets its own phone widths");
+
+  test("the routes list names the three legal pages of a demo build", () => {
+    expect(LEGAL_ROUTES).toEqual(["/impressum", "/datenschutz", "/agb"]);
+  });
+
+  for (const width of [320, 360, 390]) {
+    for (const locale of ["de", "en", "ar"] as const) {
+      for (const route of LEGAL_ROUTES) {
+        test(`/${locale}${route} at ${String(width)} px`, async ({ page }) => {
+          await page.setViewportSize({ width, height: 800 });
+          const response = await page.goto(`/${locale}${route}`);
+          expect(response?.status()).toBe(200);
+          const measured = await page.evaluate(() => {
+            const title = document.querySelector("main h1");
+            // Any text in the page that is wider than the box that holds it (a long word with nowhere to break).
+            const wider = [...document.querySelectorAll("main *")]
+              .filter((element) => !element.classList.contains("sr-only") && element.clientWidth > 0 && element.scrollWidth > element.clientWidth + 1)
+              .map((element) => `${element.tagName.toLowerCase()} ${element.textContent.trim().slice(0, 30)}`);
+            return {
+              overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+              titleRight: title ? Math.round(title.getBoundingClientRect().right) : null,
+              wider,
+            };
+          });
+          expect(measured.overflow, "the page does not scroll sideways").toBeLessThanOrEqual(0);
+          expect(measured.titleRight, "the title ends inside the screen").not.toBeNull();
+          expect(measured.titleRight ?? 0, "the title ends inside the screen").toBeLessThanOrEqual(width);
+          expect(measured.wider, "no text is wider than its box").toEqual([]);
+        });
+      }
+    }
+  }
 });
