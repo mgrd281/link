@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import type { Block } from "@linkyo/blocks";
 import type { Browser, Page, TestInfo } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
@@ -585,6 +587,72 @@ test.describe("the iPhone app's web side @real", () => {
     await ended;
     await expect.poll(async () => (await stored(account.id)).blocks.map((block) => block.visible), { timeout: 10_000 }).toEqual([false, false, true]);
     expect(net.patches.at(-1)).toBe("gte");
+  });
+
+  test("sign-out: A signs out while its saves fail, B signs in with a password in the same tab, B's app writes, B closes the tab: the app's write stays @real", async ({ page }) => {
+    // Expected: A's save state (a change waiting, its lost write) ends with A's session. Before, it
+    // carried over to B: B's tab closed with B's own unchanged page and `updated_at >= base`, which
+    // overwrote the write B's app had made since B's page loaded.
+    test.setTimeout(120_000);
+    const a = await syncAccount("sync-switch-a");
+    const b = await syncAccount("sync-switch-b");
+    const password = `Pw-${randomUUID()}`;
+    const { error } = await service().auth.admin.updateUserById(b.id, { password });
+    expect(error).toBeNull();
+    await signIn(page, a.email, "/de/app/settings");
+    const language = page.getByLabel(de.app.settings.rows.pageLanguage);
+    await expect(language).toHaveValue("de");
+    await page.evaluate(() => {
+      (window as unknown as { sameDocument: boolean }).sameDocument = true;
+    });
+    const net = { lose: true, failAll: false };
+    await page.route(
+      (url) => url.pathname.endsWith("/rest/v1/sites"),
+      async (route) => {
+        if (route.request().method() !== "PATCH") {
+          if (net.failAll) await route.abort("connectionreset");
+          else await route.continue().catch(() => undefined);
+          return;
+        }
+        if (net.lose) {
+          // A's save reaches the database; its answer is lost, and every read and write fails from now on.
+          net.lose = false;
+          await route.fetch();
+          net.failAll = true;
+          await route.abort("connectionreset");
+          return;
+        }
+        if (net.failAll) await route.abort("connectionreset");
+        else await route.continue().catch(() => undefined);
+      },
+    );
+    await language.selectOption("en");
+    await expect.poll(() => net.failAll).toBe(true);
+    await page.waitForTimeout(1_200);
+    const logout = page.getByRole("button", { name: de.app.settings.logout, exact: true });
+    await logout.scrollIntoViewIfNeeded();
+    await logout.click();
+    await page.waitForURL("**/de/login**", { timeout: 30_000 });
+    // The network is back; A's retry timer (5 s after its last failure) would have fired meanwhile.
+    net.failAll = false;
+    await page.waitForTimeout(8_000);
+    await page.getByRole("button", { name: de.auth.login.withPassword }).click();
+    await page.locator("#login-email").fill(b.email);
+    await page.locator("#login-password").fill(password);
+    await page.getByRole("button", { name: de.auth.login.passwordSubmit, exact: true }).click();
+    await page.waitForURL((url) => url.pathname.startsWith("/de/app"), { timeout: 30_000 });
+    await expect(page.locator("#main h1").first()).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { sameDocument?: boolean }).sameDocument), "B signed in in another document: this run proves nothing").toBe(true);
+    await page.waitForTimeout(1_000);
+    // B's iPhone app hides a block through the route.
+    const token = await appToken(b.email);
+    const native = await page.request.post("/api/app/page", { headers: { authorization: `Bearer ${token}` }, data: { baseUpdatedAt: (await stored(b.id)).updatedAt, ops: [{ op: "show", id: "second", visible: false }] } });
+    expect(native.status()).toBe(200);
+    await page.waitForTimeout(1_000);
+    // B changed nothing here and closes the tab.
+    await page.close({ runBeforeUnload: true });
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
+    expect((await stored(b.id)).blocks.map((block) => block.visible)).toEqual([true, false, true]);
   });
 
   test("sign-out: Abmelden in Settings right after a change keeps the change @real", async ({ page }) => {

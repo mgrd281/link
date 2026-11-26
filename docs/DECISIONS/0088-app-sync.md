@@ -205,6 +205,13 @@ view cannot share one session.
      `features/account/pending-edits.ts`), so a change made just before "Abmelden" is saved too; the demo store does
      the same. The store's own `pagehide` and `visibilitychange` handler asks the editor first as well, so the
      keepalive carries that change whatever order the page's listeners run in.
+   - **A session's save state ends with it.** A change waiting, the retry timer, failures in a row, the writes whose
+     answers were lost and a hidden tab's wait belong to one session: they are forgotten when the session ends and
+     when another account signs in in the same document (signed out in Settings, then signed in on the login page,
+     without a reload); late answers to the last account's writes change nothing. Before, they carried over: the next
+     account's tab started with a change waiting and the last account's lost writes, and closing it sent its own
+     unchanged page with the loose guard (above), over a write its app had made since; hidden instead, it showed the
+     conflict toast for a change it never made.
    - A save that changes no row is read back to decide:
      - the row still has the same version: the database refused the write (a suspended account); retried like any
        failed save, never a conflict;
@@ -301,11 +308,13 @@ other tab learns of it only on its next save (the toast, and that change is drop
   deleted.
 - The store's snapshot carries `baseUpdatedAt`, `revision` and `conflicts`; `EditorProvider` takes `revision` and
   `conflicts` for the creator's own page only (the team's editors are unchanged).
-- Tests: `features/account/supabase-store.test.ts` (with "hidden, then ended by the phone with no other event": a
-  lost answer that landed or a 503 that wrote, reads failing, hidden and ended 200 ms later; reads back in time;
-  a page changed elsewhere; a read that never answers), `features/account/local-store.test.ts` (signing out),
-  `features/app-mode/store-bridge.test.ts`, `features/app-mode/adr-contract.test.ts` (this ADR names every error
-  the two routes answer and every reason a bridge method rejects with),
-  `app/api/app/page/{ops,route}.test.ts`, `app/api/auth/{handoff,confirm}/route.test.ts`, and the real-mode
-  `e2e/app-sync-app.spec.ts` (`@real`, laptop and phone; also a lost answer, reads failing, the page hidden and
-  then ended with `Page.crash`: the change is in the row).
+- Tests: `features/account/supabase-store.test.ts` ("one document, two accounts": a sign-out while saves fail, then
+  another account in the same tab, also without a sign-out between and with a keepalive failing late; with "hidden,
+  then ended by the phone with no other event": a lost answer that landed or a 503 that wrote, reads failing, hidden
+  and ended 200 ms later; reads back in time; a page changed elsewhere; a read that never answers),
+  `features/account/local-store.test.ts` (signing out), `features/app-mode/store-bridge.test.ts`,
+  `features/app-mode/adr-contract.test.ts` (this ADR names every error the two routes answer and every reason a bridge
+  method rejects with), `app/api/app/page/{ops,route}.test.ts`, `app/api/auth/{handoff,confirm}/route.test.ts`, and
+  the real-mode `e2e/app-sync-app.spec.ts` (`@real`, laptop and phone; also a lost answer, reads failing, the page
+  hidden and then ended with `Page.crash`: the change is in the row; and a sign-out while saves fail, another account
+  signed in with a password in the same tab, its app's write through the route, the tab closed: the write stays).

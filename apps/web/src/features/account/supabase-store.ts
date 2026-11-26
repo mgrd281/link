@@ -256,6 +256,8 @@ export class SupabaseAccountStore implements AccountStore {
       window.setTimeout(() => {
         if (event === "SIGNED_OUT" || !session) {
           this.loadedFor = null;
+          // Nothing of this session's saves may carry over to the next account signed in in this tab.
+          this.resetSaves();
           this.set(SIGNED_OUT);
           return;
         }
@@ -276,10 +278,39 @@ export class SupabaseAccountStore implements AccountStore {
     });
   }
 
+  /**
+   * Forgets what one session's saves left behind: a change waiting, the retry timer, failures in a row,
+   * the writes whose answers were lost, a hidden tab's wait and the version built on. Called when the
+   * session ends and when another account takes this tab (signed out in Settings, then another sign-in
+   * in the same document): the next account must not start with the last one's `dirty` and lost writes,
+   * or its closing tab would send its own unchanged page with the loose guard over its app's write.
+   * Late answers to the last account's writes are dropped by their own account checks.
+   */
+  private resetSaves() {
+    if (this.saveTimer !== null) {
+      window.clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+    this.dirty = false;
+    this.failed = false;
+    this.retries = 0;
+    this.rebases = 0;
+    this.landed.clear();
+    this.sending.clear();
+    this.lostResolved = this.sent;
+    this.hiddenWait = null;
+    this.uploaded.clear();
+    this.base = null;
+    this.baseContent = null;
+  }
+
   private async load(session: Session): Promise<void> {
     const supabase = this.client();
     const id = session.user.id;
     this.loadedFor = id;
+    // Another account than the one shown (or none yet): its saves' state is not this one's.
+    const switching = this.snapshot.status !== "signedIn" || this.snapshot.account.id !== id;
+    if (switching) this.resetSaves();
     const [profileResult, siteResult] = await Promise.all([
       supabase.from("profiles").select("id, username, locale, status, created_at").eq("id", id).maybeSingle(),
       supabase.from("sites").select("*").eq("profile_id", id).maybeSingle(),
@@ -302,6 +333,8 @@ export class SupabaseAccountStore implements AccountStore {
       row = created.data;
     }
     if (!row || this.loadedFor !== id) return;
+    // Late answers to the last account's writes may have run while this one loaded.
+    if (switching) this.resetSaves();
     const account: Account = { id, email: session.user.email ?? "", username: profile.username, createdAt: profile.created_at };
     const site = fromRow(row);
     this.base = row.updated_at;
@@ -491,7 +524,9 @@ export class SupabaseAccountStore implements AccountStore {
     }
     // A lost answer: the row is read now, so a write of this tab's that landed becomes the base.
     if (this.lostOpen()) this.readBack(this.readLost(snapshot.account.id));
-    const waiting = this.settled(HIDDEN_WAIT).then(() => {
+    const waiting: Promise<void> = this.settled(HIDDEN_WAIT).then(() => {
+      // Signed out or another account meanwhile (`resetSaves`): this wait is over.
+      if (this.hiddenWait !== waiting) return;
       this.hiddenWait = null;
       // Still hidden: as a keepalive, which outlives a page the phone freezes (the closing tab's guard
       // while a lost answer is still open). Back on screen: the normal save (it waits for one on its way).
@@ -609,10 +644,11 @@ export class SupabaseAccountStore implements AccountStore {
 
   /** The keepalive save failed and the tab is still there (a phone back from another app): saved again later. */
   private exitFailed(id: string, content: SiteContent, write: number, sentOffline: boolean, status?: number) {
+    const now = this.snapshot;
+    // Signed out, or another account in this tab by now: nothing of this write is that account's.
+    if (now.status !== "signedIn" || now.account.id !== id) return;
     this.unconfirm(content, write, sentOffline, status);
     this.dirty = true;
-    const now = this.snapshot;
-    if (now.status !== "signedIn" || now.account.id !== id) return;
     this.failed = true;
     if (this.saveTimer === null) this.retry(now);
   }

@@ -1072,6 +1072,158 @@ describe("a lost answer, then signing out or flush()", () => {
   });
 });
 
+/**
+ * The keepalive PATCH as PostgREST applies it (`eq.` or `gte.`), answered to a tab that is still there:
+ * the new version, or no row when the guard refused it. `hold`: the answer waits for `release()`, then
+ * fails without an answer (the connection dropped). `guards` records each guard's operator.
+ */
+function keepaliveAnswered(db: FakeDb) {
+  const guards: string[] = [];
+  const held: (() => void)[] = [];
+  const state = { hold: false };
+  vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+    const guard = new URL(url, "http://localhost").searchParams.get("updated_at") ?? "";
+    const [operator = "", version = ""] = guard.split(/\.(.*)/s);
+    guards.push(operator);
+    if (state.hold) return new Promise<Response>((_, reject) => held.push(() => reject(new TypeError("Load failed"))));
+    const owner = new URL(url, "http://localhost").searchParams.get("profile_id") === `eq.${db.row.profile_id}`;
+    const matches = owner && (guard === "" || (operator === "eq" ? db.row.updated_at === version : operator === "gte" && db.row.updated_at >= version));
+    if (matches) db.write(JSON.parse(init.body as string) as Record<string, unknown>);
+    return Promise.resolve(new Response(JSON.stringify(matches ? [{ updated_at: db.row.updated_at }] : []), { status: 200 }));
+  });
+  return {
+    guards,
+    hold: () => {
+      state.hold = true;
+    },
+    failHeld: () => {
+      state.hold = false;
+      for (const fail of held.splice(0)) fail();
+    },
+  };
+}
+const hideTab = () => {
+  vi.stubGlobal("document", { visibilityState: "hidden" });
+  listeners.get("visibilitychange")?.();
+};
+const toggle = (store: InstanceType<typeof SupabaseAccountStore>, id: string) =>
+  store.updateSite((current) => ({ ...current, page: { ...current.page, blocks: current.page.blocks.map((block) => (block.id === id ? { ...block, visible: !block.visible } : block)) } }));
+
+describe("one document, two accounts (signed out in Settings, then another account signs in in the same tab)", () => {
+  const ID2 = "9a8b7c6d-2222-4333-8444-555566667777";
+  /** Account B's page in the same database: the tab signs in as B next. */
+  const becomeB = (db: FakeDb) => {
+    db.profile = { ...db.profile, id: ID2, username: "nora" };
+    db.row = { ...db.row, profile_id: ID2, page: { profile: { username: "nora", displayName: "Nora", bio: "", avatar: { src: "none:", alt: "" }, verified: false, locale: "de" }, blocks: [link("n1"), link("n2")] }, updated_at: db.stamp() };
+    db.signedOut = false;
+  };
+  const signInB = async (db: FakeDb, store: InstanceType<typeof SupabaseAccountStore>) => {
+    becomeB(db);
+    db.authListener?.("SIGNED_IN", { user: { id: ID2, email: "nora@example.com" }, access_token: "token-b" });
+    await vi.advanceTimersByTimeAsync(10);
+    expect(snapshotOf(store).account.id).toBe(ID2);
+    expect(snapshotOf(store).sync).toBe("saved");
+  };
+  /** A's save lands without an answer and its read-back fails; A then goes offline and signs out. */
+  const aLeavesWithALostWrite = async (db: FakeDb, store: InstanceType<typeof SupabaseAccountStore>) => {
+    db.loseAnswers = true;
+    db.failReads = true;
+    toggle(store, "a");
+    await vi.advanceTimersByTimeAsync(450);
+    db.loseAnswers = false;
+    db.failWrites = true;
+    store.logOut();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(store.getSnapshot().status).toBe("signedOut");
+    // A's retry timers would have run out meanwhile, while signed out.
+    await vi.advanceTimersByTimeAsync(60_000);
+    db.failWrites = false;
+    db.failReads = false;
+  };
+
+  it("B closes the tab without a change: nothing is sent, and the write B's app made stays", async () => {
+    // Before, A's `dirty` and lost writes carried over: B's close sent B's own unchanged page with
+    // `updated_at >= base` and overwrote what B's app had written since B's page loaded.
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepaliveAnswered(db);
+    await aLeavesWithALostWrite(db, store);
+    await signInB(db, store);
+    db.elsewhere([link("n1"), link("n2"), link("from-noras-app")]);
+    await vi.advanceTimersByTimeAsync(1_000);
+    closeTab();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(sent.guards).toEqual([]);
+    expect(db.blocks()).toEqual(["n1", "n2", "from-noras-app"]);
+  });
+
+  it("B's tab is hidden instead: no conflict toast for a change B never made, and the app's write stays", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepaliveAnswered(db);
+    await aLeavesWithALostWrite(db, store);
+    await signInB(db, store);
+    db.elsewhere([link("n1"), link("n2"), link("from-noras-app")]);
+    await vi.advanceTimersByTimeAsync(1_000);
+    hideTab();
+    await vi.advanceTimersByTimeAsync(HIDDEN_WAIT + 1_000);
+    expect(sent.guards).toEqual([]);
+    expect(snapshotOf(store).conflicts).toBe(0);
+    expect(db.blocks()).toEqual(["n1", "n2", "from-noras-app"]);
+  });
+
+  it("A's keepalive is on its way when A's session ends, and fails after B signed in: nothing of it is B's", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepaliveAnswered(db);
+    sent.hold();
+    toggle(store, "a");
+    hideTab();
+    expect(sent.guards).toEqual(["eq"]);
+    // A's session ends elsewhere (another tab signed out); B signs in here.
+    db.authListener?.("SIGNED_OUT", null);
+    await vi.advanceTimersByTimeAsync(10);
+    vi.stubGlobal("document", { visibilityState: "visible" });
+    await signInB(db, store);
+    sent.failHeld();
+    await vi.advanceTimersByTimeAsync(100);
+    db.elsewhere([link("n1"), link("n2"), link("from-noras-app")]);
+    closeTab();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(sent.guards).toEqual(["eq"]);
+    expect(snapshotOf(store).sync).toBe("saved");
+    expect(db.blocks()).toEqual(["n1", "n2", "from-noras-app"]);
+  });
+
+  it("B signs in over A without a sign-out in between: A's waiting change and failures are not B's", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepaliveAnswered(db);
+    db.loseAnswers = true;
+    db.failReads = true;
+    toggle(store, "a");
+    await vi.advanceTimersByTimeAsync(450);
+    db.loseAnswers = false;
+    db.failWrites = true;
+    toggle(store, "b");
+    await vi.advanceTimersByTimeAsync(450);
+    expect(snapshotOf(store).sync).toBe("error");
+    db.failWrites = false;
+    db.failReads = false;
+    await signInB(db, store);
+    const writes = db.writes.length;
+    db.elsewhere([link("n1"), link("n2"), link("from-noras-app")]);
+    // A's retry timer would have fired here, saving B's unchanged page and showing B the conflict toast.
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(db.writes.length).toBe(writes);
+    expect(snapshotOf(store).conflicts).toBe(0);
+    closeTab();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(sent.guards).toEqual([]);
+    expect(db.blocks()).toEqual(["n1", "n2", "from-noras-app"]);
+  });
+});
+
 describe("the editor's change from the last moment (its autosave delay)", () => {
   let unregister: () => void = () => undefined;
   afterEach(() => unregister());
