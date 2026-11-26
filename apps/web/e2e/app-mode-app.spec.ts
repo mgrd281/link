@@ -79,22 +79,83 @@ async function signedIn(page: Page, locale: Locale) {
   return { m, name };
 }
 
-/** Two links on the page (ids l-0 and l-1), so the editor and the previews have something to show. */
-async function seed(page: Page) {
-  const accountId = await page.evaluate((key) => {
-    const db = JSON.parse(window.localStorage.getItem(key) ?? "{}") as {
-      session: { accountId: string };
-      sites: Record<string, { page: { blocks: unknown[] } }>;
-    };
-    const site = db.sites[db.session.accountId];
-    if (!site) throw new Error("no site");
-    site.page.blocks = [0, 1].map((i) => ({ id: `l-${String(i)}`, type: "link", visible: true, highlight: false, title: `Link ${String(i + 1)}`, url: `https://example.com/${String(i)}` }));
-    window.localStorage.setItem(key, JSON.stringify(db));
-    return db.session.accountId;
-  }, STORAGE_KEY);
+/**
+ * The creator's own words that name "Pro" (a link of theirs, as a creator may have one): the "Pro" check
+ * allows the word only inside these, the page's own content (`expectNoPro`).
+ */
+const OWN_PRO = "Pro-Tipps";
+
+/**
+ * Two links on the page (ids l-0 and l-1), so the editor and the previews have something to show. With
+ * `more`: also a link whose title names "Pro" (OWN_PRO, id l-2), a live planned in three days (live-1),
+ * whose reminder the page's island offers, a photo and a bio: a page Home calls ready to share, so Home
+ * shows the invite row too.
+ */
+async function seed(page: Page, { more = false }: { more?: boolean } = {}) {
+  const accountId = await page.evaluate(
+    ({ key, more, own }) => {
+      const db = JSON.parse(window.localStorage.getItem(key) ?? "{}") as {
+        session: { accountId: string };
+        sites: Record<string, { page: { blocks: unknown[]; profile: { bio: string; avatar: { src: string; alt: string } } } }>;
+      };
+      const site = db.sites[db.session.accountId];
+      if (!site) throw new Error("no site");
+      site.page.blocks = [0, 1].map((i) => ({ id: `l-${String(i)}`, type: "link", visible: true, highlight: false, title: `Link ${String(i + 1)}`, url: `https://example.com/${String(i)}` }));
+      if (more) {
+        const soon = new Date(Date.now() + 3 * 86_400_000).toISOString();
+        site.page.profile.bio = "Musik, Live und Tipps.";
+        site.page.profile.avatar = { src: "/screenshots/de/page-phone.jpg", alt: "" };
+        site.page.blocks.push(
+          { id: "l-2", type: "link", visible: true, highlight: false, title: own, url: "https://example.com/tipps" },
+          { id: "live-1", type: "live", visible: true, highlight: false, platform: "twitch", channel: "example", isLive: false, title: "Q&A", url: "https://www.twitch.tv/example", startsAt: soon },
+        );
+      }
+      window.localStorage.setItem(key, JSON.stringify(db));
+      return db.session.accountId;
+    },
+    { key: STORAGE_KEY, more, own: OWN_PRO },
+  );
   await page.reload();
   await expect(heading(page)).toBeVisible();
   return accountId;
+}
+
+/**
+ * A creator page's share button: in its compact bar, which slides in once the hero has scrolled away
+ * (poster-bar), so the page is scrolled to its end first.
+ */
+async function pageShareButton(page: Page, label: string) {
+  // Room below a short page (a test page has four blocks), so its hero can scroll away.
+  await page.evaluate(() => {
+    const room = document.createElement("div");
+    room.style.height = "100vh";
+    document.body.append(room);
+    window.scrollTo(0, document.documentElement.scrollHeight);
+  });
+  const button = page.getByRole("button", { name: label, exact: true }).first();
+  await expect(button).toBeVisible();
+  return button;
+}
+
+/** Every closed article and disclosure (`<details>`) opened, so what a person can read is in `innerText`. */
+const openDetails = (page: Page) =>
+  page.evaluate(() => {
+    for (const details of document.querySelectorAll("details")) details.open = true;
+  });
+
+/** The words a person can reach on the page: every `<details>` opened first. */
+async function readableText(page: Page): Promise<string> {
+  await openDetails(page);
+  return page.locator("body").innerText();
+}
+
+/**
+ * No "Pro" as a word of its own (App Store 3.1.3(f): the app names no plan to buy, unlock or wait for).
+ * Allowed only inside the creator's own content (OWN_PRO), which the app shows as it is.
+ */
+function expectNoPro(text: string, where: string) {
+  const lines = text.split("\n").filter((line) => /\bPro\b/.test(line.replaceAll(OWN_PRO, "")));
+  expect(lines, `${where}: "Pro"`).toEqual([]);
 }
 
 async function axe(page: Page) {
@@ -105,11 +166,12 @@ async function axe(page: Page) {
 /** Links to a purchase or contract page anywhere in the document (hidden ones included). */
 const PURCHASE_LINKS = 'a[href*="/checkout"], a[href*="/service"], a[href*="/kuendigen"], a[href*="/widerruf"], a[href*="/admin"], a[href*="/app/orders/"]';
 
-/** What a screen in the app may never show: a price, "Get Pro", a way to a purchase, the web's bars. */
+/** What a screen in the app may never show: a price, "Pro", "Get Pro", a way to a purchase, the web's bars. */
 async function expectAppScreen(page: Page, locale: Locale, where: string) {
   const m = MESSAGES[locale];
-  const text = await page.locator("body").innerText();
+  const text = await readableText(page);
   expect(text, `${where}: a price`).not.toContain("€");
+  expectNoPro(text, where);
   for (const words of [m.app.settings.plan.upgrade, m.app.ai.pro.get, m.app.settings.plan.soon]) expect(text, `${where}: "${words}"`).not.toContain(words);
   await expect(page.locator(PURCHASE_LINKS), `${where}: a purchase link`).toHaveCount(0);
   for (const chrome of ["[data-tabbar]", "[data-nav]", "[data-grouped] header[data-app-hide]"]) {
@@ -140,6 +202,54 @@ const reachableLinks = (page: Page) =>
       .filter((link) => link.getClientRects().length > 0 && getComputedStyle(link).visibility !== "hidden")
       .map((link) => ({ href: link.href, text: link.innerText.trim().slice(0, 40), blank: link.target === "_blank" }));
   });
+
+const isDashboard = (pathname: string) => /^\/(?:de|en|ar)\/app(?:\/|$)/.test(pathname);
+
+/**
+ * From `starts`, every link a person can reach, followed two levels deep outside the dashboard: each
+ * page is read with every `<details>` open, and none may show a price; a dashboard page may also not
+ * name "Pro". A link may lead only to the app's pages (APP_PAGES), never to a purchase or contract
+ * page. A dashboard link is not followed (the dashboard's screens are starts of their own); a link to
+ * another host or into a new window is a real navigation the app's policy sends to Safari.
+ */
+async function walk(page: Page, origin: string, starts: readonly string[]) {
+  const problems: string[] = [];
+  const seen = new Set<string>();
+  let checked = 0;
+  let level = [...starts];
+  // Level 0: the pages the app opens; levels 1 and 2: where their links lead, and where those lead.
+  for (let depth = 0; depth <= 2 && level.length > 0; depth += 1) {
+    const next = new Set<string>();
+    for (const address of level) {
+      if (seen.has(address)) continue;
+      seen.add(address);
+      await page.goto(address);
+      await expect(page.locator("h1").first(), address).toBeVisible();
+      await page.waitForLoadState("networkidle");
+      expect(await page.evaluate(() => document.documentElement.dataset.app), address).toBe("ios");
+      const text = await readableText(page);
+      if (text.includes("€")) problems.push(`${address}: a price`);
+      if (isDashboard(new URL(address, origin).pathname)) {
+        const pro = text.split("\n").filter((line) => /\bPro\b/.test(line.replaceAll(OWN_PRO, "")));
+        if (pro.length > 0) problems.push(`${address}: "Pro" in ${JSON.stringify(pro)}`);
+      }
+      for (const link of await reachableLinks(page)) {
+        const url = new URL(link.href);
+        // E-mail and phone go to the system; another host is a real navigation the app's policy sends to Safari.
+        if (url.protocol === "mailto:" || url.protocol === "tel:" || url.origin !== origin) continue;
+        checked += 1;
+        const where = `${address} → ${url.pathname}${url.search} "${link.text}"`;
+        if (PURCHASE_PATH.test(url.pathname)) problems.push(`${where}: a purchase or contract page`);
+        // A new window is a real navigation too: the app opens it outside its web view.
+        else if (link.blank) continue;
+        else if (!APP_PAGES.test(url.pathname)) problems.push(`${where}: outside the app's pages`);
+        else if (!isDashboard(url.pathname)) next.add(url.pathname);
+      }
+    }
+    level = [...next];
+  }
+  return { problems, seen, checked };
+}
 
 /**
  * No service worker for this origin once the page has loaded and settled, and for two seconds more: a
@@ -185,13 +295,27 @@ test.describe("in the app, on a phone", () => {
       // Signing out is the app's own row: a web-only sign-out would land on the sign-in page, which the
       // app answers by signing the web view straight back in.
       await expect(page.getByRole("button", { name: m.app.settings.logout, exact: true })).toHaveCount(0);
+      // The app owns the app's language and its appearance (it sets both natively): no "App language",
+      // no "Appearance", no "in this browser". The page's language, for its visitors, stays.
+      await expect(page.getByText(m.app.settings.rows.appLanguage, { exact: true })).toHaveCount(0);
+      await expect(page.getByText(m.app.settings.theme, { exact: true })).toHaveCount(0);
+      await expect(page.getByText(m.app.settings.footers.app)).toHaveCount(0);
+      await expect(page.getByText(m.app.settings.rows.pageLanguage, { exact: true })).toBeVisible();
       await expect(page.getByRole("link", { name: m.app.settings.rows.terms, exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: m.app.settings.rows.terms, exact: true }).click();
       expect(await postedOf(page, "openExternal")).toEqual([{ type: "openExternal", url: new URL(`/${locale}/agb`, page.url()).href }]);
 
-      // Invite: the rules promise nothing about Pro (five rules, not six).
+      // Invite: the rules promise nothing about Pro (five rules, not six); of the rewards only the
+      // verification; the link, its share button and the count stay.
       await page.goto(`/${locale}/app/invite`);
       await expect(page.locator("section", { has: page.locator("#invite-rules") }).locator("ol > li")).toHaveCount(5);
+      await expect(page.getByText(m.app.invite.rewards.verification.title, { exact: true })).toBeVisible();
+      await expect(page.getByText(m.app.invite.rewards.pro.title, { exact: true })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: m.app.invite.link.share })).toBeVisible();
+      // A new account: nobody counted yet (the message's "=0" case).
+      const nobody = /(?:=0|zero) \{([^}]*)\}/.exec(m.app.invite.rewards.counted)?.[1] ?? "";
+      expect(nobody).not.toBe("");
+      await expect(page.getByText(nobody, { exact: true })).toBeVisible();
 
       // Design: the live page under where the bar was sticks at the very top.
       await page.goto(`/${locale}/app/design`);
@@ -228,43 +352,68 @@ test.describe("in the app, on a phone", () => {
       test.setTimeout(240_000);
       const origin = new URL(baseURL ?? page.url()).origin;
       const starts = ["/hilfe", "/kontakt", "/impressum", "/datenschutz", "/sicherheit", "/login", "/signup"].map((address) => `/${locale}${address}`);
-      const problems: string[] = [];
-      const seen = new Set<string>();
-      let checked = 0;
-      let level = starts;
-      // Level 0: the pages the app opens; levels 1 and 2: where their links lead, and where those lead.
-      for (let depth = 0; depth <= 2 && level.length > 0; depth += 1) {
-        const next = new Set<string>();
-        for (const address of level) {
-          if (seen.has(address)) continue;
-          seen.add(address);
-          await page.goto(address);
-          await expect(page.locator("h1").first(), address).toBeVisible();
-          await page.waitForLoadState("networkidle");
-          expect(await page.evaluate(() => document.documentElement.dataset.app), address).toBe("ios");
-          if ((await page.locator("body").innerText()).includes("€")) problems.push(`${address}: a price`);
-          for (const link of await reachableLinks(page)) {
-            const url = new URL(link.href);
-            // E-mail and phone go to the system; another host is a real navigation the app's policy sends to Safari.
-            if (url.protocol === "mailto:" || url.protocol === "tel:" || url.origin !== origin) continue;
-            checked += 1;
-            const where = `${address} → ${url.pathname}${url.search} "${link.text}"`;
-            if (PURCHASE_PATH.test(url.pathname)) problems.push(`${where}: a purchase or contract page`);
-            // A new window is a real navigation too: the app opens it outside its web view.
-            else if (link.blank) continue;
-            else if (!APP_PAGES.test(url.pathname)) problems.push(`${where}: outside the app's pages`);
-            // The dashboard's screens have their own checks (signed in) above.
-            else if (!url.pathname.includes("/app")) next.add(url.pathname);
-          }
-        }
-        level = [...next];
-      }
+      const { problems, seen, checked } = await walk(page, origin, starts);
       expect(problems).toEqual([]);
       // It looked at something: every start page, and the links between them (help → contact → Impressum …).
       expect(seen.size).toBeGreaterThanOrEqual(starts.length);
       expect(checked).toBeGreaterThan(starts.length);
     });
   }
+
+  for (const locale of ["de", "ar"] as const) {
+    test(`${locale}: every link from the dashboard's own screens and a dashboard 404 stays on the app's pages, two levels deep, with no price and no "Pro"`, async ({ page, baseURL }) => {
+      test.setTimeout(420_000);
+      const origin = new URL(baseURL ?? page.url()).origin;
+      await signedIn(page, locale);
+      // A link of the creator's own named "Pro-Tipps": the page's content may say it, the app may not.
+      await seed(page, { more: true });
+      // Home, Seite, Design, Arbeiten, Statistik, Einstellungen and its panes, Einladen, the AI builder,
+      // "View my page", and a dashboard address that does not exist.
+      const screens = ["/app", "/app/editor", "/app/design", "/app/work", "/app/analytics", "/app/settings", "/app/settings/plan", "/app/settings/account", "/app/settings/address", "/app/settings/legal", "/app/invite", "/app/build", "/app/preview", "/app/nope"];
+      const starts = screens.map((screen) => `/${locale}${screen}`);
+      const { problems, seen, checked } = await walk(page, origin, starts);
+      expect(problems).toEqual([]);
+      // Every screen, and the help and legal pages they lead to (Settings → Impressum → …).
+      expect(seen.size).toBeGreaterThan(starts.length);
+      expect(checked).toBeGreaterThan(starts.length);
+      // The creator's own "Pro" was on the screens that show the page, and allowed there.
+      await page.goto(`/${locale}/app/editor`);
+      await expect(page.getByText(OWN_PRO).first()).toBeVisible();
+    });
+  }
+
+  test("a dashboard 404 offers only the way back to the dashboard (no way to the website)", async ({ page }) => {
+    for (const [locale, address] of [
+      ["de", "/de/app/orders/x"],
+      ["de", "/de/app/work-old"],
+      ["ar", "/ar/app/settings/nope"],
+    ] as const) {
+      const response = await page.goto(address);
+      expect(response?.status(), address).toBe(404);
+      await expect(page.locator("h1").first()).toHaveText(MESSAGES[locale].errors.notFound.title);
+      await page.waitForLoadState("networkidle");
+      const visible = await reachableLinks(page);
+      expect(
+        visible.map((link) => new URL(link.href).pathname),
+        address,
+      ).toEqual([`/${locale}/app`]);
+      await expect(page.getByRole("link", { name: MESSAGES[locale].errors.actions.dashboard })).toBeVisible();
+      await expect(page.getByRole("link", { name: MESSAGES[locale].errors.actions.home })).toBeHidden();
+      expect(await axe(page), address).toEqual([]);
+    }
+  });
+
+  test("Ctrl/⌘ K opens no people search in the app (the website's search is not the app's)", async ({ page }) => {
+    await page.goto("/de/hilfe");
+    await expect(page.locator("h1").first()).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    for (const keys of ["Control+k", "Meta+k"]) {
+      await page.keyboard.press(keys);
+      await page.waitForTimeout(800);
+      await expect(page.locator("[data-people-search]").filter({ visible: true }), keys).toHaveCount(0);
+    }
+    expect(new URL(page.url()).pathname).toBe("/de/hilfe");
+  });
 
   test("the bridge: ready, route follows the screens, navigate() without a reload, back()", async ({ page }) => {
     const { m } = await signedIn(page, "de");
@@ -430,6 +579,67 @@ test.describe("in the app, on a phone", () => {
     await sheet.getByRole("button", { name: m.app.edit.cancel }).locator("visible=true").first().click();
     await expect(sheet).toBeHidden();
     expect(await postedOf(page, "editClosed")).toHaveLength(2);
+
+    // A block the page does not have (deleted on another device): no sheet, and at once `missing`, so
+    // the app can return to its list instead of waiting for a sheet that never opens.
+    expect(await navigate("/de/app/editor?edit=gone-1")).toBe(true);
+    await expect.poll(async () => (await postedOf(page, "editClosed")).at(-1)).toEqual({ type: "editClosed", id: "gone-1", missing: true });
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    expect(new URL(page.url()).search).toBe("");
+    // From another screen too.
+    expect(await navigate("/de/app/settings")).toBe(true);
+    await page.waitForURL("**/de/app/settings");
+    expect(await navigate("/de/app/editor?edit=gone-2")).toBe(true);
+    await expect.poll(async () => (await postedOf(page, "editClosed")).at(-1)).toEqual({ type: "editClosed", id: "gone-2", missing: true });
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    expect(await postedOf(page, "editClosed")).toHaveLength(4);
+  });
+
+  test("the page's own share and reminder in 'View my page' go to the app, with the page's public address", async ({ page }) => {
+    const { m, name } = await signedIn(page, "de");
+    await seed(page, { more: true });
+    let downloads = 0;
+    page.on("download", () => {
+      downloads += 1;
+    });
+    // The address the dashboard shares for this page (Home's link card): the public one.
+    await page.getByRole("button", { name: m.app.share.share, exact: true }).first().click();
+    await expect.poll(async () => (await postedOf(page, "share")).length).toBe(1);
+    const publicUrl = ((await postedOf(page, "share"))[0] as unknown as { url: string }).url;
+    expect(publicUrl).toMatch(new RegExp(`/${name}$`));
+
+    // A shorter window, so the page scrolls far enough for its compact bar with the share button. (A new
+    // document: what the app's handler recorded starts again.)
+    await page.setViewportSize({ width: 390, height: 640 });
+    await page.goto("/de/app/preview");
+    await expect(page.locator("[data-credit]")).toHaveCount(1);
+    await page.waitForLoadState("networkidle");
+    // The page's share button: the public address, never the dashboard's /app/preview.
+    await (await pageShareButton(page, m.creator.share)).click();
+    await expect.poll(async () => (await postedOf(page, "share")).length).toBe(1);
+    expect((await postedOf(page, "share"))[0]).toEqual({ type: "share", title: expect.any(String) as unknown as string, url: publicUrl });
+
+    // The planned live's reminder: the calendar file goes to the app.
+    await page.locator("#live-1").getByRole("button", { name: m.creator.remindAbout.replace("{title}", "Q&A") }).click();
+    await expect.poll(async () => (await postedOf(page, "download")).length).toBe(1);
+    const ics = (await postedOf(page, "download"))[0] as unknown as { name: string; mime: string; base64: string };
+    expect(ics).toMatchObject({ name: "live.ics", mime: "text/calendar" });
+    const calendar = decode(ics.base64).toString("utf8");
+    expect(calendar).toMatch(/^BEGIN:VCALENDAR\r\n/);
+    expect(calendar).toContain("UID:live-1-");
+    expect(calendar).toContain("URL:https://www.twitch.tv/example");
+    expect(downloads).toBe(0);
+  });
+
+  test("a theme stored in the web view never overrides the device's appearance (the app sets it)", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.addInitScript(() => {
+      window.localStorage.setItem("ly-theme", "light");
+    });
+    await page.goto("/de/hilfe");
+    await expect(page.locator("h1").first()).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.dataset.theme ?? null)).toBeNull();
+    expect(await page.evaluate(() => window.localStorage.getItem("ly-theme"))).toBe("light");
   });
 });
 
@@ -452,6 +662,53 @@ test.describe("in a browser", () => {
     await page.getByRole("button", { name: m.app.settings.export }).click();
     expect((await download).suggestedFilename()).toMatch(/^linkyo-app-.+-export\.json$/);
     expect(await page.evaluate(() => (window as unknown as { __posted: unknown[] }).__posted)).toEqual([]);
+  });
+
+  test("a stored theme still applies, and 'View my page' shares the page's public address", async ({ page }) => {
+    // A browser's own share sheet, recorded (desktop Chromium has none).
+    await page.addInitScript(() => {
+      const own = window as unknown as { __shared: unknown[] };
+      own.__shared = [];
+      Object.defineProperty(Navigator.prototype, "share", {
+        configurable: true,
+        value: (data: unknown) => {
+          own.__shared.push(JSON.parse(JSON.stringify(data)));
+          return Promise.resolve();
+        },
+      });
+    });
+    const { m, name } = await signedIn(page, "de");
+    await seed(page, { more: true });
+    const shared = () => page.evaluate(() => (window as unknown as { __shared: { url: string; title: string }[] }).__shared);
+    await page.getByRole("button", { name: m.app.share.share, exact: true }).first().click();
+    await expect.poll(async () => (await shared()).length).toBe(1);
+    const publicUrl = (await shared())[0]?.url ?? "";
+    expect(publicUrl).toMatch(new RegExp(`/${name}$`));
+
+    // A phone-sized window, so the page scrolls far enough for its compact bar with the share button.
+    await page.setViewportSize({ width: 390, height: 640 });
+    await page.goto("/de/app/preview");
+    await expect(page.locator("[data-credit]")).toHaveCount(1);
+    await page.waitForLoadState("networkidle");
+    await (await pageShareButton(page, m.creator.share)).click();
+    // A new document: what the stand-in recorded starts again.
+    await expect.poll(async () => (await shared()).length).toBe(1);
+    expect((await shared())[0]?.url).toBe(publicUrl);
+    // The reminder is still the browser's download.
+    const download = page.waitForEvent("download");
+    await page.locator("#live-1").getByRole("button", { name: m.creator.remindAbout.replace("{title}", "Q&A") }).click();
+    expect((await download).suggestedFilename()).toBe("live.ics");
+
+    // Settings keeps the app language, the appearance and its footer; a stored theme applies.
+    await page.goto("/de/app/settings");
+    await expect(heading(page)).toBeVisible();
+    await expect(page.getByText(m.app.settings.rows.appLanguage, { exact: true })).toBeVisible();
+    await expect(page.getByText(m.app.settings.footers.app)).toBeVisible();
+    await page.evaluate(() => {
+      window.localStorage.setItem("ly-theme", "dark");
+    });
+    await page.goto("/de/hilfe");
+    expect(await page.evaluate(() => document.documentElement.dataset.theme ?? null)).toBe("dark");
   });
 
   test("?edit=<id> opens that block's sheet once; an unknown id opens nothing", async ({ page }) => {
