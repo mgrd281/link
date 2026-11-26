@@ -12,10 +12,11 @@
  *   scripts) never reaches the worker: Chrome routes it to the network directly (static routing) and
  *   elsewhere the handler leaves it alone. The offline page lives in the worker's own script.
  * - Updates: every build writes a new version into the script, the dashboard registers it with
- *   `updateViaCache: "none"` and asks for updates when a window comes back to the front. A new worker
- *   takes over at once (`skipWaiting`, `clients.claim`): it holds no cache and no state, so there is
- *   nothing to hand over. Open windows load every page from the network, so a deploy reaches them with
- *   their next page load whichever worker is running.
+ *   `updateViaCache: "none"` and asks for updates when a window comes back to the front
+ *   (features/pwa/register.ts). A new worker takes over at once (`skipWaiting`, `clients.claim`): it
+ *   holds no cache and no state, so there is nothing to hand over. It never serves the dashboard's code:
+ *   an open window keeps the code it has until its next navigation, where Next sees the new build and
+ *   loads the page in full from the network.
  *
  * Plain JavaScript, no dependency. `serviceWorkerSource` writes the constants in front of `WORKER`.
  */
