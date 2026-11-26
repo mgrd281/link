@@ -34,8 +34,11 @@ export type BridgeMessage =
   | ({ type: "download" } & BridgeFile)
   /** A light tap of haptic feedback, from a user's tap. */
   | { type: "haptic"; style: "light" }
-  /** The block sheet that `?edit=<id>` opened was closed (saved, cancelled or the block deleted). */
-  | { type: "editClosed"; id: string }
+  /**
+   * The block sheet that `?edit=<id>` opened was closed (saved, cancelled or the block deleted); with
+   * `missing`, at once: the page has no block of that id (deleted elsewhere), so no sheet opened.
+   */
+  | { type: "editClosed"; id: string; missing?: true | undefined }
   /** Opens an address of ours outside the app, in Safari. */
   | { type: "openExternal"; url: string }
   /** The store's messages (`saveState`, `signedOut`), sent by `./store-bridge.ts`. */

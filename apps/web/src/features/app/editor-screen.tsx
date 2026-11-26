@@ -24,7 +24,7 @@ import { haptic } from "@/lib/haptics";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { blankBlock } from "./blocks";
-import { EDIT_PARAM, editLinkTarget, withoutEditParam } from "./edit-link";
+import { EDIT_PARAM, editLinkOutcome, withoutEditParam } from "./edit-link";
 import { emptyPageAsk } from "./editor-empty";
 import { isPortfolioKind } from "./kinds";
 import { PreviewButton } from "./preview";
@@ -51,7 +51,8 @@ const reorderKey = (onMove: (delta: number) => void) => (event: KeyboardEvent<HT
  * `?edit=<blockId>` (the iPhone app's pushed editor, or any link) opens that block's sheet, once; an
  * unknown id opens nothing. The address loses the request first, so a reload or Back does not open the
  * sheet again. In the app, closing that sheet (saved, cancelled, or the block deleted) posts
- * `editClosed`, so the app can return to its own list.
+ * `editClosed`, so the app can return to its own list; an unknown id posts `editClosed` with
+ * `missing` at once.
  */
 function useEditLink() {
   const { doc, edit, editing } = useSite();
@@ -60,10 +61,15 @@ function useEditLink() {
   const linked = useRef<string | null>(null);
   const timer = useRef<number | undefined>(undefined);
   const open = useEffectEvent((id: string) => {
-    const target = editLinkTarget(id, doc.blocks.map((block) => block.id));
-    if (!target) return;
-    linked.current = target;
-    edit({ mode: "edit", id: target });
+    const outcome = editLinkOutcome(id, doc.blocks.map((block) => block.id));
+    if (!outcome) return;
+    // No such block: the app hears at once that no sheet opened (a browser: nothing happens).
+    if ("closed" in outcome) {
+      post(outcome.closed);
+      return;
+    }
+    linked.current = outcome.open;
+    edit({ mode: "edit", id: outcome.open });
   });
   useEffect(() => {
     if (requested === null) return;

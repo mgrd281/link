@@ -12,6 +12,20 @@ export function editLinkTarget(requested: string | null, ids: readonly string[])
   return ids.includes(requested) ? requested : null;
 }
 
+/**
+ * What a `?edit=` link does: open the block's sheet, or (no such block: deleted on another device, a
+ * stale list) tell the iPhone app at once that nothing opened, `editClosed` with `missing`, so it can
+ * return to its own list instead of showing an editor waiting for a sheet. Null for no request.
+ */
+export function editLinkOutcome(
+  requested: string | null,
+  ids: readonly string[],
+): { open: string } | { closed: { type: "editClosed"; id: string; missing: true } } | null {
+  if (requested === null) return null;
+  const target = editLinkTarget(requested, ids);
+  return target ? { open: target } : { closed: { type: "editClosed", id: requested, missing: true } };
+}
+
 /** The address without `edit`, every other parameter and the hash kept. */
 export function withoutEditParam({ pathname, search, hash }: { pathname: string; search: string; hash: string }): string {
   const query = new URLSearchParams(search);
