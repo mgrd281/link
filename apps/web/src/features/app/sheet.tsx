@@ -205,7 +205,8 @@ export function Sheet({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
+  /** Text, or rich text (an Arabic title with a Latin name in <bdi>). */
+  title: ReactNode;
   description?: string | undefined;
   closeLabel: string;
   children: ReactNode;

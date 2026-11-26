@@ -16,6 +16,8 @@ import { LinkCard } from "./home/link-card";
 import { NextStep, TaskRow, type HomeTask } from "./home/next-step";
 import { homeProgress, homeTasks, homeTasksDone, linkHint, type HomeTaskKey } from "./home/progress";
 import { ProposalCard } from "./home/proposal-card";
+import { HomeIntents } from "./install/home-intents";
+import { InstallHint } from "./install/install-hint";
 import { ListGroup, ListRow } from "./list";
 import { ProfileSheet } from "./profile-sheet-lazy";
 import { startedBlock } from "./project-start";
@@ -124,6 +126,10 @@ export function HomeScreen() {
         </section>
       ) : null}
 
+      {/* The Add sheet a shortcut of the installed app or a share asked for (install/intents.ts). */}
+      <HomeIntents />
+      {/* Where the browser offers to install Linkyo: a hint, once (install/install-hint.tsx). */}
+      <InstallHint />
       {/* Real accounts with the page service: a proposal from the team comes first. */}
       <ProposalCard />
       <div className="@container">

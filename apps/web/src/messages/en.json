@@ -1980,7 +1980,8 @@
       "socialsHas": "Already in your social icons",
       "socialsFull": "Your social icons are full ({count}). Remove one first.",
       "exportFirst": "Export your data first",
-      "exported": "File created: {file}"
+      "exported": "File created: {file}",
+      "sharedNone": "There was no link in what you shared. Paste it here."
     },
     "design": {
       "title": "Design",
@@ -3250,6 +3251,44 @@
       "empty": {
         "title": "Add your first project",
         "body": "Show what you have worked on: a title, a sentence and, if you like, pictures."
+      }
+    },
+    "install": {
+      "row": "Linkyo as an app",
+      "installedValue": "Installed",
+      "title": "Linkyo as an app",
+      "lead": "Open your dashboard from its own icon, in its own window. It's the same dashboard as here, always up to date.",
+      "close": "Close",
+      "prompt": {
+        "body": "Your browser can install Linkyo right away.",
+        "button": "Install",
+        "later": "You can also install Linkyo later: look for “Install” in your browser's menu."
+      },
+      "ios": {
+        "intro": "To put Linkyo on your Home Screen:",
+        "step1": "Tap “Share” <glyph></glyph>. If you don't see it, tap “•••” first.",
+        "step2": "Choose “Add to Home Screen”.",
+        "step3": "Tap “Add”."
+      },
+      "mac": {
+        "intro": "In Safari on a Mac:",
+        "step": "In the menu bar, choose “File” › “Add to Dock”."
+      },
+      "installed": {
+        "title": "Linkyo is installed",
+        "body": "Open it from its icon: on your Home Screen, in the Dock or in the taskbar."
+      },
+      "other": {
+        "body": "Your browser doesn't offer to install Linkyo here. Chrome, Edge and Safari can install it as an app."
+      },
+      "chromium": {
+        "body": "If Linkyo is already installed, open it from its icon. If not, your browser's menu offers to install it, except in a private window."
+      },
+      "hint": {
+        "title": "Linkyo as an app",
+        "body": "Install the dashboard and open it in one tap.",
+        "install": "Install",
+        "dismiss": "Hide this tip"
       }
     }
   },
@@ -5507,6 +5546,29 @@
           "After that your address no longer works."
         ]
       }
+    }
+  },
+  "pwa": {
+    "shortName": "Linkyo",
+    "description": "Edit your Linkyo page, share it and see its numbers.",
+    "shortcuts": {
+      "editor": "Edit page",
+      "editorDescription": "Change, order and hide your blocks",
+      "add": "Add a block",
+      "addDescription": "Paste a link or start something new",
+      "analytics": "Stats",
+      "analyticsDescription": "Your page's views and taps",
+      "share": "Share",
+      "shareDescription": "Copy or share your link, or get its QR code"
+    },
+    "screenshots": {
+      "dashboard": "The dashboard, where you build your page",
+      "page": "A creator page as visitors see it"
+    },
+    "offline": {
+      "title": "You're offline",
+      "body": "The dashboard needs an internet connection. Check your connection, then try again.",
+      "retry": "Try again"
     }
   }
 }

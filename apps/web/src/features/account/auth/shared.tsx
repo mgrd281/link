@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+import { INTENT_RETURN } from "@/features/app/install/intents";
 import { useRouter } from "@/i18n/navigation";
 
 import { accountStore, useAccount } from "../store";
@@ -19,9 +20,12 @@ export function useSearchParam(name: string): string {
   );
 }
 
-/** Only in-app destinations are allowed after log-in (no open redirects). */
+/**
+ * Only in-app destinations are allowed after log-in (no open redirects). Home may carry the Add sheet
+ * a shortcut or a share asked for (`INTENT_RETURN`: `/app?add=1`, `/app?shared=<encoded link>`).
+ */
 export const safeNext = (value: string): string | null =>
-  /^\/(?:app|admin)(?:\/[\w/-]*)?$/.test(value) || /^\/checkout\/(?:pro|service\?package=(?:start|premium))$/.test(value) ? value : null;
+  /^\/(?:app|admin)(?:\/[\w/-]*)?$/.test(value) || /^\/checkout\/(?:pro|service\?package=(?:start|premium))$/.test(value) || INTENT_RETURN.test(value) ? value : null;
 
 /**
  * Auth pages are for signed-out people. As soon as there is a session (after sign-up, log-in, or

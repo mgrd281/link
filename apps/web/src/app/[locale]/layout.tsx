@@ -10,6 +10,8 @@ import { fontVariables } from "@/fonts";
 import { siteState } from "@/features/marketing/site-state";
 import { clientMessages } from "@/i18n/client-messages";
 import { isRtl, routing } from "@/i18n/routing";
+import { installPromptInitScript } from "@/lib/install-prompt-script";
+import { launchQueueInitScript } from "@/lib/launch-queue-script";
 import { navPanelInitScript } from "@/lib/nav-panel-script";
 import { siteUrl } from "@/lib/site-url";
 import { themeInitScript } from "@/lib/theme-script";
@@ -33,8 +35,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     description,
     // The home-screen icon: the symbol on teal, full bleed (iOS rounds the corners itself).
     icons: { icon: "/favicon.svg", apple: { url: "/apple-icon.png", sizes: "180x180", type: "image/png" } },
+    // Installable as an app (features/pwa/manifest.ts): this language's manifest, which opens the
+    // dashboard in this language. Creator pages under /u have their own root layout and link none.
+    manifest: `/${locale}/manifest.webmanifest`,
     // Added to the home screen it opens like an app: full screen, its own name, the system's status bar.
+    // `capable` writes `mobile-web-app-capable`; iOS before 16.4 reads only the apple-prefixed name.
     appleWebApp: { capable: true, title: "Linkyo", statusBarStyle: "default" },
+    other: { "apple-mobile-web-app-capable": "yes" },
     // Numbers stay numbers (follower counts, codes, prices): no automatic phone or address links.
     formatDetection: { telephone: false, email: false, address: false },
     // Public pages are indexed; private, internal and example pages say otherwise themselves (lib/seo.ts).
@@ -69,8 +76,10 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   return (
     <html lang={locale} dir={dir} className={fontVariables} suppressHydrationWarning>
       <head>
-        {/* Before paint: the stored theme, and the dashboard's folded section panel (no layout shift). */}
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript + navPanelInitScript }} />
+        {/* Before paint: the stored theme, and the dashboard's folded section panel (no layout shift).
+            Then the browser's offer to install the app, kept for the dashboard (lib/install-prompt-script.ts),
+            and the installed app's shortcuts and shares into a window already open (lib/launch-queue-script.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript + navPanelInitScript + installPromptInitScript + launchQueueInitScript }} />
       </head>
       <body className="min-h-dvh bg-canvas text-fg">
         <NextIntlClientProvider messages={clientMessages(await getMessages(), "site")}>

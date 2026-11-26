@@ -8,6 +8,7 @@ import { useEffect, type ReactNode } from "react";
 import { useAccount } from "@/features/account/store";
 import { usePathname, useRouter } from "@/i18n/navigation";
 
+import { intentReturnPath } from "./install/intents";
 import { sectionPanelShown } from "./nav";
 import { isGrownPath, routeInfo } from "./routes";
 import { SiteProvider } from "./site-context";
@@ -175,7 +176,8 @@ export function AppGate({ children }: { children: ReactNode }) {
   const needsWelcome = snapshot.status === "signedIn" && !snapshot.site.onboarded && pathname !== "/app/welcome" && pathname !== "/app/build";
 
   useEffect(() => {
-    if (snapshot.status === "signedOut") router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    // Back after sign-in: the same screen, and on Home the Add sheet a shortcut or a share asked for.
+    if (snapshot.status === "signedOut") router.replace(`/login?next=${encodeURIComponent(intentReturnPath(pathname, window.location.search))}`);
     else if (needsWelcome) router.replace("/app/welcome");
   }, [snapshot.status, needsWelcome, pathname, router]);
 
