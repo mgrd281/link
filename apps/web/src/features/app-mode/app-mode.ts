@@ -36,11 +36,27 @@ export interface LinkyoApp {
 /** The global the app shares with the page (read through a cast: other modules may type it too). */
 export type AppWindow = Window & { linkyoApp?: LinkyoApp };
 
-/** The platform the app named on `<html data-app>`, or null in a browser (and on the server). */
+/**
+ * The platform the app named on `<html data-app>`, or null in a browser (and on the server). Where the
+ * attribute is gone, the platform the app named on `window.linkyoApp` (see `keepAppSignal`).
+ */
 export function appPlatform(): AppPlatform | null {
   if (typeof document === "undefined") return null;
-  const value = document.documentElement.dataset.app;
+  const value = document.documentElement.dataset.app ?? (typeof window === "undefined" ? undefined : (window as AppWindow).linkyoApp?.platform);
   return APP_PLATFORMS.find((platform) => platform === value) ?? null;
+}
+
+/**
+ * Puts `<html data-app>` back where React took it off. When React renders a whole document in the
+ * browser (the server's stream stopped at an error or a "not found" in a layout, as for a dashboard
+ * address that can never exist: `features/errors/gated-routes.ts`), it takes `<html>` over with only the
+ * attributes it renders, after the app's document-start script ran, and that script does not run again.
+ * The object the app put on `window` stays, and names the platform: the attribute is set from it, so
+ * the CSS (`:root[data-app="ios"]`) applies again. Does nothing in a browser.
+ */
+export function keepAppSignal(): void {
+  const platform = appPlatform();
+  if (platform && document.documentElement.dataset.app !== platform) document.documentElement.dataset.app = platform;
 }
 
 /** True inside Linkyo's app (`<html data-app>` names a known platform). */

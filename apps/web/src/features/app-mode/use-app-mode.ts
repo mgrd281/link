@@ -1,8 +1,8 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useLayoutEffect, useSyncExternalStore } from "react";
 
-import { inAppMode } from "./app-mode";
+import { inAppMode, keepAppSignal } from "./app-mode";
 
 /** The app sets `<html data-app>` before the page's first script and never changes it. */
 const subscribe = () => () => undefined;
@@ -16,4 +16,12 @@ const subscribe = () => () => undefined;
  */
 export function useAppMode(): boolean {
   return useSyncExternalStore(subscribe, inAppMode, () => false);
+}
+
+/**
+ * On a page React may have rendered whole in the browser (the not-found and error pages): puts
+ * `<html data-app>` back before the browser paints (`keepAppSignal`), so what the app hides stays hidden.
+ */
+export function useKeepAppSignal(): void {
+  useLayoutEffect(keepAppSignal, []);
 }

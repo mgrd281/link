@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { APP_PLATFORMS, appPlatform, inAppMode, linkyoApp, type AppWindow } from "./app-mode";
+import { APP_PLATFORMS, appPlatform, inAppMode, keepAppSignal, linkyoApp, type AppWindow } from "./app-mode";
 
 /** A page whose <html> carries `data-app` (or not), as the app's document-start script leaves it. */
 function page(app?: string) {
@@ -41,6 +41,35 @@ describe("the app-mode signal", () => {
       page(value);
       expect(inAppMode(), value).toBe(false);
     }
+  });
+});
+
+describe("the signal after React took <html> over", () => {
+  // React renders a whole document in the browser after an error in the server's stream (a dashboard
+  // address the layout answers with a 404): it keeps only the attributes it renders on <html>.
+  it("still names the app's platform from window.linkyoApp, and puts the attribute back", () => {
+    const win = page();
+    win.linkyoApp = { platform: "ios", version: "1.0", bridge: 1 };
+    expect(appPlatform()).toBe("ios");
+    keepAppSignal();
+    expect((document.documentElement.dataset as Record<string, string>).app).toBe("ios");
+  });
+
+  it("does nothing in a browser, or for a platform the code does not know", () => {
+    page();
+    keepAppSignal();
+    expect((document.documentElement.dataset as Record<string, string>).app).toBeUndefined();
+    const win = page();
+    win.linkyoApp = { platform: "android" };
+    expect(appPlatform()).toBeNull();
+    keepAppSignal();
+    expect((document.documentElement.dataset as Record<string, string>).app).toBeUndefined();
+  });
+
+  it("lets the attribute win where it is there (an empty or unknown value is a browser)", () => {
+    const win = page("");
+    win.linkyoApp = { platform: "ios" };
+    expect(appPlatform()).toBeNull();
   });
 });
 

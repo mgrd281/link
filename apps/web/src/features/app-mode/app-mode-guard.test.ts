@@ -12,16 +12,35 @@
  *    link (`<a download>`, a file on Storage's host) renders only outside the app.
  * 3. The web chrome the app replaces carries `data-app-hide`, and the creator page's credit link the
  *    `data-credit` the dashboard previews hide it by.
+ * 4. The not-found and error pages, in the dashboard and outside it, lead in the app only back to the
+ *    dashboard: never to the website's home page or templates (they show the prices).
  */
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { NextIntlClientProvider } from "next-intl";
+import { createElement, type ReactNode } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+import de from "@/messages/de.json";
+
+import { ErrorScreen, NotFoundScreen } from "../errors/error-screen";
+
+/** What the error pages below are rendered with: the address and whether the page is in the app. */
+const view = vi.hoisted(() => ({ pathname: "/app/nope", app: false }));
+
+// The localized navigation needs Next's router, which Node alone does not have: links render plain.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({ href, children, ...rest }: { href: string; children?: ReactNode }) => createElement("a", { href, ...rest }, children),
+  usePathname: () => view.pathname,
+}));
+vi.mock("@/features/app-mode/use-app-mode", () => ({ useAppMode: () => view.app, useKeepAppSignal: () => undefined }));
 
 const SRC = path.resolve(import.meta.dirname, "../..");
-/** The dashboard and the AI builder (the homepage replay's recordings aside). */
-const DIRS = ["features/app", "features/ai"];
+/** The dashboard, the AI builder (the homepage replay's recordings aside) and the error pages. */
+const DIRS = ["features/app", "features/ai", "features/errors"];
 const EXCEPT = ["features/ai/recordings/"];
 
 interface Source {
@@ -244,5 +263,39 @@ describe("app mode: the chrome the app replaces", () => {
     const credit = elements("features/directions/shared/creator-kit.tsx", has("data-credit"));
     expect(credit).toHaveLength(1);
     expect(credit[0]).toContain("href");
+  });
+});
+
+describe("app mode: the not-found and error pages lead only back to the dashboard", () => {
+  /** The page's links as rendered: where each leads, and whether the app hides it (`data-app-hide`). */
+  function links(screen: ReactNode, pathname: string, app: boolean) {
+    view.pathname = pathname;
+    view.app = app;
+    const markup = renderToStaticMarkup(createElement(NextIntlClientProvider, { locale: "de", messages: de, timeZone: "Europe/Berlin", children: screen }));
+    return [...markup.matchAll(/<a\b([^>]*)>/g)].map(([, attributes = ""]) => ({
+      href: /href="([^"]*)"/.exec(attributes)?.[1] ?? "",
+      hidden: /\bdata-app-hide=/.test(attributes),
+    }));
+  }
+  /** What a person sees in the app: the links the app does not hide. */
+  const inApp = (found: { href: string; hidden: boolean }[]) => found.filter((link) => !link.hidden).map((link) => link.href);
+  const notFound = createElement(NotFoundScreen);
+  const failed = createElement(ErrorScreen, { error: new Error("x"), retry: () => undefined });
+
+  it("a dashboard address that does not exist: only Zum Dashboard", () => {
+    for (const pathname of ["/app/nope", "/app/orders/x", "/app/settings/nope"]) {
+      expect(inApp(links(notFound, pathname, true)), pathname).toEqual(["/app"]);
+      // The browser keeps both ways (the attribute does nothing there).
+      expect(links(notFound, pathname, false).map((link) => link.href), pathname).toEqual(["/app", "/"]);
+    }
+    expect(inApp(links(failed, "/app/build", true))).toEqual(["/app"]);
+  });
+
+  it("a page outside the dashboard: no home page and no templates, the dashboard instead", () => {
+    expect(inApp(links(notFound, "/hilfe/nope", true))).toEqual(["/app"]);
+    expect(inApp(links(failed, "/hilfe", true))).toEqual(["/app"]);
+    // A browser: the home page and the templates, and no dashboard link added.
+    expect(links(notFound, "/hilfe/nope", false).map((link) => link.href)).toEqual(["/", "/templates"]);
+    expect(links(failed, "/hilfe", false).map((link) => link.href)).toEqual(["/"]);
   });
 });
