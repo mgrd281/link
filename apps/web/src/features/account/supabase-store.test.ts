@@ -1188,6 +1188,8 @@ function keepaliveAnswered(db: FakeDb) {
     },
   };
 }
+/** Which of the row's blocks are shown, as 1 and 0. */
+const visible = (db: FakeDb) => (db.row.page.blocks as Block[]).map((block) => (block.visible ? "1" : "0")).join("");
 const hideTab = () => {
   vi.stubGlobal("document", { visibilityState: "hidden" });
   listeners.get("visibilitychange")?.();
@@ -1307,6 +1309,39 @@ describe("one document, two accounts (signed out in Settings, then another accou
     await vi.advanceTimersByTimeAsync(100);
     expect(sent.guards).toEqual([]);
     expect(db.blocks()).toEqual(["n1", "n2", "from-noras-app"]);
+  });
+});
+
+describe("flush() while a hidden tab's wait ends (the app's web view is hidden behind a native screen)", () => {
+  it("a lost answer, reads failing: flush() never answers the version before the tab's own landed write", async () => {
+    // Before, the hidden wait sent the change in a loose keepalive during flush()'s save, so flush saw
+    // nothing waiting and answered the base from before the landed write: a version the row no longer had.
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    keepaliveAnswered(db);
+    const before = db.row.updated_at;
+    db.loseAnswers = true;
+    db.failReads = true;
+    toggle(store, "a");
+    await vi.advanceTimersByTimeAsync(450);
+    db.loseAnswers = false;
+    toggle(store, "b");
+    await vi.advanceTimersByTimeAsync(50);
+    hideTab();
+    let flushed = "pending";
+    store.flush().then(
+      (answer) => {
+        flushed = `ok ${String(answer.updatedAt)}`;
+      },
+      (error: unknown) => {
+        flushed = `rejected ${error instanceof Error ? error.message : String(error)}`;
+      },
+    );
+    await vi.advanceTimersByTimeAsync(HIDDEN_WAIT + 500);
+    expect(flushed).not.toBe(`ok ${before}`);
+    // Either the keepalive's answer (the version now in the row) or a rejection: never a stale version.
+    expect([`ok ${db.row.updated_at}`, "rejected saveFailed"]).toContain(flushed);
+    expect(visible(db)).toBe("00");
   });
 });
 

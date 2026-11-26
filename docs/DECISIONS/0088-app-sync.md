@@ -247,7 +247,9 @@ view cannot share one session.
    - On `window.linkyoApp` (made when missing, never replaced), through `installOnApp` like the interface half
      ([0087](0087-app-mode.md)); its `navigate` and `back` stay, whichever half mounts first:
      - `flush(): Promise<{ updatedAt }>`: the editor's last-moment change (its autosave delay) goes to the store, then
-       everything is saved; answers the version a native write builds on. Rejects when a change could not be saved.
+       everything is saved; answers the version a native write builds on, only one the server confirmed: it also waits
+       for a write that went out meanwhile (the hidden tab's keepalive, while the web view is behind a native screen).
+       Rejects when a change could not be saved, or when its outcome is not known (a keepalive without an answer).
      - `reload(): Promise<void>`: saves what waits, reads the row again and starts the editor over from it.
      - `signOut(): Promise<void>`: saves (best effort), then ends the web view's session (`scope: "local"`). Rejects
        after 10 s offline; the app then clears the web view's data anyway.
@@ -319,11 +321,11 @@ since it last read or saved; the other tab learns of it only on its next save (t
   then ended by the phone with no other event": a lost answer that landed or a 503 that wrote, reads failing, hidden
   and ended at once, 200 ms or 1 s later (its stand-in fails a read as postgrest-js does: after retries 1, 2 and 4 s
   later, unless the query turns them off, as every read-back of the guard does); reads back in time; a page changed
-  elsewhere; a read that never answers, given up after 1.5 s; a lost answer resolved by its read-back, then closed:
-  the exact guard), `features/account/local-store.test.ts` (signing out), `features/app-mode/store-bridge.test.ts`,
-  `features/app-mode/adr-contract.test.ts` (this ADR names every error the two routes answer and every reason a bridge
-  method rejects with), `app/api/app/page/{ops,route}.test.ts`, `app/api/auth/{handoff,confirm}/route.test.ts`, and
-  the real-mode `e2e/app-sync-app.spec.ts` (`@real`, laptop and phone; also a lost answer, reads failing, the page
-  hidden and then ended with `Page.crash` 4 s and 1 s later: the change is in the row, its keepalive within 1 s of
-  hiding; and a sign-out while saves fail, another account signed in with a password in the same tab, its app's write
-  through the route, the tab closed: the write stays).
+  elsewhere; a read that never answers, given up after 1.5 s; `flush()` while the hidden wait ends; a lost answer
+  resolved by its read-back, then closed: the exact guard), `features/account/local-store.test.ts` (signing out),
+  `features/app-mode/store-bridge.test.ts`, `features/app-mode/adr-contract.test.ts` (this ADR names every error the
+  two routes answer and every reason a bridge method rejects with), `app/api/app/page/{ops,route}.test.ts`,
+  `app/api/auth/{handoff,confirm}/route.test.ts`, and the real-mode `e2e/app-sync-app.spec.ts` (`@real`, laptop and
+  phone; also a lost answer, reads failing, the page hidden and then ended with `Page.crash` 4 s and 1 s later: the
+  change is in the row, its keepalive within 1 s of hiding; and a sign-out while saves fail, another account signed in
+  with a password in the same tab, its app's write through the route, the tab closed: the write stays).

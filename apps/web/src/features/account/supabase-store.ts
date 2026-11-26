@@ -714,6 +714,9 @@ export class SupabaseAccountStore implements AccountStore {
   private async settleSaves(): Promise<void> {
     for (let round = 0; round < SETTLE_ROUNDS; round += 1) {
       await this.drainSaves();
+      // A write that went out meanwhile (a hidden tab's keepalive, sent when its wait ended during
+      // that save) decides too: its answer is awaited before anything is decided.
+      while (this.saving) await this.saving;
       if (!this.dirty || this.failed) return;
     }
   }
@@ -725,7 +728,9 @@ export class SupabaseAccountStore implements AccountStore {
   flush = async (): Promise<{ updatedAt: string | null }> => {
     await this.settleSaves();
     if (this.snapshot.status !== "signedIn") return { updatedAt: null };
-    if (this.dirty) throw new Error(this.snapshot.syncError ?? "saveFailed");
+    // `failed` without `dirty`: the change went out in a keepalive whose outcome is not known, so the
+    // base may be the version before it. A version is answered only when the server confirmed it.
+    if (this.dirty || this.failed) throw new Error(this.snapshot.syncError ?? "saveFailed");
     return { updatedAt: this.base };
   };
 
