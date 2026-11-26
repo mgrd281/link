@@ -174,29 +174,31 @@ view cannot share one session.
      itself is kept, and so is every write from elsewhere); so does one that ends it after the 3 s while a save is
      still on its way (its keepalive, exact, is refused by that save).
    - **The loose guard: a closing tab, and a hidden one with an unresolved lost answer** (`pagehide`: the page is
-     going away and cannot wait). The keepalive is the last code it runs: when it is refused, nothing sends it
-     again. A save of this tab's that lands first, with a version this tab does not know yet, would make an exact
-     keepalive fail and lose the last change. So on `pagehide` the keepalive is guarded with `updated_at >= <base>`
-     instead of `=` exactly while one of this tab's saves is on its way, or while the list above is not empty; a
-     hidden tab's keepalive only while a lost answer is still unresolved after its wait (above); otherwise it is
-     exact too. Either order then keeps the last change: the save lands first and the keepalive follows, or the
-     keepalive lands first and the save (still guarded exactly) changes nothing. When both land in a page that
-     stays (a page kept in the back/forward cache), their answers may come back in either order; writes are
-     numbered as they are sent, and an older one's late answer never moves the base back.
+     going away and cannot wait). The keepalive is the last code it runs: when it is refused, nothing sends it again.
+     A save of this tab's that lands first, with a version this tab does not know yet, would make an exact keepalive
+     fail and lose the last change. So on `pagehide` the keepalive is guarded with `updated_at >= <base>` instead of
+     `=` exactly while one of this tab's saves is on its way, or while a write of the list above has a lost answer
+     that no read of the row has resolved since (a read that finds the row still at the version this tab built on, or
+     holding a page from elsewhere, resolves it: that write did not land and cannot land any more); a hidden tab's
+     keepalive only while a lost answer is still unresolved after its wait (above); otherwise it is exact too. Either
+     order then keeps the last change: the save lands first and the keepalive follows, or the keepalive lands first
+     and the save (still guarded exactly) changes nothing. When both land in a page that stays (a page kept in the
+     back/forward cache), their answers may come back in either order; writes are numbered as they are sent, and an
+     older one's late answer never moves the base back.
    - **The real window, and its price** (taken on purpose). It opens only when a tab is closed (`pagehide`) while a
-     save of its is on its way, or while the list above is not empty (a save with no answer or a 5xx, until a later
-     save is confirmed or a read-back finds this tab's own version; on a bad network that can be a while: the
-     retries come 2, 5 and 15 s after failures in a row, then every 30 s), and when a hidden tab's 3 s wait ends
-     with a lost answer that no read of the row could resolve (the reads fail too). Then the keepalive overwrites **any write
-     from elsewhere since this tab last read or saved** (another tab, the app), instead of being refused, and the
-     closing tab sees nothing. The other tab learns of it only on its next save: that save is refused, it shows the
-     toast and the closing tab's page, and that change is dropped. A browser cannot tell a request that never left
-     (a network error while it says it is online) from one whose answer was lost, so a failed save of that kind
-     opens the window even when it wrote nothing. What is also still not kept: a change made after the team gave the
-     badge (a version this tab has not seen) in a tab that closes before its save, refused as this tab's own and
-     sent again, went through: the keepalive is refused as stale. A database function `save_site(content, base,
-     pending)` that writes when the row is at `base` or holds what may have landed would close both without the
-     window; it needs a migration and is a follow-up.
+     save of its is on its way, or while a lost answer is unresolved (a save with no answer or a 5xx whose read-back
+     failed too, until a read of the row resolves it or a later save is confirmed; on a bad network that can be a
+     while: the retries come 2, 5 and 15 s after failures in a row, then every 30 s), and when a hidden tab's 3 s wait
+     ends with a lost answer that no read of the row could resolve (the reads fail too). Then the keepalive overwrites
+     **any write from elsewhere since this tab last read or saved** (another tab, the app), instead of being refused,
+     and the closing tab sees nothing. The other tab learns of it only on its next save: that save is refused, it
+     shows the toast and the closing tab's page, and that change is dropped. A browser cannot tell a request that
+     never left (a network error while it says it is online) from one whose answer was lost, so a failed save of that
+     kind opens the window even when it wrote nothing, until a read of the row shows it did not land. What is also
+     still not kept: a change made after the team gave the badge (a version this tab has not seen) in a tab that
+     closes before its save, refused as this tab's own and sent again, went through: the keepalive is refused as
+     stale. A database function `save_site(content, base, pending)` that writes when the row is at `base` or holds
+     what may have landed would close both without the window; it needs a migration and is a follow-up.
    - A keepalive that fails while the tab is still there (a phone back from another app) is retried like any
      failed save.
    - Signing out (Settings' "Abmelden" too), the data export and the deletion first save until nothing waits, a
@@ -296,9 +298,9 @@ ends within 3 s of hiding it (while a save is on its way, or a lost answer is re
 still on its way, loses the edits made since the last save that reached the database (the price in §3). With two tabs
 (or the app) changing the page, the tab that saves later shows the newer page and the toast instead of overwriting it,
 also when it is hidden while its save is on its way. The other exception is the window above: a tab **closed**
-(`pagehide`) while a save of its is on its way, or while an answer it lost is not yet resolved, and a tab **hidden**
-whose lost answer no read could resolve in 3 s, overwrite any write from elsewhere since it last read or saved; the
-other tab learns of it only on its next save (the toast, and that change is dropped).
+(`pagehide`) while a save of its is on its way, or while an answer it lost is not yet resolved by a read of the row,
+and a tab **hidden** whose lost answer no read could resolve in 3 s, overwrite any write from elsewhere since it last
+read or saved; the other tab learns of it only on its next save (the toast, and that change is dropped).
 
 **Consequences.**
 
@@ -311,10 +313,11 @@ other tab learns of it only on its next save (the toast, and that change is drop
 - Tests: `features/account/supabase-store.test.ts` ("one document, two accounts": a sign-out while saves fail, then
   another account in the same tab, also without a sign-out between and with a keepalive failing late; with "hidden,
   then ended by the phone with no other event": a lost answer that landed or a 503 that wrote, reads failing, hidden
-  and ended 200 ms later; reads back in time; a page changed elsewhere; a read that never answers),
-  `features/account/local-store.test.ts` (signing out), `features/app-mode/store-bridge.test.ts`,
-  `features/app-mode/adr-contract.test.ts` (this ADR names every error the two routes answer and every reason a bridge
-  method rejects with), `app/api/app/page/{ops,route}.test.ts`, `app/api/auth/{handoff,confirm}/route.test.ts`, and
-  the real-mode `e2e/app-sync-app.spec.ts` (`@real`, laptop and phone; also a lost answer, reads failing, the page
-  hidden and then ended with `Page.crash`: the change is in the row; and a sign-out while saves fail, another account
-  signed in with a password in the same tab, its app's write through the route, the tab closed: the write stays).
+  and ended 200 ms later; reads back in time; a page changed elsewhere; a read that never answers; a lost answer
+  resolved by its read-back, then closed: the exact guard), `features/account/local-store.test.ts` (signing out),
+  `features/app-mode/store-bridge.test.ts`, `features/app-mode/adr-contract.test.ts` (this ADR names every error the
+  two routes answer and every reason a bridge method rejects with), `app/api/app/page/{ops,route}.test.ts`,
+  `app/api/auth/{handoff,confirm}/route.test.ts`, and the real-mode `e2e/app-sync-app.spec.ts` (`@real`, laptop and
+  phone; also a lost answer, reads failing, the page hidden and then ended with `Page.crash`: the change is in the
+  row; and a sign-out while saves fail, another account signed in with a password in the same tab, its app's write
+  through the route, the tab closed: the write stays).

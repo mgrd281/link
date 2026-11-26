@@ -966,13 +966,14 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     { label: "a server error (503)", status: 503, online: true, operator: "gte" },
     { label: "PostgREST refused it (401): nothing written", status: 401, online: true, operator: "eq" },
     { label: "the browser was offline when it was tried", status: 0, online: false, operator: "eq" },
-  ])("a failed save, then the tab closes: $label → the keepalive guard is updated_at=$operator", async ({ status, online, operator }) => {
+  ])("a failed save whose read-back fails too, then the tab closes: $label → the keepalive guard is updated_at=$operator", async ({ status, online, operator }) => {
     const db = new FakeDb();
     const store = await signedIn(db);
     const sent = keepalive(db);
     vi.stubGlobal("navigator", { onLine: online });
     db.failWrites = true;
     db.failStatus = status;
+    db.failReads = true;
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
     expect(snapshotOf(store).sync).toBe("error");
@@ -980,6 +981,25 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     closeTab();
     expect(sent[0]?.url).toContain(`updated_at=${operator}.`);
     expect(db.blocks()).toEqual(["a", "b", "c"]);
+  });
+
+  it("a 503 that wrote nothing, resolved by its read-back (the row still at the base); another tab writes; closed before the retry: exact, so that page is kept", async () => {
+    // Before, any write ever remembered as lost made the closing tab's guard loose until a later save
+    // was confirmed, also one a read had shown never landed: this tab's close overwrote the other's page.
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepalive(db);
+    db.failWrites = true;
+    db.failStatus = 503;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(450);
+    expect(snapshotOf(store).sync).toBe("error");
+    db.failWrites = false;
+    db.elsewhere([link("a"), link("b"), link("theirs")]);
+    await vi.advanceTimersByTimeAsync(500);
+    closeTab();
+    expect(sent.map((request) => new URL(request.url, "http://localhost").searchParams.get("updated_at")?.split(".")[0])).toEqual(["eq"]);
+    expect(db.blocks()).toEqual(["a", "b", "theirs"]);
   });
 
   it.each([

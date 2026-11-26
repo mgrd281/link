@@ -274,7 +274,7 @@ export class SupabaseAccountStore implements AccountStore {
       if (document.visibilityState === "hidden") this.saveWhenHidden();
     });
     window.addEventListener("pagehide", () => {
-      this.saveOnExit(this.uncertain());
+      this.saveOnExit(this.sending.size > 0 || this.lostOpen());
     });
   }
 
@@ -484,7 +484,8 @@ export class SupabaseAccountStore implements AccountStore {
 
   /**
    * Something this tab sent may have reached the database without the tab knowing its version yet: a
-   * save still on its way, or one since the last confirmed version whose answer never came (`landed`).
+   * save still on its way, or one since the last confirmed version whose answer never came (`landed`,
+   * also one a read has resolved since: a hidden tab waits for what is on its way either way).
    */
   private uncertain(): boolean {
     return this.sending.size > 0 || this.landed.size > 0;
@@ -578,14 +579,16 @@ export class SupabaseAccountStore implements AccountStore {
    *
    * `loose`: the last code the page may run, while something may have reached the database without
    * this tab knowing its version yet. A closed tab (`pagehide`) runs no more code, so a refused
-   * keepalive is never sent again; its guard therefore depends on `uncertain`:
+   * keepalive is never sent again; its guard therefore depends on what is still open:
    * - nothing: `updated_at = base`, the exact guard of every save;
-   * - a save still on its way, or one since the last confirmed version that may have landed (`landed`:
-   *   no answer at all or a server error, while the browser was online): `updated_at >= base`. That
-   *   save carries the exact guard and lands first in the normal order, so an exact keepalive would
-   *   always be refused and the last change lost. The other order is safe too: the save, landing
-   *   second, no longer finds `base` and changes nothing. The price (ADR 0088): any write from
-   *   elsewhere since this tab last read or saved is overwritten instead of refused.
+   * - a save still on its way, or one whose answer was lost (no answer at all or a server error, while
+   *   the browser was online) and that no read of the row has resolved since (`lostOpen`):
+   *   `updated_at >= base`. That save carries the exact guard and lands first in the normal order, so
+   *   an exact keepalive would always be refused and the last change lost. The other order is safe
+   *   too: the save, landing second, no longer finds `base` and changes nothing. The price (ADR 0088):
+   *   any write from elsewhere since this tab last read or saved is overwritten instead of refused.
+   *   A lost answer a read has resolved (the row was still at `base`, or held a page from elsewhere)
+   *   cannot land any more: the exact guard again.
    * A hidden tab (`saveWhenHidden`) uses the exact guard, except for a lost answer it could not read
    * back in time.
    */
