@@ -86,6 +86,18 @@ export const RESERVED_PROJECT_SLUGS = new Set([
   "p", "w", "work", "projects", "projekte", "about", "contact", "kontakt", "cv", "services", "leistungen", "links",
   "shop", "feed", "rss", "og", "opengraph-image", "edit", "new", "admin", "api", "media", "imprint", "impressum",
   "privacy", "datenschutz", "legal", "report", "melden",
+  // The application documents (`DOCUMENT_SEGMENTS`) and the words people may try for them.
+  "letter", "application", "lebenslauf", "anschreiben", "bewerbung", "unterlagen",
 ]);
 export const isProjectSlug = (value: string): boolean =>
   value.length >= PROJECT_SLUG_MIN && value.length <= PROJECT_SLUG_MAX && PROJECT_SLUG.test(value) && !RESERVED_PROJECT_SLUGS.has(value);
+
+/**
+ * The PDFs of an application page (Laufbahn): /<username>/cv, /<username>/letter and
+ * /<username>/application (the letter and the CV in one file), static siblings of the project segment
+ * (apps/web/src/app/u/[username]/cv/route.ts and the others). Undotted: the proxy skips every path
+ * with a dot. Each is a reserved project address (above).
+ */
+export const DOCUMENT_SEGMENTS = { cv: "cv", letter: "letter", application: "application" } as const;
+export type DocumentSegment = (typeof DOCUMENT_SEGMENTS)[keyof typeof DOCUMENT_SEGMENTS];
+export const isDocumentSegment = (value: string): value is DocumentSegment => (Object.values(DOCUMENT_SEGMENTS) as string[]).includes(value);

@@ -8,6 +8,7 @@ import { z } from "zod";
 import { EXAMPLES } from "@/features/examples/catalog";
 import { isLook, LOOKS, type Look } from "@/features/examples/looks";
 
+import { applicationSample } from "./application-sample";
 import { journalistAr, journalistDe, journalistEn } from "./journalist";
 import { starPage } from "./stars";
 import { STARS } from "./stars-data";
@@ -170,6 +171,22 @@ const HAND_MADE: Record<string, Preview> = {
     theme: { template: "atelier", pairing: "editorial" },
     pages: { de: journalistDe, en: journalistEn, ar: journalistAr },
     sample: { kind: "journalist", category: "careers", look: "journalist" },
+  },
+  // A fictional applicant for the Laufbahn template, with the PDFs of an application (./application-sample.ts):
+  // the surface for the template's screenshots and the documents' tests. Labelled as an example; not in the gallery.
+  "jonas-brandt": {
+    name: { de: "Jonas Brandt", en: "Jonas Brandt" },
+    username: "jonas-brandt",
+    theme: { template: "laufbahn" },
+    pages: { de: applicationSample("de"), en: applicationSample("en") },
+    sample: { kind: "warehouse", category: "careers", drawings: true },
+  },
+  "karim-nasser": {
+    name: { ar: "كريم ناصر" },
+    username: "karim-nasser",
+    theme: { template: "laufbahn" },
+    pages: { ar: applicationSample("ar") },
+    sample: { kind: "warehouse", category: "careers", drawings: true },
   },
   // Concepts for well-known people: unlisted, labelled, official links only (see stars.ts).
   ...Object.fromEntries(

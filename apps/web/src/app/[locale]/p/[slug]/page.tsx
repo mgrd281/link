@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { browserThemeColor, rootBackground } from "@/features/directions/poster/browser-top";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
+import { documentsView } from "@/features/documents/view";
 import { previewChrome, sampleLabel } from "@/features/previews/preview-chrome";
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
 import { rotationTurn, withRotationClip } from "@/features/previews/rotation";
@@ -106,12 +107,15 @@ export default async function PreviewRoute({ params, searchParams }: Props) {
   const rotation = found.preview.motionRotation;
   const turn = rotation?.length ? rotationTurn(rotation, (await searchParams)[ROTATION_PARAM]) : null;
   const page = turn ? withRotationClip(found.page, turn.clip) : found.page;
+  // An application page (Laufbahn) offers its Lebenslauf and Anschreiben as PDFs under its own address
+  // (features/documents): never indexed, never cached in a shared cache, no public address on paper.
+  const documents = await documentsView(page, { base: `/${locale}/p/${slug}`, signposted: theme.layout.headings === "signpost", now: new Date(), asOf: null, publicAddress: null });
   return (
     <>
       {/* The bleed hero's label lies over the picture (labelInFlow), so its colour is the top's. */}
       <style>{rootBackground(page.profile, theme)}</style>
       {chrome.above}
-      <PosterRenderer page={page} theme={theme} overlay={chrome.overlay} dock={chrome.dock} projectBase={`/${locale}/p/${slug}`} />
+      <PosterRenderer page={page} theme={theme} overlay={chrome.overlay} dock={chrome.dock} projectBase={`/${locale}/p/${slug}`} documents={documents} />
       {turn ? <RotationAddress next={turn.next.key} /> : null}
     </>
   );

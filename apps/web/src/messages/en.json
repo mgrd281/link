@@ -5597,5 +5597,31 @@
     "settings": {
       "legal": "Legal"
     }
+  },
+  "documents": {
+    "paper": {
+      "cv": "CV",
+      "letter": "Cover letter",
+      "application": "Application",
+      "titleCv": "CV – {name}",
+      "titleLetter": "Cover letter – {name}",
+      "titleApplication": "Application – {name}",
+      "profile": "Profile",
+      "facts": "Key facts",
+      "career": "Career",
+      "skills": "Skills",
+      "present": "present",
+      "phone": "Phone",
+      "email": "Email",
+      "online": "Online",
+      "location": "Based in",
+      "date": "Date",
+      "asOf": "As of {date}",
+      "page": "Page {page} of {pages}",
+      "enclosure": "Enclosure",
+      "enclosureCv": "CV",
+      "subjectFor": "Application for {value}",
+      "subjectBare": "Application"
+    }
   }
 }

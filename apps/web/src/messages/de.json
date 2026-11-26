@@ -5597,5 +5597,31 @@
     "settings": {
       "legal": "Rechtliches"
     }
+  },
+  "documents": {
+    "paper": {
+      "cv": "Lebenslauf",
+      "letter": "Anschreiben",
+      "application": "Bewerbung",
+      "titleCv": "Lebenslauf – {name}",
+      "titleLetter": "Anschreiben – {name}",
+      "titleApplication": "Bewerbung – {name}",
+      "profile": "Profil",
+      "facts": "Eckdaten",
+      "career": "Werdegang",
+      "skills": "Kenntnisse",
+      "present": "heute",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "online": "Online",
+      "location": "Wohnort",
+      "date": "Datum",
+      "asOf": "Stand {date}",
+      "page": "Seite {page} von {pages}",
+      "enclosure": "Anlage",
+      "enclosureCv": "Lebenslauf",
+      "subjectFor": "Bewerbung als {value}",
+      "subjectBare": "Bewerbung"
+    }
   }
 }

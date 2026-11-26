@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_PROJECTS, PROJECT_SLUG_MAX, RESERVED_PROJECT_SLUGS, isProjectSlug } from "../src/rules";
+import { DOCUMENT_SEGMENTS, MAX_PROJECTS, PROJECT_SLUG_MAX, RESERVED_PROJECT_SLUGS, isProjectSlug } from "../src/rules";
 import { blockSchema, CODE_LANGS, pageSchema } from "../src/schema";
 
 const profile = { username: "mats", displayName: "Mats Brandt", bio: "", avatar: { src: "none:", alt: "" }, locale: "de" as const };
@@ -176,6 +176,12 @@ describe("page rules", () => {
     }
     expect(isProjectSlug("tidewatch")).toBe(true);
     expect(isProjectSlug("t")).toBe(false);
+    // The application documents' addresses and the words people may try for them.
+    for (const slug of ["cv", "letter", "application", "lebenslauf", "anschreiben", "bewerbung", "unterlagen"]) {
+      expect(RESERVED_PROJECT_SLUGS.has(slug), slug).toBe(true);
+      expect(isProjectSlug(slug), slug).toBe(false);
+    }
+    for (const segment of Object.values(DOCUMENT_SEGMENTS)) expect(RESERVED_PROJECT_SLUGS.has(segment), segment).toBe(true);
     expect(isProjectSlug("Tidewatch")).toBe(false);
   });
 
