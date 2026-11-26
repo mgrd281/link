@@ -129,8 +129,40 @@ export function contentKey(content: SiteContent): string {
   return canonical({ ...content, page: { ...page, profile } });
 }
 
-/** After this many refused saves in a row that each turned out to be this tab's own, the next one counts as a conflict. */
+/**
+ * A short fingerprint of a content key: the writes that may have landed are remembered by this, never
+ * as whole pages (there is no limit on how many). Two 32-bit hashes and the length: a foreign page that
+ * matches one of them by chance (and would be overwritten as this tab's own) is not a practical risk.
+ */
+export function fingerprint(key: string): string {
+  let a = 0x811c9dc5;
+  let b = 0x2545f491;
+  for (let i = 0; i < key.length; i += 1) {
+    const code = key.charCodeAt(i);
+    a = Math.imul(a ^ code, 0x01000193);
+    b = Math.imul(b ^ code, 0x5bd1e995);
+    b ^= b >>> 13;
+  }
+  return `${key.length.toString(36)}.${(a >>> 0).toString(36)}.${(b >>> 0).toString(36)}`;
+}
+
+/** The browser says it is offline: a write tried now never left this device. */
+const offline = () => typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine;
+
+/**
+ * A failed write may still have reached the database when no answer came at all (the connection
+ * dropped, a timeout: PostgREST's client reports status 0) or the server failed (5xx). A 4xx answer
+ * from PostgREST means it wrote nothing; neither did a write tried while the browser was offline.
+ */
+const mayHaveLanded = (sentOffline: boolean, status?: number) => !sentOffline && !(status !== undefined && status >= 400 && status < 500);
+
+/**
+ * Refused saves in a row that each turned out to be this tab's own (its write landed, the answer was
+ * lost) are sent again at once this many times; after that the next one waits like a failed save.
+ */
 const MAX_REBASES = 3;
+/** Saving everything before signing out (or `flush`) stops after this many rounds that each left a change waiting. */
+const SETTLE_ROUNDS = 2 * MAX_REBASES + 2;
 
 export class SupabaseAccountStore implements AccountStore {
   readonly demo = false;
@@ -156,7 +188,13 @@ export class SupabaseAccountStore implements AccountStore {
    */
   private baseContent: SiteContent | null = null;
   private readonly sending = new Set<SiteContent>();
-  private unconfirmed: SiteContent[] = [];
+  /**
+   * Every write since the last confirmed version that may have reached the database without this tab
+   * hearing back (fingerprint → its number, see `sent`). A refused save that finds one of them in the
+   * row was this tab's own. Only a confirmed version (for the writes sent up to it), a rebase on this
+   * tab's own version and a replaced page clear it.
+   */
+  private readonly landed = new Map<string, number>();
   private rebases = 0;
   /**
    * Writes are numbered as they are sent. Two of them can both land (a save on its way, then the
@@ -395,11 +433,12 @@ export class SupabaseAccountStore implements AccountStore {
    * A closed tab runs no more code, so a refused keepalive is never sent again. Its guard therefore
    * depends on what may have reached the database without this tab knowing its version yet:
    * - nothing: `updated_at = base`, the exact guard of every save;
-   * - a save still on its way, or one whose answer never came: `updated_at >= base`. That save carries
-   *   the exact guard and lands first in the normal order, so an exact keepalive would always be
-   *   refused and the last change lost. The other order is safe too: the save, landing second, no
-   *   longer finds `base` and changes nothing. The price (ADR draft-app-sync): in that moment a write
-   *   from elsewhere after `base` is overwritten instead of refused.
+   * - a save still on its way, or one since the last confirmed version that may have landed (`landed`:
+   *   no answer at all or a server error, while the browser was online): `updated_at >= base`. That
+   *   save carries the exact guard and lands first in the normal order, so an exact keepalive would
+   *   always be refused and the last change lost. The other order is safe too: the save, landing
+   *   second, no longer finds `base` and changes nothing. The price (ADR draft-app-sync): in that
+   *   moment a write from elsewhere after `base` is overwritten instead of refused.
    */
   private saveOnExit() {
     const snapshot = this.snapshot;
@@ -417,9 +456,10 @@ export class SupabaseAccountStore implements AccountStore {
     this.dirty = false;
     const id = snapshot.account.id;
     const base = this.base;
-    const landing = this.sending.size > 0 || this.unconfirmed.length > 0;
+    const landing = this.sending.size > 0 || this.landed.size > 0;
     const guard = base === null ? "" : `&updated_at=${landing ? "gte" : "eq"}.${encodeURIComponent(base)}`;
     const write = (this.sent += 1);
+    const sentOffline = offline();
     this.sending.add(content);
     const request = fetch(`${SUPABASE_URL}/rest/v1/sites?profile_id=eq.${id}${guard}&select=updated_at`, {
       method: "PATCH",
@@ -434,9 +474,10 @@ export class SupabaseAccountStore implements AccountStore {
     })
       .then(async (response) => {
         if (!response.ok) {
-          // Turned down (an expired session, the size limit): nothing was written, the next save tries again.
+          // Turned down (an expired session, the size limit: nothing written) or a server error (maybe
+          // written): the tab, if it is still there, saves again like after any failed save.
           this.sending.delete(content);
-          this.dirty = true;
+          this.exitFailed(id, content, write, sentOffline, response.status);
           return;
         }
         const [row] = (await response.json()) as { updated_at?: string }[];
@@ -446,10 +487,19 @@ export class SupabaseAccountStore implements AccountStore {
       })
       .catch(() => {
         this.sending.delete(content);
-        this.unconfirm(content);
-        this.dirty = true;
+        this.exitFailed(id, content, write, sentOffline);
       });
     void this.track(request);
+  }
+
+  /** The keepalive save failed and the tab is still there (a phone back from another app): saved again later. */
+  private exitFailed(id: string, content: SiteContent, write: number, sentOffline: boolean, status?: number) {
+    this.unconfirm(content, write, sentOffline, status);
+    this.dirty = true;
+    const now = this.snapshot;
+    if (now.status !== "signedIn" || now.account.id !== id) return;
+    this.failed = true;
+    if (this.saveTimer === null) this.retry(now);
   }
 
   /** Every save goes into `saving`; the next one waits until all that are on their way have landed. */
@@ -478,11 +528,11 @@ export class SupabaseAccountStore implements AccountStore {
 
   /**
    * Saves until nothing waits (before signing out, an export, a deletion and `flush`): a refused save
-   * that was this tab's own is sent again here, and so is a change made while a save was on its way.
-   * Stops at a save that failed (offline, too large).
+   * that was this tab's own is sent again here at once (also past `MAX_REBASES`), and so is a change
+   * made while a save was on its way. Stops at a save that failed (offline, too large).
    */
   private async settleSaves(): Promise<void> {
-    for (let round = 0; round <= MAX_REBASES; round += 1) {
+    for (let round = 0; round < SETTLE_ROUNDS; round += 1) {
       await this.drainSaves();
       if (!this.dirty || this.failed) return;
     }
@@ -538,8 +588,9 @@ export class SupabaseAccountStore implements AccountStore {
       // The guard: the row changes only while it is still the version this tab read or last saved.
       const update = this.client().from("sites").update(content).eq("profile_id", id);
       const write = (this.sent += 1);
+      const sentOffline = offline();
       this.sending.add(content);
-      const { data, error } = await (base === null ? update : update.eq("updated_at", base)).select("page, updated_at").maybeSingle();
+      const { data, error, status } = await (base === null ? update : update.eq("updated_at", base)).select("page, updated_at").maybeSingle();
       this.sending.delete(content);
       const now = this.snapshot;
       if (now.status !== "signedIn" || now.account.id !== id) return;
@@ -552,7 +603,7 @@ export class SupabaseAccountStore implements AccountStore {
           this.set({ ...now, sync: "error", syncError: "tooLarge" });
           return;
         }
-        this.unconfirm(content);
+        this.unconfirm(content, write, sentOffline, status);
         this.retry(now);
         return;
       }
@@ -588,7 +639,9 @@ export class SupabaseAccountStore implements AccountStore {
     this.confirmedWrite = write;
     this.base = updatedAt;
     this.baseContent = content;
-    this.unconfirmed = [];
+    // A write sent before this one can no longer land (its guard names an older version); one sent
+    // after it (the keepalive save) still can.
+    for (const [key, sent] of this.landed) if (sent <= write) this.landed.delete(key);
     this.retries = 0;
     this.rebases = 0;
     this.failed = false;
@@ -602,17 +655,30 @@ export class SupabaseAccountStore implements AccountStore {
     this.set({ ...now, baseUpdatedAt: this.base ?? updatedAt, sync: this.dirty ? "saving" : "saved" });
   }
 
-  /** A write whose answer never came: the server may hold it, so a later refusal can recognise it as this tab's own. */
-  private unconfirm(content: SiteContent) {
-    this.unconfirmed = [...this.unconfirmed, content].slice(-MAX_REBASES);
+  /**
+   * A write that failed: when it may have landed (no answer, a server error), the server may hold it, so
+   * a later refusal recognises it as this tab's own. Every such write is kept until a version is confirmed.
+   */
+  private unconfirm(content: SiteContent, write: number, sentOffline: boolean, status?: number) {
+    if (!mayHaveLanded(sentOffline, status)) return;
+    const key = fingerprint(contentKey(content));
+    this.landed.set(key, Math.max(write, this.landed.get(key) ?? 0));
+  }
+
+  /** What this tab read, saved, is sending or may have written (apart from what the server owns). */
+  private isOwn(key: string): boolean {
+    if (this.baseContent !== null && contentKey(this.baseContent) === key) return true;
+    for (const content of this.sending) if (contentKey(content) === key) return true;
+    return this.landed.has(fingerprint(key));
   }
 
   /**
    * A save the guard turned down: the row is no longer the version this tab built on. It is read
    * again to decide (ADR draft-app-sync):
    * - still the same version: the database refused the write (a suspended account), retried like a failed save;
-   * - what this tab read or sent itself, apart from what the server owns (the badge, the address): it
-   *   builds on the newer version and sends what is waiting again;
+   * - what this tab read, sent or may have written itself, apart from what the server owns (the badge,
+   *   the address): it builds on the newer version and sends what is waiting again, at once the first
+   *   `MAX_REBASES` times in a row, after that like a failed save (later, each time a little later);
    * - anything else was changed elsewhere (another tab, the iPhone app): the newer version wins, this
    *   tab's unsaved change is dropped, and the editor starts over from it and says so.
    */
@@ -628,18 +694,29 @@ export class SupabaseAccountStore implements AccountStore {
     }
     const latest = toRow(fromRow(row));
     const key = contentKey(latest);
-    const own = [this.baseContent, ...this.sending, ...this.unconfirmed].some((content) => content !== null && contentKey(content) === key);
-    if (own && this.rebases < MAX_REBASES) {
+    if (!this.isOwn(key)) {
+      this.replace(row, true);
+      return;
+    }
+    // This tab's own version: the page here stays, and the next save builds on that version. The
+    // server has just answered, so the save is not failing.
+    this.base = row.updated_at;
+    this.baseContent = latest;
+    this.landed.clear();
+    this.dirty = this.dirty || contentKey(toRow(now.site)) !== key;
+    this.failed = false;
+    if (this.rebases < MAX_REBASES) {
       this.rebases += 1;
-      this.base = row.updated_at;
-      this.baseContent = latest;
-      this.unconfirmed = [];
-      this.dirty = this.dirty || contentKey(toRow(now.site)) !== key;
+      this.retries = 0;
       this.set({ ...now, baseUpdatedAt: row.updated_at, sync: this.dirty ? "saving" : "saved" });
       if (this.dirty) this.schedule(0);
       return;
     }
-    this.replace(row, true);
+    // Rebased this often without a confirmed save (its answers keep getting lost): no tight loop, the
+    // change waits like after a failed save. Nothing is dropped.
+    const rebased = { ...now, baseUpdatedAt: row.updated_at };
+    if (this.dirty) this.retry(rebased);
+    else this.set({ ...rebased, sync: "saved" });
   }
 
   /** The page from the server replaces the one here, and the editor starts over from it (`revision`). */
@@ -657,7 +734,7 @@ export class SupabaseAccountStore implements AccountStore {
     this.rebases = 0;
     this.base = row.updated_at;
     this.baseContent = toRow(site);
-    this.unconfirmed = [];
+    this.landed.clear();
     this.revision += 1;
     if (conflict) this.conflicts += 1;
     const { syncError: _gone, ...rest } = now;

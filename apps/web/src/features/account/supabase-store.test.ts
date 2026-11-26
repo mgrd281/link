@@ -28,6 +28,8 @@ class FakeDb {
   refuseWrites = false;
   /** The server answers writes with an error (offline, a timeout). */
   failWrites = false;
+  /** The HTTP status of a failed write: 0 (no answer, as PostgREST's client reports it), 5xx, or 4xx (PostgREST refused it). */
+  failStatus = 0;
   /** The write reaches the database, but its answer is an error (the connection dropped on the way back). */
   loseAnswers = false;
   /** The session ended (signed out): row-level security lets no write through any more. */
@@ -89,12 +91,12 @@ class FakeDb {
       const run = () => {
         if (table === "profiles") return { data: this.profile, error: null };
         if (values) {
-          if (this.failWrites) return { data: null, error: { message: "fetch failed" } };
+          if (this.failWrites) return { data: null, error: { message: "TypeError: fetch failed" }, status: this.failStatus };
           this.writes.push({ filters: { ...filters }, values });
           const matches = filters.profile_id === this.row.profile_id && (!("updated_at" in filters) || filters.updated_at === this.row.updated_at);
           if (!matches || this.refuseWrites || this.signedOut) return { data: null, error: null };
           this.write(values);
-          if (this.loseAnswers) return { data: null, error: { message: "Load failed" } };
+          if (this.loseAnswers) return { data: null, error: { message: "TypeError: Load failed" }, status: 0 };
           return { data: { page: clone(this.row.page), updated_at: this.row.updated_at }, error: null };
         }
         return { data: clone(this.row), error: null };
@@ -509,3 +511,180 @@ describe("flush() and reload() for the iPhone app", () => {
     expect(ids(store)).toEqual(["a", "b", "c"]);
   });
 });
+
+describe("a bad network: one tab never loses a change and never sees the toast", () => {
+  /** The keepalive PATCH as PostgREST applies it (`eq.` or `gte.`); the closed tab reads no answer. */
+  const keepalive = (db: FakeDb) => {
+    const sent: { url: string; body: string }[] = [];
+    vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+      sent.push({ url, body: init.body as string });
+      const guard = new URL(url, "http://localhost").searchParams.get("updated_at") ?? "";
+      const [operator, version = ""] = guard.split(/\.(.*)/s);
+      const matches = guard === "" || (operator === "eq" ? db.row.updated_at === version : operator === "gte" && db.row.updated_at >= version);
+      if (matches) db.write(JSON.parse(init.body as string) as Record<string, unknown>);
+      return new Promise<Response>(() => undefined);
+    });
+    return sent;
+  };
+
+  it("a save lands but its answer is lost, then three more attempts fail without an answer, then the network is back: every change is stored", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    db.loseAnswers = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    expect(db.blocks()).toEqual(["a", "b", "c"]);
+    db.loseAnswers = false;
+    db.failWrites = true;
+    const attempts = db.writes.length;
+    for (const id of ["d", "e", "f"]) {
+      addLink(store, id);
+      await vi.advanceTimersByTimeAsync(600);
+    }
+    expect(snapshotOf(store).sync).toBe("error");
+    db.failWrites = false;
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(db.writes.length - attempts).toBeGreaterThan(0);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d", "e", "f"]);
+    expect(ids(store)).toEqual(["a", "b", "c", "d", "e", "f"]);
+    expect(snapshotOf(store).conflicts).toBe(0);
+    expect(snapshotOf(store).revision).toBe(0);
+    expect(snapshotOf(store).sync).toBe("saved");
+  });
+
+  it("the same change tried again and again by the retries alone (2 s, 5 s, 15 s) never pushes the landed save out", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    db.loseAnswers = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    db.loseAnswers = false;
+    db.failWrites = true;
+    addLink(store, "d");
+    await vi.advanceTimersByTimeAsync(25_000);
+    db.failWrites = false;
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(snapshotOf(store).conflicts).toBe(0);
+  });
+
+  it("answers lost on every save: past the rebase limit the change waits like a failed save, is never dropped, and is stored once answers come back", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    db.loseAnswers = true;
+    for (const id of ["c", "d", "e", "f", "g", "h"]) {
+      addLink(store, id);
+      await vi.advanceTimersByTimeAsync(450);
+    }
+    addLink(store, "late");
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(ids(store)).toEqual(["a", "b", "c", "d", "e", "f", "g", "h", "late"]);
+    expect(snapshotOf(store).sync).toBe("error");
+    expect(snapshotOf(store).conflicts).toBe(0);
+    db.loseAnswers = false;
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d", "e", "f", "g", "h", "late"]);
+    expect(snapshotOf(store).conflicts).toBe(0);
+    expect(snapshotOf(store).revision).toBe(0);
+    expect(snapshotOf(store).sync).toBe("saved");
+  });
+
+  it("past the rebase limit no save is sent at once again: the next waits for the retry delay", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    db.loseAnswers = true;
+    addLink(store, "c");
+    // Each round: the save lands, its answer is lost; the retry is refused, finds its own page, sends again.
+    await vi.advanceTimersByTimeAsync(400 + 2_000 * 4);
+    const sent = db.writes.length;
+    await vi.advanceTimersByTimeAsync(1_500);
+    expect(db.writes.length - sent).toBeLessThanOrEqual(1);
+    expect(snapshotOf(store).conflicts).toBe(0);
+  });
+
+  it.each([
+    { label: "no answer at all (status 0)", status: 0, online: true, operator: "gte" },
+    { label: "a server error (503)", status: 503, online: true, operator: "gte" },
+    { label: "PostgREST refused it (401): nothing written", status: 401, online: true, operator: "eq" },
+    { label: "the browser was offline when it was tried", status: 0, online: false, operator: "eq" },
+  ])("a failed save, then the tab closes: $label → the keepalive guard is updated_at=$operator", async ({ status, online, operator }) => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepalive(db);
+    vi.stubGlobal("navigator", { onLine: online });
+    db.failWrites = true;
+    db.failStatus = status;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    expect(snapshotOf(store).sync).toBe("error");
+    db.failWrites = false;
+    vi.stubGlobal("document", { visibilityState: "hidden" });
+    listeners.get("visibilitychange")?.();
+    expect(sent[0]?.url).toContain(`updated_at=${operator}.`);
+    expect(db.blocks()).toEqual(["a", "b", "c"]);
+  });
+
+  it("a save tried while the browser is offline is not taken for this tab's own: the page written elsewhere meanwhile is not overwritten on closing", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    keepalive(db);
+    vi.stubGlobal("navigator", { onLine: false });
+    db.failWrites = true;
+    addLink(store, "fromB");
+    await vi.advanceTimersByTimeAsync(500);
+    db.failWrites = false;
+    db.elsewhere([link("a"), link("b"), link("fromA")]);
+    vi.stubGlobal("document", { visibilityState: "hidden" });
+    listeners.get("visibilitychange")?.();
+    expect(db.blocks()).toEqual(["a", "b", "fromA"]);
+  });
+});
+
+describe("a lost answer, then signing out or flush()", () => {
+  it("lost answer, a change, then logOut() before the store's delay: the change is stored before the session ends", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    db.loseAnswers = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    expect(snapshotOf(store).sync).toBe("error");
+    db.loseAnswers = false;
+    addLink(store, "d");
+    await vi.advanceTimersByTimeAsync(100);
+    store.logOut();
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(store.getSnapshot().status).toBe("signedOut");
+  });
+
+  it("lost answer, a change, then flush(): it resolves with the stored version", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    db.loseAnswers = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    db.loseAnswers = false;
+    addLink(store, "d");
+    const flushed = store.flush();
+    await vi.advanceTimersByTimeAsync(10);
+    await expect(flushed).resolves.toEqual({ updatedAt: db.row.updated_at });
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("lost answer, a change, logOut() while the next save is on its way: kept", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    db.loseAnswers = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    db.loseAnswers = false;
+    db.hold = "apply";
+    addLink(store, "d");
+    await vi.advanceTimersByTimeAsync(450);
+    store.logOut();
+    db.release();
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+  });
+});
+
