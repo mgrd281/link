@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -63,6 +64,20 @@ async function openInstallSheet(page: Page, locale: Locale = "de") {
   const sheet = page.getByRole("dialog");
   await expect(sheet).toBeVisible();
   return sheet;
+}
+
+/**
+ * No service worker for this origin, once the page has hydrated and its network has settled, and for
+ * two seconds more: a worker is registered after hydration and the load event, and the browser's
+ * register job runs after that.
+ */
+async function expectNoWorker(page: Page, address: string) {
+  await page.waitForLoadState("networkidle");
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0))));
+  for (let check = 0; check < 10; check += 1) {
+    expect(await page.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).map((one) => one.scope)), address).toEqual([]);
+    await page.waitForTimeout(200);
+  }
 }
 
 test.describe("manifest and head", () => {
@@ -143,10 +158,11 @@ test("Chrome finds the app installable on /de/app, /en/app and /ar/app, with a m
 
 test.describe("service worker", () => {
   test("the website, sign-in, the team area and creator pages register none", async ({ page }) => {
+    // /u/<name> is a 404 in the demo build, but in the creator pages' own root layout (app/u/[username]),
+    // the part that would carry an island; a real page under /u is checked with the stub below.
     for (const address of ["/de", "/de/login", "/de/admin", "/de/p/ronja-feldkamp", "/u/mila"]) {
       await page.goto(address);
-      await page.waitForLoadState("load");
-      expect(await page.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length), address).toBe(0);
+      await expectNoWorker(page, address);
     }
   });
 
@@ -197,6 +213,63 @@ test.describe("service worker", () => {
   });
 });
 
+// ─── A real creator page under /u, with the Supabase stand-in (E2E_STUB=1, its own build: see stub-app.spec.ts) ───
+const STUB = `http://127.0.0.1:${process.env.STUB_SUPABASE_PORT ?? "55103"}`;
+
+test.describe("service worker and a real creator page (stub)", () => {
+  test.skip(process.env.E2E_STUB !== "1", "Needs the stub build and the Supabase stand-in (E2E_STUB=1).");
+
+  test("a real page under /u registers none, and the dashboard's worker never controls it", async ({ page, browser, baseURL }) => {
+    const id = randomUUID();
+    const username = `pwa-${randomUUID().replaceAll("-", "").slice(0, 8)}`;
+    const seeded = await fetch(`${STUB}/__stub/seed`, {
+      method: "POST",
+      body: JSON.stringify({
+        users: { [id]: { id, email: `${username}@example.com` } },
+        profiles: { [id]: { id, username, locale: "de", status: "active", created_at: "2026-11-01T00:00:00Z" } },
+        sites: {
+          [id]: {
+            profile_id: id,
+            kind: null,
+            onboarded: true,
+            prepared: null,
+            page: { profile: { username, displayName: "Mira Feld", bio: "", avatar: { src: "none:", alt: "" }, verified: false, locale: "de" }, blocks: [] },
+            theme: { template: "nocturne" },
+            legal: { name: "", address: "", email: "", phone: "" },
+            updated_at: "2026-11-20T10:00:00Z",
+          },
+        },
+      }),
+    });
+    expect(seeded.ok).toBe(true);
+    // A first visit: the page itself registers nothing.
+    for (const address of [`/${username}`, `/u/${username}`]) {
+      const response = await page.goto(address);
+      expect(response?.status(), address).toBe(200);
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("Mira Feld");
+      await expectNoWorker(page, address);
+    }
+    // With the dashboard's worker in place (as the dashboard registers it), the page is still its own.
+    const origin = new URL(baseURL ?? "").origin;
+    const context = await browser.newContext({ baseURL: origin });
+    const visitor = await context.newPage();
+    await visitor.goto("/de/login");
+    // (`serviceWorker.ready` would wait forever here: sign-in is outside the worker's scope.)
+    await visitor.evaluate(async () => {
+      await navigator.serviceWorker.register("/de/app/sw.js", { scope: "/de/app", updateViaCache: "none" });
+    });
+    await expect.poll(() => visitor.evaluate(() => navigator.serviceWorker.getRegistration("/de/app").then((one) => one?.active?.state ?? null))).toBe("activated");
+    for (const address of [`/${username}`, `/u/${username}`]) {
+      await visitor.goto(address);
+      await expect(visitor.getByRole("heading", { level: 1 })).toContainText("Mira Feld");
+      expect(await visitor.evaluate(() => navigator.serviceWorker.controller), address).toBeNull();
+    }
+    expect(await visitor.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).map((one) => new URL(one.scope).pathname))).toEqual(["/de/app"]);
+    expect(await context.cookies()).toEqual([]);
+    await context.close();
+  });
+});
+
 test.describe("share into Linkyo", () => {
   test.beforeEach(async ({ page }) => {
     // No platform is asked for a title in tests.
@@ -237,6 +310,55 @@ test.describe("share into Linkyo", () => {
     await expect(sheet.getByText("Im Geteilten war kein Link.")).toHaveCount(0);
   });
 
+  test("with the app window already open, a share or a shortcut loads in it; a plain start only brings it to the front", async ({ page, baseURL }) => {
+    // Chrome hands such launches to window.launchQueue (launch_handler focus-existing); this stands in for it.
+    await page.addInitScript(() => {
+      Object.defineProperty(window, "launchQueue", {
+        configurable: true,
+        value: {
+          setConsumer: (consumer: (params: { targetURL: string }) => void) => {
+            (window as unknown as { __launch: typeof consumer }).__launch = consumer;
+          },
+        },
+      });
+    });
+    const origin = new URL(baseURL ?? "http://localhost:3100").origin;
+    // Handed over in a task of its own, as Chrome does (the evaluation returns before the window navigates).
+    const launch = (address: string) =>
+      page.evaluate((targetURL) => {
+        setTimeout(() => {
+          (window as unknown as { __launch: (params: { targetURL: string }) => void }).__launch({ targetURL });
+        }, 0);
+      }, address);
+    await signedIn(page, "de");
+    await page.goto("/de/app/settings");
+    await page.waitForLoadState("load");
+    await expect(page.locator("#main h1").first()).toBeVisible();
+
+    // From the icon: the window comes to the front and stays where it was. Another origin: ignored.
+    await page.evaluate(() => {
+      (window as unknown as { __stay: boolean }).__stay = true;
+    });
+    await launch(`${origin}/de/app?source=app`);
+    await launch("https://elsewhere.example/de/app/analytics");
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => (window as unknown as { __stay?: boolean }).__stay)).toBe(true);
+    expect(new URL(page.url()).pathname).toBe("/de/app/settings");
+
+    // A link shared into Linkyo: the Add sheet holding it.
+    await launch(`${origin}/de/app/share?text=${encodeURIComponent(`Hör mal ${SPOTIFY}`)}`);
+    await page.waitForURL((url) => url.pathname === "/de/app" && url.search === "");
+    const sheet = page.getByRole("dialog", { name: "Zu deiner Seite hinzufügen" });
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByLabel("Link einfügen")).toHaveValue(SPOTIFY);
+
+    // The shortcut "Statistik".
+    await page.waitForLoadState("load");
+    await launch(`${origin}/de/app/analytics`);
+    await page.waitForURL("**/de/app/analytics");
+    await expect(page.locator("#main h1").first()).toBeVisible();
+  });
+
   test("signed out, a share goes through sign-in and comes back to the Add sheet holding the link", async ({ page }) => {
     const { email } = await signedIn(page, "de");
     await page.goto("/de/app/settings");
@@ -274,12 +396,29 @@ test.describe("install sheet: Chrome and Edge on a computer, Android", () => {
     await expect(sheet).not.toContainText(/Benachrichtigung|App Store/);
   });
 
-  test("Home's hint shows once, and only where the browser offers to install", async ({ page }) => {
+  test("Home's hint shows once, and only where the browser offers to install; its X is a full touch target", async ({ page }, testInfo) => {
     await signedIn(page, "de");
     const hint = page.locator("[data-install-hint]");
     await expect(hint).toBeVisible();
     await expect(hint.getByRole("heading", { name: "Linkyo als App" })).toBeVisible();
     expect(await page.evaluate(() => window.localStorage.getItem("linkyo.installHint"))).toBe("shown");
+    // Its X: 32 px to look at; on a touch screen (the phone run) a press 22 px from its centre still hits it.
+    const close = hint.getByRole("button", { name: "Hinweis ausblenden" });
+    const box = await close.boundingBox();
+    if (!box) throw new Error("no X");
+    expect(Math.round(box.width)).toBe(32);
+    const reach = await close.evaluate((button) => {
+      const rect = button.getBoundingClientRect();
+      const [x, y] = [rect.left + rect.width / 2, rect.top + rect.height / 2];
+      const hits = (dx: number, dy: number) => button.contains(document.elementFromPoint(x + dx, y + dy));
+      // The largest half-size that hits on all four sides.
+      let half = 0;
+      while (half < 40 && hits(half + 1, 0) && hits(-(half + 1), 0) && hits(0, half + 1) && hits(0, -(half + 1))) half += 1;
+      return { coarse: window.matchMedia("(pointer: coarse)").matches, size: 2 * half + 1 };
+    });
+    if (testInfo.project.name === "mobile") expect(reach.coarse).toBe(true);
+    if (reach.coarse) expect(reach.size).toBeGreaterThanOrEqual(44);
+    else expect(reach.size).toBeGreaterThanOrEqual(31);
     // The next Home has the offer again, but the hint has been shown.
     await page.reload();
     await page.waitForFunction(() => Boolean((window as unknown as { __linkyoInstallPrompt?: unknown }).__linkyoInstallPrompt));
@@ -303,6 +442,8 @@ test.describe("install sheet: Chrome and Edge on a computer, Android", () => {
     await signedIn(second, "ar");
     const secondHint = second.locator("[data-install-hint]");
     await expect(secondHint.getByRole("heading", { name: "Linkyo كتطبيق" })).toBeVisible();
+    // The Latin name keeps its own direction inside the Arabic heading.
+    await expect(secondHint.getByRole("heading").locator("bdi")).toHaveText("Linkyo");
     await secondHint.getByRole("button", { name: "إخفاء هذا التلميح" }).click();
     await expect(secondHint).toHaveCount(0);
     await other.close();
@@ -347,6 +488,20 @@ test.describe("install sheet: Safari on a Mac, and Chrome's own window", () => {
     await expect(sheet.getByRole("listitem")).toHaveCount(1);
     await expect(sheet.getByRole("listitem")).toContainText("Wähle in der Menüleiste „Ablage“ › „Zum Dock hinzufügen“.");
     await context.close();
+  });
+
+  test("Chrome without an offer (installed already, a private window, or not yet): the icon or the browser's menu", async ({ page }) => {
+    // Playwright's Chromium: Chrome's user agent, and its incognito contexts never fire beforeinstallprompt.
+    await signedIn(page, "de");
+    const sheet = await openInstallSheet(page);
+    await expect(sheet.locator("[data-install-variant]")).toHaveAttribute("data-install-variant", "chromium");
+    await expect(sheet).toContainText("Ist Linkyo schon installiert, öffne es über sein Symbol.");
+    await expect(sheet).not.toContainText("Chrome, Edge und Safari können");
+    await expect(sheet.getByRole("button", { name: "Installieren" })).toHaveCount(0);
+    // Arabic: the title's Latin name in <bdi>.
+    const arabic = await openInstallSheet(page, "ar");
+    await expect(arabic.getByRole("heading", { name: "Linkyo كتطبيق" }).locator("bdi")).toHaveText("Linkyo");
+    await expect(arabic.locator("[data-install-variant] bdi").first()).toHaveText("Linkyo");
   });
 
   test("opened from the icon (display mode standalone): installed", async ({ page }) => {
