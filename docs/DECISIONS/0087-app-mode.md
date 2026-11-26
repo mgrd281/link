@@ -86,7 +86,7 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
 
    | Message | Fields | Sent by |
    |---|---|---|
-   | `ready` | `bridge` (the web's contract version, `BRIDGE_VERSION` = 1), `signedIn`, `accountId` (or null) | the island: the first message each time the dashboard mounts (a page load of a dashboard page, a return to the dashboard from a page outside it, a change of language), once the session is known, and again whenever the session changes. All five methods (`navigate`, `back`, `flush`, `reload`, `signOut`) are installed before it |
+   | `ready` | `bridge` (the web's contract version, `BRIDGE_VERSION` = 1), `signedIn`, `accountId` (or null) | the island: the first message each time the dashboard mounts (a page load of a dashboard page, a return to the dashboard from a page outside it, a change of language), each time the browser restores a dashboard page from its back/forward cache (the app's `goBack()` after a page it loaded itself: nothing mounts again, so the island listens for `pageshow` with `persisted`), once the session is known, and again whenever the session changes. All five methods (`navigate`, `back`, `flush`, `reload`, `signOut`) are installed before it |
    | `route` | `path` (with the language, `/de/app/settings/plan`), `title` (the screen's name in the page's language, from `features/app/routes.ts`; null for screens outside that table: the welcome flow, "View my page", the AI builder, an order, a proposal), `back` (the path back leads to, or null) | the island: right after each `ready`, then on every screen change |
    | `share` | `title?`, `text?`, `url?`, `file?` `{name, mime, base64}` | Home's link (`share-tools.tsx`), the QR sheet (`share-qr.tsx`), the story picture (`share-image-sheet.tsx`), the invite link (`invite/invite-link-card.tsx`), and the creator page's own share button in "View my page" (`directions/poster/share-island.tsx`: the page's public address, `pageUrl(username)`, which the dashboard names on `data-share-url` around the page; never `/<l>/app/preview`, in a browser too) |
    | `download` | `name`, `mime`, `base64` | the data export (`settings-screen.tsx`), the statistics CSV (`analytics-screen.tsx`), the story picture, the QR code as PNG and as SVG, the Premium kit's story pictures (`proposals/proposal-screen.tsx`: fetched from their signed Storage address by `appDownloadFrom`, as Storage is another host the web view does not open; a failed fetch says so in a toast), and a planned live's reminder in "View my page" (`directions/poster/live-time.ts` `remind()`: `live.ics`, `text/calendar`, UTF-8) |
@@ -97,12 +97,14 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
 
    **The order of the messages.** `ready` is always the first message after the dashboard mounts; `route` (the
    screen shown) follows it, then the store's `saveState` (`store-bridge.ts` holds an account's save state until
-   the `ready` that names that account: `announceReady` in `app-object.ts`). Each mount sends all three again:
-   the app takes every `ready` as "the web view has (re)installed its methods and says where it is", and re-reads
-   the state from the messages after it. When the session ends: `signedOut`, then `ready` (`signedIn: false`) and
+   the `ready` that names that account: `announceReady` in `app-object.ts`). Each mount, and each restore from the
+   back/forward cache, sends all three again, `saveState` too when it has not changed (a page left for that cache
+   sends nothing until it is back): the app takes every `ready` as "the web view has (re)installed its methods and
+   says where it is", and re-reads the state from the messages after it. When the session ends: `signedOut`, then `ready` (`signedIn: false`) and
    `route`. Pages outside the dashboard send no `ready`; their few messages (`haptic`, a creator page's `share`)
    need none. `e2e/app-sync-app.spec.ts` (real accounts) and `e2e/app-mode-app.spec.ts` (the demo) check the
-   order on a cold load, after a sign-out and on a return to the dashboard.
+   order on a cold load, after a sign-out, on a return to the dashboard and on a restore from the back/forward cache
+   (a Chromium with that cache on: help loaded as a page of its own, then `goBack()`).
 
    App → web on `window.linkyoApp` (created by the web if the app's script has not made it):
    - `navigate(path)`: a dashboard path, `/<locale>/app` or below, with or without the language
@@ -268,11 +270,12 @@ operations), in one place:
   `?edit=` from another screen, `editClosed` and `missing`; in a browser the chrome stays, the export
   downloads, nothing is posted, "View my page" shares the public address and a stored theme applies).
   The contract review added: `store-bridge.test.ts` (the save state held until the `ready` that names its
-  account, again after a remount; a frozen, sealed or non-extensible app object, a read-only
+  account, again after a remount and after every new `ready`, also unchanged; a frozen, sealed or non-extensible app object, a read-only
   `window.linkyoApp` and a fixed property never throw), `route.test.ts` (`navigate` refuses every page outside
   the dashboard), `adr-contract.test.ts` (both ADRs name what the code answers), and in
   `e2e/app-mode-app.spec.ts` and `e2e/app-sync-app.spec.ts` the order `ready`, `route`, `saveState` on a cold
-  load, after a sign-out and on a return from Datenschutz, where the five methods are gone.
+  load, after a sign-out and on a return from Datenschutz, where the five methods are gone, and on a restore
+  from the back/forward cache after help was loaded as a page of its own.
 - Open for the app (native): the navigation policy still has to send `/checkout`, `/service`, `/kuendigen`,
   `/widerruf`, the team area and every other host to Safari (plan §1.6); the web no longer links them from the
   dashboard in app mode, and `navigate()` takes dashboard paths only, so every other page reaches the web view

@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAccount } from "@/features/account/store";
 import { ORIGIN_TAB_KEY, TABS, type TabKey } from "@/features/app/routes";
@@ -32,9 +32,11 @@ const withLocale = (locale: string, path: string) => `/${locale}${path === "/" ?
  * - puts `navigate(path)` (a dashboard path, with the client router: no reload, whatever the store
  *   holds stays) and `back()` on `window.linkyoApp`;
  * - posts `ready` (with the web's bridge version) once the session is known, each time the dashboard
- *   mounts (a page load, a return from a page outside it, a change of language) and whenever the
- *   session changes; then the current `route`, then the store's half posts its `saveState`. Nothing
- *   reaches the app before `ready` (ADR 0087 decision 4);
+ *   mounts (a page load, a return from a page outside it, a change of language), when the browser
+ *   restores it from its back/forward cache (the app's `goBack()` after a page it loaded itself: nothing
+ *   mounts again, so `pageshow` says so) and whenever the session changes; then the current `route`,
+ *   then the store's half posts its `saveState`. Nothing reaches the app before `ready` (ADR 0087
+ *   decision 4);
  * - posts `route` for every screen shown after that: its path, its name and where back leads (routes.ts).
  *
  * All five methods live only while a dashboard page is shown: leaving it for a page outside the
@@ -81,6 +83,25 @@ function AppBridge() {
   const title = titleKey ? t(titleKey) : null;
   // What this mount told the app last: the account of its `ready` (undefined: none yet) and the route.
   const told = useRef<{ ready: string | null | undefined; route: string | null }>({ ready: undefined, route: null });
+  // Restores from the back/forward cache: the page comes back as it was left, effects and all, so it
+  // says again what it says when it mounts. Left for that cache, it says nothing until it is back.
+  const [restores, setRestores] = useState(0);
+  useEffect(() => {
+    const left = (event: PageTransitionEvent) => {
+      if (event.persisted) withdrawReady();
+    };
+    const back = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      told.current = { ready: undefined, route: null };
+      setRestores((count) => count + 1);
+    };
+    window.addEventListener("pagehide", left);
+    window.addEventListener("pageshow", back);
+    return () => {
+      window.removeEventListener("pagehide", left);
+      window.removeEventListener("pageshow", back);
+    };
+  }, []);
   useEffect(() => {
     if (!known) return;
     const fresh = told.current.ready !== accountId;
@@ -98,11 +119,11 @@ function AppBridge() {
     }
     // The store's half may tell this account's save state now.
     if (fresh) announceReady(accountId);
-  }, [known, accountId, pathname, locale, title]);
+  }, [known, accountId, pathname, locale, title, restores]);
   // Leaving the dashboard: the next mount posts `ready` first again. (Mounted again without leaving, as
-  // React's development checks do, it says again what this mount already told the app.)
+  // React's development checks do, it says again what this mount already told the app, posting nothing.)
   useEffect(() => {
-    if (told.current.ready !== undefined && readyFor() === undefined) announceReady(told.current.ready);
+    if (told.current.ready !== undefined && readyFor() === undefined) announceReady(told.current.ready, false);
     return withdrawReady;
   }, []);
 

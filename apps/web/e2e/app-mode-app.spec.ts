@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { chromium, expect, test, type Page } from "@playwright/test";
 
 import ar from "../src/messages/ar.json" with { type: "json" };
 import de from "../src/messages/de.json" with { type: "json" };
@@ -496,6 +496,50 @@ test.describe("in the app, on a phone", () => {
       .toEqual(["ready", "route", "saveState"]);
     expect((await posted(page))[seen]).toEqual({ type: "ready", bridge: 1, signedIn: true, accountId });
     expect(await methods()).toEqual(["back", "flush", "navigate", "reload", "signOut"]);
+  });
+
+  test("back from a page the app loaded itself, restored from the back/forward cache: ready, route and saveState again", async ({ baseURL }) => {
+    // navigate() refuses help and the legal pages, so the app loads them itself and brings the web view
+    // back with goBack(). The browser then restores the dashboard from its back/forward cache, which
+    // mounts nothing again: before, the app waited for a ready that never came. Playwright's Chromium
+    // turns that cache off by default, so this test starts one with it on.
+    test.setTimeout(120_000);
+    const browser = await chromium.launch({
+      ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
+      ignoreDefaultArgs: ["--disable-back-forward-cache"],
+    });
+    try {
+      const context = await browser.newContext({ ...(baseURL ? { baseURL } : {}), viewport: { width: 390, height: 844 }, userAgent: APP_UA, reducedMotion: "reduce" });
+      const page = await context.newPage();
+      await page.addInitScript(APP_SCRIPT);
+      const { m } = await signedIn(page, "de");
+      const accountId = await seed(page);
+      const order = async (from = 0) =>
+        (await posted(page))
+          .slice(from)
+          .map((message) => message.type)
+          .filter((type) => ["ready", "route", "saveState"].includes(type));
+      await expect.poll(() => order()).toEqual(["ready", "route", "saveState"]);
+      // A marker on the window survives only a restore of this very page.
+      await page.evaluate(() => {
+        (window as unknown as { __same: boolean }).__same = true;
+      });
+      const seen = (await posted(page)).length;
+      await page.goto("/de/hilfe");
+      await expect(page.locator("h1").first()).toBeVisible();
+      // A page restored from that cache fires no load event again: wait for the address only.
+      await page.goBack({ waitUntil: "commit" });
+      await expect.poll(() => new URL(page.url()).pathname).toBe("/de/app");
+      await expect(heading(page)).toBeVisible();
+      expect(await page.evaluate(() => (window as unknown as { __same?: boolean }).__same), "not restored from the back/forward cache: this run proves nothing").toBe(true);
+      await expect.poll(() => order(seen)).toEqual(["ready", "route", "saveState"]);
+      const again = (await posted(page)).slice(seen);
+      expect(again[0]).toEqual({ type: "ready", bridge: 1, signedIn: true, accountId });
+      expect(again.find((message) => message.type === "route")).toEqual({ type: "route", path: "/de/app", title: m.app.nav.home, back: null });
+      await context.close();
+    } finally {
+      await browser.close();
+    }
   });
 
   test("every download and share goes to the app, none to the browser", async ({ page }) => {

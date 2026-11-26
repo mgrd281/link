@@ -103,12 +103,21 @@ interface App {
   signOut: () => Promise<void>;
 }
 
+/** Every bridge a test installs is taken down after it, as the dashboard's layout does when it unmounts. */
+const installed: (() => void)[] = [];
+const installBridge = (...args: Parameters<typeof installStoreBridge>): (() => void) => {
+  const cleanup = installStoreBridge(...args);
+  installed.push(cleanup);
+  return cleanup;
+};
+
 beforeEach(() => {
   vi.useFakeTimers();
   // The interface half has told the app `ready` for the test's account (see "ready comes first").
   announceReady("a1");
 });
 afterEach(() => {
+  for (const cleanup of installed.splice(0)) cleanup();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   withdrawReady();
@@ -118,7 +127,7 @@ describe("store bridge", () => {
   it("installs nothing outside the app: no object, no message", () => {
     const win = webView({ app: null });
     const store = fakeStore();
-    installStoreBridge(store);
+    installBridge(store);
     expect(win.linkyoApp).toBeUndefined();
     store.set(signedIn({ sync: "saving" }));
     expect(win.messages).toEqual([]);
@@ -131,7 +140,7 @@ describe("store bridge", () => {
     for (const app of ["android", "", "true"]) {
       const win = webView({ app });
       const store = fakeStore();
-      installStoreBridge(store);
+      installBridge(store);
       store.set(signedIn({ sync: "saving" }));
       expect(win.linkyoApp, app).toBeUndefined();
       expect(win.messages, app).toEqual([]);
@@ -140,7 +149,7 @@ describe("store bridge", () => {
 
   it("is the app where React took <html data-app> away and the app's object names the platform", () => {
     const win = webView({ app: null, linkyoApp: { platform: "ios", version: "1.0", bridge: 1 } });
-    installStoreBridge(fakeStore());
+    installBridge(fakeStore());
     expect(typeof win.linkyoApp?.flush).toBe("function");
     expect(win.messages).toEqual([{ type: "saveState", state: "saved", updatedAt: "v1" }]);
   });
@@ -148,7 +157,7 @@ describe("store bridge", () => {
   it("installs nothing in a frame inside the app, and posts nothing from there", () => {
     const win = webView({ frame: true });
     const store = fakeStore();
-    installStoreBridge(store);
+    installBridge(store);
     store.set(signedIn({ sync: "saving" }));
     store.set({ status: "signedOut" });
     expect(win.linkyoApp).toBeUndefined();
@@ -159,7 +168,7 @@ describe("store bridge", () => {
     const navigate = () => true;
     const app: LinkyoApp = { platform: "ios", version: "1.0", bridge: 1, navigate };
     const win = webView({ linkyoApp: app });
-    const cleanup = installStoreBridge(fakeStore());
+    const cleanup = installBridge(fakeStore());
     expect(win.linkyoApp).toBe(app);
     expect(win.linkyoApp).toMatchObject({ platform: "ios", version: "1.0", bridge: 1, navigate });
     expect(typeof win.linkyoApp?.flush).toBe("function");
@@ -169,7 +178,7 @@ describe("store bridge", () => {
     expect(win.linkyoApp).toEqual({ platform: "ios", version: "1.0", bridge: 1, navigate });
 
     const bare = webView();
-    installStoreBridge(fakeStore());
+    installBridge(fakeStore());
     expect(Object.keys(bare.linkyoApp ?? {}).sort()).toEqual(["flush", "reload", "signOut"]);
   });
 
@@ -177,7 +186,7 @@ describe("store bridge", () => {
     const win = webView();
     const store = fakeStore();
     const handOver = vi.fn();
-    installStoreBridge(store, handOver);
+    installBridge(store, handOver);
     const app = win.linkyoApp as unknown as App;
     let answer: { updatedAt: string | null } | null = null;
     const flushed = app.flush().then((value) => (answer = value));
@@ -193,7 +202,7 @@ describe("store bridge", () => {
     const win = webView();
     const store = fakeStore();
     const handOver = vi.fn();
-    installStoreBridge(store, handOver);
+    installBridge(store, handOver);
     await (win.linkyoApp as unknown as App).reload();
     expect(handOver).toHaveBeenCalledTimes(1);
     expect(store.reload).toHaveBeenCalledTimes(1);
@@ -202,7 +211,7 @@ describe("store bridge", () => {
   it("posts saveState when the save state changes, conflict once per refused save, and signedOut", () => {
     const win = webView();
     const store = fakeStore();
-    installStoreBridge(store);
+    installBridge(store);
     store.set(signedIn({ sync: "saving" }));
     store.set(signedIn({ sync: "saving" }));
     store.set(signedIn({ sync: "saved", baseUpdatedAt: "v2" }));
@@ -224,7 +233,7 @@ describe("store bridge", () => {
   it("signOut() saves first, then ends the session and resolves once it has ended", async () => {
     const win = webView();
     const store = fakeStore();
-    installStoreBridge(store);
+    installBridge(store);
     const done = (win.linkyoApp as unknown as App).signOut();
     store.land("v2");
     await vi.advanceTimersByTimeAsync(10);
@@ -239,7 +248,7 @@ describe("store bridge", () => {
     const store = fakeStore();
     store.flush.mockImplementation(() => Promise.reject(new Error("saveFailed")));
     store.logOut.mockImplementation(() => undefined);
-    installStoreBridge(store);
+    installBridge(store);
     const refused = expect((win.linkyoApp as unknown as App).signOut()).rejects.toThrow("signOutTimeout");
     await vi.advanceTimersByTimeAsync(SIGN_OUT_WAIT + 1);
     await refused;
@@ -251,7 +260,7 @@ describe("store bridge", () => {
     it("flush() waits for the session check, then answers the version (never null for 'not known yet')", async () => {
       const win = webView();
       const store = fakeStore(loading);
-      installStoreBridge(store);
+      installBridge(store);
       let answer: { updatedAt: string | null } | null = null;
       const flushed = (win.linkyoApp as unknown as App).flush().then((value) => (answer = value));
       await vi.advanceTimersByTimeAsync(100);
@@ -268,7 +277,7 @@ describe("store bridge", () => {
     it("flush() and reload() reject when the store never finishes loading, instead of answering 'signed out'", async () => {
       const win = webView();
       const store = fakeStore(loading);
-      installStoreBridge(store);
+      installBridge(store);
       const app = win.linkyoApp as unknown as App;
       const flushed = expect(app.flush()).rejects.toThrow("storeLoading");
       const reloaded = expect(app.reload()).rejects.toThrow("storeLoading");
@@ -282,7 +291,7 @@ describe("store bridge", () => {
     it("signOut() waits for the session check, then saves and ends the session", async () => {
       const win = webView();
       const store = fakeStore(loading);
-      installStoreBridge(store);
+      installBridge(store);
       const done = (win.linkyoApp as unknown as App).signOut();
       await vi.advanceTimersByTimeAsync(100);
       expect(store.logOut).not.toHaveBeenCalled();
@@ -299,7 +308,7 @@ describe("store bridge", () => {
     it("signOut() ends nothing more when the check finds no session", async () => {
       const win = webView();
       const store = fakeStore(loading);
-      installStoreBridge(store);
+      installBridge(store);
       const done = (win.linkyoApp as unknown as App).signOut();
       store.set({ status: "signedOut" });
       await vi.advanceTimersByTimeAsync(0);
@@ -311,7 +320,7 @@ describe("store bridge", () => {
     it("signOut() still ends the session when the store is loading after the wait", async () => {
       const win = webView();
       const store = fakeStore(loading);
-      installStoreBridge(store);
+      installBridge(store);
       const done = (win.linkyoApp as unknown as App).signOut();
       await vi.advanceTimersByTimeAsync(READY_WAIT + 10);
       await done;
@@ -333,7 +342,7 @@ describe("store bridge", () => {
       },
     };
     const store = fakeStore();
-    expect(() => installStoreBridge(store)).not.toThrow();
+    expect(() => installBridge(store)).not.toThrow();
     expect(() => {
       store.set(signedIn({ sync: "saving" }));
       store.set({ status: "signedOut" });
@@ -347,7 +356,7 @@ describe("ready comes first (ADR 0087 decision 4)", () => {
     withdrawReady();
     const win = webView();
     const store = fakeStore();
-    installStoreBridge(store);
+    installBridge(store);
     store.set(signedIn({ sync: "saving" }));
     expect(win.messages).toEqual([]);
     announceReady("a1");
@@ -359,7 +368,7 @@ describe("ready comes first (ADR 0087 decision 4)", () => {
   it("another account's save state waits for the ready that names it", () => {
     const win = webView();
     const store = fakeStore();
-    installStoreBridge(store);
+    installBridge(store);
     expect(win.messages).toEqual([{ type: "saveState", state: "saved", updatedAt: "v1" }]);
     const other = signedIn({ account: { id: "a2", email: "noor@example.com", username: "noor", createdAt: "" }, baseUpdatedAt: "w1" });
     store.set(other);
@@ -371,16 +380,35 @@ describe("ready comes first (ADR 0087 decision 4)", () => {
   it("mounted again (the dashboard left and opened again): the save state is told again after the new ready", () => {
     const win = webView();
     const store = fakeStore();
-    const first = installStoreBridge(store);
+    const first = installBridge(store);
     first();
     withdrawReady();
-    installStoreBridge(store);
+    installBridge(store);
     expect(win.messages).toEqual([{ type: "saveState", state: "saved", updatedAt: "v1" }]);
     announceReady("a1");
     expect(win.messages).toEqual([
       { type: "saveState", state: "saved", updatedAt: "v1" },
       { type: "saveState", state: "saved", updatedAt: "v1" },
     ]);
+  });
+
+  it("told again after every new ready, also for the same account and an unchanged state (a page restored from the back/forward cache mounts nothing again)", () => {
+    // Before, an unchanged state was never told twice, so the app, waiting for the messages after the
+    // ready of a restored page, never heard the save state.
+    const win = webView();
+    const store = fakeStore();
+    installBridge(store);
+    expect(win.messages).toEqual([{ type: "saveState", state: "saved", updatedAt: "v1" }]);
+    // Left for the back/forward cache, then restored: the interface half posts ready again.
+    withdrawReady();
+    announceReady("a1");
+    expect(win.messages).toEqual([
+      { type: "saveState", state: "saved", updatedAt: "v1" },
+      { type: "saveState", state: "saved", updatedAt: "v1" },
+    ]);
+    // Said again without a new ready (React's development checks remount the island): nothing more.
+    announceReady("a1", false);
+    expect(win.messages).toHaveLength(2);
   });
 });
 
@@ -397,7 +425,7 @@ describe("an object the app froze or sealed (ADR 0087 asks for a plain one)", ()
       let cleanupStore = (): void => undefined;
       let cleanupUi = (): void => undefined;
       expect(() => {
-        cleanupStore = installStoreBridge(fakeStore());
+        cleanupStore = installBridge(fakeStore());
         cleanupUi = installOnApp({ navigate: () => true, back: () => false });
       }).not.toThrow();
       expect(win.linkyoApp).not.toBe(locked);
@@ -413,7 +441,7 @@ describe("an object the app froze or sealed (ADR 0087 asks for a plain one)", ()
     const win = webView();
     const locked = Object.freeze({ platform: "ios", version: "1.0", bridge: 1 });
     Object.defineProperty(win, "linkyoApp", { value: locked, writable: false, configurable: false });
-    expect(() => installStoreBridge(fakeStore())).not.toThrow();
+    expect(() => installBridge(fakeStore())).not.toThrow();
     expect(() => installOnApp({ navigate: () => true })).not.toThrow();
     expect(win.linkyoApp).toBe(locked);
   });
@@ -441,7 +469,7 @@ describe("the two halves on window.linkyoApp, in either order", () => {
     it(`${order}: one object with all five methods and the app's own fields; each cleanup removes only its own`, () => {
       const made: LinkyoApp = { platform: "ios", version: "1.0", bridge: 1 };
       const win = webView({ linkyoApp: made });
-      const install = { store: () => installStoreBridge(fakeStore()), ui: () => installOnApp({ navigate, back }) };
+      const install = { store: () => installBridge(fakeStore()), ui: () => installOnApp({ navigate, back }) };
       const [first, second] = order === "store first" ? [install.store(), install.ui()] : [install.ui(), install.store()];
       expect(win.linkyoApp).toBe(made);
       expect(names(win.linkyoApp)).toEqual(["back", "bridge", "flush", "navigate", "platform", "reload", "signOut", "version"]);
@@ -455,7 +483,7 @@ describe("the two halves on window.linkyoApp, in either order", () => {
 
     it(`${order}, without the app's object: the first half makes it and the second uses the same one`, () => {
       const win = webView();
-      const install = { store: () => installStoreBridge(fakeStore()), ui: () => installOnApp({ navigate, back }) };
+      const install = { store: () => installBridge(fakeStore()), ui: () => installOnApp({ navigate, back }) };
       if (order === "store first") install.store();
       else install.ui();
       const made = win.linkyoApp;
@@ -470,7 +498,7 @@ describe("the two halves on window.linkyoApp, in either order", () => {
   it("a half installed again (a remount) replaces only its own methods, and its old cleanup removes nothing", () => {
     const win = webView();
     const oldUi = installOnApp({ navigate, back });
-    const store = installStoreBridge(fakeStore());
+    const store = installBridge(fakeStore());
     const navigate2 = () => true;
     const newUi = installOnApp({ navigate: navigate2, back });
     oldUi();

@@ -6,7 +6,7 @@ import { accountStore, handOverPendingEdits } from "@/features/account/store";
 import type { AccountSnapshot, AccountStore } from "@/features/account/types";
 
 import { inAppMode } from "./app-mode";
-import { installOnApp, onReady, readyFor } from "./app-object";
+import { installOnApp, onReady, readyCount, readyFor } from "./app-object";
 import { inMainFrame, post, type SaveState } from "./bridge";
 
 /**
@@ -117,7 +117,8 @@ export function installStoreBridge(store: BridgeStore = accountStore, handOver: 
       conflicts = seen;
       // Real accounts: the version on the server; the demo saves at once, so its page's own time.
       const updatedAt = snapshot.baseUpdatedAt ?? (store.demo ? snapshot.site.updatedAt : null);
-      const key = `${state}|${updatedAt ?? ""}`;
+      // After every `ready` the app reads the state again: told once more, even unchanged.
+      const key = `${String(readyCount())}|${state}|${updatedAt ?? ""}`;
       if (key === last) return;
       last = key;
       post({ type: "saveState", state, updatedAt });

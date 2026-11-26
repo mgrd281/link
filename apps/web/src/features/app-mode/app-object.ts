@@ -66,13 +66,26 @@ export function installOnApp(methods: AppMethods): () => void {
  * (ADR 0087 decision 4).
  */
 let announced: string | null | undefined;
+/**
+ * How many `ready` messages this document has posted. The app re-reads the state from the messages
+ * after every `ready`, so the store's half tells its save state again after each one, also when it
+ * names the same account (a page restored from the back/forward cache mounts nothing again).
+ */
+let readies = 0;
 const waiting = new Set<() => void>();
 
-/** The interface half posted `ready` for this account: what waited for it may post now. */
-export function announceReady(accountId: string | null): void {
+/**
+ * The interface half posted `ready` for this account (`posted`: false when it only says again what
+ * this mount already told the app, as React's development checks remount it): what waited may post now.
+ */
+export function announceReady(accountId: string | null, posted = true): void {
   announced = accountId;
+  if (posted) readies += 1;
   for (const listener of [...waiting]) listener();
 }
+
+/** How many `ready` messages this document has posted (the store's half tells its save state after each). */
+export const readyCount = (): number => readies;
 
 /** The dashboard was left (the interface half unmounted): the next mount posts `ready` first again. */
 export function withdrawReady(): void {

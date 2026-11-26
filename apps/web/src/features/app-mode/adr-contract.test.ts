@@ -109,6 +109,11 @@ describe("ADR 0087 records the order, the dashboard-only methods and what the na
     expect(text).toContain("`navigate(path)`: a dashboard path");
     expect(text).toContain("**All five exist only while a dashboard page (`/<locale>/app/…`) is shown.**");
     expect(text).toContain(`\`BRIDGE_VERSION\` = ${String(BRIDGE_VERSION)}`);
+    // The app brings the web view back with goBack(): a page restored from the back/forward cache sends
+    // ready, route and saveState again, as the island does on `pageshow` with `persisted`.
+    expect(source("features/app-mode/app-mode-island.tsx")).toMatch(/addEventListener\("pageshow"/);
+    expect(text).toMatch(/each time the browser restores a dashboard page from its back\/forward cache/);
+    expect(text).toMatch(/Each mount, and each restore from the\s+back\/forward cache, sends all three again/);
   });
 
   it("decision 1: the app's object is plain and extensible, and a frozen one never breaks the dashboard", () => {
