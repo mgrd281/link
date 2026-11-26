@@ -36,6 +36,8 @@ const TRY_AI = TRY_AI_ANY ? (["ai.run", "app.ai.platform", "app.ai.review.topics
 const SITE = [
   "common",
   "errors",
+  // The not-found page's sentence inside the iPhone app (features/errors/error-screen.tsx).
+  "appMode.errors",
   "search",
   // The people search's filters and badges, the template gallery, the way back from a missing example.
   "examples",

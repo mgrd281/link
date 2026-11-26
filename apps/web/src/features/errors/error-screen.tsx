@@ -36,7 +36,7 @@ function ErrorFrame({ area, children }: { area: ErrorArea; children: ReactNode }
   );
 }
 
-function Message({ title, body, children }: { title: string; body: string; children?: ReactNode }) {
+function Message({ title, body, children }: { title: string; body: ReactNode; children?: ReactNode }) {
   return (
     <div className="grid gap-3">
       <h1 className="text-h2 font-semibold text-balance rtl:tracking-normal">{title}</h1>
@@ -83,6 +83,18 @@ function AppWayBack({ area, variant }: { area: ErrorArea; variant: "primary" | "
   return app && area === "site" ? <HomeLink area="app" frame={area} variant={variant} /> : null;
 }
 
+/**
+ * The words for an address outside the dashboard and the team area. Inside the app the website's "start
+ * again from the home page" would point to a page the app does not show: the dashboard instead
+ * (`appMode.errors.notFoundBody`). The website's sentence is marked `data-app-hide`, so the app's CSS
+ * hides it on a page the server rendered before the browser knows it is the app.
+ */
+function SiteNotFoundBody() {
+  const t = useTranslations("errors");
+  const tApp = useTranslations("appMode.errors");
+  return useAppMode() ? tApp("notFoundBody") : <span {...WEBSITE}>{t("notFound.body")}</span>;
+}
+
 /** The page for an address nobody has: in the site's language, with the ways back that fit its part of Linkyo. */
 export function NotFoundScreen() {
   const t = useTranslations("errors");
@@ -95,7 +107,7 @@ export function NotFoundScreen() {
         : t("notFound.appBody")
       : area === "admin"
         ? t("notFound.teamBody")
-        : t("notFound.body");
+        : <SiteNotFoundBody />;
   return (
     <ErrorFrame area={area}>
       <Message title={t("notFound.title")} body={body} />

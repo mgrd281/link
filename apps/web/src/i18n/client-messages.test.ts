@@ -70,6 +70,14 @@ describe("client messages per route group (E-03)", () => {
     }
   });
 
+  it("gives every page the not-found sentence the iPhone app shows, and only that of the app's words", () => {
+    for (const group of ["site", "help", "auth", "legal", "checkout"] as const) {
+      const messages = clientMessages(DE, group);
+      expect(has(messages, "appMode.errors.notFoundBody"), group).toBe(true);
+      expect(has(messages, "appMode.ai"), group).toBe(false);
+    }
+  });
+
   it("keeps the installed app's server-only words (manifest, offline page) out of every page", () => {
     for (const group of Object.keys(CLIENT_NAMESPACES) as (keyof typeof CLIENT_NAMESPACES)[]) expect(has(clientMessages(DE, group), "pwa"), group).toBe(false);
     // The dashboard's install sheet reads its own words in the browser.

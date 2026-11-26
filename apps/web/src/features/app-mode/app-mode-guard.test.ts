@@ -24,7 +24,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
+import en from "@/messages/en.json";
 
 import { ErrorScreen, NotFoundScreen } from "../errors/error-screen";
 
@@ -292,6 +294,31 @@ describe("app mode: the not-found and error pages lead only back to the dashboar
       expect(links(notFound, pathname, false).map((link) => link.href), pathname).toEqual(["/app", "/"]);
     }
     expect(inApp(links(failed, "/app/build", true))).toEqual(["/app"]);
+  });
+
+  it("a page outside the dashboard: the sentence names the dashboard, not the home page (appMode.errors.notFoundBody)", () => {
+    const render = (app: boolean, locale: "de" | "en" | "ar" = "de") => {
+      view.pathname = "/hilfe/nope";
+      view.app = app;
+      const messages = { de, en, ar }[locale];
+      return renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, messages, timeZone: "Europe/Berlin", children: createElement(NotFoundScreen) }));
+    };
+    /** The text a person sees in the app: what `data-app-hide` marks is gone. */
+    const shownInApp = (markup: string) => markup.replace(/<(\w+)[^>]*data-app-hide[^>]*>.*?<\/\1>/g, "").replace(/<[^>]+>/g, " ");
+    for (const [locale, messages, home] of [
+      ["de", de, "Startseite"],
+      ["en", en, "home page"],
+      ["ar", ar, "الصفحة الرئيسية"],
+    ] as const) {
+      const app = shownInApp(render(true, locale));
+      expect(app, locale).toContain(messages.appMode.errors.notFoundBody);
+      expect(app, locale).not.toContain(home);
+      expect(messages.appMode.errors.notFoundBody, locale).not.toContain(home);
+      // A browser keeps the website's sentence; it is marked, so the app's CSS hides it before the page knows.
+      const browser = render(false, locale);
+      expect(browser, locale).toContain(messages.errors.notFound.body);
+      expect(shownInApp(browser), locale).not.toContain(messages.errors.notFound.body);
+    }
   });
 
   it("a page outside the dashboard: no home page and no templates, the dashboard instead", () => {

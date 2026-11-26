@@ -5588,6 +5588,9 @@
     },
     "home": {
       "inviteSubtitle": "{count, plural, one {# friend} other {# friends}}: free verification review"
+    },
+    "errors": {
+      "notFoundBody": "Check the address for typos, or go back to your dashboard."
     }
   }
 }

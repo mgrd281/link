@@ -5588,6 +5588,9 @@
     },
     "home": {
       "inviteSubtitle": "{count, plural, one {# Person} other {# Personen}}: kostenlose Verifizierung"
+    },
+    "errors": {
+      "notFoundBody": "Prüf die Adresse auf Tippfehler oder geh zurück zum Dashboard."
     }
   }
 }
