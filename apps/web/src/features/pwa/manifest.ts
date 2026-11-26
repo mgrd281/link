@@ -38,14 +38,18 @@ export const MANIFEST_ICONS: NonNullable<MetadataRoute.Manifest["icons"]> = [
 /**
  * The pictures Chrome's richer install dialog shows (scripts/capture-app-screenshots.mjs takes them
  * from the demo build, with the fictional sample creator): the dashboard and a creator page, on a
- * phone (narrow) and on a laptop (wide).
+ * phone (narrow) and on a laptop (wide). One set per language, under `/screenshots/<locale>/`: the
+ * dashboard's own words and the sample page in that language, mirrored in Arabic.
  */
 export const MANIFEST_SCREENSHOTS = [
-  { src: "/screenshots/dashboard-phone.jpg", sizes: "780x1688", form_factor: "narrow", label: "dashboard" },
-  { src: "/screenshots/page-phone.jpg", sizes: "780x1688", form_factor: "narrow", label: "page" },
-  { src: "/screenshots/dashboard-laptop.jpg", sizes: "1440x900", form_factor: "wide", label: "dashboard" },
-  { src: "/screenshots/page-laptop.jpg", sizes: "1440x900", form_factor: "wide", label: "page" },
+  { file: "dashboard-phone.jpg", sizes: "780x1688", form_factor: "narrow", label: "dashboard" },
+  { file: "page-phone.jpg", sizes: "780x1688", form_factor: "narrow", label: "page" },
+  { file: "dashboard-laptop.jpg", sizes: "1440x900", form_factor: "wide", label: "dashboard" },
+  { file: "page-laptop.jpg", sizes: "1440x900", form_factor: "wide", label: "page" },
 ] as const;
+
+/** A screenshot's address in a language's set. */
+export const screenshotSrc = (locale: Locale, file: string) => `/screenshots/${locale}/${file}`;
 
 /** The words a manifest needs, under `pwa` in the messages. */
 export type ManifestKey =
@@ -103,7 +107,7 @@ export function appManifest(locale: Locale, t: (key: ManifestKey) => string): Ap
       // Home's link card: copy, share, QR code (the section panel's "Your link" jumps there the same way).
       { name: t("shortcuts.share"), description: t("shortcuts.shareDescription"), url: `${app}#${NAV_ANCHORS.homeLink}` },
     ],
-    screenshots: MANIFEST_SCREENSHOTS.map(({ label, ...shot }) => ({ ...shot, type: "image/jpeg", label: t(`screenshots.${label}`) })),
+    screenshots: MANIFEST_SCREENSHOTS.map(({ file, label, ...shot }) => ({ src: screenshotSrc(locale, file), ...shot, type: "image/jpeg", label: t(`screenshots.${label}`) })),
     // `enctype` only matters for POST; Chrome reports its absence as a (non-critical) manifest error.
     share_target: { action: shareAction(locale), method: "GET", enctype: "application/x-www-form-urlencoded", params: { title: "title", text: "text", url: "url" } },
   };
