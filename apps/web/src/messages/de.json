@@ -5579,8 +5579,8 @@
   },
   "appMode": {
     "ai": {
-      "title": "KI-Entwürfe sind für dieses Konto nicht freigeschaltet",
-      "quotaFree": "Deinen kostenlosen KI-Entwurf hast du genutzt. Weitere Entwürfe sind für dieses Konto nicht freigeschaltet.",
+      "title": "KI-Entwürfe sind für dieses Konto nicht verfügbar",
+      "quotaFree": "Deinen kostenlosen KI-Entwurf hast du genutzt. Weitere Entwürfe gibt es für dieses Konto nicht.",
       "close": "Schließen"
     },
     "invite": {

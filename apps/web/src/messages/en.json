@@ -5579,8 +5579,8 @@
   },
   "appMode": {
     "ai": {
-      "title": "AI drafts aren't enabled for this account",
-      "quotaFree": "You've used your free AI draft. More drafts aren't enabled for this account.",
+      "title": "AI drafts aren't available for this account",
+      "quotaFree": "You've used your free AI draft. More drafts aren't available for this account.",
       "close": "Close"
     },
     "invite": {

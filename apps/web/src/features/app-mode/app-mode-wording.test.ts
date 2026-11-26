@@ -72,6 +72,23 @@ describe("app mode: the app's own words name no plan to buy", () => {
     }
   });
 
+  it("the AI's words say plainly that drafts are not available for this account: no hint at an unlock, plan, price or upgrade", () => {
+    // "nicht freigeschaltet" / "aren't enabled" read as something that could be switched on (a call to
+    // action in disguise, 3.1.3(f)); the app states the fact.
+    const UNLOCK = /freigeschaltet|freischalt|aktivier|enabled|unlock|activat|upgrade|\bplan\b|مفعّل|مفعل|تفعيل|ترقية|خطة/i;
+    const AVAILABLE: Record<Locale, RegExp> = { de: /nicht verfügbar|gibt es .* nicht/, en: /aren't available/, ar: /غير متاحة|لا تتوفر/ };
+    for (const locale of LOCALES) {
+      const { title, quotaFree } = CATALOGUES[locale].appMode.ai;
+      for (const [key, text] of [
+        ["title", title],
+        ["quotaFree", quotaFree],
+      ] as const) {
+        expect(text, `${locale} appMode.ai.${key}`).not.toMatch(UNLOCK);
+        expect(text, `${locale} appMode.ai.${key}`).toMatch(AVAILABLE[locale]);
+      }
+    }
+  });
+
   it("the AI sheet for a Free account states the fact in the app, and still offers Pro in a browser", () => {
     for (const locale of LOCALES) {
       const sheet = createElement(ProSheet, { open: true, onOpenChange: () => undefined });
