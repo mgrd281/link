@@ -18,25 +18,8 @@ export const accountStore: AccountStore = supabaseEnabled
   ? new DeferredAccountStore()
   : new LocalAccountStore(() => (typeof window === "undefined" ? null : window.localStorage), browserLoginContext);
 
-/**
- * Changes that have not reached the store yet: the dashboard's editor writes a change a moment after
- * the last one (its autosave delay). Whoever needs everything saved now (the iPhone app, before it
- * changes the page itself) asks these to hand their change over first, then flushes the store.
- */
-const pendingEdits = new Set<() => void>();
-
-/** The editor registers how to hand over its waiting change; the answer unregisters it. */
-export function registerPendingEdits(handOver: () => void): () => void {
-  pendingEdits.add(handOver);
-  return () => {
-    pendingEdits.delete(handOver);
-  };
-}
-
-/** Every waiting change goes to the store now (it saves them with its next flush). */
-export function handOverPendingEdits(): void {
-  for (const handOver of pendingEdits) handOver();
-}
+/** The editor's change from the last moment, handed over before everything must be saved (`./pending-edits.ts`). */
+export { handOverPendingEdits, registerPendingEdits } from "./pending-edits";
 
 /** Current session and site; `loading` during server render and hydration. */
 const subscribe = (listener: () => void) => accountStore.subscribe(listener);

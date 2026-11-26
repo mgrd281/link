@@ -2,6 +2,7 @@ import { NO_IMAGE } from "@linkyo/blocks";
 import { describe, expect, it } from "vitest";
 
 import { LocalAccountStore, sixDigits, STORAGE_KEY, type StorageLike } from "./local-store";
+import { registerPendingEdits } from "./pending-edits";
 import type { CodeRequest } from "./types";
 
 function memory(): StorageLike & { data: Map<string, string>; full: boolean } {
@@ -99,6 +100,18 @@ describe("LocalAccountStore", () => {
     expect(await other("x@example.com", "login")).toEqual({ ok: false, error: "reservedUsername" });
     expect(await other("x@example.com", "Mila Aurel!")).toEqual({ ok: false, error: "invalidUsername" });
     expect(await other("not-an-email", "mila3")).toEqual({ ok: false, error: "invalidEmail" });
+  });
+
+  it("logOut() keeps the editor's change from the last moment (its autosave delay)", async () => {
+    const store = fresh();
+    await withCode(store, signUp);
+    const unregister = registerPendingEdits(() => store.updateSite((site) => ({ ...site, page: { ...site.page, profile: { ...site.page.profile, bio: "Just typed" } } })));
+    store.logOut();
+    unregister();
+    expect(store.getSnapshot().status).toBe("signedOut");
+    await withCode(store, logIn);
+    const snapshot = store.getSnapshot();
+    expect(snapshot.status === "signedIn" && snapshot.site.page.profile.bio).toBe("Just typed");
   });
 
   it("signs in with a code, with the same answer for unknown emails", async () => {

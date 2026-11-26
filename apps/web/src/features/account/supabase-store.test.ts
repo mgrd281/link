@@ -13,6 +13,7 @@ import type { Site } from "./types";
 vi.mock("@/features/app/media-upload", () => ({ uploadDataUrl: () => Promise.reject(new Error("no uploads in this test")) }));
 
 const { SupabaseAccountStore } = await import("./supabase-store");
+const { registerPendingEdits } = await import("./pending-edits");
 
 type Row = Record<string, unknown> & { profile_id: string; page: Record<string, unknown>; updated_at: string };
 
@@ -688,3 +689,41 @@ describe("a lost answer, then signing out or flush()", () => {
   });
 });
 
+describe("the editor's change from the last moment (its autosave delay)", () => {
+  let unregister: () => void = () => undefined;
+  afterEach(() => unregister());
+
+  it("logOut() asks the editor for it first and saves it before the session ends", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    let waiting = true;
+    unregister = registerPendingEdits(() => {
+      if (waiting) addLink(store, "just-typed");
+      waiting = false;
+    });
+    store.logOut();
+    await vi.advanceTimersByTimeAsync(10);
+    expect(db.blocks()).toEqual(["a", "b", "just-typed"]);
+    expect(store.getSnapshot().status).toBe("signedOut");
+  });
+
+  it("the store's pagehide asks the editor itself, whatever order the listeners run in", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const bodies: string[] = [];
+    vi.stubGlobal("fetch", (_url: string, init: RequestInit) => {
+      bodies.push(init.body as string);
+      db.write(JSON.parse(init.body as string) as Record<string, unknown>);
+      return new Promise<Response>(() => undefined);
+    });
+    let waiting = true;
+    unregister = registerPendingEdits(() => {
+      if (waiting) addLink(store, "just-typed");
+      waiting = false;
+    });
+    // The store's listener first (it was added before the editor's), as in a closing tab.
+    listeners.get("pagehide")?.();
+    expect(bodies).toHaveLength(1);
+    expect(db.blocks()).toEqual(["a", "b", "just-typed"]);
+  });
+});

@@ -10,6 +10,7 @@ import type {
   VerificationResult,
 } from "@/features/referrals/types";
 
+import { handOverPendingEdits } from "./pending-edits";
 import { firstSite } from "./site-builders";
 import type { Account, AccountSnapshot, AccountStore, CodeRequest, LoginContext, LoginEvent, Result, Site, UsernameStatus } from "./types";
 import { localUsernameStatus, normalizeEmail, normalizeUsername } from "./username";
@@ -361,6 +362,8 @@ export class LocalAccountStore implements AccountStore {
   }
 
   logOut(): void {
+    // The editor's change from the last moment (its autosave delay) is kept, as with real accounts.
+    handOverPendingEdits();
     this.write({ ...this.db(), session: null });
   }
 

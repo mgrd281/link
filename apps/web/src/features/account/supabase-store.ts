@@ -11,6 +11,7 @@ import type { Database, Tables } from "@/lib/supabase/database.types";
 import { fromJson, toJson } from "@/lib/supabase/json";
 
 import { hasDataUrls, migrateDataUrls, replaceSources } from "./media-migrate";
+import { handOverPendingEdits } from "./pending-edits";
 import { starterSite } from "./site-builders";
 import type {
   Account,
@@ -344,7 +345,9 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   logOut(): void {
-    // Everything waiting is saved first, a refused save of this tab's own included; one that cannot be saved goes with the session.
+    // The editor's change from the last moment (its autosave delay) first, then everything waiting is
+    // saved, a refused save of this tab's own included; one that cannot be saved goes with the session.
+    handOverPendingEdits();
     void this.settleSaves()
       .catch(() => undefined)
       .finally(() => void this.client().auth.signOut({ scope: "local" }));
@@ -441,6 +444,8 @@ export class SupabaseAccountStore implements AccountStore {
    *   moment a write from elsewhere after `base` is overwritten instead of refused.
    */
   private saveOnExit() {
+    // The editor's change from the last moment: its own listener may run after this one (`pagehide`).
+    handOverPendingEdits();
     const snapshot = this.snapshot;
     if (!this.dirty || snapshot.status !== "signedIn" || !this.token) return;
     const content = toRow(snapshot.site);
