@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
  * The iPhone app's two decisions carry their numbers: ADR 0087 (app mode, the interface half of the
  * bridge) and ADR 0088 (the session hand-off, the page operations, the save guard and the store's
  * half). They name each other, the index lists both, and no code, test or doc still points to the
- * drafts they were written as.
+ * drafts they were written as (nor to the draft of ADR 0086, the installable app, they build on).
  */
 
 const ROOT = path.resolve(import.meta.dirname, "../../../../..");
@@ -62,7 +62,7 @@ describe("ADR 0087 and 0088", () => {
   });
 
   it("no code, test, skill or doc still points to the drafts", () => {
-    const stale = /draft-app-mode|draft-app-sync|ADR draft "app mode"/;
+    const stale = /draft-app-mode|draft-app-sync|draft-installable-app|ADR draft "(?:app mode|installable app)"/;
     const found = ["apps/web/src", "apps/web/e2e", "docs", ".claude/skills"]
       .flatMap(files)
       .filter((file) => !file.endsWith("adr-links.test.ts") && stale.test(readFileSync(path.join(ROOT, file), "utf8")));

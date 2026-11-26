@@ -1,5 +1,5 @@
 /**
- * The dashboard's service worker (ADR draft "installable app"), one per language, served from
+ * The dashboard's service worker (ADR 0086), one per language, served from
  * `/<locale>/app/sw.js` and registered for the scope `/<locale>/app` by the dashboard alone
  * (features/app/install/service-worker-island.tsx). It does one thing: when a page of the dashboard
  * cannot load because the device is offline, it answers with the offline page in that language.

@@ -13,7 +13,7 @@ import { enterDemoCode } from "./auth";
 import { LOCALES } from "./routes";
 
 /**
- * Linkyo as an installed app (ADR draft "installable app"): a manifest per language that Chrome finds
+ * Linkyo as an installed app (ADR 0086): a manifest per language that Chrome finds
  * installable, a service worker that controls the dashboard only and shows the offline page in the
  * dashboard's language, sharing into the Add sheet (also through sign-in), the install sheet's
  * variant per device, Home's hint shown once, and the dashboard's ground at the first paint.

@@ -5,7 +5,7 @@ import { NAV_ANCHORS } from "@/features/app/routes";
 import { isRtl, type Locale } from "@/i18n/routing";
 
 /**
- * Linkyo as an app (ADR draft "installable app"): one web app manifest per language, served at
+ * Linkyo as an app (ADR 0086): one web app manifest per language, served at
  * `/<locale>/manifest.webmanifest` and linked by the language's root layout. Every language installs
  * the same app (one `id`), which opens the dashboard in that language in its own window.
  *
