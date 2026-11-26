@@ -65,6 +65,46 @@ async function watchConflicts(page: Page) {
 }
 const conflictToasts = (page: Page) => page.evaluate(() => (window as unknown as { conflictToasts: number }).conflictToasts);
 
+/**
+ * The page as the iPhone app shows it: the native shell marks <html> and puts its object on window
+ * before the first paint, and WebKit's message handler records what the page tells the app.
+ */
+async function asTheApp(page: Page) {
+  await page.addInitScript(() => {
+    const messages: unknown[] = [];
+    Object.assign(window, {
+      linkyoApp: { platform: "ios", version: "1.0", bridge: 1 },
+      appMessages: messages,
+      webkit: { messageHandlers: { linkyo: { postMessage: (message: unknown) => messages.push(message) } } },
+    });
+    // WebKit runs a document-start script once <html> exists; Chromium runs this one before it does.
+    const mark = () => {
+      const root = document.documentElement as HTMLElement | null;
+      if (!root) return false;
+      root.dataset.app = "ios";
+      return true;
+    };
+    if (!mark()) {
+      const watch = new MutationObserver(() => {
+        if (mark()) watch.disconnect();
+      });
+      watch.observe(document, { childList: true });
+    }
+  });
+}
+interface AppMessage {
+  type: string;
+  state?: string;
+  updatedAt?: string | null;
+}
+const appMessages = (page: Page) => page.evaluate(() => (window as unknown as { appMessages: AppMessage[] }).appMessages);
+const callApp = (page: Page, method: "flush" | "reload" | "signOut") =>
+  page.evaluate(async (name) => {
+    const app = (window as unknown as { linkyoApp: Record<string, () => Promise<unknown>> }).linkyoApp;
+    const answer = await app[name]?.();
+    return answer ?? null;
+  }, method);
+
 /** A second browser for the same account, with this project's screen. */
 async function secondBrowser(browser: Browser, info: TestInfo, baseURL: string | undefined) {
   const { viewport, userAgent, isMobile, hasTouch, deviceScaleFactor } = info.project.use;
@@ -103,6 +143,8 @@ test.describe("the iPhone app's web side @real", () => {
     await expect(web.page.locator("main")).toBeVisible();
     expect(web.page.url()).toMatch(/\/de\/app$/);
     expect((await web.context.cookies()).some((cookie) => cookie.name.includes("-auth-token"))).toBe(true);
+    // A browser is not the app: nothing of the bridge is installed.
+    expect(await web.page.evaluate(() => "linkyoApp" in window)).toBe(false);
     // The security log names the app's device, so "Sign out device" ends both of its sessions.
     const { data: rows } = await service().from("sign_ins").select("device_id, result, session_id").eq("profile_id", account.id).order("at", { ascending: false }).limit(1);
     expect(rows?.[0]).toMatchObject({ device_id: DEVICE, result: "success" });
@@ -158,6 +200,45 @@ test.describe("the iPhone app's web side @real", () => {
     expect(stale.status()).toBe(409);
     expect(await stale.json()).toEqual({ ok: false, error: "conflict", updatedAt: now.updatedAt });
     expect((await stored(account.id)).blocks).toHaveLength(3);
+  });
+
+  test("bridge: in the app, flush() answers the saved version, the route writes on it, reload() shows it without a toast, signOut() ends the session @real", async ({ page }) => {
+    const account = await syncAccount("sync-bridge");
+    await asTheApp(page);
+    await watchConflicts(page);
+    await signIn(page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+
+    // A change the editor has not even handed to the store yet: flush() saves it and answers the new version.
+    await visibility(page, "Erster Link").click();
+    const flushed = (await callApp(page, "flush")) as { updatedAt: string };
+    const afterFlush = await stored(account.id);
+    expect(flushed.updatedAt).toBe(afterFlush.updatedAt);
+    expect(afterFlush.blocks[0]?.visible).toBe(false);
+
+    // The native write builds on that version, then the web view reads the page again.
+    const token = await appToken(account.email);
+    const native = await page.request.post("/api/app/page", { headers: { authorization: `Bearer ${token}` }, data: { baseUpdatedAt: flushed.updatedAt, ops: [{ op: "remove", id: "third" }] } });
+    expect(native.status()).toBe(200);
+    await callApp(page, "reload");
+    await expect(visibility(page, "Dritter Link")).toHaveCount(0);
+    await expect(visibility(page, "Erster Link")).not.toBeChecked();
+    // The next change in the web view saves over the native write: no conflict, no toast.
+    await visibility(page, "Zweiter Link").click();
+    await expect.poll(() => shown(account.id, "second"), { timeout: 15_000 }).toBe(false);
+    expect((await stored(account.id)).blocks.map((block) => block.id)).toEqual(["first", "second"]);
+    expect(await conflictToasts(page)).toBe(0);
+
+    const states = (await appMessages(page)).filter((message) => message.type === "saveState");
+    expect(states.map((message) => message.state)).toContain("saving");
+    expect(states.at(-1)).toEqual({ type: "saveState", state: "saved", updatedAt: (await stored(account.id)).updatedAt });
+    expect(states.some((message) => message.state === "conflict")).toBe(false);
+
+    // Signing out ends the web view's session and tells the app.
+    await callApp(page, "signOut");
+    expect((await appMessages(page)).at(-1)).toEqual({ type: "signedOut" });
+    await page.goto("/de/app");
+    await page.waitForURL("**/de/login**");
   });
 
   test("guard: of two tabs, the stale one's save is refused; it shows the toast and the newest page, the other's change stays @real", async ({ page, browser, baseURL }, info) => {
