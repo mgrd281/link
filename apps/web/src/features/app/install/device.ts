@@ -8,10 +8,12 @@
  * - `later`: that offer was declined in this page load; the browser's menu still has it.
  * - `ios`: iPhone and iPad (Safari, and since iOS 16.4 any browser there): Share › Add to Home Screen.
  * - `macSafari`: Safari 17 or newer on a Mac: File › Add to Dock.
- * - `chromium`: Chrome, Edge, Samsung Internet or Opera that has not offered it (yet). Chrome never offers
- *   an app that is already installed, nor in a private window, and the offer can come later than the
- *   page: if Linkyo is installed, it opens from its icon; if not, the browser's menu installs it.
- * - `other`: none of these (Firefox on a computer, an older Safari).
+ * - `chromium`: a browser whose menu installs a site but that has not offered it (yet): Chrome, Edge and
+ *   Samsung Internet anywhere, and every Android browser (Firefox and Opera there too, under "Install" or
+ *   "Add to Home screen"). Chrome never offers an app that is already installed, nor in a private window,
+ *   and the offer can come later than the page: if Linkyo is installed, it opens from its icon; if not,
+ *   the browser's menu installs it.
+ * - `other`: none of these (Firefox and Opera on a computer, an older Safari).
  */
 export type InstallVariant = "installed" | "prompt" | "later" | "ios" | "macSafari" | "chromium" | "other";
 
@@ -38,8 +40,13 @@ export function isMacSafari(userAgent: string, maxTouchPoints: number): boolean 
   return Number(/Version\/(\d+)/.exec(userAgent)?.[1] ?? 0) >= 17;
 }
 
-/** A browser built on Chromium that can install a site from its menu (iPhone and iPad are checked first). */
-export const isChromium = (userAgent: string): boolean => /Chrome\/|Chromium\/|Edg\/|EdgA\/|SamsungBrowser\/|OPR\//.test(userAgent);
+/**
+ * A browser whose menu installs a site (iPhone and iPad are checked first): on Android every browser with
+ * a manifest-aware menu (Chrome, Edge, Samsung Internet, Firefox, Opera); on a computer Chrome and Edge, but
+ * not Opera, which has no install for web apps there.
+ */
+export const isChromium = (userAgent: string): boolean =>
+  userAgent.includes("Android") || (/Chrome\/|Chromium\/|Edg\//.test(userAgent) && !userAgent.includes("OPR/"));
 
 export function installVariant(facts: DeviceFacts): InstallVariant {
   if (facts.standalone || facts.installed) return "installed";

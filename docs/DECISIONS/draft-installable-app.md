@@ -99,10 +99,12 @@ to install.
    "Installieren" button that opens the browser's own dialog; declined, where the browser's menu still offers it;
    iPhone and iPad (any browser there, since iOS 16.4) three steps with the share glyph; Safari 17+ on a Mac
    "Ablage › Zum Dock hinzufügen"; inside the app (display mode standalone or `navigator.standalone`) "Linkyo ist
-   installiert"; Chrome, Edge, Samsung Internet or Opera without an offer (Chrome never offers an app that is
+   installiert"; Chrome, Edge or Samsung Internet without an offer, and every Android browser (Firefox and
+   Opera there install a site with a manifest from their menu too; Chrome never offers an app that is
    already installed, nor in a private window, and the offer can come after the page) "if Linkyo is installed,
    open it from its icon; if not, the browser's menu installs it, except in a private window"; anything else
-   (Firefox on a computer, an older Safari) a plain sentence that Chrome, Edge and Safari can install it. The
+   (Firefox and Opera on a computer, an older Safari) a plain sentence that Chrome, Edge and Safari can install
+   it. Full-screen display mode does not count as "installed": a normal tab matches it in F11 fullscreen. The
    Arabic texts keep Linkyo, Safari, Mac, Dock, Chrome and Edge in `<bdi>` (rendered with `t.rich`; the sheet's
    title takes rich text). The X of Home's hint is 32 px to look at and a 48 px target on touch screens. Home
    shows a small
@@ -141,6 +143,13 @@ to install.
   and ar; sharing, also through sign-in and into an open window through a stand-in launch queue; the sheet's
   variant per device; axe in three languages, light and dark; the hint once, and its X measured as a touch
   target).
+- One app in three languages: every manifest has the id `/app`. Chrome checks an installed app's manifest
+  about once a day from the pages its owner opens, so an owner who switches language gets that language's
+  name, shortcuts, start address and share target in the installed app; the app follows the language last
+  used.
+- A shortcut or share only brings the window to the front where no launch consumer runs: a window that is
+  still loading (its own launch is the one that opened it), the worker's offline page, and a window showing a
+  creator page under `/u`.
 - Not done, on purpose: window-controls-overlay, push notifications, offline editing, a listing in an app store.
   A dark launch screen waits for a dark manifest colour in browsers.
 - Open: the example pages under `/<locale>/p` use the website's layout, so they link the manifest and Chrome's

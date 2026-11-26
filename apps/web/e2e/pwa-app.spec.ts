@@ -450,6 +450,38 @@ test.describe("install sheet: Chrome and Edge on a computer, Android", () => {
   });
 });
 
+test("every other variant of the install sheet is axe-clean too, in de, en and ar, light and dark", async ({ browser, baseURL }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "the devices are emulated here; one run is enough");
+  test.setTimeout(240_000);
+  const STANDALONE = () => {
+    const real = window.matchMedia.bind(window);
+    window.matchMedia = (query: string) => (/display-mode:\s*standalone/.test(query) ? real("(min-width: 0px)") : real(query));
+  };
+  const variants = [
+    { variant: "chromium", options: {} },
+    { variant: "ios", options: { userAgent: UA.iphone, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
+    { variant: "macSafari", options: { userAgent: UA.macSafari, viewport: { width: 1440, height: 900 } } },
+    { variant: "installed", options: {}, init: STANDALONE },
+  ] as const;
+  for (const { variant, options, ...rest } of variants) {
+    const context = await browser.newContext({ baseURL: baseURL ?? "", ...options });
+    const page = await context.newPage();
+    if ("init" in rest) await page.addInitScript(rest.init);
+    await signedIn(page, "de");
+    for (const locale of LOCALES) {
+      for (const scheme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme: scheme, reducedMotion: "reduce" });
+        const sheet = await openInstallSheet(page, locale);
+        await expect(sheet.locator("[data-install-variant]")).toHaveAttribute("data-install-variant", variant);
+        const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+        const summary = results.violations.map((v) => `${v.id} (${String(v.impact)}): ${String(v.nodes.length)}× — ${v.nodes[0]?.target.join(" ") ?? ""}`);
+        expect(summary, `${variant} ${locale} ${scheme}`).toEqual([]);
+      }
+    }
+    await context.close();
+  }
+});
+
 test.describe("install sheet: iPhone and iPad", () => {
   test.use({ userAgent: UA.iphone, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 

@@ -25,8 +25,11 @@ type InstallWindow = Window & {
 /** Declined in this page load: the offer is used up until the next one. */
 let declined = false;
 
-/** Shown as an installed app: standalone (and the other app display modes), or iOS's home-screen web app. */
-const APP_DISPLAY = "(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui), (display-mode: window-controls-overlay)";
+/**
+ * Shown as an installed app: standalone (and the other app display modes), or iOS's home-screen web app.
+ * Not `fullscreen`: a normal tab matches it while the browser window is in F11 fullscreen.
+ */
+const APP_DISPLAY = "(display-mode: standalone), (display-mode: minimal-ui), (display-mode: window-controls-overlay)";
 
 const notify = () => window.dispatchEvent(new Event(INSTALL_CHANGE_EVENT));
 

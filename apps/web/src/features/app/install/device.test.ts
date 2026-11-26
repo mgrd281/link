@@ -15,6 +15,8 @@ const UA = {
   firefoxMac: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:140.0) Gecko/20100101 Firefox/140.0",
   firefoxWindows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
   samsungAndroid: "Mozilla/5.0 (Linux; Android 14; SM-S921B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/27.0 Chrome/125.0.0.0 Mobile Safari/537.36",
+  firefoxAndroid: "Mozilla/5.0 (Android 14; Mobile; rv:132.0) Gecko/132.0 Firefox/132.0",
+  operaAndroid: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 OPR/90.0.0.0",
   operaWindows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 OPR/126.0.0.0",
   edgeIphone: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 EdgiOS/142.0.0.0 Mobile/15E148 Safari/605.1.15",
 } as const;
@@ -52,9 +54,10 @@ describe("the way to install on this device", () => {
     expect(installVariant(facts(UA.firefoxWindows))).toBe("other");
   });
 
-  it("points Chrome, Edge, Samsung Internet and Opera without an offer to the app's icon or the browser's menu", () => {
+  it("points Chrome, Edge, Samsung Internet and every Android browser without an offer to the app's icon or the browser's menu", () => {
     // No offer: already installed (Chrome never offers it then), a private window, or the offer is still to come.
-    for (const ua of [UA.chromeWindows, UA.edgeMac, UA.chromeAndroid, UA.samsungAndroid, UA.operaWindows]) {
+    // Firefox and Opera on Android install a site with a manifest from their menu too.
+    for (const ua of [UA.chromeWindows, UA.edgeMac, UA.chromeAndroid, UA.samsungAndroid, UA.firefoxAndroid, UA.operaAndroid]) {
       expect(isChromium(ua), ua).toBe(true);
       expect(installVariant(facts(ua)), ua).toBe("chromium");
     }
@@ -62,6 +65,9 @@ describe("the way to install on this device", () => {
     expect(installVariant(facts(UA.iphoneChrome, { maxTouchPoints: 5 }))).toBe("ios");
     expect(installVariant(facts(UA.edgeIphone, { maxTouchPoints: 5 }))).toBe("ios");
     for (const ua of [UA.macSafari18, UA.firefoxMac, UA.iphoneSafari]) expect(isChromium(ua), ua).toBe(false);
+    // Opera on a computer has no install for web apps: it gets the honest "not here".
+    expect(isChromium(UA.operaWindows)).toBe(false);
+    expect(installVariant(facts(UA.operaWindows))).toBe("other");
   });
 
   it("says installed inside the app, whatever the device", () => {
