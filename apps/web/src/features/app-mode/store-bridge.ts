@@ -3,15 +3,17 @@
 import { useEffect } from "react";
 
 import { accountStore, handOverPendingEdits } from "@/features/account/store";
-import type { AccountStore } from "@/features/account/types";
+import type { AccountSnapshot, AccountStore } from "@/features/account/types";
 
 /**
  * The store half of the bridge to the iPhone app (PLAN §1.5, ADR draft-app-sync). Only in app mode
  * (the native shell sets `data-app` on <html> before the first paint) and only in the main frame:
  *
  * - native → web: `window.linkyoApp.flush()` saves everything waiting and answers `{ updatedAt }`, the
- *   page's version the native write builds on; `reload()` reads the page again after that write;
- *   `signOut()` saves, then ends this session (the WebView's own, PLAN D3);
+ *   page's version the native write builds on (an opaque string: sent back exactly as received);
+ *   `reload()` reads the page again after that write; `signOut()` saves, then ends this session (the
+ *   WebView's own, PLAN D3). Right after the web view opens, all three first wait for the store's
+ *   session check: until then "no version" would read as signed out, and a sign-out would end nothing;
  * - web → native: `saveState { state, updatedAt }` whenever the save state changes ("conflict": a save
  *   was refused because the page changed elsewhere, and the newer version is shown now), and
  *   `signedOut` when the session ends.
@@ -39,6 +41,8 @@ export type BridgeStore = Pick<AccountStore, "demo" | "subscribe" | "getSnapshot
 
 /** How long `signOut()` waits for the session to end (offline, it ends only on this device: native then clears the WebView's data). */
 export const SIGN_OUT_WAIT = 10_000;
+/** How long the bridge waits for the store's first session check (the web view has just opened). */
+export const READY_WAIT = 10_000;
 
 /** In the iPhone app (the native shell marks <html> before the first paint), in the page itself rather than a frame. */
 export function inApp(win: AppWindow): boolean {
@@ -54,24 +58,45 @@ export function postToApp(win: AppWindow, message: StoreMessage): void {
   }
 }
 
-/** Saves what is waiting (best effort), then signs out and waits until the session has ended here. */
-async function signOut(win: AppWindow, store: BridgeStore, handOver: () => void): Promise<void> {
-  handOver();
-  // Signing out never waits on a save that cannot succeed: what was saved stays, the rest is gone with the session.
-  await store.flush().catch(() => undefined);
-  if (store.getSnapshot().status !== "signedIn") return;
-  await new Promise<void>((resolve, reject) => {
+type Status = AccountSnapshot["status"];
+
+/**
+ * Resolves once the store's status is one `reached` accepts (checked after `begin` and on every
+ * change), and rejects with `reason` after `limit` ms.
+ */
+function until(win: AppWindow, store: BridgeStore, reached: (status: Status) => boolean, reason: string, limit: number, begin: () => void = () => undefined): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     let unsubscribe: (() => void) | null = null;
     const timer = win.setTimeout(() => {
       unsubscribe?.();
-      reject(new Error("signOutTimeout"));
-    }, SIGN_OUT_WAIT);
-    unsubscribe = store.subscribe(() => {
-      if (store.getSnapshot().status !== "signedOut") return;
+      reject(new Error(reason));
+    }, limit);
+    const check = () => {
+      if (!reached(store.getSnapshot().status)) return;
       win.clearTimeout(timer);
       unsubscribe?.();
       resolve();
-    });
+    };
+    unsubscribe = store.subscribe(check);
+    begin();
+    check();
+  });
+}
+
+/** The store knows whether there is a session: at once, except right after the web view opened. */
+const ready = (win: AppWindow, store: BridgeStore): Promise<void> =>
+  store.getSnapshot().status === "loading" ? until(win, store, (status) => status !== "loading", "storeLoading", READY_WAIT) : Promise.resolve();
+
+/** Saves what is waiting (best effort), then signs out and waits until the session has ended here. */
+async function signOut(win: AppWindow, store: BridgeStore, handOver: () => void): Promise<void> {
+  handOver();
+  // Still loading after the wait: signed in or not, the session (if any) is ended all the same.
+  if (store.getSnapshot().status === "loading") await ready(win, store).catch(() => undefined);
+  if (store.getSnapshot().status === "signedOut") return;
+  // Signing out never waits on a save that cannot succeed: what was saved stays, the rest is gone with the session.
+  if (store.getSnapshot().status === "signedIn") await store.flush().catch(() => undefined);
+  if (store.getSnapshot().status === "signedOut") return;
+  await until(win, store, (status) => status === "signedOut", "signOutTimeout", SIGN_OUT_WAIT, () => {
     store.logOut();
   });
 }
@@ -86,12 +111,15 @@ export function installStoreBridge(win: AppWindow, store: BridgeStore = accountS
   const app = win.linkyoApp;
   const methods = {
     // The editor's change from the last moment goes to the store first, then everything is saved.
-    flush: (): Promise<{ updatedAt: string | null }> => {
+    // `{ updatedAt: null }` means signed out; a store still loading after the wait rejects instead.
+    flush: async (): Promise<{ updatedAt: string | null }> => {
       handOver();
+      await ready(win, store);
       return store.flush();
     },
-    reload: (): Promise<void> => {
+    reload: async (): Promise<void> => {
       handOver();
+      await ready(win, store);
       return store.reload();
     },
     signOut: (): Promise<void> => signOut(win, store, handOver),

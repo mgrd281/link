@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AccountSnapshot } from "@/features/account/types";
 
-import { installStoreBridge, postToApp, SIGN_OUT_WAIT, type AppWindow } from "./store-bridge";
+import { installStoreBridge, postToApp, READY_WAIT, SIGN_OUT_WAIT, type AppWindow } from "./store-bridge";
 
 /**
  * The store half of the iPhone app's bridge, against a fake window (the app's object and WebKit's
@@ -187,6 +187,82 @@ describe("store bridge", () => {
     const refused = expect((win.linkyoApp as unknown as App).signOut()).rejects.toThrow("signOutTimeout");
     await vi.advanceTimersByTimeAsync(SIGN_OUT_WAIT + 1);
     await refused;
+  });
+
+  describe("right after the web view opened (the store is still loading)", () => {
+    const loading: AccountSnapshot = { status: "loading" };
+
+    it("flush() waits for the session check, then answers the version (never null for 'not known yet')", async () => {
+      const win = fakeWindow();
+      const store = fakeStore(loading);
+      installStoreBridge(win, store);
+      let answer: { updatedAt: string | null } | null = null;
+      const flushed = (win.linkyoApp as unknown as App).flush().then((value) => (answer = value));
+      await vi.advanceTimersByTimeAsync(100);
+      expect(store.flush).not.toHaveBeenCalled();
+      expect(answer).toBeNull();
+      store.set(signedIn());
+      await vi.advanceTimersByTimeAsync(0);
+      expect(store.flush).toHaveBeenCalledTimes(1);
+      store.land("v2");
+      await flushed;
+      expect(answer).toEqual({ updatedAt: "v2" });
+    });
+
+    it("flush() and reload() reject when the store never finishes loading, instead of answering 'signed out'", async () => {
+      const win = fakeWindow();
+      const store = fakeStore(loading);
+      installStoreBridge(win, store);
+      const app = win.linkyoApp as unknown as App;
+      const flushed = expect(app.flush()).rejects.toThrow("storeLoading");
+      const reloaded = expect(app.reload()).rejects.toThrow("storeLoading");
+      await vi.advanceTimersByTimeAsync(READY_WAIT + 1);
+      await flushed;
+      await reloaded;
+      expect(store.flush).not.toHaveBeenCalled();
+      expect(store.reload).not.toHaveBeenCalled();
+    });
+
+    it("signOut() waits for the session check, then saves and ends the session", async () => {
+      const win = fakeWindow();
+      const store = fakeStore(loading);
+      installStoreBridge(win, store);
+      const done = (win.linkyoApp as unknown as App).signOut();
+      await vi.advanceTimersByTimeAsync(100);
+      expect(store.logOut).not.toHaveBeenCalled();
+      store.set(signedIn());
+      await vi.advanceTimersByTimeAsync(0);
+      store.land("v2");
+      await vi.advanceTimersByTimeAsync(10);
+      await done;
+      expect(store.flush).toHaveBeenCalledTimes(1);
+      expect(store.logOut).toHaveBeenCalledTimes(1);
+      expect(store.getSnapshot().status).toBe("signedOut");
+    });
+
+    it("signOut() ends nothing more when the check finds no session", async () => {
+      const win = fakeWindow();
+      const store = fakeStore(loading);
+      installStoreBridge(win, store);
+      const done = (win.linkyoApp as unknown as App).signOut();
+      store.set({ status: "signedOut" });
+      await vi.advanceTimersByTimeAsync(0);
+      await done;
+      expect(store.flush).not.toHaveBeenCalled();
+      expect(store.logOut).not.toHaveBeenCalled();
+    });
+
+    it("signOut() still ends the session when the store is loading after the wait", async () => {
+      const win = fakeWindow();
+      const store = fakeStore(loading);
+      installStoreBridge(win, store);
+      const done = (win.linkyoApp as unknown as App).signOut();
+      await vi.advanceTimersByTimeAsync(READY_WAIT + 10);
+      await done;
+      expect(store.flush).not.toHaveBeenCalled();
+      expect(store.logOut).toHaveBeenCalledTimes(1);
+      expect(store.getSnapshot().status).toBe("signedOut");
+    });
   });
 
   it("never throws when the app's handler is gone", () => {

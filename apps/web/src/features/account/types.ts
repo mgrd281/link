@@ -184,7 +184,8 @@ export interface AccountStore {
   updateSite(update: (site: Site) => Site): Result;
   /**
    * Saves what is waiting now and answers the page's version on the server (`updatedAt`, null when
-   * signed out; the demo answers its own). Rejects when the change could not be saved. A save refused
+   * signed out or not known yet: callers wait until the status leaves "loading", as the iPhone app's
+   * bridge does; the demo answers its own). Rejects when the change could not be saved. A save refused
    * because the page changed elsewhere loads the newer version first and answers that one.
    */
   flush(): Promise<{ updatedAt: string | null }>;
