@@ -54,8 +54,9 @@ export async function GET(request: NextRequest) {
   const { data: profile, error: readError } = await service.from("profiles").select("status").eq("id", data.user.id).maybeSingle<{ status: string }>();
   if (readError) {
     // A failed read says nothing about the account (never "suspended"): no session, nothing logged as
-    // failed, and the login page asks to try again.
-    if (data.session) await service.auth.admin.signOut(data.session.access_token).catch(() => undefined);
+    // failed, and the login page asks to try again. Only the session this token just opened ends
+    // (scope local): the account's other sessions, the iPhone app's own among them, stay.
+    if (data.session) await service.auth.admin.signOut(data.session.access_token, "local").catch(() => undefined);
     await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
     return back(`/${locale}/login?link=retry`);
   }

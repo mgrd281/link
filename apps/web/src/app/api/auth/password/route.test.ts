@@ -15,6 +15,7 @@ interface State {
   /** Reading the profile fails (the database could not be reached). */
   readFails: boolean;
   logged: string[];
+  /** Sessions ended on the server: "<token> <scope>". */
   revoked: string[];
   firstSites: number;
 }
@@ -48,8 +49,9 @@ vi.mock("@/lib/supabase/server", () => ({
     }),
     auth: {
       admin: {
-        signOut: (token: string) => {
-          state.revoked.push(token);
+        // auth-js ends every session of the account when no scope is given (its default is global).
+        signOut: (token: string, scope?: string) => {
+          state.revoked.push(`${token} ${scope ?? "global"}`);
           return Promise.resolve({ error: null });
         },
       },
@@ -98,7 +100,7 @@ describe("POST /api/auth/password", () => {
   it.each([["suspended"], ["deleted"], [null]])("profile status %s: suspended, the session ended, a failed sign-in in the log", async (status) => {
     state.status = status;
     expect(await signIn()).toEqual({ status: 200, body: { ok: false, error: "suspended" }, store: "no-store" });
-    expect(state.revoked).toEqual(["a.e30.b"]);
+    expect(state.revoked).toEqual(["a.e30.b global"]);
     expect(state.logged).toEqual(["failed"]);
     expect(state.firstSites).toBe(0);
   });
@@ -106,7 +108,8 @@ describe("POST /api/auth/password", () => {
   it("the profile could not be read: the generic server error, never suspended; the session ended, nothing logged as failed", async () => {
     state.readFails = true;
     expect(await signIn()).toEqual({ status: 502, body: { ok: false, error: "serverError" }, store: "no-store" });
-    expect(state.revoked).toEqual(["a.e30.b"]);
+    // Only that one session (scope local): the account's other sessions, the app's own among them, stay.
+    expect(state.revoked).toEqual(["a.e30.b local"]);
     expect(state.logged).toEqual([]);
     expect(state.firstSites).toBe(0);
   });

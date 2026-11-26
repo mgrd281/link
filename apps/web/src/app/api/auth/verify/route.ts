@@ -50,7 +50,8 @@ export async function POST(request: Request) {
   const { data: profile, error: readError } = await service.from("profiles").select("status").eq("id", data.user.id).maybeSingle<{ status: string }>();
   if (readError) {
     // A failed read says nothing about the account (never "suspended"): no session, try again.
-    await service.auth.admin.signOut(data.session.access_token).catch(() => undefined);
+    // Only the session just opened ends (scope local): the account's other devices stay signed in.
+    await service.auth.admin.signOut(data.session.access_token, "local").catch(() => undefined);
     return fail("serverError", 502);
   }
   if (profile?.status !== "active") {
