@@ -6,6 +6,7 @@ import { setRequestLocale } from "next-intl/server";
 
 import { CreatorLegal, hasCreatorLegal } from "@/features/creator/creator-legal";
 import { loadPublicPage } from "@/features/creator/public-page";
+import { browserThemeColor, rootBackground } from "@/features/directions/poster/browser-top";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { pageUrl } from "@/lib/page-url";
 import { siteUrl } from "@/lib/site-url";
@@ -57,7 +58,8 @@ export async function generateViewport({ params }: Props): Promise<Viewport> {
   const base: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
   if (!found) return base;
   const theme = resolveCreatorTheme(found.theme, { rtlScript: found.page.profile.locale === "ar" });
-  return { ...base, themeColor: theme.palette.bg, colorScheme: colorSchemeOf(theme.palette.mode) };
+  // The page's color, or on phones and tablets the bleed hero's own (features/directions/poster/browser-top.ts).
+  return { ...base, themeColor: browserThemeColor(found.page.profile, theme), colorScheme: colorSchemeOf(theme.palette.mode) };
 }
 
 /**
@@ -75,7 +77,7 @@ export default async function CreatorRoute({ params }: Props) {
   const site = siteUrl().origin;
   return (
     <>
-      <style>{`html,body{background-color:${theme.palette.bg}}`}</style>
+      <style>{rootBackground(page.profile, theme)}</style>
       <PosterRenderer
         page={page}
         theme={theme}

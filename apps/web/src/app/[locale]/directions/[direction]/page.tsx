@@ -6,6 +6,7 @@ import { Suspense } from "react";
 
 import { DirectionRenderer } from "@/features/directions/direction-renderer";
 import { defaultTheme, loadSamplePage } from "@/features/directions/load";
+import { browserThemeColor, rootBackground } from "@/features/directions/poster/browser-top";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { portfolioSample, portfolioSampleLong } from "@/features/directions/poster/sample";
 import { isCreatorPreset } from "@/features/directions/preset";
@@ -52,10 +53,13 @@ async function resolveRoute({ params, searchParams }: RouteProps) {
   return { locale, direction, page, theme, portfolio: portfolio ? { base: `/${locale}/directions/poster/work`, suffix } : null };
 }
 
-/** Browser chrome (status bar, address bar, overscroll) takes the creator's page color. */
+/**
+ * Browser chrome (status bar, address bar, overscroll) takes the creator's page color, or on phones
+ * and tablets the bleed hero's own (./browser-top.ts).
+ */
 export async function generateViewport(props: RouteProps): Promise<Viewport> {
-  const { theme } = await resolveRoute(props);
-  return { themeColor: theme.palette.bg, colorScheme: colorSchemeOf(theme.palette.mode) };
+  const { direction, page, theme } = await resolveRoute(props);
+  return { themeColor: direction === "poster" ? browserThemeColor(page.profile, theme) : theme.palette.bg, colorScheme: colorSchemeOf(theme.palette.mode) };
 }
 
 export default async function CreatorPageRoute(props: RouteProps) {
@@ -68,8 +72,8 @@ export default async function CreatorPageRoute(props: RouteProps) {
 
   return (
     <>
-      {/* Safari 26 tints its toolbars from the page background, so the root must match the creator page. */}
-      <style>{`html,body{background-color:${theme.palette.bg}}`}</style>
+      {/* Safari 26 tints its toolbars from the page background, so the root must match the top of the creator page. */}
+      <style>{direction === "poster" ? rootBackground(page.profile, theme) : `html,body{background-color:${theme.palette.bg}}`}</style>
       {portfolio ? (
         <PosterRenderer page={page} theme={theme} dock={dock} projectBase={portfolio.base} projectSuffix={portfolio.suffix} />
       ) : (

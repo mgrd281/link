@@ -273,5 +273,13 @@ modern and fitting. Template-level again (Sevag's clips aside); every other temp
 - **Measured** on the demo build with the fictional portfolio sample, reduced motion: 390 px the portrait
   130 × 163 beside facts 204 px wide; 320 px 102 × 128 beside 162 px, every value wrapping between
   words; 1440 px 281 × 351 beside 434 px; no horizontal scroll, no shadow; Arabic mirrored.
+- **The browser's top area takes the hero's colour.** On a phone the bleed hero opens at the top edge
+  with a dark picture, but the status bar and Safari 26's bar took the light page colour: a white band
+  above the picture. Below the wide canvas (`width < layout.work`) the page's `theme-color` and the
+  document's background (html, body: what Safari 26 tints from) are now the hero's own colour: the ink
+  of its ground and veil over a picture, the accent over the initials
+  (`features/directions/poster/browser-top.ts`, used by `/<username>`, `/p/<slug>` and the poster
+  preview). The page below keeps its light ground (its root paints `bg-creator-bg`); the wide canvas
+  and every other template keep the page colour.
 
 **Status.** Accepted.

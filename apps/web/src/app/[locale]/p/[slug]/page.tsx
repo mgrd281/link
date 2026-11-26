@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { browserThemeColor, rootBackground } from "@/features/directions/poster/browser-top";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { previewChrome, sampleLabel } from "@/features/previews/preview-chrome";
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
@@ -78,7 +79,8 @@ export async function generateViewport({ params }: Props): Promise<Viewport> {
   const found = previewPage(slug, locale);
   if (!found) return {};
   const theme = resolveCreatorTheme(found.preview.theme, { rtlScript: locale === "ar" });
-  return { themeColor: theme.palette.bg, colorScheme: colorSchemeOf(theme.palette.mode) };
+  // The page's color, or on phones and tablets the bleed hero's own (features/directions/poster/browser-top.ts).
+  return { themeColor: browserThemeColor(found.page.profile, theme), colorScheme: colorSchemeOf(theme.palette.mode) };
 }
 
 /**
@@ -106,7 +108,8 @@ export default async function PreviewRoute({ params, searchParams }: Props) {
   const page = turn ? withRotationClip(found.page, turn.clip) : found.page;
   return (
     <>
-      <style>{`html,body{background-color:${theme.palette.bg}}`}</style>
+      {/* The bleed hero's label lies over the picture (labelInFlow), so its colour is the top's. */}
+      <style>{rootBackground(page.profile, theme)}</style>
       {chrome.above}
       <PosterRenderer page={page} theme={theme} overlay={chrome.overlay} dock={chrome.dock} projectBase={`/${locale}/p/${slug}`} />
       {turn ? <RotationAddress next={turn.next.key} /> : null}
