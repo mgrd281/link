@@ -55,6 +55,8 @@ const tooLarge = (error: { code?: string; message?: string }) => error.code === 
  * - Bearer only (`requireUser`); the read and the write run as the account, under row-level security.
  * - The write happens only while the row still has `baseUpdatedAt` (the version the app saw, from its
  *   own read or `window.linkyoApp.flush()`): otherwise 409 with the current `updatedAt`, nothing written.
+ *   It is an opaque string, sent back exactly as received: parsed into a date and written out again
+ *   (milliseconds, where Postgres keeps microseconds) it never matches.
  * - 422 for more than 20 operations, a body the schema refuses, a link that is no address, a picture
  *   that is not the account's own upload, an unknown or doubled block id, a position past the end, or
  *   a page the blocks schema would refuse; 413 above 64 KB; 403 for a suspended account; 409 without

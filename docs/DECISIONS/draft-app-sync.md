@@ -29,7 +29,9 @@ view cannot share one session.
    - 401 without a valid token; 409 in a demo build or without the server key; 502 when Supabase cannot make the
      link. Never a 500. Neither the token, the link nor the address is logged.
    - The link is single-use and lives as long as Supabase's OTP (10 minutes locally). Making it replaces an e-mailed
-     code that is still open for this address (only the newest token works, ADR 0035).
+     code that is still open for this address and any earlier link (only the newest token works, ADR 0035). **The
+     app keeps one hand-off in flight:** it opens a link before it asks for the next one, since a second request
+     makes the first link fail (`/<locale>/login?link=expired`).
    - The app repeats the hand-off whenever its web view reaches `/<locale>/login`; a 401 means the app's own session
      is gone and it signs out natively.
 
@@ -47,6 +49,9 @@ view cannot share one session.
 
    - Answer 200 `{ ok, updatedAt, changed: [ids], added: [ids] }`; `changed` in the order of the operations,
      `added` the new blocks' ids in the order of the `add`/`addImage` operations.
+   - **`updatedAt` and `baseUpdatedAt` are opaque strings.** The app stores the value exactly as `flush()` or this
+     route answered it and sends it back verbatim; it never parses it. Postgres keeps microseconds, Swift's `Date`
+     and `ISO8601DateFormatter` keep milliseconds, so a value parsed and written out again never matches (409).
    - `add`: the web's own code: `detectLink` (tracking parameters off), `blockFromLink` (no sample pictures), placed
      where the Add sheet places it (`insertAt`: the top, under the social icons, in the order sent), then the
      platform details from `lookupLinkMetadata`, as `/api/link-metadata` gives them to the editor, patched with
@@ -69,7 +74,24 @@ view cannot share one session.
 3. **The save guard in the web store** (`SupabaseAccountStore`).
    - Every save, and the keepalive save when a tab is hidden or closed, is `update … where profile_id = me and
      updated_at = <the version this tab read or last saved>`. A successful save answers the new version, which the
-     next save builds on; saves stay one at a time, so a tab never conflicts with itself.
+     next save builds on; saves stay one at a time, so a tab never conflicts with itself. An address change in this
+     tab rewrites the row too (`change_username`); the tab then takes that version as its base.
+   - **The keepalive save is the last code a closing tab runs**: when it is refused, nothing sends it again. While
+     one of this tab's saves is still on its way, or one went out whose answer never came, that save may land first
+     with the version this tab does not know yet. So in exactly that moment the keepalive is guarded with
+     `updated_at >= <base>` instead of `=`. Either order then keeps the last change: the save lands first and the
+     keepalive follows, or the keepalive lands first and the save (still guarded exactly) changes nothing. When both
+     land in a tab that stays open (a phone switching apps), their answers may come back in either order; writes
+     are numbered as they are sent, and an older one's late answer never moves the base back. The price,
+     taken on purpose: a write from elsewhere that landed after `<base>` is overwritten in that moment instead of
+     refused. What is still not kept: two keepalives on their way at once (hidden, back, changed, hidden again, all
+     while the first is still travelling) that reach the database in reverse order, where the older one wins; and a
+     change made after the team gave the badge (a version this tab has not seen) in a tab that closes before its
+     save, refused as this tab's own and sent again, went through: the keepalive is refused as stale. A
+     database function `save_site(content, base, pending)` that writes when the row is at `base` or holds what is
+     on its way would close all three without the window; it needs a migration and is a follow-up.
+   - Signing out, the data export and the deletion first save until nothing waits, a refused save of this tab's own
+     sent again included.
    - A save that changes no row is read back to decide:
      - the row still has the same version: the database refused the write (a suspended account); retried like any
        failed save, never a conflict;
@@ -97,6 +119,10 @@ view cannot share one session.
      - `reload(): Promise<void>`: saves what waits, reads the row again and starts the editor over from it.
      - `signOut(): Promise<void>`: saves (best effort), then ends the web view's session (`scope: "local"`). Rejects
        after 10 s offline; the app then clears the web view's data anyway.
+     - Right after the web view opens, the store is still checking the session. All three wait for that check (at
+       most 10 s) before they answer: `flush()` answers `{ updatedAt: null }` only for a web view that is signed
+       out, and rejects (`storeLoading`) when the check never ends; `signOut()` ends the session even then, so it is
+       revoked on the server, not only deleted from the cookie.
    - To the app (`webkit.messageHandlers.linkyo`, never throwing): `{ type: "saveState", state: "saving" | "saved" |
      "error" | "conflict", updatedAt }` whenever it changes, and `{ type: "signedOut" }` when the session ends (also
      after a deletion inside the web view).
@@ -106,7 +132,10 @@ view cannot share one session.
 **Limits.** At most 20 operations and 64 KB per call; a link up to 2048 characters; the page's own limits (200 blocks,
 the project and contact rules, under 1 MB per row: 422 `pageTooLarge`). **Rate limiting** is WP4.4's: it should cover
 `/api/auth/handoff` (each call mints a sign-in token) and `/api/app/page` (each `add` may ask a platform for details,
-and each write drops a cached page).
+and each write drops a cached page), per account and per IP. The hand-off is the one new way to turn a leaked access
+token (about an hour) into a long-lived session, under a device id the caller chooses. WP4.4 should also consider
+handing off only a token whose session (`session_id` in its JWT) has a `sign_ins` row with the same `deviceId`; the
+app's native sign-in writes both.
 
 **What a browser user notices.** Nothing, in one tab: rapid edits, slow networks, a reload, an address change or the
 team's badge never conflict. With two tabs (or the app) changing the page, the tab that saves later shows the newer

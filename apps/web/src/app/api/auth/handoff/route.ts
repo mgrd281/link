@@ -36,7 +36,9 @@ const DASHBOARD = /^\/(?:de|en|ar)\/app(?:\/|$)/;
  *   or the server's key are missing (a demo build), 403 for a suspended account or a blocked address
  *   (the same refusals as /api/auth/verify).
  * - The link is single-use and expires with Supabase's OTP lifetime; making it sends no e-mail, but it
- *   replaces an e-mailed code that is still open for this address. Neither the token nor the link is logged.
+ *   replaces an e-mailed code that is still open for this address, and the previous link: the app
+ *   asks for one hand-off at a time and opens each link before asking again. Neither the token nor the
+ *   link is logged.
  */
 export async function POST(request: Request) {
   const serviceKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
