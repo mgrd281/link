@@ -17,12 +17,14 @@ interface State {
   logged: { deviceId: string; result: string }[];
   /** The account's `profiles.status`; `null`: no profile row. */
   status: string | null;
+  /** Reading the profile fails (the database could not be reached). */
+  readFails: boolean;
   revoked: string[];
   cookiesCleared: number;
   firstSites: number;
 }
 
-const state = vi.hoisted((): State => ({ enabled: true, expired: false, logged: [], status: "active", revoked: [], cookiesCleared: 0, firstSites: 0 }));
+const state = vi.hoisted((): State => ({ enabled: true, expired: false, logged: [], status: "active", readFails: false, revoked: [], cookiesCleared: 0, firstSites: 0 }));
 
 vi.mock("@/lib/supabase/config", () => ({
   get supabaseEnabled() {
@@ -48,7 +50,16 @@ vi.mock("@/lib/supabase/server", () => ({
     }),
   serviceSupabase: () => ({
     from: () => ({
-      select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: state.status === null ? null : { status: state.status }, error: null }) }) }),
+      select: () => ({
+        eq: () => ({
+          maybeSingle: () =>
+            Promise.resolve(
+              state.readFails
+                ? { data: null, error: { message: "TypeError: fetch failed", code: "" } }
+                : { data: state.status === null ? null : { status: state.status }, error: null },
+            ),
+        }),
+      }),
     }),
     auth: {
       admin: {
@@ -84,6 +95,7 @@ beforeEach(() => {
   state.expired = false;
   state.logged = [];
   state.status = "active";
+  state.readFails = false;
   state.revoked = [];
   state.cookiesCleared = 0;
   state.firstSites = 0;
@@ -125,6 +137,24 @@ describe("GET /api/auth/confirm: a suspended account", () => {
   });
 });
 
+describe("GET /api/auth/confirm: the account could not be read", () => {
+  // A failed read says nothing about the account: before, it read as "not active" and the login page
+  // said "suspended", and the iPhone app's web view stopped handing off for an account that is fine.
+  it.each([["de"], ["ar"]])("no session, no failed sign-in in the log, and the login page asks to try again (%s)", async (locale) => {
+    state.readFails = true;
+    const response = await open({ token_hash: "h", type: "magiclink", next: `/${locale}/app`, device: "dev_0123456789ab" });
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location") ?? "");
+    expect(`${location.pathname}${location.search}`).toBe(`/${locale}/login?link=retry`);
+    // The session the link just opened is ended, on the server and in this browser's cookies.
+    expect(state.revoked).toEqual(["a.e30.b"]);
+    expect(state.cookiesCleared).toBe(1);
+    expect(state.logged).toEqual([]);
+    expect(state.firstSites).toBe(0);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+});
+
 describe("GET /api/auth/confirm: never cached", () => {
   // Each answer is for one single-use token and sets (or ends) a session: no browser or cache in
   // between may keep it, also not a redirect to the login page.
@@ -133,6 +163,7 @@ describe("GET /api/auth/confirm: never cached", () => {
     ["an expired link", () => (state.expired = true), { token_hash: "h", type: "magiclink", next: "/en/app" }, "/en/login?link=expired"],
     ["no token and no code", () => undefined, { next: "/de/app" }, "/de/login?link=expired"],
     ["a suspended account", () => (state.status = "suspended"), { token_hash: "h", type: "magiclink", next: "/ar/app" }, "/ar/login?link=suspended"],
+    ["the account could not be read", () => (state.readFails = true), { token_hash: "h", type: "magiclink", next: "/en/app" }, "/en/login?link=retry"],
     ["a demo build", () => (state.enabled = false), { token_hash: "h", type: "magiclink", next: "/de/app" }, "/de/login"],
   ];
 

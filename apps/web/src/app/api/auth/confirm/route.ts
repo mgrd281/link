@@ -24,7 +24,8 @@ const deviceOf = (value: string | null): string => (value !== null && DEVICE_ID.
  * page and continues in the app. Works on any device:
  * the token is in the link, nothing has to be remembered by the browser that asked for it.
  * A suspended account is refused as `/api/auth/verify` and `/api/auth/password` refuse it: the new
- * session is ended at once, the sign-in is logged as failed, and the login page says "suspended".
+ * session is ended at once, the sign-in is logged as failed, and the login page says "suspended". An
+ * account that could not be read gets no session either, but the login page asks to try again.
  */
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -50,7 +51,14 @@ export async function GET(request: NextRequest) {
   const service = serviceSupabase();
   const place = requestPlace(request.headers);
   const device = { device: parseUserAgent(request.headers.get("user-agent") ?? ""), deviceId: deviceOf(url.searchParams.get("device")) };
-  const { data: profile } = await service.from("profiles").select("status").eq("id", data.user.id).maybeSingle<{ status: string }>();
+  const { data: profile, error: readError } = await service.from("profiles").select("status").eq("id", data.user.id).maybeSingle<{ status: string }>();
+  if (readError) {
+    // A failed read says nothing about the account (never "suspended"): no session, nothing logged as
+    // failed, and the login page asks to try again.
+    if (data.session) await service.auth.admin.signOut(data.session.access_token).catch(() => undefined);
+    await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+    return back(`/${locale}/login?link=retry`);
+  }
   if (profile?.status !== "active") {
     if (data.session) await service.auth.admin.signOut(data.session.access_token).catch(() => undefined);
     // The cookies verifyOtp just wrote go too: this browser keeps no session of the account.

@@ -32,10 +32,11 @@ export function LoginForm() {
   const [withPassword, setWithPassword] = useState(false);
   const [password, setPassword] = useState("");
   const leaving = useLeaveWhenSignedIn();
-  // Back from an email link that no longer works (expired or used) or whose account is suspended
-  // (/api/auth/confirm): say so, in the words the code sign-in uses, until the next try.
+  // Back from an email link that no longer works (expired or used), whose account is suspended, or
+  // whose sign-in could not finish (the account could not be read: /api/auth/confirm): say so, in the
+  // words the code sign-in uses, until the next try.
   const link = useSearchParam("link");
-  const linkError = link === "expired" ? "linkExpired" : link === "suspended" ? "suspended" : null;
+  const linkError = link === "expired" ? "linkExpired" : link === "suspended" ? "suspended" : link === "retry" ? "linkRetry" : null;
 
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();

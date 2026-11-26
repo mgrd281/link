@@ -1,6 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
+import ar from "../src/messages/ar.json" with { type: "json" };
+import de from "../src/messages/de.json" with { type: "json" };
+import en from "../src/messages/en.json" with { type: "json" };
 import { enterDemoCode } from "./auth";
 
 /**
@@ -200,6 +203,21 @@ test.describe("accounts", () => {
     await expect(page.getByText("5 blocks")).toBeVisible();
     await expect(page.getByText("Directions: Hauptstraße 5, Berlin").first()).toBeVisible();
     await expect(page.getByText("Call", { exact: true }).first()).toBeVisible();
+  });
+
+  test("a link whose sign-in could not finish (/api/auth/confirm: ?link=retry) asks to try again, in de, en and ar", async ({ page }) => {
+    // The account could not be read: no session, and never "suspended", which would read as final.
+    for (const [locale, m] of [["de", de], ["en", en], ["ar", ar]] as const) {
+      await page.goto(`/${locale}/login?link=retry`);
+      await expect(page.getByText(m.auth.errors.linkRetry, { exact: true })).toBeVisible();
+      await expect(page.getByText(m.auth.errors.suspended, { exact: true })).toHaveCount(0);
+    }
+    expect(await page.locator("html").getAttribute("dir")).toBe("rtl");
+    // The other two words stay as they were.
+    await page.goto("/de/login?link=expired");
+    await expect(page.getByText(de.auth.errors.linkExpired, { exact: true })).toBeVisible();
+    await page.goto("/de/login?link=suspended");
+    await expect(page.getByText(de.auth.errors.suspended, { exact: true })).toBeVisible();
   });
 
   test("old password links lead to sign-in, and an unknown email gets the same answer", async ({ page }) => {

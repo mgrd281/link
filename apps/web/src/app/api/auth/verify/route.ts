@@ -47,7 +47,12 @@ export async function POST(request: Request) {
     return fail("invalidCode");
   }
 
-  const { data: profile } = await service.from("profiles").select("status").eq("id", data.user.id).maybeSingle<{ status: string }>();
+  const { data: profile, error: readError } = await service.from("profiles").select("status").eq("id", data.user.id).maybeSingle<{ status: string }>();
+  if (readError) {
+    // A failed read says nothing about the account (never "suspended"): no session, try again.
+    await service.auth.admin.signOut(data.session.access_token).catch(() => undefined);
+    return fail("serverError", 502);
+  }
   if (profile?.status !== "active") {
     await service.auth.admin.signOut(data.session.access_token).catch(() => undefined);
     await recordSignIn(service, { email, result: "failed", place, device: input });

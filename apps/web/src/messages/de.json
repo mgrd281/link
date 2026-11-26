@@ -1314,6 +1314,7 @@
       "blocked": "Von dieser Verbindung aus ist gerade keine Anmeldung möglich. Versuch es über ein anderes Netz oder wende dich an den Support.",
       "serverError": "Gerade klappt die Verbindung zu Linkyo nicht. Versuch es in einem Moment noch einmal.",
       "linkExpired": "Dieser Link ist abgelaufen oder wurde schon benutzt. Fordere einfach einen neuen Code an.",
+      "linkRetry": "Die Anmeldung hat gerade nicht geklappt. Bitte versuch es noch einmal.",
       "invalidCode": "Dieser Code passt nicht. Prüfe die Ziffern oder fordere einen neuen Code an.",
       "wrongPassword": "E-Mail oder Passwort stimmt nicht.",
       "passwordRequired": "Bitte gib dein Passwort ein.",

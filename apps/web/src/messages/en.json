@@ -1314,6 +1314,7 @@
       "blocked": "Signing in isn't possible from this connection right now. Try another network or contact support.",
       "serverError": "We can't reach Linkyo right now. Try again in a moment.",
       "linkExpired": "This link has expired or was already used. Just ask for a new code.",
+      "linkRetry": "Signing in didn't work just now. Please try again.",
       "invalidCode": "This code doesn't match. Check the digits or ask for a new code.",
       "wrongPassword": "The e-mail or password is not right.",
       "passwordRequired": "Please enter your password.",
