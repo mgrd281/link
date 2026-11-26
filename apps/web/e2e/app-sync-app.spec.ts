@@ -105,6 +105,30 @@ const callApp = (page: Page, method: "flush" | "reload" | "signOut") =>
     return answer ?? null;
   }, method);
 
+/**
+ * A slow network back: the next page save reaches the database at once, but its answer is held for
+ * `ms`. `sent` counts the saves held (one at most).
+ */
+async function holdNextSave(page: Page, ms: number) {
+  const held = { sent: 0 };
+  await page.route(
+    (url) => url.pathname.endsWith("/rest/v1/sites"),
+    async (route) => {
+      if (route.request().method() !== "PATCH") {
+        await route.continue();
+        return;
+      }
+      held.sent += 1;
+      const response = await route.fetch();
+      await new Promise((resolve) => setTimeout(resolve, ms));
+      // The page may be gone by now (closed): nobody is left to read the answer.
+      await route.fulfill({ response }).catch(() => undefined);
+    },
+    { times: 1 },
+  );
+  return held;
+}
+
 /** A second browser for the same account, with this project's screen. */
 async function secondBrowser(browser: Browser, info: TestInfo, baseURL: string | undefined) {
   const { viewport, userAgent, isMobile, hasTouch, deviceScaleFactor } = info.project.use;
@@ -295,8 +319,11 @@ test.describe("the iPhone app's web side @real", () => {
     await watchConflicts(page);
     await signIn(page, account.email, "/de/app/editor");
     await expect(visibility(page, "Erster Link")).toBeChecked();
-    // Rapid changes, each while the one before may still be on its way.
+    // Rapid changes on a slow network: the first save's answer takes 3 s, the next changes are made while it is on its way.
+    const held = await holdNextSave(page, 3_000);
     await visibility(page, "Erster Link").click();
+    await expect.poll(() => held.sent).toBe(1);
+    await expect.poll(() => shown(account.id, "first")).toBe(false);
     await visibility(page, "Zweiter Link").click();
     await visibility(page, "Dritter Link").click();
     await visibility(page, "Erster Link").click();
@@ -316,5 +343,23 @@ test.describe("the iPhone app's web side @real", () => {
     await expect(page.getByText(CONFLICT, { exact: true })).toHaveCount(0);
     const { blocks } = await stored(account.id);
     expect(blocks.map((block) => block.visible)).toEqual([true, true, true]);
+  });
+
+  test("guard: a tab closed while its save is on its way keeps the change made meanwhile @real", async ({ page }) => {
+    const account = await syncAccount("sync-close");
+    await signIn(page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    // The first change's save reaches the database; its answer is still on its way back.
+    const held = await holdNextSave(page, 4_000);
+    await visibility(page, "Erster Link").click();
+    await expect.poll(() => held.sent).toBe(1);
+    await expect.poll(() => shown(account.id, "first")).toBe(false);
+    // The next change, then the tab is closed: only the keepalive save is left to carry it.
+    await visibility(page, "Zweiter Link").click();
+    await expect(visibility(page, "Zweiter Link")).not.toBeChecked();
+    await page.close({ runBeforeUnload: true });
+    await expect.poll(() => shown(account.id, "second"), { timeout: 10_000 }).toBe(false);
+    const { blocks } = await stored(account.id);
+    expect(blocks.map((block) => block.visible)).toEqual([false, false, true]);
   });
 });
