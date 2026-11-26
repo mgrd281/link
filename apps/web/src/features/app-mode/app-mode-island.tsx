@@ -11,7 +11,7 @@ import type { Locale } from "@/i18n/routing";
 import { installOnApp } from "./app-mode";
 import { post } from "./bridge";
 import { navigationTarget, routeParts } from "./route";
-import { useAppMode } from "./use-app-mode";
+import { useAppMode, useKeepAppSignal } from "./use-app-mode";
 
 /** The tab Settings was opened from, as the shell keeps it (Settings' "back" leads there). */
 function readOrigin(): TabKey {
@@ -35,6 +35,9 @@ const withLocale = (locale: string, path: string) => `/${locale}${path === "/" ?
  * - posts `route` for every screen shown: its path, its name and where back leads (routes.ts).
  */
 export function AppModeIsland() {
+  // Once, before the browser paints: where React rendered the document anew and dropped the app's
+  // `<html data-app>`, it is put back from window.linkyoApp, so the CSS and the code agree on app mode.
+  useKeepAppSignal();
   return useAppMode() ? <AppBridge /> : null;
 }
 

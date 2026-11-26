@@ -77,7 +77,13 @@ describe("the global error page's own words", () => {
   it("are the message files' words, in every language", () => {
     for (const locale of ["de", "en", "ar"] as const) {
       const { errors } = MESSAGES[locale];
-      expect(GLOBAL_COPY[locale]).toEqual({ title: errors.error.title, body: errors.error.body, retry: errors.actions.retry, home: errors.actions.home });
+      expect(GLOBAL_COPY[locale]).toEqual({
+        title: errors.error.title,
+        body: errors.error.body,
+        retry: errors.actions.retry,
+        home: errors.actions.home,
+        dashboard: errors.actions.dashboard,
+      });
     }
   });
 

@@ -19,8 +19,10 @@ export function useAppMode(): boolean {
 }
 
 /**
- * On a page React may have rendered whole in the browser (the not-found and error pages): puts
- * `<html data-app>` back before the browser paints (`keepAppSignal`), so what the app hides stays hidden.
+ * Puts `<html data-app>` back before the browser paints (`keepAppSignal`), once, where React may have
+ * rendered the document anew in the browser: the dashboard (its island), the not-found and error pages
+ * and the root layout's own error page. So what the app hides stays hidden, and the CSS and the code
+ * never disagree on app mode.
  */
 export function useKeepAppSignal(): void {
   useLayoutEffect(keepAppSignal, []);

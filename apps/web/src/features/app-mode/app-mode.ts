@@ -55,10 +55,13 @@ export function appPlatform(): AppPlatform | null {
 /**
  * Puts `<html data-app>` back where React took it off. When React renders a whole document in the
  * browser (the server's stream stopped at an error or a "not found" in a layout, as for a dashboard
- * address that can never exist: `features/errors/gated-routes.ts`), it takes `<html>` over with only the
- * attributes it renders, after the app's document-start script ran, and that script does not run again.
- * The object the app put on `window` stays, and names the platform: the attribute is set from it, so
- * the CSS (`:root[data-app="ios"]`) applies again. Does nothing in a browser.
+ * address that can never exist: `features/errors/gated-routes.ts`; the root layout's own error page,
+ * `app/global-error.tsx`, with its own <html>), it takes `<html>` over with only the attributes it
+ * renders, after the app's document-start script ran, and that script does not run again. The object
+ * the app put on `window` stays, and names the platform: the attribute is set from it, so the CSS
+ * (`:root[data-app="ios"]`) applies again and agrees with `inAppMode()`. Called before the browser
+ * paints (`useKeepAppSignal`) by the dashboard's island once, by the not-found and error pages and by
+ * the root layout's error page. Does nothing in a browser.
  */
 export function keepAppSignal(): void {
   const platform = appPlatform();
