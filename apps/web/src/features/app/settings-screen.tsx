@@ -35,6 +35,7 @@ import { browserSupabase } from "@/lib/supabase/browser";
 import { useLegalDraft } from "./drafts";
 import { pickFiles } from "./images";
 import { parseImport, type ImportedSite } from "./import";
+import { InstallRow } from "./install/install-row";
 import { legalStatus } from "./legal";
 import { ListGroup, ListRow, PickerRow, SegmentedRow } from "./list";
 import { ProfileSheet } from "./profile-form";
@@ -326,6 +327,7 @@ export function SettingsScreen() {
             options={LANGUAGES}
             onValue={(next) => router.replace(pathname, { locale: next })}
           />
+          <InstallRow />
         </ListGroup>
 
         <DataGroup />

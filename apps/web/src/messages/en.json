@@ -3252,6 +3252,41 @@
         "title": "Add your first project",
         "body": "Show what you have worked on: a title, a sentence and, if you like, pictures."
       }
+    },
+    "install": {
+      "row": "Linkyo as an app",
+      "installedValue": "Installed",
+      "title": "Linkyo as an app",
+      "lead": "Open your dashboard from its own icon, in its own window. It's the same dashboard as here, always up to date.",
+      "close": "Close",
+      "prompt": {
+        "body": "Your browser can install Linkyo right away.",
+        "button": "Install",
+        "later": "You can also install Linkyo later: choose “Install app” in your browser's menu."
+      },
+      "ios": {
+        "intro": "To put Linkyo on your Home Screen:",
+        "step1": "Tap “Share” <glyph></glyph>. If you don't see it, tap “•••” first.",
+        "step2": "Choose “Add to Home Screen”.",
+        "step3": "Tap “Add”."
+      },
+      "mac": {
+        "intro": "In Safari on a Mac:",
+        "step": "In the menu bar, choose “File” › “Add to Dock”."
+      },
+      "installed": {
+        "title": "Linkyo is installed",
+        "body": "Open it from its icon: on your Home Screen, in the Dock or in the taskbar."
+      },
+      "other": {
+        "body": "Your browser doesn't offer to install Linkyo here. Chrome, Edge and Safari can install it as an app."
+      },
+      "hint": {
+        "title": "Linkyo as an app",
+        "body": "Install the dashboard and open it in one tap.",
+        "install": "Install",
+        "dismiss": "Hide this tip"
+      }
     }
   },
   "preview": {

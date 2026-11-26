@@ -3252,6 +3252,41 @@
         "title": "Füg dein erstes Projekt hinzu",
         "body": "Zeig, woran du gearbeitet hast: ein Titel, ein Satz und, wenn du magst, Bilder."
       }
+    },
+    "install": {
+      "row": "Linkyo als App",
+      "installedValue": "Installiert",
+      "title": "Linkyo als App",
+      "lead": "Öffne dein Dashboard über ein eigenes Symbol, in einem eigenen Fenster. Es ist dasselbe Dashboard wie hier und immer auf dem neuesten Stand.",
+      "close": "Schließen",
+      "prompt": {
+        "body": "Dein Browser kann Linkyo direkt installieren.",
+        "button": "Installieren",
+        "later": "Du kannst Linkyo auch später installieren: im Menü deines Browsers unter „App installieren“."
+      },
+      "ios": {
+        "intro": "So kommt Linkyo auf deinen Home-Bildschirm:",
+        "step1": "Tippe auf „Teilen“ <glyph></glyph>. Siehst du es nicht, tippe zuerst auf „•••“.",
+        "step2": "Wähle „Zum Home-Bildschirm“.",
+        "step3": "Tippe auf „Hinzufügen“."
+      },
+      "mac": {
+        "intro": "In Safari auf dem Mac:",
+        "step": "Wähle in der Menüleiste „Ablage“ › „Zum Dock hinzufügen“."
+      },
+      "installed": {
+        "title": "Linkyo ist installiert",
+        "body": "Öffne es über sein Symbol: auf dem Home-Bildschirm, im Dock oder in der Taskleiste."
+      },
+      "other": {
+        "body": "Dein Browser bietet hier keine Installation an. Chrome, Edge und Safari können Linkyo als App installieren."
+      },
+      "hint": {
+        "title": "Linkyo als App",
+        "body": "Installiere das Dashboard und öffne es mit einem Tipp.",
+        "install": "Installieren",
+        "dismiss": "Hinweis ausblenden"
+      }
     }
   },
   "preview": {

@@ -10,6 +10,7 @@ import { fontVariables } from "@/fonts";
 import { siteState } from "@/features/marketing/site-state";
 import { clientMessages } from "@/i18n/client-messages";
 import { isRtl, routing } from "@/i18n/routing";
+import { installPromptInitScript } from "@/lib/install-prompt-script";
 import { navPanelInitScript } from "@/lib/nav-panel-script";
 import { siteUrl } from "@/lib/site-url";
 import { themeInitScript } from "@/lib/theme-script";
@@ -74,8 +75,9 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   return (
     <html lang={locale} dir={dir} className={fontVariables} suppressHydrationWarning>
       <head>
-        {/* Before paint: the stored theme, and the dashboard's folded section panel (no layout shift). */}
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript + navPanelInitScript }} />
+        {/* Before paint: the stored theme, and the dashboard's folded section panel (no layout shift).
+            Then the browser's offer to install the app, kept for the dashboard (lib/install-prompt-script.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript + navPanelInitScript + installPromptInitScript }} />
       </head>
       <body className="min-h-dvh bg-canvas text-fg">
         <NextIntlClientProvider messages={clientMessages(await getMessages(), "site")}>

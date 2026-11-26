@@ -77,6 +77,7 @@ import {
   MapPin,
   Menu,
   Minus,
+  MonitorSmartphone,
   MoveLeft,
   MoveRight,
   Music,
@@ -168,6 +169,8 @@ export const icons = {
   confirm: Check,
   // Turning an address away (the team's sign-in log): a circle crossed through.
   block: Ban,
+  // Linkyo as an app on a computer or a phone (Settings › "Linkyo als App", Home's hint).
+  install: MonitorSmartphone,
   // Ways through the product
   back: ArrowLeft,
   forward: ArrowRight,
@@ -255,7 +258,7 @@ export const ICON_MEANINGS = Object.keys(icons) as IconMeaning[];
 
 /** The registry's groups, for the /design page. */
 export const ICON_GROUPS = {
-  actions: ["add", "edit", "delete", "copy", "share", "close", "search", "filter", "sort", "more", "undo", "redo", "upload", "download", "refresh", "reorder", "send", "preview", "hide", "settings", "confirm", "block"],
+  actions: ["add", "edit", "delete", "copy", "share", "close", "search", "filter", "sort", "more", "undo", "redo", "upload", "download", "refresh", "reorder", "send", "preview", "hide", "settings", "confirm", "block", "install"],
   navigation: ["back", "forward", "next", "previous", "external", "expand", "home", "menu", "signIn", "signOut", "sidebarOpen", "sidebarClose", "switchArea"],
   states: ["success", "warning", "error", "info", "help", "verified", "locked", "notifications", "live", "increase", "decrease", "unchanged"],
   areas: ["page", "analytics", "design", "templates", "features", "portfolio", "work", "invite", "team", "creators", "customers", "overview", "account", "billing", "plan", "orders", "security", "activity", "ai", "shop", "link", "qrCode", "inbox"],
