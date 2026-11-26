@@ -4,7 +4,7 @@
  * surface and the install hints there, and talks to the app through `./bridge.ts`.
  *
  * The signal comes from the app, before the first paint (a document-start script):
- * - `<html data-app="ios">`, which the CSS rules in `app/globals.css` (`:root[data-app]`) key on;
+ * - `<html data-app="ios">`, which the CSS rules in `app/globals.css` (`:root[data-app="ios"]`) key on;
  * - `window.linkyoApp = { platform, version, bridge: 1 }`, where the web adds `navigate` and `back`
  *   (`./app-mode-island.tsx`) and the store adds `flush`, `reload` and `signOut` (`./store-bridge.ts`);
  * - and `LinkyoApp/<version>` in the user agent, for the server (the analytics filter).
@@ -13,7 +13,11 @@
  * check of rights, price or data may ever read it.
  */
 
-/** The platforms whose shell sets `data-app` (only the iPhone app so far). */
+/**
+ * The platforms whose shell sets `data-app` (only the iPhone app so far). `app/globals.css` keys its
+ * rules on the same values (`:root[data-app="ios"]`): a new platform is added in both places, so the
+ * chrome never hides where the purchase links still show.
+ */
 export const APP_PLATFORMS = ["ios"] as const;
 export type AppPlatform = (typeof APP_PLATFORMS)[number];
 

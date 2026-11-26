@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { appPlatform, inAppMode, linkyoApp, type AppWindow } from "./app-mode";
+import { APP_PLATFORMS, appPlatform, inAppMode, linkyoApp, type AppWindow } from "./app-mode";
 
 /** A page whose <html> carries `data-app` (or not), as the app's document-start script leaves it. */
 function page(app?: string) {
@@ -38,6 +41,18 @@ describe("the app-mode signal", () => {
       page(value);
       expect(inAppMode(), value).toBe(false);
     }
+  });
+});
+
+describe("the CSS and the code agree on what the app is", () => {
+  // The chrome hides through CSS, the purchase links through inAppMode(): a value only one of them knew
+  // (an Android shell's "android") would hide the bars and still show every way to buy.
+  const css = readFileSync(path.resolve(import.meta.dirname, "../../app/globals.css"), "utf8");
+  const selectors = [...css.matchAll(/:root\[data-app(?:="([^"]*)")?\]/g)].map(([, value]) => value ?? "(any value)");
+
+  it("keys every app-mode rule on a platform inAppMode() knows", () => {
+    expect(selectors.length).toBeGreaterThan(0);
+    for (const value of selectors) expect(APP_PLATFORMS as readonly string[], value).toContain(value);
   });
 });
 

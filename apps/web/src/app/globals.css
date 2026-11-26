@@ -195,10 +195,11 @@
  * its own chrome (the tab bar, the rail with its section panel, the phone top bar, the website's header
  * and footer around help and legal pages), every purchase surface and the install hints: each is marked
  * data-app-hide. What sat clear of that chrome moves to the edge. A browser never has the attribute, so
- * nothing here applies there. Outside any layer, so these rules win over the utilities they undo. The
- * attribute only hides interface; it grants nothing.
+ * nothing here applies there. Keyed on the platforms `inAppMode()` knows (APP_PLATFORMS), so the CSS
+ * and the code that leaves out purchase links never disagree. Outside any layer, so these rules win over
+ * the utilities they undo. The attribute only hides interface; it grants nothing.
  */
-:root[data-app] {
+:root[data-app="ios"] {
   /* Toasts: no tab bar to stand above (the app's own bar lies outside the page) and no rail to skip
      on wide screens; on phones they may take the top, under the app's navigation bar. */
   --toast-offset: 0;
