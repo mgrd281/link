@@ -36,6 +36,10 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    - **Trust:** the attribute (and `window.linkyoApp`) only hides interface. It grants nothing: any page can set an attribute on itself,
      so no check of rights, price, plan or data may read it. The web posts only from the main frame; the app's
      handler accepts messages only from the main frame of our host.
+   - **The app's object is a plain, extensible object.** The web adds its methods to it. An object the app froze,
+     sealed or made non-extensible is replaced by a plain copy of its fields, so the dashboard never breaks on it
+     (`linkyoApp()` in `features/app-mode/app-object.ts`); where `window.linkyoApp` itself is read-only, the web
+     installs nothing and never throws. A property the app fixed on its object (non-writable) stays the app's.
 
 2. **What app mode hides, and why.** Everything is marked `data-app-hide` (hidden by
    `:root[data-app="ios"] [data-app-hide]`) unless it must not exist, then `useAppMode()` leaves it out.
@@ -44,8 +48,9 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    |---|---|---|
    | The phone tab bar, the rail with its section panel, the phone top bar (avatar, back, save state, eye) | `shell.tsx`; the same places in the loading frame (`gate.tsx`) | The app draws its own tab bar, navigation bar and toolbar (4.2) |
    | Offsets for that chrome | `globals.css`: toasts sit at the bottom edge and may take the top under the app's bar (`--toast-offset`, `--toast-top`, `--toast-start`), the scroll padding and `main`'s bottom padding lose the bars, Design's sticky live page sits at `top: 0` | Sticky bars sit flush, nothing hides behind a bar that is not there |
-   | Plan pane: where the plan comes from (the source line: the subscription's price and Stripe, the team, the invite reward's "Pro für immer"), "Pro kommt mit dem Start", "Pro kommt bald…", the past-due badge and note (a payment nudge; a past-due account shows no badge rather than a false "Aktiv"), the feature list ("Das ist enthalten"), the whole payment group (Pro holen, Stripe's portal, invoices, Kündigen). What stays: the plan's name ("Linkyo Pro", the account's own plan bought elsewhere, 3.1.3(b)), the states Aktiv, Gekündigt and Reserviert, the dates, and the AI drafts left (they name no plan, price or upgrade) | `settings/plan-screen.tsx` (`PlanGroups`) | 3.1.1, 3.1.3(f): the pane shows the plan's name, state and dates only (decision 9) |
+   | Plan pane: where the plan comes from (the source line: the subscription's price and Stripe, the team, the invite reward's "Pro für immer"), "Pro kommt mit dem Start", "Pro kommt bald…", the past-due badge and note (a payment nudge; a past-due account shows no badge rather than a false "Aktiv") and its renewal date (it would say the same in other words), the feature list ("Das ist enthalten"), the whole payment group (Pro holen, Stripe's portal, invoices, Kündigen). What stays: the plan's name ("Linkyo Pro", the account's own plan bought elsewhere, 3.1.3(b)), the states Aktiv, Gekündigt and Reserviert, the dates, and the AI drafts left (they name no plan, price or upgrade) | `settings/plan-screen.tsx` (`PlanGroups`) | 3.1.1, 3.1.3(f): the pane shows the plan's name, state and dates only (decision 9) |
    | Settings: the order, Widerruf and Kündigen rows and their footer; the team area row | `settings-screen.tsx` | No way to a contract or to the team console from the app |
+   | Settings: the plan row's value (the plan's name, "Linkyo Pro"); the row reads "Plan" and leads to the pane | `settings/plan-screen.tsx` (`PlanRow`) | The plan's name stands only on the pane (decision 9) |
    | Settings: the AGB open in Safari (`openExternal`) instead of in the app (accepted by the lead) | `settings-screen.tsx` | The AGB state the prices (`features/legal/texts.ts`, not changed here). The Impressum and the privacy policy open in the app |
    | Settings: the "App" group: "Darstellung", "Sprache der App", its footer "Gilt nur für dich, in diesem Browser" (and the install row, below). "Sprache der Seite", the page's language for its visitors, stays | `settings-screen.tsx` | The app owns its language and appearance (decision 8). A stored web theme is ignored too: `lib/theme-script.ts` sets no `data-theme` under `data-app`, so the web view follows `prefers-color-scheme`, which the app sets |
    | AI: the Pro sheet's price, "Pro kommt bald" and "Pro holen"; its title and close button say the fact in the app's own words (`appMode.ai.title`: "KI-Entwürfe sind für dieses Konto nicht verfügbar", `appMode.ai.close`); the plan link stays, so a tap is never dead. The page service link with its price; the error state's "Pro holen"; the used-up free draft says `appMode.ai.quotaFree` ("…Weitere Entwürfe gibt es für dieses Konto nicht."). "Nicht freigeschaltet" (not unlocked) was dropped: it hints that the drafts could be switched on (decision 9) | `ai/pro-sheet.tsx`, `ai/build-screen.tsx` | 3.1.1, 3.1.3(f), and the "Pro" rule (decision 8) |
@@ -81,8 +86,8 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
 
    | Message | Fields | Sent by |
    |---|---|---|
-   | `ready` | `signedIn`, `accountId` (or null) | the island, once the session is known and whenever it changes; `navigate` and `back` are installed before |
-   | `route` | `path` (with the language, `/de/app/settings/plan`), `title` (the screen's name in the page's language, from `features/app/routes.ts`; null for screens outside that table: the welcome flow, "View my page", the AI builder, an order, a proposal), `back` (the path back leads to, or null) | the island, on every screen |
+   | `ready` | `bridge` (the web's contract version, `BRIDGE_VERSION` = 1), `signedIn`, `accountId` (or null) | the island: the first message each time the dashboard mounts (a page load of a dashboard page, a return to the dashboard from a page outside it, a change of language), once the session is known, and again whenever the session changes. All five methods (`navigate`, `back`, `flush`, `reload`, `signOut`) are installed before it |
+   | `route` | `path` (with the language, `/de/app/settings/plan`), `title` (the screen's name in the page's language, from `features/app/routes.ts`; null for screens outside that table: the welcome flow, "View my page", the AI builder, an order, a proposal), `back` (the path back leads to, or null) | the island: right after each `ready`, then on every screen change |
    | `share` | `title?`, `text?`, `url?`, `file?` `{name, mime, base64}` | Home's link (`share-tools.tsx`), the QR sheet (`share-qr.tsx`), the story picture (`share-image-sheet.tsx`), the invite link (`invite/invite-link-card.tsx`), and the creator page's own share button in "View my page" (`directions/poster/share-island.tsx`: the page's public address, `pageUrl(username)`, which the dashboard names on `data-share-url` around the page; never `/<l>/app/preview`, in a browser too) |
    | `download` | `name`, `mime`, `base64` | the data export (`settings-screen.tsx`), the statistics CSV (`analytics-screen.tsx`), the story picture, the QR code as PNG and as SVG, the Premium kit's story pictures (`proposals/proposal-screen.tsx`: fetched from their signed Storage address by `appDownloadFrom`, as Storage is another host the web view does not open; a failed fetch says so in a toast), and a planned live's reminder in "View my page" (`directions/poster/live-time.ts` `remind()`: `live.ics`, `text/calendar`, UTF-8) |
    | `haptic` | `style: "light"` | `lib/haptics.ts` (every `haptic()` of a user's tap) |
@@ -90,14 +95,33 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    | `openExternal` | `url` (absolute, this site only) | the AGB row |
    | `saveState`, `signedOut` | the store's ([0088](0088-app-sync.md)) | `features/app-mode/store-bridge.ts` |
 
+   **The order of the messages.** `ready` is always the first message after the dashboard mounts; `route` (the
+   screen shown) follows it, then the store's `saveState` (`store-bridge.ts` holds an account's save state until
+   the `ready` that names that account: `announceReady` in `app-object.ts`). Each mount sends all three again:
+   the app takes every `ready` as "the web view has (re)installed its methods and says where it is", and re-reads
+   the state from the messages after it. When the session ends: `signedOut`, then `ready` (`signedIn: false`) and
+   `route`. Pages outside the dashboard send no `ready`; their few messages (`haptic`, a creator page's `share`)
+   need none. `e2e/app-sync-app.spec.ts` (real accounts) and `e2e/app-mode-app.spec.ts` (the demo) check the
+   order on a cold load, after a sign-out and on a return to the dashboard.
+
    App → web on `window.linkyoApp` (created by the web if the app's script has not made it):
-   - `navigate(path)`: a path of this site, with or without the language (`/de/app/editor?edit=b1`,
-     `/app/design`); the client router, so no reload and nothing the store holds is lost. Answers false for
-     anything else (another host, `//…`, a backslash, a non-string, more than 2048 characters). Installed on the
-     dashboard's pages (`/<locale>/app/*`, `features/app-mode/app-mode-island.tsx`, mounted by the dashboard's
-     layout); elsewhere (a legal page) the app loads the address.
+   - `navigate(path)`: a dashboard path, `/<locale>/app` or below, with or without the language
+     (`/de/app/editor?edit=b1`, `/app/design`); the client router, so no reload and nothing the store holds is
+     lost. Answers false for anything else: a page of this site outside the dashboard (the homepage, help, a
+     legal page, checkout), which the app loads itself so that its navigation policy sees it (a `pushState`
+     never asks `WKNavigationDelegate`), another host, `//…`, a backslash, a non-string, more than 2048
+     characters.
    - `back()`: goes where the current screen's `route.back` leads; false where there is none.
    - `flush()`, `reload()`, `signOut()`: the store's half ([0088](0088-app-sync.md), `store-bridge.ts`).
+   - **All five exist only while a dashboard page (`/<locale>/app/…`) is shown.** They are installed by the
+     dashboard's layout (`app-mode-island.tsx`, `store-bridge.ts`) and taken off when the web view leaves it:
+     the router's links from the dashboard to a legal page or help (Settings' Impressum and Datenschutz rows)
+     keep the same document but leave `window.linkyoApp` without methods. Before it calls `flush()`, `reload()`
+     or `signOut()` (a native write, sign-out, deletion: plan §1.2, §1.3), the app checks that the web view is
+     on the dashboard (its last `route`, or `WKWebView.url`); if not, it brings it back (`goBack()`, or loads
+     `/<locale>/app`) and waits for the `ready` that follows. A native write made while the web view was away is
+     followed by `reload()` after that `ready`: the store does not read the row again by itself when the
+     dashboard mounts again, so without it the next edit would be refused with the conflict toast.
 
 5. **The editor's deep link.** `/<locale>/app/editor?edit=<blockId>` opens that block's sheet once; an unknown id
    opens nothing. The address loses the parameter first (`replaceState`), so a reload or Back does not reopen
@@ -147,9 +171,11 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
      Its states that ask for nothing stay (Aktiv, Gekündigt, Reserviert) with its dates; everything else on
      the pane is hidden in the app: the source line (a price, Stripe, the team, "Pro für immer"), the feature
      list, the past-due badge and note (a past-due account shows no badge rather than a false "Aktiv"), and
-     the payment group (decision 2). The "Pro" rule allows the word only inside the plan's name there
-     (`plan-app-mode.test.ts`; `e2e/plan-app.spec.ts` in the stub build, for a reward, team, Stripe,
-     canceled and past-due account).
+     the payment group (decision 2). A past-due account shows the plan's name only: no badge, and no "Verlängert
+     sich am …" either, which without its state would read as a healthy plan that renews. The "Pro" rule allows
+     the word only inside the plan's name there: Settings' plan row shows no plan name in the app (it reads
+     "Plan" and leads to the pane) (`plan-app-mode.test.ts`; `e2e/plan-app.spec.ts` in the stub build, for a
+     reward, team, Stripe, canceled and past-due account, and Settings for a Stripe account).
    - **No hint at an unlock:** the AI's app words say the drafts are not available for this account
      ("nicht verfügbar"), never "nicht freigeschaltet" (decision 2).
    - **The privacy policy stays as it is in the app.** Its text (`features/legal/texts.ts`) names Linkyo Pro
@@ -163,6 +189,46 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    - **The signal everywhere React renders a document anew:** the dashboard's island restores `data-app`
      once, and the root layout's own error page restores it and leads only back to the dashboard
      (decisions 1 and 2).
+   - **The contract review (integration, 2026-11-26):** `ready` comes first (decision 4); `navigate` takes
+     dashboard paths only; the five methods exist only on dashboard pages, and the app brings the web view
+     back before it calls the store's three (decision 4); a frozen or sealed app object never breaks the
+     dashboard (decision 1); `ready` carries the web's contract version; and the plan pane of a past-due
+     account shows only the plan's name (no renewal date, which would read as a healthy plan without its
+     state), while Settings' plan row names no plan in the app at all (decision 2; the name stands only on the
+     pane).
+
+**For the native shell.** What the app has to do to use this contract (and [0088](0088-app-sync.md)'s
+operations), in one place:
+
+1. **One content world.** The document-start script, the message handler and every call run in
+   `WKContentWorld.page`: each world has its own `window`, so a `window.linkyoApp` made in another world has none
+   of the web's methods, and a handler in another world hears nothing. The script is a `WKUserScript` with
+   `injectionTime: .atDocumentStart` and `forMainFrameOnly: true`; the handler is added with
+   `add(_:contentWorld:name:)` as `linkyo` in `.page`. The app calls the methods with
+   `callAsyncJavaScript(_:arguments:in:in:)` in `.page`: `return await window.linkyoApp.flush()` resolves to
+   `{ updatedAt }`, and a rejection arrives as an error whose message is the reason ([0088](0088-app-sync.md)
+   §4); `return window.linkyoApp.navigate(path)` with `arguments: ["path": path]`, and `back()`, answer a
+   boolean at once.
+2. **After `ready`, all five methods are there** (`flush`, `reload` and `signOut` too, not only `navigate` and
+   `back`), while the web view shows a dashboard page (decision 4).
+3. **`ready.accountId` is checked.** The app compares it with its own user id: another account (the cookies of
+   an earlier account in the web view) means a new hand-off; `signedIn: false` too (as on `/<locale>/login`,
+   [0088](0088-app-sync.md) §1).
+4. **`ready` may never come** (a script chunk that fails to load, an error page): after a load or a hand-off the
+   app waits at most about 15 s, then shows its own error view with "Try again" (a reload, or a new hand-off).
+5. **Versions.** `ready.bridge` is the web's contract version (`BRIDGE_VERSION`, 1); the app's object carries the
+   app's (`bridge: 1`). The web deploys continuously and installed apps lag behind, so the contract only grows:
+   messages, fields and methods are added, never renamed or removed, and the app ignores what it does not know.
+   A change an older app could not follow raises the version, and the web then reads `window.linkyoApp.bridge`
+   and keeps the old way for a lower one (nothing in version 1 depends on it yet).
+6. **`saveState` after a refused save.** `conflict` stays the last state until the next change (the newer page
+   is shown and saved; no `saved` follows). `saving` carries the version the save builds on (the old one); the
+   new version comes with the `saved` after it.
+7. **`download.mime` may carry parameters** (`text/csv;charset=utf-8` for the statistics CSV): the app takes the
+   type before `;` for the file type and the `charset` for text.
+8. **`?edit=` and `?tab=` after the hand-off.** The hand-off's `next` is a dashboard path without a query
+   ([0088](0088-app-sync.md) §1), so the app opens a block's sheet or a tab with `navigate()` after the first
+   `ready`.
 
 **Consequences.**
 
@@ -178,6 +244,10 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
   dashboard loads, so the bridge's core on creator pages did not grow. Page code `/u/<name>` 30.4 → 30.8 KB,
   `/u/<name>/<project>` 23.5 → 23.9 KB, `/<l>/p/<slug>` 32.2 → 32.6 KB, `/<l>/p/<slug>/<project>` 26.5 →
   26.9 KB (budget 35 KB); the dashboard's first load 324.1 → 324.5 KB of 350; `/de`'s HTML stays 54.3 KB.
+  The contract review (decision 9) adds 0.4 KB to the dashboard's first load (324.5 → 324.9 KB of 350, demo
+  and real builds alike: the order of the first messages, the copy of a frozen object, the dashboard-only
+  `navigate`); creator pages and the website stay as they were, apart from `/<l>/p/<slug>/<project>`
+  26.9 → 27.0 KB in the demo build; `/de`'s HTML stays 54.3 KB (demo) and 55.3 KB (real).
 - Tests: `features/app-mode/*.test.ts` (the signal, the bridge against a stand-in WKWebView: main frame only,
   never throws, files as base64, a file fetched from another host, Safari only for our host; the route names and
   `navigate`'s paths; the CSS keyed on the platforms the code knows; a static guard that every purchase link and
@@ -197,9 +267,16 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
   download and share, also the creator page's share and reminder in "View my page"; no message from a frame;
   `?edit=` from another screen, `editClosed` and `missing`; in a browser the chrome stays, the export
   downloads, nothing is posted, "View my page" shares the public address and a stored theme applies).
+  The contract review added: `store-bridge.test.ts` (the save state held until the `ready` that names its
+  account, again after a remount; a frozen, sealed or non-extensible app object, a read-only
+  `window.linkyoApp` and a fixed property never throw), `route.test.ts` (`navigate` refuses every page outside
+  the dashboard), `adr-contract.test.ts` (both ADRs name what the code answers), and in
+  `e2e/app-mode-app.spec.ts` and `e2e/app-sync-app.spec.ts` the order `ready`, `route`, `saveState` on a cold
+  load, after a sign-out and on a return from Datenschutz, where the five methods are gone.
 - Open for the app (native): the navigation policy still has to send `/checkout`, `/service`, `/kuendigen`,
   `/widerruf`, the team area and every other host to Safari (plan §1.6); the web no longer links them from the
-  dashboard in app mode, but the policy is the guarantee.
+  dashboard in app mode, and `navigate()` takes dashboard paths only, so every other page reaches the web view
+  as a real navigation the policy sees; the policy is the guarantee.
 - Closed by the lead (decision 9): the store's half asks `inAppMode()` and the main frame like the rest, and
   the plan pane names the plan, "Linkyo Pro", with its state only.
 - Not covered here: the privacy policy's wording for the app (W8, a note for the lawyer, decision 9).
