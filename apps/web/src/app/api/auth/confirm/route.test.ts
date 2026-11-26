@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type * as Auth from "@/features/account/server/auth";
+
 /**
  * GET /api/auth/confirm logs the sign-in under the iPhone app's device id when its hand-off link
  * carries one (`/api/auth/handoff`), so "Sign out device" ends the app's two sessions together; any
@@ -22,7 +24,7 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/features/account/server/first-site", () => ({ ensureFirstSite: () => Promise.resolve() }));
 vi.mock("@/features/account/server/referrals", () => ({ cleanRef: () => null, settleReferral: () => Promise.resolve() }));
 vi.mock("@/features/account/server/auth", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/features/account/server/auth")>()),
+  ...(await importOriginal<typeof Auth>()),
   recordSignIn: (_service: unknown, input: { device: { deviceId: string }; result: string }) => {
     state.logged.push({ deviceId: input.device.deviceId, result: input.result });
     return Promise.resolve();

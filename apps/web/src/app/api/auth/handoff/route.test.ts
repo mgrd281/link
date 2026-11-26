@@ -6,14 +6,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * logs the token or the link.
  */
 
-const state = vi.hoisted(() => ({
-  enabled: true,
-  status: "active" as string | null,
-  locale: "de",
-  blocked: false,
-  linkError: false,
-  generated: [] as { type: string; email: string }[],
-}));
+interface State {
+  enabled: boolean;
+  /** The account's status; null when it has no profile. */
+  status: string | null;
+  locale: string;
+  blocked: boolean;
+  linkError: boolean;
+  generated: { type: string; email: string }[];
+}
+
+const state = vi.hoisted((): State => ({ enabled: true, status: "active", locale: "de", blocked: false, linkError: false, generated: [] }));
 
 vi.mock("@/lib/supabase/config", () => ({
   get supabaseEnabled() {

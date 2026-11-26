@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AccountSnapshot } from "@/features/account/types";
 
-import { installStoreBridge, postToApp, SIGN_OUT_WAIT, type AppWindow, type BridgeStore } from "./store-bridge";
+import { installStoreBridge, postToApp, SIGN_OUT_WAIT, type AppWindow } from "./store-bridge";
 
 /**
  * The store half of the iPhone app's bridge, against a fake window (the app's object and WebKit's
@@ -73,7 +73,7 @@ function fakeWindow({ app = true, frame = false, linkyoApp }: { app?: boolean; f
   return win;
 }
 
-type App = { flush: () => Promise<{ updatedAt: string | null }>; reload: () => Promise<void>; signOut: () => Promise<void> };
+interface App { flush: () => Promise<{ updatedAt: string | null }>; reload: () => Promise<void>; signOut: () => Promise<void> }
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -86,7 +86,7 @@ describe("store bridge", () => {
   it("installs nothing outside the app: no object, no message", () => {
     const win = fakeWindow({ app: false });
     const store = fakeStore();
-    installStoreBridge(win, store as unknown as BridgeStore);
+    installStoreBridge(win, store);
     expect(win.linkyoApp).toBeUndefined();
     store.set(signedIn({ sync: "saving" }));
     expect(win.messages).toEqual([]);
@@ -95,7 +95,7 @@ describe("store bridge", () => {
 
   it("installs nothing in a frame inside the app, and posts nothing from there", () => {
     const win = fakeWindow({ frame: true });
-    installStoreBridge(win, fakeStore() as unknown as BridgeStore);
+    installStoreBridge(win, fakeStore());
     expect(win.linkyoApp).toBeUndefined();
     postToApp(win, { type: "signedOut" });
     expect(win.messages).toEqual([]);
@@ -104,7 +104,7 @@ describe("store bridge", () => {
   it("makes window.linkyoApp when missing and keeps what the app and the interface half put there", () => {
     const navigate = () => undefined;
     const win = fakeWindow({ linkyoApp: { platform: "ios", version: "1.0", bridge: 1, navigate } });
-    const cleanup = installStoreBridge(win, fakeStore() as unknown as BridgeStore);
+    const cleanup = installStoreBridge(win, fakeStore());
     expect(win.linkyoApp).toMatchObject({ platform: "ios", version: "1.0", bridge: 1, navigate });
     expect(typeof win.linkyoApp?.flush).toBe("function");
     expect(typeof win.linkyoApp?.reload).toBe("function");
@@ -113,7 +113,7 @@ describe("store bridge", () => {
     expect(win.linkyoApp).toEqual({ platform: "ios", version: "1.0", bridge: 1, navigate });
 
     const bare = fakeWindow();
-    installStoreBridge(bare, fakeStore() as unknown as BridgeStore);
+    installStoreBridge(bare, fakeStore());
     expect(Object.keys(bare.linkyoApp ?? {}).sort()).toEqual(["flush", "reload", "signOut"]);
   });
 
@@ -121,7 +121,7 @@ describe("store bridge", () => {
     const win = fakeWindow();
     const store = fakeStore();
     const handOver = vi.fn();
-    installStoreBridge(win, store as unknown as BridgeStore, handOver);
+    installStoreBridge(win, store, handOver);
     const app = win.linkyoApp as unknown as App;
     let answer: { updatedAt: string | null } | null = null;
     const flushed = app.flush().then((value) => (answer = value));
@@ -137,7 +137,7 @@ describe("store bridge", () => {
     const win = fakeWindow();
     const store = fakeStore();
     const handOver = vi.fn();
-    installStoreBridge(win, store as unknown as BridgeStore, handOver);
+    installStoreBridge(win, store, handOver);
     await (win.linkyoApp as unknown as App).reload();
     expect(handOver).toHaveBeenCalledTimes(1);
     expect(store.reload).toHaveBeenCalledTimes(1);
@@ -146,7 +146,7 @@ describe("store bridge", () => {
   it("posts saveState when the save state changes, conflict once per refused save, and signedOut", () => {
     const win = fakeWindow();
     const store = fakeStore();
-    installStoreBridge(win, store as unknown as BridgeStore);
+    installStoreBridge(win, store);
     store.set(signedIn({ sync: "saving" }));
     store.set(signedIn({ sync: "saving" }));
     store.set(signedIn({ sync: "saved", baseUpdatedAt: "v2" }));
@@ -168,7 +168,7 @@ describe("store bridge", () => {
   it("signOut() saves first, then ends the session and resolves once it has ended", async () => {
     const win = fakeWindow();
     const store = fakeStore();
-    installStoreBridge(win, store as unknown as BridgeStore);
+    installStoreBridge(win, store);
     const done = (win.linkyoApp as unknown as App).signOut();
     store.land("v2");
     await vi.advanceTimersByTimeAsync(10);
@@ -183,7 +183,7 @@ describe("store bridge", () => {
     const store = fakeStore();
     store.flush.mockImplementation(() => Promise.reject(new Error("saveFailed")));
     store.logOut.mockImplementation(() => undefined);
-    installStoreBridge(win, store as unknown as BridgeStore);
+    installStoreBridge(win, store);
     const refused = expect((win.linkyoApp as unknown as App).signOut()).rejects.toThrow("signOutTimeout");
     await vi.advanceTimersByTimeAsync(SIGN_OUT_WAIT + 1);
     await refused;

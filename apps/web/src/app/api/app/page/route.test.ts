@@ -140,7 +140,7 @@ describe("POST /api/app/page", () => {
 
   it("answers 409 with the current version when the page changed since (nothing written)", async () => {
     const stale = base();
-    state.row = { ...(state.row as Row), updated_at: stamp() };
+    state.row = { ...(state.row!), updated_at: stamp() };
     const response = await call({ baseUpdatedAt: stale, ops: [{ op: "remove", id: "a" }] });
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ ok: false, error: "conflict", updatedAt: state.row.updated_at });
