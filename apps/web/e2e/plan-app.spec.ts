@@ -7,6 +7,9 @@ import { creatorTokens } from "@linkyo/tokens";
 import { generatePalette, parseHex, resolveCreatorTheme, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { expect, test, type BrowserContext, type Download, type Page } from "@playwright/test";
 
+import ar from "../src/messages/ar.json" with { type: "json" };
+import de from "../src/messages/de.json" with { type: "json" };
+
 import { enterDemoCode } from "./auth";
 import { createRealAccount, realEnabled, service, signIn as realSignIn, test as realTest, uniqueName } from "./real";
 
@@ -295,8 +298,8 @@ const LATER = new Date(Date.now() + 20 * 86_400_000).toISOString();
  * security would hand this owner. Only reads of these four tables are answered; everything else
  * still goes to the stand-in.
  */
-async function planRows(page: Page, rows: { entitlements?: unknown[]; invoices?: unknown[] } = {}): Promise<void> {
-  const answers: Record<string, unknown[]> = { entitlements: rows.entitlements ?? [], invoices: rows.invoices ?? [], rewards: [], subscriptions: [] };
+async function planRows(page: Page, rows: { entitlements?: unknown[]; invoices?: unknown[]; rewards?: unknown[] } = {}): Promise<void> {
+  const answers: Record<string, unknown[]> = { entitlements: rows.entitlements ?? [], invoices: rows.invoices ?? [], rewards: rows.rewards ?? [], subscriptions: [] };
   for (const [table, body] of Object.entries(answers)) {
     await page.route(`${STUB}/rest/v1/${table}?**`, (route) =>
       route.request().method() === "GET"
@@ -401,6 +404,90 @@ test.describe("plan with payments in test mode (stub)", () => {
     await expect(page.locator("bdi", { hasText: "€" }).first()).toBeVisible();
     expect(await axe(page)).toEqual([]);
     await shot(page, "plan-pro-test-ar", "phone");
+  });
+});
+
+// ─── The plan pane inside the iPhone app (stub) ──────────────────────────────────────────────
+
+/** WKWebView's user agent with the app's name, and what the app's document-start script sets. */
+const APP_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 LinkyoApp/1.0";
+const APP_SCRIPT = `(() => {
+  const mark = () => { document.documentElement.dataset.app = "ios"; };
+  if (document.documentElement) mark();
+  else new MutationObserver((_, observer) => { if (document.documentElement) { mark(); observer.disconnect(); } }).observe(document, { childList: true });
+  window.linkyoApp = { platform: "ios", version: "1.0", bridge: 1 };
+  window.webkit = { messageHandlers: { linkyo: { postMessage: () => undefined } } };
+})();`;
+const MESSAGES = { de, ar } as const;
+const teamPro = { source: "team", status: "active", current_period_end: LATER, cancel_at_period_end: false, cancel_at: null, stripe_customer_id: null, created_at: "2026-11-01T00:00:00Z" };
+type PlanStatus = keyof typeof de.app.settings.plan.status;
+
+/**
+ * Accounts with Pro from each source, and the one state badge the app may show (null: none). PRO_AVAILABLE
+ * is false, so the invite reward is "reserved".
+ */
+const APP_PLANS: { name: string; rows: Parameters<typeof planRows>[1]; badge: PlanStatus | null }[] = [
+  { name: "the invite reward (reserved)", rows: { rewards: [{ kind: "pro_for_life", revoked_at: null }] }, badge: "reserved" },
+  { name: "Pro given by the team", rows: { entitlements: [teamPro] }, badge: "active" },
+  { name: "Pro through Stripe", rows: { entitlements: [stripePro], invoices: proInvoices }, badge: "active" },
+  { name: "Pro through Stripe, canceled", rows: { entitlements: [{ ...stripePro, cancel_at_period_end: true }], invoices: proInvoices }, badge: "ending" },
+  { name: "Pro through Stripe, past due", rows: { entitlements: [{ ...stripePro, status: "past_due" }], invoices: proInvoices }, badge: null },
+];
+
+test.describe("the plan pane in the iPhone app (stub)", () => {
+  test.skip(!stubEnabled, "Needs the stub build and the Supabase stand-in (E2E_STUB=1).");
+  test.use({ userAgent: APP_UA });
+
+  for (const locale of ["de", "ar"] as const) {
+    for (const plan of APP_PLANS) {
+      test(`${locale}, ${plan.name}: the plan's name and its state only; no price, payment, Stripe or other "Pro"`, async ({ page, context, baseURL }) => {
+        const m = MESSAGES[locale].app.settings.plan;
+        await page.addInitScript(APP_SCRIPT);
+        const who = await stubAccount(locale);
+        await stubSignIn(context, baseURL, who);
+        await planRows(page, plan.rows);
+        await quota(page, { enabled: true, plan: "pro", allowance: 5, used: 2, left: 3, period: "month", resetsAt: "2026-12-01T00:00:00+01:00" });
+        await page.goto(`/${locale}/app/settings/plan`);
+        await expect(page.getByText("Linkyo Pro").first()).toBeVisible();
+        await expect(page.getByRole("heading", { name: m.groups.ai })).toBeVisible();
+        // The words a person can see: only the plan's name says "Pro".
+        const text = await page.locator("body").innerText();
+        const pro = text.split("\n").filter((line) => /\bPro\b/.test(line.replaceAll("Linkyo Pro", "")));
+        expect(pro, "Pro").toEqual([]);
+        expect(text).not.toContain("€");
+        expect(text).not.toContain("Stripe");
+        expect(text).not.toMatch(/Zahlung|الدفع/);
+        // No source line, no feature list, no payment group.
+        for (const source of Object.values(m.source)) expect(text).not.toContain(source.replace(/<\/?bdi>/g, "").replace(/\{[^}]*\}.*$/, "").trim());
+        await expect(page.getByRole("heading", { name: m.groups.includes })).toHaveCount(0);
+        await expect(page.getByRole("heading", { name: m.groups.billing })).toHaveCount(0);
+        // The state: its badge, or none for an account whose payment is due (never a false "active").
+        for (const status of Object.keys(m.status) as PlanStatus[]) {
+          await expect(page.getByText(m.status[status], { exact: true }), status).toHaveCount(status === plan.badge ? 1 : 0);
+        }
+        expect(await axe(page)).toEqual([]);
+        await shot(page, `plan-app-${locale}-${plan.name.replace(/[^a-z]+/gi, "-").toLowerCase()}`, "phone");
+      });
+    }
+  }
+
+  test("a browser keeps the whole pane: the past-due badge and note, the source, the feature list and the payment group", async ({ browser, baseURL }, info) => {
+    // A browser of this project (not the app's user agent, no app script).
+    const { viewport, isMobile, hasTouch } = info.project.use;
+    const context = await browser.newContext({ ...(baseURL ? { baseURL } : {}), ...(viewport ? { viewport } : {}), ...(isMobile ? { isMobile } : {}), ...(hasTouch ? { hasTouch } : {}) });
+    const page = await context.newPage();
+    const m = de.app.settings.plan;
+    const who = await stubAccount("de");
+    await stubSignIn(context, baseURL, who);
+    await planRows(page, { entitlements: [{ ...stripePro, status: "past_due" }], invoices: proInvoices });
+    await quota(page, { enabled: true, plan: "pro", allowance: 5, used: 2, left: 3, period: "month", resetsAt: "2026-12-01T00:00:00+01:00" });
+    await page.goto("/de/app/settings/plan");
+    await expect(page.getByText(m.status.pastDue, { exact: true })).toBeVisible();
+    await expect(page.getByText("Abo über Stripe, 8,00 € im Monat")).toBeVisible();
+    await expect(page.getByText(/^Die letzte Zahlung ging nicht durch/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: m.groups.includes })).toBeVisible();
+    await expect(page.getByRole("heading", { name: m.groups.billing })).toBeVisible();
+    await context.close();
   });
 });
 

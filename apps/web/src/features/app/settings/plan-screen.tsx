@@ -189,8 +189,11 @@ const bdi = { bdi: (chunks: ReactNode) => <bdi>{chunks}</bdi> };
 
 /**
  * The plan's name, where it comes from and its state: one row, then its dates. In the iPhone app (app
- * mode) only the name, the state and the dates: no price and no word about Pro coming or about paying,
- * since the app sells nothing and points to no purchase (App Store 3.1.1, 3.1.3(f)).
+ * mode, ADR 0087) only the name, the state and the dates: the account's own plan, bought elsewhere, may
+ * be named (App Store 3.1.3(b)), but nothing about where it comes from (no price, no Stripe, no invite
+ * reward), no word about Pro coming and no nudge to pay: no past-due badge or note (a past-due account
+ * shows no badge rather than a false "Aktiv"), since the app sells nothing and points to no purchase
+ * (3.1.1, 3.1.3(f)). The states that ask for nothing stay: Aktiv, Gekündigt, Reserviert.
  */
 function PlanGroup({ view }: { view: PlanView }) {
   const t = useTranslations("app.settings.plan");
@@ -202,7 +205,7 @@ function PlanGroup({ view }: { view: PlanView }) {
   const reserved = view.source === "reward" && !PRO_AVAILABLE;
   const badge =
     view.plan === "free" ? null : view.pastDue ? (
-      <Badge tone="danger">{t("status.pastDue")}</Badge>
+      app ? null : <Badge tone="danger">{t("status.pastDue")}</Badge>
     ) : view.source === "stripe" && view.endsAt ? (
       // A subscription the owner canceled (it runs to its end); a grant that simply ends is still active.
       <Badge>{t("status.ending")}</Badge>
@@ -225,8 +228,8 @@ function PlanGroup({ view }: { view: PlanView }) {
       <ListRow
         icon={view.plan === "pro" ? icons.ai : icons.plan}
         title={<span className="font-semibold">{t.rich(`name.${view.plan}`, bdi)}</span>}
-        // A subscription names its price: not in the app.
-        subtitle={app && view.source === "stripe" ? undefined : t.rich(`source.${view.source}`, { ...bdi, price })}
+        // Where the plan comes from (a price, Stripe, the invite reward): not in the app.
+        subtitle={app ? undefined : t.rich(`source.${view.source}`, { ...bdi, price })}
         subtitleWrap
         value={badge}
       />
@@ -365,6 +368,23 @@ function BillingGroup({ view }: { view: PlanView }) {
   );
 }
 
+/**
+ * The pane's groups once the plan is known. In the iPhone app the plan's name and state, and the AI
+ * drafts left (they name no plan, price or upgrade): no feature list, no payment group.
+ */
+export function PlanGroups({ view, quota }: { view: PlanView; quota: AiQuotaView }) {
+  // The iPhone app shows no buying, no portal, no invoices and no cancellation (App Store 3.1.1, 3.1.3(f)).
+  const app = useAppMode();
+  return (
+    <>
+      <PlanGroup view={view} />
+      {app ? null : <IncludesGroup view={view} quota={quota} />}
+      <AiGroup quota={quota} />
+      {paymentsEnabled && !app ? <BillingGroup view={view} /> : null}
+    </>
+  );
+}
+
 /** The pane while the plan loads, or after it could not be read. */
 function PlanPlaceholder({ failed, retry }: { failed: boolean; retry: () => void }) {
   const t = useTranslations("app.settings.plan");
@@ -397,19 +417,12 @@ export function PlanScreen() {
   const { account } = useSite();
   const { state, retry } = usePlan(account.id);
   const quota = useAiQuota({ account: account.id, fresh: true });
-  // The iPhone app shows no buying, no portal, no invoices and no cancellation (App Store 3.1.1, 3.1.3(f)).
-  const app = useAppMode();
   return (
     <Screen title={t("panes.plan")} back={{ href: SETTINGS_HREF, label: tApp("nav.settings") }} grow>
       {/* The groups stand in two columns where the column has the room (laptops), one below that. */}
       <ColumnGroups>
         {state.status === "ready" ? (
-          <>
-            <PlanGroup view={state.view} />
-            <IncludesGroup view={state.view} quota={quota} />
-            <AiGroup quota={quota} />
-            {paymentsEnabled && !app ? <BillingGroup view={state.view} /> : null}
-          </>
+          <PlanGroups view={state.view} quota={quota} />
         ) : (
           <PlanPlaceholder failed={state.status === "failed"} retry={retry} />
         )}
