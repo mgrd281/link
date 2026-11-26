@@ -28,6 +28,13 @@ class FakeDb {
   refuseWrites = false;
   /** The server answers writes with an error (offline, a timeout). */
   failWrites = false;
+  /** Holds writes: "answer" applies them at once but holds the answer, "apply" holds both until `release()`. */
+  hold: "answer" | "apply" | null = null;
+  private held: (() => void)[] = [];
+  release() {
+    this.hold = null;
+    for (const resume of this.held.splice(0)) resume();
+  }
   writes: { filters: Record<string, unknown>; values: Record<string, unknown> }[] = [];
   authListener: ((event: string, session: unknown) => void) | null = null;
 
@@ -93,7 +100,14 @@ class FakeDb {
           filters[column] = value;
           return chain;
         },
-        maybeSingle: () => Promise.resolve(run()),
+        maybeSingle: () => {
+          if (!values || !this.hold) return Promise.resolve(run());
+          if (this.hold === "answer") {
+            const answer = run();
+            return new Promise((resolve) => this.held.push(() => resolve(answer)));
+          }
+          return new Promise((resolve) => this.held.push(() => resolve(run())));
+        },
         single: () => Promise.resolve(run()),
       };
       return chain;
@@ -253,7 +267,7 @@ describe("the save guard", () => {
     const fetches: { url: string; init: RequestInit }[] = [];
     vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
       fetches.push({ url, init });
-      db.write(JSON.parse(String(init.body)) as Record<string, unknown>);
+      db.write(JSON.parse(init.body as string) as Record<string, unknown>);
       return Promise.resolve(new Response(JSON.stringify([{ updated_at: db.row.updated_at }]), { status: 200 }));
     });
     addLink(store, "c");
@@ -268,6 +282,59 @@ describe("the save guard", () => {
     await vi.advanceTimersByTimeAsync(500);
     expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
     expect(snapshotOf(store).conflicts).toBe(0);
+  });
+});
+
+describe("closing the tab while a save is on its way", () => {
+  /** The keepalive PATCH against the stand-in row, with its guard. */
+  const keepalive = (db: FakeDb) => {
+    const sent: string[] = [];
+    vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+      sent.push(url);
+      const guard = new URL(url, "http://localhost").searchParams.get("updated_at")?.replace(/^eq\./, "");
+      if (guard !== db.row.updated_at) return Promise.resolve(new Response("[]", { status: 200 }));
+      db.write(JSON.parse(init.body as string) as Record<string, unknown>);
+      return Promise.resolve(new Response(JSON.stringify([{ updated_at: db.row.updated_at }]), { status: 200 }));
+    });
+    return sent;
+  };
+
+  it("still sends the last change; the save on its way landing first is no conflict", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepalive(db);
+    db.hold = "answer";
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    addLink(store, "d");
+    listeners.get("pagehide")?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(sent).toHaveLength(1);
+    db.release();
+    await vi.advanceTimersByTimeAsync(10);
+    await store.flush();
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(snapshotOf(store).conflicts).toBe(0);
+    expect(snapshotOf(store).revision).toBe(0);
+  });
+
+  it("still sends the last change; the keepalive landing first is no conflict either", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    keepalive(db);
+    db.hold = "apply";
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    addLink(store, "d");
+    listeners.get("pagehide")?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    db.release();
+    await vi.advanceTimersByTimeAsync(10);
+    await store.flush();
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(snapshotOf(store).conflicts).toBe(0);
+    expect(snapshotOf(store).baseUpdatedAt).toBe(db.row.updated_at);
   });
 });
 

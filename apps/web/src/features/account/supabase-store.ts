@@ -150,8 +150,12 @@ export class SupabaseAccountStore implements AccountStore {
    * save writes only while the row still has it, so a stale copy never overwrites a newer page.
    */
   private base: string | null = null;
-  /** What the page held at `base`: a refused save that finds it (or a write whose answer never came) was this tab's own. */
+  /**
+   * What the page held at `base`: a refused save that finds it, a write still on its way or one whose
+   * answer never came, was this tab's own.
+   */
   private baseContent: SiteContent | null = null;
+  private readonly sending = new Set<SiteContent>();
   private unconfirmed: SiteContent[] = [];
   private rebases = 0;
   /** The last save failed (network, server): `flush()` says so instead of answering an old version. */
@@ -356,15 +360,15 @@ export class SupabaseAccountStore implements AccountStore {
    * The page is going away: send what is pending as a `keepalive` request, which the browser
    * completes even after the tab is gone (a normal request would be cancelled with the page). It
    * carries the save guard like every save; when the tab comes back, its answer is the new version.
+   * A save still on its way goes on: whichever of the two lands second is refused, and finds the
+   * other one as this tab's own (`sending`), so nothing is reported as a conflict.
    */
   private saveOnExit() {
     const snapshot = this.snapshot;
     if (!this.dirty || snapshot.status !== "signedIn" || !this.token) return;
     const content = toRow(snapshot.site);
     const body = JSON.stringify(content);
-    // A save on its way holds the version this one builds on, so this one follows it (a hidden tab
-    // still runs its script); a page too large for keepalive saves the normal way.
-    if (body.length > KEEPALIVE_LIMIT || this.saving) {
+    if (body.length > KEEPALIVE_LIMIT) {
       void this.drainSaves();
       return;
     }
@@ -376,6 +380,7 @@ export class SupabaseAccountStore implements AccountStore {
     const id = snapshot.account.id;
     const base = this.base;
     const guard = base === null ? "" : `&updated_at=eq.${encodeURIComponent(base)}`;
+    this.sending.add(content);
     const request = fetch(`${SUPABASE_URL}/rest/v1/sites?profile_id=eq.${id}${guard}&select=updated_at`, {
       method: "PATCH",
       keepalive: true,
@@ -390,20 +395,35 @@ export class SupabaseAccountStore implements AccountStore {
       .then(async (response) => {
         if (!response.ok) {
           // Turned down (an expired session, the size limit): nothing was written, the next save tries again.
+          this.sending.delete(content);
           this.dirty = true;
           return;
         }
         const [row] = (await response.json()) as { updated_at?: string }[];
+        this.sending.delete(content);
         if (row?.updated_at) this.saved(id, row.updated_at, content);
         else await this.refused(id, base);
       })
       .catch(() => {
+        this.sending.delete(content);
         this.unconfirm(content);
         this.dirty = true;
       });
-    this.saving = request.finally(() => {
-      this.saving = null;
+    void this.track(request);
+  }
+
+  /** Every save goes into `saving`; the next one waits until all that are on their way have landed. */
+  private track(work: Promise<unknown>): Promise<void> {
+    const previous = this.saving;
+    const all: Promise<void> = (previous ? Promise.allSettled([previous, work]) : work).then(
+      () => undefined,
+      () => undefined,
+    );
+    this.saving = all;
+    void all.then(() => {
+      if (this.saving === all) this.saving = null;
     });
+    return all;
   }
 
   /** Saves now if something is pending (before signing out, deleting, or when the tab hides). */
@@ -441,8 +461,10 @@ export class SupabaseAccountStore implements AccountStore {
     if (snapshot.status !== "signedIn") return;
     const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", snapshot.account.id).maybeSingle();
     if (error || !row) throw new Error("reloadFailed");
+    const now = this.snapshot;
+    if (now.status !== "signedIn" || now.account.id !== snapshot.account.id || row.updated_at === this.base) return;
     // A change made while the row was read is saved against the guard, which meets the newer version itself.
-    if (this.dirty || this.saving || this.snapshot !== snapshot || row.updated_at === this.base) return;
+    if (this.dirty || this.saving) return;
     this.replace(row, false);
   };
 
@@ -467,7 +489,9 @@ export class SupabaseAccountStore implements AccountStore {
       const content = toRow(site);
       // The guard: the row changes only while it is still the version this tab read or last saved.
       const update = this.client().from("sites").update(content).eq("profile_id", id);
+      this.sending.add(content);
       const { data, error } = await (base === null ? update : update.eq("updated_at", base)).select("page, updated_at").maybeSingle();
+      this.sending.delete(content);
       const now = this.snapshot;
       if (now.status !== "signedIn" || now.account.id !== id) return;
       if (error) {
@@ -496,10 +520,9 @@ export class SupabaseAccountStore implements AccountStore {
       const { syncError: _resolved, ...rest } = now;
       this.set({ ...rest, site: { ...now.site, page: { ...page, profile } }, sync: this.dirty ? "saving" : "saved", baseUpdatedAt: data.updated_at });
     };
-    this.saving = run().finally(() => {
-      this.saving = null;
-    });
-    await this.saving;
+    const running = run();
+    void this.track(running);
+    await running;
   }
 
   /** A failed save is tried again, each time a little later (the next change tries at once). */
@@ -554,7 +577,7 @@ export class SupabaseAccountStore implements AccountStore {
     }
     const latest = toRow(fromRow(row));
     const key = contentKey(latest);
-    const own = [this.baseContent, ...this.unconfirmed].some((content) => content !== null && contentKey(content) === key);
+    const own = [this.baseContent, ...this.sending, ...this.unconfirmed].some((content) => content !== null && contentKey(content) === key);
     if (own && this.rebases < MAX_REBASES) {
       this.rebases += 1;
       this.base = row.updated_at;
