@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AccountSnapshot } from "@/features/account/types";
 
-import { installOnApp, type LinkyoApp } from "./app-mode";
+import type { LinkyoApp } from "./app-mode";
+import { installOnApp } from "./app-object";
 import { installStoreBridge, READY_WAIT, SIGN_OUT_WAIT } from "./store-bridge";
 
 /**

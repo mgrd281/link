@@ -5,7 +5,8 @@ import { useEffect } from "react";
 import { accountStore, handOverPendingEdits } from "@/features/account/store";
 import type { AccountSnapshot, AccountStore } from "@/features/account/types";
 
-import { inAppMode, installOnApp } from "./app-mode";
+import { inAppMode } from "./app-mode";
+import { installOnApp } from "./app-object";
 import { inMainFrame, post, type SaveState } from "./bridge";
 
 /**

@@ -3,7 +3,8 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { APP_PLATFORMS, appPlatform, inAppMode, keepAppSignal, linkyoApp, type AppWindow } from "./app-mode";
+import { APP_PLATFORMS, appPlatform, inAppMode, keepAppSignal, type AppWindow } from "./app-mode";
+import { linkyoApp } from "./app-object";
 
 /** A page whose <html> carries `data-app` (or not), as the app's document-start script leaves it. */
 function page(app?: string) {

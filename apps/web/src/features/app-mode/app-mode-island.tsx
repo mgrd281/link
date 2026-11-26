@@ -8,7 +8,7 @@ import { ORIGIN_TAB_KEY, TABS, type TabKey } from "@/features/app/routes";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 
-import { installOnApp } from "./app-mode";
+import { installOnApp } from "./app-object";
 import { post } from "./bridge";
 import { navigationTarget, routeParts } from "./route";
 import { useAppMode, useKeepAppSignal } from "./use-app-mode";
