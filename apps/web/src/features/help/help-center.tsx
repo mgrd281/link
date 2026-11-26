@@ -9,11 +9,14 @@ import { Link } from "@/i18n/navigation";
 import type { HelpGroup } from "./articles";
 import { matchArticles, type SearchableArticle } from "./search";
 
-/** One article as the page hands it over: rendered words, plain words for the search, a link onwards. */
+/**
+ * One article as the page hands it over: rendered words, plain words for the search, a link onwards
+ * (`inApp: false`: a page of the website, hidden inside Linkyo's iPhone app, ADR draft "app mode").
+ */
 export interface HelpCenterArticle extends SearchableArticle {
   group: HelpGroup;
   view: { title: ReactNode; summary: ReactNode; body: ReactNode[] };
-  related?: { href: string; label: string } | undefined;
+  related?: { href: string; label: string; inApp: boolean } | undefined;
 }
 
 const linkClass =
@@ -183,7 +186,11 @@ export function HelpCenter({
                           </p>
                         ))}
                         {article.related ? (
-                          <Link href={article.related.href} className={linkClass}>
+                          <Link
+                            href={article.related.href}
+                            data-app-hide={article.related.inApp ? undefined : true}
+                            className={linkClass}
+                          >
                             {article.related.label}
                             <Icon icon={icons.next} size="sm" />
                           </Link>

@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Fragment, useCallback, useEffect, useState, type ReactNode } from "react";
 
+import { bridgeAvailable, post } from "@/features/app-mode/bridge";
 import { copyText } from "@/lib/clipboard";
 import { haptic } from "@/lib/haptics";
 
@@ -12,15 +13,26 @@ import { CONFIRM_MS } from "../shared/copy-confirm";
 type Outcome = "idle" | "copied" | "failed";
 
 /**
- * Shares the page: the native share sheet where there is one (phones). Where there is none, or the
- * browser refuses it (not allowed, a bad call), the page's address (without query or fragment) is
- * copied instead. A visitor who closes the share sheet has decided: nothing is copied and nothing is
- * said. No third-party code.
+ * The page's public address. Inside the dashboard's "View my page" the page is shown at the dashboard's
+ * own address (`/<l>/app/preview`), so the dashboard names the public one on an element around it
+ * (`data-share-url`); everywhere else it is this page's address, without query or fragment.
  */
-function useShare(title: string): { share: () => Promise<void>; outcome: Outcome; reset: () => void } {
+function pageAddress(from: Element): string {
+  const named = from.closest<HTMLElement>("[data-share-url]")?.dataset.shareUrl;
+  return named ?? `${window.location.origin}${window.location.pathname}`;
+}
+
+/**
+ * Shares the page: in Linkyo's iPhone app (the owner's "View my page") the app's share sheet, through
+ * the bridge; otherwise the native share sheet where there is one (phones). Where there is none, or the
+ * browser refuses it (not allowed, a bad call), the page's address is copied instead. A visitor who
+ * closes the share sheet has decided: nothing is copied and nothing is said. No third-party code.
+ */
+function useShare(title: string): { share: (from: Element) => Promise<void>; outcome: Outcome; reset: () => void } {
   const [outcome, setOutcome] = useState<Outcome>("idle");
-  const share = async () => {
-    const url = `${window.location.origin}${window.location.pathname}`;
+  const share = async (from: Element) => {
+    const url = pageAddress(from);
+    if (bridgeAvailable() && post({ type: "share", title, url })) return;
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({ title, url });
@@ -68,7 +80,7 @@ export function ShareButtonIsland({ title, className, icons }: { title: string; 
   const announcement = useAnnouncement(outcome);
   return (
     <>
-      <button type="button" onClick={() => void share()} aria-label={t("share")} className={className}>
+      <button type="button" onClick={(event) => void share(event.currentTarget)} aria-label={t("share")} className={className}>
         {outcome === "copied" ? icons.copied : icons.share}
       </button>
       <span role="status" className="sr-only">
@@ -90,7 +102,7 @@ export function ShareActionIsland({ title, label, className, icons }: { title: s
   const announcement = useAnnouncement(outcome);
   return (
     <>
-      <button type="button" onClick={() => void share()} className={className}>
+      <button type="button" onClick={(event) => void share(event.currentTarget)} className={className}>
         {/* A new element each time, so the check pops in again. */}
         <Fragment key={outcome === "copied" ? "copied" : "share"}>{outcome === "copied" ? icons.copied : icons.share}</Fragment>
         <span>{label}</span>

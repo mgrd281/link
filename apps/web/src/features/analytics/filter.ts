@@ -23,9 +23,24 @@ export function isBot(userAgent: string | null | undefined): boolean {
   return BOT.test(ua);
 }
 
-/** The visitor asked not to be tracked: Global Privacy Control (`Sec-GPC: 1`) or Do Not Track (`DNT: 1`). */
+/**
+ * Linkyo's own iPhone app, whose web views name it in the user agent (`… Mobile/15E148 LinkyoApp/1.2`,
+ * ADR draft "app mode"): an owner looking at their own page, never a visitor.
+ */
+const LINKYO_APP = /(?:^|[\s(;])LinkyoApp\//;
+
+/** A request from Linkyo's iPhone app (its user agent carries `LinkyoApp/<version>`). */
+export function fromLinkyoApp(userAgent: string | null | undefined): boolean {
+  return LINKYO_APP.test(userAgent ?? "");
+}
+
+/**
+ * Not counted on principle: the visitor asked not to be tracked, with Global Privacy Control
+ * (`Sec-GPC: 1`) or Do Not Track (`DNT: 1`), or the request comes from Linkyo's own app (the owner,
+ * a safety net beside the app's own GPC on its page view).
+ */
 export function optedOut(headers: Headers): boolean {
-  return headers.get("sec-gpc")?.trim() === "1" || headers.get("dnt")?.trim() === "1";
+  return headers.get("sec-gpc")?.trim() === "1" || headers.get("dnt")?.trim() === "1" || fromLinkyoApp(headers.get("user-agent"));
 }
 
 /** A prefetch or prerender the visitor may never look at (`Sec-Purpose` / `Purpose`). */

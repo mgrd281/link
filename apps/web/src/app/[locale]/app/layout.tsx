@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { Providers } from "@/components/providers";
+import { AppModeIsland } from "@/features/app-mode/app-mode-island";
 import { AppGate } from "@/features/app/gate";
 import { ServiceWorkerIsland } from "@/features/app/install/service-worker-island";
 import { GatedRouteCheck } from "@/features/errors/gated-route-check";
@@ -26,6 +27,8 @@ export default async function AppLayout({ children, params }: { children: ReactN
         {/* The dashboard's offline page (features/pwa); nothing else on the site registers a worker. */}
         <ServiceWorkerIsland />
         <AppGate>{children}</AppGate>
+        {/* Inside Linkyo's iPhone app: navigate/back and the ready and route messages (features/app-mode). */}
+        <AppModeIsland />
       </Providers>
     </ClientMessages>
   );

@@ -10,13 +10,18 @@ import { SITE_NUMBERS } from "./numbers";
 import { SitePage, standaloneLink } from "./site-page";
 import { bdi, plainTags } from "./text";
 
-/** The name of the page an article points on to (a message key). */
-const RELATED_LABEL: Record<HelpRelated, string> = {
-  "/funktionen": "marketing.nav.features",
-  "/portfolio": "marketing.nav.portfolio",
-  "/templates": "marketing.nav.templates",
-  "/sicherheit": "sitePages.security.eyebrow",
-  "/sicherheit#statistik": "sitePages.security.eyebrow",
+/**
+ * The name of the page an article points on to (a message key), and whether Linkyo's iPhone app shows
+ * the link (app mode). Funktionen, Portfolio and Vorlagen are the website's: their links lead on to
+ * sign-up and the homepage with its prices, and the router's links never ask the app's navigation
+ * policy. Sicherheit leads only to Datenschutz and Kontakt.
+ */
+const RELATED: Record<HelpRelated, { label: string; inApp: boolean }> = {
+  "/funktionen": { label: "marketing.nav.features", inApp: false },
+  "/portfolio": { label: "marketing.nav.portfolio", inApp: false },
+  "/templates": { label: "marketing.nav.templates", inApp: false },
+  "/sicherheit": { label: "sitePages.security.eyebrow", inApp: true },
+  "/sicherheit#statistik": { label: "sitePages.security.eyebrow", inApp: true },
 };
 
 /**
@@ -42,7 +47,7 @@ export async function HelpPage({ locale }: { locale: string }) {
       summary: plain(summary),
       body: body.map(plain),
       view: { title: rich(`${base}.title`), summary: rich(summary), body: body.map(rich) },
-      related: "related" in article ? { href: article.related, label: t(RELATED_LABEL[article.related]) } : undefined,
+      related: "related" in article ? { href: article.related, label: t(RELATED[article.related].label), inApp: RELATED[article.related].inApp } : undefined,
     };
   });
   const groups = HELP_GROUPS.map((key) => ({ key, label: t(`sitePages.help.groups.${key}`) }));
@@ -60,7 +65,8 @@ export async function HelpPage({ locale }: { locale: string }) {
               <Icon icon={icons.email} size="md" />
               {t("sitePages.help.more.contact")}
             </Link>
-            <Link href="/#faq" className={standaloneLink}>
+            {/* The homepage's questions sit beside its prices: not from inside the iPhone app (app mode). */}
+            <Link href="/#faq" data-app-hide className={standaloneLink}>
               <Icon icon={icons.help} size="md" />
               {t("sitePages.help.more.faq")}
             </Link>

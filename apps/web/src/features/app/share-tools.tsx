@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { useAccount } from "@/features/account/store";
+import { bridgeAvailable } from "@/features/app-mode/bridge";
+import { appShare } from "@/features/app-mode/bridge-files";
 import { copyText } from "@/lib/clipboard";
 import { haptic } from "@/lib/haptics";
 import { pageAddress, pageUrl, qrPageUrl } from "@/lib/page-url";
@@ -18,7 +20,10 @@ export { pageUrl };
 // sheet opens (`./share-qr.tsx`, ADR 0008).
 const QrSheet = dynamic(() => import("./share-qr").then((module) => module.QrSheet), { ssr: false });
 
-/** Copy and share for one page address: the system share sheet where there is one, copy everywhere else. */
+/**
+ * Copy and share for one page address: the system share sheet where there is one (in the iPhone app,
+ * the app's own, through the bridge), copy everywhere else.
+ */
 function useShareLink(username: string) {
   const t = useTranslations("app.share");
   const url = pageUrl(username);
@@ -27,7 +32,8 @@ function useShareLink(username: string) {
     toast({ title: ok ? t("copied") : t("copyFailed"), tone: ok ? "success" : "danger" });
   };
   const share = () => {
-    if (typeof navigator.share === "function") void navigator.share({ title: pageAddress(username), url }).catch(() => undefined);
+    if (bridgeAvailable()) void appShare({ title: pageAddress(username), url });
+    else if (typeof navigator.share === "function") void navigator.share({ title: pageAddress(username), url }).catch(() => undefined);
     else void copy();
   };
   return { copy, share };
@@ -140,7 +146,7 @@ export function QrButton({ compact = false, appearance = "button", ...target }: 
   const theme = target.username !== undefined && snapshot.status === "signedIn" ? snapshot.site.theme : null;
 
   const show = () => {
-    setCanShare(typeof navigator.share === "function");
+    setCanShare(bridgeAvailable() || typeof navigator.share === "function");
     setShown(true);
     setOpen(true);
   };

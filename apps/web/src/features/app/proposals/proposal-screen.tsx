@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { DraftChip } from "@/features/ai/draft-phone";
+import { appDownloadFrom } from "@/features/app-mode/bridge-files";
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { DraftReview, type ReviewDraft } from "@/features/ai/review";
 import { clockTime, longDate, type EmailLocale } from "@/features/email/templates/render";
 import { COMPANY } from "@/features/legal/company";
@@ -105,9 +107,17 @@ async function loadProposal(id: string): Promise<{ proposal: Proposal; order: Or
   };
 }
 
-/** Premium's marketing kit beside the review: two bios to copy, the four weeks, three pictures to download. */
+/** The name a story picture is saved under: `linkyo-story-2.png` (its stored name is a random id). */
+const storyName = (path: string, index: number) => `linkyo-story-${String(index + 1)}.${/\.(\w+)$/.exec(path)?.[1] ?? "jpg"}`;
+
+/**
+ * Premium's marketing kit beside the review: two bios to copy, the four weeks, three pictures to
+ * download. In Linkyo's iPhone app the pictures go to the app (its share sheet saves them): a link to
+ * Storage, another host, would do nothing in its web view or leave it.
+ */
 function KitAside({ kit, stories }: { kit: Kit | null; stories: string[] }) {
   const t = useTranslations("app.proposals.kit");
+  const app = useAppMode();
   // Signed for ten minutes, signed again while the review stays open (people compare and copy first).
   const links = useSignedUrls("deliverables", stories, { download: true });
   const copy = async (text: string) => {
@@ -118,6 +128,11 @@ function KitAside({ kit, stories }: { kit: Kit | null; stories: string[] }) {
     const url = (await links.sign()).get(path);
     if (url) window.location.assign(url);
     else toast({ title: t("downloadFailed"), tone: "danger" });
+  };
+  /** In the app: the picture's bytes, from an address signed now (never one run out), handed to the app. */
+  const downloadToApp = async (path: string, index: number) => {
+    const url = (await links.sign()).get(path);
+    if (!url || !(await appDownloadFrom(url, storyName(path, index)))) toast({ title: t("downloadFailed"), tone: "danger" });
   };
   const storyLink = "inline-flex min-h-touch-target items-center gap-2 rounded-sm text-start text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring";
   const bios = kit
@@ -164,7 +179,12 @@ function KitAside({ kit, stories }: { kit: Kit | null; stories: string[] }) {
           <ul className="grid gap-1">
             {stories.map((path, index) => (
               <li key={path}>
-                {links.fresh.get(path) ? (
+                {app ? (
+                  <button type="button" className={storyLink} onClick={() => void downloadToApp(path, index)}>
+                    <Icon icon={Download} size="sm" />
+                    {t("download", { n: index + 1 })}
+                  </button>
+                ) : links.fresh.get(path) ? (
                   <a
                     href={links.fresh.get(path)}
                     download

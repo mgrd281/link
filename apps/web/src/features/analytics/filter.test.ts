@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fromOwnPage, isBot, isPrefetch, optedOut } from "./filter";
+import { fromLinkyoApp, fromOwnPage, isBot, isPrefetch, optedOut } from "./filter";
 
 const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1";
 const CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -50,6 +50,21 @@ describe("privacy signals", () => {
     expect(optedOut(headers({ dnt: "1" }))).toBe(true);
     expect(optedOut(headers({ dnt: "0" }))).toBe(false);
     expect(optedOut(headers({}))).toBe(false);
+  });
+
+  it("never count Linkyo's own iPhone app (its web views add LinkyoApp/<version> to the user agent)", () => {
+    // WKWebView's own agent plus `applicationNameForUserAgent`: a browser by every other rule.
+    const app = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 LinkyoApp/1.0";
+    expect(isBot(app)).toBe(false);
+    expect(fromLinkyoApp(app)).toBe(true);
+    expect(fromLinkyoApp(`${IPHONE} LinkyoApp/2.10.3`)).toBe(true);
+    expect(optedOut(headers({ "user-agent": app }))).toBe(true);
+    // People's browsers, in-app browsers included, and look-alike names stay counted.
+    for (const ua of [IPHONE, CHROME, INSTAGRAM_APP, PINTEREST_IOS, `${IPHONE} NotLinkyoApp/1.0`, `${IPHONE} LinkyoApp`]) {
+      expect(fromLinkyoApp(ua), ua).toBe(false);
+      expect(optedOut(headers({ "user-agent": ua })), ua).toBe(false);
+    }
+    expect(fromLinkyoApp(null)).toBe(false);
   });
 
   it("skip prefetches and prerenders nobody may look at", () => {

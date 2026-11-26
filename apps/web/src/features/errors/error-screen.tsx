@@ -4,6 +4,7 @@ import { Button, cn, Logo } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { useAppMode, useKeepAppSignal } from "@/features/app-mode/use-app-mode";
 import { Link, usePathname } from "@/i18n/navigation";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
@@ -17,6 +18,9 @@ import { AREA_HOME, areaOf, isOrderPath, type ErrorArea } from "./area";
  * route below it.
  */
 function ErrorFrame({ area, children }: { area: ErrorArea; children: ReactNode }) {
+  // A dashboard address that can never exist stops the server's stream in the layout; React then renders
+  // the whole document in the browser and drops the app's `<html data-app>`, which this puts back.
+  useKeepAppSignal();
   const inConsole = area === "app";
   return (
     <main
@@ -49,15 +53,34 @@ const actionWidth = "w-full sm:w-auto";
 /** One button shape per page: the website's pill (ADR 0059), the product's own buttons in its areas. */
 const sizeFor = (frame: ErrorArea) => (frame === "site" ? "cta" : "xl");
 
+/**
+ * In Linkyo's iPhone app (app mode, ADR draft "app mode") the website is not one of the app's pages: it
+ * shows the prices. A way to it (the home page, the templates) is marked `data-app-hide`, hidden by CSS
+ * from the first paint, also on a page the server rendered.
+ */
+const WEBSITE = { "data-app-hide": "" } as const;
+
 /** The main way back of an area (the home page, the dashboard or the team area), shaped for the page it sits on. */
 function HomeLink({ area, frame, variant }: { area: ErrorArea; frame: ErrorArea; variant: "primary" | "tinted" }) {
   const t = useTranslations("errors.actions");
   const label = area === "app" ? t("dashboard") : area === "admin" ? t("team") : t("home");
   return (
     <Button asChild variant={variant} size={sizeFor(frame)} className={actionWidth}>
-      <Link href={AREA_HOME[area]}>{label}</Link>
+      <Link href={AREA_HOME[area]} {...(area === "site" ? WEBSITE : {})}>
+        {label}
+      </Link>
     </Button>
   );
+}
+
+/**
+ * In the app, on a page outside the dashboard (help or a legal page, whose ways to the website are
+ * hidden): the way back to the dashboard instead. Added once the browser knows it is the app (the
+ * server renders this page for browsers and the app alike), so a browser never shows it.
+ */
+function AppWayBack({ area, variant }: { area: ErrorArea; variant: "primary" | "tinted" }) {
+  const app = useAppMode();
+  return app && area === "site" ? <HomeLink area="app" frame={area} variant={variant} /> : null;
 }
 
 /** The page for an address nobody has: in the site's language, with the ways back that fit its part of Linkyo. */
@@ -80,11 +103,14 @@ export function NotFoundScreen() {
         <HomeLink area={area} frame={area} variant="primary" />
         {area === "site" ? (
           <Button asChild variant="tinted" size="cta" className={actionWidth}>
-            <Link href="/templates">{t("actions.templates")}</Link>
+            <Link href="/templates" {...WEBSITE}>
+              {t("actions.templates")}
+            </Link>
           </Button>
         ) : (
           <HomeLink area="site" frame={area} variant="tinted" />
         )}
+        <AppWayBack area={area} variant="primary" />
       </div>
     </ErrorFrame>
   );
@@ -115,6 +141,7 @@ export function ErrorScreen({ error, retry }: { error: unknown; retry: () => voi
           {t("actions.retry")}
         </Button>
         <HomeLink area={area} frame={area} variant="tinted" />
+        <AppWayBack area={area} variant="tinted" />
       </div>
     </ErrorFrame>
   );

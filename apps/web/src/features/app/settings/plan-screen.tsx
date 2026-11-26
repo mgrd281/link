@@ -6,6 +6,7 @@ import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { useAiQuota, type AiQuotaView } from "@/features/ai/quota";
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { formatEuro, PRICES, PRO_DRAFTS } from "@/features/payments/prices";
 import { PRO_AVAILABLE } from "@/features/referrals/rules";
 import type { Locale } from "@/i18n/routing";
@@ -186,11 +187,16 @@ export async function requestPortal(locale: Locale): Promise<PortalAnswer> {
 
 const bdi = { bdi: (chunks: ReactNode) => <bdi>{chunks}</bdi> };
 
-/** The plan's name, where it comes from and its state: one row, then its dates. */
+/**
+ * The plan's name, where it comes from and its state: one row, then its dates. In the iPhone app (app
+ * mode) only the name, the state and the dates: no price and no word about Pro coming or about paying,
+ * since the app sells nothing and points to no purchase (App Store 3.1.1, 3.1.3(f)).
+ */
 function PlanGroup({ view }: { view: PlanView }) {
   const t = useTranslations("app.settings.plan");
   const format = useFormatter();
   const locale = useLocale() as Locale;
+  const app = useAppMode();
   const day = (at: string) => format.dateTime(new Date(at), { day: "numeric", month: "long", year: "numeric" });
   const price = formatEuro(PRICES["pro-monthly"].amountCents, locale);
   const reserved = view.source === "reward" && !PRO_AVAILABLE;
@@ -205,13 +211,22 @@ function PlanGroup({ view }: { view: PlanView }) {
     ) : (
       <Badge tone="success">{t("status.active")}</Badge>
     );
-  const footer = view.pastDue ? t.rich("pastDue", bdi) : reserved ? t.rich("rewardSoon", bdi) : view.plan === "free" && !paymentsEnabled ? t.rich("soon", bdi) : undefined;
+  const footer = app
+    ? undefined
+    : view.pastDue
+      ? t.rich("pastDue", bdi)
+      : reserved
+        ? t.rich("rewardSoon", bdi)
+        : view.plan === "free" && !paymentsEnabled
+          ? t.rich("soon", bdi)
+          : undefined;
   return (
     <ListGroup title={t("groups.plan")} titleId="plan-current" footer={footer}>
       <ListRow
         icon={view.plan === "pro" ? icons.ai : icons.plan}
         title={<span className="font-semibold">{t.rich(`name.${view.plan}`, bdi)}</span>}
-        subtitle={t.rich(`source.${view.source}`, { ...bdi, price })}
+        // A subscription names its price: not in the app.
+        subtitle={app && view.source === "stripe" ? undefined : t.rich(`source.${view.source}`, { ...bdi, price })}
         subtitleWrap
         value={badge}
       />
@@ -382,6 +397,8 @@ export function PlanScreen() {
   const { account } = useSite();
   const { state, retry } = usePlan(account.id);
   const quota = useAiQuota({ account: account.id, fresh: true });
+  // The iPhone app shows no buying, no portal, no invoices and no cancellation (App Store 3.1.1, 3.1.3(f)).
+  const app = useAppMode();
   return (
     <Screen title={t("panes.plan")} back={{ href: SETTINGS_HREF, label: tApp("nav.settings") }} grow>
       {/* The groups stand in two columns where the column has the room (laptops), one below that. */}
@@ -391,7 +408,7 @@ export function PlanScreen() {
             <PlanGroup view={state.view} />
             <IncludesGroup view={state.view} quota={quota} />
             <AiGroup quota={quota} />
-            {paymentsEnabled ? <BillingGroup view={state.view} /> : null}
+            {paymentsEnabled && !app ? <BillingGroup view={state.view} /> : null}
           </>
         ) : (
           <PlanPlaceholder failed={state.status === "failed"} retry={retry} />

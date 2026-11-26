@@ -242,6 +242,9 @@ function remember(key: string, value: string) {
  *
  * `data-grouped` and `group/app` mark the grouped look: a tinted ground with white groups, as in iOS
  * Settings. The team area has no such marker, so the screens it shares keep their outlined cards.
+ *
+ * Inside Linkyo's iPhone app the rail, the top bar and the tab bar are hidden (`data-app-hide`, app
+ * mode in globals.css): the app draws its own bars and navigation.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations("app");
@@ -430,7 +433,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <aside>: it holds the main navigation, which is named. The panel's width is CSS only
               (nav-folded:), set before paint, so the frame never shifts. data-panel="none" marks a
               place without it (toasts then centre beside the rail alone). */}
-          <div data-nav data-panel={panel ? undefined : "none"} className="sticky top-0 hidden h-dvh shrink-0 lg:flex">
+          <div data-nav data-panel={panel ? undefined : "none"} data-app-hide className="sticky top-0 hidden h-dvh shrink-0 lg:flex">
             <NavRail pathname={pathname} pending={pending} onNavigate={setPending} onTeam={onTeam} status={<SaveStatus layout="compact" />} panel={panel} />
             {panel ? <SectionPanel pathname={pathname} pending={pending} onNavigate={setPending} status={<SaveStatus layout="panel" />} /> : null}
           </div>
@@ -442,6 +445,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 the title truncates instead. Safe areas are physical (pl/pr): they do not mirror in Arabic. */}
             <header
               data-scrolled={scrolled ? "" : undefined}
+              data-app-hide
               className="layer-sticky sticky top-0 grid h-16 grid-cols-[minmax(max-content,1fr)_minmax(0,auto)_minmax(max-content,1fr)] items-center border-b border-transparent bg-canvas-muted pr-[max(var(--spacing-2),env(safe-area-inset-right))] pl-[max(var(--spacing-2),env(safe-area-inset-left))] transition-colors duration-micro data-[scrolled]:border-line short:static lg:hidden"
             >
               {backTarget ? (
@@ -480,6 +484,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <nav
             data-tabbar
+            data-app-hide
             aria-label={t("nav.label")}
             className="layer-sticky fixed inset-x-0 bottom-0 border-t border-line bg-surface pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] lg:hidden"
           >

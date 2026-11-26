@@ -11,6 +11,9 @@ import { AuthWall } from "./auth-wall";
  * Sign-up and sign-in share one frame: the logo, the form on white, and on wide screens a tilted
  * wall of example pages, so people see what they are about to make. Nothing else but the legal pages
  * at the foot: language and light/dark live on the homepage (the language comes along in the address).
+ * Inside Linkyo's iPhone app (app mode, `data-app-hide`) neither the logo's link to the homepage and
+ * its prices nor the legal foot with its contract links shows: the app signs in natively and comes
+ * here only for a moment, when the web view's session has ended.
  */
 export function AuthShell({ children }: { children: ReactNode }) {
   const t = useTranslations("auth");
@@ -24,7 +27,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           >
             {t("skip")}
           </a>
-          <Link href="/" className="rounded-xs focus-visible:focus-ring" aria-label={t("home")}>
+          <Link href="/" data-app-hide className="rounded-xs focus-visible:focus-ring" aria-label={t("home")}>
             <Logo className="h-8" title="Linkyo" />
           </Link>
         </header>
@@ -32,7 +35,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <div className="grid w-full max-w-creator grid-cols-1 gap-6">{children}</div>
         </main>
         {/* The legal pages, as at the foot of the website (named, or links once the company details are in). */}
-        <footer className="text-small text-fg-secondary md:text-caption">
+        <footer data-app-hide className="text-small text-fg-secondary md:text-caption">
           <LegalLinks />
         </footer>
       </div>

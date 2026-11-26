@@ -5570,5 +5570,18 @@
       "body": "Das Dashboard braucht eine Internetverbindung. Prüf deine Verbindung und versuch es dann noch einmal.",
       "retry": "Erneut versuchen"
     }
+  },
+  "appMode": {
+    "ai": {
+      "title": "KI-Entwürfe sind für dieses Konto nicht freigeschaltet",
+      "quotaFree": "Deinen kostenlosen KI-Entwurf hast du genutzt. Weitere Entwürfe sind für dieses Konto nicht freigeschaltet.",
+      "close": "Schließen"
+    },
+    "invite": {
+      "terms": "Belohnungen sind persönlich, nicht übertragbar und nicht in Geld einlösbar."
+    },
+    "home": {
+      "inviteSubtitle": "{count, plural, one {# Person} other {# Personen}}: kostenlose Verifizierung"
+    }
   }
 }

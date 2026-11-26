@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { readTryDraft } from "@/features/account/try-draft";
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { storePreparedImage } from "@/features/app/media-upload";
 import { useSite, type SiteDoc } from "@/features/app/site-context";
 import { useScrolled } from "@/features/app/use-scrolled";
@@ -33,16 +34,22 @@ import { rememberAppliedDraft, useAiRun } from "./use-ai-run";
 
 type Locale = "de" | "en" | "ar";
 
-/** The message of a run-ending error; quota depends on the plan (Pro: until next month, no offer). */
-function useErrorText() {
+/**
+ * The message of a run-ending error; quota depends on the plan (Pro: until next month, no offer). In
+ * the iPhone app a Free account's quota says the fact without naming Pro (`appMode.ai`, App Store
+ * 3.1.3(f)).
+ */
+export function useErrorText() {
   const t = useTranslations("app.ai.errors");
+  const tApp = useTranslations("appMode.ai");
+  const app = useAppMode();
   const format = useFormatter();
   return (code: AiErrorCode, quota: AiQuota | null) => {
     if (code !== "quota") return t(code);
     if (quota?.plan === "pro") {
       return t("quotaPro", { count: quota.allowance, date: quota.resetsAt ? format.dateTime(new Date(quota.resetsAt), { day: "numeric", month: "long" }) : "" });
     }
-    return t("quotaFree");
+    return app ? tApp("quotaFree") : t("quotaFree");
   };
 }
 
@@ -88,6 +95,8 @@ export function BuildScreen() {
   const { state, start, stop, reset } = useAiRun({ endpoint: "/api/ai/runs" });
   const scrolled = useScrolled();
   const errorText = useErrorText();
+  // The iPhone app sells nothing: no page service with its price, no "Get Pro" (App Store 3.1.1, 3.1.3(f)).
+  const app = useAppMode();
 
   const welcome = !site.onboarded;
   const back = welcome ? "/app/welcome" : "/app";
@@ -357,7 +366,7 @@ export function BuildScreen() {
           </div>
         }
         below={
-          paymentsEnabled ? (
+          paymentsEnabled && !app ? (
             <Link
               href="/service"
               className="inline-flex min-h-touch-target items-center gap-2 rounded-sm text-small font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
@@ -439,7 +448,7 @@ export function BuildScreen() {
                 </p>
                 <p className="text-body">{errorText(state.error, quota)}</p>
                 <p className="text-small text-fg-secondary">{tRun("notCounted")}</p>
-                {state.error === "quota" && !pro ? (
+                {state.error === "quota" && !pro && !app ? (
                   <Button variant="tinted" className="justify-self-start" onClick={() => setProOpen(true)}>
                     {t("pro.get")}
                   </Button>

@@ -5,11 +5,13 @@ import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Badge, Button, cn, Icon, IconButton, icons, initialsOf, Menu, Switch, toast, Tooltip } from "@linkyo/ui";
 import { ArrowDown, ArrowRight, ArrowUp, CalendarClock, ChevronRight, CopyPlus, GripVertical, ListOrdered, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Fragment, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { Fragment, useEffect, useEffectEvent, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { useAiQuota } from "@/features/ai/quota";
+import { post } from "@/features/app-mode/bridge";
 import { SortableBlocks, blockIcon, useSortableRow } from "@/features/directions/editor/ui";
 import { thumbSizes } from "@/features/directions/editor/use-dashboard";
 import { blockSummary } from "@/features/directions/editor/use-editor";
@@ -22,6 +24,7 @@ import { haptic } from "@/lib/haptics";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { blankBlock } from "./blocks";
+import { EDIT_PARAM, editLinkOutcome, withoutEditParam } from "./edit-link";
 import { emptyPageAsk } from "./editor-empty";
 import { isPortfolioKind } from "./kinds";
 import { PreviewButton } from "./preview";
@@ -45,6 +48,47 @@ const reorderKey = (onMove: (delta: number) => void) => (event: KeyboardEvent<HT
 };
 
 /**
+ * `?edit=<blockId>` (the iPhone app's pushed editor, or any link) opens that block's sheet, once; an
+ * unknown id opens nothing. The address loses the request first, so a reload or Back does not open the
+ * sheet again. In the app, closing that sheet (saved, cancelled, or the block deleted) posts
+ * `editClosed`, so the app can return to its own list; an unknown id posts `editClosed` with
+ * `missing` at once.
+ */
+function useEditLink() {
+  const { doc, edit, editing } = useSite();
+  const requested = useSearchParams().get(EDIT_PARAM);
+  // The block the link opened, until its sheet closes.
+  const linked = useRef<string | null>(null);
+  const timer = useRef<number | undefined>(undefined);
+  const open = useEffectEvent((id: string) => {
+    const outcome = editLinkOutcome(id, doc.blocks.map((block) => block.id));
+    if (!outcome) return;
+    // No such block: the app hears at once that no sheet opened (a browser: nothing happens).
+    if ("closed" in outcome) {
+      post(outcome.closed);
+      return;
+    }
+    linked.current = outcome.open;
+    edit({ mode: "edit", id: outcome.open });
+  });
+  useEffect(() => {
+    if (requested === null) return;
+    // `null`, never `history.state`: see setDesignTabUrl in jump.ts.
+    window.history.replaceState(null, "", withoutEditParam(window.location));
+    // A task later: arriving from another screen, the shell's own effect for the new path closes every
+    // sheet after this one has run. Not cancelled when `requested` turns null (the line above does that).
+    timer.current = window.setTimeout(() => open(requested), 0);
+  }, [requested]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  useEffect(() => {
+    const id = linked.current;
+    if (!id || (editing?.mode === "edit" && editing.id === id)) return;
+    linked.current = null;
+    post({ type: "editClosed", id });
+  }, [editing]);
+}
+
+/**
  * The page, top to bottom, exactly as visitors see it: the profile, then sections and their blocks.
  * Tap a row to edit it, switch it off to hide it. Moving rows: drag the grip (with a mouse), ⌥↑/⌥↓,
  * the ⋯ menu, or "Reorder", which shows a grip on every row (the way iOS lists do it, so a drag never
@@ -63,6 +107,7 @@ export function EditorScreen({ title, lead }: { title?: string; lead?: string } 
   const tDesign = useTranslations("app.design.projects");
   const tWork = useTranslations("app.work");
   const { doc, dispatch, edit, setAddOpen, label, announce, justAdded, account, site } = useSite();
+  useEditLink();
   const wanted = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: doc.profile.locale === "ar" }).layout.projects, [doc.theme, doc.profile.locale]);
   const runs = useMemo(() => projectRuns(doc.blocks, wanted), [doc.blocks, wanted]);
   // The page's rules, and close to the size limit with a real account (the demo's limit is the browser's).

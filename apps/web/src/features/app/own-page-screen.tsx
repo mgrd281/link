@@ -7,10 +7,12 @@ import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { OwnerPreview, usePrivacyNoticeOpen } from "@/features/directions/shared/privacy";
 import { externalProviders } from "@/features/directions/shared/providers";
 import { Link } from "@/i18n/navigation";
+import { pageUrl } from "@/lib/page-url";
 
 import { isReturnPath, LAST_APP_PATH_KEY } from "./routes";
 import { useSite } from "./site-context";
@@ -30,10 +32,15 @@ function readReturnPath(): string {
  * "Done" (back where you were) or edit. The browser chrome takes the page color, like the public
  * page. While the page's privacy notice is open (it sits at the bottom), the bar waits at the top, so
  * neither covers the other.
+ *
+ * In the iPhone app the app's own toolbar (Done, Edit, Share) stands over the page instead: the bar is
+ * hidden (`data-app-hide`) and the page keeps no room for it. The bar's `data-console` stays in the
+ * page: it is what hides the page's "Made with Linkyo" credit inside the dashboard (globals.css).
  */
 export function OwnPageScreen() {
   const t = useTranslations("app.ownPage");
-  const { previewPage, doc } = useSite();
+  const app = useAppMode();
+  const { previewPage, doc, account } = useSite();
   const theme = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: previewPage.profile.locale === "ar" }), [doc.theme, previewPage.profile.locale]);
   const noticeOpen = usePrivacyNoticeOpen(externalProviders(previewPage.blocks.filter((block) => isBlockActive(block))).length > 0);
   // Read once: this screen only renders in the browser (behind AppGate's splash).
@@ -58,12 +65,16 @@ export function OwnPageScreen() {
 
   return (
     <>
-      <OwnerPreview bar>
-        <PosterRenderer page={previewPage} theme={theme} openProject={opened ? { id: opened, onBack: () => setOpened(null) } : undefined} onOpenProject={setOpened} />
+      <OwnerPreview bar={!app}>
+        {/* The page's share button shares its public address, not this screen's (share-island.tsx). */}
+        <div data-share-url={pageUrl(account.username)} className="contents">
+          <PosterRenderer page={previewPage} theme={theme} openProject={opened ? { id: opened, onBack: () => setOpened(null) } : undefined} onOpenProject={setOpened} />
+        </div>
       </OwnerPreview>
       {/* The bar is dashboard chrome (black and grey); the creator's page under it keeps its own colours (ADR 0062). */}
       <nav
         data-console="local"
+        data-app-hide
         aria-label={t("label")}
         className={cn(
           // A full-width strip, so taps beside the bar reach the page under it; only the bar takes them.

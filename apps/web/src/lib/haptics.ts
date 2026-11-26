@@ -1,5 +1,8 @@
+import { appHaptic } from "@/features/app-mode/bridge";
+
 /**
  * A light tap of haptic feedback, where the device offers one to the web:
+ * - Linkyo's iPhone app (app mode): the app plays it (`haptic` through the bridge);
  * - Android (Chrome, Samsung Internet): the Vibration API, one very short pulse;
  * - iPhone (iOS 18 and later): Safari plays the system's "selection" tick when a native switch
  *   control toggles, so a hidden switch is toggled through its label;
@@ -13,6 +16,7 @@ const isIos = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.use
 
 export function haptic(): void {
   if (typeof window === "undefined") return;
+  if (appHaptic()) return;
   if (typeof navigator.vibrate === "function" && !isIos()) {
     navigator.vibrate(8);
     return;

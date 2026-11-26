@@ -1,5 +1,7 @@
 import type { BlockOf } from "@linkyo/blocks";
 
+import { base64OfBytes, bridgeAvailable, post } from "@/features/app-mode/bridge";
+
 /**
  * When a live starts, said for the visitor (pure: no React, so the page's server code, the island
  * and the tests share it). The clock itself (`useNow`) lives in the island, `./live-island.tsx`.
@@ -40,7 +42,11 @@ export function describeStart(startsAt: string, now: number | null, locale: stri
   return { day, time, label: `${dayLabel}${comma(locale)}${time}`, relative, state };
 }
 
-/** Adds the live to the visitor's calendar (.ics, made in the browser; nothing is sent anywhere). */
+/**
+ * Adds the live to the visitor's calendar (.ics, made in the browser; nothing is sent anywhere). In
+ * Linkyo's iPhone app (app mode: the owner's "View my page") the web view saves no blob download, so
+ * the file goes to the app (`download` through the bridge), which offers to add it to the calendar.
+ */
 export function remind(block: Live, summary: string) {
   if (!block.startsAt) return;
   const stamp = (date: Date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
@@ -65,6 +71,7 @@ export function remind(block: Live, summary: string) {
     "END:VEVENT",
     "END:VCALENDAR",
   ].join("\r\n");
+  if (bridgeAvailable() && post({ type: "download", name: "live.ics", mime: "text/calendar", base64: base64OfBytes(new TextEncoder().encode(ics)) })) return;
   const link = document.createElement("a");
   link.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
   link.download = "live.ics";

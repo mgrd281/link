@@ -6,6 +6,8 @@ import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
+import { inAppMode } from "@/features/app-mode/app-mode";
+
 import { closeSearch, isSearchOpen, onSearchChange, openSearch } from "./people-history";
 import { loadPeople } from "./people-store";
 
@@ -61,6 +63,9 @@ export function PeopleSearch() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "k" || !(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
+      // In Linkyo's iPhone app (an iPad keyboard) the website's header and its search are not there
+      // (ADR draft "app mode"): the search leads to the website's pages, so the shortcut does nothing.
+      if (inAppMode()) return;
       // Another dialog is open in front (a page preview, a confirmation, the phone menu): the
       // shortcut is not for us. Closed ones may stay in the page (the menu is a hidden popover).
       const others = document.querySelectorAll<HTMLElement>("[role=dialog]:not([data-people-search]), [role=alertdialog]");

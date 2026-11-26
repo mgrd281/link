@@ -4,6 +4,8 @@ import { Button, IconButton, icons } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from "react";
 
+import { useAppMode } from "@/features/app-mode/use-app-mode";
+
 import { Tile } from "../list";
 import { installApp, useInstallVariant } from "./install-store";
 
@@ -33,16 +35,18 @@ function rememberShown() {
  * Home's hint "Linkyo als App", where the browser itself offers to install it (Chrome and Edge on
  * computers, Android): one button for the browser's dialog and an X. It shows once in a browser: the
  * first Home that has the offer remembers it in localStorage, and it stays on that Home until it is
- * dismissed, used, or Home is left. Safari users find the steps in Settings › Linkyo als App.
+ * dismissed, used, or Home is left. Safari users find the steps in Settings › Linkyo als App. Never in
+ * the iPhone app (app mode), and it is not used up there.
  */
 export function InstallHint() {
   const t = useTranslations("app.install.hint");
   const titleId = useId();
   const variant = useInstallVariant();
+  const app = useAppMode();
   const shownBefore = useSyncExternalStore(never, readShownBefore, () => true);
   const [visible, setVisible] = useState(false);
   const [decided, setDecided] = useState(false);
-  if (!decided && variant === "prompt" && !shownBefore) {
+  if (!decided && !app && variant === "prompt" && !shownBefore) {
     setDecided(true);
     setVisible(true);
   }

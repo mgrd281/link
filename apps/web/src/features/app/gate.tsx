@@ -67,7 +67,8 @@ export function AppSplash() {
     <div data-grouped data-console="frame" className="flex min-h-dvh bg-canvas-muted" role="status">
       <span className="sr-only">{t("loading")}</span>
 
-      <div aria-hidden className="sticky top-0 hidden h-dvh shrink-0 lg:flex">
+      {/* The chrome's places (rail, phone bar, tab bar) are data-app-hide: the iPhone app draws its own (app mode). */}
+      <div aria-hidden data-app-hide className="sticky top-0 hidden h-dvh shrink-0 lg:flex">
         {/* The rail: the symbol, Add, the places, Settings at the bottom, then the eye and the toggle. */}
         <div className="flex w-nav-rail shrink-0 flex-col items-center border-e border-line bg-surface pb-3">
           <div className="grid h-16 shrink-0 place-items-center text-fg">
@@ -119,7 +120,7 @@ export function AppSplash() {
 
       <div aria-hidden className="min-w-0 flex-1">
         {/* Phones: the shell's bar (avatar at the start, the page at the end). */}
-        <div className="grid h-16 grid-cols-[1fr_auto_1fr] items-center pr-[max(var(--spacing-2),env(safe-area-inset-right))] pl-[max(var(--spacing-2),env(safe-area-inset-left))] lg:hidden">
+        <div data-app-hide className="grid h-16 grid-cols-[1fr_auto_1fr] items-center pr-[max(var(--spacing-2),env(safe-area-inset-right))] pl-[max(var(--spacing-2),env(safe-area-inset-left))] lg:hidden">
           <span className="grid size-touch-target place-items-center">
             <Skeleton className="size-avatar-sm rounded-full" />
           </span>
@@ -153,7 +154,7 @@ export function AppSplash() {
         <Skeleton className="mx-auto min-h-0 w-full max-w-preview-compact flex-1 rounded-xl xl:max-w-preview" />
       </div>
 
-      <div aria-hidden className="fixed inset-x-0 bottom-0 border-t border-line bg-surface pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] lg:hidden">
+      <div aria-hidden data-app-hide className="fixed inset-x-0 bottom-0 border-t border-line bg-surface pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] lg:hidden">
         <div className="mx-auto grid h-16 max-w-prose grid-cols-5 place-items-center">
           {[0, 1, 2, 3, 4].map((slot) => (
             <Skeleton key={slot} className={slot === 2 ? "h-control-sm w-12 rounded-full" : "size-icon-md rounded-md"} />

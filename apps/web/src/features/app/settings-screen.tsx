@@ -25,6 +25,9 @@ import { useCallback, useEffect, useState } from "react";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { accountStore } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
+import { openExternal } from "@/features/app-mode/bridge";
+import { appDownload } from "@/features/app-mode/bridge-files";
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { legalLinksVisible } from "@/features/legal/company";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
@@ -94,7 +97,9 @@ function useOldHashes(openProfile: () => void) {
 
 /**
  * Downloads everything the account holds as one JSON file (Settings › Data, and the delete dialog's
- * "export first"), and answers the file's name. A change still waiting for autosave goes in too.
+ * "export first"), and answers the file's name. A change still waiting for autosave goes in too. In
+ * the iPhone app the file goes to the app, which offers to save or share it (a WebView downloads
+ * nothing from a link).
  */
 export function useExportData(): () => Promise<string> {
   const { account, flush } = useSite();
@@ -102,6 +107,7 @@ export function useExportData(): () => Promise<string> {
     flush();
     const name = `linkyo-${account.username}-export.json`;
     const blob = new Blob([await accountStore.exportData()], { type: "application/json" });
+    if (await appDownload(blob, name)) return name;
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = name;
@@ -212,19 +218,34 @@ function useNewestOrder(): string | null {
  * Contracts and legal: the newest order, "Vertrag widerrufen" and "Verträge hier kündigen" where
  * contracts can be made (payments on), and Linkyo's legal pages once they are linked anywhere
  * (`legalLinksVisible`). Withdrawal and cancellation also work signed out (the footer says so).
+ *
+ * In the iPhone app nothing is sold and nothing leads to a contract (App Store 3.1.1, 3.1.3(f)): no
+ * order, withdrawal or cancellation row. The AGB state prices, so the app opens them in Safari; the
+ * Impressum and the privacy policy open in the app, without the website's header and footer.
  */
 function ContractsGroup() {
   const t = useTranslations("app.settings");
+  const locale = useLocale();
+  const app = useAppMode();
   const newestOrder = useNewestOrder();
-  if (!paymentsEnabled && !legalLinksVisible) return null;
+  const contracts = paymentsEnabled && !app;
+  if (!contracts && !legalLinksVisible) return null;
   return (
-    <ListGroup title={t("groups.contracts")} titleId="contracts" footer={paymentsEnabled ? t("footers.contracts") : undefined}>
-      {paymentsEnabled && newestOrder ? <ListRow icon={Receipt} title={t("rows.orders")} href={`/app/orders/${newestOrder}`} /> : null}
-      {paymentsEnabled ? <ListRow icon={Undo2} title={t("rows.withdraw")} href="/widerruf" /> : null}
-      {paymentsEnabled ? <ListRow icon={FileX} title={t("rows.cancel")} href="/kuendigen" /> : null}
+    <ListGroup title={t("groups.contracts")} titleId="contracts" footer={contracts ? t("footers.contracts") : undefined}>
+      {contracts && newestOrder ? <ListRow icon={Receipt} title={t("rows.orders")} href={`/app/orders/${newestOrder}`} /> : null}
+      {contracts ? <ListRow icon={Undo2} title={t("rows.withdraw")} href="/widerruf" /> : null}
+      {contracts ? <ListRow icon={FileX} title={t("rows.cancel")} href="/kuendigen" /> : null}
       {legalLinksVisible ? <ListRow icon={Scale} title={t("rows.imprint")} href="/impressum" /> : null}
       {legalLinksVisible ? <ListRow icon={LockKeyhole} title={t("rows.privacy")} href="/datenschutz" /> : null}
-      {legalLinksVisible ? <ListRow icon={FileText} title={t("rows.terms")} href="/agb" /> : null}
+      {legalLinksVisible && app ? (
+        <ListRow
+          icon={FileText}
+          title={t("rows.terms")}
+          accessory={<Icon icon={icons.external} size="sm" className="text-fg-tertiary" />}
+          onClick={() => openExternal(`/${locale}/agb`)}
+        />
+      ) : null}
+      {legalLinksVisible && !app ? <ListRow icon={FileText} title={t("rows.terms")} href="/agb" /> : null}
     </ListGroup>
   );
 }
@@ -244,6 +265,9 @@ export function SettingsScreen() {
   const router = useRouter();
   const { account, site, doc, dispatch } = useSite();
   const onTeam = useOnTeam(account.email);
+  // The team area stays on the website, and signing out, the app's language and its appearance are the
+  // app's own: the iPhone app shows none of them.
+  const app = useAppMode();
   const [profileOpen, setProfileOpen] = useState(false);
   const openProfile = useCallback(() => setProfileOpen(true), []);
   useOldHashes(openProfile);
@@ -306,44 +330,54 @@ export function SettingsScreen() {
             subtitleDir="ltr"
             href="/app/settings/account"
           />
-          {onTeam ? <ListRow icon={ShieldCheck} title={tApp("teamArea")} href="/admin" /> : null}
+          {onTeam && !app ? <ListRow icon={ShieldCheck} title={tApp("teamArea")} href="/admin" /> : null}
           {/* Phones have no rail: Invite is always reachable from here (its back link says "‹ Settings"). */}
           <ListRow icon={Gift} title={tInvite("title")} href={INVITE_HREF} className="lg:hidden" />
         </ListGroup>
 
-        <ListGroup title={t("groups.app")} titleId="app" footer={t("footers.app")}>
-          <SegmentedRow icon={SunMoon} label={t("theme")}>
-            <ThemeSwitch
-              withSystem
-              size="md"
-              label={t("theme")}
-              className="pointer-coarse:h-control-lg w-full *:flex-1 sm:w-auto sm:*:flex-none"
+        {/* Not in the iPhone app: the app sets its language (and the account's, profiles.locale) and its
+            appearance natively, and is the app itself (no install row): a web choice "in this browser"
+            would disagree with the app's. The page's language, for its visitors, stays above. */}
+        {app ? null : (
+          <ListGroup title={t("groups.app")} titleId="app" footer={t("footers.app")}>
+            <SegmentedRow icon={SunMoon} label={t("theme")}>
+              <ThemeSwitch
+                withSystem
+                size="md"
+                label={t("theme")}
+                className="pointer-coarse:h-control-lg w-full *:flex-1 sm:w-auto sm:*:flex-none"
+              />
+            </SegmentedRow>
+            <PickerRow
+              icon={Languages}
+              label={t("rows.appLanguage")}
+              value={locale}
+              options={LANGUAGES}
+              onValue={(next) => router.replace(pathname, { locale: next })}
             />
-          </SegmentedRow>
-          <PickerRow
-            icon={Languages}
-            label={t("rows.appLanguage")}
-            value={locale}
-            options={LANGUAGES}
-            onValue={(next) => router.replace(pathname, { locale: next })}
-          />
-          <InstallRow />
-        </ListGroup>
+            <InstallRow />
+          </ListGroup>
+        )}
 
         <DataGroup />
 
         <ContractsGroup />
 
-        {/* Logging out is safe (nothing is lost), so it is a plain row, not a red one. Last "Log out" on the screen. */}
-        <ListGroup
-          footer={
-            accountStore.demo ? (
-              <span className="text-caption text-fg-tertiary">{t("demoNote")}</span>
-            ) : undefined
-          }
-        >
-          <ListRow icon={LogOut} title={t("logout")} accessory="none" onClick={() => accountStore.logOut()} />
-        </ListGroup>
+        {/* Logging out is safe (nothing is lost), so it is a plain row, not a red one. Last "Log out" on the screen.
+          Not in the iPhone app: it signs out natively (its own Settings row), ending this web view's session
+          with the app's own; a web-only sign-out would land on the sign-in page, which the app answers by
+          signing the web view straight back in. */}
+        {app ? null : (
+          <ListGroup
+            footer={
+              accountStore.demo ? (
+                <span className="text-caption text-fg-tertiary">{t("demoNote")}</span>
+              ) : undefined
+            }
+          >
+            <ListRow icon={LogOut} title={t("logout")} accessory="none" onClick={() => accountStore.logOut()} />
+          </ListGroup>
+        )}
       </div>
 
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
