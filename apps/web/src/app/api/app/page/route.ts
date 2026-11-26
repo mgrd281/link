@@ -53,6 +53,9 @@ const tooLarge = (error: { code?: string; message?: string }) => error.code === 
  *   200  { ok: true, updatedAt, changed: [ids], added: [ids] }
  *
  * - Bearer only (`requireUser`); the read and the write run as the account, under row-level security.
+ *   401 only for a token Supabase Auth turned down (the app signs out on it); 503 when Auth could not
+ *   check it (no answer, a 5xx, a rate limit: the app tries again later); 502 when a read or the write
+ *   fails.
  * - The write happens only while the row still has `baseUpdatedAt` (the version the app saw, from its
  *   own read or `window.linkyoApp.flush()`): otherwise 409 with the current `updatedAt`, nothing written.
  *   It is an opaque string, sent back exactly as received: parsed into a date and written out again
@@ -65,7 +68,7 @@ const tooLarge = (error: { code?: string; message?: string }) => error.code === 
  */
 export async function POST(request: Request) {
   if (!supabaseEnabled) return answer({ ok: false, error: "unavailable" }, 409);
-  const signedIn = await requireUser(request);
+  const signedIn = await requireUser(request, { outage: "unavailable" });
   if (signedIn instanceof Response) return signedIn;
 
   const raw = await readBody(request, MAX_BODY);
@@ -81,12 +84,18 @@ export async function POST(request: Request) {
   if (!parsed.success) return answer({ ok: false, error: "invalidBody", path: parsed.error.issues[0]?.path.join(".") ?? "" }, 422);
 
   const { user, db } = signedIn;
-  const { data: profile } = await db.from("profiles").select("status, username, locale").eq("id", user.id).maybeSingle();
+  const { data: profile, error: profileError } = await db.from("profiles").select("status, username, locale").eq("id", user.id).maybeSingle();
+  // A failed read says nothing about the account: never the final-sounding "notFound" for it.
+  if (profileError) return answer({ ok: false, error: "serverError" }, 502);
   if (!profile) return answer({ ok: false, error: "notFound" }, 404);
   if (profile.status !== "active") return answer({ ok: false, error: "suspended" }, 403);
 
-  const currentVersion = async () => (await db.from("sites").select("updated_at").eq("profile_id", user.id).maybeSingle()).data?.updated_at ?? null;
-  const conflict = async () => answer({ ok: false, error: "conflict", updatedAt: await currentVersion() }, 409);
+  /** The row's version now: null when there is no row, undefined when the read failed. */
+  const currentVersion = async (): Promise<string | null | undefined> => {
+    const { data, error } = await db.from("sites").select("updated_at").eq("profile_id", user.id).maybeSingle();
+    return error ? undefined : (data?.updated_at ?? null);
+  };
+  const conflict = async () => answer({ ok: false, error: "conflict", updatedAt: (await currentVersion()) ?? null }, 409);
 
   // Read only the version the app built on: a newer one is a conflict before any link is looked up.
   const { data: row, error: readError } = await db
@@ -96,7 +105,11 @@ export async function POST(request: Request) {
     .eq("updated_at", parsed.data.baseUpdatedAt)
     .maybeSingle();
   if (readError) return answer({ ok: false, error: "serverError" }, 502);
-  if (!row) return (await currentVersion()) === null ? answer({ ok: false, error: "notFound" }, 404) : conflict();
+  if (!row) {
+    const version = await currentVersion();
+    if (version === undefined) return answer({ ok: false, error: "serverError" }, 502);
+    return version === null ? answer({ ok: false, error: "notFound" }, 404) : answer({ ok: false, error: "conflict", updatedAt: version }, 409);
+  }
 
   const stored = isRecord(row.page) && isRecord(row.page.profile) ? row.page.profile : {};
   const t = await getTranslations({ locale: localeOf(stored.locale, profile.locale), namespace: "dashboard.types" });

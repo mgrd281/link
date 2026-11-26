@@ -13,10 +13,12 @@ interface State {
   locale: string;
   blocked: boolean;
   linkError: boolean;
+  /** The profiles read fails (the database cannot be reached). */
+  profileError: boolean;
   generated: { type: string; email: string }[];
 }
 
-const state = vi.hoisted((): State => ({ enabled: true, status: "active", locale: "de", blocked: false, linkError: false, generated: [] }));
+const state = vi.hoisted((): State => ({ enabled: true, status: "active", locale: "de", blocked: false, linkError: false, profileError: false, generated: [] }));
 
 vi.mock("@/lib/supabase/config", () => ({
   get supabaseEnabled() {
@@ -31,7 +33,10 @@ vi.mock("@/lib/supabase/server", () => ({
       const chain = {
         select: () => chain,
         eq: () => chain,
-        maybeSingle: () => Promise.resolve({ data: state.status ? { status: state.status, locale: state.locale } : null, error: null }),
+        maybeSingle: () =>
+          Promise.resolve(
+            state.profileError ? { data: null, error: { message: "TypeError: fetch failed" } } : { data: state.status ? { status: state.status, locale: state.locale } : null, error: null },
+          ),
       };
       return chain;
     },
@@ -51,12 +56,14 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/lib/server/user", () => ({
-  requireUser: (request: Request) =>
-    Promise.resolve(
-      request.headers.get("authorization") === "Bearer app-session"
-        ? { user: { id: "u1", email: "mira@example.com" }, db: {} }
-        : Response.json({ ok: false, error: "unauthorized" }, { status: 401 }),
-    ),
+  // As the real one answers (lib/server/user.test.ts): "Bearer auth-down" stands for Supabase Auth
+  // failing itself (no answer, a 5xx, a rate limit), which is a 401 unless the route asks otherwise.
+  requireUser: (request: Request, options: { outage?: string } = {}) => {
+    const header = request.headers.get("authorization");
+    if (header === "Bearer app-session") return Promise.resolve({ user: { id: "u1", email: "mira@example.com" }, db: {} });
+    if (header === "Bearer auth-down" && options.outage === "unavailable") return Promise.resolve(Response.json({ ok: false, error: "unavailable" }, { status: 503 }));
+    return Promise.resolve(Response.json({ ok: false, error: "unauthorized" }, { status: 401 }));
+  },
 }));
 
 const { POST } = await import("./route");
@@ -73,7 +80,7 @@ const call = (body: unknown, token: string | null = "app-session") =>
 
 const logged: unknown[][] = [];
 beforeEach(() => {
-  Object.assign(state, { enabled: true, status: "active", locale: "de", blocked: false, linkError: false, generated: [] });
+  Object.assign(state, { enabled: true, status: "active", locale: "de", blocked: false, linkError: false, profileError: false, generated: [] });
   process.env.SUPABASE_SECRET_KEY = "sb_secret_test";
   logged.length = 0;
   for (const level of ["log", "info", "warn", "error", "debug"] as const) vi.spyOn(console, level).mockImplementation((...args: unknown[]) => void logged.push(args));
@@ -111,6 +118,22 @@ describe("POST /api/auth/handoff", () => {
   it("answers 401 without a valid Bearer token, and makes no link", async () => {
     expect((await call({ deviceId: DEVICE }, null)).status).toBe(401);
     expect((await call({ deviceId: DEVICE }, "someone-else")).status).toBe(401);
+    expect(state.generated).toEqual([]);
+  });
+
+  it("answers 503 when Supabase Auth could not check the token: never the 401 on which the app signs out and wipes the device", async () => {
+    const response = await call({ deviceId: DEVICE }, "auth-down");
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ ok: false, error: "unavailable" });
+    expect(state.generated).toEqual([]);
+  });
+
+  it("answers 502 when the account cannot be read, never 403 suspended (which sounds final)", async () => {
+    state.profileError = true;
+    const response = await call({ deviceId: DEVICE });
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({ ok: false, error: "serverError" });
+    expect(response.headers.get("cache-control")).toBe("no-store");
     expect(state.generated).toEqual([]);
   });
 

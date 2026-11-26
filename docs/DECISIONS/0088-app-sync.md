@@ -44,26 +44,29 @@ view cannot share one session.
      |---|---|---|
      | 200 | — | `{ ok: true, url }` |
      | 409 | `unavailable` | a demo build (no real accounts) or no server key |
-     | 401 | `unauthorized` | no `Authorization: Bearer`, or a token Supabase does not accept |
+     | 401 | `unauthorized` | no `Authorization: Bearer`, or a token Supabase Auth turned down (invalid, expired, its session or its user gone) |
+     | 503 | `unavailable` | Supabase Auth could not check the token (no answer, a 5xx, a rate limit): try again later; never sign out on it |
      | 422 | `invalidDevice` | `deviceId` missing or not `dev_` + 12 lowercase hex digits; also a body that is not JSON |
      | 422 | `invalidNext` | `next` is not a string, or longer than 200 characters |
      | 409 | `unavailable` | the account has no e-mail address |
      | 403 | `blocked` | the request's address is blocked (as at sign-in) |
      | 403 | `suspended` | the account is not active |
-     | 502 | `serverError` | Supabase could not make the link |
+     | 502 | `serverError` | the account could not be read, or Supabase could not make the link: try again later |
    - The link is single-use and lives as long as Supabase's OTP (10 minutes locally). Making it replaces an e-mailed
      code that is still open for this address and any earlier link (only the newest token works, ADR 0035). **The
      app keeps one hand-off in flight:** it opens a link before it asks for the next one, since a second request
      makes the first link fail (`/<locale>/login?link=expired`).
    - The app repeats the hand-off whenever its web view reaches `/<locale>/login`; a 401 means the app's own session
-     is gone and it signs out natively. Two exceptions:
+     is gone and it signs out natively. Only a 401 does: a 503 `unavailable` (Supabase Auth could not check the
+     token) and a 502 `serverError` say nothing about the session, and the app tries again later, keeping its
+     session, the Keychain and the App Group (the share extension's queue) as they are. Two exceptions:
      - **not while the app signs out itself.** After `signOut()` the web view goes to
        `/<locale>/login?next=…` (plan §1.2 step 7 ends the web view's session before the native one); a
        hand-off there would sign it back in;
      - **a `signedOut` the app did not cause** (§4: the account was deleted in the web view, its session was
        ended elsewhere): the app tries one hand-off; a 401 means the account or its session is gone, and the app
        wipes the device (plan §1.2 steps 8 and 9); a link means only the web view's session had ended, and it
-       opens it.
+       opens it; a 503 or a 502 means neither is known yet, and the app tries again later without wiping.
 
 2. **Page operations: native screens never build block JSON** (`POST /api/app/page`).
    - Body (at most 64 KB, else 413):
@@ -111,11 +114,12 @@ view cannot share one session.
      |---|---|---|---|
      | 200 | — | `updatedAt`, `changed`, `added` | written |
      | 400 | `invalidJson` | | the body is not JSON |
-     | 401 | `unauthorized` | | no `Authorization: Bearer`, or a token Supabase does not accept |
+     | 401 | `unauthorized` | | no `Authorization: Bearer`, or a token Supabase Auth turned down (invalid, expired, its session or its user gone) |
+     | 503 | `unavailable` | | Supabase Auth could not check the token (no answer, a 5xx, a rate limit): try again later; never sign out on it |
      | 403 | `suspended` | | the account is not active |
      | 404 | `notFound` | | the account has no profile or no page row |
      | 409 | `unavailable` | | a demo build (no real accounts) |
-     | 409 | `conflict` | `updatedAt` (the current version) | the row is no longer at `baseUpdatedAt`; nothing written |
+     | 409 | `conflict` | `updatedAt` (the current version; null when it could not be read) | the row is no longer at `baseUpdatedAt`; nothing written |
      | 413 | `tooLarge` | `max` (65536) | the body is above 64 KB |
      | 422 | `tooManyOps` | `max` (20) | more than 20 operations |
      | 422 | `invalidBody` | `path` | the body breaks the limits above (an empty `ops` too, with `path` `ops`) |
@@ -125,7 +129,7 @@ view cannot share one session.
      | 422 | `unknownBlock`, `ambiguousBlock` | `id` | an id the page does not hold, or holds twice |
      | 422 | `invalidPage` | `problems` | the page the blocks schema would refuse (only for a problem the call adds) |
      | 422 | `pageTooLarge` | | the database refused the page for its size (1 MB) |
-     | 502 | `serverError` | | the read or the write failed |
+     | 502 | `serverError` | | a read (the account, the page or its version) or the write failed: try again later |
 
 3. **The save guard in the web store** (`SupabaseAccountStore`).
    - Every save, and the keepalive save when a tab is hidden (and, with the one exception below, when it is

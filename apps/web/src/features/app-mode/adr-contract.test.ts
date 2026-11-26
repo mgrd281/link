@@ -52,6 +52,11 @@ describe("ADR 0088 answers what the two routes answer", () => {
     // A `next` that is no string or too long is refused; one with a query falls back.
     expect(text).toContain("at most 200");
     expect(text).toMatch(/query[^.]*`navigate\(\)`/);
+    // Only a token Auth turned down is a 401, on which the app signs out and wipes the device; Auth that
+    // could not answer is a 503 the app retries (lib/server/user.ts `outage`, both app routes ask for it).
+    expect(source("app/api/auth/handoff/route.ts")).toContain('requireUser(request, { outage: "unavailable" })');
+    expect(text).toMatch(/\| 503 \| `unavailable` \|[^\n]*never sign out on it/);
+    expect(text).toContain("Only a 401 does");
   });
 
   it("the page operations: every error name, every extra field and the input limits", () => {
@@ -60,7 +65,9 @@ describe("ADR 0088 answers what the two routes answer", () => {
     const text = page();
     for (const name of names) expect(text, name).toContain(`\`${name}\``);
     for (const field of ["max", "path", "op", "id", "problems", "updatedAt"]) expect(text, field).toContain(`\`${field}\``);
-    for (const status of ["400", "401", "403", "404", "409", "413", "422", "502"]) expect(text, status).toContain(`| ${status} |`);
+    for (const status of ["400", "401", "403", "404", "409", "413", "422", "502", "503"]) expect(text, status).toContain(`| ${status} |`);
+    expect(source("app/api/app/page/route.ts")).toContain('requireUser(request, { outage: "unavailable" })');
+    expect(text).toMatch(/\| 503 \| `unavailable` \| \|[^\n]*never sign out on it/);
     for (const limit of ["1 to 20", "at most 300", "from 1 to 8192", "below the number of blocks"]) expect(text, limit).toContain(limit);
   });
 });

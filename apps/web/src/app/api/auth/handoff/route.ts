@@ -32,9 +32,11 @@ const DASHBOARD = /^\/(?:de|en|ar)\/app(?:\/|$)/;
  * logs the sign-in under the app's device id and continues to the dashboard.
  *
  * - Bearer only (no cookie is read, so no cross-site request can use it); `no-store`.
- * - 401 without a valid token, 422 for a device id that is not `dev_<12 hex>`, 409 where real accounts
- *   or the server's key are missing (a demo build), 403 for a suspended account or a blocked address
- *   (the same refusals as /api/auth/verify).
+ * - 401 only for a token Supabase Auth turned down (the app signs out on it); 503 when Auth could not
+ *   check the token (no answer, a 5xx, a rate limit: the app tries again later, ADR 0088); 422 for a
+ *   device id that is not `dev_<12 hex>`; 409 where real accounts or the server's key are missing (a
+ *   demo build); 403 for a suspended account or a blocked address (the same refusals as
+ *   /api/auth/verify); 502 when the account cannot be read or the link cannot be made.
  * - The link is single-use and expires with Supabase's OTP lifetime; making it sends no e-mail, but it
  *   replaces an e-mailed code that is still open for this address, and the previous link: the app
  *   asks for one hand-off at a time and opens each link before asking again. Neither the token nor the
@@ -43,7 +45,7 @@ const DASHBOARD = /^\/(?:de|en|ar)\/app(?:\/|$)/;
 export async function POST(request: Request) {
   const serviceKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
   if (!supabaseEnabled || !serviceKey) return answer({ ok: false, error: "unavailable" }, 409);
-  const signedIn = await requireUser(request);
+  const signedIn = await requireUser(request, { outage: "unavailable" });
   if (signedIn instanceof Response) return signedIn;
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
@@ -55,7 +57,9 @@ export async function POST(request: Request) {
 
   const service = serviceSupabase();
   if (await isBlocked(service, requestPlace(request.headers))) return answer({ ok: false, error: "blocked" }, 403);
-  const { data: profile } = await service.from("profiles").select("status, locale").eq("id", user.id).maybeSingle<{ status: string; locale: string }>();
+  const { data: profile, error: profileError } = await service.from("profiles").select("status, locale").eq("id", user.id).maybeSingle<{ status: string; locale: string }>();
+  // A failed read says nothing about the account: never the final-sounding "suspended" for it.
+  if (profileError) return answer({ ok: false, error: "serverError" }, 502);
   if (profile?.status !== "active") return answer({ ok: false, error: "suspended" }, 403);
 
   const home = `/${LOCALES.has(profile.locale) ? profile.locale : "de"}/app`;

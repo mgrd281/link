@@ -20,6 +20,10 @@ const state = vi.hoisted(() => ({
   clock: 0,
   /** Someone writes between the route's read and its write. */
   raceOnWrite: false,
+  /** The profiles read fails (the database cannot be reached). */
+  profileError: false,
+  /** A read of the page's current version fails. */
+  versionError: false,
   writes: [] as Record<string, unknown>[],
   revalidated: [] as string[],
 }));
@@ -44,7 +48,8 @@ function db() {
       const filters: Record<string, unknown> = {};
       let values: Record<string, unknown> | null = null;
       const run = () => {
-        if (table === "profiles") return { data: { status: state.status, username: "mira", locale: "de" }, error: null };
+        if (table === "profiles") return state.profileError ? { data: null, error: { message: "TypeError: fetch failed" } } : { data: { status: state.status, username: "mira", locale: "de" }, error: null };
+        if (!values && !("updated_at" in filters) && state.versionError) return { data: null, error: { message: "TypeError: fetch failed" } };
         const row = state.row;
         if (!row) return { data: null, error: null };
         const matches = !("updated_at" in filters) || filters.updated_at === row.updated_at;
@@ -76,12 +81,14 @@ function db() {
 }
 
 vi.mock("@/lib/server/user", () => ({
-  requireUser: (request: Request) =>
-    Promise.resolve(
-      request.headers.get("authorization") === "Bearer app-session"
-        ? { user: { id: OWNER, email: "mira@example.com" }, db: db() }
-        : Response.json({ ok: false, error: "unauthorized" }, { status: 401 }),
-    ),
+  // As the real one answers (lib/server/user.test.ts): "Bearer auth-down" stands for Supabase Auth
+  // failing itself (no answer, a 5xx, a rate limit), which is a 401 unless the route asks otherwise.
+  requireUser: (request: Request, options: { outage?: string } = {}) => {
+    const header = request.headers.get("authorization");
+    if (header === "Bearer app-session") return Promise.resolve({ user: { id: OWNER, email: "mira@example.com" }, db: db() });
+    if (header === "Bearer auth-down" && options.outage === "unavailable") return Promise.resolve(Response.json({ ok: false, error: "unavailable" }, { status: 503 }));
+    return Promise.resolve(Response.json({ ok: false, error: "unauthorized" }, { status: 401 }));
+  },
 }));
 
 const { POST } = await import("./route");
@@ -100,6 +107,8 @@ beforeEach(() => {
   state.status = "active";
   state.clock = 0;
   state.raceOnWrite = false;
+  state.profileError = false;
+  state.versionError = false;
   state.writes = [];
   state.revalidated = [];
   state.row = {
@@ -120,6 +129,27 @@ describe("POST /api/app/page", () => {
     const demo = await call({ baseUpdatedAt: base(), ops: [{ op: "remove", id: "a" }] });
     expect(demo.status).toBe(409);
     expect(demo.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("answers 503 when Supabase Auth could not check the token: never the 401 on which the app signs out and wipes the device", async () => {
+    const response = await call({ baseUpdatedAt: base(), ops: [{ op: "remove", id: "a" }] }, { token: "auth-down" });
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ ok: false, error: "unavailable" });
+    expect(state.writes).toEqual([]);
+  });
+
+  it("answers 502 when the account or the page's version cannot be read, never a final-sounding 404", async () => {
+    state.profileError = true;
+    const profile = await call({ baseUpdatedAt: base(), ops: [{ op: "remove", id: "a" }] });
+    expect(profile.status).toBe(502);
+    expect(await profile.json()).toEqual({ ok: false, error: "serverError" });
+    state.profileError = false;
+    // A stale base, and the read that would tell a conflict from a missing page fails.
+    state.versionError = true;
+    const version = await call({ baseUpdatedAt: "2020-01-01T00:00:00+00:00", ops: [{ op: "remove", id: "a" }] });
+    expect(version.status).toBe(502);
+    expect(await version.json()).toEqual({ ok: false, error: "serverError" });
+    expect(state.writes).toEqual([]);
   });
 
   it("writes over the version the app saw and answers the new version and the changed ids", async () => {
