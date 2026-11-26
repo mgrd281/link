@@ -89,6 +89,12 @@ view cannot share one session.
      version is confirmed (for the writes sent up to it), when a refused save's read-back shows this tab's own
      version (it then builds on that), and when the page is replaced. So a save that landed just before the phone
      went offline is still recognised as this tab's own after any number of failed attempts.
+   - **A save without an answer is read back at once.** A read often gets through where the write's answer did not
+     (a connection that drops on the way back); it runs on its own, so no save waits for it. When the row holds that save's content, the save landed and
+     counts as confirmed (its version becomes the base, the list above is cleared up to it, and the window below
+     closes); when it holds another version of this tab's own, the tab builds on that. Without this, a network
+     that keeps losing write answers would refuse every later save for good (each carries the version before the
+     first landed write, and the refusals' answers are lost too), where the store before the guard wrote them all.
    - **The keepalive save is the last code a closing tab runs**: when it is refused, nothing sends it again. A save
      of this tab's that may land first with a version this tab does not know yet would make an exact keepalive fail
      and lose the last change. So the keepalive is guarded with `updated_at >= <base>` instead of `=` exactly
@@ -98,8 +104,8 @@ view cannot share one session.
      answers may come back in either order; writes are numbered as they are sent, and an older one's late answer
      never moves the base back.
    - **The real window, and its price** (taken on purpose). It opens when a save goes out and closes when its
-     answer comes; after a save with no answer or a 5xx it stays open until a later save is confirmed or a refused
-     save's read-back finds this tab's own version. On a bad network that can be a while: the retries come 2, 5 and
+     answer comes; after a save with no answer or a 5xx it stays open until a later save is confirmed or a read-back
+     (right after the failure, or after a refusal) finds this tab's own version. On a bad network that can be a while: the retries come 2, 5 and
      15 s after failures in a row, then every 30 s, and each change tries at once. If, inside the window, another
      tab or the app writes the page and this tab is then closed, the keepalive overwrites that write instead of
      being refused, and nobody sees a toast. A browser cannot tell a request that never left (a network error
