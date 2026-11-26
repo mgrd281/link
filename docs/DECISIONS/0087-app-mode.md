@@ -49,11 +49,11 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    | The phone tab bar, the rail with its section panel, the phone top bar (avatar, back, save state, eye) | `shell.tsx`; the same places in the loading frame (`gate.tsx`) | The app draws its own tab bar, navigation bar and toolbar (4.2) |
    | Offsets for that chrome | `globals.css`: toasts sit at the bottom edge and may take the top under the app's bar (`--toast-offset`, `--toast-top`, `--toast-start`), the scroll padding and `main`'s bottom padding lose the bars, Design's sticky live page sits at `top: 0` | Sticky bars sit flush, nothing hides behind a bar that is not there |
    | Plan pane: where the plan comes from (the source line: the subscription's price and Stripe, the team, the invite reward's "Pro für immer"), "Pro kommt mit dem Start", "Pro kommt bald…", the past-due badge and note (a payment nudge; a past-due account shows no badge rather than a false "Aktiv") and its renewal date (it would say the same in other words), the feature list ("Das ist enthalten"), the whole payment group (Pro holen, Stripe's portal, invoices, Kündigen). What stays: the plan's name ("Linkyo Pro", the account's own plan bought elsewhere, 3.1.3(b)), the states Aktiv, Gekündigt and Reserviert, the dates, and the AI drafts left (they name no plan, price or upgrade) | `settings/plan-screen.tsx` (`PlanGroups`) | 3.1.1, 3.1.3(f): the pane shows the plan's name, state and dates only (decision 9) |
-   | Settings: the order, Widerruf and Kündigen rows and their footer; the team area row | `settings-screen.tsx` | No way to a contract or to the team console from the app |
+   | Settings: the order, Widerruf and Kündigen rows and their footer; the team area row. The group that is left is "Rechtliches" (`appMode.settings.legal`), not "Verträge und Rechtliches" (decision 10) | `settings-screen.tsx` | No way to a contract or to the team console from the app |
    | Settings: the plan row's value (the plan's name, "Linkyo Pro"); the row reads "Plan" and leads to the pane | `settings/plan-screen.tsx` (`PlanRow`) | The plan's name stands only on the pane (decision 9) |
    | Settings: the AGB open in Safari (`openExternal`) instead of in the app (accepted by the lead) | `settings-screen.tsx` | The AGB state the prices (`features/legal/texts.ts`, not changed here). The Impressum and the privacy policy open in the app |
    | Settings: the "App" group: "Darstellung", "Sprache der App", its footer "Gilt nur für dich, in diesem Browser" (and the install row, below). "Sprache der Seite", the page's language for its visitors, stays | `settings-screen.tsx` | The app owns its language and appearance (decision 8). A stored web theme is ignored too: `lib/theme-script.ts` sets no `data-theme` under `data-app`, so the web view follows `prefers-color-scheme`, which the app sets |
-   | AI: the Pro sheet's price, "Pro kommt bald" and "Pro holen"; its title and close button say the fact in the app's own words (`appMode.ai.title`: "KI-Entwürfe sind für dieses Konto nicht verfügbar", `appMode.ai.close`); the plan link stays, so a tap is never dead. The page service link with its price; the error state's "Pro holen"; the used-up free draft says `appMode.ai.quotaFree` ("…Weitere Entwürfe gibt es für dieses Konto nicht."). "Nicht freigeschaltet" (not unlocked) was dropped: it hints that the drafts could be switched on (decision 9) | `ai/pro-sheet.tsx`, `ai/build-screen.tsx` | 3.1.1, 3.1.3(f), and the "Pro" rule (decision 8) |
+   | AI: the Pro sheet's price, "Pro kommt bald" and "Pro holen"; its title and close button say the fact in the app's own words (`appMode.ai.title`: "KI-Entwürfe sind für dieses Konto nicht verfügbar", `appMode.ai.close`); the plan link stays, so a tap is never dead, with a neutral label (`appMode.ai.plan`: "Zu deinem Plan"; the pane shows no feature list in the app, so "Was dein Plan enthält" would promise what it hides). The page service link with its price; the error state's "Pro holen"; the used-up draft says `appMode.ai.quotaFree` ("Deinen KI-Entwurf hast du genutzt. Weitere Entwürfe gibt es für dieses Konto nicht.", without "kostenlos": a free draft set against paid ones points at a plan to buy, decision 10). "Nicht freigeschaltet" (not unlocked) was dropped: it hints that the drafts could be switched on (decision 9) | `ai/pro-sheet.tsx`, `ai/build-screen.tsx` | 3.1.1, 3.1.3(f), and the "Pro" rule (decision 8) |
    | Invite: the "Pro für immer" reward (loaded or not), the rule that promises Pro ("Pro gibt es noch nicht…" / "Pro gibt es jetzt…"); the terms' sentence on Pro says only `appMode.invite.terms` ("Belohnungen sind persönlich, nicht übertragbar und nicht in Geld einlösbar."). Home's invite row names only the verification (`appMode.home.inviteSubtitle`). The invite link, its share and the count stay | `invite/invite-screen.tsx`, `home-screen.tsx` | A promise about a paid plan (the "Pro" rule, decision 8) |
    | The not-found and error pages: the ways to the website ("Zur Startseite", "Vorlagen ansehen", `data-app-hide`); a dashboard 404 shows only "Zum Dashboard", a page outside the dashboard shows "Zum Dashboard" instead (added by `useAppMode()` once the page knows it is in the app), and its sentence names the dashboard instead of the home page (`appMode.errors.notFoundBody`; the website's sentence carries `data-app-hide`). The root layout's own error page puts `data-app` back and offers only "Noch einmal versuchen" and "Zum Dashboard" (`/<l>/app`); its link to the home page carries `data-app-hide` | `errors/error-screen.tsx`, `app/global-error.tsx`, `errors/global-error-screen.tsx` | The website shows the prices; inside the app's web view a link to it would carry the web view there |
    | Ctrl/⌘ K on help and legal pages (an iPad keyboard): the people search does not open | `search/people-search.tsx` (`inAppMode()`) | Its header button is hidden with the header; its results lead to the website's pages |
@@ -62,6 +62,7 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    | Help: the articles' links on to the website (Funktionen, Portfolio, Vorlagen); the links to Sicherheit and Kontakt stay | `help/help-center.tsx`, `marketing/pages/help-page.tsx` (`inApp` per related page) | They lead on to sign-up and the homepage with its prices. They are the router's links (`pushState`), which the app's navigation policy is never asked about, so only the web can keep the web view on the app's pages |
    | The sign-in and sign-up frame: the logo's link to the homepage and the legal foot (AGB, and Widerruf and Kündigen in a payments build) | `account/auth/auth-shell.tsx` | The app signs in natively; the web shows these pages only for a moment, when the web view's session has ended (plan §1.2 step 5) |
    | Settings: "Abmelden" | `settings-screen.tsx` | Signing out is the app's own row (plan §1.1, §1.2 step 7): it ends the web view's session with the app's and wipes the device. A web-only sign-out would land on `/login`, which the app answers with a new hand-off, so the row would seem to do nothing (2.1) |
+   | "Linkyo als App" in Settings and Home's install hint (the hint is not used up in the app) | `install/install-row.tsx`, `install/install-hint.tsx` | The app is the app (ADR 0086) |
 
    Where a link may lead inside the app's web view: the dashboard (`/<l>/app/**`), help, contact, the legal
    pages, Sicherheit, and the sign-in pages; `e2e/app-mode-app.spec.ts` walks every link a person can reach
@@ -72,7 +73,6 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    A link that opens a new window (the sign-up form's AGB and Datenschutz words, `target="_blank"`) and a
    link to another host are real navigations, which the app's policy sees: the app opens them outside its
    web view (in Safari), never a purchase page.
-   | "Linkyo als App" in Settings and Home's install hint (the hint is not used up in the app) | `install/install-row.tsx`, `install/install-hint.tsx` | The app is the app (ADR 0086) |
 
 3. **No service worker in the app.** `ServiceWorkerIsland` does not register the dashboard's worker in app mode. A
    WKWebView runs service workers only for App-Bound Domains (`WKAppBoundDomains` and
@@ -91,7 +91,7 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    | `share` | `title?`, `text?`, `url?`, `file?` `{name, mime, base64}` | Home's link (`share-tools.tsx`), the QR sheet (`share-qr.tsx`), the story picture (`share-image-sheet.tsx`), the invite link (`invite/invite-link-card.tsx`), and the creator page's own share button in "View my page" (`directions/poster/share-island.tsx`: the page's public address, `pageUrl(username)`, which the dashboard names on `data-share-url` around the page; never `/<l>/app/preview`, in a browser too) |
    | `download` | `name`, `mime`, `base64` | the data export (`settings-screen.tsx`), the statistics CSV (`analytics-screen.tsx`), the story picture, the QR code as PNG and as SVG, the Premium kit's story pictures (`proposals/proposal-screen.tsx`: fetched from their signed Storage address by `appDownloadFrom`, as Storage is another host the web view does not open; a failed fetch says so in a toast), and a planned live's reminder in "View my page" (`directions/poster/live-time.ts` `remind()`: `live.ics`, `text/calendar`, UTF-8) |
    | `haptic` | `style: "light"` | `lib/haptics.ts` (every `haptic()` of a user's tap) |
-   | `editClosed` | `id`, `missing?` (`true`) | the editor, when the sheet `?edit=<id>` opened closes (saved, cancelled or the block deleted); with `missing: true` at once when the page has no block of that id (deleted on another device, a stale list): no sheet opens, so the app pops back to its list instead of waiting |
+   | `editClosed` | `id`, `missing?` (`true`) | the editor, when the sheet `?edit=<id>` opened closes (saved, cancelled, the block deleted, or replaced by a later `?edit=` for another block); with `missing: true` at once when the page has no block of that id (deleted on another device, a stale list): no sheet opens, so the app pops back to its list instead of waiting. An empty id (`?edit=`) posts nothing (decision 5) |
    | `openExternal` | `url` (absolute, this site only) | the AGB row |
    | `saveState`, `signedOut` | the store's ([0088](0088-app-sync.md)) | `features/app-mode/store-bridge.ts` |
 
@@ -134,7 +134,10 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    it. The sheet opens a task after the screen's effects, because the shell closes every sheet when the screen
    changes (`navigate()` from Home). It works in a browser too. In the app, closing that sheet posts
    `editClosed {id}`; an unknown id posts `editClosed {id, missing: true}` at once (`editLinkOutcome` in
-   `features/app/edit-link.ts`); a sheet opened from the list posts nothing.
+   `features/app/edit-link.ts`); a sheet opened from the list posts nothing. An empty id (`?edit=`) asks for no
+   block: it opens nothing and posts nothing. A second `?edit=` while the sheet an earlier one opened is still open
+   replaces that sheet and posts `editClosed {id}` for the earlier block before the second opens
+   (`editLinkReplaces`): every link the app sends gets its own `editClosed`.
 
 6. **The app is not counted.** `optedOut()` in `features/analytics/filter.ts` also drops a user agent with
    `LinkyoApp/` (a word of its own, not `NotLinkyoApp/`), beside GPC and DNT: the owner looking at their own page
@@ -203,6 +206,26 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
      state), while Settings' plan row names no plan in the app at all (decision 2; the name stands only on the
      pane).
 
+10. **The lead's decisions on the third review (integration, 2026-11-26).**
+    - **A 401 is not a wipe** ([0088](0088-app-sync.md) §1): only Supabase Auth's own error codes make the app's
+      routes answer 401; the app answers a 401 with one refresh and wipes only when that refresh is refused ("For
+      the native shell" item 10).
+    - **The AI sheet's way to the plan** reads "Zu deinem Plan" in the app (`appMode.ai.plan`): the pane shows no
+      feature list there, so "Was dein Plan enthält" would promise what it hides (decision 2).
+    - **The used-up draft names no "free":** `appMode.ai.quotaFree` says "Deinen KI-Entwurf hast du genutzt.
+      Weitere Entwürfe gibt es für dieses Konto nicht." A free draft set against paid ones points at a plan to buy
+      (3.1.3(f)); `app-mode-wording.test.ts` holds it free of "kostenlos", "free" and "مجاني".
+    - **Settings' legal group is "Rechtliches"** in the app (`appMode.settings.legal`): it holds no contract
+      there, only the Impressum, the privacy policy and the AGB (decision 2).
+    - **`?edit=`:** an empty id posts nothing; a second link replaces the sheet an earlier one opened and posts
+      `editClosed` for the earlier block first (decision 5).
+    - **The proposal screen's refund line stays** in the app (`proposals/proposal-screen.tsx`, `data-refund-line`:
+      "Gefällt er dir nicht? Schreib uns bis 14 Tage nach der Übergabe …, und du bekommst den vollen Preis
+      zurück."), accepted: consumer information about a service bought on the web, with no price, no link and no
+      way to buy.
+    - **A rejection's reason is read through the app's own wrapper**, never from WebKit's error ("For the native
+      shell" item 1), and `ready.accountId` is a lowercase UUID string the app compares case-insensitively (item 3).
+
 **For the native shell.** What the app has to do to use this contract (and [0088](0088-app-sync.md)'s
 operations), in one place:
 
@@ -211,19 +234,26 @@ operations), in one place:
    of the web's methods, and a handler in another world hears nothing. The script is a `WKUserScript` with
    `injectionTime: .atDocumentStart` and `forMainFrameOnly: true`; the handler is added with
    `add(_:contentWorld:name:)` as `linkyo` in `.page`. The app calls the methods with
-   `callAsyncJavaScript(_:arguments:in:in:)` in `.page`: `return await window.linkyoApp.flush()` resolves to
-   `{ updatedAt }`. A rejection arrives as an `NSError` in `WKErrorDomain` whose `localizedDescription` is WebKit's
-   generic text; the reason is in `userInfo[WKJavaScriptExceptionMessage]`, the rejection's string form, which the
-   web makes the bare reason (`saveFailed`, `storeLoading`, …, [0088](0088-app-sync.md) §4; `BridgeRejection` in
-   `store-bridge.ts`: a plain `Error` would read "Error: saveFailed"). The app matches the reason word inside that
-   message, so a prefix a WebKit version might add changes nothing. Not yet seen on a device: the first build checks
-   it once (`flush()` offline answers `saveFailed`). `return window.linkyoApp.navigate(path)` with
-   `arguments: ["path": path]`, and `back()`, answer a boolean at once.
+   `callAsyncJavaScript(_:arguments:in:in:)` in `.page`, through a wrapper of its own that always resolves, so
+   the reason never has to come out of WebKit's error:
+
+   ```js
+   try { return {ok:true, value: await window.linkyoApp.flush()} } catch (e) { return {ok:false, reason: String(e && e.message || e)} }
+   ```
+
+   (the same for `reload()` and `signOut()`). `value` is `{ updatedAt }` for `flush()`; `reason` is the bare reason
+   (`saveFailed`, `storeLoading`, …, [0088](0088-app-sync.md) §4: the web rejects with a `BridgeRejection` from
+   `store-bridge.ts`, whose message and string form are both the reason), or a `TypeError`'s message off the
+   dashboard. WebKit's own `userInfo[WKJavaScriptExceptionMessage]` is not part of the contract: a private key whose
+   text may change. `return window.linkyoApp.navigate(path)` with `arguments: ["path": path]`, and `back()`,
+   answer a boolean at once.
 2. **After `ready`, all five methods are there** (`flush`, `reload` and `signOut` too, not only `navigate` and
    `back`), while the web view shows a dashboard page (decision 4).
 3. **`ready.accountId` is checked.** The app compares it with its own user id: another account (the cookies of
    an earlier account in the web view) means a new hand-off; `signedIn: false` too (as on `/<locale>/login`,
-   [0088](0088-app-sync.md) §1).
+   [0088](0088-app-sync.md) §1). `accountId` is the account's UUID as a **lowercase** string (Supabase's
+   `user.id`); the app compares it case-insensitively (`UUID(uuidString:)` on both sides, or both lowercased),
+   since Swift's `UUID.uuidString` is upper case.
 4. **`ready` may never come** (a script chunk that fails to load, an error page): after a load or a hand-off the
    app waits at most about 15 s, then shows its own error view with "Try again" (a reload, or a new hand-off).
 5. **Versions.** `ready.bridge` is the web's contract version (`BRIDGE_VERSION`, 1); the app's object carries the
@@ -245,6 +275,12 @@ operations), in one place:
    that sends no message, or loaded by the app) is a page outside it: the app shows `WKWebView.title` and goes
    back with `goBack()`, and calls none of the five methods there (they are not there: a `TypeError`). The last
    `route` never decides where the web view is (decision 4).
+10. **A 401 is answered with one refresh, never a wipe by itself** ([0088](0088-app-sync.md) §1). On a 401 from
+    `/api/auth/handoff`, `/api/app/page` or any other Bearer route, the app refreshes its session once and repeats
+    the call. It signs out and wipes the device only when that refresh fails with `invalid_grant`,
+    `refresh_token_not_found`, `session_not_found` or `user_not_found` (plan §1.2 step 9); a 401 right after a
+    successful refresh is treated like a 503 (try again later, never wipe). The routes answer 401 only for
+    Supabase Auth's own codes about the token; a gateway's "Invalid API key" or a firewall's 403 is a 503.
 
 **Consequences.**
 

@@ -4,6 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { DEVICE_ID } from "@/features/account/server/auth";
+import { isOwnMedia } from "@/app/api/app/page/ops";
 
 import { BRIDGE_VERSION } from "./bridge";
 
@@ -29,6 +30,18 @@ function part(text: string, from: string, to: string): string {
   return text.slice(start, end);
 }
 
+/** The rows of the first Markdown table in `text` (header and divider left out), as their cells (no `|` inside one). */
+function tableRows(text: string): string[][] {
+  const lines = text.split("\n").map((line) => line.trim());
+  const start = lines.findIndex((line) => line.startsWith("|"));
+  const rows: string[][] = [];
+  for (const line of lines.slice(start + 2)) {
+    if (!line.startsWith("|")) break;
+    rows.push(line.slice(1, -1).split("|").map((cell) => cell.trim()));
+  }
+  return rows;
+}
+
 /** Every error name a file can answer: the quoted words after `error:` (a value, a choice or a type). */
 function errorNames(text: string): string[] {
   const names = new Set<string>();
@@ -52,11 +65,61 @@ describe("ADR 0088 answers what the two routes answer", () => {
     // A `next` that is no string or too long is refused; one with a query falls back.
     expect(text).toContain("at most 200");
     expect(text).toMatch(/query[^.]*`navigate\(\)`/);
-    // Only a token Auth turned down is a 401, on which the app signs out and wipes the device; Auth that
-    // could not answer is a 503 the app retries (lib/server/user.ts `outage`, both app routes ask for it).
+    // Only a token Auth turned down with its own code is a 401; Auth that could not answer, or anything
+    // else that answered (a gateway, a firewall), is a 503 the app retries (lib/server/user.ts `outage`).
     expect(source("app/api/auth/handoff/route.ts")).toContain('requireUser(request, { outage: "unavailable" })');
-    expect(text).toMatch(/\| 503 \| `unavailable` \|[^\n]*never sign out on it/);
-    expect(text).toContain("Only a 401 does");
+    expect(text).toMatch(/\| 503 \| `unavailable` \|[^\n]*never signs out on it/);
+    for (const code of ["bad_jwt", "session_not_found", "user_not_found", "no_authorization"]) {
+      expect(source("lib/server/user.ts"), code).toContain(`"${code}"`);
+      expect(text, code).toContain(`\`${code}\``);
+    }
+    expect(text).toMatch(/\| 503 \| `unavailable` \|[^\n]*"Invalid API key"/);
+  });
+
+  it("the hand-off: a 401 is answered with one refresh, and only a refused refresh wipes the device (plan §1.2 step 9)", () => {
+    const text = handoff();
+    expect(text).toContain("**A 401 is answered with one refresh, never a wipe by itself.**");
+    expect(text).toMatch(/refreshes its session once[\s\S]*?and repeats the call/);
+    expect(text).toMatch(/wipes the device \*\*only\*\* when that\s+refresh fails with `invalid_grant`, `refresh_token_not_found`, `session_not_found` or `user_not_found`/);
+    expect(text).toMatch(/A 401\s+right after a successful refresh is treated like a 503 \(try again later, never wipe\)/);
+    for (const route of ["`/api/auth/handoff`", "`/api/app/page`", "any other Bearer route"]) expect(text, route).toContain(route);
+    // ADR 0087's checklist for the app says the same.
+    const shell = part(MODE, "**For the native shell.**", "**Consequences.**");
+    expect(shell).toContain("**A 401 is answered with one refresh, never a wipe by itself**");
+    expect(shell).toMatch(/only when that refresh fails with `invalid_grant`,\s+`refresh_token_not_found`, `session_not_found` or `user_not_found`/);
+    expect(shell).toMatch(/a 401 right after a\s+successful refresh is treated like a 503/);
+  });
+
+  it("the hand-off: what the app does with every answer, and the bounded loop on the login page", () => {
+    const rows = tableRows(part(handoff(), "| Status | `error` | When | App does |", "- The link is single-use"));
+    expect(rows.length).toBeGreaterThanOrEqual(10);
+    for (const [status = "", error = "", , does = ""] of rows) {
+      const answer = `${status} ${error}`;
+      expect(does.length, answer).toBeGreaterThan(10);
+      if (status === "422") expect(does, answer).toMatch(/an app bug: reports it; no retry/);
+      if (status === "503" || status === "502") expect(does, answer).toMatch(/tries again later with a growing pause/);
+      if (error === "`suspended`") expect(does, answer).toMatch(/native "account suspended" screen and stops handing off/);
+      if (error === "`blocked`") expect(does, answer).toMatch(/native error view[^|]*no retry loop/);
+      if (status === "409") expect(does, answer).toMatch(/native error view; no retry/);
+      if (status === "401") expect(does, answer).toMatch(/refreshes its session once/);
+    }
+    const loop = handoff();
+    expect(loop).toContain("**The hand-off loop is bounded.**");
+    expect(loop).toMatch(/at most once per landing there/);
+    expect(loop).toMatch(/`\/<locale>\/login\?link=retry`[^.]*and\s+`\/<locale>\/login\?link=expired`[^.]*get that one automatic hand-off/);
+    expect(loop).toMatch(/`\/<locale>\/login\?link=suspended` gets none/);
+    expect(loop).toMatch(/After two\s+failed hand-offs in a row within about a minute[^.]*native error view with "Try again"/);
+  });
+
+  it("the confirm route never answers suspended for a failed read: ?link=retry, in de, en and ar", () => {
+    const confirm = source("app/api/auth/confirm/route.ts");
+    expect(confirm).toMatch(/if \(readError\) \{[\s\S]*?link=retry/);
+    for (const route of ["verify", "password"]) expect(source(`app/api/auth/${route}/route.ts`), route).toMatch(/if \(readError\) \{[\s\S]*?fail\("serverError", 502\)/);
+    const text = handoff();
+    expect(text).toContain("The confirm route never answers `suspended` for a\n     failed read");
+    expect(text).toContain("`/<locale>/login?link=retry`");
+    expect(text).toContain("`auth.errors.linkRetry`");
+    expect(source("features/account/auth/login-form.tsx")).toContain('link === "retry" ? "linkRetry"');
   });
 
   it("the page operations: every error name, every extra field and the input limits", () => {
@@ -67,8 +130,40 @@ describe("ADR 0088 answers what the two routes answer", () => {
     for (const field of ["max", "path", "op", "id", "problems", "updatedAt"]) expect(text, field).toContain(`\`${field}\``);
     for (const status of ["400", "401", "403", "404", "409", "413", "422", "502", "503"]) expect(text, status).toContain(`| ${status} |`);
     expect(source("app/api/app/page/route.ts")).toContain('requireUser(request, { outage: "unavailable" })');
-    expect(text).toMatch(/\| 503 \| `unavailable` \| \|[^\n]*never sign out on it/);
+    expect(text).toMatch(/\| 503 \| `unavailable` \| \|[^\n]*never signs out on it/);
     for (const limit of ["1 to 20", "at most 300", "from 1 to 8192", "below the number of blocks"]) expect(text, limit).toContain(limit);
+  });
+
+  it("the page operations: what the app does with every answer", () => {
+    const rows = tableRows(part(SYNC, "| Status | `error` | Extra fields | When | App does |", "3. **The save guard"));
+    expect(rows.length).toBeGreaterThanOrEqual(18);
+    for (const [status = "", error = "", , , does = ""] of rows) {
+      const answer = `${status} ${error}`;
+      expect(does.length, answer).toBeGreaterThan(10);
+      if (status === "422") expect(does, answer).toMatch(/no retry/);
+      if (status === "503" || status === "502") expect(does, answer).toMatch(/tries again later with a growing pause/);
+      if (status === "404") expect(does, answer).toMatch(/loads the dashboard again/);
+      if (error === "`suspended`") expect(does, answer).toMatch(/native "account suspended" screen/);
+      if (error === "`unavailable`" && status === "409") expect(does, answer).toMatch(/native error view; no retry/);
+      if (error === "`conflict`") expect(does, answer).toMatch(/`reload\(\)`/);
+      if (status === "401") expect(does, answer).toMatch(/refreshes its session once/);
+    }
+    for (const status of ["200", "400", "401", "403", "404", "409", "413", "422", "502", "503"]) expect(rows.some(([cell]) => cell === status), status).toBe(true);
+  });
+
+  it("addImage: the exact address, uid and uuid in lowercase, never .jpeg; the server stays strict", () => {
+    const text = page();
+    expect(text).toContain("`<SUPABASE_URL>/storage/v1/object/public/media/<uid>/<yyyy>/<uuid>.<jpg|webp|png>`");
+    expect(text).toContain("`UUID().uuidString.lowercased()`");
+    expect(text).toMatch(/never `\.jpeg`/);
+    const storage = "https://project.supabase.co";
+    const owner = "0f4c5a3e-1111-4222-8333-444455556666";
+    const at = (uid: string, file: string) => `${storage}/storage/v1/object/public/media/${uid}/2026/${file}`;
+    const uuid = "6f9619ff-8b86-4d01-b42d-00cf4fc964ff";
+    expect(isOwnMedia(at(owner, `${uuid}.jpg`), owner, storage)).toBe(true);
+    for (const wrong of [at(owner, `${uuid.toUpperCase()}.jpg`), at(owner, `${uuid}.JPG`), at(owner, `${uuid}.jpeg`), at(owner.toUpperCase(), `${uuid}.jpg`)]) {
+      expect(isOwnMedia(wrong, owner, storage), wrong).toBe(false);
+    }
   });
 });
 
@@ -87,9 +182,13 @@ describe("ADR 0088 §4 names every reason a bridge method rejects with", () => {
     expect([...reasons].sort()).toEqual(["reloadFailed", "saveFailed", "signOutTimeout", "storeLoading", "tooLarge"]);
     const text = half();
     for (const reason of reasons) expect(text, reason).toContain(`| \`${reason}\` |`);
-    // What the app reads is the rejection's string form: the bare reason, not "Error: saveFailed".
+    // What the app reads is the bare reason, as the message and as the string form, not "Error: saveFailed",
+    // through its own wrapper (ADR 0087 "For the native shell" item 1), not WebKit's private error key.
     expect(bridge).toMatch(/class BridgeRejection extends Error[\s\S]*toString\(\): string \{\s*return this\.message;/);
-    expect(text).toContain("`userInfo[WKJavaScriptExceptionMessage]`");
+    expect(text).toMatch(/the app reads it\s+through its own wrapper/);
+    expect(text).not.toContain("`userInfo[WKJavaScriptExceptionMessage]`");
+    // saveFailed is also a refused save whose read-back failed; a slow network is no failure.
+    expect(text).toMatch(/\| `saveFailed` \|[^\n]*a refused save could not be read back[^\n]*A slow network is no failure/);
   });
 
   it("says the methods exist only on dashboard pages, and how the app tells its own sign-out from the others", () => {
@@ -143,12 +242,38 @@ describe("ADR 0087 records the order, the dashboard-only methods and what the na
       "`conflict` stays the last state",
       "`text/csv;charset=utf-8`",
       "**`?edit=` and `?tab=` after the hand-off.**",
-      "the reason is in `userInfo[WKJavaScriptExceptionMessage]`",
+      "try { return {ok:true, value: await window.linkyoApp.flush()} } catch (e) { return {ok:false, reason: String(e && e.message || e)} }",
       "**Where the web view is: `WKWebView.url`.**",
+      "**A 401 is answered with one refresh, never a wipe by itself**",
     ]) {
       expect(shell(), words).toContain(words);
     }
     expect(shell()).not.toContain("an error whose message is the reason");
+    // WebKit's private key is named only to say the app does not use it.
+    expect(shell()).not.toContain("the reason is in `userInfo[WKJavaScriptExceptionMessage]`");
+    expect(shell()).toContain("`userInfo[WKJavaScriptExceptionMessage]` is not part of the contract");
+    // accountId: a lowercase UUID string, compared case-insensitively (Swift's uuidString is upper case).
+    expect(shell()).toMatch(/`accountId` is the account's UUID as a \*\*lowercase\*\* string/);
+    expect(shell()).toMatch(/compares it case-insensitively/);
+  });
+});
+
+describe("ADR 0088: only a hidden tab reads the row quickly; a tab on screen waits for a slow network", () => {
+  it("§3 and 'What a browser user notices' say so, as the store does", () => {
+    const guard = part(SYNC, "3. **The save guard", "4. **The store half");
+    expect(guard).toContain("**Only a hidden tab reads this way**");
+    expect(guard).toContain("**A tab on screen reads as every read does**");
+    expect(guard).toMatch(/not for a slower read-back that started while it was on screen/);
+    expect(guard).toMatch(/\*\*reads the row again instead of sending the save\*\*/);
+    expect(guard).toContain("had not landed by the time of the read");
+    expect(guard).not.toContain("cannot land any more");
+    expect(guard).toMatch(/\*\*Accepted, not covered:\*\* a resolved write that commits\s+only after that read/);
+    const notice = part(SYNC, "**What a browser user notices.**", "**Consequences.**");
+    expect(notice).toMatch(/also on a slow network: the toast comes\s+when the read-back does/);
+    const store = source("features/account/supabase-store.ts");
+    // The quick read (one attempt, aborted after READ_BACK_LIMIT) is taken only when the page is hidden.
+    expect(store).toMatch(/private async readRow\(id: string, quick = pageHidden\(\)\)/);
+    expect(store).toMatch(/if \(!quick\) return await query\.maybeSingle\(\);/);
   });
 });
 

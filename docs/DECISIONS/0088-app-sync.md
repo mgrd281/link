@@ -37,36 +37,55 @@ view cannot share one session.
      (`auth.errors.suspended`). Before, an e-mailed link or a hand-off link made before the suspension still signed
      the account in. Every answer of the confirm route, each a redirect, carries `Cache-Control: no-store`: it is
      for one single-use token and sets or ends a session, so no browser or cache in between may keep it.
+   - **A profile that could not be read is not "suspended".** The confirm route never answers `suspended` for a
+     failed read: it ends the session the token just opened too (it grants nothing), logs no failed sign-in, and
+     redirects to `/<locale>/login?link=retry`, which says `auth.errors.linkRetry` ("Die Anmeldung hat gerade nicht
+     geklappt. Bitte versuch es noch einmal.", in de, en and ar). `/api/auth/verify` and `/api/auth/password` answer
+     their generic server error there (502 `serverError`, the session just opened ended, nothing logged as failed).
+     Before, all three read a failed read as an account that is not active.
    - Never a 500. Neither the token, the link nor the address is logged. The answers, in the order the route
-     checks them (every one `{ ok: false, error }` but the first):
+     checks them (every one `{ ok: false, error }` but the first), and what the app does with each:
 
-     | Status | `error` | When |
-     |---|---|---|
-     | 200 | — | `{ ok: true, url }` |
-     | 409 | `unavailable` | a demo build (no real accounts) or no server key |
-     | 401 | `unauthorized` | no `Authorization: Bearer`, or a token Supabase Auth turned down (invalid, expired, its session or its user gone) |
-     | 503 | `unavailable` | Supabase Auth could not check the token (no answer, a 5xx, a rate limit): try again later; never sign out on it |
-     | 422 | `invalidDevice` | `deviceId` missing or not `dev_` + 12 lowercase hex digits; also a body that is not JSON |
-     | 422 | `invalidNext` | `next` is not a string, or longer than 200 characters |
-     | 409 | `unavailable` | the account has no e-mail address |
-     | 403 | `blocked` | the request's address is blocked (as at sign-in) |
-     | 403 | `suspended` | the account is not active |
-     | 502 | `serverError` | the account could not be read, or Supabase could not make the link: try again later |
+     | Status | `error` | When | App does |
+     |---|---|---|---|
+     | 200 | — | `{ ok: true, url }` | opens `url` in its web view (one hand-off in flight, below) |
+     | 409 | `unavailable` | a demo build (no real accounts) or no server key | shows its native error view; no retry (a retry changes nothing) |
+     | 401 | `unauthorized` | no `Authorization: Bearer`, or a token Supabase Auth turned down with its own error code: `bad_jwt` (not a valid token, a wrong signature, expired), `session_not_found` (its session ended; supabase-js reports it as `AuthSessionMissingError`), `user_not_found`, `no_authorization` | refreshes its session once and asks again; signs out and wipes the device only when that refresh fails with `invalid_grant`, `refresh_token_not_found`, `session_not_found` or `user_not_found` (below) |
+     | 503 | `unavailable` | Supabase Auth could not check the token (no answer, a 5xx, a rate limit), or something other than Auth answered: any 4xx without Auth's own code (the API gateway's "Invalid API key", a firewall's page) says nothing about the token | tries again later with a growing pause; never signs out on it, keeps the Keychain and the App Group |
+     | 422 | `invalidDevice` | `deviceId` missing or not `dev_` + 12 lowercase hex digits; also a body that is not JSON | an app bug: reports it; no retry |
+     | 422 | `invalidNext` | `next` is not a string, or longer than 200 characters | an app bug: reports it; no retry |
+     | 409 | `unavailable` | the account has no e-mail address | shows its native error view; no retry |
+     | 403 | `blocked` | the request's address is blocked (as at sign-in) | shows its native error view (no sign-in from this connection); no retry loop: the next try is the person's |
+     | 403 | `suspended` | the account is not active | shows its native "account suspended" screen and stops handing off |
+     | 502 | `serverError` | the account could not be read, or Supabase could not make the link: try again later | tries again later with a growing pause, as for 503 |
    - The link is single-use and lives as long as Supabase's OTP (10 minutes locally). Making it replaces an e-mailed
      code that is still open for this address and any earlier link (only the newest token works, ADR 0035). **The
      app keeps one hand-off in flight:** it opens a link before it asks for the next one, since a second request
      makes the first link fail (`/<locale>/login?link=expired`).
-   - The app repeats the hand-off whenever its web view reaches `/<locale>/login`; a 401 means the app's own session
-     is gone and it signs out natively. Only a 401 does: a 503 `unavailable` (Supabase Auth could not check the
-     token) and a 502 `serverError` say nothing about the session, and the app tries again later, keeping its
-     session, the Keychain and the App Group (the share extension's queue) as they are. Two exceptions:
+   - **The hand-off loop is bounded.** The app hands off again when its web view reaches `/<locale>/login`
+     (`WKWebView.url`), at most once per landing there: one automatic hand-off, then it waits for the answer
+     and the page it opens. `/<locale>/login?link=retry` (the confirm route could not read the account) and
+     `/<locale>/login?link=expired` (a link used or too old) get that one automatic hand-off;
+     `/<locale>/login?link=suspended` gets none (the native "account suspended" screen instead). After two
+     failed hand-offs in a row within about a minute (an answer other than 200, or a link that lands on the
+     login page again), the app stops handing off by itself and shows its native error view with "Try again".
+   - **A 401 is answered with one refresh, never a wipe by itself.** On a 401 from `/api/auth/handoff`,
+     `/api/app/page` or any other Bearer route, the app refreshes its session once (its `SessionStore`, the
+     only refresher, plan §1.2) and repeats the call. It signs out and wipes the device **only** when that
+     refresh fails with `invalid_grant`, `refresh_token_not_found`, `session_not_found` or `user_not_found`
+     (the account or its session is gone: a suspension, a device sign-out, a deletion; plan §1.2 step 9). A 401
+     right after a successful refresh is treated like a 503 (try again later, never wipe), and so is a refresh
+     that fails any other way (no answer, a 5xx, a rate limit). A 503 `unavailable` and a 502 `serverError` say
+     nothing about the session: the app tries again later, keeping its session, the Keychain and the App Group
+     (the share extension's queue) as they are. Two exceptions to handing off on the login page:
      - **not while the app signs out itself.** After `signOut()` the web view goes to
        `/<locale>/login?next=…` (plan §1.2 step 7 ends the web view's session before the native one); a
        hand-off there would sign it back in;
      - **a `signedOut` the app did not cause** (§4: the account was deleted in the web view, its session was
-       ended elsewhere): the app tries one hand-off; a 401 means the account or its session is gone, and the app
-       wipes the device (plan §1.2 steps 8 and 9); a link means only the web view's session had ended, and it
-       opens it; a 503 or a 502 means neither is known yet, and the app tries again later without wiping.
+       ended elsewhere): the app tries one hand-off; a 401 there is answered as above (one refresh; a refused
+       refresh means the account or its session is gone, and the app wipes the device: plan §1.2 steps 8 and
+       9); a link means only the web view's session had ended, and it opens it; a 503 or a 502 means neither is
+       known yet, and the app tries again later without wiping.
 
 2. **Page operations: native screens never build block JSON** (`POST /api/app/page`).
    - Body (at most 64 KB, else 413):
@@ -90,8 +109,12 @@ view cannot share one session.
      platform details from `lookupLinkMetadata`, as `/api/link-metadata` gives them to the editor, patched with
      `metadataPatch`. Details that would break the schema (a title over 120 characters) are left out.
    - `addImage`: only a picture the account uploaded itself: this project's public `media` bucket, the account's own
-     folder, an upload's path (`<uid>/<yyyy>/<uuid>.jpg|webp|png`, as `features/app/media-upload.ts` names them). The
-     app uploads to Storage first (JPEG, WebP or PNG; the bucket refuses HEIC).
+     folder, an upload's path, as `features/app/media-upload.ts` names them. The app uploads to Storage first (JPEG,
+     WebP or PNG; the bucket refuses HEIC) and sends exactly
+     `<SUPABASE_URL>/storage/v1/object/public/media/<uid>/<yyyy>/<uuid>.<jpg|webp|png>`: `<uid>` the account's id
+     and `<uuid>` a new UUID, both in **lowercase** (in Swift `UUID().uuidString.lowercased()`: `uuidString` is upper
+     case), `<yyyy>` the year in four digits, and the extension in lowercase: `jpg`, `webp` or `png`, never `.jpeg`.
+     The server stays strict: any other spelling is 422 `badImage`.
    - `move` (`to` is the block's index afterwards), `show`, `remove`: by id. An unknown id answers 422 naming it; an id
      the page holds twice too (`ambiguousBlock`).
    - Validation: every new block passes `blockSchema`; the whole page is parsed with `pageSchema`, and the call is
@@ -108,28 +131,28 @@ view cannot share one session.
      `ops` 1 to 20 operations (more: `tooManyOps`); `add.url` 1 to 2048 characters; `addImage.src` 1 to 2048
      characters, `alt` at most 300, `w` and `h` integers from 1 to 8192; `id` 1 to 200 characters; `move.to` an
      integer from 0, below the number of blocks (else `badIndex`); `show.visible` a boolean.
-   - **Answers** (every one `{ ok: false, error, … }` but the first):
+   - **Answers** (every one `{ ok: false, error, … }` but the first), and what the app does with each:
 
-     | Status | `error` | Extra fields | When |
-     |---|---|---|---|
-     | 200 | — | `updatedAt`, `changed`, `added` | written |
-     | 400 | `invalidJson` | | the body is not JSON |
-     | 401 | `unauthorized` | | no `Authorization: Bearer`, or a token Supabase Auth turned down (invalid, expired, its session or its user gone) |
-     | 503 | `unavailable` | | Supabase Auth could not check the token (no answer, a 5xx, a rate limit): try again later; never sign out on it |
-     | 403 | `suspended` | | the account is not active |
-     | 404 | `notFound` | | the account has no profile or no page row |
-     | 409 | `unavailable` | | a demo build (no real accounts) |
-     | 409 | `conflict` | `updatedAt` (the current version; null when it could not be read) | the row is no longer at `baseUpdatedAt`; nothing written |
-     | 413 | `tooLarge` | `max` (65536) | the body is above 64 KB |
-     | 422 | `tooManyOps` | `max` (20) | more than 20 operations |
-     | 422 | `invalidBody` | `path` | the body breaks the limits above (an empty `ops` too, with `path` `ops`) |
-     | 422 | `badUrl` | `op` (its index) | an `add` whose link is no address, or whose block the schema refuses |
-     | 422 | `badImage` | `op` | an `addImage` that is not the account's own upload, or whose block the schema refuses |
-     | 422 | `badIndex` | `op` | a `move` past the end |
-     | 422 | `unknownBlock`, `ambiguousBlock` | `id` | an id the page does not hold, or holds twice |
-     | 422 | `invalidPage` | `problems` | the page the blocks schema would refuse (only for a problem the call adds) |
-     | 422 | `pageTooLarge` | | the database refused the page for its size (1 MB) |
-     | 502 | `serverError` | | a read (the account, the page or its version) or the write failed: try again later |
+     | Status | `error` | Extra fields | When | App does |
+     |---|---|---|---|---|
+     | 200 | — | `updatedAt`, `changed`, `added` | written | keeps `updatedAt` verbatim, then calls `reload()` (§4) |
+     | 400 | `invalidJson` | | the body is not JSON | an app bug: reports it; no retry |
+     | 401 | `unauthorized` | | no `Authorization: Bearer`, or a token Supabase Auth turned down with its own error code (`bad_jwt`, `session_not_found`, `user_not_found`, `no_authorization`; §1) | refreshes its session once and repeats the call; wipes only when that refresh is refused (§1) |
+     | 503 | `unavailable` | | Supabase Auth could not check the token (no answer, a 5xx, a rate limit), or something other than Auth answered (any 4xx without Auth's own code: the API gateway's "Invalid API key", a firewall) | tries again later with a growing pause; never signs out on it |
+     | 403 | `suspended` | | the account is not active | shows its native "account suspended" screen; no more writes or hand-offs |
+     | 404 | `notFound` | | the account has no profile or no page row | loads the dashboard again (`/<locale>/app`, which makes the first page); no retry of the call |
+     | 409 | `unavailable` | | a demo build (no real accounts) | shows its native error view; no retry |
+     | 409 | `conflict` | `updatedAt` (the current version; null when it could not be read) | the row is no longer at `baseUpdatedAt`; nothing written | calls `reload()`, then retries once on the new version or says it could not (§4) |
+     | 413 | `tooLarge` | `max` (65536) | the body is above 64 KB | an app bug: reports it; no retry |
+     | 422 | `tooManyOps` | `max` (20) | more than 20 operations | an app bug: reports it; no retry |
+     | 422 | `invalidBody` | `path` | the body breaks the limits above (an empty `ops` too, with `path` `ops`) | an app bug: reports it; no retry |
+     | 422 | `badUrl` | `op` (its index) | an `add` whose link is no address, or whose block the schema refuses | an app bug (its Add screen sends only links it checked): reports it; no retry; says the link could not be added |
+     | 422 | `badImage` | `op` | an `addImage` that is not the account's own upload, or whose block the schema refuses | an app bug: reports it; no retry |
+     | 422 | `badIndex` | `op` | a `move` past the end | an app bug: reports it; no retry |
+     | 422 | `unknownBlock`, `ambiguousBlock` | `id` | an id the page does not hold, or holds twice | an app bug (it builds on the version `flush()` answered): reports it; no retry; calls `reload()` |
+     | 422 | `invalidPage` | `problems` | the page the blocks schema would refuse (only for a problem the call adds) | an app bug: reports it; no retry |
+     | 422 | `pageTooLarge` | | the database refused the page for its size (1 MB) | no retry; says the page is full |
+     | 502 | `serverError` | | a read (the account, the page or its version) or the write failed: try again later | tries again later with a growing pause |
 
 3. **The save guard in the web store** (`SupabaseAccountStore`).
    - Every save, and the keepalive save when a tab is hidden (and, with the one exception below, when it is
@@ -146,10 +169,10 @@ view cannot share one session.
      version (it then builds on that), and when the page is replaced. So a save that landed just before the phone
      went offline is still recognised as this tab's own after any number of failed attempts.
    - **A save without an answer is read back at once.** A read often gets through where the write's answer did not (a
-     connection that drops on the way back); it runs on its own, so no save waits for it (a hidden tab does, for a
-     while). When the row holds that save's content, the save landed and counts as confirmed (its version becomes
-     the base, the list above is cleared up to it, and the window below closes); when it holds another version of
-     this tab's own, the tab builds on that. Without this, a network that keeps losing write answers would refuse
+     connection that drops on the way back); it runs on its own, so no save waits for it (a hidden tab reads the row
+     itself, quickly, below). When the row holds that save's content, the save landed and counts as confirmed (its
+     version becomes the base, the list above is cleared up to it, and the window below closes); when it holds
+     another version of this tab's own, the tab builds on that. Without this, a network that keeps losing write answers would refuse
      every later save for good (each carries the version before the first landed write, and the refusals' answers
      are lost too), where the store before the guard wrote them all.
    - **A hidden tab usually keeps running, but its keepalive may be the last write it makes.** When the tab is
@@ -158,15 +181,23 @@ view cannot share one session.
      without another event: iOS ends a suspended app's web view with no `pagehide`, so in the iPhone app the hidden
      path is the only exit there is.
      - Nothing uncertain (no save of this tab's on its way, the list above empty): at once, with the exact guard.
-     - A save on its way, or a lost answer (the list above not empty): the tab sends nothing else meanwhile, waits for
-       that to settle, at most 3 s (`HIDDEN_WAIT`), and reads the row again for a lost answer: one attempt of at most
+     - A save on its way, a lost answer (the list above not empty), or a refused save whose read-back has not decided
+       yet: the tab sends nothing else meanwhile, waits for the saves on their way to settle, at most 3 s
+       (`HIDDEN_WAIT`), and reads the row itself for a lost answer or the refusal: one attempt of at most
        1.5 s (`READ_BACK_LIMIT`), without the client's own retries (postgrest-js tries a failed read again after 1, 2
-       and 4 s, which held the keepalive for the whole 3 s). Every read-back of the guard reads this way (`readRow`).
+       and 4 s, which held the keepalive for the whole 3 s). **Only a hidden tab reads this way**: its own read, and
+       every read-back that starts while the page is hidden (`readRow`). It waits for its own read and the saves on
+       their way, not for a slower read-back that started while it was on screen, so its keepalive still goes within
+       1.5 s of that read. **A tab on screen reads as every read does**, with postgrest-js's retries and no time
+       limit: on a slow network (a read that takes 2 s) a read-back cut off after 1.5 s never decided anything, and
+       the refused save was sent again and again (sync "error" for good, `flush()` rejected, no toast).
        Holding a version of this tab's own (a write that landed without an answer), it builds on that version; still
-       at the version it built on, nothing of its landed; holding a version from elsewhere, that page wins. Each of
-       these resolves the lost answers, and the tab sends what is left with the exact guard against the version it
-       knows then, like any save. Back on screen before that, the rest goes as a normal save instead. A refusal there
-       is a normal one: the row is read again; this tab's own version is built on and sent again, a page changed
+       at the version it built on, nothing of its landed; holding a version from elsewhere, that page wins (after a
+       refusal it replaces the page here, and the toast shows when the tab is back). Each of these resolves the lost
+       answers, and the tab sends what is left with the exact guard against the version it knows then, like any
+       save. A refusal its read could not decide sends nothing (that keepalive would be refused for sure); the row is
+       read again later. Back on screen before that, the rest goes as a normal save instead. A refusal there is a
+       normal one: the row is read again; this tab's own version is built on and sent again, a page changed
        elsewhere wins, and the toast shows when the tab is back.
      - A lost answer that no read of the row has resolved when the wait ends (the read failed, which it does at once,
        or took longer than 1.5 s): the row may hold this tab's own landed write, which an exact keepalive never
@@ -183,12 +214,14 @@ view cannot share one session.
      fail and lose the last change. So on `pagehide` the keepalive is guarded with `updated_at >= <base>` instead of
      `=` exactly while one of this tab's saves is on its way, or while a write of the list above has a lost answer
      that no read of the row has resolved since (a read that finds the row still at the version this tab built on, or
-     holding a page from elsewhere, resolves it: that write did not land and cannot land any more); a hidden tab's
+     holding a page from elsewhere, resolves it: that write had not landed by the time of the read); a hidden tab's
      keepalive only while a lost answer is still unresolved after its wait (above); otherwise it is exact too. Either
      order then keeps the last change: the save lands first and the keepalive follows, or the keepalive lands first
-     and the save (still guarded exactly) changes nothing. When both land in a page that stays (a page kept in the
-     back/forward cache), their answers may come back in either order; writes are numbered as they are sent, and an
-     older one's late answer never moves the base back.
+     and the save (still guarded exactly) changes nothing. **Accepted, not covered:** a resolved write that commits
+     only after that read (still on its way in, held by the network) while the tab closes; its new version makes
+     the exact keepalive fail, and the change made since that write is lost (that write itself is kept). When both
+     land in a page that stays (a page kept in the back/forward cache), their answers may come back in either order;
+     writes are numbered as they are sent, and an older one's late answer never moves the base back.
    - **The real window, and its price** (taken on purpose). It opens only when a tab is closed (`pagehide`) while a
      save of its is on its way, or while a lost answer is unresolved (a save with no answer or a 5xx whose read-back
      failed too, until a read of the row resolves it or a later save is confirmed; on a bad network that can be a
@@ -233,11 +266,16 @@ view cannot share one session.
        one is never written over it), and a toast says so in de, en and ar (`app.sync.conflict`): "Deine Seite wurde an
        anderer Stelle geändert. Wir haben die neueste Fassung geladen. Deine letzte Änderung hier wurde nicht
        gespeichert."
+     - the read-back failed (offline, also after postgrest-js's own retries on screen): nothing is decided. The change
+       waits like after a failed save (sync "error", the retry delays, `flush()` rejects with `saveFailed`), and each
+       later attempt **reads the row again instead of sending the save**, which the guard would refuse for sure.
+       Once a read gets through, it decides as above. On a slow network the read simply takes longer: the toast, or
+       the rebase, comes when its answer does.
    - **The unsaved change here is lost on purpose.** The other write is newer and, from the app, small and
      deliberate (one link added, one block moved). Merging two versions of one JSON document needs per-block
      versions or operations on both sides; that is a later step (the realtime split of PLAN.md D9). Until then the
-     toast says plainly what happened, and the change is one tap to redo. No retry loop: a refused save is read back
-     once.
+     toast says plainly what happened, and the change is one tap to redo. No retry loop: a refused save is never
+     sent again before a read of the row has decided it.
    - The demo store keeps everything in this browser and needs no guard. Both stores keep the same interface.
 
 4. **The store half of the bridge** (`features/app-mode/store-bridge.ts`, mounted once in the dashboard layout).
@@ -264,14 +302,15 @@ view cannot share one session.
      dashboard (`goBack()`, or loads `/<locale>/app`) and waits for the `ready` that follows; after a native write
      made while the web view was away, it calls `reload()` after that `ready` ([0087](0087-app-mode.md) decision 4,
      "For the native shell" item 9).
-   - **Why a call rejects** (the rejection's string form is the bare reason; `callAsyncJavaScript` hands it to the app
-     in the error's `userInfo[WKJavaScriptExceptionMessage]`, [0087](0087-app-mode.md) "For the native shell" item 1):
+   - **Why a call rejects** (the rejection's message and its string form are the bare reason; the app reads it
+     through its own wrapper, which turns a rejection into a plain answer `{ ok: false, reason }`, never from
+     WebKit's error: [0087](0087-app-mode.md) "For the native shell" item 1):
 
      | Method | Rejects with | Meaning | What the app does |
      |---|---|---|---|
-     | `flush()`, `reload()`, `signOut()`: not a function | (a `TypeError`) | the web view is not on a dashboard page | brings it back and waits for `ready` (above) |
+     | `flush()`, `reload()`, `signOut()`: not a function | (a `TypeError`: its message, `… is not a function`) | the web view is not on a dashboard page | brings it back and waits for `ready` (above) |
      | `flush()`, `reload()` | `storeLoading` | the store's session check did not end within 10 s | reloads the web view and waits for `ready`; no native write meanwhile |
-     | `flush()`, `reload()` | `saveFailed` | a save failed (offline, a server error); the change stays and is retried | tries again later (back online); no native write until `flush()` resolves |
+     | `flush()`, `reload()` | `saveFailed` | a save failed (offline, a server error), or a refused save could not be read back (offline): the change stays and is retried (a refused one by reading the row again, never by sending it again). A slow network is no failure: on screen the read-back takes as long as the network does, and `flush()` waits for it | tries again later (back online); no native write until `flush()` resolves |
      | `flush()`, `reload()` | `tooLarge` | the page is over the database's size limit; retrying cannot help until the page changes | says so; no retry |
      | `reload()` | `reloadFailed` | everything was saved, but the row could not be read again | tries again later |
      | `signOut()` | `signOutTimeout` | the session did not end within 10 s (offline) | clears the web view's data anyway (plan §1.2 step 7) |
@@ -300,14 +339,25 @@ the project and contact rules, under 1 MB per row: 422 `pageTooLarge`).
   (about an hour) into a long-lived session, under a device id the caller chooses. It should hand off only a token
   whose session (`session_id` in its JWT) has a `sign_ins` row with the same `deviceId`; the app's native sign-in
   writes both.
+- **The blocked-address check for `POST /api/app/page`:** the hand-off refuses a blocked address (403 `blocked`, as
+  at sign-in); the page route does not check it yet.
+- **A body size cap for `POST /api/auth/handoff`:** it reads the whole body before it checks it (the page route
+  stops at 64 KB, 413); a cap of a few KB answered before the body is read.
+- **`Cache-Control: no-store` on the framework's 405 answers:** a method the two routes do not export (a `GET` on
+  either) is answered by Next.js itself, without the `no-store` every answer of theirs carries.
 
 **What a browser user notices.** Nothing, in one tab: rapid edits, slow networks, lost answers, a stretch offline, a
 reload, hiding and showing the tab, an address change or the team's badge never conflict and never lose a change (the
-save state shows "error" until the network is back), with one exception on phones: a page that the phone freezes and
+save state shows "saving" while a slow network answers, and "error" until the network is back), with one exception on
+phones: a page that the phone freezes and
 ends within 3 s of hiding it while a save is on its way (within 1.5 s while a lost answer's read hangs), or later
 while that save is still on its way, loses the edits made since the last save that reached the database (the price in
 §3). With two tabs (or the app) changing the page, the tab that saves later shows the newer page and the toast instead
-of overwriting it, also when it is hidden while its save is on its way. The other exception is the window above: a tab
+of overwriting it, also when it is hidden while its save is on its way, and also on a slow network: the toast comes
+when the read-back does (a network that answers in 2 s, about 4 s after the change: the refused save, then its read).
+Before, a tab on screen gave the read-back up after 1.5 s and sent the refused save again and again: no toast, the
+newer page never shown, and the save state "error" for good. Offline, a refused save shows "error" and the toast
+comes once the network is back. The other exception is the window above: a tab
 **closed** (`pagehide`) while a save of its is on its way, or while an answer it lost is not yet resolved by a read of
 the row, and a tab **hidden** whose lost answer no read could resolve in 1.5 s, overwrite any write from elsewhere
 since it last read or saved; the other tab learns of it only on its next save (the toast, and that change is dropped).
@@ -324,12 +374,18 @@ since it last read or saved; the other tab learns of it only on its next save (t
   another account in the same tab, also without a sign-out between and with a keepalive failing late; with "hidden,
   then ended by the phone with no other event": a lost answer that landed or a 503 that wrote, reads failing, hidden
   and ended at once, 200 ms or 1 s later (its stand-in fails a read as postgrest-js does: after retries 1, 2 and 4 s
-  later, unless the query turns them off, as every read-back of the guard does); reads back in time; a page changed
+  later, unless the query turns them off, as a hidden tab's read-backs do); reads back in time; a page changed
   elsewhere; a read that never answers, given up after 1.5 s; `flush()` while the hidden wait ends; a lost answer
-  resolved by its read-back, then closed: the exact guard), `features/account/local-store.test.ts` (signing out),
-  `features/app-mode/store-bridge.test.ts`, `features/app-mode/adr-contract.test.ts` (this ADR names every error the
-  two routes answer and every reason a bridge method rejects with), `app/api/app/page/{ops,route}.test.ts`,
-  `app/api/auth/{handoff,confirm}/route.test.ts`, and the real-mode `e2e/app-sync-app.spec.ts` (`@real`, laptop and
-  phone; also a lost answer, reads failing, the page hidden and then ended with `Page.crash` 4 s and 1 s later: the
-  change is in the row, its keepalive within 1 s of hiding; and a sign-out while saves fail, another account signed in
-  with a password in the same tab, its app's write through the route, the tab closed: the write stays).
+  resolved by its read-back, then closed: the exact guard; and "a slow network", every read 1.8 s: another tab's
+  write shows with the toast, a lost answer and two more changes are all stored, `flush()` answers the version on the
+  server, a refused save whose read-back fails is read again and never sent again, and a tab hidden while a slow
+  read-back runs reads the row itself and sends its keepalive within 1.5 s), `features/account/local-store.test.ts`
+  (signing out), `features/app-mode/store-bridge.test.ts`, `features/app-mode/adr-contract.test.ts` (this ADR names
+  every error the two routes answer, what the app does with each, and every reason a bridge method rejects with),
+  `lib/server/user.test.ts` (a 401 only for Auth's own codes; a gateway's "Invalid API key" or a firewall is a 503),
+  `app/api/app/page/{ops,route}.test.ts`, `app/api/auth/{handoff,confirm,verify,password}/route.test.ts` (a failed
+  read is never "suspended"), and the real-mode `e2e/app-sync-app.spec.ts` (`@real`, laptop and phone; also a lost
+  answer, reads failing, the page hidden and then ended with `Page.crash` 4 s and 1 s later: the change is in the
+  row, its keepalive within 1 s of hiding; a sign-out while saves fail, another account signed in with a password in
+  the same tab, its app's write through the route, the tab closed: the write stays; and every request to the row
+  2 s late: the toast, the newest page and `flush()`).
