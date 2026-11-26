@@ -610,6 +610,7 @@ export class SupabaseAccountStore implements AccountStore {
         }
         this.unconfirm(content, write, sentOffline, status);
         this.retry(now);
+        if (mayHaveLanded(sentOffline, status)) await this.recheck(id, base, content, write);
         return;
       }
       if (!data) {
@@ -617,17 +618,56 @@ export class SupabaseAccountStore implements AccountStore {
         return;
       }
       this.confirm(data.updated_at, content, write);
-      // The server owns the badge and the address on the page (sites_guard); keep its word. Pictures
-      // that went to Storage keep their new address here too.
-      const saved = fromJson<Page>(data.page).profile;
-      const page = this.uploaded.size > 0 ? replaceSources(now.site.page, this.uploaded) : now.site.page;
-      const profile = { ...page.profile, verified: saved.verified, username: saved.username };
-      const { syncError: _resolved, ...rest } = now;
-      this.set({ ...rest, site: { ...now.site, page: { ...page, profile } }, sync: this.dirty ? "saving" : "saved", baseUpdatedAt: this.base ?? data.updated_at });
+      this.showSaved(now, data.page, data.updated_at);
     };
     const running = run();
     void this.track(running);
     await running;
+  }
+
+  /**
+   * After a confirmed save: the server owns the badge and the address on the page (sites_guard); keep
+   * its word. Pictures that went to Storage keep their new address here too.
+   */
+  private showSaved(now: Extract<AccountSnapshot, { status: "signedIn" }>, savedPage: SiteRow["page"], updatedAt: string) {
+    const saved = fromJson<Page>(savedPage).profile;
+    const page = this.uploaded.size > 0 ? replaceSources(now.site.page, this.uploaded) : now.site.page;
+    const profile = { ...page.profile, verified: saved.verified, username: saved.username };
+    const { syncError: _resolved, ...rest } = now;
+    this.set({ ...rest, site: { ...now.site, page: { ...page, profile } }, sync: this.dirty ? "saving" : "saved", baseUpdatedAt: this.base ?? updatedAt });
+  }
+
+  /**
+   * A save failed in a way that may have written it (no answer, a server error): the row is read back
+   * at once, since a read often gets through where the write's answer did not (a connection that drops
+   * on the way back). Holding this write's content, the save landed: it counts as confirmed. Holding
+   * another version of this tab's own (an earlier write that landed), the tab builds on that. Anything
+   * else, or no answer, changes nothing here: the next save's guard decides.
+   */
+  private async recheck(id: string, base: string | null, content: SiteContent, write: number): Promise<void> {
+    const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
+    const now = this.snapshot;
+    if (error || !row || now.status !== "signedIn" || now.account.id !== id) return;
+    // Something moved meanwhile (another save, a refusal read back): that one decides.
+    if (this.base !== base || row.updated_at === base || this.sending.size > 0) return;
+    const latest = toRow(fromRow(row));
+    const key = contentKey(latest);
+    if (key === contentKey(content)) {
+      this.confirm(row.updated_at, latest, write);
+      this.dirty = contentKey(toRow(now.site)) !== key;
+      this.showSaved(now, row.page, row.updated_at);
+      // The failed save's retry is not needed; a change made meanwhile goes out at once.
+      if (this.dirty) this.schedule(0);
+      else if (this.saveTimer !== null) {
+        window.clearTimeout(this.saveTimer);
+        this.saveTimer = null;
+      }
+      return;
+    }
+    if (!this.isOwn(key)) return;
+    // Whether anything waits is what the page here holds beyond that version (the failed save set it).
+    this.dirty = false;
+    this.rebaseOwn(now, row, latest, key);
   }
 
   /** A failed save is tried again, each time a little later (the next change tries at once). */
@@ -703,8 +743,14 @@ export class SupabaseAccountStore implements AccountStore {
       this.replace(row, true);
       return;
     }
-    // This tab's own version: the page here stays, and the next save builds on that version. The
-    // server has just answered, so the save is not failing.
+    this.rebaseOwn(now, row, latest, key);
+  }
+
+  /**
+   * The row holds a version of this tab's own: the page here stays, and the next save builds on that
+   * version. The server has just answered, so the save is not failing.
+   */
+  private rebaseOwn(now: Extract<AccountSnapshot, { status: "signedIn" }>, row: SiteRow, latest: SiteContent, key: string) {
     this.base = row.updated_at;
     this.baseContent = latest;
     this.landed.clear();

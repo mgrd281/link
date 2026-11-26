@@ -33,6 +33,8 @@ class FakeDb {
   failStatus = 0;
   /** The write reaches the database, but its answer is an error (the connection dropped on the way back). */
   loseAnswers = false;
+  /** Reads fail (the connection is gone): `true` for all, or a function asked before each read. */
+  failReads: boolean | (() => boolean) = false;
   /** The session ended (signed out): row-level security lets no write through any more. */
   signedOut = false;
   /** Holds writes: "answer" applies them at once but holds the answer, "apply" holds both until `release()`. */
@@ -100,6 +102,8 @@ class FakeDb {
           if (this.loseAnswers) return { data: null, error: { message: "TypeError: Load failed" }, status: 0 };
           return { data: { page: clone(this.row.page), updated_at: this.row.updated_at }, error: null };
         }
+        const failing = typeof this.failReads === "function" ? this.failReads() : this.failReads;
+        if (failing) return { data: null, error: { message: "TypeError: fetch failed" }, status: 0 };
         return { data: clone(this.row), error: null };
       };
       const chain = {
@@ -364,7 +368,9 @@ describe("closing the tab: the keepalive save is the last code that runs", () =>
     const db = new FakeDb();
     const store = await signedIn(db);
     const sent = keepalive(db);
+    // The connection dropped right after the write landed: its answer and the read-back are lost.
     db.loseAnswers = true;
+    db.failReads = true;
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
     expect(snapshotOf(store).sync).toBe("error");
@@ -531,7 +537,9 @@ describe("a bad network: one tab never loses a change and never sees the toast",
   it("a save lands but its answer is lost, then three more attempts fail without an answer, then the network is back: every change is stored", async () => {
     const db = new FakeDb();
     const store = await signedIn(db);
+    // The write lands; the connection drops before its answer (and the read-back) comes.
     db.loseAnswers = true;
+    db.failReads = true;
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
     expect(db.blocks()).toEqual(["a", "b", "c"]);
@@ -544,6 +552,7 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     }
     expect(snapshotOf(store).sync).toBe("error");
     db.failWrites = false;
+    db.failReads = false;
     await vi.advanceTimersByTimeAsync(60_000);
     expect(db.writes.length - attempts).toBeGreaterThan(0);
     expect(db.blocks()).toEqual(["a", "b", "c", "d", "e", "f"]);
@@ -557,6 +566,7 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     const db = new FakeDb();
     const store = await signedIn(db);
     db.loseAnswers = true;
+    db.failReads = true;
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
     db.loseAnswers = false;
@@ -564,6 +574,7 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     addLink(store, "d");
     await vi.advanceTimersByTimeAsync(25_000);
     db.failWrites = false;
+    db.failReads = false;
     await vi.advanceTimersByTimeAsync(60_000);
     expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
     expect(snapshotOf(store).conflicts).toBe(0);
@@ -572,6 +583,9 @@ describe("a bad network: one tab never loses a change and never sees the toast",
   it("answers lost on every save: past the rebase limit the change waits like a failed save, is never dropped, and is stored once answers come back", async () => {
     const db = new FakeDb();
     const store = await signedIn(db);
+    // Every write lands without an answer; its read-back fails too, the next refusal's read works.
+    let reads = 0;
+    db.failReads = () => reads++ % 2 === 0;
     db.loseAnswers = true;
     for (const id of ["c", "d", "e", "f", "g", "h"]) {
       addLink(store, id);
@@ -583,6 +597,7 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     expect(snapshotOf(store).sync).toBe("error");
     expect(snapshotOf(store).conflicts).toBe(0);
     db.loseAnswers = false;
+    db.failReads = false;
     await vi.advanceTimersByTimeAsync(60_000);
     expect(db.blocks()).toEqual(["a", "b", "c", "d", "e", "f", "g", "h", "late"]);
     expect(snapshotOf(store).conflicts).toBe(0);
@@ -593,6 +608,8 @@ describe("a bad network: one tab never loses a change and never sees the toast",
   it("past the rebase limit no save is sent at once again: the next waits for the retry delay", async () => {
     const db = new FakeDb();
     const store = await signedIn(db);
+    let reads = 0;
+    db.failReads = () => reads++ % 2 === 0;
     db.loseAnswers = true;
     addLink(store, "c");
     // Each round: the save lands, its answer is lost; the retry is refused, finds its own page, sends again.
@@ -601,6 +618,40 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     await vi.advanceTimersByTimeAsync(1_500);
     expect(db.writes.length - sent).toBeLessThanOrEqual(1);
     expect(snapshotOf(store).conflicts).toBe(0);
+  });
+
+  it("every write's answer is lost but reads get through (a connection that drops on the way back): every change is stored, no toast", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    db.loseAnswers = true;
+    for (const id of ["c", "d", "e", "f", "g", "h", "i", "j"]) {
+      addLink(store, id);
+      await vi.advanceTimersByTimeAsync(650);
+    }
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]);
+    expect(snapshotOf(store).conflicts).toBe(0);
+    // The read-back showed each save landed: nothing waits, nothing is in doubt.
+    expect(snapshotOf(store).sync).toBe("saved");
+    expect(snapshotOf(store).baseUpdatedAt).toBe(db.row.updated_at);
+  });
+
+  it("a lost answer whose read-back shows the save landed: the keepalive guard is exact again", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepalive(db);
+    db.loseAnswers = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    db.loseAnswers = false;
+    expect(snapshotOf(store).sync).toBe("saved");
+    // Another tab writes now; this tab then closes with a change: the newer page is not overwritten.
+    db.elsewhere([link("a"), link("b"), link("c"), link("from-elsewhere")]);
+    addLink(store, "stale");
+    vi.stubGlobal("document", { visibilityState: "hidden" });
+    listeners.get("visibilitychange")?.();
+    expect(sent[0]?.url).toContain("updated_at=eq.");
+    expect(db.blocks()).toEqual(["a", "b", "c", "from-elsewhere"]);
   });
 
   it.each([
@@ -646,10 +697,12 @@ describe("a lost answer, then signing out or flush()", () => {
     const db = new FakeDb();
     const store = await signedIn(db);
     db.loseAnswers = true;
+    db.failReads = true;
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
     expect(snapshotOf(store).sync).toBe("error");
     db.loseAnswers = false;
+    db.failReads = false;
     addLink(store, "d");
     await vi.advanceTimersByTimeAsync(100);
     store.logOut();
@@ -662,9 +715,12 @@ describe("a lost answer, then signing out or flush()", () => {
     const db = new FakeDb();
     const store = await signedIn(db);
     db.loseAnswers = true;
+    db.failReads = true;
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
+    expect(snapshotOf(store).sync).toBe("error");
     db.loseAnswers = false;
+    db.failReads = false;
     addLink(store, "d");
     const flushed = store.flush();
     await vi.advanceTimersByTimeAsync(10);
@@ -676,9 +732,11 @@ describe("a lost answer, then signing out or flush()", () => {
     const db = new FakeDb();
     const store = await signedIn(db);
     db.loseAnswers = true;
+    db.failReads = true;
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
     db.loseAnswers = false;
+    db.failReads = false;
     db.hold = "apply";
     addLink(store, "d");
     await vi.advanceTimersByTimeAsync(450);
