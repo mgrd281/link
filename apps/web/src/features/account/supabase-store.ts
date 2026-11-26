@@ -55,6 +55,12 @@ const RETRY_DELAYS = [2_000, 5_000, 15_000, 30_000];
  * before it sends what is left anyway (with the exact guard): a phone may freeze the page soon after.
  */
 export const HIDDEN_WAIT = 3_000;
+/**
+ * How long the guard's read-backs of the row may take (`readRow`): one attempt, no retries. postgrest-js
+ * tries a failed read again after 1, 2 and 4 s; a hidden tab waiting on that would send its keepalive
+ * only when `HIDDEN_WAIT` is over, so a phone that ends the page within those 3 s lost the change.
+ */
+export const READ_BACK_LIMIT = 1_500;
 
 const AUTH_ERRORS = new Set<string>(["invalidUsername", "reservedUsername", "usernameTaken"]);
 
@@ -497,16 +503,19 @@ export class SupabaseAccountStore implements AccountStore {
    * app's web view sends no `pagehide`), so the keepalive sent here may be the last write it makes:
    * - nothing uncertain: what is pending goes at once, as a keepalive with the exact guard;
    * - a save on its way, or a write whose answer was lost (`landed`): the tab waits for that to settle
-   *   (at most `HIDDEN_WAIT`), and reads the row again for a lost answer, so a write of its own that
-   *   landed becomes the version it builds on. Then it sends what is left with the exact guard against
-   *   the version it knows, like any save. A refusal is a normal one: the row is read again, a page
-   *   changed elsewhere wins and the toast shows when the tab is back.
+   *   (at most `HIDDEN_WAIT`), and reads the row again for a lost answer (one attempt of at most
+   *   `READ_BACK_LIMIT`, `readRow`), so a write of its own that landed becomes the version it builds on.
+   *   Then it sends what is left with the exact guard against the version it knows, like any save. A
+   *   refusal is a normal one: the row is read again, a page changed elsewhere wins and the toast shows
+   *   when the tab is back.
    * - a lost answer still unresolved when the wait ends (the read failed or took too long): the row may
    *   hold this tab's own write, which an exact keepalive would never match, and nothing may run after
-   *   it. So that keepalive takes the closing tab's rule (`updated_at >= base`, `saveOnExit`).
+   *   it. So that keepalive takes the closing tab's rule (`updated_at >= base`, `saveOnExit`). A read
+   *   that fails fails at once, so this keepalive goes right away; one that hangs, after `READ_BACK_LIMIT`.
    * The price (ADR 0088): a phone that freezes the page and ends it before a save on its way answers
-   * loses the edits made after that save (the save itself is kept); in the last case, a write from
-   * elsewhere since this tab last read or saved is overwritten instead of refused.
+   * (at most `HIDDEN_WAIT`), or before a hanging read is given up (`READ_BACK_LIMIT`), loses the edits
+   * made since the last save that reached the database; in the last case, a write from elsewhere since
+   * this tab last read or saved is overwritten instead of refused.
    */
   private saveWhenHidden() {
     // The editor's change from the last moment: its own listener may run after this one.
@@ -546,7 +555,7 @@ export class SupabaseAccountStore implements AccountStore {
   private async readLost(id: string): Promise<void> {
     const base = this.base;
     const lost = this.lostUpTo();
-    const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
+    const { data: row, error } = await this.readRow(id);
     const now = this.snapshot;
     // Something moved meanwhile (a save confirmed, a refusal read back): that one decides.
     if (error || !row || now.status !== "signedIn" || now.account.id !== id || this.base !== base) return;
@@ -554,6 +563,23 @@ export class SupabaseAccountStore implements AccountStore {
     const key = contentKey(latest);
     if (row.updated_at !== base && this.isOwn(key)) this.rebaseOwn(now, row, latest, key, false);
     else this.resolveLost(lost);
+  }
+
+  /**
+   * The row as it is now, for the guard's read-backs (`recheck`, `readLost`, `refused`): a single attempt
+   * of at most `READ_BACK_LIMIT` ms, without postgrest-js's retries (1, 2 and 4 s after a network
+   * error). A failed one changes nothing: the next save's guard, or the hidden tab's keepalive, decides.
+   */
+  private async readRow(id: string) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      controller.abort();
+    }, READ_BACK_LIMIT);
+    try {
+      return await this.client().from("sites").select("*").eq("profile_id", id).retry(false).abortSignal(controller.signal).maybeSingle();
+    } finally {
+      window.clearTimeout(timer);
+    }
   }
 
   /** Resolves once no save is on its way and no read-back runs, or after `limit` ms. */
@@ -759,8 +785,8 @@ export class SupabaseAccountStore implements AccountStore {
         }
         this.unconfirm(content, write, sentOffline, status);
         this.retry(now);
-        // Not awaited: offline, the read is retried for seconds, and no save waits for it (a hidden
-        // tab does, for a while: `saveWhenHidden`).
+        // Not awaited: no save waits for it (a hidden tab does, at most `READ_BACK_LIMIT`:
+        // `saveWhenHidden`).
         if (mayHaveLanded(sentOffline, status)) this.readBack(this.recheck(id, base, content, write));
         return;
       }
@@ -798,7 +824,7 @@ export class SupabaseAccountStore implements AccountStore {
    */
   private async recheck(id: string, base: string | null, content: SiteContent, write: number): Promise<void> {
     const lost = this.lostUpTo();
-    const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
+    const { data: row, error } = await this.readRow(id);
     const now = this.snapshot;
     if (error || !row || now.status !== "signedIn" || now.account.id !== id) return;
     // Something moved meanwhile (a later write, a refusal read back): that one decides.
@@ -913,7 +939,7 @@ export class SupabaseAccountStore implements AccountStore {
    *   tab's unsaved change is dropped, and the editor starts over from it and says so.
    */
   private async refused(id: string, base: string | null): Promise<void> {
-    const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
+    const { data: row, error } = await this.readRow(id);
     const now = this.snapshot;
     if (now.status !== "signedIn" || now.account.id !== id) return;
     if (error || !row || row.updated_at === base) {

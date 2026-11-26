@@ -578,6 +578,7 @@ test.describe("the iPhone app's web side @real", () => {
     await page.waitForTimeout(1_000);
     await visibility(page, "Zweiter Link").click();
     await expect(visibility(page, "Zweiter Link")).not.toBeChecked();
+    const beforeHiding = net.patches.length;
     await setHidden(page, true);
     await page.waitForTimeout(4_000);
     // The phone ends the page: no more code of it runs.
@@ -586,7 +587,56 @@ test.describe("the iPhone app's web side @real", () => {
     void cdp.send("Page.crash").catch(() => undefined);
     await ended;
     await expect.poll(async () => (await stored(account.id)).blocks.map((block) => block.visible), { timeout: 10_000 }).toEqual([false, false, true]);
-    expect(net.patches.at(-1)).toBe("gte");
+    // The hidden tab's keepalive is the first write after hiding (the editor may save the same page again after it).
+    expect(net.patches[beforeHiding]).toBe("gte");
+  });
+
+  test("guard: a save lands but its answer is lost and reads fail; a change, hidden, then the phone ends the page 1 s later: the change is kept @real", async ({ page }) => {
+    // Expected: the read-back of the lost answer fails at once (one attempt, no retries), so the hidden
+    // tab's keepalive goes right away, with the loose guard, and the change is in the row. Before, the
+    // client's retries (1, 2, 4 s) held it until the 3 s wait was over: a page ended earlier lost it.
+    test.setTimeout(90_000);
+    const account = await syncAccount("sync-hiddenkill1");
+    await signIn(page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    const net = { lose: true, readsFail: false, patches: [] as { guard: string; at: number }[] };
+    await page.route(
+      (url) => url.pathname.endsWith("/rest/v1/sites"),
+      async (route) => {
+        if (route.request().method() !== "PATCH") {
+          if (net.readsFail) await route.abort("connectionreset");
+          else await route.continue().catch(() => undefined);
+          return;
+        }
+        net.patches.push({ guard: new URL(route.request().url()).searchParams.get("updated_at")?.split(".")[0] ?? "none", at: Date.now() });
+        if (net.lose) {
+          net.lose = false;
+          await route.fetch();
+          net.readsFail = true;
+          await route.abort("connectionreset");
+          return;
+        }
+        await route.continue().catch(() => undefined);
+      },
+    );
+    await visibility(page, "Erster Link").click();
+    await expect.poll(() => shown(account.id, "first")).toBe(false);
+    await expect.poll(() => net.readsFail).toBe(true);
+    await page.waitForTimeout(1_000);
+    await visibility(page, "Zweiter Link").click();
+    await expect(visibility(page, "Zweiter Link")).not.toBeChecked();
+    const hiddenAt = Date.now();
+    await setHidden(page, true);
+    await page.waitForTimeout(1_000);
+    const cdp = await page.context().newCDPSession(page);
+    const ended = page.waitForEvent("crash");
+    void cdp.send("Page.crash").catch(() => undefined);
+    await ended;
+    await expect.poll(async () => (await stored(account.id)).blocks.map((block) => block.visible), { timeout: 10_000 }).toEqual([false, false, true]);
+    // The hidden tab's keepalive is the first write after hiding (the editor may save the same page again after it).
+    const keepalive = net.patches.find((patch) => patch.at >= hiddenAt);
+    expect(keepalive?.guard).toBe("gte");
+    expect((keepalive?.at ?? Infinity) - hiddenAt).toBeLessThan(1_000);
   });
 
   test("sign-out: A signs out while its saves fail, B signs in with a password in the same tab, B's app writes, B closes the tab: the app's write stays @real", async ({ page }) => {

@@ -138,6 +138,13 @@ describe("ADR 0088 tells a browser user the truth about phones", () => {
   it("'What a browser user notices' names the phone that freezes and ends a hidden page", () => {
     const notice = part(SYNC, "**What a browser user notices.**", "**Consequences.**");
     expect(notice).toMatch(/phone freezes and\s+ends within 3 s of hiding it/);
-    expect(notice).toMatch(/hidden\*\*\s+whose lost answer no read could resolve in 3 s/);
+    // The read-back's limit as the store has it (`READ_BACK_LIMIT`): a hidden tab's keepalive goes then at the latest.
+    const store = source("features/account/supabase-store.ts");
+    const limit = Number((/export const READ_BACK_LIMIT = ([\d_]+);/.exec(store)?.[1] ?? "").replaceAll("_", "")) / 1000;
+    expect(limit).toBeGreaterThan(0);
+    const seconds = String(limit).replace(".", "\\.");
+    expect(notice).toMatch(new RegExp(`within ${seconds} s while a lost answer's read hangs`));
+    expect(notice).toMatch(new RegExp(`hidden\\*\\*\\s+whose lost answer no read could resolve in ${seconds} s`));
+    expect(part(SYNC, "3. **The save guard", "4. **The store half")).toMatch(new RegExp(`at most\\s+${seconds} s \\(\`READ_BACK_LIMIT\`\\)`));
   });
 });

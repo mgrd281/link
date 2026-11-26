@@ -12,7 +12,7 @@ import type { Site } from "./types";
 
 vi.mock("@/features/app/media-upload", () => ({ uploadDataUrl: () => Promise.reject(new Error("no uploads in this test")) }));
 
-const { HIDDEN_WAIT, SupabaseAccountStore } = await import("./supabase-store");
+const { HIDDEN_WAIT, READ_BACK_LIMIT, SupabaseAccountStore } = await import("./supabase-store");
 const { registerPendingEdits } = await import("./pending-edits");
 
 type Row = Record<string, unknown> & { profile_id: string; page: Record<string, unknown>; updated_at: string };
@@ -35,9 +35,13 @@ class FakeDb {
   loseAnswers = false;
   /** The status of that lost answer: 0 (no answer at all) or a server error (5xx) whose write landed. */
   lostStatus = 0;
-  /** Reads fail (the connection is gone): `true` for all, or a function asked before each read. */
+  /**
+   * Reads fail (the connection is gone): `true` for all, or a function asked before each attempt. As
+   * postgrest-js 2.119 does, a failed read is tried again after 1, 2 and 4 s (7 s in all) unless the
+   * query asked `.retry(false)`.
+   */
   failReads: boolean | (() => boolean) = false;
-  /** Reads never answer (offline, PostgREST's client retries a read for seconds). */
+  /** Reads never answer (a connection that hangs) until the query's abort signal ends them. */
   hangReads = false;
   /** Reads answer this many ms late, with the row as it is then (a slow connection). */
   readDelay = 0;
@@ -97,7 +101,11 @@ class FakeDb {
     const query = (table: string) => {
       const filters: Record<string, unknown> = {};
       let values: Record<string, unknown> | null = null;
-      const run = () => {
+      let retry = true;
+      let signal: AbortSignal | null = null;
+      const failingNow = () => (typeof this.failReads === "function" ? this.failReads() : this.failReads);
+      /** `failing`: whether this read attempt fails (asked once per attempt by `read`). */
+      const run = (failing = !values && failingNow()) => {
         if (table === "profiles") return { data: this.profile, error: null };
         if (values) {
           if (this.failWrites) return { data: null, error: { message: "TypeError: fetch failed" }, status: this.failStatus };
@@ -108,9 +116,36 @@ class FakeDb {
           if (this.loseAnswers) return { data: null, error: { message: "TypeError: Load failed" }, status: this.lostStatus };
           return { data: { page: clone(this.row.page), updated_at: this.row.updated_at }, error: null };
         }
-        const failing = typeof this.failReads === "function" ? this.failReads() : this.failReads;
         if (failing) return { data: null, error: { message: "TypeError: fetch failed" }, status: 0 };
         return { data: clone(this.row), error: null };
+      };
+      /** Waits `ms` (null: for ever) unless the query's signal aborts first. */
+      const wait = (ms: number | null) =>
+        new Promise<"time" | "aborted">((resolve) => {
+          if (signal?.aborted) {
+            resolve("aborted");
+            return;
+          }
+          const timer = ms === null ? null : setTimeout(() => resolve("time"), ms);
+          signal?.addEventListener("abort", () => {
+            if (timer !== null) clearTimeout(timer);
+            resolve("aborted");
+          });
+        });
+      const aborted = { data: null, error: { message: "AbortError: signal is aborted without reason" }, status: 0 };
+      /** A read as postgrest-js runs it: tried again after 1, 2 and 4 s when it fails, unless `.retry(false)`. */
+      const read = async () => {
+        if (this.hangReads) {
+          await wait(null);
+          return aborted;
+        }
+        if (this.readDelay > 0 && (await wait(this.readDelay)) === "aborted") return aborted;
+        if (table === "profiles") return run(false);
+        for (let attempt = 0; ; attempt += 1) {
+          const failing = failingNow();
+          if (!failing || !retry || attempt === 3) return run(failing);
+          if ((await wait(1_000 * 2 ** attempt)) === "aborted") return aborted;
+        }
       };
       const chain = {
         select: () => chain,
@@ -122,10 +157,17 @@ class FakeDb {
           filters[column] = value;
           return chain;
         },
+        retry: (enabled: boolean) => {
+          retry = enabled;
+          return chain;
+        },
+        abortSignal: (value: AbortSignal) => {
+          signal = value;
+          return chain;
+        },
         maybeSingle: () => {
-          if (!values && this.hangReads) return new Promise(() => undefined);
-          if (!values && this.readDelay > 0) return new Promise((resolve) => setTimeout(() => resolve(run()), this.readDelay));
-          if (!values || !this.hold) return Promise.resolve(run());
+          if (!values) return read();
+          if (!this.hold) return Promise.resolve(run());
           if (this.hold === "answer") {
             const answer = run();
             return new Promise((resolve) => this.held.push({ land: () => answer, resolve }));
@@ -699,7 +741,7 @@ describe("hidden, then ended by the phone with no other event (iOS ends a suspen
     expect(db.blocks()).toEqual(["a", "b", "from-elsewhere"]);
   });
 
-  it(`the read never answers: after ${String(HIDDEN_WAIT)} ms the keepalive goes with the closing tab's guard`, async () => {
+  it(`the read never answers: it is given up after ${String(READ_BACK_LIMIT)} ms, and the keepalive goes then with the closing tab's guard`, async () => {
     const db = new FakeDb();
     const store = await signedIn(db);
     const guards = killed(db);
@@ -713,12 +755,36 @@ describe("hidden, then ended by the phone with no other event (iOS ends a suspen
     addLink(store, "d");
     await vi.advanceTimersByTimeAsync(50);
     hide();
-    await vi.advanceTimersByTimeAsync(HIDDEN_WAIT - 10);
+    await vi.advanceTimersByTimeAsync(READ_BACK_LIMIT - 10);
     expect(guards).toEqual([]);
     await vi.advanceTimersByTimeAsync(10);
     expect(guards).toEqual(["gte"]);
     expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(READ_BACK_LIMIT).toBeLessThan(HIDDEN_WAIT);
   });
+
+  for (const endedAt of [0, 1_000]) {
+    it(`a save landed but its answer was lost, then reads fail; hidden later; ended ${String(endedAt)} ms after hiding: the change is kept`, async () => {
+      // postgrest-js tries a failed read again after 1, 2 and 4 s: the read-backs that waited for that
+      // held the hidden tab's keepalive until its 3 s wait was over, and a page ended before lost it.
+      const db = new FakeDb();
+      const store = await signedIn(db);
+      const guards = killed(db);
+      db.loseAnswers = true;
+      db.failReads = true;
+      addLink(store, "c");
+      await vi.advanceTimersByTimeAsync(450);
+      db.loseAnswers = false;
+      await vi.advanceTimersByTimeAsync(1_500);
+      addLink(store, "d");
+      await vi.advanceTimersByTimeAsync(50);
+      hide();
+      await vi.advanceTimersByTimeAsync(endedAt);
+      // The page is ended here: only what reached the database counts.
+      expect(guards).toEqual(["gte"]);
+      expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    });
+  }
 });
 
 describe("leaving the account", () => {

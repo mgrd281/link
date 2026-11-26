@@ -158,21 +158,25 @@ view cannot share one session.
      without another event: iOS ends a suspended app's web view with no `pagehide`, so in the iPhone app the hidden
      path is the only exit there is.
      - Nothing uncertain (no save of this tab's on its way, the list above empty): at once, with the exact guard.
-     - A save on its way, or a lost answer (the list above not empty): the tab sends nothing else meanwhile, waits
-       for that to settle, at most 3 s (`HIDDEN_WAIT`), and reads the row again for a lost answer. Holding a
-       version of this tab's own (a write that landed without an answer), it builds on that version; still at the
-       version it built on, nothing of its landed; holding a version from elsewhere, that page wins. Each of these
-       resolves the lost answers, and the tab sends what is left with the exact guard against the version it
-       knows then, like any save. Back on screen before that, the rest goes as a normal save instead. A refusal
-       there is a normal one: the row is read again; this tab's own version is built on and sent again, a page
-       changed elsewhere wins, and the toast shows when the tab is back.
-     - A lost answer that no read of the row has resolved when the wait ends (reads fail, or take longer than
-       3 s): the row may hold this tab's own landed write, which an exact keepalive never matches, and no code may
-       run after it. That keepalive takes the closing tab's guard (`updated_at >= <base>`, below), with its price.
-     **The price, accepted:** a phone that freezes the page right after hiding it and ends it within those 3 s,
-     before the keepalive went, loses the edits made since the last save that reached the database (that save
-     itself is kept, and so is every write from elsewhere); so does one that ends it after the 3 s while a save is
-     still on its way (its keepalive, exact, is refused by that save).
+     - A save on its way, or a lost answer (the list above not empty): the tab sends nothing else meanwhile, waits for
+       that to settle, at most 3 s (`HIDDEN_WAIT`), and reads the row again for a lost answer: one attempt of at most
+       1.5 s (`READ_BACK_LIMIT`), without the client's own retries (postgrest-js tries a failed read again after 1, 2
+       and 4 s, which held the keepalive for the whole 3 s). Every read-back of the guard reads this way (`readRow`).
+       Holding a version of this tab's own (a write that landed without an answer), it builds on that version; still
+       at the version it built on, nothing of its landed; holding a version from elsewhere, that page wins. Each of
+       these resolves the lost answers, and the tab sends what is left with the exact guard against the version it
+       knows then, like any save. Back on screen before that, the rest goes as a normal save instead. A refusal there
+       is a normal one: the row is read again; this tab's own version is built on and sent again, a page changed
+       elsewhere wins, and the toast shows when the tab is back.
+     - A lost answer that no read of the row has resolved when the wait ends (the read failed, which it does at once,
+       or took longer than 1.5 s): the row may hold this tab's own landed write, which an exact keepalive never
+       matches, and no code may run after it. That keepalive takes the closing tab's guard (`updated_at >= <base>`,
+       below), with its price. It goes right away when the read fails, 1.5 s after hiding when the read hangs.
+     **The price, accepted:** a phone that freezes the page right after hiding it and ends it before the keepalive
+     went (within 3 s while a save is on its way, within 1.5 s while a lost answer's read hangs; a read that fails
+     costs no time) loses the edits made since the last save that reached the database (that save itself is kept, and
+     so is every write from elsewhere); so does one that ends it after the 3 s while a save is still on its way (its
+     keepalive, exact, is refused by that save).
    - **The loose guard: a closing tab, and a hidden one with an unresolved lost answer** (`pagehide`: the page is
      going away and cannot wait). The keepalive is the last code it runs: when it is refused, nothing sends it again.
      A save of this tab's that lands first, with a version this tab does not know yet, would make an exact keepalive
@@ -188,17 +192,17 @@ view cannot share one session.
    - **The real window, and its price** (taken on purpose). It opens only when a tab is closed (`pagehide`) while a
      save of its is on its way, or while a lost answer is unresolved (a save with no answer or a 5xx whose read-back
      failed too, until a read of the row resolves it or a later save is confirmed; on a bad network that can be a
-     while: the retries come 2, 5 and 15 s after failures in a row, then every 30 s), and when a hidden tab's 3 s wait
-     ends with a lost answer that no read of the row could resolve (the reads fail too). Then the keepalive overwrites
-     **any write from elsewhere since this tab last read or saved** (another tab, the app), instead of being refused,
-     and the closing tab sees nothing. The other tab learns of it only on its next save: that save is refused, it
-     shows the toast and the closing tab's page, and that change is dropped. A browser cannot tell a request that
-     never left (a network error while it says it is online) from one whose answer was lost, so a failed save of that
-     kind opens the window even when it wrote nothing, until a read of the row shows it did not land. What is also
-     still not kept: a change made after the team gave the badge (a version this tab has not seen) in a tab that
-     closes before its save, refused as this tab's own and sent again, went through: the keepalive is refused as
-     stale. A database function `save_site(content, base, pending)` that writes when the row is at `base` or holds
-     what may have landed would close both without the window; it needs a migration and is a follow-up.
+     while: the retries come 2, 5 and 15 s after failures in a row, then every 30 s), and when a hidden tab's wait
+     ends with a lost answer that no read of the row could resolve (the read failed, or hung for 1.5 s). Then the
+     keepalive overwrites **any write from elsewhere since this tab last read or saved** (another tab, the app),
+     instead of being refused, and the closing tab sees nothing. The other tab learns of it only on its next save:
+     that save is refused, it shows the toast and the closing tab's page, and that change is dropped. A browser cannot
+     tell a request that never left (a network error while it says it is online) from one whose answer was lost, so a
+     failed save of that kind opens the window even when it wrote nothing, until a read of the row shows it did not
+     land. What is also still not kept: a change made after the team gave the badge (a version this tab has not seen)
+     in a tab that closes before its save, refused as this tab's own and sent again, went through: the keepalive is
+     refused as stale. A database function `save_site(content, base, pending)` that writes when the row is at `base`
+     or holds what may have landed would close both without the window; it needs a migration and is a follow-up.
    - A keepalive that fails while the tab is still there (a phone back from another app) is retried like any
      failed save.
    - Signing out (Settings' "Abmelden" too), the data export and the deletion first save until nothing waits, a
@@ -294,13 +298,13 @@ the project and contact rules, under 1 MB per row: 422 `pageTooLarge`).
 **What a browser user notices.** Nothing, in one tab: rapid edits, slow networks, lost answers, a stretch offline, a
 reload, hiding and showing the tab, an address change or the team's badge never conflict and never lose a change (the
 save state shows "error" until the network is back), with one exception on phones: a page that the phone freezes and
-ends within 3 s of hiding it (while a save is on its way, or a lost answer is read back), or later while that save is
-still on its way, loses the edits made since the last save that reached the database (the price in §3). With two tabs
-(or the app) changing the page, the tab that saves later shows the newer page and the toast instead of overwriting it,
-also when it is hidden while its save is on its way. The other exception is the window above: a tab **closed**
-(`pagehide`) while a save of its is on its way, or while an answer it lost is not yet resolved by a read of the row,
-and a tab **hidden** whose lost answer no read could resolve in 3 s, overwrite any write from elsewhere since it last
-read or saved; the other tab learns of it only on its next save (the toast, and that change is dropped).
+ends within 3 s of hiding it while a save is on its way (within 1.5 s while a lost answer's read hangs), or later
+while that save is still on its way, loses the edits made since the last save that reached the database (the price in
+§3). With two tabs (or the app) changing the page, the tab that saves later shows the newer page and the toast instead
+of overwriting it, also when it is hidden while its save is on its way. The other exception is the window above: a tab
+**closed** (`pagehide`) while a save of its is on its way, or while an answer it lost is not yet resolved by a read of
+the row, and a tab **hidden** whose lost answer no read could resolve in 1.5 s, overwrite any write from elsewhere
+since it last read or saved; the other tab learns of it only on its next save (the toast, and that change is dropped).
 
 **Consequences.**
 
@@ -313,11 +317,13 @@ read or saved; the other tab learns of it only on its next save (the toast, and 
 - Tests: `features/account/supabase-store.test.ts` ("one document, two accounts": a sign-out while saves fail, then
   another account in the same tab, also without a sign-out between and with a keepalive failing late; with "hidden,
   then ended by the phone with no other event": a lost answer that landed or a 503 that wrote, reads failing, hidden
-  and ended 200 ms later; reads back in time; a page changed elsewhere; a read that never answers; a lost answer
-  resolved by its read-back, then closed: the exact guard), `features/account/local-store.test.ts` (signing out),
-  `features/app-mode/store-bridge.test.ts`, `features/app-mode/adr-contract.test.ts` (this ADR names every error the
-  two routes answer and every reason a bridge method rejects with), `app/api/app/page/{ops,route}.test.ts`,
-  `app/api/auth/{handoff,confirm}/route.test.ts`, and the real-mode `e2e/app-sync-app.spec.ts` (`@real`, laptop and
-  phone; also a lost answer, reads failing, the page hidden and then ended with `Page.crash`: the change is in the
-  row; and a sign-out while saves fail, another account signed in with a password in the same tab, its app's write
+  and ended at once, 200 ms or 1 s later (its stand-in fails a read as postgrest-js does: after retries 1, 2 and 4 s
+  later, unless the query turns them off, as every read-back of the guard does); reads back in time; a page changed
+  elsewhere; a read that never answers, given up after 1.5 s; a lost answer resolved by its read-back, then closed:
+  the exact guard), `features/account/local-store.test.ts` (signing out), `features/app-mode/store-bridge.test.ts`,
+  `features/app-mode/adr-contract.test.ts` (this ADR names every error the two routes answer and every reason a bridge
+  method rejects with), `app/api/app/page/{ops,route}.test.ts`, `app/api/auth/{handoff,confirm}/route.test.ts`, and
+  the real-mode `e2e/app-sync-app.spec.ts` (`@real`, laptop and phone; also a lost answer, reads failing, the page
+  hidden and then ended with `Page.crash` 4 s and 1 s later: the change is in the row, its keepalive within 1 s of
+  hiding; and a sign-out while saves fail, another account signed in with a password in the same tab, its app's write
   through the route, the tab closed: the write stays).
