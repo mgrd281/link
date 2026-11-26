@@ -1,7 +1,6 @@
-# Draft — Linkyo installs as an app (Windows, Mac, Linux, Android, iPhone and iPad)
+# 0086 — Linkyo installs as an app (Windows, Mac, Linux, Android, iPhone and iPad)
 
-**Status.** Proposed (Stage 4, PWA work package, 2026-11-26). The integrator gives it the next free number
-(0086 at the time of writing). Replaces the single `app/manifest.ts` of the "native feel on phones" pass.
+**Status.** Accepted (Stage 4, PWA work package, 2026-11-26). Replaces the single `app/manifest.ts` of the "native feel on phones" pass.
 
 **Context.** The founder wants Linkyo as an app on phones and on computers. A native iPhone app follows separately
 (it needs a Mac to build). Until then the existing product should install for free from the website wherever a
