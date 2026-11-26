@@ -299,9 +299,11 @@ test.describe("the iPhone app's web side @real", () => {
     expect(states.at(-1)).toEqual({ type: "saveState", state: "saved", updatedAt: (await stored(account.id)).updatedAt });
     expect(states.some((message) => message.state === "conflict")).toBe(false);
 
-    // Signing out ends the web view's session and tells the app.
+    // Signing out ends the web view's session and tells the app (signedOut); the interface half then says
+    // the web view has no session any more (ready, ADR 0087), as it does whenever the session changes.
+    const seen = (await appMessages(page)).length;
     await callApp(page, "signOut");
-    expect((await appMessages(page)).at(-1)).toEqual({ type: "signedOut" });
+    await expect.poll(async () => (await appMessages(page)).slice(seen)).toEqual([{ type: "signedOut" }, { type: "ready", signedIn: false, accountId: null }]);
     await page.goto("/de/app");
     await page.waitForURL("**/de/login**");
   });
