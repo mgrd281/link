@@ -1,4 +1,4 @@
-import { bridgeAvailable, post, type BridgeFile } from "./bridge";
+import { base64OfBytes, bridgeAvailable, post, type BridgeFile } from "./bridge";
 
 /*
  * Files through the bridge (ADR draft "app mode"): the dashboard's downloads and shares. Apart from
@@ -6,13 +6,9 @@ import { bridgeAvailable, post, type BridgeFile } from "./bridge";
  * lib/haptics.ts) do not carry them.
  */
 
-/** A file's bytes as base64, in slices (one call with every byte would overflow the stack). */
+/** A file's bytes as base64. */
 export async function base64Of(file: Blob): Promise<string> {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const SLICE = 0x8000;
-  let binary = "";
-  for (let at = 0; at < bytes.length; at += SLICE) binary += String.fromCharCode(...bytes.subarray(at, at + SLICE));
-  return btoa(binary);
+  return base64OfBytes(new Uint8Array(await file.arrayBuffer()));
 }
 
 async function bridgeFile(file: Blob, name: string): Promise<BridgeFile> {

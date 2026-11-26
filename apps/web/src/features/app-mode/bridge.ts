@@ -7,7 +7,8 @@ import { inAppMode } from "./app-mode";
  * posting never throws: in a browser every call here answers false and the caller does what it did
  * before (a download link, the system share sheet, copy).
  *
- * Downloads and shares with a file are in `./bridge-files.ts`. The other direction, `window.linkyoApp`:
+ * Downloads and shares with a file are in `./bridge-files.ts`; this core also reaches creator pages
+ * (`lib/haptics.ts`, the share button and the live reminder), so it stays small. The other direction, `window.linkyoApp`:
  * `navigate` and `back` (`./app-mode-island.tsx`), `flush`, `reload` and `signOut` (`./store-bridge.ts`,
  * the store's half).
  */
@@ -77,6 +78,14 @@ export function post(message: BridgeMessage): boolean {
   } catch {
     return false;
   }
+}
+
+/** Bytes as base64 (no data: prefix), in slices: one call with every byte would overflow the stack. */
+export function base64OfBytes(bytes: Uint8Array): string {
+  const SLICE = 0x8000;
+  let binary = "";
+  for (let at = 0; at < bytes.length; at += SLICE) binary += String.fromCharCode(...bytes.subarray(at, at + SLICE));
+  return btoa(binary);
 }
 
 /** In the app: a light haptic tap played by the app. False in a browser (lib/haptics.ts does its own). */

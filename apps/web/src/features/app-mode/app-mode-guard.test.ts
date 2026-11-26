@@ -160,10 +160,12 @@ describe("app mode: no purchase surface in the iPhone app", () => {
     expect(links).toBeGreaterThanOrEqual(7);
   });
 
-  it("hands every download and share in the dashboard to the bridge first", () => {
+  it("hands every download and share in the dashboard, and on the creator page's two islands, to the bridge first", () => {
     const offences: string[] = [];
     let sites = 0;
-    for (const source of all) {
+    // The creator page's share button and live reminder, which "View my page" shows inside the app.
+    const islands = ["features/directions/poster/share-island.tsx", "features/directions/poster/live-time.ts"].map(read);
+    for (const source of [...all, ...islands]) {
       walk(source.ast, (node) => {
         const share = ts.isCallExpression(node) && node.expression.getText(source.ast) === "navigator.share";
         const download =
@@ -179,8 +181,9 @@ describe("app mode: no purchase surface in the iPhone app", () => {
       });
     }
     expect(offences).toEqual([]);
-    // Five downloads (export, CSV, story picture, QR PNG and SVG) and five shares (QR twice, story, page link, invite).
-    expect(sites).toBeGreaterThanOrEqual(9);
+    // Five downloads (export, CSV, story picture, QR PNG and SVG) and five shares (QR twice, story, page
+    // link, invite) in the dashboard; the creator page's share and its live reminder.
+    expect(sites).toBeGreaterThanOrEqual(11);
   });
 
   it("renders a download link only outside the app (the app gets the file through the bridge)", () => {
