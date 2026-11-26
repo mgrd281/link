@@ -14,7 +14,8 @@ import { enterDemoCode } from "./auth";
  * posts. On a phone (390 × 844) in German and Arabic: no web chrome, no purchase surface, no install
  * hint, no service worker, axe clean; the bridge (ready, route, navigate, back, every download and
  * share, editClosed) and nothing posted outside the app or from a frame; the editor's ?edit= link, also
- * in a browser. Demo build.
+ * in a browser; and from every page the app shows outside the dashboard (help, contact, the legal and
+ * sign-in pages), every link a person can see, followed two levels deep, stays on those pages. Demo build.
  */
 
 const MESSAGES = { de, en, ar } as const;
@@ -119,6 +120,28 @@ async function expectAppScreen(page: Page, locale: Locale, where: string) {
 }
 
 /**
+ * The pages the app shows outside the dashboard (plan §1.1: help, contact, the legal pages and the
+ * security page help links to; the sign-in pages only for a moment, when the web view's session has
+ * ended), and the dashboard itself. Inside the app's one web view a link may lead only here: the
+ * router's links never ask the app's navigation policy, so a link to the website would carry the web
+ * view on to the homepage and its prices.
+ */
+const APP_PAGES = /^\/(?:de|en|ar)\/(?:app(?:\/.*)?|hilfe|kontakt|impressum|datenschutz|sicherheit|login|signup)$/;
+const PURCHASE_PATH = /^\/(?:de|en|ar)\/(?:checkout|service|kuendigen|widerruf|admin)(?:\/|$)|\/app\/orders\//;
+
+/**
+ * Every link a person can reach on the page: closed articles (`<details>`) opened first, then each link
+ * that is laid out (not hidden by `data-app-hide`, or anything else) and not invisible.
+ */
+const reachableLinks = (page: Page) =>
+  page.evaluate(() => {
+    for (const details of document.querySelectorAll("details")) details.open = true;
+    return [...document.querySelectorAll<HTMLAnchorElement>("a[href]")]
+      .filter((link) => link.getClientRects().length > 0 && getComputedStyle(link).visibility !== "hidden")
+      .map((link) => ({ href: link.href, text: link.innerText.trim().slice(0, 40), blank: link.target === "_blank" }));
+  });
+
+/**
  * No service worker for this origin once the page has loaded and settled, and for two seconds more: a
  * worker is registered after hydration and the load event, and the browser's job runs after that.
  */
@@ -159,6 +182,9 @@ test.describe("in the app, on a phone", () => {
       await page.goto(`/${locale}/app/settings`);
       await expect(heading(page)).toBeVisible();
       await expect(page.getByRole("button", { name: new RegExp(`^${m.app.install.row}`) })).toHaveCount(0);
+      // Signing out is the app's own row: a web-only sign-out would land on the sign-in page, which the
+      // app answers by signing the web view straight back in.
+      await expect(page.getByRole("button", { name: m.app.settings.logout, exact: true })).toHaveCount(0);
       await expect(page.getByRole("link", { name: m.app.settings.rows.terms, exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: m.app.settings.rows.terms, exact: true }).click();
       expect(await postedOf(page, "openExternal")).toEqual([{ type: "openExternal", url: new URL(`/${locale}/agb`, page.url()).href }]);
@@ -194,6 +220,49 @@ test.describe("in the app, on a phone", () => {
         await expect(page.locator(PURCHASE_LINKS).locator("visible=true"), address).toHaveCount(0);
         expect(await axe(page), address).toEqual([]);
       }
+    });
+  }
+
+  for (const locale of ["de", "ar"] as const) {
+    test(`${locale}: every link from help, contact, the legal and sign-in pages stays on the app's pages, two levels deep, with no price`, async ({ page, baseURL }) => {
+      test.setTimeout(240_000);
+      const origin = new URL(baseURL ?? page.url()).origin;
+      const starts = ["/hilfe", "/kontakt", "/impressum", "/datenschutz", "/sicherheit", "/login", "/signup"].map((address) => `/${locale}${address}`);
+      const problems: string[] = [];
+      const seen = new Set<string>();
+      let checked = 0;
+      let level = starts;
+      // Level 0: the pages the app opens; levels 1 and 2: where their links lead, and where those lead.
+      for (let depth = 0; depth <= 2 && level.length > 0; depth += 1) {
+        const next = new Set<string>();
+        for (const address of level) {
+          if (seen.has(address)) continue;
+          seen.add(address);
+          await page.goto(address);
+          await expect(page.locator("h1").first(), address).toBeVisible();
+          await page.waitForLoadState("networkidle");
+          expect(await page.evaluate(() => document.documentElement.dataset.app), address).toBe("ios");
+          if ((await page.locator("body").innerText()).includes("€")) problems.push(`${address}: a price`);
+          for (const link of await reachableLinks(page)) {
+            const url = new URL(link.href);
+            // E-mail and phone go to the system; another host is a real navigation the app's policy sends to Safari.
+            if (url.protocol === "mailto:" || url.protocol === "tel:" || url.origin !== origin) continue;
+            checked += 1;
+            const where = `${address} → ${url.pathname}${url.search} "${link.text}"`;
+            if (PURCHASE_PATH.test(url.pathname)) problems.push(`${where}: a purchase or contract page`);
+            // A new window is a real navigation too: the app opens it outside its web view.
+            else if (link.blank) continue;
+            else if (!APP_PAGES.test(url.pathname)) problems.push(`${where}: outside the app's pages`);
+            // The dashboard's screens have their own checks (signed in) above.
+            else if (!url.pathname.includes("/app")) next.add(url.pathname);
+          }
+        }
+        level = [...next];
+      }
+      expect(problems).toEqual([]);
+      // It looked at something: every start page, and the links between them (help → contact → Impressum …).
+      expect(seen.size).toBeGreaterThanOrEqual(starts.length);
+      expect(checked).toBeGreaterThan(starts.length);
     });
   }
 
@@ -269,8 +338,9 @@ test.describe("in the app, on a phone", () => {
     await expect(story.getByRole("button", { name: m.app.shareImage.download })).toBeEnabled();
     await story.getByRole("button", { name: m.app.shareImage.download }).click();
     await story.getByRole("button", { name: m.app.shareImage.share, exact: true }).click();
-    await expect.poll(async () => (await postedOf(page, "download")).length).toBe(3);
-    await expect.poll(async () => (await postedOf(page, "share")).length).toBe(3);
+    // A 1080 × 1920 picture is encoded twice (PNG, then base64): seconds on a busy machine.
+    await expect.poll(async () => (await postedOf(page, "download")).length, { timeout: 20_000 }).toBe(3);
+    await expect.poll(async () => (await postedOf(page, "share")).length, { timeout: 20_000 }).toBe(3);
     const storyFile = (await postedOf(page, "download"))[2] as unknown as { name: string; mime: string; base64: string };
     expect(storyFile.mime).toBe("image/png");
     expect(decode(storyFile.base64).subarray(1, 4).toString()).toBe("PNG");
@@ -376,6 +446,7 @@ test.describe("in a browser", () => {
     await page.goto("/de/app/settings/plan");
     await expect(page.getByText(m.app.settings.plan.soon)).toBeVisible();
     await page.goto("/de/app/settings");
+    await expect(page.getByRole("button", { name: m.app.settings.logout, exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: m.app.settings.rows.terms, exact: true })).toBeVisible();
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: m.app.settings.export }).click();

@@ -204,6 +204,21 @@ describe("app mode: the chrome the app replaces", () => {
     }
   });
 
+  it("hides the sign-in and sign-up frame's link to the homepage and its legal foot", () => {
+    // The homepage shows the prices; the foot links the AGB, Widerruf and Kündigen in a payments build.
+    const [foot] = elements("features/account/auth/auth-shell.tsx", tag("footer"));
+    expect(foot).toContain("data-app-hide");
+    const source = read("features/account/auth/auth-shell.tsx");
+    const home: string[][] = [];
+    walk(source.ast, (node) => {
+      if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) && node.attributes.properties.some((property) => ts.isJsxAttribute(property) && property.name.getText(source.ast) === "href" && hrefText(property) === "/")) {
+        home.push(node.attributes.properties.flatMap((property) => (ts.isJsxAttribute(property) ? [property.name.getText(source.ast)] : [])));
+      }
+    });
+    expect(home).toHaveLength(1);
+    expect(home[0]).toContain("data-app-hide");
+  });
+
   it("hides the own page's floating bar, keeping its data-console (which hides the credit)", () => {
     const [bar] = elements("features/app/own-page-screen.tsx", has("data-console"));
     expect(bar).toEqual(expect.arrayContaining(["data-console", "data-app-hide"]));

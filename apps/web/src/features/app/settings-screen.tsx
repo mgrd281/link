@@ -265,7 +265,7 @@ export function SettingsScreen() {
   const router = useRouter();
   const { account, site, doc, dispatch } = useSite();
   const onTeam = useOnTeam(account.email);
-  // The team area stays on the website: the iPhone app has no way into it.
+  // The team area stays on the website, and signing out is the app's own: the iPhone app shows neither.
   const app = useAppMode();
   const [profileOpen, setProfileOpen] = useState(false);
   const openProfile = useCallback(() => setProfileOpen(true), []);
@@ -357,16 +357,21 @@ export function SettingsScreen() {
 
         <ContractsGroup />
 
-        {/* Logging out is safe (nothing is lost), so it is a plain row, not a red one. Last "Log out" on the screen. */}
-        <ListGroup
-          footer={
-            accountStore.demo ? (
-              <span className="text-caption text-fg-tertiary">{t("demoNote")}</span>
-            ) : undefined
-          }
-        >
-          <ListRow icon={LogOut} title={t("logout")} accessory="none" onClick={() => accountStore.logOut()} />
-        </ListGroup>
+        {/* Logging out is safe (nothing is lost), so it is a plain row, not a red one. Last "Log out" on the screen.
+          Not in the iPhone app: it signs out natively (its own Settings row), ending this web view's session
+          with the app's own; a web-only sign-out would land on the sign-in page, which the app answers by
+          signing the web view straight back in. */}
+        {app ? null : (
+          <ListGroup
+            footer={
+              accountStore.demo ? (
+                <span className="text-caption text-fg-tertiary">{t("demoNote")}</span>
+              ) : undefined
+            }
+          >
+            <ListRow icon={LogOut} title={t("logout")} accessory="none" onClick={() => accountStore.logOut()} />
+          </ListGroup>
+        )}
       </div>
 
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
