@@ -5508,5 +5508,28 @@
         ]
       }
     }
+  },
+  "pwa": {
+    "shortName": "Linkyo",
+    "description": "Edit your Linkyo page, share it and see its numbers.",
+    "shortcuts": {
+      "editor": "Edit page",
+      "editorDescription": "Change, order and hide your blocks",
+      "add": "Add a block",
+      "addDescription": "Paste a link or start something new",
+      "analytics": "Stats",
+      "analyticsDescription": "Your page's views and taps",
+      "share": "Share",
+      "shareDescription": "Copy or share your link, or get its QR code"
+    },
+    "screenshots": {
+      "dashboard": "The dashboard, where you build your page",
+      "page": "A creator page as visitors see it"
+    },
+    "offline": {
+      "title": "You're offline",
+      "body": "The dashboard needs an internet connection. Check your connection, then try again.",
+      "retry": "Try again"
+    }
   }
 }

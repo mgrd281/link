@@ -96,10 +96,11 @@ export const CLIENT_NAMESPACES = {
   auth: [...SITE, "auth"],
   legal: [...SITE, "legal", "orders.package"],
   checkout: [...SITE, "checkout", "orders.package", "service"],
-  app: ["*", "!admin", "!email", "!design"],
-  admin: ["*", "!email"],
-  design: ["*", "!admin", "!email"],
-  directions: ["*", "!admin", "!email"],
+  // `pwa`: the manifest's and the offline page's words, written on the server only (features/pwa).
+  app: ["*", "!admin", "!email", "!design", "!pwa"],
+  admin: ["*", "!email", "!pwa"],
+  design: ["*", "!admin", "!email", "!pwa"],
+  directions: ["*", "!admin", "!email", "!pwa"],
   // Of a portfolio's words only those its islands read travel (CREATOR_ISLANDS). The rest is server-rendered.
   creator: [...CREATOR_ISLANDS, "common"],
 } as const satisfies Record<string, readonly string[]>;

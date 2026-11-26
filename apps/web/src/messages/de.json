@@ -5508,5 +5508,28 @@
         ]
       }
     }
+  },
+  "pwa": {
+    "shortName": "Linkyo",
+    "description": "Bearbeite deine Linkyo-Seite, teile sie und sieh ihre Zahlen.",
+    "shortcuts": {
+      "editor": "Seite bearbeiten",
+      "editorDescription": "Blöcke ändern, ordnen und ausblenden",
+      "add": "Block hinzufügen",
+      "addDescription": "Einen Link einfügen oder etwas Neues anlegen",
+      "analytics": "Statistik",
+      "analyticsDescription": "Aufrufe und Klicks deiner Seite",
+      "share": "Teilen",
+      "shareDescription": "Deinen Link kopieren, teilen oder als QR-Code holen"
+    },
+    "screenshots": {
+      "dashboard": "Das Dashboard, in dem du deine Seite baust",
+      "page": "Eine Creator-Seite, wie Besucher sie sehen"
+    },
+    "offline": {
+      "title": "Keine Verbindung",
+      "body": "Das Dashboard braucht eine Internetverbindung. Prüf deine Verbindung und versuch es dann noch einmal.",
+      "retry": "Erneut versuchen"
+    }
   }
 }

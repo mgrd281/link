@@ -2,7 +2,7 @@ import { readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { RESERVED_USERNAMES, USERNAME_MIN } from "@linkyo/blocks/rules";
+import { RESERVED_USERNAMES, USERNAME_MIN, USERNAME_PATTERN } from "@linkyo/blocks/rules";
 import { describe, expect, it, vi } from "vitest";
 
 import { config } from "../proxy";
@@ -100,6 +100,8 @@ describe("creator page addresses", () => {
     for (const route of routes) {
       // Shorter than a username can be ("p", "i"): nobody can take it anyway.
       if (route.length < USERNAME_MIN) continue;
+      // A file-like route ("manifest.webmanifest") has a dot, which no username can have.
+      if (!USERNAME_PATTERN.test(route)) continue;
       expect(RESERVED_USERNAMES.has(route), route).toBe(true);
     }
   });

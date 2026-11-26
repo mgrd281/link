@@ -70,6 +70,12 @@ describe("client messages per route group (E-03)", () => {
     }
   });
 
+  it("keeps the installed app's server-only words (manifest, offline page) out of every page", () => {
+    for (const group of Object.keys(CLIENT_NAMESPACES) as (keyof typeof CLIENT_NAMESPACES)[]) expect(has(clientMessages(DE, group), "pwa"), group).toBe(false);
+    // The dashboard's install sheet reads its own words in the browser.
+    expect(has(clientMessages(DE, "app"), "app.install.prompt.button")).toBe(true);
+  });
+
   it("leaves the AI run's words out of the website while no AI tab can show (phase 1: no real recording)", () => {
     const site = clientMessages(DE, "site");
     for (const path of ["ai.run", "app.ai.platform", "app.ai.review.topics", "marketing.try.ai"]) expect(has(site, path), path).toBe(TRY_AI_ANY);
