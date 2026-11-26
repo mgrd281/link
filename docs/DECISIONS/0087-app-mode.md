@@ -172,7 +172,12 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
   reminder's use of it (+0.16 to +0.21 KB): page code `/u/<name>` 30.2 → 30.4 KB, `/u/<name>/<project>`
   23.3 → 23.5 KB, `/<l>/p/<slug>` 32.0 → 32.2 KB, `/<l>/p/<slug>/<project>` 26.4 → 26.5 KB (budget 35 KB);
   the website's pages +0.18 KB (the signal's restore, the theme script's platform list, the people search's
-  check); `/de`'s HTML 54.2 → 54.3 KB of 60.
+  check); `/de`'s HTML 54.2 → 54.3 KB of 60. The integration (decision 9) adds 0.4 KB to every page: the root
+  layout's error page, whose code every page carries, restores the signal and knows the dashboard's way out
+  (its chunk 2.27 → 2.68 KB); `linkyoApp()` and `installOnApp` live in `app-object.ts`, which only the
+  dashboard loads, so the bridge's core on creator pages did not grow. Page code `/u/<name>` 30.4 → 30.8 KB,
+  `/u/<name>/<project>` 23.5 → 23.9 KB, `/<l>/p/<slug>` 32.2 → 32.6 KB, `/<l>/p/<slug>/<project>` 26.5 →
+  26.9 KB (budget 35 KB); the dashboard's first load 324.1 → 324.5 KB of 350; `/de`'s HTML stays 54.3 KB.
 - Tests: `features/app-mode/*.test.ts` (the signal, the bridge against a stand-in WKWebView: main frame only,
   never throws, files as base64, a file fetched from another host, Safari only for our host; the route names and
   `navigate`'s paths; the CSS keyed on the platforms the code knows; a static guard that every purchase link and
