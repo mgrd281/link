@@ -7,6 +7,8 @@ import { Download, ImagePlus, Share } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
+import { bridgeAvailable } from "@/features/app-mode/bridge";
+import { appDownload, appShare } from "@/features/app-mode/bridge-files";
 import { themeStyle } from "@/features/creator/theme";
 import { resolveMedia } from "@/features/directions/shared/media";
 import { drawShareArt, initials, loadFaces, SHARE_SIZES, type ShareFormat } from "@/features/share/story-card";
@@ -92,9 +94,12 @@ export function ShareImageSheet({ open, onOpenChange, onAddPhoto }: { open: bool
       else resolve(null);
     });
 
+  // In the iPhone app the picture goes to the app (a WebView downloads nothing from a link, and has no
+  // file sharing of its own); the app saves or shares it.
   const download = async () => {
     const file = await blob();
     if (!file) return;
+    if (await appDownload(file, fileName)) return;
     const link = document.createElement("a");
     link.download = fileName;
     link.href = URL.createObjectURL(file);
@@ -106,6 +111,10 @@ export function ShareImageSheet({ open, onOpenChange, onAddPhoto }: { open: bool
     haptic();
     const data = await blob();
     if (!data) return;
+    if (bridgeAvailable()) {
+      await appShare({ title: address, url: pageUrl(account.username), file: { blob: data, name: fileName } });
+      return;
+    }
     const file = new File([data], fileName, { type: "image/png" });
     // The address rides along as the caption wherever files can be shared (targets that take no
     // text simply drop it; the browser cannot tell us which ones do).

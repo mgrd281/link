@@ -7,9 +7,14 @@ import { useTranslations } from "next-intl";
 import { useMemo, useRef, type ReactNode } from "react";
 import { encode } from "uqr";
 
+import { bridgeAvailable } from "@/features/app-mode/bridge";
+import { appDownload, appShare } from "@/features/app-mode/bridge-files";
 import { haptic } from "@/lib/haptics";
 
 import { Sheet } from "./sheet";
+
+/** The canvas as a PNG file (null where the browser cannot make one). */
+const pngOf = (canvas: HTMLCanvasElement) => new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
 
 /*
  * The QR code and its sheet. Loaded the first time a QR sheet opens (`QrButton` in `./share-tools.tsx`),
@@ -120,9 +125,15 @@ export function QrSheet({ open, onOpenChange, canShare, target }: { open: boolea
     return canvas;
   };
 
+  // In the iPhone app both files go to the app, which saves or shares them (a WebView downloads nothing
+  // from a link). In a browser they download as before.
   const download = () => {
     const canvas = paint();
     if (!canvas) return;
+    if (bridgeAvailable()) {
+      void pngOf(canvas).then((png) => (png ? appDownload(png, fileName) : false));
+      return;
+    }
     const link = document.createElement("a");
     link.download = fileName;
     link.href = canvas.toDataURL("image/png");
@@ -135,6 +146,10 @@ export function QrSheet({ open, onOpenChange, canShare, target }: { open: boolea
     if (!box) return;
     const style = getComputedStyle(box);
     const svg = qrSvg({ value: code, title: t("qrLabel", { url: address }), color: style.color, background: style.backgroundColor });
+    if (bridgeAvailable()) {
+      void appDownload(new Blob([svg], { type: "image/svg+xml" }), fileName.replace(/\.png$/, ".svg"));
+      return;
+    }
     const link = document.createElement("a");
     link.download = fileName.replace(/\.png$/, ".svg");
     link.href = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
@@ -147,7 +162,11 @@ export function QrSheet({ open, onOpenChange, canShare, target }: { open: boolea
     haptic();
     const canvas = paint();
     if (!canvas) return;
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    const blob = await pngOf(canvas);
+    if (bridgeAvailable()) {
+      await appShare({ title: address, url, file: blob ? { blob, name: fileName } : undefined });
+      return;
+    }
     const file = blob ? new File([blob], fileName, { type: "image/png" }) : null;
     if (file && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: address }).catch(() => undefined);

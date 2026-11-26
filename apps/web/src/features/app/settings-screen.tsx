@@ -25,6 +25,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { accountStore } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
+import { appDownload } from "@/features/app-mode/bridge-files";
 import { legalLinksVisible } from "@/features/legal/company";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
@@ -94,7 +95,9 @@ function useOldHashes(openProfile: () => void) {
 
 /**
  * Downloads everything the account holds as one JSON file (Settings › Data, and the delete dialog's
- * "export first"), and answers the file's name. A change still waiting for autosave goes in too.
+ * "export first"), and answers the file's name. A change still waiting for autosave goes in too. In
+ * the iPhone app the file goes to the app, which offers to save or share it (a WebView downloads
+ * nothing from a link).
  */
 export function useExportData(): () => Promise<string> {
   const { account, flush } = useSite();
@@ -102,6 +105,7 @@ export function useExportData(): () => Promise<string> {
     flush();
     const name = `linkyo-${account.username}-export.json`;
     const blob = new Blob([await accountStore.exportData()], { type: "application/json" });
+    if (await appDownload(blob, name)) return name;
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = name;

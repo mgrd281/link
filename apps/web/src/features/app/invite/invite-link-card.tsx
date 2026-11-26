@@ -5,6 +5,8 @@ import { Copy, Share } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { bridgeAvailable } from "@/features/app-mode/bridge";
+import { appShare } from "@/features/app-mode/bridge-files";
 import { inviteAddress, inviteHost, inviteUrl } from "@/features/referrals/links";
 import { copyText } from "@/lib/clipboard";
 import { haptic } from "@/lib/haptics";
@@ -47,7 +49,10 @@ export function InviteLinkCard({ code, error }: { code: string | null; error?: R
   );
 }
 
-/** Copy and share for the invite link: the system share sheet where there is one, copy everywhere else. */
+/**
+ * Copy and share for the invite link: the system share sheet where there is one (in the iPhone app, the
+ * app's own, through the bridge), copy everywhere else.
+ */
 function useInviteLink(code: string) {
   const t = useTranslations("app.invite");
   const tShare = useTranslations("app.share");
@@ -57,7 +62,8 @@ function useInviteLink(code: string) {
     toast({ title: ok ? t("link.copied") : tShare("copyFailed"), tone: ok ? "success" : "danger" });
   };
   const share = () => {
-    if (typeof navigator.share === "function") void navigator.share({ title: "Linkyo", text: t("link.shareText"), url }).catch(() => undefined);
+    if (bridgeAvailable()) void appShare({ title: "Linkyo", text: t("link.shareText"), url });
+    else if (typeof navigator.share === "function") void navigator.share({ title: "Linkyo", text: t("link.shareText"), url }).catch(() => undefined);
     else void copy();
   };
   return { url, copy, share };

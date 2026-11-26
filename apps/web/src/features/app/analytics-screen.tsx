@@ -5,6 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 
 import type { KeyCount } from "@/features/analytics/answer";
+import { bridgeAvailable } from "@/features/app-mode/bridge";
+import { appDownload } from "@/features/app-mode/bridge-files";
 
 import { sampleStats, totals as sampleTotals } from "./sample-stats";
 import { Panel, Screen } from "./screen";
@@ -352,11 +354,16 @@ function useDelta(range: StatsRange) {
   };
 }
 
-/** Saves the days on screen as a CSV file. */
+/** Saves the days on screen as a CSV file (in the iPhone app, through the app: a WebView downloads nothing from a link). */
 function downloadCsv(text: string, name: string) {
-  const link = document.createElement("a");
   // A byte order mark first, so spreadsheet apps read the file as UTF-8.
-  link.href = URL.createObjectURL(new Blob([String.fromCharCode(0xfeff), text], { type: "text/csv;charset=utf-8" }));
+  const file = new Blob([String.fromCharCode(0xfeff), text], { type: "text/csv;charset=utf-8" });
+  if (bridgeAvailable()) {
+    void appDownload(file, name);
+    return;
+  }
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(file);
   link.download = name;
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 0);
