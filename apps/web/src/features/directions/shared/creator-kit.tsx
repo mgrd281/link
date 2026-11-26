@@ -149,7 +149,9 @@ export function CreatorFooter({
       )}
     >
       {credit ? (
+        // data-credit: the iPhone app hides it in the dashboard's previews (app mode, globals.css).
         <a
+          data-credit
           href={creatorOrigin()}
           className="h-control-sm border-creator-line text-creator-fg duration-micro hover:border-creator-line-strong focus-visible:focus-ring inline-flex items-center gap-2 rounded-full border px-3 font-medium transition-colors"
         >

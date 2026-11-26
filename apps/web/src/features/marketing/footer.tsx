@@ -54,12 +54,13 @@ function groups(payments: boolean): { key: "product" | "support" | "company"; li
  * The footer: the logo and its line, three short groups (the product, help and contact, Linkyo
  * itself), then one quiet band with the rights, the legal pages and the light/dark switch. The legal
  * pages become links with the company details (or in a payments test build); until then they are
- * named only (LegalLinks).
+ * named only (LegalLinks). Not inside the iPhone app (`data-app-hide`, app mode), where help and legal
+ * pages stand alone: the footer leads to the prices and the rest of the website.
  */
 export function MarketingFooter() {
   const t = useTranslations("marketing.footer");
   return (
-    <footer className="mx-auto grid max-w-content gap-10 px-5 pt-12 pb-10 md:px-10 md:pt-24">
+    <footer data-app-hide className="mx-auto grid max-w-content gap-10 px-5 pt-12 pb-10 md:px-10 md:pt-24">
       <div className="grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-16">
         <div className="grid content-start gap-3">
           <Logo className="h-8" title="Linkyo" />

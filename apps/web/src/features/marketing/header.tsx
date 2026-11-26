@@ -11,7 +11,9 @@ import { HeaderAuth, HeaderPhoneAction, MobileMenu, type MenuItem } from "./mobi
  * A flat bar: logo, the places on the site, the people search, language, a quiet "log in" and one
  * action in Linkyo Teal. On phones: logo, search and menu; sign-up joins them once the hero's own
  * sign-up has been passed (`signupAfter`, the id of that block). A visitor who is signed in gets
- * their avatar and "To the dashboard" instead of sign-up and log-in.
+ * their avatar and "To the dashboard" instead of sign-up and log-in. Not inside the iPhone app
+ * (`data-app-hide`, app mode): the app draws its own bar over help and legal pages, and this one leads
+ * to the prices.
  */
 export function MarketingHeader({
   signupAfter,
@@ -43,7 +45,7 @@ export function MarketingHeader({
   const cta = { href: `/${locale}/signup`, label: t("nav.start") };
   const login = { href: `/${locale}/login`, label: t("nav.login") };
   return (
-    <header className={cn("layer-sticky sticky top-0 bg-canvas", edge && "mk-stuck-band")}>
+    <header data-app-hide className={cn("layer-sticky sticky top-0 bg-canvas", edge && "mk-stuck-band")}>
       {edge ? <span aria-hidden className="mk-stuck-edge pointer-events-none absolute inset-x-0 bottom-0 border-b border-transparent" /> : null}
       <a
         href="#main"

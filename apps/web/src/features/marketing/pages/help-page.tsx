@@ -60,7 +60,8 @@ export async function HelpPage({ locale }: { locale: string }) {
               <Icon icon={icons.email} size="md" />
               {t("sitePages.help.more.contact")}
             </Link>
-            <Link href="/#faq" className={standaloneLink}>
+            {/* The homepage's questions sit beside its prices: not from inside the iPhone app (app mode). */}
+            <Link href="/#faq" data-app-hide className={standaloneLink}>
               <Icon icon={icons.help} size="md" />
               {t("sitePages.help.more.faq")}
             </Link>

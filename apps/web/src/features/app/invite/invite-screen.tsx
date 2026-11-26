@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 
 import { accountStore } from "@/features/account/store";
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { PRO_AVAILABLE, REFERRAL_RULES, remaining } from "@/features/referrals/rules";
 import type { DeclineReason, ReferralOverview } from "@/features/referrals/types";
 import { useReferrals } from "@/features/referrals/use-referrals";
@@ -268,6 +269,8 @@ function LockedRewards() {
 
 function Rules() {
   const t = useTranslations("app.invite");
+  // The iPhone app promises nothing about Pro coming or what it costs (App Store 3.1.1, 3.1.3(f)).
+  const app = useAppMode();
   return (
     <Panel title={t("rules.title")} id={NAV_ANCHORS.inviteRules} className="scroll-mt-16">
       <ol className="grid list-decimal gap-2 ps-5 text-small font-regular text-fg-secondary marker:text-fg-tertiary">
@@ -277,7 +280,7 @@ function Rules() {
         <li>{t("rules.deleted")}</li>
         <li>{t("rules.verify", { count: REFERRAL_RULES.verificationAt })}</li>
         {/* Where Pro can be bought, it exists: the reward line says what it includes. */}
-        <li>{t(paymentsEnabled ? "rules.proLive" : "rules.pro", { count: REFERRAL_RULES.proForLifeAt })}</li>
+        {app ? null : <li>{t(paymentsEnabled ? "rules.proLive" : "rules.pro", { count: REFERRAL_RULES.proForLifeAt })}</li>}
       </ol>
       <Disclosure summary={t("rules.terms")}>
         <div className="grid gap-2 pt-1 text-small font-regular text-fg-secondary">

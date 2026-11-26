@@ -25,7 +25,9 @@ import { useCallback, useEffect, useState } from "react";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { accountStore } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
+import { openExternal } from "@/features/app-mode/bridge";
 import { appDownload } from "@/features/app-mode/bridge-files";
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { legalLinksVisible } from "@/features/legal/company";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
@@ -216,19 +218,34 @@ function useNewestOrder(): string | null {
  * Contracts and legal: the newest order, "Vertrag widerrufen" and "Verträge hier kündigen" where
  * contracts can be made (payments on), and Linkyo's legal pages once they are linked anywhere
  * (`legalLinksVisible`). Withdrawal and cancellation also work signed out (the footer says so).
+ *
+ * In the iPhone app nothing is sold and nothing leads to a contract (App Store 3.1.1, 3.1.3(f)): no
+ * order, withdrawal or cancellation row. The AGB state prices, so the app opens them in Safari; the
+ * Impressum and the privacy policy open in the app, without the website's header and footer.
  */
 function ContractsGroup() {
   const t = useTranslations("app.settings");
+  const locale = useLocale();
+  const app = useAppMode();
   const newestOrder = useNewestOrder();
-  if (!paymentsEnabled && !legalLinksVisible) return null;
+  const contracts = paymentsEnabled && !app;
+  if (!contracts && !legalLinksVisible) return null;
   return (
-    <ListGroup title={t("groups.contracts")} titleId="contracts" footer={paymentsEnabled ? t("footers.contracts") : undefined}>
-      {paymentsEnabled && newestOrder ? <ListRow icon={Receipt} title={t("rows.orders")} href={`/app/orders/${newestOrder}`} /> : null}
-      {paymentsEnabled ? <ListRow icon={Undo2} title={t("rows.withdraw")} href="/widerruf" /> : null}
-      {paymentsEnabled ? <ListRow icon={FileX} title={t("rows.cancel")} href="/kuendigen" /> : null}
+    <ListGroup title={t("groups.contracts")} titleId="contracts" footer={contracts ? t("footers.contracts") : undefined}>
+      {contracts && newestOrder ? <ListRow icon={Receipt} title={t("rows.orders")} href={`/app/orders/${newestOrder}`} /> : null}
+      {contracts ? <ListRow icon={Undo2} title={t("rows.withdraw")} href="/widerruf" /> : null}
+      {contracts ? <ListRow icon={FileX} title={t("rows.cancel")} href="/kuendigen" /> : null}
       {legalLinksVisible ? <ListRow icon={Scale} title={t("rows.imprint")} href="/impressum" /> : null}
       {legalLinksVisible ? <ListRow icon={LockKeyhole} title={t("rows.privacy")} href="/datenschutz" /> : null}
-      {legalLinksVisible ? <ListRow icon={FileText} title={t("rows.terms")} href="/agb" /> : null}
+      {legalLinksVisible && app ? (
+        <ListRow
+          icon={FileText}
+          title={t("rows.terms")}
+          accessory={<Icon icon={icons.external} size="sm" className="text-fg-tertiary" />}
+          onClick={() => openExternal(`/${locale}/agb`)}
+        />
+      ) : null}
+      {legalLinksVisible && !app ? <ListRow icon={FileText} title={t("rows.terms")} href="/agb" /> : null}
     </ListGroup>
   );
 }
@@ -248,6 +265,8 @@ export function SettingsScreen() {
   const router = useRouter();
   const { account, site, doc, dispatch } = useSite();
   const onTeam = useOnTeam(account.email);
+  // The team area stays on the website: the iPhone app has no way into it.
+  const app = useAppMode();
   const [profileOpen, setProfileOpen] = useState(false);
   const openProfile = useCallback(() => setProfileOpen(true), []);
   useOldHashes(openProfile);
@@ -310,7 +329,7 @@ export function SettingsScreen() {
             subtitleDir="ltr"
             href="/app/settings/account"
           />
-          {onTeam ? <ListRow icon={ShieldCheck} title={tApp("teamArea")} href="/admin" /> : null}
+          {onTeam && !app ? <ListRow icon={ShieldCheck} title={tApp("teamArea")} href="/admin" /> : null}
           {/* Phones have no rail: Invite is always reachable from here (its back link says "‹ Settings"). */}
           <ListRow icon={Gift} title={tInvite("title")} href={INVITE_HREF} className="lg:hidden" />
         </ListGroup>

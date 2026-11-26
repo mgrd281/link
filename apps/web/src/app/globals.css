@@ -190,6 +190,53 @@
 }
 
 /*
+ * App mode (ADR draft "app mode", features/app-mode). Inside Linkyo's iPhone app the app sets
+ * <html data-app="ios"> before the first paint and draws its own bars and navigation. So the web drops
+ * its own chrome (the tab bar, the rail with its section panel, the phone top bar, the website's header
+ * and footer around help and legal pages), every purchase surface and the install hints: each is marked
+ * data-app-hide. What sat clear of that chrome moves to the edge. A browser never has the attribute, so
+ * nothing here applies there. Outside any layer, so these rules win over the utilities they undo. The
+ * attribute only hides interface; it grants nothing.
+ */
+:root[data-app] {
+  /* Toasts: no tab bar to stand above (the app's own bar lies outside the page) and no rail to skip
+     on wide screens; on phones they may take the top, under the app's navigation bar. */
+  --toast-offset: 0;
+  --toast-inset: initial;
+  --toast-top: env(safe-area-inset-top);
+  --toast-start: 0;
+
+  [data-app-hide] {
+    display: none;
+  }
+
+  /* "Made with Linkyo" leads to the website and its prices: not in the dashboard's previews (every
+     dashboard document carries data-console). Creator pages keep it. */
+  &:has([data-console]) [data-credit] {
+    display: none;
+  }
+
+  @variant max-lg {
+    /* WCAG 2.4.11: no top bar and no tab bar left to scroll a focused control clear of. */
+    scroll-padding-block: var(--spacing-2) calc(var(--spacing-2) + env(safe-area-inset-bottom));
+
+    /* The dashboard's content ends above the home indicator, not above a tab bar. */
+    [data-grouped] main {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Sticky bars sit flush at the top, where the web's top bar was. */
+    [data-sticky-preview] {
+      top: 0;
+    }
+
+    &:has([data-sticky-preview]) {
+      scroll-padding-top: calc(30svh + var(--spacing-3) + var(--spacing-2));
+    }
+  }
+}
+
+/*
  * Poster: scroll-driven hero and compact bar (progressive enhancement, zero JavaScript).
  * The hero names a view timeline; its photo softens and fades as it leaves the screen, and the
  * compact bar slides in once it is gone. Browsers without scroll-driven animations keep the

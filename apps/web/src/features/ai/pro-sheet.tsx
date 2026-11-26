@@ -4,6 +4,7 @@ import { Button, Icon } from "@linkyo/ui";
 import { ArrowRight, ChevronRight, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { Sheet } from "@/features/app/sheet";
 import { formatEuro, PRICES, PRO_DRAFTS } from "@/features/payments/prices";
 import { Link } from "@/i18n/navigation";
@@ -14,11 +15,15 @@ import { paymentsEnabled } from "@/lib/flags";
  * zero waits for next month and is never offered anything). "Get Pro" leads to the Pro checkout once
  * payments exist; until then the sheet says Pro is coming, with no button that cannot do anything.
  * Either way the plan pane (Settings › Plan) is one tap away: the plan, what it holds, drafts left.
+ *
+ * In the iPhone app (app mode) the sheet only says why there is no new draft and leads to the plan:
+ * no price, no "Pro is coming", no way to buy (App Store 3.1.1, 3.1.3(f)).
  */
 export function ProSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const t = useTranslations("app.ai.pro");
   const tPlan = useTranslations("app.settings.plan");
   const locale = useLocale() as "de" | "en" | "ar";
+  const app = useAppMode();
   return (
     <Sheet
       open={open}
@@ -30,7 +35,7 @@ export function ProSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("later")}
           </Button>
-          {paymentsEnabled ? (
+          {paymentsEnabled && !app ? (
             <Button asChild variant="primary" trailing={<Icon icon={ArrowRight} size="sm" />}>
               <Link href="/checkout/pro">{t("get")}</Link>
             </Button>
@@ -42,8 +47,8 @@ export function ProSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
         <span className="grid size-control-xl place-items-center rounded-full bg-selected text-selected-fg">
           <Sparkles aria-hidden className="size-icon-lg" />
         </span>
-        <p className="text-body">{t("body", { price: formatEuro(PRICES["pro-monthly"].amountCents, locale), count: PRO_DRAFTS })}</p>
-        {paymentsEnabled ? null : <p className="text-body font-semibold">{t("soon")}</p>}
+        {app ? null : <p className="text-body">{t("body", { price: formatEuro(PRICES["pro-monthly"].amountCents, locale), count: PRO_DRAFTS })}</p>}
+        {paymentsEnabled || app ? null : <p className="text-body font-semibold">{t("soon")}</p>}
         {/* A standalone link (bold, with a chevron), as links are in the dashboard. */}
         <Link
           href="/app/settings/plan"
