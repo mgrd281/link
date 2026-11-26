@@ -437,6 +437,54 @@ test.describe("the iPhone app's web side @real", () => {
     ]);
   });
 
+  test("guard: on a slow network (every request to the page row 2 s late) a refused save is still read back: the toast, the newest page, and flush() answers @real", async ({ page, browser, baseURL }, info) => {
+    // Before, every read-back was given up after 1.5 s (READ_BACK_LIMIT), also in a tab on screen: on a
+    // network this slow the refused save was sent again and again, the toast never came, and flush()
+    // rejected with saveFailed for good. Only a hidden tab reads that quickly now.
+    const account = await syncAccount("sync-slow");
+    const tabB = await secondBrowser(browser, info, baseURL);
+    await asTheApp(page);
+    await watchConflicts(page);
+    await signIn(page, account.email, "/de/app/editor");
+    await signIn(tabB.page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    await expect(visibility(tabB.page, "Zweiter Link")).toBeChecked();
+    let late = 0;
+    await page.route(
+      (url) => url.pathname.endsWith("/rest/v1/sites"),
+      async (route) => {
+        late += 1;
+        await new Promise((resolve) => setTimeout(resolve, 2_000));
+        await route.continue().catch(() => undefined);
+      },
+    );
+
+    // Another tab hides the second link, and it is saved.
+    await visibility(tabB.page, "Zweiter Link").click();
+    await expect.poll(() => shown(account.id, "second"), { timeout: 15_000 }).toBe(false);
+    // This tab still has the version before: its change is refused, read back (2 s), and the newer page wins.
+    await visibility(page, "Erster Link").click();
+    await expect(page.getByText(CONFLICT, { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(visibility(page, "Zweiter Link")).not.toBeChecked();
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    // The app's flush() answers the version on the server (through the same slow network).
+    const flushed = (await callApp(page, "flush")) as { updatedAt: string };
+    const now = await stored(account.id);
+    expect(flushed.updatedAt).toBe(now.updatedAt);
+    expect(now.blocks.map((block) => [block.id, block.visible])).toEqual([
+      ["first", true],
+      ["second", false],
+      ["third", true],
+    ]);
+    expect(await conflictToasts(page)).toBe(1);
+    // The refused save, then its read-back: the same save was never sent again.
+    expect(late).toBe(2);
+    const states = (await appMessages(page)).filter((message) => message.type === "saveState").map((message) => message.state);
+    expect(states.at(-1)).toBe("conflict");
+    expect(states).not.toContain("error");
+    await tabB.context.close();
+  });
+
   test("guard: normal editing in one tab (rapid changes, a reload, the team's badge meanwhile) never shows the toast @real", async ({ page }) => {
     const account = await syncAccount("sync-normal");
     await watchConflicts(page);

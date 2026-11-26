@@ -56,9 +56,10 @@ const RETRY_DELAYS = [2_000, 5_000, 15_000, 30_000];
  */
 export const HIDDEN_WAIT = 3_000;
 /**
- * How long the guard's read-backs of the row may take (`readRow`): one attempt, no retries. postgrest-js
- * tries a failed read again after 1, 2 and 4 s; a hidden tab waiting on that would send its keepalive
- * only when `HIDDEN_WAIT` is over, so a phone that ends the page within those 3 s lost the change.
+ * How long a hidden tab's read-backs of the row may take (`readRow` with `quick`): one attempt, no
+ * retries. postgrest-js tries a failed read again after 1, 2 and 4 s; a hidden tab waiting on that would
+ * send its keepalive only when `HIDDEN_WAIT` is over, so a phone that ends the page within those 3 s lost
+ * the change. A tab on screen reads as every read does (a slow network must not fail its read-backs).
  */
 export const READ_BACK_LIMIT = 1_500;
 
@@ -158,6 +159,9 @@ export function fingerprint(key: string): string {
   return `${key.length.toString(36)}.${(a >>> 0).toString(36)}.${(b >>> 0).toString(36)}`;
 }
 
+/** The page is not on screen (another tab, another app): its keepalive may be the last write it makes. */
+const pageHidden = () => typeof document !== "undefined" && document.visibilityState === "hidden";
+
 /** The browser says it is offline: a write tried now never left this device. */
 const offline = () => typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine;
 
@@ -207,8 +211,19 @@ export class SupabaseAccountStore implements AccountStore {
    * tab's own version and a replaced page clear it.
    */
   private readonly landed = new Map<string, number>();
-  /** Read-backs of saves whose answer was lost, still running (a hidden tab waits for them). */
-  private readonly reading = new Set<Promise<void>>();
+  /**
+   * What a hidden tab waits for before its keepalive (`settled`): the writes on their way (a save from
+   * its start, pictures included, until its answer; a keepalive until its answer) and the hidden tab's
+   * own quick reads of the row (`readRow`). Not a slow read-back that started while the tab was on screen.
+   */
+  private readonly writing = new Set<Promise<unknown>>();
+  private readonly quickReads = new Set<Promise<unknown>>();
+  /**
+   * A save of this tab's was refused (the row is no longer at `base`), and no read of the row has said
+   * yet what it holds (`refused`: the read is on its way, or failed). The same save would be refused
+   * again, so the next attempt reads the row instead of writing; a hidden tab reads it itself.
+   */
+  private refusalOpen = false;
   /**
    * The lost writes (`landed`) up to this number were resolved by a read of the row since: none of
    * them is in the row unseen. A hidden tab with one still open sends its keepalive with the closing
@@ -304,6 +319,7 @@ export class SupabaseAccountStore implements AccountStore {
     this.landed.clear();
     this.sending.clear();
     this.lostResolved = this.sent;
+    this.refusalOpen = false;
     this.hiddenWait = null;
     this.uploaded.clear();
     this.base = null;
@@ -491,10 +507,11 @@ export class SupabaseAccountStore implements AccountStore {
   /**
    * Something this tab sent may have reached the database without the tab knowing its version yet: a
    * save still on its way, or one since the last confirmed version whose answer never came (`landed`,
-   * also one a read has resolved since: a hidden tab waits for what is on its way either way).
+   * also one a read has resolved since: a hidden tab waits for what is on its way either way); or a
+   * refused save whose read-back has not decided yet (`refusalOpen`).
    */
   private uncertain(): boolean {
-    return this.sending.size > 0 || this.landed.size > 0;
+    return this.sending.size > 0 || this.landed.size > 0 || this.refusalOpen;
   }
 
   /**
@@ -502,12 +519,14 @@ export class SupabaseAccountStore implements AccountStore {
    * running, but a phone may freeze it and end it later without another event (iOS ending a suspended
    * app's web view sends no `pagehide`), so the keepalive sent here may be the last write it makes:
    * - nothing uncertain: what is pending goes at once, as a keepalive with the exact guard;
-   * - a save on its way, or a write whose answer was lost (`landed`): the tab waits for that to settle
-   *   (at most `HIDDEN_WAIT`), and reads the row again for a lost answer (one attempt of at most
-   *   `READ_BACK_LIMIT`, `readRow`), so a write of its own that landed becomes the version it builds on.
-   *   Then it sends what is left with the exact guard against the version it knows, like any save. A
-   *   refusal is a normal one: the row is read again, a page changed elsewhere wins and the toast shows
-   *   when the tab is back.
+   * - a save on its way, a write whose answer was lost (`landed`), or a refused save not read back yet
+   *   (`refusalOpen`): the tab waits for that to settle (at most `HIDDEN_WAIT`), and reads the row itself
+   *   for a lost answer or the refusal (one attempt of at most `READ_BACK_LIMIT`, `readHidden`), so a
+   *   write of its own that landed becomes the version it builds on. It does not wait for a slower
+   *   read-back that started while it was on screen. Then it sends what is left with the exact guard
+   *   against the version it knows, like any save. A refusal is a normal one: the row is read again, a
+   *   page changed elsewhere wins and the toast shows when the tab is back. A refusal its read could not
+   *   decide sends nothing (that keepalive would be refused for sure): the row is read again later.
    * - a lost answer still unresolved when the wait ends (the read failed or took too long): the row may
    *   hold this tab's own write, which an exact keepalive would never match, and nothing may run after
    *   it. So that keepalive takes the closing tab's rule (`updated_at >= base`, `saveOnExit`). A read
@@ -521,7 +540,8 @@ export class SupabaseAccountStore implements AccountStore {
     // The editor's change from the last moment: its own listener may run after this one.
     handOverPendingEdits();
     const snapshot = this.snapshot;
-    if (!this.dirty || snapshot.status !== "signedIn") return;
+    // A refused save not read back yet carries a change too: the row does not hold it.
+    if (!(this.dirty || this.refusalOpen) || snapshot.status !== "signedIn") return;
     if (!this.uncertain()) {
       this.saveOnExit(false);
       return;
@@ -532,57 +552,108 @@ export class SupabaseAccountStore implements AccountStore {
       window.clearTimeout(this.saveTimer);
       this.saveTimer = null;
     }
-    // A lost answer: the row is read now, so a write of this tab's that landed becomes the base.
-    if (this.lostOpen()) this.readBack(this.readLost(snapshot.account.id));
+    // A lost answer or a refusal not read back yet: the row is read now (quickly), so a write of this
+    // tab's that landed becomes the base, and a page changed elsewhere wins.
+    if (this.lostOpen() || this.refusalOpen) this.readBack(this.readHidden(snapshot.account.id));
     const waiting: Promise<void> = this.settled(HIDDEN_WAIT).then(() => {
       // Signed out or another account meanwhile (`resetSaves`): this wait is over.
       if (this.hiddenWait !== waiting) return;
       this.hiddenWait = null;
+      const now = this.snapshot;
+      if (document.visibilityState !== "hidden") {
+        // Back on screen: the normal save (it waits for one on its way).
+        if (this.dirty && now.status === "signedIn") this.schedule(0);
+        return;
+      }
       // Still hidden: as a keepalive, which outlives a page the phone freezes (the closing tab's guard
-      // while a lost answer is still open). Back on screen: the normal save (it waits for one on its way).
-      if (document.visibilityState === "hidden") this.saveOnExit(this.lostOpen());
-      else if (this.dirty && this.snapshot.status === "signedIn") this.schedule(0);
+      // while a lost answer is still open). A refusal no read has decided: the row is not at the base,
+      // so an exact keepalive is refused for sure; the row is read again later instead.
+      if (this.refusalOpen && !this.lostOpen()) {
+        if (this.dirty && now.status === "signedIn" && this.saveTimer === null) this.retry(now);
+        return;
+      }
+      this.saveOnExit(this.lostOpen());
     });
     this.hiddenWait = waiting;
   }
 
   /**
-   * A hidden tab with an open lost answer reads the row (`saveWhenHidden`). Holding one of this tab's
-   * own versions, the tab builds on it (no save goes out here: the keepalive carries the rest). Still
-   * at the version it built on, nothing of its lost writes landed; holding a version from elsewhere, the
-   * exact guard is right too (a page changed elsewhere wins). Either way the lost answers are resolved.
+   * A hidden tab with an open lost answer, or a refused save not read back yet, reads the row itself,
+   * quickly (`saveWhenHidden`). Holding one of this tab's own versions, the tab builds on it (no save
+   * goes out here: the keepalive carries the rest). Holding a version from elsewhere after a refusal,
+   * that page wins (as `refused` decides). Still at the version it built on, nothing of its lost writes
+   * landed; holding a version from elsewhere, the exact guard is right too (a page changed elsewhere
+   * wins). Either way the lost answers are resolved.
    */
-  private async readLost(id: string): Promise<void> {
+  private async readHidden(id: string): Promise<void> {
     const base = this.base;
     const lost = this.lostUpTo();
-    const { data: row, error } = await this.readRow(id);
+    const { data: row, error } = await this.readRow(id, true);
     const now = this.snapshot;
     // Something moved meanwhile (a save confirmed, a refusal read back): that one decides.
     if (error || !row || now.status !== "signedIn" || now.account.id !== id || this.base !== base) return;
     const latest = toRow(fromRow(row));
     const key = contentKey(latest);
-    if (row.updated_at !== base && this.isOwn(key)) this.rebaseOwn(now, row, latest, key, false);
-    else this.resolveLost(lost);
+    if (row.updated_at !== base && this.isOwn(key)) {
+      this.rebaseOwn(now, row, latest, key, false);
+      return;
+    }
+    if (this.refusalOpen) {
+      // A refused save: a page changed elsewhere wins, as `refused` decides. Still at the base, the
+      // database turned the write down (a suspended account): the keepalive may try again.
+      if (row.updated_at !== base) {
+        this.replace(row, true);
+        return;
+      }
+      this.refusalOpen = false;
+    }
+    // None of this tab's lost writes is in the row (still at the base, or a page from elsewhere, which
+    // the exact keepalive then does not overwrite): they are resolved.
+    this.resolveLost(lost);
   }
 
   /**
-   * The row as it is now, for the guard's read-backs (`recheck`, `readLost`, `refused`): a single attempt
-   * of at most `READ_BACK_LIMIT` ms, without postgrest-js's retries (1, 2 and 4 s after a network
-   * error). A failed one changes nothing: the next save's guard, or the hidden tab's keepalive, decides.
+   * The row as it is now, for the guard's read-backs (`recheck`, `readHidden`, `refused`). A tab on
+   * screen reads as every read does: postgrest-js tries a failed read again after 1, 2 and 4 s, and no
+   * time limit cuts a slow answer off (a refused save on a slow network must still learn what the row
+   * holds). A hidden tab (`quick`: `readHidden`, and every read-back that starts while the page is
+   * hidden) reads once, for at most `READ_BACK_LIMIT` ms, without those retries: its keepalive waits for
+   * this read (`quickReads`, `settled`) and may be the last write it makes. A failed read changes
+   * nothing: the next save's guard, a refusal's next read, or the hidden tab's keepalive decides.
    */
-  private async readRow(id: string) {
+  private async readRow(id: string, quick = pageHidden()) {
+    const query = this.client().from("sites").select("*").eq("profile_id", id);
+    if (!quick) return await query.maybeSingle();
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       controller.abort();
     }, READ_BACK_LIMIT);
-    try {
-      return await this.client().from("sites").select("*").eq("profile_id", id).retry(false).abortSignal(controller.signal).maybeSingle();
-    } finally {
-      window.clearTimeout(timer);
-    }
+    const read = (async () => {
+      try {
+        return await query.retry(false).abortSignal(controller.signal).maybeSingle();
+      } finally {
+        window.clearTimeout(timer);
+      }
+    })();
+    this.hold(this.quickReads, read);
+    return await read;
   }
 
-  /** Resolves once no save is on its way and no read-back runs, or after `limit` ms. */
+  /** Keeps `work` in `set` until it ends (a write on its way, a hidden tab's quick read). */
+  private hold(set: Set<Promise<unknown>>, work: Promise<unknown>) {
+    const held = work.then(
+      () => undefined,
+      () => undefined,
+    );
+    set.add(held);
+    void held.then(() => set.delete(held));
+  }
+
+  /**
+   * Resolves once no write is on its way and no quick read of a hidden tab runs, or after `limit` ms.
+   * A slow read-back that started while the tab was on screen is not waited for (`readHidden` reads
+   * the row itself instead).
+   */
   private async settled(limit: number): Promise<void> {
     let timer = 0;
     const timeout = new Promise<"over">((resolve) => {
@@ -590,9 +661,10 @@ export class SupabaseAccountStore implements AccountStore {
         resolve("over");
       }, limit);
     });
-    // A save or read-back that ends may start the next (a rebase sends again): wait for those too.
-    while (this.saving || this.reading.size > 0) {
-      const outcome = await Promise.race([Promise.allSettled([this.saving, ...this.reading]).then(() => "settled" as const), timeout]);
+    // A write or read that ends may start the next (a refused save's read, a rebase that sends
+    // again): wait for those too.
+    while (this.writing.size > 0 || this.quickReads.size > 0) {
+      const outcome = await Promise.race([Promise.allSettled([...this.writing, ...this.quickReads]).then(() => "settled" as const), timeout]);
       if (outcome === "over") break;
     }
     window.clearTimeout(timer);
@@ -613,8 +685,9 @@ export class SupabaseAccountStore implements AccountStore {
    *   an exact keepalive would always be refused and the last change lost. The other order is safe
    *   too: the save, landing second, no longer finds `base` and changes nothing. The price (ADR 0088):
    *   any write from elsewhere since this tab last read or saved is overwritten instead of refused.
-   *   A lost answer a read has resolved (the row was still at `base`, or held a page from elsewhere)
-   *   cannot land any more: the exact guard again.
+   *   A lost answer a read has resolved (the row was still at `base`, or held a page from elsewhere) had
+   *   not landed by the time of that read: the exact guard again. Accepted (ADR 0088): such a write that
+   *   commits only after the read, while the tab closes, makes this exact keepalive fail.
    * A hidden tab (`saveWhenHidden`) uses the exact guard, except for a lost answer it could not read
    * back in time.
    */
@@ -640,7 +713,8 @@ export class SupabaseAccountStore implements AccountStore {
     const write = (this.sent += 1);
     const sentOffline = offline();
     this.sending.add(content);
-    const request = fetch(`${SUPABASE_URL}/rest/v1/sites?profile_id=eq.${id}${guard}&select=updated_at`, {
+    // The answer, read whole: until then the keepalive is on its way (a hidden tab waits for it).
+    const answered = fetch(`${SUPABASE_URL}/rest/v1/sites?profile_id=eq.${id}${guard}&select=updated_at`, {
       method: "PATCH",
       keepalive: true,
       headers: {
@@ -650,16 +724,18 @@ export class SupabaseAccountStore implements AccountStore {
         Prefer: "return=representation",
       },
       body,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
+    }).then(async (response) => (response.ok ? { ok: true as const, rows: (await response.json()) as { updated_at?: string }[] } : { ok: false as const, status: response.status }));
+    this.hold(this.writing, answered);
+    const request = answered
+      .then(async (answer) => {
+        if (!answer.ok) {
           // Turned down (an expired session, the size limit: nothing written) or a server error (maybe
           // written): the tab, if it is still there, saves again like after any failed save.
           this.sending.delete(content);
-          this.exitFailed(id, content, write, sentOffline, response.status);
+          this.exitFailed(id, content, write, sentOffline, answer.status);
           return;
         }
-        const [row] = (await response.json()) as { updated_at?: string }[];
+        const [row] = answer.rows;
         this.sending.delete(content);
         if (row?.updated_at) this.saved(id, row.updated_at, content, write);
         else await this.refused(id, base);
@@ -763,6 +839,23 @@ export class SupabaseAccountStore implements AccountStore {
     this.dirty = false;
     const id = snapshot.account.id;
     const base = this.base;
+    if (this.refusalOpen) {
+      // The last save was refused and no read has said yet what the row holds: the same save would be
+      // refused again, so the row is read instead (a page changed elsewhere wins, a version of this
+      // tab's own is built on and the change sent then).
+      const reading = this.refused(id, base);
+      void this.track(reading);
+      await reading;
+      return;
+    }
+    // On its way from here (pictures first) until the write's answer: a hidden tab waits for it.
+    let answered: () => void = () => undefined;
+    this.hold(
+      this.writing,
+      new Promise<void>((resolve) => {
+        answered = resolve;
+      }),
+    );
     const run = async () => {
       // Pictures still inside the page (imported from the demo, the "Try it" photo) go to Storage first;
       // one that fails to upload stays as it is and is tried again on the next save.
@@ -777,6 +870,7 @@ export class SupabaseAccountStore implements AccountStore {
       this.sending.add(content);
       const { data, error, status } = await (base === null ? update : update.eq("updated_at", base)).select("page, updated_at").maybeSingle();
       this.sending.delete(content);
+      answered();
       const now = this.snapshot;
       if (now.status !== "signedIn" || now.account.id !== id) return;
       if (error) {
@@ -790,8 +884,8 @@ export class SupabaseAccountStore implements AccountStore {
         }
         this.unconfirm(content, write, sentOffline, status);
         this.retry(now);
-        // Not awaited: no save waits for it (a hidden tab does, at most `READ_BACK_LIMIT`:
-        // `saveWhenHidden`).
+        // Not awaited: no save waits for it (a hidden tab reads the row itself, at most
+        // `READ_BACK_LIMIT`: `saveWhenHidden`).
         if (mayHaveLanded(sentOffline, status)) this.readBack(this.recheck(id, base, content, write));
         return;
       }
@@ -802,7 +896,7 @@ export class SupabaseAccountStore implements AccountStore {
       this.confirm(data.updated_at, content, write);
       this.showSaved(now, data.page, data.updated_at);
     };
-    const running = run();
+    const running = run().finally(answered);
     void this.track(running);
     await running;
   }
@@ -879,11 +973,9 @@ export class SupabaseAccountStore implements AccountStore {
     return false;
   }
 
-  /** Keeps a running read-back in `reading` until it ends. */
+  /** A read-back nobody awaits: its failure changes nothing. */
   private readBack(work: Promise<void>) {
-    const running = work.catch(() => undefined);
-    this.reading.add(running);
-    void running.then(() => this.reading.delete(running));
+    void work.catch(() => undefined);
   }
 
   /** A failed save is tried again, each time a little later (the next change tries at once). */
@@ -900,6 +992,7 @@ export class SupabaseAccountStore implements AccountStore {
     this.confirmedWrite = write;
     this.base = updatedAt;
     this.baseContent = content;
+    this.refusalOpen = false;
     // A write sent before this one can no longer land (its guard names an older version); one sent
     // after it (the keepalive save) still can.
     for (const [key, sent] of this.landed) if (sent <= write) this.landed.delete(key);
@@ -942,12 +1035,34 @@ export class SupabaseAccountStore implements AccountStore {
    *   `MAX_REBASES` times in a row, after that like a failed save (later, each time a little later);
    * - anything else was changed elsewhere (another tab, the iPhone app): the newer version wins, this
    *   tab's unsaved change is dropped, and the editor starts over from it and says so.
+   * A read that fails (offline) decides nothing: the change waits like after a failed save, and its next
+   * attempt reads the row again instead of sending a save the guard would refuse again (`refusalOpen`).
+   * On screen the read takes as long as the network does (`readRow`); a hidden tab reads quickly.
    */
   private async refused(id: string, base: string | null): Promise<void> {
+    // The version known when the read starts: a refusal of a write with that base leaves it open.
+    const known = this.base;
+    if (base === known) this.refusalOpen = true;
     const { data: row, error } = await this.readRow(id);
     const now = this.snapshot;
     if (now.status !== "signedIn" || now.account.id !== id) return;
-    if (error || !row || row.updated_at === base) {
+    if (this.base !== known) {
+      // Another read or answer decided meanwhile (a hidden tab's read, a keepalive confirmed): this row
+      // may be older than that. What the page here holds beyond that version still goes.
+      if (!this.dirty && !this.isOwn(contentKey(toRow(now.site)))) {
+        this.dirty = true;
+        this.schedule(0);
+      }
+      return;
+    }
+    if (error || !row) {
+      this.dirty = true;
+      this.failed = true;
+      this.retry(now);
+      return;
+    }
+    this.refusalOpen = false;
+    if (row.updated_at === base) {
       this.dirty = true;
       this.failed = true;
       this.retry(now);
@@ -970,6 +1085,7 @@ export class SupabaseAccountStore implements AccountStore {
   private rebaseOwn(now: Extract<AccountSnapshot, { status: "signedIn" }>, row: SiteRow, latest: SiteContent, key: string, send = true) {
     this.base = row.updated_at;
     this.baseContent = latest;
+    this.refusalOpen = false;
     this.landed.clear();
     this.dirty = this.dirty || contentKey(toRow(now.site)) !== key;
     this.failed = false;
@@ -1006,6 +1122,7 @@ export class SupabaseAccountStore implements AccountStore {
     this.rebases = 0;
     this.base = row.updated_at;
     this.baseContent = toRow(site);
+    this.refusalOpen = false;
     this.landed.clear();
     this.revision += 1;
     if (conflict) this.conflicts += 1;

@@ -41,7 +41,7 @@ class FakeDb {
    * query asked `.retry(false)`.
    */
   failReads: boolean | (() => boolean) = false;
-  /** Reads never answer (a connection that hangs) until the query's abort signal ends them. */
+  /** Reads never answer (a connection that hangs, also for a retried attempt) until the query's abort signal ends them. */
   hangReads = false;
   /** Reads answer this many ms late, with the row as it is then (a slow connection). */
   readDelay = 0;
@@ -104,6 +104,7 @@ class FakeDb {
       let retry = true;
       let signal: AbortSignal | null = null;
       const failingNow = () => (typeof this.failReads === "function" ? this.failReads() : this.failReads);
+      const hangingNow = () => this.hangReads;
       /** `failing`: whether this read attempt fails (asked once per attempt by `read`). */
       const run = (failing = !values && failingNow()) => {
         if (table === "profiles") return { data: this.profile, error: null };
@@ -145,6 +146,11 @@ class FakeDb {
           const failing = failingNow();
           if (!failing || !retry || attempt === 3) return run(failing);
           if ((await wait(1_000 * 2 ** attempt)) === "aborted") return aborted;
+          // Each attempt is a request of its own: a connection that hangs by now never answers it.
+          if (hangingNow()) {
+            await wait(null);
+            return aborted;
+          }
         }
       };
       const chain = {
@@ -1381,5 +1387,138 @@ describe("the editor's change from the last moment (its autosave delay)", () => 
     listeners.get("pagehide")?.();
     expect(bodies).toHaveLength(1);
     expect(db.blocks()).toEqual(["a", "b", "just-typed"]);
+  });
+});
+
+describe(`a slow network: every read of the row takes 1.8 s, longer than READ_BACK_LIMIT (ADR 0088 §3)`, () => {
+  // Before, every read-back of the guard was one attempt given up after READ_BACK_LIMIT, also in a tab
+  // on screen. On a network this slow a refused save was never read back: the tab sent the same refused
+  // save again and again (sync "error" for good, flush() rejected, no toast, the newer page never shown),
+  // and a lost answer was never resolved. Only a hidden tab reads that quickly now.
+  const SLOW = 1_800;
+  const flushOf = (store: InstanceType<typeof SupabaseAccountStore>) => {
+    const outcome = { value: "pending" };
+    store.flush().then(
+      (answer) => {
+        outcome.value = `ok ${String(answer.updatedAt)}`;
+      },
+      (error: unknown) => {
+        outcome.value = `rejected ${error instanceof Error ? error.message : String(error)}`;
+      },
+    );
+    return outcome;
+  };
+
+  it("S1 another tab wrote, then a change here: the newer page shows with the toast, nothing is overwritten", async () => {
+    const db = new FakeDb([link("a"), link("b"), link("c")]);
+    const store = await signedIn(db);
+    keepaliveAnswered(db);
+    db.readDelay = SLOW;
+    db.elsewhere([link("a"), link("b"), link("c"), link("theirs")]);
+    toggle(store, "a");
+    await vi.advanceTimersByTimeAsync(120_000);
+    const snapshot = snapshotOf(store);
+    expect(snapshot.conflicts).toBe(1);
+    expect(ids(store)).toEqual(["a", "b", "c", "theirs"]);
+    expect(snapshot.sync).toBe("saved");
+    expect(db.blocks()).toEqual(["a", "b", "c", "theirs"]);
+    // One save, refused, then read back: never sent again while it was certain to be refused.
+    expect(db.writes).toHaveLength(1);
+  });
+
+  it("S2 a save lands but its answer is lost, then two more changes: every change is stored, and the tab says saved", async () => {
+    const db = new FakeDb([link("a"), link("b"), link("c")]);
+    const store = await signedIn(db);
+    keepaliveAnswered(db);
+    db.readDelay = SLOW;
+    db.loseAnswers = true;
+    toggle(store, "a");
+    await vi.advanceTimersByTimeAsync(450);
+    db.loseAnswers = false;
+    toggle(store, "b");
+    await vi.advanceTimersByTimeAsync(3_000);
+    toggle(store, "c");
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(visible(db)).toBe("000");
+    expect(snapshotOf(store).sync).toBe("saved");
+    expect(snapshotOf(store).conflicts).toBe(0);
+  });
+
+  it("S3 the iPhone app: a write the web view did not see, a change, then flush() answers the version on the server", async () => {
+    const db = new FakeDb([link("a"), link("b")]);
+    const store = await signedIn(db);
+    keepaliveAnswered(db);
+    db.readDelay = SLOW;
+    db.elsewhere([link("a"), link("b"), link("shared")]);
+    toggle(store, "a");
+    await vi.advanceTimersByTimeAsync(120_000);
+    const flushed = flushOf(store);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(flushed.value).toBe(`ok ${db.row.updated_at}`);
+    expect(db.blocks()).toEqual(["a", "b", "shared"]);
+  });
+
+  it("flush() right after the change waits for the slow read-back and answers the newer version, with the toast", async () => {
+    const db = new FakeDb([link("a"), link("b")]);
+    const store = await signedIn(db);
+    keepaliveAnswered(db);
+    db.readDelay = SLOW;
+    db.elsewhere([link("a"), link("b"), link("shared")]);
+    toggle(store, "a");
+    const flushed = flushOf(store);
+    await vi.advanceTimersByTimeAsync(SLOW + 500);
+    expect(flushed.value).toBe(`ok ${db.row.updated_at}`);
+    expect(snapshotOf(store).conflicts).toBe(1);
+    expect(db.writes).toHaveLength(1);
+  });
+
+  it("a refused save's read-back that fails on screen is read again; the refused save is never sent again", async () => {
+    const db = new FakeDb([link("a"), link("b")]);
+    const store = await signedIn(db);
+    keepaliveAnswered(db);
+    db.elsewhere([link("a"), link("b"), link("theirs")]);
+    db.failReads = true;
+    toggle(store, "a");
+    // postgrest-js's own retries (1, 2 and 4 s), then the store's (2, 5, 15 and 30 s): reads only.
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(snapshotOf(store).sync).toBe("error");
+    const flushed = flushOf(store);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(flushed.value).toBe("rejected saveFailed");
+    expect(db.writes).toHaveLength(1);
+    db.failReads = false;
+    await vi.advanceTimersByTimeAsync(40_000);
+    expect(snapshotOf(store).conflicts).toBe(1);
+    expect(ids(store)).toEqual(["a", "b", "theirs"]);
+    expect(snapshotOf(store).sync).toBe("saved");
+    expect(db.writes).toHaveLength(1);
+  });
+
+  it(`hidden while a refused save's slow read-back runs: its own quick read decides, and the keepalive goes within ${String(READ_BACK_LIMIT)} ms on the version it found`, async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent: string[] = [];
+    vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+      const guard = new URL(url, "http://localhost").searchParams.get("updated_at") ?? "";
+      sent.push(guard);
+      const matches = guard === `eq.${db.row.updated_at}`;
+      if (matches) db.write(JSON.parse(init.body as string) as Record<string, unknown>);
+      return Promise.resolve(new Response(JSON.stringify(matches ? [{ updated_at: db.row.updated_at }] : []), { status: 200 }));
+    });
+    // The team gave the badge meanwhile: a new version of the same content (sites_guard).
+    db.profile.verified = true;
+    db.write({});
+    const badge = db.row.updated_at;
+    db.readDelay = SLOW;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(450);
+    expect(db.writes).toHaveLength(1);
+    // The phone switches apps while that read-back is on its way; the hidden tab's own read gets through.
+    db.readDelay = 100;
+    hideTab();
+    await vi.advanceTimersByTimeAsync(READ_BACK_LIMIT);
+    // One keepalive, with the exact guard on the version the hidden read found: no keepalive certain to be refused.
+    expect(sent).toEqual([`eq.${badge}`]);
+    expect(db.blocks()).toEqual(["a", "b", "c"]);
   });
 });
