@@ -34,16 +34,22 @@ import { rememberAppliedDraft, useAiRun } from "./use-ai-run";
 
 type Locale = "de" | "en" | "ar";
 
-/** The message of a run-ending error; quota depends on the plan (Pro: until next month, no offer). */
-function useErrorText() {
+/**
+ * The message of a run-ending error; quota depends on the plan (Pro: until next month, no offer). In
+ * the iPhone app a Free account's quota says the fact without naming Pro (`appMode.ai`, App Store
+ * 3.1.3(f)).
+ */
+export function useErrorText() {
   const t = useTranslations("app.ai.errors");
+  const tApp = useTranslations("appMode.ai");
+  const app = useAppMode();
   const format = useFormatter();
   return (code: AiErrorCode, quota: AiQuota | null) => {
     if (code !== "quota") return t(code);
     if (quota?.plan === "pro") {
       return t("quotaPro", { count: quota.allowance, date: quota.resetsAt ? format.dateTime(new Date(quota.resetsAt), { day: "numeric", month: "long" }) : "" });
     }
-    return t("quotaFree");
+    return app ? tApp("quotaFree") : t("quotaFree");
   };
 }
 

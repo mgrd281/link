@@ -178,8 +178,13 @@ function verificationView(data: ReferralOverview, verified: boolean, now: number
   return { kind: "ready" };
 }
 
+/**
+ * The rewards. In the iPhone app only the verification: "Pro for life" names a paid plan, and the app
+ * promises none (App Store 3.1.1, 3.1.3(f)); the invite link, its share and the count stay.
+ */
 function Rewards({ data, verified, onRequest }: { data: ReferralOverview; verified: boolean; onRequest: () => void }) {
   const t = useTranslations("app.invite.rewards");
+  const app = useAppMode();
   const tReasons = useTranslations("app.invite.declineReasons");
   const locale = useLocale();
   const [now] = useState(() => Date.now());
@@ -245,13 +250,15 @@ function Rewards({ data, verified, onRequest }: { data: ReferralOverview; verifi
         progress={view.kind === "locked" ? progress(REFERRAL_RULES.verificationAt) : undefined}
         action={action}
       />
-      <MilestoneRow
-        icon={InfinityIcon}
-        title={t("pro.title")}
-        status={pro?.revoked ? t("removed") : pro ? proYours : t("pro.locked", { count: REFERRAL_RULES.proForLifeAt })}
-        done={Boolean(pro && !pro.revoked)}
-        progress={pro ? undefined : progress(REFERRAL_RULES.proForLifeAt)}
-      />
+      {app ? null : (
+        <MilestoneRow
+          icon={InfinityIcon}
+          title={t("pro.title")}
+          status={pro?.revoked ? t("removed") : pro ? proYours : t("pro.locked", { count: REFERRAL_RULES.proForLifeAt })}
+          done={Boolean(pro && !pro.revoked)}
+          progress={pro ? undefined : progress(REFERRAL_RULES.proForLifeAt)}
+        />
+      )}
     </>
   );
 }
@@ -259,16 +266,18 @@ function Rewards({ data, verified, onRequest }: { data: ReferralOverview; verifi
 /** Without the program (it did not load): the two rewards and what unlocks them, which hold for everyone. */
 function LockedRewards() {
   const t = useTranslations("app.invite.rewards");
+  const app = useAppMode();
   return (
     <>
       <MilestoneRow icon={BadgeCheck} title={t("verification.title")} status={t("verification.locked", { count: REFERRAL_RULES.verificationAt })} />
-      <MilestoneRow icon={InfinityIcon} title={t("pro.title")} status={t("pro.locked", { count: REFERRAL_RULES.proForLifeAt })} />
+      {app ? null : <MilestoneRow icon={InfinityIcon} title={t("pro.title")} status={t("pro.locked", { count: REFERRAL_RULES.proForLifeAt })} />}
     </>
   );
 }
 
 function Rules() {
   const t = useTranslations("app.invite");
+  const tApp = useTranslations("appMode.invite");
   // The iPhone app promises nothing about Pro coming or what it costs (App Store 3.1.1, 3.1.3(f)).
   const app = useAppMode();
   return (
@@ -284,7 +293,8 @@ function Rules() {
       </ol>
       <Disclosure summary={t("rules.terms")}>
         <div className="grid gap-2 pt-1 text-small font-regular text-fg-secondary">
-          <p>{t("terms.personal")}</p>
+          {/* The app's terms say the same without the Pro reward it does not show. */}
+          <p>{app ? tApp("terms") : t("terms.personal")}</p>
           <p>{t("terms.review", { days: REFERRAL_RULES.retryVerificationDays })}</p>
           <p>{t("terms.abuse")}</p>
           <p>{t("terms.ads")}</p>

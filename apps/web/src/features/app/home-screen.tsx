@@ -8,6 +8,7 @@ import { useMemo, useState, type CSSProperties } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { AiHomeCard } from "@/features/ai/home-card";
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { REFERRAL_RULES } from "@/features/referrals/rules";
 import { Link, useRouter } from "@/i18n/navigation";
 
@@ -42,6 +43,8 @@ import { weekdayLong, weekdayName } from "./weekday";
  */
 export function HomeScreen() {
   const t = useTranslations("app.home");
+  const tApp = useTranslations("appMode.home");
+  const app = useAppMode();
   const tInvite = useTranslations("app.invite");
   const tPortfolio = useTranslations("app.portfolio");
   const router = useRouter();
@@ -163,7 +166,8 @@ export function HomeScreen() {
           <ListRow
             icon={Gift}
             title={tInvite("title")}
-            subtitle={t("inviteSubtitle", { verify: REFERRAL_RULES.verificationAt, pro: REFERRAL_RULES.proForLifeAt })}
+            // The iPhone app names only the verification: it promises no paid plan (App Store 3.1.3(f)).
+            subtitle={app ? tApp("inviteSubtitle", { count: REFERRAL_RULES.verificationAt }) : t("inviteSubtitle", { verify: REFERRAL_RULES.verificationAt, pro: REFERRAL_RULES.proForLifeAt })}
             subtitleWrap
             href={INVITE_HREF}
           />
