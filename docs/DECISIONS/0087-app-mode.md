@@ -120,8 +120,12 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
      the router's links from the dashboard to a legal page or help (Settings' Impressum and Datenschutz rows)
      keep the same document but leave `window.linkyoApp` without methods. Before it calls `flush()`, `reload()`
      or `signOut()` (a native write, sign-out, deletion: plan §1.2, §1.3), the app checks that the web view is
-     on the dashboard (its last `route`, or `WKWebView.url`); if not, it brings it back (`goBack()`, or loads
-     `/<locale>/app`) and waits for the `ready` that follows. A native write made while the web view was away is
+     on the dashboard by `WKWebView.url`, which it observes with KVO (it changes on `pushState` too): a path at
+     or below `/<locale>/app`. Never by its last `route`: leaving the dashboard by such a router link sends
+     nothing, so the last `route` still names Settings while the web view shows Datenschutz. Off the dashboard
+     the app draws its own title from `WKWebView.title` and goes back with `goBack()`; `navigate` and `back` are
+     not there (calling one throws a `TypeError`). If it is not on the dashboard, the app brings it back
+     (`goBack()`, or loads `/<locale>/app`) and waits for the `ready` that follows. A native write made while the web view was away is
      followed by `reload()` after that `ready`: the store does not read the row again by itself when the
      dashboard mounts again, so without it the next edit would be refused with the conflict toast.
 
@@ -235,6 +239,12 @@ operations), in one place:
 8. **`?edit=` and `?tab=` after the hand-off.** The hand-off's `next` is a dashboard path without a query
    ([0088](0088-app-sync.md) §1), so the app opens a block's sheet or a tab with `navigate()` after the first
    `ready`.
+9. **Where the web view is: `WKWebView.url`.** The app observes `url` and `title` with KVO; both change on a
+   `pushState` too. A path at or below `/<locale>/app` is the dashboard: its native title and back button come
+   from the last `route`. Any other path (help, contact, a legal page, the sign-in pages, reached by a router link
+   that sends no message, or loaded by the app) is a page outside it: the app shows `WKWebView.title` and goes
+   back with `goBack()`, and calls none of the five methods there (they are not there: a `TypeError`). The last
+   `route` never decides where the web view is (decision 4).
 
 **Consequences.**
 

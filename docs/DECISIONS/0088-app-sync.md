@@ -259,9 +259,11 @@ view cannot share one session.
        revoked on the server, not only deleted from the cookie.
    - **Only on dashboard pages.** Like `navigate` and `back`, the three exist only while the web view shows a
      dashboard page (`/<locale>/app/…`): the router's links from the dashboard to a legal page or help keep the
-     document but take all five methods off. Before it calls one, the app brings the web view back to the dashboard
-     (`goBack()`, or loads `/<locale>/app`) and waits for the `ready` that follows; after a native write made while
-     the web view was away, it calls `reload()` after that `ready` ([0087](0087-app-mode.md) decision 4).
+     document but take all five methods off, and send nothing. The app tells where the web view is from
+     `WKWebView.url` (KVO), never from the last `route`. Before it calls one, the app brings the web view back to the
+     dashboard (`goBack()`, or loads `/<locale>/app`) and waits for the `ready` that follows; after a native write
+     made while the web view was away, it calls `reload()` after that `ready` ([0087](0087-app-mode.md) decision 4,
+     "For the native shell" item 9).
    - **Why a call rejects** (the rejection's string form is the bare reason; `callAsyncJavaScript` hands it to the app
      in the error's `userInfo[WKJavaScriptExceptionMessage]`, [0087](0087-app-mode.md) "For the native shell" item 1):
 
@@ -274,8 +276,9 @@ view cannot share one session.
      | `reload()` | `reloadFailed` | everything was saved, but the row could not be read again | tries again later |
      | `signOut()` | `signOutTimeout` | the session did not end within 10 s (offline) | clears the web view's data anyway (plan §1.2 step 7) |
 
-     `navigate()` and `back()` never reject: they answer false. A save state of `error` (`saveState`) is the same
-     condition as `saveFailed`.
+     On a dashboard page `navigate()` and `back()` never reject: they answer false. Off the dashboard none of the five
+     is there: calling one throws a `TypeError` (`… is not a function`), which the app avoids by checking
+     `WKWebView.url` first. A save state of `error` (`saveState`) is the same condition as `saveFailed`.
    - To the app through the bridge's `post()` ([0087](0087-app-mode.md): app mode, the main frame, plain data, never
      throwing): `{ type: "saveState", state: "saving" | "saved" | "error" | "conflict", updatedAt }` whenever it
      changes, never before the `ready` that names the account ([0087](0087-app-mode.md) decision 4, also again

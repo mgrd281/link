@@ -97,6 +97,10 @@ describe("ADR 0088 §4 names every reason a bridge method rejects with", () => {
     expect(text).toContain("**Only on dashboard pages.**");
     expect(text).toContain("waits for the `ready` that follows");
     expect(text).toMatch(/calls `reload\(\)` after that `ready`/);
+    // Off the dashboard the methods are missing (a TypeError), and the last route is stale there.
+    expect(text).toContain("Off the dashboard none of the five");
+    expect(text).not.toMatch(/(?<!On a dashboard page )`navigate\(\)` and `back\(\)` never reject/);
+    expect(text).toMatch(/never from the last `route`/);
     expect(SYNC).toContain("**not while the app signs out itself.**");
     expect(SYNC).toContain("**a `signedOut` the app did not cause**");
   });
@@ -112,6 +116,9 @@ describe("ADR 0087 records the order, the dashboard-only methods and what the na
     expect(text).toContain("`navigate(path)`: a dashboard path");
     expect(text).toContain("**All five exist only while a dashboard page (`/<locale>/app/…`) is shown.**");
     expect(text).toContain(`\`BRIDGE_VERSION\` = ${String(BRIDGE_VERSION)}`);
+    // Where the web view is: WKWebView.url, never the last route (a router link off the dashboard sends nothing).
+    expect(text).not.toContain("its last `route`, or `WKWebView.url`");
+    expect(text).toMatch(/on the dashboard by `WKWebView.url`, which it observes with KVO/);
     // The app brings the web view back with goBack(): a page restored from the back/forward cache sends
     // ready, route and saveState again, as the island does on `pageshow` with `persisted`.
     expect(source("features/app-mode/app-mode-island.tsx")).toMatch(/addEventListener\("pageshow"/);
@@ -137,6 +144,7 @@ describe("ADR 0087 records the order, the dashboard-only methods and what the na
       "`text/csv;charset=utf-8`",
       "**`?edit=` and `?tab=` after the hand-off.**",
       "the reason is in `userInfo[WKJavaScriptExceptionMessage]`",
+      "**Where the web view is: `WKWebView.url`.**",
     ]) {
       expect(shell(), words).toContain(words);
     }
