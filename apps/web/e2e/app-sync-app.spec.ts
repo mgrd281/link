@@ -129,6 +129,35 @@ async function holdNextSave(page: Page, ms: number) {
   return held;
 }
 
+/**
+ * A slow network on the way there: the next page save waits `ms` before it leaves the browser, so it
+ * is still on its way meanwhile. `sent` counts the saves held (one at most).
+ */
+async function delayNextSave(page: Page, ms: number) {
+  const held = { sent: 0 };
+  await page.route(
+    (url) => url.pathname.endsWith("/rest/v1/sites"),
+    async (route) => {
+      if (route.request().method() !== "PATCH") {
+        await route.continue();
+        return;
+      }
+      held.sent += 1;
+      await new Promise((resolve) => setTimeout(resolve, ms));
+      await route.continue().catch(() => undefined);
+    },
+    { times: 1 },
+  );
+  return held;
+}
+
+/** The tab is hidden (a tab switch, another app on a phone) or shown again; the page keeps running. */
+const setHidden = (page: Page, hidden: boolean) =>
+  page.evaluate((value) => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => (value ? "hidden" : "visible") });
+    document.dispatchEvent(new Event("visibilitychange", { bubbles: true }));
+  }, hidden);
+
 /** A second browser for the same account, with this project's screen. */
 async function secondBrowser(browser: Browser, info: TestInfo, baseURL: string | undefined) {
   const { viewport, userAgent, isMobile, hasTouch, deviceScaleFactor } = info.project.use;
@@ -303,6 +332,46 @@ test.describe("the iPhone app's web side @real", () => {
     await visibility(tabB.page, "Dritter Link").click();
     await expect.poll(() => shown(account.id, "third"), { timeout: 15_000 }).toBe(false);
     expect(await shown(account.id, "first")).toBe(false);
+    await tabB.context.close();
+  });
+
+  test("guard: the stale tab is hidden while its save is on its way: the other tab's change stays, and it shows the toast and the newest page when it is back @real", async ({ page, browser, baseURL }, info) => {
+    // A hidden tab keeps running, so it waits for that save and sends the rest with the exact guard
+    // (ADR 0088). Before, it sent `updated_at >= base` at once, which overwrote tab A's newer page.
+    const account = await syncAccount("sync-hidden");
+    const tabB = await secondBrowser(browser, info, baseURL);
+    await watchConflicts(page);
+    await watchConflicts(tabB.page);
+    await signIn(page, account.email, "/de/app/editor");
+    await signIn(tabB.page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    await expect(visibility(tabB.page, "Erster Link")).toBeChecked();
+
+    // Tab A hides the first link, and it is saved.
+    await visibility(page, "Erster Link").click();
+    await expect.poll(() => shown(account.id, "first"), { timeout: 15_000 }).toBe(false);
+
+    // Tab B still has the version before. Its save waits 1 s on the way there; meanwhile another
+    // change, and B is hidden while that save is on its way.
+    const held = await delayNextSave(tabB.page, 1_000);
+    await visibility(tabB.page, "Zweiter Link").click();
+    await expect.poll(() => held.sent).toBe(1);
+    await visibility(tabB.page, "Dritter Link").click();
+    await setHidden(tabB.page, true);
+    // B's save is refused (the row is A's version), B reads the newest page and counts the conflict.
+    await expect.poll(() => conflictToasts(tabB.page), { timeout: 15_000 }).toBe(1);
+    await tabB.page.waitForTimeout(1_000);
+    // A's change stays; nothing of B's stale page reached the database.
+    expect((await stored(account.id)).blocks.map((block) => block.visible)).toEqual([false, true, true]);
+
+    // B is back: the newest page, with the toast.
+    await setHidden(tabB.page, false);
+    await expect(visibility(tabB.page, "Erster Link")).not.toBeChecked();
+    await expect(visibility(tabB.page, "Zweiter Link")).toBeChecked();
+    await expect(visibility(tabB.page, "Dritter Link")).toBeChecked();
+    await expect(tabB.page.getByText(CONFLICT, { exact: true })).toBeVisible();
+    expect(await conflictToasts(page)).toBe(0);
+    expect((await stored(account.id)).blocks.map((block) => block.visible)).toEqual([false, true, true]);
     await tabB.context.close();
   });
 

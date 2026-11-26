@@ -77,10 +77,11 @@ view cannot share one session.
    - No dry run (`preview?` in PLAN.md W4 was left out: nothing needs it yet).
 
 3. **The save guard in the web store** (`SupabaseAccountStore`).
-   - Every save, and the keepalive save when a tab is hidden or closed, is `update … where profile_id = me and
-     updated_at = <the version this tab read or last saved>`. A successful save answers the new version, which the
-     next save builds on; saves stay one at a time, so a tab never conflicts with itself. An address change in this
-     tab rewrites the row too (`change_username`); the tab then takes that version as its base.
+   - Every save, and the keepalive save when a tab is hidden (and, with the one exception below, when it is
+     closed), is `update … where profile_id = me and updated_at = <the version this tab read or last saved>`. A
+     successful save answers the new version, which the next save builds on; saves stay one at a time, so a tab
+     never conflicts with itself. An address change in this tab rewrites the row too (`change_username`); the tab
+     then takes that version as its base.
    - **A bad network never costs a change.** Every write since the last version the server confirmed to this tab
      that may have reached the database without an answer is remembered (a fingerprint of its content, without
      limit; the same content once): no answer at all (the connection dropped, a timeout; PostgREST's client reports
@@ -90,33 +91,46 @@ view cannot share one session.
      version (it then builds on that), and when the page is replaced. So a save that landed just before the phone
      went offline is still recognised as this tab's own after any number of failed attempts.
    - **A save without an answer is read back at once.** A read often gets through where the write's answer did not (a
-     connection that drops on the way back); it runs on its own, so no save waits for it. When the row holds that save's
-     content, the save landed and counts as confirmed (its version becomes the base, the list above is cleared up to it,
-     and the window below closes); when it holds another version of this tab's own, the tab builds on that. Without
-     this, a network that keeps losing write answers would refuse every later save for good (each carries the version
-     before the first landed write, and the refusals' answers are lost too), where the store before the guard wrote them
-     all.
-   - **The keepalive save is the last code a closing tab runs**: when it is refused, nothing sends it again. A save
-     of this tab's that may land first with a version this tab does not know yet would make an exact keepalive fail
-     and lose the last change. So the keepalive is guarded with `updated_at >= <base>` instead of `=` exactly
-     while one of this tab's saves is on its way, or while the list above is not empty. Either order then keeps the
-     last change: the save lands first and the keepalive follows, or the keepalive lands first and the save (still
-     guarded exactly) changes nothing. When both land in a tab that stays open (a phone switching apps), their
-     answers may come back in either order; writes are numbered as they are sent, and an older one's late answer
-     never moves the base back.
-   - **The real window, and its price** (taken on purpose). It opens when a save goes out and closes when its answer
-     comes; after a save with no answer or a 5xx it stays open until a later save is confirmed or a read-back (right
-     after the failure, or after a refusal) finds this tab's own version. On a bad network that can be a while: the
-     retries come 2, 5 and 15 s after failures in a row, then every 30 s, and each change tries at once. If, inside the
-     window, another tab or the app writes the page and this tab is then closed, the keepalive overwrites that write
-     instead of being refused, and nobody sees a toast. A browser cannot tell a request that never left (a network error
-     while it says it is online) from one whose answer was lost, so a failed save of that kind opens the window even
-     when it wrote nothing. What is also still not kept: two keepalives on their way at once (hidden, back, changed,
-     hidden again, all while the first is still travelling) that reach the database in reverse order, where the older
-     one wins; and a change made after the team gave the badge (a version this tab has not seen) in a tab that closes
-     before its save, refused as this tab's own and sent again, went through: the keepalive is refused as stale. A
-     database function `save_site(content, base, pending)` that writes when the row is at `base` or holds what may have
-     landed would close all of these without the window; it needs a migration and is a follow-up.
+     connection that drops on the way back); it runs on its own, so no save waits for it (a hidden tab does, for a
+     while). When the row holds that save's content, the save landed and counts as confirmed (its version becomes
+     the base, the list above is cleared up to it, and the window below closes); when it holds another version of
+     this tab's own, the tab builds on that. Without this, a network that keeps losing write answers would refuse
+     every later save for good (each carries the version before the first landed write, and the refusals' answers
+     are lost too), where the store before the guard wrote them all.
+   - **A hidden tab keeps running, so it never needs a loose guard.** When the tab is hidden (a tab switch on a
+     computer, another app on a phone: `visibilitychange` to `hidden`), what is pending is sent as a `keepalive`
+     request, which outlives a page the phone freezes, always with the exact guard:
+     - nothing uncertain (no save of this tab's on its way, the list above empty): at once;
+     - a save on its way, or a lost answer still being read back (the list above not empty): the tab first waits
+       for that to settle, at most 3 s (`HIDDEN_WAIT`), then sends what is left with the exact guard against the
+       version it knows then, like any save. Back on screen before that, the rest goes as a normal save instead.
+       A refusal there is a normal one: the row is read again; this tab's own version is built on and sent again,
+       a page changed elsewhere wins, and the toast shows when the tab is back.
+     **The price, accepted:** a phone that freezes the page right after hiding it and ends it before that answer
+     comes loses the edits made after the save that was on its way (that save itself is kept, and so is every
+     write from elsewhere).
+   - **Only a closing tab uses the loose guard** (`pagehide`: the page is going away and cannot wait). The keepalive
+     is the last code it runs: when it is refused, nothing sends it again. A save of this tab's that lands first,
+     with a version this tab does not know yet, would make an exact keepalive fail and lose the last change. So on
+     `pagehide` the keepalive is guarded with `updated_at >= <base>` instead of `=` exactly while one of this
+     tab's saves is on its way, or while the list above is not empty; otherwise it is exact too. Either order then
+     keeps the last change: the save lands first and the keepalive follows, or the keepalive lands first and the
+     save (still guarded exactly) changes nothing. When both land in a page that stays (a page kept in the
+     back/forward cache), their answers may come back in either order; writes are numbered as they are sent, and
+     an older one's late answer never moves the base back.
+   - **The real window, and its price** (taken on purpose). It opens only when a tab is closed (`pagehide`) while a
+     save of its is on its way, or while the list above is not empty (a save with no answer or a 5xx, until a later
+     save is confirmed or a read-back finds this tab's own version; on a bad network that can be a while: the
+     retries come 2, 5 and 15 s after failures in a row, then every 30 s). Then the keepalive overwrites **any write
+     from elsewhere since this tab last read or saved** (another tab, the app), instead of being refused, and the
+     closing tab sees nothing. The other tab learns of it only on its next save: that save is refused, it shows the
+     toast and the closing tab's page, and that change is dropped. A browser cannot tell a request that never left
+     (a network error while it says it is online) from one whose answer was lost, so a failed save of that kind
+     opens the window even when it wrote nothing. What is also still not kept: a change made after the team gave the
+     badge (a version this tab has not seen) in a tab that closes before its save, refused as this tab's own and
+     sent again, went through: the keepalive is refused as stale. A database function `save_site(content, base,
+     pending)` that writes when the row is at `base` or holds what may have landed would close both without the
+     window; it needs a migration and is a follow-up.
    - A keepalive that fails while the tab is still there (a phone back from another app) is retried like any
      failed save.
    - Signing out (Settings' "Abmelden" too), the data export and the deletion first save until nothing waits, a
@@ -179,9 +193,12 @@ the project and contact rules, under 1 MB per row: 422 `pageTooLarge`).
   writes both.
 
 **What a browser user notices.** Nothing, in one tab: rapid edits, slow networks, lost answers, a stretch offline, a
-reload, an address change or the team's badge never conflict and never lose a change (the save state shows "error"
-until the network is back). With two tabs (or the app) changing the page, the tab that saves later shows the newer
-page and the toast instead of overwriting it.
+reload, hiding and showing the tab, an address change or the team's badge never conflict and never lose a change (the
+save state shows "error" until the network is back). With two tabs (or the app) changing the page, the tab that saves
+later shows the newer page and the toast instead of overwriting it, also when it is hidden while its save is on its
+way. The one exception is the window above: a tab **closed** (`pagehide`) while a save of its is on its way, or while
+an answer it lost is not yet resolved, overwrites any write from elsewhere since it last read or saved; the other tab
+learns of it only on its next save (the toast, and that change is dropped).
 
 **Consequences.**
 

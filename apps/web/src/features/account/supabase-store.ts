@@ -50,6 +50,11 @@ const SAVE_DELAY = 400;
 /** Requests with `keepalive` (the only kind that survives closing the tab) may carry at most 64 KB. */
 const KEEPALIVE_LIMIT = 60_000;
 const RETRY_DELAYS = [2_000, 5_000, 15_000, 30_000];
+/**
+ * How long a hidden tab waits for a save on its way, or the read-back of one whose answer was lost,
+ * before it sends what is left anyway (with the exact guard): a phone may freeze the page soon after.
+ */
+export const HIDDEN_WAIT = 3_000;
 
 const AUTH_ERRORS = new Set<string>(["invalidUsername", "reservedUsername", "usernameTaken"]);
 
@@ -196,6 +201,10 @@ export class SupabaseAccountStore implements AccountStore {
    * tab's own version and a replaced page clear it.
    */
   private readonly landed = new Map<string, number>();
+  /** Read-backs of saves whose answer was lost, still running (a hidden tab waits for them). */
+  private readonly reading = new Set<Promise<void>>();
+  /** A hidden tab waiting for what is uncertain before it sends the rest (`saveWhenHidden`). */
+  private hiddenWait: Promise<void> | null = null;
   private rebases = 0;
   /**
    * Writes are numbered as they are sent. Two of them can both land (a save on its way, then the
@@ -251,11 +260,12 @@ export class SupabaseAccountStore implements AccountStore {
         if (this.loadedFor !== session.user.id) void this.load(session);
       }, 0);
     });
-    // Save what is pending when the tab goes away (closing, reloading, switching apps on a phone).
+    // Save what is pending when the tab is hidden (another tab, another app on a phone: the page keeps
+    // running) or goes away (closing, reloading: no code runs after this).
     window.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") this.saveOnExit();
+      if (document.visibilityState === "hidden") this.saveWhenHidden();
     });
-    window.addEventListener("pagehide", () => this.saveOnExit());
+    window.addEventListener("pagehide", () => this.saveOnExit(true));
   }
 
   private async load(session: Session): Promise<void> {
@@ -429,21 +439,82 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   /**
-   * The page is going away: send what is pending as a `keepalive` request, which the browser
-   * completes even after the tab is gone (a normal request would be cancelled with the page). It
-   * carries the save guard like every save; when the tab comes back, its answer is the new version.
+   * Something this tab sent may have reached the database without the tab knowing its version yet: a
+   * save still on its way, or one since the last confirmed version whose answer never came (`landed`).
+   */
+  private uncertain(): boolean {
+    return this.sending.size > 0 || this.landed.size > 0;
+  }
+
+  /**
+   * The tab is hidden (a tab switch on a computer, another app on a phone). The page keeps running, so
+   * it never needs the loose guard of a closing tab (`saveOnExit`):
+   * - nothing uncertain: what is pending goes at once, as a keepalive with the exact guard;
+   * - a save on its way, or a lost answer still being read back: the tab waits for that to settle (at
+   *   most `HIDDEN_WAIT`), then sends what is left with the exact guard against the version it knows
+   *   then, like any save. A refusal is a normal one: the row is read again, a page changed elsewhere
+   *   wins and the toast shows when the tab is back.
+   * The price (ADR 0088): a phone that freezes the page and ends it before that answer comes loses the
+   * edits made after the save that was on its way (that save itself is kept).
+   */
+  private saveWhenHidden() {
+    // The editor's change from the last moment: its own listener may run after this one.
+    handOverPendingEdits();
+    if (!this.dirty || this.snapshot.status !== "signedIn") return;
+    if (!this.uncertain()) {
+      this.saveOnExit(false);
+      return;
+    }
+    if (this.hiddenWait) return;
+    // Nothing goes out meanwhile; a save that lands or a refusal read back sets the version to build on.
+    if (this.saveTimer !== null) {
+      window.clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+    const waiting = this.settled(HIDDEN_WAIT).then(() => {
+      this.hiddenWait = null;
+      // Still hidden: as a keepalive, which outlives a page the phone freezes. Back on screen: the
+      // normal save (it waits for one still on its way).
+      if (document.visibilityState === "hidden") this.saveOnExit(false);
+      else if (this.dirty && this.snapshot.status === "signedIn") this.schedule(0);
+    });
+    this.hiddenWait = waiting;
+  }
+
+  /** Resolves once no save is on its way and no read-back runs, or after `limit` ms. */
+  private async settled(limit: number): Promise<void> {
+    let timer = 0;
+    const timeout = new Promise<"over">((resolve) => {
+      timer = window.setTimeout(() => {
+        resolve("over");
+      }, limit);
+    });
+    // A save or read-back that ends may start the next (a rebase sends again): wait for those too.
+    while (this.saving || this.reading.size > 0) {
+      const outcome = await Promise.race([Promise.allSettled([this.saving, ...this.reading]).then(() => "settled" as const), timeout]);
+      if (outcome === "over") break;
+    }
+    window.clearTimeout(timer);
+  }
+
+  /**
+   * Sends what is pending as a `keepalive` request, which the browser completes even after the tab is
+   * gone (a normal request would be cancelled with the page). It carries the save guard like every
+   * save; when the tab is still there, its answer is the new version.
    *
-   * A closed tab runs no more code, so a refused keepalive is never sent again. Its guard therefore
-   * depends on what may have reached the database without this tab knowing its version yet:
+   * `closing` (`pagehide`: the page is going away and cannot wait). A closed tab runs no more code,
+   * so a refused keepalive is never sent again. Its guard therefore depends on what may have reached
+   * the database without this tab knowing its version yet (`uncertain`):
    * - nothing: `updated_at = base`, the exact guard of every save;
    * - a save still on its way, or one since the last confirmed version that may have landed (`landed`:
    *   no answer at all or a server error, while the browser was online): `updated_at >= base`. That
    *   save carries the exact guard and lands first in the normal order, so an exact keepalive would
    *   always be refused and the last change lost. The other order is safe too: the save, landing
-   *   second, no longer finds `base` and changes nothing. The price (ADR 0088): in that
-   *   moment a write from elsewhere after `base` is overwritten instead of refused.
+   *   second, no longer finds `base` and changes nothing. The price (ADR 0088): any write from
+   *   elsewhere since this tab last read or saved is overwritten instead of refused.
+   * Not closing (a hidden tab, `saveWhenHidden`): always the exact guard.
    */
-  private saveOnExit() {
+  private saveOnExit(closing: boolean) {
     // The editor's change from the last moment: its own listener may run after this one (`pagehide`).
     handOverPendingEdits();
     const snapshot = this.snapshot;
@@ -461,8 +532,8 @@ export class SupabaseAccountStore implements AccountStore {
     this.dirty = false;
     const id = snapshot.account.id;
     const base = this.base;
-    const landing = this.sending.size > 0 || this.landed.size > 0;
-    const guard = base === null ? "" : `&updated_at=${landing ? "gte" : "eq"}.${encodeURIComponent(base)}`;
+    const loose = closing && this.uncertain();
+    const guard = base === null ? "" : `&updated_at=${loose ? "gte" : "eq"}.${encodeURIComponent(base)}`;
     const write = (this.sent += 1);
     const sentOffline = offline();
     this.sending.add(content);
@@ -610,8 +681,9 @@ export class SupabaseAccountStore implements AccountStore {
         }
         this.unconfirm(content, write, sentOffline, status);
         this.retry(now);
-        // Not awaited: offline, the read is retried for seconds, and no save waits for it.
-        if (mayHaveLanded(sentOffline, status)) void this.recheck(id, base, content, write);
+        // Not awaited: offline, the read is retried for seconds, and no save waits for it (a hidden
+        // tab does, for a while: `saveWhenHidden`).
+        if (mayHaveLanded(sentOffline, status)) this.readBack(this.recheck(id, base, content, write));
         return;
       }
       if (!data) {
@@ -670,6 +742,13 @@ export class SupabaseAccountStore implements AccountStore {
     // Whether anything waits is what the page here holds beyond that version (the failed save set it).
     this.dirty = false;
     this.rebaseOwn(now, row, latest, key);
+  }
+
+  /** Keeps a running read-back in `reading` until it ends. */
+  private readBack(work: Promise<void>) {
+    const running = work.catch(() => undefined);
+    this.reading.add(running);
+    void running.then(() => this.reading.delete(running));
   }
 
   /** A failed save is tried again, each time a little later (the next change tries at once). */

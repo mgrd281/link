@@ -12,7 +12,7 @@ import type { Site } from "./types";
 
 vi.mock("@/features/app/media-upload", () => ({ uploadDataUrl: () => Promise.reject(new Error("no uploads in this test")) }));
 
-const { SupabaseAccountStore } = await import("./supabase-store");
+const { HIDDEN_WAIT, SupabaseAccountStore } = await import("./supabase-store");
 const { registerPendingEdits } = await import("./pending-edits");
 
 type Row = Record<string, unknown> & { profile_id: string; page: Record<string, unknown>; updated_at: string };
@@ -37,6 +37,8 @@ class FakeDb {
   failReads: boolean | (() => boolean) = false;
   /** Reads never answer (offline, PostgREST's client retries a read for seconds). */
   hangReads = false;
+  /** Reads answer this many ms late, with the row as it is then (a slow connection). */
+  readDelay = 0;
   /** The session ended (signed out): row-level security lets no write through any more. */
   signedOut = false;
   /** Holds writes: "answer" applies them at once but holds the answer, "apply" holds both until `release()`. */
@@ -120,6 +122,7 @@ class FakeDb {
         },
         maybeSingle: () => {
           if (!values && this.hangReads) return new Promise(() => undefined);
+          if (!values && this.readDelay > 0) return new Promise((resolve) => setTimeout(() => resolve(run()), this.readDelay));
           if (!values || !this.hold) return Promise.resolve(run());
           if (this.hold === "answer") {
             const answer = run();
@@ -410,35 +413,171 @@ describe("closing the tab: the keepalive save is the last code that runs", () =>
   });
 });
 
-describe("hidden while a save is on its way, then back (a phone switching apps)", () => {
-  it("the keepalive's answer comes before the late answer of the save that landed first: the base stays the newer one", async () => {
+describe("hidden, not closed (a tab switch, a phone switching apps): never the loose guard", () => {
+  /**
+   * The keepalive PATCH as PostgREST runs it, `eq.` or `gte.`, answered to a tab that is still there:
+   * the new version, or no row when the guard refused it. `guards` records each guard's operator.
+   */
+  const alive = (db: FakeDb) => {
+    const guards: string[] = [];
+    vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+      const guard = new URL(url, "http://localhost").searchParams.get("updated_at") ?? "";
+      const [operator = "", version = ""] = guard.split(/\.(.*)/s);
+      guards.push(operator);
+      const matches = guard === "" || (operator === "eq" ? db.row.updated_at === version : operator === "gte" && db.row.updated_at >= version);
+      if (matches) db.write(JSON.parse(init.body as string) as Record<string, unknown>);
+      return Promise.resolve(new Response(JSON.stringify(matches ? [{ updated_at: db.row.updated_at }] : []), { status: 200 }));
+    });
+    return guards;
+  };
+  /** Hidden, and it stays hidden until `show()`. */
+  const hide = () => {
+    vi.stubGlobal("document", { visibilityState: "hidden" });
+    listeners.get("visibilitychange")?.();
+  };
+  const show = () => {
+    vi.stubGlobal("document", { visibilityState: "visible" });
+    listeners.get("visibilitychange")?.();
+  };
+
+  it("hidden while a save is on its way: nothing goes until its answer, then the rest with the exact guard on the version it answered", async () => {
     const db = new FakeDb();
     const store = await signedIn(db);
-    vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
-      const version = new URL(url, "http://localhost").searchParams.get("updated_at")?.replace(/^gte\./, "") ?? "";
-      if (db.row.updated_at < version) return Promise.resolve(new Response("[]", { status: 200 }));
-      db.write(JSON.parse(init.body as string) as Record<string, unknown>);
-      return Promise.resolve(new Response(JSON.stringify([{ updated_at: db.row.updated_at }]), { status: 200 }));
-    });
+    const guards = alive(db);
     db.hold = "answer";
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
     addLink(store, "d");
-    vi.stubGlobal("document", { visibilityState: "hidden" });
-    listeners.get("visibilitychange")?.();
-    await vi.advanceTimersByTimeAsync(0);
-    const newest = db.row.updated_at;
-    expect(snapshotOf(store).baseUpdatedAt).toBe(newest);
-    // Back on screen; the first save's answer (an older version) arrives only now.
-    vi.stubGlobal("document", { visibilityState: "visible" });
+    hide();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(guards).toEqual([]);
+    const landed = db.row.updated_at;
     db.release();
     await vi.advanceTimersByTimeAsync(0);
-    expect(snapshotOf(store).baseUpdatedAt).toBe(newest);
+    expect(guards).toEqual(["eq"]);
+    expect(db.writes).toHaveLength(1);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(snapshotOf(store).baseUpdatedAt).toBe(db.row.updated_at);
+    expect(db.row.updated_at > landed).toBe(true);
+    show();
+    addLink(store, "e");
+    await vi.advanceTimersByTimeAsync(500);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d", "e"]);
+    expect(snapshotOf(store).conflicts).toBe(0);
+  });
+
+  it("two tabs: B (stale) is hidden while its save is on its way; A's change is kept and B shows the newer page with the toast", async () => {
+    // The reviewer's "window" (N12): before, B's hidden tab sent `updated_at >= base` at once, which
+    // overwrote A's newer page when B's own save was refused.
+    const db = new FakeDb();
+    const tabA = await signedIn(db);
+    const tabB = await signedIn(db);
+    const guards = alive(db);
+    addLink(tabA, "fromA");
+    await vi.advanceTimersByTimeAsync(500);
+    expect(db.blocks()).toEqual(["a", "b", "fromA"]);
+    db.hold = "apply";
+    addLink(tabB, "fromB1");
+    await vi.advanceTimersByTimeAsync(450);
+    addLink(tabB, "fromB2");
+    hide();
+    await vi.advanceTimersByTimeAsync(1_000);
+    db.release();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(guards).not.toContain("gte");
+    expect(db.blocks()).toEqual(["a", "b", "fromA"]);
+    expect(ids(tabA)).toEqual(["a", "b", "fromA"]);
+    // Back on screen, B shows the newest page and has counted the conflict (its toast).
+    show();
+    expect(ids(tabB)).toEqual(["a", "b", "fromA"]);
+    expect(snapshotOf(tabB).conflicts).toBe(1);
+    expect(snapshotOf(tabA).conflicts).toBe(0);
+  });
+
+  it("hidden while a lost answer is read back: it waits for the read-back, then the exact guard on the version it found", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = alive(db);
+    db.loseAnswers = true;
+    db.readDelay = 1_000;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(450);
+    db.loseAnswers = false;
+    addLink(store, "d");
+    hide();
+    await vi.advanceTimersByTimeAsync(900);
+    expect(guards).toEqual([]);
+    db.readDelay = 0;
+    await vi.advanceTimersByTimeAsync(200);
+    expect(guards).toEqual(["eq"]);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(snapshotOf(store).sync).toBe("saved");
+    expect(snapshotOf(store).conflicts).toBe(0);
+  });
+
+  it(`a slow answer: after ${String(HIDDEN_WAIT)} ms the rest goes with the exact guard; refused as this tab's own, it goes again after that answer`, async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = alive(db);
+    db.hold = "answer";
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    addLink(store, "d");
+    hide();
+    await vi.advanceTimersByTimeAsync(HIDDEN_WAIT - 10);
+    expect(guards).toEqual([]);
+    await vi.advanceTimersByTimeAsync(10);
+    // Exact: c (this tab's own, still without an answer) is in the row, so it is refused, never a conflict.
+    expect(guards).toEqual(["eq"]);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(db.blocks()).toEqual(["a", "b", "c"]);
+    expect(snapshotOf(store).conflicts).toBe(0);
+    // c's answer comes at last: d goes as a normal save on its version.
+    db.release();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(snapshotOf(store).baseUpdatedAt).toBe(db.row.updated_at);
+    show();
     addLink(store, "e");
     await vi.advanceTimersByTimeAsync(500);
     expect(db.blocks()).toEqual(["a", "b", "c", "d", "e"]);
     expect(snapshotOf(store).conflicts).toBe(0);
     expect(snapshotOf(store).revision).toBe(0);
+  });
+
+  it("closed while it waits (pagehide right after hidden, as a closing tab does): the keepalive goes at once, with the loose guard", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = alive(db);
+    db.hold = "answer";
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    addLink(store, "d");
+    hide();
+    listeners.get("pagehide")?.();
+    expect(guards).toEqual(["gte"]);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    // Nothing more is sent when the wait ends.
+    await vi.advanceTimersByTimeAsync(HIDDEN_WAIT + 100);
+    expect(guards).toEqual(["gte"]);
+  });
+
+  it("back on screen before the answer: the rest goes as a normal save once that answer comes", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = alive(db);
+    db.hold = "answer";
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    addLink(store, "d");
+    hide();
+    await vi.advanceTimersByTimeAsync(300);
+    show();
+    db.release();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(guards).toEqual([]);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(snapshotOf(store).sync).toBe("saved");
   });
 });
 
@@ -521,6 +660,13 @@ describe("flush() and reload() for the iPhone app", () => {
     expect(ids(store)).toEqual(["a", "b", "c"]);
   });
 });
+
+/** The tab is closed: hidden, then `pagehide` (the page is going away; nothing of it runs after this). */
+const closeTab = () => {
+  vi.stubGlobal("document", { visibilityState: "hidden" });
+  listeners.get("visibilitychange")?.();
+  listeners.get("pagehide")?.();
+};
 
 describe("a bad network: one tab never loses a change and never sees the toast", () => {
   /** The keepalive PATCH as PostgREST applies it (`eq.` or `gte.`); the closed tab reads no answer. */
@@ -691,9 +837,28 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     await vi.advanceTimersByTimeAsync(500);
     expect(snapshotOf(store).sync).toBe("error");
     db.failWrites = false;
+    closeTab();
+    expect(sent[0]?.url).toContain(`updated_at=${operator}.`);
+    expect(db.blocks()).toEqual(["a", "b", "c"]);
+  });
+
+  it.each([
+    { label: "no answer at all (status 0)", status: 0 },
+    { label: "a server error (503)", status: 503 },
+  ])("a failed save, then the tab is only hidden: $label → it waits for the read-back, then the exact guard", async ({ status }) => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepalive(db);
+    db.failWrites = true;
+    db.failStatus = status;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    db.failWrites = false;
+    // The read-back (nothing landed) ends, and the page is still there: never the loose guard.
     vi.stubGlobal("document", { visibilityState: "hidden" });
     listeners.get("visibilitychange")?.();
-    expect(sent[0]?.url).toContain(`updated_at=${operator}.`);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(sent.map((request) => new URL(request.url, "http://localhost").searchParams.get("updated_at")?.split(".")[0])).toEqual(["eq"]);
     expect(db.blocks()).toEqual(["a", "b", "c"]);
   });
 
@@ -707,8 +872,7 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     await vi.advanceTimersByTimeAsync(500);
     db.failWrites = false;
     db.elsewhere([link("a"), link("b"), link("fromA")]);
-    vi.stubGlobal("document", { visibilityState: "hidden" });
-    listeners.get("visibilitychange")?.();
+    closeTab();
     expect(db.blocks()).toEqual(["a", "b", "fromA"]);
   });
 });
