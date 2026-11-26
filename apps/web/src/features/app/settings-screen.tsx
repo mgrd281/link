@@ -265,7 +265,8 @@ export function SettingsScreen() {
   const router = useRouter();
   const { account, site, doc, dispatch } = useSite();
   const onTeam = useOnTeam(account.email);
-  // The team area stays on the website, and signing out is the app's own: the iPhone app shows neither.
+  // The team area stays on the website, and signing out, the app's language and its appearance are the
+  // app's own: the iPhone app shows none of them.
   const app = useAppMode();
   const [profileOpen, setProfileOpen] = useState(false);
   const openProfile = useCallback(() => setProfileOpen(true), []);
@@ -334,24 +335,29 @@ export function SettingsScreen() {
           <ListRow icon={Gift} title={tInvite("title")} href={INVITE_HREF} className="lg:hidden" />
         </ListGroup>
 
-        <ListGroup title={t("groups.app")} titleId="app" footer={t("footers.app")}>
-          <SegmentedRow icon={SunMoon} label={t("theme")}>
-            <ThemeSwitch
-              withSystem
-              size="md"
-              label={t("theme")}
-              className="pointer-coarse:h-control-lg w-full *:flex-1 sm:w-auto sm:*:flex-none"
+        {/* Not in the iPhone app: the app sets its language (and the account's, profiles.locale) and its
+            appearance natively, and is the app itself (no install row): a web choice "in this browser"
+            would disagree with the app's. The page's language, for its visitors, stays above. */}
+        {app ? null : (
+          <ListGroup title={t("groups.app")} titleId="app" footer={t("footers.app")}>
+            <SegmentedRow icon={SunMoon} label={t("theme")}>
+              <ThemeSwitch
+                withSystem
+                size="md"
+                label={t("theme")}
+                className="pointer-coarse:h-control-lg w-full *:flex-1 sm:w-auto sm:*:flex-none"
+              />
+            </SegmentedRow>
+            <PickerRow
+              icon={Languages}
+              label={t("rows.appLanguage")}
+              value={locale}
+              options={LANGUAGES}
+              onValue={(next) => router.replace(pathname, { locale: next })}
             />
-          </SegmentedRow>
-          <PickerRow
-            icon={Languages}
-            label={t("rows.appLanguage")}
-            value={locale}
-            options={LANGUAGES}
-            onValue={(next) => router.replace(pathname, { locale: next })}
-          />
-          <InstallRow />
-        </ListGroup>
+            <InstallRow />
+          </ListGroup>
+        )}
 
         <DataGroup />
 
