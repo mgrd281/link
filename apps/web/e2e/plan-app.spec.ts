@@ -426,13 +426,16 @@ type PlanStatus = keyof typeof de.app.settings.plan.status;
  * Accounts with Pro from each source, and the one state badge the app may show (null: none). PRO_AVAILABLE
  * is false, so the invite reward is "reserved".
  */
-const APP_PLANS: { name: string; rows: Parameters<typeof planRows>[1]; badge: PlanStatus | null }[] = [
+const APP_PLANS: { name: string; rows: Parameters<typeof planRows>[1]; badge: PlanStatus | null; renews?: boolean }[] = [
   { name: "the invite reward (reserved)", rows: { rewards: [{ kind: "pro_for_life", revoked_at: null }] }, badge: "reserved" },
   { name: "Pro given by the team", rows: { entitlements: [teamPro] }, badge: "active" },
-  { name: "Pro through Stripe", rows: { entitlements: [stripePro], invoices: proInvoices }, badge: "active" },
+  { name: "Pro through Stripe", rows: { entitlements: [stripePro], invoices: proInvoices }, badge: "active", renews: true },
   { name: "Pro through Stripe, canceled", rows: { entitlements: [{ ...stripePro, cancel_at_period_end: true }], invoices: proInvoices }, badge: "ending" },
-  { name: "Pro through Stripe, past due", rows: { entitlements: [{ ...stripePro, status: "past_due" }], invoices: proInvoices }, badge: null },
+  // No badge and no "renews on" either: without its state, the date would read as a healthy plan.
+  { name: "Pro through Stripe, past due", rows: { entitlements: [{ ...stripePro, status: "past_due" }], invoices: proInvoices }, badge: null, renews: false },
 ];
+/** "Renews on {date}" as the pane writes it, without the date. */
+const renewsWords = (locale: "de" | "ar") => MESSAGES[locale].app.settings.plan.renews.replace(/\{[^}]*\}/g, "").trim();
 
 test.describe("the plan pane in the iPhone app (stub)", () => {
   test.skip(!stubEnabled, "Needs the stub build and the Supabase stand-in (E2E_STUB=1).");
@@ -465,10 +468,45 @@ test.describe("the plan pane in the iPhone app (stub)", () => {
         for (const status of Object.keys(m.status) as PlanStatus[]) {
           await expect(page.getByText(m.status[status], { exact: true }), status).toHaveCount(status === plan.badge ? 1 : 0);
         }
+        if (plan.renews !== undefined) expect(text.includes(renewsWords(locale)), "renews on").toBe(plan.renews);
         expect(await axe(page)).toEqual([]);
         await shot(page, `plan-app-${locale}-${plan.name.replace(/[^a-z]+/gi, "-").toLowerCase()}`, "phone");
       });
     }
+  }
+
+  for (const locale of ["de", "ar"] as const) {
+    test(`${locale}: Settings names no plan in its plan row for a Pro account; a browser names it`, async ({ page, context, browser, baseURL }, info) => {
+      const settings = MESSAGES[locale].app.settings;
+      const who = await stubAccount(locale);
+      const rows = { entitlements: [stripePro], invoices: proInvoices };
+      // A browser first (not the app's user agent, no app script): the row says "Linkyo Pro" once the plan is read.
+      const { viewport, isMobile, hasTouch } = info.project.use;
+      const plain = await browser.newContext({ ...(baseURL ? { baseURL } : {}), ...(viewport ? { viewport } : {}), ...(isMobile ? { isMobile } : {}), ...(hasTouch ? { hasTouch } : {}) });
+      const web = await plain.newPage();
+      await stubSignIn(plain, baseURL, who);
+      await planRows(web, rows);
+      await web.goto(`/${locale}/app/settings`);
+      await expect(web.locator(`a[href$="/${locale}/app/settings/plan"]`).getByText("Linkyo Pro")).toBeVisible();
+      await plain.close();
+
+      // The app: the same account, the same rows read; the row reads only "Plan".
+      await page.addInitScript(APP_SCRIPT);
+      await stubSignIn(context, baseURL, who);
+      await planRows(page, rows);
+      const read = page.waitForResponse((response) => response.url().includes("/rest/v1/entitlements"));
+      await page.goto(`/${locale}/app/settings`);
+      await read;
+      // The Settings row (the rail's own link to the pane is hidden with the rail in the app).
+      const row = page.locator(`a[href$="/${locale}/app/settings/plan"]`).filter({ visible: true });
+      await expect(row).toBeVisible();
+      await expect(row).toContainText(settings.panes.plan);
+      await page.waitForTimeout(500);
+      const text = await page.locator("body").innerText();
+      expect(text.split("\n").filter((line) => /\bPro\b/.test(line)), "Pro").toEqual([]);
+      expect(await axe(page)).toEqual([]);
+      await shot(page, `plan-app-${locale}-settings-pro`, "phone");
+    });
   }
 
   test("a browser keeps the whole pane: the past-due badge and note, the source, the feature list and the payment group", async ({ browser, baseURL }, info) => {

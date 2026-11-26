@@ -192,8 +192,9 @@ const bdi = { bdi: (chunks: ReactNode) => <bdi>{chunks}</bdi> };
  * mode, ADR 0087) only the name, the state and the dates: the account's own plan, bought elsewhere, may
  * be named (App Store 3.1.3(b)), but nothing about where it comes from (no price, no Stripe, no invite
  * reward), no word about Pro coming and no nudge to pay: no past-due badge or note (a past-due account
- * shows no badge rather than a false "Aktiv"), since the app sells nothing and points to no purchase
- * (3.1.1, 3.1.3(f)). The states that ask for nothing stay: Aktiv, Gekündigt, Reserviert.
+ * shows no badge rather than a false "Aktiv", and no renewal date, which would say the same in other
+ * words: only the plan's name), since the app sells nothing and points to no purchase (3.1.1,
+ * 3.1.3(f)). The states that ask for nothing stay: Aktiv, Gekündigt, Reserviert.
  */
 function PlanGroup({ view }: { view: PlanView }) {
   const t = useTranslations("app.settings.plan");
@@ -233,7 +234,8 @@ function PlanGroup({ view }: { view: PlanView }) {
         subtitleWrap
         value={badge}
       />
-      {view.renewsAt ? <ListRow icon={CalendarClock} title={t("renews", { date: day(view.renewsAt) })} /> : null}
+      {/* "Renews on" for a past-due account, with its badge and note gone, would read as a healthy plan: not in the app. */}
+      {view.renewsAt && !(app && view.pastDue) ? <ListRow icon={CalendarClock} title={t("renews", { date: day(view.renewsAt) })} /> : null}
       {view.endsAt ? <ListRow icon={CalendarClock} title={t(view.trial ? "trial" : "ends", { date: day(view.endsAt) })} /> : null}
     </ListGroup>
   );
@@ -431,16 +433,21 @@ export function PlanScreen() {
   );
 }
 
-/** The Settings row that opens the pane, with the plan's name once it is known. */
+/**
+ * The Settings row that opens the pane, with the plan's name once it is known. In the iPhone app the
+ * row names no plan: the plan's name ("Linkyo Pro") may stand only on the pane itself (ADR 0087
+ * decision 9), so the row reads "Plan" and leads there.
+ */
 export function PlanRow({ icon }: { icon: LucideIcon }) {
   const t = useTranslations("app.settings");
   const { account } = useSite();
+  const app = useAppMode();
   const { state } = usePlan(account.id);
   return (
     <ListRow
       icon={icon}
       title={t("panes.plan")}
-      value={state.status === "ready" ? t.rich(`plan.name.${state.view.plan}`, bdi) : undefined}
+      value={state.status === "ready" && !app ? t.rich(`plan.name.${state.view.plan}`, bdi) : undefined}
       href="/app/settings/plan"
     />
   );

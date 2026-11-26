@@ -5,6 +5,7 @@
  * past-due badge or note (a payment nudge) and every payment row are not shown. The AI drafts left stay:
  * they name no plan, price or upgrade. A browser keeps the whole pane.
  */
+import { Check } from "lucide-react";
 import { NextIntlClientProvider } from "next-intl";
 import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -15,11 +16,13 @@ import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
-import { FREE_PLAN, PlanGroups, type PlanView } from "./plan-screen";
+import { FREE_PLAN, PlanGroups, PlanRow, type PlanView } from "./plan-screen";
 
 const mode = vi.hoisted(() => ({ app: false }));
 
 vi.mock("@/features/app-mode/use-app-mode", () => ({ useAppMode: () => mode.app }));
+// The Settings row reads the signed-in account (a demo build: every account is Free).
+vi.mock("../site-context", () => ({ useSite: () => ({ account: { id: "a1" } }) }));
 // Node has no router: links render plain.
 vi.mock("@/i18n/navigation", () => ({
   Link: ({ href, children }: { href: string; children?: ReactNode }) => createElement("a", { href }, children),
@@ -105,13 +108,34 @@ describe("the plan pane in the iPhone app", () => {
       for (const badge of Object.values(m.status)) expect(pastDue, badge).not.toContain(badge);
     });
 
-    it(`${locale}: a browser keeps the source, the feature list and the past-due badge and note`, () => {
+    it(`${locale}: a past-due account shows no renewal date either ("renews on" would read as a healthy plan); a running one keeps it`, () => {
+      const renews = plain(m.renews).trim();
+      expect(render(locale, true, VIEWS.pastDue)).not.toContain(renews);
+      expect(render(locale, true, VIEWS.stripe)).toContain(renews);
+    });
+
+    it(`${locale}: a browser keeps the source, the feature list, the past-due badge and note and the renewal date`, () => {
       const reward = render(locale, false, VIEWS.reward);
       expect(reward).toContain(plain(m.source.reward).trim());
       expect(reward).toContain(m.groups.includes);
       const pastDue = render(locale, false, VIEWS.pastDue);
       expect(pastDue).toContain(m.status.pastDue);
       expect(pastDue).toContain(plain(m.pastDue).slice(0, 20));
+      expect(pastDue).toContain(plain(m.renews).trim());
+    });
+
+    it(`${locale}: the Settings row names no plan in the app (the name stands only on the pane); a browser names it`, () => {
+      const row = (app: boolean) => {
+        mode.app = app;
+        const markup = renderToStaticMarkup(
+          createElement(NextIntlClientProvider, { locale, messages: CATALOGUES[locale], timeZone: "Europe/Berlin", children: createElement(PlanRow, { icon: Check }) }),
+        );
+        return textOf(markup, "");
+      };
+      expect(row(false)).toContain(plain(m.name.free));
+      const inApp = row(true);
+      expect(inApp).toContain(CATALOGUES[locale].app.settings.panes.plan);
+      expect(inApp).not.toContain(plain(m.name.free));
     });
   }
 });
