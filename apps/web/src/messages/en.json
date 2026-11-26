@@ -3262,7 +3262,7 @@
       "prompt": {
         "body": "Your browser can install Linkyo right away.",
         "button": "Install",
-        "later": "You can also install Linkyo later: choose “Install app” in your browser's menu."
+        "later": "You can also install Linkyo later: look for “Install” in your browser's menu."
       },
       "ios": {
         "intro": "To put Linkyo on your Home Screen:",
@@ -3280,6 +3280,9 @@
       },
       "other": {
         "body": "Your browser doesn't offer to install Linkyo here. Chrome, Edge and Safari can install it as an app."
+      },
+      "chromium": {
+        "body": "If Linkyo is already installed, open it from its icon. If not, your browser's menu offers to install it, except in a private window."
       },
       "hint": {
         "title": "Linkyo as an app",

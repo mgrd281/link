@@ -2,7 +2,7 @@
 
 import { icons } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { ListRow } from "../list";
 import { InstallSheet } from "./install-sheet";
@@ -15,7 +15,7 @@ export function InstallRow() {
   const installed = useInstallVariant() === "installed";
   return (
     <>
-      <ListRow icon={icons.install} title={t("row")} value={installed ? t("installedValue") : undefined} onClick={() => setOpen(true)} />
+      <ListRow icon={icons.install} title={t.rich("row", { bdi: (chunks: ReactNode) => <bdi>{chunks}</bdi> })} value={installed ? t("installedValue") : undefined} onClick={() => setOpen(true)} />
       <InstallSheet open={open} onOpenChange={setOpen} />
     </>
   );

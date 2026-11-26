@@ -2,7 +2,7 @@
 
 import { Button, IconButton, icons } from "@linkyo/ui";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { Tile } from "../list";
 import { installApp, useInstallVariant } from "./install-store";
@@ -56,14 +56,15 @@ export function InstallHint() {
       <Tile icon={icons.install} />
       <div className="grid min-w-0 flex-1 gap-1">
         <h2 id={titleId} className="text-body font-semibold">
-          {t("title")}
+          {t.rich("title", { bdi: (chunks: ReactNode) => <bdi>{chunks}</bdi> })}
         </h2>
         <p className="text-small font-regular text-fg-secondary">{t("body")}</p>
         <Button variant="primary" size="md" icon={icons.install} className="mt-2 justify-self-start" onClick={() => void installApp()}>
           {t("install")}
         </Button>
       </div>
-      <IconButton variant="ghost" size="sm" icon={icons.close} label={t("dismiss")} className="-me-1 -mt-1 rounded-full" onClick={() => setVisible(false)} />
+      {/* 32 px to look at; on touch screens a 48 px target (the kit's small button reaches only 36 px). */}
+      <IconButton variant="ghost" size="sm" icon={icons.close} label={t("dismiss")} className="-me-1 -mt-1 rounded-full pointer-coarse:before:-inset-2" onClick={() => setVisible(false)} />
     </section>
   );
 }

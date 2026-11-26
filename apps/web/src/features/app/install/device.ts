@@ -8,9 +8,12 @@
  * - `later`: that offer was declined in this page load; the browser's menu still has it.
  * - `ios`: iPhone and iPad (Safari, and since iOS 16.4 any browser there): Share › Add to Home Screen.
  * - `macSafari`: Safari 17 or newer on a Mac: File › Add to Dock.
- * - `other`: none of these (Firefox on a computer, an older Safari, a browser that has not offered it).
+ * - `chromium`: Chrome, Edge, Samsung Internet or Opera that has not offered it (yet). Chrome never offers
+ *   an app that is already installed, nor in a private window, and the offer can come later than the
+ *   page: if Linkyo is installed, it opens from its icon; if not, the browser's menu installs it.
+ * - `other`: none of these (Firefox on a computer, an older Safari).
  */
-export type InstallVariant = "installed" | "prompt" | "later" | "ios" | "macSafari" | "other";
+export type InstallVariant = "installed" | "prompt" | "later" | "ios" | "macSafari" | "chromium" | "other";
 
 export interface DeviceFacts {
   /** The page is shown as an installed app. */
@@ -35,11 +38,15 @@ export function isMacSafari(userAgent: string, maxTouchPoints: number): boolean 
   return Number(/Version\/(\d+)/.exec(userAgent)?.[1] ?? 0) >= 17;
 }
 
+/** A browser built on Chromium that can install a site from its menu (iPhone and iPad are checked first). */
+export const isChromium = (userAgent: string): boolean => /Chrome\/|Chromium\/|Edg\/|EdgA\/|SamsungBrowser\/|OPR\//.test(userAgent);
+
 export function installVariant(facts: DeviceFacts): InstallVariant {
   if (facts.standalone || facts.installed) return "installed";
   if (facts.canPrompt) return "prompt";
   if (facts.declined) return "later";
   if (isIos(facts.userAgent, facts.maxTouchPoints)) return "ios";
   if (isMacSafari(facts.userAgent, facts.maxTouchPoints)) return "macSafari";
+  if (isChromium(facts.userAgent)) return "chromium";
   return "other";
 }

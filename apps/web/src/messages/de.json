@@ -3262,7 +3262,7 @@
       "prompt": {
         "body": "Dein Browser kann Linkyo direkt installieren.",
         "button": "Installieren",
-        "later": "Du kannst Linkyo auch später installieren: im Menü deines Browsers unter „App installieren“."
+        "later": "Du kannst Linkyo auch später installieren: im Menü deines Browsers unter „Installieren“."
       },
       "ios": {
         "intro": "So kommt Linkyo auf deinen Home-Bildschirm:",
@@ -3280,6 +3280,9 @@
       },
       "other": {
         "body": "Dein Browser bietet hier keine Installation an. Chrome, Edge und Safari können Linkyo als App installieren."
+      },
+      "chromium": {
+        "body": "Ist Linkyo schon installiert, öffne es über sein Symbol. Sonst findest du die Installation im Menü deines Browsers, außer in einem privaten Fenster."
       },
       "hint": {
         "title": "Linkyo als App",
