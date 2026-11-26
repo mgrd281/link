@@ -1,0 +1,239 @@
+import type { Block } from "@linkyo/blocks";
+import type { Browser, Page, TestInfo } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
+
+import de from "../src/messages/de.json" with { type: "json" };
+import type { Database } from "../src/lib/supabase/database.types";
+import { createRealAccount, expect, realEnabled, seedPage, service, signIn, test, uniqueName, type RealAccount } from "./real";
+
+/**
+ * The web side of the iPhone app, against real accounts (ADR draft-app-sync): the app's session
+ * handed to its web view (/api/auth/handoff), the page operations route (/api/app/page) and the save
+ * guard that keeps a stale copy (another tab, the web view while the app wrote) from overwriting a
+ * newer page. Needs a build with Supabase settings, the local stack and the real-mode variables.
+ */
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
+// The local stack's publishable key (public by design) unless the run names another.
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
+/** The app's own device id, as its Keychain keeps it. */
+const DEVICE = "dev_0a99c0ffee12";
+const CONFLICT = de.app.sync.conflict.title;
+
+const link = (id: string, title: string): Block => ({ id, type: "link", title, url: `https://example.com/${id}`, visible: true, highlight: false });
+const BLOCKS = [link("first", "Erster Link"), link("second", "Zweiter Link"), link("third", "Dritter Link")];
+
+/** A confirmed, onboarded account with three links. */
+async function syncAccount(prefix: string): Promise<RealAccount> {
+  const { username, email } = uniqueName(prefix);
+  return createRealAccount({ email, username, locale: "de", onboarded: true, page: seedPage(username, "de", { displayName: "Mira Okafor" }, BLOCKS) });
+}
+
+/** The native app's own session: a magic-link token verified directly, as the app's sign-in answers it. */
+async function appToken(email: string): Promise<string> {
+  const { data, error } = await service().auth.admin.generateLink({ type: "magiclink", email });
+  if (error) throw new Error(error.message);
+  const anon = createClient<Database>(SUPABASE_URL, PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  const verified = await anon.auth.verifyOtp({ token_hash: data.properties.hashed_token, type: "magiclink" });
+  if (verified.error || !verified.data.session) throw new Error(verified.error?.message ?? "no session");
+  return verified.data.session.access_token;
+}
+
+async function stored(id: string): Promise<{ blocks: Block[]; updatedAt: string }> {
+  const { data, error } = await service().from("sites").select("page, updated_at").eq("profile_id", id).single();
+  if (error) throw new Error(error.message);
+  return { blocks: (data.page as { blocks: Block[] }).blocks, updatedAt: data.updated_at };
+}
+const shown = async (id: string, block: string) => (await stored(id)).blocks.find((candidate) => candidate.id === block)?.visible;
+
+/** The page editor's visibility switch of a block. */
+const visibility = (page: Page, title: string) => page.getByRole("switch", { name: de.app.editor.visible.replace("{title}", title) });
+
+/** Counts every time the conflict toast appears in this page, from its first script on. */
+async function watchConflicts(page: Page) {
+  await page.addInitScript((title: string) => {
+    const seen = window as unknown as { conflictToasts: number };
+    seen.conflictToasts = 0;
+    let showing = false;
+    // Only a toast (a list item): the page's own message catalogue also carries the words.
+    new MutationObserver(() => {
+      const now = Array.from(document.querySelectorAll("li")).some((item) => item.textContent.includes(title));
+      if (now && !showing) seen.conflictToasts += 1;
+      showing = now;
+    }).observe(document, { subtree: true, childList: true, characterData: true });
+  }, CONFLICT);
+}
+const conflictToasts = (page: Page) => page.evaluate(() => (window as unknown as { conflictToasts: number }).conflictToasts);
+
+/** A second browser for the same account, with this project's screen. */
+async function secondBrowser(browser: Browser, info: TestInfo, baseURL: string | undefined) {
+  const { viewport, userAgent, isMobile, hasTouch, deviceScaleFactor } = info.project.use;
+  const context = await browser.newContext({
+    reducedMotion: "reduce",
+    ...(baseURL ? { baseURL } : {}),
+    ...(viewport ? { viewport } : {}),
+    ...(userAgent ? { userAgent } : {}),
+    ...(isMobile ? { isMobile } : {}),
+    ...(hasTouch ? { hasTouch } : {}),
+    ...(deviceScaleFactor ? { deviceScaleFactor } : {}),
+  });
+  return { context, page: await context.newPage() };
+}
+
+test.describe("the iPhone app's web side @real", () => {
+  test.skip(!realEnabled, "Needs the local Supabase stack (E2E_SUPABASE=1).");
+  test.use({ reducedMotion: "reduce" });
+
+  test("hand-off: the app's Bearer token opens /de/app signed in in a fresh browser, logged under the app's device id @real", async ({ page, browser, baseURL }, info) => {
+    const account = await syncAccount("sync-handoff");
+    const token = await appToken(account.email);
+    const bearer = { authorization: `Bearer ${token}` };
+    expect((await page.request.post("/api/auth/handoff", { data: { deviceId: DEVICE } })).status()).toBe(401);
+    expect((await page.request.post("/api/auth/handoff", { headers: bearer, data: { deviceId: "dev_email_link" } })).status()).toBe(422);
+    const response = await page.request.post("/api/auth/handoff", { headers: bearer, data: { deviceId: DEVICE } });
+    expect(response.status()).toBe(200);
+    expect(response.headers()["cache-control"]).toBe("no-store");
+    const { url } = (await response.json()) as { url: string };
+    expect(url).toMatch(/^\/api\/auth\/confirm\?/);
+
+    // The web view: a browser that has never seen this account.
+    const web = await secondBrowser(browser, info, baseURL);
+    await web.page.goto(url);
+    await web.page.waitForURL("**/de/app");
+    await expect(web.page.locator("main")).toBeVisible();
+    expect(web.page.url()).toMatch(/\/de\/app$/);
+    expect((await web.context.cookies()).some((cookie) => cookie.name.includes("-auth-token"))).toBe(true);
+    // The security log names the app's device, so "Sign out device" ends both of its sessions.
+    const { data: rows } = await service().from("sign_ins").select("device_id, result, session_id").eq("profile_id", account.id).order("at", { ascending: false }).limit(1);
+    expect(rows?.[0]).toMatchObject({ device_id: DEVICE, result: "success" });
+    expect(rows?.[0]?.session_id).toBeTruthy();
+    // The link works once.
+    const again = await secondBrowser(browser, info, baseURL);
+    await again.page.goto(url);
+    await again.page.waitForURL("**/de/login?link=expired");
+    await Promise.all([web.context.close(), again.context.close()]);
+  });
+
+  test("hand-off: a suspended account gets no link @real", async ({ page }) => {
+    const account = await syncAccount("sync-suspended");
+    const token = await appToken(account.email);
+    const { error } = await service().from("profiles").update({ status: "suspended" }).eq("id", account.id);
+    expect(error).toBeNull();
+    const response = await page.request.post("/api/auth/handoff", { headers: { authorization: `Bearer ${token}` }, data: { deviceId: DEVICE } });
+    expect(response.status()).toBe(403);
+    expect(await response.json()).toEqual({ ok: false, error: "suspended" });
+  });
+
+  test("operations: add, move and remove change the public page at once, and a stale version is refused @real", async ({ page }) => {
+    const account = await syncAccount("sync-ops");
+    // A visitor first: the public page is now cached.
+    const before = await page.goto(`/${account.username}`);
+    expect(before?.status()).toBe(200);
+    await expect(page.getByText("Erster Link")).toBeVisible();
+
+    const token = await appToken(account.email);
+    const { updatedAt: base } = await stored(account.id);
+    const response = await page.request.post("/api/app/page", {
+      headers: { authorization: `Bearer ${token}` },
+      data: { baseUpdatedAt: base, ops: [{ op: "add", url: "https://example.org/app-sync?utm_source=app" }, { op: "move", id: "third", to: 0 }, { op: "remove", id: "first" }] },
+    });
+    expect(response.status()).toBe(200);
+    const answer = (await response.json()) as { ok: boolean; updatedAt: string; changed: string[]; added: string[] };
+    const now = await stored(account.id);
+    expect(answer).toMatchObject({ ok: true, updatedAt: now.updatedAt });
+    expect(answer.changed).toEqual([answer.added[0], "third", "first"]);
+    expect(now.blocks.map((block) => block.id)).toEqual(["third", answer.added[0], "second"]);
+    expect(now.blocks[1]).toMatchObject({ type: "card", url: "https://example.org/app-sync" });
+
+    // The visitor's next look shows the change (the route dropped the cached page).
+    const after = await page.goto(`/${account.username}`);
+    const html = (await after?.text()) ?? "";
+    expect(html).toContain("https://example.org/app-sync");
+    expect(html).not.toContain("Erster Link");
+    expect(html.indexOf("Dritter Link")).toBeGreaterThan(-1);
+    expect(html.indexOf("Dritter Link")).toBeLessThan(html.indexOf("Zweiter Link"));
+
+    // The version the app saw is gone now: nothing is written, the current one is answered.
+    const stale = await page.request.post("/api/app/page", { headers: { authorization: `Bearer ${token}` }, data: { baseUpdatedAt: base, ops: [{ op: "remove", id: "second" }] } });
+    expect(stale.status()).toBe(409);
+    expect(await stale.json()).toEqual({ ok: false, error: "conflict", updatedAt: now.updatedAt });
+    expect((await stored(account.id)).blocks).toHaveLength(3);
+  });
+
+  test("guard: of two tabs, the stale one's save is refused; it shows the toast and the newest page, the other's change stays @real", async ({ page, browser, baseURL }, info) => {
+    const account = await syncAccount("sync-tabs");
+    const tabB = await secondBrowser(browser, info, baseURL);
+    await signIn(page, account.email, "/de/app/editor");
+    await signIn(tabB.page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    await expect(visibility(tabB.page, "Erster Link")).toBeChecked();
+
+    // Tab A hides the first link, and it is saved.
+    await visibility(page, "Erster Link").click();
+    await expect.poll(() => shown(account.id, "first"), { timeout: 15_000 }).toBe(false);
+
+    // Tab B still has the version before: it hides the second link.
+    await visibility(tabB.page, "Zweiter Link").click();
+    await expect(tabB.page.getByText(CONFLICT, { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(tabB.page.getByText(de.app.sync.conflict.body, { exact: true })).toBeVisible();
+    // B now shows the newest page: A's change, not its own.
+    await expect(visibility(tabB.page, "Erster Link")).not.toBeChecked();
+    await expect(visibility(tabB.page, "Zweiter Link")).toBeChecked();
+    // The server kept A's change and never took B's.
+    expect(await shown(account.id, "first")).toBe(false);
+    expect(await shown(account.id, "second")).toBe(true);
+    // B's next change builds on the newest version; A's change is still there.
+    await visibility(tabB.page, "Dritter Link").click();
+    await expect.poll(() => shown(account.id, "third"), { timeout: 15_000 }).toBe(false);
+    expect(await shown(account.id, "first")).toBe(false);
+    await tabB.context.close();
+  });
+
+  test("guard: after the app changed the page through the route, the open tab's next save is refused the same way @real", async ({ page }) => {
+    const account = await syncAccount("sync-native");
+    await signIn(page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Zweiter Link")).toBeChecked();
+    const token = await appToken(account.email);
+    const { updatedAt } = await stored(account.id);
+    const native = await page.request.post("/api/app/page", { headers: { authorization: `Bearer ${token}` }, data: { baseUpdatedAt: updatedAt, ops: [{ op: "remove", id: "second" }] } });
+    expect(native.status()).toBe(200);
+
+    await visibility(page, "Erster Link").click();
+    await expect(page.getByText(CONFLICT, { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(visibility(page, "Zweiter Link")).toHaveCount(0);
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    const now = await stored(account.id);
+    expect(now.blocks.map((block) => [block.id, block.visible])).toEqual([
+      ["first", true],
+      ["third", true],
+    ]);
+  });
+
+  test("guard: normal editing in one tab (rapid changes, a reload, the team's badge meanwhile) never shows the toast @real", async ({ page }) => {
+    const account = await syncAccount("sync-normal");
+    await watchConflicts(page);
+    await signIn(page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    // Rapid changes, each while the one before may still be on its way.
+    await visibility(page, "Erster Link").click();
+    await visibility(page, "Zweiter Link").click();
+    await visibility(page, "Dritter Link").click();
+    await visibility(page, "Erster Link").click();
+    await expect
+      .poll(async () => (await stored(account.id)).blocks.map((block) => block.visible), { timeout: 15_000 })
+      .toEqual([true, false, false]);
+    await page.reload();
+    await expect(visibility(page, "Zweiter Link")).not.toBeChecked();
+    // The team gives the page its badge meanwhile (a new version, the same content): not a conflict.
+    await service().from("profiles").update({ verified: true }).eq("id", account.id);
+    await service().from("sites").update({ onboarded: true }).eq("profile_id", account.id);
+    await visibility(page, "Zweiter Link").click();
+    await expect.poll(() => shown(account.id, "second"), { timeout: 15_000 }).toBe(true);
+    await visibility(page, "Dritter Link").click();
+    await expect.poll(() => shown(account.id, "third"), { timeout: 15_000 }).toBe(true);
+    expect(await conflictToasts(page)).toBe(0);
+    await expect(page.getByText(CONFLICT, { exact: true })).toHaveCount(0);
+    const { blocks } = await stored(account.id);
+    expect(blocks.map((block) => block.visible)).toEqual([true, true, true]);
+  });
+});
