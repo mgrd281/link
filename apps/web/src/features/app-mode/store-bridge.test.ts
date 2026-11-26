@@ -338,6 +338,51 @@ describe("store bridge", () => {
   });
 });
 
+describe("an object the app froze or sealed (ADR 0087 asks for a plain one)", () => {
+  const locks: [string, (app: LinkyoApp) => LinkyoApp][] = [
+    ["frozen", (app) => Object.freeze(app)],
+    ["sealed", (app) => Object.seal(app)],
+    ["not extensible", (app) => Object.preventExtensions(app)],
+  ];
+  for (const [name, lock] of locks) {
+    it(`${name}: never throws; a plain copy with the app's fields takes both halves' methods`, () => {
+      const locked = lock({ platform: "ios", version: "1.0", bridge: 1 });
+      const win = webView({ linkyoApp: locked });
+      let cleanupStore = (): void => undefined;
+      let cleanupUi = (): void => undefined;
+      expect(() => {
+        cleanupStore = installStoreBridge(fakeStore());
+        cleanupUi = installOnApp({ navigate: () => true, back: () => false });
+      }).not.toThrow();
+      expect(win.linkyoApp).not.toBe(locked);
+      expect(win.linkyoApp).toMatchObject({ platform: "ios", version: "1.0", bridge: 1 });
+      expect(Object.keys(win.linkyoApp ?? {}).sort()).toEqual(["back", "bridge", "flush", "navigate", "platform", "reload", "signOut", "version"]);
+      cleanupStore();
+      cleanupUi();
+      expect(win.linkyoApp).toEqual({ platform: "ios", version: "1.0", bridge: 1 });
+    });
+  }
+
+  it("a read-only window.linkyoApp: nothing is installed, nothing throws", () => {
+    const win = webView();
+    const locked = Object.freeze({ platform: "ios", version: "1.0", bridge: 1 });
+    Object.defineProperty(win, "linkyoApp", { value: locked, writable: false, configurable: false });
+    expect(() => installStoreBridge(fakeStore())).not.toThrow();
+    expect(() => installOnApp({ navigate: () => true })).not.toThrow();
+    expect(win.linkyoApp).toBe(locked);
+  });
+
+  it("a method the app fixed on its object stays the app's; the others are installed", () => {
+    const own = () => false;
+    const app = { platform: "ios" } as LinkyoApp;
+    Object.defineProperty(app, "navigate", { value: own, writable: false, enumerable: true });
+    const win = webView({ linkyoApp: app });
+    expect(() => installOnApp({ navigate: () => true, back: () => true })).not.toThrow();
+    expect(win.linkyoApp?.navigate).toBe(own);
+    expect(typeof win.linkyoApp?.back).toBe("function");
+  });
+});
+
 describe("the two halves on window.linkyoApp, in either order", () => {
   // The dashboard layout mounts the store's half (StoreBridge) before the interface half
   // (AppModeIsland); a remount or a later screen can turn that around. Both install through
