@@ -262,7 +262,8 @@ view cannot share one session.
      document but take all five methods off. Before it calls one, the app brings the web view back to the dashboard
      (`goBack()`, or loads `/<locale>/app`) and waits for the `ready` that follows; after a native write made while
      the web view was away, it calls `reload()` after that `ready` ([0087](0087-app-mode.md) decision 4).
-   - **Why a call rejects** (the error's message, as `callAsyncJavaScript` hands it to the app):
+   - **Why a call rejects** (the rejection's string form is the bare reason; `callAsyncJavaScript` hands it to the app
+     in the error's `userInfo[WKJavaScriptExceptionMessage]`, [0087](0087-app-mode.md) "For the native shell" item 1):
 
      | Method | Rejects with | Meaning | What the app does |
      |---|---|---|---|

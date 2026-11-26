@@ -254,6 +254,28 @@ describe("store bridge", () => {
     await refused;
   });
 
+  it("a rejection's string form is the bare reason, as WebKit hands it to the app (never \"Error: saveFailed\")", async () => {
+    // WebKit puts a rejected promise's string form in the error the app gets
+    // (userInfo[WKJavaScriptExceptionMessage]); ADR 0088 §4 lists the bare reasons.
+    const win = webView();
+    const store = fakeStore();
+    store.flush.mockImplementation(() => Promise.reject(new Error("saveFailed")));
+    store.reload.mockImplementation(() => Promise.reject(new Error("reloadFailed")));
+    store.logOut.mockImplementation(() => undefined);
+    installBridge(store);
+    const app = win.linkyoApp as unknown as App;
+    const reason = (work: Promise<unknown>) =>
+      work.then(
+        () => "resolved",
+        (error: unknown) => ({ asString: String(error), message: error instanceof Error ? error.message : null }),
+      );
+    expect(await reason(app.flush())).toEqual({ asString: "saveFailed", message: "saveFailed" });
+    expect(await reason(app.reload())).toEqual({ asString: "reloadFailed", message: "reloadFailed" });
+    const signingOut = reason(app.signOut());
+    await vi.advanceTimersByTimeAsync(SIGN_OUT_WAIT + 1);
+    expect(await signingOut).toEqual({ asString: "signOutTimeout", message: "signOutTimeout" });
+  });
+
   describe("right after the web view opened (the store is still loading)", () => {
     const loading: AccountSnapshot = { status: "loading" };
 
@@ -280,10 +302,11 @@ describe("store bridge", () => {
       installBridge(store);
       const app = win.linkyoApp as unknown as App;
       const flushed = expect(app.flush()).rejects.toThrow("storeLoading");
-      const reloaded = expect(app.reload()).rejects.toThrow("storeLoading");
+      // As the app reads it: the bare reason.
+      const reloaded = app.reload().catch((error: unknown) => String(error));
       await vi.advanceTimersByTimeAsync(READY_WAIT + 1);
       await flushed;
-      await reloaded;
+      expect(await reloaded).toBe("storeLoading");
       expect(store.flush).not.toHaveBeenCalled();
       expect(store.reload).not.toHaveBeenCalled();
     });

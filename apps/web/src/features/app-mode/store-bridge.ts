@@ -39,6 +39,26 @@ export const READY_WAIT = 10_000;
 type Status = AccountSnapshot["status"];
 
 /**
+ * A refused call as the app reads it. WebKit hands a rejected `callAsyncJavaScript` promise to the app
+ * as an error that carries the rejection's string form (`userInfo[WKJavaScriptExceptionMessage]`); a
+ * plain Error's is "Error: saveFailed". This one's is the bare reason ("saveFailed"), the word ADR 0088
+ * §4 lists. It is still an Error, with the reason as its message.
+ */
+export class BridgeRejection extends Error {
+  override name = "BridgeRejection";
+
+  override toString(): string {
+    return this.message;
+  }
+}
+
+/** Every rejection of a bridge method, whatever threw it, reaches the app as the bare reason. */
+const bare = <T>(work: () => Promise<T>): Promise<T> =>
+  work().catch((error: unknown) => {
+    throw error instanceof BridgeRejection ? error : new BridgeRejection(error instanceof Error ? error.message : String(error));
+  });
+
+/**
  * Resolves once the store's status is one `reached` accepts (checked after `begin` and on every
  * change), and rejects with `reason` after `limit` ms.
  */
@@ -88,17 +108,19 @@ export function installStoreBridge(store: BridgeStore = accountStore, handOver: 
   const uninstall = installOnApp({
     // The editor's change from the last moment goes to the store first, then everything is saved.
     // `{ updatedAt: null }` means signed out; a store still loading after the wait rejects instead.
-    flush: async (): Promise<{ updatedAt: string | null }> => {
-      handOver();
-      await ready(store);
-      return store.flush();
-    },
-    reload: async (): Promise<void> => {
-      handOver();
-      await ready(store);
-      return store.reload();
-    },
-    signOut: (): Promise<void> => signOut(store, handOver),
+    flush: (): Promise<{ updatedAt: string | null }> =>
+      bare(async () => {
+        handOver();
+        await ready(store);
+        return store.flush();
+      }),
+    reload: (): Promise<void> =>
+      bare(async () => {
+        handOver();
+        await ready(store);
+        return store.reload();
+      }),
+    signOut: (): Promise<void> => bare(() => signOut(store, handOver)),
   });
 
   const first = store.getSnapshot();

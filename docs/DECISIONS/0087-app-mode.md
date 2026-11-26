@@ -208,9 +208,13 @@ operations), in one place:
    `injectionTime: .atDocumentStart` and `forMainFrameOnly: true`; the handler is added with
    `add(_:contentWorld:name:)` as `linkyo` in `.page`. The app calls the methods with
    `callAsyncJavaScript(_:arguments:in:in:)` in `.page`: `return await window.linkyoApp.flush()` resolves to
-   `{ updatedAt }`, and a rejection arrives as an error whose message is the reason ([0088](0088-app-sync.md)
-   §4); `return window.linkyoApp.navigate(path)` with `arguments: ["path": path]`, and `back()`, answer a
-   boolean at once.
+   `{ updatedAt }`. A rejection arrives as an `NSError` in `WKErrorDomain` whose `localizedDescription` is WebKit's
+   generic text; the reason is in `userInfo[WKJavaScriptExceptionMessage]`, the rejection's string form, which the
+   web makes the bare reason (`saveFailed`, `storeLoading`, …, [0088](0088-app-sync.md) §4; `BridgeRejection` in
+   `store-bridge.ts`: a plain `Error` would read "Error: saveFailed"). The app matches the reason word inside that
+   message, so a prefix a WebKit version might add changes nothing. Not yet seen on a device: the first build checks
+   it once (`flush()` offline answers `saveFailed`). `return window.linkyoApp.navigate(path)` with
+   `arguments: ["path": path]`, and `back()`, answer a boolean at once.
 2. **After `ready`, all five methods are there** (`flush`, `reload` and `signOut` too, not only `navigate` and
    `back`), while the web view shows a dashboard page (decision 4).
 3. **`ready.accountId` is checked.** The app compares it with its own user id: another account (the cookies of

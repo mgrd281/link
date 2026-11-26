@@ -87,6 +87,9 @@ describe("ADR 0088 §4 names every reason a bridge method rejects with", () => {
     expect([...reasons].sort()).toEqual(["reloadFailed", "saveFailed", "signOutTimeout", "storeLoading", "tooLarge"]);
     const text = half();
     for (const reason of reasons) expect(text, reason).toContain(`| \`${reason}\` |`);
+    // What the app reads is the rejection's string form: the bare reason, not "Error: saveFailed".
+    expect(bridge).toMatch(/class BridgeRejection extends Error[\s\S]*toString\(\): string \{\s*return this\.message;/);
+    expect(text).toContain("`userInfo[WKJavaScriptExceptionMessage]`");
   });
 
   it("says the methods exist only on dashboard pages, and how the app tells its own sign-out from the others", () => {
@@ -133,9 +136,11 @@ describe("ADR 0087 records the order, the dashboard-only methods and what the na
       "`conflict` stays the last state",
       "`text/csv;charset=utf-8`",
       "**`?edit=` and `?tab=` after the hand-off.**",
+      "the reason is in `userInfo[WKJavaScriptExceptionMessage]`",
     ]) {
       expect(shell(), words).toContain(words);
     }
+    expect(shell()).not.toContain("an error whose message is the reason");
   });
 });
 

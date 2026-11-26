@@ -323,6 +323,31 @@ test.describe("the iPhone app's web side @real", () => {
     await page.waitForURL("**/de/login**");
   });
 
+  test("bridge: a refused call reaches the app as the bare reason: flush() offline rejects with saveFailed @real", async ({ page }) => {
+    // WebKit hands the app the rejection's string form (userInfo[WKJavaScriptExceptionMessage]). Before,
+    // it was "Error: saveFailed", which a native switch on ADR 0088's reasons never matched.
+    const account = await syncAccount("sync-reason");
+    await asTheApp(page);
+    await signIn(page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    await expect.poll(async () => (await appMessages(page)).map((message) => message.type)).toContain("saveState");
+    await page.route(
+      (url) => url.pathname.endsWith("/rest/v1/sites"),
+      (route) => route.abort("internetdisconnected"),
+    );
+    await visibility(page, "Erster Link").click();
+    const refused = await page.evaluate(async () => {
+      const app = (window as unknown as { linkyoApp: { flush: () => Promise<unknown> } }).linkyoApp;
+      try {
+        await app.flush();
+        return null;
+      } catch (error) {
+        return { asString: String(error), message: error instanceof Error ? error.message : null };
+      }
+    });
+    expect(refused).toEqual({ asString: "saveFailed", message: "saveFailed" });
+  });
+
   test("guard: of two tabs, the stale one's save is refused; it shows the toast and the newest page, the other's change stays @real", async ({ page, browser, baseURL }, info) => {
     const account = await syncAccount("sync-tabs");
     const tabB = await secondBrowser(browser, info, baseURL);
