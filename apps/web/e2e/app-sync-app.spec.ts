@@ -527,6 +527,53 @@ test.describe("the iPhone app's web side @real", () => {
     await expect(page.getByText(CONFLICT, { exact: true })).toHaveCount(0);
   });
 
+  test("guard: a save lands but its answer is lost and reads fail; a change, the page is hidden, then the phone ends it with no other event: the change is kept @real", async ({ page }) => {
+    // iOS ends a suspended app's web view without a pagehide: the hidden tab's keepalive is the last
+    // write it makes. Before, it carried the exact guard against the version before the landed save,
+    // so it was refused and the change was lost with the page.
+    test.setTimeout(90_000);
+    const account = await syncAccount("sync-hiddenkill");
+    await signIn(page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    const net = { lose: true, readsFail: false, patches: [] as string[] };
+    await page.route(
+      (url) => url.pathname.endsWith("/rest/v1/sites"),
+      async (route) => {
+        if (route.request().method() !== "PATCH") {
+          if (net.readsFail) await route.abort("connectionreset");
+          else await route.continue().catch(() => undefined);
+          return;
+        }
+        net.patches.push(new URL(route.request().url()).searchParams.get("updated_at")?.split(".")[0] ?? "none");
+        if (net.lose) {
+          // The first save reaches the database; its answer is lost, and reads fail from now on.
+          net.lose = false;
+          await route.fetch();
+          net.readsFail = true;
+          await route.abort("connectionreset");
+          return;
+        }
+        await route.continue().catch(() => undefined);
+      },
+    );
+    await visibility(page, "Erster Link").click();
+    await expect.poll(() => shown(account.id, "first")).toBe(false);
+    await expect.poll(() => net.readsFail).toBe(true);
+    // Its read-back fails meanwhile.
+    await page.waitForTimeout(1_000);
+    await visibility(page, "Zweiter Link").click();
+    await expect(visibility(page, "Zweiter Link")).not.toBeChecked();
+    await setHidden(page, true);
+    await page.waitForTimeout(4_000);
+    // The phone ends the page: no more code of it runs.
+    const cdp = await page.context().newCDPSession(page);
+    const ended = page.waitForEvent("crash");
+    void cdp.send("Page.crash").catch(() => undefined);
+    await ended;
+    await expect.poll(async () => (await stored(account.id)).blocks.map((block) => block.visible), { timeout: 10_000 }).toEqual([false, false, true]);
+    expect(net.patches.at(-1)).toBe("gte");
+  });
+
   test("sign-out: Abmelden in Settings right after a change keeps the change @real", async ({ page }) => {
     const account = await syncAccount("sync-logout");
     await signIn(page, account.email, "/de/app/settings");

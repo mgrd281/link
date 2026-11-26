@@ -203,6 +203,12 @@ export class SupabaseAccountStore implements AccountStore {
   private readonly landed = new Map<string, number>();
   /** Read-backs of saves whose answer was lost, still running (a hidden tab waits for them). */
   private readonly reading = new Set<Promise<void>>();
+  /**
+   * The lost writes (`landed`) up to this number were resolved by a read of the row since: none of
+   * them is in the row unseen. A hidden tab with one still open sends its keepalive with the closing
+   * tab's guard (`saveWhenHidden`).
+   */
+  private lostResolved = 0;
   /** A hidden tab waiting for what is uncertain before it sends the rest (`saveWhenHidden`). */
   private hiddenWait: Promise<void> | null = null;
   private rebases = 0;
@@ -265,7 +271,9 @@ export class SupabaseAccountStore implements AccountStore {
     window.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") this.saveWhenHidden();
     });
-    window.addEventListener("pagehide", () => this.saveOnExit(true));
+    window.addEventListener("pagehide", () => {
+      this.saveOnExit(this.uncertain());
+    });
   }
 
   private async load(session: Session): Promise<void> {
@@ -431,6 +439,9 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   private schedule(delay: number) {
+    // A hidden tab waiting (`saveWhenHidden`) sends nothing meanwhile: when the wait ends, what is left
+    // goes as its keepalive, or as a normal save once the tab is back on screen.
+    if (this.hiddenWait) return;
     if (this.saveTimer !== null) window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => {
       this.saveTimer = null;
@@ -447,20 +458,27 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   /**
-   * The tab is hidden (a tab switch on a computer, another app on a phone). The page keeps running, so
-   * it never needs the loose guard of a closing tab (`saveOnExit`):
+   * The tab is hidden (a tab switch on a computer, another app on a phone). The page usually keeps
+   * running, but a phone may freeze it and end it later without another event (iOS ending a suspended
+   * app's web view sends no `pagehide`), so the keepalive sent here may be the last write it makes:
    * - nothing uncertain: what is pending goes at once, as a keepalive with the exact guard;
-   * - a save on its way, or a lost answer still being read back: the tab waits for that to settle (at
-   *   most `HIDDEN_WAIT`), then sends what is left with the exact guard against the version it knows
-   *   then, like any save. A refusal is a normal one: the row is read again, a page changed elsewhere
-   *   wins and the toast shows when the tab is back.
-   * The price (ADR 0088): a phone that freezes the page and ends it before that answer comes loses the
-   * edits made after the save that was on its way (that save itself is kept).
+   * - a save on its way, or a write whose answer was lost (`landed`): the tab waits for that to settle
+   *   (at most `HIDDEN_WAIT`), and reads the row again for a lost answer, so a write of its own that
+   *   landed becomes the version it builds on. Then it sends what is left with the exact guard against
+   *   the version it knows, like any save. A refusal is a normal one: the row is read again, a page
+   *   changed elsewhere wins and the toast shows when the tab is back.
+   * - a lost answer still unresolved when the wait ends (the read failed or took too long): the row may
+   *   hold this tab's own write, which an exact keepalive would never match, and nothing may run after
+   *   it. So that keepalive takes the closing tab's rule (`updated_at >= base`, `saveOnExit`).
+   * The price (ADR 0088): a phone that freezes the page and ends it before a save on its way answers
+   * loses the edits made after that save (the save itself is kept); in the last case, a write from
+   * elsewhere since this tab last read or saved is overwritten instead of refused.
    */
   private saveWhenHidden() {
     // The editor's change from the last moment: its own listener may run after this one.
     handOverPendingEdits();
-    if (!this.dirty || this.snapshot.status !== "signedIn") return;
+    const snapshot = this.snapshot;
+    if (!this.dirty || snapshot.status !== "signedIn") return;
     if (!this.uncertain()) {
       this.saveOnExit(false);
       return;
@@ -471,14 +489,35 @@ export class SupabaseAccountStore implements AccountStore {
       window.clearTimeout(this.saveTimer);
       this.saveTimer = null;
     }
+    // A lost answer: the row is read now, so a write of this tab's that landed becomes the base.
+    if (this.lostOpen()) this.readBack(this.readLost(snapshot.account.id));
     const waiting = this.settled(HIDDEN_WAIT).then(() => {
       this.hiddenWait = null;
-      // Still hidden: as a keepalive, which outlives a page the phone freezes. Back on screen: the
-      // normal save (it waits for one still on its way).
-      if (document.visibilityState === "hidden") this.saveOnExit(false);
+      // Still hidden: as a keepalive, which outlives a page the phone freezes (the closing tab's guard
+      // while a lost answer is still open). Back on screen: the normal save (it waits for one on its way).
+      if (document.visibilityState === "hidden") this.saveOnExit(this.lostOpen());
       else if (this.dirty && this.snapshot.status === "signedIn") this.schedule(0);
     });
     this.hiddenWait = waiting;
+  }
+
+  /**
+   * A hidden tab with an open lost answer reads the row (`saveWhenHidden`). Holding one of this tab's
+   * own versions, the tab builds on it (no save goes out here: the keepalive carries the rest). Still
+   * at the version it built on, nothing of its lost writes landed; holding a version from elsewhere, the
+   * exact guard is right too (a page changed elsewhere wins). Either way the lost answers are resolved.
+   */
+  private async readLost(id: string): Promise<void> {
+    const base = this.base;
+    const lost = this.lostUpTo();
+    const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
+    const now = this.snapshot;
+    // Something moved meanwhile (a save confirmed, a refusal read back): that one decides.
+    if (error || !row || now.status !== "signedIn" || now.account.id !== id || this.base !== base) return;
+    const latest = toRow(fromRow(row));
+    const key = contentKey(latest);
+    if (row.updated_at !== base && this.isOwn(key)) this.rebaseOwn(now, row, latest, key, false);
+    else this.resolveLost(lost);
   }
 
   /** Resolves once no save is on its way and no read-back runs, or after `limit` ms. */
@@ -502,9 +541,9 @@ export class SupabaseAccountStore implements AccountStore {
    * gone (a normal request would be cancelled with the page). It carries the save guard like every
    * save; when the tab is still there, its answer is the new version.
    *
-   * `closing` (`pagehide`: the page is going away and cannot wait). A closed tab runs no more code,
-   * so a refused keepalive is never sent again. Its guard therefore depends on what may have reached
-   * the database without this tab knowing its version yet (`uncertain`):
+   * `loose`: the last code the page may run, while something may have reached the database without
+   * this tab knowing its version yet. A closed tab (`pagehide`) runs no more code, so a refused
+   * keepalive is never sent again; its guard therefore depends on `uncertain`:
    * - nothing: `updated_at = base`, the exact guard of every save;
    * - a save still on its way, or one since the last confirmed version that may have landed (`landed`:
    *   no answer at all or a server error, while the browser was online): `updated_at >= base`. That
@@ -512,9 +551,10 @@ export class SupabaseAccountStore implements AccountStore {
    *   always be refused and the last change lost. The other order is safe too: the save, landing
    *   second, no longer finds `base` and changes nothing. The price (ADR 0088): any write from
    *   elsewhere since this tab last read or saved is overwritten instead of refused.
-   * Not closing (a hidden tab, `saveWhenHidden`): always the exact guard.
+   * A hidden tab (`saveWhenHidden`) uses the exact guard, except for a lost answer it could not read
+   * back in time.
    */
-  private saveOnExit(closing: boolean) {
+  private saveOnExit(loose: boolean) {
     // The editor's change from the last moment: its own listener may run after this one (`pagehide`).
     handOverPendingEdits();
     const snapshot = this.snapshot;
@@ -532,7 +572,6 @@ export class SupabaseAccountStore implements AccountStore {
     this.dirty = false;
     const id = snapshot.account.id;
     const base = this.base;
-    const loose = closing && this.uncertain();
     const guard = base === null ? "" : `&updated_at=${loose ? "gte" : "eq"}.${encodeURIComponent(base)}`;
     const write = (this.sent += 1);
     const sentOffline = offline();
@@ -719,11 +758,17 @@ export class SupabaseAccountStore implements AccountStore {
    * guard decides.
    */
   private async recheck(id: string, base: string | null, content: SiteContent, write: number): Promise<void> {
+    const lost = this.lostUpTo();
     const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
     const now = this.snapshot;
     if (error || !row || now.status !== "signedIn" || now.account.id !== id) return;
     // Something moved meanwhile (a later write, a refusal read back): that one decides.
-    if (this.sent !== write || this.base !== base || row.updated_at === base || this.sending.size > 0) return;
+    if (this.sent !== write || this.base !== base || this.sending.size > 0) return;
+    // Still the version this tab built on: nothing of its lost writes landed.
+    if (row.updated_at === base) {
+      this.resolveLost(lost);
+      return;
+    }
     const latest = toRow(fromRow(row));
     const key = contentKey(latest);
     if (key === contentKey(content)) {
@@ -738,10 +783,30 @@ export class SupabaseAccountStore implements AccountStore {
       }
       return;
     }
-    if (!this.isOwn(key)) return;
+    // Changed elsewhere: the next save's exact guard is refused, and the newer page wins.
+    if (!this.isOwn(key)) {
+      this.resolveLost(lost);
+      return;
+    }
     // Whether anything waits is what the page here holds beyond that version (the failed save set it).
     this.dirty = false;
     this.rebaseOwn(now, row, latest, key);
+  }
+
+  /** The newest of the writes whose answers were lost (`landed`) so far, 0 for none. */
+  private lostUpTo(): number {
+    return Math.max(0, ...this.landed.values());
+  }
+
+  /** A read of the row showed what became of the lost writes up to `write`: none of them is still open. */
+  private resolveLost(write: number) {
+    this.lostResolved = Math.max(this.lostResolved, write);
+  }
+
+  /** A write whose answer was lost and that no read of the row has resolved since (`saveWhenHidden`). */
+  private lostOpen(): boolean {
+    for (const write of this.landed.values()) if (write > this.lostResolved) return true;
+    return false;
   }
 
   /** Keeps a running read-back in `reading` until it ends. */
@@ -829,14 +894,19 @@ export class SupabaseAccountStore implements AccountStore {
 
   /**
    * The row holds a version of this tab's own: the page here stays, and the next save builds on that
-   * version. The server has just answered, so the save is not failing.
+   * version. The server has just answered, so the save is not failing. `send`: what waits goes out at
+   * once (a hidden tab's read-back leaves that to its keepalive).
    */
-  private rebaseOwn(now: Extract<AccountSnapshot, { status: "signedIn" }>, row: SiteRow, latest: SiteContent, key: string) {
+  private rebaseOwn(now: Extract<AccountSnapshot, { status: "signedIn" }>, row: SiteRow, latest: SiteContent, key: string, send = true) {
     this.base = row.updated_at;
     this.baseContent = latest;
     this.landed.clear();
     this.dirty = this.dirty || contentKey(toRow(now.site)) !== key;
     this.failed = false;
+    if (!send) {
+      this.set({ ...now, baseUpdatedAt: row.updated_at, sync: this.dirty ? "saving" : "saved" });
+      return;
+    }
     if (this.rebases < MAX_REBASES) {
       this.rebases += 1;
       this.retries = 0;

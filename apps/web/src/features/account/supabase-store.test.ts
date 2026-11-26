@@ -33,6 +33,8 @@ class FakeDb {
   failStatus = 0;
   /** The write reaches the database, but its answer is an error (the connection dropped on the way back). */
   loseAnswers = false;
+  /** The status of that lost answer: 0 (no answer at all) or a server error (5xx) whose write landed. */
+  lostStatus = 0;
   /** Reads fail (the connection is gone): `true` for all, or a function asked before each read. */
   failReads: boolean | (() => boolean) = false;
   /** Reads never answer (offline, PostgREST's client retries a read for seconds). */
@@ -103,7 +105,7 @@ class FakeDb {
           const matches = filters.profile_id === this.row.profile_id && (!("updated_at" in filters) || filters.updated_at === this.row.updated_at);
           if (!matches || this.refuseWrites || this.signedOut) return { data: null, error: null };
           this.write(values);
-          if (this.loseAnswers) return { data: null, error: { message: "TypeError: Load failed" }, status: 0 };
+          if (this.loseAnswers) return { data: null, error: { message: "TypeError: Load failed" }, status: this.lostStatus };
           return { data: { page: clone(this.row.page), updated_at: this.row.updated_at }, error: null };
         }
         const failing = typeof this.failReads === "function" ? this.failReads() : this.failReads;
@@ -578,6 +580,144 @@ describe("hidden, not closed (a tab switch, a phone switching apps): never the l
     expect(guards).toEqual([]);
     expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
     expect(snapshotOf(store).sync).toBe("saved");
+  });
+});
+
+describe("hidden, then ended by the phone with no other event (iOS ends a suspended app's web view)", () => {
+  /**
+   * The keepalive PATCH as PostgREST applies it (`eq.` or `gte.`); the page is gone by its answer, so
+   * nothing reads it. `guards` records each guard's operator.
+   */
+  const killed = (db: FakeDb) => {
+    const guards: string[] = [];
+    vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+      const guard = new URL(url, "http://localhost").searchParams.get("updated_at") ?? "";
+      const [operator = "", version = ""] = guard.split(/\.(.*)/s);
+      guards.push(operator);
+      const matches = guard === "" || (operator === "eq" ? db.row.updated_at === version : operator === "gte" && db.row.updated_at >= version);
+      if (matches) db.write(JSON.parse(init.body as string) as Record<string, unknown>);
+      return new Promise<Response>(() => undefined);
+    });
+    return guards;
+  };
+  const hide = () => {
+    vi.stubGlobal("document", { visibilityState: "hidden" });
+    listeners.get("visibilitychange")?.();
+  };
+
+  it("a save landed but its answer was lost and reads fail; a change, hidden, ended 200 ms later: the change is kept", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = killed(db);
+    db.loseAnswers = true;
+    db.failReads = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(450);
+    expect(db.blocks()).toEqual(["a", "b", "c"]);
+    db.loseAnswers = false;
+    addLink(store, "d");
+    await vi.advanceTimersByTimeAsync(50);
+    hide();
+    await vi.advanceTimersByTimeAsync(200);
+    // The page is ended here: only what reached the database counts.
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(guards).toEqual(["gte"]);
+  });
+
+  it("a 503 whose write landed and reads fail; a change, hidden, ended 200 ms later: the change is kept", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = killed(db);
+    db.loseAnswers = true;
+    db.lostStatus = 503;
+    db.failReads = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(450);
+    db.loseAnswers = false;
+    addLink(store, "d");
+    await vi.advanceTimersByTimeAsync(50);
+    hide();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(guards).toEqual(["gte"]);
+  });
+
+  it("reads work again by the time it is hidden: the row shows its own write, so the keepalive builds on it with the exact guard", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = killed(db);
+    db.loseAnswers = true;
+    db.failReads = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(450);
+    db.loseAnswers = false;
+    db.failReads = false;
+    addLink(store, "d");
+    await vi.advanceTimersByTimeAsync(50);
+    hide();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(guards).toEqual(["eq"]);
+  });
+
+  it("reads work again and the row holds a page changed elsewhere: the exact guard, so that page is not overwritten", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = killed(db);
+    db.loseAnswers = true;
+    db.failReads = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(450);
+    db.loseAnswers = false;
+    db.failReads = false;
+    db.elsewhere([link("a"), link("b"), link("c"), link("from-elsewhere")]);
+    addLink(store, "d");
+    await vi.advanceTimersByTimeAsync(50);
+    hide();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(guards).toEqual(["eq"]);
+    expect(db.blocks()).toEqual(["a", "b", "c", "from-elsewhere"]);
+  });
+
+  it("hidden while a save is on its way that fails without an answer, and the page was changed elsewhere: the read-back resolves it, so the exact guard keeps that page", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = killed(db);
+    db.hold = "apply";
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(450);
+    addLink(store, "d");
+    hide();
+    db.elsewhere([link("a"), link("b"), link("from-elsewhere")]);
+    db.failWrites = true;
+    db.failStatus = 0;
+    db.release();
+    await vi.advanceTimersByTimeAsync(10);
+    db.failWrites = false;
+    await vi.advanceTimersByTimeAsync(HIDDEN_WAIT);
+    expect(guards).toEqual(["eq"]);
+    expect(db.blocks()).toEqual(["a", "b", "from-elsewhere"]);
+  });
+
+  it(`the read never answers: after ${String(HIDDEN_WAIT)} ms the keepalive goes with the closing tab's guard`, async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const guards = killed(db);
+    db.loseAnswers = true;
+    db.failReads = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(450);
+    db.loseAnswers = false;
+    db.failReads = false;
+    db.hangReads = true;
+    addLink(store, "d");
+    await vi.advanceTimersByTimeAsync(50);
+    hide();
+    await vi.advanceTimersByTimeAsync(HIDDEN_WAIT - 10);
+    expect(guards).toEqual([]);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(guards).toEqual(["gte"]);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
   });
 });
 
