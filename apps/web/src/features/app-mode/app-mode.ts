@@ -30,6 +30,12 @@ export interface LinkyoApp {
   navigate?: (path: string) => boolean;
   /** Goes to where the screen's "back" leads (`route.back`); false where there is nowhere to go. */
   back?: () => boolean;
+  /** Saves everything waiting and answers the page's version on the server (`./store-bridge.ts`). */
+  flush?: () => Promise<{ updatedAt: string | null }>;
+  /** Reads the page again after the app changed it (`./store-bridge.ts`). */
+  reload?: () => Promise<void>;
+  /** Saves, then ends the web view's session (`./store-bridge.ts`). */
+  signOut?: () => Promise<void>;
   [method: string]: unknown;
 }
 
@@ -73,4 +79,22 @@ export function linkyoApp(): LinkyoApp {
   const created: LinkyoApp = {};
   own.linkyoApp = created;
   return created;
+}
+
+/** The methods the web puts on `window.linkyoApp`: each half names only its own. */
+export type AppMethods = Partial<Pick<LinkyoApp, "navigate" | "back" | "flush" | "reload" | "signOut">>;
+
+/**
+ * Puts methods on `window.linkyoApp` (made if missing; the object is never replaced) and answers how
+ * to take them off again: only those still the ones put there. The interface half (`navigate`, `back`,
+ * `./app-mode-island.tsx`) and the store's half (`flush`, `reload`, `signOut`, `./store-bridge.ts`)
+ * both install through here, so neither replaces the object or removes the other's methods, whatever
+ * order they are installed and taken off in. Call only in app mode, in the browser.
+ */
+export function installOnApp(methods: AppMethods): () => void {
+  const app = linkyoApp();
+  Object.assign(app, methods);
+  return () => {
+    for (const [name, method] of Object.entries(methods)) if (app[name] === method) Reflect.deleteProperty(app, name);
+  };
 }

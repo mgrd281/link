@@ -42,8 +42,17 @@ export type BridgeMessage =
   | { type: "editClosed"; id: string; missing?: true | undefined }
   /** Opens an address of ours outside the app, in Safari. */
   | { type: "openExternal"; url: string }
-  /** The store's messages (`saveState`, `signedOut`), sent by `./store-bridge.ts`. */
-  | ({ type: "saveState" | "signedOut" } & Record<string, unknown>);
+  /**
+   * The save state changed (`./store-bridge.ts`): "conflict" when a save was refused because the page
+   * changed elsewhere and the newer version is shown now; `updatedAt` is the page's version on the
+   * server, an opaque string the app sends back exactly as received (null: not known).
+   */
+  | { type: "saveState"; state: SaveState; updatedAt: string | null }
+  /** The web view's session ended (`./store-bridge.ts`). */
+  | { type: "signedOut" };
+
+/** The store's save state, as `saveState` reports it. */
+export type SaveState = "saving" | "saved" | "error" | "conflict";
 
 interface Handler {
   postMessage: (body: unknown) => void;
@@ -51,12 +60,22 @@ interface Handler {
 
 type WebkitWindow = Window & { webkit?: { messageHandlers?: Record<string, Handler | undefined> } };
 
+/**
+ * The page itself, not a frame inside another (an embed, a page shown inside another): only the main
+ * frame speaks for the app or takes its calls. False on the server and where the window cannot be read.
+ */
+export function inMainFrame(): boolean {
+  try {
+    return typeof window !== "undefined" && window.top === window.self;
+  } catch {
+    return false;
+  }
+}
+
 /** The app's handler, when this page may post to it: app mode, the main frame, a handler that exists. */
 function handler(): Handler | null {
   try {
-    if (typeof window === "undefined" || !inAppMode()) return null;
-    // A frame (an embed, a page shown inside another) never speaks for the app.
-    if (window.top !== window.self) return null;
+    if (!inMainFrame() || !inAppMode()) return null;
     const found = (window as WebkitWindow).webkit?.messageHandlers?.[HANDLER];
     return found && typeof found.postMessage === "function" ? found : null;
   } catch {

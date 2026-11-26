@@ -8,7 +8,7 @@ import { ORIGIN_TAB_KEY, TABS, type TabKey } from "@/features/app/routes";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 
-import { linkyoApp } from "./app-mode";
+import { installOnApp } from "./app-mode";
 import { post } from "./bridge";
 import { navigationTarget, routeParts } from "./route";
 import { useAppMode } from "./use-app-mode";
@@ -46,7 +46,6 @@ function AppBridge() {
   const snapshot = useAccount();
 
   useEffect(() => {
-    const app = linkyoApp();
     const navigate = (path: string): boolean => {
       const target = navigationTarget(path, window.location.origin);
       if (!target) return false;
@@ -59,13 +58,9 @@ function AppBridge() {
       router.push(target);
       return true;
     };
-    app.navigate = navigate;
-    app.back = back;
-    return () => {
-      // Leaving the dashboard (a legal page, the website): the methods go with it, unless replaced.
-      if (app.navigate === navigate) delete app.navigate;
-      if (app.back === back) delete app.back;
-    };
+    // Leaving the dashboard (a legal page, the website): the methods go with it, unless replaced; the
+    // store's flush, reload and signOut (./store-bridge.ts) stay, whichever was installed first.
+    return installOnApp({ navigate, back });
   }, [router, pathname, locale]);
 
   const known = snapshot.status !== "loading";
