@@ -180,14 +180,26 @@ test.describe("the iPhone app's web side @real", () => {
     await Promise.all([web.context.close(), again.context.close()]);
   });
 
-  test("hand-off: a suspended account gets no link @real", async ({ page }) => {
+  test("hand-off: a suspended account gets no link, and no session from a link it already has @real", async ({ page }) => {
     const account = await syncAccount("sync-suspended");
     const token = await appToken(account.email);
+    // A link made while the account was still active (an e-mailed one, or a hand-off link not yet opened).
+    const { data: link } = await service().auth.admin.generateLink({ type: "magiclink", email: account.email });
     const { error } = await service().from("profiles").update({ status: "suspended" }).eq("id", account.id);
     expect(error).toBeNull();
     const response = await page.request.post("/api/auth/handoff", { headers: { authorization: `Bearer ${token}` }, data: { deviceId: DEVICE } });
     expect(response.status()).toBe(403);
     expect(await response.json()).toEqual({ ok: false, error: "suspended" });
+
+    // The confirm route refuses it as the code and password sign-ins do, with their words.
+    await page.goto(`/api/auth/confirm?${new URLSearchParams({ token_hash: link.properties?.hashed_token ?? "", type: "magiclink", next: "/de/app", device: DEVICE }).toString()}`);
+    await page.waitForURL("**/de/login?link=suspended");
+    await expect(page.getByText(de.auth.errors.suspended, { exact: true })).toBeVisible();
+    expect((await page.context().cookies()).some((cookie) => cookie.name.includes("-auth-token"))).toBe(false);
+    const { data: rows } = await service().from("sign_ins").select("device_id, result").eq("profile_id", account.id).order("at", { ascending: false }).limit(1);
+    expect(rows?.[0]).toMatchObject({ device_id: DEVICE, result: "failed" });
+    await page.goto("/de/app");
+    await page.waitForURL("**/de/login**");
   });
 
   test("operations: add, move and remove change the public page at once, and a stale version is refused @real", async ({ page }) => {
@@ -361,5 +373,105 @@ test.describe("the iPhone app's web side @real", () => {
     await expect.poll(() => shown(account.id, "second"), { timeout: 10_000 }).toBe(false);
     const { blocks } = await stored(account.id);
     expect(blocks.map((block) => block.visible)).toEqual([false, false, true]);
+  });
+
+  test("guard: a save lands but its answer is lost, three more attempts fail offline, then the network is back: every change is stored, no toast @real", async ({ page }) => {
+    // The store tries again 2, 5, 15 and 30 s after failures in a row; the last wait is part of this test.
+    test.setTimeout(120_000);
+    const account = await syncAccount("sync-offline");
+    await watchConflicts(page);
+    await signIn(page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    const net = { offline: false, landed: 0, failed: 0 };
+    await page.route(
+      (url) => url.pathname.endsWith("/rest/v1/sites"),
+      async (route) => {
+        if (net.offline) {
+          // Offline: nothing leaves the device (no fetch), every request fails.
+          if (route.request().method() === "PATCH") net.failed += 1;
+          await route.abort("internetdisconnected");
+          return;
+        }
+        if (route.request().method() !== "PATCH" || net.landed > 0) {
+          await route.continue();
+          return;
+        }
+        // The first save reaches the database; the connection drops before its answer comes back.
+        net.landed += 1;
+        await route.fetch();
+        net.offline = true;
+        await route.abort("connectionreset");
+      },
+    );
+    await visibility(page, "Erster Link").click();
+    await expect.poll(() => shown(account.id, "first")).toBe(false);
+    // Three more changes while offline, each one a save attempt that fails.
+    await visibility(page, "Zweiter Link").click();
+    await expect.poll(() => net.failed).toBeGreaterThanOrEqual(1);
+    await visibility(page, "Dritter Link").click();
+    await expect.poll(() => net.failed).toBeGreaterThanOrEqual(2);
+    await visibility(page, "Dritter Link").click();
+    await expect.poll(() => net.failed).toBeGreaterThanOrEqual(3);
+    expect((await stored(account.id)).blocks.map((block) => block.visible)).toEqual([false, true, true]);
+    // Back online: the store's next try (no further change) stores everything over its own landed save.
+    net.offline = false;
+    await expect.poll(async () => (await stored(account.id)).blocks.map((block) => block.visible), { timeout: 45_000 }).toEqual([false, false, true]);
+    await expect(visibility(page, "Erster Link")).not.toBeChecked();
+    await expect(visibility(page, "Zweiter Link")).not.toBeChecked();
+    await expect(visibility(page, "Dritter Link")).toBeChecked();
+    expect(await conflictToasts(page)).toBe(0);
+    await expect(page.getByText(CONFLICT, { exact: true })).toHaveCount(0);
+  });
+
+  test("guard: every save reaches the database but its answer is lost on the way back: every change is stored, no toast @real", async ({ page }) => {
+    const account = await syncAccount("sync-lossy");
+    await watchConflicts(page);
+    await signIn(page, account.email, "/de/app/editor");
+    await expect(visibility(page, "Erster Link")).toBeChecked();
+    const lost = { patches: 0 };
+    await page.route(
+      (url) => url.pathname.endsWith("/rest/v1/sites"),
+      async (route) => {
+        if (route.request().method() !== "PATCH") {
+          await route.continue();
+          return;
+        }
+        // The write reaches the database (or its guard turns it down); the answer never comes back.
+        lost.patches += 1;
+        await route.fetch();
+        await route.abort("connectionreset");
+      },
+    );
+    const expected = [true, true, true];
+    for (const [index, title] of ["Erster Link", "Zweiter Link", "Dritter Link", "Erster Link", "Zweiter Link"].entries()) {
+      await visibility(page, title).click();
+      const block = ["Erster Link", "Zweiter Link", "Dritter Link"].indexOf(title);
+      expected[block] = !expected[block];
+      // A change every 650 ms: each save goes out while the earlier ones' answers are lost.
+      if (index < 4) await page.waitForTimeout(650);
+    }
+    await expect.poll(async () => (await stored(account.id)).blocks.map((block) => block.visible), { timeout: 20_000 }).toEqual(expected);
+    expect(lost.patches).toBeGreaterThanOrEqual(5);
+    expect(await conflictToasts(page)).toBe(0);
+    await expect(page.getByText(CONFLICT, { exact: true })).toHaveCount(0);
+  });
+
+  test("sign-out: Abmelden in Settings right after a change keeps the change @real", async ({ page }) => {
+    const account = await syncAccount("sync-logout");
+    await signIn(page, account.email, "/de/app/settings");
+    const language = page.getByLabel(de.app.settings.rows.pageLanguage);
+    const logout = page.getByRole("button", { name: de.app.settings.logout, exact: true });
+    await logout.scrollIntoViewIfNeeded();
+    await expect(language).toHaveValue("de");
+    // Inside the editor's autosave delay (400 ms): the change has not reached the store yet.
+    const started = Date.now();
+    await language.selectOption("en");
+    await logout.dispatchEvent("click");
+    expect(Date.now() - started, "the click came after the autosave delay: this run proves nothing").toBeLessThan(400);
+    await page.waitForURL("**/de/login**");
+    await expect.poll(async () => {
+      const { data } = await service().from("sites").select("page").eq("profile_id", account.id).single();
+      return (data?.page as { profile: { locale: string } } | undefined)?.profile.locale;
+    }).toBe("en");
   });
 });
