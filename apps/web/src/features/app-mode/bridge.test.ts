@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { appHaptic, bridgeAvailable, HANDLER, openExternal, post } from "./bridge";
-import { appDownload, appShare, base64Of } from "./bridge-files";
+import { appDownload, appDownloadFrom, appShare, base64Of } from "./bridge-files";
 
 /**
  * The bridge against a stand-in WKWebView: `webkit.messageHandlers.linkyo` records what it is given.
@@ -121,8 +121,36 @@ describe("files and sharing", () => {
 
   it("answers false in a browser at once, so the caller downloads or shares as before", async () => {
     const { postMessage } = webView({ app: false });
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
     expect(await appDownload(new Blob(["a"]), "a.txt")).toBe(false);
+    expect(await appDownloadFrom("https://storage.example/story.png", "linkyo-story-1.png")).toBe(false);
     expect(await appShare({ url: "https://linkyo.app/mila" })).toBe(false);
+    expect(postMessage).not.toHaveBeenCalled();
+    // A browser links to the file itself: nothing is fetched for it.
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("fetches a file on another host (a signed Storage address) and hands its bytes to the app", async () => {
+    const { posted } = webView();
+    const jpeg = new Uint8Array([255, 216, 255, 224]);
+    const fetcher = vi.fn(() => Promise.resolve(new Response(jpeg, { headers: { "content-type": "image/jpeg" } })));
+    vi.stubGlobal("fetch", fetcher);
+    const signed = "https://project.supabase.co/storage/v1/object/sign/deliverables/a/b/c.jpg?token=t&download=";
+    expect(await appDownloadFrom(signed, "linkyo-story-1.jpg")).toBe(true);
+    // No cookie goes along: the signed address is the whole permission.
+    expect(fetcher).toHaveBeenCalledWith(signed, { credentials: "omit" });
+    const [message] = posted as [{ type: string; name: string; mime: string; base64: string }];
+    expect(message).toMatchObject({ type: "download", name: "linkyo-story-1.jpg", mime: "image/jpeg" });
+    expect(bytesOf(message.base64)).toEqual(jpeg);
+  });
+
+  it("answers false, and sends nothing, when the file cannot be fetched (the caller says so)", async () => {
+    const { postMessage } = webView();
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response("expired", { status: 400 }))));
+    expect(await appDownloadFrom("https://project.supabase.co/x", "x.jpg")).toBe(false);
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new TypeError("offline"))));
+    expect(await appDownloadFrom("https://project.supabase.co/x", "x.jpg")).toBe(false);
     expect(postMessage).not.toHaveBeenCalled();
   });
 });

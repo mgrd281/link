@@ -8,7 +8,8 @@
  *    reads `app` (the `useAppMode()` result), directly or through a local that does, around the link or
  *    around every place its component is used.
  * 2. Every blob download (`link.download = …`) and every `navigator.share(…)` in the dashboard asks the
- *    bridge first (`bridgeAvailable`, `appDownload`, `appShare`): a WKWebView ignores both.
+ *    bridge first (`bridgeAvailable`, `appDownload`, `appShare`): a WKWebView ignores both. A download
+ *    link (`<a download>`, a file on Storage's host) renders only outside the app.
  * 3. The web chrome the app replaces carries `data-app-hide`, and the creator page's credit link the
  *    `data-credit` the dashboard previews hide it by.
  */
@@ -161,6 +162,21 @@ describe("app mode: no purchase surface in the iPhone app", () => {
     expect(offences).toEqual([]);
     // Five downloads (export, CSV, story picture, QR PNG and SVG) and five shares (QR twice, story, page link, invite).
     expect(sites).toBeGreaterThanOrEqual(9);
+  });
+
+  it("renders a download link only outside the app (the app gets the file through the bridge)", () => {
+    const offences: string[] = [];
+    let links = 0;
+    for (const source of all) {
+      walk(source.ast, (node) => {
+        if (!ts.isJsxAttribute(node) || node.name.getText(source.ast) !== "download") return;
+        links += 1;
+        if (!guarded(node, source)) offences.push(`${source.file}:${String(lineOf(source, node))}  <a download> renders in the app`);
+      });
+    }
+    expect(offences).toEqual([]);
+    // The Premium kit's story pictures (proposals/proposal-screen.tsx).
+    expect(links).toBeGreaterThanOrEqual(1);
   });
 });
 

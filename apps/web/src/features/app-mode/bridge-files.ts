@@ -33,6 +33,23 @@ export async function appDownload(file: Blob, name: string): Promise<boolean> {
 }
 
 /**
+ * In the app: fetches a file the web links to on another host (a signed Storage address) and hands it
+ * to the app (`download`), answering true; the app's one web view never leaves our host for a download.
+ * False when it could not be fetched or sent; in a browser false at once, and the caller links to the
+ * file as before (tell the two apart with `bridgeAvailable()`).
+ */
+export async function appDownloadFrom(url: string, name: string): Promise<boolean> {
+  if (!bridgeAvailable()) return false;
+  try {
+    const response = await fetch(url, { credentials: "omit" });
+    if (!response.ok) return false;
+    return await appDownload(await response.blob(), name);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * In the app: opens the system share sheet through the app (`share`) and answers true. In a browser:
  * false at once, and the caller uses `navigator.share` (or copies) as before.
  */
