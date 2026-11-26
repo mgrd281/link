@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { Providers } from "@/components/providers";
 import { AppGate } from "@/features/app/gate";
+import { ServiceWorkerIsland } from "@/features/app/install/service-worker-island";
 import { GatedRouteCheck } from "@/features/errors/gated-route-check";
 import { ClientMessages } from "@/i18n/client-messages-provider";
 
@@ -22,6 +23,8 @@ export default async function AppLayout({ children, params }: { children: ReactN
     <ClientMessages group="app">
       <Providers>
         <GatedRouteCheck area="app" />
+        {/* The dashboard's offline page (features/pwa); nothing else on the site registers a worker. */}
+        <ServiceWorkerIsland />
         <AppGate>{children}</AppGate>
       </Providers>
     </ClientMessages>
