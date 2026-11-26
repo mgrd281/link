@@ -21,9 +21,11 @@ export function routeParts(pathname: string, origin: TabKey): { title: RouteTitl
 const MAX_PATH = 2048;
 
 /**
- * Where `linkyoApp.navigate(path)` leads: a path of this site (`/de/app/editor?edit=…`, or without
- * the language, `/app/design`), split into its language and the rest, for the client router. Null for
- * anything else: another host, a protocol-relative or backslashed address, a non-string.
+ * Where `linkyoApp.navigate(path)` leads: a dashboard path (`/de/app/editor?edit=…`, or without the
+ * language, `/app/design`), split into its language and the rest, for the client router. Null for
+ * anything else: a page of this site outside the dashboard (the homepage, help, a legal page,
+ * checkout), which the app loads itself, so its navigation policy sees it (ADR 0087 decision 4);
+ * another host, a protocol-relative or backslashed address, a non-string.
  */
 export function navigationTarget(path: unknown, origin: string): { locale: Locale | null; href: string } | null {
   if (typeof path !== "string" || path.length === 0 || path.length > MAX_PATH) return null;
@@ -38,5 +40,6 @@ export function navigationTarget(path: unknown, origin: string): { locale: Local
   const [, first = "", ...rest] = url.pathname.split("/");
   const locale = routing.locales.find((candidate) => candidate === first) ?? null;
   const pathname = locale ? `/${rest.join("/")}` : url.pathname;
+  if (pathname !== TAB_HREF.home && !pathname.startsWith(`${TAB_HREF.home}/`)) return null;
   return { locale, href: `${pathname}${url.search}${url.hash}` };
 }

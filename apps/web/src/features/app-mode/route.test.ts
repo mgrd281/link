@@ -32,8 +32,15 @@ describe("navigate(path)", () => {
   it("splits a path with its language into the language and the rest", () => {
     expect(navigationTarget("/de/app/editor?edit=b1", ORIGIN)).toEqual({ locale: "de", href: "/app/editor?edit=b1" });
     expect(navigationTarget("/ar/app/settings/plan", ORIGIN)).toEqual({ locale: "ar", href: "/app/settings/plan" });
-    expect(navigationTarget("/en/hilfe#statistik", ORIGIN)).toEqual({ locale: "en", href: "/hilfe#statistik" });
-    expect(navigationTarget("/de", ORIGIN)).toEqual({ locale: "de", href: "/" });
+    expect(navigationTarget("/en/app", ORIGIN)).toEqual({ locale: "en", href: "/app" });
+    expect(navigationTarget("/de/app/analytics#week", ORIGIN)).toEqual({ locale: "de", href: "/app/analytics#week" });
+  });
+
+  it("refuses every page outside the dashboard: the app loads those itself, so its navigation policy sees them", () => {
+    // pushState never asks WKNavigationDelegate: a page reached this way would pass the app's policy by.
+    for (const path of ["/de", "/", "/en/hilfe#statistik", "/de/checkout/pro", "/checkout/pro", "/de/service", "/de/kuendigen", "/de/datenschutz", "/de/admin", "/de/application", "/de/app/../checkout/pro", "/de/app/%2e%2e/checkout/pro"]) {
+      expect(navigationTarget(path, ORIGIN), path).toBeNull();
+    }
   });
 
   it("keeps the current language for a path without one", () => {

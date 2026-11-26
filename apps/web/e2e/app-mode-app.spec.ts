@@ -437,8 +437,11 @@ test.describe("in the app, on a phone", () => {
     expect(await navigate("/app/design")).toBe(true);
     await page.waitForURL("**/de/app/design");
     await expect(heading(page)).toHaveText(m.app.nav.design);
-    // Nothing but this site's paths.
-    for (const refused of ["https://evil.example/de/app", "//evil.example/x", "javascript:alert(1)"]) expect(await navigate(refused), refused).toBe(false);
+    // Nothing but the dashboard's paths: a page outside it (the homepage, help, checkout) is the app's to
+    // load, so its navigation policy sees it (pushState never asks it).
+    for (const refused of ["https://evil.example/de/app", "//evil.example/x", "javascript:alert(1)", "/de", "/de/hilfe", "/de/checkout/pro"]) {
+      expect(await navigate(refused), refused).toBe(false);
+    }
     expect(page.url()).toContain("/de/app/design");
 
     expect(await navigate("/de/app/settings/account")).toBe(true);
