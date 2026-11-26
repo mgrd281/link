@@ -16,6 +16,7 @@ import { supabaseEnabled } from "@/lib/supabase/config";
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
 import { ADD_PRESETS, addGroups, blankBlock, blockFromLink, insertAt, newBlockId, presetBlock, type AddPreset } from "./blocks";
 import { useShowRules } from "./edit-sheet";
+import { readSharedOffer, subscribeSharedOffer, takeSharedOffer } from "./install/intents";
 import { ImageError, pickFiles, prepareAndStore, projectPictureLimit, storedImage, workImageKind } from "./images";
 import { isPortfolioKind, titleKeys } from "./kinds";
 import { useMediaOwner } from "./media-owner";
@@ -124,6 +125,21 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
   const inputId = useId();
   const [value, setValue] = useState("");
   const [error, setError] = useState(false);
+  // A link shared into Linkyo (the installed app's share target) waits in the field as if pasted;
+  // when nothing usable was shared, the hint says so instead (install/intents.ts).
+  const sharedOffer = useSyncExternalStore(subscribeSharedOffer, readSharedOffer, () => null);
+  const [takenOffer, setTakenOffer] = useState(0);
+  const [sharedNone, setSharedNone] = useState(false);
+  if (addOpen && sharedOffer && sharedOffer.id !== takenOffer) {
+    setTakenOffer(sharedOffer.id);
+    setValue(sharedOffer.link ?? "");
+    setError(false);
+    setSharedNone(sharedOffer.link === null);
+  }
+  if (!addOpen && sharedNone) setSharedNone(false);
+  useEffect(() => {
+    if (takenOffer) takeSharedOffer(takenOffer);
+  }, [takenOffer]);
   const [uploading, setUploading] = useState(false);
   const canPaste = useSyncExternalStore(never, canReadClipboard, () => false);
   const detection = useMemo(() => (value.trim() ? detectLink(value.trim()) : null), [value]);
@@ -430,6 +446,7 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
                   onChange={(event) => {
                     setValue(event.target.value);
                     setError(false);
+                    setSharedNone(false);
                   }}
                   onPaste={(event) => {
                     const text = event.clipboardData.getData("text");
@@ -472,6 +489,8 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
                   </span>
                 ) : workLink ? null : detection ? (
                   <Badge tone="primary">{t("detected", { type: tTypes(detection.type === "shorts" ? "link" : detection.type) })}</Badge>
+                ) : sharedNone ? (
+                  tShare("sharedNone")
                 ) : (
                   t("pasteHint")
                 )}

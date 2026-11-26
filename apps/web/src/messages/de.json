@@ -1980,7 +1980,8 @@
       "socialsHas": "Ist schon in deinen Social-Icons",
       "socialsFull": "Deine Social-Icons sind voll ({count}). Entferne erst eins.",
       "exportFirst": "Erst Daten exportieren",
-      "exported": "Datei erstellt: {file}"
+      "exported": "Datei erstellt: {file}",
+      "sharedNone": "Im Geteilten war kein Link. Füg ihn hier ein."
     },
     "design": {
       "title": "Design",
