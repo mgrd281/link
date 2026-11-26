@@ -6,7 +6,7 @@ import { accountStore, handOverPendingEdits } from "@/features/account/store";
 import type { AccountSnapshot, AccountStore } from "@/features/account/types";
 
 import { inAppMode } from "./app-mode";
-import { installOnApp } from "./app-object";
+import { installOnApp, onReady, readyFor } from "./app-object";
 import { inMainFrame, post, type SaveState } from "./bridge";
 
 /**
@@ -108,6 +108,9 @@ export function installStoreBridge(store: BridgeStore = accountStore, handOver: 
   const report = () => {
     const snapshot = store.getSnapshot();
     if (snapshot.status === "signedIn") {
+      // The app hears an account's save state only after the `ready` that names it (the interface
+      // half posts it, ADR 0087 decision 4): `ready` is always the first message.
+      if (readyFor() !== snapshot.account.id) return;
       signedIn = true;
       const seen = snapshot.conflicts ?? 0;
       const state: SaveState = seen > conflicts ? "conflict" : (snapshot.sync ?? "saved");
@@ -125,9 +128,11 @@ export function installStoreBridge(store: BridgeStore = accountStore, handOver: 
     }
   };
   const unsubscribe = store.subscribe(report);
+  const stopWaiting = onReady(report);
   report();
   return () => {
     unsubscribe();
+    stopWaiting();
     // Only ours: the interface half keeps its own methods.
     uninstall();
   };

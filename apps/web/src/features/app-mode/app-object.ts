@@ -1,9 +1,10 @@
 import type { AppWindow, LinkyoApp } from "./app-mode";
 
 /*
- * The web's methods on `window.linkyoApp` (ADR 0087, 0088). Apart from `./app-mode.ts`, which every page
- * that reads the app signal carries (the website, creator pages through the bridge's core, the root
- * error page): only the dashboard installs methods, so only its chunks load this.
+ * The web's methods on `window.linkyoApp` (ADR 0087, 0088), and the order of the bridge's first
+ * messages. Apart from `./app-mode.ts`, which every page that reads the app signal carries (the
+ * website, creator pages through the bridge's core, the root error page): only the dashboard installs
+ * methods, so only its chunks load this.
  */
 
 /**
@@ -52,5 +53,39 @@ export function installOnApp(methods: AppMethods): () => void {
   }
   return () => {
     for (const [name, method] of put) if (app[name] === method) Reflect.deleteProperty(app, name);
+  };
+}
+
+// ─── The order of the first messages ─────────────────────────────────────────────────────────
+
+/**
+ * The account the dashboard's last `ready` named (null: signed out); undefined before its first
+ * `ready` and after the dashboard was left. The interface half (`./app-mode-island.tsx`) posts `ready`,
+ * then `route`; the store's half (`./store-bridge.ts`) holds an account's `saveState` until the
+ * `ready` that names that account, so `ready` is always the first message after the dashboard mounts
+ * (ADR 0087 decision 4).
+ */
+let announced: string | null | undefined;
+const waiting = new Set<() => void>();
+
+/** The interface half posted `ready` for this account: what waited for it may post now. */
+export function announceReady(accountId: string | null): void {
+  announced = accountId;
+  for (const listener of [...waiting]) listener();
+}
+
+/** The dashboard was left (the interface half unmounted): the next mount posts `ready` first again. */
+export function withdrawReady(): void {
+  announced = undefined;
+}
+
+/** The account the last `ready` named, null for signed out, undefined for none since the dashboard mounted. */
+export const readyFor = (): string | null | undefined => announced;
+
+/** Calls `listener` after every `ready`; answers how to stop. */
+export function onReady(listener: () => void): () => void {
+  waiting.add(listener);
+  return () => {
+    waiting.delete(listener);
   };
 }

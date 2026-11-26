@@ -418,7 +418,7 @@ test.describe("in the app, on a phone", () => {
   test("the bridge: ready, route follows the screens, navigate() without a reload, back()", async ({ page }) => {
     const { m } = await signedIn(page, "de");
     const accountId = await seed(page);
-    await expect.poll(() => postedOf(page, "ready")).toContainEqual({ type: "ready", signedIn: true, accountId });
+    await expect.poll(() => postedOf(page, "ready")).toContainEqual({ type: "ready", bridge: 1, signedIn: true, accountId });
     await expect.poll(async () => (await postedOf(page, "route")).at(-1)).toEqual({ type: "route", path: "/de/app", title: m.app.nav.home, back: null });
 
     // A marker on the window survives only a move without a reload.
@@ -452,6 +452,50 @@ test.describe("in the app, on a phone", () => {
     expect(await page.evaluate(() => (window as unknown as { __same?: boolean }).__same)).toBe(true);
     const paths = (await postedOf(page, "route")).map((message) => message.path);
     expect(paths.slice(-4)).toEqual(["/de/app/settings/plan", "/de/app/design", "/de/app/settings/account", "/de/app/settings"]);
+  });
+
+  test("ready is the first message, then route, then saveState; leaving the dashboard takes all five methods, and coming back says ready first again", async ({ page }) => {
+    const { m } = await signedIn(page, "de");
+    const accountId = await seed(page);
+    const order = async () => (await posted(page)).map((message) => message.type).filter((type) => ["ready", "route", "saveState"].includes(type));
+    // A fresh document (seed reloads): nothing reaches the app before ready.
+    await expect.poll(order).toEqual(["ready", "route", "saveState"]);
+    expect((await posted(page))[0]).toEqual({ type: "ready", bridge: 1, signedIn: true, accountId });
+    const methods = () =>
+      page.evaluate(() => {
+        const app = (window as unknown as { linkyoApp: Record<string, unknown> }).linkyoApp;
+        return Object.keys(app)
+          .filter((name) => typeof app[name] === "function")
+          .sort();
+      });
+    expect(await methods()).toEqual(["back", "flush", "navigate", "reload", "signOut"]);
+
+    // Settings' Datenschutz row is a router link: the same document, a page outside the dashboard.
+    await page.evaluate(() => (window as unknown as { linkyoApp: { navigate: (path: string) => boolean } }).linkyoApp.navigate("/de/app/settings"));
+    await page.waitForURL("**/de/app/settings");
+    await page.evaluate(() => {
+      (window as unknown as { __same: boolean }).__same = true;
+    });
+    await page.getByRole("link", { name: m.app.settings.rows.privacy }).click();
+    await page.waitForURL("**/de/datenschutz");
+    await expect(page.locator("h1").first()).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { __same?: boolean }).__same)).toBe(true);
+    await expect.poll(methods).toEqual([]);
+
+    // Back on the dashboard: ready first, then route, then saveState, and all five methods again.
+    const seen = (await posted(page)).length;
+    await page.goBack();
+    await page.waitForURL("**/de/app/settings");
+    await expect
+      .poll(async () =>
+        (await posted(page))
+          .slice(seen)
+          .map((message) => message.type)
+          .filter((type) => ["ready", "route", "saveState"].includes(type)),
+      )
+      .toEqual(["ready", "route", "saveState"]);
+    expect((await posted(page))[seen]).toEqual({ type: "ready", bridge: 1, signedIn: true, accountId });
+    expect(await methods()).toEqual(["back", "flush", "navigate", "reload", "signOut"]);
   });
 
   test("every download and share goes to the app, none to the browser", async ({ page }) => {

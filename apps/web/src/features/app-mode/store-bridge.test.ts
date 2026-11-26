@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AccountSnapshot } from "@/features/account/types";
 
 import type { LinkyoApp } from "./app-mode";
-import { installOnApp } from "./app-object";
+import { announceReady, installOnApp, withdrawReady } from "./app-object";
 import { installStoreBridge, READY_WAIT, SIGN_OUT_WAIT } from "./store-bridge";
 
 /**
@@ -105,10 +105,13 @@ interface App {
 
 beforeEach(() => {
   vi.useFakeTimers();
+  // The interface half has told the app `ready` for the test's account (see "ready comes first").
+  announceReady("a1");
 });
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  withdrawReady();
 });
 
 describe("store bridge", () => {
@@ -335,6 +338,49 @@ describe("store bridge", () => {
       store.set(signedIn({ sync: "saving" }));
       store.set({ status: "signedOut" });
     }).not.toThrow();
+  });
+});
+
+describe("ready comes first (ADR 0087 decision 4)", () => {
+  it("holds the save state until the interface half has posted ready for this account, then tells it", () => {
+    // Before, the store's half posted saveState as soon as the store loaded, ahead of ready.
+    withdrawReady();
+    const win = webView();
+    const store = fakeStore();
+    installStoreBridge(store);
+    store.set(signedIn({ sync: "saving" }));
+    expect(win.messages).toEqual([]);
+    announceReady("a1");
+    expect(win.messages).toEqual([{ type: "saveState", state: "saving", updatedAt: "v1" }]);
+    store.set(signedIn({ sync: "saved", baseUpdatedAt: "v2" }));
+    expect(win.messages.at(-1)).toEqual({ type: "saveState", state: "saved", updatedAt: "v2" });
+  });
+
+  it("another account's save state waits for the ready that names it", () => {
+    const win = webView();
+    const store = fakeStore();
+    installStoreBridge(store);
+    expect(win.messages).toEqual([{ type: "saveState", state: "saved", updatedAt: "v1" }]);
+    const other = signedIn({ account: { id: "a2", email: "noor@example.com", username: "noor", createdAt: "" }, baseUpdatedAt: "w1" });
+    store.set(other);
+    expect(win.messages).toHaveLength(1);
+    announceReady("a2");
+    expect(win.messages.at(-1)).toEqual({ type: "saveState", state: "saved", updatedAt: "w1" });
+  });
+
+  it("mounted again (the dashboard left and opened again): the save state is told again after the new ready", () => {
+    const win = webView();
+    const store = fakeStore();
+    const first = installStoreBridge(store);
+    first();
+    withdrawReady();
+    installStoreBridge(store);
+    expect(win.messages).toEqual([{ type: "saveState", state: "saved", updatedAt: "v1" }]);
+    announceReady("a1");
+    expect(win.messages).toEqual([
+      { type: "saveState", state: "saved", updatedAt: "v1" },
+      { type: "saveState", state: "saved", updatedAt: "v1" },
+    ]);
   });
 });
 

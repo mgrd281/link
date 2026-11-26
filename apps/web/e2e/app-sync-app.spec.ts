@@ -273,6 +273,13 @@ test.describe("the iPhone app's web side @real", () => {
     await watchConflicts(page);
     await signIn(page, account.email, "/de/app/editor");
     await expect(visibility(page, "Erster Link")).toBeChecked();
+    // The order the app relies on (ADR 0087 decision 4): nothing before ready, then the screen, then the
+    // save state. Before, route and saveState reached the app ahead of ready on every cold load.
+    await expect.poll(async () => (await appMessages(page)).slice(0, 3).map((message) => message.type)).toEqual(["ready", "route", "saveState"]);
+    const opening = await appMessages(page);
+    expect(opening[0]).toEqual({ type: "ready", bridge: 1, signedIn: true, accountId: account.id });
+    expect(opening[1]).toEqual({ type: "route", path: "/de/app/editor", title: de.app.nav.page, back: null });
+    expect(opening[2]).toEqual({ type: "saveState", state: "saved", updatedAt: (await stored(account.id)).updatedAt });
 
     // A change the editor has not even handed to the store yet: flush() saves it and answers the new version.
     await visibility(page, "Erster Link").click();
@@ -300,10 +307,16 @@ test.describe("the iPhone app's web side @real", () => {
     expect(states.some((message) => message.state === "conflict")).toBe(false);
 
     // Signing out ends the web view's session and tells the app (signedOut); the interface half then says
-    // the web view has no session any more (ready, ADR 0087), as it does whenever the session changes.
+    // the web view has no session any more (ready, then the screen, ADR 0087), as whenever the session changes.
     const seen = (await appMessages(page)).length;
     await callApp(page, "signOut");
-    await expect.poll(async () => (await appMessages(page)).slice(seen)).toEqual([{ type: "signedOut" }, { type: "ready", signedIn: false, accountId: null }]);
+    await expect
+      .poll(async () => (await appMessages(page)).slice(seen))
+      .toEqual([
+        { type: "signedOut" },
+        { type: "ready", bridge: 1, signedIn: false, accountId: null },
+        { type: "route", path: "/de/app/editor", title: de.app.nav.page, back: null },
+      ]);
     await page.goto("/de/app");
     await page.waitForURL("**/de/login**");
   });

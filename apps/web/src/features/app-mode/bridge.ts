@@ -16,6 +16,14 @@ import { inAppMode } from "./app-mode";
 /** The handler's name: `webkit.messageHandlers.linkyo`. */
 export const HANDLER = "linkyo";
 
+/**
+ * The contract's version on the web's side, sent with every `ready`. The web deploys continuously and
+ * installed apps lag behind, so the contract only ever grows (a new message, a new field, a new
+ * method); a change an older app could not follow would raise this number, and the web would keep
+ * the old way for an app whose `window.linkyoApp.bridge` is lower (ADR 0087, "For the native shell").
+ */
+export const BRIDGE_VERSION = 1;
+
 /** A file handed to the app, its bytes as base64 (no data: prefix). */
 export interface BridgeFile {
   name: string;
@@ -25,8 +33,11 @@ export interface BridgeFile {
 
 /** What the web tells the app. Every message is a plain object with a `type`. */
 export type BridgeMessage =
-  /** The web is listening (`navigate`, `back` installed) and knows the session: after load and when it changes. */
-  | { type: "ready"; signedIn: boolean; accountId: string | null }
+  /**
+   * The web is listening (all five methods installed) and knows the session: the first message each
+   * time the dashboard mounts, and again whenever the session changes. `bridge`: `BRIDGE_VERSION`.
+   */
+  | { type: "ready"; bridge: number; signedIn: boolean; accountId: string | null }
   /** The dashboard shows another screen: its path (with the language), its name and where back leads (null: nowhere, or a screen the web does not name). */
   | { type: "route"; path: string; title: string | null; back: string | null }
   /** Opens the system share sheet with a link, words and/or a file. */

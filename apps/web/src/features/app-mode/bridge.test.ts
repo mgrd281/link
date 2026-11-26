@@ -49,7 +49,7 @@ describe("post", () => {
   it("sends nothing in a browser, even where a page has a handler of that name", () => {
     const { postMessage } = webView({ app: false });
     expect(bridgeAvailable()).toBe(false);
-    expect(post({ type: "ready", signedIn: true, accountId: "a" })).toBe(false);
+    expect(post({ type: "ready", bridge: 1, signedIn: true, accountId: "a" })).toBe(false);
     expect(appHaptic()).toBe(false);
     expect(postMessage).not.toHaveBeenCalled();
   });
@@ -83,7 +83,7 @@ describe("post", () => {
 
   it("is false on the server", () => {
     expect(bridgeAvailable()).toBe(false);
-    expect(post({ type: "ready", signedIn: false, accountId: null })).toBe(false);
+    expect(post({ type: "ready", bridge: 1, signedIn: false, accountId: null })).toBe(false);
   });
 });
 
