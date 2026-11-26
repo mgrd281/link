@@ -299,7 +299,15 @@ operations), in one place:
   The contract review (decision 9) adds 0.4 KB to the dashboard's first load (324.5 → 324.9 KB of 350, demo
   and real builds alike: the order of the first messages, the copy of a frozen object, the dashboard-only
   `navigate`); creator pages and the website stay as they were, apart from `/<l>/p/<slug>/<project>`
-  26.9 → 27.0 KB in the demo build; `/de`'s HTML stays 54.3 KB (demo) and 55.3 KB (real).
+  26.9 → 27.0 KB in the demo build; `/de`'s HTML stays 54.3 KB (demo) and 55.3 KB (real). The fixes of
+  the third review (the guard's lost answers, the restore from the back/forward cache, the bare reasons)
+  bring the dashboard's first load to 325.1 KB of 350 in the demo build and 325.0 KB with real accounts;
+  its decisions (decision 10, [0088](0088-app-sync.md)) add 1 byte to it in either build (325,076 →
+  325,077 and 325,045 → 325,046 bytes gzipped) and 0.24 KB to the real-account store's own chunk, which
+  the first load does not carry (7.14 → 7.37 KB gzipped: the read-backs on screen, the open refusal).
+  Creator pages and the website stay as they were: page code `/u/<name>` 30.8 KB, `/u/<name>/<project>`
+  23.9 KB, `/<l>/p/<slug>` 32.6 KB, `/<l>/p/<slug>/<project>` 27.0 KB (budget 35 KB); `/de`'s HTML 54.3 KB
+  (demo) and 55.3 KB (real) of 60.
 - Tests: `features/app-mode/*.test.ts` (the signal, the bridge against a stand-in WKWebView: main frame only,
   never throws, files as base64, a file fetched from another host, Safari only for our host; the route names and
   `navigate`'s paths; the CSS keyed on the platforms the code knows; a static guard that every purchase link and
