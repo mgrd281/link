@@ -20,6 +20,8 @@ const read = (file: string) => readFileSync(path.join(ROOT, file), "utf8");
 const source = (file: string) => readFileSync(path.join(WEB, file), "utf8");
 const MODE = read("docs/DECISIONS/0087-app-mode.md");
 const SYNC = read("docs/DECISIONS/0088-app-sync.md");
+/** Auth's codes for a session that is gone: a refresh refused with one of them wipes the device. */
+const WIPE_CODES = ["refresh_token_not_found", "refresh_token_already_used", "session_not_found", "user_not_found", "session_expired", "user_banned"];
 
 /** The part of a document from `from` to `to` (both must be there). */
 function part(text: string, from: string, to: string): string {
@@ -80,13 +82,27 @@ describe("ADR 0088 answers what the two routes answer", () => {
     const text = handoff();
     expect(text).toContain("**A 401 is answered with one refresh, never a wipe by itself.**");
     expect(text).toMatch(/refreshes its session once[\s\S]*?and repeats the call/);
-    expect(text).toMatch(/wipes the device \*\*only\*\* when that\s+refresh fails with `invalid_grant`, `refresh_token_not_found`, `session_not_found` or `user_not_found`/);
+    expect(text).toMatch(/wipes the device \*\*only\*\* when that\s+refresh is refused with a wipe code/);
+    // What Auth really answers (Auth v2.197.0): the request, where the code is, and every wipe code. A
+    // client reading OAuth's `error` (`invalid_grant`) or a numeric `code` would never match and retry a
+    // dead session forever.
+    const wipe = part(text, "**A 401 is answered with one refresh, never a wipe by itself.**", "A 401 right after");
+    expect(wipe).toMatch(/`POST \/auth\/v1\/token\?grant_type=refresh_token` with the headers `apikey` and\s+`X-Supabase-Api-Version: 2024-01-01`/);
+    expect(wipe).toMatch(/the string in the answer's `code` field\. Without the version header `code` is the number\s+400 and the string is in `error_code`/);
+    expect(wipe).toMatch(/never sends OAuth's `error` field, nor `invalid_grant`/);
+    expect(wipe).toMatch(/a sign-out, a device sign-out, a suspension and a\s+deletion all answer 400 `refresh_token_not_found`/);
+    for (const code of WIPE_CODES) expect(wipe, code).toContain(`\`${code}\``);
+    const cell = tableRows(part(text, "| Status | `error` | When | App does |", "- The link is single-use")).find(([status, error]) => status === "401" && error === "`unauthorized`");
+    for (const code of WIPE_CODES) expect(cell?.[3], code).toContain(`\`${code}\``);
+    expect(cell?.[3]).not.toContain("invalid_grant");
     expect(text).toMatch(/A 401\s+right after a successful refresh is treated like a 503 \(try again later, never wipe\)/);
     for (const route of ["`/api/auth/handoff`", "`/api/app/page`", "any other Bearer route"]) expect(text, route).toContain(route);
     // ADR 0087's checklist for the app says the same.
     const shell = part(MODE, "**For the native shell.**", "**Consequences.**");
     expect(shell).toContain("**A 401 is answered with one refresh, never a wipe by itself**");
-    expect(shell).toMatch(/only when that refresh fails with `invalid_grant`,\s+`refresh_token_not_found`, `session_not_found` or `user_not_found`/);
+    expect(shell).toMatch(/\(`POST \/auth\/v1\/token\?grant_type=refresh_token` with `X-Supabase-Api-Version: 2024-01-01`\) is refused with\s+a wipe code, the string in the answer's `code` \(in `error_code` when the header is missing\)/);
+    expect(shell).toMatch(/a sign-out, a device sign-out, a suspension and a deletion all answer 400\s+`refresh_token_not_found`/);
+    for (const code of WIPE_CODES) expect(shell, code).toContain(`\`${code}\``);
     expect(shell).toMatch(/a 401 right after a\s+successful refresh is treated like a 503/);
   });
 
@@ -117,6 +133,16 @@ describe("ADR 0088 answers what the two routes answer", () => {
     for (const route of ["verify", "password"]) expect(source(`app/api/auth/${route}/route.ts`), route).toMatch(/if \(readError\) \{[\s\S]*?fail\("serverError", 502\)/);
     const text = handoff();
     expect(text).toContain("The confirm route never answers `suspended` for a\n     failed read");
+    // A failed read ends only the session just opened (scope local), so the app's own session survives
+    // `link=retry`; a suspended account loses every session (auth-js's default scope, global).
+    for (const route of ["confirm", "verify", "password"]) {
+      const code = source(`app/api/auth/${route}/route.ts`);
+      expect(code, route).toMatch(/if \(readError\) \{[\s\S]*?admin\.signOut\(data\.session\.access_token, "local"\)[\s\S]*?return/);
+      expect(code, route).toMatch(/if \(profile\?\.status !== "active"\) \{[^}]*admin\.signOut\(data\.session\.access_token\)\./);
+    }
+    expect(text).toMatch(/it ends only the session the token just opened \(`admin\.signOut\(token, "local"\)`[^)]*\), so the account's other sessions, the app's own native session among them, stay/);
+    expect(text).toMatch(/only the session just opened ended, scope `local`, so\s+no other device of the account is signed out/);
+    expect(text).toMatch(/it ends every session of the account \(`admin\.signOut\(token\)`, scope `global`: an account that is not\s+active loses every session\)/);
     expect(text).toContain("`/<locale>/login?link=retry`");
     expect(text).toContain("`auth.errors.linkRetry`");
     expect(source("features/account/auth/login-form.tsx")).toContain('link === "retry" ? "linkRetry"');

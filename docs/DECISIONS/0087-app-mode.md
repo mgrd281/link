@@ -277,8 +277,12 @@ operations), in one place:
    `route` never decides where the web view is (decision 4).
 10. **A 401 is answered with one refresh, never a wipe by itself** ([0088](0088-app-sync.md) §1). On a 401 from
     `/api/auth/handoff`, `/api/app/page` or any other Bearer route, the app refreshes its session once and repeats
-    the call. It signs out and wipes the device only when that refresh fails with `invalid_grant`,
-    `refresh_token_not_found`, `session_not_found` or `user_not_found` (plan §1.2 step 9); a 401 right after a
+    the call. It signs out and wipes the device only when that refresh
+    (`POST /auth/v1/token?grant_type=refresh_token` with `X-Supabase-Api-Version: 2024-01-01`) is refused with
+    a wipe code, the string in the answer's `code` (in `error_code` when the header is missing):
+    `refresh_token_not_found` (a sign-out, a device sign-out, a suspension and a deletion all answer 400
+    `refresh_token_not_found`), `refresh_token_already_used`, `session_not_found`, `user_not_found`,
+    `session_expired` or `user_banned` (plan §1.2 step 9; Auth never sends `invalid_grant`); a 401 right after a
     successful refresh is treated like a 503 (try again later, never wipe). The routes answer 401 only for
     Supabase Auth's own codes about the token; a gateway's "Invalid API key" or a firewall's 403 is a 503.
 

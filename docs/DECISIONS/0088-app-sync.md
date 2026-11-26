@@ -32,16 +32,20 @@ view cannot share one session.
      redirects. The confirm route now logs a valid `device` instead of `dev_email_link`, so both of the app's
      sessions carry its device id and the console's "Sign out device" ends both.
    - The confirm route also refuses an account that is not active, as `/api/auth/verify` and `/api/auth/password`
-     do: it ends the session the token just opened (on the server and in the browser's cookies), logs a failed
-     sign-in and redirects to `/<locale>/login?link=suspended`, which shows the code sign-in's own words
+     do: it ends every session of the account (`admin.signOut(token)`, scope `global`: an account that is not
+     active loses every session) and the browser's cookies, logs a failed sign-in and redirects to
+     `/<locale>/login?link=suspended`, which shows the code sign-in's own words
      (`auth.errors.suspended`). Before, an e-mailed link or a hand-off link made before the suspension still signed
      the account in. Every answer of the confirm route, each a redirect, carries `Cache-Control: no-store`: it is
      for one single-use token and sets or ends a session, so no browser or cache in between may keep it.
    - **A profile that could not be read is not "suspended".** The confirm route never answers `suspended` for a
-     failed read: it ends the session the token just opened too (it grants nothing), logs no failed sign-in, and
-     redirects to `/<locale>/login?link=retry`, which says `auth.errors.linkRetry` ("Die Anmeldung hat gerade nicht
+     failed read: it ends only the session the token just opened (`admin.signOut(token, "local")`; it grants
+     nothing), so the account's other sessions, the app's own native session among them, stay and the app's
+     one automatic hand-off on `link=retry` (below) can work; it logs no failed sign-in and redirects to
+     `/<locale>/login?link=retry`, which says `auth.errors.linkRetry` ("Die Anmeldung hat gerade nicht
      geklappt. Bitte versuch es noch einmal.", in de, en and ar). `/api/auth/verify` and `/api/auth/password` answer
-     their generic server error there (502 `serverError`, the session just opened ended, nothing logged as failed).
+     their generic server error there (502 `serverError`, only the session just opened ended, scope `local`, so
+     no other device of the account is signed out; nothing logged as failed).
      Before, all three read a failed read as an account that is not active.
    - Never a 500. Neither the token, the link nor the address is logged. The answers, in the order the route
      checks them (every one `{ ok: false, error }` but the first), and what the app does with each:
@@ -50,7 +54,7 @@ view cannot share one session.
      |---|---|---|---|
      | 200 | — | `{ ok: true, url }` | opens `url` in its web view (one hand-off in flight, below) |
      | 409 | `unavailable` | a demo build (no real accounts) or no server key | shows its native error view; no retry (a retry changes nothing) |
-     | 401 | `unauthorized` | no `Authorization: Bearer`, or a token Supabase Auth turned down with its own error code: `bad_jwt` (not a valid token, a wrong signature, expired), `session_not_found` (its session ended; supabase-js reports it as `AuthSessionMissingError`), `user_not_found`, `no_authorization` | refreshes its session once and asks again; signs out and wipes the device only when that refresh fails with `invalid_grant`, `refresh_token_not_found`, `session_not_found` or `user_not_found` (below) |
+     | 401 | `unauthorized` | no `Authorization: Bearer`, or a token Supabase Auth turned down with its own error code: `bad_jwt` (not a valid token, a wrong signature, expired), `session_not_found` (its session ended; supabase-js reports it as `AuthSessionMissingError`), `user_not_found`, `no_authorization` | refreshes its session once and asks again; signs out and wipes the device only when that refresh is refused with a wipe code: `refresh_token_not_found`, `refresh_token_already_used`, `session_not_found`, `user_not_found`, `session_expired` or `user_banned` (below) |
      | 503 | `unavailable` | Supabase Auth could not check the token (no answer, a 5xx, a rate limit), or something other than Auth answered: any 4xx without Auth's own code (the API gateway's "Invalid API key", a firewall's page) says nothing about the token | tries again later with a growing pause; never signs out on it, keeps the Keychain and the App Group |
      | 422 | `invalidDevice` | `deviceId` missing or not `dev_` + 12 lowercase hex digits; also a body that is not JSON | an app bug: reports it; no retry |
      | 422 | `invalidNext` | `next` is not a string, or longer than 200 characters | an app bug: reports it; no retry |
@@ -72,12 +76,22 @@ view cannot share one session.
    - **A 401 is answered with one refresh, never a wipe by itself.** On a 401 from `/api/auth/handoff`,
      `/api/app/page` or any other Bearer route, the app refreshes its session once (its `SessionStore`, the
      only refresher, plan §1.2) and repeats the call. It signs out and wipes the device **only** when that
-     refresh fails with `invalid_grant`, `refresh_token_not_found`, `session_not_found` or `user_not_found`
-     (the account or its session is gone: a suspension, a device sign-out, a deletion; plan §1.2 step 9). A 401
-     right after a successful refresh is treated like a 503 (try again later, never wipe), and so is a refresh
-     that fails any other way (no answer, a 5xx, a rate limit). A 503 `unavailable` and a 502 `serverError` say
-     nothing about the session: the app tries again later, keeping its session, the Keychain and the App Group
-     (the share extension's queue) as they are. Two exceptions to handing off on the login page:
+     refresh is refused with a wipe code (the account or its session is gone; plan §1.2 step 9):
+     - **the request:** `POST /auth/v1/token?grant_type=refresh_token` with the headers `apikey` and
+       `X-Supabase-Api-Version: 2024-01-01` and the body `{ "refresh_token": … }`;
+     - **the code:** the string in the answer's `code` field. Without the version header `code` is the number
+       400 and the string is in `error_code`, so the app reads `error_code` when `code` is not a string. Auth
+       never sends OAuth's `error` field, nor `invalid_grant`, which the app may keep only as a legacy alias;
+     - **the wipe codes:** `refresh_token_not_found` (a sign-out, a device sign-out, a suspension and a
+       deletion all answer 400 `refresh_token_not_found`; Auth v2.197.0), `refresh_token_already_used` (a
+       token older than the reuse window: it can never refresh again), `session_not_found` and
+       `user_not_found` (what `GET /auth/v1/user` answers, 403), and `session_expired` and `user_banned`
+       (should a session time limit or bans ever be configured).
+
+     A 401 right after a successful refresh is treated like a 503 (try again later, never wipe), and so is a
+     refresh that fails any other way (no answer, a 5xx, a rate limit). A 503 `unavailable` and a 502
+     `serverError` say nothing about the session: the app tries again later, keeping its session, the Keychain
+     and the App Group (the share extension's queue) as they are. Two exceptions to handing off on the login page:
      - **not while the app signs out itself.** After `signOut()` the web view goes to
        `/<locale>/login?next=…` (plan §1.2 step 7 ends the web view's session before the native one); a
        hand-off there would sign it back in;
