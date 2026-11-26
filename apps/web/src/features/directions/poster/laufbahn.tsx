@@ -18,9 +18,10 @@ import { displayStyle, pageSide } from "./styles";
  * titled section opens under a hairline with its title, and the titles form the page's contents: on
  * phones the app bar names the section being read and opens the contents as a sheet; chips that wrap
  * on tablets; a sticky list beside the sections on the wide canvas, marking the section being read.
- * Facts and skills are calm lists on one soft sheet (a step in the fill, no frame and no rules), never
- * tiles that look like buttons, and no word is ever broken: a label too long for its row wraps between
- * words. Sections stand apart by space and their titles alone: no hairline above each one.
+ * Facts and skills are calm lists on one soft sheet (a step in the fill, no frame and no rules; beside
+ * a portrait the facts are a list under hairlines, as in Werkbogen), never tiles that look like
+ * buttons, and no word is ever broken: a label too long for its row wraps between words. Sections
+ * stand apart by space and their titles alone: no hairline above each one.
  *
  * The section frame takes every kind of block; about, skills, experience and text have their own
  * calm renderers here, everything else keeps the renderer it has in every template. Server HTML with
@@ -119,11 +120,35 @@ function IconSquare({ icon, size = "sm" }: { icon: Parameters<typeof Icon>[0]["i
   );
 }
 
+/** The lead of "About": calm on phones, larger from tablets on, the measure kept. */
+const aboutLead = cn(
+  pageSide,
+  "max-w-prose text-title leading-normal font-medium text-pretty whitespace-pre-line text-creator-fg rtl:tracking-normal @prose:text-h3 @prose:leading-snug @work:text-h2 @prose:rtl:leading-normal",
+);
+
+/** The rest of "About" as body, in its paragraphs. */
+function AboutBody({ parts }: { parts: readonly string[] }): ReactNode {
+  if (parts.length === 0) return null;
+  return (
+    <div className="grid max-w-prose gap-4">
+      {parts.map((part) => (
+        <p key={part} dir="auto" className={cn(pageSide, "text-body text-pretty whitespace-pre-line text-creator-fg @prose:text-body-lg")}>
+          {part}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 /**
  * Who the owner is: the first paragraph as a lead (calm on phones, larger from tablets on; a long one
  * leads with its first sentence, so the lead stays within about five lines on a phone, and the rest of
- * it opens the body), the facts as a grouped list, then the rest of the text as body. A portrait, when
- * there is one, stands at the start of the lead.
+ * it opens the body), then the facts, then the rest of the text as body.
+ * - With a portrait (as Werkbogen's "About"): under the lead the portrait on two of five columns at
+ *   the start and the facts on the other three beside it, side by side from 320 px on (in Arabic the
+ *   portrait stands on the right); the facts a list with a hairline above each row, the label quiet
+ *   over its value.
+ * - Without one: the facts on one soft sheet.
  */
 export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode {
   const [opening, ...others] = paragraphs(block.text);
@@ -131,27 +156,46 @@ export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode
   const rest = more ? [more, ...others] : others;
   const facts = block.facts ?? [];
   const portrait = hasImage(block.portrait) ? block.portrait : undefined;
+  if (portrait) {
+    return (
+      <div className="grid min-w-0 gap-6 @prose:gap-8">
+        {first ? (
+          <p dir="auto" className={aboutLead}>
+            {first}
+          </p>
+        ) : null}
+        <div data-about-portrait className="grid min-w-0 grid-cols-5 items-start gap-x-4 @prose:gap-x-6">
+          <div className="relative col-span-2 aspect-portrait overflow-hidden rounded-creator-card bg-creator-surface-2">
+            <MediaImage src={portrait.src} focal={portrait.focal} alt={portrait.alt} sizes={mediaSizes.half} />
+          </div>
+          {facts.length > 0 ? (
+            // One fact a row beside the portrait, a hairline above each. Words stay whole: a value wraps
+            // between words, and only a word wider than its column may break (WCAG 1.4.10).
+            <dl className="col-span-3 grid min-w-0 grid-cols-1 content-start">
+              {facts.map((fact) => (
+                <div key={`${fact.label}-${fact.value}`} className="grid min-w-0 grid-cols-1 content-start gap-1 border-t border-creator-line py-3">
+                  <dt dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>
+                    {fact.label}
+                  </dt>
+                  <dd dir="auto" className={cn(pageSide, "text-small leading-snug font-semibold text-pretty hyphens-manual break-words @prose:text-body")}>
+                    {fact.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+        </div>
+        <AboutBody parts={rest} />
+      </div>
+    );
+  }
   return (
     <div className="grid min-w-0 gap-6 @prose:gap-8">
-      {first || portrait ? (
-        <div className={cn("grid min-w-0 items-start gap-6", portrait && "@prose:grid-cols-3")}>
-          {portrait ? (
-            <div className="relative aspect-portrait w-1/2 overflow-hidden rounded-creator-card bg-creator-surface-2 @prose:w-full">
-              <MediaImage src={portrait.src} focal={portrait.focal} alt={portrait.alt} sizes={mediaSizes.third} />
-            </div>
-          ) : null}
-          {first ? (
-            <p
-              dir="auto"
-              className={cn(
-                pageSide,
-                "max-w-prose text-title leading-normal font-medium text-pretty whitespace-pre-line text-creator-fg rtl:tracking-normal @prose:text-h3 @prose:leading-snug @work:text-h2 @prose:rtl:leading-normal",
-                portrait && "@prose:col-span-2",
-              )}
-            >
-              {first}
-            </p>
-          ) : null}
+      {first ? (
+        <div className="grid min-w-0 items-start gap-6">
+          <p dir="auto" className={aboutLead}>
+            {first}
+          </p>
         </div>
       ) : null}
       {facts.length > 0 ? (
@@ -171,15 +215,7 @@ export function LaufbahnAbout({ block }: { block: BlockOf<"about"> }): ReactNode
           ))}
         </dl>
       ) : null}
-      {rest.length > 0 ? (
-        <div className="grid max-w-prose gap-4">
-          {rest.map((part) => (
-            <p key={part} dir="auto" className={cn(pageSide, "text-body text-pretty whitespace-pre-line text-creator-fg @prose:text-body-lg")}>
-              {part}
-            </p>
-          ))}
-        </div>
-      ) : null}
+      <AboutBody parts={rest} />
     </div>
   );
 }

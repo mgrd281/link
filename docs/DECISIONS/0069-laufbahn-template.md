@@ -257,4 +257,21 @@ modern and fitting. Template-level again (Sevag's clips aside); every other temp
   sheet 592 px with all twelve labels on one line; the facts sheet 260 px with every value on one line;
   each number and its label on one line at 390 and 360 px.
 
+## Round 5: a portrait beside the facts (the founder's screenshot of Werkbogen's "About")
+
+- **With a portrait, "About" is set as Werkbogen's:** the lead, then the portrait on two of five
+  columns at the start and the facts on the other three beside it, side by side at every width from
+  320 px (in Arabic the portrait stands on the right), then the rest of the text. Beside a portrait
+  the facts are a list with a hairline above each row (the label quiet over its value in bold), not
+  the soft sheet: the portrait is the step that sets the row apart. Without a portrait nothing
+  changes: the facts keep their soft sheet (a unit test holds that markup to the one before).
+- **No section numbers.** Werkbogen puts a small "02" before its titles; Laufbahn's titles stay words
+  only, as its index and its contents sheet do (round 2: no numbers), so none is added for one section.
+- **Sevag's placeholder** is the drawn still of "Scannen von Waren" until his own photo. On the visit
+  whose header plays that clip, the portrait takes the header's own still instead
+  (`withRotationClip`), so no visit shows one picture twice.
+- **Measured** on the demo build with the fictional portfolio sample, reduced motion: 390 px the portrait
+  130 × 163 beside facts 204 px wide; 320 px 102 × 128 beside 162 px, every value wrapping between
+  words; 1440 px 281 × 351 beside 434 px; no horizontal scroll, no shadow; Arabic mirrored.
+
 **Status.** Accepted.

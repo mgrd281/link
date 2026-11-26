@@ -3,7 +3,8 @@ import { NO_IMAGE, type BlockOf, type Page } from "@linkyo/blocks";
 /**
  * A page prepared for Sevag Ghazarian, from the application letter he gave the Linkyo team
  * (Lagerist / Töner, Sales Center Lörrach). Every fact on it comes from that letter; nothing is
- * added. No photo of him yet: his initials stand in.
+ * added. No photo of him yet: his initials stand in, and "Über mich" shows a drawn still beside the
+ * facts until his own photo replaces it.
  *
  * Picture and moving picture: Linkyo's own illustrations only, drawn for this kind of page (no stock
  * material, no real footage: the founder's wish). His own clip is the founder's choice from the motion
@@ -60,6 +61,16 @@ export const sevagDe: Page = {
       id: "about",
       type: "about",
       title: "Über mich",
+      // A placeholder until his own photo: the first frame of the library's drawn clip "Scannen von
+      // Waren" (features/creator/motion-library.ts), never his header's own clip. On the visit whose
+      // header plays this clip, the portrait takes the header's own still instead (./rotation).
+      portrait: {
+        src: "sample:ex-motion-ware-scannen",
+        alt: "Illustration: Ein Lagerist scannt Kartons auf einem Rollenband, das Terminal bestätigt jeden Scan",
+        focal: [0.3, 0.42],
+        w: 1080,
+        h: 1350,
+      },
       text: "In meiner aktuellen Position liegt mein Schwerpunkt in der Kommissionierung, im Scannen von Waren und im Be- und Entladen von Lkw. Das sichere Ein- und Auslagern mit dem Seitenschubstapler gehört zu meinen täglichen Aufgaben.\n\nMit SAP prüfe ich Bestände und quittiere und buche Warenbewegungen. Ich wirke regelmäßig bei Inventuren mit, erstelle Versanddokumente und beachte die Vorschriften zur Ladungssicherung und zum Gefahrgut.\n\nIch arbeite gerne im Team, unterstütze meine Kollegen im Tagesgeschäft und schätze den direkten Kontakt mit Kunden bei der Warenausgabe.",
       facts: [
         { label: "Bewerbung als", value: "Lagerist / Töner (w/m/d)" },

@@ -6,13 +6,14 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
+import { MOTION_LIBRARY } from "@/features/creator/motion-library";
 import { PREVIEWS } from "@/features/previews/registry";
 import { SEVAG_SLUG, sevagDe } from "@/features/previews/sevag";
 import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
-import { signposts } from "./laufbahn";
+import { LaufbahnAbout, signposts } from "./laufbahn";
 import { splitLead } from "./laufbahn-content";
 import { PosterRenderer } from "./renderer";
 import { portfolioSample } from "./sample";
@@ -218,8 +219,37 @@ describe("Sevag's application page on Laufbahn", () => {
     expect(skills).not.toMatch(/>0\d</);
   });
 
-  it("sets the facts on one soft sheet without lines, with whole words, and the timeline's licence on its node", () => {
-    const facts = /<dl class="([^"]*)"[\s\S]*?<\/dl>/.exec(/<section id="section-about"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "");
+  it("sets '\u00DCber mich' as Werkbogen does: the lead, then a drawn placeholder portrait beside the facts, then the rest", () => {
+    const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
+    // The placeholder until his own photo: a drawn still of the library, never his header's own clip.
+    const block = sevagDe.blocks.find((entry): entry is BlockOf<"about"> => entry.type === "about");
+    const clip = MOTION_LIBRARY.find((entry) => entry.poster === block?.portrait?.src);
+    expect(clip?.key).toBe("ware-scannen");
+    expect(clip?.kind).toBe("illustration");
+    expect(block?.portrait).toMatchObject({ alt: clip?.alt.de, w: clip?.w, h: clip?.h });
+    expect(block?.portrait?.alt).toMatch(/^Illustration: /);
+    expect(block?.portrait?.src).not.toBe(sevagDe.profile.hero?.src);
+    expect(about).toContain(`alt="${clip?.alt.de ?? "?"}"`);
+    // Lead, portrait row, rest: in this order.
+    const lead = about.indexOf("In meiner aktuellen Position");
+    const row = about.indexOf("data-about-portrait");
+    const restAt = about.indexOf("Das sichere Ein- und Auslagern");
+    expect(lead).toBeGreaterThan(0);
+    expect(row).toBeGreaterThan(lead);
+    expect(restAt).toBeGreaterThan(row);
+    // The facts in the same row as the portrait, beside it (no breakpoint: phones too), each row under a hairline.
+    expect(about).toMatch(/data-about-portrait="true" class="grid min-w-0 grid-cols-5 /);
+    const facts = /<dl class="([^"]*)"[\s\S]*?<\/dl>/.exec(about);
+    expect(facts?.[1]).toMatch(/^col-span-3 grid min-w-0 grid-cols-1/);
+    expect(facts?.[1]).not.toContain("bg-creator-surface");
+    expect(count(facts?.[0] ?? "", /border-t border-creator-line/g)).toBe(4);
+    expect(facts?.[0]).not.toContain("\u00AD");
+    expect(text(facts?.[0] ?? "")).toContain("vor allem Seitenschubstapler");
+  });
+
+  it("keeps the facts on one soft sheet without lines when '\u00DCber mich' has no portrait, and the timeline's licence on its node", () => {
+    const bare: Page = { ...sevagDe, blocks: sevagDe.blocks.map((block) => (block.type === "about" ? { ...block, portrait: undefined } : block)) };
+    const facts = /<dl class="([^"]*)"[\s\S]*?<\/dl>/.exec(/<section id="section-about"[\s\S]*?<\/section>/.exec(render(bare, sevagTheme))?.[0] ?? "");
     expect(facts?.[1]).toMatch(/^grid min-w-0 grid-cols-1 [^"]*rounded-creator-card bg-creator-surface [^"]*@prose:grid-cols-2/);
     expect(facts?.[0]).not.toMatch(/\bborder|\bgap-px\b|bg-creator-line/);
     expect(facts?.[0]).not.toContain("\u00AD");
@@ -262,7 +292,11 @@ describe("the same page once a contact block is added (fixture only)", () => {
 });
 
 describe("without any picture", () => {
-  const bare: Page = { ...sevagDe, profile: { ...sevagDe.profile, hero: undefined } };
+  const bare: Page = {
+    ...sevagDe,
+    profile: { ...sevagDe.profile, hero: undefined },
+    blocks: sevagDe.blocks.map((block) => (block.type === "about" ? { ...block, portrait: undefined } : block)),
+  };
   const markup = render(bare);
 
   it("fills the picture's place with the accent and the initials, never an empty box", () => {
@@ -376,5 +410,70 @@ describe("a portrait as the only picture (no separate hero picture)", () => {
     expect(markup).toContain("absolute inset-x-0 top-0 aspect-square mask-b-from-60% mask-b-to-100% @work:inset-0 @work:aspect-auto @work:mask-none");
     // The role line follows the name, with no portrait or initials beside it.
     expect(markup).toMatch(/<\/h1><\/div><p class="[^"]*text-body[^"]*"[^>]*><span dir="auto"/);
+  });
+});
+
+describe("'About' with a portrait (fictional owner)", () => {
+  const about = (portrait: BlockOf<"about">["portrait"], words: string, facts: [string, string][]): string =>
+    renderToStaticMarkup(
+      createElement(LaufbahnAbout, {
+        block: { ...base, id: "about", type: "about", title: "Über mich", text: words, ...(portrait ? { portrait } : {}), facts: facts.map(([label, value]) => ({ label, value })) },
+      }),
+    );
+  const lead = "Ich baue seit zwölf Jahren Bühnen für kleine Theater im Allgäu und in Oberschwaben.";
+  const words = `${lead} Am liebsten mit Holz.\n\nIn der Werkstatt bin ich jeden Morgen um sieben.`;
+  // A first paragraph longer than a lead: it leads with its first sentence, the rest opens the body.
+  const more = "Am liebsten mit Holz, mit Stahl und mit Stoff, und am allerliebsten dann, wenn am Abend der Vorhang aufgeht und keiner mehr an die Bühne denkt.";
+  const long = `${lead} ${more}\n\nIn der Werkstatt bin ich jeden Morgen um sieben.`;
+  const facts: [string, string][] = [
+    ["Wohnort", "Kempten"],
+    ["Sprachen", "Deutsch, Englisch"],
+  ];
+  const german = about({ src: "sample:mila-hero", alt: "Ines Beispiel im Porträt", focal: [0.5, 0.3] }, long, facts);
+  const arabic = about({ src: "sample:nour-hero", alt: "صورة شخصية لنور حداد" }, "أصمم المسارح الصغيرة منذ اثني عشر عاماً.\n\nأعمل في الورشة كل صباح.", [["المدينة", "بيروت"]]);
+
+  it("leads with the first paragraph, then the portrait on two of five columns at the start, the facts on three beside it, then the rest", () => {
+    const parts =
+      /^<div class="grid min-w-0 gap-6 @prose:gap-8"><p[^>]*>([\s\S]*?)<\/p><div data-about-portrait="true" class="([^"]*)"><div class="([^"]*)">(<img[^>]*>)[\s\S]*?<\/div><dl class="([^"]*)">([\s\S]*?)<\/dl><\/div><div class="grid max-w-prose gap-4">([\s\S]*?)<\/div><\/div>$/.exec(
+        german,
+      );
+    expect(parts).not.toBeNull();
+    const [, first, row, frame, image, list, rows, rest] = parts ?? [];
+    expect(first).toBe(lead);
+    // Side by side at every width from 320 px up: the row has no breakpoint before its five columns.
+    expect(row).toBe("grid min-w-0 grid-cols-5 items-start gap-x-4 @prose:gap-x-6");
+    expect(frame).toBe("relative col-span-2 aspect-portrait overflow-hidden rounded-creator-card bg-creator-surface-2");
+    expect(image).toContain('alt="Ines Beispiel im Porträt"');
+    expect(list).toBe("col-span-3 grid min-w-0 grid-cols-1 content-start");
+    // Each fact under a hairline: the label quiet over its value, in bold.
+    const items = [...(rows ?? "").matchAll(/<div class="([^"]*)"><dt[^>]*class="([^"]*)"[^>]*>([^<]*)<\/dt><dd[^>]*class="([^"]*)"[^>]*>([^<]*)<\/dd><\/div>/g)];
+    expect(items.map((item) => [item[3], item[5]])).toEqual(facts);
+    for (const [, item, label, , value] of items) {
+      expect(item).toContain("border-t border-creator-line");
+      expect(label).toContain("text-creator-fg-muted");
+      expect(value).toContain("font-semibold");
+      expect(value).toContain("hyphens-manual");
+    }
+    expect(text(rest ?? "")).toBe(`${more}In der Werkstatt bin ich jeden Morgen um sieben.`);
+  });
+
+  it("mirrors in Arabic by the page's direction alone (logical order, no physical sides), flat and unlined", () => {
+    // The portrait comes first in the reading order, so it stands at the start: on the right in Arabic.
+    expect(arabic.indexOf("<img")).toBeGreaterThan(0);
+    expect(arabic.indexOf("<img")).toBeLessThan(arabic.indexOf("<dl"));
+    expect(arabic).toContain('alt="صورة شخصية لنور حداد"');
+    for (const markup of [german, arabic]) {
+      expect(markup).not.toMatch(/\b(?:left|right|ml|mr|pl|pr|text-left|text-right|float)-/);
+      expect(markup).not.toMatch(/\b(?:shadow-(?!none)|drop-shadow|underline|decoration-)/);
+      expect(markup).not.toMatch(/\banimate-|\blb-(?:reveal|zoom)\b/);
+    }
+  });
+
+  it("keeps today's layout exactly without a portrait: the lead, the facts on one soft sheet, the rest", () => {
+    const markup = about(undefined, words, facts);
+    expect(markup).not.toContain("data-about-portrait");
+    expect(markup).not.toContain("<img");
+    // Recorded from the renderer before the portrait layout existed.
+    expect(markup).toMatchInlineSnapshot(`"<div class="grid min-w-0 gap-6 @prose:gap-8"><div class="grid min-w-0 items-start gap-6"><p dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] max-w-prose text-title leading-normal font-medium text-pretty whitespace-pre-line text-creator-fg rtl:tracking-normal @prose:text-h3 @prose:leading-snug @work:text-h2 @prose:rtl:leading-normal">Ich baue seit zwölf Jahren Bühnen für kleine Theater im Allgäu und in Oberschwaben. Am liebsten mit Holz.</p></div><dl class="grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-4 @prose:grid-cols-2 @prose:gap-y-5 @prose:p-6"><div class="grid min-w-0 grid-cols-1 content-start gap-1"><dt dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-small text-creator-fg-muted">Wohnort</dt><dd dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-body leading-snug font-semibold text-pretty hyphens-manual break-words">Kempten</dd></div><div class="grid min-w-0 grid-cols-1 content-start gap-1"><dt dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-small text-creator-fg-muted">Sprachen</dt><dd dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-body leading-snug font-semibold text-pretty hyphens-manual break-words">Deutsch, Englisch</dd></div></dl><div class="grid max-w-prose gap-4"><p dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-body text-pretty whitespace-pre-line text-creator-fg @prose:text-body-lg">In der Werkstatt bin ich jeden Morgen um sieben.</p></div></div>"`);
   });
 });
