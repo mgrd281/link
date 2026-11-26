@@ -39,6 +39,11 @@ vi.mock("./supabase-store", () => ({
     getSnapshot = () => realStore.get();
     requestCode = (): Promise<Result> => Promise.resolve({ ok: true, pending: "code" });
     updateSite = (): Result => ({ ok: true });
+    flush = () => Promise.resolve({ updatedAt: "2026-11-26T10:00:00.000001+00:00" });
+    reload = () => {
+      realStore.set({ status: "reloaded" });
+      return Promise.resolve();
+    };
   },
 }));
 
@@ -75,6 +80,13 @@ describe("the real-account store, loaded when first asked for (ADR 0008)", () =>
     // Loaded once: later calls reuse it.
     await store.requestCode({ email: "mila@example.com", locale: "de" });
     expect(loads.client).toBe(1);
+  });
+
+  it("hands the iPhone app's flush and reload to the real store", async () => {
+    const store = new DeferredAccountStore();
+    expect(await store.flush()).toEqual({ updatedAt: "2026-11-26T10:00:00.000001+00:00" });
+    await store.reload();
+    expect(store.getSnapshot()).toEqual({ status: "reloaded" });
   });
 
   it("tries again after a failed load (offline)", async () => {

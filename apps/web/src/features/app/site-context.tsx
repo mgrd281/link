@@ -5,7 +5,7 @@ import { toast } from "@linkyo/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 
-import { accountStore, useAccount, useSignedIn } from "@/features/account/store";
+import { accountStore, registerPendingEdits, useAccount, useSignedIn } from "@/features/account/store";
 import type { Account, AuthError, Result, Site } from "@/features/account/types";
 import { editorReducer, initialEditorState, withDatedShows, type EditorAction, type EditorDoc, type EditorState } from "@/features/directions/editor/state";
 import { blockTitle } from "@/features/directions/editor/use-editor";
@@ -28,7 +28,9 @@ export type SiteAction =
   /** Several blocks at once (a pasted list of links): one step in the history, so one undo takes them all back. */
   | { type: "addMany"; blocks: Block[]; index: number }
   /** Takes several blocks off the page in one step (the Undo of an `addMany`). */
-  | { type: "removeIds"; ids: string[] };
+  | { type: "removeIds"; ids: string[] }
+  /** The store replaced the page with a newer version from elsewhere: start over from it, with nothing to undo. */
+  | { type: "reset"; doc: SiteDoc };
 
 const HISTORY_LIMIT = 50;
 
@@ -41,6 +43,7 @@ const step = (state: EditorState<SiteDoc>, present: SiteDoc, selectedId = state.
 });
 
 export function siteReducer(state: EditorState<SiteDoc>, action: SiteAction): EditorState<SiteDoc> {
+  if (action.type === "reset") return initialEditorState(action.doc);
   if (action.type === "addMany") {
     const first = action.blocks[0];
     if (!first) return state;
@@ -152,14 +155,34 @@ const writeDoc = (doc: SiteDoc) =>
     theme: doc.theme,
   }));
 
+/** How often the store has replaced the page from the server so far (`AccountSnapshot.revision`). */
+const storeRevision = () => {
+  const now = accountStore.getSnapshot();
+  return now.status === "signedIn" ? (now.revision ?? 0) : 0;
+};
+
 /** The signed-in creator's own page, saved to their account. */
 export function SiteProvider({ children }: { children: ReactNode }) {
   const { account, site } = useSignedIn();
+  const snapshot = useAccount();
+  const revision = snapshot.status === "signedIn" ? (snapshot.revision ?? 0) : 0;
+  const conflicts = snapshot.status === "signedIn" ? (snapshot.conflicts ?? 0) : 0;
+  // A change made on a page the store has since replaced (a newer version from elsewhere, ADR
+  // draft-app-sync) is never written over it: the editor starts over from the newer one instead.
+  const write = useCallback((doc: SiteDoc): Result => (storeRevision() === revision ? writeDoc(doc) : { ok: true }), [revision]);
   return (
-    <EditorProvider account={account} site={site} write={writeDoc}>
+    <EditorProvider account={account} site={site} write={write} revision={revision} conflicts={conflicts}>
+      <PendingEdits />
       {children}
     </EditorProvider>
   );
+}
+
+/** Hands the editor's waiting change to the store whenever everything must be saved now (the iPhone app's `flush`). */
+function PendingEdits() {
+  const { flush } = useSite();
+  useEffect(() => registerPendingEdits(flush), [flush]);
+  return null;
 }
 
 /**
@@ -172,12 +195,18 @@ export function EditorProvider({
   site,
   write,
   previewHref = "/app/preview",
+  revision,
+  conflicts = 0,
   children,
 }: {
   account: Account;
   site: Site;
   write: (doc: SiteDoc) => Result;
   previewHref?: string;
+  /** The creator's own page: changes when the store replaced `site` with a newer version from the server. */
+  revision?: number | undefined;
+  /** The creator's own page: how many saves were refused because the page changed elsewhere. */
+  conflicts?: number | undefined;
   children: ReactNode;
 }) {
   const t = useTranslations("app");
@@ -190,6 +219,22 @@ export function EditorProvider({
   const [state, reduce] = useReducer(siteReducer, site, (initial) => initialEditorState(toDoc(initial)));
   const doc = state.present;
   const [saved, setSaved] = useState<{ doc: SiteDoc; error: AuthError | null }>({ doc, error: null });
+  // The store replaced the page with a newer version (another tab, the iPhone app): start over from
+  // it while rendering, so no autosave of the replaced version can follow, and nothing to undo into it.
+  const [seenRevision, setSeenRevision] = useState(revision);
+  if (revision !== seenRevision) {
+    setSeenRevision(revision);
+    const fresh = toDoc(site);
+    reduce({ type: "reset", doc: fresh });
+    setSaved({ doc: fresh, error: null });
+  }
+  // A save was refused because the page had changed elsewhere: say that the newer version shows now.
+  const seenConflicts = useRef(conflicts);
+  useEffect(() => {
+    if (conflicts <= seenConflicts.current) return;
+    seenConflicts.current = conflicts;
+    toast({ title: t("sync.conflict.title"), description: t("sync.conflict.body") });
+  }, [conflicts, t]);
   // Real accounts: the store saves to the server in the background and reports how that went.
   const snapshot = useAccount();
   const sync = snapshot.status === "signedIn" ? snapshot.sync : undefined;

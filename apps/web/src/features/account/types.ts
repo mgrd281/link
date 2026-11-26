@@ -82,6 +82,15 @@ export type AccountSnapshot =
        * over the database's size limit). The next change tries again.
        */
       syncError?: "tooLarge" | undefined;
+      /**
+       * Real accounts: the page's version on the server (the row's `updated_at`) as it was read or
+       * last saved here. A save writes only over this version (ADR draft-app-sync).
+       */
+      baseUpdatedAt?: string | undefined;
+      /** How often the page was replaced from where it is kept (`reload()`, a refused save): the editor starts over from it. */
+      revision?: number | undefined;
+      /** Real accounts: how many saves were refused because the page had changed elsewhere (another tab, the iPhone app). */
+      conflicts?: number | undefined;
     };
 
 export type AuthError =
@@ -173,6 +182,17 @@ export interface AccountStore {
 
   /** Applies at once; real accounts save in the background (see `syncState`). */
   updateSite(update: (site: Site) => Site): Result;
+  /**
+   * Saves what is waiting now and answers the page's version on the server (`updatedAt`, null when
+   * signed out; the demo answers its own). Rejects when the change could not be saved. A save refused
+   * because the page changed elsewhere loads the newer version first and answers that one.
+   */
+  flush(): Promise<{ updatedAt: string | null }>;
+  /**
+   * Reads the page again from where it is kept (after the iPhone app changed it) and starts the editor
+   * over from it. Saves what is waiting first; rejects when that fails, so nothing is dropped silently.
+   */
+  reload(): Promise<void>;
   /** The account's sign-ins and failed attempts of the last 30 days, newest first. */
   signIns(): Promise<LoginEvent[]>;
   exportData(): Promise<string>;

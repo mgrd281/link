@@ -170,6 +170,8 @@ export class LocalAccountStore implements AccountStore {
   private snapshot: AccountSnapshot = LOADING;
   private readonly storage: () => StorageLike | null;
   private readonly context: (() => Promise<LoginContext>) | null;
+  /** How often `reload()` read the page again (the editor starts over when it changes). */
+  private revision = 0;
 
   /** `context` describes where a sign-in comes from (IP, place, device); without it nothing is logged. */
   constructor(storage: () => StorageLike | null, context: (() => Promise<LoginContext>) | null = null) {
@@ -220,11 +222,25 @@ export class LocalAccountStore implements AccountStore {
     const db = parse(raw);
     const account = db.session ? db.accounts.find((candidate) => candidate.id === db.session?.accountId) : undefined;
     const site = account ? db.sites[account.id] : undefined;
-    this.snapshot = account && site ? { status: "signedIn", account: publicAccount(account), site } : SIGNED_OUT;
+    this.snapshot = account && site ? { status: "signedIn", account: publicAccount(account), site, ...(this.revision > 0 ? { revision: this.revision } : {}) } : SIGNED_OUT;
     return this.snapshot;
   };
 
   getServerSnapshot = (): AccountSnapshot => LOADING;
+
+  /** The demo saves every change at once (in this browser), so nothing waits: the stored version is the answer. */
+  flush = (): Promise<{ updatedAt: string | null }> => {
+    const snapshot = this.getSnapshot();
+    return Promise.resolve({ updatedAt: snapshot.status === "signedIn" ? snapshot.site.updatedAt : null });
+  };
+
+  /** Reads the page again from this browser's storage and starts the editor over from it (as real accounts do). */
+  reload = (): Promise<void> => {
+    this.revision += 1;
+    this.raw = undefined;
+    for (const listener of this.listeners) listener();
+    return Promise.resolve();
+  };
 
   usernameStatus = (input: string): Promise<UsernameStatus> => Promise.resolve(this.usernameStatusNow(input));
 

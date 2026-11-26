@@ -3290,6 +3290,12 @@
         "install": "Installieren",
         "dismiss": "Hinweis ausblenden"
       }
+    },
+    "sync": {
+      "conflict": {
+        "title": "Deine Seite wurde an anderer Stelle geändert",
+        "body": "Wir haben die neueste Fassung geladen. Deine letzte Änderung hier wurde nicht gespeichert."
+      }
     }
   },
   "preview": {

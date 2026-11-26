@@ -165,6 +165,33 @@ describe("LocalAccountStore", () => {
   });
 });
 
+describe("LocalAccountStore: flush and reload, as real accounts have them", () => {
+  it("flush answers the stored version: the demo saves every change at once", async () => {
+    const store = fresh();
+    expect(await store.flush()).toEqual({ updatedAt: null });
+    await withCode(store, signUp);
+    store.updateSite((site) => ({ ...site, page: { ...site.page, profile: { ...site.page.profile, bio: "Neu" } } }));
+    const snapshot = store.getSnapshot();
+    expect(await store.flush()).toEqual({ updatedAt: snapshot.status === "signedIn" ? snapshot.site.updatedAt : "" });
+  });
+
+  it("reload reads this browser's storage again and counts a new revision, so the editor starts over", async () => {
+    const storage = memory();
+    const store = new LocalAccountStore(() => storage);
+    await withCode(store, signUp);
+    const before = store.getSnapshot();
+    expect(before.status === "signedIn" && before.revision).toBeFalsy();
+    let told = 0;
+    store.subscribe(() => (told += 1));
+    await store.reload();
+    const after = store.getSnapshot();
+    expect(told).toBe(1);
+    expect(after).not.toBe(before);
+    expect(after.status === "signedIn" && after.revision).toBe(1);
+    expect(after.status === "signedIn" && before.status === "signedIn" && after.site).toEqual(before.status === "signedIn" && before.site);
+  });
+});
+
 describe("LocalAccountStore: the invite program (demo)", () => {
   interface Stored {
     referralCodes?: Record<string, string>;

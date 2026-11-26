@@ -63,6 +63,8 @@ export class DeferredAccountStore implements AccountStore {
   usernameStatus = async (username: string): Promise<UsernameStatus> => (await this.load()).usernameStatus(username);
   // Only a signed-in account changes its page, and there is none before the real store is here.
   updateSite = (update: (site: Site) => Site): Result => (this.real ? this.real.updateSite(update) : { ok: false, error: "notFound" });
+  flush = async (): Promise<{ updatedAt: string | null }> => (await this.load()).flush();
+  reload = async (): Promise<void> => (await this.load()).reload();
   signIns = async (): Promise<LoginEvent[]> => (await this.load()).signIns();
   exportData = async (): Promise<string> => (await this.load()).exportData();
   deleteAccount = async (): Promise<Result> => (await this.load()).deleteAccount();
