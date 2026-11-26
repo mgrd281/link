@@ -158,6 +158,13 @@ export class SupabaseAccountStore implements AccountStore {
   private readonly sending = new Set<SiteContent>();
   private unconfirmed: SiteContent[] = [];
   private rebases = 0;
+  /**
+   * Writes are numbered as they are sent. Two of them can both land (a save on its way, then the
+   * keepalive save after it), and their answers may come back in either order: the answer of one
+   * sent before the newest confirmed one never moves the base back.
+   */
+  private sent = 0;
+  private confirmedWrite = 0;
   /** The last save failed (network, server): `flush()` says so instead of answering an old version. */
   private failed = false;
   private revision = 0;
@@ -299,7 +306,10 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   logOut(): void {
-    void this.drainSaves().finally(() => void this.client().auth.signOut({ scope: "local" }));
+    // Everything waiting is saved first, a refused save of this tab's own included; one that cannot be saved goes with the session.
+    void this.settleSaves()
+      .catch(() => undefined)
+      .finally(() => void this.client().auth.signOut({ scope: "local" }));
   }
 
   async changeEmail(input: string): Promise<Result> {
@@ -327,8 +337,29 @@ export class SupabaseAccountStore implements AccountStore {
         account: { ...account, username },
         site: { ...site, page: { ...site.page, profile: { ...site.page.profile, username } } },
       });
+      // The address went into the page row too, as a new version of the same content.
+      void this.adoptServerVersion(account.id);
     }
     return { ok: true };
+  }
+
+  /**
+   * The server wrote the row without a change of this tab's (the address): when it still holds the
+   * content this tab built on, its new version becomes the base. Otherwise the next save would be
+   * refused, and a tab that closes right after a change (the keepalive save, with nothing left to
+   * send it again) would lose it.
+   */
+  private async adoptServerVersion(id: string): Promise<void> {
+    if (this.saving) await this.saving;
+    const { data: row } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
+    const now = this.snapshot;
+    // A save that started meanwhile finds the new version itself (refused as this tab's own).
+    if (!row || this.saving || now.status !== "signedIn" || now.account.id !== id || row.updated_at === this.base) return;
+    const latest = toRow(fromRow(row));
+    if (this.baseContent === null || contentKey(latest) !== contentKey(this.baseContent)) return;
+    this.base = row.updated_at;
+    this.baseContent = latest;
+    this.set({ ...now, baseUpdatedAt: row.updated_at });
   }
 
   updateSite(update: (site: Site) => Site): Result {
@@ -360,8 +391,15 @@ export class SupabaseAccountStore implements AccountStore {
    * The page is going away: send what is pending as a `keepalive` request, which the browser
    * completes even after the tab is gone (a normal request would be cancelled with the page). It
    * carries the save guard like every save; when the tab comes back, its answer is the new version.
-   * A save still on its way goes on: whichever of the two lands second is refused, and finds the
-   * other one as this tab's own (`sending`), so nothing is reported as a conflict.
+   *
+   * A closed tab runs no more code, so a refused keepalive is never sent again. Its guard therefore
+   * depends on what may have reached the database without this tab knowing its version yet:
+   * - nothing: `updated_at = base`, the exact guard of every save;
+   * - a save still on its way, or one whose answer never came: `updated_at >= base`. That save carries
+   *   the exact guard and lands first in the normal order, so an exact keepalive would always be
+   *   refused and the last change lost. The other order is safe too: the save, landing second, no
+   *   longer finds `base` and changes nothing. The price (ADR draft-app-sync): in that moment a write
+   *   from elsewhere after `base` is overwritten instead of refused.
    */
   private saveOnExit() {
     const snapshot = this.snapshot;
@@ -379,7 +417,9 @@ export class SupabaseAccountStore implements AccountStore {
     this.dirty = false;
     const id = snapshot.account.id;
     const base = this.base;
-    const guard = base === null ? "" : `&updated_at=eq.${encodeURIComponent(base)}`;
+    const landing = this.sending.size > 0 || this.unconfirmed.length > 0;
+    const guard = base === null ? "" : `&updated_at=${landing ? "gte" : "eq"}.${encodeURIComponent(base)}`;
+    const write = (this.sent += 1);
     this.sending.add(content);
     const request = fetch(`${SUPABASE_URL}/rest/v1/sites?profile_id=eq.${id}${guard}&select=updated_at`, {
       method: "PATCH",
@@ -401,7 +441,7 @@ export class SupabaseAccountStore implements AccountStore {
         }
         const [row] = (await response.json()) as { updated_at?: string }[];
         this.sending.delete(content);
-        if (row?.updated_at) this.saved(id, row.updated_at, content);
+        if (row?.updated_at) this.saved(id, row.updated_at, content, write);
         else await this.refused(id, base);
       })
       .catch(() => {
@@ -426,7 +466,7 @@ export class SupabaseAccountStore implements AccountStore {
     return all;
   }
 
-  /** Saves now if something is pending (before signing out, deleting, or when the tab hides). */
+  /** Saves now if something is pending (one pass: `settleSaves` also sends again what a refusal left waiting). */
   private async drainSaves(): Promise<void> {
     if (this.saveTimer !== null) {
       window.clearTimeout(this.saveTimer);
@@ -437,15 +477,23 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   /**
-   * For the iPhone app before it changes the page itself (`window.linkyoApp.flush`): everything
-   * waiting is saved, then the version on the server is answered. A refused save that was this tab's
-   * own is sent again here, and so is a change made while a save was on its way.
+   * Saves until nothing waits (before signing out, an export, a deletion and `flush`): a refused save
+   * that was this tab's own is sent again here, and so is a change made while a save was on its way.
+   * Stops at a save that failed (offline, too large).
    */
-  flush = async (): Promise<{ updatedAt: string | null }> => {
+  private async settleSaves(): Promise<void> {
     for (let round = 0; round <= MAX_REBASES; round += 1) {
       await this.drainSaves();
-      if (!this.dirty || this.failed) break;
+      if (!this.dirty || this.failed) return;
     }
+  }
+
+  /**
+   * For the iPhone app before it changes the page itself (`window.linkyoApp.flush`): everything
+   * waiting is saved, then the version on the server is answered.
+   */
+  flush = async (): Promise<{ updatedAt: string | null }> => {
+    await this.settleSaves();
     if (this.snapshot.status !== "signedIn") return { updatedAt: null };
     if (this.dirty) throw new Error(this.snapshot.syncError ?? "saveFailed");
     return { updatedAt: this.base };
@@ -489,6 +537,7 @@ export class SupabaseAccountStore implements AccountStore {
       const content = toRow(site);
       // The guard: the row changes only while it is still the version this tab read or last saved.
       const update = this.client().from("sites").update(content).eq("profile_id", id);
+      const write = (this.sent += 1);
       this.sending.add(content);
       const { data, error } = await (base === null ? update : update.eq("updated_at", base)).select("page, updated_at").maybeSingle();
       this.sending.delete(content);
@@ -511,14 +560,14 @@ export class SupabaseAccountStore implements AccountStore {
         await this.refused(id, base);
         return;
       }
-      this.confirm(data.updated_at, content);
+      this.confirm(data.updated_at, content, write);
       // The server owns the badge and the address on the page (sites_guard); keep its word. Pictures
       // that went to Storage keep their new address here too.
       const saved = fromJson<Page>(data.page).profile;
       const page = this.uploaded.size > 0 ? replaceSources(now.site.page, this.uploaded) : now.site.page;
       const profile = { ...page.profile, verified: saved.verified, username: saved.username };
       const { syncError: _resolved, ...rest } = now;
-      this.set({ ...rest, site: { ...now.site, page: { ...page, profile } }, sync: this.dirty ? "saving" : "saved", baseUpdatedAt: data.updated_at });
+      this.set({ ...rest, site: { ...now.site, page: { ...page, profile } }, sync: this.dirty ? "saving" : "saved", baseUpdatedAt: this.base ?? data.updated_at });
     };
     const running = run();
     void this.track(running);
@@ -533,8 +582,10 @@ export class SupabaseAccountStore implements AccountStore {
     this.schedule(delay);
   }
 
-  /** The server took a write: its version is the one the next save builds on. */
-  private confirm(updatedAt: string, content: SiteContent) {
+  /** The server took a write: its version is the one the next save builds on (unless a later write's answer came first). */
+  private confirm(updatedAt: string, content: SiteContent, write: number) {
+    if (write < this.confirmedWrite) return;
+    this.confirmedWrite = write;
     this.base = updatedAt;
     this.baseContent = content;
     this.unconfirmed = [];
@@ -544,11 +595,11 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   /** The keepalive save's answer came while the tab was still there. */
-  private saved(id: string, updatedAt: string, content: SiteContent) {
+  private saved(id: string, updatedAt: string, content: SiteContent, write: number) {
     const now = this.snapshot;
     if (now.status !== "signedIn" || now.account.id !== id) return;
-    this.confirm(updatedAt, content);
-    this.set({ ...now, baseUpdatedAt: updatedAt, sync: this.dirty ? "saving" : "saved" });
+    this.confirm(updatedAt, content, write);
+    this.set({ ...now, baseUpdatedAt: this.base ?? updatedAt, sync: this.dirty ? "saving" : "saved" });
   }
 
   /** A write whose answer never came: the server may hold it, so a later refusal can recognise it as this tab's own. */
@@ -633,7 +684,7 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   async exportData(): Promise<string> {
-    await this.drainSaves();
+    await this.settleSaves();
     if (this.snapshot.status !== "signedIn") return "{}";
     const { account, site } = this.snapshot;
     const supabase = this.client();
@@ -665,7 +716,7 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   async deleteAccount(): Promise<Result> {
-    await this.drainSaves();
+    await this.settleSaves();
     const supabase = this.client();
     const token = (await supabase.auth.getSession()).data.session?.access_token ?? this.token;
     if (!token) return { ok: false, error: "serverError" };

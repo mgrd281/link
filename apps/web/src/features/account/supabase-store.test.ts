@@ -28,12 +28,20 @@ class FakeDb {
   refuseWrites = false;
   /** The server answers writes with an error (offline, a timeout). */
   failWrites = false;
+  /** The write reaches the database, but its answer is an error (the connection dropped on the way back). */
+  loseAnswers = false;
+  /** The session ended (signed out): row-level security lets no write through any more. */
+  signedOut = false;
   /** Holds writes: "answer" applies them at once but holds the answer, "apply" holds both until `release()`. */
   hold: "answer" | "apply" | null = null;
-  private held: (() => void)[] = [];
+  private held: { land: () => unknown; resolve: (answer: unknown) => void }[] = [];
   release() {
     this.hold = null;
-    for (const resume of this.held.splice(0)) resume();
+    for (const write of this.held.splice(0)) write.resolve(write.land());
+  }
+  /** The tab is gone: the held writes reach the database, but no code is left to read their answers. */
+  land() {
+    for (const write of this.held.splice(0)) write.land();
   }
   writes: { filters: Record<string, unknown>; values: Record<string, unknown> }[] = [];
   authListener: ((event: string, session: unknown) => void) | null = null;
@@ -84,8 +92,9 @@ class FakeDb {
           if (this.failWrites) return { data: null, error: { message: "fetch failed" } };
           this.writes.push({ filters: { ...filters }, values });
           const matches = filters.profile_id === this.row.profile_id && (!("updated_at" in filters) || filters.updated_at === this.row.updated_at);
-          if (!matches || this.refuseWrites) return { data: null, error: null };
+          if (!matches || this.refuseWrites || this.signedOut) return { data: null, error: null };
           this.write(values);
+          if (this.loseAnswers) return { data: null, error: { message: "Load failed" } };
           return { data: { page: clone(this.row.page), updated_at: this.row.updated_at }, error: null };
         }
         return { data: clone(this.row), error: null };
@@ -104,9 +113,11 @@ class FakeDb {
           if (!values || !this.hold) return Promise.resolve(run());
           if (this.hold === "answer") {
             const answer = run();
-            return new Promise((resolve) => this.held.push(() => resolve(answer)));
+            return new Promise((resolve) => this.held.push({ land: () => answer, resolve }));
           }
-          return new Promise((resolve) => this.held.push(() => resolve(run())));
+          let landed: { answer: unknown } | null = null;
+          const land = () => (landed ??= { answer: run() }).answer;
+          return new Promise((resolve) => this.held.push({ land, resolve }));
         },
         single: () => Promise.resolve(run()),
       };
@@ -114,13 +125,20 @@ class FakeDb {
     };
     return {
       from: query,
-      rpc: () => Promise.resolve({ data: null, error: null }),
+      rpc: (name: string, args: { candidate?: string } = {}) => {
+        if (name !== "change_username" || !args.candidate) return Promise.resolve({ data: null, error: null });
+        // As the database function does: the account's address, then the page row (a new version).
+        this.profile.username = args.candidate;
+        this.write({});
+        return Promise.resolve({ data: "ok", error: null });
+      },
       auth: {
         onAuthStateChange: (listener: (event: string, session: unknown) => void) => {
           this.authListener = listener;
           return { data: { subscription: { unsubscribe: () => undefined } } };
         },
         signOut: () => {
+          this.signedOut = true;
           this.authListener?.("SIGNED_OUT", null);
           return Promise.resolve({ error: null });
         },
@@ -285,40 +303,47 @@ describe("the save guard", () => {
   });
 });
 
-describe("closing the tab while a save is on its way", () => {
-  /** The keepalive PATCH against the stand-in row, with its guard. */
+describe("closing the tab: the keepalive save is the last code that runs", () => {
+  /**
+   * The keepalive PATCH against the stand-in row, as PostgREST applies it: `updated_at=eq.` or `gte.`
+   * (the stand-in's versions sort as text). A closed tab never reads the answer, so none comes back.
+   */
   const keepalive = (db: FakeDb) => {
     const sent: string[] = [];
     vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
       sent.push(url);
-      const guard = new URL(url, "http://localhost").searchParams.get("updated_at")?.replace(/^eq\./, "");
-      if (guard !== db.row.updated_at) return Promise.resolve(new Response("[]", { status: 200 }));
-      db.write(JSON.parse(init.body as string) as Record<string, unknown>);
-      return Promise.resolve(new Response(JSON.stringify([{ updated_at: db.row.updated_at }]), { status: 200 }));
+      const guard = new URL(url, "http://localhost").searchParams.get("updated_at") ?? "";
+      const [operator, version = ""] = guard.split(/\.(.*)/s);
+      const matches = guard === "" || (operator === "eq" ? db.row.updated_at === version : operator === "gte" && db.row.updated_at >= version);
+      if (matches) db.write(JSON.parse(init.body as string) as Record<string, unknown>);
+      return new Promise<Response>(() => undefined);
     });
     return sent;
   };
+  /** The tab is closed: its last events run, and nothing of it after that (no timers, no answers). */
+  const close = () => {
+    vi.stubGlobal("document", { visibilityState: "hidden" });
+    listeners.get("visibilitychange")?.();
+    listeners.get("pagehide")?.();
+  };
 
-  it("still sends the last change; the save on its way landing first is no conflict", async () => {
+  it("a save on its way lands first, then the keepalive with the change made meanwhile: both are kept", async () => {
     const db = new FakeDb();
     const store = await signedIn(db);
+    const read = db.row.updated_at;
     const sent = keepalive(db);
     db.hold = "answer";
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
+    expect(db.blocks()).toEqual(["a", "b", "c"]);
     addLink(store, "d");
-    listeners.get("pagehide")?.();
-    await vi.advanceTimersByTimeAsync(0);
+    close();
     expect(sent).toHaveLength(1);
-    db.release();
-    await vi.advanceTimersByTimeAsync(10);
-    await store.flush();
+    expect(sent[0]).toContain(`updated_at=gte.${encodeURIComponent(read)}`);
     expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
-    expect(snapshotOf(store).conflicts).toBe(0);
-    expect(snapshotOf(store).revision).toBe(0);
   });
 
-  it("still sends the last change; the keepalive landing first is no conflict either", async () => {
+  it("the keepalive lands first, then the save that was on its way: the save changes nothing", async () => {
     const db = new FakeDb();
     const store = await signedIn(db);
     keepalive(db);
@@ -326,15 +351,97 @@ describe("closing the tab while a save is on its way", () => {
     addLink(store, "c");
     await vi.advanceTimersByTimeAsync(500);
     addLink(store, "d");
-    listeners.get("pagehide")?.();
+    close();
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    db.land();
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("a save landed but its answer was lost; the change made after it is kept on closing", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepalive(db);
+    db.loseAnswers = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    expect(snapshotOf(store).sync).toBe("error");
+    addLink(store, "d");
+    close();
+    expect(sent[0]).toContain("updated_at=gte.");
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("after an address change, a change made just before closing is kept (the base follows the address)", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepalive(db);
+    await expect(store.changeUsername("mira-okafor")).resolves.toEqual({ ok: true });
     await vi.advanceTimersByTimeAsync(0);
-    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    const renamed = db.row.updated_at;
+    expect(snapshotOf(store).baseUpdatedAt).toBe(renamed);
+    addLink(store, "c");
+    close();
+    expect(sent[0]).toContain(`updated_at=eq.${encodeURIComponent(renamed)}`);
+    expect(db.blocks()).toEqual(["a", "b", "c"]);
+    expect((db.row.page.profile as Record<string, unknown>).username).toBe("mira-okafor");
+  });
+
+  it("with nothing on its way, the keepalive keeps the exact guard: a newer page from elsewhere is not overwritten", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    const sent = keepalive(db);
+    db.elsewhere([link("a"), link("from-elsewhere")]);
+    addLink(store, "stale");
+    close();
+    expect(sent[0]).toContain("updated_at=eq.");
+    expect(db.blocks()).toEqual(["a", "from-elsewhere"]);
+  });
+});
+
+describe("hidden while a save is on its way, then back (a phone switching apps)", () => {
+  it("the keepalive's answer comes before the late answer of the save that landed first: the base stays the newer one", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+      const version = new URL(url, "http://localhost").searchParams.get("updated_at")?.replace(/^gte\./, "") ?? "";
+      if (db.row.updated_at < version) return Promise.resolve(new Response("[]", { status: 200 }));
+      db.write(JSON.parse(init.body as string) as Record<string, unknown>);
+      return Promise.resolve(new Response(JSON.stringify([{ updated_at: db.row.updated_at }]), { status: 200 }));
+    });
+    db.hold = "answer";
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    addLink(store, "d");
+    vi.stubGlobal("document", { visibilityState: "hidden" });
+    listeners.get("visibilitychange")?.();
+    await vi.advanceTimersByTimeAsync(0);
+    const newest = db.row.updated_at;
+    expect(snapshotOf(store).baseUpdatedAt).toBe(newest);
+    // Back on screen; the first save's answer (an older version) arrives only now.
+    vi.stubGlobal("document", { visibilityState: "visible" });
     db.release();
-    await vi.advanceTimersByTimeAsync(10);
-    await store.flush();
-    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(snapshotOf(store).baseUpdatedAt).toBe(newest);
+    addLink(store, "e");
+    await vi.advanceTimersByTimeAsync(500);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d", "e"]);
     expect(snapshotOf(store).conflicts).toBe(0);
-    expect(snapshotOf(store).baseUpdatedAt).toBe(db.row.updated_at);
+    expect(snapshotOf(store).revision).toBe(0);
+  });
+});
+
+describe("leaving the account", () => {
+  it("logOut() sends a refused save of its own again before the session ends", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    // The team's badge: a new version with the same content, so the next save is refused as this tab's own.
+    db.profile.verified = true;
+    db.write({});
+    addLink(store, "c");
+    store.logOut();
+    await vi.advanceTimersByTimeAsync(10);
+    expect(db.blocks()).toEqual(["a", "b", "c"]);
+    expect(store.getSnapshot().status).toBe("signedOut");
   });
 });
 
