@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { editLinkOutcome, editLinkTarget, withoutEditParam } from "./edit-link";
+import { editLinkOutcome, editLinkReplaces, editLinkTarget, withoutEditParam } from "./edit-link";
 
 describe("the editor's ?edit= link", () => {
   const ids = ["b1", "b2", "project-7"];
@@ -33,11 +33,22 @@ describe("what a ?edit= link does", () => {
 
   it("tells the app at once that nothing opened for a block the page does not have", () => {
     expect(editLinkOutcome("gone", ids)).toEqual({ closed: { type: "editClosed", id: "gone", missing: true } });
-    expect(editLinkOutcome("", ids)).toEqual({ closed: { type: "editClosed", id: "", missing: true } });
     expect(editLinkOutcome("b1", [])).toEqual({ closed: { type: "editClosed", id: "b1", missing: true } });
   });
 
-  it("does nothing without a request", () => {
+  it("does nothing without a request, and nothing for an empty id (the app asked for no block)", () => {
     expect(editLinkOutcome(null, ids)).toBeNull();
+    expect(editLinkOutcome("", ids)).toBeNull();
+  });
+});
+
+describe("a second ?edit= while the sheet an earlier one opened is still open", () => {
+  it("closes that sheet for the new one: the app hears editClosed for the earlier block first", () => {
+    expect(editLinkReplaces("b1", "b2")).toEqual({ type: "editClosed", id: "b1" });
+  });
+
+  it("tells nothing when no link's sheet is open, or when the same block is asked for again (its sheet stays)", () => {
+    expect(editLinkReplaces(null, "b2")).toBeNull();
+    expect(editLinkReplaces("b2", "b2")).toBeNull();
   });
 });

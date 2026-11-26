@@ -301,6 +301,9 @@ test.describe("in the app, on a phone", () => {
       await expect(page.getByText(m.app.settings.theme, { exact: true })).toHaveCount(0);
       await expect(page.getByText(m.app.settings.footers.app)).toHaveCount(0);
       await expect(page.getByText(m.app.settings.rows.pageLanguage, { exact: true })).toBeVisible();
+      // The legal group holds no contract in the app: "Rechtliches", not "Verträge und Rechtliches".
+      await expect(page.getByRole("heading", { name: m.appMode.settings.legal, exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: m.app.settings.groups.contracts, exact: true })).toHaveCount(0);
       await expect(page.getByRole("link", { name: m.app.settings.rows.terms, exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: m.app.settings.rows.terms, exact: true }).click();
       expect(await postedOf(page, "openExternal")).toEqual([{ type: "openExternal", url: new URL(`/${locale}/agb`, page.url()).href }]);
@@ -684,6 +687,27 @@ test.describe("in the app, on a phone", () => {
     await expect.poll(async () => (await postedOf(page, "editClosed")).at(-1)).toEqual({ type: "editClosed", id: "gone-2", missing: true });
     await expect(page.getByRole("dialog")).toHaveCount(0);
     expect(await postedOf(page, "editClosed")).toHaveLength(4);
+
+    // An empty id asks for no block: the address loses it, nothing opens and nothing is posted.
+    expect(await navigate("/de/app/editor?edit=")).toBe(true);
+    await page.waitForURL((url) => url.pathname === "/de/app/editor" && !url.searchParams.has("edit"));
+    await page.waitForTimeout(300);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    expect(await postedOf(page, "editClosed")).toHaveLength(4);
+
+    // A second link while the first one's sheet is still open: that sheet gives way, and the app hears
+    // editClosed for the first block before the second's sheet closes in its turn.
+    expect(await navigate("/de/app/editor?edit=l-0")).toBe(true);
+    await expect(sheet.locator("input[value='https://example.com/0']")).toHaveCount(1);
+    expect(await navigate("/de/app/editor?edit=l-1")).toBe(true);
+    await expect(sheet.locator("input[value='https://example.com/1']")).toHaveCount(1);
+    await expect.poll(async () => (await postedOf(page, "editClosed")).slice(4)).toEqual([{ type: "editClosed", id: "l-0" }]);
+    await sheet.getByRole("button", { name: m.app.edit.cancel }).locator("visible=true").first().click();
+    await expect(sheet).toBeHidden();
+    await expect.poll(async () => (await postedOf(page, "editClosed")).slice(4)).toEqual([
+      { type: "editClosed", id: "l-0" },
+      { type: "editClosed", id: "l-1" },
+    ]);
   });
 
   test("the page's own share and reminder in 'View my page' go to the app, with the page's public address", async ({ page }) => {
@@ -748,6 +772,7 @@ test.describe("in a browser", () => {
     await expect(page.getByText(m.app.settings.plan.soon)).toBeVisible();
     await page.goto("/de/app/settings");
     await expect(page.getByRole("button", { name: m.app.settings.logout, exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: m.app.settings.groups.contracts, exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: m.app.settings.rows.terms, exact: true })).toBeVisible();
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: m.app.settings.export }).click();

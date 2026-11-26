@@ -5581,8 +5581,9 @@
   "appMode": {
     "ai": {
       "title": "AI drafts aren't available for this account",
-      "quotaFree": "You've used your free AI draft. More drafts aren't available for this account.",
-      "close": "Close"
+      "quotaFree": "You've used your AI draft. More drafts aren't available for this account.",
+      "close": "Close",
+      "plan": "Go to your plan"
     },
     "invite": {
       "terms": "Rewards are personal, can't be transferred and have no cash value."
@@ -5592,6 +5593,9 @@
     },
     "errors": {
       "notFoundBody": "Check the address for typos, or go back to your dashboard."
+    },
+    "settings": {
+      "legal": "Legal"
     }
   }
 }

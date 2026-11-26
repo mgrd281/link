@@ -39,10 +39,11 @@ export const READY_WAIT = 10_000;
 type Status = AccountSnapshot["status"];
 
 /**
- * A refused call as the app reads it. WebKit hands a rejected `callAsyncJavaScript` promise to the app
- * as an error that carries the rejection's string form (`userInfo[WKJavaScriptExceptionMessage]`); a
- * plain Error's is "Error: saveFailed". This one's is the bare reason ("saveFailed"), the word ADR 0088
- * §4 lists. It is still an Error, with the reason as its message.
+ * A refused call as the app reads it: the bare reason ("saveFailed"), the word ADR 0088 §4 lists, both
+ * as its message and as its string form (a plain Error's is "Error: saveFailed"). The app reads it
+ * through its own wrapper, `String(e && e.message || e)` inside a `try` (ADR 0087, "For the native
+ * shell" item 1), never from WebKit's error; the string form serves any reader that takes the whole
+ * rejection. It is still an Error.
  */
 export class BridgeRejection extends Error {
   override name = "BridgeRejection";

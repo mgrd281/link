@@ -63,8 +63,9 @@ describe("app mode: the app's own words name no plan to buy", () => {
   it("appMode.* says no 'Pro', no price and no currency, in every language", () => {
     for (const locale of LOCALES) {
       const found = strings(CATALOGUES[locale].appMode, "appMode");
-      // The AI sheet's title and close, the quota, the invite terms and Home's invite line.
-      expect(found.length, locale).toBeGreaterThanOrEqual(5);
+      // The AI sheet's title, close and plan link, the quota, the invite terms, Home's invite line, the
+      // not-found sentence and Settings' legal group.
+      expect(found.length, locale).toBeGreaterThanOrEqual(8);
       for (const [key, text] of found) {
         expect(text, `${locale} ${key}`).not.toMatch(/\bPro\b/);
         expect(text, `${locale} ${key}`).not.toMatch(/€|\$|£|EUR\b|\d+[.,]\d{2}/);
@@ -97,19 +98,24 @@ describe("app mode: the app's own words name no plan to buy", () => {
       expect(inApp, locale).toContain(CATALOGUES[locale].appMode.ai.close);
       expect(inApp, locale).not.toMatch(/\bPro\b/);
       expect(inApp, locale).not.toContain(CATALOGUES[locale].app.ai.pro.later);
-      // The way to the plan stays, so the sheet still leads somewhere.
-      expect(inApp, locale).toContain(CATALOGUES[locale].app.settings.plan.open);
+      // The way to the plan stays, so the sheet still leads somewhere, with a neutral label: the pane
+      // shows no feature list in the app, so "What your plan includes" would promise what it hides.
+      expect(inApp, locale).toContain(CATALOGUES[locale].appMode.ai.plan);
+      expect(inApp, locale).not.toContain(CATALOGUES[locale].app.settings.plan.open);
 
       const inBrowser = render(locale, false, sheet);
       expect(inBrowser, locale).toContain(CATALOGUES[locale].app.ai.pro.title);
+      expect(inBrowser, locale).toContain(CATALOGUES[locale].app.settings.plan.open);
     }
   });
 
-  it("the used-up free draft says so in the app without 'Pro'; a browser keeps its words", () => {
+  it("the used-up free draft says so in the app without 'Pro' and without 'free'; a browser keeps its words", () => {
     for (const locale of LOCALES) {
       const inApp = render(locale, true, createElement(QuotaError));
       expect(inApp, locale).toContain(CATALOGUES[locale].appMode.ai.quotaFree);
       expect(inApp, locale).not.toMatch(/\bPro\b/);
+      // "kostenlos" sets a free draft against paid ones: a plan to buy, in other words.
+      expect(inApp, locale).not.toMatch(/kostenlos|gratis|\bfree\b|مجان/i);
       expect(render(locale, false, createElement(QuotaError)), locale).toContain(CATALOGUES[locale].app.ai.errors.quotaFree);
     }
   });

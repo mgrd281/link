@@ -24,7 +24,7 @@ import { haptic } from "@/lib/haptics";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { blankBlock } from "./blocks";
-import { EDIT_PARAM, editLinkOutcome, withoutEditParam } from "./edit-link";
+import { EDIT_PARAM, editLinkOutcome, editLinkReplaces, withoutEditParam } from "./edit-link";
 import { emptyPageAsk } from "./editor-empty";
 import { isPortfolioKind } from "./kinds";
 import { PreviewButton } from "./preview";
@@ -52,7 +52,8 @@ const reorderKey = (onMove: (delta: number) => void) => (event: KeyboardEvent<HT
  * unknown id opens nothing. The address loses the request first, so a reload or Back does not open the
  * sheet again. In the app, closing that sheet (saved, cancelled, or the block deleted) posts
  * `editClosed`, so the app can return to its own list; an unknown id posts `editClosed` with
- * `missing` at once.
+ * `missing` at once; an empty id (`?edit=`) posts nothing. A second link while the first one's sheet is
+ * open replaces that sheet and posts `editClosed` for the first block before the second opens.
  */
 function useEditLink() {
   const { doc, edit, editing } = useSite();
@@ -68,6 +69,9 @@ function useEditLink() {
       post(outcome.closed);
       return;
     }
+    // The sheet an earlier link opened gives way to this one: the app hears that it closed, first.
+    const replaced = editLinkReplaces(linked.current, outcome.open);
+    if (replaced) post(replaced);
     linked.current = outcome.open;
     edit({ mode: "edit", id: outcome.open });
   });

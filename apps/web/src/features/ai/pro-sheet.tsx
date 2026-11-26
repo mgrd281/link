@@ -16,9 +16,10 @@ import { paymentsEnabled } from "@/lib/flags";
  * payments exist; until then the sheet says Pro is coming, with no button that cannot do anything.
  * Either way the plan pane (Settings › Plan) is one tap away: the plan, what it holds, drafts left.
  *
- * In the iPhone app (app mode) the sheet only states the fact, that AI drafts are not enabled for this
- * account, and leads to the plan: no "Pro", no price, no "not now" that hints at later, no way to buy
- * (App Store 3.1.1, 3.1.3(f); `appMode.ai`).
+ * In the iPhone app (app mode) the sheet only states the fact, that AI drafts are not available for this
+ * account, and leads to the plan with a neutral "Zu deinem Plan" (the pane shows no feature list there,
+ * so "Was dein Plan enthält" would promise what it does not show): no "Pro", no price, no "not now" that
+ * hints at later, no way to buy (App Store 3.1.1, 3.1.3(f); `appMode.ai`).
  */
 export function ProSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const t = useTranslations("app.ai.pro");
@@ -58,7 +59,7 @@ export function ProSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
           onClick={() => onOpenChange(false)}
           className="inline-flex items-center gap-1 justify-self-start rounded-sm font-semibold text-link transition-colors duration-micro hover:text-link-hover focus-visible:focus-ring"
         >
-          {tPlan("open")}
+          {app ? tApp("plan") : tPlan("open")}
           <Icon icon={ChevronRight} size="sm" />
         </Link>
       </div>

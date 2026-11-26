@@ -220,18 +220,20 @@ function useNewestOrder(): string | null {
  * (`legalLinksVisible`). Withdrawal and cancellation also work signed out (the footer says so).
  *
  * In the iPhone app nothing is sold and nothing leads to a contract (App Store 3.1.1, 3.1.3(f)): no
- * order, withdrawal or cancellation row. The AGB state prices, so the app opens them in Safari; the
+ * order, withdrawal or cancellation row, and the group is "Rechtliches" (`appMode.settings.legal`),
+ * not "Verträge und Rechtliches". The AGB state prices, so the app opens them in Safari; the
  * Impressum and the privacy policy open in the app, without the website's header and footer.
  */
 function ContractsGroup() {
   const t = useTranslations("app.settings");
+  const tApp = useTranslations("appMode.settings");
   const locale = useLocale();
   const app = useAppMode();
   const newestOrder = useNewestOrder();
   const contracts = paymentsEnabled && !app;
   if (!contracts && !legalLinksVisible) return null;
   return (
-    <ListGroup title={t("groups.contracts")} titleId="contracts" footer={contracts ? t("footers.contracts") : undefined}>
+    <ListGroup title={app ? tApp("legal") : t("groups.contracts")} titleId="contracts" footer={contracts ? t("footers.contracts") : undefined}>
       {contracts && newestOrder ? <ListRow icon={Receipt} title={t("rows.orders")} href={`/app/orders/${newestOrder}`} /> : null}
       {contracts ? <ListRow icon={Undo2} title={t("rows.withdraw")} href="/widerruf" /> : null}
       {contracts ? <ListRow icon={FileX} title={t("rows.cancel")} href="/kuendigen" /> : null}

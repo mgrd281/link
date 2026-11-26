@@ -15,15 +15,25 @@ export function editLinkTarget(requested: string | null, ids: readonly string[])
 /**
  * What a `?edit=` link does: open the block's sheet, or (no such block: deleted on another device, a
  * stale list) tell the iPhone app at once that nothing opened, `editClosed` with `missing`, so it can
- * return to its own list instead of showing an editor waiting for a sheet. Null for no request.
+ * return to its own list instead of showing an editor waiting for a sheet. Null for no request and for
+ * an empty id (`?edit=`): no block was asked for, so the app is told nothing.
  */
 export function editLinkOutcome(
   requested: string | null,
   ids: readonly string[],
 ): { open: string } | { closed: { type: "editClosed"; id: string; missing: true } } | null {
-  if (requested === null) return null;
+  if (!requested) return null;
   const target = editLinkTarget(requested, ids);
   return target ? { open: target } : { closed: { type: "editClosed", id: requested, missing: true } };
+}
+
+/**
+ * A `?edit=` link that opens `next` while the sheet an earlier link opened (`linked`) is still open: that
+ * sheet closes for the new one, so the app hears `editClosed` for the earlier block first (each link it
+ * sent gets its own answer). Nothing when no link's sheet is open, or for the same block again.
+ */
+export function editLinkReplaces(linked: string | null, next: string): { type: "editClosed"; id: string } | null {
+  return linked !== null && linked !== next ? { type: "editClosed", id: linked } : null;
 }
 
 /** The address without `edit`, every other parameter and the hash kept. */

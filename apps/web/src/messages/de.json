@@ -5581,8 +5581,9 @@
   "appMode": {
     "ai": {
       "title": "KI-Entwürfe sind für dieses Konto nicht verfügbar",
-      "quotaFree": "Deinen kostenlosen KI-Entwurf hast du genutzt. Weitere Entwürfe gibt es für dieses Konto nicht.",
-      "close": "Schließen"
+      "quotaFree": "Deinen KI-Entwurf hast du genutzt. Weitere Entwürfe gibt es für dieses Konto nicht.",
+      "close": "Schließen",
+      "plan": "Zu deinem Plan"
     },
     "invite": {
       "terms": "Belohnungen sind persönlich, nicht übertragbar und nicht in Geld einlösbar."
@@ -5592,6 +5593,9 @@
     },
     "errors": {
       "notFoundBody": "Prüf die Adresse auf Tippfehler oder geh zurück zum Dashboard."
+    },
+    "settings": {
+      "legal": "Rechtliches"
     }
   }
 }

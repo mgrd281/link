@@ -255,8 +255,8 @@ describe("store bridge", () => {
   });
 
   it("a rejection's string form is the bare reason, as WebKit hands it to the app (never \"Error: saveFailed\")", async () => {
-    // WebKit puts a rejected promise's string form in the error the app gets
-    // (userInfo[WKJavaScriptExceptionMessage]); ADR 0088 §4 lists the bare reasons.
+    // The app's wrapper reads `e.message` (ADR 0087, "For the native shell" item 1); a reader that takes the
+    // whole rejection gets its string form. Both are the bare reason ADR 0088 §4 lists.
     const win = webView();
     const store = fakeStore();
     store.flush.mockImplementation(() => Promise.reject(new Error("saveFailed")));
