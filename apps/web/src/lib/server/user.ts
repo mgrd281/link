@@ -22,21 +22,31 @@ const unauthorized = () => Response.json({ ok: false, error: "unauthorized" }, {
 const unavailable = () => Response.json({ ok: false, error: "unavailable" }, { status: 503, headers: noStore });
 
 /**
- * Supabase Auth turned the token down: an answer about the token (invalid, expired, its session or its
- * user gone), a 4xx other than a rate limit (429) or a timeout (408). No answer, a 5xx, a rate limit or
- * an answer that is not Auth's own (no status) say nothing about the token.
+ * Supabase Auth's own error codes for a token it turned down: not a valid JWT, a wrong signature or
+ * expired (`bad_jwt`), no token (`no_authorization`), its session ended (`session_not_found`) or its user
+ * deleted (`user_not_found`).
  */
-export function tokenRefused(error: { name?: string; status?: number | undefined }): boolean {
-  if (error.name === "AuthRetryableFetchError") return false;
+const TOKEN_REFUSED = new Set(["bad_jwt", "no_authorization", "session_not_found", "user_not_found"]);
+
+/**
+ * Supabase Auth turned the token down: a 4xx that carries one of Auth's own codes about the token
+ * (`TOKEN_REFUSED`). supabase-js reports `session_not_found` as an `AuthSessionMissingError` without a
+ * code. Anything else says nothing about the token: no answer, a 5xx, a rate limit, and a 4xx without
+ * such a code (the API gateway's "Invalid API key", a firewall's page, a proxy).
+ */
+export function tokenRefused(error: { name?: string; status?: number | undefined; code?: string | undefined }): boolean {
   const { status } = error;
-  return typeof status === "number" && status >= 400 && status < 500 && status !== 408 && status !== 429;
+  if (typeof status !== "number" || status < 400 || status >= 500) return false;
+  if (error.name === "AuthSessionMissingError") return true;
+  return typeof error.code === "string" && TOKEN_REFUSED.has(error.code);
 }
 
 export interface RequireUserOptions {
   /**
-   * The answer when Supabase Auth could not check the token (no answer, a 5xx, a rate limit):
-   * "unauthorized" (401, the default) or "unavailable" (503: try again later). The iPhone app's routes
-   * take the second, since the app signs out and wipes the device on a 401 (ADR 0088).
+   * The answer when Supabase Auth did not turn the token down with its own code (`tokenRefused`): no
+   * answer, a 5xx, a rate limit, a gateway's or a firewall's 4xx. "unauthorized" (401, the default) or
+   * "unavailable" (503: try again later). The iPhone app's routes take the second: on a 401 the app
+   * refreshes its session, and wipes the device when the refresh is refused too (ADR 0088).
    */
   outage?: "unauthorized" | "unavailable";
 }
