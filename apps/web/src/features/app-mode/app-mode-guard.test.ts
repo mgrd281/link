@@ -1,5 +1,5 @@
 /**
- * App mode (ADR draft "app mode"): static guards that keep the iPhone app free of purchase surfaces and
+ * App mode (ADR 0087): static guards that keep the iPhone app free of purchase surfaces and
  * of dead download and share buttons. They read the code, so they also hold for builds the e2e suite
  * does not run (a payments build, where the buy buttons and contract rows exist).
  *

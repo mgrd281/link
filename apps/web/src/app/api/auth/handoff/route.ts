@@ -24,7 +24,7 @@ const LOCALES = new Set(["de", "en", "ar"]);
 const DASHBOARD = /^\/(?:de|en|ar)\/app(?:\/|$)/;
 
 /**
- * The iPhone app's way into the web dashboard (PLAN D3, ADR draft-app-sync). The app signs in through
+ * The iPhone app's way into the web dashboard (PLAN D3, ADR 0088). The app signs in through
  * our routes and keeps its own session; its web view gets a second, separate one, so the two never
  * refresh the same token (Supabase rotates refresh tokens and revokes a session whose spent token
  * comes back). With the app's access token as `Authorization: Bearer`, this answers a one-time link

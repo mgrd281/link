@@ -1,7 +1,7 @@
 import { base64OfBytes, bridgeAvailable, post, type BridgeFile } from "./bridge";
 
 /*
- * Files through the bridge (ADR draft "app mode"): the dashboard's downloads and shares. Apart from
+ * Files through the bridge (ADR 0087): the dashboard's downloads and shares. Apart from
  * `./bridge.ts`, so the pages that only need a haptic tap (creator pages' islands, through
  * lib/haptics.ts) do not carry them.
  */

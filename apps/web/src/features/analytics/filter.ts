@@ -25,7 +25,7 @@ export function isBot(userAgent: string | null | undefined): boolean {
 
 /**
  * Linkyo's own iPhone app, whose web views name it in the user agent (`… Mobile/15E148 LinkyoApp/1.2`,
- * ADR draft "app mode"): an owner looking at their own page, never a visitor.
+ * ADR 0087): an owner looking at their own page, never a visitor.
  */
 const LINKYO_APP = /(?:^|[\s(;])LinkyoApp\//;
 

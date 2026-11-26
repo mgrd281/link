@@ -84,7 +84,7 @@ export type AccountSnapshot =
       syncError?: "tooLarge" | undefined;
       /**
        * Real accounts: the page's version on the server (the row's `updated_at`) as it was read or
-       * last saved here. A save writes only over this version (ADR draft-app-sync).
+       * last saved here. A save writes only over this version (ADR 0088).
        */
       baseUpdatedAt?: string | undefined;
       /** How often the page was replaced from where it is kept (`reload()`, a refused save): the editor starts over from it. */

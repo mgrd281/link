@@ -27,7 +27,7 @@ export default async function AppLayout({ children, params }: { children: ReactN
         <GatedRouteCheck area="app" />
         {/* The dashboard's offline page (features/pwa); nothing else on the site registers a worker. */}
         <ServiceWorkerIsland />
-        {/* The iPhone app's flush, reload and signOut (app mode only, ADR draft-app-sync). */}
+        {/* The iPhone app's flush, reload and signOut (app mode only, ADR 0088). */}
         <StoreBridge />
         <AppGate>{children}</AppGate>
         {/* Inside Linkyo's iPhone app: navigate/back and the ready and route messages (features/app-mode). */}

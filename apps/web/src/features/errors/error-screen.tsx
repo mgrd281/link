@@ -54,7 +54,7 @@ const actionWidth = "w-full sm:w-auto";
 const sizeFor = (frame: ErrorArea) => (frame === "site" ? "cta" : "xl");
 
 /**
- * In Linkyo's iPhone app (app mode, ADR draft "app mode") the website is not one of the app's pages: it
+ * In Linkyo's iPhone app (app mode, ADR 0087) the website is not one of the app's pages: it
  * shows the prices. A way to it (the home page, the templates) is marked `data-app-hide`, hidden by CSS
  * from the first paint, also on a page the server rendered.
  */

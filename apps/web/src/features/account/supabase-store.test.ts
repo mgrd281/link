@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Site } from "./types";
 
 /**
- * The save guard (ADR draft-app-sync): the store writes the page only while the row still has the
+ * The save guard (ADR 0088): the store writes the page only while the row still has the
  * version it read or last saved. Against an in-memory stand-in for the `sites` row that behaves as
  * Postgres does: every write gets a new `updated_at`, `sites_guard` writes the account's address and
  * badge into the page, and a filter on `updated_at` that no longer matches changes nothing.

@@ -167,8 +167,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const snapshot = useAccount();
   const revision = snapshot.status === "signedIn" ? (snapshot.revision ?? 0) : 0;
   const conflicts = snapshot.status === "signedIn" ? (snapshot.conflicts ?? 0) : 0;
-  // A change made on a page the store has since replaced (a newer version from elsewhere, ADR
-  // draft-app-sync) is never written over it: the editor starts over from the newer one instead.
+  // A change made on a page the store has since replaced (a newer version from elsewhere, ADR 0088)
+  // is never written over it: the editor starts over from the newer one instead.
   const write = useCallback((doc: SiteDoc): Result => (storeRevision() === revision ? writeDoc(doc) : { ok: true }), [revision]);
   return (
     <EditorProvider account={account} site={site} write={write} revision={revision} conflicts={conflicts}>

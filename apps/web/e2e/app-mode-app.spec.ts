@@ -8,7 +8,7 @@ import en from "../src/messages/en.json" with { type: "json" };
 import { enterDemoCode } from "./auth";
 
 /**
- * App mode (ADR draft "app mode"): the dashboard inside Linkyo's iPhone app. The app's WKWebView is
+ * App mode (ADR 0087): the dashboard inside Linkyo's iPhone app. The app's WKWebView is
  * stood in for by the app's user agent and a document-start script, as the app sets them: `<html
  * data-app="ios">`, `window.linkyoApp` and a `webkit.messageHandlers.linkyo` that records what the web
  * posts. On a phone (390 × 844) in German and Arabic: no web chrome, no purchase surface, no install

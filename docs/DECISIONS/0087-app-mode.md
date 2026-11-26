@@ -1,7 +1,8 @@
-# Draft — App mode: the web dashboard inside Linkyo's iPhone app
+# 0087 — App mode: the web dashboard inside Linkyo's iPhone app
 
-**Status.** Proposed (iOS web part A: W1, W2a, W5, W9 of the iPhone app plan, 2026-11-26), with the lead's
-decisions on the second review's open points (decision 8). The lead numbers it (next free: 0087). Builds on
+**Status.** Accepted (iOS web part A: W1, W2a, W5, W9 of the iPhone app plan, 2026-11-26), with the lead's
+decisions on the second review's open points (decision 8). Pairs with [0088](0088-app-sync.md) (the session
+hand-off, the page operations, the save guard and the store's half of the bridge). Builds on
 [0086](0086-installable-app.md) (the installable web app) and [0062](0062-black-and-grey-dashboard.md) (the
 black-and-grey dashboard).
 
@@ -85,7 +86,7 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    | `haptic` | `style: "light"` | `lib/haptics.ts` (every `haptic()` of a user's tap) |
    | `editClosed` | `id`, `missing?` (`true`) | the editor, when the sheet `?edit=<id>` opened closes (saved, cancelled or the block deleted); with `missing: true` at once when the page has no block of that id (deleted on another device, a stale list): no sheet opens, so the app pops back to its list instead of waiting |
    | `openExternal` | `url` (absolute, this site only) | the AGB row |
-   | `saveState`, `signedOut` | the store's (WP "appsync") | `features/app-mode/store-bridge.ts` |
+   | `saveState`, `signedOut` | the store's ([0088](0088-app-sync.md)) | `features/app-mode/store-bridge.ts` |
 
    App → web on `window.linkyoApp` (created by the web if the app's script has not made it):
    - `navigate(path)`: a path of this site, with or without the language (`/de/app/editor?edit=b1`,
@@ -94,7 +95,7 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
      dashboard's pages (`/<locale>/app/*`, `features/app-mode/app-mode-island.tsx`, mounted by the dashboard's
      layout); elsewhere (a legal page) the app loads the address.
    - `back()`: goes where the current screen's `route.back` leads; false where there is none.
-   - `flush()`, `reload()`, `signOut()`: the store's half (WP "appsync", `store-bridge.ts`).
+   - `flush()`, `reload()`, `signOut()`: the store's half ([0088](0088-app-sync.md), `store-bridge.ts`).
 
 5. **The editor's deep link.** `/<locale>/app/editor?edit=<blockId>` opens that block's sheet once; an unknown id
    opens nothing. The address loses the parameter first (`replaceState`), so a reload or Back does not reopen

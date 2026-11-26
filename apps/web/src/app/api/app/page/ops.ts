@@ -6,7 +6,7 @@ import { metadataPatch, metadataUrl, type LinkMetadata } from "@/features/app/me
 import { isStorageImage, STORAGE_MEDIA_PATH } from "@/features/directions/shared/remote-images";
 
 /**
- * The page operations the iPhone app sends (`POST /api/app/page`, ADR draft-app-sync). The app never
+ * The page operations the iPhone app sends (`POST /api/app/page`, ADR 0088). The app never
  * builds block JSON itself: a link becomes a block here with the code the web's Add sheet uses
  * (`detectLink`, `blockFromLink`, the platform details of `/api/link-metadata`), and every other
  * operation only moves, shows, hides or removes a block by its id. The result must not make the page

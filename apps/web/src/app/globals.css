@@ -190,7 +190,7 @@
 }
 
 /*
- * App mode (ADR draft "app mode", features/app-mode). Inside Linkyo's iPhone app the app sets
+ * App mode (ADR 0087, features/app-mode). Inside Linkyo's iPhone app the app sets
  * <html data-app="ios"> before the first paint and draws its own bars and navigation. So the web drops
  * its own chrome (the tab bar, the rail with its section panel, the phone top bar, the website's header
  * and footer around help and legal pages), every purchase surface and the install hints: each is marked

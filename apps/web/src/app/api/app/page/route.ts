@@ -45,7 +45,7 @@ async function readBody(request: Request, max: number): Promise<string | null> {
 const tooLarge = (error: { code?: string; message?: string }) => error.code === "23514" && (error.message ?? "").includes("site_size");
 
 /**
- * The iPhone app's page changes (ADR draft-app-sync): its Home, Add sheet, block list and share
+ * The iPhone app's page changes (ADR 0088): its Home, Add sheet, block list and share
  * extension change the page through here, never by writing block JSON themselves.
  *
  *   POST { baseUpdatedAt, ops: [{ op: "add", url } | { op: "addImage", src, alt, w, h }

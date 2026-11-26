@@ -179,7 +179,7 @@ export class SupabaseAccountStore implements AccountStore {
   /** Pictures moved from data URLs to Storage in this session (data URL → address): never uploaded twice. */
   private readonly uploaded = new Map<string, string>();
   /**
-   * The save guard (ADR draft-app-sync): the row's `updated_at` as it was read or last saved here. A
+   * The save guard (ADR 0088): the row's `updated_at` as it was read or last saved here. A
    * save writes only while the row still has it, so a stale copy never overwrites a newer page.
    */
   private base: string | null = null;
@@ -440,7 +440,7 @@ export class SupabaseAccountStore implements AccountStore {
    *   no answer at all or a server error, while the browser was online): `updated_at >= base`. That
    *   save carries the exact guard and lands first in the normal order, so an exact keepalive would
    *   always be refused and the last change lost. The other order is safe too: the save, landing
-   *   second, no longer finds `base` and changes nothing. The price (ADR draft-app-sync): in that
+   *   second, no longer finds `base` and changes nothing. The price (ADR 0088): in that
    *   moment a write from elsewhere after `base` is overwritten instead of refused.
    */
   private saveOnExit() {
@@ -721,7 +721,7 @@ export class SupabaseAccountStore implements AccountStore {
 
   /**
    * A save the guard turned down: the row is no longer the version this tab built on. It is read
-   * again to decide (ADR draft-app-sync):
+   * again to decide (ADR 0088):
    * - still the same version: the database refused the write (a suspended account), retried like a failed save;
    * - what this tab read, sent or may have written itself, apart from what the server owns (the badge,
    *   the address): it builds on the newer version and sends what is waiting again, at once the first

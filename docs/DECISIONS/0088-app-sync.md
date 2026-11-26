@@ -1,7 +1,7 @@
-# draft — The iPhone app and the web dashboard share one page safely
+# 0088 — The iPhone app and the web dashboard share one page safely
 
-**Status.** Proposed (iOS web part B, 2026-11-26; the lead numbers it). Builds on PLAN.md D2–D5 (`audit/ios`). Pairs
-with `draft-app-mode.md` (app mode and the interface half of the bridge).
+**Status.** Accepted (iOS web part B, 2026-11-26). Builds on PLAN.md D2–D5 (`audit/ios`). Pairs with
+[0087](0087-app-mode.md) (app mode and the interface half of the bridge).
 
 **Context.** The iPhone app signs in natively (`/api/auth/code` → `/api/auth/verify`, or `/api/auth/password`) and
 keeps its session in the Keychain. Its deep screens are the web dashboard in one WKWebView. Its native screens
@@ -167,12 +167,16 @@ view cannot share one session.
      reloads, and either retries once on the new version or says it could not.
 
 **Limits.** At most 20 operations and 64 KB per call; a link up to 2048 characters; the page's own limits (200 blocks,
-the project and contact rules, under 1 MB per row: 422 `pageTooLarge`). **Rate limiting** is WP4.4's: it should cover
-`/api/auth/handoff` (each call mints a sign-in token) and `/api/app/page` (each `add` may ask a platform for details,
-and each write drops a cached page), per account and per IP. The hand-off is the one new way to turn a leaked access
-token (about an hour) into a long-lived session, under a device id the caller chooses. WP4.4 should also consider
-handing off only a token whose session (`session_id` in its JWT) has a `sign_ins` row with the same `deviceId`; the
-app's native sign-in writes both.
+the project and contact rules, under 1 MB per row: 422 `pageTooLarge`).
+
+**For WP4.4 (security), not built here:**
+
+- **Rate limits** on `POST /api/auth/handoff` (each call mints a sign-in token) and `POST /api/app/page` (each `add`
+  may ask a platform for details, and each write drops a cached page), per account and per IP.
+- **Binding the hand-off to the device id:** `/api/auth/handoff` is the one new way to turn a leaked access token
+  (about an hour) into a long-lived session, under a device id the caller chooses. It should hand off only a token
+  whose session (`session_id` in its JWT) has a `sign_ins` row with the same `deviceId`; the app's native sign-in
+  writes both.
 
 **What a browser user notices.** Nothing, in one tab: rapid edits, slow networks, lost answers, a stretch offline, a
 reload, an address change or the team's badge never conflict and never lose a change (the save state shows "error"

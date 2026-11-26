@@ -64,7 +64,7 @@ export function PeopleSearch() {
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "k" || !(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
       // In Linkyo's iPhone app (an iPad keyboard) the website's header and its search are not there
-      // (ADR draft "app mode"): the search leads to the website's pages, so the shortcut does nothing.
+      // (ADR 0087): the search leads to the website's pages, so the shortcut does nothing.
       if (inAppMode()) return;
       // Another dialog is open in front (a page preview, a confirmation, the phone menu): the
       // shortcut is not for us. Closed ones may stay in the page (the menu is a hidden popover).

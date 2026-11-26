@@ -1,6 +1,6 @@
 /*
  * The editor's deep link: `/<locale>/app/editor?edit=<blockId>` opens that block's edit sheet. The
- * iPhone app pushes it to edit one block from its own list (ADR draft "app mode"); any link may use it.
+ * iPhone app pushes it to edit one block from its own list (ADR 0087); any link may use it.
  */
 
 /** The query parameter: `?edit=<blockId>`. */

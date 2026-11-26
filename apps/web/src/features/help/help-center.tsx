@@ -11,7 +11,7 @@ import { matchArticles, type SearchableArticle } from "./search";
 
 /**
  * One article as the page hands it over: rendered words, plain words for the search, a link onwards
- * (`inApp: false`: a page of the website, hidden inside Linkyo's iPhone app, ADR draft "app mode").
+ * (`inApp: false`: a page of the website, hidden inside Linkyo's iPhone app, ADR 0087).
  */
 export interface HelpCenterArticle extends SearchableArticle {
   group: HelpGroup;

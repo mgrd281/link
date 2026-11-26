@@ -1,5 +1,5 @@
 /**
- * App mode (ADR draft "app mode"): no "Pro" wording inside the iPhone app (App Store 3.1.3(f): no call
+ * App mode (ADR 0087): no "Pro" wording inside the iPhone app (App Store 3.1.3(f): no call
  * to action for a purchase). Where the dashboard tells a Free account about a paid plan, the app says
  * the fact in words of its own (`appMode.*`): without "Pro", without a price, without a hint to buy.
  */

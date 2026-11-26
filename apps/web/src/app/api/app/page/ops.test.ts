@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { applyOps, bodySchema, isOwnMedia, MAX_OPS, type OpsContext, type PageOp } from "./ops";
 
 /**
- * The iPhone app's page operations, applied to a stored page (ADR draft-app-sync): links become
+ * The iPhone app's page operations, applied to a stored page (ADR 0088): links become
  * blocks with the web's own code, pictures must be the account's own uploads, and nothing the call
  * does may leave the page failing the blocks schema where it did not before.
  */

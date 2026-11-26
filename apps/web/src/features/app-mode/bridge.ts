@@ -1,7 +1,7 @@
 import { inAppMode } from "./app-mode";
 
 /*
- * The web's half of the bridge to Linkyo's iPhone app (ADR draft "app mode", contract version 1).
+ * The web's half of the bridge to Linkyo's iPhone app (ADR 0087, contract version 1).
  * Messages go to `webkit.messageHandlers.linkyo`, which the app installs; it accepts them only from
  * the main frame of our own host. The web posts only in app mode and only from the main frame, and
  * posting never throws: in a browser every call here answers false and the caller does what it did

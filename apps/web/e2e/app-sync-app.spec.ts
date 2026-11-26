@@ -7,7 +7,7 @@ import type { Database } from "../src/lib/supabase/database.types";
 import { createRealAccount, expect, realEnabled, seedPage, service, signIn, test, uniqueName, type RealAccount } from "./real";
 
 /**
- * The web side of the iPhone app, against real accounts (ADR draft-app-sync): the app's session
+ * The web side of the iPhone app, against real accounts (ADR 0088): the app's session
  * handed to its web view (/api/auth/handoff), the page operations route (/api/app/page) and the save
  * guard that keeps a stale copy (another tab, the web view while the app wrote) from overwriting a
  * newer page. Needs a build with Supabase settings, the local stack and the real-mode variables.

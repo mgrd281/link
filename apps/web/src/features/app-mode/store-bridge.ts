@@ -9,7 +9,7 @@ import { inAppMode, installOnApp } from "./app-mode";
 import { inMainFrame, post, type SaveState } from "./bridge";
 
 /**
- * The store half of the bridge to the iPhone app (PLAN §1.5, ADR draft-app-sync). Only in app mode
+ * The store half of the bridge to the iPhone app (PLAN §1.5, ADR 0088). Only in app mode
  * (`inAppMode()`: the native shell sets `data-app` on <html> before the first paint) and only in the
  * main frame, the same rules as every other message (`./bridge.ts`):
  *

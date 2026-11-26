@@ -1,5 +1,5 @@
 /**
- * App mode: the dashboard inside Linkyo's iPhone app (ADR draft "app mode"). The app shows the web
+ * App mode: the dashboard inside Linkyo's iPhone app (ADR 0087). The app shows the web
  * dashboard in one WKWebView and draws its own bars, so the web hides its own chrome, every purchase
  * surface and the install hints there, and talks to the app through `./bridge.ts`.
  *
