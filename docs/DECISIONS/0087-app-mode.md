@@ -1,10 +1,10 @@
 # 0087 — App mode: the web dashboard inside Linkyo's iPhone app
 
 **Status.** Accepted (iOS web part A: W1, W2a, W5, W9 of the iPhone app plan, 2026-11-26), with the lead's
-decisions on the second review's open points (decision 8). Pairs with [0088](0088-app-sync.md) (the session
-hand-off, the page operations, the save guard and the store's half of the bridge). Builds on
-[0086](0086-installable-app.md) (the installable web app) and [0062](0062-black-and-grey-dashboard.md) (the
-black-and-grey dashboard).
+decisions on the second review's open points (decision 8) and on the last review (decision 9). Pairs with
+[0088](0088-app-sync.md) (the session hand-off, the page operations, the save guard and the store's half of the
+bridge). Builds on [0086](0086-installable-app.md) (the installable web app) and
+[0062](0062-black-and-grey-dashboard.md) (the black-and-grey dashboard).
 
 **Context.** The iPhone app is a native SwiftUI shell with one WKWebView for the deep web screens (block forms,
 Design, Arbeiten, the welcome flow, the Settings panes, "View my page"). The same deployment serves browsers and
@@ -140,6 +140,30 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
      stored in the web view never overrides the device's (`lib/theme-script.ts`).
    - **`editClosed.missing`** (decision 5).
 
+9. **The lead's decisions on the last review (integration, 2026-11-26).**
+   - **The plan pane names the plan and its state, nothing else.** The account's own plan, "Linkyo Pro"
+     (bought on the web, given by the team, or the invite reward), is named: App Store 3.1.3(b) lets an app
+     show what an account has bought elsewhere, and hiding it would make the pane say less than the truth.
+     Its states that ask for nothing stay (Aktiv, Gekündigt, Reserviert) with its dates; everything else on
+     the pane is hidden in the app: the source line (a price, Stripe, the team, "Pro für immer"), the feature
+     list, the past-due badge and note (a past-due account shows no badge rather than a false "Aktiv"), and
+     the payment group (decision 2). The "Pro" rule allows the word only inside the plan's name there
+     (`plan-app-mode.test.ts`; `e2e/plan-app.spec.ts` in the stub build, for a reward, team, Stripe,
+     canceled and past-due account).
+   - **No hint at an unlock:** the AI's app words say the drafts are not available for this account
+     ("nicht verfügbar"), never "nicht freigeschaltet" (decision 2).
+   - **The privacy policy stays as it is in the app.** Its text (`features/legal/texts.ts`) names Linkyo Pro
+     and Stripe in running text, as the processor of paid services, with no link to a purchase: a legal text,
+     not an offer. A note for the lawyer (plan W8): whether the policy should say that the app shows the
+     dashboard in a web view, and that views from the app are not counted (decision 6).
+   - **One predicate, one sender:** the store's half (`store-bridge.ts`, [0088](0088-app-sync.md)) now asks
+     `inAppMode()` and the main frame and posts `saveState` and `signedOut` through `post()`; both halves put
+     their methods on `window.linkyoApp` through `installOnApp`, which never replaces the object or the
+     other half's methods, whichever mounts first (`store-bridge.test.ts`).
+   - **The signal everywhere React renders a document anew:** the dashboard's island restores `data-app`
+     once, and the root layout's own error page restores it and leads only back to the dashboard
+     (decisions 1 and 2).
+
 **Consequences.**
 
 - Weight: the dashboard's first load grows by 1.4 KB with the first round (321.9 → 323.3 KB of 350) and is
@@ -171,11 +195,6 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
 - Open for the app (native): the navigation policy still has to send `/checkout`, `/service`, `/kuendigen`,
   `/widerruf`, the team area and every other host to Safari (plan §1.6); the web no longer links them from the
   dashboard in app mode, but the policy is the guarantee.
-- Open for the app and the lead:
-  - the store's half (`store-bridge.ts`, WP "appsync") installs its methods for any `data-app` value; it should
-    ask `inAppMode()` too, so all three parts agree on one predicate;
-  - the plan pane of an account that has Pro (bought on the web, given by the team, or the invite reward)
-    names its plan, "Linkyo Pro", in the app: the account's state, not an offer (no price, no way to buy, no
-    "coming"); the e2e "Pro" check runs on a Free demo account, so it does not see it. Whether the app shows
-    the plan's name is the lead's call.
-- Not covered here: the privacy policy could say that views from the app are not counted (W8).
+- Closed by the lead (decision 9): the store's half asks `inAppMode()` and the main frame like the rest, and
+  the plan pane names the plan, "Linkyo Pro", with its state only.
+- Not covered here: the privacy policy's wording for the app (W8, a note for the lawyer, decision 9).

@@ -45,6 +45,22 @@ describe("ADR 0087 and 0088", () => {
     for (const words of ["/api/auth/handoff", "/api/app/page", "Rate limits", "deviceId"]) expect(wp44, words).toContain(words);
   });
 
+  it("0087 records the lead's decisions on the last review and leaves nothing open for the lead", () => {
+    const mode = read("0087-app-mode.md");
+    const decision = mode.slice(mode.indexOf("9. **The lead's decisions on the last review"), mode.indexOf("**Consequences.**"));
+    expect(decision.length).toBeGreaterThan(100);
+    // The plan pane names the plan and its state only; the privacy policy is a note for the lawyer (W8).
+    for (const words of ["Linkyo Pro", "3.1.3(b)", "past-due", "Stripe", "W8", "installOnApp"]) expect(decision, words).toContain(words);
+    expect(mode).not.toContain("Open for the app and the lead");
+    expect(mode).not.toMatch(/is the lead's call/);
+  });
+
+  it("0088 says the store's half uses the same predicate and the same sender as the rest of app mode", () => {
+    const sync = read("0088-app-sync.md");
+    const half = sync.slice(sync.indexOf("4. **The store half of the bridge**"), sync.indexOf("**Limits.**"));
+    for (const words of ["inAppMode()", "inMainFrame()", "installOnApp", "post()"]) expect(half, words).toContain(words);
+  });
+
   it("no code, test, skill or doc still points to the drafts", () => {
     const stale = /draft-app-mode|draft-app-sync|ADR draft "app mode"/;
     const found = ["apps/web/src", "apps/web/e2e", "docs", ".claude/skills"]

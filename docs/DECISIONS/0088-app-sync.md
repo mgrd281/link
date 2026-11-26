@@ -163,9 +163,11 @@ view cannot share one session.
    - The demo store keeps everything in this browser and needs no guard. Both stores keep the same interface.
 
 4. **The store half of the bridge** (`features/app-mode/store-bridge.ts`, mounted once in the dashboard layout).
-   - In app mode only (`data-app` on `<html>`, set by the native shell before the first paint) and only in the main
-     frame. `data-app` grants nothing: every write still goes through the account's session and the server's rules.
-   - On `window.linkyoApp` (made when missing; the interface half's `navigate` and `back` stay):
+   - In app mode only (`inAppMode()`, the same predicate as the rest of app mode: `data-app="ios"` on `<html>`, set
+     by the native shell before the first paint) and only in the main frame (`inMainFrame()`). `data-app` grants
+     nothing: every write still goes through the account's session and the server's rules.
+   - On `window.linkyoApp` (made when missing, never replaced), through `installOnApp` like the interface half
+     ([0087](0087-app-mode.md)); its `navigate` and `back` stay, whichever half mounts first:
      - `flush(): Promise<{ updatedAt }>`: the editor's last-moment change (its autosave delay) goes to the store, then
        everything is saved; answers the version a native write builds on. Rejects when a change could not be saved.
      - `reload(): Promise<void>`: saves what waits, reads the row again and starts the editor over from it.
@@ -175,9 +177,9 @@ view cannot share one session.
        most 10 s) before they answer: `flush()` answers `{ updatedAt: null }` only for a web view that is signed
        out, and rejects (`storeLoading`) when the check never ends; `signOut()` ends the session even then, so it is
        revoked on the server, not only deleted from the cookie.
-   - To the app (`webkit.messageHandlers.linkyo`, never throwing): `{ type: "saveState", state: "saving" | "saved" |
-     "error" | "conflict", updatedAt }` whenever it changes, and `{ type: "signedOut" }` when the session ends (also
-     after a deletion inside the web view).
+   - To the app through the bridge's `post()` ([0087](0087-app-mode.md): app mode, the main frame, plain data, never
+     throwing): `{ type: "saveState", state: "saving" | "saved" | "error" | "conflict", updatedAt }` whenever it
+     changes, and `{ type: "signedOut" }` when the session ends (also after a deletion inside the web view).
    - A native write is: `await flush()` → the operation with that `updatedAt` → `await reload()`. On 409 the app
      reloads, and either retries once on the new version or says it could not.
 
