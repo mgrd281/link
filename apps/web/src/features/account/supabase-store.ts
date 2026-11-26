@@ -610,7 +610,8 @@ export class SupabaseAccountStore implements AccountStore {
         }
         this.unconfirm(content, write, sentOffline, status);
         this.retry(now);
-        if (mayHaveLanded(sentOffline, status)) await this.recheck(id, base, content, write);
+        // Not awaited: offline, the read is retried for seconds, and no save waits for it.
+        if (mayHaveLanded(sentOffline, status)) void this.recheck(id, base, content, write);
         return;
       }
       if (!data) {
@@ -642,14 +643,15 @@ export class SupabaseAccountStore implements AccountStore {
    * at once, since a read often gets through where the write's answer did not (a connection that drops
    * on the way back). Holding this write's content, the save landed: it counts as confirmed. Holding
    * another version of this tab's own (an earlier write that landed), the tab builds on that. Anything
-   * else, or no answer, changes nothing here: the next save's guard decides.
+   * else, no answer, or a write sent after this one meanwhile changes nothing here: the next save's
+   * guard decides.
    */
   private async recheck(id: string, base: string | null, content: SiteContent, write: number): Promise<void> {
     const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
     const now = this.snapshot;
     if (error || !row || now.status !== "signedIn" || now.account.id !== id) return;
-    // Something moved meanwhile (another save, a refusal read back): that one decides.
-    if (this.base !== base || row.updated_at === base || this.sending.size > 0) return;
+    // Something moved meanwhile (a later write, a refusal read back): that one decides.
+    if (this.sent !== write || this.base !== base || row.updated_at === base || this.sending.size > 0) return;
     const latest = toRow(fromRow(row));
     const key = contentKey(latest);
     if (key === contentKey(content)) {

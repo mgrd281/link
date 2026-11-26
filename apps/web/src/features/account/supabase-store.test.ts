@@ -35,6 +35,8 @@ class FakeDb {
   loseAnswers = false;
   /** Reads fail (the connection is gone): `true` for all, or a function asked before each read. */
   failReads: boolean | (() => boolean) = false;
+  /** Reads never answer (offline, PostgREST's client retries a read for seconds). */
+  hangReads = false;
   /** The session ended (signed out): row-level security lets no write through any more. */
   signedOut = false;
   /** Holds writes: "answer" applies them at once but holds the answer, "apply" holds both until `release()`. */
@@ -117,6 +119,7 @@ class FakeDb {
           return chain;
         },
         maybeSingle: () => {
+          if (!values && this.hangReads) return new Promise(() => undefined);
           if (!values || !this.hold) return Promise.resolve(run());
           if (this.hold === "answer") {
             const answer = run();
@@ -634,6 +637,24 @@ describe("a bad network: one tab never loses a change and never sees the toast",
     // The read-back showed each save landed: nothing waits, nothing is in doubt.
     expect(snapshotOf(store).sync).toBe("saved");
     expect(snapshotOf(store).baseUpdatedAt).toBe(db.row.updated_at);
+  });
+
+  it("the read-back after a lost answer never holds up the next save (a read that takes seconds)", async () => {
+    const db = new FakeDb();
+    const store = await signedIn(db);
+    db.loseAnswers = true;
+    db.hangReads = true;
+    addLink(store, "c");
+    await vi.advanceTimersByTimeAsync(500);
+    db.loseAnswers = false;
+    db.hangReads = false;
+    const before = db.writes.length;
+    addLink(store, "d");
+    await vi.advanceTimersByTimeAsync(450);
+    expect(db.writes.length).toBeGreaterThan(before);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(db.blocks()).toEqual(["a", "b", "c", "d"]);
+    expect(snapshotOf(store).conflicts).toBe(0);
   });
 
   it("a lost answer whose read-back shows the save landed: the keepalive guard is exact again", async () => {
