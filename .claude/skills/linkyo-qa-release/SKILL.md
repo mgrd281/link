@@ -59,7 +59,8 @@ PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test --project desktop
 | unset or `v8` (the default) | `/root/linkyo-v8-baseline` | 50: eleven templates, de and ar, three `/p` pages; 390 and 1440 wide |
 | `s2` | `/root/linkyo-s2-baseline` | 78: all fourteen templates, de and ar; the four portfolio templates also on the portfolio sample; the same three `/p` pages; 390 and 1440 wide |
 | `s3` | `/root/linkyo-s3-baseline` (written at S3.Z) | 102: the s2 set plus Leuchttisch, Grundriss and Logbuch on both samples, de and ar, 390 and 1440 wide; same names as s2, so an s3 run can be compared with the s2 folder |
-| `s3` with `/root/linkyo-s3p-baseline` | written after the polish pass (`8de70f7`); compare Stage 4 against this folder | the s3 list; the two Leuchttisch phone captures differ from the s3 folder on purpose (one picture height in the strip), the other 100 are byte-equal (its README) |
+| `s3` with `/root/linkyo-s3p-baseline` | written after the polish pass (`8de70f7`); Stage 4 step 1 compared against it | the s3 list; the two Leuchttisch phone captures differ from the s3 folder on purpose (one picture height in the strip), the other 100 are byte-equal (its README) |
+| `s3` with `/root/linkyo-s4m-baseline` | written after Stage 4 step 1 and the new sample portrait; compare Stage 4 step 2 and later against this folder | the s3 list; 82 captures differ from s3p only by the sample creator's new pictures (de templates, the ar gear thumbnail, de portfolio pages), the other 20 are byte-equal (its README) |
 
 Run on the demo build (no Supabase variables), from `apps/web`, on your own port. Compare against a
 copy: a difference writes `<name>.actual.png` into the folder.
