@@ -18,6 +18,9 @@ export const accountStore: AccountStore = supabaseEnabled
   ? new DeferredAccountStore()
   : new LocalAccountStore(() => (typeof window === "undefined" ? null : window.localStorage), browserLoginContext);
 
+/** The editor's change from the last moment, handed over before everything must be saved (`./pending-edits.ts`). */
+export { handOverPendingEdits, registerPendingEdits } from "./pending-edits";
+
 /** Current session and site; `loading` during server render and hydration. */
 const subscribe = (listener: () => void) => accountStore.subscribe(listener);
 const getSnapshot = () => accountStore.getSnapshot();

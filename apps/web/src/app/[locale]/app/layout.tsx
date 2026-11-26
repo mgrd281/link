@@ -6,6 +6,7 @@ import { Providers } from "@/components/providers";
 import { AppModeIsland } from "@/features/app-mode/app-mode-island";
 import { AppGate } from "@/features/app/gate";
 import { ServiceWorkerIsland } from "@/features/app/install/service-worker-island";
+import { StoreBridge } from "@/features/app-mode/store-bridge";
 import { GatedRouteCheck } from "@/features/errors/gated-route-check";
 import { ClientMessages } from "@/i18n/client-messages-provider";
 
@@ -26,6 +27,8 @@ export default async function AppLayout({ children, params }: { children: ReactN
         <GatedRouteCheck area="app" />
         {/* The dashboard's offline page (features/pwa); nothing else on the site registers a worker. */}
         <ServiceWorkerIsland />
+        {/* The iPhone app's flush, reload and signOut (app mode only, ADR draft-app-sync). */}
+        <StoreBridge />
         <AppGate>{children}</AppGate>
         {/* Inside Linkyo's iPhone app: navigate/back and the ready and route messages (features/app-mode). */}
         <AppModeIsland />

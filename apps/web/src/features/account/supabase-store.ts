@@ -11,6 +11,7 @@ import type { Database, Tables } from "@/lib/supabase/database.types";
 import { fromJson, toJson } from "@/lib/supabase/json";
 
 import { hasDataUrls, migrateDataUrls, replaceSources } from "./media-migrate";
+import { handOverPendingEdits } from "./pending-edits";
 import { starterSite } from "./site-builders";
 import type {
   Account,
@@ -103,6 +104,67 @@ const localeOf = (site: Site | null) => site?.page.profile.locale ?? "de";
 /** The database refused the page for its size (`sites.site_size`): retrying the same page cannot help. */
 const tooLarge = (error: { code?: string; message?: string }) => error.code === "23514" && (error.message ?? "").includes("site_size");
 
+type SiteContent = ReturnType<typeof toRow>;
+
+/** A JSON value in one fixed spelling: keys sorted (Postgres hands `jsonb` back in its own key order). */
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value !== null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const keys = Object.keys(record)
+      .filter((key) => record[key] !== undefined)
+      .sort();
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`).join(",")}}`;
+  }
+  return value === undefined ? "null" : JSON.stringify(value);
+}
+
+/**
+ * What a version of the page holds, without what the server owns: `sites_guard` writes the badge and
+ * the address into every page, so a version that differs only there was not changed by anyone's edit
+ * (an address change, the team's badge).
+ */
+export function contentKey(content: SiteContent): string {
+  const page = content.page as Record<string, unknown>;
+  const { username: _username, verified: _verified, ...profile } = (page.profile ?? {}) as Record<string, unknown>;
+  return canonical({ ...content, page: { ...page, profile } });
+}
+
+/**
+ * A short fingerprint of a content key: the writes that may have landed are remembered by this, never
+ * as whole pages (there is no limit on how many). Two 32-bit hashes and the length: a foreign page that
+ * matches one of them by chance (and would be overwritten as this tab's own) is not a practical risk.
+ */
+export function fingerprint(key: string): string {
+  let a = 0x811c9dc5;
+  let b = 0x2545f491;
+  for (let i = 0; i < key.length; i += 1) {
+    const code = key.charCodeAt(i);
+    a = Math.imul(a ^ code, 0x01000193);
+    b = Math.imul(b ^ code, 0x5bd1e995);
+    b ^= b >>> 13;
+  }
+  return `${key.length.toString(36)}.${(a >>> 0).toString(36)}.${(b >>> 0).toString(36)}`;
+}
+
+/** The browser says it is offline: a write tried now never left this device. */
+const offline = () => typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine;
+
+/**
+ * A failed write may still have reached the database when no answer came at all (the connection
+ * dropped, a timeout: PostgREST's client reports status 0) or the server failed (5xx). A 4xx answer
+ * from PostgREST means it wrote nothing; neither did a write tried while the browser was offline.
+ */
+const mayHaveLanded = (sentOffline: boolean, status?: number) => !sentOffline && !(status !== undefined && status >= 400 && status < 500);
+
+/**
+ * Refused saves in a row that each turned out to be this tab's own (its write landed, the answer was
+ * lost) are sent again at once this many times; after that the next one waits like a failed save.
+ */
+const MAX_REBASES = 3;
+/** Saving everything before signing out (or `flush`) stops after this many rounds that each left a change waiting. */
+const SETTLE_ROUNDS = 2 * MAX_REBASES + 2;
+
 export class SupabaseAccountStore implements AccountStore {
   readonly demo = false;
   private snapshot: AccountSnapshot = LOADING;
@@ -116,6 +178,36 @@ export class SupabaseAccountStore implements AccountStore {
   private token: string | null = null;
   /** Pictures moved from data URLs to Storage in this session (data URL → address): never uploaded twice. */
   private readonly uploaded = new Map<string, string>();
+  /**
+   * The save guard (ADR draft-app-sync): the row's `updated_at` as it was read or last saved here. A
+   * save writes only while the row still has it, so a stale copy never overwrites a newer page.
+   */
+  private base: string | null = null;
+  /**
+   * What the page held at `base`: a refused save that finds it, a write still on its way or one whose
+   * answer never came, was this tab's own.
+   */
+  private baseContent: SiteContent | null = null;
+  private readonly sending = new Set<SiteContent>();
+  /**
+   * Every write since the last confirmed version that may have reached the database without this tab
+   * hearing back (fingerprint → its number, see `sent`). A refused save that finds one of them in the
+   * row was this tab's own. Only a confirmed version (for the writes sent up to it), a rebase on this
+   * tab's own version and a replaced page clear it.
+   */
+  private readonly landed = new Map<string, number>();
+  private rebases = 0;
+  /**
+   * Writes are numbered as they are sent. Two of them can both land (a save on its way, then the
+   * keepalive save after it), and their answers may come back in either order: the answer of one
+   * sent before the newest confirmed one never moves the base back.
+   */
+  private sent = 0;
+  private confirmedWrite = 0;
+  /** The last save failed (network, server): `flush()` says so instead of answering an old version. */
+  private failed = false;
+  private revision = 0;
+  private conflicts = 0;
 
   constructor(
     private readonly client: () => Client,
@@ -193,7 +285,10 @@ export class SupabaseAccountStore implements AccountStore {
     }
     if (!row || this.loadedFor !== id) return;
     const account: Account = { id, email: session.user.email ?? "", username: profile.username, createdAt: profile.created_at };
-    this.set({ status: "signedIn", account, site: fromRow(row), sync: "saved" });
+    const site = fromRow(row);
+    this.base = row.updated_at;
+    this.baseContent = toRow(site);
+    this.set({ status: "signedIn", account, site, sync: "saved", baseUpdatedAt: row.updated_at, revision: this.revision, conflicts: this.conflicts });
   }
 
   /** Takes over the session our server opened (after a correct code). */
@@ -250,7 +345,12 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   logOut(): void {
-    void this.flush().finally(() => void this.client().auth.signOut({ scope: "local" }));
+    // The editor's change from the last moment (its autosave delay) first, then everything waiting is
+    // saved, a refused save of this tab's own included; one that cannot be saved goes with the session.
+    handOverPendingEdits();
+    void this.settleSaves()
+      .catch(() => undefined)
+      .finally(() => void this.client().auth.signOut({ scope: "local" }));
   }
 
   async changeEmail(input: string): Promise<Result> {
@@ -278,8 +378,29 @@ export class SupabaseAccountStore implements AccountStore {
         account: { ...account, username },
         site: { ...site, page: { ...site.page, profile: { ...site.page.profile, username } } },
       });
+      // The address went into the page row too, as a new version of the same content.
+      void this.adoptServerVersion(account.id);
     }
     return { ok: true };
+  }
+
+  /**
+   * The server wrote the row without a change of this tab's (the address): when it still holds the
+   * content this tab built on, its new version becomes the base. Otherwise the next save would be
+   * refused, and a tab that closes right after a change (the keepalive save, with nothing left to
+   * send it again) would lose it.
+   */
+  private async adoptServerVersion(id: string): Promise<void> {
+    if (this.saving) await this.saving;
+    const { data: row } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
+    const now = this.snapshot;
+    // A save that started meanwhile finds the new version itself (refused as this tab's own).
+    if (!row || this.saving || now.status !== "signedIn" || now.account.id !== id || row.updated_at === this.base) return;
+    const latest = toRow(fromRow(row));
+    if (this.baseContent === null || contentKey(latest) !== contentKey(this.baseContent)) return;
+    this.base = row.updated_at;
+    this.baseContent = latest;
+    this.set({ ...now, baseUpdatedAt: row.updated_at });
   }
 
   updateSite(update: (site: Site) => Site): Result {
@@ -309,14 +430,28 @@ export class SupabaseAccountStore implements AccountStore {
 
   /**
    * The page is going away: send what is pending as a `keepalive` request, which the browser
-   * completes even after the tab is gone (a normal request would be cancelled with the page).
+   * completes even after the tab is gone (a normal request would be cancelled with the page). It
+   * carries the save guard like every save; when the tab comes back, its answer is the new version.
+   *
+   * A closed tab runs no more code, so a refused keepalive is never sent again. Its guard therefore
+   * depends on what may have reached the database without this tab knowing its version yet:
+   * - nothing: `updated_at = base`, the exact guard of every save;
+   * - a save still on its way, or one since the last confirmed version that may have landed (`landed`:
+   *   no answer at all or a server error, while the browser was online): `updated_at >= base`. That
+   *   save carries the exact guard and lands first in the normal order, so an exact keepalive would
+   *   always be refused and the last change lost. The other order is safe too: the save, landing
+   *   second, no longer finds `base` and changes nothing. The price (ADR draft-app-sync): in that
+   *   moment a write from elsewhere after `base` is overwritten instead of refused.
    */
   private saveOnExit() {
+    // The editor's change from the last moment: its own listener may run after this one (`pagehide`).
+    handOverPendingEdits();
     const snapshot = this.snapshot;
     if (!this.dirty || snapshot.status !== "signedIn" || !this.token) return;
-    const body = JSON.stringify(toRow(snapshot.site));
+    const content = toRow(snapshot.site);
+    const body = JSON.stringify(content);
     if (body.length > KEEPALIVE_LIMIT) {
-      void this.flush();
+      void this.drainSaves();
       return;
     }
     if (this.saveTimer !== null) {
@@ -324,23 +459,70 @@ export class SupabaseAccountStore implements AccountStore {
       this.saveTimer = null;
     }
     this.dirty = false;
-    void fetch(`${SUPABASE_URL}/rest/v1/sites?profile_id=eq.${snapshot.account.id}`, {
+    const id = snapshot.account.id;
+    const base = this.base;
+    const landing = this.sending.size > 0 || this.landed.size > 0;
+    const guard = base === null ? "" : `&updated_at=${landing ? "gte" : "eq"}.${encodeURIComponent(base)}`;
+    const write = (this.sent += 1);
+    const sentOffline = offline();
+    this.sending.add(content);
+    const request = fetch(`${SUPABASE_URL}/rest/v1/sites?profile_id=eq.${id}${guard}&select=updated_at`, {
       method: "PATCH",
       keepalive: true,
       headers: {
         apikey: SUPABASE_PUBLISHABLE_KEY,
         Authorization: `Bearer ${this.token}`,
         "Content-Type": "application/json",
-        Prefer: "return=minimal",
+        Prefer: "return=representation",
       },
       body,
-    }).catch(() => {
-      this.dirty = true;
-    });
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          // Turned down (an expired session, the size limit: nothing written) or a server error (maybe
+          // written): the tab, if it is still there, saves again like after any failed save.
+          this.sending.delete(content);
+          this.exitFailed(id, content, write, sentOffline, response.status);
+          return;
+        }
+        const [row] = (await response.json()) as { updated_at?: string }[];
+        this.sending.delete(content);
+        if (row?.updated_at) this.saved(id, row.updated_at, content, write);
+        else await this.refused(id, base);
+      })
+      .catch(() => {
+        this.sending.delete(content);
+        this.exitFailed(id, content, write, sentOffline);
+      });
+    void this.track(request);
   }
 
-  /** Saves now if something is pending (before signing out, deleting, or when the tab hides). */
-  private async flush(): Promise<void> {
+  /** The keepalive save failed and the tab is still there (a phone back from another app): saved again later. */
+  private exitFailed(id: string, content: SiteContent, write: number, sentOffline: boolean, status?: number) {
+    this.unconfirm(content, write, sentOffline, status);
+    this.dirty = true;
+    const now = this.snapshot;
+    if (now.status !== "signedIn" || now.account.id !== id) return;
+    this.failed = true;
+    if (this.saveTimer === null) this.retry(now);
+  }
+
+  /** Every save goes into `saving`; the next one waits until all that are on their way have landed. */
+  private track(work: Promise<unknown>): Promise<void> {
+    const previous = this.saving;
+    const all: Promise<void> = (previous ? Promise.allSettled([previous, work]) : work).then(
+      () => undefined,
+      () => undefined,
+    );
+    this.saving = all;
+    void all.then(() => {
+      if (this.saving === all) this.saving = null;
+    });
+    return all;
+  }
+
+  /** Saves now if something is pending (one pass: `settleSaves` also sends again what a refusal left waiting). */
+  private async drainSaves(): Promise<void> {
     if (this.saveTimer !== null) {
       window.clearTimeout(this.saveTimer);
       this.saveTimer = null;
@@ -348,6 +530,46 @@ export class SupabaseAccountStore implements AccountStore {
     if (this.saving) await this.saving;
     if (this.dirty) await this.save();
   }
+
+  /**
+   * Saves until nothing waits (before signing out, an export, a deletion and `flush`): a refused save
+   * that was this tab's own is sent again here at once (also past `MAX_REBASES`), and so is a change
+   * made while a save was on its way. Stops at a save that failed (offline, too large).
+   */
+  private async settleSaves(): Promise<void> {
+    for (let round = 0; round < SETTLE_ROUNDS; round += 1) {
+      await this.drainSaves();
+      if (!this.dirty || this.failed) return;
+    }
+  }
+
+  /**
+   * For the iPhone app before it changes the page itself (`window.linkyoApp.flush`): everything
+   * waiting is saved, then the version on the server is answered.
+   */
+  flush = async (): Promise<{ updatedAt: string | null }> => {
+    await this.settleSaves();
+    if (this.snapshot.status !== "signedIn") return { updatedAt: null };
+    if (this.dirty) throw new Error(this.snapshot.syncError ?? "saveFailed");
+    return { updatedAt: this.base };
+  };
+
+  /**
+   * After the iPhone app changed the page (`window.linkyoApp.reload`): saves what is waiting, reads the
+   * row again and starts the editor over from it. When nothing changed, nothing happens.
+   */
+  reload = async (): Promise<void> => {
+    await this.flush();
+    const snapshot = this.snapshot;
+    if (snapshot.status !== "signedIn") return;
+    const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", snapshot.account.id).maybeSingle();
+    if (error || !row) throw new Error("reloadFailed");
+    const now = this.snapshot;
+    if (now.status !== "signedIn" || now.account.id !== snapshot.account.id || row.updated_at === this.base) return;
+    // A change made while the row was read is saved against the guard, which meets the newer version itself.
+    if (this.dirty || this.saving) return;
+    this.replace(row, false);
+  };
 
   private async save(): Promise<void> {
     if (this.saving) {
@@ -359,47 +581,227 @@ export class SupabaseAccountStore implements AccountStore {
     const snapshot = this.snapshot;
     if (snapshot.status !== "signedIn" || !this.dirty) return;
     this.dirty = false;
+    const id = snapshot.account.id;
+    const base = this.base;
     const run = async () => {
       // Pictures still inside the page (imported from the demo, the "Try it" photo) go to Storage first;
       // one that fails to upload stays as it is and is tried again on the next save.
       const site = hasDataUrls(snapshot.site.page)
         ? { ...snapshot.site, page: await migrateDataUrls(snapshot.site.page, (dataUrl) => uploadDataUrl(dataUrl), { uploaded: this.uploaded }) }
         : snapshot.site;
-      const { data, error } = await this.client()
-        .from("sites")
-        .update(toRow(site))
-        .eq("profile_id", snapshot.account.id)
-        .select("page, updated_at")
-        .single();
+      const content = toRow(site);
+      // The guard: the row changes only while it is still the version this tab read or last saved.
+      const update = this.client().from("sites").update(content).eq("profile_id", id);
+      const write = (this.sent += 1);
+      const sentOffline = offline();
+      this.sending.add(content);
+      const { data, error, status } = await (base === null ? update : update.eq("updated_at", base)).select("page, updated_at").maybeSingle();
+      this.sending.delete(content);
       const now = this.snapshot;
-      if (now.status !== "signedIn" || now.account.id !== snapshot.account.id) return;
+      if (now.status !== "signedIn" || now.account.id !== id) return;
       if (error) {
         this.dirty = true;
+        this.failed = true;
         if (tooLarge(error)) {
           // No retry loop: the page stays too large until it changes (the next change saves again).
           this.retries = 0;
           this.set({ ...now, sync: "error", syncError: "tooLarge" });
           return;
         }
-        const delay = RETRY_DELAYS[Math.min(this.retries, RETRY_DELAYS.length - 1)] ?? 30_000;
-        this.retries += 1;
-        this.set({ ...now, sync: "error" });
-        this.schedule(delay);
+        this.unconfirm(content, write, sentOffline, status);
+        this.retry(now);
+        // Not awaited: offline, the read is retried for seconds, and no save waits for it.
+        if (mayHaveLanded(sentOffline, status)) void this.recheck(id, base, content, write);
         return;
       }
-      this.retries = 0;
-      // The server owns the badge and the address on the page (sites_guard); keep its word. Pictures
-      // that went to Storage keep their new address here too.
-      const saved = fromJson<Page>(data.page).profile;
-      const page = this.uploaded.size > 0 ? replaceSources(now.site.page, this.uploaded) : now.site.page;
-      const profile = { ...page.profile, verified: saved.verified, username: saved.username };
-      const { syncError: _resolved, ...rest } = now;
-      this.set({ ...rest, site: { ...now.site, page: { ...page, profile } }, sync: this.dirty ? "saving" : "saved" });
+      if (!data) {
+        await this.refused(id, base);
+        return;
+      }
+      this.confirm(data.updated_at, content, write);
+      this.showSaved(now, data.page, data.updated_at);
     };
-    this.saving = run().finally(() => {
-      this.saving = null;
+    const running = run();
+    void this.track(running);
+    await running;
+  }
+
+  /**
+   * After a confirmed save: the server owns the badge and the address on the page (sites_guard); keep
+   * its word. Pictures that went to Storage keep their new address here too.
+   */
+  private showSaved(now: Extract<AccountSnapshot, { status: "signedIn" }>, savedPage: SiteRow["page"], updatedAt: string) {
+    const saved = fromJson<Page>(savedPage).profile;
+    const page = this.uploaded.size > 0 ? replaceSources(now.site.page, this.uploaded) : now.site.page;
+    const profile = { ...page.profile, verified: saved.verified, username: saved.username };
+    const { syncError: _resolved, ...rest } = now;
+    this.set({ ...rest, site: { ...now.site, page: { ...page, profile } }, sync: this.dirty ? "saving" : "saved", baseUpdatedAt: this.base ?? updatedAt });
+  }
+
+  /**
+   * A save failed in a way that may have written it (no answer, a server error): the row is read back
+   * at once, since a read often gets through where the write's answer did not (a connection that drops
+   * on the way back). Holding this write's content, the save landed: it counts as confirmed. Holding
+   * another version of this tab's own (an earlier write that landed), the tab builds on that. Anything
+   * else, no answer, or a write sent after this one meanwhile changes nothing here: the next save's
+   * guard decides.
+   */
+  private async recheck(id: string, base: string | null, content: SiteContent, write: number): Promise<void> {
+    const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
+    const now = this.snapshot;
+    if (error || !row || now.status !== "signedIn" || now.account.id !== id) return;
+    // Something moved meanwhile (a later write, a refusal read back): that one decides.
+    if (this.sent !== write || this.base !== base || row.updated_at === base || this.sending.size > 0) return;
+    const latest = toRow(fromRow(row));
+    const key = contentKey(latest);
+    if (key === contentKey(content)) {
+      this.confirm(row.updated_at, latest, write);
+      this.dirty = contentKey(toRow(now.site)) !== key;
+      this.showSaved(now, row.page, row.updated_at);
+      // The failed save's retry is not needed; a change made meanwhile goes out at once.
+      if (this.dirty) this.schedule(0);
+      else if (this.saveTimer !== null) {
+        window.clearTimeout(this.saveTimer);
+        this.saveTimer = null;
+      }
+      return;
+    }
+    if (!this.isOwn(key)) return;
+    // Whether anything waits is what the page here holds beyond that version (the failed save set it).
+    this.dirty = false;
+    this.rebaseOwn(now, row, latest, key);
+  }
+
+  /** A failed save is tried again, each time a little later (the next change tries at once). */
+  private retry(now: Extract<AccountSnapshot, { status: "signedIn" }>) {
+    const delay = RETRY_DELAYS[Math.min(this.retries, RETRY_DELAYS.length - 1)] ?? 30_000;
+    this.retries += 1;
+    this.set({ ...now, sync: "error" });
+    this.schedule(delay);
+  }
+
+  /** The server took a write: its version is the one the next save builds on (unless a later write's answer came first). */
+  private confirm(updatedAt: string, content: SiteContent, write: number) {
+    if (write < this.confirmedWrite) return;
+    this.confirmedWrite = write;
+    this.base = updatedAt;
+    this.baseContent = content;
+    // A write sent before this one can no longer land (its guard names an older version); one sent
+    // after it (the keepalive save) still can.
+    for (const [key, sent] of this.landed) if (sent <= write) this.landed.delete(key);
+    this.retries = 0;
+    this.rebases = 0;
+    this.failed = false;
+  }
+
+  /** The keepalive save's answer came while the tab was still there. */
+  private saved(id: string, updatedAt: string, content: SiteContent, write: number) {
+    const now = this.snapshot;
+    if (now.status !== "signedIn" || now.account.id !== id) return;
+    this.confirm(updatedAt, content, write);
+    this.set({ ...now, baseUpdatedAt: this.base ?? updatedAt, sync: this.dirty ? "saving" : "saved" });
+  }
+
+  /**
+   * A write that failed: when it may have landed (no answer, a server error), the server may hold it, so
+   * a later refusal recognises it as this tab's own. Every such write is kept until a version is confirmed.
+   */
+  private unconfirm(content: SiteContent, write: number, sentOffline: boolean, status?: number) {
+    if (!mayHaveLanded(sentOffline, status)) return;
+    const key = fingerprint(contentKey(content));
+    this.landed.set(key, Math.max(write, this.landed.get(key) ?? 0));
+  }
+
+  /** What this tab read, saved, is sending or may have written (apart from what the server owns). */
+  private isOwn(key: string): boolean {
+    if (this.baseContent !== null && contentKey(this.baseContent) === key) return true;
+    for (const content of this.sending) if (contentKey(content) === key) return true;
+    return this.landed.has(fingerprint(key));
+  }
+
+  /**
+   * A save the guard turned down: the row is no longer the version this tab built on. It is read
+   * again to decide (ADR draft-app-sync):
+   * - still the same version: the database refused the write (a suspended account), retried like a failed save;
+   * - what this tab read, sent or may have written itself, apart from what the server owns (the badge,
+   *   the address): it builds on the newer version and sends what is waiting again, at once the first
+   *   `MAX_REBASES` times in a row, after that like a failed save (later, each time a little later);
+   * - anything else was changed elsewhere (another tab, the iPhone app): the newer version wins, this
+   *   tab's unsaved change is dropped, and the editor starts over from it and says so.
+   */
+  private async refused(id: string, base: string | null): Promise<void> {
+    const { data: row, error } = await this.client().from("sites").select("*").eq("profile_id", id).maybeSingle();
+    const now = this.snapshot;
+    if (now.status !== "signedIn" || now.account.id !== id) return;
+    if (error || !row || row.updated_at === base) {
+      this.dirty = true;
+      this.failed = true;
+      this.retry(now);
+      return;
+    }
+    const latest = toRow(fromRow(row));
+    const key = contentKey(latest);
+    if (!this.isOwn(key)) {
+      this.replace(row, true);
+      return;
+    }
+    this.rebaseOwn(now, row, latest, key);
+  }
+
+  /**
+   * The row holds a version of this tab's own: the page here stays, and the next save builds on that
+   * version. The server has just answered, so the save is not failing.
+   */
+  private rebaseOwn(now: Extract<AccountSnapshot, { status: "signedIn" }>, row: SiteRow, latest: SiteContent, key: string) {
+    this.base = row.updated_at;
+    this.baseContent = latest;
+    this.landed.clear();
+    this.dirty = this.dirty || contentKey(toRow(now.site)) !== key;
+    this.failed = false;
+    if (this.rebases < MAX_REBASES) {
+      this.rebases += 1;
+      this.retries = 0;
+      this.set({ ...now, baseUpdatedAt: row.updated_at, sync: this.dirty ? "saving" : "saved" });
+      if (this.dirty) this.schedule(0);
+      return;
+    }
+    // Rebased this often without a confirmed save (its answers keep getting lost): no tight loop, the
+    // change waits like after a failed save. Nothing is dropped.
+    const rebased = { ...now, baseUpdatedAt: row.updated_at };
+    if (this.dirty) this.retry(rebased);
+    else this.set({ ...rebased, sync: "saved" });
+  }
+
+  /** The page from the server replaces the one here, and the editor starts over from it (`revision`). */
+  private replace(row: SiteRow, conflict: boolean) {
+    const now = this.snapshot;
+    if (now.status !== "signedIn") return;
+    if (this.saveTimer !== null) {
+      window.clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+    const site = fromRow(row);
+    this.dirty = false;
+    this.failed = false;
+    this.retries = 0;
+    this.rebases = 0;
+    this.base = row.updated_at;
+    this.baseContent = toRow(site);
+    this.landed.clear();
+    this.revision += 1;
+    if (conflict) this.conflicts += 1;
+    const { syncError: _gone, ...rest } = now;
+    // The address on the page is the account's (sites_guard): another tab may have changed it.
+    const username = site.page.profile.username || now.account.username;
+    this.set({
+      ...rest,
+      account: { ...now.account, username },
+      site,
+      sync: "saved",
+      baseUpdatedAt: row.updated_at,
+      revision: this.revision,
+      conflicts: this.conflicts,
     });
-    await this.saving;
   }
 
   async signIns(): Promise<LoginEvent[]> {
@@ -412,7 +814,7 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   async exportData(): Promise<string> {
-    await this.flush();
+    await this.settleSaves();
     if (this.snapshot.status !== "signedIn") return "{}";
     const { account, site } = this.snapshot;
     const supabase = this.client();
@@ -444,7 +846,7 @@ export class SupabaseAccountStore implements AccountStore {
   }
 
   async deleteAccount(): Promise<Result> {
-    await this.flush();
+    await this.settleSaves();
     const supabase = this.client();
     const token = (await supabase.auth.getSession()).data.session?.access_token ?? this.token;
     if (!token) return { ok: false, error: "serverError" };

@@ -3290,6 +3290,12 @@
         "install": "Install",
         "dismiss": "Hide this tip"
       }
+    },
+    "sync": {
+      "conflict": {
+        "title": "Your page was changed somewhere else",
+        "body": "We loaded the newest version. Your last change here was not saved."
+      }
     }
   },
   "preview": {

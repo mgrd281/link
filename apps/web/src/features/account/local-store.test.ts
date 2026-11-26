@@ -2,6 +2,7 @@ import { NO_IMAGE } from "@linkyo/blocks";
 import { describe, expect, it } from "vitest";
 
 import { LocalAccountStore, sixDigits, STORAGE_KEY, type StorageLike } from "./local-store";
+import { registerPendingEdits } from "./pending-edits";
 import type { CodeRequest } from "./types";
 
 function memory(): StorageLike & { data: Map<string, string>; full: boolean } {
@@ -101,6 +102,18 @@ describe("LocalAccountStore", () => {
     expect(await other("not-an-email", "mila3")).toEqual({ ok: false, error: "invalidEmail" });
   });
 
+  it("logOut() keeps the editor's change from the last moment (its autosave delay)", async () => {
+    const store = fresh();
+    await withCode(store, signUp);
+    const unregister = registerPendingEdits(() => store.updateSite((site) => ({ ...site, page: { ...site.page, profile: { ...site.page.profile, bio: "Just typed" } } })));
+    store.logOut();
+    unregister();
+    expect(store.getSnapshot().status).toBe("signedOut");
+    await withCode(store, logIn);
+    const snapshot = store.getSnapshot();
+    expect(snapshot.status === "signedIn" && snapshot.site.page.profile.bio).toBe("Just typed");
+  });
+
   it("signs in with a code, with the same answer for unknown emails", async () => {
     const store = fresh();
     await withCode(store, signUp);
@@ -162,6 +175,33 @@ describe("LocalAccountStore", () => {
     expect((JSON.parse(await store.exportData()) as { signIns: unknown[] }).signIns).toHaveLength(3);
     await store.deleteAccount();
     expect((JSON.parse(storage.data.get(STORAGE_KEY) ?? "{}") as { logins: unknown }).logins).toEqual({});
+  });
+});
+
+describe("LocalAccountStore: flush and reload, as real accounts have them", () => {
+  it("flush answers the stored version: the demo saves every change at once", async () => {
+    const store = fresh();
+    expect(await store.flush()).toEqual({ updatedAt: null });
+    await withCode(store, signUp);
+    store.updateSite((site) => ({ ...site, page: { ...site.page, profile: { ...site.page.profile, bio: "Neu" } } }));
+    const snapshot = store.getSnapshot();
+    expect(await store.flush()).toEqual({ updatedAt: snapshot.status === "signedIn" ? snapshot.site.updatedAt : "" });
+  });
+
+  it("reload reads this browser's storage again and counts a new revision, so the editor starts over", async () => {
+    const storage = memory();
+    const store = new LocalAccountStore(() => storage);
+    await withCode(store, signUp);
+    const before = store.getSnapshot();
+    expect(before.status === "signedIn" && before.revision).toBeFalsy();
+    let told = 0;
+    store.subscribe(() => (told += 1));
+    await store.reload();
+    const after = store.getSnapshot();
+    expect(told).toBe(1);
+    expect(after).not.toBe(before);
+    expect(after.status === "signedIn" && after.revision).toBe(1);
+    expect(after.status === "signedIn" && before.status === "signedIn" && after.site).toEqual(before.status === "signedIn" && before.site);
   });
 });
 

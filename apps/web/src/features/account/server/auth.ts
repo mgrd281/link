@@ -59,6 +59,12 @@ export async function isBlocked(service: Db, place: RequestPlace): Promise<boole
   return data === true;
 }
 
+/**
+ * A device id as browsers keep it (`dev_` and 12 hex digits, features/account/login-context.ts) and
+ * as the iPhone app sends it: the only form the hand-off and its confirm link accept.
+ */
+export const DEVICE_ID = /^dev_[0-9a-f]{12}$/;
+
 /** Only in-app destinations after a link from an email (no open redirects). */
 export function safePath(value: string | null, fallback: string): string {
   if (!value) return fallback;
