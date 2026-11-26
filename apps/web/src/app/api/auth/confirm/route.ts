@@ -29,7 +29,12 @@ const deviceOf = (value: string | null): string => (value !== null && DEVICE_ID.
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const locale = /^\/(de|en|ar)\//.exec(url.searchParams.get("next") ?? "")?.[1] ?? "de";
-  const back = (path: string) => NextResponse.redirect(new URL(path, url.origin));
+  // Never kept by a browser or a cache in between: each answer is for one token and sets a session.
+  const back = (path: string) => {
+    const response = NextResponse.redirect(new URL(path, url.origin));
+    response.headers.set("Cache-Control", "no-store");
+    return response;
+  };
   if (!supabaseEnabled) return back(`/${locale}/login`);
 
   const tokenHash = url.searchParams.get("token_hash");

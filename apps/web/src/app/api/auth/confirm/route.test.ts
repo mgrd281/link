@@ -10,6 +10,10 @@ import type * as Auth from "@/features/account/server/auth";
  */
 
 interface State {
+  /** Real accounts in this build (`supabaseEnabled`); a demo build has none. */
+  enabled: boolean;
+  /** verifyOtp fails (a used or expired link). */
+  expired: boolean;
   logged: { deviceId: string; result: string }[];
   /** The account's `profiles.status`; `null`: no profile row. */
   status: string | null;
@@ -18,14 +22,23 @@ interface State {
   firstSites: number;
 }
 
-const state = vi.hoisted((): State => ({ logged: [], status: "active", revoked: [], cookiesCleared: 0, firstSites: 0 }));
+const state = vi.hoisted((): State => ({ enabled: true, expired: false, logged: [], status: "active", revoked: [], cookiesCleared: 0, firstSites: 0 }));
 
-vi.mock("@/lib/supabase/config", () => ({ supabaseEnabled: true }));
+vi.mock("@/lib/supabase/config", () => ({
+  get supabaseEnabled() {
+    return state.enabled;
+  },
+}));
 vi.mock("@/lib/supabase/server", () => ({
   cookieServerSupabase: () =>
     Promise.resolve({
       auth: {
-        verifyOtp: () => Promise.resolve({ data: { user: { id: "u1", email: "mira@example.com" }, session: { access_token: "a.e30.b" } }, error: null }),
+        verifyOtp: () =>
+          Promise.resolve(
+            state.expired
+              ? { data: { user: null, session: null }, error: { message: "expired" } }
+              : { data: { user: { id: "u1", email: "mira@example.com" }, session: { access_token: "a.e30.b" } }, error: null },
+          ),
         exchangeCodeForSession: () => Promise.resolve({ data: { user: null }, error: { message: "no code" } }),
         signOut: () => {
           state.cookiesCleared += 1;
@@ -67,6 +80,8 @@ const { GET } = await import("./route");
 const open = (params: Record<string, string>) => GET(new Request(`http://localhost/api/auth/confirm?${new URLSearchParams(params).toString()}`) as never);
 
 beforeEach(() => {
+  state.enabled = true;
+  state.expired = false;
   state.logged = [];
   state.status = "active";
   state.revoked = [];
@@ -107,5 +122,26 @@ describe("GET /api/auth/confirm: a suspended account", () => {
     expect(state.revoked).toEqual([]);
     expect(state.cookiesCleared).toBe(0);
     expect(state.firstSites).toBe(1);
+  });
+});
+
+describe("GET /api/auth/confirm: never cached", () => {
+  // Each answer is for one single-use token and sets (or ends) a session: no browser or cache in
+  // between may keep it, also not a redirect to the login page.
+  const cases: [string, () => void, Record<string, string>, string][] = [
+    ["signed in", () => undefined, { token_hash: "h", type: "magiclink", next: "/de/app", device: "dev_0123456789ab" }, "/de/app"],
+    ["an expired link", () => (state.expired = true), { token_hash: "h", type: "magiclink", next: "/en/app" }, "/en/login?link=expired"],
+    ["no token and no code", () => undefined, { next: "/de/app" }, "/de/login?link=expired"],
+    ["a suspended account", () => (state.status = "suspended"), { token_hash: "h", type: "magiclink", next: "/ar/app" }, "/ar/login?link=suspended"],
+    ["a demo build", () => (state.enabled = false), { token_hash: "h", type: "magiclink", next: "/de/app" }, "/de/login"],
+  ];
+
+  it.each(cases)("%s: Cache-Control: no-store on the redirect", async (_label, arrange, params, where) => {
+    arrange();
+    const response = await open(params);
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location") ?? "");
+    expect(`${location.pathname}${location.search}`).toBe(where);
+    expect(response.headers.get("cache-control")).toBe("no-store");
   });
 });

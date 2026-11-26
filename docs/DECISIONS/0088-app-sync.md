@@ -30,7 +30,8 @@ view cannot share one session.
      do: it ends the session the token just opened (on the server and in the browser's cookies), logs a failed
      sign-in and redirects to `/<locale>/login?link=suspended`, which shows the code sign-in's own words
      (`auth.errors.suspended`). Before, an e-mailed link or a hand-off link made before the suspension still signed
-     the account in.
+     the account in. Every answer of the confirm route, each a redirect, carries `Cache-Control: no-store`: it is
+     for one single-use token and sets or ends a session, so no browser or cache in between may keep it.
    - 401 without a valid token; 409 in a demo build or without the server key; 502 when Supabase cannot make the
      link. Never a 500. Neither the token, the link nor the address is logged.
    - The link is single-use and lives as long as Supabase's OTP (10 minutes locally). Making it replaces an e-mailed
