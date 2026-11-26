@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { useId, type CSSProperties, type ReactNode } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
+import type { DocumentsView } from "@/features/documents/offer";
 
 import { CreatorFooter, MediaImage, mediaSizes, type CreatorFooterLinks } from "../shared/creator-kit";
 import { PrivacyNotice } from "../shared/privacy-notice";
@@ -105,6 +106,7 @@ export function PosterRenderer({
   projectSuffix = "",
   openProject,
   onOpenProject,
+  documents = null,
 }: {
   page: Page;
   theme: ResolvedCreatorTheme;
@@ -123,6 +125,8 @@ export function PosterRenderer({
   openProject?: { id: string; onBack: () => void } | undefined;
   /** Previews without a router: a tap on a card that has a project page. */
   onOpenProject?: ((id: string) => void) | undefined;
+  /** Signposted templates (Laufbahn): the CV and cover letter the page offers as PDFs (features/documents/view.ts). */
+  documents?: DocumentsView | null | undefined;
 }) {
   const { profile } = page;
   const now = new Date();
@@ -390,6 +394,7 @@ export function PosterRenderer({
               sections.map((section) => [section.id, { blockIds: preview && section.title !== null ? section.id : undefined, ai: isAiBlock(blocks.find((block) => block.id === section.id)) }]),
             )}
             letter={letter}
+            documents={documents}
             heroProps={heroProps}
             hero={hero}
             banner={banner}

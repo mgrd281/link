@@ -5597,5 +5597,11 @@
     "settings": {
       "legal": "الشؤون القانونية"
     }
+  },
+  "documents": {
+    "paper": {
+      "subjectFor": "التقديم على {value}",
+      "subjectBare": "طلب توظيف"
+    }
   }
 }

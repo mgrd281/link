@@ -4,6 +4,8 @@ import { PAIRING_IDS, type ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn } from "@linkyo/ui";
 import type { ReactNode } from "react";
 
+import type { DocumentsView } from "@/features/documents/offer";
+
 import { PosterBar } from "./hero";
 import { SignpostIndex, SignpostSection, signposts as signpostsOf } from "./laufbahn";
 import { BleedHero, type Lead } from "./laufbahn-hero";
@@ -66,6 +68,8 @@ export default function SignpostedBody({
   marks: Record<string, { blockIds: string | undefined; ai: boolean }>;
   /** The page's cover letter: its section and its text block (the renderer finds it). */
   letter: { section: string; block: string } | undefined;
+  /** The CV and the cover letter as PDFs, or null when the page offers none (the Laufbahn redesign draws them). */
+  documents: DocumentsView | null;
   heroProps: SignpostedHeroProps;
   /** Any other hero than the bleed hero, drawn by the renderer. */
   hero: ReactNode;

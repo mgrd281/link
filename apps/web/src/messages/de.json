@@ -5597,5 +5597,11 @@
     "settings": {
       "legal": "Rechtliches"
     }
+  },
+  "documents": {
+    "paper": {
+      "subjectFor": "Bewerbung als {value}",
+      "subjectBare": "Bewerbung"
+    }
   }
 }

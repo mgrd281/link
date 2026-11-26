@@ -5597,5 +5597,11 @@
     "settings": {
       "legal": "Legal"
     }
+  },
+  "documents": {
+    "paper": {
+      "subjectFor": "Application for {value}",
+      "subjectBare": "Application"
+    }
   }
 }
