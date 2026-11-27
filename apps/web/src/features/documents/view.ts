@@ -1,36 +1,42 @@
-import type { Page } from "@linkyo/blocks";
-import { getTranslations } from "next-intl/server";
+import "server-only";
 
-import { documentEligibility, documentFilename, documentLinks, letterSubject, type DocumentCard, type DocumentKind, type DocumentLocale, type DocumentsView } from "./offer";
+import type { Page } from "@linkyo/blocks";
+
+import { documentShape, onlineLine } from "./build";
+import { paperLabels } from "./labels";
+import { documentFilename, documentLinks, letterSubject, type DocumentCard, type DocumentKind, type DocumentsView } from "./offer";
+import { photoCandidate } from "./photo";
 
 /**
- * What a Laufbahn page shows of its documents, computed on the server for each render: the cards
- * (address, file name, page count, the first page's miniature), the owner's own CV, the date of the
- * last save and the letter's subject. Null when nothing is offered (an Arabic page, another template,
- * a page without a career or a letter).
- *
- * The contract's first step (C1): real addresses, file names and subject; one page each and no
- * miniature until the PDF layout lands (then the real page counts and the first page's marks).
+ * What a page shows of its PDFs (the hero's download, the bar's pills, the Unterlagen cards, the
+ * letter's subject): the addresses and file names, each document's real page count and its first
+ * page in miniature, from the same layout as the PDF. Server only; the page renders the result
+ * (offer.ts types). Null when nothing is offered (Arabic pages, other templates, nothing printable).
+ * The miniature holds numbers and tones only: no text and no contact data reach the page's HTML.
  */
 export async function documentsView(
   page: Page,
   options: { base: string; signposted: boolean; now: Date; asOf: string | null; publicAddress: string | null },
 ): Promise<DocumentsView | null> {
   const links = documentLinks(page, options.base, options);
-  if (!links) return null;
-  const locale: DocumentLocale = page.profile.locale === "en" ? "en" : "de";
-  const t = await getTranslations({ locale, namespace: "documents.paper" });
-  const offer = documentEligibility(page, options);
-  const card = (kind: DocumentKind, href: string | null, pages: number): DocumentCard | null =>
-    href ? { kind, href, filename: documentFilename(kind, page.profile.displayName, locale).ascii, pages, miniature: null } : null;
-  const cv = card("cv", links.cv, 1);
-  const letter = card("letter", links.letter, 1);
+  const locale = page.profile.locale;
+  if (!links || (locale !== "de" && locale !== "en")) return null;
+  const asOf = options.asOf ? new Date(options.asOf) : null;
+  const shapeOptions = { now: options.now, asOf: asOf && !Number.isNaN(asOf.getTime()) ? asOf : null, online: onlineLine(options.publicAddress), photo: photoCandidate(page) !== null };
+  const card = async (kind: DocumentKind, href: string | null): Promise<DocumentCard | null> => {
+    if (!href) return null;
+    const shape = await documentShape(kind, page, shapeOptions);
+    return { kind, href, filename: documentFilename(kind, page.profile.displayName, locale).ascii, pages: shape.pages, miniature: kind === "application" ? null : shape.miniature };
+  };
+  const [cv, letter, application] = await Promise.all([card("cv", links.cv), card("letter", links.letter), card("application", links.application)]);
+  const own = links.ownCv;
+  const ownLabel = own ? (page.blocks.flatMap((block) => (block.type === "contact" ? (block.links ?? []) : [])).find((link) => link.url === own)?.label?.trim() ?? null) : null;
   return {
     cv,
     letter,
-    application: card("application", links.application, (cv?.pages ?? 0) + (letter?.pages ?? 0)),
-    ownCv: offer.ownCv,
+    application,
+    ownCv: own ? { href: own, label: ownLabel === "" ? null : ownLabel } : null,
     asOf: options.asOf,
-    subject: letter ? letterSubject(page, { subjectFor: (value) => t("subjectFor", { value }), subjectBare: t("subjectBare") }) : null,
+    subject: links.letter ? letterSubject(page, paperLabels(locale), options.now) : null,
   };
 }

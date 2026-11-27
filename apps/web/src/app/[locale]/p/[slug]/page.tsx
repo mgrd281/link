@@ -4,8 +4,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { browserThemeColor, rootBackground } from "@/features/directions/poster/browser-top";
-import { documentsView } from "@/features/documents/view";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
+import { documentsView } from "@/features/documents/view";
 import { previewChrome, sampleLabel } from "@/features/previews/preview-chrome";
 import { previewPage, PREVIEWS } from "@/features/previews/registry";
 import { rotationTurn, withRotationClip } from "@/features/previews/rotation";
@@ -107,7 +107,8 @@ export default async function PreviewRoute({ params, searchParams }: Props) {
   const rotation = found.preview.motionRotation;
   const turn = rotation?.length ? rotationTurn(rotation, (await searchParams)[ROTATION_PARAM]) : null;
   const page = turn ? withRotationClip(found.page, turn.clip) : found.page;
-  // A Laufbahn page offers its CV and cover letter as PDFs (features/documents): addresses under the page's own.
+  // An application page (Laufbahn) offers its Lebenslauf and Anschreiben as PDFs under its own address
+  // (features/documents): never indexed, never cached in a shared cache, no public address on paper.
   const documents = await documentsView(page, { base: `/${locale}/p/${slug}`, signposted: theme.layout.headings === "signpost", now: new Date(), asOf: null, publicAddress: null });
   return (
     <>

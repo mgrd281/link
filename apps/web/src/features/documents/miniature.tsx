@@ -1,32 +1,37 @@
+import { cn } from "@linkyo/ui";
 import type { ReactNode } from "react";
 
 import type { MiniatureMark } from "./offer";
 
-/** Each mark's tone as a fill from the page's own palette (paper is white whatever the page's mode). */
-const TONE: Record<MiniatureMark["tone"], string> = {
+/** Each tone's fill: the page's own colours, as the paper prints them. */
+const FILL: Record<MiniatureMark["tone"], string> = {
   ink: "fill-creator-fg",
   accent: "fill-creator-accent-text",
   strong: "fill-creator-line-strong",
   muted: "fill-creator-line",
 };
+const TONES = Object.keys(FILL) as MiniatureMark["tone"][];
 
-/** The paper's corner radius in mm, and its size: A4. */
-const BAR_RADIUS = 0.6;
-const A4 = { width: 210, height: 297 };
+/** One tone's bars as a single path of rectangles (small enough to inline: about 2 KB for a CV). */
+const bars = (marks: readonly MiniatureMark[]): string => marks.map((mark) => `M${String(mark.x)} ${String(mark.y)}h${String(mark.w)}v${String(mark.h)}h-${String(mark.w)}z`).join("");
 
 /**
- * A document's first page as a thumbnail (Laufbahn's Unterlagen cards): white paper with greeked bars
- * laid out from the PDF's own boxes (`MiniatureMark`, mm on A4), never any text. Without marks (the
- * owner's own file, or before the layout is known) a blank sheet. Decorative: the card's words name
- * the document. Pure SVG, no hooks, safe in client modules.
+ * A document's first page in miniature (the page's Unterlagen cards): white A4 paper with greeked
+ * bars where the PDF sets its text, rules and squares, drawn from the PDF's own layout
+ * (miniature-marks.ts). It holds no text and no contact data, only numbers and tones. Without marks
+ * (the owner's own file, or before the layout is known) it is a blank sheet. Pure SVG, no hooks: safe
+ * in client modules. Decorative: the card's words name the document.
  */
 export function PaperMiniature({ marks, className }: { marks: readonly MiniatureMark[] | null; className?: string }): ReactNode {
   return (
-    <svg viewBox={`0 0 ${String(A4.width)} ${String(A4.height)}`} aria-hidden="true" focusable="false" className={className}>
-      <rect width={A4.width} height={A4.height} className="fill-white" />
-      {(marks ?? []).map((mark, index) => (
-        <rect key={index} x={mark.x} y={mark.y} width={mark.w} height={mark.h} rx={BAR_RADIUS} className={TONE[mark.tone]} />
-      ))}
+    <svg viewBox="0 0 210 297" aria-hidden="true" focusable="false" className={cn("block", className)}>
+      <rect width="210" height="297" className="fill-white" />
+      {marks
+        ? TONES.map((tone) => {
+            const own = marks.filter((mark) => mark.tone === tone);
+            return own.length > 0 ? <path key={tone} d={bars(own)} className={FILL[tone]} /> : null;
+          })
+        : null}
     </svg>
   );
 }

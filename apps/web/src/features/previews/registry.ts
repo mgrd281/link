@@ -172,8 +172,8 @@ const HAND_MADE: Record<string, Preview> = {
     pages: { de: journalistDe, en: journalistEn, ar: journalistAr },
     sample: { kind: "journalist", category: "careers", look: "journalist" },
   },
-  // The application example (Laufbahn): a fictional warehouse specialist, with the CV and the cover
-  // letter it offers as PDFs (de, en; Arabic pages offer none). Labelled as an example, not in the gallery.
+  // A fictional applicant for the Laufbahn template, with the PDFs of an application (./application-sample.ts):
+  // the surface for the template's screenshots and the documents' tests. Labelled as an example; not in the gallery.
   "jonas-brandt": {
     name: { de: "Jonas Brandt", en: "Jonas Brandt" },
     username: "jonas-brandt",

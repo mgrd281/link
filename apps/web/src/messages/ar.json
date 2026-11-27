@@ -5621,7 +5621,27 @@
   },
   "documents": {
     "paper": {
-      "subjectFor": "التقديم على {value}",
+      "cv": "السيرة الذاتية",
+      "letter": "خطاب التقديم",
+      "application": "طلب التوظيف",
+      "titleCv": "السيرة الذاتية – {name}",
+      "titleLetter": "خطاب التقديم – {name}",
+      "titleApplication": "طلب التوظيف – {name}",
+      "profile": "نبذة",
+      "facts": "معلومات أساسية",
+      "career": "المسيرة المهنية",
+      "skills": "المهارات",
+      "present": "حتى الآن",
+      "phone": "الهاتف",
+      "email": "البريد الإلكتروني",
+      "online": "على الإنترنت",
+      "location": "مكان الإقامة",
+      "date": "التاريخ",
+      "asOf": "محدّث في {date}",
+      "page": "الصفحة {page} من {pages}",
+      "enclosure": "مرفق",
+      "enclosureCv": "السيرة الذاتية",
+      "subjectFor": "طلب توظيف لوظيفة {value}",
       "subjectBare": "طلب توظيف"
     }
   }

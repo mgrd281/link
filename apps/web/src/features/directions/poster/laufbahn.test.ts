@@ -234,7 +234,7 @@ describe("Unterlagen", () => {
   const section = /<section id="unterlagen"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
 
   it("is a titled section in the contents, before the Kontakt band", () => {
-    expect(headingsOf(jonasMarkup)).toEqual(["Über mich", "Kenntnisse", "Werdegang", "Gut zu wissen", "Anschreiben", "Unterlagen", "Ich freue mich auf ein Gespräch."]);
+    expect(headingsOf(jonasMarkup)).toEqual(["Über mich", "Kenntnisse", "Werdegang", "Als Nächstes", "Anschreiben", "Unterlagen", "Ich freue mich auf ein Gespräch."]);
     expect(jonasMarkup.indexOf('id="unterlagen"')).toBeLessThan(jonasMarkup.indexOf("data-lb-contact"));
   });
 
@@ -271,7 +271,7 @@ describe("Unterlagen", () => {
     expect(markup).not.toContain('id="unterlagen"');
     expect(markup).not.toMatch(/download=/);
     expect(markup).not.toContain("Unterlagen");
-    expect(text(markup)).not.toContain("Bewerbung als Fachkraft für Lagerlogistik (m/w/d)Sehr geehrte");
+    expect(text(markup)).not.toContain("Bewerbung als Fachkraft für Lagerlogistik (m/w/d)Sehr geehrte Frau Albers");
   });
 });
 
@@ -282,13 +282,25 @@ describe("the letter", () => {
     expect(letter).toMatch(/data-lb-letter="" class="[^"]*bg-white text-ink/);
     expect(letter).toMatch(/<a href="\/de\/p\/jonas-brandt\/letter" download="Anschreiben_Jonas_Brandt.pdf" aria-label="Anschreiben als PDF herunterladen \(1 Seite\)"/);
     const words = text(letter);
-    expect(words.indexOf("Bewerbung als Fachkraft für Lagerlogistik (m/w/d)")).toBeLessThan(words.indexOf("Sehr geehrte Damen und Herren,"));
+    expect(words.indexOf("Bewerbung als Fachkraft für Lagerlogistik (m/w/d)")).toBeLessThan(words.indexOf("Sehr geehrte Frau Albers,"));
     // The owner's text exactly: nothing added before the salutation or after the closing.
     expect(words).toMatch(/Mit freundlichen Grüßen\nJonas BrandtGanzes|Mit freundlichen Grüßen\nJonas Brandt$/);
   });
 
-  it("keeps its disclosure on phones after two paragraphs", () => {
-    const [before, details] = letter.split("<details");
+  it("keeps its disclosure on phones after two paragraphs once the letter is a long read", () => {
+    // Jonas's letter (889 characters) stays whole; one more paragraph makes it a long read (LONG_TEXT).
+    expect(letter).not.toContain("<details");
+    const longer: Page = {
+      ...jonas,
+      blocks: jonas.blocks.map((block) =>
+        block.id === "letter" && block.type === "text"
+          ? { ...block, text: block.text.replace("\n\nMit freundlichen", "\n\nGern komme ich auch zu einem Probetag in Ihr Lager, damit Sie mich bei der Arbeit kennenlernen.\n\nMit freundlichen") }
+          : block,
+      ),
+    };
+    const markup = render(longer, { template: "laufbahn" }, documentsOf(longer, "/de/p/jonas-brandt"));
+    const long = /<section id="section-letter-title"[\s\S]*?<\/section>/.exec(markup)?.[0] ?? "";
+    const [before, details] = long.split("<details");
     expect(count(before ?? "", /<p dir="auto"/g)).toBe(3);
     expect(details).toMatch(/^ class="lb-more /);
   });
@@ -305,8 +317,8 @@ describe("the career as a table", () => {
   const career = /<section id="section-career"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
 
   it("sets the years first, with an en dash between spaces, and tags the ongoing step", () => {
-    expect(text(career)).toContain("2021 – heuteaktuellLagerfachkraft");
-    expect(text(career)).toContain("2017 – 2021Lagerhelfer");
+    expect(text(career)).toContain("2021 – heuteaktuellFachkraft für Lagerlogistik");
+    expect(text(career)).toContain("2020 – 2021Lagerist");
     expect(text(career)).toContain("2019Staplerschein");
     expect(count(career, />aktuell</g)).toBe(1);
   });
@@ -387,7 +399,7 @@ describe("the Kontakt band on ink", () => {
   it("closes the page with the status, the title, the primary action and the rows, the footer inside", () => {
     expect(band).toMatch(/class="lb-ground text-white"/);
     const words = text(band);
-    for (const part of ["Verfügbar ab 1. März 2027", "Ich freue mich auf ein Gespräch.", "E-Mail schreiben", "E-Mail", "jonas.brandt@example.com", "Telefon", "+493023125457", "Lebenslauf · PDF", "Anschreiben · PDF", "Seite teilen", "Impressum"]) {
+    for (const part of ["Verfügbar ab 1. März 2027", "Ich freue mich auf ein Gespräch.", "E-Mail schreiben", "E-Mail", "jonas.brandt@example.com", "Telefon", "+49 30 23125 457", "Lebenslauf · PDF", "Anschreiben · PDF", "Seite teilen", "Impressum"]) {
       expect(words, part).toContain(part);
     }
     expect(band).toMatch(/<footer class="text-caption lb-ink-muted/);

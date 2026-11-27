@@ -70,7 +70,7 @@ describe("creator page addresses", () => {
       "/u/mats",
       "/api/people",
       "/checkout/pro",
-      "/mats/cv",
+      "/mats/lebenslauf",
       "/mats/opengraph-image",
       "/mats/kontakt",
       "/mats/a",
@@ -82,6 +82,23 @@ describe("creator page addresses", () => {
     ]) {
       expect(creatorRewrite(path, true), path).toBeNull();
     }
+  });
+
+  it("serves a page's PDFs (cv, letter, application) from their routes under the creator", () => {
+    expect(creatorRewrite("/mila/cv", true)).toBe("/u/mila/cv");
+    expect(creatorRewrite("/mila/letter", true)).toBe("/u/mila/letter");
+    expect(creatorRewrite("/mila/application/", true)).toBe("/u/mila/application");
+    // Reserved words without a route, a name that is no creator's, a demo build.
+    expect(creatorRewrite("/mila/lebenslauf", true)).toBeNull();
+    expect(creatorRewrite("/mila/bewerbung", true)).toBeNull();
+    expect(creatorRewrite("/templates/cv", true)).toBeNull();
+    expect(creatorRewrite("/de/cv", true)).toBeNull();
+    expect(creatorRewrite("/mila/cv", false)).toBeNull();
+    // Capital letters lead to the lowercase address first.
+    expect(creatorRedirect("/Mila/CV")).toBe("/mila/cv");
+    expect(creatorRedirect("/mila/Letter")).toBe("/mila/letter");
+    expect(creatorRedirect("/mila/cv")).toBeNull();
+    expect(creatorRedirect("/Mila/Lebenslauf")).toBeNull();
   });
 
   it("rewrites no project address in a demo build", () => {
@@ -112,7 +129,7 @@ describe("creator page addresses", () => {
     expect(creatorRedirect("/mats/tidewatch")).toBeNull();
     expect(creatorRedirect("/De/Pricing")).toBeNull();
     expect(creatorRedirect("/Templates/X")).toBeNull();
-    expect(creatorRedirect("/Mats/CV")).toBeNull();
+    expect(creatorRedirect("/Mats/Lebenslauf")).toBeNull();
     expect(creatorRedirect("/Mats/A/B")).toBeNull();
   });
 

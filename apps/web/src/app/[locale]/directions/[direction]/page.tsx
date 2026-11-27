@@ -9,9 +9,9 @@ import { defaultTheme, loadSamplePage } from "@/features/directions/load";
 import { browserThemeColor, rootBackground } from "@/features/directions/poster/browser-top";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { portfolioSample, portfolioSampleLong } from "@/features/directions/poster/sample";
-import { documentsView } from "@/features/documents/view";
-import { applicationSample } from "@/features/previews/application-sample";
 import { isCreatorPreset } from "@/features/directions/preset";
+import { documentsView } from "@/features/documents/view";
+import { APPLICATION_SLUGS, applicationSample } from "@/features/previews/application-sample";
 import { DIRECTIONS, isDirection, isThemeMode } from "@/features/directions/registry";
 import { LinkyoDock } from "@/features/directions/shared/dock";
 import { DirectionToolbar } from "@/features/directions/toolbar";
@@ -35,19 +35,20 @@ interface RouteProps {
 /**
  * Page + resolved theme for a request. Any preset works with any direction and either mode.
  * Poster also shows the portfolio sample (`?page=portfolio`; `portfolio-long` fills it with the
- * longest texts a page can hold) and the application example (`?page=application`, Jonas Brandt; in
- * Arabic Karim Nasser), and takes the owner's choice of work layout (`?projects=`), so every
- * template, language and layout of a portfolio can be looked at.
+ * longest texts a page can hold), and takes the owner's choice of work layout (`?projects=`), so
+ * every template, language and layout of a portfolio can be looked at. `?page=application` shows the
+ * fictional applicant (features/previews/application-sample.ts), with Laufbahn's PDFs as his example
+ * page offers them.
  */
 async function resolveRoute({ params, searchParams }: RouteProps) {
   const { locale, direction } = await params;
   if (!isDirection(direction)) notFound();
   const { preset, mode, template, chrome, page: sample, projects } = await searchParams;
+  const portfolio = direction === "poster" && (sample === "portfolio" || sample === "portfolio-long");
   const application = direction === "poster" && sample === "application";
-  const portfolio = direction === "poster" && (application || sample === "portfolio" || sample === "portfolio-long");
-  const pageLocale = locale === "en" || locale === "ar" ? locale : "de";
+  const language = locale === "ar" || locale === "en" ? locale : "de";
   const page = application
-    ? applicationSample(pageLocale)
+    ? applicationSample(language)
     : portfolio
       ? sample === "portfolio-long"
         ? portfolioSampleLong(locale)
@@ -61,12 +62,9 @@ async function resolveRoute({ params, searchParams }: RouteProps) {
   if (chrome === "0") query.set("chrome", "0");
   if (isTemplate(template)) query.set("template", template);
   const suffix = query.size > 0 ? `?${query.toString()}` : "";
-  // The application example offers its documents at the example page's own addresses (/p/jonas-brandt).
-  const documents =
-    application && theme.layout.headings === "signpost"
-      ? await documentsView(page, { base: `/${locale}/p/${page.profile.username}`, signposted: true, now: new Date(), asOf: null, publicAddress: null })
-      : null;
-  return { locale, direction, page, theme, documents, portfolio: portfolio ? { base: `/${locale}/directions/poster/work`, suffix } : null };
+  // The applicant's PDFs live at his example page's address (/<locale>/p/jonas-brandt/cv …).
+  const documents = application ? { base: `/${language}/p/${APPLICATION_SLUGS[language]}` } : null;
+  return { locale, direction, page, theme, portfolio: portfolio ? { base: `/${locale}/directions/poster/work`, suffix } : null, documents };
 }
 
 /**
@@ -79,7 +77,7 @@ export async function generateViewport(props: RouteProps): Promise<Viewport> {
 }
 
 export default async function CreatorPageRoute(props: RouteProps) {
-  const { locale, direction, page, theme, documents, portfolio } = await resolveRoute(props);
+  const { locale, direction, page, theme, portfolio, documents } = await resolveRoute(props);
   setRequestLocale(locale);
   // Without the review toolbar (?chrome=0) the sample shows exactly what visitors get, Linkyo bar included.
   const bare = (await props.searchParams).chrome === "0";
@@ -91,7 +89,14 @@ export default async function CreatorPageRoute(props: RouteProps) {
       {/* Safari 26 tints its toolbars from the page background, so the root must match the top of the creator page. */}
       <style>{direction === "poster" ? rootBackground(page.profile, theme) : `html,body{background-color:${theme.palette.bg}}`}</style>
       {portfolio ? (
-        <PosterRenderer page={page} theme={theme} dock={dock} projectBase={portfolio.base} projectSuffix={portfolio.suffix} documents={documents} />
+        <PosterRenderer page={page} theme={theme} dock={dock} projectBase={portfolio.base} projectSuffix={portfolio.suffix} />
+      ) : documents ? (
+        <PosterRenderer
+          page={page}
+          theme={theme}
+          dock={dock}
+          documents={await documentsView(page, { base: documents.base, signposted: theme.layout.headings === "signpost", now: new Date(), asOf: null, publicAddress: null })}
+        />
       ) : (
         <DirectionRenderer direction={direction} page={page} theme={theme} dock={dock} />
       )}

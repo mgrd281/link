@@ -170,6 +170,7 @@ describe("page rules", () => {
 
   it("keep the application documents' addresses and their look-alikes free of projects", () => {
     expect(DOCUMENT_SEGMENTS).toEqual({ cv: "cv", letter: "letter", application: "application" });
+    for (const segment of Object.values(DOCUMENT_SEGMENTS)) expect(RESERVED_PROJECT_SLUGS.has(segment), segment).toBe(true);
     for (const slug of ["cv", "letter", "application", "lebenslauf", "anschreiben", "bewerbung", "unterlagen"]) {
       expect(RESERVED_PROJECT_SLUGS.has(slug), slug).toBe(true);
       expect(isProjectSlug(slug), slug).toBe(false);

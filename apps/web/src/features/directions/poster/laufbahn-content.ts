@@ -527,7 +527,7 @@ const LETTER_TITLES: Record<Locale, string[]> = {
 };
 /** How letters open and close, in the three languages. */
 const SALUTATION = /^(sehr geehrte|liebe[rs]?\b|hallo\b|guten tag|dear\b|hello\b|to whom|السيد|السيده|عزيزي|عزيزتي|حضره|تحيه)/u;
-const CLOSING = /(mit freundlichen grüßen|freundliche grüße|viele grüße|beste grüße|hochachtungsvoll|kind regards|best regards|yours sincerely|yours faithfully|sincerely|مع خالص التحيه|مع التحيه|وتفضلوا بقبول|تحياتي)/u;
+export const CLOSING = /(mit freundlichen grüßen|freundliche grüße|viele grüße|beste grüße|hochachtungsvoll|kind regards|best regards|yours sincerely|yours faithfully|sincerely|مع خالص التحيه|مع التحيه|وتفضلوا بقبول|تحياتي)/u;
 
 /**
  * Whether a section's text is a letter: a long read under a title that names one, or a long read that

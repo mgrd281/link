@@ -7,8 +7,8 @@ import { setRequestLocale } from "next-intl/server";
 import { CreatorLegal, hasCreatorLegal } from "@/features/creator/creator-legal";
 import { loadPublicPage } from "@/features/creator/public-page";
 import { browserThemeColor, rootBackground } from "@/features/directions/poster/browser-top";
-import { documentsView } from "@/features/documents/view";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
+import { documentsView } from "@/features/documents/view";
 import { pageAddress, pageUrl } from "@/lib/page-url";
 import { siteUrl } from "@/lib/site-url";
 
@@ -76,13 +76,15 @@ export default async function CreatorRoute({ params }: Props) {
   setRequestLocale(locale);
   const theme = resolveCreatorTheme(found.theme, { rtlScript: locale === "ar" });
   const site = siteUrl().origin;
-  // A Laufbahn page offers its CV and cover letter as PDFs at /<username>/cv, /letter and /application (features/documents).
+  // An application page (Laufbahn) offers its Lebenslauf and Anschreiben as PDFs at /<username>/cv and
+  // /<username>/letter (features/documents): their addresses, page counts and miniatures.
+  const { username: name } = page.profile;
   const documents = await documentsView(page, {
-    base: `/${username}`,
+    base: `/${name}`,
     signposted: theme.layout.headings === "signpost",
     now: new Date(),
-    asOf: found.updatedAt || null,
-    publicAddress: pageAddress(username),
+    asOf: found.updatedAt,
+    publicAddress: pageAddress(name),
   });
   return (
     <>
