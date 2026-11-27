@@ -18,12 +18,21 @@ export interface IndexEntry {
 /** Where reading happens: a section is being read once its start has passed this share of the screen's height. */
 const READING_LINE = 0.35;
 
+/** Keys that scroll the page: after a jump, the visitor's own scrolling hands the mark back to the reading line. */
+const SCROLL_KEYS = new Set(["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "]);
+
 /**
  * The section being read (its index in `entries`), or null before the observer has looked (the
  * server's HTML claims no section): found by an IntersectionObserver on a thin band at a third of the
  * screen (no scroll handler), and the last one once the end of the content (`[data-lb-end]`) is on
  * screen. Above the first section: the first one (`top: "first"`, an index that always marks where
  * the reader is headed) or none (the app bar, which names a section only once it is being read).
+ *
+ * A jump names its section: after a link to a section (the contents sheet, the index, the hero's
+ * "Anschreiben lesen"), the back button or an address with a section's hash, that section is the
+ * current one until the visitor scrolls on their own (wheel, touch, a scroll key, the scroll bar). On
+ * a tall screen a short section lands at the top with the next one already past the reading line;
+ * the bar and the sheet still name the one the visitor chose.
  */
 export function useCurrentSection(entries: readonly IndexEntry[], top: "first" | "none" = "first"): number | null {
   const [current, setCurrent] = useState<number | null>(null);
@@ -32,11 +41,52 @@ export function useCurrentSection(entries: readonly IndexEntry[], top: "first" |
     const end = document.querySelector("[data-lb-end]");
     if (sections.length === 0) return;
     let atEnd = false;
+    // The section a jump landed on, until the visitor scrolls.
+    let jumped: number | null = null;
     const decide = () => {
+      if (jumped !== null) return;
       const line = window.innerHeight * READING_LINE;
       const passed = sections.findLastIndex((section) => section.getBoundingClientRect().top <= line);
       setCurrent(atEnd ? sections.length - 1 : passed >= 0 ? passed : top === "first" ? 0 : null);
     };
+    const jumpTo = (hash: string) => {
+      let id = hash.slice(1);
+      try {
+        id = decodeURIComponent(id);
+      } catch {
+        // A malformed escape: the hash as written.
+      }
+      const index = hash.startsWith("#") ? sections.findIndex((section) => section.id === id) : -1;
+      if (index < 0) return;
+      jumped = index;
+      setCurrent(index);
+    };
+    // Scrolling of the visitor's own: the reading line decides again, from the scroll it starts on.
+    const again = () => decide();
+    const scrolled = () => {
+      if (jumped === null) return;
+      jumped = null;
+      window.addEventListener("scroll", again, { passive: true, once: true });
+    };
+    const keyed = (event: KeyboardEvent) => {
+      const typing = event.target instanceof HTMLElement && (event.target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName));
+      if (SCROLL_KEYS.has(event.key) && !typing) scrolled();
+    };
+    // The scroll bar: a press on the page's root (nothing of the page is under the pointer).
+    const pressed = (event: PointerEvent) => {
+      if (event.target === document.documentElement) scrolled();
+    };
+    const followed = (event: MouseEvent) => {
+      const link = event.target instanceof Element ? event.target.closest("a[href^='#']") : null;
+      if (link && !event.defaultPrevented) jumpTo(link.getAttribute("href") ?? "");
+    };
+    const hashed = () => jumpTo(window.location.hash);
+    document.addEventListener("click", followed);
+    window.addEventListener("hashchange", hashed);
+    window.addEventListener("wheel", scrolled, { passive: true });
+    window.addEventListener("touchmove", scrolled, { passive: true });
+    window.addEventListener("keydown", keyed);
+    window.addEventListener("pointerdown", pressed);
     // A band one percent tall that ends at the reading line: a section's top enters it just as it passes
     // the line going down (so `decide` already counts it as read) and leaves it just as it goes back
     // below the line going up. A band that began at the line reported the entry while the top was still
@@ -49,10 +99,19 @@ export function useCurrentSection(entries: readonly IndexEntry[], top: "first" |
       decide();
     });
     if (end) tail.observe(end);
+    // An address with a section's hash (a shared link, a reload) lands there: that section first.
+    if (window.location.hash) jumpTo(window.location.hash);
     decide();
     return () => {
       band.disconnect();
       tail.disconnect();
+      document.removeEventListener("click", followed);
+      window.removeEventListener("hashchange", hashed);
+      window.removeEventListener("wheel", scrolled);
+      window.removeEventListener("touchmove", scrolled);
+      window.removeEventListener("keydown", keyed);
+      window.removeEventListener("pointerdown", pressed);
+      window.removeEventListener("scroll", again);
     };
   }, [entries, top]);
   return current;
