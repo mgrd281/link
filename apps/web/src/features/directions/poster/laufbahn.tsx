@@ -129,10 +129,10 @@ const aboutLead = cn(
 );
 
 /** The rest of "About" as body, in its paragraphs. */
-function AboutBody({ parts }: { parts: readonly string[] }): ReactNode {
+function AboutBody({ parts, className }: { parts: readonly string[]; className?: string | undefined }): ReactNode {
   if (parts.length === 0) return null;
   return (
-    <div className="grid max-w-prose gap-4">
+    <div className={cn("grid max-w-prose gap-4", className)}>
       {parts.map((part) => (
         <p key={part} dir="auto" className={cn(pageSide, "text-body text-pretty whitespace-pre-line text-creator-fg @work:text-body-lg")}>
           {part}
@@ -199,6 +199,9 @@ export function factSpans(facts: readonly Fact[]): string[] {
  * already shows (the position applied for, the employer: `omit`) are not repeated here.
  * - With a portrait (as Werkbogen's "About"): under the lead the portrait on two of five columns at the
  *   start and the facts on the other three beside it; the facts a list with a hairline above each row.
+ *   On the wide canvas the rest of the text follows the facts in their three columns, beside the
+ *   picture, so the 4 : 5 frame never stands beside an empty column; narrower, it runs under both. The
+ *   frame has a hairline, so a dark drawing keeps its edge on a dark page.
  *   The portrait is the owner's choice: any picture they set on the block stands there, a drawn still
  *   from the library too, with its alt text and focal point (the founder, round 6 review 4). The CV is
  *   stricter: it prints only an uploaded photo, never a drawing (features/documents/photo.ts).
@@ -221,8 +224,10 @@ export function LaufbahnAbout({ block, omit = [] }: { block: BlockOf<"about">; o
             {first}
           </p>
         ) : null}
-        <div data-about-portrait className="grid min-w-0 grid-cols-5 items-start gap-x-4 @prose:gap-x-6">
-          <div className="relative col-span-2 aspect-portrait overflow-hidden rounded-creator-card bg-creator-surface-2">
+        {/* Wide canvas: the picture over two rows, the facts and then the text in the three columns
+            beside it (the second row takes what height is left, so the text starts under the facts). */}
+        <div data-about-portrait className="grid min-w-0 grid-cols-5 items-start gap-x-4 gap-y-6 @prose:gap-x-6 @prose:gap-y-8 @work:grid-rows-[auto_1fr]">
+          <div className="relative col-span-2 aspect-portrait overflow-hidden rounded-creator-card border border-creator-line bg-creator-surface-2 @work:row-span-2">
             <MediaImage src={portrait.src} focal={portrait.focal} alt={portrait.alt} sizes={mediaSizes.half} />
           </div>
           {shown.length > 0 ? (
@@ -241,8 +246,8 @@ export function LaufbahnAbout({ block, omit = [] }: { block: BlockOf<"about">; o
               ))}
             </dl>
           ) : null}
+          <AboutBody parts={rest} className="col-span-5 @work:col-span-3 @work:col-start-3" />
         </div>
-        <AboutBody parts={rest} />
       </div>
     );
   }
@@ -254,8 +259,10 @@ export function LaufbahnAbout({ block, omit = [] }: { block: BlockOf<"about">; o
         </p>
       ) : null}
       {shown.length > 0 ? (
-        // One soft sheet (a step in the fill, no frame, no rules), the label quiet over its value.
-        <dl className="grid min-w-0 grid-cols-12 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-5 @work:p-6">
+        // One soft sheet (a step in the fill, no frame, no rules), the label quiet over its value. Phones
+        // keep the twelve columns' eleven gaps at 16 px (176 px), so they fit the sheet's 240 px inside
+        // at 320 and no row is wider than the sheet; 24 px from tablets on.
+        <dl className="grid min-w-0 grid-cols-12 gap-x-4 gap-y-4 rounded-creator-card bg-creator-surface p-5 @prose:gap-x-6 @work:p-6">
           {shown.map((fact, index) => (
             <div key={`${fact.label}-${fact.value}`} className={cn("grid min-w-0 grid-cols-1 content-start gap-1", spans[index])}>
               <dt dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>

@@ -290,5 +290,45 @@ export function withoutContact(page: Page): Page {
   return { ...page, blocks: page.blocks.filter((block) => block.type !== "contact") };
 }
 
+/** The languages fact at its longest, per language (`withLongValues`). */
+const LONG_LANGUAGES: Record<Page["profile"]["locale"], string> = {
+  de: "Deutsch (Muttersprache), Englisch (B1), Polnisch (A2)",
+  en: "German (native speaker), English (B1), Polish (A2)",
+  ar: "العربية (اللغة الأم)، الإنجليزية (B1)، الأردية (A2)",
+};
+
+/**
+ * The fictional applicant with values as long as a real page holds them (the sample route's
+ * `page=application-long`), for the reflow checks at 320 and 390 px (WCAG 1.4.10): a 40-character
+ * e-mail address without a hyphen ("jonas.brandt.lagerlogistik42@example.com", still example.com)
+ * and a languages fact that fills a line.
+ */
+export function withLongValues(page: Page): Page {
+  const longer = (url: string) => (url.startsWith("mailto:") ? url.replace("@example.com", ".lagerlogistik42@example.com") : url);
+  const locale = page.profile.locale;
+  return {
+    ...page,
+    blocks: page.blocks.map((item): Block => {
+      if (item.type === "contact") {
+        return { ...item, primary: { ...item.primary, url: longer(item.primary.url) }, ...(item.links ? { links: item.links.map((link) => ({ ...link, url: longer(link.url) })) } : {}) };
+      }
+      if (item.type === "about" && item.facts) return { ...item, facts: item.facts.map((fact, index) => (index === 1 ? { ...fact, value: LONG_LANGUAGES[locale] } : fact)) };
+      return item;
+    }),
+  };
+}
+
+/**
+ * The fictional applicant with a drawn still from the library beside his facts in "About" (the sample
+ * route's `page=application-portrait`): the layout a page with an About picture has, looked at and
+ * measured on fictional data only.
+ */
+export function withPortrait(page: Page): Page {
+  const clip = libraryClip("sample:motion-ware-scannen");
+  if (!clip) return page;
+  const portrait = { src: clip.poster, alt: clip.alt[page.profile.locale], focal: [0.3, 0.42] as [number, number] };
+  return { ...page, blocks: page.blocks.map((item): Block => (item.type === "about" ? { ...item, portrait } : item)) };
+}
+
 /** Where the fictional applicants' pages live (features/previews/registry.ts). */
 export const APPLICATION_SLUGS = { de: "jonas-brandt", en: "jonas-brandt", ar: "karim-nasser" } as const;

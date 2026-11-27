@@ -127,28 +127,38 @@ function head(input: DocumentInput, options: CvOptions): { boxes: Box[]; bottom:
   // the rule into the columns of the figures' cells (a sparse head beside a wide block), so a figure
   // never sits right under a contact row and reads as one more.
   if (input.stats.length > 0) {
-    const figures = input.stats.slice(0, 3).map((stat) => ({ ...stat, parts: splitFigure(stat.value) }));
-    const cellsEnd = columnX(1 + (figures.length - 1) * 3) + span(1, 3);
+    const cell = span(1, 3);
+    // The unit at half size, right after the number; a no-break space of its own size before it where
+    // the page has one too ("99,6 %", "12 Jahre"), drawn as a character, so copying and extractors that
+    // read the characters keep it.
+    const unitOf = (parts: { unit: string; spaced: boolean }) => (parts.unit && parts.spaced ? `${NB}${parts.unit}` : parts.unit);
+    const natural = (parts: { number: string; unit: string; spaced: boolean }) => measure(parts.number, TYPE.figure, metrics) + measure(unitOf(parts), TYPE.figureUnit, metrics);
+    const split = input.stats.slice(0, 3).map((stat) => ({ ...stat, parts: splitFigure(stat.value) }));
+    // Every number with its unit stays in its three columns: one size for all of them, as on the page,
+    // 20 pt or both stepped down together until the widest fits (as the name steps down), at least to
+    // the size of a figure in words. A value too wide even then is set in words, wrapped in its cell.
+    const scale = Math.max(TYPE.figureWord.size / TYPE.figure.size, Math.min(1, ...split.flatMap((figure) => (figure.parts.kind === "number" ? [cell / natural(figure.parts)] : []))));
+    const numberStyle: TextStyle = scale < 1 ? { ...TYPE.figure, size: TYPE.figure.size * scale } : TYPE.figure;
+    const unitStyle: TextStyle = scale < 1 ? { ...TYPE.figureUnit, size: TYPE.figureUnit.size * scale } : TYPE.figureUnit;
+    const figures = split.map((figure) =>
+      figure.parts.kind === "number" && natural(figure.parts) * scale > cell + 1e-6 ? { ...figure, parts: { kind: "word" as const, text: figure.value.trim() } } : figure,
+    );
+    const cellsEnd = columnX(1 + (figures.length - 1) * 3) + cell;
     const above = rows.length > 0 && (block.under || block.x < cellsEnd);
     const top = Math.max(ruleTop + RULE.accentWeight, above ? contactBottom : 0) + SPACE.figures;
     const qualified = figures.some((figure) => figure.parts.kind === "number" && figure.parts.qualifier !== "");
     const valueTop = top + (qualified ? TYPE.figureQualifier.leading : 0);
     const numberBaseline = valueTop + baselineOffset(TYPE.figure, metrics);
-    const cell = span(1, 3);
     let lowest = top;
     figures.forEach((figure, index) => {
       const fx = columnX(1 + index * 3);
       let valueBottom = valueTop + TYPE.figure.leading;
       if (figure.parts.kind === "number") {
-        const { qualifier, number, unit, spaced } = figure.parts;
+        const { qualifier, number } = figure.parts;
         if (qualifier) boxes.push(...textRuns([qualifier], fx, top + baselineOffset(TYPE.figureQualifier, metrics), TYPE.figureQualifier, metrics));
-        const style = TYPE.figure;
-        const runs = textRuns([number], fx, numberBaseline, style, metrics);
-        boxes.push(...runs);
-        // The unit at half size, right after the number; a no-break space of its own size before it
-        // where the page has one too ("99,6 %", "12 Jahre"), drawn as a character, so copying and
-        // extractors that read the characters keep it.
-        if (unit) boxes.push(...textRuns([spaced ? `${NB}${unit}` : unit], fx + measure(number, style, metrics), numberBaseline, TYPE.figureUnit, metrics));
+        boxes.push(...textRuns([number], fx, numberBaseline, numberStyle, metrics));
+        const unit = unitOf(figure.parts);
+        if (unit) boxes.push(...textRuns([unit], fx + measure(number, numberStyle, metrics), numberBaseline, unitStyle, metrics));
       } else {
         const lines = wrap(figure.parts.text, TYPE.figureWord, cell, metrics);
         boxes.push(...textRuns(lines, fx, numberBaseline, TYPE.figureWord, metrics));

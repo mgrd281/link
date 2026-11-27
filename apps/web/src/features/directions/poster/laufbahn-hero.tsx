@@ -454,7 +454,7 @@ export function DossierHero({
             className="relative mt-10 aspect-photo overflow-hidden bg-hover-inverse @work:col-span-4 @work:col-start-9 @work:row-start-1 @work:mt-0 @work:aspect-auto @work:self-stretch @work:rounded-xl"
           >
             <MediaImage src={picture.src} focal={picture.focal} alt={picture.alt} sizes={plateSizes(picture)} priority={!preview} />
-            {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}
+            {profile.motion ? <HeroMotion src={profile.motion.src} tone="ink" /> : null}
           </div>
         ) : null}
       </div>

@@ -97,17 +97,21 @@ test("a page prepared from a person's own application letter reads as his own pa
 
 const ROTATION = ["palette-packen", "lagerarbeit", "ware-scannen"];
 
-test("his page shows the clip its address names, each with its own still; a first visit shows his own", async ({ request }) => {
+test("his page shows the clip its address names, each with its own still; a first visit shows his own", async ({ page, request }) => {
   const clipOf = (html: string) => /\/media\/motion\/([a-z-]+)\.mp4/.exec(html)?.[1] ?? "";
   // A first visit (and a link preview, a shared link) without a clip in the address: his own clip.
   expect(clipOf(await (await request.get("/de/p/sevag-ghazarian-2131af")).text())).toBe("palette-packen");
+  const still = async (selector: string) => /ex-motion-[a-z-]+/u.exec((await page.locator(selector).first().getAttribute("src")) ?? "")?.[0] ?? "";
   for (const key of [...ROTATION, "not-a-clip"]) {
-    const html = await (await request.get(`/de/p/sevag-ghazarian-2131af?clip=${key}`)).text();
+    await page.goto(`/de/p/sevag-ghazarian-2131af?clip=${key}`);
     const shown = key === "not-a-clip" ? "palette-packen" : key;
-    expect(clipOf(html)).toBe(shown);
-    // The still is that clip's own first frame, never another one's.
-    expect(html).toContain(`ex-motion-${shown}`);
-    for (const other of ROTATION.filter((name) => name !== shown)) expect(html).not.toContain(`ex-motion-${other}`);
+    await expect(page.locator("[data-hero-plate] video")).toHaveAttribute("src", `/media/motion/${shown}.mp4`);
+    // The header's still is that clip's own first frame, never another one's. The page as a whole
+    // holds a second drawn still on purpose: "Über mich" shows one of its own beside the facts (the
+    // founder, round 6 review 4), and never the header's (the rotation swaps the two when the header
+    // plays the portrait's clip), so the check reads the plate, not the whole HTML.
+    expect(await still("[data-hero-plate] img")).toBe(`ex-motion-${shown}`);
+    if ((await page.locator("[data-about-portrait] img").count()) > 0) expect(await still("[data-about-portrait] img")).not.toBe(`ex-motion-${shown}`);
   }
 });
 
