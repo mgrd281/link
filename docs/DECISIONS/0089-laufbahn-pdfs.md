@@ -102,6 +102,23 @@ installed and none may be added.
 - Dashboard previews show no PDF UI.
 - A real project already at one of the six new reserved slugs would be shadowed by the document
   route: check the live database once it is free and list any such project here.
+- The PDF answers still carry the `Link` header with `hreflang` alternates that next-intl adds to every
+  localized route (`/ar/p/<slug>/cv` among them, which is a 404). Harmless for a `noindex` attachment;
+  drop it for the document routes when the proxy is next touched.
+
+## Integration with the page (Laufbahn round 6)
+
+- One contract module: `offer.ts` (with `input.ts` and `printable.ts`) as above; the page's own
+  stand-in was dropped at the merge. The page imports `DocumentsView`, `DocumentCard`, `splitFigure`,
+  `targetFacts` and `PaperMiniature`; the fact labels are matched in the page's own language.
+- Every place the page offers a document (the hero's Lebenslauf, the bar's pills and round button, the
+  contents sheet, the Unterlagen cards with their miniatures and real page counts, "Beides in einer
+  Datei", the letter's PDF pill, the Kontakt band's rows) is one `<a download>` to the routes above.
+  Checked end to end on the fictional preview (`e2e/laufbahn-dossier-app.spec.ts`): every address the
+  page links to answers 200 with a PDF 1.7 of the stated page count, `private, no-store` and `noindex`,
+  and a press on the hero, a card and "Beides" is the browser's own download of that file.
+- On a dark page the paper of a card stays white, as printed, and its marks keep the printed tones
+  (ink, two greys, the accent) instead of the page's dark palette, which drew near-white on white.
 
 ## Measured (fictional applicant Jonas Brandt, de; Node 22)
 
