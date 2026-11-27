@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { bareLetter, jonasDe, long, slightlyOver, withContact, withLetter } from "../fixtures";
+import type { Page } from "@linkyo/blocks";
+
 import { documentInput, type DocumentInput } from "../input";
 import { paperLabels } from "../labels";
 import { miniatureOf } from "../miniature-marks";
 import { loadFonts } from "../pdf/fonts";
-import { AREA_END, BASELINE, columnX, DIN, HEAD, MARGIN, mm, PHOTO, RULE, TYPE } from "../print-tokens";
+import { AREA_END, BASELINE, columnX, DIN, HEAD, MARGIN, mm, PHOTO, RULE, SPACE, TYPE } from "../print-tokens";
 
 import { layoutCv } from "./cv";
 import { flow, paragraphUnit } from "./flow";
@@ -161,6 +163,41 @@ describe("layoutCv", () => {
     // Nothing of the head overlaps: every contact value stands clear of the role's line.
     const role = texts(page).find((run) => run.style === TYPE.role);
     expect(role && phone ? phone.y > role.y : false).toBe(true);
+  });
+
+  it("starts the figures under a top-right contact block that reaches past the rule into their columns", () => {
+    // A sparse head (no role, no status) beside a block of four rows (Online too) that takes columns 7
+    // to 12 (a 43-character address): the block reaches below the accent rule, over the third figure's
+    // cell. Before, "seit" stood 3.6 mm under "Wohnort", in the same column.
+    const address = "jonas.brandt.lagerlogistik.1990@example.com";
+    const page: Page = (() => {
+      const base = withContact(`mailto:${address}`);
+      return {
+        ...base,
+        profile: { ...base.profile, tagline: "" },
+        blocks: base.blocks.map((block) => (block.type === "contact" ? { ...block, status: undefined } : block)),
+      };
+    })();
+    const head = input(page);
+    expect([head.role, head.status]).toEqual([null, null]);
+    const runs = texts(cv(page, { online: true }).pages[0] ?? { boxes: [] });
+    expect(runs.some((run) => run.text === "Online")).toBe(true);
+    const phone = runs.find((run) => run.text === "Telefon");
+    expect(phone?.y).toBe(HEAD.contactTop);
+    expect(phone && phone.x <= columnX(9)).toBe(true);
+    const contact = runs.filter((run) => run.style === TYPE.contactLabel || run.style === TYPE.contactValue);
+    const blockBottom = Math.max(...contact.map((run) => run.y - metrics[run.style.face].descender * run.style.size));
+    // The top of the first figure row: the qualifier's cap ("seit") or, without one, a number's.
+    const figureTop = Math.min(
+      ...runs.filter((run) => run.style === TYPE.figure || run.style === TYPE.figureQualifier || run.style === TYPE.figureWord).map((run) => run.y - capHeight(run.style, metrics)),
+    );
+    expect(figureTop - blockBottom).toBeGreaterThanOrEqual(SPACE.figures - 0.01);
+    // Two figures end at column 6: the same block beside them leaves them right under the rule.
+    const two = { ...page, profile: { ...page.profile, stats: (page.profile.stats ?? []).slice(0, 2) } };
+    const twoRuns = texts(cv(two).pages[0] ?? { boxes: [] });
+    const rule = (cv(two).pages[0]?.boxes ?? []).find((box): box is Extract<Box, { kind: "rect" }> => box.kind === "rect" && box.w === RULE.accentWidth);
+    const firstFigure = twoRuns.find((run) => run.style === TYPE.figure || run.style === TYPE.figureQualifier);
+    expect(rule && firstFigure ? firstFigure.y - capHeight(firstFigure.style, metrics) - (rule.y + rule.h) : 0).toBeLessThan(SPACE.figures + mm(4));
   });
 
   it("prints no picture and no initials without a real photo", () => {
@@ -329,6 +366,51 @@ describe("layoutLetter", () => {
     expect(closingOf(["Dear Ms Albers,", "I am sincerely writing to apply.\nKind regards,\nJonas Brandt"], "Jonas Brandt")?.greeting).toEqual(["Kind regards,"]);
     // A closing word in a sentence alone is no closing: nothing gets a signature space.
     expect(closingOf(["Dear Ms Albers,", "I am sincerely writing to apply and send best regards to the team."], "Jonas Brandt")).toBeNull();
+  });
+
+  it("leaves the signature space under every common closing, German (with ß or ss) and English", () => {
+    const BODY =
+      "seit 2017 arbeite ich in Lagern von Handel und Industrie: Ich nehme Ware an, lagere sie ein, kommissioniere und verlade, mit Scanner, SAP und Stapler. Ich lerne neue Abläufe schnell und arbeite gern im Team, auch im Schichtbetrieb und nachts.\n\nÜber eine Einladung zu einem Gespräch freue ich mich sehr.";
+    const closings = [
+      "Mit freundlichen Grüßen",
+      "Mit freundlichen Grüssen",
+      "Mit freundlichem Gruß",
+      "Mit freundlichem Gruss",
+      "Mit besten Grüßen",
+      "Mit herzlichen Grüßen",
+      "Herzliche Grüße",
+      "Liebe Grüße",
+      "Freundliche Grüsse",
+      "Viele Grüße",
+      "Beste Grüße",
+      "Hochachtungsvoll",
+      "Kind regards,",
+      "Best regards,",
+      "Warm regards,",
+      "Regards,",
+      "Best wishes,",
+      "Yours sincerely,",
+      "Yours faithfully,",
+      "Yours truly,",
+    ];
+    for (const closing of closings) {
+      const doc = letter(withLetter(`Sehr geehrte Frau Albers,\n\n${BODY}\n\n${closing}\nJonas Brandt`));
+      const body = texts(doc.pages[0] ?? { boxes: [] }).filter((run) => run.style === TYPE.letterBody);
+      const greeting = body.find((run) => run.text.replaceAll(NB, " ") === closing);
+      const name = body.find((run) => run.text === "Jonas Brandt");
+      expect(greeting, closing).toBeDefined();
+      expect(close((name?.y ?? 0) - (greeting?.y ?? 0), DIN.signature + TYPE.letterBody.leading), `${closing}: ${String((name?.y ?? 0) - (greeting?.y ?? 0))}`).toBe(true);
+    }
+    // The same words inside a sentence are body text: no closing, no signature space.
+    for (const sentence of [
+      "Ich sende Ihnen herzliche Grüße aus Bremen und freue mich auf Ihre Antwort.",
+      "Liebe Grüße an das ganze Team in Halle 3.",
+      "Regards to the whole team, and thank you for reading.",
+      "I send my best wishes to the team in hall 3.",
+      "With regards to the night shifts, I am flexible.",
+    ]) {
+      expect(closingOf(["Sehr geehrte Frau Albers,", sentence], "Jonas Brandt"), sentence).toBeNull();
+    }
   });
 
   it("wraps and paginates letters typed with single line breaks or a long last paragraph: nothing past the edge or the limit", () => {

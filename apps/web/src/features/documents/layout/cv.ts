@@ -122,10 +122,15 @@ function head(input: DocumentInput, options: CvOptions): { boxes: Box[]; bottom:
     bottom = Math.max(bottom, contactBottom);
   }
 
-  // The figures: three cells from columns 1, 4 and 7.
+  // The figures: three cells from columns 1, 4 and 7. They start under the rule, or under the contact
+  // rows where those stand above them: under the rule beside a photo, or top right reaching down past
+  // the rule into the columns of the figures' cells (a sparse head beside a wide block), so a figure
+  // never sits right under a contact row and reads as one more.
   if (input.stats.length > 0) {
-    const top = (block.under && rows.length > 0 ? contactBottom : ruleTop + RULE.accentWeight) + SPACE.figures;
     const figures = input.stats.slice(0, 3).map((stat) => ({ ...stat, parts: splitFigure(stat.value) }));
+    const cellsEnd = columnX(1 + (figures.length - 1) * 3) + span(1, 3);
+    const above = rows.length > 0 && (block.under || block.x < cellsEnd);
+    const top = Math.max(ruleTop + RULE.accentWeight, above ? contactBottom : 0) + SPACE.figures;
     const qualified = figures.some((figure) => figure.parts.kind === "number" && figure.parts.qualifier !== "");
     const valueTop = top + (qualified ? TYPE.figureQualifier.leading : 0);
     const numberBaseline = valueTop + baselineOffset(TYPE.figure, metrics);

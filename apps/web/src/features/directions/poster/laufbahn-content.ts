@@ -527,8 +527,41 @@ const LETTER_TITLES: Record<Locale, string[]> = {
 };
 /** How letters open and close, in the three languages. */
 const SALUTATION = /^(sehr geehrte|liebe[rs]?\b|hallo\b|guten tag|dear\b|hello\b|to whom|السيد|السيده|عزيزي|عزيزتي|حضره|تحيه)/u;
-const CLOSINGS = "mit freundlichen grüßen|freundliche grüße|viele grüße|beste grüße|hochachtungsvoll|kind regards|best regards|yours sincerely|yours faithfully|sincerely|مع خالص التحيه|مع التحيه|وتفضلوا بقبول|تحياتي";
-export const CLOSING = new RegExp(`(${CLOSINGS})`, "u");
+const GERMAN_CLOSINGS = [
+  "mit freundlichen grüßen",
+  "mit freundlichem gruß",
+  "mit besten grüßen",
+  "mit herzlichen grüßen",
+  "mit vielen grüßen",
+  "freundliche grüße",
+  "herzliche grüße",
+  "liebe grüße",
+  "viele grüße",
+  "beste grüße",
+  "freundlichen gruß",
+  "hochachtungsvoll",
+];
+const ENGLISH_CLOSINGS = [
+  "with kind regards",
+  "with best regards",
+  "kind regards",
+  "kindest regards",
+  "best regards",
+  "warm regards",
+  "warmest regards",
+  "regards",
+  "best wishes",
+  "yours sincerely",
+  "yours faithfully",
+  "yours truly",
+  "sincerely yours",
+  "sincerely",
+];
+const ARABIC_CLOSINGS = ["مع خالص التحيه", "مع التحيه", "وتفضلوا بقبول", "تحياتي"];
+/** The closings as one alternation; a German "ß" also matches the Swiss "ss" ("Mit freundlichen Grüssen"). */
+const CLOSINGS = [...GERMAN_CLOSINGS.map((closing) => closing.replaceAll("ß", "(?:ß|ss)")), ...ENGLISH_CLOSINGS, ...ARABIC_CLOSINGS].join("|");
+/** A closing anywhere in a text, as whole words ("regards", never "disregards"). */
+export const CLOSING = new RegExp(`(?<![\\p{L}])(${CLOSINGS})(?![\\p{L}])`, "u");
 /**
  * A line that is a closing and nothing else ("Mit freundlichen Grüßen", "Kind regards,"), lower case:
  * the letter's PDF sets the signature space after it. A sentence that merely holds one of the words
