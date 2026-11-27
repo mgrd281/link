@@ -39,7 +39,8 @@ const EXAMPLE_ANSWER = {
 
 describe("PagePlan v1", () => {
   it("sends a stable schema (snapshot)", () => {
-    expect(PAGE_PLAN_VERSION).toBe("plan-v4");
+    // plan-v5: one more pairing (grotesk, Laufbahn round 6), nothing else.
+    expect(PAGE_PLAN_VERSION).toBe("plan-v5");
     expect(PAGE_PLAN_JSON_SCHEMA).toMatchSnapshot();
   });
 

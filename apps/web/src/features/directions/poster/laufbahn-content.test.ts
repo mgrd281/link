@@ -35,16 +35,23 @@ import {
 } from "lucide-react";
 import { describe, expect, it } from "vitest";
 
+import { NO_IMAGE } from "@linkyo/blocks";
+
+import { MOTION_LIBRARY } from "@/features/creator/motion-library";
 import { sevagDe } from "@/features/previews/sevag";
 
 import {
   iconFor,
   isLetter,
+  isPersonPicture,
+  keepSeparators,
   LEAD_MAX,
+  lineEms,
   opensShort,
   readingMinutes,
   splitLead,
   textKind,
+  widestWord,
   wordsOf,
 } from "./laufbahn-content";
 import { paragraphs } from "./sections";
@@ -329,5 +336,43 @@ describe("text sections", () => {
     // Arabic: a full stop before an Arabic letter ends a sentence.
     const arabic = `أعمل في المستودع منذ عام ألفين وثمانية عشر وأقود الرافعة الشوكية يومياً. ${"وأحب النظام والعمل ضمن الفريق. ".repeat(6)}`;
     expect(splitLead(arabic)[0]).toBe("أعمل في المستودع منذ عام ألفين وثمانية عشر وأقود الرافعة الشوكية يومياً.");
+  });
+});
+
+describe("round 6: the dossier's head", () => {
+  const NBSP = String.fromCharCode(0xa0);
+
+  it("keeps a separator's dot at the end of a line: a non-breaking space before every ' · '", () => {
+    expect(keepSeparators("Fachkraft für Lagerlogistik · Staplerfahrer")).toBe(`Fachkraft für Lagerlogistik${NBSP}· Staplerfahrer`);
+    expect(keepSeparators("A · B · C")).toBe(`A${NBSP}· B${NBSP}· C`);
+    expect(keepSeparators("Ohne Trenner")).toBe("Ohne Trenner");
+    // Only the spaced separator: a dot inside a word or a figure stays as it is.
+    expect(keepSeparators("1·2")).toBe("1·2");
+  });
+
+  it("takes only a picture of the person as a portrait: no library still, no empty picture", () => {
+    const still = MOTION_LIBRARY[0]?.poster ?? "";
+    expect(isPersonPicture({ src: still })).toBe(false);
+    expect(isPersonPicture({ src: "sample:mila-hero" })).toBe(true);
+    expect(isPersonPicture({ src: NO_IMAGE })).toBe(false);
+    expect(isPersonPicture(undefined)).toBe(false);
+    // Sevag's About still is one of the library's drawn clips: it leaves About until he sends a photo.
+    const about = sevagDe.blocks.find((block) => block.type === "about");
+    expect(about?.type === "about" && isPersonPicture(about.portrait)).toBe(false);
+  });
+
+  it("measures figures by their digits (0.62 em), commas and points (0.3 em) and the per cent sign (0.8 em)", () => {
+    const average = 0.53;
+    expect(lineEms("2019", average)).toBeCloseTo(4 * 0.62);
+    expect(lineEms("99,6", average)).toBeCloseTo(3 * 0.62 + 0.3);
+    expect(lineEms("%", average)).toBeCloseTo(0.8);
+    // A wider face scales every class with its average.
+    expect(lineEms("2019", 0.52)).toBeCloseTo((4 * 0.62 * 0.52) / 0.53);
+  });
+
+  it("finds a name's widest word (each word may take its own line on a phone)", () => {
+    expect(widestWord("Jo Brandt", 0.52)).toBe("Brandt");
+    expect(widestWord("Maximilian Ek", 0.52)).toBe("Maximilian");
+    expect(widestWord("Lea Hartmann-Weiß", 0.52)).toBe("Hartmann-Weiß");
   });
 });

@@ -77,7 +77,7 @@ const DE: Copy = {
   note: "Ich kann kurzfristig zum Probearbeiten kommen. Sicherheitsschuhe und Warnweste bringe ich mit.",
   letter: [
     "Sehr geehrte Damen und Herren,",
-    "mit großem Interesse habe ich Ihre Anzeige für eine Fachkraft für Lagerlogistik gelesen. Seit neun Jahren arbeite ich im Lager, die letzten fünf in einem Elektrogroßhandel in Bremen. Dort nehme ich Ware an, kommissioniere mit dem Scanner und fahre Gabel- und Schubmaststapler im Schichtbetrieb.",
+    "mit großem Interesse habe ich Ihre Anzeige für eine Fachkraft für Lagerlogistik gelesen. Seit neun Jahren arbeite ich im Lager, die letzten fünf in einem Elektrogroßhandel in Bremen. Dort nehme ich Ware an, kommissioniere mit dem Scanner und fahre Gabel- und Schubmaststapler im Schichtbetrieb. Zuvor habe ich in einem Logistikzentrum gearbeitet und dort den Umgang mit Scanner und Lagerverwaltungssystem von Grund auf gelernt.",
     "Genauigkeit ist mir wichtig: 2025 lag meine Pickgenauigkeit bei 99,6 Prozent. Ich halte die Bestände in SAP EWM aktuell, packe bei Inventuren mit an und achte darauf, dass jede Ladung richtig gesichert ist.",
     "Neue Kolleginnen und Kollegen arbeite ich gern ein, und auch in vollen Wochen behalte ich den Überblick. Nachtschichten und Arbeit am Wochenende sind für mich kein Problem.",
     "Ab dem 1. März 2027 stehe ich Ihnen zur Verfügung. Über eine Einladung zu einem Gespräch oder zum Probearbeiten freue ich mich sehr.",
@@ -133,10 +133,10 @@ const EN: Copy = {
   note: "I can come in for a trial shift at short notice, with my own safety shoes and high-visibility vest.",
   letter: [
     "Dear Sir or Madam,",
-    "I read your advertisement for a warehouse logistics specialist with great interest. I have worked in warehouses for nine years, the last five at an electrical wholesaler in Bremen, where I receive goods, pick orders with a scanner and drive counterbalance forklifts and reach trucks on shifts.",
-    "Accuracy matters to me: in 2025 my picking accuracy was 99.6 per cent. I keep stock records in SAP EWM up to date, help with stocktaking and make sure every load is properly secured.",
+    "I read your advertisement for a warehouse logistics specialist with great interest. I have worked in warehouses for nine years, the last five at an electrical wholesaler in Bremen, where I receive goods, pick orders with a scanner and drive counterbalance forklifts and reach trucks on shifts. Before that I worked in a fulfilment centre, where I learned scanner work and the warehouse management system from the ground up.",
+    "Accuracy matters to me: in 2025 my picking accuracy was 99.6 per cent. I keep stock records in SAP EWM up to date, help with stocktaking and make sure every load is properly secured. Mistakes cost time and money, so I check twice before a pallet leaves the hall.",
     "I enjoy training new colleagues, and I keep track of things in busy weeks too. Night shifts and weekend work are no problem for me.",
-    "I am available from 1 March 2027 and would be glad to come in for an interview or a trial shift.",
+    "I am available from 1 March 2027 and would be glad to come in for an interview or a trial shift. Thank you for considering my application.",
     "Kind regards\nJonas Brandt",
   ].join("\n\n"),
   contact: {
@@ -189,10 +189,10 @@ const AR: Copy = {
   note: "أستطيع الحضور ليوم عمل تجريبي في وقت قصير، ومعي حذاء السلامة والسترة العاكسة.",
   letter: [
     "السادة الكرام،",
-    "قرأت إعلانكم عن وظيفة أخصائي لوجستيات مستودعات باهتمام كبير. أعمل في المستودعات منذ تسع سنوات، آخر خمس منها لدى تاجر جملة للأدوات الكهربائية في الشارقة، حيث أستلم البضائع وأنتقي الطلبات بالماسح الضوئي وأقود الرافعات الشوكية في نظام الورديات.",
-    "الدقة مهمة بالنسبة لي: في عام 2025 بلغت دقة الانتقاء لدي 99,6 بالمئة. أحدّث سجلات المخزون في نظام SAP EWM، وأشارك في الجرد، وأتأكد من تثبيت كل حمولة كما يجب.",
-    "أحب تدريب الزملاء الجدد، وأحافظ على هدوئي وتنظيمي في الأسابيع المزدحمة. ولا مانع لدي من الورديات الليلية أو العمل في عطلة نهاية الأسبوع.",
-    "أنا متاح للعمل اعتبارًا من 1 مارس 2027، ويسعدني الحضور لمقابلة شخصية أو ليوم عمل تجريبي.",
+    "قرأت إعلانكم عن وظيفة أخصائي لوجستيات مستودعات باهتمام كبير. أعمل في المستودعات منذ تسع سنوات، آخر خمس منها لدى تاجر جملة للأدوات الكهربائية في الشارقة، حيث أستلم البضائع وأنتقي الطلبات بالماسح الضوئي وأقود الرافعات الشوكية في نظام الورديات. وقبل ذلك عملت في مركز توزيع، حيث تعلمت العمل بالماسح الضوئي ونظام إدارة المستودعات من الأساس.",
+    "الدقة مهمة بالنسبة لي: في عام 2025 بلغت دقة الانتقاء لدي 99,6 بالمئة. أحدّث سجلات المخزون في نظام SAP EWM، وأشارك في الجرد، وأتأكد من تثبيت كل حمولة كما يجب. فالأخطاء تكلّف وقتًا ومالًا، لذلك أراجع كل شيء مرتين قبل أن تغادر المنصة المستودع.",
+    "أحب تدريب الزملاء الجدد، وأحافظ على هدوئي وتنظيمي في الأسابيع المزدحمة. ولا مانع لدي من الورديات الليلية أو العمل في عطلة نهاية الأسبوع، وأتعاون بسهولة مع زملاء من جنسيات مختلفة.",
+    "أنا متاح للعمل اعتبارًا من 1 مارس 2027، ويسعدني الحضور لمقابلة شخصية أو ليوم عمل تجريبي. شكرًا لاهتمامكم بطلبي.",
     "مع خالص التحية\nكريم ناصر",
   ].join("\n\n"),
   contact: {

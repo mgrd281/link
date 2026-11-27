@@ -6,7 +6,9 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
+import { documentFilename, documentLinks, letterSubject, type DocumentsView } from "@/features/documents/offer";
 import { MOTION_LIBRARY } from "@/features/creator/motion-library";
+import { applicationSample } from "@/features/previews/application-sample";
 import { PREVIEWS } from "@/features/previews/registry";
 import { SEVAG_SLUG, sevagDe } from "@/features/previews/sevag";
 import ar from "@/messages/ar.json";
@@ -18,10 +20,11 @@ import { splitLead } from "./laufbahn-content";
 import { PosterRenderer } from "./renderer";
 import { portfolioSample } from "./sample";
 
-// Laufbahn (ADR 0069) rendered to HTML in Node: Sevag's page keeps every fact of his letter, the
-// headings, the index and the app bar's contents sheet agree, facts and skills are grouped lists with
-// whole words, the page works with and without a contact block and without any picture, and Arabic
-// pages are mirrored.
+// Laufbahn (ADR 0069, round 6 "Dossier") rendered to HTML in Node: the head on ink, type first (the
+// status, the name, the role, the target line, the place, the sentence, two actions, the figures, the
+// plate), the bar on ink with the documents, the sections with hanging titles, "Unterlagen" with its
+// cards, and the closing Kontakt band on ink. Fictional pages (Jonas Brandt, Karim Nasser, the
+// portfolio sample) and Sevag's page as the repository holds it (no contact block, no private data).
 
 vi.mock("@/i18n/navigation", () => ({
   Link: ({ href, children, ...rest }: { href: string; children?: unknown }) => createElement("a", { href, ...rest }, children as never),
@@ -30,42 +33,67 @@ vi.mock("@/i18n/navigation", () => ({
 }));
 
 const MESSAGES = { de, en, ar };
+const NOW = new Date("2026-11-26T10:00:00Z");
 
-const render = (page: Page, config: CreatorThemeConfig = { template: "laufbahn" }): string =>
+/** The documents as the server's view gives them before the PDF layout lands (one page each, no miniature). */
+function documentsOf(page: Page, base: string, asOf: string | null = null): DocumentsView | null {
+  const links = documentLinks(page, base, { signposted: true, now: NOW });
+  if (!links) return null;
+  const locale = page.profile.locale === "en" ? "en" : "de";
+  const card = (kind: "cv" | "letter" | "application", href: string | null, pages: number) =>
+    href ? { kind, href, filename: documentFilename(kind, page.profile.displayName, locale).ascii, pages, miniature: null } : null;
+  const cv = card("cv", links.cv, 1);
+  const letter = card("letter", links.letter, 1);
+  const words = locale === "de" ? { subjectFor: (value: string) => `Bewerbung als ${value}`, subjectBare: "Bewerbung" } : { subjectFor: (value: string) => `Application for ${value}`, subjectBare: "Application" };
+  return {
+    cv,
+    letter,
+    application: card("application", links.application, (cv?.pages ?? 0) + (letter?.pages ?? 0)),
+    ownCv: links.ownCv ? { href: links.ownCv, label: null } : null,
+    asOf,
+    subject: letter ? letterSubject(page, words) : null,
+  };
+}
+
+const render = (page: Page, config: CreatorThemeConfig = { template: "laufbahn" }, documents: DocumentsView | null = null): string =>
   renderToStaticMarkup(
     createElement(NextIntlClientProvider, {
       locale: page.profile.locale,
       messages: MESSAGES[page.profile.locale],
       timeZone: "Europe/Berlin",
-      children: createElement(PosterRenderer, { page, theme: resolveCreatorTheme(config, { rtlScript: page.profile.locale === "ar" }) }),
+      children: createElement(PosterRenderer, { page, theme: resolveCreatorTheme(config, { rtlScript: page.profile.locale === "ar" }), documents }),
     }),
   );
 
 /** The text a visitor reads, without tags (entities decoded where the page has them). */
 const text = (markup: string): string =>
-  markup.replace(/<[^>]+>/g, "").replaceAll("&amp;", "&").replaceAll("&quot;", '"').replaceAll("&#x27;", "'").replaceAll("­", "");
+  markup
+    .replace(/<[^>]+>/g, "")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#x27;", "'")
+    .replaceAll(String.fromCharCode(0xad), "")
+    .replaceAll(String.fromCharCode(0xa0), " ");
 const count = (markup: string, pattern: RegExp): number => markup.match(pattern)?.length ?? 0;
 /** The page without its closed contents sheet (a dialog), as the document reads before it opens. */
 const page = (markup: string): string => markup.replace(/<dialog[\s\S]*?<\/dialog>/g, "");
 /** The section titles a visitor reads on the page (the h2 headings outside the sheet). */
 const headingsOf = (markup: string): string[] => [...page(markup).matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map((match) => text(match[1] ?? ""));
+const headOf = (markup: string): string => /<header data-lb-head[\s\S]*?<\/header>/.exec(markup)?.[0] ?? "";
+const barOf = (markup: string): string => /<div class="poster-bar[\s\S]*?<\/dialog>[\s\S]*?<\/div><\/div><\/div>/.exec(markup)?.[0] ?? "";
+const sheetOf = (markup: string): string => /<dialog[^>]*class="lb-sheet"[\s\S]*?<\/dialog>/.exec(markup)?.[0] ?? "";
 
+const jonas = applicationSample("de");
+const jonasDocs = documentsOf(jonas, "/de/p/jonas-brandt");
+const jonasMarkup = render(jonas, { template: "laufbahn" }, jonasDocs);
+const karim = applicationSample("ar");
+const karimMarkup = render(karim, { template: "laufbahn" }, documentsOf(karim, "/ar/p/karim-nasser"));
 const sevagTheme = PREVIEWS[SEVAG_SLUG]?.theme ?? {};
 const sevag = render(sevagDe, sevagTheme);
 const base = { visible: true, highlight: false } as const;
-/** A contact block for the fixture only: Sevag's real page has none (no phone number or e-mail is known). */
-const contact: BlockOf<"contact"> = {
-  ...base,
-  id: "contact",
-  type: "contact",
-  title: "Lassen Sie uns sprechen",
-  status: "Ab sofort verfügbar",
-  primary: { label: "Gespräch vereinbaren", url: "mailto:bewerbung@example.com", icon: "mail" },
-  links: [{ kind: "cv", url: "https://example.com/lebenslauf.pdf" }],
-};
 
 describe("the page's contents", () => {
-  it("list the titled sections only, each with its own anchor, and no letters", () => {
+  it("list the titled sections only, each with its own anchor", () => {
     const entries = signposts([
       { id: "top", title: null },
       { id: "about", title: "Über mich" },
@@ -73,281 +101,326 @@ describe("the page's contents", () => {
       { id: "a-b", title: "Drei" },
     ]);
     expect(entries.map((entry) => entry.title)).toEqual(["Über mich", "Zwei", "Drei"]);
-    expect(entries.every((entry) => !("letter" in entry))).toBe(true);
     expect(entries.map((entry) => entry.anchor)).toEqual(["section-about", "section-a-b", "section-a-b-3"]);
-    expect(new Set(entries.map((entry) => entry.anchor)).size).toBe(3);
   });
 });
 
-describe("Sevag's application page on Laufbahn", () => {
-  it("uses the template in black and grey, easy on the eyes: a soft light grey ground and black buttons", () => {
+describe("the head (round 6): type first, on ink", () => {
+  const head = headOf(jonasMarkup);
+
+  it("is one header on ink with the parts in reading order", () => {
+    expect(head).toMatch(/^<header data-lb-head="true" class="poster-hero-timeline lb-ground text-white/);
+    const order = ["Verfügbar ab 1. März 2027", "Jonas Brandt", "Fachkraft für Lagerlogistik · Staplerfahrer", "Bewerbung als Fachkraft für Lagerlogistik (m/w/d)", "Bremen", "Ich sorge dafür", "E-Mail schreiben", "Lebenslauf", "Jahre im Lager"];
+    const words = text(head);
+    const positions = order.map((part) => words.indexOf(part));
+    for (const [index, position] of positions.entries()) expect(position, order[index]).toBeGreaterThanOrEqual(0);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    expect(count(jonasMarkup, /<h1/g)).toBe(1);
+    expect(head).toMatch(/<h1 data-lb-name="true"[^>]*><bdi dir="auto">Jonas Brandt<\/bdi><\/h1>/);
+  });
+
+  it("keeps a separator's dot at the end of a line (a non-breaking space before it)", () => {
+    expect(head).toContain(`Fachkraft für Lagerlogistik${String.fromCharCode(0xa0)}· Staplerfahrer`);
+  });
+
+  it("shows the owner's own label and value as the target line, and About no longer repeats that fact", () => {
+    const target = /<p data-lb-target[\s\S]*?<\/p>/.exec(head)?.[0] ?? "";
+    expect(target).toMatch(/<span dir="auto" class="lb-ink-muted">Bewerbung als<\/span> <bdi dir="auto" class="font-semibold text-white">Fachkraft für Lagerlogistik \(m\/w\/d\)<\/bdi>/);
+    const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
+    expect(text(about)).not.toContain("Bewerbung als");
+    expect(text(about)).toContain("SprachenDeutsch, Englisch (B1)");
+  });
+
+  it("names the employer beside the target when there is one (Sevag's page)", () => {
+    const target = text(/<p data-lb-target[\s\S]*?<\/p>/.exec(sevag)?.[0] ?? "");
+    expect(target).toBe("Bewerbung als Lagerist / Töner (w/m/d) · Für Sales Center Lörrach");
+  });
+
+  it("splits each figure into qualifier, number and unit; the label comes first for screen readers", () => {
+    const figures = /<dl class="mt-10[\s\S]*?<\/dl>/.exec(head)?.[0] ?? "";
+    const cells = [...figures.matchAll(/<div class="row-span-3[^"]*">([\s\S]*?)<\/div>/g)].map((match) => match[1] ?? "");
+    expect(cells).toHaveLength(3);
+    for (const cell of cells) expect(cell.indexOf("<dt")).toBe(0);
+    // One qualifier ("seit"), so the row is kept for all three: the numbers stand level.
+    expect(count(figures, /row-start-1/g)).toBe(3);
+    expect(figures).toMatch(/<bdi dir="ltr"[^>]*><span[^>]*>99,6<\/span><span class="[^"]*calc\(var\(--figure-size\)\/2\)[^"]*">%<\/span><\/bdi>/);
+    // Sevag's "SAP" is a value in words, set at the words' size.
+    expect(headOf(sevag)).toMatch(/<dd dir="auto" class="[^"]*text-h3[^"]*">SAP<\/dd>/);
+  });
+
+  it("ends with the picture as a 3 : 2 plate from edge to edge on phones, no parallax and no veil", () => {
+    expect(head).toMatch(/data-hero-plate="true" class="relative mt-10 aspect-photo[^"]*@work:col-start-9/);
+    expect(jonasMarkup).not.toMatch(/(?<![\w-])lb-(?:parallax|veil|plate|name)\b/);
+  });
+
+  it("has no plate and no initials without a picture", () => {
+    const bare = render({ ...jonas, profile: { ...jonas.profile, hero: undefined, motion: undefined } });
+    expect(headOf(bare)).not.toContain("data-hero-plate");
+    expect(headOf(bare)).not.toContain("<img");
+    expect(headOf(bare)).toContain("pb-10");
+  });
+
+  it("drops each row the page does not fill (A.7)", () => {
+    const empty: Page = {
+      ...jonas,
+      profile: { ...jonas.profile, tagline: undefined, location: undefined, bio: "", stats: undefined },
+      blocks: jonas.blocks.filter((block) => block.type !== "about" && block.type !== "contact"),
+    };
+    const markup = headOf(render(empty));
+    expect(markup).not.toContain("bg-success");
+    expect(markup).not.toContain("data-lb-target");
+    expect(markup).not.toContain("lucide-map-pin");
+    expect(markup).not.toContain("<dl");
+    expect(text(markup)).not.toContain("Fachkraft");
+    // Without a contact block the first action is the letter.
+    expect(text(/<div data-hero-actions[\s\S]*?<\/button>/.exec(markup)?.[0] ?? "")).toContain("Anschreiben lesen");
+  });
+
+  it("offers the CV as the second action, then the owner's own CV, then Share", () => {
+    const withCv = /<div data-hero-actions[\s\S]*?<\/a><\/div>/.exec(head)?.[0] ?? "";
+    expect(withCv).toMatch(/<a href="\/de\/p\/jonas-brandt\/cv" download="Lebenslauf_Jonas_Brandt.pdf" aria-label="Lebenslauf herunterladen \(PDF, 1 Seite\)"/);
+    expect(withCv).not.toContain("Teilen");
+    const own: Page = {
+      ...jonas,
+      blocks: jonas.blocks.map((block) => (block.type === "contact" ? { ...block, links: [...(block.links ?? []), { kind: "cv" as const, url: "https://example.com/cv.pdf" }] } : block)),
+    };
+    const ownHead = headOf(render(own, { template: "laufbahn" }, documentsOf(own, "/de/p/jonas-brandt")));
+    expect(ownHead).toMatch(/<a href="https:\/\/example.com\/cv.pdf"[^>]*>[\s\S]*?Lebenslauf \(PDF\)/);
+    const none = headOf(render(jonas));
+    expect(text(/<div data-hero-actions[\s\S]*?<\/button>/.exec(none)?.[0] ?? "")).toBe("E-Mail schreibenTeilen");
+  });
+
+  it("uses the white focus ring on ink, and never the accent for the filled action", () => {
+    const actions = /<div data-hero-actions[\s\S]*?<\/a><\/div>/.exec(head)?.[0] ?? "";
+    expect(count(actions, /focus-visible:focus-ring-inverse/g)).toBe(2);
+    expect(actions).toContain("bg-white text-ink");
+    expect(actions).not.toContain("bg-creator-accent");
+  });
+});
+
+describe("the bar on ink", () => {
+  it("offers the documents as pills on the wide canvas and as one round download on phones, with one Share", () => {
+    const bar = barOf(jonasMarkup);
+    expect(bar).toMatch(/class="poster-bar lb-bar lb-ground/);
+    expect(count(bar, /aria-label="Seite teilen"/g)).toBe(1);
+    // The phone's round download hides on the wide canvas; the Share beside it shows only there.
+    expect(bar).toMatch(/<a href="\/de\/p\/jonas-brandt\/cv" download="Lebenslauf_Jonas_Brandt.pdf" aria-label="Lebenslauf herunterladen \(PDF\)" class="[^"]*@work:hidden/);
+    expect(bar).toMatch(/aria-label="Seite teilen" class="[^"]*\bhidden @work:grid/);
+    expect(count(bar, /class="hidden min-h-control-md[^"]*@work:inline-flex/g)).toBe(2);
+    expect(text(/<a [^>]*data-bar-action[\s\S]*?<\/a>/.exec(bar)?.[0] ?? "")).toBe("E-Mail schreiben");
+  });
+
+  it("has exactly one Share in every state: without documents, and in Arabic", () => {
+    for (const markup of [render(jonas), karimMarkup]) {
+      const bar = barOf(markup);
+      expect(count(bar, /<button type="button" aria-label="(Seite teilen|شارك الصفحة)"/g)).toBe(1);
+      expect(bar).not.toMatch(/\bhidden @work:grid/);
+      expect(bar).not.toMatch(/download=/);
+    }
+  });
+
+  it("lists the documents as a second group of the contents sheet, each a direct download", () => {
+    const sheet = sheetOf(jonasMarkup);
+    expect(sheet).toContain(">Unterlagen</h3>");
+    expect([...sheet.matchAll(/<a href="([^"]+)" download="([^"]+)"[^>]*aria-label="([^"]+)"/g)].map((match) => [match[1], match[2], match[3]])).toEqual([
+      ["/de/p/jonas-brandt/cv", "Lebenslauf_Jonas_Brandt.pdf", "Lebenslauf · PDF herunterladen"],
+      ["/de/p/jonas-brandt/letter", "Anschreiben_Jonas_Brandt.pdf", "Anschreiben · PDF herunterladen"],
+    ]);
+    expect(sheetOf(render(jonas))).not.toContain("Unterlagen</h3>");
+  });
+});
+
+describe("Unterlagen", () => {
+  const section = /<section id="unterlagen"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
+
+  it("is a titled section in the contents, before the Kontakt band", () => {
+    expect(headingsOf(jonasMarkup)).toEqual(["Über mich", "Kenntnisse", "Werdegang", "Gut zu wissen", "Anschreiben", "Unterlagen", "Ich freue mich auf ein Gespräch."]);
+    expect(jonasMarkup.indexOf('id="unterlagen"')).toBeLessThan(jonasMarkup.indexOf("data-lb-contact"));
+  });
+
+  it("makes each card one download link with the real page count, then both in one file and no date on a preview", () => {
+    // Each card is named by its own words (title, "PDF · A4 · 1 Seite", "Herunterladen"): no aria-label that could differ from them.
+    const cards = [...section.matchAll(/<a href="([^"]+)" download="([^"]+)" class="group grid[^"]*">([\s\S]*?)<\/a>/g)].map((match) => [match[1], match[2], text(match[3] ?? "")]);
+    expect(cards).toEqual([
+      ["/de/p/jonas-brandt/cv", "Lebenslauf_Jonas_Brandt.pdf", "LebenslaufPDF · A4 · 1 SeiteHerunterladen"],
+      ["/de/p/jonas-brandt/letter", "Anschreiben_Jonas_Brandt.pdf", "AnschreibenPDF · A4 · 1 SeiteHerunterladen"],
+    ]);
+    expect(text(section)).toContain("PDF · A4 · 1 Seite");
+    expect(section).toMatch(/<a href="\/de\/p\/jonas-brandt\/application" download="Bewerbung_Jonas_Brandt.pdf" aria-label="Beides in einer Datei · 2 Seiten: Anschreiben und Lebenslauf \(PDF\)"/);
+    expect(text(section)).not.toContain("Stand:");
+    // A blank paper (no miniature yet) is decorative.
+    expect(section).toMatch(/<span aria-hidden="true" class="relative grid aspect-a4/);
+  });
+
+  it("dates the documents on a public page by its last save", () => {
+    const markup = render(jonas, { template: "laufbahn" }, documentsOf(jonas, "/jonas-brandt", "2026-11-20T09:00:00Z"));
+    expect(text(/<section id="unterlagen"[\s\S]*?<\/section>/.exec(markup)?.[0] ?? "")).toContain("Stand: 20. November 2026");
+  });
+
+  it("shows one card at full width and no 'Beides' when only one document is offered", () => {
+    const cvOnly: Page = { ...jonas, blocks: jonas.blocks.filter((block) => block.id !== "letter") };
+    const markup = render(cvOnly, { template: "laufbahn" }, documentsOf(cvOnly, "/de/p/jonas-brandt"));
+    const documents = /<section id="unterlagen"[\s\S]*?<\/section>/.exec(markup)?.[0] ?? "";
+    expect(count(documents, /class="group grid/g)).toBe(1);
+    expect(documents).not.toContain("@work:grid-cols-2");
+    expect(documents).not.toContain("/application");
+  });
+
+  it("is absent with documents null: no section, no pills, no sheet group, no letter pill, no subject", () => {
+    const markup = render(jonas);
+    expect(markup).not.toContain('id="unterlagen"');
+    expect(markup).not.toMatch(/download=/);
+    expect(markup).not.toContain("Unterlagen");
+    expect(text(markup)).not.toContain("Bewerbung als Fachkraft für Lagerlogistik (m/w/d)Sehr geehrte");
+  });
+});
+
+describe("the letter", () => {
+  const letter = /<section id="section-letter-title"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
+
+  it("is set as a letter on white paper, with its PDF in the top line and the PDF's subject above the owner's words", () => {
+    expect(letter).toMatch(/data-lb-letter="" class="[^"]*bg-white text-ink/);
+    expect(letter).toMatch(/<a href="\/de\/p\/jonas-brandt\/letter" download="Anschreiben_Jonas_Brandt.pdf" aria-label="Anschreiben als PDF herunterladen \(1 Seite\)"/);
+    const words = text(letter);
+    expect(words.indexOf("Bewerbung als Fachkraft für Lagerlogistik (m/w/d)")).toBeLessThan(words.indexOf("Sehr geehrte Damen und Herren,"));
+    // The owner's text exactly: nothing added before the salutation or after the closing.
+    expect(words).toMatch(/Mit freundlichen Grüßen\nJonas BrandtGanzes|Mit freundlichen Grüßen\nJonas Brandt$/);
+  });
+
+  it("keeps its disclosure on phones after two paragraphs", () => {
+    const [before, details] = letter.split("<details");
+    expect(count(before ?? "", /<p dir="auto"/g)).toBe(3);
+    expect(details).toMatch(/^ class="lb-more /);
+  });
+
+  it("is the page's surface on a dark page", () => {
+    const dark = render(jonas, { template: "laufbahn", mode: "dark" }, jonasDocs);
+    expect(/<section id="section-letter-title"[\s\S]*?<\/section>/.exec(dark)?.[0]).toMatch(/data-lb-letter="" class="[^"]*bg-creator-surface text-creator-fg/);
+    // The head adds a hairline at its foot on a dark page.
+    expect(headOf(dark)).toMatch(/^<header data-lb-head="true" class="[^"]*border-b border-creator-line/);
+  });
+});
+
+describe("the career as a table", () => {
+  const career = /<section id="section-career"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
+
+  it("sets the years first, with an en dash between spaces, and tags the ongoing step", () => {
+    expect(text(career)).toContain("2021 – heuteaktuellLagerfachkraft");
+    expect(text(career)).toContain("2017 – 2021Lagerhelfer");
+    expect(text(career)).toContain("2019Staplerschein");
+    expect(count(career, />aktuell</g)).toBe(1);
+  });
+
+  it("puts every step beside one rail with a dot (filled for the ongoing one), no icon nodes", () => {
+    expect(count(career, /class="lb-step /g)).toBe(4);
+    expect(count(career, /size-dot rounded-full[^"]*bg-creator-accent"/g)).toBe(1);
+    expect(career).not.toMatch(/lucide-(briefcase|id-card)/);
+  });
+});
+
+describe("About", () => {
+  it("shows the facts on one soft sheet, two to a row, a long fact across the row", () => {
+    const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
+    expect(about).toMatch(/<dl class="grid min-w-0 grid-cols-2 [^"]*rounded-creator-card bg-creator-surface [^"]*@work:grid-cols-4/);
+    expect(about).toMatch(/<div class="grid min-w-0 grid-cols-1 content-start gap-1 col-span-2"><dt[^>]*>Sprachen/);
+    expect(about).toMatch(/<div class="grid min-w-0 grid-cols-1 content-start gap-1"><dt[^>]*>Führerschein/);
+  });
+
+  it("never shows a drawn still as the person's portrait (Sevag's placeholder leaves About)", () => {
+    const block = sevagDe.blocks.find((entry): entry is BlockOf<"about"> => entry.type === "about");
+    const clip = MOTION_LIBRARY.find((entry) => entry.poster === block?.portrait?.src);
+    expect(clip?.kind).toBe("illustration");
+    const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
+    expect(about).not.toContain("data-about-portrait");
+    expect(about).not.toContain(`alt="${clip?.alt.de ?? "?"}"`);
+    // The facts the head does not show stay, on the sheet.
+    expect(text(about)).toContain("Staplervor allem Seitenschubstapler");
+    expect(text(about)).not.toContain("Sales Center Lörrach");
+  });
+
+  it("keeps the Werkbogen layout with a real portrait (the portfolio sample)", () => {
+    const markup = render(portfolioSample("de"));
+    expect(markup).toContain("data-about-portrait");
+  });
+});
+
+describe("Sevag's application page on Laufbahn (no contact block in the repository)", () => {
+  it("uses the template in black and grey, now in the grotesk pairing", () => {
     expect(sevagTheme).toEqual({ template: "laufbahn", mode: "light", accent: creatorTokens.swatches.ink, tint: 0 });
     const theme = resolveCreatorTheme(sevagTheme);
     expect(theme.layout.hero).toBe("bleed");
-    expect({ mode: theme.palette.mode, bg: theme.palette.bg, accent: theme.palette.accent, accentFg: theme.palette.accentFg }).toEqual({ mode: "light", bg: "#F6F6F6", accent: "#111111", accentFg: "#FFFFFF" });
+    expect(theme.pairing.id).toBe("grotesk");
   });
 
   it("keeps every fact of the page and adds none", () => {
     const words = text(sevag);
     const profile = sevagDe.profile;
-    for (const fact of [profile.displayName.split(" ")[0], profile.tagline, profile.bio, ...(profile.stats ?? []).flatMap((stat) => [stat.value, stat.label])]) expect(words).toContain(fact);
+    for (const fact of [profile.displayName, profile.tagline, profile.bio, ...(profile.stats ?? []).flatMap((stat) => [stat.label])]) expect(words).toContain(fact);
     for (const block of sevagDe.blocks) {
       if (block.type === "about") {
-        // A long first paragraph leads with its first sentence; the rest of it follows the facts (splitLead drops nothing).
         for (const part of block.text.split("\n\n").flatMap((paragraph) => splitLead(paragraph))) if (part) expect(words).toContain(part);
-        for (const fact of block.facts ?? []) expect(words).toContain(`${fact.label}${fact.value}`);
+        for (const fact of block.facts ?? []) expect(words.includes(`${fact.label}${fact.value}`) || words.includes(`${fact.label} ${fact.value}`), fact.label).toBe(true);
       }
       if (block.type === "tools") for (const item of block.items) expect(words).toContain(item);
-      if (block.type === "timeline") for (const item of block.items) expect(words).toContain(`${item.role}${item.note ?? ""}`);
+      if (block.type === "timeline") for (const item of block.items) expect(words).toContain(`${item.role}${item.org ?? ""}`);
       if (block.type === "header") expect(words).toContain(block.title);
       if (block.type === "text") for (const part of block.text.split("\n\n")) expect(words).toContain(part);
     }
-    // Both steps are still going on: "heute", in tabular figures, with the en dash every template uses.
-    expect(count(sevag, /2021–heute|2018–heute/g)).toBe(2);
   });
 
-  it("names him in one heading, on one line, with his role right under it and no initials in the hero", () => {
-    expect(count(sevag, /<h1/g)).toBe(1);
-    expect(sevag).toMatch(/<h1[^>]*><bdi dir="auto">Sevag Ghazarian<\/bdi><\/h1>/);
-    // The role follows the name as a plain line (no chip); the initials only in the compact bar.
-    expect(sevag).toMatch(/<\/h1><\/div><p class="[^"]*text-body[^"]*"[^>]*><span dir="auto"[^>]*>Lagerist · Staplerfahrer mit Flurförderzeugschein<\/span><\/p>/);
-    expect(sevag).not.toContain("lb-chip");
-    // The reach-truck illustration is the large picture, with its description.
-    expect(sevag).toContain('alt="Illustration: Ein Lagerist scannt jeden Karton mit dem Handscanner, die EAN erscheint; er packt die Palette und sichert sie mit Stretchfolie"');
-  });
-
-  it("asks for the picture as wide as it is drawn: a 4:5 picture covers the tall plate", () => {
-    // Phones: 4/5 of a plate 1.56 times as tall as the screen is wide (125 %); the wide canvas: the 560 px plate.
-    expect(sevag).toContain('sizes="(max-width: 1119px) 125vw, 560px"');
-  });
-
-  it("sets the white words on a veil tied to them, and caps the name by the screen's height", () => {
-    expect(sevag).toMatch(/class="relative [^"]*lb-veil text-white @work:text-creator-fg @work:before:hidden"/);
-    expect(sevag).toMatch(/<h1 [^>]*class="[^"]*\blb-name\b/);
-    expect(sevag).not.toContain("lb-scrim");
-  });
-
-  it("titles its five sections plainly (no letters) and lists them as contents: the app bar's sheet and an index", () => {
-    const titles = ["Über mich", "Was ich mitbringe", "Werdegang", "Neu für mich: das Tönen", "Anschreiben"];
-    // The index beside the sections (tablets and wider): words only.
-    const nav = /<nav aria-label="Abschnitte" class="([^"]*)"[\s\S]*?<\/nav>/.exec(sevag);
-    expect(text(nav?.[0] ?? "")).toBe(titles.join(""));
-    // Phones have no row of chips: the index is hidden there, the app bar carries the contents.
-    expect(nav?.[1]).toMatch(/^hidden\b[^"]*@prose:block/);
-    const targets = [...(nav?.[0] ?? "").matchAll(/href="#([^"]+)"/g)].map((match) => match[1]);
-    expect(targets).toHaveLength(5);
-    for (const target of targets) expect(sevag).toContain(`<section id="${target ?? ""}"`);
-    // Each section's title is its h2, nothing beside it.
-    expect(headingsOf(sevag)).toEqual(titles);
-    expect(sevag).not.toMatch(/>[A-E]<\/span><h2|bg-creator-accent[^"]*">[A-E]</);
-    // The app bar's title opens the contents as a modal sheet that lists the same sections, in order.
-    const bar = /<div class="poster-bar[^"]*"[\s\S]*?<\/dialog>/.exec(sevag)?.[0] ?? "";
-    expect(bar).toMatch(/<button type="button" aria-haspopup="dialog"[^>]*>[\s\S]*?Sevag Ghazarian[\s\S]*?Inhalt öffnen<\/span><\/button>/);
-    const sheet = /<dialog[^>]*class="lb-sheet"[\s\S]*?<\/dialog>/.exec(bar)?.[0] ?? "";
-    expect(sheet).toMatch(/aria-labelledby="([^"]+)"[\s\S]*<h2 id="\1"[^>]*>Inhalt<\/h2>/);
-    expect([...sheet.matchAll(/<a href="#([^"]+)"/g)].map((match) => match[1])).toEqual(targets);
-    expect(sheet).toContain('aria-label="Schließen"');
-    // The bar is solid, shows once the large name has passed under it (BarReveal watches the name),
-    // has no reading line and a soft round share button.
-    expect(bar).toMatch(/class="poster-bar [^"]*lb-bar bg-creator-bg"/);
-    expect(sevag).not.toContain("lb-progress");
-    expect(sevag).toMatch(/<h1 data-lb-name="true"/);
-    expect(sevag).toMatch(/<\/dialog><button type="button" aria-label="Seite teilen" class="[^"]*rounded-full[^"]*bg-creator-surface-2/);
-  });
-
-  it("without a contact block: the hero leads to his cover letter, with 'Teilen' beside it", () => {
-    // Nothing is promoted in the compact bar (it has no contact action to repeat).
+  it("without a contact block: no ink band, the hero leads to the letter, 'Teilen' beside it", () => {
+    expect(sevag).not.toContain("data-lb-contact");
     expect(sevag).not.toContain("data-bar-action");
     const actions = /<div data-hero-actions[\s\S]*?<\/button>/.exec(sevag)?.[0] ?? "";
-    const lead = /<a href="#section-letter-title"[^>]*>[\s\S]*?<\/a>/.exec(actions)?.[0] ?? "";
-    expect(text(lead)).toBe("Anschreiben lesen");
-    // One filled button (the first action) and the share button in a soft grey fill (no outline), both 48 px pills.
-    expect(lead).toMatch(/bg-creator-accent[^"]*text-creator-accent-fg/);
-    const share = /<button[^>]*>[\s\S]*?<\/button>/.exec(actions)?.[0] ?? "";
-    // Its visible label is its name, and stays "Teilen" while the address is copied (WCAG 2.5.3).
-    expect(share).not.toContain("aria-label");
-    expect(text(share)).toBe("Teilen");
-    expect(share).toContain("bg-creator-surface-2");
-    expect(share).not.toMatch(/\bborder\b/);
-    for (const control of [lead, share]) expect(control).toMatch(/min-h-control-lg[^"]*rounded-creator-button|rounded-creator-button[^"]*min-h-control-lg/);
-    expect(count(/<header[\s\S]*?<\/header>/.exec(sevag)?.[0] ?? "", /<a [^>]*bg-creator-accent/g)).toBe(1);
-    // A polite live region announces the copied link where the page has no share sheet.
-    expect(sevag).toMatch(/<span role="status" class="sr-only"><\/span>/);
+    expect(text(/<a href="#section-letter-title"[^>]*>[\s\S]*?<\/a>/.exec(actions)?.[0] ?? "")).toBe("Anschreiben lesen");
+    expect(text(actions)).toContain("Teilen");
   });
 
-  it("sets the letter as a reading tile with its reading time: two paragraphs, then the rest behind a native disclosure", () => {
-    const letter = sevagDe.blocks.find((block): block is BlockOf<"text"> => block.type === "text" && block.id === "letter");
-    const paragraphs = letter?.text.split("\n\n") ?? [];
-    expect(paragraphs).toHaveLength(7);
-    expect(sevag).toContain("1 Min. Lesezeit");
-    // The signature keeps its line break.
-    expect(sevag).toMatch(/whitespace-pre-line[^"]*">Mit freundlichen Grüßen\nSevag Ghazarian<\/p>/);
-    const section = /<section id="section-letter-title"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
-    const [before, details] = section.split("<details");
-    expect(count(before ?? "", /<p dir="auto"/g)).toBe(2);
-    expect(details).toMatch(/^ class="lb-more /);
-    // Its label says what opens ("Weniger anzeigen" shows once it is open).
-    expect(text(/<summary[\s\S]*?<\/summary>/.exec(details ?? "")?.[0] ?? "")).toBe("Ganzes Anschreiben lesenWeniger anzeigen");
-    expect(count(details ?? "", /<p dir="auto"/g)).toBe(5);
-    // The short text about toning is a note (a callout with its icon), not a reading tile.
-    expect(count(sevag, /Lesezeit/g)).toBe(1);
-    const toning = /<section id="section-toning-title"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
-    expect(toning).toContain("lb-soft");
-    expect(toning).toContain("lucide-paint-bucket");
-    expect(toning).not.toContain("<details");
+  it("is flat and unlined: no shadow, no underline", () => {
+    for (const markup of [sevag, jonasMarkup, karimMarkup]) expect(markup).not.toMatch(/\b(?:shadow-(?!none)|drop-shadow|underline|decoration-)/);
   });
+});
 
-  it("lists the skills on one soft sheet without lines: one a row on phones, an icon and the whole label, nothing that looks pressable", () => {
-    const skills = /<section id="section-skills"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
-    const list = /<ul class="([^"]*)"/.exec(skills)?.[1] ?? "";
-    // One sheet in the surface colour (a step in the fill): no frame, no rules between the rows.
-    expect(list).toMatch(/^grid min-w-0 grid-cols-1 [^"]*rounded-creator-card bg-creator-surface [^"]*@prose:grid-cols-2/);
-    expect(list).not.toMatch(/\bborder\b|\bgap-px\b|bg-creator-line/);
-    const rows = [...skills.matchAll(/<li class="([^"]*)"[^>]*>([\s\S]*?)<\/li>/g)];
-    const items = sevagDe.blocks.find((block): block is BlockOf<"tools"> => block.type === "tools")?.items ?? [];
-    expect(rows.map(([, , inner]) => text(inner ?? ""))).toEqual(items);
-    for (const [, classes, inner] of rows) {
-      expect(inner).toMatch(/^<svg[^>]*class="lucide lucide-/);
-      // A row of the list: no frame or rule of its own, no hover, at least 48 px.
-      expect(classes).toMatch(/\bflex\b[^"]*\bmin-h-control-lg\b/);
-      expect(classes).not.toMatch(/\bborder|hover:/);
+describe("the Kontakt band on ink", () => {
+  const band = /<div data-block="contact" data-lb-contact[\s\S]*?<\/footer><\/div>/.exec(jonasMarkup)?.[0] ?? "";
+
+  it("closes the page with the status, the title, the primary action and the rows, the footer inside", () => {
+    expect(band).toMatch(/class="lb-ground text-white"/);
+    const words = text(band);
+    for (const part of ["Verfügbar ab 1. März 2027", "Ich freue mich auf ein Gespräch.", "E-Mail schreiben", "E-Mail", "jonas.brandt@example.com", "Telefon", "+493023125457", "Lebenslauf · PDF", "Anschreiben · PDF", "Seite teilen", "Impressum"]) {
+      expect(words, part).toContain(part);
     }
-    // Whole words: no soft hyphens put in, no automatic hyphenation, never numbered.
-    expect(skills).not.toContain("\u00AD");
-    expect(skills).not.toContain("hyphens-auto");
-    expect(skills).toContain("hyphens-manual");
-    expect(skills).not.toMatch(/>0\d</);
-  });
-
-  it("sets '\u00DCber mich' as Werkbogen does: the lead, then a drawn placeholder portrait beside the facts, then the rest", () => {
-    const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
-    // The placeholder until his own photo: a drawn still of the library, never his header's own clip.
-    const block = sevagDe.blocks.find((entry): entry is BlockOf<"about"> => entry.type === "about");
-    const clip = MOTION_LIBRARY.find((entry) => entry.poster === block?.portrait?.src);
-    expect(clip?.key).toBe("ware-scannen");
-    expect(clip?.kind).toBe("illustration");
-    expect(block?.portrait).toMatchObject({ alt: clip?.alt.de, w: clip?.w, h: clip?.h });
-    expect(block?.portrait?.alt).toMatch(/^Illustration: /);
-    expect(block?.portrait?.src).not.toBe(sevagDe.profile.hero?.src);
-    expect(about).toContain(`alt="${clip?.alt.de ?? "?"}"`);
-    // Lead, portrait row, rest: in this order.
-    const lead = about.indexOf("In meiner aktuellen Position");
-    const row = about.indexOf("data-about-portrait");
-    const restAt = about.indexOf("Das sichere Ein- und Auslagern");
-    expect(lead).toBeGreaterThan(0);
-    expect(row).toBeGreaterThan(lead);
-    expect(restAt).toBeGreaterThan(row);
-    // The facts in the same row as the portrait, beside it (no breakpoint: phones too), each row under a hairline.
-    expect(about).toMatch(/data-about-portrait="true" class="grid min-w-0 grid-cols-5 /);
-    const facts = /<dl class="([^"]*)"[\s\S]*?<\/dl>/.exec(about);
-    expect(facts?.[1]).toMatch(/^col-span-3 grid min-w-0 grid-cols-1/);
-    expect(facts?.[1]).not.toContain("bg-creator-surface");
-    expect(count(facts?.[0] ?? "", /border-t border-creator-line/g)).toBe(4);
-    expect(facts?.[0]).not.toContain("\u00AD");
-    expect(text(facts?.[0] ?? "")).toContain("vor allem Seitenschubstapler");
-  });
-
-  it("keeps the facts on one soft sheet without lines when '\u00DCber mich' has no portrait, and the timeline's licence on its node", () => {
-    const bare: Page = { ...sevagDe, blocks: sevagDe.blocks.map((block) => (block.type === "about" ? { ...block, portrait: undefined } : block)) };
-    const facts = /<dl class="([^"]*)"[\s\S]*?<\/dl>/.exec(/<section id="section-about"[\s\S]*?<\/section>/.exec(render(bare, sevagTheme))?.[0] ?? "");
-    expect(facts?.[1]).toMatch(/^grid min-w-0 grid-cols-1 [^"]*rounded-creator-card bg-creator-surface [^"]*@prose:grid-cols-2/);
-    expect(facts?.[0]).not.toMatch(/\bborder|\bgap-px\b|bg-creator-line/);
-    expect(facts?.[0]).not.toContain("\u00AD");
-    expect(text(facts?.[0] ?? "")).toContain("vor allem Seitenschubstapler");
-    const timeline = /<section id="section-path"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
-    expect([...timeline.matchAll(/class="lucide lucide-([a-z-]+)/g)].map((match) => match[1])).toEqual(["id-card", "briefcase"]);
-  });
-
-  it("is flat and unlined: no shadow, no underline, no rule above the sections or between the hero's numbers", () => {
-    expect(sevag).not.toMatch(/\b(?:shadow-(?!none)|drop-shadow|underline|decoration-)/);
-    for (const section of sevag.match(/<section id="[^"]*"[^>]*class="[^"]*"/g) ?? []) expect(section).not.toMatch(/\bborder-t\b/);
-    const numbers = /<header[\s\S]*?<\/header>/.exec(sevag)?.[0].match(/<dl class="[^"]*"[\s\S]*?<\/dl>/)?.[0] ?? "";
-    expect(numbers).toContain("seit 2018");
-    expect(numbers).not.toMatch(/\bborder/);
-    // One soft sheet for the three numbers; no hyphen is ever put into a label.
-    expect(numbers).toMatch(/^<dl class="[^"]*rounded-creator-card bg-creator-surface/);
-    expect(numbers).not.toContain("hyphens-auto");
-  });
-});
-
-describe("the same page once a contact block is added (fixture only)", () => {
-  const withContact: Page = { ...sevagDe, blocks: [...sevagDe.blocks, contact] };
-  const markup = render(withContact, sevagTheme);
-
-  it("puts the contact block's primary action first in the hero, 'Teilen' beside it and the CV below, quietly", () => {
-    const row = /<div data-hero-actions[\s\S]*?Lebenslauf \(PDF\)<\/span><\/a>/.exec(markup)?.[0] ?? "";
-    expect(text(row)).toBe("Ab sofort verfügbarGespräch vereinbarenTeilenLebenslauf (PDF)");
-    expect(row).toContain('href="mailto:bewerbung@example.com"');
-    // The letter is no longer the first action: the contact block's is.
-    expect(row).not.toContain('href="#section-letter-title"');
-    // Exactly one filled button in the hero.
-    const hero = /<header[\s\S]*?<\/header>/.exec(markup)?.[0] ?? "";
-    expect(count(hero, /<a [^>]*bg-creator-accent/g)).toBe(1);
-    // The compact bar says the same words; the band closes the page under its own heading.
-    expect(text(/<a [^>]*data-bar-action[\s\S]*?<\/a>/.exec(markup)?.[0] ?? "")).toBe("Gespräch vereinbaren");
-    expect(markup).toMatch(/<h2[^>]*>Lassen Sie uns sprechen<\/h2>/);
-    // The band is no titled section: the index keeps its five entries.
-    expect(count(/<nav aria-label="Abschnitte"[\s\S]*?<\/nav>/.exec(markup)?.[0] ?? "", /<li/g)).toBe(5);
-  });
-});
-
-describe("without any picture", () => {
-  const bare: Page = {
-    ...sevagDe,
-    profile: { ...sevagDe.profile, hero: undefined },
-    blocks: sevagDe.blocks.map((block) => (block.type === "about" ? { ...block, portrait: undefined } : block)),
-  };
-  const markup = render(bare);
-
-  it("fills the picture's place with the accent and the initials, never an empty box", () => {
-    expect(markup).toMatch(/data-hero-plate="true" class="[^"]*bg-creator-accent[^"]*"><span aria-hidden="true"[^>]*>SG<\/span>/);
-    expect(markup).not.toContain("lb-veil");
-    expect(markup).not.toContain("<img");
-    // The name reads in the accent's own text color over the field.
-    expect(markup).toMatch(/text-creator-accent-fg @work:text-creator-fg/);
-  });
-});
-
-describe("other blocks in the signposted frame", () => {
-  it("keeps the content of every template: the same section titles as Tiefdruck on the portfolio sample", () => {
-    const page = portfolioSample("de");
-    const titles = (markup: string) => headingsOf(markup).map((title) => title.replace(/^\d{2}/, ""));
-    const laufbahn = render(page);
-    expect(titles(laufbahn)).toEqual(titles(render(page, { template: "tiefdruck" })));
-    // Projects keep their cards (each one the anchor the way back from its page lands on).
-    for (const slug of ["hafenlicht", "stadtbad", "termine"]) expect(laufbahn).toContain(`id="${slug}"`);
-  });
-
-  it("changes nothing for any other template", () => {
-    for (const template of ["nocturne", "werkbogen", "tiefdruck", "studio"] as const) {
-      const markup = render(sevagDe, { template });
-      expect(markup, template).not.toMatch(/lb-(?:plate|scrim|veil|name|ground|section|soft|more|step|reveal|zoom|sheet|bar|progress)/);
-      expect(markup, template).not.toContain("<dialog");
-      expect(markup, template).not.toContain('aria-label="Abschnitte"');
-    }
+    expect(band).toMatch(/<footer class="text-caption lb-ink-muted/);
+    expect(count(band, /focus-visible:focus-ring-inverse/g)).toBeGreaterThanOrEqual(6);
+    // The footer stays the page's contentinfo: it is not inside the band's section.
+    expect(band).toMatch(/<\/section><footer/);
   });
 });
 
 describe("Arabic pages", () => {
-  const page = portfolioSample("ar");
-  const markup = render(page);
-
-  it("are right to left, with their contents in Arabic and the Arabic word for 'until now'", () => {
-    expect(markup).toContain('<div lang="ar" dir="rtl"');
-    const nav = /<nav aria-label="الأقسام"[\s\S]*?<\/nav>/.exec(markup)?.[0] ?? "";
-    expect(count(nav, /<li/g)).toBe(6);
-    expect(markup).toMatch(/<h2 id="[^"]+"[^>]*>المحتويات<\/h2>/);
-    expect(markup).toContain('aria-label="إغلاق"');
-    expect(markup).toContain("حتى الآن");
-  });
-
-  it("keep a figure such as 40+ left to right", () => {
-    expect(markup).toMatch(/<dd dir="ltr"[^>]*>40\+<\/dd>/);
+  it("are right to left, offer no documents and keep 'منذ' over its number", () => {
+    expect(karimMarkup).toContain('<div lang="ar" dir="rtl"');
+    expect(karimMarkup).not.toMatch(/download=|\/cv"|\/letter"|\/application"/);
+    expect(karimMarkup).not.toContain('id="unterlagen"');
+    expect(text(/<div data-hero-actions[\s\S]*?<\/button>/.exec(headOf(karimMarkup))?.[0] ?? "")).toContain("مشاركة");
+    expect(headOf(karimMarkup)).toMatch(/<dd dir="auto" class="[^"]*row-start-1[^"]*">منذ<\/dd>/);
+    expect(text(/<p data-lb-target[\s\S]*?<\/p>/.exec(karimMarkup)?.[0] ?? "")).toBe("التقديم على أخصائي لوجستيات مستودعات");
   });
 
   it("never track or capitalise Arabic display text", () => {
     expect(resolveCreatorTheme({ template: "laufbahn" }, { rtlScript: true }).cssVars["--creator-display-tracking"]).toBe("0em");
-    expect(markup).not.toMatch(/class="[^"]*\buppercase\b[^"]*"[^>]*>[^<]*\p{Script=Arabic}/u);
+    expect(karimMarkup).not.toMatch(/class="[^"]*\buppercase\b[^"]*"[^>]*>[^<]*\p{Script=Arabic}/u);
+  });
+});
+
+describe("other templates", () => {
+  it("change nothing", () => {
+    for (const template of ["nocturne", "werkbogen", "tiefdruck", "studio"] as const) {
+      const markup = render(jonas, { template }, jonasDocs);
+      expect(markup, template).not.toMatch(/lb-(?:ground|section|soft|more|step|sheet|bar|ink-muted)|focus-ring-inverse|data-lb-head|data-lb-contact/);
+      expect(markup, template).not.toContain("<dialog");
+      expect(markup, template).not.toMatch(/download=/);
+    }
   });
 });
 
@@ -359,57 +432,19 @@ const mixed: Block[] = [
 ];
 
 describe("a page whose first blocks have no title", () => {
-  it("shows them before the first titled section, without a heading of their own", () => {
+  it("shows them before the first titled section; 'Weiterlesen' leads to the start of the content", () => {
     const markup = render({ ...sevagDe, blocks: mixed });
     expect(markup).toMatch(/Kurz und gut\.[\s\S]*<section id="section-links"/);
-    // One titled section: no index for a single entry. "Weiterlesen" leads to the start of the
-    // content, so the untitled text before the first signpost is not skipped.
     expect(markup).not.toContain('aria-label="Abschnitte"');
     expect(markup).toMatch(/<a href="#page-content"[^>]*>[\s\S]*?Weiterlesen/);
     expect(markup).toContain('<main id="page-content"');
-    expect(markup).not.toContain("Weiterlesen: Links");
-    // Without an index the sections stand in the first eight columns, under the hero's words.
-    expect(markup).toContain("@work:col-start-1");
-    expect(markup).not.toContain("@work:col-start-5");
-  });
-
-  it("a plain link page (no title at all) has no index and keeps its content under the hero's words", () => {
-    const markup = render({ ...sevagDe, blocks: [{ ...base, id: "site", type: "link", title: "Website", url: "https://example.com" }] });
-    expect(markup).not.toContain('aria-label="Abschnitte"');
-    expect(markup).not.toContain("@work:col-start-5");
-    // Nothing to read on to: no "Weiterlesen".
-    expect(markup).not.toContain("Weiterlesen");
   });
 });
 
 describe("motion", () => {
-  it("nothing in the content moves as the page scrolls: no rising sections, rows or steps, no zooming picture", () => {
-    const blocks: Block[] = [
-      { ...base, id: "skills", type: "header", title: "Können" },
-      { ...base, id: "note", type: "text", text: "Was ich am liebsten tue." },
-      { ...base, id: "tools", type: "tools", items: ["Stapler", "SAP"] },
-    ];
-    for (const markup of [sevag, render({ ...sevagDe, blocks })]) {
-      expect(markup).not.toMatch(/\blb-(?:reveal|zoom|progress)\b/);
-      expect(markup).not.toMatch(/\bposter-reveal\b/);
-    }
-  });
-
-  it("the header's picture and clip drift a little slower than the page, as an app's header does", () => {
-    const plate = /<div data-hero-plate="true"[^>]*>([\s\S]*?)<\/div>/.exec(sevag)?.[1] ?? "";
-    expect(plate).toMatch(/^<div class="lb-parallax absolute/);
-    expect(plate).toContain("<video");
-  });
-});
-
-describe("a portrait as the only picture (no separate hero picture)", () => {
-  const markup = render(portfolioSample("en"));
-
-  it("rides high in a square on phones and fades into an ink ground, so the words stand below the face", () => {
-    expect(markup).toMatch(/data-hero-plate="true" class="[^"]*lb-ground @work:bg-creator-surface-2/);
-    expect(markup).toContain("absolute inset-x-0 top-0 aspect-square mask-b-from-60% mask-b-to-100% @work:inset-0 @work:aspect-auto @work:mask-none");
-    // The role line follows the name, with no portrait or initials beside it.
-    expect(markup).toMatch(/<\/h1><\/div><p class="[^"]*text-body[^"]*"[^>]*><span dir="auto"/);
+  it("nothing in the content moves as the page scrolls but the career's rail; the head rises in once", () => {
+    expect(jonasMarkup).not.toMatch(/\blb-(?:reveal|zoom|progress|parallax)\b|\bposter-reveal\b/);
+    expect(count(headOf(jonasMarkup), /poster-rise/g)).toBeGreaterThanOrEqual(5);
   });
 });
 
@@ -420,60 +455,27 @@ describe("'About' with a portrait (fictional owner)", () => {
         block: { ...base, id: "about", type: "about", title: "Über mich", text: words, ...(portrait ? { portrait } : {}), facts: facts.map(([label, value]) => ({ label, value })) },
       }),
     );
-  const lead = "Ich baue seit zwölf Jahren Bühnen für kleine Theater im Allgäu und in Oberschwaben.";
-  const words = `${lead} Am liebsten mit Holz.\n\nIn der Werkstatt bin ich jeden Morgen um sieben.`;
-  // A first paragraph longer than a lead: it leads with its first sentence, the rest opens the body.
-  const more = "Am liebsten mit Holz, mit Stahl und mit Stoff, und am allerliebsten dann, wenn am Abend der Vorhang aufgeht und keiner mehr an die Bühne denkt.";
-  const long = `${lead} ${more}\n\nIn der Werkstatt bin ich jeden Morgen um sieben.`;
   const facts: [string, string][] = [
     ["Wohnort", "Kempten"],
     ["Sprachen", "Deutsch, Englisch"],
   ];
-  const german = about({ src: "sample:mila-hero", alt: "Ines Beispiel im Porträt", focal: [0.5, 0.3] }, long, facts);
-  const arabic = about({ src: "sample:nour-hero", alt: "صورة شخصية لنور حداد" }, "أصمم المسارح الصغيرة منذ اثني عشر عاماً.\n\nأعمل في الورشة كل صباح.", [["المدينة", "بيروت"]]);
 
-  it("leads with the first paragraph, then the portrait on two of five columns at the start, the facts on three beside it, then the rest", () => {
-    const parts =
-      /^<div class="grid min-w-0 gap-6 @prose:gap-8"><p[^>]*>([\s\S]*?)<\/p><div data-about-portrait="true" class="([^"]*)"><div class="([^"]*)">(<img[^>]*>)[\s\S]*?<\/div><dl class="([^"]*)">([\s\S]*?)<\/dl><\/div><div class="grid max-w-prose gap-4">([\s\S]*?)<\/div><\/div>$/.exec(
-        german,
-      );
-    expect(parts).not.toBeNull();
-    const [, first, row, frame, image, list, rows, rest] = parts ?? [];
-    expect(first).toBe(lead);
-    // Side by side at every width from 320 px up: the row has no breakpoint before its five columns.
-    expect(row).toBe("grid min-w-0 grid-cols-5 items-start gap-x-4 @prose:gap-x-6");
-    expect(frame).toBe("relative col-span-2 aspect-portrait overflow-hidden rounded-creator-card bg-creator-surface-2");
-    expect(image).toContain('alt="Ines Beispiel im Porträt"');
-    expect(list).toBe("col-span-3 grid min-w-0 grid-cols-1 content-start");
-    // Each fact under a hairline: the label quiet over its value, in bold.
-    const items = [...(rows ?? "").matchAll(/<div class="([^"]*)"><dt[^>]*class="([^"]*)"[^>]*>([^<]*)<\/dt><dd[^>]*class="([^"]*)"[^>]*>([^<]*)<\/dd><\/div>/g)];
-    expect(items.map((item) => [item[3], item[5]])).toEqual(facts);
-    for (const [, item, label, , value] of items) {
-      expect(item).toContain("border-t border-creator-line");
-      expect(label).toContain("text-creator-fg-muted");
-      expect(value).toContain("font-semibold");
-      expect(value).toContain("hyphens-manual");
-    }
-    expect(text(rest ?? "")).toBe(`${more}In der Werkstatt bin ich jeden Morgen um sieben.`);
+  it("sets a real portrait beside the facts, and a library still never", () => {
+    const real = about({ src: "sample:mila-hero", alt: "Ines Beispiel im Porträt" }, "Ich baue Bühnen.", facts);
+    expect(real).toContain("data-about-portrait");
+    const still = MOTION_LIBRARY[0]?.poster ?? "";
+    const drawn = about({ src: still, alt: "Illustration" }, "Ich baue Bühnen.", facts);
+    expect(drawn).not.toContain("data-about-portrait");
+    expect(drawn).not.toContain("<img");
   });
 
-  it("mirrors in Arabic by the page's direction alone (logical order, no physical sides), flat and unlined", () => {
-    // The portrait comes first in the reading order, so it stands at the start: on the right in Arabic.
-    expect(arabic.indexOf("<img")).toBeGreaterThan(0);
-    expect(arabic.indexOf("<img")).toBeLessThan(arabic.indexOf("<dl"));
-    expect(arabic).toContain('alt="صورة شخصية لنور حداد"');
-    for (const markup of [german, arabic]) {
-      expect(markup).not.toMatch(/\b(?:left|right|ml|mr|pl|pr|text-left|text-right|float)-/);
-      expect(markup).not.toMatch(/\b(?:shadow-(?!none)|drop-shadow|underline|decoration-)/);
-      expect(markup).not.toMatch(/\banimate-|\blb-(?:reveal|zoom)\b/);
-    }
-  });
-
-  it("keeps today's layout exactly without a portrait: the lead, the facts on one soft sheet, the rest", () => {
-    const markup = about(undefined, words, facts);
-    expect(markup).not.toContain("data-about-portrait");
-    expect(markup).not.toContain("<img");
-    // Recorded from the renderer before the portrait layout existed.
-    expect(markup).toMatchInlineSnapshot(`"<div class="grid min-w-0 gap-6 @prose:gap-8"><div class="grid min-w-0 items-start gap-6"><p dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] max-w-prose text-title leading-normal font-medium text-pretty whitespace-pre-line text-creator-fg rtl:tracking-normal @prose:text-h3 @prose:leading-snug @work:text-h2 @prose:rtl:leading-normal">Ich baue seit zwölf Jahren Bühnen für kleine Theater im Allgäu und in Oberschwaben. Am liebsten mit Holz.</p></div><dl class="grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-4 @prose:grid-cols-2 @prose:gap-y-5 @prose:p-6"><div class="grid min-w-0 grid-cols-1 content-start gap-1"><dt dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-small text-creator-fg-muted">Wohnort</dt><dd dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-body leading-snug font-semibold text-pretty hyphens-manual break-words">Kempten</dd></div><div class="grid min-w-0 grid-cols-1 content-start gap-1"><dt dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-small text-creator-fg-muted">Sprachen</dt><dd dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-body leading-snug font-semibold text-pretty hyphens-manual break-words">Deutsch, Englisch</dd></div></dl><div class="grid max-w-prose gap-4"><p dir="auto" class="[text-align:-webkit-match-parent] supports-[text-align:match-parent]:[text-align:match-parent] text-body text-pretty whitespace-pre-line text-creator-fg @prose:text-body-lg">In der Werkstatt bin ich jeden Morgen um sieben.</p></div></div>"`);
+  it("leaves out the facts the head shows, and drops the sheet when none are left", () => {
+    const markup = renderToStaticMarkup(
+      createElement(LaufbahnAbout, {
+        block: { ...base, id: "about", type: "about", text: "Ich baue Bühnen.", facts: [{ label: "Bewerbung als", value: "Bühnenbauer" }] },
+        omit: [{ label: "Bewerbung als", value: "Bühnenbauer" }],
+      }),
+    );
+    expect(markup).not.toContain("<dl");
   });
 });

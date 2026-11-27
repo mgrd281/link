@@ -1,4 +1,4 @@
-import type { Profile } from "@linkyo/blocks";
+import { hasImage, type Profile } from "@linkyo/blocks";
 import {
   Accessibility,
   Award,
@@ -44,6 +44,8 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+
+import { posterClip } from "@/features/creator/motion-library";
 
 import { paragraphs } from "./sections";
 
@@ -564,4 +566,68 @@ export function splitLead(paragraph: string): [lead: string, rest: string | null
     return [text.slice(0, cut), text.slice(cut).trim()];
   }
   return [text, null];
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Round 6: the dossier's head                                                                       */
+/* ------------------------------------------------------------------------------------------------ */
+
+/** A space that never breaks (U+00A0), written by its code so the source holds no invisible character. */
+const NBSP = String.fromCharCode(0xa0);
+
+/**
+ * The role line as set: every " · " keeps its dot at the end of a line (a non-breaking space before
+ * it), so a dot never starts a line. Nothing else changes.
+ */
+export function keepSeparators(text: string): string {
+  return text.replaceAll(" · ", `${NBSP}· `);
+}
+
+/**
+ * Whether a picture shows the person: a picture at all, and not one of Linkyo's own moving pictures
+ * (a library clip's still is a drawing or a stock scene, never the owner). Only such a picture may
+ * stand as a portrait beside the facts; the head's plate may show any picture.
+ */
+export function isPersonPicture<T extends { src: string }>(image: T | undefined): image is T {
+  return hasImage(image) && posterClip(image.src) === undefined;
+}
+
+/** Characters a display face sets narrow (the right single quote is U+2019). */
+const NARROW_GLYPHS = new Set([...Array.from("fijlrtI'.,:;!|"), String.fromCharCode(0x2019)]);
+const WIDE_GLYPHS = new Set(Array.from("mwMW"));
+/** Signs a figure carries, about a digit wide: plus, minus, the multiplication sign and the minus sign. */
+const FIGURE_SIGNS = new Set(["+", "-", String.fromCharCode(0xd7), String.fromCharCode(0x2212)]);
+const LATIN_GLYPH = /\p{Script=Latin}/u;
+const DIGIT = /\p{Nd}/u;
+const SPACE = /\s/u;
+/** The width the estimate scales from: the classic pairing's average advance (em per character). */
+const BASE_AVERAGE = 0.53;
+
+/**
+ * How wide a line is, in em of the display face. A single word set this large has no spaces to average
+ * over, so letters count by their class (i, l, t, r and friends narrow; m and w wide; capitals wider
+ * than lowercase), figures at 0.62 (Geist's widest digits), "%" at 0.8, all scaled to the pairing's
+ * average glyph width (`average`, hero.tsx's GLYPH_WIDTH). Scripts without capitals (Arabic) count at
+ * that average.
+ */
+export function lineEms(line: string, average: number): number {
+  const scale = average / BASE_AVERAGE;
+  return Array.from(line).reduce((sum, glyph) => {
+    if (SPACE.test(glyph)) return sum + 0.28 * scale;
+    if (DIGIT.test(glyph)) return sum + 0.62 * scale;
+    if (glyph === "%") return sum + 0.8 * scale;
+    if (FIGURE_SIGNS.has(glyph)) return sum + 0.6 * scale;
+    if (NARROW_GLYPHS.has(glyph)) return sum + 0.3 * scale;
+    if (!LATIN_GLYPH.test(glyph)) return sum + average;
+    if (WIDE_GLYPHS.has(glyph)) return sum + 0.92 * scale;
+    return sum + (glyph === glyph.toUpperCase() && glyph !== glyph.toLowerCase() ? 0.72 : 0.6) * scale;
+  }, 0);
+}
+
+/** The widest word of a text (each word of a name may take its own line on a phone). */
+export function widestWord(text: string, average: number): string {
+  return text
+    .trim()
+    .split(/\s+/u)
+    .reduce((widest, word) => (lineEms(word, average) > lineEms(widest, average) ? word : widest), "");
 }

@@ -11,9 +11,6 @@ import { MediaImage, mediaSizes, Monogram, PlatformGlyph, platformName } from ".
 import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
 import { BarActionGlyph } from "./bar-action-glyph";
-// Laufbahn's bar parts load with Laufbahn's pages only (a client module that splits them off, ADR 0008).
-import { BarReveal, SectionSwitcher } from "./signposted-bar";
-import type { IndexEntry } from "./laufbahn-index";
 import { HeroLive } from "./live";
 import { plateFrame, plateRatio } from "./projects";
 import { ShareButton } from "./share";
@@ -31,7 +28,7 @@ export const aiText = (profile: Profile, field: AiProfileField) => (profile.aiFi
  * Average advance per character of each display face, measured on real names (em per character).
  * Used to size the name so that it stays on one line whenever that still reads large.
  */
-export const GLYPH_WIDTH: Record<string, number> = { classic: 0.53, stage: 0.47, editorial: 0.46, modern: 0.49, bold: 0.48, elegant: 0.5, tech: 0.52, arabic: 0.47 };
+export const GLYPH_WIDTH: Record<string, number> = { classic: 0.53, stage: 0.47, editorial: 0.46, modern: 0.49, bold: 0.48, elegant: 0.5, tech: 0.52, grotesk: 0.52, arabic: 0.47 };
 
 /**
  * Latin letters on an Arabic page (audit C-04). The Arabic face has no Latin letters, so a Latin name
@@ -192,7 +189,22 @@ const rowWidth = (count: number, plain: boolean): string =>
  * layout.preview (390), and from there to layout.prose (640), where the page becomes the column. The
  * column and wider screens are unchanged.
  */
-export function Socials({ block, plain, start = false, solid = false, balance = false }: { block: BlockOf<"socials">; plain: boolean; start?: boolean; solid?: boolean; balance?: boolean }) {
+export function Socials({
+  block,
+  plain,
+  start = false,
+  solid = false,
+  balance = false,
+  inverse = false,
+}: {
+  block: BlockOf<"socials">;
+  plain: boolean;
+  start?: boolean;
+  solid?: boolean;
+  balance?: boolean;
+  /** On ink (Laufbahn's head): white glyphs and the white focus ring. */
+  inverse?: boolean;
+}) {
   const { preview, previewCompact, prose } = tokens.layout;
   const phone = balance ? balancedRow(block.items.length, preview, prose, plain, start) : null;
   const narrow = balance ? balancedRow(block.items.length, previewCompact, preview, plain, start) : null;
@@ -218,7 +230,9 @@ export function Socials({ block, plain, start = false, solid = false, balance = 
             href={item.url}
             aria-label={platformName(item.platform)}
             className={cn(
-              "grid place-items-center rounded-full text-creator-fg duration-micro focus-visible:focus-ring active:scale-pressed",
+              inverse
+                ? "grid place-items-center rounded-full text-white duration-micro focus-visible:focus-ring-inverse active:scale-pressed"
+                : "grid place-items-center rounded-full text-creator-fg duration-micro focus-visible:focus-ring active:scale-pressed",
               plain
                 ? "size-touch-target transition-[opacity,scale] hover:opacity-secondary"
                 : "size-control-xl bg-creator-surface-2 transition-[background-color,scale] hover:bg-creator-line-strong",
@@ -661,57 +675,28 @@ export function PosterHero({
  * Compact bar that slides in once the hero has scrolled away: avatar, name, share; on a page with a
  * contact block also its primary action, as a small filled button before the share button.
  * Driven by the hero's view timeline; browsers without scroll-driven animations never show it.
- * `solid` (Laufbahn): an app's navigation bar on the page's own ground instead of glass, one hairline at
- * its foot; it fades in over a short, fixed time once the large name has passed under it (BarReveal,
- * lb-bar) instead of sliding with the scroll, its share button a soft round one. `sections`: a page with
- * contents (Laufbahn) makes the name a title that names the section being read and opens the contents
- * as a sheet.
+ * Laufbahn draws its own bar, on ink (./laufbahn-bar.tsx).
  */
 export function PosterBar({
   profile,
   primary,
   primaryBlock,
-  solid = false,
-  sections,
 }: {
   profile: Profile;
   primary?: Primary | null | undefined;
   /** The id of the contact block the primary action comes from (its block mark). */
   primaryBlock?: string | undefined;
-  solid?: boolean;
-  sections?: readonly IndexEntry[] | undefined;
 }) {
   return (
     <div className="pointer-events-none sticky top-0 layer-sticky h-0">
-      <div
-        className={cn(
-          "poster-bar pointer-events-auto relative flex h-control-xl items-center gap-3 border-b border-creator-line ps-creator-gutter pe-2",
-          solid ? "lb-bar bg-creator-bg" : "bg-creator-glass backdrop-blur-glass",
-        )}
-      >
+      <div className="poster-bar pointer-events-auto relative flex h-control-xl items-center gap-3 border-b border-creator-line ps-creator-gutter pe-2 bg-creator-glass backdrop-blur-glass">
         <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full bg-creator-surface-2 text-small">
           {hasImage(profile.avatar) ? <MediaImage src={profile.avatar.src} focal={profile.avatar.focal} alt="" sizes={mediaSizes.thumb} /> : <Monogram name={profile.displayName} />}
         </span>
-        {sections && sections.length > 1 ? (
-          <SectionSwitcher entries={sections} name={profile.displayName} ai={aiText(profile, "displayName")} />
-        ) : (
-          <p dir="auto" className={cn(pageSide, "min-w-0 flex-1 truncate text-body font-semibold")} {...aiText(profile, "displayName")}>
-            {profile.displayName}
-          </p>
-        )}
-        {primary && solid ? (
-          // The label may be cut short here; the link's name is still the whole label.
-          <a
-            href={primary.url}
-            data-bar-action
-            data-block={primaryBlock}
-            className={cn("inline-flex min-h-touch-target max-w-2/5 shrink-0 items-center rounded-creator-button bg-creator-accent px-4 text-small font-semibold text-creator-accent-fg", pressable)}
-          >
-            <span dir="auto" className="truncate">
-              {primary.label}
-            </span>
-          </a>
-        ) : primary ? (
+        <p dir="auto" className={cn(pageSide, "min-w-0 flex-1 truncate text-body font-semibold")} {...aiText(profile, "displayName")}>
+          {profile.displayName}
+        </p>
+        {primary ? (
           // Phones (audit C-08): the action's icon in a filled touch target, named by its whole label, so
           // neither the name nor the action is cut short; wider: the label itself.
           <a
@@ -729,8 +714,7 @@ export function PosterBar({
             </span>
           </a>
         ) : null}
-        <ShareButton title={profile.displayName} {...(solid ? { className: "bg-creator-surface-2 hover:bg-creator-line" } : {})} />
-        {solid ? <BarReveal /> : null}
+        <ShareButton title={profile.displayName} />
       </div>
     </div>
   );
