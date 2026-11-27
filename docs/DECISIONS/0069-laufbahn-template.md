@@ -313,11 +313,13 @@ the other two. This round is the page; the PDFs are their own ADR, [0089](0089-l
   words ("SAP") is set as words. The label comes first in the DOM (screen readers read "Pickgenauigkeit
   2025: 99,6 %"); the visual order is a subgrid.
 - **The plate below the figures, no parallax.** Phones and tablets: 3 : 2 from edge to edge, last in
-  the band; the wide canvas: the last four of twelve columns beside the words, rounded, in the
-  picture's own shape (`widePlateRatio`: no taller than 4 : 5, no flatter than 4 : 3; 4 : 5 without a
-  stored size) and level with the top of the words, so a drawn 4 : 5 clip stands whole and is never
-  cut at its sides. Without any picture: no plate and no initials. Nothing in the head moves after its
-  lines rise in once.
+  the band; the wide canvas: the last four of twelve columns beside the words, rounded, from the top
+  of the words to their last row (the actions, or the social links under them), the picture covering
+  it at its focal point, so the plate ends on a line of the head (review 4; until then it stood in the
+  picture's own shape, `widePlateRatio`, and ended at a height that matched nothing). Beside the
+  sample's words a drawn 4 : 5 clip loses under 3 % of its height and nothing at its sides.
+  Without any picture: no plate and no initials. Nothing in the head moves after its lines rise in
+  once.
 - **The `grotesk` pairing** (Geist 700 / Geist 400, Arabic IBM Plex Sans Arabic 700/400) replaces
   `classic` for Laufbahn: one modern grotesque for the name and the text, with true tabular figures.
   Geist is already the only preloaded face, so Inter no longer loads on Laufbahn pages (checked by the
@@ -333,22 +335,33 @@ the other two. This round is the page; the PDFs are their own ADR, [0089](0089-l
 - **Hanging titles on the wide canvas.** The sticky index list beside the sections is gone: each section
   is a row of twelve columns, its title in the first three and sticky while the section is read (a
   running head under the bar), the content in the other nine. Tablets keep the chips; the contents
-  stay one tap away in the bar at every width.
-- **The career is a table, as on paper:** the years first ("2021 – heute", tabular figures, the tag
-  "aktuell" under a step still going on), then the role, where and a note beside one rail with a dot
-  for each step, filled for the current one; the rail ends with the last step's words (no space under
-  the last step). **The 32 px icon nodes go**: dots match the paper. The rail
-  still fills with the accent as the steps scroll by (the only scroll-linked motion), drawn in full with
-  reduced motion.
-- **A portrait only of the person.** "Über mich" shows round 5's portrait beside the facts only for a
-  picture of the person (`isPersonPicture`: not one of Linkyo's library stills, which are drawings or
-  stock scenes). Otherwise the facts stand alone on one soft sheet in full rows (`factRows`, review 2):
+  stay one tap away in the bar at every width. A jump (from the contents, the hero or an address)
+  lands the section where its title sticks, 96 px from the top: the document's scroll padding (72 px,
+  for the bar) and, on the wide canvas, a scroll margin of 24 px on the section (`lb-section`), so the
+  title and the content's first line arrive level (review 4).
+- **The career is a table, as on paper** (from tablet widths on): the years first ("2021 – heute",
+  tabular figures, the tag "aktuell" under a step still going on), then the role, where and a note
+  beside one rail with a dot for each step, filled for the current one; the rail ends with the last
+  step's words (no space under the last step). On phones (below `@prose`) the years stand as a small
+  accent line above the role, beside the rail, the tag beside them, and the words take the column's
+  whole width (review 4: the table left them 146 px at 320 and 216 px at 390). **The 32 px icon
+  nodes go**: dots match the paper. The rail still fills with the accent as the steps scroll by (the
+  only scroll-linked motion), drawn in full with reduced motion.
+- **A portrait only of the person, then the owner's choice (review 4).** Round 6 first showed round 5's
+  portrait beside the facts in "Über mich" only for a picture of the person (`isPersonPicture`: not one
+  of Linkyo's library stills), which took Sevag's drawn still out of About. **The founder decided
+  otherwise:** Sevag's "Über mich" keeps a picture beside the facts, "any picture for now", until he
+  sends his own photo. So the portrait an owner sets on the About block always stands beside the
+  facts, a drawn library still too, with its alt text, focal point and sizes; `isPersonPicture` is
+  gone. **The PDF CV does not follow:** it prints only an uploaded JPEG photo of the person
+  (`photoCandidate`, [0089](0089-laufbahn-pdfs.md)), never an illustration or a library still, and
+  then no avatar either (`photo.test.ts` checks every still of the library). Without a portrait the
+  facts stand alone on one soft sheet in full rows (`factRows`, review 2):
   at each width as many to a row as the longest fact allows on one line (at most two on phones, three
   on tablets, four on the wide canvas; a value up to 18, 23 or 22 characters for those), the rows as
   even as they can be with the fuller ones first (five: three and two), each row filling the sheet's
   twelve columns, and never a fact alone beside an empty half: then one fact a row. The sample's three
-  facts are one row of three on the wide canvas and one a row below it. **On Sevag's page the drawn
-  still leaves About until he sends a real photo: the founder's OK is needed for that.**
+  facts are one row of three on the wide canvas and one a row below it.
 - **The letter is set as a letter:** white paper on a light page (the page's surface on a dark one), its
   reading time and its own PDF as a small pill in the top line, the PDF's subject ("Bewerbung als …")
   above the owner's paragraphs, which stay exactly as written. The paper spans the content's columns
@@ -401,9 +414,11 @@ CSS px from the top of the page):
 | 768 × 1024 | 148 | 229 | 399 | 525 |
 | 1440 × 900 | 256 | 345 | 530 | 698 |
 
-At 360 px the two actions stack ("E-Mail schreiben" and "Lebenslauf" need 325 px side by side, the
-row has 320); everything named, figures included, is still on the first screen. No horizontal scroll
-at 360, 390, 768 or 1440 in de, en and ar.
+At 360 px the two actions stack at full width, deliberately: the spec asked for one row at 360, but
+"E-Mail schreiben" and "Lebenslauf" need 325 px side by side and the row has 320, and two full-width
+buttons are easier to hit than two squeezed ones; everything named, figures included, is still on the
+first screen. No horizontal scroll at 360, 390, 768 or 1440 in de, en and ar (and at 320 since
+review 4).
 
 | Pair (measured in the browser) | Ratio |
 |---|---|
@@ -419,9 +434,10 @@ of 35 KB (Laufbahn's own parts load with its pages only; measured again at revie
 picture baseline are byte-equal (95 of 103; the 8 that differ are Laufbahn's own, by design).
 
 **For the founder:** today versus new, side by side, at 390 and 1440
-(`audit/laufbahn-v6/build-page/today-vs-new-*.png`), and three decisions to confirm: the ink,
-type-first head; Sevag's drawn portrait leaving "Über mich" until his own photo; "Teilen" moving out of
-the hero when a CV is offered.
+(`audit/laufbahn-v6/build-page/today-vs-new-*.png`), and two decisions to confirm: the ink,
+type-first head; "Teilen" moving out of the hero when a CV is offered. Decided by the founder (review
+4): Sevag's drawn still stays beside his facts in "Über mich" until he sends his own photo ("any
+picture for now"); his PDF CV never shows it (it prints only an uploaded photo).
 
 ### Round 6, review 2 (2026-11-27)
 
@@ -477,5 +493,45 @@ the hero when a CV is offered.
   Plex Sans Arabic are drawn (head 17 Geist glyphs, main 86, the band 30, the e-mail address Geist
   alone). With the old stack forced back into the same page the same scan finds Liberation Sans in
   all three regions.
+
+### Round 6, review 4 (2026-11-27)
+
+Measured on the demo build (fictional samples, reduced motion, chrome off), `next start`:
+
+- **Nothing leaves its box at 320 px** (WCAG 1.4.10 reflow: a 320 px phone, or a 1280 px laptop at
+  400 %). The German "Herunterladen" pill stood 4.3 px outside each Unterlagen card (x 152–304.3 in a
+  card ending at 300). Below 390 px the paper is a size smaller (64 × 91 px instead of 96 × 136), so
+  the words keep 164 px beside it; the pill is never wider than its column (`max-w-full`, its label
+  `min-w-0` and wrapping as a last resort). Now: pill 120–272.3 px in de, 120–243 px in en. In the
+  head, "Pickgenauigkeit" ran 8.5 px into the gutter (its figure's column ended at 201.3, the label
+  at 209.8): each figure is one track that may shrink (`minmax(0, 1fr)`), and a word of twelve letters
+  or more hyphenates in the page's language only where it does not fit whole (`lb-hyphens`:
+  `hyphens: auto`, `hyphenate-limit-chars: 12 5 5`, no balancing, which hyphenated words that fit):
+  "Pickgenau-igkeit 2025" at 320, whole at 360; "licence", "accuracy" and "Staplerschein" never.
+  "Beides in einer Datei · 2 Seiten" broke between "2" and "Seiten": a count keeps its word and a dot
+  ends its line (`keepCounts`, in the cards' "PDF · A4 · 1 Seite", "Beides" and the sheet's row), as
+  the PDF already set it. An e2e at 320 × 700 in de, en and ar checks every element of each card and
+  each figure inside its own box (± 0.5 px) and no sideways scroll; with round 6's paper, pill and
+  figure track injected back, the same measure reports 304.3 > 300 and 209.8 > 201.3.
+- **The career on phones.** Below `@prose` the years stand as a small accent line above the role,
+  beside the rail, "aktuell" beside them; the words get 258 px at 320 (146 before) and 328 px at 390
+  (216). The table stays from tablets on (768 and 1440 as before: years, rail at 598 px, words at 632
+  on the wide canvas). The rail is now its own grid item (`lb-step`, 2 px, in a `min-content` track),
+  beside the years and the words on phones and between them in the table; the dot sits on its first
+  line (`lb-node`: the years' line on phones, the role's in the table), and the e2e measures the dot
+  on the rail, centre on centre, in de and ar.
+- **Jumps land level.** Every contents-sheet jump at 1440 put the section and its content at 72 px and
+  its sticky title at 96 px. A scroll margin on the section on the wide canvas (`lb-section`: 96 px less
+  the 72 px scroll padding) lands title and content together: 96.0–96.5 px in de, en and ar for About,
+  Kenntnisse, Werdegang, Als Nächstes, Anschreiben and Unterlagen, |title − content| ≤ 0.3 px (e2e:
+  ≤ 1 px after each sheet jump).
+- **The plate ends on a line of the head:** from the top of the words to their last row, 357 × 434 px
+  at 96–529.6 in de and en (the actions end at 529.6), 357 × 419 in ar, 357 × 462 on the portfolio
+  sample (to its social links at 557.7). It ended 13 px below the actions before. The e2e checks top
+  and bottom against the words (± 1 px) in de, en, ar and on the portfolio sample.
+- **About's picture is the owner's choice** (the founder's decision, above): any portrait set on the
+  About block stands beside the facts; the CV still prints only an uploaded photo.
+
+The creator pages keep their budgets (`/u/[username]` 30.8 KB, `/[locale]/p/[slug]` 32.5 KB of 35 KB).
 
 **Status.** Accepted.
