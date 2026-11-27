@@ -33,6 +33,17 @@ function isCreatorName(segment: string): boolean {
 const isSecondPart = (segment: string): boolean => isProjectSlug(segment) || isDocumentSegment(segment);
 
 /**
+ * "/de/p/jonas-brandt/cv", "…/letter" and "…/application": a PDF of a prepared page (ADR 0089), an
+ * attachment in one language rather than a page in three. The proxy drops the hreflang alternates
+ * next-intl lists for every localized address from these answers (Arabic pages offer no PDFs, so
+ * "/ar/p/<slug>/cv" is a 404).
+ */
+export function isPreparedDocument(pathname: string): boolean {
+  const match = /^\/([^/]+)\/p\/[^/]+\/([^/]+)\/?$/.exec(pathname);
+  return match !== null && LOCALES.includes(match[1] ?? "") && isDocumentSegment(match[2] ?? "");
+}
+
+/**
  * "/mila" → "/u/mila" and "/mila/hafenlicht" → "/u/mila/hafenlicht" when real accounts are on, the
  * first part could be someone's page and the second a project's address or a document of the page
  * ("/mila/cv" → "/u/mila/cv", its Lebenslauf as a PDF); otherwise null. Every first-level route of

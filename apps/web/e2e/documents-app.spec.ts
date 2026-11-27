@@ -29,6 +29,8 @@ for (const pdf of PDFS) {
     expect(headers["x-content-type-options"]).toBe("nosniff");
     expect(headers.etag).toBeUndefined();
     expect(headers["set-cookie"]).toBeUndefined();
+    // No hreflang alternates: an attachment in one language (next-intl would list /ar/p/<slug>/cv, a 404).
+    expect(headers.link).toBeUndefined();
     const body = await response.body();
     const text = latin1(body);
     expect(text.startsWith("%PDF-1.7\n")).toBe(true);
@@ -56,5 +58,7 @@ test("the example page itself still renders", async ({ request }) => {
   for (const path of ["/de/p/jonas-brandt", "/en/p/jonas-brandt", "/ar/p/karim-nasser"]) {
     const response = await request.get(path);
     expect(response.status(), path).toBe(200);
+    // The page keeps the alternates next-intl lists (only its PDFs drop them).
+    expect(response.headers().link, path).toContain('hreflang="ar"');
   }
 });
