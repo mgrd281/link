@@ -61,6 +61,26 @@ describe("a prepared page's documents (/p)", () => {
     }
   });
 
+  it("answers the same empty 404 for names an object inherits (constructor, toString, __proto__)", async () => {
+    for (const slug of ["constructor", "toString", "__proto__", "hasOwnProperty", "valueOf"]) {
+      for (const kind of ["cv", "letter", "application"] as const) {
+        const response = await servePreviewDocument(kind, "de", slug, { now: () => NOW });
+        expect(response.status, `${slug}/${kind}`).toBe(404);
+        expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+        expect(response.headers.get("cache-control")).toBe("no-store");
+      }
+    }
+    // A prepared page under such a name in another language is no page either.
+    expect((await servePreviewDocument("cv", "constructor", "jonas-brandt", base)).status).toBe(404);
+  });
+
+  it("answers an empty, unindexed 500 when the lookup itself fails", async () => {
+    const response = await servePreviewDocument("cv", "de", "jonas-brandt", { ...base, find: () => { throw new Error("Jonas Brandt"); } });
+    expect(response.status).toBe(500);
+    expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
   it("logs nothing, not even on a failure", async () => {
     const spies = (["log", "info", "warn", "error", "debug"] as const).map((method) => vi.spyOn(console, method));
     await servePreviewDocument("cv", "de", "jonas-brandt", base);
@@ -86,6 +106,13 @@ describe("a public page's documents (/u)", () => {
     const again = await servePublicDocument("cv", "jonasbrandt", request(etag), deps);
     expect(again.status).toBe(304);
     expect(await again.text()).toBe("");
+  });
+
+  it("answers an empty, unindexed 500 when the page cannot be loaded", async () => {
+    const response = await servePublicDocument("cv", "jonasbrandt", request(), { ...base, load: () => Promise.reject(new Error("database")) });
+    expect(response.status).toBe(500);
+    expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    expect(response.headers.get("cache-control")).toBe("no-store");
   });
 
   it("answers 404 for an unknown page or another template", async () => {

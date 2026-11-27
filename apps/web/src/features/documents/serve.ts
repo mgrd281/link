@@ -30,10 +30,12 @@ export interface ServeDeps {
   /** The prepared page's lookup. */
   find?: (slug: string, locale: string, now: Date) => { page: Page; preview: { theme: CreatorThemeConfig } } | null;
   /** The owner's uploaded portrait as a JPEG (tests inject bytes). */
-  photo?: (page: Page) => Promise<Jpeg | null>;
+  photo?: (page: Page, now: Date) => Promise<Jpeg | null>;
 }
 
 const notFound = (): Response => new Response(null, { status: 404, headers: { "X-Robots-Tag": NO_INDEX, "Cache-Control": "no-store" } });
+/** Anything that went wrong: an empty answer, never indexed, never stored. */
+const failed = (): Response => new Response(null, { status: 500, headers: { "X-Robots-Tag": NO_INDEX, "Cache-Control": "no-store" } });
 
 /** The download's name: plain ASCII in `filename`, the name's own letters in `filename*` (RFC 6266). */
 export function contentDisposition(kind: DocumentKind, displayName: string, locale: "de" | "en"): string {
@@ -63,25 +65,25 @@ const body = (bytes: Uint8Array): ArrayBuffer => bytes.buffer.slice(bytes.byteOf
 
 /** A prepared page's document: /<locale>/p/<slug>/<kind>. Private: no shared cache, no ETag, no public address on paper. */
 export async function servePreviewDocument(kind: DocumentKind, locale: string, slug: string, deps: ServeDeps = {}): Promise<Response> {
-  const now = deps.now?.() ?? new Date();
-  const found = (deps.find ?? previewPage)(slug, locale, now);
-  if (found?.page.profile.locale !== locale || !offered(kind, found.page, found.preview.theme, now)) return notFound();
   try {
-    const photo = await (deps.photo ?? fetchPhoto)(found.page);
+    const now = deps.now?.() ?? new Date();
+    const found = (deps.find ?? previewPage)(slug, locale, now);
+    if (found?.page.profile.locale !== locale || !offered(kind, found.page, found.preview.theme, now)) return notFound();
+    const photo = await (deps.photo ?? fetchPhoto)(found.page, now);
     const bytes = await renderDocument(kind, found.page, found.preview.theme, { now, asOf: null, online: null, photo });
     return new Response(body(bytes), { status: 200, headers: pdfHeaders(kind, found.page, { "Cache-Control": "private, no-store" }) });
   } catch {
-    return new Response(null, { status: 500, headers: { "X-Robots-Tag": NO_INDEX, "Cache-Control": "no-store" } });
+    return failed();
   }
 }
 
 /** A public page's document: /<username>/<kind> (the proxy rewrites it to /u/<username>/<kind>). Revalidated with an ETag. */
 export async function servePublicDocument(kind: DocumentKind, username: string, request: Request, deps: ServeDeps = {}): Promise<Response> {
-  const now = deps.now?.() ?? new Date();
-  const found = await (deps.load ?? loadPublicPage)(username);
-  if (!found || !offered(kind, found.page, found.theme, now)) return notFound();
   try {
-    const photo = await (deps.photo ?? fetchPhoto)(found.page);
+    const now = deps.now?.() ?? new Date();
+    const found = await (deps.load ?? loadPublicPage)(username);
+    if (!found || !offered(kind, found.page, found.theme, now)) return notFound();
+    const photo = await (deps.photo ?? fetchPhoto)(found.page, now);
     const asOf = new Date(found.updatedAt);
     const bytes = await renderDocument(kind, found.page, found.theme, {
       now,
@@ -95,6 +97,6 @@ export async function servePublicDocument(kind: DocumentKind, username: string, 
     if (match?.split(",").some((tag) => tag.trim().replace(/^W\//u, "") === etag)) return new Response(null, { status: 304, headers });
     return new Response(body(bytes), { status: 200, headers });
   } catch {
-    return new Response(null, { status: 500, headers: { "X-Robots-Tag": NO_INDEX, "Cache-Control": "no-store" } });
+    return failed();
   }
 }

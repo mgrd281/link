@@ -252,8 +252,9 @@ export const PREVIEWS: Record<string, Preview> = {
 export { PREVIEW_ALIASES } from "./aliases";
 
 export const previewPage = (slug: string, locale: string, now = new Date()) => {
-  const preview = PREVIEWS[slug];
-  const page = preview?.pages[locale as "de" | "en" | "ar"];
+  // Own entries only: "constructor", "toString" or "__proto__" name no prepared page.
+  const preview = Object.hasOwn(PREVIEWS, slug) ? PREVIEWS[slug] : undefined;
+  const page = preview?.pages && Object.hasOwn(preview.pages, locale) ? preview.pages[locale as "de" | "en" | "ar"] : undefined;
   if (!preview || !page) return null;
   return { preview, page: preview.prepare ? preview.prepare(page, now) : page };
 };
