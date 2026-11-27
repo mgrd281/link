@@ -21,8 +21,10 @@ reverse: every face is one token and one `localFont` call; the founder may overr
 1. **An Arabic companion per pairing (tokens).** `creator.pairing.<id>.$extensions["app.linkyo"].arabic`
    holds a display and a body face (family, face id, weight). A template may override it
    (`creator.template.<id>…arabic`): Nocturne has its own display face, and Laufbahn keeps the Arabic
-   pairing exactly as it was (`{ "pairing": "arabic" }`). The token build emits each face with its
-   stack. On Arabic pages the theme sets `--creator-font-display` to `<companion>, <the template's Latin
+   pairing exactly as it was (`{ "pairing": "arabic" }`; until [0069](0069-laufbahn-template.md) round 6,
+   review 3, which gave it its grotesk pairing's companion, Plex then Geist, because the Arabic
+   pairing's stack has no Latin face and Latin fell to a system face). The token build emits each
+   face with its stack. On Arabic pages the theme sets `--creator-font-display` to `<companion>, <the template's Latin
    stack>`, the weight to the companion's (a template's `arabicDisplayWeight` still wins: Werkbogen 400,
    Laufbahn 700), letter spacing to 0 (spacing pulls joined letters apart) and keeps the Latin
    pairing's capitals for Latin names. `theme.pairing` stays the Arabic pairing, because name fitting,
@@ -39,7 +41,7 @@ reverse: every face is one token and one `localFont` call; the founder may overr
    | bold (Bricolage 700/800) | Changa 700 | Plex 400 | A wide, punchy Kufi-like display for a chunky grotesque. 700 keeps the existing "Tiefdruck is heavy (700) in Arabic" check true. Pulse, Bloom, Tiefdruck. |
    | tech (Geist 700) | IBM Plex Sans Arabic 700 | Plex 400 | Plex is an engineered, technical family, the nearest Arabic voice to Geist and Geist Mono. Signal. |
    | arabic | itself | itself | — |
-   | Laufbahn (template override) | the Arabic pairing as before | as before | Its rendering must not change. |
+   | Laufbahn (template override) | the Arabic pairing as before | as before | Its rendering must not change. (Since 0069 round 6, review 3: grotesk's companion, IBM Plex Sans Arabic 700 then Geist; body Plex 400 then Geist.) |
 
    In /ar the h1 of Nocturne, Marquee and Daylight now has three different computed font families
    (e2e `design-system-v2-app.spec.ts`, which also reads the fonts Chrome actually draws).

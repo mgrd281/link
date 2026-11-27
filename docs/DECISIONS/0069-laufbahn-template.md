@@ -369,12 +369,14 @@ the other two. This round is the page; the PDFs are their own ADR, [0089](0089-l
 - **Arabic pages offer no documents** ([0089](0089-laufbahn-pdfs.md) says why): no section, no pills or round
   download, no sheet group, no letter pill and no subject; the hero's second action is "مشاركة" and the
   bar on the wide canvas has one Share. Everything mirrors by logical properties alone; "منذ" stands
-  over its number, figures are isolated left to right and set in Geist (`rtl:font-display`): the
-  Arabic pairing's face has no Latin digits, which fell to a system face. The same holds for the
-  career's years, roles, places and notes and for the head's status, role, target line, place and
-  sentence (review 2): their Latin runs ("2021 –", "·", "SAP", "(B1)", "1 … 2027") are set in Geist
-  (`LatinRuns`, `latinRuns`), the Arabic words and the spaces between them stay in IBM Plex Sans
-  Arabic.
+  over its number, figures are isolated left to right. The page is set in its pairing's Arabic
+  companion (review 3): IBM Plex Sans Arabic first, then Geist (`arabicStacks("grotesk")`, as every
+  other template's Arabic pages). Plex's unicode-range holds Arabic letters and word spaces only, so
+  every Latin letter, digit and sign, wherever it stands ("2021 –", "·", "SAP", "2017", "(B1)", the
+  letter's dates, the Kontakt title, the e-mail address, the figures), is drawn in Geist, and the
+  Arabic words and the spaces between them in Plex. Until review 3 Laufbahn kept the Arabic pairing
+  as it is (Plex, "Geeza Pro", sans-serif), which has no Latin face: Latin fell to a system face, and
+  review 2 patched six places with spans (`LatinRuns`). Those are gone.
 - **Names that read as they look (WCAG 2.5.3).** A download's accessible name starts with its visible
   words: "Lebenslauf herunterladen (PDF, 1 Seite)" for the hero's "Lebenslauf", "Lebenslauf · PDF
   herunterladen" for a row, "Anschreiben als PDF herunterladen (1 Seite)" for the letter's "PDF" pill;
@@ -412,8 +414,8 @@ at 360, 390, 768 or 1440 in de, en and ar.
 | accent text on `lb-soft` (the "aktuell" tag) | 5.6 : 1 light, 4.7 : 1 dark |
 | muted on `surface-2` (the cards' meta) | 5.6 : 1 light, 7.2 : 1 dark |
 
-The creator page code stays within its budget: `/[locale]/p/[slug]` 32.5 KB and `/u/[username]` 30.7 KB
-of 35 KB (Laufbahn's own parts load with its pages only). Every other template's captures in the s4m
+The creator page code stays within its budget: `/[locale]/p/[slug]` 32.5 KB and `/u/[username]` 30.8 KB
+of 35 KB (Laufbahn's own parts load with its pages only; measured again at review 3, see below). Every other template's captures in the s4m
 picture baseline are byte-equal (95 of 103; the 8 that differ are Laufbahn's own, by design).
 
 **For the founder:** today versus new, side by side, at 390 and 1440
@@ -436,7 +438,8 @@ the hero when a CV is offered.
   asserts full rows for one to eight facts of every length at every width.
 - **Arabic Latin runs in Geist** (see "Arabic pages" above): the career's years and the role's "·" were
   drawn in a system face; a CDP check of the platform fonts now allows only Geist and IBM Plex Sans
-  Arabic for the career's years, the role and the status.
+  Arabic for the career's years, the role and the status. (Review 3 replaced this patch by the
+  companion stack and widened the check to every text of the page.)
 - **The hero's two actions on phones: one row while both fit, else both at full width.** On phones the
   two buttons keep `px-3` (`px-4` from tablets on, `px-6` on the wide canvas); both grow to fill their
   row, so the narrower padding only shows at the point of wrapping. Measured (intrinsic widths):
@@ -447,5 +450,32 @@ the hero when a CV is offered.
   (one row at 390, stacked at full width at 360, any page count in the name), and the fictional
   `?page=application-no-contact` (the sample without its contact block) checks the same layout where
   reviews may run it.
+
+### Round 6, review 3 (2026-11-27)
+
+- **Every creator page shipped Laufbahn's index again** (safety review, must-fix). Review 2's helper
+  for Arabic Latin runs lived in laufbahn.tsx, and laufbahn-hero.tsx imported it; the renderer imports
+  the hero statically, so laufbahn.tsx and through it the client index (`laufbahn-index.tsx`: the
+  section switcher, the bar's reveal, the app's downloads) joined the first load of every creator page
+  of every template: `/u/[username]` 63.1 KB and `/[locale]/p/[slug]` 64.8 KB of 35 KB, CI's "Route
+  budgets" step red. The helper is gone (next point), and with it the import. Demo build again:
+  `/u/[username]` 30.8 KB, `/u/[username]/[project]` 24.0 KB, `/[locale]/p/[slug]` 32.5 KB,
+  `/[locale]/p/[slug]/[project]` 27.0 KB of 35 KB, all ok; a fictional page of another template
+  (`/de/p/fc-kiezkicker`) loads 14 scripts, none with the index's code. A guard
+  (`poster/renderer-imports.test.ts`) walks the static imports from renderer.tsx with the TypeScript
+  parser and fails, naming the chain, when they reach laufbahn.tsx, a module the signposted-* entry
+  points load dynamically, or any Laufbahn "use client" module; it failed on the old tree with
+  "renderer.tsx → laufbahn-hero.tsx → laufbahn.tsx → laufbahn-index.tsx".
+- **Arabic Latin in Geist everywhere, at the root** (design review). Review 2 patched six places;
+  "SAP" and "2017" in About, "(B1)" in the facts, the skills, the letter's dates, the Kontakt title's
+  full stop and the e-mail address in the band still fell to Liberation Sans. Laufbahn no longer keeps
+  the Arabic pairing as it is (tokens: its `arabic: { pairing: "arabic" }` is gone); its Arabic pages
+  take the grotesk pairing's companion like every other template, `IBM Plex Sans Arabic, Geist` for
+  display and body (`arabicStacks("grotesk")`), weight 700 as before. `LatinRuns`, `latinRuns` and
+  the figures' `rtl:font-display` are removed. The e2e font check now reads every element with text
+  in the head, `main` and the Kontakt band on the Arabic sample, desktop and phone: only Geist and IBM
+  Plex Sans Arabic are drawn (head 17 Geist glyphs, main 86, the band 30, the e-mail address Geist
+  alone). With the old stack forced back into the same page the same scan finds Liberation Sans in
+  all three regions.
 
 **Status.** Accepted.
