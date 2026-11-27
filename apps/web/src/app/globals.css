@@ -583,19 +583,12 @@
 }
 
 /*
- * Laufbahn (ADR 0069): the picture from edge to edge on phones, drifting a little slower than the page;
- * sections that stand still as the page scrolls (as in an app); a timeline whose rail fills as it is
- * read. Transform and opacity only (nothing shifts the layout), all of it off with
- * prefers-reduced-motion, and absent where scroll-driven animations are not supported: there the page
- * is complete as it stands (the rail drawn in full).
+ * Laufbahn (ADR 0069): sections that stand still as the page scrolls (as in an app); a career whose rail
+ * fills as it is read, the only scroll-linked motion (round 6 took the head's parallax away). Transform
+ * and opacity only (nothing shifts the layout), all of it off with prefers-reduced-motion, and absent
+ * where scroll-driven animations are not supported: there the page is complete as it stands (the rail
+ * drawn in full).
  */
-
-/* The header's picture or clip drifting a little slower than the page (parallax), as in an app's header. */
-@keyframes lb-parallax {
-  to {
-    translate: 0 25%;
-  }
-}
 
 @keyframes lb-fill {
   from {
@@ -631,12 +624,6 @@
   }
 }
 
-/* The picture on phones: about three quarters of the small viewport, never taller than 1.6 times the
-   page's width (a phone preview in the dashboard), never too short for the name it carries. */
-@utility lb-plate {
-  height: clamp(var(--spacing-32) * 3, 72svh, 160cqi);
-}
-
 /* Ink at the secondary opacity at the foot of a picture, easing out above it (the template picker's card). */
 @utility lb-scrim {
   --lb-ink: color-mix(in oklab, var(--color-ink) calc(var(--opacity-secondary) * 100%), transparent);
@@ -644,69 +631,46 @@
   background: linear-gradient(to top, var(--lb-ink) 0%, color-mix(in oklab, var(--lb-ink) 75%, transparent) 45%, transparent 80%);
 }
 
-/* The veil under the words that stand on the picture. It is tied to the words, not to the picture's
-   height: ink at the secondary opacity behind every line (the role line and the name), whatever the
-   picture's height (a landscape phone, 200 % zoom), easing out over 6 rem above them. White text keeps
-   AA there even on a white picture (64 % ink over white is about 6 : 1); the picture stays clear above.
-   The words' box is its own stacking context (isolate), so the veil sits behind them and over the picture. */
-/* stylelint-disable nesting-selector-no-missing-scoping-root -- Tailwind @utility bodies are the scoping root. */
-@utility lb-veil {
-  --lb-ink: color-mix(in oklab, var(--color-ink) calc(var(--opacity-secondary) * 100%), transparent);
-
-  isolation: isolate;
-
-  &::before {
-    position: absolute;
-    z-index: -1;
-    inset-inline: 0;
-    inset-block: calc(var(--spacing-24) * -1) 0;
-    background: linear-gradient(
-      to top,
-      var(--lb-ink) calc(100% - var(--spacing-24)),
-      color-mix(in oklab, var(--lb-ink) 55%, transparent) calc(100% - var(--spacing-12)),
-      transparent
-    );
-    content: "";
-    pointer-events: none;
-  }
-}
-/* stylelint-enable nesting-selector-no-missing-scoping-root */
-
-/* The name over the picture: as large as its longest line allows (--name-fit), and never taller than
-   an eighth of the small viewport, so on a landscape phone or at 200 % zoom the words keep to the
-   foot of the picture, under an example's badge. */
-@utility lb-name {
-  font-size: clamp(var(--text-h1), min(var(--name-fit), 12svh), var(--text-display-2xl));
-}
-
-/* The ground under a portrait that rides high on phones (Laufbahn without a separate hero picture):
-   the portrait fades into it, and the name stands on it below the face. */
+/* Laufbahn's ink (round 6): the head, the app bar and the closing Kontakt band. Ink whatever the page's
+   or the device's colour scheme, so the soft fills and hairlines on it (`bg-hover-inverse`,
+   `border-hover-inverse`) keep the light value they have on a dark surface: the device's dark mode
+   would otherwise turn them into ink on ink. */
 @utility lb-ground {
+  --color-hover-inverse: color-mix(in oklab, var(--color-white) calc(var(--opacity-pressed) * 100%), transparent);
+
   background-color: var(--color-ink);
 }
 
-/* The header's picture (and its clip) drifts a little slower than the words over it as the page
-   scrolls, as an app's header does: at most a quarter of its height over the hero's whole exit, so its
-   top edge never comes into view. Phones and tablets only: on the wide canvas the picture is a plate
-   beside the words, wholly on screen, where a drift would show its edge. Nothing else on the page moves
-   with the scroll except the timeline's rail. Off with reduced motion and without scroll timelines. */
-@utility lb-parallax {
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      animation: lb-parallax linear both;
-      animation-timeline: --poster-hero;
-      animation-range: exit 0% exit 100%;
-
-      @variant @work {
-        animation: none;
-      }
-    }
-  }
+/* Secondary text on ink: white at the secondary opacity, mixed solid (about 8 : 1 on ink, ADR 0069). */
+@utility lb-ink-muted {
+  color: color-mix(in oklab, var(--color-white) calc(var(--opacity-secondary) * 100%), var(--color-ink));
 }
 
-/* A signposted section (the page's scroll padding below keys on it). */
+/* Hyphenation for short labels in narrow columns (the head's figures): only a long word (12 letters
+   or more, at least 5 on each side of the break) hyphenates, in the language of the page, and only
+   where it does not fit its line whole, so "Pickgenauigkeit" breaks at 320 px and "licence" or
+   "Staplerschein" never do. Lines are not balanced: balancing would hyphenate a word that fits. */
+@utility lb-hyphens {
+  hyphens: auto;
+  hyphenate-limit-chars: 12 5 5;
+}
+
+/* The focus ring on ink: white (the page's accent ring is about 2.3 : 1 there). */
+@utility focus-ring-inverse {
+  outline: var(--border-width-focus) solid var(--color-white);
+  outline-offset: var(--border-width-focus-offset);
+}
+
+/* A signposted section (the page's scroll padding below keys on it). On the wide canvas its title
+   hangs beside it and sticks at top-24 (the 64 px bar and 32 px of air): a jump from the contents, the
+   hero or an address lands the section there too (the document's scroll padding, control-xl + 4, and
+   this margin, the rest), so the title and the content's first line arrive level. */
 @utility lb-section {
   position: relative;
+
+  @variant @work {
+    scroll-margin-block-start: calc(var(--spacing-24) - var(--spacing-control-xl) - var(--spacing-4));
+  }
 }
 
 /* A Laufbahn page keeps what is focused or jumped to clear of its fixed chrome: the app bar at the top
@@ -858,38 +822,50 @@
   }
 }
 
-/* One step of the timeline: an icon node at the reading start and, to the next step, a rail in the
-   line color through the nodes' centres, with the accent drawn over it as the step scrolls through. */
+/* The career's rail (round 6), one item of the grid per step: the line itself (its width, in the line
+   colour), beside the years and the words on phones and between them from tablet widths on. The accent
+   is drawn over it as the step scrolls through, a pseudo-element painted under the rail's own child, so
+   the step's dot stays on top. Without scroll-driven animations, and with reduced motion, the accent is
+   drawn in full. */
 @utility lb-step {
   position: relative;
   view-timeline: --lb-step block;
 
-  &:not(:last-child)::before,
-  &:not(:last-child)::after {
+  &::before {
     position: absolute;
-    inset-block: calc(var(--spacing-control-sm) + var(--spacing-1)) var(--spacing-1);
-    inset-inline-start: calc(var(--spacing-control-sm) / 2 - var(--border-width-hairline));
-    inline-size: calc(var(--border-width-hairline) * 2);
-    content: "";
-  }
-
-  &:not(:last-child)::before {
-    background-color: var(--creator-line);
-  }
-
-  &:not(:last-child)::after {
+    inset: 0;
     background-color: var(--creator-accent);
     transform-origin: top;
+    content: "";
   }
 
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
-      &:not(:last-child)::after {
+      &::before {
         animation: lb-fill linear both;
         animation-timeline: --lb-step;
         animation-range: entry 40% cover 55%;
       }
     }
+  }
+}
+
+/* A step's dot, centred on the rail (the rail is its container: half the dot's size beyond each side)
+   and on the step's first line: on phones the years (text-small), in the table the role (text-title,
+   text-h3 on the wide canvas). Written here and not as an arbitrary class: Tailwind reads an
+   underscore inside a nested var() of an arbitrary calc() as a space, and the rule that held this
+   offset was dropped (round 6 review). */
+@utility lb-node {
+  position: absolute;
+  inset-inline-start: calc((var(--spacing-0_5) - var(--spacing-dot)) / 2);
+  inset-block-start: calc((var(--text-small) * var(--text-small--line-height) - var(--spacing-dot)) / 2);
+
+  @variant @prose {
+    inset-block-start: calc((var(--text-title) * var(--text-title--line-height) - var(--spacing-dot)) / 2);
+  }
+
+  @variant @work {
+    inset-block-start: calc((var(--text-h3) * var(--text-h3--line-height) - var(--spacing-dot)) / 2);
   }
 }
 

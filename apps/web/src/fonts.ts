@@ -21,9 +21,9 @@ export const geistMono = localFont({
  * Arabic faces carry a `unicode-range` of Arabic letters plus the word spaces (U+0020, U+00A0), the
  * joiners and marks U+200C–U+200F and the hyphen U+2010: no Latin letter or digit, so a page downloads
  * them only when it has Arabic text to set (a German page never does: Geist and its local fallback draw
- * its spaces first). The spaces stay in: a stack that starts with an Arabic face (Laufbahn, the Arabic
- * pairing) draws the gaps between Arabic words in that face, exactly as before the range (the Plex file
- * maps nothing else outside it). next/font needs the value written out in each call.
+ * its spaces first). The spaces stay in: a stack that starts with an Arabic face (every Arabic creator
+ * page, the Arabic pairing) draws the gaps between Arabic words in that face, as before the range (the
+ * Plex file maps nothing else outside it). next/font needs the value written out in each call.
  */
 export const plexArabic = localFont({
   src: [

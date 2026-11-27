@@ -38,10 +38,11 @@ describe("prompts", () => {
     // core-v3: one more template (laufbahn), nothing else.
     // core-v4: laufbahn's description (its sections lost their letters and gained a contents menu), nothing else.
     // core-v5: three more templates (grundriss, leuchttisch, logbuch), nothing else.
-    expect(sha256(CATALOGUE_V1)).toBe("aff490abec8a4c9ce114eaeb4f9697736af49ee3bc21e173b25b8b18fd3be279");
+    // core-v6: one more pairing (grotesk) and laufbahn's description (Laufbahn round 6), nothing else.
+    expect(sha256(CATALOGUE_V1)).toBe("a653c6baba023deb2587124dfe0cb2f3cd58cd986630f61440468657062db14d");
     expect(sha256(EXAMPLE_V1)).toBe("a8f7cc40b2ba0811b70a63fb4c4a9bf458f9bfe2241e345a690bd97203db3742");
     expect(CATALOGUE_AND_EXAMPLE_V1).toBe(`${CATALOGUE_V1}\n\n${EXAMPLE_V1}`);
-    expect(PROMPT_VERSION).toBe("core-v5");
+    expect(PROMPT_VERSION).toBe("core-v6");
   });
 
   it("hold nothing that changes per run (the cached prefix stays the same)", () => {

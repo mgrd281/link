@@ -8,6 +8,17 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
  * are grouped lists with whole words, reduced motion stills every animation, phone and desktop pass
  * axe, and Arabic pages are mirrored. Runs in the desktop project; phone checks open their own
  * phone-sized context.
+ *
+ * Round 6 ("Dossier", ADR 0069; documents, ADR 0089): the head is ink and type first, its picture a
+ * 3 : 2 plate under the figures (no parallax); the hero's second action is the Lebenslauf as a PDF where
+ * the page offers one (Share then lives in the bar on the wide canvas); the contents end with
+ * "Unterlagen" and list the documents as a second group; on the wide canvas the titles hang beside
+ * their sections and the chip index is the tablet's. This file was brought to round 6 by reading the
+ * code only: it opens a real person's page, which the review runs never open. The template itself is
+ * checked on fictional pages in e2e/laufbahn-dossier-app.spec.ts. Since review 4, "Über mich" keeps
+ * his drawn still beside the facts (the founder's choice), "Beides in einer Datei · 2 Seiten" keeps
+ * its no-break spaces and the career's rail is a column of its own; the assertions changed for that
+ * were run once on the fictional application without a contact block and on the portfolio sample.
  */
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -90,11 +101,13 @@ const underBadge = (page: Page) =>
 
 test.describe("Laufbahn", () => {
   test("the section index leads to each section by keyboard, clear of the compact bar", async ({ page }) => {
+    // The chip index is the tablet's (on the wide canvas the titles hang beside their sections).
+    await page.setViewportSize({ width: 820, height: 1180 });
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const index = page.getByRole("navigation", { name: "Abschnitte" });
-    // Words only: no letters before the titles.
-    await expect(index.getByRole("link")).toHaveText(["Über mich", "Was ich mitbringe", "Werdegang", "Neu für mich: das Tönen", "Anschreiben"]);
+    // Words only: no letters before the titles; the documents close the contents.
+    await expect(index.getByRole("link")).toHaveText(["Über mich", "Was ich mitbringe", "Werdegang", "Neu für mich: das Tönen", "Anschreiben", "Unterlagen"]);
     // Tab walks the index in order; Enter follows a link.
     await index.getByRole("link", { name: "Über mich" }).focus();
     await page.keyboard.press("Tab");
@@ -106,20 +119,28 @@ test.describe("Laufbahn", () => {
     const title = page.getByRole("heading", { level: 2, name: "Werdegang" });
     await expect(title).toBeInViewport();
     // The section stops below the compact bar (scroll margin), never under it.
+    await expect(page.locator(".poster-bar")).toBeVisible();
     const bar = await page.locator(".poster-bar").boundingBox();
     const box = await title.boundingBox();
     expect(box && bar && box.y >= bar.y + bar.height).toBe(true);
-    // On the wide canvas the index stays in view beside the sections and marks the one being read.
-    await expect(index.getByRole("list")).toBeInViewport();
-    await expect(index.getByRole("link", { name: "Werdegang" })).toHaveAttribute("aria-current", "true");
+    // The index marks the section being read: the last one whose top has passed the reading line, at
+    // 35 % of the screen. His career has two steps, so at 1180 px the section after it ("Neu für mich:
+    // das Tönen") may have passed the line as well; then that one is marked, never an earlier one.
+    const read = await page.evaluate(() => {
+      const line = window.innerHeight * 0.35;
+      const passed = [...document.querySelectorAll("#page-content > section.lb-section")].filter((section) => section.getBoundingClientRect().top <= line);
+      return passed.at(-1)?.querySelector(":scope > h2")?.textContent ?? "";
+    });
+    expect(["Werdegang", "Neu für mich: das Tönen"]).toContain(read);
     await expect(index.locator("[aria-current]")).toHaveCount(1);
+    await expect(index.locator("[aria-current='true']")).toHaveText(read);
     // His page has a cover letter and no contact block: the hero's first action leads to the letter.
     await page.goto(SEVAG);
     await expect(index.getByRole("link", { name: "Über mich" })).toHaveAttribute("aria-current", "true");
     await page.locator("[data-hero-actions]").getByRole("link", { name: "Anschreiben lesen" }).press("Enter");
     await expect(page).toHaveURL(/#section-letter-title$/);
     await expect(page.getByRole("heading", { level: 2, name: "Anschreiben" })).toBeInViewport();
-    // The whole letter on the wide canvas: no disclosure button, all seven paragraphs on screen.
+    // Arrived at by its address, the whole letter: no disclosure button, all seven paragraphs on screen.
     const letter = page.getByRole("region", { name: "Anschreiben" });
     await expect(letter.locator("summary")).toBeHidden();
     await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeVisible();
@@ -139,49 +160,78 @@ test.describe("Laufbahn", () => {
     });
     expect(guards.length).toBeGreaterThan(0);
     for (const condition of guards) expect(condition).toContain("::details-content");
-    // The wide canvas's index list has no mask (it would clip a chip's focus ring); the bar is solid.
+    // The index list has no mask (it would clip a chip's focus ring); the bar is solid.
     expect(await index.getByRole("list").evaluate((list) => getComputedStyle(list).maskImage)).toBe("none");
     expect(await page.locator(".poster-bar").evaluate((bar) => [getComputedStyle(bar).backdropFilter, getComputedStyle(bar).backgroundColor])).toEqual(["none", expect.not.stringMatching(/rgba?\(.*,\s*0(\.\d+)?\)$/)]);
   });
 
-  test("phones: two hero buttons share a row on the first screen at 390 and 360 px; 'Teilen' copies the address and says so", async ({ browser }) => {
-    for (const [width, height] of [
-      [390, 844],
-      [360, 780],
+  test("phones: the letter and the Lebenslauf as a PDF on the first screen, side by side at 390 px and stacked at full width at 360 px", async ({ browser }) => {
+    // Without the private contact lines (CI) the page has no contact block, so the hero pairs
+    // "Anschreiben lesen" with "Lebenslauf": 338 of the 350 px a 390 px phone has (px-3 on phones),
+    // so they share a row there, and stack at full width on a 360 px phone (ADR 0069 round 6). The same
+    // pair on the fictional page: e2e/laufbahn-dossier-app.spec.ts (application-no-contact).
+    for (const [width, height, together] of [
+      [390, 844, true],
+      [360, 780, false],
     ] as const) {
       const context = await browser.newContext({ ...PHONE, viewport: { width, height }, reducedMotion: "reduce" });
-      await context.grantPermissions(["clipboard-read", "clipboard-write"]);
       await context.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
       const page = await context.newPage();
       await page.goto(SEVAG);
       const actions = page.locator("[data-hero-actions]");
-      const [lead, share] = [actions.getByRole("link", { name: "Anschreiben lesen" }), actions.getByRole("button", { name: "Teilen" })];
-      const [a, b] = [await lead.boundingBox(), await share.boundingBox()];
-      // Side by side, the same height (at least 48 px), the first action the wider one; nothing leaves the screen.
-      expect(a && b && Math.abs(a.y - b.y) < 1 && a.height >= 48 && b.height === a.height && a.width > b.width, `${String(width)}: ${JSON.stringify([a, b])}`).toBe(true);
-      // Where the thumb is: both on the first screen, before the numbers.
-      expect(a && a.y + a.height <= height, `${String(width)}: ${JSON.stringify(a)}`).toBe(true);
-      const stats = await page.locator("header dl").boundingBox();
-      expect(a && stats && stats.y > a.y + a.height).toBe(true);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
-      if (width === 390) {
-        // Headless Chromium has no share sheet: the address is copied and a polite live region says so.
-        expect(await page.evaluate(() => typeof navigator.share)).toBe("undefined");
-        await share.click();
-        await expect(actions.getByRole("status")).toHaveText("Link kopiert.");
-        expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/de\/p\/sevag-ghazarian-2131af$/);
-        // The visible label stays the name (WCAG 2.5.3); only the icon turns into a check.
-        await expect(share).toHaveText("Teilen");
-        await expect(share).toHaveAccessibleName("Teilen");
-        await expect(share.locator("svg.lucide-check")).toHaveCount(1);
+      // The page offers its documents: the second action is the Lebenslauf (Share is the bar's).
+      const [lead, cv] = [actions.getByRole("link", { name: "Anschreiben lesen" }), actions.getByRole("link", { name: /^Lebenslauf herunterladen \(PDF, \d+ Seiten?\)$/ })];
+      await expect(cv).toHaveAttribute("href", /\/de\/p\/sevag-ghazarian-2131af\/cv$/);
+      await expect(cv).toHaveAttribute("download", /^Lebenslauf_.+\.pdf$/);
+      await expect(actions.getByRole("button", { name: "Teilen" })).toHaveCount(0);
+      const [a, b, row] = [await lead.boundingBox(), await cv.boundingBox(), await actions.boundingBox()];
+      const where = `${String(width)}: ${JSON.stringify([a, b, row])}`;
+      expect(a && b && row, where).toBeTruthy();
+      if (!a || !b || !row) continue;
+      // The same height (at least 48 px) either way.
+      expect(a.height >= 48 && Math.abs(b.height - a.height) < 1, where).toBe(true);
+      if (together) {
+        // Side by side, the first action the wider one.
+        expect(Math.abs(a.y - b.y) < 1 && a.width > b.width, where).toBe(true);
+      } else {
+        // One under the other, each as wide as the row.
+        expect(b.y >= a.y + a.height && Math.abs(a.x - b.x) < 1 && Math.abs(a.width - row.width) < 1 && Math.abs(b.width - row.width) < 1, where).toBe(true);
       }
+      // Where the thumb is: both on the first screen, before the numbers.
+      expect(b.y + b.height <= height, where).toBe(true);
+      const stats = await page.locator("header dl").boundingBox();
+      expect(stats && stats.y > Math.max(a.y + a.height, b.y + b.height)).toBe(true);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
       await context.close();
     }
   });
 
-  test("phones: closing the share sheet copies nothing and says nothing; a refused share sheet falls back to copying", async ({ browser }) => {
+  test("the wide canvas: the bar's Share copies the address and says so", async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await context.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
+    const page = await context.newPage();
+    await page.goto(SEVAG);
+    // The bar comes in once the name has passed under it.
+    await page.getByRole("heading", { level: 1 }).evaluate((name) => window.scrollBy({ top: name.getBoundingClientRect().bottom + 200, behavior: "instant" }));
+    const bar = page.locator(".poster-bar");
+    await expect(bar).toBeVisible();
+    // Headless Chromium has no share sheet: the address is copied and a polite live region says so.
+    expect(await page.evaluate(() => typeof navigator.share)).toBe("undefined");
+    const share = bar.getByRole("button", { name: "Seite teilen" });
+    await expect(share).toHaveCount(1);
+    await share.click();
+    await expect(bar.getByRole("status")).toHaveText("Link kopiert.");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/de\/p\/sevag-ghazarian-2131af$/);
+    // The name stays the same (WCAG 2.5.3); only the icon turns into a check.
+    await expect(share).toHaveAccessibleName("Seite teilen");
+    await expect(share.locator("svg.lucide-check")).toHaveCount(1);
+    await context.close();
+  });
+
+  test("the wide canvas: closing the share sheet copies nothing and says nothing; a refused share sheet falls back to copying", async ({ browser }) => {
     for (const refusal of ["AbortError", "NotAllowedError"] as const) {
-      const context = await browser.newContext({ ...PHONE, reducedMotion: "reduce" });
+      const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
       await context.grantPermissions(["clipboard-read", "clipboard-write"]);
       await context.addInitScript((name) => {
         window.localStorage.setItem("linkyo.privacy.v1", "essential");
@@ -191,8 +241,11 @@ test.describe("Laufbahn", () => {
       await page.goto(SEVAG);
       await page.waitForLoadState("networkidle");
       await page.evaluate(() => navigator.clipboard.writeText("before"));
-      const actions = page.locator("[data-hero-actions]");
-      await actions.getByRole("button", { name: "Teilen" }).click();
+      // Share is the bar's on this page (the hero offers the Lebenslauf): past the name, it comes in.
+      await page.getByRole("heading", { level: 1 }).evaluate((name) => window.scrollBy({ top: name.getBoundingClientRect().bottom + 200, behavior: "instant" }));
+      const actions = page.locator(".poster-bar");
+      await expect(actions).toBeVisible();
+      await actions.getByRole("button", { name: "Seite teilen" }).click();
       if (refusal === "AbortError") {
         // The visitor decided: their clipboard stays theirs, the live region stays silent.
         await page.waitForTimeout(300);
@@ -221,8 +274,8 @@ test.describe("Laufbahn", () => {
     await expect(title).toContainText("Sevag Ghazarian");
     await expect(async () => {
       const box = await bar.boundingBox();
-      // Flush at the top and the only chrome there: one bar of 56 px.
-      expect(box?.y === 0 && Math.round(box.height) === 56).toBe(true);
+      // Flush at the top and the only chrome there: one bar of 56 px and its hairline.
+      expect(box?.y === 0 && Math.round(box.height) >= 56 && Math.round(box.height) <= 57).toBe(true);
     }).toPass();
     // Solid: nothing shows through it.
     expect(await bar.evaluate((element) => [getComputedStyle(element).backdropFilter, getComputedStyle(element).backgroundColor])).toEqual(["none", expect.not.stringMatching(/rgba?\(.*,\s*0(\.\d+)?\)$/)]);
@@ -231,9 +284,9 @@ test.describe("Laufbahn", () => {
     await expect(title).toHaveAttribute("aria-haspopup", "dialog");
     // No letters anywhere on the page: the sections are titled by their words.
     for (const heading of await page.getByRole("heading", { level: 2 }).all()) await expect(heading).not.toHaveText(/^[A-E]\s*$/);
-    // At the end of the page the last section is named.
+    // At the end of the page the last section is named: the documents.
     await page.keyboard.press("End");
-    await expect(title).toContainText("Anschreiben");
+    await expect(title).toContainText("Unterlagen");
     await page.context().close();
   });
 
@@ -288,9 +341,14 @@ test.describe("Laufbahn", () => {
     await page.keyboard.press("Enter");
     const sheet = page.getByRole("dialog", { name: "Inhalt" });
     await expect(sheet).toBeVisible();
-    const links = sheet.getByRole("link");
-    await expect(links).toHaveText(["Über mich", "Was ich mitbringe", "Werdegang", "Neu für mich: das Tönen", "Anschreiben"]);
+    // The sections, then the documents as a second group (each a direct download).
+    const links = sheet.locator("ol").getByRole("link");
+    await expect(links).toHaveText(["Über mich", "Was ich mitbringe", "Werdegang", "Neu für mich: das Tönen", "Anschreiben", "Unterlagen"]);
     await expect(sheet.locator("[aria-current='true']")).toHaveCount(1);
+    const documents = sheet.getByRole("list", { name: "Unterlagen" }).getByRole("link");
+    // The count keeps its word and the dot ends a line: no-break spaces there (keepCounts, review 4).
+    await expect(documents).toHaveText(["Lebenslauf · PDF", "Anschreiben · PDF", /^Beides in einer Datei\u00a0· \d\u00a0Seiten$/u]);
+    for (const link of await documents.all()) await expect(link).toHaveAttribute("download", /\.pdf$/);
     // Tab never reaches the page behind the sheet (it is inert): focus stays in the sheet, or passes to
     // the browser's own controls after the last row, as a native modal dialog allows.
     const inSheetOrBrowser = () => sheet.evaluate((dialog) => dialog.contains(document.activeElement) || document.activeElement === document.body);
@@ -320,7 +378,7 @@ test.describe("Laufbahn", () => {
     await expect(sheet).toBeHidden();
     // Choosing a section: the sheet closes, the address follows, and the heading stops below the bar.
     await title.click();
-    await sheet.getByRole("link", { name: "Werdegang" }).click();
+    await sheet.getByRole("link", { name: "Werdegang", exact: true }).click();
     await expect(sheet).toBeHidden();
     await expect(page).toHaveURL(/#section-path$/);
     const [heading, bar] = [await page.getByRole("heading", { level: 2, name: "Werdegang" }).boundingBox(), await page.locator(".poster-bar").boundingBox()];
@@ -329,7 +387,7 @@ test.describe("Laufbahn", () => {
     await page.context().close();
   });
 
-  test("phones: skills are a list on one soft sheet: an icon and the whole label in each row, no lines, no hyphenation, nothing broken", async ({ browser }) => {
+  test("phones: skills are a list on one soft sheet: an icon and the whole label in each row, no lines, no hyphenation, nothing broken; the facts stand beside his portrait", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const skills = page.getByRole("region", { name: "Was ich mitbringe" });
@@ -362,15 +420,36 @@ test.describe("Laufbahn", () => {
     }
     // Twelve skills in under 600 px.
     expect(list?.height).toBeLessThan(600);
-    // The facts are on one soft sheet as well, every value whole on its row.
-    const facts = page.getByRole("region", { name: "Über mich" }).locator("dl");
+    // "Über mich" keeps a picture beside the facts until his own photo comes (the founder, round 6
+    // review 4: a drawn still for now): the portrait on two of five columns at the start, the facts on
+    // the other three, one a row under a hairline. The position and the employer stand in the head's
+    // target line only. A value may wrap between its words, never inside one, and nothing hyphenates.
+    const about = page.getByRole("region", { name: "Über mich" });
+    const portrait = about.locator("[data-about-portrait]");
+    await expect(portrait).toHaveCount(1);
+    await expect(portrait.locator("img").first()).toHaveAttribute("alt", /^Illustration: /);
+    const facts = portrait.locator("dl");
+    await expect(facts.locator("dt")).toHaveText(["Stapler", "Farbsehen"]);
+    await expect(about).not.toContainText("Bewerbung als");
+    const [picture, column] = [await portrait.locator(":scope > div").first().boundingBox(), await facts.boundingBox()];
+    expect(picture && column && picture.x + picture.width <= column.x && Math.abs(picture.y - column.y) <= 1, JSON.stringify([picture, column])).toBe(true);
+    for (const row of await facts.locator(":scope > div").all()) expect(await row.evaluate((element) => parseFloat(getComputedStyle(element).borderTopWidth))).toBeGreaterThan(0);
     for (const value of await facts.locator("dd").all()) {
-      const lines = await value.evaluate((element) => {
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+      const text = (await value.textContent()) ?? "";
+      expect(text).not.toContain("\u00AD");
+      expect(await value.evaluate((element) => getComputedStyle(element).hyphens)).toBe("manual");
+      // Every word on one line: a range over each word has one line box.
+      const broken = await value.evaluate((element) => {
+        const node = element.firstChild;
+        if (node?.nodeType !== Node.TEXT_NODE) return ["no text"];
+        return [...(node.textContent ?? "").matchAll(/\S+/gu)].flatMap((word) => {
+          const range = document.createRange();
+          range.setStart(node, word.index);
+          range.setEnd(node, word.index + word[0].length);
+          return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size > 1 ? [word[0]] : [];
+        });
       });
-      expect(lines, await value.textContent() ?? "").toBe(1);
+      expect(broken, text).toEqual([]);
     }
     await page.context().close();
   });
@@ -424,7 +503,7 @@ test.describe("Laufbahn", () => {
     const page = await context.newPage();
     await page.goto(SEVAG);
     const nav = page.getByRole("navigation", { name: "Abschnitte" });
-    await expect(nav.getByRole("link")).toHaveCount(5);
+    await expect(nav.getByRole("link")).toHaveCount(6);
     await expect(nav.locator("[aria-current]")).toHaveCount(0);
     await nav.getByRole("link", { name: "Neu für mich: das Tönen" }).click();
     await expect(page).toHaveURL(/#section-toning-title$/);
@@ -443,24 +522,39 @@ test.describe("Laufbahn", () => {
     const sheet = page.getByRole("dialog", { name: "Inhalt" });
     await expect(sheet).toBeVisible();
     expect((await sheet.boundingBox())?.height).toBeLessThanOrEqual(390);
-    const last = sheet.getByRole("link", { name: "Anschreiben" });
+    // The section row, not the document row below it ("Anschreiben · PDF herunterladen").
+    const letter = sheet.locator("ol").getByRole("link", { name: "Anschreiben", exact: true });
+    await letter.scrollIntoViewIfNeeded();
+    await expect(letter).toBeInViewport({ ratio: 1 });
+    // The last row of all, the combined file, can be reached too.
+    const last = sheet.getByRole("list", { name: "Unterlagen" }).getByRole("link").last();
     await last.scrollIntoViewIfNeeded();
     await expect(last).toBeInViewport({ ratio: 1 });
-    await last.click();
+    await letter.scrollIntoViewIfNeeded();
+    await letter.click();
     await expect(page).toHaveURL(/#section-letter-title$/);
     await context.close();
   });
 
-  test("phones: the picture runs edge to edge, nothing runs off the side, and his own page has no Linkyo bar", async ({ browser }) => {
+  test("phones: the picture runs edge to edge under the figures, About shows another still, nothing runs off the side, and his own page has no Linkyo bar", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const plate = await page.locator("[data-hero-plate]").boundingBox();
     expect(plate?.x).toBe(0);
     expect(plate?.width).toBe(390);
-    // About three quarters of the screen, and the name stands on it.
-    expect(plate && plate.height > 844 * 0.6 && plate.height < 844 * 0.8).toBe(true);
+    // A 3 : 2 plate, last in the ink head: the name and the figures stand above it, never on it.
+    expect(plate && Math.abs(plate.height - 390 * (2 / 3)) <= 1).toBe(true);
     const name = await page.getByRole("heading", { level: 1 }).boundingBox();
-    expect(name && plate && name.y + name.height <= plate.y + plate.height).toBe(true);
+    const figures = await page.locator("[data-lb-head] dl").boundingBox();
+    expect(name && plate && name.y + name.height <= plate.y).toBe(true);
+    expect(figures && plate && figures.y + figures.height <= plate.y).toBe(true);
+    // "Über mich" shows a drawn still of its own beside the facts, never the plate's (the rotation swaps
+    // the two when the header plays the portrait's clip): no visit shows one picture twice.
+    const still = async (selector: string) => /ex-motion-[a-z-]+/u.exec((await page.locator(selector).first().getAttribute("src")) ?? "")?.[0] ?? "";
+    const [plateStill, portraitStill] = [await still("[data-hero-plate] img"), await still("[data-about-portrait] img")];
+    expect(plateStill).toMatch(/^ex-motion-/);
+    expect(portraitStill).toMatch(/^ex-motion-/);
+    expect(portraitStill).not.toBe(plateStill);
     // The page never scrolls sideways.
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
     // Sevag's page is shown as his own (bare): no Linkyo bar comes in.
@@ -470,12 +564,13 @@ test.describe("Laufbahn", () => {
     await page.context().close();
   });
 
-  test("with reduced motion nothing moves; without it only the hero's lines, the header's drift and the rail move: no section rises", async ({ browser }) => {
+  test("with reduced motion nothing moves; without it only the hero's lines and the rail move: no parallax, no section rises", async ({ browser }) => {
     const names = (page: Page) =>
       page.evaluate(() => ({
         rise: getComputedStyle(document.querySelector(".poster-rise") ?? document.body).animationName,
-        drift: getComputedStyle(document.querySelector(".lb-parallax") ?? document.body).animationName,
-        rail: getComputedStyle(document.querySelector(".lb-step") ?? document.body, "::after").animationName,
+        // Round 6 has no parallax: no element carries it.
+        drift: document.querySelectorAll(".lb-parallax").length,
+        rail: getComputedStyle(document.querySelector(".lb-step") ?? document.body, "::before").animationName,
         // Nothing in the content rises, zooms or fills a reading line as the page scrolls.
         rising: document.querySelectorAll(".lb-reveal, .lb-zoom, .lb-progress, .poster-reveal").length,
         running: document
@@ -485,14 +580,14 @@ test.describe("Laufbahn", () => {
       }));
     const still = await phone(browser, { reducedMotion: "reduce" });
     await still.goto(SEVAG);
-    expect(await names(still)).toEqual({ rise: "none", drift: "none", rail: "none", rising: 0, running: [] });
+    expect(await names(still)).toEqual({ rise: "none", drift: 0, rail: "none", rising: 0, running: [] });
     // The rail is drawn in full without its animation.
-    expect(await still.locator(".lb-step").first().evaluate((step) => getComputedStyle(step, "::after").scale)).toBe("none");
+    expect(await still.locator(".lb-step").first().evaluate((step) => getComputedStyle(step, "::before").scale)).toBe("none");
     await still.context().close();
     const moving = await phone(browser, { reducedMotion: "no-preference" });
     await moving.goto(SEVAG);
     const live = await names(moving);
-    expect([live.rise, live.drift, live.rail, live.rising]).toEqual(["poster-rise", "lb-parallax", "lb-fill", 0]);
+    expect([live.rise, live.drift, live.rail, live.rising]).toEqual(["poster-rise", 0, "lb-fill", 0]);
     await moving.context().close();
   });
 
@@ -523,15 +618,16 @@ test.describe("Laufbahn", () => {
       await small.goto(url);
       expect(await axe(small), url).toEqual([]);
     }
-    // With a contact block the hero leads with its action, "Share" beside it, the CV below as a quiet
-    // link: one filled button in the hero.
+    // With a contact block the hero leads with its action (filled), the owner's own CV beside it
+    // (soft) on one row: one filled button in the hero, and no Share there (it is the bar's).
     await small.goto(SAMPLE("en"));
     const actions = small.locator("[data-hero-actions]");
-    const [ask, share, cv] = [actions.getByRole("link", { name: "Ask about a project" }), actions.getByRole("button", { name: "Share" }), actions.getByRole("link", { name: /^CV/ })];
+    const [ask, cv] = [actions.getByRole("link", { name: "Ask about a project" }), actions.getByRole("link", { name: /^CV/ })];
     await expect(ask).toBeVisible();
-    await expect(share).toBeVisible();
-    const [askBox, shareBox, cvBox] = [await ask.boundingBox(), await share.boundingBox(), await cv.boundingBox()];
-    expect(askBox && shareBox && cvBox && Math.abs(askBox.y - shareBox.y) < 1 && cvBox.y > askBox.y + askBox.height).toBe(true);
+    await expect(cv).toBeVisible();
+    await expect(actions.getByRole("button", { name: "Share" })).toHaveCount(0);
+    const [askBox, cvBox] = [await ask.boundingBox(), await cv.boundingBox()];
+    expect(askBox && cvBox && Math.abs(askBox.y - cvBox.y) < 1).toBe(true);
     await small.context().close();
   });
 
@@ -558,6 +654,8 @@ test.describe("Laufbahn", () => {
   });
 
   test("Shift+Tab from the index back into the hero never leaves focus under the compact bar", async ({ page }) => {
+    // The chip index is the tablet's.
+    await page.setViewportSize({ width: 820, height: 1180 });
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(SAMPLE("en"));
     // To the end at once: the End key's scroll is animated by Chrome and could still be running (and pull
@@ -589,7 +687,7 @@ test.describe("Laufbahn", () => {
     await context.close();
   });
 
-  test("short screens (a landscape phone, 200 % zoom): the white words keep AA on the picture and stay clear of the badge", async ({ browser }) => {
+  test("short screens (a landscape phone, 200 % zoom): the white words keep AA on the ink head and stay clear of the badge", async ({ browser }) => {
     for (const viewport of [
       { width: 844, height: 390 },
       { width: 640, height: 360 },
@@ -601,7 +699,7 @@ test.describe("Laufbahn", () => {
         await page.goto(url);
         // His own page carries no Linkyo badge at all; the sample has none either.
         if (url === SEVAG) expect(await underBadge(page)).toEqual(["no badge"]);
-        // Large text: at least 3 : 1 on every pixel behind it (the veil gives about 6 : 1 even on white).
+        // On ink (round 6 sets no words over the picture): at least 4.5 : 1 on every pixel behind them.
         expect(await wordsContrast(page), `${url} at ${String(viewport.width)}x${String(viewport.height)}`).toBeGreaterThanOrEqual(4.5);
         await context.close();
       }
@@ -629,10 +727,16 @@ test.describe("Laufbahn", () => {
     const tile = page.getByRole("region", { name: "المهارات والأدوات" }).getByRole("listitem").first();
     const [tileBox, iconBox] = [await tile.boundingBox(), await tile.locator("svg").boundingBox()];
     expect(tileBox && iconBox && iconBox.x > tileBox.x + tileBox.width / 2).toBe(true);
-    // A timeline's nodes stand at the right edge of its steps.
-    const step = page.locator(".lb-step").first();
-    const [stepBox, nodeBox] = [await step.boundingBox(), await step.locator("span[aria-hidden]").first().boundingBox()];
-    expect(stepBox && nodeBox && nodeBox.x + nodeBox.width >= stepBox.x + stepBox.width - 1).toBe(true);
+    // A timeline's rail and dots stand at the right of its words: the rail is the step's first column
+    // (the rightmost in Arabic), the words to its left, each dot centred on the rail.
+    const step = page.locator("li:has(> .lb-step)").first();
+    const [item, rail, dot, words] = [await step.boundingBox(), await step.locator(".lb-step").boundingBox(), await step.locator(".lb-step > span").boundingBox(), await step.locator("[data-lb-entry]").boundingBox()];
+    const where = JSON.stringify({ item, rail, dot, words });
+    expect(item && rail && dot && words, where).toBeTruthy();
+    if (item && rail && dot && words) {
+      expect(rail.x + rail.width >= item.x + item.width - 1 && rail.x >= words.x + words.width - 1, where).toBe(true);
+      expect(Math.abs(dot.x + dot.width / 2 - (rail.x + rail.width / 2)), where).toBeLessThanOrEqual(0.5);
+    }
     await page.context().close();
   });
 });

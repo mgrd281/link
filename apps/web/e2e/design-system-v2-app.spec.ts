@@ -202,13 +202,18 @@ test.describe("Arabic companions (C-03)", () => {
     expect(new Set(Object.values(fonts)).size).toBe(3);
   });
 
-  test("Laufbahn keeps exactly the Arabic face it had", async ({ page }) => {
+  test("Laufbahn sets Arabic in its pairing's companion, IBM Plex Sans Arabic, then Geist for every Latin letter and digit", async ({ page }) => {
     const font = await h1Font(page, "laufbahn");
-    const plex = await page.evaluate(() => getComputedStyle(document.querySelector(".poster-scope") ?? document.body).getPropertyValue("--font-face-plex-arabic").trim());
+    const face = (name: string) => page.evaluate((variable) => getComputedStyle(document.querySelector(".poster-scope") ?? document.body).getPropertyValue(variable).trim(), name);
+    const plex = await face("--font-face-arabic-plex");
+    const geist = await face("--font-face-geist");
     expect(plex).not.toBe("");
-    // The variable holds quoted names; the computed value drops the quotes around single words.
+    expect(geist).not.toBe("");
+    // The variables hold quoted names; the computed value drops the quotes around single words. Until
+    // ADR 0069 round 6, review 3 Laufbahn kept the Arabic pairing's stack, with no Latin face at all.
     const unquote = (value: string) => value.replace(/["']/g, "");
-    expect(unquote(font)).toBe(unquote(`${plex}, "Geeza Pro", sans-serif`));
+    expect(unquote(font).startsWith(unquote(`${plex}, ${geist}`)), font).toBe(true);
+    expect(font).not.toContain("Geeza Pro");
     expect(await page.locator("h1").first().evaluate((element) => getComputedStyle(element).fontWeight)).toBe("700");
   });
 

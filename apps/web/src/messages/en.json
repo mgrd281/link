@@ -256,7 +256,7 @@
       "fail": "fails",
       "presets": "12 presets",
       "presetsNote": "Starting points. Everything stays editable.",
-      "pairings": "8 font pairings",
+      "pairings": "9 font pairings",
       "pairingsNote": "Self-hosted, OFL. Arabic pages always use the Arabic pairing.",
       "linkStyles": "Link buttons: 6 styles × 3 shapes",
       "linkStylesNote": "Rendered with the theme above. Hover and press work on every style."
@@ -567,7 +567,30 @@
       "readLetter": "Read the letter",
       "readLetterWhole": "Read the whole letter",
       "readMore": "Read more",
-      "readLess": "Show less"
+      "readLess": "Show less",
+      "cv": "CV",
+      "letter": "Cover letter",
+      "cvInSentence": "CV",
+      "letterInSentence": "cover letter",
+      "documents": "Documents",
+      "documentsLead": "CV and cover letter as PDFs, set from this page.",
+      "download": "Download",
+      "downloadName": "Download {document} (PDF, {pages, plural, one {# page} other {# pages}})",
+      "downloadShort": "Download {document} (PDF)",
+      "pdfMeta": "PDF · A4 · {pages, plural, one {# page} other {# pages}}",
+      "pdf": "PDF",
+      "pdfRow": "{document} · PDF",
+      "application": "Both in one file · {pages, plural, one {# page} other {# pages}}",
+      "applicationShort": "Both in one file",
+      "applicationName": "Both in one file · {pages, plural, one {# page} other {# pages}}: cover letter and CV (PDF)",
+      "asOf": "As of {date}",
+      "current": "current",
+      "documentsGroup": "Documents",
+      "email": "Email",
+      "phone": "Phone",
+      "sharePage": "Share page",
+      "pdfRowName": "Download {document} · PDF",
+      "letterPdfName": "Download {document} as PDF ({pages, plural, one {# page} other {# pages}})"
     },
     "newsletter": {
       "exampleTitle": "Just a preview",
@@ -801,7 +824,7 @@
       "description": "Dark and bold: huge type, projects as a numbered list, one electric blue."
     },
     "laufbahn": {
-      "description": "For applications and CVs: a large picture, clear sections with a contents menu, a timeline that fills as you read."
+      "description": "For applications and CVs: type first on ink, the CV and cover letter as PDFs, clear sections with a contents menu, a timeline that fills as you read."
     },
     "leuchttisch": {
       "description": "For photographers: whole series uncropped in rows across the full width, type in ink, only the pictures carry colour."
@@ -5596,6 +5619,32 @@
     },
     "settings": {
       "legal": "Legal"
+    }
+  },
+  "documents": {
+    "paper": {
+      "cv": "CV",
+      "letter": "Cover letter",
+      "application": "Application",
+      "titleCv": "CV – {name}",
+      "titleLetter": "Cover letter – {name}",
+      "titleApplication": "Application – {name}",
+      "profile": "Profile",
+      "facts": "Key facts",
+      "career": "Career",
+      "skills": "Skills",
+      "present": "present",
+      "phone": "Phone",
+      "email": "Email",
+      "online": "Online",
+      "location": "Based in",
+      "date": "Date",
+      "asOf": "As of {date}",
+      "page": "Page {page} of {pages}",
+      "enclosure": "Enclosure",
+      "enclosureCv": "CV",
+      "subjectFor": "Application for {value}",
+      "subjectBare": "Application"
     }
   }
 }

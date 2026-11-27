@@ -256,7 +256,7 @@
       "fail": "fällt durch",
       "presets": "12 Vorlagen",
       "presetsNote": "Startpunkte. Alles bleibt anpassbar.",
-      "pairings": "8 Schriftpaare",
+      "pairings": "9 Schriftpaare",
       "pairingsNote": "Selbst gehostet, OFL. Arabische Seiten nutzen immer das arabische Paar.",
       "linkStyles": "Link-Buttons: 6 Stile × 3 Formen",
       "linkStylesNote": "Mit dem Theme oben gerendert. Hover und Drücken funktionieren bei jedem Stil."
@@ -567,7 +567,30 @@
       "readLetter": "Anschreiben lesen",
       "readLetterWhole": "Ganzes Anschreiben lesen",
       "readMore": "Weiterlesen",
-      "readLess": "Weniger anzeigen"
+      "readLess": "Weniger anzeigen",
+      "cv": "Lebenslauf",
+      "letter": "Anschreiben",
+      "cvInSentence": "Lebenslauf",
+      "letterInSentence": "Anschreiben",
+      "documents": "Unterlagen",
+      "documentsLead": "Lebenslauf und Anschreiben als PDF, gesetzt aus dieser Seite.",
+      "download": "Herunterladen",
+      "downloadName": "{document} herunterladen (PDF, {pages, plural, one {# Seite} other {# Seiten}})",
+      "downloadShort": "{document} herunterladen (PDF)",
+      "pdfMeta": "PDF · A4 · {pages, plural, one {# Seite} other {# Seiten}}",
+      "pdf": "PDF",
+      "pdfRow": "{document} · PDF",
+      "application": "Beides in einer Datei · {pages, plural, one {# Seite} other {# Seiten}}",
+      "applicationShort": "Beides in einer Datei",
+      "applicationName": "Beides in einer Datei · {pages, plural, one {# Seite} other {# Seiten}}: Anschreiben und Lebenslauf (PDF)",
+      "asOf": "Stand: {date}",
+      "current": "aktuell",
+      "documentsGroup": "Unterlagen",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "sharePage": "Seite teilen",
+      "pdfRowName": "{document} · PDF herunterladen",
+      "letterPdfName": "{document} als PDF herunterladen ({pages, plural, one {# Seite} other {# Seiten}})"
     },
     "newsletter": {
       "exampleTitle": "Nur eine Vorschau",
@@ -801,7 +824,7 @@
       "description": "Dunkel und kräftig: riesige Schrift, Projekte als nummerierte Liste, ein elektrisches Blau."
     },
     "laufbahn": {
-      "description": "Für Bewerbungen und Lebensläufe: ein großes Bild, klare Abschnitte mit Inhaltsmenü, ein Werdegang, der sich beim Lesen füllt."
+      "description": "Für Bewerbungen und Lebensläufe: Schrift zuerst auf Tinte, Lebenslauf und Anschreiben als PDF, klare Abschnitte mit Inhaltsmenü, ein Werdegang, der sich beim Lesen füllt."
     },
     "leuchttisch": {
       "description": "Für Fotografie: ganze Serien ungeschnitten in Reihen über die volle Breite, Schrift in Tinte, nur die Bilder tragen Farbe."
@@ -5596,6 +5619,32 @@
     },
     "settings": {
       "legal": "Rechtliches"
+    }
+  },
+  "documents": {
+    "paper": {
+      "cv": "Lebenslauf",
+      "letter": "Anschreiben",
+      "application": "Bewerbung",
+      "titleCv": "Lebenslauf – {name}",
+      "titleLetter": "Anschreiben – {name}",
+      "titleApplication": "Bewerbung – {name}",
+      "profile": "Profil",
+      "facts": "Eckdaten",
+      "career": "Werdegang",
+      "skills": "Kenntnisse",
+      "present": "heute",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "online": "Online",
+      "location": "Wohnort",
+      "date": "Datum",
+      "asOf": "Stand {date}",
+      "page": "Seite {page} von {pages}",
+      "enclosure": "Anlage",
+      "enclosureCv": "Lebenslauf",
+      "subjectFor": "Bewerbung als {value}",
+      "subjectBare": "Bewerbung"
     }
   }
 }

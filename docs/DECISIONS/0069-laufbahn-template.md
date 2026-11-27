@@ -257,4 +257,282 @@ modern and fitting. Template-level again (Sevag's clips aside); every other temp
   sheet 592 px with all twelve labels on one line; the facts sheet 260 px with every value on one line;
   each number and its label on one line at 390 and 360 px.
 
+## Round 5: a portrait beside the facts (the founder's screenshot of Werkbogen's "About")
+
+- **With a portrait, "About" is set as Werkbogen's:** the lead, then the portrait on two of five
+  columns at the start and the facts on the other three beside it, side by side at every width from
+  320 px (in Arabic the portrait stands on the right), then the rest of the text. Beside a portrait
+  the facts are a list with a hairline above each row (the label quiet over its value in bold), not
+  the soft sheet: the portrait is the step that sets the row apart. Without a portrait nothing
+  changes: the facts keep their soft sheet (a unit test holds that markup to the one before).
+- **No section numbers.** Werkbogen puts a small "02" before its titles; Laufbahn's titles stay words
+  only, as its index and its contents sheet do (round 2: no numbers), so none is added for one section.
+- **Sevag's placeholder** is the drawn still of "Scannen von Waren" until his own photo. On the visit
+  whose header plays that clip, the portrait takes the header's own still instead
+  (`withRotationClip`), so no visit shows one picture twice.
+- **Measured** on the demo build with the fictional portfolio sample, reduced motion: 390 px the portrait
+  130 × 163 beside facts 204 px wide; 320 px 102 × 128 beside 162 px, every value wrapping between
+  words; 1440 px 281 × 351 beside 434 px; no horizontal scroll, no shadow; Arabic mirrored.
+- **The browser's top area takes the hero's colour.** On a phone the bleed hero opens at the top edge
+  with a dark picture, but the status bar and Safari 26's bar took the light page colour: a white band
+  above the picture. Below the wide canvas (`width < layout.work`) the page's `theme-color` and the
+  document's background (html, body: what Safari 26 tints from) are now the hero's own colour: the ink
+  of its ground and veil over a picture, the accent over the initials
+  (`features/directions/poster/browser-top.ts`, used by `/<username>`, `/p/<slug>` and the poster
+  preview). The page below keeps its light ground (its root paints `bg-creator-bg`); the wide canvas
+  and every other template keep the page colour.
+
+## Round 6: the dossier (the founder: "a very modern design, the best user experience, with a Lebenslauf and Bewerbung to download")
+
+The founder found round 5 too close to what was there and asked for the most modern design possible,
+"so that companies are amazed", with the CV and the cover letter to download. Three studies were
+scored (`audit/laufbahn-v6/SPEC.md`); "Satzspiegel" won (8.0, against 7.83 and 6.17) with grafts from
+the other two. This round is the page; the PDFs are their own ADR, [0089](0089-laufbahn-pdfs.md).
+
+- **The head is type first, on ink, at every width.** It reverses the 72svh picture hero of rounds
+  1–3: a recruiter reads who, what and for which position before anything else. In this order: the
+  availability as a pill (a still green dot, decorative), the name (h1, Geist 700, each word may take
+  its own line on a phone, the whole name on one line in eight columns on the wide canvas), the role
+  (every " · " keeps its dot at the end of a line: a non-breaking space before it), the **target line**
+  ("Bewerbung als **Fachkraft für Lagerlogistik (m/w/d)**", the owner's own label and value, and the
+  employer beside it when the page names one), the place, the sentence, two actions, the figures, and
+  last the picture as a plate. The head and the closing Kontakt band are ink (`lb-ground`) from edge to
+  edge, never words over a picture; round 5's browser-top tint keeps its purpose (now ink at every
+  width, with or without a picture, `browser-top.ts`).
+- **The target line's facts leave "Über mich".** The position applied for and the employer are found
+  by their labels (an exact match: "Bewerbung als", "Stelle", "Applying for", "التقديم على" …, never
+  "Bewerbungsfrist"; `targetFacts`, shared with the letter's subject) and stand in the head only: facts
+  live in one place.
+- **The two actions.** First, filled in white with ink words (never the accent, which may be ink
+  itself, as on Sevag's page): the contact block's primary action, else "Anschreiben lesen", else
+  "Weiterlesen". Second, soft: the Lebenslauf as a PDF where the page offers one, else the owner's own
+  CV, else "Teilen". **Share leaves the hero when a CV is offered** (it reverses round 2): it stays in
+  the bar, in the Kontakt band's rows and on every page without PDFs.
+- **Figures** are split into qualifier, number and unit (`splitFigure`: "seit" over "2019", "99,6" with
+  a half-size "%" after a no-break space of its size, DIN 5008, as on paper: ADR 0089, point 11), one
+  size for all three, as large as the widest allows in its column; a value in words ("SAP") is set as
+  words. The label comes first in the DOM (screen readers read "Pickgenauigkeit 2025: 99,6 %"); the
+  visual order is a subgrid.
+- **The plate below the figures, no parallax.** Phones and tablets: 3 : 2 from edge to edge, last in
+  the band; the wide canvas: the last four of twelve columns beside the words, rounded, from the top
+  of the words to their last row (the actions, or the social links under them), the picture covering
+  it at its focal point, so the plate ends on a line of the head (review 4; until then it stood in the
+  picture's own shape, `widePlateRatio`, and ended at a height that matched nothing). Beside the
+  sample's words a drawn 4 : 5 clip loses under 3 % of its height and nothing at its sides.
+  Without any picture: no plate and no initials. Nothing in the head moves after its lines rise in
+  once.
+- **The `grotesk` pairing** (Geist 700 / Geist 400, Arabic IBM Plex Sans Arabic 700/400) replaces
+  `classic` for Laufbahn: one modern grotesque for the name and the text, with true tabular figures.
+  Geist is already the only preloaded face, so Inter no longer loads on Laufbahn pages (checked by the
+  e2e: no Inter request). Every place that lists pairings has it: tokens, the design screen, the AI
+  catalogue (`core-v6`, `plan-v5`: one more pairing and Laufbahn's new description, nothing else), "9
+  Schriftpaare". `GLYPH_WIDTH.grotesk` is Geist's 0.52.
+- **The bar on ink** (`laufbahn-bar.tsx`), as the head and the browser's top: the initials, the name
+  over the section being read (it opens the contents), and fixed round buttons on phones (the CV to
+  download, the primary action in white), so an owner's long label never squeezes the title. On the
+  wide canvas: the documents as soft pills, the primary action as a white pill with its label, and
+  **exactly one Share** (the phone's Share-instead-of-download fallback never reaches the wide canvas;
+  unit test and e2e in de, en and ar).
+- **Hanging titles on the wide canvas.** The sticky index list beside the sections is gone: each section
+  is a row of twelve columns, its title in the first three and sticky while the section is read (a
+  running head under the bar), the content in the other nine. Tablets keep the chips; the contents
+  stay one tap away in the bar at every width. A jump (from the contents, the hero or an address)
+  lands the section where its title sticks, 96 px from the top: the document's scroll padding (72 px,
+  for the bar) and, on the wide canvas, a scroll margin of 24 px on the section (`lb-section`), so the
+  title and the content's first line arrive level (review 4).
+- **The career is a table, as on paper** (from tablet widths on): the years first ("2021 – heute",
+  tabular figures, the tag "aktuell" under a step still going on), then the role, where and a note
+  beside one rail with a dot for each step, filled for the current one; the rail ends with the last
+  step's words (no space under the last step). On phones (below `@prose`) the years stand as a small
+  accent line above the role, beside the rail, the tag beside them, and the words take the column's
+  whole width (review 4: the table left them 146 px at 320 and 216 px at 390). **The 32 px icon
+  nodes go**: dots match the paper. The rail still fills with the accent as the steps scroll by (the
+  only scroll-linked motion), drawn in full with reduced motion.
+- **A portrait only of the person, then the owner's choice (review 4).** Round 6 first showed round 5's
+  portrait beside the facts in "Über mich" only for a picture of the person (`isPersonPicture`: not one
+  of Linkyo's library stills), which took Sevag's drawn still out of About. **The founder decided
+  otherwise:** Sevag's "Über mich" keeps a picture beside the facts, "any picture for now", until he
+  sends his own photo. So the portrait an owner sets on the About block always stands beside the
+  facts, a drawn library still too, with its alt text, focal point and sizes; `isPersonPicture` is
+  gone. **The PDF CV does not follow:** it prints only an uploaded JPEG photo of the person
+  (`photoCandidate`, [0089](0089-laufbahn-pdfs.md)), never an illustration or a library still, and
+  then no avatar either (`photo.test.ts` checks every still of the library). Without a portrait the
+  facts stand alone on one soft sheet in full rows (`factRows`, review 2):
+  at each width as many to a row as the longest fact allows on one line (at most two on phones, three
+  on tablets, four on the wide canvas; a value up to 18, 23 or 22 characters for those), the rows as
+  even as they can be with the fuller ones first (five: three and two), each row filling the sheet's
+  twelve columns, and never a fact alone beside an empty half: then one fact a row. The sample's three
+  facts are one row of three on the wide canvas and one a row below it.
+- **The letter is set as a letter:** white paper on a light page (the page's surface on a dark one), its
+  reading time and its own PDF as a small pill in the top line, the PDF's subject ("Bewerbung als …")
+  above the owner's paragraphs, which stay exactly as written. The paper spans the content's columns
+  like every sheet of the section (one right edge); the words inside keep the reading measure. Phones
+  keep the disclosure after two paragraphs.
+- **Unterlagen** (a new automatic section, before the Kontakt band, in the contents): one card per
+  document (the whole card is one `<a download>`: a paper miniature from the PDF's own layout, the
+  title, "PDF · A4 · 1 Seite" with the real page count, a "Herunterladen" pill), both in one file under
+  the cards, and the date of the page's last save on public pages ("Stand: 20. November 2026"). No
+  spinner and no toast: the browser's own download, or iOS's PDF viewer, is the state. The contents
+  sheet lists the documents as a second group of direct downloads, both in one file as its third row
+  ("Beides in einer Datei · 2 Seiten"); the bar and the Kontakt band keep to the two documents.
+  Inside Linkyo's iPhone app every one of these links hands its PDF to the app ([0089](0089-laufbahn-pdfs.md)).
+- **The Kontakt band on ink** closes the page: the status, the closing line set large, the owner's
+  sentence, the primary action in white, then one list of ways to reach them (E-Mail and Telefon with
+  their addresses, the other links, the documents, "Seite teilen") and the page's footer in the band's
+  tone (`CreatorFooter tone="inverse"`; it stays the page's contentinfo, outside the band's section).
+- **Arabic pages offer no documents** ([0089](0089-laufbahn-pdfs.md) says why): no section, no pills or round
+  download, no sheet group, no letter pill and no subject; the hero's second action is "مشاركة" and the
+  bar on the wide canvas has one Share. Everything mirrors by logical properties alone; "منذ" stands
+  over its number, figures are isolated left to right. The page is set in its pairing's Arabic
+  companion (review 3): IBM Plex Sans Arabic first, then Geist (`arabicStacks("grotesk")`, as every
+  other template's Arabic pages). Plex's unicode-range holds Arabic letters and word spaces only, so
+  every Latin letter, digit and sign, wherever it stands ("2021 –", "·", "SAP", "2017", "(B1)", the
+  letter's dates, the Kontakt title, the e-mail address, the figures), is drawn in Geist, and the
+  Arabic words and the spaces between them in Plex. Until review 3 Laufbahn kept the Arabic pairing
+  as it is (Plex, "Geeza Pro", sans-serif), which has no Latin face: Latin fell to a system face, and
+  review 2 patched six places with spans (`LatinRuns`). Those are gone.
+- **Names that read as they look (WCAG 2.5.3).** A download's accessible name starts with its visible
+  words: "Lebenslauf herunterladen (PDF, 1 Seite)" for the hero's "Lebenslauf", "Lebenslauf · PDF
+  herunterladen" for a row, "Anschreiben als PDF herunterladen (1 Seite)" for the letter's "PDF" pill;
+  a card is named by its own words, in reading order and each part apart ("Lebenslauf PDF · A4 · 1
+  Seite Herunterladen", no longer "LebenslaufPDF …" run together). The spec's sentence name
+  ("Lebenslauf herunterladen (PDF, 1 Seite)") is not used on the cards: it leaves the card's visible
+  "PDF · A4 · 1 Seite" out of its name, which axe reports (`label-content-name-mismatch`). In English
+  the document's name is lower case inside a sentence ("Download cover letter (PDF)": `cvInSentence`,
+  `letterInSentence`). (axe's label-in-name check ignores words in parentheses, so a
+  visible word may never stand only inside them.)
+- **On ink**, the focus ring is white (`focus-ring-inverse`; the accent is about 2.3 : 1 there), and the
+  soft fill and hairlines use `hover-inverse`, which `lb-ground` keeps light whatever the device's
+  colour scheme (in a dark scheme the token turns into ink at 8 %, invisible on ink).
+
+**Measured** on the demo build (fictional application example, reduced motion, chrome off; bottoms in
+CSS px from the top of the page):
+
+| Width | h1 | target line | actions | figures |
+|---|---|---|---|---|
+| 390 × 844 | 220 | 355 | 549 | 690 |
+| 360 × 780 | 220 | 355 | 605 (stacked) | 743 |
+| 768 × 1024 | 148 | 229 | 399 | 525 |
+| 1440 × 900 | 256 | 345 | 530 | 698 |
+
+At 360 px the two actions stack at full width, deliberately: the spec asked for one row at 360, but
+"E-Mail schreiben" and "Lebenslauf" need 325 px side by side and the row has 320, and two full-width
+buttons are easier to hit than two squeezed ones; everything named, figures included, is still on the
+first screen. No horizontal scroll at 360, 390, 768 or 1440 in de, en and ar (and at 320 since
+review 4).
+
+| Pair (measured in the browser) | Ratio |
+|---|---|
+| white on ink | 19.8 : 1 |
+| `lb-ink-muted` on ink | 7.2 : 1 |
+| white on `bg-hover-inverse` over ink | 14.9 : 1 |
+| ink on the white button | 19.8 : 1 |
+| accent text on `lb-soft` (the "aktuell" tag) | 5.6 : 1 light, 4.7 : 1 dark |
+| muted on `surface-2` (the cards' meta) | 5.6 : 1 light, 7.2 : 1 dark |
+
+The creator page code stays within its budget: `/[locale]/p/[slug]` 32.5 KB and `/u/[username]` 30.8 KB
+of 35 KB (Laufbahn's own parts load with its pages only; measured again at review 3, see below). Every other template's captures in the s4m
+picture baseline are byte-equal (95 of 103; the 8 that differ are Laufbahn's own, by design).
+
+**For the founder:** today versus new, side by side, at 390 and 1440
+(`audit/laufbahn-v6/build-page/today-vs-new-*.png`), and two decisions to confirm: the ink,
+type-first head; "Teilen" moving out of the hero when a CV is offered. Decided by the founder (review
+4): Sevag's drawn still stays beside his facts in "Über mich" until he sends his own photo ("any
+picture for now"); his PDF CV never shows it (it prints only an uploaded photo).
+
+### Round 6, review 2 (2026-11-27)
+
+- **The career's dots sit on the rail.** The class that centred them,
+  `-start-[calc(var(--spacing-dot)/2+var(--spacing-0_5)/2)]`, compiled to `var(--spacing-0 5)`:
+  Tailwind reads `_` in an arbitrary value as a space except in a `var()` it recognises, and a `var(`
+  straight after an operator is not one. The minifier dropped the rule and every dot hung 5 px beside
+  the rail. The offset is now a utility, `lb-node` (globals.css); dot centre minus rail centre measures
+  0 px in de and ar at 360, 390 and 1440 (was 5). A guard compiles every class in the app and the UI kit
+  that names an underscored token with Tailwind itself and fails when the name loses its underscore
+  (`design-system/arbitrary-values.test.ts`); the e2e measures the dots in de and ar.
+- **No fact alone beside an empty half** (`factRows`, see "A portrait only of the person" above): the
+  sample's facts were "Sprachen | Führerschein" over a lone "Arbeitszeit" at 768 and 1440. The test now
+  asserts full rows for one to eight facts of every length at every width.
+- **Arabic Latin runs in Geist** (see "Arabic pages" above): the career's years and the role's "·" were
+  drawn in a system face; a CDP check of the platform fonts now allows only Geist and IBM Plex Sans
+  Arabic for the career's years, the role and the status. (Review 3 replaced this patch by the
+  companion stack and widened the check to every text of the page.)
+- **The hero's two actions on phones: one row while both fit, else both at full width.** On phones the
+  two buttons keep `px-3` (`px-4` from tablets on, `px-6` on the wide canvas); both grow to fill their
+  row, so the narrower padding only shows at the point of wrapping. Measured (intrinsic widths):
+  "Anschreiben lesen" 193 px + "Lebenslauf" 137 px + 8 px = 338 px: one row at 390 (350 px of room),
+  stacked at 375 and 360; "E-Mail schreiben" 180 px + "Lebenslauf": 325 px, one row at 390 and 375,
+  stacked at 360. The spec's "one row at 390 and 360" holds only for short pairs; a page without a
+  contact block (Sevag's in CI) has the "Anschreiben lesen" pair. The private spec asserts exactly that
+  (one row at 390, stacked at full width at 360, any page count in the name), and the fictional
+  `?page=application-no-contact` (the sample without its contact block) checks the same layout where
+  reviews may run it.
+
+### Round 6, review 3 (2026-11-27)
+
+- **Every creator page shipped Laufbahn's index again** (safety review, must-fix). Review 2's helper
+  for Arabic Latin runs lived in laufbahn.tsx, and laufbahn-hero.tsx imported it; the renderer imports
+  the hero statically, so laufbahn.tsx and through it the client index (`laufbahn-index.tsx`: the
+  section switcher, the bar's reveal, the app's downloads) joined the first load of every creator page
+  of every template: `/u/[username]` 63.1 KB and `/[locale]/p/[slug]` 64.8 KB of 35 KB, CI's "Route
+  budgets" step red. The helper is gone (next point), and with it the import. Demo build again:
+  `/u/[username]` 30.8 KB, `/u/[username]/[project]` 24.0 KB, `/[locale]/p/[slug]` 32.5 KB,
+  `/[locale]/p/[slug]/[project]` 27.0 KB of 35 KB, all ok; a fictional page of another template
+  (`/de/p/fc-kiezkicker`) loads 14 scripts, none with the index's code. A guard
+  (`poster/renderer-imports.test.ts`) walks the static imports from renderer.tsx with the TypeScript
+  parser and fails, naming the chain, when they reach laufbahn.tsx, a module the signposted-* entry
+  points load dynamically, or any Laufbahn "use client" module; it failed on the old tree with
+  "renderer.tsx → laufbahn-hero.tsx → laufbahn.tsx → laufbahn-index.tsx".
+- **Arabic Latin in Geist everywhere, at the root** (design review). Review 2 patched six places;
+  "SAP" and "2017" in About, "(B1)" in the facts, the skills, the letter's dates, the Kontakt title's
+  full stop and the e-mail address in the band still fell to Liberation Sans. Laufbahn no longer keeps
+  the Arabic pairing as it is (tokens: its `arabic: { pairing: "arabic" }` is gone); its Arabic pages
+  take the grotesk pairing's companion like every other template, `IBM Plex Sans Arabic, Geist` for
+  display and body (`arabicStacks("grotesk")`), weight 700 as before. `LatinRuns`, `latinRuns` and
+  the figures' `rtl:font-display` are removed. The e2e font check now reads every element with text
+  in the head, `main` and the Kontakt band on the Arabic sample, desktop and phone: only Geist and IBM
+  Plex Sans Arabic are drawn (head 17 Geist glyphs, main 86, the band 30, the e-mail address Geist
+  alone). With the old stack forced back into the same page the same scan finds Liberation Sans in
+  all three regions.
+
+### Round 6, review 4 (2026-11-27)
+
+Measured on the demo build (fictional samples, reduced motion, chrome off), `next start`:
+
+- **Nothing leaves its box at 320 px** (WCAG 1.4.10 reflow: a 320 px phone, or a 1280 px laptop at
+  400 %). The German "Herunterladen" pill stood 4.3 px outside each Unterlagen card (x 152–304.3 in a
+  card ending at 300). Below 390 px the paper is a size smaller (64 × 91 px instead of 96 × 136), so
+  the words keep 164 px beside it; the pill is never wider than its column (`max-w-full`, its label
+  `min-w-0` and wrapping as a last resort). Now: pill 120–272.3 px in de, 120–243 px in en. In the
+  head, "Pickgenauigkeit" ran 8.5 px into the gutter (its figure's column ended at 201.3, the label
+  at 209.8): each figure is one track that may shrink (`minmax(0, 1fr)`), and a word of twelve letters
+  or more hyphenates in the page's language only where it does not fit whole (`lb-hyphens`:
+  `hyphens: auto`, `hyphenate-limit-chars: 12 5 5`, no balancing, which hyphenated words that fit):
+  "Pickgenau-igkeit 2025" at 320, whole at 360; "licence", "accuracy" and "Staplerschein" never.
+  "Beides in einer Datei · 2 Seiten" broke between "2" and "Seiten": a count keeps its word and a dot
+  ends its line (`keepCounts`, in the cards' "PDF · A4 · 1 Seite", "Beides" and the sheet's row), as
+  the PDF already set it. An e2e at 320 × 700 in de, en and ar checks every element of each card and
+  each figure inside its own box (± 0.5 px) and no sideways scroll; with round 6's paper, pill and
+  figure track injected back, the same measure reports 304.3 > 300 and 209.8 > 201.3.
+- **The career on phones.** Below `@prose` the years stand as a small accent line above the role,
+  beside the rail, "aktuell" beside them; the words get 258 px at 320 (146 before) and 328 px at 390
+  (216). The table stays from tablets on (768 and 1440 as before: years, rail at 598 px, words at 632
+  on the wide canvas). The rail is now its own grid item (`lb-step`, 2 px, in a `min-content` track),
+  beside the years and the words on phones and between them in the table; the dot sits on its first
+  line (`lb-node`: the years' line on phones, the role's in the table), and the e2e measures the dot
+  on the rail, centre on centre, in de and ar.
+- **Jumps land level.** Every contents-sheet jump at 1440 put the section and its content at 72 px and
+  its sticky title at 96 px. A scroll margin on the section on the wide canvas (`lb-section`: 96 px less
+  the 72 px scroll padding) lands title and content together: 96.0–96.5 px in de, en and ar for About,
+  Kenntnisse, Werdegang, Als Nächstes, Anschreiben and Unterlagen, |title − content| ≤ 0.3 px (e2e:
+  ≤ 1 px after each sheet jump).
+- **The plate ends on a line of the head:** from the top of the words to their last row, 357 × 434 px
+  at 96–529.6 in de and en (the actions end at 529.6), 357 × 419 in ar, 357 × 462 on the portfolio
+  sample (to its social links at 557.7). It ended 13 px below the actions before. The e2e checks top
+  and bottom against the words (± 1 px) in de, en, ar and on the portfolio sample.
+- **About's picture is the owner's choice** (the founder's decision, above): any portrait set on the
+  About block stands beside the facts; the CV still prints only an uploaded photo.
+
+The creator pages keep their budgets (`/u/[username]` 30.8 KB, `/[locale]/p/[slug]` 32.5 KB of 35 KB).
+
 **Status.** Accepted.

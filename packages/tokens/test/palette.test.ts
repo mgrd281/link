@@ -345,8 +345,8 @@ describe("presets", () => {
       expect(layout.headings, template).not.toBe("signpost");
       expect(layout.hero, template).not.toBe("bleed");
     }
-    // Inter for both faces (classic), so the hierarchy is size and weight alone; 700 on Arabic pages too.
-    expect(resolveCreatorTheme({ template: "laufbahn" }).pairing.id).toBe("classic");
+    // Geist for both faces (grotesk, round 6), so the hierarchy is size and weight alone; 700 on Arabic pages too.
+    expect(resolveCreatorTheme({ template: "laufbahn" }).pairing.id).toBe("grotesk");
     expect(resolveCreatorTheme({ template: "laufbahn" }, { rtlScript: true }).cssVars["--creator-display-weight"]).toBe("700");
     for (const accent of [undefined, creatorTokens.swatches.navy]) {
       for (const rtlScript of [false, true]) {

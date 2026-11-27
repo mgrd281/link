@@ -32,8 +32,15 @@ export function rotationTurn(keys: readonly string[], asked: string | readonly s
 
 /**
  * The page with that clip as its moving header and the clip's first frame as its header picture,
- * described in the page's language (so the still and the film always belong together).
+ * described in the page's language (so the still and the film always belong together). A portrait in
+ * "About" that is that same still takes the page's own header picture instead (the two swap), so no
+ * visit shows one picture twice.
  */
 export function withRotationClip(page: Page, clip: MotionClip): Page {
-  return { ...page, profile: withLibraryClip(page.profile, clip) };
+  const own = page.profile.hero;
+  const blocks =
+    own && own.src !== clip.poster
+      ? page.blocks.map((block) => (block.type === "about" && block.portrait?.src === clip.poster ? { ...block, portrait: own } : block))
+      : page.blocks;
+  return { ...page, profile: withLibraryClip(page.profile, clip), blocks };
 }

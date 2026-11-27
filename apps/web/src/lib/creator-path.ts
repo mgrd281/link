@@ -1,4 +1,4 @@
-import { isProjectSlug, isUsernameFormat, RESERVED_USERNAMES } from "@linkyo/blocks/rules";
+import { isDocumentSegment, isProjectSlug, isUsernameFormat, RESERVED_USERNAMES } from "@linkyo/blocks/rules";
 
 import { routing } from "@/i18n/routing";
 
@@ -29,11 +29,26 @@ function isCreatorName(segment: string): boolean {
   return isUsernameFormat(segment) && !LOCALES.includes(segment) && !RESERVED_USERNAMES.has(segment);
 }
 
+/** What may follow a creator's name: a project's address, or one of the application's PDFs (cv, letter, application). */
+const isSecondPart = (segment: string): boolean => isProjectSlug(segment) || isDocumentSegment(segment);
+
+/**
+ * "/de/p/jonas-brandt/cv", "…/letter" and "…/application": a PDF of a prepared page (ADR 0089), an
+ * attachment in one language rather than a page in three. The proxy drops the hreflang alternates
+ * next-intl lists for every localized address from these answers (Arabic pages offer no PDFs, so
+ * "/ar/p/<slug>/cv" is a 404).
+ */
+export function isPreparedDocument(pathname: string): boolean {
+  const match = /^\/([^/]+)\/p\/[^/]+\/([^/]+)\/?$/.exec(pathname);
+  return match !== null && LOCALES.includes(match[1] ?? "") && isDocumentSegment(match[2] ?? "");
+}
+
 /**
  * "/mila" → "/u/mila" and "/mila/hafenlicht" → "/u/mila/hafenlicht" when real accounts are on, the
- * first part could be someone's page and the second a project's address; otherwise null. Every
- * first-level route of the app is a reserved name (and "p" and "i" are too short for one), so a
- * product route is never taken for a project.
+ * first part could be someone's page and the second a project's address or a document of the page
+ * ("/mila/cv" → "/u/mila/cv", its Lebenslauf as a PDF); otherwise null. Every first-level route of
+ * the app is a reserved name (and "p" and "i" are too short for one), so a product route is never
+ * taken for a project. The documents' words are reserved project addresses, so the two never meet.
  */
 export function creatorRewrite(pathname: string, enabled: boolean): string | null {
   if (!enabled) return null;
@@ -42,12 +57,12 @@ export function creatorRewrite(pathname: string, enabled: boolean): string | nul
   const pair = twoSegments(pathname);
   if (pair === null) return null;
   const [name, project] = pair;
-  return isCreatorName(name) && isProjectSlug(project) ? `/u/${name}/${project}` : null;
+  return isCreatorName(name) && isSecondPart(project) ? `/u/${name}/${project}` : null;
 }
 
 /**
- * "/Mila" → "/mila" and "/Mila/Hafenlicht" → "/mila/hafenlicht" (a permanent redirect): addresses
- * are lowercase, people type them as they like.
+ * "/Mila" → "/mila", "/Mila/Hafenlicht" → "/mila/hafenlicht" and "/Mila/CV" → "/mila/cv" (a
+ * permanent redirect): addresses are lowercase, people type them as they like.
  */
 export function creatorRedirect(pathname: string): string | null {
   const segment = singleSegment(pathname);
@@ -62,5 +77,5 @@ export function creatorRedirect(pathname: string): string | null {
   if (name === name.toLowerCase() && project === project.toLowerCase()) return null;
   const lowerName = name.toLowerCase();
   const lowerProject = project.toLowerCase();
-  return isCreatorName(lowerName) && isProjectSlug(lowerProject) ? `/${lowerName}/${lowerProject}` : null;
+  return isCreatorName(lowerName) && isSecondPart(lowerProject) ? `/${lowerName}/${lowerProject}` : null;
 }

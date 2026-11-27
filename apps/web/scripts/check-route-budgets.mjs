@@ -28,6 +28,11 @@
  *   (no `NEXT_PUBLIC_SUPABASE_URL`) no Supabase code in any `/app` chunk;
  * - the home page (`/de`): its HTML at most 60 KB;
  * - every prerendered link preview card (`opengraph-image`): at most 300 KB.
+ *
+ * And one check of the server's files: every route that lays out or writes a Lebenslauf or an
+ * Anschreiben (the six PDF routes and the two creator page routes that show the miniature) lists the
+ * three Geist faces it reads at run time in its file trace (`.next/server/app/<route>.js.nft.json`),
+ * so a serverless deployment carries them (ADR 0089).
  */
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -52,6 +57,13 @@ export const APP_ROUTE = "/[locale]/app";
 export const HOME_HTML = "server/app/de.html";
 /** Strings only Supabase's browser libraries carry (their client headers and the auth client's name). */
 export const SUPABASE_SIGNATURE = /supabase-js|supabase-ssr|GoTrueClient/;
+
+/** The faces the documents read at run time (features/documents/pdf/fonts.ts). */
+export const DOCUMENT_FONTS = Object.freeze(["Geist-Regular.ttf", "Geist-SemiBold.ttf", "Geist-Bold.ttf"]);
+/** The routes that lay out or write a PDF: the six document routes and the two creator page routes (their miniatures). */
+export const DOCUMENT_ROUTES = Object.freeze(
+  ["u/[username]", "[locale]/p/[slug]"].flatMap((base) => [`${base}/page`, ...["cv", "letter", "application"].map((kind) => `${base}/${kind}/route`)]),
+);
 
 /** gzip size of a buffer at zlib's default level (what `next start` sends). */
 export const gzipSize = (buffer) => gzipSync(buffer).length;
@@ -196,6 +208,22 @@ export function readHome(appDir) {
 }
 
 /**
+ * The document faces missing from each document route's file trace (an empty list: all there).
+ * @param {string} appDir the app's folder (the one holding `.next`)
+ * @returns {{ route: string, missing: string[] }[]}
+ */
+export function readTraces(appDir) {
+  return DOCUMENT_ROUTES.map((route) => {
+    const file = join(appDir, ".next", "server", "app", `${route}.js.nft.json`);
+    if (!existsSync(file)) return { route, missing: ["the route's trace"] };
+    /** @type {{ files: string[] }} */
+    const trace = JSON.parse(readFileSync(file, "utf8"));
+    const traced = trace.files.map((name) => name.split("\\").join("/"));
+    return { route, missing: DOCUMENT_FONTS.filter((face) => !traced.some((name) => name.endsWith(`/geist/dist/fonts/geist-sans/${face}`))) };
+  });
+}
+
+/**
  * Every budget with its measured value.
  * @param {string} appDir
  * @param {{ demo: boolean }} options a demo build must ship no Supabase code to the dashboard
@@ -204,7 +232,7 @@ export function checkBudgets(appDir, { demo }) {
   const routes = readRoutes(appDir);
   const cards = readCards(appDir);
   const home = readHome(appDir);
-  /** @type {{ name: string, value: number, budget: number, ok: boolean, detail?: string }[]} */
+  /** @type {{ name: string, value: number, budget: number, ok: boolean, count?: boolean, detail?: string }[]} */
   const results = [];
   for (const route of CREATOR_ROUTES) {
     const stats = routes[route];
@@ -239,6 +267,15 @@ export function checkBudgets(appDir, { demo }) {
     ok: cards.length > 0 && heavy.length === 0,
     ...(heavy.length ? { detail: `${String(heavy.length)} over budget, e.g. ${heavy.slice(0, 5).map((card) => card.path).join(", ")}` } : cards.length ? {} : { detail: "no prerendered card found" }),
   });
+  const traces = readTraces(appDir).filter((entry) => entry.missing.length > 0);
+  results.push({
+    name: `document fonts in the file traces of ${String(DOCUMENT_ROUTES.length)} routes, routes missing one`,
+    value: traces.length,
+    budget: 0,
+    ok: traces.length === 0,
+    count: true,
+    ...(traces.length ? { detail: traces.map((entry) => `${entry.route}: ${entry.missing.join(", ")}`).join("; ") } : {}),
+  });
   return { routes, cards, home, results };
 }
 
@@ -252,7 +289,7 @@ function main() {
   if (values.json) writeFileSync(values.json, `${JSON.stringify({ demo, budgets: BUDGETS, ...report }, null, 2)}\n`);
   console.log(`Route budgets (${demo ? "demo build" : "build with real accounts"}):`);
   for (const result of report.results) {
-    const counted = result.name.startsWith("demo build") ? String(result.value) : `${kb(result.value)} of ${kb(result.budget)}`;
+    const counted = result.name.startsWith("demo build") || result.count ? String(result.value) : `${kb(result.value)} of ${kb(result.budget)}`;
     console.log(`  ${result.ok ? "ok  " : "FAIL"}  ${result.name}: ${counted}${result.detail ? ` (${result.detail})` : ""}`);
   }
   const failed = report.results.filter((result) => !result.ok);

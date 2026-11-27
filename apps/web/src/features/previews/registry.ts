@@ -8,6 +8,7 @@ import { z } from "zod";
 import { EXAMPLES } from "@/features/examples/catalog";
 import { isLook, LOOKS, type Look } from "@/features/examples/looks";
 
+import { applicationSample } from "./application-sample";
 import { journalistAr, journalistDe, journalistEn } from "./journalist";
 import { starPage } from "./stars";
 import { STARS } from "./stars-data";
@@ -171,6 +172,22 @@ const HAND_MADE: Record<string, Preview> = {
     pages: { de: journalistDe, en: journalistEn, ar: journalistAr },
     sample: { kind: "journalist", category: "careers", look: "journalist" },
   },
+  // A fictional applicant for the Laufbahn template, with the PDFs of an application (./application-sample.ts):
+  // the surface for the template's screenshots and the documents' tests. Labelled as an example; not in the gallery.
+  "jonas-brandt": {
+    name: { de: "Jonas Brandt", en: "Jonas Brandt" },
+    username: "jonas-brandt",
+    theme: { template: "laufbahn" },
+    pages: { de: applicationSample("de"), en: applicationSample("en") },
+    sample: { kind: "warehouse", category: "careers", drawings: true },
+  },
+  "karim-nasser": {
+    name: { ar: "كريم ناصر" },
+    username: "karim-nasser",
+    theme: { template: "laufbahn" },
+    pages: { ar: applicationSample("ar") },
+    sample: { kind: "warehouse", category: "careers", drawings: true },
+  },
   // Concepts for well-known people: unlisted, labelled, official links only (see stars.ts).
   ...Object.fromEntries(
     STARS.map((star): [string, Preview] => [
@@ -235,8 +252,9 @@ export const PREVIEWS: Record<string, Preview> = {
 export { PREVIEW_ALIASES } from "./aliases";
 
 export const previewPage = (slug: string, locale: string, now = new Date()) => {
-  const preview = PREVIEWS[slug];
-  const page = preview?.pages[locale as "de" | "en" | "ar"];
+  // Own entries only: "constructor", "toString" or "__proto__" name no prepared page.
+  const preview = Object.hasOwn(PREVIEWS, slug) ? PREVIEWS[slug] : undefined;
+  const page = preview?.pages && Object.hasOwn(preview.pages, locale) ? preview.pages[locale as "de" | "en" | "ar"] : undefined;
   if (!preview || !page) return null;
   return { preview, page: preview.prepare ? preview.prepare(page, now) : page };
 };

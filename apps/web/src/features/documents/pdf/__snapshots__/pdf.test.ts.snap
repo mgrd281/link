@@ -1,0 +1,42 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the PDF file > keeps its drawing in a reviewable snapshot 1`] = `
+"BT /F3 20 Tf -0.5 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 776.666 Tm (Jonas Brandt) Tj ET
+BT /F1 10 Tf 0 Tc 0.353 0.357 0.361 rg 1 0 0 1 70.866 755.393 Tm (Fachkraft f\\374r Lagerlogistik \\267 Staplerfahrer) Tj ET
+0.118 0.314 0.784 rg 70.866 743.972 51.024 1.5 re f
+BT /F1 8.5 Tf 0 Tc 0.353 0.357 0.361 rg 1 0 0 1 354.331 694.122 Tm (Wohnort) Tj ET
+BT /F1 8.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 402.52 694.122 Tm (Bremen) Tj ET
+BT /F1 8.5 Tf 0 Tc 0.353 0.357 0.361 rg 1 0 0 1 354.331 682.132 Tm (Telefon) Tj ET
+BT /F1 8.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 402.52 682.132 Tm (+49 30 23125 457) Tj ET
+BT /F1 8.5 Tf 0 Tc 0.353 0.357 0.361 rg 1 0 0 1 354.331 670.141 Tm (E-Mail) Tj ET
+BT /F1 8.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 402.52 670.141 Tm (jonas.brandt@example.com) Tj ET
+BT /F1 8.5 Tf 0 Tc 0.353 0.357 0.361 rg 1 0 0 1 354.331 646.16 Tm (Datum) Tj ET
+BT /F1 8.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 402.52 646.16 Tm (26. November 2026) Tj ET
+0.557 0.557 0.561 RG 0.3 w 12.756 544.252 m 26.929 544.252 l S
+0.557 0.557 0.561 RG 0.3 w 12.756 246.614 m 26.929 246.614 l S
+0.557 0.557 0.561 RG 0.3 w 12.756 420.945 m 32.598 420.945 l S
+BT /F2 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 555.336 Tm (Bewerbung als Fachkraft f\\374r Lagerlogistik \\(m/w/d\\)) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 519.364 Tm (Sehr geehrte Frau Albers,) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 488.964 Tm (mit gro\\337em Interesse bewerbe ich mich als Fachkraft f\\374r Lagerlogistik in Ihrem) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 473.764 Tm (Logistikzentrum. Seit 2017 arbeite ich in Lagern von Handel und Industrie, seit 2021 als) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 458.564 Tm (Fachkraft im Dreischichtbetrieb der Hafenlager Nord GmbH in Bremen.) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 428.164 Tm (Dort nehme ich Ware an, pr\\374fe sie gegen Lieferschein und Bestellung, lagere sie mit dem) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 412.964 Tm (Schubmaststapler ein und kommissioniere mit dem Handscanner. Best\\344nde und Buchungen) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 397.764 Tm (pflege ich in SAP EWM. Meine Pickgenauigkeit lag 2025 bei 99,6 Prozent.) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 367.364 Tm (Sicherheit hat f\\374r mich Vorrang: Ich sichere Ladungen nach Vorschrift und weise neue) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 352.164 Tm (Kolleginnen und Kollegen am Stapler ein. Im Team bleibe ich ruhig, auch wenn am) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 336.964 Tm (Freitagnachmittag drei Lkw gleichzeitig an der Rampe stehen.) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 306.564 Tm (Ab dem 1. M\\344rz 2027 kann ich bei Ihnen beginnen. \\334ber eine Einladung zu einem pers\\366nlichen) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 291.364 Tm (Gespr\\344ch freue ich mich.) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 260.964 Tm (Mit freundlichen Gr\\374\\337en) Tj ET
+BT /F1 10.5 Tf 0 Tc 0.086 0.086 0.09 rg 1 0 0 1 70.866 209.764 Tm (Jonas Brandt) Tj ET
+BT /F1 7.5 Tf 0 Tc 0.353 0.357 0.361 rg 1 0 0 1 70.866 34.016 Tm (Jonas Brandt \\267 Anschreiben) Tj ET"
+`;
+
+exports[`the PDF file > matches the stored bytes (Node 22's zlib, geist 1.9.2) 1`] = `
+{
+  "application": "3d5fa1f51214efbb0da307bd8604511a99668ecf87e2d38a85236cd36da0606d",
+  "cv": "b74b14b1850eb1237b0a1dc12d616e60de6a2116883e216787f99256cb51be70",
+  "letter": "c055cd3c6b8fe3cff5341b5a919c7a07b44300dfbb749df567023aa3951d2609",
+}
+`;

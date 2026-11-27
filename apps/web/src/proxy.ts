@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { PREVIEW_ALIASES } from "./features/previews/aliases";
 import { routing } from "./i18n/routing";
-import { creatorRedirect, creatorRewrite } from "./lib/creator-path";
+import { creatorRedirect, creatorRewrite, isPreparedDocument } from "./lib/creator-path";
 import { supabaseEnabled } from "./lib/supabase/config";
 
 const intl = createMiddleware(routing);
@@ -32,7 +32,11 @@ export default function proxy(request: NextRequest) {
     url.pathname = `/${match[1] ?? routing.defaultLocale}/p/${alias}`;
     return NextResponse.redirect(url, 308);
   }
-  return intl(request);
+  const response = intl(request);
+  // next-intl names every localized address in all three languages (a Link header of hreflang
+  // alternates). A prepared page's PDF is an attachment in one language, so its answer names none.
+  if (isPreparedDocument(pathname)) response.headers.delete("link");
+  return response;
 }
 
 // Everything but the API, Next's own paths and files. Each skipped name ends at a path boundary: as

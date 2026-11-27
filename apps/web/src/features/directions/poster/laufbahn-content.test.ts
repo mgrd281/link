@@ -40,11 +40,15 @@ import { sevagDe } from "@/features/previews/sevag";
 import {
   iconFor,
   isLetter,
+  keepCounts,
+  keepSeparators,
   LEAD_MAX,
+  lineEms,
   opensShort,
   readingMinutes,
   splitLead,
   textKind,
+  widestWord,
   wordsOf,
 } from "./laufbahn-content";
 import { paragraphs } from "./sections";
@@ -329,5 +333,42 @@ describe("text sections", () => {
     // Arabic: a full stop before an Arabic letter ends a sentence.
     const arabic = `أعمل في المستودع منذ عام ألفين وثمانية عشر وأقود الرافعة الشوكية يومياً. ${"وأحب النظام والعمل ضمن الفريق. ".repeat(6)}`;
     expect(splitLead(arabic)[0]).toBe("أعمل في المستودع منذ عام ألفين وثمانية عشر وأقود الرافعة الشوكية يومياً.");
+  });
+});
+
+describe("round 6: the dossier's head", () => {
+  const NBSP = String.fromCharCode(0xa0);
+
+  it("keeps a separator's dot at the end of a line: a non-breaking space before every ' · '", () => {
+    expect(keepSeparators("Fachkraft für Lagerlogistik · Staplerfahrer")).toBe(`Fachkraft für Lagerlogistik${NBSP}· Staplerfahrer`);
+    expect(keepSeparators("A · B · C")).toBe(`A${NBSP}· B${NBSP}· C`);
+    expect(keepSeparators("Ohne Trenner")).toBe("Ohne Trenner");
+    // Only the spaced separator: a dot inside a word or a figure stays as it is.
+    expect(keepSeparators("1·2")).toBe("1·2");
+  });
+
+  it("keeps a count with its word and a separator's dot at the end of a line (the documents' meta lines)", () => {
+    expect(keepCounts("Beides in einer Datei · 2 Seiten")).toBe(`Beides in einer Datei${NBSP}· 2${NBSP}Seiten`);
+    expect(keepCounts("PDF · A4 · 1 Seite")).toBe(`PDF${NBSP}· A4${NBSP}· 1${NBSP}Seite`);
+    expect(keepCounts("Both in one file · 2 pages")).toBe(`Both in one file${NBSP}· 2${NBSP}pages`);
+    // Any script's digits and letters: "٣ صفحات" stays together too.
+    expect(keepCounts("٣ صفحات")).toBe(`٣${NBSP}صفحات`);
+    // Only a number before a word is glued: the spaces between words stay.
+    expect(keepCounts("Lebenslauf und Anschreiben")).toBe("Lebenslauf und Anschreiben");
+  });
+
+  it("measures figures by their digits (0.62 em), commas and points (0.3 em) and the per cent sign (0.8 em)", () => {
+    const average = 0.53;
+    expect(lineEms("2019", average)).toBeCloseTo(4 * 0.62);
+    expect(lineEms("99,6", average)).toBeCloseTo(3 * 0.62 + 0.3);
+    expect(lineEms("%", average)).toBeCloseTo(0.8);
+    // A wider face scales every class with its average.
+    expect(lineEms("2019", 0.52)).toBeCloseTo((4 * 0.62 * 0.52) / 0.53);
+  });
+
+  it("finds a name's widest word (each word may take its own line on a phone)", () => {
+    expect(widestWord("Jo Brandt", 0.52)).toBe("Brandt");
+    expect(widestWord("Maximilian Ek", 0.52)).toBe("Maximilian");
+    expect(widestWord("Lea Hartmann-Weiß", 0.52)).toBe("Hartmann-Weiß");
   });
 });

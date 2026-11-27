@@ -256,7 +256,7 @@
       "fail": "راسب",
       "presets": "12 قالبًا",
       "presetsNote": "نقاط انطلاق. كل شيء قابل للتعديل.",
-      "pairings": "8 أزواج خطوط",
+      "pairings": "9 أزواج خطوط",
       "pairingsNote": "مستضافة ذاتيًا وبترخيص OFL. الصفحات العربية تستخدم الزوج العربي دائمًا.",
       "linkStyles": "أزرار الروابط: 6 أنماط × 3 أشكال",
       "linkStylesNote": "معروضة بالسمة أعلاه. التمرير والضغط يعملان في كل نمط."
@@ -567,7 +567,30 @@
       "readLetter": "اقرأ الخطاب",
       "readLetterWhole": "اقرأ الخطاب كاملاً",
       "readMore": "اقرأ المزيد",
-      "readLess": "عرض أقل"
+      "readLess": "عرض أقل",
+      "cv": "السيرة الذاتية",
+      "letter": "خطاب التقديم",
+      "cvInSentence": "السيرة الذاتية",
+      "letterInSentence": "خطاب التقديم",
+      "documents": "المستندات",
+      "documentsLead": "السيرة الذاتية وخطاب التقديم بصيغة PDF، مأخوذان من هذه الصفحة.",
+      "download": "تنزيل",
+      "downloadName": "تنزيل {document} (PDF، {pages, plural, one {صفحة واحدة} two {صفحتان} few {# صفحات} many {# صفحة} other {# صفحة}})",
+      "downloadShort": "تنزيل {document} (PDF)",
+      "pdfMeta": "PDF · A4 · {pages, plural, one {صفحة واحدة} two {صفحتان} few {# صفحات} many {# صفحة} other {# صفحة}}",
+      "pdf": "PDF",
+      "pdfRow": "{document} · PDF",
+      "application": "الاثنان في ملف واحد · {pages, plural, one {صفحة واحدة} two {صفحتان} few {# صفحات} many {# صفحة} other {# صفحة}}",
+      "applicationShort": "الاثنان في ملف واحد",
+      "applicationName": "الاثنان في ملف واحد · {pages, plural, one {صفحة واحدة} two {صفحتان} few {# صفحات} many {# صفحة} other {# صفحة}}: خطاب التقديم والسيرة الذاتية (PDF)",
+      "asOf": "آخر تحديث: {date}",
+      "current": "حاليًا",
+      "documentsGroup": "المستندات",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "sharePage": "مشاركة الصفحة",
+      "pdfRowName": "تنزيل {document} · PDF",
+      "letterPdfName": "تنزيل {document} بصيغة PDF ({pages, plural, one {صفحة واحدة} two {صفحتان} few {# صفحات} many {# صفحة} other {# صفحة}})"
     },
     "newsletter": {
       "exampleTitle": "مجرد معاينة",
@@ -801,7 +824,7 @@
       "description": "داكن وجريء: خط كبير جدًّا، والمشاريع في قائمة مرقّمة، ولمسة من الأزرق الكهربائي."
     },
     "laufbahn": {
-      "description": "للطلبات والسير الذاتية: صورة كبيرة، وأقسام واضحة مع قائمة محتويات، ومسار مهني يمتلئ أثناء القراءة."
+      "description": "للطلبات والسير الذاتية: النص أولًا على خلفية داكنة، والسيرة الذاتية وخطاب التقديم بصيغة PDF، وأقسام واضحة مع قائمة محتويات، ومسار مهني يمتلئ أثناء القراءة."
     },
     "leuchttisch": {
       "description": "للمصوّرين: سلاسل الصور كاملة دون قصّ في صفوف بعرض الصفحة، والكتابة بلون الحبر، فلا لون إلا للصور."
@@ -5596,6 +5619,32 @@
     },
     "settings": {
       "legal": "الشؤون القانونية"
+    }
+  },
+  "documents": {
+    "paper": {
+      "cv": "السيرة الذاتية",
+      "letter": "خطاب التقديم",
+      "application": "طلب التوظيف",
+      "titleCv": "السيرة الذاتية – {name}",
+      "titleLetter": "خطاب التقديم – {name}",
+      "titleApplication": "طلب التوظيف – {name}",
+      "profile": "نبذة",
+      "facts": "معلومات أساسية",
+      "career": "المسيرة المهنية",
+      "skills": "المهارات",
+      "present": "حتى الآن",
+      "phone": "الهاتف",
+      "email": "البريد الإلكتروني",
+      "online": "على الإنترنت",
+      "location": "مكان الإقامة",
+      "date": "التاريخ",
+      "asOf": "محدّث في {date}",
+      "page": "الصفحة {page} من {pages}",
+      "enclosure": "مرفق",
+      "enclosureCv": "السيرة الذاتية",
+      "subjectFor": "طلب توظيف لوظيفة {value}",
+      "subjectBare": "طلب توظيف"
     }
   }
 }

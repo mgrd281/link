@@ -10,3 +10,5 @@ import dynamic from "next/dynamic";
  */
 export const SectionSwitcher = dynamic(() => import("./laufbahn-index").then((module) => module.SectionSwitcher));
 export const BarReveal = dynamic(() => import("./laufbahn-index").then((module) => module.BarReveal));
+/** Inside the iPhone app the page's PDFs go to the app (a web view performs no `<a download>`, ADR 0087). */
+export const AppDownloads = dynamic(() => import("./laufbahn-index").then((module) => module.AppDownloads));

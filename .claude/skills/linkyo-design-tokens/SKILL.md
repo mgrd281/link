@@ -106,8 +106,10 @@ reports unknown classes.
   is flipped exactly once (add a screen there when you build a new one with arrows).
 - **Arabic companions of the creator faces (C-03).** Each pairing in `tokens.json` has
   `creator.pairing.<id>.$extensions["app.linkyo"].arabic` (`display` and `body`: family, face,
-  weight); a template can override it with its own `arabic` (Nocturne: Rakkas) or keep the Arabic
-  pairing as it is (`{ "pairing": "arabic" }`, Laufbahn). On Arabic pages `resolveCreatorTheme`
+  weight); a template can override it with its own `arabic` (Nocturne: Rakkas). `{ "pairing":
+  "arabic" }` would keep the Arabic pairing as it is, but that stack has no Latin face, so Latin
+  letters, digits and signs fall to a system face; no template uses it (Laufbahn dropped it in ADR
+  0069 round 6, review 3). On Arabic pages `resolveCreatorTheme`
   puts the companion first and the template's Latin stack after it; `theme.pairing` stays the
   Arabic pairing (name fitting, link cards and share pictures read it). The faces are vendored OFL
   files in `apps/web/src/assets/fonts/<family>/` (Arabic subset, at most two weights, `OFL.txt`

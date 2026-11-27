@@ -525,7 +525,47 @@ const LETTER_TITLES: Record<Locale, string[]> = {
 };
 /** How letters open and close, in the three languages. */
 const SALUTATION = /^(sehr geehrte|liebe[rs]?\b|hallo\b|guten tag|dear\b|hello\b|to whom|السيد|السيده|عزيزي|عزيزتي|حضره|تحيه)/u;
-const CLOSING = /(mit freundlichen grüßen|freundliche grüße|viele grüße|beste grüße|hochachtungsvoll|kind regards|best regards|yours sincerely|yours faithfully|sincerely|مع خالص التحيه|مع التحيه|وتفضلوا بقبول|تحياتي)/u;
+const GERMAN_CLOSINGS = [
+  "mit freundlichen grüßen",
+  "mit freundlichem gruß",
+  "mit besten grüßen",
+  "mit herzlichen grüßen",
+  "mit vielen grüßen",
+  "freundliche grüße",
+  "herzliche grüße",
+  "liebe grüße",
+  "viele grüße",
+  "beste grüße",
+  "freundlichen gruß",
+  "hochachtungsvoll",
+];
+const ENGLISH_CLOSINGS = [
+  "with kind regards",
+  "with best regards",
+  "kind regards",
+  "kindest regards",
+  "best regards",
+  "warm regards",
+  "warmest regards",
+  "regards",
+  "best wishes",
+  "yours sincerely",
+  "yours faithfully",
+  "yours truly",
+  "sincerely yours",
+  "sincerely",
+];
+const ARABIC_CLOSINGS = ["مع خالص التحيه", "مع التحيه", "وتفضلوا بقبول", "تحياتي"];
+/** The closings as one alternation; a German "ß" also matches the Swiss "ss" ("Mit freundlichen Grüssen"). */
+const CLOSINGS = [...GERMAN_CLOSINGS.map((closing) => closing.replaceAll("ß", "(?:ß|ss)")), ...ENGLISH_CLOSINGS, ...ARABIC_CLOSINGS].join("|");
+/** A closing anywhere in a text, as whole words ("regards", never "disregards"). */
+export const CLOSING = new RegExp(`(?<![\\p{L}])(${CLOSINGS})(?![\\p{L}])`, "u");
+/**
+ * A line that is a closing and nothing else ("Mit freundlichen Grüßen", "Kind regards,"), lower case:
+ * the letter's PDF sets the signature space after it. A sentence that merely holds one of the words
+ * ("I am sincerely …") is no closing.
+ */
+export const CLOSING_LINE = new RegExp(`^\\s*(?:${CLOSINGS})\\s*[,.!]?\\s*$`, "u");
 
 /**
  * Whether a section's text is a letter: a long read under a title that names one, or a long read that
@@ -564,4 +604,69 @@ export function splitLead(paragraph: string): [lead: string, rest: string | null
     return [text.slice(0, cut), text.slice(cut).trim()];
   }
   return [text, null];
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Round 6: the dossier's head                                                                       */
+/* ------------------------------------------------------------------------------------------------ */
+
+/** A space that never breaks (U+00A0), written by its code so the source holds no invisible character. */
+const NBSP = String.fromCharCode(0xa0);
+
+/**
+ * The role line as set: every " · " keeps its dot at the end of a line (a non-breaking space before
+ * it), so a dot never starts a line. Nothing else changes.
+ */
+export function keepSeparators(text: string): string {
+  return text.replaceAll(" · ", `${NBSP}· `);
+}
+
+/**
+ * A short line of document facts as set: a count stays with its word ("2 Seiten", "1 page"), so
+ * "Beides in einer Datei · 2 Seiten" never breaks between the number and "Seiten", and every " · "
+ * keeps its dot at the end of a line (`keepSeparators`). The PDF glues the same spaces
+ * (features/documents/layout/wrap.ts).
+ */
+export function keepCounts(text: string): string {
+  return keepSeparators(text).replace(/(\p{Nd}) (?=\p{L})/gu, `$1${NBSP}`);
+}
+
+/** Characters a display face sets narrow (the right single quote is U+2019). */
+const NARROW_GLYPHS = new Set([...Array.from("fijlrtI'.,:;!|"), String.fromCharCode(0x2019)]);
+const WIDE_GLYPHS = new Set(Array.from("mwMW"));
+/** Signs a figure carries, about a digit wide: plus, minus, the multiplication sign and the minus sign. */
+const FIGURE_SIGNS = new Set(["+", "-", String.fromCharCode(0xd7), String.fromCharCode(0x2212)]);
+const LATIN_GLYPH = /\p{Script=Latin}/u;
+const DIGIT = /\p{Nd}/u;
+const SPACE = /\s/u;
+/** The width the estimate scales from: the classic pairing's average advance (em per character). */
+const BASE_AVERAGE = 0.53;
+
+/**
+ * How wide a line is, in em of the display face. A single word set this large has no spaces to average
+ * over, so letters count by their class (i, l, t, r and friends narrow; m and w wide; capitals wider
+ * than lowercase), figures at 0.62 (Geist's widest digits), "%" at 0.8, all scaled to the pairing's
+ * average glyph width (`average`, hero.tsx's GLYPH_WIDTH). Scripts without capitals (Arabic) count at
+ * that average.
+ */
+export function lineEms(line: string, average: number): number {
+  const scale = average / BASE_AVERAGE;
+  return Array.from(line).reduce((sum, glyph) => {
+    if (SPACE.test(glyph)) return sum + 0.28 * scale;
+    if (DIGIT.test(glyph)) return sum + 0.62 * scale;
+    if (glyph === "%") return sum + 0.8 * scale;
+    if (FIGURE_SIGNS.has(glyph)) return sum + 0.6 * scale;
+    if (NARROW_GLYPHS.has(glyph)) return sum + 0.3 * scale;
+    if (!LATIN_GLYPH.test(glyph)) return sum + average;
+    if (WIDE_GLYPHS.has(glyph)) return sum + 0.92 * scale;
+    return sum + (glyph === glyph.toUpperCase() && glyph !== glyph.toLowerCase() ? 0.72 : 0.6) * scale;
+  }, 0);
+}
+
+/** The widest word of a text (each word of a name may take its own line on a phone). */
+export function widestWord(text: string, average: number): string {
+  return text
+    .trim()
+    .split(/\s+/u)
+    .reduce((widest, word) => (lineEms(word, average) > lineEms(widest, average) ? word : widest), "");
 }

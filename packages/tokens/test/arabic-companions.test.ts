@@ -4,7 +4,7 @@ import { arabicFacesOf, arabicStacks, PAIRING_IDS, resolveCreatorTheme, TEMPLATE
 import { creatorTokens } from "../src/generated/tokens";
 
 const vars = (template: (typeof TEMPLATE_IDS)[number], rtlScript = true) => resolveCreatorTheme({ template }, { rtlScript }).cssVars;
-/** The Laufbahn stacks before Stage 2, written out: they must not change by a character. */
+/** The Arabic pairing's own display stack, written out: a page that chooses it keeps it by the character. */
 const ARABIC_PAIRING_DISPLAY = 'var(--font-face-plex-arabic, "IBM Plex Sans Arabic"), "Geeza Pro", sans-serif';
 
 describe("Arabic companions (C-03)", () => {
@@ -23,7 +23,6 @@ describe("Arabic companions (C-03)", () => {
 
   it("sets Arabic pages in the companion first, then the template's own Latin stack", () => {
     for (const template of TEMPLATE_IDS) {
-      if (template === "laufbahn") continue;
       const t = creatorTokens.templates[template] as { pairing: (typeof PAIRING_IDS)[number] };
       const latin = creatorTokens.pairings[t.pairing];
       const css = vars(template);
@@ -42,14 +41,22 @@ describe("Arabic companions (C-03)", () => {
     expect(faces[2]).toContain("arabic-lalezar");
   });
 
-  it("keeps Laufbahn exactly as it was: the Arabic pairing's faces, weight 700, no capitals, no spacing", () => {
+  it("sets Laufbahn's Arabic pages in its pairing's companion, IBM Plex Sans Arabic, then Geist: bold, no capitals, no spacing", () => {
+    // Plex's unicode-range sends every Latin letter, digit and sign ("SAP", "2017", "(B1)", an e-mail)
+    // on to Geist; with the Arabic pairing's stack alone they fell to a system face (round 6 review).
     const css = vars("laufbahn");
-    expect(css["--creator-font-display"]).toBe(ARABIC_PAIRING_DISPLAY);
-    expect(css["--creator-font-body"]).toBe(creatorTokens.pairings.arabic.body.stack);
+    const grotesk = arabicStacks("grotesk");
+    expect(css["--creator-font-display"]).toBe(grotesk?.display);
+    expect(css["--creator-font-body"]).toBe(grotesk?.body);
+    expect(css["--creator-font-display"]).toBe(`var(--font-face-arabic-plex, "IBM Plex Sans Arabic"), ${creatorTokens.pairings.grotesk.display.stack}`);
+    expect(css["--creator-font-body"]).toBe(`var(--font-face-arabic-plex, "IBM Plex Sans Arabic"), ${creatorTokens.pairings.grotesk.body.stack}`);
+    expect(css["--creator-font-display"]).toContain("var(--font-face-geist, Geist)");
     expect(css["--creator-display-weight"]).toBe("700");
     expect(css["--creator-display-transform"]).toBe("none");
     expect(css["--creator-display-tracking"]).toBe("0em");
     expect(resolveCreatorTheme({ template: "laufbahn" }, { rtlScript: true }).pairing.id).toBe("arabic");
+    // No template keeps the Arabic pairing as it is any more; a creator may still choose it.
+    for (const template of TEMPLATE_IDS) expect((creatorTokens.templates[template] as { arabic?: { pairing?: string } }).arabic?.pairing, template).toBeUndefined();
   });
 
   it("keeps Werkbogen's light Arabic name (arabicDisplayWeight 400) on its serif companion", () => {
