@@ -255,9 +255,9 @@ const APP_DOWNLOAD = "data-app-download";
 /**
  * A press on one of the page's document links inside Linkyo's iPhone app (ADR 0087), where the web
  * view performs no `<a download>`: the PDF (our own address) is fetched and handed to the app, which
- * offers to save or share it; should that fail, the web view opens the PDF itself. True when the press
- * was taken over. In a browser, or for any other press (a modifier key, another button, another
- * link), false and nothing happens: the link downloads as always.
+ * offers to save or share it; should that fail (the bridge's code not loading included), the web view
+ * opens the PDF itself. True when the press was taken over. In a browser, or for any other press (a
+ * modifier key, another button, another link), false and nothing happens: the link downloads as always.
  */
 export function appDocumentPress(event: Pick<MouseEvent, "target" | "defaultPrevented" | "button" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey" | "preventDefault">): boolean {
   if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !bridgeAvailable()) return false;
@@ -266,8 +266,11 @@ export function appDocumentPress(event: Pick<MouseEvent, "target" | "defaultPrev
   if (!(link instanceof HTMLAnchorElement)) return false;
   event.preventDefault();
   const { href, download } = link;
+  // Should the hand-off fail (the bridge's chunk does not load after a deploy or offline, the fetch or
+  // the post fails), the web view opens the PDF itself: a press is never swallowed.
   void import("@/features/app-mode/bridge-files")
     .then(({ appDownloadFrom }) => appDownloadFrom(href, download || "document.pdf"))
+    .catch(() => false)
     .then((sent) => {
       if (!sent) window.location.assign(href);
     });

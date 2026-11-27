@@ -29,8 +29,11 @@ export function letterSubject(page: Page, words: { subjectFor: (value: string) =
   return value === "" ? words.subjectBare : words.subjectFor(value);
 }
 
-/** One stat value split for display: a qualifier ("seit"), a number ("99,6") and a unit ("%"), or words. */
-export type FigureParts = { kind: "number"; qualifier: string; number: string; unit: string } | { kind: "word"; text: string };
+/**
+ * One stat value split for display: a qualifier ("seit"), a number ("99,6") and a unit ("%"), or
+ * words. `spaced`: the unit follows a no-break space, on the page and on paper alike.
+ */
+export type FigureParts = { kind: "number"; qualifier: string; number: string; unit: string; spaced: boolean } | { kind: "word"; text: string };
 
 /**
  * A qualifier is whole words before the number, a space between them ("seit 2019"); a unit is "%",
@@ -40,7 +43,12 @@ export type FigureParts = { kind: "number"; qualifier: string; number: string; u
 const FIGURE = /^(?:(?<q>[^\p{Nd}]*[^\p{Nd}\s])\s+)?(?<n>[+\-−]?\p{Nd}[\p{Nd}.,]*)(?:\s*(?<s>%|\+|×)|(?<g>\p{L}[\p{L}.]{0,2})|\s+(?<w>\p{L}[\p{L}.]{0,5}))?$/u;
 const QUALIFIER_MAX = 12;
 
-/** "seit 2019" → seit · 2019; "99,6 %" → 99,6 · %; "12 Jahre" → 12 · Jahre; "SAP EWM", "9 → 3" and "C1" stay words. */
+/**
+ * "seit 2019" → seit · 2019; "99,6 %" → 99,6 · %; "12 Jahre" → 12 · Jahre; "SAP EWM", "9 → 3" and
+ * "C1" stay words. One form on the page and on paper: "%" follows a no-break space (DIN 5008:
+ * "99,6 %", also when typed "99,6%"), and so does a word written after a space ("12 Jahre"); "+", "×"
+ * and a unit written onto the number ("40+", "2.3M") stay on it.
+ */
 export function splitFigure(value: string): FigureParts {
   const text = value.trim();
   const match = FIGURE.exec(text);
@@ -48,7 +56,8 @@ export function splitFigure(value: string): FigureParts {
   const qualifier = groups?.q?.trim() ?? "";
   const number = groups?.n;
   if (!groups || number === undefined || qualifier.length > QUALIFIER_MAX) return { kind: "word", text };
-  return { kind: "number", qualifier, number, unit: groups.s ?? groups.g ?? groups.w ?? "" };
+  const unit = groups.s ?? groups.g ?? groups.w ?? "";
+  return { kind: "number", qualifier, number, unit, spaced: unit === "%" || groups.w !== undefined };
 }
 
 /** What a page offers: a generated CV, a generated letter, or the owner's own CV file instead of the generated one. */

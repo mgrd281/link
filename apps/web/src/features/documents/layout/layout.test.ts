@@ -136,8 +136,26 @@ describe("layoutCv", () => {
     expect(short.find((run) => run.text === "Telefon")?.x).toBe(columnX(9));
   });
 
+  it("sets a figure's unit as the page does: '99,6 %' with its no-break space as a character, '40+' on the number", () => {
+    const withStats = (values: string[]): Page => {
+      const base = jonasDe();
+      return { ...base, profile: { ...base.profile, stats: values.map((value, index) => ({ value, label: `Kennzahl ${String(index + 1)}` })) } };
+    };
+    const runs = texts(cv(withStats(["99,6%", "40+", "12 Jahre"])).pages[0] ?? { boxes: [] });
+    const numbers = runs.filter((run) => run.style === TYPE.figure);
+    const units = runs.filter((run) => run.style === TYPE.figureUnit);
+    expect(units.map((run) => run.text)).toEqual([`${NB}%`, "+", `${NB}Jahre`]);
+    // Each unit run starts where its number ends: the space is a character of the unit's size (copied
+    // and extracted with the text), no geometric gap.
+    numbers.forEach((number, index) => {
+      expect(units[index]?.x, number.text).toBeCloseTo(number.x + number.width, 6);
+      expect(units[index]?.y).toBe(number.y);
+    });
+    expect((units[0]?.width ?? 0) - measure("%", TYPE.figureUnit, metrics)).toBeCloseTo(measure(" ", TYPE.figureUnit, metrics), 6);
+  });
+
   it("never breaks an e-mail address that fits on one line: one run, one link rectangle", () => {
-    for (const address of ["jonas.brandt@example.com", "vorname.nachname1990@example.com", "vorname.nachname-bewerbung@lager-example.com"]) {
+    for (const address of ["jonas.brandt@example.com", "vorname.nachname1990@example.com", "vorname.nachname-bewerbung@lager.example.com"]) {
       const page = cv(withContact(`mailto:${address}`)).pages[0] ?? { boxes: [] };
       const runs = texts(page).filter((run) => run.contact && run.style === TYPE.contactValue);
       expect(runs.map((run) => run.text), address).toContain(address);
@@ -198,6 +216,47 @@ describe("layoutCv", () => {
     const rule = (cv(two).pages[0]?.boxes ?? []).find((box): box is Extract<Box, { kind: "rect" }> => box.kind === "rect" && box.w === RULE.accentWidth);
     const firstFigure = twoRuns.find((run) => run.style === TYPE.figure || run.style === TYPE.figureQualifier);
     expect(rule && firstFigure ? firstFigure.y - capHeight(firstFigure.style, metrics) - (rule.y + rule.h) : 0).toBeLessThan(SPACE.figures + mm(4));
+  });
+
+  it("keeps the figures 8 mm under the rule and under a top-right block over their cells, for any address length", () => {
+    // A sparse head (no tagline, no status), three figures, and addresses of 24 to 43 characters: the
+    // 36-character one puts the block in column 7 or 8, beside the third figure's cell (columns 7 to 9).
+    const sparseHead = (address: string): Page => {
+      const base = withContact(`mailto:${address}`);
+      return {
+        ...base,
+        profile: { ...base.profile, tagline: "" },
+        blocks: base.blocks.map((block) => (block.type === "contact" ? { ...block, status: undefined } : block)),
+      };
+    };
+    const addresses = ["jonas.brandt@example.com", "jonas.brandt.lager@example.com", "jonas.brandt.bewerbung90@example.com", "jonas.brandt.lagerlogistik.1990@example.com"];
+    expect(addresses.map((address) => address.length)).toEqual([24, 30, 36, 43]);
+    let beside = 0;
+    for (const address of addresses) {
+      for (const online of [false, true]) {
+        const page = sparseHead(address);
+        expect([input(page).role, input(page).status]).toEqual([null, null]);
+        const laid = cv(page, { online }).pages[0] ?? { boxes: [] };
+        const runs = texts(laid);
+        const rule = laid.boxes.find((box): box is Extract<Box, { kind: "rect" }> => box.kind === "rect" && box.w === RULE.accentWidth);
+        const phone = runs.find((run) => run.text === "Telefon");
+        const contact = runs.filter((run) => run.style === TYPE.contactLabel || run.style === TYPE.contactValue);
+        const blockBottom = Math.max(...contact.map((run) => run.y - metrics[run.style.face].descender * run.style.size));
+        const figureTop = Math.min(
+          ...runs.filter((run) => run.style === TYPE.figure || run.style === TYPE.figureQualifier || run.style === TYPE.figureWord).map((run) => run.y - capHeight(run.style, metrics)),
+        );
+        const label = `${address} (${online ? "with" : "without"} Online)`;
+        expect(rule, label).toBeDefined();
+        expect(figureTop - ((rule?.y ?? 0) + (rule?.h ?? 0)), label).toBeGreaterThanOrEqual(SPACE.figures - 0.01);
+        // Top right with columns over the figures' cells (it starts before column 10): the figures keep 8 mm under its last row too.
+        if (phone?.y === HEAD.contactTop && phone.x < columnX(10)) {
+          if (address.length === 36) beside += 1;
+          expect(figureTop - blockBottom, label).toBeGreaterThanOrEqual(SPACE.figures - 0.01);
+        }
+      }
+    }
+    // The 36-character address does stand top right beside the third figure, with and without Online.
+    expect(beside).toBe(2);
   });
 
   it("prints no picture and no initials without a real photo", () => {

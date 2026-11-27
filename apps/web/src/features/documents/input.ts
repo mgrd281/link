@@ -141,23 +141,27 @@ function addressOf(url: string, scheme: string): string | null {
 
 /**
  * A phone number as printed: as the owner wrote it, except a German mobile number in E.164
- * (+4915…, +4916…, +4917…), which is grouped "+49 176 12345678" (formatting, not invention).
+ * (+4915…, +4916…, +4917…), which is grouped "+49 1xx xxxxxxx" (formatting, not invention).
  */
 export function phoneText(number: string): string {
   const mobile = /^\+49(1[5-7]\d)(\d{4,})$/u.exec(number);
   return mobile ? `+49 ${mobile[1] ?? ""} ${mobile[2] ?? ""}` : number;
 }
 
-/** The first `tel:` and the first `mailto:` of the contact block (its primary action, then its links). Nothing else is printed. */
+/**
+ * The first `tel:` and the first `mailto:` of the contact block (its primary action, then its links).
+ * Nothing else is printed. Each is read as printed first, so a mark a keyboard put in (an LRM, say)
+ * is neither printed nor part of the link.
+ */
 export function contactLines(contact: BlockOf<"contact"> | undefined): { phone: ContactLine | null; email: ContactLine | null } {
   const urls = contact ? [contact.primary.url, ...(contact.links ?? []).map((link) => link.url)] : [];
   const phoneUrl = urls.find((url) => url.startsWith("tel:"));
   const emailUrl = urls.find((url) => url.startsWith("mailto:"));
-  const phone = phoneUrl ? addressOf(phoneUrl, "tel:") : null;
-  const email = emailUrl ? addressOf(emailUrl, "mailto:") : null;
+  const phone = printable((phoneUrl ? addressOf(phoneUrl, "tel:") : null) ?? "");
+  const email = printable((emailUrl ? addressOf(emailUrl, "mailto:") : null) ?? "");
   return {
-    phone: phone ? { text: printable(phoneText(phone)), uri: `tel:${phone.replace(/[^+\d]/gu, "")}` } : null,
-    email: email ? { text: printable(email), uri: `mailto:${email}` } : null,
+    phone: phone ? { text: phoneText(phone), uri: `tel:${phone.replace(/[^+\d]/gu, "")}` } : null,
+    email: email ? { text: email, uri: `mailto:${email}` } : null,
   };
 }
 

@@ -140,15 +140,15 @@ function head(input: DocumentInput, options: CvOptions): { boxes: Box[]; bottom:
       const fx = columnX(1 + index * 3);
       let valueBottom = valueTop + TYPE.figure.leading;
       if (figure.parts.kind === "number") {
-        const { qualifier, number, unit } = figure.parts;
+        const { qualifier, number, unit, spaced } = figure.parts;
         if (qualifier) boxes.push(...textRuns([qualifier], fx, top + baselineOffset(TYPE.figureQualifier, metrics), TYPE.figureQualifier, metrics));
         const style = TYPE.figure;
         const runs = textRuns([number], fx, numberBaseline, style, metrics);
         boxes.push(...runs);
-        if (unit) {
-          const gap = measure(" ", TYPE.figureUnit, metrics);
-          boxes.push(...textRuns([unit], fx + measure(number, style, metrics) + gap, numberBaseline, TYPE.figureUnit, metrics));
-        }
+        // The unit at half size, right after the number; a no-break space of its own size before it
+        // where the page has one too ("99,6 %", "12 Jahre"), drawn as a character, so copying and
+        // extractors that read the characters keep it.
+        if (unit) boxes.push(...textRuns([spaced ? `${NB}${unit}` : unit], fx + measure(number, style, metrics), numberBaseline, TYPE.figureUnit, metrics));
       } else {
         const lines = wrap(figure.parts.text, TYPE.figureWord, cell, metrics);
         boxes.push(...textRuns(lines, fx, numberBaseline, TYPE.figureWord, metrics));

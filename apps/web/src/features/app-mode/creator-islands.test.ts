@@ -79,7 +79,7 @@ describe("a Laufbahn page's PDF in the app", () => {
   const NAME = "Lebenslauf_Jonas_Brandt.pdf";
 
   /** A press on a document link (`a[data-app-download]`), in the app or not; with the app's handler and a fetch of our own PDF. */
-  function press({ app, modifier = false }: { app: boolean; modifier?: boolean }) {
+  function press({ app, modifier = false, status = 200 }: { app: boolean; modifier?: boolean; status?: number }) {
     const { posted } = page({ app });
     const assigned: string[] = [];
     (window as unknown as Record<string, unknown>).location = { assign: (href: string) => assigned.push(href) };
@@ -98,7 +98,7 @@ describe("a Laufbahn page's PDF in the app", () => {
     const fetched: string[] = [];
     vi.stubGlobal("fetch", (url: string) => {
       fetched.push(url);
-      return Promise.resolve(new Response(new Blob(["%PDF-1.7"], { type: "application/pdf" }), { status: 200 }));
+      return Promise.resolve(new Response(new Blob(["%PDF-1.7"], { type: "application/pdf" }), { status }));
     });
     let prevented = false;
     const event = { target: link, defaultPrevented: false, button: 0, metaKey: modifier, ctrlKey: false, shiftKey: false, altKey: false, preventDefault: () => (prevented = true) };
@@ -113,6 +113,30 @@ describe("a Laufbahn page's PDF in the app", () => {
     expect(result.fetched).toEqual([HREF]);
     expect(result.posted[0]).toMatchObject({ type: "download", name: NAME, mime: "application/pdf" });
     expect(result.assigned).toEqual([]);
+  });
+
+  it("opens the PDF in the web view when it cannot be fetched for the app", async () => {
+    const result = press({ app: true, status: 503 });
+    expect(result.taken).toBe(true);
+    await vi.waitFor(() => expect(result.assigned).toEqual([HREF]));
+    expect(result.fetched).toEqual([HREF]);
+    expect(result.posted).toEqual([]);
+  });
+
+  it("opens the PDF in the web view when the bridge's code does not load (a chunk gone after a deploy, or offline)", async () => {
+    vi.doMock("@/features/app-mode/bridge-files", () => {
+      throw new Error("Loading chunk failed");
+    });
+    try {
+      const result = press({ app: true });
+      expect(result.taken).toBe(true);
+      expect(result.prevented()).toBe(true);
+      await vi.waitFor(() => expect(result.assigned).toEqual([HREF]));
+      expect(result.posted).toEqual([]);
+      expect(result.fetched).toEqual([]);
+    } finally {
+      vi.doUnmock("@/features/app-mode/bridge-files");
+    }
   });
 
   it("leaves the browser's own download alone, and any press with a modifier key", () => {

@@ -223,6 +223,9 @@ function DossierActions({
 /** Letters of the right-to-left scripts: a figure in them runs right to left, every other figure left to right. */
 const RTL_LETTERS = /[\p{Script=Arabic}\p{Script=Hebrew}]/u;
 
+/** A figure's unit as set: after a no-break space where `splitFigure` says so ("\u00A0%"), else as it is. */
+const unitText = (parts: Extract<FigureParts, { kind: "number" }>): string => (parts.unit && parts.spaced ? `\u00A0${parts.unit}` : parts.unit);
+
 /**
  * The figures (at most three) on one baseline: each one a label (read first), a qualifier ("seit")
  * over its number, the number and its unit ("%", "Jahre") at half its size, or a value in words. The
@@ -231,8 +234,8 @@ const RTL_LETTERS = /[\p{Script=Arabic}\p{Script=Hebrew}]/u;
 function DossierFigures({ stats, average, className, style }: { stats: NonNullable<Profile["stats"]>; average: number; className?: string | undefined; style?: CSSProperties | undefined }): ReactNode {
   const figures = stats.slice(0, 3).map((stat) => ({ stat, parts: splitFigure(stat.value) }));
   const numbers = figures.flatMap(({ parts }) => (parts.kind === "number" ? [parts] : []));
-  // The widest number with its unit (the unit at half size), in em of the display face.
-  const ems = Math.max(1, ...numbers.map((parts) => lineEms(parts.number, average) + lineEms(parts.unit, average) / 2 + (parts.unit ? 0.1 : 0)));
+  // The widest number with its unit (the unit at half size, after its no-break space or a hair), in em of the display face.
+  const ems = Math.max(1, ...numbers.map((parts) => lineEms(parts.number, average) + lineEms(unitText(parts), average) / 2 + (parts.unit && !parts.spaced ? 0.1 : 0)));
   const count = figures.length;
   const column = (room: string, gap: string) => `(${room} - ${String(count - 1)} * ${gap}) / ${String(count)}`;
   const size = {
@@ -286,9 +289,8 @@ function FigureValue({ parts, qualified }: { parts: FigureParts; qualified: bool
             companion's unicode-range leaves them to the Latin face after it). */}
         <bdi dir="ltr" className="inline-flex items-baseline whitespace-nowrap">
           <span className="text-[length:var(--figure-size)] leading-none font-bold tracking-display tabular-nums">{parts.number}</span>
-          {parts.unit ? (
-            <span className={cn("text-[length:calc(var(--figure-size)/2)] leading-none font-bold", /\p{L}/u.test(parts.unit) ? "ms-1" : "ms-0_5")}>{parts.unit}</span>
-          ) : null}
+          {/* One form with the paper: "99,6 %" and "12 Jahre" with a no-break space of the unit's size (DIN 5008), "40+" on the number. */}
+          {parts.unit ? <span className={cn("text-[length:calc(var(--figure-size)/2)] leading-none font-bold", parts.spaced ? null : "ms-0_5")}>{unitText(parts)}</span> : null}
         </bdi>
       </dd>
     </>

@@ -143,7 +143,8 @@ describe("the head (round 6): type first, on ink", () => {
     for (const cell of cells) expect(cell.indexOf("<dt")).toBe(0);
     // One qualifier ("seit"), so the row is kept for all three: the numbers stand level.
     expect(count(figures, /row-start-1/g)).toBe(3);
-    expect(figures).toMatch(/<bdi dir="ltr"[^>]*><span[^>]*>99,6<\/span><span class="[^"]*calc\(var\(--figure-size\)\/2\)[^"]*">%<\/span><\/bdi>/);
+    // "99,6 %" as on paper (DIN 5008): the "%" at half size after a no-break space of its own size.
+    expect(figures).toMatch(/<bdi dir="ltr"[^>]*><span[^>]*>99,6<\/span><span class="[^"]*calc\(var\(--figure-size\)\/2\)[^"]*">\u00A0%<\/span><\/bdi>/u);
     // Sevag's "SAP" is a value in words, set at the words' size.
     expect(headOf(sevag)).toMatch(/<dd dir="auto" class="[^"]*text-h3[^"]*">SAP<\/dd>/);
     // On an Arabic page the figure stays left to right, in the page's own stack: Plex's unicode-range

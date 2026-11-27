@@ -1,7 +1,7 @@
 import type { Page } from "@linkyo/blocks";
 import { describe, expect, it } from "vitest";
 
-import { endedLetter, hiddenLetter, jonasDe, jonasEn, karimAr, lukasz, noLetter, ownCv, sparse, statsAndBio, toolsOnly } from "./fixtures";
+import { endedLetter, hiddenLetter, jonasDe, jonasEn, karimAr, lukasz, noLetter, ownCv, sparse, statsAndBio, toolsOnly, withContact } from "./fixtures";
 import { documentInput } from "./input";
 import { paperLabels } from "./labels";
 import { documentEligibility, documentFilename, documentLinks, isPrintable, letterOf, letterSubject, printable, splitFigure, targetFacts } from "./offer";
@@ -30,17 +30,50 @@ describe("printable", () => {
     expect(printable("Zeile 1\r\nZeile 2")).toBe("Zeile 1\nZeile 2");
     expect(isPrintable("Lager 🚜")).toBe(true);
   });
+
+  it("removes the bidirectional marks, embeddings and isolates an Arabic keyboard leaves in Latin text", () => {
+    const marks = ["\u200E", "\u200F", "\u061C", "\u202A", "\u202B", "\u202C", "\u202D", "\u202E", "\u2066", "\u2067", "\u2068", "\u2069", "\uFEFF"];
+    for (const mark of marks) {
+      const code = `U+${(mark.codePointAt(0) ?? 0).toString(16).toUpperCase()}`;
+      expect(printable(`Bremen${mark}`), code).toBe("Bremen");
+      expect(printable(`Bremen${mark} Nord`), code).toBe("Bremen Nord");
+      expect(printable(`${mark}Fachkraft${mark} für Lagerlogistik`), code).toBe("Fachkraft für Lagerlogistik");
+      expect(isPrintable(`Bremen${mark}`), code).toBe(true);
+    }
+    expect(printable("\u2066jonas.brandt@example.com\u2069")).toBe("jonas.brandt@example.com");
+  });
+
+  it("prints the minus as a hyphen-minus and the line and paragraph separators as line breaks", () => {
+    expect(printable("\u221220 °C Tiefkühllager")).toBe("-20 °C Tiefkühllager");
+    expect(isPrintable("\u221220 °C Tiefkühllager")).toBe(true);
+    expect(printable("Zeile 1\u2028Zeile 2")).toBe("Zeile 1\nZeile 2");
+    expect(printable("Absatz 1\u2029Absatz 2")).toBe("Absatz 1\nAbsatz 2");
+    expect(printable("Zeile 1 \u2028 Zeile 2")).toBe("Zeile 1\nZeile 2");
+  });
+
+  it("never drops or replaces a letter or a symbol: what WinAnsi has not stays, and the text is refused", () => {
+    for (const text of ["Łukasz", "9 → 3", "✓ Gabelstapler", "≥ 3 Jahre", "★"]) {
+      expect(printable(text), text).toBe(text);
+      expect(isPrintable(text), text).toBe(false);
+    }
+    // Removing a mark leaves the letters as they are.
+    expect(printable("Kılıç\u200E")).toBe("Kılıç");
+    expect(isPrintable("Kılıç\u200E")).toBe(false);
+  });
 });
 
 describe("splitFigure", () => {
   it.each([
-    ["seit 2019", { kind: "number", qualifier: "seit", number: "2019", unit: "" }],
-    ["99,6 %", { kind: "number", qualifier: "", number: "99,6", unit: "%" }],
-    ["40+", { kind: "number", qualifier: "", number: "40", unit: "+" }],
-    ["9", { kind: "number", qualifier: "", number: "9", unit: "" }],
-    ["12 Jahre", { kind: "number", qualifier: "", number: "12", unit: "Jahre" }],
-    ["2.3M", { kind: "number", qualifier: "", number: "2.3", unit: "M" }],
-    ["منذ 2019", { kind: "number", qualifier: "منذ", number: "2019", unit: "" }],
+    ["seit 2019", { kind: "number", qualifier: "seit", number: "2019", unit: "", spaced: false }],
+    ["99,6 %", { kind: "number", qualifier: "", number: "99,6", unit: "%", spaced: true }],
+    // DIN 5008: "%" after a space, also when typed onto the number; the page and the paper agree.
+    ["99,6%", { kind: "number", qualifier: "", number: "99,6", unit: "%", spaced: true }],
+    ["40+", { kind: "number", qualifier: "", number: "40", unit: "+", spaced: false }],
+    ["3 ×", { kind: "number", qualifier: "", number: "3", unit: "×", spaced: false }],
+    ["9", { kind: "number", qualifier: "", number: "9", unit: "", spaced: false }],
+    ["12 Jahre", { kind: "number", qualifier: "", number: "12", unit: "Jahre", spaced: true }],
+    ["2.3M", { kind: "number", qualifier: "", number: "2.3", unit: "M", spaced: false }],
+    ["منذ 2019", { kind: "number", qualifier: "منذ", number: "2019", unit: "", spaced: false }],
     ["SAP", { kind: "word", text: "SAP" }],
     ["SAP EWM", { kind: "word", text: "SAP EWM" }],
     ["9 → 3", { kind: "word", text: "9 → 3" }],
@@ -49,7 +82,7 @@ describe("splitFigure", () => {
     ["C1", { kind: "word", text: "C1" }],
     ["B2B", { kind: "word", text: "B2B" }],
     ["Win11", { kind: "word", text: "Win11" }],
-    ["Top 3", { kind: "number", qualifier: "Top", number: "3", unit: "" }],
+    ["Top 3", { kind: "number", qualifier: "Top", number: "3", unit: "", spaced: false }],
   ] as const)("%s", (value, parts) => {
     expect(splitFigure(value)).toEqual(parts);
   });
@@ -171,6 +204,18 @@ describe("documentEligibility and documentLinks", () => {
     const skill = { ...page, blocks: page.blocks.map((block) => (block.type === "tools" ? { ...block, items: [...block.items, "Łódź"] } : block)) };
     expect(documentEligibility(skill, at)).toEqual({ cv: false, letter: true, ownCv: null });
   });
+
+  it("keeps offering both documents when a printed text holds a bidirectional mark, a minus or a line separator", () => {
+    const page = jonasDe();
+    const located = (location: string): Page => ({ ...page, profile: { ...page.profile, location } });
+    for (const location of ["Bremen\u200E", "\u2067Bremen\u2069 Nord", "Bremen\u202C", "\u221220 °C Tiefkühllager", "Bremen\u2028Nord", "Bremen\u061C"]) {
+      expect(documentEligibility(located(location), at), JSON.stringify(location)).toEqual({ cv: true, letter: true, ownCv: null });
+    }
+    // A symbol WinAnsi has not still switches the documents that print it off in v1 (ADR 0089, point 5).
+    for (const location of ["9 → 3", "✓ Gabelstapler", "≥ 3 Jahre", "★"]) {
+      expect(documentEligibility(located(location), at), location).toEqual({ cv: false, letter: false, ownCv: null });
+    }
+  });
 });
 
 describe("documentInput", () => {
@@ -181,6 +226,15 @@ describe("documentInput", () => {
     expect(input.status).toBe("Verfügbar ab 1. März 2027");
     expect(input.online).toBeNull();
     expect(input.target).toEqual({ label: "Bewerbung als", value: "Fachkraft für Lagerlogistik (m/w/d)" });
+  });
+
+  it("leaves a keyboard's bidirectional marks out of the printed contact lines and out of their links", () => {
+    const page = withContact("mailto:\u2066jonas.brandt@example.com\u200E\u2069");
+    const input = documentInput(page, { now: NOW });
+    expect(input.email).toEqual({ text: "jonas.brandt@example.com", uri: "mailto:jonas.brandt@example.com" });
+    const phone = withContact("tel:\u200E+493023125457");
+    expect(documentInput(phone, { now: NOW }).phone).toEqual({ text: "+493023125457", uri: "tel:+493023125457" });
+    expect(documentInput(withContact("mailto:\u200E"), { now: NOW }).email).toBeNull();
   });
 
   it("drops the status once its last day has passed", () => {
