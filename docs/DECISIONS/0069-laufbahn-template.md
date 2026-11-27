@@ -535,4 +535,42 @@ Measured on the demo build (fictional samples, reduced motion, chrome off), `nex
 
 The creator pages keep their budgets (`/u/[username]` 30.8 KB, `/[locale]/p/[slug]` 32.5 KB of 35 KB).
 
+### Round 6, review 5 (2026-11-27)
+
+Measured on the demo build (fictional samples only, reduced motion, chrome off), `next start`:
+
+- **The Kontakt band's e-mail address stays in its column.** At 320 px "jonas.brandt@example.com" ran
+  x 76–288.5 in a column ending at 268, under the arrow (ar: 28.8–244 in 52–244). The value was a grid
+  item as wide as its unbroken min-content. Now the row's column is `minmax(0, 1fr)`, the value
+  `max-w-full` with `wrap-anywhere`, aligned to the page's side, and the address carries its break
+  chances as `<wbr>` (no characters: it reads, copies and is named as written): before each "." of
+  the name and after "@", never inside the domain. At 320 it is 76–268 on two lines,
+  "jonas.brandt@" / "example.com" (ar 52–244); at 390 it stays on one line. The sample route's
+  `page=application-long` (a 40-character address without a hyphen, still example.com, and a long
+  languages fact) breaks it "jonas.brandt" / ".lagerlogistik42@" / "example.com" at 320 and after
+  "@" at 390. The e2e checks the band's rows at 320 in de, en and ar and the long variant at 320 and
+  390, the domain alone on its line.
+- **About's facts sheet fits 320 px.** Twelve columns with 24 px gaps needed 264 px in a 240 px sheet,
+  so every fact row stood 24 px into the sheet's end padding. Phones use 16 px gaps (176 px), tablets
+  and the wide canvas 24 px; the rows are 40–280 in the 40–280 content box at 320. The 320 e2e checks
+  the sheet, the long variant too ("Deutsch (Muttersprache), Englisch (B1), Polnisch (A2)").
+- **A jump names its section.** After a jump to a short section ("Als Nächstes") on a tall screen the
+  next one had passed the reading line too, so the bar and the sheet named "Anschreiben" (768, 1440,
+  1920; de, en, ar). A link to a section (the sheet, the index, the hero), the back button or an
+  address with a section's hash now marks that section until the visitor scrolls on their own
+  (wheel, touch, a scroll key, the scroll bar); the reading line decides again from that scroll on.
+  The e2e opens the sheet, takes every entry at 768 × 1024 and 1440 × 900 and reads the bar's label
+  and the sheet's mark (it fails on the old build with "Anschreiben" at 768).
+- **The hero clip's play button belongs to the ink head:** 48 × 48 px (the hero's target) and the
+  white ring (`HeroMotion tone="ink"`); the other templates keep their 32 px glass button and accent
+  ring. The e2e's "on ink the ring is white" covers it.
+- **About with a picture on the wide canvas:** the rest of the text follows the facts in their three
+  columns beside the picture (the picture spans two rows), so less of the column stays empty: 45 px of
+  399 in de and en, 101 in ar (189 before, with the text under both). Narrower it runs under both as
+  before (768: 92 px). The frame has a hairline (`border-creator-line`), so a dark drawing keeps its
+  edge on a dark page. `page=application-portrait` shows the layout on the fictional applicant; the
+  e2e measures it at 1440 (de, ar, dark) and at 320 and 390 on phones.
+- Still open: the Linkyo dock (shared by every creator page, unchanged on this branch) is wider than
+  a 320 px screen in German ("Kostenlos registrieren" to x 328, its close button off screen).
+
 **Status.** Accepted.

@@ -293,3 +293,18 @@ it, and a table test keeps the figures 8 mm under the rule and under a top-right
 of 24 to 43 characters on a head without tagline and status. The third figure still starts at
 column 7 (the spec's equal cells from columns 1, 4 and 7, the second on the content edge), not on the
 facts' value column 6: moving it needs a design decision.
+
+The fifth review (same day) found two more. Common closings got no signature space: a place after
+the closing ("Viele Grüße aus Bremen", "Kind regards from Bremen") and closings that are one only on
+a line of their own ("Respectfully,", "Thank you,", "Many thanks,", "All the best,", "Best,",
+"Cordially,", "Yours,", "Schöne Grüße", "Herzlichst", "Gruß"); a letter ending "Respectfully," with
+no name printed no name at all. `CLOSING_LINE` takes them now, and `CLOSING` (which tells a letter)
+stays strict; the table test covers every form, a letter ending in a closing alone gets the display
+name after DIN.signature plus one leading, and the same words inside a sentence stay body text. And a
+figure was never kept in its three columns: "100.000.000" ran from 67.25 to 110.75 mm into the third
+figure at 109.50, "1.250.000 km" 1.7 mm past its cell. All numbers of the head now share one size, 20
+pt, or both number and unit stepped down together until the widest fits (to 17.6 pt for
+"100.000.000"), at least to figure-word's 13 pt; a value too wide even then is set in words and
+wrapped in its cell. A layout test checks every head run against its cell's end and no two runs
+overlapping, for "1.250.000 km", "100.000.000", "99,6 %" and a 21-digit value. The sample fits at 20
+pt, so its PDFs and their stored hashes are unchanged.
