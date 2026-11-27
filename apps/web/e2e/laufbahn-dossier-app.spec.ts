@@ -58,8 +58,109 @@ async function pastName(page: Page) {
   await expect(page.locator(".poster-bar")).toHaveAttribute("data-lb-shown", "");
 }
 
+/** The contents opener's name in the bar, per language. */
+const OPEN_CONTENTS = { de: /Inhalt öffnen/, en: /Open contents/, ar: /فتح المحتويات/ } as const;
+
+/**
+ * Every element inside each box a selector names that leaves that box by more than half a pixel on any
+ * side, and every line of text that leaves it at either side, as "label: <tag> "words" left–right
+ * outside left–right". (A line's glyph box may stand a pixel above or below its line: a face's ascent,
+ * IBM Plex Sans Arabic's taller than its line height, is no overflow; reflow is about the sides.)
+ */
+async function escapes(page: Page, boxes: Record<string, string>): Promise<{ counts: Record<string, number>; out: string[] }> {
+  return page.evaluate((selectors) => {
+    const out: string[] = [];
+    const counts: Record<string, number> = {};
+    const leaves = (inner: DOMRect, outer: DOMRect, sides: boolean) =>
+      inner.width + inner.height > 0 &&
+      (inner.left < outer.left - 0.5 || inner.right > outer.right + 0.5 || (!sides && (inner.top < outer.top - 0.5 || inner.bottom > outer.bottom + 0.5)));
+    for (const [label, selector] of Object.entries(selectors)) {
+      const found = [...document.querySelectorAll(selector)];
+      counts[label] = found.length;
+      found.forEach((box, index) => {
+        const outer = box.getBoundingClientRect();
+        const walker = document.createTreeWalker(box, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          let rects: DOMRect[];
+          if (node.nodeType === Node.TEXT_NODE) {
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            rects = [...range.getClientRects()];
+          } else rects = [(node as Element).getBoundingClientRect()];
+          for (const rect of rects) {
+            if (!leaves(rect, outer, node.nodeType === Node.TEXT_NODE)) continue;
+            const words = (node.textContent ?? "").trim().slice(0, 30);
+            out.push(`${label} ${String(index + 1)}: <${node.nodeName.toLowerCase()}> "${words}" ${rect.left.toFixed(1)}–${rect.right.toFixed(1)} × ${rect.top.toFixed(1)}–${rect.bottom.toFixed(1)} outside ${outer.left.toFixed(1)}–${outer.right.toFixed(1)} × ${outer.top.toFixed(1)}–${outer.bottom.toFixed(1)}`);
+          }
+        }
+      });
+    }
+    return { counts, out };
+  }, boxes);
+}
+
 test.describe("on a phone", () => {
   test.skip(({ isMobile }) => !isMobile, "phone sizes on the mobile project");
+
+  for (const locale of ["de", "en", "ar"] as const) {
+    test(`${locale}: at 320 × 700 (the reflow width of WCAG 1.4.10) every part of each Unterlagen card and each figure stays inside its own box, and nothing scrolls sideways`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 700 });
+      await open(page, application(locale));
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+      const { counts, out } = await escapes(page, {
+        // Each card (the whole card is one link), "both in one file" and the date inside the section's content.
+        card: "#unterlagen [data-lb-documents] li > a",
+        documents: "#unterlagen [data-lb-documents]",
+        // Each figure of the head: its qualifier, number and label inside its own column.
+        figure: "[data-lb-head] dl > div",
+      });
+      expect(counts, JSON.stringify(counts)).toEqual({ card: locale === "ar" ? 0 : 2, documents: locale === "ar" ? 0 : 1, figure: 3 });
+      expect(out).toEqual([]);
+      if (locale !== "ar") {
+        // "Beides in einer Datei · 2 Seiten": the count stays with its word, and the dot ends a line.
+        const both = (await page.locator('#unterlagen a[href$="/application"]').textContent()) ?? "";
+        expect(both).toMatch(/\p{Nd}\u00a0\p{L}/u);
+        expect(both).toMatch(/\u00a0· /u);
+        await page.locator("#unterlagen").evaluate((section) => section.scrollIntoView({ block: "start", behavior: "instant" }));
+        await shot(page, `${locale}-320-unterlagen`);
+      }
+      await shot(page, `${locale}-320-fold`);
+    });
+  }
+
+  for (const locale of ["de", "ar"] as const) {
+    test(`${locale}: on phones the career's years stand above the role beside the rail, the words in the column's full width (320, 390)`, async ({ page }) => {
+      for (const width of [320, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        await open(page, application(locale));
+        const steps = await page.locator("#section-career li").evaluateAll((items) =>
+          items.map((item) => {
+            const [years, rail, entry] = [...item.children].map((child) => child.getBoundingClientRect());
+            const role = item.querySelector("[data-lb-entry] > p")?.getBoundingClientRect();
+            return { years, rail, entry, role, rtl: getComputedStyle(item).direction === "rtl" };
+          }),
+        );
+        expect(steps.length).toBe(4);
+        for (const { years, rail, entry, role, rtl } of steps) {
+          const where = `${String(width)} px: ${JSON.stringify({ years, rail, entry, role })}`;
+          if (!years || !rail || !entry || !role) throw new Error(where);
+          // The years above the role, both on the same side of the rail, starting where the role starts.
+          expect(years.bottom <= role.top + 0.5, where).toBe(true);
+          expect(Math.abs((rtl ? years.right : years.left) - (rtl ? entry.right : entry.left)) <= 0.5, where).toBe(true);
+          expect(rtl ? years.right <= rail.left + 0.5 : years.left >= rail.right - 0.5, where).toBe(true);
+          // The rail runs beside the years and the words.
+          expect(rail.top <= years.top + 0.5 && rail.bottom >= entry.bottom - 0.5, where).toBe(true);
+          // The words take the column: the page's width less the gutters, the rail and its 20 px.
+          expect(entry.width, where).toBeGreaterThanOrEqual(width - 2 * 20 - 2 - 1);
+        }
+      }
+      await page.locator("#section-career").evaluate((section) => section.scrollIntoView({ block: "start", behavior: "instant" }));
+      await shot(page, `${locale}-390-career`);
+      await page.setViewportSize({ width: 320, height: 700 });
+      await page.locator("#section-career").evaluate((section) => section.scrollIntoView({ block: "start", behavior: "instant" }));
+      await shot(page, `${locale}-320-career`);
+    });
+  }
 
   for (const locale of ["de", "en"] as const) {
     test(`${locale}: the first screen holds the status, the name, the role, the target line and both actions (390 × 844, 360 × 780)`, async ({ page }) => {
@@ -183,6 +284,57 @@ test.describe("on a laptop", () => {
         await expect(bar.locator('a[href$="/application"]:visible')).toHaveCount(0);
       }
       await shot(page, `${locale}-1440-bar`);
+    });
+  }
+
+  for (const locale of ["de", "en", "ar"] as const) {
+    test(`${locale}: every jump from the contents lands its section with the hanging title level with the content (1440 × 900)`, async ({ page }) => {
+      await open(page, application(locale));
+      await pastName(page);
+      const bar = page.locator(".poster-bar");
+      const opener = bar.getByRole("button", { name: OPEN_CONTENTS[locale] });
+      await opener.click();
+      const sheet = page.getByRole("dialog");
+      const anchors = await sheet.locator('a[href^="#"]').evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
+      await page.keyboard.press("Escape");
+      expect(anchors.length).toBeGreaterThanOrEqual(5);
+      for (const anchor of anchors) {
+        await opener.click();
+        await expect(sheet).toBeVisible();
+        await sheet.locator(`a[href="${anchor}"]`).click();
+        await expect(sheet).toBeHidden();
+        await expect.poll(() => page.evaluate(() => window.location.hash)).toBe(anchor);
+        const [title, content, scrolled] = await page.evaluate((id) => {
+          const section = document.getElementById(id.slice(1));
+          const h2 = section?.querySelector(":scope > h2");
+          return [h2?.getBoundingClientRect().top ?? -1, h2?.nextElementSibling?.getBoundingClientRect().top ?? -1, window.scrollY];
+        }, anchor);
+        const where = `${anchor}: title ${String(title)}, content ${String(content)}, scrollY ${String(scrolled)}`;
+        expect(title, where).toBeGreaterThan(0);
+        expect(Math.abs(title - content), where).toBeLessThanOrEqual(1);
+        if (anchor === anchors[0] || anchor === "#unterlagen") await shot(page, `${locale}-1440-jump-${anchor.slice(1)}`);
+      }
+    });
+  }
+
+  for (const path of [application("de"), application("en"), application("ar"), portfolio("de")]) {
+    test(`${path}: the plate stands from the top of the words to their last row (1440 × 900)`, async ({ page }) => {
+      await open(page, path);
+      const lines = await page.evaluate(() => {
+        const plate = document.querySelector("[data-hero-plate]")?.getBoundingClientRect();
+        const words = document.querySelector("[data-lb-words]");
+        const last = words?.lastElementChild?.getBoundingClientRect();
+        return { plate, words: words?.getBoundingClientRect(), last, actions: document.querySelector("[data-hero-actions]")?.getBoundingClientRect() };
+      });
+      const where = JSON.stringify(lines);
+      const { plate, words, last, actions } = lines;
+      if (!plate || !words || !last || !actions) throw new Error(where);
+      expect(Math.abs(plate.top - words.top), where).toBeLessThanOrEqual(1);
+      // Its bottom is the words' last row: the actions, or the social links under them.
+      expect(Math.abs(plate.bottom - last.bottom), where).toBeLessThanOrEqual(1);
+      expect(last.bottom >= actions.bottom - 0.5, where).toBe(true);
+      expect(plate.height, where).toBeGreaterThan(300);
+      await shot(page, `${path.split("/")[1] ?? ""}-${path.includes("portfolio") ? "portfolio" : "application"}-1440-plate`);
     });
   }
 
@@ -314,15 +466,13 @@ for (const locale of ["de", "ar"] as const) {
       await page.setViewportSize({ width, height: width === 1440 ? 900 : 844 });
       await open(page, application(locale));
       await page.locator("#section-career").scrollIntoViewIfNeeded();
+      // The rail is its own item (its width is the line); the dot is its child, centred on it.
       const offsets = await page.locator("#section-career .lb-step").evaluateAll((steps) =>
         steps.map((step) => {
           const box = step.getBoundingClientRect();
-          const style = getComputedStyle(step);
-          const rtl = style.direction === "rtl";
-          const rail = Number.parseFloat(rtl ? style.borderRightWidth : style.borderLeftWidth);
-          const railCentre = rtl ? box.right - rail / 2 : box.left + rail / 2;
+          const railCentre = box.left + box.width / 2;
           const dot = step.querySelector(":scope > span[aria-hidden]")?.getBoundingClientRect();
-          return dot ? Math.abs(dot.left + dot.width / 2 - railCentre) : Number.POSITIVE_INFINITY;
+          return box.width > 0 && dot ? Math.abs(dot.left + dot.width / 2 - railCentre) : Number.POSITIVE_INFINITY;
         }),
       );
       expect(offsets.length, `${String(width)} px`).toBe(4);

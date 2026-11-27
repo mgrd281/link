@@ -1,6 +1,8 @@
 import type { Page } from "@linkyo/blocks";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { MOTION_LIBRARY } from "@/features/creator/motion-library";
+
 import { jonasDe, jpegHead } from "./fixtures";
 import { fetchPhoto, photoCandidate, storageObjectUrl } from "./photo";
 
@@ -41,6 +43,17 @@ describe("the photo's candidate", () => {
   it("is none for a WebP or PNG upload, so the miniature and the PDF agree (no photo box on either)", () => {
     expect(photoCandidate(withPortrait(`${MEDIA}/uid/2026/a.webp`), NOW, ENV)).toBeNull();
     expect(photoCandidate(withPortrait(`${MEDIA}/uid/2026/a.png`), NOW, ENV)).toBeNull();
+  });
+
+  it("is none for a drawn still or a library scene, even where the page shows it beside the facts (the CV prints only a photo)", () => {
+    // The page's "Über mich" shows any picture its owner set (ADR 0069, round 6 review 4); the CV never
+    // prints a drawing or a stock still as the applicant, and the avatar does not stand in for it.
+    const stills = MOTION_LIBRARY.map((clip) => clip.poster);
+    expect(stills.length).toBeGreaterThan(0);
+    for (const still of stills) {
+      const page = withPortrait(still);
+      expect(photoCandidate({ ...page, profile: { ...page.profile, avatar: { src: `${MEDIA}/uid/2026/a.jpg`, alt: "Jonas Brandt" } } }, NOW, ENV), still).toBeNull();
+    }
   });
 
   it("follows the about block the page shows right now (hidden or ended: the avatar, here none)", () => {

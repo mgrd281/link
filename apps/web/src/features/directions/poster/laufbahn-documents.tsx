@@ -8,6 +8,7 @@ import { PaperMiniature } from "@/features/documents/miniature";
 import type { DocumentCard, DocumentsView } from "@/features/documents/offer";
 
 import { isPdf } from "./hero";
+import { keepCounts } from "./laufbahn-content";
 import { pageSide } from "./styles";
 
 /** The words of the documents' cards, from the page's language. */
@@ -20,13 +21,17 @@ const DATE_LOCALES: Record<Profile["locale"], string> = { de: "de-DE", en: "en-G
  */
 const PRINTED_TONES = "[--creator-fg:var(--color-ink)] [--creator-line-strong:var(--color-gray-400)] [--creator-line:var(--color-gray-200)] [--creator-accent-text:var(--creator-accent)]";
 
-/** The paper: white whatever the page's mode (as printed), A4, its first page's marks or blank. */
+/**
+ * The paper: white whatever the page's mode (as printed), A4, its first page's marks or blank. On the
+ * smallest phones (below 390 px: 320 is the reflow width of WCAG 1.4.10, a 1280 px laptop at 400 %)
+ * it is a size smaller, so the card's words keep room beside it for "Herunterladen" (152 px).
+ */
 function Paper({ marks, paper }: { marks: DocumentCard["miniature"]; paper: "light" | "dark" }): ReactNode {
   return (
     <span
       aria-hidden
       className={cn(
-        "relative grid aspect-a4 w-avatar-xl shrink-0 place-items-center overflow-hidden rounded-xs bg-white transition-transform duration-standard ease-emphasized group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 @work:w-[calc(var(--spacing-avatar-xl)+var(--spacing-12))]",
+        "relative grid aspect-a4 w-avatar-lg shrink-0 place-items-center overflow-hidden rounded-xs bg-white transition-transform duration-standard ease-emphasized group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 @preview:w-avatar-xl @work:w-[calc(var(--spacing-avatar-xl)+var(--spacing-12))]",
         paper === "dark" && PRINTED_TONES,
       )}
     >
@@ -82,17 +87,18 @@ export function LaufbahnDocuments({ documents, locale, paper = "light" }: { docu
                   {entry.title}
                 </span>{" "}
                 {entry.pages !== null ? (
-                  <span className="text-small text-creator-fg-muted">{t("laufbahn.pdfMeta", { pages: entry.pages })}</span>
+                  <span className="text-small text-creator-fg-muted">{keepCounts(t("laufbahn.pdfMeta", { pages: entry.pages }))}</span>
                 ) : isPdf(entry.href) ? (
                   <span className="text-small text-creator-fg-muted">{t("laufbahn.pdf")}</span>
                 ) : null}{" "}
-                <span className="mt-3 inline-flex min-h-control-md items-center gap-2 rounded-full bg-creator-fg px-4 text-small font-semibold text-creator-bg">
+                {/* Never wider than its column: a label longer than the room wraps inside the pill. */}
+                <span className="mt-3 inline-flex min-h-control-md max-w-full items-center gap-2 rounded-full bg-creator-fg px-4 text-small font-semibold text-creator-bg">
                   <Icon
                     icon={entry.own ? FileText : Download}
                     size="sm"
                     className="shrink-0 transition-transform duration-micro group-hover:translate-y-0_5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
                   />
-                  {t("laufbahn.download")}
+                  <span className="min-w-0 break-words">{t("laufbahn.download")}</span>
                 </span>
               </span>
             </a>
@@ -108,7 +114,7 @@ export function LaufbahnDocuments({ documents, locale, paper = "light" }: { docu
           className="inline-flex min-h-control-lg max-w-full items-center gap-2 justify-self-start rounded-full border border-creator-line-strong px-5 text-body font-semibold transition-[background-color,scale] duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring active:scale-pressed motion-reduce:transition-colors motion-reduce:active:scale-none"
         >
           <Icon icon={Files} size="md" className="shrink-0" />
-          <span className="min-w-0 break-words">{t("laufbahn.application", { pages: documents.application.pages })}</span>
+          <span className="min-w-0 break-words">{keepCounts(t("laufbahn.application", { pages: documents.application.pages }))}</span>
         </a>
       ) : null}
       {date ? (

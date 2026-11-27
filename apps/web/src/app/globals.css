@@ -646,15 +646,31 @@
   color: color-mix(in oklab, var(--color-white) calc(var(--opacity-secondary) * 100%), var(--color-ink));
 }
 
+/* Hyphenation for short labels in narrow columns (the head's figures): only a long word (12 letters
+   or more, at least 5 on each side of the break) hyphenates, in the language of the page, and only
+   where it does not fit its line whole, so "Pickgenauigkeit" breaks at 320 px and "licence" or
+   "Staplerschein" never do. Lines are not balanced: balancing would hyphenate a word that fits. */
+@utility lb-hyphens {
+  hyphens: auto;
+  hyphenate-limit-chars: 12 5 5;
+}
+
 /* The focus ring on ink: white (the page's accent ring is about 2.3 : 1 there). */
 @utility focus-ring-inverse {
   outline: var(--border-width-focus) solid var(--color-white);
   outline-offset: var(--border-width-focus-offset);
 }
 
-/* A signposted section (the page's scroll padding below keys on it). */
+/* A signposted section (the page's scroll padding below keys on it). On the wide canvas its title
+   hangs beside it and sticks at top-24 (the 64 px bar and 32 px of air): a jump from the contents, the
+   hero or an address lands the section there too (the document's scroll padding, control-xl + 4, and
+   this margin, the rest), so the title and the content's first line arrive level. */
 @utility lb-section {
   position: relative;
+
+  @variant @work {
+    scroll-margin-block-start: calc(var(--spacing-24) - var(--spacing-control-xl) - var(--spacing-4));
+  }
 }
 
 /* A Laufbahn page keeps what is focused or jumped to clear of its fixed chrome: the app bar at the top
@@ -806,19 +822,18 @@
   }
 }
 
-/* One step of the career (round 6): the step's content beside a single rail at its reading start (the
-   content's own border, in the line colour), with the accent drawn over it as the step scrolls through.
-   The accent is a pseudo-element painted under the step's own children, so the step's dot stays on top.
-   Without scroll-driven animations, and with reduced motion, the accent is drawn in full. */
+/* The career's rail (round 6), one item of the grid per step: the line itself (its width, in the line
+   colour), beside the years and the words on phones and between them from tablet widths on. The accent
+   is drawn over it as the step scrolls through, a pseudo-element painted under the rail's own child, so
+   the step's dot stays on top. Without scroll-driven animations, and with reduced motion, the accent is
+   drawn in full. */
 @utility lb-step {
   position: relative;
   view-timeline: --lb-step block;
 
   &::before {
     position: absolute;
-    inset-block: 0;
-    inset-inline-start: calc(var(--spacing-0_5) * -1);
-    inline-size: var(--spacing-0_5);
+    inset: 0;
     background-color: var(--creator-accent);
     transform-origin: top;
     content: "";
@@ -835,13 +850,23 @@
   }
 }
 
-/* A step's dot, centred on the rail: the rail is the step's own start border, so the dot's centre sits
-   half the rail's width before the content's start edge, and the dot starts half its own size before
-   that. Written here and not as an arbitrary class: Tailwind reads an underscore inside a nested var()
-   of an arbitrary calc() as a space, and the rule that held this offset was dropped (round 6 review). */
+/* A step's dot, centred on the rail (the rail is its container: half the dot's size beyond each side)
+   and on the step's first line: on phones the years (text-small), in the table the role (text-title,
+   text-h3 on the wide canvas). Written here and not as an arbitrary class: Tailwind reads an
+   underscore inside a nested var() of an arbitrary calc() as a space, and the rule that held this
+   offset was dropped (round 6 review). */
 @utility lb-node {
   position: absolute;
-  inset-inline-start: calc((var(--spacing-dot) + var(--spacing-0_5)) / -2);
+  inset-inline-start: calc((var(--spacing-0_5) - var(--spacing-dot)) / 2);
+  inset-block-start: calc((var(--text-small) * var(--text-small--line-height) - var(--spacing-dot)) / 2);
+
+  @variant @prose {
+    inset-block-start: calc((var(--text-title) * var(--text-title--line-height) - var(--spacing-dot)) / 2);
+  }
+
+  @variant @work {
+    inset-block-start: calc((var(--text-h3) * var(--text-h3--line-height) - var(--spacing-dot)) / 2);
+  }
 }
 
 /* stylelint-enable nesting-selector-no-missing-scoping-root */

@@ -1,4 +1,4 @@
-import type { Block, BlockOf, Page } from "@linkyo/blocks";
+import { NO_IMAGE, type Block, type BlockOf, type Page } from "@linkyo/blocks";
 import { creatorTokens } from "@linkyo/tokens";
 import { resolveCreatorTheme, type CreatorThemeConfig } from "@linkyo/tokens/creator";
 import { NextIntlClientProvider } from "next-intl";
@@ -16,7 +16,6 @@ import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
 import { factRows, factSpans, LaufbahnAbout, signposts } from "./laufbahn";
-import { widePlateRatio } from "./laufbahn-hero";
 import { splitLead } from "./laufbahn-content";
 import { PosterRenderer } from "./renderer";
 import { portfolioSample } from "./sample";
@@ -157,15 +156,18 @@ describe("the head (round 6): type first, on ink", () => {
     expect(jonasMarkup).not.toMatch(/(?<![\w-])lb-(?:parallax|veil|plate|name)\b/);
   });
 
-  it("stands the plate on the wide canvas in the picture's own shape, level with the words (the drawn 4 : 5 clip whole)", () => {
-    const plate = /<div data-hero-plate="true" class="([^"]*)" style="([^"]*)"/.exec(head);
-    expect(plate?.[1]).toContain("@work:aspect-[var(--plate-ratio)]");
-    expect(plate?.[1]).toContain("@work:self-start");
-    expect(plate?.[1]).not.toMatch(/@work:(?:self-stretch|min-h-full|aspect-auto)/);
-    expect(plate?.[2]).toBe("--plate-ratio:0.8");
+  it("ends the plate on a line of the head on the wide canvas: from the top of the words to their last row, the picture covering it", () => {
+    const plate = /<div data-hero-plate="true" class="([^"]*)"(?: style="[^"]*")?>/.exec(head);
+    // The words' row only (the figures stand in the second): the plate stretches to the words' height.
+    expect(plate?.[1]).toContain("@work:row-start-1");
+    expect(plate?.[1]).toContain("@work:self-stretch");
+    expect(plate?.[1]).toContain("@work:aspect-auto");
+    expect(plate?.[1]).not.toMatch(/@work:(?:row-span|self-start|aspect-\[)/);
+    expect(head).not.toContain("--plate-ratio");
+    expect(head).toMatch(/<div data-lb-words="true" class="grid min-w-0 justify-items-start @work:col-span-8 @work:col-start-1 @work:row-start-1/);
+    // The picture covers the plate at its focal point; sizes counts the wide plate as tall as 2 : 3.
     expect(jonas.profile.hero).toMatchObject({ w: 1080, h: 1350 });
-    // Only a picture taller than 4 : 5 or flatter than 4 : 3 is cropped to that; no size: 4 : 5.
-    expect([widePlateRatio({ w: 1080, h: 1350 }), widePlateRatio({ w: 900, h: 1600 }), widePlateRatio({ w: 1600, h: 900 }), widePlateRatio({ w: 1200, h: 1000 }), widePlateRatio({})]).toEqual([0.8, 0.8, 4 / 3, 1.2, 0.8]);
+    expect(head).toMatch(/sizes="\(max-width: 1119px\) 100vw, 428px"/);
   });
 
   it("has no plate and no initials without a picture", () => {
@@ -382,10 +384,22 @@ describe("the career as a table", () => {
   });
 
   it("ends the rail with the last step's words: space under every step but the last", () => {
-    const steps = [...career.matchAll(/<div class="(lb-step [^"]*)"/g)].map((match) => match[1] ?? "");
+    const steps = [...career.matchAll(/<div data-lb-entry="true" class="([^"]*)"/g)].map((match) => match[1] ?? "");
     expect(steps).toHaveLength(4);
     expect(steps.slice(0, -1).every((step) => /\bpb-8\b/.test(step))).toBe(true);
     expect(steps.at(-1)).not.toMatch(/\bpb-/);
+  });
+
+  it("sets the years above the role beside the rail on phones and as the table's first column from tablets on", () => {
+    const step = /<li class="([^"]*)"><div class="([^"]*)">[\s\S]*?<\/div><span aria-hidden="true" class="(lb-step [^"]*)">[\s\S]*?<\/span><div data-lb-entry="true" class="([^"]*)"/.exec(career);
+    const [li, years, rail, entry] = [step?.[1] ?? "", step?.[2] ?? "", step?.[3] ?? "", step?.[4] ?? ""];
+    // Phones: two columns, the rail then the words; the years in the words' column on the first row
+    // (the tag beside them), the role under them, the rail through both rows.
+    expect(career).toContain('<ol class="grid min-w-0 grid-cols-[min-content_minmax(0,1fr)] @prose:grid-cols-[minmax(calc(var(--spacing-24)+var(--spacing-4)),max-content)_min-content_minmax(0,1fr)]');
+    expect(li).toContain("grid-cols-subgrid");
+    expect(years.split(" ")).toEqual(expect.arrayContaining(["col-start-2", "row-start-1", "flex", "ps-5", "@prose:col-start-1", "@prose:grid", "@prose:ps-0"]));
+    expect(rail.split(" ")).toEqual(expect.arrayContaining(["col-start-1", "row-start-1", "row-end-3", "w-0_5", "@prose:col-start-2", "@prose:row-end-2"]));
+    expect(entry.split(" ")).toEqual(expect.arrayContaining(["col-start-2", "row-start-2", "ps-5", "@prose:col-start-3", "@prose:row-start-1"]));
   });
 
   it("puts every step beside one rail with a dot (filled for the ongoing one), no icon nodes", () => {
@@ -477,14 +491,30 @@ describe("About", () => {
     expect(factRows([], "work")).toEqual([]);
   });
 
-  it("never shows a drawn still as the person's portrait (Sevag's placeholder leaves About)", () => {
+  it("shows the portrait the owner set beside the facts, a library still too, with its alt text and focal point", () => {
+    const clip = MOTION_LIBRARY.find((entry) => entry.kind === "illustration");
+    expect(clip).toBeDefined();
+    const withStill: Page = {
+      ...jonas,
+      blocks: jonas.blocks.map((block) => (block.type === "about" ? { ...block, portrait: { src: clip?.poster ?? "", alt: "Gezeichnetes Lager", focal: [0.4, 0.3] } } : block)),
+    };
+    const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(render(withStill))?.[0] ?? "";
+    expect(about).toContain("data-about-portrait");
+    expect(about).toContain('alt="Gezeichnetes Lager"');
+    expect(about).toContain("object-position:40% 30%");
+    // No picture set (or the empty one): the facts sheet alone.
+    const empty: Page = { ...jonas, blocks: jonas.blocks.map((block) => (block.type === "about" ? { ...block, portrait: { src: NO_IMAGE, alt: "" } } : block)) };
+    expect(/<section id="section-about"[\s\S]*?<\/section>/.exec(render(empty))?.[0] ?? "").not.toContain("data-about-portrait");
+  });
+
+  it("keeps Sevag's drawn still beside his facts until he sends a photo (the founder's decision)", () => {
     const block = sevagDe.blocks.find((entry): entry is BlockOf<"about"> => entry.type === "about");
     const clip = MOTION_LIBRARY.find((entry) => entry.poster === block?.portrait?.src);
     expect(clip?.kind).toBe("illustration");
     const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
-    expect(about).not.toContain("data-about-portrait");
-    expect(about).not.toContain(`alt="${clip?.alt.de ?? "?"}"`);
-    // The facts the head does not show stay, on the sheet.
+    expect(about).toContain("data-about-portrait");
+    expect(about).toContain(`alt="${block?.portrait?.alt ?? "?"}"`);
+    // The facts the head does not show stay, beside the picture.
     expect(text(about)).toContain("Staplervor allem Seitenschubstapler");
     expect(text(about)).not.toContain("Sales Center Lörrach");
   });
@@ -611,13 +641,13 @@ describe("'About' with a portrait (fictional owner)", () => {
     ["Sprachen", "Deutsch, Englisch"],
   ];
 
-  it("sets a real portrait beside the facts, and a library still never", () => {
+  it("sets the portrait the owner chose beside the facts: a photo, and a library still as well", () => {
     const real = about({ src: "sample:mila-hero", alt: "Ines Beispiel im Porträt" }, "Ich baue Bühnen.", facts);
     expect(real).toContain("data-about-portrait");
     const still = MOTION_LIBRARY[0]?.poster ?? "";
     const drawn = about({ src: still, alt: "Illustration" }, "Ich baue Bühnen.", facts);
-    expect(drawn).not.toContain("data-about-portrait");
-    expect(drawn).not.toContain("<img");
+    expect(drawn).toContain("data-about-portrait");
+    expect(drawn).toContain('<img alt="Illustration"');
   });
 
   it("leaves out the facts the head shows, and drops the sheet when none are left", () => {

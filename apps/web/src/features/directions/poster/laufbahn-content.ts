@@ -1,4 +1,4 @@
-import { hasImage, type Profile } from "@linkyo/blocks";
+import type { Profile } from "@linkyo/blocks";
 import {
   Accessibility,
   Award,
@@ -44,8 +44,6 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-
-import { posterClip } from "@/features/creator/motion-library";
 
 import { paragraphs } from "./sections";
 
@@ -624,12 +622,13 @@ export function keepSeparators(text: string): string {
 }
 
 /**
- * Whether a picture shows the person: a picture at all, and not one of Linkyo's own moving pictures
- * (a library clip's still is a drawing or a stock scene, never the owner). Only such a picture may
- * stand as a portrait beside the facts; the head's plate may show any picture.
+ * A short line of document facts as set: a count stays with its word ("2 Seiten", "1 page"), so
+ * "Beides in einer Datei · 2 Seiten" never breaks between the number and "Seiten", and every " · "
+ * keeps its dot at the end of a line (`keepSeparators`). The PDF glues the same spaces
+ * (features/documents/layout/wrap.ts).
  */
-export function isPersonPicture<T extends { src: string }>(image: T | undefined): image is T {
-  return hasImage(image) && posterClip(image.src) === undefined;
+export function keepCounts(text: string): string {
+  return keepSeparators(text).replace(/(\p{Nd}) (?=\p{L})/gu, `$1${NBSP}`);
 }
 
 /** Characters a display face sets narrow (the right single quote is U+2019). */

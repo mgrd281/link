@@ -9,6 +9,7 @@ import type { DocumentsView } from "@/features/documents/offer";
 import { initials, PlatformGlyph } from "../shared/creator-kit";
 import { LinkIconGlyph, linkGlyph } from "../shared/link-icons";
 import { aiText } from "./hero";
+import { keepCounts } from "./laufbahn-content";
 import type { IndexEntry } from "./laufbahn-index";
 import { ShareButtonIsland } from "./share-island";
 // Laufbahn's bar parts load with Laufbahn's pages only (a client module that splits them off, ADR 0008).
@@ -70,8 +71,9 @@ export function useDocumentLinks(documents: DocumentsView | null, ownCv: { href:
       kind: "application",
       href: documents.application.href,
       filename: documents.application.filename,
-      label: t("laufbahn.application", { pages }),
-      row: t("laufbahn.application", { pages }),
+      // "2 Seiten" stays together, and the dot ends a line (keepCounts), as in the Unterlagen section.
+      label: keepCounts(t("laufbahn.application", { pages })),
+      row: keepCounts(t("laufbahn.application", { pages })),
       name: t("laufbahn.applicationName", { pages }),
       rowName: t("laufbahn.applicationName", { pages }),
     });

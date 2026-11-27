@@ -1,11 +1,11 @@
-import type { BlockOf, Profile } from "@linkyo/blocks";
+import { hasImage, type BlockOf, type Profile } from "@linkyo/blocks";
 import { cn, Icon } from "@linkyo/ui";
 import { ArrowUpRight, ChevronDown, CircleCheck, Clock, Download, Lightbulb } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
-import { iconFor, isPersonPicture, opensShort, readingMinutes, splitLead, textKind } from "./laufbahn-content";
+import { iconFor, opensShort, readingMinutes, splitLead, textKind } from "./laufbahn-content";
 import { IndexList } from "./laufbahn-index";
 import { textLink } from "./portfolio-sections";
 import { linkDestination, paragraphs } from "./sections";
@@ -197,9 +197,11 @@ export function factSpans(facts: readonly Fact[]): string[] {
  * Who the owner is: the first paragraph as a lead (a long one leads with its first sentence, and the
  * rest of it opens the body), then the facts, then the rest of the text as body. The facts the head
  * already shows (the position applied for, the employer: `omit`) are not repeated here.
- * - With a portrait of the person (as Werkbogen's "About"): under the lead the portrait on two of five
- *   columns at the start and the facts on the other three beside it; the facts a list with a hairline
- *   above each row. A drawn picture or a library clip's still is no portrait (`isPersonPicture`).
+ * - With a portrait (as Werkbogen's "About"): under the lead the portrait on two of five columns at the
+ *   start and the facts on the other three beside it; the facts a list with a hairline above each row.
+ *   The portrait is the owner's choice: any picture they set on the block stands there, a drawn still
+ *   from the library too, with its alt text and focal point (the founder, round 6 review 4). The CV is
+ *   stricter: it prints only an uploaded photo, never a drawing (features/documents/photo.ts).
  * - Without one: the facts on one soft sheet in full, even rows (`factRows`): as many to a row as
  *   the longest fact allows at each width, never one alone beside an empty half. No facts left: no
  *   sheet.
@@ -209,7 +211,7 @@ export function LaufbahnAbout({ block, omit = [] }: { block: BlockOf<"about">; o
   const [first, more] = opening ? splitLead(opening) : [undefined, null];
   const rest = more ? [more, ...others] : others;
   const shown = (block.facts ?? []).filter((fact) => !omit.some((head) => head.label === fact.label && head.value === fact.value));
-  const portrait = isPersonPicture(block.portrait) ? block.portrait : undefined;
+  const portrait = hasImage(block.portrait) ? block.portrait : undefined;
   const spans = factSpans(shown);
   if (portrait) {
     return (
@@ -300,37 +302,49 @@ export function yearsText(years: BlockOf<"timeline">["items"][number]["years"], 
 }
 
 /**
- * Experience as a table, as on paper, in the order the owner entered it: the years in the first
- * column (tabular figures, "2021 – heute", and the tag "aktuell" under a step still going on), then
- * the role, where and a note beside a single rail with a dot for each step (filled for the current
- * one). The rail fills with the accent as the steps scroll by (drawn in full without scroll-driven
+ * Experience as a table, as on paper, in the order the owner entered it: from tablet widths on, the
+ * years in the first column (tabular figures, "2021 – heute", and the tag "aktuell" under a step still
+ * going on), then the role, where and a note beside a single rail with a dot for each step (filled for
+ * the current one). On phones the table would leave the words a narrow column (146 px at 320), so the
+ * years stand as a small accent line above the role inside the railed column, the tag beside them,
+ * and the words take the column's whole width. One DOM for every width: the years come first, the rail
+ * is a decorative item of its own between them and the words (or beside both on phones), placed by the
+ * grid. The rail fills with the accent as the steps scroll by (drawn in full without scroll-driven
  * animations and with reduced motion). Logical sides: it mirrors in Arabic.
  */
 export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">; locale: Profile["locale"] }): ReactNode {
   const t = useTranslations("creator");
   return (
-    <ol className="grid min-w-0 grid-cols-[minmax(var(--spacing-24),max-content)_minmax(0,1fr)] gap-x-4 @work:grid-cols-[minmax(var(--spacing-32),max-content)_minmax(0,var(--container-prose))] @work:gap-x-6">
+    // The rail's track is min-content (its 2 px), never stretched by the room the table leaves; the
+    // years' track holds their space to the rail (pe-4, pe-6), so the table keeps round 6's measures.
+    <ol className="grid min-w-0 grid-cols-[min-content_minmax(0,1fr)] @prose:grid-cols-[minmax(calc(var(--spacing-24)+var(--spacing-4)),max-content)_min-content_minmax(0,1fr)] @work:grid-cols-[minmax(calc(var(--spacing-32)+var(--spacing-6)),max-content)_min-content_minmax(0,var(--container-prose))]">
       {block.items.map((item, index) => {
         const ongoing = item.years.to === "now";
         // The rail ends with the last step's words: no space under the last one (nothing runs on past it).
         const last = index === block.items.length - 1;
         return (
-          <li key={`${item.role}-${String(item.years.from)}-${item.org ?? ""}`} className="col-span-2 grid min-w-0 grid-cols-subgrid">
-            <div className="grid content-start justify-items-start gap-2 pt-0_5">
+          <li key={`${item.role}-${String(item.years.from)}-${item.org ?? ""}`} className="col-span-full grid min-w-0 grid-cols-subgrid gap-y-1 @prose:gap-y-0">
+            {/* Phones: a line above the role, beside the rail, the tag after the years. From tablets on:
+                the table's first column, the tag under the years. */}
+            <div className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 ps-5 @prose:col-start-1 @prose:grid @prose:content-start @prose:justify-items-start @prose:gap-2 @prose:ps-0 @prose:pe-4 @prose:pt-0_5 @work:pe-6">
               {/* One isolated run in the page's direction, so every range reads from its start, also in Arabic. */}
               <p className="text-small font-semibold whitespace-nowrap text-creator-accent-text tabular-nums @work:text-body">
                 <bdi dir={locale === "ar" ? "rtl" : "ltr"}>{yearsText(item.years, t("laufbahn.ongoing"))}</bdi>
               </p>
               {ongoing ? <span className="rounded-full lb-soft px-2 text-caption font-semibold text-creator-accent-text">{t("laufbahn.current")}</span> : null}
             </div>
-            <div className={cn("lb-step grid min-w-0 content-start justify-items-start gap-1 border-s-[length:var(--spacing-0_5)] border-creator-line ps-5 @work:ps-8", !last && "pb-8")}>
+            {/* The rail: one line through every step (its own grid item, beside the years and the words on
+                phones, between them from tablets on), with the step's dot on its first line. */}
+            <span aria-hidden className="lb-step col-start-1 row-start-1 row-end-3 w-0_5 bg-creator-line @prose:col-start-2 @prose:row-end-2">
               <span
                 aria-hidden
-                className={cn(
-                  "lb-node top-2 size-dot rounded-full border-[length:var(--spacing-0_5)] border-creator-accent",
-                  ongoing ? "bg-creator-accent" : "bg-creator-bg",
-                )}
+                className={cn("lb-node size-dot rounded-full border-[length:var(--spacing-0_5)] border-creator-accent", ongoing ? "bg-creator-accent" : "bg-creator-bg")}
               />
+            </span>
+            <div
+              data-lb-entry
+              className={cn("col-start-2 row-start-2 grid min-w-0 content-start justify-items-start gap-1 ps-5 @prose:col-start-3 @prose:row-start-1 @work:ps-8", !last && "pb-8")}
+            >
               <p dir="auto" className={cn(pageSide, "text-title font-semibold text-balance rtl:tracking-normal @work:text-h3")}>
                 {item.role}
               </p>

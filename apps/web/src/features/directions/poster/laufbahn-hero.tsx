@@ -44,8 +44,12 @@ const COLUMN_INSET = "px-creator-gutter @prose:px-[max(var(--spacing-creator-gut
 const WIDE_PLATE_WIDTH = Math.round(((tokens.layout.work - 11 * tokens.spacing["6"]) * 4) / 12 + 3 * tokens.spacing["6"]);
 /** The plate on phones and tablets: the screen's width, 3 : 2 (aspect-photo), as height over width. */
 const PHONE_PLATE_RATIO = 2 / 3;
-/** The wide plate's shape (width over height): the picture's own, no taller than 4 : 5 and no flatter than 4 : 3. */
-const WIDE_PLATE_RATIO = { tallest: 4 / 5, flattest: 4 / 3 };
+/**
+ * The wide plate's shape (width over height) as `sizes` counts it: as tall as the words beside it,
+ * which is seldom taller than 2 : 3 (a long sentence and the social links), so the picture fetched is
+ * wide enough for it.
+ */
+const WIDE_PLATE_TALLEST = 2 / 3;
 
 interface Picture {
   w?: number | undefined;
@@ -53,24 +57,14 @@ interface Picture {
 }
 
 /**
- * The plate's shape on the wide canvas (width over height): the picture's own, so a drawn 4 : 5 clip
- * stands whole beside the words and is never cut at its sides; only a picture taller than 4 : 5 or
- * flatter than 4 : 3 is cropped to that. Without a stored size: 4 : 5.
- */
-export function widePlateRatio(picture: Picture): number {
-  const aspect = picture.w && picture.h ? picture.w / picture.h : WIDE_PLATE_RATIO.tallest;
-  return Math.min(WIDE_PLATE_RATIO.flattest, Math.max(WIDE_PLATE_RATIO.tallest, aspect));
-}
-
-/**
  * The picture's `sizes`: it covers its plate, so a picture wider than the plate's shape is drawn wider
  * than the plate, and the browser fetches the width it really draws. Without a stored size the picture
- * counts as square on phones.
+ * counts as square on phones and as 4 : 5 on the wide canvas.
  */
 function plateSizes(picture: Picture): string {
   const aspect = picture.w && picture.h ? picture.w / picture.h : 1;
   const phone = Math.max(1, aspect * PHONE_PLATE_RATIO);
-  const wide = Math.max(1, aspect / widePlateRatio(picture)) * WIDE_PLATE_WIDTH;
+  const wide = Math.max(1, (picture.w && picture.h ? aspect : 4 / 5) / WIDE_PLATE_TALLEST) * WIDE_PLATE_WIDTH;
   return `(max-width: ${String(tokens.layout.work - 1)}px) ${String(Math.round(phone * 100))}vw, ${String(Math.round(wide))}px`;
 }
 
@@ -258,8 +252,11 @@ function DossierFigures({ stats, average, className, style }: { stats: NonNullab
       {figures.map(({ stat, parts }) => (
         // Rows: the qualifier (kept for all when any has one, so the numbers stand level), the value, the
         // label. The label comes first for screen readers ("Pickgenauigkeit 2025: 99,6 %").
-        <div key={`${stat.label}-${stat.value}`} className="row-span-3 grid min-w-0 grid-rows-subgrid">
-          <dt dir="auto" className={cn(pageSide, "row-start-3 mt-2 text-caption text-balance hyphens-manual break-words lb-ink-muted @work:text-small")}>
+        // One track that may shrink below its longest word (minmax(0, 1fr)): a label never pushes its
+        // column into the gutter. A long word too wide for its column hyphenates in the page's language
+        // ("Pickgenau-igkeit" at 320 px; lb-hyphens), and only a word too long even then breaks (WCAG 1.4.10).
+        <div key={`${stat.label}-${stat.value}`} className="row-span-3 grid min-w-0 grid-cols-[minmax(0,1fr)] grid-rows-subgrid">
+          <dt dir="auto" className={cn(pageSide, "row-start-3 mt-2 text-caption break-words lb-hyphens lb-ink-muted @work:text-small")}>
             {stat.label}
           </dt>
           <FigureValue parts={parts} qualified={qualified} />
@@ -272,7 +269,7 @@ function DossierFigures({ stats, average, className, style }: { stats: NonNullab
 function FigureValue({ parts, qualified }: { parts: FigureParts; qualified: boolean }): ReactNode {
   if (parts.kind === "word") {
     return (
-      <dd dir={RTL_LETTERS.test(parts.text) ? "rtl" : "auto"} className={cn(pageSide, "row-start-2 self-end text-h3 leading-tight font-semibold text-balance text-white @work:text-h2")}>
+      <dd dir={RTL_LETTERS.test(parts.text) ? "rtl" : "auto"} className={cn(pageSide, "row-start-2 self-end text-h3 leading-tight font-semibold text-balance break-words lb-hyphens text-white @work:text-h2")}>
         {parts.text}
       </dd>
     );
@@ -280,7 +277,7 @@ function FigureValue({ parts, qualified }: { parts: FigureParts; qualified: bool
   return (
     <>
       {qualified ? (
-        <dd dir="auto" className={cn(pageSide, "row-start-1 self-end text-small font-medium lb-ink-muted")}>
+        <dd dir="auto" className={cn(pageSide, "row-start-1 self-end text-small font-medium break-words lb-ink-muted")}>
           {parts.qualifier}
         </dd>
       ) : null}
@@ -306,9 +303,9 @@ function FigureValue({ parts, qualified }: { parts: FigureParts; qualified: bool
  * with the owner's own label and value), the place, the sentence, the two actions, then the figures
  * (qualifier, number and unit, label) and, last on phones, the picture or clip as a plate from edge to
  * edge (3 : 2). On the wide canvas one composition on twelve columns: the words on eight, the figures
- * under them on seven, the plate as a rounded picture in its own shape on the last four, level with
- * the top of the words. No picture: no plate and
- * no initials. One DOM for every width. The lines rise in once when the page opens; nothing in the head
+ * under them on seven, the plate as a rounded picture on the last four, from the top of the words to
+ * their last row (so it ends on a line of the head). No picture: no plate and no initials. One DOM
+ * for every width. The lines rise in once when the page opens; nothing in the head
  * moves after that (no parallax), and nothing at all with reduced motion.
  */
 export function DossierHero({
@@ -374,7 +371,7 @@ export function DossierHero({
         )}
       >
         {/* The words: eight columns on the wide canvas. */}
-        <div className={cn("grid min-w-0 justify-items-start @work:col-span-8 @work:col-start-1 @work:row-start-1", COLUMN_INSET)}>
+        <div data-lb-words className={cn("grid min-w-0 justify-items-start @work:col-span-8 @work:col-start-1 @work:row-start-1", COLUMN_INSET)}>
           {live ? <HeroLive block={live} /> : null}
           {status ? <StatusPill text={status} className={rise(0).className} style={rise(0).style} /> : null}
           <div className={cn("w-full min-w-0", rise(1).className)} style={rise(1).style}>
@@ -447,12 +444,12 @@ export function DossierHero({
         ) : null}
 
         {/* The picture or clip: last on phones and tablets, from edge to edge; on the wide canvas a plate
-            in the picture's own shape (widePlateRatio), level with the top of the words. */}
+            on the last four columns from the top of the words to their last row (the actions, or the
+            social links under them), the picture covering it at its focal point. */}
         {picture ? (
           <div
             data-hero-plate
-            className="relative mt-10 aspect-photo overflow-hidden bg-hover-inverse @work:col-span-4 @work:col-start-9 @work:row-span-2 @work:row-start-1 @work:mt-0 @work:aspect-[var(--plate-ratio)] @work:self-start @work:rounded-xl"
-            style={{ "--plate-ratio": String(Number(widePlateRatio(picture).toFixed(4))) } as CSSProperties}
+            className="relative mt-10 aspect-photo overflow-hidden bg-hover-inverse @work:col-span-4 @work:col-start-9 @work:row-start-1 @work:mt-0 @work:aspect-auto @work:self-stretch @work:rounded-xl"
           >
             <MediaImage src={picture.src} focal={picture.focal} alt={picture.alt} sizes={plateSizes(picture)} priority={!preview} />
             {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}

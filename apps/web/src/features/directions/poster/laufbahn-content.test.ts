@@ -35,15 +35,12 @@ import {
 } from "lucide-react";
 import { describe, expect, it } from "vitest";
 
-import { NO_IMAGE } from "@linkyo/blocks";
-
-import { MOTION_LIBRARY } from "@/features/creator/motion-library";
 import { sevagDe } from "@/features/previews/sevag";
 
 import {
   iconFor,
   isLetter,
-  isPersonPicture,
+  keepCounts,
   keepSeparators,
   LEAD_MAX,
   lineEms,
@@ -350,15 +347,14 @@ describe("round 6: the dossier's head", () => {
     expect(keepSeparators("1·2")).toBe("1·2");
   });
 
-  it("takes only a picture of the person as a portrait: no library still, no empty picture", () => {
-    const still = MOTION_LIBRARY[0]?.poster ?? "";
-    expect(isPersonPicture({ src: still })).toBe(false);
-    expect(isPersonPicture({ src: "sample:mila-hero" })).toBe(true);
-    expect(isPersonPicture({ src: NO_IMAGE })).toBe(false);
-    expect(isPersonPicture(undefined)).toBe(false);
-    // Sevag's About still is one of the library's drawn clips: it leaves About until he sends a photo.
-    const about = sevagDe.blocks.find((block) => block.type === "about");
-    expect(about?.type === "about" && isPersonPicture(about.portrait)).toBe(false);
+  it("keeps a count with its word and a separator's dot at the end of a line (the documents' meta lines)", () => {
+    expect(keepCounts("Beides in einer Datei · 2 Seiten")).toBe(`Beides in einer Datei${NBSP}· 2${NBSP}Seiten`);
+    expect(keepCounts("PDF · A4 · 1 Seite")).toBe(`PDF${NBSP}· A4${NBSP}· 1${NBSP}Seite`);
+    expect(keepCounts("Both in one file · 2 pages")).toBe(`Both in one file${NBSP}· 2${NBSP}pages`);
+    // Any script's digits and letters: "٣ صفحات" stays together too.
+    expect(keepCounts("٣ صفحات")).toBe(`٣${NBSP}صفحات`);
+    // Only a number before a word is glued: the spaces between words stay.
+    expect(keepCounts("Lebenslauf und Anschreiben")).toBe("Lebenslauf und Anschreiben");
   });
 
   it("measures figures by their digits (0.62 em), commas and points (0.3 em) and the per cent sign (0.8 em)", () => {
