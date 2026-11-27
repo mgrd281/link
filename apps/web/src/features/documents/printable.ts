@@ -1,7 +1,7 @@
 import { isWinAnsi, NBSP } from "./font/winansi";
 
 /**
- * Text as the documents print it, and whether they can (ADR draft-laufbahn-pdfs). The PDFs set every
+ * Text as the documents print it, and whether they can (ADR 0089). The PDFs set every
  * text in Geist with WinAnsiEncoding, which holds German, English and most Western European letters;
  * a page whose words need any other letter gets no PDF (a letter is never dropped or replaced).
  * Pure: the page imports it through offer.ts.

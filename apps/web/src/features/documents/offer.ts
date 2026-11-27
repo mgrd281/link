@@ -7,7 +7,7 @@ import { printable } from "./printable";
 
 /**
  * Which PDFs a page offers, where they live and what they are called: the one predicate the page
- * and the routes share (ADR draft-laufbahn-pdfs). Pure and isomorphic (no node:*, no React, no
+ * and the routes share (ADR 0089). Pure and isomorphic (no node:*, no React, no
  * next-intl): the page imports it; view.ts and serve.ts fill in the rest on the server.
  */
 

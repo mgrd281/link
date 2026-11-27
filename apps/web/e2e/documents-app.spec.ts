@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * The application's PDFs (features/documents, ADR draft-laufbahn-pdfs), on the fictional applicant's
+ * The application's PDFs (features/documents, ADR 0089), on the fictional applicant's
  * example page only (Jonas Brandt, Karim Nasser: features/previews/application-sample.ts). Never on
  * a real person's page. Each answer is a real PDF with the person's name in its text, private
  * (no shared cache) and never indexed; Arabic pages and other templates have none.

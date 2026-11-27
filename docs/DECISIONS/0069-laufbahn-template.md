@@ -287,7 +287,7 @@ modern and fitting. Template-level again (Sevag's clips aside); every other temp
 The founder found round 5 too close to what was there and asked for the most modern design possible,
 "so that companies are amazed", with the CV and the cover letter to download. Three studies were
 scored (`audit/laufbahn-v6/SPEC.md`); "Satzspiegel" won (8.0, against 7.83 and 6.17) with grafts from
-the other two. This round is the page; the PDFs are their own ADR (the documents builder's).
+the other two. This round is the page; the PDFs are their own ADR, [0089](0089-laufbahn-pdfs.md).
 
 - **The head is type first, on ink, at every width.** It reverses the 72svh picture hero of rounds
   1–3: a recruiter reads who, what and for which position before anything else. In this order: the
@@ -355,7 +355,7 @@ the other two. This round is the page; the PDFs are their own ADR (the documents
   sentence, the primary action in white, then one list of ways to reach them (E-Mail and Telefon with
   their addresses, the other links, the documents, "Seite teilen") and the page's footer in the band's
   tone (`CreatorFooter tone="inverse"`; it stays the page's contentinfo, outside the band's section).
-- **Arabic pages offer no documents** (the documents' ADR says why): no section, no pills or round
+- **Arabic pages offer no documents** ([0089](0089-laufbahn-pdfs.md) says why): no section, no pills or round
   download, no sheet group, no letter pill and no subject; the hero's second action is "مشاركة" and the
   bar on the wide canvas has one Share. Everything mirrors by logical properties alone; "منذ" stands
   over its number, figures are isolated left to right.

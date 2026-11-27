@@ -1,8 +1,8 @@
-# Draft ADR (next free number, 0089 today): Lebenslauf and Anschreiben as PDFs, written by our own module
+# 0089 — Lebenslauf and Anschreiben as PDFs, written by our own module
 
-- Status: proposed (draft; numbered when it lands next to ADR 0069 round 6)
-- Date: 2026-11-27
-- Context: ADR 0069 (Laufbahn), its round 6 spec (`audit/laufbahn-v6/SPEC.md`, parts B and C)
+**Status.** Accepted (Laufbahn round 6, 2026-11-27). Pairs with [0069](0069-laufbahn-template.md) round 6, the
+page that offers these documents (the hero's Lebenslauf, the bar's pills, the Unterlagen cards, the letter's PDF
+pill and the Kontakt band's rows all link to the routes below). Spec: `audit/laufbahn-v6/SPEC.md`, parts B and C.
 
 ## Context
 

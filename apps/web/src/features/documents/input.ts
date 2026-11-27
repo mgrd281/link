@@ -8,7 +8,7 @@ import { printable } from "./printable";
 
 /**
  * What the documents print, read from a page: the only place that reads its blocks for paper
- * (ADR draft-laufbahn-pdfs). Every text is the owner's own, as printed (`printable`); nothing is
+ * (ADR 0089). Every text is the owner's own, as printed (`printable`); nothing is
  * added. Missing data simply does not appear: no address, birth date, employer or date the page does
  * not hold. Pure and isomorphic: the page (offer.ts) and the server (layout, serve.ts) share it.
  */

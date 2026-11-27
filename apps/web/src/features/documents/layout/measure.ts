@@ -58,7 +58,7 @@ export function codeOf(char: string): number {
 /**
  * A character's advance in thousandths of an em. Digits keep Geist's own (proportional) advances: set
  * in fixed cells with TJ gaps, text extractors and applicant tracking systems read "2019" as
- * "20 1 9" (ADR draft-laufbahn-pdfs); tabular figures come with subsetting (glyph access).
+ * "20 1 9" (ADR 0089); tabular figures come with subsetting (glyph access).
  */
 export const advance = (char: string, face: FaceMetrics): number => face.widths[codeOf(char)] ?? 0;
 

@@ -15,7 +15,7 @@ import type { Jpeg } from "./pdf/jpeg";
 import { fetchPhoto } from "./photo";
 
 /**
- * The PDF routes' answers (ADR draft-laufbahn-pdfs). A document exists only where the page offers it
+ * The PDF routes' answers (ADR 0089). A document exists only where the page offers it
  * (offer.ts, the predicate the page shares); everything else is an empty 404. Every answer is kept
  * out of search engines. Prepared pages (/p) are private: never stored in a shared cache. Public pages
  * (/u) revalidate with an ETag. Nothing here logs: page text and contact data never reach a log.
