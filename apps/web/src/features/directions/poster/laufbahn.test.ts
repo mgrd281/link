@@ -443,7 +443,7 @@ describe("About", () => {
     // Three facts, two of them long for a phone's half ("Deutsch, Englisch (B1)", "Schichtbetrieb, auch
     // nachts"): one a row below the wide canvas, and one row of three on it (round 6 review: no fact
     // alone beside an empty half of the sheet).
-    expect(about).toContain('<dl class="grid min-w-0 grid-cols-12 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-5 @work:p-6">');
+    expect(about).toContain('<dl class="grid min-w-0 grid-cols-12 gap-x-4 gap-y-4 rounded-creator-card bg-creator-surface p-5 @prose:gap-x-6 @work:p-6">');
     expect(count(about, /<div class="grid min-w-0 grid-cols-1 content-start gap-1 col-span-12 @prose:col-span-12 @work:col-span-4"><dt/g)).toBe(3);
   });
 

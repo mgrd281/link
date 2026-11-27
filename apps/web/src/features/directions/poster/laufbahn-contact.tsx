@@ -3,7 +3,7 @@ import { contactStatus, linkLabelKey } from "@linkyo/blocks/project";
 import { cn, Icon } from "@linkyo/ui";
 import { ArrowUpRight, Check, Download, FileText, Share } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useId, type ReactNode } from "react";
+import { Fragment, useId, type ReactNode } from "react";
 
 import { LinkIconGlyph } from "../shared/link-icons";
 import type { DocumentLink } from "./laufbahn-bar";
@@ -21,22 +21,51 @@ const ICONS = { email: "mail", phone: "phone", whatsapp: "chat", calendar: "cale
 /** A row of the band: an icon, the label quiet over its value, and where it leads (an arrow, or a download). */
 const rowClass =
   "group flex min-h-control-xl w-full min-w-0 items-center gap-4 rounded-xs py-2 text-start font-semibold text-white focus-visible:focus-ring-inverse";
-const valueClass = "min-w-0 break-words transition-colors duration-micro group-hover:lb-ink-muted motion-reduce:transition-none";
+const valueClass = "min-w-0 transition-colors duration-micro group-hover:lb-ink-muted motion-reduce:transition-none";
 
-function Row({ icon, label, value, trail, ltr = false }: { icon: ReactNode; label: string | null; value: string; trail: "arrow" | "download" | null; ltr?: boolean }): ReactNode {
+/**
+ * An e-mail address with the places it may break, so a long one wraps inside its column and never
+ * runs under the arrow (WCAG 1.4.10, 320 px): before each "." of the name and after the "@"
+ * ("jonas.brandt@" / "example.com"). The domain keeps together; only a part wider than the whole
+ * column breaks by characters (`wrap-anywhere`), as a last resort. The break chances are no
+ * characters: the address reads, copies and is named as written.
+ */
+export function addressBreaks(address: string): ReactNode {
+  const at = address.lastIndexOf("@");
+  if (at <= 0) return address;
+  const local = address.slice(0, at).split(".");
+  return (
+    <>
+      {local.map((part, index) => (
+        <Fragment key={`${String(index)}-${part}`}>
+          {index > 0 ? <wbr /> : null}
+          {index > 0 ? "." : null}
+          {part}
+        </Fragment>
+      ))}
+      @<wbr />
+      {address.slice(at + 1)}
+    </>
+  );
+}
+
+function Row({ icon, label, value, trail, ltr = false }: { icon: ReactNode; label: string | null; value: ReactNode; trail: "arrow" | "download" | null; ltr?: boolean }): ReactNode {
   return (
     <>
       <span aria-hidden className="grid size-control-md shrink-0 place-items-center rounded-full bg-hover-inverse">
         {icon}
       </span>
-      <span className="grid min-w-0 flex-1">
-        {label ? <span className="text-small font-regular lb-ink-muted">{label}</span> : null}
+      {/* One column that never grows past the row's room (minmax(0, 1fr)): the value wraps inside it. */}
+      <span className="grid min-w-0 flex-1 grid-cols-1">
+        {label ? <span className="text-small font-regular break-words lb-ink-muted">{label}</span> : null}
         {ltr ? (
-          <bdi dir="ltr" className={cn(valueClass, "justify-self-start")}>
+          // As wide as its words, at most the column: an address or a number never leaves it. A wrapped
+          // address keeps to the page's side (the label's), in Arabic too.
+          <bdi dir="ltr" className={cn(pageSide, valueClass, "max-w-full justify-self-start wrap-anywhere")}>
             {value}
           </bdi>
         ) : (
-          <span dir="auto" className={cn(pageSide, valueClass)}>
+          <span dir="auto" className={cn(pageSide, valueClass, "break-words")}>
             {value}
           </span>
         )}
@@ -145,7 +174,7 @@ export function LaufbahnContact({
           {email ? (
             <li>
               <a href={email} className={rowClass}>
-                <Row icon={<LinkIconGlyph icon="mail" size="sm" />} label={t("laufbahn.email")} value={linkDestination(email)} trail="arrow" ltr />
+                <Row icon={<LinkIconGlyph icon="mail" size="sm" />} label={t("laufbahn.email")} value={addressBreaks(linkDestination(email))} trail="arrow" ltr />
               </a>
             </li>
           ) : null}

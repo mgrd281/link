@@ -21,13 +21,22 @@ const application = (locale: string) => `/${locale}/directions/poster?chrome=0&t
 const portfolio = (locale: string) => `/${locale}/directions/poster?chrome=0&template=laufbahn&page=portfolio`;
 /** The same applicant without his contact block: the hero then leads with "Anschreiben lesen". */
 const noContact = (locale: string) => `/${locale}/directions/poster?chrome=0&template=laufbahn&page=application-no-contact`;
+/** The same applicant with a 40-character e-mail address (no hyphen, example.com) and a languages fact that fills a line. */
+const longValues = (locale: string) => `/${locale}/directions/poster?chrome=0&template=laufbahn&page=application-long`;
+/** The same applicant with a drawn still beside About's facts (the layout a page with an About picture has). */
+const withPortrait = (locale: string) => `/${locale}/directions/poster?chrome=0&template=laufbahn&page=application-portrait`;
+const LONG_EMAIL: Record<string, string> = {
+  de: "jonas.brandt.lagerlogistik42@example.com",
+  en: "jonas.brandt.lagerlogistik42@example.com",
+  ar: "karim.nasser.lagerlogistik42@example.com",
+};
 /** The page every document of the example lives under (the sample route offers the example page's own). */
 const BASES: Record<string, string> = { de: "/de/p/jonas-brandt", en: "/en/p/jonas-brandt" };
 const FILES: Record<string, Record<string, string>> = {
   de: { cv: "Lebenslauf_Jonas_Brandt.pdf", letter: "Anschreiben_Jonas_Brandt.pdf", application: "Bewerbung_Jonas_Brandt.pdf" },
   en: { cv: "CV_Jonas_Brandt.pdf", letter: "Cover_letter_Jonas_Brandt.pdf", application: "Application_Jonas_Brandt.pdf" },
 };
-const ROUTES = [application("de"), application("en"), application("ar"), portfolio("de"), "/de/p/jonas-brandt", "/en/p/jonas-brandt", "/ar/p/karim-nasser"];
+const ROUTES = [application("de"), application("en"), application("ar"), portfolio("de"), "/de/p/jonas-brandt", "/en/p/jonas-brandt", "/ar/p/karim-nasser", withPortrait("de"), withPortrait("ar")];
 
 async function open(page: Page, path: string) {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -103,7 +112,7 @@ test.describe("on a phone", () => {
   test.skip(({ isMobile }) => !isMobile, "phone sizes on the mobile project");
 
   for (const locale of ["de", "en", "ar"] as const) {
-    test(`${locale}: at 320 × 700 (the reflow width of WCAG 1.4.10) every part of each Unterlagen card and each figure stays inside its own box, and nothing scrolls sideways`, async ({ page }) => {
+    test(`${locale}: at 320 × 700 (the reflow width of WCAG 1.4.10) every part of each Unterlagen card, each figure, each Kontakt row and the facts stays inside its own box, and nothing scrolls sideways`, async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 700 });
       await open(page, application(locale));
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
@@ -113,8 +122,13 @@ test.describe("on a phone", () => {
         documents: "#unterlagen [data-lb-documents]",
         // Each figure of the head: its qualifier, number and label inside its own column.
         figure: "[data-lb-head] dl > div",
+        // Each row of the Kontakt band: the e-mail address ("jonas.brandt@" / "example.com" at 320) and
+        // the number inside their column, never under the arrow.
+        contact: "[data-lb-contact] ul a",
+        // About's facts sheet: no row wider than the sheet (its gaps fit 320 px).
+        facts: "main dl.rounded-creator-card",
       });
-      expect(counts, JSON.stringify(counts)).toEqual({ card: locale === "ar" ? 0 : 2, documents: locale === "ar" ? 0 : 1, figure: 3 });
+      expect(counts, JSON.stringify(counts)).toEqual({ card: locale === "ar" ? 0 : 2, documents: locale === "ar" ? 0 : 1, figure: 3, contact: locale === "ar" ? 1 : 4, facts: 1 });
       expect(out).toEqual([]);
       if (locale !== "ar") {
         // "Beides in einer Datei · 2 Seiten": the count stays with its word, and the dot ends a line.
@@ -125,6 +139,75 @@ test.describe("on a phone", () => {
         await shot(page, `${locale}-320-unterlagen`);
       }
       await shot(page, `${locale}-320-fold`);
+    });
+  }
+
+  for (const locale of ["de", "en", "ar"] as const) {
+    test(`${locale}: a 40-character e-mail address and a long fact stay inside their boxes at 320 and 390 px, the address broken after "@"`, async ({ page }) => {
+      for (const [width, height] of [
+        [320, 700],
+        [390, 844],
+      ] as const) {
+        await page.setViewportSize({ width, height });
+        await open(page, longValues(locale));
+        const where = `${String(width)} px`;
+        expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), where).toBeLessThanOrEqual(0);
+        const { counts, out } = await escapes(page, { contact: "[data-lb-contact] ul a", value: "[data-lb-contact] a[href^='mailto:'] bdi", facts: "main dl.rounded-creator-card" });
+        expect(counts.value, where).toBe(1);
+        expect(out, where).toEqual([]);
+        const address = page.locator("[data-lb-contact] a[href^='mailto:'] bdi");
+        // The break chances are no characters: the address reads and copies as written.
+        await expect(address).toHaveText(LONG_EMAIL[locale] ?? "");
+        // The domain keeps together on a line of its own: the address breaks after "@" (and, at 320,
+        // before a "." of the name), never inside "example.com".
+        const lines = await address.evaluate((bdi) => {
+          const nodes = [...bdi.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE);
+          const measure = (node: Node) => {
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            return [...range.getClientRects()].map((rect) => ({ top: rect.top, left: rect.left, right: rect.right }));
+          };
+          const rects = (text: string) => {
+            const node = nodes.find((candidate) => candidate.textContent === text);
+            return node ? measure(node) : [];
+          };
+          // Every other piece's line tops (the name's parts, its dots, the "@").
+          const others = nodes.filter((node) => node.textContent !== "example.com").flatMap((node) => measure(node).map((rect) => rect.top));
+          return { at: rects("@"), domain: rects("example.com"), others };
+        });
+        const detail = `${where}: ${JSON.stringify(lines)}`;
+        expect(lines.domain.length, detail).toBe(1);
+        expect(lines.at.length, detail).toBe(1);
+        const [at, domain] = [lines.at[0], lines.domain[0]];
+        if (!at || !domain) throw new Error(detail);
+        expect(domain.top, detail).toBeGreaterThan(at.top + 1);
+        // Nothing else on the domain's line: it stands alone, whichever side the page aligns it to.
+        expect(lines.others.every((top) => top < domain.top - 1), detail).toBe(true);
+        await page.locator("[data-lb-contact] ul").evaluate((list) => list.scrollIntoView({ block: "center", behavior: "instant" }));
+        await shot(page, `${locale}-${String(width)}-long-email`);
+        await page.locator("main dl.rounded-creator-card").evaluate((sheet) => sheet.scrollIntoView({ block: "center", behavior: "instant" }));
+        await shot(page, `${locale}-${String(width)}-long-facts`);
+      }
+    });
+  }
+
+  for (const locale of ["de", "ar"] as const) {
+    test(`${locale}: About with a picture on phones: the facts beside it, the text under both, nothing outside its box (320, 390)`, async ({ page }) => {
+      for (const [width, height] of [
+        [320, 700],
+        [390, 844],
+      ] as const) {
+        await page.setViewportSize({ width, height });
+        await open(page, withPortrait(locale));
+        const where = `${String(width)} px`;
+        expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), where).toBeLessThanOrEqual(0);
+        const { out } = await escapes(page, { about: "[data-about-portrait]" });
+        expect(out, where).toEqual([]);
+        const [frame, text] = [await page.locator("[data-about-portrait] > div").first().boundingBox(), await page.locator("[data-about-portrait] > div:has(> p)").boundingBox()];
+        expect(frame && text && text.y >= frame.y + frame.height, `${where}: ${JSON.stringify([frame, text])}`).toBe(true);
+        await page.locator("[data-about-portrait]").evaluate((element) => element.scrollIntoView({ block: "center", behavior: "instant" }));
+        await shot(page, `${locale}-${String(width)}-about-portrait`);
+      }
     });
   }
 
@@ -317,6 +400,40 @@ test.describe("on a laptop", () => {
     });
   }
 
+  for (const locale of ["de", "en", "ar"] as const) {
+    test(`${locale}: after every jump from the contents, the bar and the sheet name the section jumped to, a short one too (768 × 1024, 1440 × 900)`, async ({ page }) => {
+      test.setTimeout(120_000);
+      for (const [width, height] of [
+        [768, 1024],
+        [1440, 900],
+      ] as const) {
+        await page.setViewportSize({ width, height });
+        await open(page, application(locale));
+        await pastName(page);
+        const opener = page.locator(".poster-bar").getByRole("button", { name: OPEN_CONTENTS[locale] });
+        const sheet = page.getByRole("dialog");
+        await opener.click();
+        const entries = await sheet.locator('ol a[href^="#"]').evaluateAll((links) => links.map((link) => ({ href: link.getAttribute("href") ?? "", title: link.textContent.trim() })));
+        await page.keyboard.press("Escape");
+        expect(entries.length).toBeGreaterThanOrEqual(5);
+        for (const { href, title } of entries) {
+          const where = `${String(width)} px, ${href}`;
+          await opener.click();
+          await sheet.locator(`a[href="${href}"]`).click();
+          await expect(sheet).toBeHidden();
+          await expect.poll(() => page.evaluate(() => window.location.hash), where).toBe(href);
+          // The observers have reported the landing (two frames later): the bar names the chosen section.
+          await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+          await expect(opener.locator("span.text-caption"), where).toHaveText(title);
+          await opener.click();
+          await expect(sheet.locator('a[aria-current="true"]'), where).toHaveText(title);
+          await page.keyboard.press("Escape");
+          await expect(sheet).toBeHidden();
+        }
+      }
+    });
+  }
+
   for (const path of [application("de"), application("en"), application("ar"), portfolio("de")]) {
     test(`${path}: the plate stands from the top of the words to their last row (1440 × 900)`, async ({ page }) => {
       await open(page, path);
@@ -335,6 +452,46 @@ test.describe("on a laptop", () => {
       expect(last.bottom >= actions.bottom - 0.5, where).toBe(true);
       expect(plate.height, where).toBeGreaterThan(300);
       await shot(page, `${path.split("/")[1] ?? ""}-${path.includes("portfolio") ? "portfolio" : "application"}-1440-plate`);
+    });
+  }
+
+  for (const [locale, mode] of [
+    ["de", "light"],
+    ["ar", "light"],
+    ["de", "dark"],
+  ] as const) {
+    test(`${locale} (${mode}): About with a picture: on the wide canvas the text follows the facts beside the framed picture (1440 × 900)`, async ({ page }) => {
+      await open(page, `${withPortrait(locale)}${mode === "dark" ? "&mode=dark" : ""}`);
+      const about = page.locator("[data-about-portrait]");
+      await about.evaluate((element) => element.scrollIntoView({ block: "center", behavior: "instant" }));
+      const parts = await about.evaluate((grid) => {
+        const box = (element: Element | null | undefined) => {
+          const rect = element?.getBoundingClientRect();
+          return rect ? { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom } : null;
+        };
+        const frame = grid.querySelector(":scope > div");
+        return {
+          frame: box(frame),
+          border: frame ? getComputedStyle(frame).borderTopWidth : "",
+          facts: box(grid.querySelector(":scope > dl")),
+          text: box(grid.querySelector(":scope > div:has(> p)")),
+          rtl: getComputedStyle(grid).direction === "rtl",
+        };
+      });
+      const where = JSON.stringify(parts);
+      const { frame, facts, text, rtl } = parts;
+      if (!frame || !facts || !text) throw new Error(where);
+      // The picture at the start, the facts beside it, the text under the facts in their columns.
+      expect(rtl ? frame.left >= facts.right : frame.right <= facts.left, where).toBe(true);
+      expect(text.top, where).toBeGreaterThanOrEqual(facts.bottom);
+      expect(Math.abs(rtl ? text.right - facts.right : text.left - facts.left), where).toBeLessThanOrEqual(1);
+      // The column beside the picture is filled: under a third of the picture's height stays empty
+      // (the review measured 189 px of 399, 47 %, with the text under both; how much is left now
+      // depends on the length of the text).
+      expect(frame.bottom - text.bottom, where).toBeLessThan((frame.bottom - frame.top) / 3);
+      // A hairline frames the picture, so a dark drawing keeps its edge on a dark page.
+      expect(parts.border, where).toBe("1px");
+      await shot(page, `${locale}-1440-about-portrait-${mode}`);
     });
   }
 
@@ -578,7 +735,7 @@ test("reduced motion: nothing animates, after load and after scrolling, and the 
   expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(rail);
 });
 
-test("on ink the focus ring is white; Geist is the only face (no Inter file is loaded)", async ({ page }) => {
+test("on ink the focus ring is white, the clip's play button too; Geist is the only face (no Inter file is loaded)", async ({ page }) => {
   const fonts: string[] = [];
   page.on("request", (request) => {
     if (request.resourceType() === "font") fonts.push(request.url());
@@ -589,6 +746,15 @@ test("on ink the focus ring is white; Geist is the only face (no Inter file is l
   await page.keyboard.press("Shift+Tab");
   const ring = await page.locator("[data-hero-actions] a").first().evaluate((element) => getComputedStyle(element).outlineColor);
   expect(ring).toBe("rgb(255, 255, 255)");
+  // The clip's play button on the plate is in the ink head too: the white ring, and the hero's 48 px target.
+  const play = page.locator("[data-hero-plate] button");
+  await play.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(play).toBeFocused();
+  expect(await play.evaluate((element) => [getComputedStyle(element).outlineStyle, getComputedStyle(element).outlineColor])).toEqual(["solid", "rgb(255, 255, 255)"]);
+  const target = await play.boundingBox();
+  expect(target && target.width >= 48 && target.height >= 48, JSON.stringify(target)).toBe(true);
   expect(await page.locator("h1").evaluate((element) => getComputedStyle(element).fontFamily)).toMatch(/^"?Geist|__Geist|geist/i);
   expect(fonts.filter((url) => /inter/i.test(url))).toEqual([]);
 });
