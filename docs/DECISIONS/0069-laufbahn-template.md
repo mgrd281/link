@@ -309,9 +309,10 @@ the other two. This round is the page; the PDFs are their own ADR, [0089](0089-l
   CV, else "Teilen". **Share leaves the hero when a CV is offered** (it reverses round 2): it stays in
   the bar, in the Kontakt band's rows and on every page without PDFs.
 - **Figures** are split into qualifier, number and unit (`splitFigure`: "seit" over "2019", "99,6" with
-  a half-size "%"), one size for all three, as large as the widest allows in its column; a value in
-  words ("SAP") is set as words. The label comes first in the DOM (screen readers read "Pickgenauigkeit
-  2025: 99,6 %"); the visual order is a subgrid.
+  a half-size "%" after a no-break space of its size, DIN 5008, as on paper: ADR 0089, point 11), one
+  size for all three, as large as the widest allows in its column; a value in words ("SAP") is set as
+  words. The label comes first in the DOM (screen readers read "Pickgenauigkeit 2025: 99,6 %"); the
+  visual order is a subgrid.
 - **The plate below the figures, no parallax.** Phones and tablets: 3 : 2 from edge to edge, last in
   the band; the wide canvas: the last four of twelve columns beside the words, rounded, from the top
   of the words to their last row (the actions, or the social links under them), the picture covering

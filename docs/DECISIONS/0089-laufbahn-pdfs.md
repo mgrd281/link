@@ -39,16 +39,26 @@ installed and none may be added.
    its own.
 5. **WinAnsi only, never a dropped letter.** A page whose printed texts need a letter outside WinAnsi
    ("Łukasz", "Kılıç", "Yılmaz") is not offered that document in v1. Emoji, soft hyphens, joiners and
-   variation selectors are removed (decoration, not letters); thin and narrow spaces become a space or a
-   no-break space. v1.1: a per-document `/Differences` encoding built from Geist's post table, so any
-   Latin letter Geist has can print.
+   variation selectors are removed (decoration, not letters), and so are the bidirectional marks,
+   embeddings and isolates (LRM, RLM, ALM, U+202A–U+202E, U+2066–U+2069) and a zero-width no-break
+   space, which phone keyboards with an Arabic layout leave in Latin text (formatting only; the paper
+   is set left to right). Thin and narrow spaces become a space or a no-break space; the minus U+2212
+   prints as "-", the line and paragraph separators U+2028 and U+2029 as a line break. Nothing else is
+   replaced: a symbol outside WinAnsi still switches off, in v1, the document that prints it, with no
+   word to the owner (the dashboard has no PDF UI yet). Those are arrows ("→", "←"), the check mark and
+   ballot X ("✓", "✗"), the outline stars ("★", "☆") and the mathematical signs beyond Latin-1 ("≥",
+   "≤", "≈", "≠", "∞"). Their emoji forms ("✔", "⭐", "↗") are pictographs and are removed; "±", "×",
+   "÷", "°", "½", "²", "€", "™", "•", "…" and "–" are WinAnsi and print. v1.1: a per-document
+   `/Differences` encoding built from Geist's post table, so any Latin letter and symbol Geist has can
+   print; until then the dashboard should say why a document is missing once it shows them.
 6. **Nothing invented.** Every fact comes from the page (`input.ts` is the only reader of blocks):
    - missing data (address, birth date, employer, months) simply does not appear;
    - contact lines come only from the page's contact block at request time (first `tel:`, first
      `mailto:`); for a prepared page that block comes from the server's private environment, so it
      exists only in the response;
-   - a German mobile number in E.164 is grouped "+49 176 12345678" (formatting, not invention);
-     everything else prints as stored.
+   - a German mobile number in E.164 is grouped "+49 1xx xxxxxxx" (formatting, not invention);
+     everything else prints as stored. Contact values are read as printed first (point 5), so a mark
+     a keyboard put into an address is neither printed nor part of its `mailto:` or `tel:` link.
 7. **The letter (DIN 5008 Form B)**:
    - the address field is kept free: no addressee, no return line, nothing invented, but the geometry
      stays so the subject sits where a German reader expects it;
@@ -112,6 +122,13 @@ installed and none may be added.
     eight beside a photo). The figures start 8 mm under the rule, or 8 mm under the contact rows where
     those reach past the rule into the figures' columns (a sparse head beside a block of four rows from
     column 7 or 8), so a figure's "seit" never sits right under "Wohnort" and reads as one more row.
+    A figure has one form on the page and on paper (`splitFigure`'s `spaced`): "%" follows a no-break
+    space (DIN 5008: "99,6 %", also when typed "99,6%"), and so does a unit word written after a space
+    ("12 Jahre"); "+", "×" and a unit written onto the number ("40+", "2.3M") stay on it. On paper the
+    space is a character at the unit's size, drawn as the space glyph, and the "%" stands exactly where
+    the old geometric gap put it. An extractor that reads the characters gives "99,6 %" (pypdf; it gave
+    "99,6%" before); poppler places words by their geometry alone, so `pdftotext -layout` gives "99,6 %"
+    and `-raw` still "99,6%", as before.
     In the letter's information block (48 mm for a value) the contact values step down together
     from 8.5 to at most `info-min` (7 pt) until the widest fits. Only a value wider than its block at
     that size breaks, as a last resort. Every address is one link rectangle.
@@ -141,7 +158,8 @@ installed and none may be added.
     document link of the page carries `data-app-download`; inside the app a small listener
     (`AppDownloads`, loaded with Laufbahn's pages only) hands a press on one to the app (`appDownloadFrom`,
     our own address), which offers to save or share the PDF; should that fail, the web view opens the
-    PDF itself. In a browser nothing changes. No app surface shows a Laufbahn page with its documents
+    PDF itself, also when the bridge's own code does not load (a chunk gone after a deploy, or
+    offline). In a browser nothing changes. No app surface shows a Laufbahn page with its documents
     today (the dashboard's previews pass none); `app-mode-guard.test.ts` keeps every `<a download>` of
     the creator page marked.
 
@@ -214,3 +232,17 @@ freundlichem Gruß", "Mit besten Grüßen", "Herzliche Grüße", the Swiss "Grü
 rule. Point 7 and point 11 say what holds now; a table test sets each closing before "Jonas Brandt"
 (DIN.signature plus one leading every time) and keeps the same words inside a sentence as body text,
 and a layout test puts the first figure at least 8 mm under the block's last row.
+
+The third review (same day) found that `printable` switched a document off for the bidirectional
+marks a phone keyboard with an Arabic layout leaves in Latin text, for the line separator and for the
+minus sign, without a word to the owner; a dialable mobile number as the grouping example; a test
+address on a registrable domain (now `lager.example.com`, RFC 2606, the same length); an app-mode
+press that was swallowed when the bridge's code failed to load; and a figure whose "%" was a gap in
+the PDF (pypdf extracted "99,6%") and set tight on the page. Points 5, 6, 11 and 17 say what holds now. The
+figure change moves the CV's and the combined file's stored byte hashes in `pdf.test.ts` (the
+letter's stays); the sample's drawing is the same, its "%" run one character longer ("40+" now
+stands on its number, where the old gap set it apart). Each code fix has a test that fails without
+it, and a table test keeps the figures 8 mm under the rule and under a top-right block for addresses
+of 24 to 43 characters on a head without tagline and status. The third figure still starts at
+column 7 (the spec's equal cells from columns 1, 4 and 7, the second on the content edge), not on the
+facts' value column 6: moving it needs a design decision.
