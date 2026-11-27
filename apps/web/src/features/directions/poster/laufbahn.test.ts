@@ -508,10 +508,10 @@ describe("About", () => {
     expect(/<section id="section-about"[\s\S]*?<\/section>/.exec(render(empty))?.[0] ?? "").not.toContain("data-about-portrait");
   });
 
-  it("keeps Sevag's drawn still beside his facts until he sends a photo (the founder's decision)", () => {
+  it("shows Sevag's own photo beside his facts", () => {
     const block = sevagDe.blocks.find((entry): entry is BlockOf<"about"> => entry.type === "about");
-    const clip = MOTION_LIBRARY.find((entry) => entry.poster === block?.portrait?.src);
-    expect(clip?.kind).toBe("illustration");
+    expect(block?.portrait?.src).toBe("sample:pv-sevag-portrait");
+    expect(MOTION_LIBRARY.some((entry) => entry.poster === block?.portrait?.src)).toBe(false);
     const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(sevag)?.[0] ?? "";
     expect(about).toContain("data-about-portrait");
     expect(about).toContain(`alt="${block?.portrait?.alt ?? "?"}"`);

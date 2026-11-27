@@ -1,5 +1,8 @@
 import "server-only";
 
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
 import { hasImage, type Page } from "@linkyo/blocks";
 
 import { posterClip } from "@/features/creator/motion-library";
@@ -16,6 +19,9 @@ import { parseJpeg, type Jpeg } from "./pdf/jpeg";
  * JPEG. Otherwise the CV has no picture at all: no illustration ever stands in for a person, and no
  * initials either.
  *
+ * One exception: a prepared page's own photo, which the person gave the Linkyo team for that page
+ * (features/previews/preview-media.ts), is read from the app's files (PREVIEW_PHOTOS below).
+ *
  * The page's miniature and page count ask `photoCandidate` too, so the card and the PDF agree on
  * whether a photo stands in the head. Uploads keep their type in their name (`<uid>/<yyyy>/<uuid>.jpg`,
  * features/app/media-upload.ts): a PNG or WebP upload is no candidate (v1 embeds JPEG only).
@@ -26,6 +32,20 @@ const MAX_BYTES = 2 * 1024 * 1024;
 const JPEG_NAME = /\.jpe?g$/iu;
 /** A dot segment, written plainly or percent-encoded ("..", "%2e%2e", ".%2E"). */
 const DOT_SEGMENT = /(?:^|\/)(?:\.|%2e){2}(?:\/|$)/iu;
+
+/**
+ * A prepared page's own photos, each read from the app's files. Each path is written out whole: the
+ * build's file tracer follows only literal paths (see pdf/fonts.ts).
+ */
+const PREVIEW_PHOTOS: Readonly<Record<string, () => Promise<Buffer>>> = {
+  "sample:pv-sevag-portrait": () => readFile(join(process.cwd(), "src/assets/previews/sevag-portrait.jpg")),
+  "sample:pv-sevag-avatar": () => readFile(join(process.cwd(), "src/assets/previews/sevag-avatar.jpg")),
+};
+
+/** Whether `src` names a prepared page's own photo (a picture of the person, never stock or a drawing). */
+export function isPreviewPhoto(src: string): boolean {
+  return Object.hasOwn(PREVIEW_PHOTOS, src);
+}
 
 /**
  * A Storage address the server may fetch: this deployment's media bucket by origin and normalised
@@ -50,6 +70,7 @@ export function photoCandidate(page: Page, now: Date, env: { supabaseUrl?: strin
   const portrait = about?.type === "about" ? about.portrait : undefined;
   const picture = hasImage(portrait) ? portrait : page.profile.avatar;
   if (!hasImage(picture) || posterClip(picture.src) !== undefined) return null;
+  if (isPreviewPhoto(picture.src)) return { src: picture.src, focal: picture.focal };
   const url = storageObjectUrl(picture.src, env);
   if (!url || !JPEG_NAME.test(url.pathname)) return null;
   return { src: url.href, focal: picture.focal };
@@ -84,6 +105,16 @@ async function readCapped(response: Response, limit: number): Promise<Uint8Array
 export async function fetchPhoto(page: Page, now: Date, load: typeof fetch = fetch): Promise<Jpeg | null> {
   const candidate = photoCandidate(page, now);
   if (!candidate) return null;
+  const local = PREVIEW_PHOTOS[candidate.src];
+  if (local) {
+    try {
+      const bytes = await local();
+      const jpeg = bytes.byteLength <= MAX_BYTES ? parseJpeg(new Uint8Array(bytes)) : null;
+      return jpeg ? { ...jpeg, focal: candidate.focal } : null;
+    } catch {
+      return null;
+    }
+  }
   try {
     // No redirect is followed: the bytes come from the address checked above or not at all.
     const response = await load(candidate.src, { signal: AbortSignal.timeout(TIMEOUT_MS), cache: "no-store", redirect: "error" });

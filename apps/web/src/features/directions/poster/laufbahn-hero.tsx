@@ -14,7 +14,7 @@ import { MediaImage } from "../shared/creator-kit";
 import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
 import { aiText, GLYPH_WIDTH, isPdf, Socials } from "./hero";
-import { keepSeparators, lineEms, widestWord } from "./laufbahn-content";
+import { keepSeparators, lineEms } from "./laufbahn-content";
 import { HeroLive } from "./live";
 import { ShareAction } from "./share";
 import { displayStyle, pageSide } from "./styles";
@@ -75,26 +75,26 @@ function averageOf(theme: ResolvedCreatorTheme): number {
 }
 
 /**
- * The name, type first: on phones as large as its widest word allows (each word may take its own line,
- * so "Jonas Brandt" stands on two lines at 72 px on a 390 px phone), never below a display size; on the
- * wide canvas the whole name on one line in the words' eight columns. Arabic stops one step lower.
- * The estimate errs a little wide (× 1.04), so a fitted line never breaks by a hair.
+ * The name, type first, on one line: on phones as large as the whole name allows in the reading
+ * column ("Jonas Brandt" at about 53 px on a 390 px phone, "Sevag Ghazarian" at 33 px on a 320 px
+ * one), never below h2, so only a very long name on a narrow screen wraps; on the wide canvas the whole name on one
+ * line in the words' eight columns. Arabic stops one step lower. The estimate errs a little wide
+ * (× 1.04), so a fitted line never breaks by a hair.
  */
 function DossierName({ profile, theme, isRtl, className, style }: { profile: Profile; theme: ResolvedCreatorTheme; isRtl: boolean; className?: string | undefined; style?: CSSProperties | undefined }) {
   const t = useTranslations("creator");
   const average = averageOf(theme);
   const name = profile.displayName.trim();
-  const word = (lineEms(widestWord(name, average), average) * 1.04).toFixed(2);
   const line = (lineEms(name, average) * 1.04).toFixed(2);
   const badge = profile.verified ? " - var(--spacing-icon-lg) - var(--spacing-2)" : "";
-  const fit = { "--name-fit": `calc((${NARROW}${badge}) / ${word})`, "--name-fit-work": `calc((${columns(8)}${badge}) / ${line})` } as CSSProperties;
+  const fit = { "--name-fit": `calc((${NARROW}${badge}) / ${line})`, "--name-fit-work": `calc((${columns(8)}${badge}) / ${line})` } as CSSProperties;
   return (
     <h1
       // The app bar appears once the name has passed under it, as an app's large title does (BarReveal).
       data-lb-name
       className={cn(
         "mt-5 font-creator-display text-balance break-words @work:mt-6",
-        "text-[length:clamp(var(--text-display-sm),var(--name-fit),var(--text-display-xl))]",
+        "text-[length:clamp(var(--text-h2),var(--name-fit),var(--text-display-xl))]",
         isRtl
           ? "leading-tight @work:text-[length:clamp(var(--text-h1),var(--name-fit-work),var(--text-display-xl))]"
           : "leading-none @work:text-[length:clamp(var(--text-h1),var(--name-fit-work),var(--text-display-2xl))]",

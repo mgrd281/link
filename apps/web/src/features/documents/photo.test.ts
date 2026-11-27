@@ -111,3 +111,23 @@ describe("reading the photo", () => {
     for (const load of [big, missing, png, thrown]) expect(await fetchPhoto(page, NOW, load as unknown as typeof fetch)).toBeNull();
   });
 });
+
+describe("a prepared page's own photo", () => {
+  it("is Sevag's CV photo, read from the app's files without any request", async () => {
+    const { sevagDe } = await import("@/features/previews/sevag");
+    const now = new Date("2026-11-27T12:00:00Z");
+    expect(photoCandidate(sevagDe, now)).toEqual({ src: "sample:pv-sevag-portrait", focal: [0.47, 0.32] });
+    const load = vi.fn<typeof fetch>();
+    const photo = await fetchPhoto(sevagDe, now, load);
+    expect(load).not.toHaveBeenCalled();
+    expect(photo).not.toBeNull();
+    expect(photo?.width).toBe(1080);
+    expect(photo?.height).toBe(1350);
+  });
+
+  it("is never a sample picture that is not one", () => {
+    const jonas = jonasDe();
+    const page: Page = { ...jonas, profile: { ...jonas.profile, avatar: { src: "sample:mila-avatar", alt: "" } }, blocks: jonas.blocks.filter((block) => block.type !== "about") };
+    expect(photoCandidate(page, new Date("2026-11-27T12:00:00Z"))).toBeNull();
+  });
+});

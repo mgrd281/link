@@ -535,4 +535,17 @@ Measured on the demo build (fictional samples, reduced motion, chrome off), `nex
 
 The creator pages keep their budgets (`/u/[username]` 30.8 KB, `/[locale]/p/[slug]` 32.5 KB of 35 KB).
 
+### Round 6, the founder's review (2026-11-27)
+
+- **The name stands on one line.** On phones the head fits the whole name into the reading column
+  instead of its widest word (the founder: "Sevag Ghazarian" on one line). It never goes below h2 there,
+  so only a very long name on a narrow screen wraps. Measured on the fictional sample with that name:
+  33 px at 320, 38 px at 360, 41 px at 390, 72 px at 768 and 87 px at 1440, one line each; "Jonas
+  Brandt" is 53 px at 390.
+- **Sevag's own photo.** He gave the Linkyo team a portrait for his page
+  (`features/previews/preview-media.ts`, `assets/previews/`). It is his avatar, stands beside the facts
+  in "Über mich" in place of the drawn still, and is the photo on his CV: a prepared page's own photo
+  is read from the app's files (`PREVIEW_PHOTOS` in `features/documents/photo.ts`), never fetched,
+  while every other sample picture still never prints as an applicant.
+
 **Status.** Accepted.

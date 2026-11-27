@@ -1,12 +1,12 @@
-import { NO_IMAGE, type BlockOf, type Page } from "@linkyo/blocks";
+import type { BlockOf, Page } from "@linkyo/blocks";
 
 /**
  * A page prepared for Sevag Ghazarian, from the application letter he gave the Linkyo team
  * (Lagerist / Töner, Sales Center Lörrach). Every fact on it comes from that letter; nothing is
- * added. No photo of him yet: his initials stand in, and "Über mich" shows a drawn still beside the
- * facts until his own photo replaces it.
+ * added. His own photo (he gave it to the Linkyo team for this page) is his avatar, stands beside the
+ * facts in "Über mich" and is the photo on his CV.
  *
- * Picture and moving picture: Linkyo's own illustrations only, drawn for this kind of page (no stock
+ * Header picture and moving picture: Linkyo's own illustrations only, drawn for this kind of page (no stock
  * material, no real footage: the founder's wish). His own clip is the founder's choice from the motion
  * library, "Palette packen" (features/creator/motion-library.ts; source in
  * .claude/skills/linkyo-media-assets/scripts/pallet-scene.html): a warehouse worker scans each carton
@@ -39,7 +39,7 @@ export const sevagDe: Page = {
     displayName: "Sevag Ghazarian",
     tagline: "Lagerist · Staplerfahrer mit Flurförderzeugschein",
     bio: "Sorgfältig und zuverlässig im Lager. Sicherheit, Ordnung und Sauberkeit sind mir wichtig.",
-    avatar: { src: NO_IMAGE, alt: "" },
+    avatar: { src: "sample:pv-sevag-avatar", alt: "Sevag Ghazarian", w: 512, h: 512 },
     hero: {
       src: "sample:ex-motion-palette-packen",
       alt: "Illustration: Ein Lagerist scannt jeden Karton mit dem Handscanner, die EAN erscheint; er packt die Palette und sichert sie mit Stretchfolie",
@@ -61,13 +61,12 @@ export const sevagDe: Page = {
       id: "about",
       type: "about",
       title: "Über mich",
-      // A placeholder until his own photo: the first frame of the library's drawn clip "Scannen von
-      // Waren" (features/creator/motion-library.ts), never his header's own clip. On the visit whose
-      // header plays this clip, the portrait takes the header's own still instead (./rotation).
+      // His own photo, which he gave the Linkyo team for this page (features/previews/preview-media.ts).
+      // The CV prints it as his applicant photo too (features/documents/photo.ts).
       portrait: {
-        src: "sample:ex-motion-ware-scannen",
-        alt: "Illustration: Ein Lagerist scannt Kartons auf einem Rollenband, das Terminal bestätigt jeden Scan",
-        focal: [0.3, 0.42],
+        src: "sample:pv-sevag-portrait",
+        alt: "Sevag Ghazarian",
+        focal: [0.47, 0.32],
         w: 1080,
         h: 1350,
       },

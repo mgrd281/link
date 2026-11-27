@@ -66,23 +66,17 @@ describe("a page that takes turns with clips (Sevag's)", () => {
     }
   });
 
-  it("never shows one picture twice: the drawn placeholder in 'Über mich' swaps with the header's still on the visit that plays its clip", () => {
+  it("keeps his own photo in 'Über mich' on every visit, whichever clip the header plays", () => {
     const portraitOf = (blocks: typeof page.blocks) => blocks.find((block) => block.type === "about")?.portrait;
-    // His own clip and the reach truck keep the placeholder (the still of "Scannen von Waren").
-    expect(portraitOf(page.blocks)?.src).toBe("sample:ex-motion-ware-scannen");
-    for (const key of ["palette-packen", "lagerarbeit"]) {
+    expect(portraitOf(page.blocks)?.src).toBe("sample:pv-sevag-portrait");
+    for (const key of ["palette-packen", "lagerarbeit", "ware-scannen"]) {
       const turn = rotationTurn(rotation, key);
       if (!turn) throw new Error("no turn");
-      expect(portraitOf(withRotationClip(page, turn.clip).blocks), key).toEqual(portraitOf(page.blocks));
+      const turned = withRotationClip(page, turn.clip);
+      expect(portraitOf(turned.blocks), key).toEqual(portraitOf(page.blocks));
+      // Every other block is the page's own.
+      expect(turned.blocks.filter((block) => block.type !== "about"), key).toEqual(page.blocks.filter((block) => block.type !== "about"));
     }
-    // The conveyor clip in the header: "Über mich" shows his own header still, with its description.
-    const turn = rotationTurn(rotation, "ware-scannen");
-    if (!turn) throw new Error("no turn");
-    const swapped = withRotationClip(page, turn.clip);
-    expect(swapped.profile.hero?.src).toBe("sample:ex-motion-ware-scannen");
-    expect(portraitOf(swapped.blocks)).toEqual(page.profile.hero);
-    // Every other block is the page's own.
-    expect(swapped.blocks.filter((block) => block.type !== "about")).toEqual(page.blocks.filter((block) => block.type !== "about"));
   });
 
   it("has no turn when the rotation names no clip of the library", () => {
