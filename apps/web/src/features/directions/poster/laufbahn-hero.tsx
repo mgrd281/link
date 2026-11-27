@@ -14,7 +14,6 @@ import { MediaImage } from "../shared/creator-kit";
 import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
 import { aiText, GLYPH_WIDTH, isPdf, Socials } from "./hero";
-import { LatinRuns } from "./laufbahn";
 import { keepSeparators, lineEms, widestWord } from "./laufbahn-content";
 import { HeroLive } from "./live";
 import { ShareAction } from "./share";
@@ -122,12 +121,12 @@ function DossierName({ profile, theme, isRtl, className, style }: { profile: Pro
 }
 
 /** The owner's availability in their own words: a still dot (decorative) and the words, on a soft pill. */
-export function StatusPill({ text, rtl = false, className, style }: { text: string; rtl?: boolean | undefined; className?: string | undefined; style?: CSSProperties | undefined }): ReactNode {
+export function StatusPill({ text, className, style }: { text: string; className?: string | undefined; style?: CSSProperties | undefined }): ReactNode {
   return (
     <p className={cn("inline-flex min-h-control-sm max-w-full items-center gap-2 rounded-full bg-hover-inverse px-3 text-small font-semibold text-white", className)} style={style}>
       <span aria-hidden className="size-dot shrink-0 rounded-full bg-success" />
       <span dir="auto" className={cn(pageSide, "min-w-0 break-words")}>
-        <LatinRuns text={text} rtl={rtl} />
+        {text}
       </span>
     </p>
   );
@@ -286,9 +285,9 @@ function FigureValue({ parts, qualified }: { parts: FigureParts; qualified: bool
         </dd>
       ) : null}
       <dd className={cn(pageSide, "row-start-2 self-end text-white")}>
-        {/* "99,6 %" stays left to right on an Arabic page, and in the template's Latin face there: the
-            Arabic pairing's face has no digits, which would fall to a system face. */}
-        <bdi dir="ltr" className="inline-flex items-baseline whitespace-nowrap rtl:font-display">
+        {/* "99,6 %" stays left to right on an Arabic page; its digits are Geist's there too (the Arabic
+            companion's unicode-range leaves them to the Latin face after it). */}
+        <bdi dir="ltr" className="inline-flex items-baseline whitespace-nowrap">
           <span className="text-[length:var(--figure-size)] leading-none font-bold tracking-display tabular-nums">{parts.number}</span>
           {parts.unit ? (
             <span className={cn("text-[length:calc(var(--figure-size)/2)] leading-none font-bold", /\p{L}/u.test(parts.unit) ? "ms-1" : "ms-0_5")}>{parts.unit}</span>
@@ -377,32 +376,32 @@ export function DossierHero({
         {/* The words: eight columns on the wide canvas. */}
         <div className={cn("grid min-w-0 justify-items-start @work:col-span-8 @work:col-start-1 @work:row-start-1", COLUMN_INSET)}>
           {live ? <HeroLive block={live} /> : null}
-          {status ? <StatusPill text={status} rtl={isRtl} className={rise(0).className} style={rise(0).style} /> : null}
+          {status ? <StatusPill text={status} className={rise(0).className} style={rise(0).style} /> : null}
           <div className={cn("w-full min-w-0", rise(1).className)} style={rise(1).style}>
             {/* The name keeps its space under the live pill or the status; first in the head, it starts at the top. */}
             <DossierName profile={profile} theme={theme} isRtl={isRtl} className={status || live ? undefined : "mt-0"} />
           </div>
           {profile.tagline ? (
             <p data-lb-role dir="auto" className={cn(pageSide, "mt-4 max-w-full text-h3 font-medium text-balance break-words @work:text-h2 rtl:leading-normal", rise(2).className)} style={rise(2).style} {...aiText(profile, "tagline")}>
-              <LatinRuns text={keepSeparators(profile.tagline)} rtl={isRtl} />
+              {keepSeparators(profile.tagline)}
             </p>
           ) : null}
           {target ? (
             <p data-lb-target className={cn("mt-3 max-w-full text-body text-pretty break-words @work:text-body-lg", rise(3).className)} style={rise(3).style}>
               <span dir="auto" className="lb-ink-muted">
-                <LatinRuns text={target.label.trim().replace(/\s*:$/u, "")} rtl={isRtl} />
+                {target.label.trim().replace(/\s*:$/u, "")}
               </span>{" "}
               <bdi dir="auto" className="font-semibold text-white">
-                <LatinRuns text={target.value} rtl={isRtl} />
+                {target.value}
               </bdi>
               {employer ? (
                 <>
                   {`${NBSP}· `}
                   <span dir="auto" className="lb-ink-muted">
-                    <LatinRuns text={employer.label.trim().replace(/\s*:$/u, "")} rtl={isRtl} />
+                    {employer.label.trim().replace(/\s*:$/u, "")}
                   </span>{" "}
                   <bdi dir="auto" className="font-semibold text-white">
-                    <LatinRuns text={employer.value} rtl={isRtl} />
+                    {employer.value}
                   </bdi>
                 </>
               ) : null}
@@ -412,13 +411,13 @@ export function DossierHero({
             <p className="mt-3 inline-flex max-w-full items-center gap-1 text-small font-medium lb-ink-muted">
               <Icon icon={MapPin} size="sm" className="shrink-0" />
               <span dir="auto" className="min-w-0 break-words">
-                <LatinRuns text={profile.location} rtl={isRtl} />
+                {profile.location}
               </span>
             </p>
           ) : null}
           {profile.bio ? (
             <p dir="auto" className={cn(pageSide, "mt-4 max-w-prose text-body text-pretty break-words lb-ink-muted @work:text-body-lg")} {...aiText(profile, "bio")}>
-              <LatinRuns text={profile.bio} rtl={isRtl} />
+              {profile.bio}
             </p>
           ) : null}
           <DossierActions

@@ -333,31 +333,76 @@ for (const locale of ["de", "ar"] as const) {
   });
 }
 
-test("ar: the career's years, the role and the status draw their digits and Latin in Geist, the Arabic in IBM Plex Sans Arabic", async ({ page }) => {
+/** A node of CDP's DOM tree, as far as the font check reads it. */
+interface DomNode {
+  nodeId: number;
+  nodeType: number;
+  nodeName: string;
+  nodeValue: string;
+  children?: DomNode[];
+}
+
+test("ar: every text of the head, main and the Kontakt band is drawn in Geist or IBM Plex Sans Arabic, nothing in a system face", async ({ page }) => {
   await open(page, application("ar"));
   const client = await page.context().newCDPSession(page);
   await client.send("DOM.enable");
   await client.send("CSS.enable");
-  const { root } = await client.send("DOM.getDocument", { depth: -1 });
-  const families = async (selector: string): Promise<Record<string, number>> => {
+  const { root } = (await client.send("DOM.getDocument", { depth: -1 })) as { root: DomNode };
+  // The fonts Chrome actually drew for each element that holds text of its own, region by region: the
+  // head (status, name, role, target line, facts, figures), main (About's lead with "SAP" and "2017",
+  // the facts with "(B1)", the skills, the career, the letter with its dates, the documents) and the
+  // Kontakt band (its title, the e-mail address, the footer). Plex's unicode-range sends every Latin
+  // letter, digit and sign on to Geist; any other family is a system face standing in.
+  const regions: Record<string, string> = { head: "[data-lb-head]", main: "main", contact: "[data-lb-contact]" };
+  const allowed = ["Geist", "IBM Plex Sans Arabic"];
+  const strays: string[] = [];
+  for (const [region, selector] of Object.entries(regions)) {
+    const { nodeId } = await client.send("DOM.querySelector", { nodeId: root.nodeId, selector });
+    expect(nodeId, selector).toBeGreaterThan(0);
+    const find = (node: DomNode): DomNode | undefined => (node.nodeId === nodeId ? node : node.children?.map(find).find(Boolean));
+    const start = find(root);
+    expect(start, selector).toBeDefined();
+    const holders: DomNode[] = [];
+    const walk = (node: DomNode) => {
+      if (node.nodeType === 1 && node.children?.some((child) => child.nodeType === 3 && child.nodeValue.trim() !== "")) holders.push(node);
+      node.children?.forEach(walk);
+    };
+    if (start) walk(start);
+    const used: Record<string, number> = {};
+    let drawn = 0;
+    for (const holder of holders) {
+      const { fonts } = (await client.send("CSS.getPlatformFontsForNode", { nodeId: holder.nodeId })) as { fonts: { familyName: string; glyphCount: number }[] };
+      if (fonts.length > 0) drawn += 1;
+      for (const font of fonts) {
+        used[font.familyName] = (used[font.familyName] ?? 0) + font.glyphCount;
+        if (!allowed.includes(font.familyName)) {
+          const words = (holder.children ?? []).filter((child) => child.nodeType === 3).map((child) => child.nodeValue.trim()).join(" ");
+          strays.push(`${region} <${holder.nodeName.toLowerCase()}> "${words.slice(0, 60)}": ${font.familyName} ${String(font.glyphCount)}`);
+        }
+      }
+    }
+    // The walk read the region: many elements with text, each face drawing some of it.
+    expect(drawn, `${region}: ${JSON.stringify(used)}`).toBeGreaterThan(region === "main" ? 40 : 5);
+    expect(used.Geist ?? 0, `${region}: ${JSON.stringify(used)}`).toBeGreaterThan(0);
+    expect(used["IBM Plex Sans Arabic"] ?? 0, `${region}: ${JSON.stringify(used)}`).toBeGreaterThan(0);
+  }
+  expect(strays).toEqual([]);
+  // The places the round 6 review found in a system face: the e-mail address in the band and the
+  // years of the career, each with its Latin in Geist now.
+  const fontsOf = async (selector: string): Promise<Record<string, number>> => {
     const { nodeIds } = await client.send("DOM.querySelectorAll", { nodeId: root.nodeId, selector });
     const used: Record<string, number> = {};
     for (const nodeId of nodeIds) {
-      const { fonts } = await client.send("CSS.getPlatformFontsForNode", { nodeId });
+      const { fonts } = (await client.send("CSS.getPlatformFontsForNode", { nodeId })) as { fonts: { familyName: string; glyphCount: number }[] };
       for (const font of fonts) used[font.familyName] = (used[font.familyName] ?? 0) + font.glyphCount;
     }
     return used;
   };
-  const allowed = ["Geist", "IBM Plex Sans Arabic"];
-  for (const selector of ["#section-career bdi, #section-career bdi *", "[data-lb-role], [data-lb-role] *", "[data-lb-head] p:has(.bg-success), [data-lb-head] p:has(.bg-success) *"]) {
-    const used = await families(selector);
-    expect(Object.keys(used).length, selector).toBeGreaterThan(0);
-    expect(Object.keys(used).filter((family) => !allowed.includes(family)), `${selector}: ${JSON.stringify(used)}`).toEqual([]);
-  }
-  // The years are digits in Geist ("2021 –") and Arabic words in Plex ("حتى الآن").
-  const years = await families("#section-career bdi, #section-career bdi *");
-  expect(years.Geist ?? 0).toBeGreaterThan(0);
-  expect(years["IBM Plex Sans Arabic"] ?? 0).toBeGreaterThan(0);
+  const email = await fontsOf("[data-lb-contact] a[href^='mailto:'] bdi[dir=ltr]");
+  expect(Object.keys(email), JSON.stringify(email)).toEqual(["Geist"]);
+  const years = await fontsOf("#section-career bdi");
+  expect(years.Geist ?? 0, JSON.stringify(years)).toBeGreaterThan(0);
+  expect(years["IBM Plex Sans Arabic"] ?? 0, JSON.stringify(years)).toBeGreaterThan(0);
 });
 
 test("reduced motion: nothing animates, after load and after scrolling, and the career's rail is drawn in full", async ({ page }) => {

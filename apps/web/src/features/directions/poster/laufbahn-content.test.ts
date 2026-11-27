@@ -45,7 +45,6 @@ import {
   isLetter,
   isPersonPicture,
   keepSeparators,
-  latinRuns,
   LEAD_MAX,
   lineEms,
   opensShort,
@@ -342,45 +341,6 @@ describe("text sections", () => {
 
 describe("round 6: the dossier's head", () => {
   const NBSP = String.fromCharCode(0xa0);
-
-  it("splits an Arabic text into the runs the Arabic face sets and the Latin runs it would leave to a system face", () => {
-    const runs = (text: string) => latinRuns(text).map((run) => [run.text, run.latin]);
-    // A year range: the digits and the dash one Latin run, the Arabic word after it.
-    expect(runs("2021 – حتى الآن")).toEqual([
-      ["2021 –", true],
-      [" حتى الآن", false],
-    ]);
-    // A role's separator (after its non-breaking space), a product name, a level in brackets, a date.
-    expect(runs(`أخصائي لوجستيات${NBSP}· سائق رافعة`)).toEqual([
-      [`أخصائي لوجستيات${NBSP}`, false],
-      ["·", true],
-      [" سائق رافعة", false],
-    ]);
-    expect(runs("نظام SAP EWM والرافعة")).toEqual([
-      ["نظام ", false],
-      ["SAP EWM", true],
-      [" والرافعة", false],
-    ]);
-    expect(runs("العربية، الإنجليزية (B1)")).toEqual([
-      ["العربية، الإنجليزية ", false],
-      ["(B1)", true],
-    ]);
-    expect(runs("متاح للعمل من 1 مارس 2027")).toEqual([
-      ["متاح للعمل من ", false],
-      ["1", true],
-      [" مارس ", false],
-      ["2027", true],
-    ]);
-    // Arabic-Indic digits are the Arabic face's own; a text without Latin is one run.
-    expect(runs("٢٠٢١")).toEqual([["٢٠٢١", false]]);
-    expect(runs("")).toEqual([]);
-    // Joined, the runs are the text, and each offset is where its run starts.
-    for (const text of ["2021 – حتى الآن", "Lagerist · Staplerfahrer", "نظام SAP EWM والرافعة (B1) 99.6 %"]) {
-      const parts = latinRuns(text);
-      expect(parts.map((run) => run.text).join("")).toBe(text);
-      for (const run of parts) expect(text.slice(run.at, run.at + run.text.length)).toBe(run.text);
-    }
-  });
 
   it("keeps a separator's dot at the end of a line: a non-breaking space before every ' · '", () => {
     expect(keepSeparators("Fachkraft für Lagerlogistik · Staplerfahrer")).toBe(`Fachkraft für Lagerlogistik${NBSP}· Staplerfahrer`);

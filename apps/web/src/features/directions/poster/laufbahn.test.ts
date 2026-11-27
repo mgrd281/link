@@ -147,8 +147,9 @@ describe("the head (round 6): type first, on ink", () => {
     expect(figures).toMatch(/<bdi dir="ltr"[^>]*><span[^>]*>99,6<\/span><span class="[^"]*calc\(var\(--figure-size\)\/2\)[^"]*">%<\/span><\/bdi>/);
     // Sevag's "SAP" is a value in words, set at the words' size.
     expect(headOf(sevag)).toMatch(/<dd dir="auto" class="[^"]*text-h3[^"]*">SAP<\/dd>/);
-    // On an Arabic page the digits stand in the template's Latin face (the Arabic face has none).
-    expect(headOf(karimMarkup)).toMatch(/<bdi dir="ltr" class="[^"]*rtl:font-display[^"]*"><span[^>]*>99.6<\/span>/);
+    // On an Arabic page the figure stays left to right, in the page's own stack: Plex's unicode-range
+    // leaves its digits to Geist, so it needs no face of its own.
+    expect(headOf(karimMarkup)).toMatch(/<bdi dir="ltr" class="inline-flex items-baseline whitespace-nowrap"><span[^>]*>99.6<\/span>/);
   });
 
   it("ends with the picture as a 3 : 2 plate from edge to edge on phones, no parallax and no veil", () => {
@@ -395,28 +396,29 @@ describe("the career as a table", () => {
 });
 
 describe("Arabic pages' Latin runs", () => {
-  /** A part of the markup with every span in the template's Latin face taken out, then as text. */
-  const outsideLatinFace = (markup: string): string => text(markup.replace(/<span class="font-display">[^<]*<\/span>/g, ""));
-  const LATIN = /[0-9A-Za-z·–%()]/u;
+  /** The value of a custom property in the markup's theme style, its quotes (escaped there) as single ones. */
+  const property = (markup: string, name: string): string => new RegExp(`${name}:([^;"]*)`).exec(markup.replaceAll("&quot;", "'"))?.[1] ?? "";
+  const PLEX = "var(--font-face-arabic-plex, 'IBM Plex Sans Arabic')";
+  const GEIST = "var(--font-face-geist, Geist)";
 
-  it("sets the career's years, roles, places and notes, the role, the status and the target line with their digits and Latin in Geist", () => {
-    const career = /<section id="section-career"[\s\S]*?<\/section>/.exec(karimMarkup)?.[0] ?? "";
-    const head = headOf(karimMarkup);
-    expect(career).toContain('<span class="font-display">2021 –</span>');
-    expect(count(career, /<span class="font-display">/g)).toBeGreaterThanOrEqual(4);
-    expect(outsideLatinFace(career)).not.toMatch(LATIN);
-    const role = /<p data-lb-role[\s\S]*?<\/p>/.exec(head)?.[0] ?? "";
-    expect(role).toContain('<span class="font-display">·</span>');
-    expect(outsideLatinFace(role)).not.toMatch(LATIN);
-    const status = /<p class="inline-flex min-h-control-sm[\s\S]*?<\/p>/.exec(head)?.[0] ?? "";
-    expect(status).toContain('<span class="font-display">2027</span>');
-    expect(outsideLatinFace(status)).not.toMatch(LATIN);
+  it("sets the whole page in IBM Plex Sans Arabic, then Geist: the Arabic face's unicode-range leaves every Latin letter, digit and sign to Geist", () => {
+    for (const name of ["--creator-font-display", "--creator-font-body"]) {
+      const stack = property(karimMarkup, name);
+      expect(stack.startsWith(`${PLEX}, ${GEIST}`), `${name}: ${stack}`).toBe(true);
+    }
+    // German pages keep Geist alone.
+    expect(property(jonasMarkup, "--creator-font-body").startsWith(GEIST)).toBe(true);
+    expect(property(jonasMarkup, "--creator-font-body")).not.toContain("arabic");
   });
 
-  it("leaves German pages as they are: no extra spans", () => {
-    const career = /<section id="section-career"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
-    expect(career).not.toContain('class="font-display"');
-    expect(headOf(jonasMarkup)).not.toContain('class="font-display"');
+  it("writes the text as it is, without spans of a face of their own (the career, the role, the status, the figures)", () => {
+    const career = /<section id="section-career"[\s\S]*?<\/section>/.exec(karimMarkup)?.[0] ?? "";
+    const head = headOf(karimMarkup);
+    expect(career).toContain(">2021 – ");
+    // No class of the Latin face anywhere on the page (the custom property --creator-font-display is no class).
+    for (const markup of [career, head, karimMarkup]) expect(markup).not.toMatch(/class="[^"]*(?<![\w-])font-display(?![\w-])/);
+    const role = /<p data-lb-role[\s\S]*?<\/p>/.exec(head)?.[0] ?? "";
+    expect(role).not.toContain("<span");
   });
 });
 

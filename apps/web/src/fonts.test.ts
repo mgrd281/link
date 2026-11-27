@@ -174,7 +174,7 @@ describe("Arabic faces in fonts.ts", () => {
     }
   });
 
-  it("lets the Arabic pairing's face draw everything its file has (Laufbahn renders as before the range)", () => {
+  it("lets the Arabic pairing's face draw everything its file has (a page in that pairing renders as before the range)", () => {
     const plex = faceById.get("plex-arabic");
     if (!plex) throw new Error("plex-arabic missing");
     const visible = (cp: number) => cp >= 0x20 && !(cp >= 0x7f && cp <= 0x9f);

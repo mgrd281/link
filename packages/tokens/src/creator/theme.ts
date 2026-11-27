@@ -252,7 +252,8 @@ interface ArabicFace {
 
 /**
  * The faces a pairing (or one template) uses for Arabic letters on Arabic pages (tokens: `arabic`).
- * `pairing: "arabic"` keeps the Arabic pairing exactly as it is, with no Latin faces (Laufbahn).
+ * `pairing: "arabic"` keeps the Arabic pairing exactly as it is, with no Latin faces. No template uses it
+ * now: Laufbahn did until round 6, and its Latin runs ("SAP", "2017", an e-mail) fell to a system face.
  */
 export interface ArabicFaces {
   pairing?: "arabic" | undefined;
@@ -334,7 +335,7 @@ export function resolveCreatorTheme(config: CreatorThemeConfig = {}, options: { 
   const pairingId: CreatorPairingId = options.rtlScript ? "arabic" : latinPairingId;
   const pairing = creatorTokens.pairings[pairingId];
   // A template's own Arabic faces belong to its own pairing: a creator who picks another pairing gets
-  // that pairing's companions. Laufbahn's "the Arabic pairing as it is" holds whatever the pairing.
+  // that pairing's companions. A template's "the Arabic pairing as it is" would hold whatever the pairing.
   const ownArabic = t.arabic?.pairing === "arabic" || latinPairingId === t.pairing ? t.arabic : undefined;
   const arabic = options.rtlScript ? arabicStacks(latinPairingId, ownArabic) : null;
   const buttonStyle: CreatorButtonStyle = config.buttonStyle ?? preset.buttonStyle;

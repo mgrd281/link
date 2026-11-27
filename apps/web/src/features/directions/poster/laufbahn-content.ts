@@ -624,58 +624,6 @@ export function keepSeparators(text: string): string {
 }
 
 /**
- * The code points Laufbahn's Arabic face carries besides the spaces (src/fonts.ts, its unicode-range):
- * Arabic letters, marks and presentation forms, the joiners and the hyphen. Laufbahn's Arabic stack
- * is that face alone (ADR 0076), so anything else in an Arabic text (Latin letters, digits, "·", "%",
- * "–") falls to a system face.
- */
-const ARABIC_FACE: readonly (readonly [number, number])[] = [
-  [0x0600, 0x06ff],
-  [0x0750, 0x077f],
-  [0x0870, 0x088e],
-  [0x0890, 0x0891],
-  [0x0897, 0x08e1],
-  [0x08e3, 0x08ff],
-  [0x200c, 0x2010],
-  [0xfb50, 0xfdff],
-  [0xfe70, 0xfe74],
-  [0xfe76, 0xfefc],
-];
-
-type Glyph = "space" | "arabic" | "latin";
-
-const glyphOf = (char: string): Glyph => {
-  if (SPACE.test(char)) return "space";
-  const code = char.codePointAt(0) ?? 0;
-  return ARABIC_FACE.some(([from, to]) => code >= from && code <= to) ? "arabic" : "latin";
-};
-
-/**
- * A text in runs, in order: the runs the Arabic face sets and the ones it would leave to a system face
- * (`latin`: "2021 –", "SAP EWM", "·", "(B1)"; spaces between two Latin characters belong to their
- * run), each with its offset. Joined, they are the text.
- */
-export function latinRuns(text: string): { text: string; latin: boolean; at: number }[] {
-  const chars = Array.from(text);
-  const kinds = chars.map(glyphOf);
-  const latin = kinds.map((kind, index) => {
-    if (kind !== "space") return kind === "latin";
-    const before = kinds.slice(0, index).findLast((other) => other !== "space");
-    const after = kinds.slice(index + 1).find((other) => other !== "space");
-    return before === "latin" && after === "latin";
-  });
-  const runs: { text: string; latin: boolean; at: number }[] = [];
-  let at = 0;
-  chars.forEach((char, index) => {
-    const last = runs.at(-1);
-    if (last && last.latin === latin[index]) last.text += char;
-    else runs.push({ text: char, latin: latin[index] ?? false, at });
-    at += char.length;
-  });
-  return runs;
-}
-
-/**
  * Whether a picture shows the person: a picture at all, and not one of Linkyo's own moving pictures
  * (a library clip's still is a drawing or a stock scene, never the owner). Only such a picture may
  * stand as a portrait beside the facts; the head's plate may show any picture.

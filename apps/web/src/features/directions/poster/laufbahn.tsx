@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useId, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
-import { iconFor, isPersonPicture, latinRuns, opensShort, readingMinutes, splitLead, textKind } from "./laufbahn-content";
+import { iconFor, isPersonPicture, opensShort, readingMinutes, splitLead, textKind } from "./laufbahn-content";
 import { IndexList } from "./laufbahn-index";
 import { textLink } from "./portfolio-sections";
 import { linkDestination, paragraphs } from "./sections";
@@ -27,25 +27,6 @@ import { pageSide } from "./styles";
  * calm renderers here, everything else keeps the renderer it has in every template. Server HTML with
  * one small script (the index); motion is CSS (globals.css, `lb-*`), and the page is complete without it.
  */
-
-/**
- * A text of an Arabic page with its Latin runs (digits, "SAP", "·", "(B1)") in the template's Latin
- * face (Geist, `font-display`, as the head's figures): Laufbahn's Arabic stack has only the Arabic
- * face, which would leave them to a system face (round 6 review). The Arabic words and the spaces
- * between them keep the Arabic face. On other pages the text is left as it is.
- */
-export function LatinRuns({ text, rtl }: { text: string; rtl: boolean }): ReactNode {
-  if (!rtl) return text;
-  return latinRuns(text).map((run) =>
-    run.latin ? (
-      <span key={run.at} className="font-display">
-        {run.text}
-      </span>
-    ) : (
-      run.text
-    ),
-  );
-}
 
 /** A titled section as the contents and its heading know it. */
 export interface Signpost {
@@ -338,9 +319,7 @@ export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">
             <div className="grid content-start justify-items-start gap-2 pt-0_5">
               {/* One isolated run in the page's direction, so every range reads from its start, also in Arabic. */}
               <p className="text-small font-semibold whitespace-nowrap text-creator-accent-text tabular-nums @work:text-body">
-                <bdi dir={locale === "ar" ? "rtl" : "ltr"}>
-                  <LatinRuns text={yearsText(item.years, t("laufbahn.ongoing"))} rtl={locale === "ar"} />
-                </bdi>
+                <bdi dir={locale === "ar" ? "rtl" : "ltr"}>{yearsText(item.years, t("laufbahn.ongoing"))}</bdi>
               </p>
               {ongoing ? <span className="rounded-full lb-soft px-2 text-caption font-semibold text-creator-accent-text">{t("laufbahn.current")}</span> : null}
             </div>
@@ -353,19 +332,19 @@ export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">
                 )}
               />
               <p dir="auto" className={cn(pageSide, "text-title font-semibold text-balance rtl:tracking-normal @work:text-h3")}>
-                <LatinRuns text={item.role} rtl={locale === "ar"} />
+                {item.role}
               </p>
               {item.org ? (
                 item.url ? (
                   <a href={item.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-1", textLink)}>
                     <span dir="auto" className="truncate">
-                      <LatinRuns text={item.org} rtl={locale === "ar"} />
+                      {item.org}
                     </span>
                     <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
                   </a>
                 ) : (
                   <p dir="auto" className={cn(pageSide, "text-body text-creator-fg-muted")}>
-                    <LatinRuns text={item.org} rtl={locale === "ar"} />
+                    {item.org}
                   </p>
                 )
               ) : item.url ? (
@@ -378,7 +357,7 @@ export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">
               ) : null}
               {item.note ? (
                 <p dir="auto" className={cn(pageSide, "max-w-prose text-small text-pretty text-creator-fg-muted @work:text-body")}>
-                  <LatinRuns text={item.note} rtl={locale === "ar"} />
+                  {item.note}
                 </p>
               ) : null}
             </div>
