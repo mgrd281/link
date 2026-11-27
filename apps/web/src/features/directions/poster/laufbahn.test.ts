@@ -15,7 +15,7 @@ import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
-import { factColumns, LaufbahnAbout, signposts } from "./laufbahn";
+import { factRows, factSpans, LaufbahnAbout, signposts } from "./laufbahn";
 import { widePlateRatio } from "./laufbahn-hero";
 import { splitLead } from "./laufbahn-content";
 import { PosterRenderer } from "./renderer";
@@ -394,22 +394,85 @@ describe("the career as a table", () => {
   });
 });
 
-describe("About", () => {
-  it("shows the facts on one soft sheet in even rows, the columns decided for the whole set", () => {
-    const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
-    // Three facts, two of them long ("Deutsch, Englisch (B1)", "Schichtbetrieb, auch nachts"): one to a
-    // row on phones, two from tablets on; every fact the same width, none across a row.
-    expect(about).toMatch(/<dl class="grid min-w-0 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-5 @work:p-6 grid-cols-1 @prose:grid-cols-2">/);
-    expect(about).not.toContain("col-span-2");
-    expect(count(about, /<div class="grid min-w-0 grid-cols-1 content-start gap-1"><dt/g)).toBe(3);
+describe("Arabic pages' Latin runs", () => {
+  /** A part of the markup with every span in the template's Latin face taken out, then as text. */
+  const outsideLatinFace = (markup: string): string => text(markup.replace(/<span class="font-display">[^<]*<\/span>/g, ""));
+  const LATIN = /[0-9A-Za-z·–%()]/u;
+
+  it("sets the career's years, roles, places and notes, the role, the status and the target line with their digits and Latin in Geist", () => {
+    const career = /<section id="section-career"[\s\S]*?<\/section>/.exec(karimMarkup)?.[0] ?? "";
+    const head = headOf(karimMarkup);
+    expect(career).toContain('<span class="font-display">2021 –</span>');
+    expect(count(career, /<span class="font-display">/g)).toBeGreaterThanOrEqual(4);
+    expect(outsideLatinFace(career)).not.toMatch(LATIN);
+    const role = /<p data-lb-role[\s\S]*?<\/p>/.exec(head)?.[0] ?? "";
+    expect(role).toContain('<span class="font-display">·</span>');
+    expect(outsideLatinFace(role)).not.toMatch(LATIN);
+    const status = /<p class="inline-flex min-h-control-sm[\s\S]*?<\/p>/.exec(head)?.[0] ?? "";
+    expect(status).toContain('<span class="font-display">2027</span>');
+    expect(outsideLatinFace(status)).not.toMatch(LATIN);
   });
 
-  it("puts three facts with one long one on a clean grid, and short facts four (or three) to a row on the wide canvas", () => {
+  it("leaves German pages as they are: no extra spans", () => {
+    const career = /<section id="section-career"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
+    expect(career).not.toContain('class="font-display"');
+    expect(headOf(jonasMarkup)).not.toContain('class="font-display"');
+  });
+});
+
+describe("About", () => {
+  it("shows the facts on one soft sheet in full rows: one a row on phones and tablets, the three side by side on the wide canvas", () => {
+    const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
+    // Three facts, two of them long for a phone's half ("Deutsch, Englisch (B1)", "Schichtbetrieb, auch
+    // nachts"): one a row below the wide canvas, and one row of three on it (round 6 review: no fact
+    // alone beside an empty half of the sheet).
+    expect(about).toContain('<dl class="grid min-w-0 grid-cols-12 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-5 @work:p-6">');
+    expect(count(about, /<div class="grid min-w-0 grid-cols-1 content-start gap-1 col-span-12 @prose:col-span-12 @work:col-span-4"><dt/g)).toBe(3);
+  });
+
+  it("never leaves a fact alone beside an empty half: every row of the facts sheet is full, for one to eight facts", () => {
     const fact = (label: string, value: string) => ({ label, value });
-    expect(factColumns([fact("Sprachen", "Deutsch, Englisch (B1)"), fact("Führerschein", "Klasse B"), fact("Ort", "Bremen")])).toBe("grid-cols-1 @prose:grid-cols-2");
-    expect(factColumns([fact("Führerschein", "Klasse B"), fact("Ort", "Bremen"), fact("Start", "März 2027")])).toBe("grid-cols-2 @work:grid-cols-3");
-    expect(factColumns([fact("Führerschein", "Klasse B"), fact("Ort", "Bremen"), fact("Start", "März 2027"), fact("Gehalt", "nach Tarif")])).toBe("grid-cols-2 @work:grid-cols-4");
-    expect(factColumns([fact("Ein sehr langes Etikett", "kurz")])).toBe("grid-cols-1 @prose:grid-cols-2");
+    const kinds = {
+      short: (index: number) => fact(`Fakt ${String(index)}`, "Klasse B"),
+      medium: (index: number) => fact(`Fakt ${String(index)}`, "Deutsch, Englisch (B1)"),
+      long: (index: number) => fact(`Fakt ${String(index)}`, "Schichtbetrieb, auch nachts und am Wochenende"),
+      mixed: (index: number) => (index % 2 === 0 ? fact(`Fakt ${String(index)}`, "Klasse B") : fact("Ein sehr langes Etikett", "Schichtbetrieb, auch nachts")),
+    };
+    const spanOf = (classes: string, prefix: string): number => Number(new RegExp(`(?:^| )${prefix}col-span-(\\d+)`).exec(classes)?.[1] ?? "0");
+    for (const [kind, make] of Object.entries(kinds)) {
+      for (let total = 1; total <= 8; total += 1) {
+        const facts = Array.from({ length: total }, (_, index) => make(index));
+        const spans = factSpans(facts);
+        for (const width of ["phone", "prose", "work"] as const) {
+          const rows = factRows(facts, width);
+          const where = `${kind}, ${String(total)} facts, ${width}: ${JSON.stringify(rows)}`;
+          expect(rows.reduce((sum, size) => sum + size, 0), where).toBe(total);
+          // At most two to a row on phones, three on tablets, four on the wide canvas; the rows even, the fuller first.
+          expect(Math.max(...rows), where).toBeLessThanOrEqual({ phone: 2, prose: 3, work: 4 }[width]);
+          expect(Math.max(...rows) - Math.min(...rows), where).toBeLessThanOrEqual(1);
+          expect([...rows].sort((a, b) => b - a), where).toEqual(rows);
+          // No orphan: a row of one only where every row is one (the sheet in a single column).
+          if (rows.includes(1)) expect(rows.every((size) => size === 1), where).toBe(true);
+          // Each row fills the sheet's twelve columns.
+          const prefix = { phone: "", prose: "@prose:", work: "@work:" }[width];
+          let at = 0;
+          for (const size of rows) {
+            const row = spans.slice(at, at + size).map((classes) => spanOf(classes, prefix));
+            expect(row.reduce((sum, span) => sum + span, 0), where).toBe(12);
+            at += size;
+          }
+        }
+      }
+    }
+    // Long facts take fewer to a row: the wide canvas holds four short ones, three of the sample's, two long ones.
+    expect(factRows(Array.from({ length: 4 }, (_, index) => kinds.short(index)), "work")).toEqual([4]);
+    expect(factRows(Array.from({ length: 4 }, (_, index) => kinds.short(index)), "phone")).toEqual([2, 2]);
+    expect(factRows(Array.from({ length: 5 }, (_, index) => kinds.short(index)), "work")).toEqual([3, 2]);
+    expect(factRows(Array.from({ length: 3 }, (_, index) => kinds.medium(index)), "work")).toEqual([3]);
+    expect(factRows(Array.from({ length: 3 }, (_, index) => kinds.short(index)), "phone")).toEqual([1, 1, 1]);
+    expect(factRows(Array.from({ length: 4 }, (_, index) => kinds.long(index)), "work")).toEqual([2, 2]);
+    expect(factRows([fact("Ein sehr langes Etikett", "kurz")], "work")).toEqual([1]);
+    expect(factRows([], "work")).toEqual([]);
   });
 
   it("never shows a drawn still as the person's portrait (Sevag's placeholder leaves About)", () => {

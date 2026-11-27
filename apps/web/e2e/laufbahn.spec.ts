@@ -154,10 +154,14 @@ test.describe("Laufbahn", () => {
     expect(await page.locator(".poster-bar").evaluate((bar) => [getComputedStyle(bar).backdropFilter, getComputedStyle(bar).backgroundColor])).toEqual(["none", expect.not.stringMatching(/rgba?\(.*,\s*0(\.\d+)?\)$/)]);
   });
 
-  test("phones: two hero buttons share a row on the first screen at 390 and 360 px, the letter and the Lebenslauf as a PDF", async ({ browser }) => {
-    for (const [width, height] of [
-      [390, 844],
-      [360, 780],
+  test("phones: the letter and the Lebenslauf as a PDF on the first screen, side by side at 390 px and stacked at full width at 360 px", async ({ browser }) => {
+    // Without the private contact lines (CI) the page has no contact block, so the hero pairs
+    // "Anschreiben lesen" with "Lebenslauf": 338 of the 350 px a 390 px phone has (px-3 on phones),
+    // so they share a row there, and stack at full width on a 360 px phone (ADR 0069 round 6). The same
+    // pair on the fictional page: e2e/laufbahn-dossier-app.spec.ts (application-no-contact).
+    for (const [width, height, together] of [
+      [390, 844, true],
+      [360, 780, false],
     ] as const) {
       const context = await browser.newContext({ ...PHONE, viewport: { width, height }, reducedMotion: "reduce" });
       await context.addInitScript(() => window.localStorage.setItem("linkyo.privacy.v1", "essential"));
@@ -165,17 +169,27 @@ test.describe("Laufbahn", () => {
       await page.goto(SEVAG);
       const actions = page.locator("[data-hero-actions]");
       // The page offers its documents: the second action is the Lebenslauf (Share is the bar's).
-      const [lead, cv] = [actions.getByRole("link", { name: "Anschreiben lesen" }), actions.getByRole("link", { name: /^Lebenslauf herunterladen \(PDF, 1 Seite\)$/ })];
+      const [lead, cv] = [actions.getByRole("link", { name: "Anschreiben lesen" }), actions.getByRole("link", { name: /^Lebenslauf herunterladen \(PDF, \d+ Seiten?\)$/ })];
       await expect(cv).toHaveAttribute("href", /\/de\/p\/sevag-ghazarian-2131af\/cv$/);
       await expect(cv).toHaveAttribute("download", /^Lebenslauf_.+\.pdf$/);
       await expect(actions.getByRole("button", { name: "Teilen" })).toHaveCount(0);
-      const [a, b] = [await lead.boundingBox(), await cv.boundingBox()];
-      // Side by side, the same height (at least 48 px), the first action the wider one; nothing leaves the screen.
-      expect(a && b && Math.abs(a.y - b.y) < 1 && a.height >= 48 && b.height === a.height && a.width > b.width, `${String(width)}: ${JSON.stringify([a, b])}`).toBe(true);
+      const [a, b, row] = [await lead.boundingBox(), await cv.boundingBox(), await actions.boundingBox()];
+      const where = `${String(width)}: ${JSON.stringify([a, b, row])}`;
+      expect(a && b && row, where).toBeTruthy();
+      if (!a || !b || !row) continue;
+      // The same height (at least 48 px) either way.
+      expect(a.height >= 48 && Math.abs(b.height - a.height) < 1, where).toBe(true);
+      if (together) {
+        // Side by side, the first action the wider one.
+        expect(Math.abs(a.y - b.y) < 1 && a.width > b.width, where).toBe(true);
+      } else {
+        // One under the other, each as wide as the row.
+        expect(b.y >= a.y + a.height && Math.abs(a.x - b.x) < 1 && Math.abs(a.width - row.width) < 1 && Math.abs(b.width - row.width) < 1, where).toBe(true);
+      }
       // Where the thumb is: both on the first screen, before the numbers.
-      expect(a && a.y + a.height <= height, `${String(width)}: ${JSON.stringify(a)}`).toBe(true);
+      expect(b.y + b.height <= height, where).toBe(true);
       const stats = await page.locator("header dl").boundingBox();
-      expect(a && stats && stats.y > a.y + a.height).toBe(true);
+      expect(stats && stats.y > Math.max(a.y + a.height, b.y + b.height)).toBe(true);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
       await context.close();
     }

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useId, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
-import { iconFor, isPersonPicture, opensShort, readingMinutes, splitLead, textKind } from "./laufbahn-content";
+import { iconFor, isPersonPicture, latinRuns, opensShort, readingMinutes, splitLead, textKind } from "./laufbahn-content";
 import { IndexList } from "./laufbahn-index";
 import { textLink } from "./portfolio-sections";
 import { linkDestination, paragraphs } from "./sections";
@@ -27,6 +27,25 @@ import { pageSide } from "./styles";
  * calm renderers here, everything else keeps the renderer it has in every template. Server HTML with
  * one small script (the index); motion is CSS (globals.css, `lb-*`), and the page is complete without it.
  */
+
+/**
+ * A text of an Arabic page with its Latin runs (digits, "SAP", "·", "(B1)") in the template's Latin
+ * face (Geist, `font-display`, as the head's figures): Laufbahn's Arabic stack has only the Arabic
+ * face, which would leave them to a system face (round 6 review). The Arabic words and the spaces
+ * between them keep the Arabic face. On other pages the text is left as it is.
+ */
+export function LatinRuns({ text, rtl }: { text: string; rtl: boolean }): ReactNode {
+  if (!rtl) return text;
+  return latinRuns(text).map((run) =>
+    run.latin ? (
+      <span key={run.at} className="font-display">
+        {run.text}
+      </span>
+    ) : (
+      run.text
+    ),
+  );
+}
 
 /** A titled section as the contents and its heading know it. */
 export interface Signpost {
@@ -144,17 +163,53 @@ function AboutBody({ parts }: { parts: readonly string[] }): ReactNode {
 
 type Fact = NonNullable<BlockOf<"about">["facts"]>[number];
 
-/** A fact too long for a quarter of the wide sheet (a value over 18 characters, a label over 14). */
-const wideFact = (fact: Fact): boolean => fact.value.length > 18 || fact.label.length > 14;
+/** The facts sheet's widths: a phone, a tablet (the reading column) and the wide canvas. */
+export type SheetWidth = "phone" | "prose" | "work";
 
 /**
- * The facts sheet's columns, decided for the whole set so its rows stay on the grid: short facts two
- * to a row on phones and four on the wide canvas (three when there are three); with any long fact,
- * one to a row on phones and two from tablets on, every fact the same width.
+ * The most characters a fact's value may have to share a row of so many facts, per width (its label
+ * may have four fifths of that): about one line of Geist at text-body in each cell. The cells: a
+ * phone's two 143 px (350 px less p-5 and the gap); the reading column's two 288 px and three 184 px
+ * (600 px inside p-5); the wide canvas's two 381 px, three 246 px and four 178 px (the 834 px of nine
+ * columns less p-6). Anything longer needs fewer facts to a row.
  */
-export function factColumns(facts: readonly Fact[]): string {
-  if (facts.some(wideFact)) return "grid-cols-1 @prose:grid-cols-2";
-  return facts.length === 3 ? "grid-cols-2 @work:grid-cols-3" : "grid-cols-2 @work:grid-cols-4";
+const ROOM: Record<SheetWidth, Partial<Record<number, number>>> = {
+  phone: { 2: 18 },
+  prose: { 2: 36, 3: 23 },
+  work: { 2: 47, 3: 30, 4: 22 },
+};
+
+const fits = (fact: Fact, chars: number): boolean => fact.value.length <= chars && fact.label.length <= Math.floor(chars * 0.8);
+
+/**
+ * The facts sheet's rows at a width, as the number of facts on each, in the owner's order: as many to
+ * a row as the longest fact allows (two on phones, three on tablets, four on the wide canvas at
+ * most), the rows as even as they can be with the fuller ones first (five facts: three and two). A
+ * fact never stands alone on a row of a sheet in columns, where half the sheet would stay empty
+ * beside it: then the sheet takes one fact a row. So three facts are one row of three on the wide
+ * canvas and one a row on phones; every row is full.
+ */
+export function factRows(facts: readonly Fact[], width: SheetWidth): number[] {
+  const count = facts.length;
+  if (count === 0) return [];
+  const most = [4, 3, 2].find((perRow) => perRow <= count && ROOM[width][perRow] !== undefined && facts.every((fact) => fits(fact, ROOM[width][perRow] ?? 0))) ?? 1;
+  const rows = Math.ceil(count / most);
+  const even = Math.floor(count / rows);
+  const sizes = Array.from({ length: rows }, (_, row) => even + (row < count % rows ? 1 : 0));
+  return sizes.includes(1) ? Array.from({ length: count }, () => 1) : sizes;
+}
+
+/** A fact's share of the sheet's twelve columns, by the number of facts on its row (literal classes for Tailwind). */
+const SPANS: Record<SheetWidth, Record<number, string>> = {
+  phone: { 1: "col-span-12", 2: "col-span-6" },
+  prose: { 1: "@prose:col-span-12", 2: "@prose:col-span-6", 3: "@prose:col-span-4" },
+  work: { 1: "@work:col-span-12", 2: "@work:col-span-6", 3: "@work:col-span-4", 4: "@work:col-span-3" },
+};
+
+/** Each fact's columns on the sheet's twelve, at every width (`factRows`): every row is filled. */
+export function factSpans(facts: readonly Fact[]): string[] {
+  const perWidth = (["phone", "prose", "work"] as const).map((width) => factRows(facts, width).flatMap((size) => Array.from({ length: size }, () => SPANS[width][size] ?? "")));
+  return facts.map((_, index) => cn(...perWidth.map((spans) => spans[index])));
 }
 
 /**
@@ -164,9 +219,9 @@ export function factColumns(facts: readonly Fact[]): string {
  * - With a portrait of the person (as Werkbogen's "About"): under the lead the portrait on two of five
  *   columns at the start and the facts on the other three beside it; the facts a list with a hairline
  *   above each row. A drawn picture or a library clip's still is no portrait (`isPersonPicture`).
- * - Without one: the facts on one soft sheet in even rows (`factColumns`): two to a row and four on
- *   the wide canvas, or, with any long fact, one to a row on phones and two from tablets on. No facts
- *   left: no sheet.
+ * - Without one: the facts on one soft sheet in full, even rows (`factRows`): as many to a row as
+ *   the longest fact allows at each width, never one alone beside an empty half. No facts left: no
+ *   sheet.
  */
 export function LaufbahnAbout({ block, omit = [] }: { block: BlockOf<"about">; omit?: readonly Fact[] | undefined }): ReactNode {
   const [opening, ...others] = paragraphs(block.text);
@@ -174,6 +229,7 @@ export function LaufbahnAbout({ block, omit = [] }: { block: BlockOf<"about">; o
   const rest = more ? [more, ...others] : others;
   const shown = (block.facts ?? []).filter((fact) => !omit.some((head) => head.label === fact.label && head.value === fact.value));
   const portrait = isPersonPicture(block.portrait) ? block.portrait : undefined;
+  const spans = factSpans(shown);
   if (portrait) {
     return (
       <div className="grid min-w-0 gap-6 @prose:gap-8">
@@ -216,9 +272,9 @@ export function LaufbahnAbout({ block, omit = [] }: { block: BlockOf<"about">; o
       ) : null}
       {shown.length > 0 ? (
         // One soft sheet (a step in the fill, no frame, no rules), the label quiet over its value.
-        <dl className={cn("grid min-w-0 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-5 @work:p-6", factColumns(shown))}>
-          {shown.map((fact) => (
-            <div key={`${fact.label}-${fact.value}`} className="grid min-w-0 grid-cols-1 content-start gap-1">
+        <dl className="grid min-w-0 grid-cols-12 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-5 @work:p-6">
+          {shown.map((fact, index) => (
+            <div key={`${fact.label}-${fact.value}`} className={cn("grid min-w-0 grid-cols-1 content-start gap-1", spans[index])}>
               <dt dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>
                 {fact.label}
               </dt>
@@ -282,7 +338,9 @@ export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">
             <div className="grid content-start justify-items-start gap-2 pt-0_5">
               {/* One isolated run in the page's direction, so every range reads from its start, also in Arabic. */}
               <p className="text-small font-semibold whitespace-nowrap text-creator-accent-text tabular-nums @work:text-body">
-                <bdi dir={locale === "ar" ? "rtl" : "ltr"}>{yearsText(item.years, t("laufbahn.ongoing"))}</bdi>
+                <bdi dir={locale === "ar" ? "rtl" : "ltr"}>
+                  <LatinRuns text={yearsText(item.years, t("laufbahn.ongoing"))} rtl={locale === "ar"} />
+                </bdi>
               </p>
               {ongoing ? <span className="rounded-full lb-soft px-2 text-caption font-semibold text-creator-accent-text">{t("laufbahn.current")}</span> : null}
             </div>
@@ -290,24 +348,24 @@ export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">
               <span
                 aria-hidden
                 className={cn(
-                  "absolute -start-[calc(var(--spacing-dot)/2+var(--spacing-0_5)/2)] top-2 size-dot rounded-full border-[length:var(--spacing-0_5)] border-creator-accent",
+                  "lb-node top-2 size-dot rounded-full border-[length:var(--spacing-0_5)] border-creator-accent",
                   ongoing ? "bg-creator-accent" : "bg-creator-bg",
                 )}
               />
               <p dir="auto" className={cn(pageSide, "text-title font-semibold text-balance rtl:tracking-normal @work:text-h3")}>
-                {item.role}
+                <LatinRuns text={item.role} rtl={locale === "ar"} />
               </p>
               {item.org ? (
                 item.url ? (
                   <a href={item.url} className={cn("inline-flex min-h-touch-target max-w-full items-center gap-1", textLink)}>
                     <span dir="auto" className="truncate">
-                      {item.org}
+                      <LatinRuns text={item.org} rtl={locale === "ar"} />
                     </span>
                     <Icon icon={ArrowUpRight} size="sm" className="shrink-0 rtl:-scale-x-100" />
                   </a>
                 ) : (
                   <p dir="auto" className={cn(pageSide, "text-body text-creator-fg-muted")}>
-                    {item.org}
+                    <LatinRuns text={item.org} rtl={locale === "ar"} />
                   </p>
                 )
               ) : item.url ? (
@@ -320,7 +378,7 @@ export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">
               ) : null}
               {item.note ? (
                 <p dir="auto" className={cn(pageSide, "max-w-prose text-small text-pretty text-creator-fg-muted @work:text-body")}>
-                  {item.note}
+                  <LatinRuns text={item.note} rtl={locale === "ar"} />
                 </p>
               ) : null}
             </div>

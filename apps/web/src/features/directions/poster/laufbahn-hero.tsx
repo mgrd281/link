@@ -14,6 +14,7 @@ import { MediaImage } from "../shared/creator-kit";
 import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
 import { aiText, GLYPH_WIDTH, isPdf, Socials } from "./hero";
+import { LatinRuns } from "./laufbahn";
 import { keepSeparators, lineEms, widestWord } from "./laufbahn-content";
 import { HeroLive } from "./live";
 import { ShareAction } from "./share";
@@ -121,12 +122,12 @@ function DossierName({ profile, theme, isRtl, className, style }: { profile: Pro
 }
 
 /** The owner's availability in their own words: a still dot (decorative) and the words, on a soft pill. */
-export function StatusPill({ text, className, style }: { text: string; className?: string | undefined; style?: CSSProperties | undefined }): ReactNode {
+export function StatusPill({ text, rtl = false, className, style }: { text: string; rtl?: boolean | undefined; className?: string | undefined; style?: CSSProperties | undefined }): ReactNode {
   return (
     <p className={cn("inline-flex min-h-control-sm max-w-full items-center gap-2 rounded-full bg-hover-inverse px-3 text-small font-semibold text-white", className)} style={style}>
       <span aria-hidden className="size-dot shrink-0 rounded-full bg-success" />
       <span dir="auto" className={cn(pageSide, "min-w-0 break-words")}>
-        {text}
+        <LatinRuns text={text} rtl={rtl} />
       </span>
     </p>
   );
@@ -161,7 +162,10 @@ export const inkSoft = "bg-hover-inverse text-white";
  * The hero's two actions where the thumb is. First, filled in white: the contact block's primary
  * action, else "Read the letter", else "Read on". Second, soft: the Lebenslauf as a PDF when the page
  * offers one, else the owner's own CV, else "Share". The two share a row while both labels fit; below
- * that they stack at full width.
+ * that they stack at full width. On phones they keep a little less padding at their sides (px-3), so
+ * the template's longest pair, "Anschreiben lesen" and "Lebenslauf", still shares a row at 390 px (338
+ * of 350 px); on a 360 px phone it stacks. Both grow to fill their row, so the padding shows only
+ * there, at the point of wrapping.
  */
 function DossierActions({
   profile,
@@ -181,8 +185,8 @@ function DossierActions({
   style?: CSSProperties | undefined;
 }): ReactNode {
   const t = useTranslations("creator");
-  const first = cn(inkButton, inkFilled, "grow-3 @prose:flex-none");
-  const second = cn(inkButton, inkSoft, "grow-2 @prose:flex-none");
+  const first = cn(inkButton, inkFilled, "grow-3 px-3 @prose:flex-none @prose:px-4 @work:px-6");
+  const second = cn(inkButton, inkSoft, "grow-2 px-3 @prose:flex-none @prose:px-4 @work:px-6");
   const cv = documents?.cv;
   return (
     <div data-hero-actions className={cn("mt-6 flex min-w-0 flex-wrap gap-2 @work:mt-8 @work:gap-3", className)} style={style}>
@@ -373,32 +377,32 @@ export function DossierHero({
         {/* The words: eight columns on the wide canvas. */}
         <div className={cn("grid min-w-0 justify-items-start @work:col-span-8 @work:col-start-1 @work:row-start-1", COLUMN_INSET)}>
           {live ? <HeroLive block={live} /> : null}
-          {status ? <StatusPill text={status} className={rise(0).className} style={rise(0).style} /> : null}
+          {status ? <StatusPill text={status} rtl={isRtl} className={rise(0).className} style={rise(0).style} /> : null}
           <div className={cn("w-full min-w-0", rise(1).className)} style={rise(1).style}>
             {/* The name keeps its space under the live pill or the status; first in the head, it starts at the top. */}
             <DossierName profile={profile} theme={theme} isRtl={isRtl} className={status || live ? undefined : "mt-0"} />
           </div>
           {profile.tagline ? (
             <p data-lb-role dir="auto" className={cn(pageSide, "mt-4 max-w-full text-h3 font-medium text-balance break-words @work:text-h2 rtl:leading-normal", rise(2).className)} style={rise(2).style} {...aiText(profile, "tagline")}>
-              {keepSeparators(profile.tagline)}
+              <LatinRuns text={keepSeparators(profile.tagline)} rtl={isRtl} />
             </p>
           ) : null}
           {target ? (
             <p data-lb-target className={cn("mt-3 max-w-full text-body text-pretty break-words @work:text-body-lg", rise(3).className)} style={rise(3).style}>
               <span dir="auto" className="lb-ink-muted">
-                {target.label.trim().replace(/\s*:$/u, "")}
+                <LatinRuns text={target.label.trim().replace(/\s*:$/u, "")} rtl={isRtl} />
               </span>{" "}
               <bdi dir="auto" className="font-semibold text-white">
-                {target.value}
+                <LatinRuns text={target.value} rtl={isRtl} />
               </bdi>
               {employer ? (
                 <>
                   {`${NBSP}· `}
                   <span dir="auto" className="lb-ink-muted">
-                    {employer.label.trim().replace(/\s*:$/u, "")}
+                    <LatinRuns text={employer.label.trim().replace(/\s*:$/u, "")} rtl={isRtl} />
                   </span>{" "}
                   <bdi dir="auto" className="font-semibold text-white">
-                    {employer.value}
+                    <LatinRuns text={employer.value} rtl={isRtl} />
                   </bdi>
                 </>
               ) : null}
@@ -408,13 +412,13 @@ export function DossierHero({
             <p className="mt-3 inline-flex max-w-full items-center gap-1 text-small font-medium lb-ink-muted">
               <Icon icon={MapPin} size="sm" className="shrink-0" />
               <span dir="auto" className="min-w-0 break-words">
-                {profile.location}
+                <LatinRuns text={profile.location} rtl={isRtl} />
               </span>
             </p>
           ) : null}
           {profile.bio ? (
             <p dir="auto" className={cn(pageSide, "mt-4 max-w-prose text-body text-pretty break-words lb-ink-muted @work:text-body-lg")} {...aiText(profile, "bio")}>
-              {profile.bio}
+              <LatinRuns text={profile.bio} rtl={isRtl} />
             </p>
           ) : null}
           <DossierActions

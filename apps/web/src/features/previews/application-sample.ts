@@ -285,5 +285,10 @@ export function applicationSample(locale: "de" | "en" | "ar"): Page {
   return locale === "ar" ? KARIM_AR : locale === "en" ? JONAS_EN : JONAS_DE;
 }
 
+/** The fictional applicant's page without its contact block (the sample route's `page=application-no-contact`). */
+export function withoutContact(page: Page): Page {
+  return { ...page, blocks: page.blocks.filter((block) => block.type !== "contact") };
+}
+
 /** Where the fictional applicants' pages live (features/previews/registry.ts). */
 export const APPLICATION_SLUGS = { de: "jonas-brandt", en: "jonas-brandt", ar: "karim-nasser" } as const;

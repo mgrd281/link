@@ -835,6 +835,15 @@
   }
 }
 
+/* A step's dot, centred on the rail: the rail is the step's own start border, so the dot's centre sits
+   half the rail's width before the content's start edge, and the dot starts half its own size before
+   that. Written here and not as an arbitrary class: Tailwind reads an underscore inside a nested var()
+   of an arbitrary calc() as a space, and the rule that held this offset was dropped (round 6 review). */
+@utility lb-node {
+  position: absolute;
+  inset-inline-start: calc((var(--spacing-dot) + var(--spacing-0_5)) / -2);
+}
+
 /* stylelint-enable nesting-selector-no-missing-scoping-root */
 
 /* stylelint-enable no-invalid-position-declaration */

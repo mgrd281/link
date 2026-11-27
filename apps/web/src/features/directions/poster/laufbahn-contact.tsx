@@ -61,6 +61,7 @@ export function LaufbahnContact({
   documents,
   shareTitle,
   footer,
+  rtl = false,
 }: {
   contact: Contact;
   now: Date;
@@ -70,6 +71,8 @@ export function LaufbahnContact({
   shareTitle: string;
   /** The page's footer, in the band's tone. */
   footer: ReactNode;
+  /** An Arabic page: the status's Latin runs (dates) in the template's Latin face. */
+  rtl?: boolean | undefined;
 }): ReactNode {
   const t = useTranslations("creator");
   const id = useId();
@@ -104,7 +107,7 @@ export function LaufbahnContact({
         className="grid gap-6 px-creator-gutter pt-12 pb-10 @prose:mx-auto @prose:max-w-prose @prose:px-0 @work:box-content @work:max-w-work @work:grid-cols-12 @work:items-end @work:gap-x-6 @work:px-creator-gutter @work:pt-24 @work:pb-16"
       >
         <div className="grid min-w-0 justify-items-start gap-6 @work:col-span-7">
-          {status ? <StatusPill text={status} /> : null}
+          {status ? <StatusPill text={status} rtl={rtl} /> : null}
           <div className="grid min-w-0 gap-3">
             <h2 id={id} dir="auto" className={cn(pageSide, "font-creator-display text-h1 leading-tight font-bold tracking-display text-balance break-words rtl:leading-snug rtl:tracking-normal @work:text-display")}>
               {contact.title}

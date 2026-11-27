@@ -142,7 +142,7 @@ export default function SignpostedBody({
             grid's flow (absolute), so it adds no gap under the last section. */}
         <div data-lb-end aria-hidden className="absolute inset-x-0 bottom-0 h-px" />
       </Main>
-      {band ? <LaufbahnContact contact={band} now={heroProps.now} documents={singleDocuments(links)} shareTitle={profile.displayName} footer={footer} /> : footer}
+      {band ? <LaufbahnContact contact={band} now={heroProps.now} documents={singleDocuments(links)} shareTitle={profile.displayName} footer={footer} rtl={profile.locale === "ar"} /> : footer}
     </>
   );
 }

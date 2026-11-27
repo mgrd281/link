@@ -11,7 +11,7 @@ import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { portfolioSample, portfolioSampleLong } from "@/features/directions/poster/sample";
 import { isCreatorPreset } from "@/features/directions/preset";
 import { documentsView } from "@/features/documents/view";
-import { APPLICATION_SLUGS, applicationSample } from "@/features/previews/application-sample";
+import { APPLICATION_SLUGS, applicationSample, withoutContact } from "@/features/previews/application-sample";
 import { DIRECTIONS, isDirection, isThemeMode } from "@/features/directions/registry";
 import { LinkyoDock } from "@/features/directions/shared/dock";
 import { DirectionToolbar } from "@/features/directions/toolbar";
@@ -38,17 +38,20 @@ interface RouteProps {
  * longest texts a page can hold), and takes the owner's choice of work layout (`?projects=`), so
  * every template, language and layout of a portfolio can be looked at. `?page=application` shows the
  * fictional applicant (features/previews/application-sample.ts), with Laufbahn's PDFs as his example
- * page offers them.
+ * page offers them; `?page=application-no-contact` the same page without its contact block, so the
+ * hero leads with "Anschreiben lesen" (the layout a page without contact lines has).
  */
 async function resolveRoute({ params, searchParams }: RouteProps) {
   const { locale, direction } = await params;
   if (!isDirection(direction)) notFound();
   const { preset, mode, template, chrome, page: sample, projects } = await searchParams;
   const portfolio = direction === "poster" && (sample === "portfolio" || sample === "portfolio-long");
-  const application = direction === "poster" && sample === "application";
+  const application = direction === "poster" && (sample === "application" || sample === "application-no-contact");
   const language = locale === "ar" || locale === "en" ? locale : "de";
   const page = application
-    ? applicationSample(language)
+    ? sample === "application-no-contact"
+      ? withoutContact(applicationSample(language))
+      : applicationSample(language)
     : portfolio
       ? sample === "portfolio-long"
         ? portfolioSampleLong(locale)

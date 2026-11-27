@@ -19,6 +19,8 @@ const SHOTS = process.env.LB_SHOTS;
 
 const application = (locale: string) => `/${locale}/directions/poster?chrome=0&template=laufbahn&page=application`;
 const portfolio = (locale: string) => `/${locale}/directions/poster?chrome=0&template=laufbahn&page=portfolio`;
+/** The same applicant without his contact block: the hero then leads with "Anschreiben lesen". */
+const noContact = (locale: string) => `/${locale}/directions/poster?chrome=0&template=laufbahn&page=application-no-contact`;
 /** The page every document of the example lives under (the sample route offers the example page's own). */
 const BASES: Record<string, string> = { de: "/de/p/jonas-brandt", en: "/en/p/jonas-brandt" };
 const FILES: Record<string, Record<string, string>> = {
@@ -87,6 +89,30 @@ test.describe("on a phone", () => {
     await expect(page.locator("[data-hero-actions] > *").nth(1)).toHaveText("مشاركة");
     await shot(page, "ar-390-fold");
     await shot(page, "ar-390-full", true);
+  });
+
+  test("de without a contact block: 'Anschreiben lesen' and 'Lebenslauf' side by side at 390 px, stacked at full width at 360 px", async ({ page }) => {
+    for (const [width, height, together] of [
+      [390, 844, true],
+      [360, 780, false],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      await open(page, noContact("de"));
+      const actions = page.locator("[data-hero-actions]");
+      const lead = actions.getByRole("link", { name: "Anschreiben lesen" });
+      const cv = actions.getByRole("link", { name: /^Lebenslauf herunterladen \(PDF, \d+ Seiten?\)$/ });
+      await expect(lead).toHaveAttribute("href", /#section-letter/);
+      await expect(cv).toHaveAttribute("download", "Lebenslauf_Jonas_Brandt.pdf");
+      const [a, b, row] = [await lead.boundingBox(), await cv.boundingBox(), await actions.boundingBox()];
+      const where = `${String(width)}: ${JSON.stringify([a, b, row])}`;
+      expect(a && b && row, where).toBeTruthy();
+      if (!a || !b || !row) continue;
+      expect(a.height >= 48 && Math.abs(b.height - a.height) < 1, where).toBe(true);
+      if (together) expect(Math.abs(a.y - b.y) < 1 && a.width > b.width, where).toBe(true);
+      else expect(b.y >= a.y + a.height && Math.abs(a.x - b.x) < 1 && Math.abs(a.width - row.width) < 1 && Math.abs(b.width - row.width) < 1, where).toBe(true);
+      expect(b.y + b.height, where).toBeLessThanOrEqual(height);
+      await shot(page, `de-${String(width)}-no-contact`);
+    }
   });
 
   test("the bar stays away while the name is on screen, comes in on ink, and opens the contents with the documents", async ({ page }) => {
@@ -281,6 +307,58 @@ for (const path of ROUTES) {
     expect(flat).toEqual([]);
   });
 }
+
+for (const locale of ["de", "ar"] as const) {
+  test(`${locale}: every step's dot sits on the career's rail, centre on centre`, async ({ page, isMobile }) => {
+    for (const width of isMobile ? [390, 360] : [1440]) {
+      await page.setViewportSize({ width, height: width === 1440 ? 900 : 844 });
+      await open(page, application(locale));
+      await page.locator("#section-career").scrollIntoViewIfNeeded();
+      const offsets = await page.locator("#section-career .lb-step").evaluateAll((steps) =>
+        steps.map((step) => {
+          const box = step.getBoundingClientRect();
+          const style = getComputedStyle(step);
+          const rtl = style.direction === "rtl";
+          const rail = Number.parseFloat(rtl ? style.borderRightWidth : style.borderLeftWidth);
+          const railCentre = rtl ? box.right - rail / 2 : box.left + rail / 2;
+          const dot = step.querySelector(":scope > span[aria-hidden]")?.getBoundingClientRect();
+          return dot ? Math.abs(dot.left + dot.width / 2 - railCentre) : Number.POSITIVE_INFINITY;
+        }),
+      );
+      expect(offsets.length, `${String(width)} px`).toBe(4);
+      for (const offset of offsets) expect(offset, `${String(width)} px: ${JSON.stringify(offsets)}`).toBeLessThanOrEqual(0.5);
+    }
+    await page.locator("#section-career").evaluate((section) => section.scrollIntoView({ block: "start", behavior: "instant" }));
+    await shot(page, `${locale}-${isMobile ? "phone" : "1440"}-rail`);
+  });
+}
+
+test("ar: the career's years, the role and the status draw their digits and Latin in Geist, the Arabic in IBM Plex Sans Arabic", async ({ page }) => {
+  await open(page, application("ar"));
+  const client = await page.context().newCDPSession(page);
+  await client.send("DOM.enable");
+  await client.send("CSS.enable");
+  const { root } = await client.send("DOM.getDocument", { depth: -1 });
+  const families = async (selector: string): Promise<Record<string, number>> => {
+    const { nodeIds } = await client.send("DOM.querySelectorAll", { nodeId: root.nodeId, selector });
+    const used: Record<string, number> = {};
+    for (const nodeId of nodeIds) {
+      const { fonts } = await client.send("CSS.getPlatformFontsForNode", { nodeId });
+      for (const font of fonts) used[font.familyName] = (used[font.familyName] ?? 0) + font.glyphCount;
+    }
+    return used;
+  };
+  const allowed = ["Geist", "IBM Plex Sans Arabic"];
+  for (const selector of ["#section-career bdi, #section-career bdi *", "[data-lb-role], [data-lb-role] *", "[data-lb-head] p:has(.bg-success), [data-lb-head] p:has(.bg-success) *"]) {
+    const used = await families(selector);
+    expect(Object.keys(used).length, selector).toBeGreaterThan(0);
+    expect(Object.keys(used).filter((family) => !allowed.includes(family)), `${selector}: ${JSON.stringify(used)}`).toEqual([]);
+  }
+  // The years are digits in Geist ("2021 –") and Arabic words in Plex ("حتى الآن").
+  const years = await families("#section-career bdi, #section-career bdi *");
+  expect(years.Geist ?? 0).toBeGreaterThan(0);
+  expect(years["IBM Plex Sans Arabic"] ?? 0).toBeGreaterThan(0);
+});
 
 test("reduced motion: nothing animates, after load and after scrolling, and the career's rail is drawn in full", async ({ page }) => {
   await open(page, application("de"));
