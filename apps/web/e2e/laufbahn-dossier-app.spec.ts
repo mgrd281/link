@@ -4,7 +4,8 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * Laufbahn round 6 ("Dossier", ADR 0069) on fictional pages only: the application example (Jonas
  * Brandt in German and English, Karim Nasser in Arabic) on the sample route and as example pages, and
- * the portfolio sample. Its first screen, the documents offer (de and en) and its absence (ar), the
+ * the portfolio sample. Its first screen, the documents offer (de and en) with the real PDFs behind
+ * every link and a press that downloads one (ADR 0089), and its absence (ar), the
  * bar on ink with one Share, the contents sheet with its documents group, axe, the white focus ring on
  * ink, no shadow and no underline, reduced motion, and Geist as the only face.
  *
@@ -193,7 +194,55 @@ for (const locale of ["de", "en"] as const) {
       expect(name, href).toContain("PDF");
     }
   });
+
+  test(`${locale}: every address the page links to answers a real PDF, private and never indexed`, async ({ page, request }) => {
+    await open(page, application(locale));
+    const hrefs = [...new Set(await page.locator("a[download]").evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? "")))].sort();
+    const base = BASES[locale] ?? "";
+    expect(hrefs).toEqual([`${base}/application`, `${base}/cv`, `${base}/letter`]);
+    for (const href of hrefs) {
+      const response = await request.get(href);
+      expect(response.status(), href).toBe(200);
+      const headers = response.headers();
+      const kind = /\/(cv|letter|application)$/.exec(href)?.[1] ?? "";
+      expect(headers["content-type"], href).toBe("application/pdf");
+      expect(headers["content-disposition"], href).toContain(`attachment; filename="${FILES[locale]?.[kind] ?? ""}"`);
+      expect(headers["x-robots-tag"], href).toBe("noindex, nofollow");
+      expect(headers["cache-control"], href).toBe("private, no-store");
+      const text = (await response.body()).toString("latin1");
+      expect(text.startsWith("%PDF-1.7\n"), href).toBe(true);
+      expect(text.endsWith("%%EOF\n"), href).toBe(true);
+      // The page's cards show the real page count: one page each, two for both in one file.
+      expect(text.match(/\/Type \/Page /gu), href).toHaveLength(kind === "application" ? 2 : 1);
+    }
+  });
 }
+
+test("de: a press on the hero's Lebenslauf, a card and 'Beides' is the browser's own download of a valid PDF", async ({ page }) => {
+  await open(page, application("de"));
+  const buttons = [
+    { link: page.locator("[data-hero-actions] a[download]").first(), file: "Lebenslauf_Jonas_Brandt.pdf", pages: 1 },
+    { link: page.locator('#unterlagen a[download][href$="/letter"]').first(), file: "Anschreiben_Jonas_Brandt.pdf", pages: 1 },
+    { link: page.locator('#unterlagen a[download][href$="/application"]').first(), file: "Bewerbung_Jonas_Brandt.pdf", pages: 2 },
+  ];
+  for (const { link, file, pages } of buttons) {
+    await link.scrollIntoViewIfNeeded();
+    const [download] = await Promise.all([page.waitForEvent("download"), link.click()]);
+    expect(download.suggestedFilename()).toBe(file);
+    expect(await download.failure()).toBeNull();
+    const stream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(Buffer.from(chunk as Uint8Array));
+    const text = Buffer.concat(chunks).toString("latin1");
+    expect(text.startsWith("%PDF-1.7\n"), file).toBe(true);
+    expect(text.endsWith("%%EOF\n"), file).toBe(true);
+    expect(text.match(/\/Type \/Page /gu), file).toHaveLength(pages);
+    expect(text, file).toContain("/Author (Jonas Brandt)");
+  }
+  // Downloading leaves the page where it was: no navigation, no error page.
+  const url = new URL(page.url());
+  expect(`${url.pathname}${url.search}`).toBe(application("de"));
+});
 
 for (const path of ROUTES) {
   test(`${path}: axe-clean, nothing too wide at 360, 390, 768 and 1440, no shadow and no underline`, async ({ page, isMobile }) => {
