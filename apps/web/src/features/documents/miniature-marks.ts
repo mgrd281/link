@@ -6,8 +6,9 @@ import { MINIATURE, mm, toMm } from "./print-tokens";
  * A document's first page as the page's miniature draws it (PaperMiniature): every text run a bar of
  * its measured width and a share of its type size tall, sitting on its baseline; the accent rule and
  * the skills' squares in the accent; a photo as a grey box. Contact values (phone, e-mail, address)
- * become bars of one fixed width, so the page's HTML holds no contact data, not even its length.
- * Numbers and tones only: no text, ever. Millimetres on the A4 sheet, rounded to 0.1 mm.
+ * become one bar of one fixed width a row (an address long enough to wrap still makes one bar), so
+ * the page's HTML holds no contact data and no length but a coarse band (ADR 0089). Numbers and
+ * tones only: no text, ever. Millimetres on the A4 sheet, rounded to 0.1 mm.
  */
 export function miniatureOf(document: LaidDocument): MiniatureMark[] {
   const page = document.pages[0];
@@ -24,7 +25,7 @@ export function miniatureOf(document: LaidDocument): MiniatureMark[] {
   return page.boxes.flatMap((box): MiniatureMark[] => {
     switch (box.kind) {
       case "text": {
-        if (box.text.trim() === "") return [];
+        if (box.text.trim() === "" || box.continued) return [];
         const height = box.style.size * MINIATURE.barHeight;
         const width = box.contact ? mm(MINIATURE.contactBar) : box.width;
         const tone: MiniatureMark["tone"] =

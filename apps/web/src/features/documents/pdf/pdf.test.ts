@@ -135,6 +135,13 @@ describe("text that comes back out", () => {
     const order = ["Jonas Brandt", "Fachkraft für Lagerlogistik · Staplerfahrer", "Verfügbar ab 1. März 2027", "Telefon", "9", "Profil", "Eckdaten", "Werdegang", "Kenntnisse", "Jonas Brandt · Lebenslauf"].map(at);
     expect(order.every((index) => index >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
+    // Each section's title before its own first row: "Profil" before the profile, "Werdegang" before the first step.
+    expect(at("Profil")).toBeLessThan(cv.findIndex((run) => run.startsWith("Seit 2017")));
+    expect(at("Eckdaten")).toBeLessThan(at("Bewerbung als"));
+    expect(at("Bewerbung als")).toBeGreaterThan(0);
+    expect(at("Werdegang")).toBeLessThan(cv.findIndex((run) => run.replaceAll(NB, " ").startsWith("2021 – ")));
+    expect(at("Kenntnisse")).toBeLessThan(at("Wareneingang und"));
+    expect(at("Wareneingang und")).toBeGreaterThan(0);
     const letter = pageTexts(await render("letter"))[0] ?? [];
     const find = (text: string) => letter.findIndex((run) => run.replaceAll(NB, " ") === text);
     const steps = ["Jonas Brandt", "Wohnort", "Datum", "Bewerbung als Fachkraft für Lagerlogistik (m/w/d)", "Sehr geehrte Frau Albers,", "Mit freundlichen Grüßen", "Jonas Brandt · Anschreiben"].map(find);
@@ -184,5 +191,36 @@ describe("JPEG", () => {
     const image = [...pdf.objects.values()].find((object) => object.dictionary.includes("/Subtype /Image"));
     expect(image?.dictionary).toContain("/Width 350 /Height 450 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode");
     expect(image?.dictionary).not.toContain("FlateDecode");
+  });
+
+  it("covers the photo's box at the picture's own aspect ratio, clipped and never stretched, at its focal point", async () => {
+    const drawing = async (jpeg: Jpeg) => {
+      const pdf = readPdf(await render("cv", jonasDe(), { photo: jpeg }));
+      const page = [...pdf.objects.values()].find((object) => object.dictionary.startsWith("<< /Type /Page "));
+      const contents = pdf.objects.get(Number(/\/Contents (\d+)/u.exec(page?.dictionary ?? "")?.[1]));
+      const ops = contents ? decoded(contents) : "";
+      const match = /q (\S+) (\S+) (\S+) (\S+) re W n (\S+) 0 0 (\S+) (\S+) (\S+) cm \/Im1 Do Q/u.exec(ops);
+      expect(match, "a clip path, then the image").not.toBeNull();
+      const [x, y, w, h, a, d, e, f] = (match ?? []).slice(1).map(Number) as [number, number, number, number, number, number, number, number];
+      return { x, y, w, h, a, d, e, f };
+    };
+    for (const [width, height] of [[400, 300], [300, 400], [500, 500], [350, 450]] as const) {
+      const jpeg = parseJpeg(jpegHead({ width, height }));
+      if (!jpeg) throw new Error("jpeg");
+      const { x, y, w, h, a, d, e, f } = await drawing(jpeg);
+      // The box is the photo's 35 x 45 mm; the picture keeps its own ratio and covers the box.
+      expect(w / h).toBeCloseTo(35 / 45, 3);
+      expect(a / d).toBeCloseTo(width / height, 2);
+      expect(a).toBeGreaterThanOrEqual(w - 0.01);
+      expect(d).toBeGreaterThanOrEqual(h - 0.01);
+      // Centred without a focal point.
+      expect(e + a / 2).toBeCloseTo(x + w / 2, 1);
+      expect(f + d / 2).toBeCloseTo(y + h / 2, 1);
+    }
+    // A focal point at the top keeps the picture's top edge in the box.
+    const tall = parseJpeg(jpegHead({ width: 300, height: 600 }));
+    if (!tall) throw new Error("jpeg");
+    const top = await drawing({ ...tall, focal: [0.5, 0] });
+    expect(top.f + top.d).toBeCloseTo(top.y + top.h, 1);
   });
 });

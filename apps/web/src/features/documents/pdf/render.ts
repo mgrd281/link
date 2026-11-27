@@ -1,7 +1,7 @@
 import type { TrueTypeFont } from "../font/ttf";
 import { FIRST_CODE, LAST_CODE, unicodeOf } from "../font/winansi";
 import { codeOf, type Metrics } from "../layout/measure";
-import type { Box, Face, LaidDocument, TextRun, Tone } from "../layout/types";
+import type { Box, Face, ImageBox, LaidDocument, TextRun, Tone } from "../layout/types";
 import { PAGE } from "../print-tokens";
 
 import { colourSpace, type Jpeg } from "./jpeg";
@@ -49,6 +49,21 @@ const bytesOf = (text: string): number[] => Array.from(text, codeOf);
 /** A run's show operator: its WinAnsi bytes as one string. */
 const show = (run: TextRun): string => `${literal(bytesOf(run.text))} Tj`;
 
+/**
+ * The photo covering its box at its own aspect ratio: scaled evenly until it fills the box, the rest
+ * clipped, the owner's focal point kept in view (the centre without one). A picture is never stretched.
+ */
+export function cover(box: ImageBox, photo: Jpeg, image: string): string {
+  const scale = Math.max(box.w / photo.width, box.h / photo.height);
+  const width = photo.width * scale;
+  const height = photo.height * scale;
+  const [across, down] = photo.focal ?? [0.5, 0.5];
+  const left = box.x - (width - box.w) * across;
+  const top = box.y - (height - box.h) * down;
+  const bottom = PAGE.height - box.y - box.h;
+  return `q ${num(box.x)} ${num(bottom)} ${num(box.w)} ${num(box.h)} re W n ${num(width)} 0 0 ${num(height)} ${num(left)} ${num(PAGE.height - top - height)} cm ${image} Do Q`;
+}
+
 /** A page's content stream: text, rectangles, rules and the photo, in the order the layout gives (reading order). */
 function content(boxes: readonly Box[], input: RenderInput, image: string | null): string {
   const ops: string[] = [];
@@ -70,7 +85,7 @@ function content(boxes: readonly Box[], input: RenderInput, image: string | null
         ops.push(`${colour(input.palette[box.tone], "RG")} ${num(box.weight)} w ${num(box.x1)} ${num(flip(box.y1))} m ${num(box.x2)} ${num(flip(box.y2))} l S`);
         break;
       case "image":
-        if (image) ops.push(`q ${num(box.w)} 0 0 ${num(box.h)} ${num(box.x)} ${num(flip(box.y + box.h))} cm ${image} Do Q`);
+        if (image && input.photo) ops.push(cover(box, input.photo, image));
         break;
       default:
         break;

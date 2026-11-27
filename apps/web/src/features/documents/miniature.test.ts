@@ -37,14 +37,20 @@ describe("the paper miniature", () => {
     }
   });
 
-  it("draws contact values at one fixed width, whatever their length", () => {
+  it("draws contact values at one fixed width, one bar a row, whatever their length", () => {
     const short = marks(jonasDe());
     const longer = marks(longEmail());
-    // A longer e-mail address may wrap, but every bar has the same width and the bars do not reveal it.
-    const widths = (all: MiniatureMark[]) => new Set(all.filter((mark) => mark.w === 28).map((mark) => mark.w));
-    expect(widths(short)).toEqual(new Set([28]));
-    expect(widths(longer)).toEqual(new Set([28]));
-    expect(short.filter((mark) => mark.w === 28).length).toBeGreaterThanOrEqual(2);
+    // An address never wraps, so each contact row is one bar of the same width: neither their width
+    // nor their number reveals how long an address is.
+    const bars = (all: MiniatureMark[]) => all.filter((mark) => mark.w === 28);
+    expect(new Set(bars(short).map((mark) => mark.w))).toEqual(new Set([28]));
+    expect(new Set(bars(longer).map((mark) => mark.w))).toEqual(new Set([28]));
+    // The sample's phone and e-mail: two rows, two bars, for the short address and the 50-character one.
+    expect(bars(short)).toHaveLength(2);
+    expect(bars(longer)).toHaveLength(2);
+    // In the letter's information block too.
+    expect(bars(marks(jonasDe(), "letter"))).toHaveLength(2);
+    expect(bars(marks(longEmail(), "letter"))).toHaveLength(2);
   });
 
   it("puts the accent rule and the title marks in the accent", () => {

@@ -527,7 +527,14 @@ const LETTER_TITLES: Record<Locale, string[]> = {
 };
 /** How letters open and close, in the three languages. */
 const SALUTATION = /^(sehr geehrte|liebe[rs]?\b|hallo\b|guten tag|dear\b|hello\b|to whom|السيد|السيده|عزيزي|عزيزتي|حضره|تحيه)/u;
-export const CLOSING = /(mit freundlichen grüßen|freundliche grüße|viele grüße|beste grüße|hochachtungsvoll|kind regards|best regards|yours sincerely|yours faithfully|sincerely|مع خالص التحيه|مع التحيه|وتفضلوا بقبول|تحياتي)/u;
+const CLOSINGS = "mit freundlichen grüßen|freundliche grüße|viele grüße|beste grüße|hochachtungsvoll|kind regards|best regards|yours sincerely|yours faithfully|sincerely|مع خالص التحيه|مع التحيه|وتفضلوا بقبول|تحياتي";
+export const CLOSING = new RegExp(`(${CLOSINGS})`, "u");
+/**
+ * A line that is a closing and nothing else ("Mit freundlichen Grüßen", "Kind regards,"), lower case:
+ * the letter's PDF sets the signature space after it. A sentence that merely holds one of the words
+ * ("I am sincerely …") is no closing.
+ */
+export const CLOSING_LINE = new RegExp(`^\\s*(?:${CLOSINGS})\\s*[,.!]?\\s*$`, "u");
 
 /**
  * Whether a section's text is a letter: a long read under a title that names one, or a long read that

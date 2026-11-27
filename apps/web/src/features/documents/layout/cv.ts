@@ -1,12 +1,12 @@
 import type { DocumentInput, Fact, TimelineItem } from "../input";
 import type { PaperLabels } from "../labels";
 import { splitFigure } from "../offer";
-import { BASELINE, columnX, HEAD, MARGIN, PHOTO, RULE, SPACE, span, TYPE } from "../print-tokens";
+import { BASELINE, columnX, GUTTER, HEAD, MARGIN, PHOTO, RULE, SPACE, span, TYPE } from "../print-tokens";
 
 import { flow, paragraphUnit, textRuns, titleOf, type FlowSection, type Unit } from "./flow";
 import { baselineOffset, capHeight, measure, type Metrics } from "./measure";
 import { footer, runningHead } from "./paper";
-import type { Box, LaidDocument, TextStyle } from "./types";
+import type { Box, LaidDocument, TextRun, TextStyle } from "./types";
 import { wrap } from "./wrap";
 
 /**
@@ -31,6 +31,31 @@ const NB = "\u00A0";
 const SEPARATOR = `${NB}· `;
 
 const descent = (style: TextStyle, metrics: Metrics): number => -metrics[style.face].descender * style.size;
+
+/** The columns the contact block may take at the top right: the last four, or one or two more for a long value. */
+const CONTACT_COLUMNS = [9, 8, 7] as const;
+
+/**
+ * Where the head's contact block stands. Top right in the last four columns; a value too wide for
+ * them (most e-mail addresses are) takes one or two columns more towards the start, as long as the
+ * block stays a gutter clear of the head's words beside it (the name, role and status lines). A
+ * value too wide for that, or a photo in the corner, puts the rows under the accent rule, label and
+ * value on one line in the columns of the words (all twelve without a photo).
+ */
+function contactBlock(rows: readonly { value: string }[], words: readonly Box[], options: CvOptions): { x: number; width: number; under: boolean } {
+  const { metrics } = options;
+  const value = TYPE.contactValue;
+  const under = { x: MARGIN.start, width: options.photo ? span(1, 8) : span(1, 12), under: true };
+  if (options.photo || rows.length === 0) return under;
+  const widest = Math.max(...rows.map((entry) => measure(entry.value, value, metrics)));
+  // The head's lines that stand level with the block (its first cap top to its last descender).
+  const top = HEAD.contactTop - capHeight(value, metrics);
+  const foot = HEAD.contactTop + (rows.length - 1) * HEAD.contactPitch + descent(value, metrics);
+  const level = words.filter((box): box is TextRun => box.kind === "text" && box.y - metrics[box.style.face].ascender * box.style.size < foot && box.y + descent(box.style, metrics) > top);
+  const wordsEnd = Math.max(MARGIN.start, ...level.map((run) => run.x + run.width));
+  const column = CONTACT_COLUMNS.find((from) => widest <= span(from, 12) - HEAD.contactLabel + 1e-6 && columnX(from) >= wordsEnd + GUTTER - 1e-6);
+  return column === undefined ? under : { x: columnX(column), width: span(column, 12), under: false };
+}
 
 /** The head: its boxes and how far down it reaches. */
 function head(input: DocumentInput, options: CvOptions): { boxes: Box[]; bottom: number } {
@@ -73,18 +98,19 @@ function head(input: DocumentInput, options: CvOptions): { boxes: Box[]; bottom:
     ...(input.location ? [{ label: labels.location, value: input.location, uri: null, contact: false }] : []),
   ];
   const value = TYPE.contactValue;
-  const x = options.photo ? MARGIN.start : columnX(9);
-  const width = options.photo ? words : span(9, 12);
-  let row = options.photo ? ruleTop + RULE.accentWeight + HEAD.contactUnderRule + capHeight(value, metrics) : HEAD.contactTop;
+  const block = contactBlock(rows, boxes, options);
+  let row = block.under ? ruleTop + RULE.accentWeight + HEAD.contactUnderRule + capHeight(value, metrics) : HEAD.contactTop;
   for (const entry of rows) {
-    const lines = wrap(entry.value, value, width - HEAD.contactLabel, metrics);
-    boxes.push(...textRuns([entry.label], x, row, TYPE.contactLabel, metrics));
-    const runs = textRuns(lines, x + HEAD.contactLabel, row, value, metrics, { contact: entry.contact });
+    // A value stays on one line while it fits the block (it is copied from here); only a value wider
+    // than the whole block breaks, as a last resort.
+    const lines = wrap(entry.value, value, block.width - HEAD.contactLabel, metrics);
+    boxes.push(...textRuns([entry.label], block.x, row, TYPE.contactLabel, metrics));
+    const runs = textRuns(lines, block.x + HEAD.contactLabel, row, value, metrics, { contact: entry.contact });
     boxes.push(...runs);
     if (entry.uri) {
       const widest = Math.max(...runs.map((run) => (run.kind === "text" ? run.width : 0)));
       const top = row - capHeight(value, metrics) - descent(value, metrics);
-      boxes.push({ kind: "link", x: x + HEAD.contactLabel, y: top, w: widest, h: (lines.length - 1) * HEAD.contactPitch + capHeight(value, metrics) + 2 * descent(value, metrics), uri: entry.uri });
+      boxes.push({ kind: "link", x: block.x + HEAD.contactLabel, y: top, w: widest, h: (lines.length - 1) * HEAD.contactPitch + capHeight(value, metrics) + 2 * descent(value, metrics), uri: entry.uri });
     }
     row += lines.length * HEAD.contactPitch;
   }
@@ -98,7 +124,7 @@ function head(input: DocumentInput, options: CvOptions): { boxes: Box[]; bottom:
 
   // The figures: three cells from columns 1, 4 and 7.
   if (input.stats.length > 0) {
-    const top = (options.photo && rows.length > 0 ? contactBottom : ruleTop + RULE.accentWeight) + SPACE.figures;
+    const top = (block.under && rows.length > 0 ? contactBottom : ruleTop + RULE.accentWeight) + SPACE.figures;
     const figures = input.stats.slice(0, 3).map((stat) => ({ ...stat, parts: splitFigure(stat.value) }));
     const qualified = figures.some((figure) => figure.parts.kind === "number" && figure.parts.qualifier !== "");
     const valueTop = top + (qualified ? TYPE.figureQualifier.leading : 0);

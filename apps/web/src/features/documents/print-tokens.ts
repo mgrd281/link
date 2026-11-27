@@ -19,7 +19,8 @@ export const PAGE = { width: mm(P.page.width), height: mm(P.page.height) };
 export const MARGIN = { start: mm(P.margin.start), end: mm(P.margin.end), top: mm(P.margin.top) };
 
 const AREA = PAGE.width - MARGIN.start - MARGIN.end;
-const GUTTER = mm(P.grid.gutter);
+/** The gutter between two grid columns. */
+export const GUTTER = mm(P.grid.gutter);
 const COLUMNS = P.grid.columns;
 const COLUMN = (AREA - (COLUMNS - 1) * GUTTER) / COLUMNS;
 

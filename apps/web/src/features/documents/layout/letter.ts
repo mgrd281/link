@@ -1,10 +1,10 @@
-import { CLOSING } from "../../directions/poster/laufbahn-content";
+import { CLOSING_LINE } from "../../directions/poster/laufbahn-content";
 import type { DocumentInput } from "../input";
 import type { PaperLabels } from "../labels";
 import { AREA_END, BASELINE, DIN, MARGIN, RULE, SPACE, TYPE } from "../print-tokens";
 
 import { flow, paragraphUnit, textRuns, type FlowSection, type Unit } from "./flow";
-import { baselineOffset, capHeight, type Metrics } from "./measure";
+import { baselineOffset, capHeight, measure, type Metrics } from "./measure";
 import { footer, runningHead } from "./paper";
 import type { Box, LaidDocument, TextStyle } from "./types";
 import { wrap } from "./wrap";
@@ -32,38 +32,62 @@ const AREA = AREA_END - MARGIN.start;
 
 const descent = (style: TextStyle, metrics: Metrics): number => -metrics[style.face].descender * style.size;
 
-/** The letter's paragraphs, and its closing when it has one: the greeting up to the closing words, then who signs. */
+/** A signature is short: at most this many lines after the closing, each at most SIGNER_CHARS characters. */
+const SIGNER_LINES = 3;
+const SIGNER_CHARS = 60;
+
+/**
+ * The letter's paragraphs, and its closing when it has one: the closing line ("Mit freundlichen
+ * Grüßen" and nothing else on that line), then who signs. The closing is the last such line of the
+ * last paragraph, followed by at most a short signature; or the last line of the paragraph before,
+ * when the last one is the name alone. Whatever the owner wrote before the closing in the same
+ * paragraph stays body text (a letter typed with single line breaks is one paragraph). A sentence
+ * that merely holds a closing word ("I am sincerely …") is body text too.
+ */
 export function closingOf(paragraphs: readonly string[], name: string): { body: string[]; greeting: string[]; signer: string[] } | null {
   const lines = (text: string | undefined) => (text ?? "").split("\n");
-  const closes = (line: string) => CLOSING.test(line.toLowerCase());
+  const closes = (line: string) => CLOSING_LINE.test(line.toLowerCase());
+  const filled = (list: readonly string[]) => list.filter((line) => line.trim() !== "");
+  const signature = (list: readonly string[]) => list.length <= SIGNER_LINES && list.every((line) => line.trim().length <= SIGNER_CHARS);
+  const before = (list: readonly string[], at: number) => {
+    const text = list.slice(0, at).join("\n").trim();
+    return text === "" ? [] : [text];
+  };
   const last = lines(paragraphs.at(-1));
-  const at = last.findIndex(closes);
+  const at = last.findLastIndex(closes);
   if (at >= 0) {
-    const signer = last.slice(at + 1).filter(Boolean);
+    const signer = filled(last.slice(at + 1));
+    if (!signature(signer)) return null;
     // A closing with nobody after it: the sender's own name (form, not invention).
-    return { body: paragraphs.slice(0, -1), greeting: last.slice(0, at + 1), signer: signer.length > 0 ? signer : [name] };
+    return { body: [...paragraphs.slice(0, -1), ...before(last, at)], greeting: [last[at] ?? ""], signer: signer.length > 0 ? signer : [name] };
   }
-  // The closing as a paragraph of its own and the name as the last, short one.
-  const before = lines(paragraphs.at(-2));
-  const short = last.length <= 2 && last.every((line) => line.length <= 60);
-  if (paragraphs.length >= 2 && short && before.length > 0 && closes(before.at(-1) ?? "")) {
-    return { body: paragraphs.slice(0, -2), greeting: before, signer: last };
+  // The closing as the end of the paragraph before, and the name as the last, short one.
+  const previous = filled(lines(paragraphs.at(-2)));
+  const end = previous.length - 1;
+  if (paragraphs.length >= 2 && signature(filled(last)) && end >= 0 && closes(previous[end] ?? "")) {
+    return { body: [...paragraphs.slice(0, -2), ...before(previous, end)], greeting: [previous[end] ?? ""], signer: filled(last) };
   }
   return null;
 }
 
-/** The closing as one unit: greeting, the signature space, the name, and the enclosure when the CV follows. */
+/**
+ * The closing as one unit, kept together: the closing line, the signature space, the name, and the
+ * enclosure when the CV follows. Every line wraps to the text column; it is a few lines tall, so it
+ * always fits a page.
+ */
 function closingUnit(greeting: readonly string[], signer: readonly string[], style: TextStyle, options: LetterOptions): Unit {
   const { metrics, labels } = options;
   const offset = baselineOffset(style, metrics);
   const boxes: Box[] = [];
+  const greetingLines = greeting.flatMap((line) => wrap(line, style, AREA, metrics));
+  const signerLines = signer.flatMap((line) => wrap(line, style, AREA, metrics));
   let first = offset;
   let last = offset - 2 * style.leading;
-  if (greeting.length > 0 || signer.length > 0) {
-    boxes.push(...textRuns(greeting, MARGIN.start, offset, style, metrics));
-    const signerFirst = offset + (greeting.length - 1) * style.leading + DIN.signature + style.leading;
-    boxes.push(...textRuns(signer, MARGIN.start, signerFirst, style, metrics));
-    last = signerFirst + (signer.length - 1) * style.leading;
+  if (greetingLines.length > 0 || signerLines.length > 0) {
+    boxes.push(...textRuns(greetingLines, MARGIN.start, offset, style, metrics));
+    const signerFirst = offset + (greetingLines.length - 1) * style.leading + DIN.signature + style.leading;
+    boxes.push(...textRuns(signerLines, MARGIN.start, signerFirst, style, metrics));
+    last = signerFirst + (signerLines.length - 1) * style.leading;
   }
   let height = last + style.leading - offset;
   if (options.enclosure) {
@@ -108,14 +132,20 @@ function top(input: DocumentInput, options: LetterOptions): { boxes: Box[]; subj
   ];
   let row = DIN.info.top + capHeight(value, metrics);
   const valueX = DIN.info.x + DIN.info.label;
+  const room = DIN.info.w - DIN.info.label;
+  // An address is copied from here: the values step down together (to info-min) until the widest fits
+  // on one line; only one wider still breaks.
+  const contactSize = Math.max(TYPE.infoMin.size, Math.min(value.size, ...rows.filter((entry) => entry.contact).map((entry) => (value.size * room) / Math.max(room, measure(entry.value, value, metrics)))));
+  const contactValue: TextStyle = { ...value, size: Math.floor(contactSize * 2) / 2 };
   const write = (entry: { label: string; value: string; uri?: string; contact?: boolean }) => {
-    const lines = wrap(entry.value, value, DIN.info.w - DIN.info.label, metrics);
+    const style = entry.contact ? contactValue : value;
+    const lines = wrap(entry.value, style, room, metrics);
     boxes.push(...textRuns([entry.label], DIN.info.x, row, label, metrics));
-    const runs = textRuns(lines, valueX, row, value, metrics, { contact: entry.contact === true });
+    const runs = textRuns(lines, valueX, row, style, metrics, { contact: entry.contact === true });
     boxes.push(...runs);
     if (entry.uri) {
       const widest = Math.max(...runs.map((run) => (run.kind === "text" ? run.width : 0)));
-      boxes.push({ kind: "link", x: valueX, y: row - capHeight(value, metrics) - descent(value, metrics), w: widest, h: (lines.length - 1) * DIN.line + capHeight(value, metrics) + 2 * descent(value, metrics), uri: entry.uri });
+      boxes.push({ kind: "link", x: valueX, y: row - capHeight(style, metrics) - descent(style, metrics), w: widest, h: (lines.length - 1) * DIN.line + capHeight(style, metrics) + 2 * descent(style, metrics), uri: entry.uri });
     }
     row += lines.length * DIN.line;
   };

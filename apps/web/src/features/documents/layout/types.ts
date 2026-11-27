@@ -30,6 +30,8 @@ export interface TextRun {
   width: number;
   /** A contact value (phone, e-mail, address): the miniature draws it at one fixed width, whatever its length. */
   contact?: boolean;
+  /** A contact value's second or later line (only an address too long for its block wraps): the miniature draws one bar a row. */
+  continued?: boolean;
 }
 
 export interface RectBox {

@@ -35,8 +35,8 @@ BT /F1 7.5 Tf 0 Tc 0.353 0.357 0.361 rg 1 0 0 1 70.866 34.016 Tm (Jonas Brandt \
 
 exports[`the PDF file > matches the stored bytes (Node 22's zlib, geist 1.9.2) 1`] = `
 {
-  "application": "23c0d51b7ceb1a40a4b4e69165e47ba71436846f99b990ccfb0ae923b4b102d8",
-  "cv": "d496db5c0a9a279d5169029dabe6c93a891ba0b5c18b09c4cd69ae9cbb12efad",
+  "application": "1857ce72e7f9a02333c3627dcdcab8bdefee497da0613b6c7348d3e2866c4ad1",
+  "cv": "c4ae1020510588b3a1f9f55debb90269781863a4bec9be0688d42dfb9ce18176",
   "letter": "c055cd3c6b8fe3cff5341b5a919c7a07b44300dfbb749df567023aa3951d2609",
 }
 `;

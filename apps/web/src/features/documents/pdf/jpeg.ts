@@ -10,6 +10,8 @@ export interface Jpeg {
   components: 1 | 3 | 4;
   /** An Adobe APP14 marker: its CMYK is stored inverted, so the PDF decodes it with /Decode [1 0 …]. */
   adobe: boolean;
+  /** Where the picture's subject is (the owner's focal point, 0–1 across and down): the cover crop keeps it in view. */
+  focal?: readonly [number, number] | undefined;
 }
 
 const SOI = 0xd8;

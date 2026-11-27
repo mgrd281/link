@@ -44,6 +44,12 @@ describe("splitFigure", () => {
     ["SAP", { kind: "word", text: "SAP" }],
     ["SAP EWM", { kind: "word", text: "SAP EWM" }],
     ["9 → 3", { kind: "word", text: "9 → 3" }],
+    // A digit inside a word is no number.
+    ["SAP S/4HANA", { kind: "word", text: "SAP S/4HANA" }],
+    ["C1", { kind: "word", text: "C1" }],
+    ["B2B", { kind: "word", text: "B2B" }],
+    ["Win11", { kind: "word", text: "Win11" }],
+    ["Top 3", { kind: "number", qualifier: "Top", number: "3", unit: "" }],
   ] as const)("%s", (value, parts) => {
     expect(splitFigure(value)).toEqual(parts);
   });

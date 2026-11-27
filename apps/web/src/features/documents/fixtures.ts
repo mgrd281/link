@@ -52,6 +52,12 @@ export const ownCv = (): Page =>
     replace("contact", (block) => ({ ...block, links: [...(block.links ?? []), { kind: "cv", label: "Mein Lebenslauf", url: "https://example.com/jonas-brandt-lebenslauf.pdf" }] })),
   );
 
+/** The same applicant with another primary address (an e-mail of another length, say). */
+export const withContact = (url: string): Page => withBlocks(jonasDe(), replace("contact", (block) => ({ ...block, primary: { ...block.primary, url } })));
+
+/** The same applicant with another cover letter text. */
+export const withLetter = (text: string): Page => withBlocks(jonasDe(), replace("text", (block) => (block.id === "letter" ? { ...block, text } : block)));
+
 /** The same applicant with a longer e-mail address (the miniature's contact bars keep their width). */
 export const longEmail = (): Page =>
   withBlocks(

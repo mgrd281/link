@@ -50,6 +50,7 @@ export function textRuns(lines: readonly string[], x: number, baseline: number, 
     style,
     width: measure(text, style, metrics),
     ...(extra.contact ? { contact: true } : {}),
+    ...(extra.contact && index > 0 ? { continued: true } : {}),
   }));
 }
 
@@ -97,50 +98,62 @@ export interface FlowOptions {
   sectionGap: number;
 }
 
-/** The body's boxes per page (page 0 is the first). With an infinite limit, one page and its last baseline. */
+/**
+ * The body's boxes per page (page 0 is the first). With an infinite limit, one page and its last
+ * baseline. No unit is placed past the limit while a split or a new page can avoid it: a paragraph
+ * splits (again on the next page if it is longer than a page), anything else moves to a new page
+ * whole. Only a unit that cannot split and is taller than a whole page stands past the limit.
+ */
 export function flow(sections: readonly FlowSection[], options: FlowOptions): { pages: Box[][]; lastBaseline: number } {
   const pages: Box[][] = [[]];
   let y = options.start;
-  let pageStart = true;
+  // Nothing placed on this page yet: no gap before its first unit, and a section's title stands again.
+  let fresh = true;
   let lastBaseline = options.start;
   const place = (unit: Unit, top: number, title: FlowSection["title"]) => {
     const page = pages.at(-1);
     if (!page) return;
-    page.push(...unit.boxes.map((box) => shift(box, top)));
+    // Reading order: a section's title before its first row.
     if (title) page.push(...title(top + unit.first));
+    page.push(...unit.boxes.map((box) => shift(box, top)));
     lastBaseline = top + unit.last;
     y = top + unit.height;
-    pageStart = false;
+    fresh = false;
   };
   const newPage = () => {
     pages.push([]);
     y = options.restart;
-    pageStart = true;
+    fresh = true;
   };
   for (const section of sections) {
     let gap = 0;
     section.units.forEach((original, index) => {
       // The title's own depth below the first baseline counts for the first unit.
-      const unit = index === 0 && section.title ? { ...original, height: Math.max(original.height, original.first + section.titleDepth) } : original;
-      const before = index === 0 ? (pageStart ? 0 : options.sectionGap) : gap;
-      let top = y + before;
-      const titleHere = index === 0 || pageStart;
-      if (top + unit.last > options.limit) {
-        const parts = pageStart ? null : unit.split?.(options.limit - top);
+      let unit = index === 0 && section.title ? { ...original, height: Math.max(original.height, original.first + section.titleDepth) } : original;
+      let before = index === 0 ? (fresh ? 0 : options.sectionGap) : gap;
+      for (;;) {
+        const top = y + before;
+        const title = index === 0 || fresh ? section.title : null;
+        if (top + unit.last <= options.limit) {
+          place(unit, top, title);
+          break;
+        }
+        const parts = unit.split?.(options.limit - top);
         if (parts) {
-          place(parts[0], top, titleHere ? section.title : null);
+          place(parts[0], top, title);
           newPage();
-          place(parts[1], y, section.title);
-          gap = parts[1].gapAfter;
-          return;
+          unit = parts[1];
+          before = 0;
+          continue;
         }
-        if (!pageStart) {
+        // A later page with nothing on it yet has no more room to offer: the unit stands here.
+        if (!fresh || pages.length === 1) {
           newPage();
-          top = y;
+          before = 0;
+          continue;
         }
-        place(unit, top, section.title);
-      } else {
-        place(unit, top, titleHere ? section.title : null);
+        place(unit, top, title);
+        break;
       }
       gap = unit.gapAfter;
     });

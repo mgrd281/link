@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { bareLetter, jonasDe, long, slightlyOver } from "../fixtures";
+import { bareLetter, jonasDe, long, slightlyOver, withContact, withLetter } from "../fixtures";
 import { documentInput, type DocumentInput } from "../input";
 import { paperLabels } from "../labels";
+import { miniatureOf } from "../miniature-marks";
 import { loadFonts } from "../pdf/fonts";
-import { BASELINE, columnX, DIN, HEAD, MARGIN, mm, PHOTO, TYPE } from "../print-tokens";
+import { AREA_END, BASELINE, columnX, DIN, HEAD, MARGIN, mm, PHOTO, RULE, TYPE } from "../print-tokens";
 
 import { layoutCv } from "./cv";
-import { paragraphUnit } from "./flow";
+import { flow, paragraphUnit } from "./flow";
 import { closingOf, layoutLetter } from "./letter";
 import { capHeight, measure } from "./measure";
+import { footer } from "./paper";
 import type { Box, LaidDocument, TextRun } from "./types";
 import { glue, wrap } from "./wrap";
 
@@ -113,14 +115,52 @@ describe("layoutCv", () => {
     }
   });
 
-  it("starts the figures at columns 1, 4 and 7, and the contact block at column 9", () => {
+  it("starts the figures at columns 1, 4 and 7, and the contact block top right on the grid", () => {
     const runs = texts(cv().pages[0] ?? { boxes: [] });
     expect(runs.filter((run) => run.style === TYPE.figure).map((run) => run.x)).toEqual([columnX(1), columnX(4), columnX(7)]);
     expect(runs.find((run) => run.text === "seit")?.x).toBe(columnX(7));
     const contact = runs.filter((run) => run.contact);
     expect(contact.length).toBeGreaterThan(0);
-    for (const run of contact) expect(run.x).toBe(columnX(9) + HEAD.contactLabel);
-    expect(runs.find((run) => run.text === "Telefon")?.x).toBe(columnX(9));
+    // The sample's e-mail address (38.6 mm) is a hair too wide for the last four columns' 38.3 mm:
+    // the block takes column 8 too, on the grid, and every value ends inside the type area.
+    for (const run of contact) {
+      expect(run.x).toBe(columnX(8) + HEAD.contactLabel);
+      expect(run.x + run.width).toBeLessThanOrEqual(AREA_END + 0.01);
+    }
+    expect(runs.find((run) => run.text === "Telefon")?.x).toBe(columnX(8));
+    expect(runs.find((run) => run.text === "Telefon")?.y).toBe(HEAD.contactTop);
+    // A short address keeps the last four columns.
+    const short = texts(cv(withContact("mailto:jb@example.com")).pages[0] ?? { boxes: [] });
+    expect(short.find((run) => run.text === "Telefon")?.x).toBe(columnX(9));
+  });
+
+  it("never breaks an e-mail address that fits on one line: one run, one link rectangle", () => {
+    for (const address of ["jonas.brandt@example.com", "vorname.nachname1990@example.com", "vorname.nachname-bewerbung@lager-example.com"]) {
+      const page = cv(withContact(`mailto:${address}`)).pages[0] ?? { boxes: [] };
+      const runs = texts(page).filter((run) => run.contact && run.style === TYPE.contactValue);
+      expect(runs.map((run) => run.text), address).toContain(address);
+      for (const run of runs) expect(run.x + run.width, run.text).toBeLessThanOrEqual(AREA_END + 0.01);
+      const links = page.boxes.filter((box) => box.kind === "link" && box.uri === `mailto:${address}`);
+      expect(links, address).toHaveLength(1);
+      const [link] = links;
+      expect(link?.kind === "link" ? link.h : 0).toBeLessThan(HEAD.contactPitch);
+    }
+  });
+
+  it("puts the contact rows under the rule when a long address would run into the head's words", () => {
+    // 55 mm: columns 7 to 12 would hold it, but the role line reaches into column 7.
+    const page = cv(withContact("mailto:vorname.nachname1990@example.com")).pages[0] ?? { boxes: [] };
+    const rule = page.boxes.find((box): box is Extract<Box, { kind: "rect" }> => box.kind === "rect" && box.w === RULE.accentWidth);
+    const phone = texts(page).find((run) => run.text === "Telefon");
+    expect(phone?.x).toBe(MARGIN.start);
+    expect(rule && phone ? phone.y > rule.y : false).toBe(true);
+    // The figures follow under the rows.
+    const lastRow = Math.max(...texts(page).filter((run) => run.contact).map((run) => run.y));
+    const figure = texts(page).find((run) => run.style === TYPE.figure);
+    expect((figure?.y ?? 0) > lastRow).toBe(true);
+    // Nothing of the head overlaps: every contact value stands clear of the role's line.
+    const role = texts(page).find((run) => run.style === TYPE.role);
+    expect(role && phone ? phone.y > role.y : false).toBe(true);
   });
 
   it("prints no picture and no initials without a real photo", () => {
@@ -182,6 +222,52 @@ describe("layoutCv", () => {
   });
 });
 
+describe("the footer", () => {
+  it("moves the end to a line of its own before a long name and address meet", () => {
+    const name = "Maximilian Alexander Schmidt-Hohenberg von Lüdenscheidt-Neu";
+    expect(name.length).toBeGreaterThanOrEqual(58);
+    const boxes = footer({
+      start: `${name}${NB}· Lebenslauf`,
+      end: [{ text: "Stand 20. November 2026" }, { text: "linkyo.app/maximilianschmidthohenb", uri: "https://linkyo.app/maximilianschmidthohenb" }, { text: "Seite 1 von 2" }],
+      metrics,
+    });
+    const [start, end] = texts({ boxes });
+    expect(start && end).toBeTruthy();
+    if (!start || !end) return;
+    // On different lines, both on or above the footer's baseline, the end right-aligned.
+    expect(start.y).toBeLessThan(end.y);
+    expect(end.y).toBe(BASELINE.footer);
+    expect(end.x + end.width).toBeCloseTo(AREA_END, 5);
+    for (const run of [start, end]) expect(run.x).toBeGreaterThanOrEqual(MARGIN.start - 0.01);
+  });
+
+  it("keeps one line while the two parts stand apart", () => {
+    const boxes = footer({ start: `Jonas Brandt${NB}· Lebenslauf`, end: [{ text: "Seite 1 von 2" }], metrics });
+    const [start, end] = texts({ boxes });
+    expect(start?.y).toBe(BASELINE.footer);
+    expect(end?.y).toBe(BASELINE.footer);
+  });
+});
+
+describe("the flow", () => {
+  it("splits a paragraph taller than the rest of the first page instead of running past the limit", () => {
+    const lines = Array.from({ length: 80 }, (_, index) => `Zeile ${String(index + 1)}`);
+    const unit = paragraphUnit(lines, MARGIN.start, TYPE.letterBody, metrics, 0);
+    const result = flow([{ title: null, titleDepth: 0, units: [unit] }], { start: mm(120), restart: mm(35), limit: BASELINE.limit, sectionGap: 0 });
+    expect(result.pages.length).toBeGreaterThanOrEqual(2);
+    for (const page of result.pages) for (const run of texts({ boxes: page })) expect(run.y).toBeLessThanOrEqual(BASELINE.limit + 0.01);
+    expect(result.pages.flat().filter((box) => box.kind === "text")).toHaveLength(80);
+  });
+
+  it("puts a section's title before its first row (reading order)", () => {
+    const doc = cv();
+    const runs = texts(doc.pages[0] ?? { boxes: [] });
+    const at = (match: (run: TextRun) => boolean) => runs.findIndex(match);
+    expect(at((run) => run.text === "Profil")).toBeLessThan(at((run) => run.style === TYPE.body));
+    expect(at((run) => run.text === "Werdegang")).toBeLessThan(at((run) => run.text.startsWith("2021")));
+  });
+});
+
 describe("layoutLetter", () => {
   const page = letter().pages[0] ?? { boxes: [] };
   const runs = texts(page);
@@ -228,6 +314,92 @@ describe("layoutLetter", () => {
     expect(closingOf(["Sehr geehrte Frau Albers,", "Text.", "Mit freundlichen Grüßen"], "Jonas Brandt")?.signer).toEqual(["Jonas Brandt"]);
     expect(closingOf(["Text.", "Mit freundlichen Grüßen", "Jonas Brandt"], "Jonas Brandt")).toEqual({ body: ["Text."], greeting: ["Mit freundlichen Grüßen"], signer: ["Jonas Brandt"] });
     expect(closingOf(["Text.", "Noch mehr Text."], "Jonas Brandt")).toBeNull();
+  });
+
+  it("finds the closing only as a line of its own, from the end: a sentence with 'sincerely' or 'beste Grüße' is body text", () => {
+    const paragraphs = [
+      "Sehr geehrte Frau Albers,",
+      "ich schreibe Ihnen sincerely und mit besten Grüßen an das Team.\nIch sende beste Grüße an die Halle 3, wo ich gelernt habe.\nMit freundlichen Grüßen\nJonas Brandt",
+    ];
+    expect(closingOf(paragraphs, "Jonas Brandt")).toEqual({
+      body: ["Sehr geehrte Frau Albers,", "ich schreibe Ihnen sincerely und mit besten Grüßen an das Team.\nIch sende beste Grüße an die Halle 3, wo ich gelernt habe."],
+      greeting: ["Mit freundlichen Grüßen"],
+      signer: ["Jonas Brandt"],
+    });
+    expect(closingOf(["Dear Ms Albers,", "I am sincerely writing to apply.\nKind regards,\nJonas Brandt"], "Jonas Brandt")?.greeting).toEqual(["Kind regards,"]);
+    // A closing word in a sentence alone is no closing: nothing gets a signature space.
+    expect(closingOf(["Dear Ms Albers,", "I am sincerely writing to apply and send best regards to the team."], "Jonas Brandt")).toBeNull();
+  });
+
+  it("wraps and paginates letters typed with single line breaks or a long last paragraph: nothing past the edge or the limit", () => {
+    const sentence = "Über eine Einladung zu einem persönlichen Gespräch freue ich mich sehr und stehe Ihnen jederzeit gern für Rückfragen zur Verfügung, auch kurzfristig.";
+    expect(sentence.length).toBeGreaterThan(120);
+    const sample = jonasDe().blocks.find((block) => block.type === "text" && block.id === "letter");
+    const text = sample?.type === "text" ? sample.text : "";
+    const letters = [
+      // (a) the sample letter with its blank lines turned into single line breaks
+      text.replace(/\n{2,}/gu, "\n"),
+      // (b) a last paragraph with a long sentence, then the closing after a single line break
+      text.replace("\n\nMit freundlichen Grüßen", `\n\n${sentence}\nMit freundlichen Grüßen`),
+    ];
+    expect(letters[1]).toContain(`${sentence}\nMit freundlichen Grüßen\nJonas Brandt`);
+    for (const letterText of letters) {
+      const doc = letter(withLetter(letterText));
+      for (const page of doc.pages) {
+        for (const run of texts(page)) {
+          expect(run.x + run.width, run.text).toBeLessThanOrEqual(mm(190) + 0.01);
+          if (run.style.size === TYPE.letterBody.size || run.style.size === TYPE.letterBodyMin.size) expect(run.y, run.text).toBeLessThanOrEqual(BASELINE.limit + 0.01);
+        }
+      }
+      const runs = doc.pages.flatMap((page) => texts(page));
+      expect(runs.some((run) => run.text.startsWith("Über eine Einladung") || run.text.startsWith("mit großem Interesse"))).toBe(true);
+      const greeting = runs.find((run) => run.text === "Mit freundlichen Grüßen");
+      const name = runs.findLast((run) => run.text === "Jonas Brandt" && run.style.size !== TYPE.letterName.size);
+      expect(greeting && name ? close(name.y - greeting.y, DIN.signature + greeting.style.leading) : false, letterText.slice(0, 40)).toBe(true);
+    }
+  });
+
+  it("keeps every generated letter on the paper: single and double line breaks, 2,000 characters, long words", () => {
+    const words = ["Lager", "Kommissionierung", "Wareneingangskontrolle", "Schubmaststapler", "und", "die", "Donaudampfschifffahrtsgesellschaftskapitän", "SAP", "Bremen"];
+    let seed = 7;
+    const next = () => {
+      seed = (seed * 48271) % 2147483647;
+      return seed;
+    };
+    for (let round = 0; round < 12; round += 1) {
+      let body = "";
+      while (body.length < 1990) {
+        const word = words[next() % words.length] ?? "Lager";
+        const gap = next() % 9 === 0 ? (round % 2 === 0 ? "\n" : "\n\n") : " ";
+        body += `${word}${gap}`;
+      }
+      const closing = round % 3 === 0 ? "" : `${round % 2 === 0 ? "\n" : "\n\n"}Mit freundlichen Grüßen\nJonas Brandt`;
+      const doc = letter(withLetter(`Sehr geehrte Frau Albers,\n\n${body.slice(0, 1990).trim()}${closing}`), round % 2 === 0);
+      expect(doc.pages.flatMap((page) => texts(page)).filter((run) => run.style.size === TYPE.letterBody.size || run.style.size === TYPE.letterBodyMin.size).length).toBeGreaterThan(20);
+      for (const page of doc.pages) {
+        for (const box of page.boxes) {
+          if (box.kind !== "text") continue;
+          expect(box.x, box.text).toBeGreaterThanOrEqual(mm(25) - 0.01);
+          expect(box.x + box.width, box.text).toBeLessThanOrEqual(mm(190) + 0.01);
+          expect(box.y, box.text).toBeLessThanOrEqual(mm(285) + 0.01);
+        }
+      }
+      for (const mark of miniatureOf(doc)) {
+        expect(mark.x + mark.w).toBeLessThanOrEqual(210);
+        expect(mark.y + mark.h).toBeLessThanOrEqual(297);
+      }
+    }
+  });
+
+  it("keeps a contact value on one line in the information block, stepping its size down to fit", () => {
+    const page = letter(withContact("mailto:vorname.nachname1990@example.com")).pages[0] ?? { boxes: [] };
+    const value = texts(page).find((run) => run.contact && run.text.includes("@"));
+    expect(value?.text).toBe("vorname.nachname1990@example.com");
+    expect(value ? value.x + value.width : Infinity).toBeLessThanOrEqual(DIN.info.x + DIN.info.w + 0.01);
+    expect(value?.style.size).toBeGreaterThanOrEqual(TYPE.infoMin.size);
+    expect(value?.style.size).toBeLessThan(TYPE.info.size);
+    // The sample's own address keeps the block's size.
+    expect(runs.find((run) => run.contact && run.text.includes("@"))?.style.size).toBe(TYPE.info.size);
   });
 
   it("names the CV as its enclosure only where the CV follows", () => {

@@ -32,17 +32,23 @@ export function letterSubject(page: Page, words: { subjectFor: (value: string) =
 /** One stat value split for display: a qualifier ("seit"), a number ("99,6") and a unit ("%"), or words. */
 export type FigureParts = { kind: "number"; qualifier: string; number: string; unit: string } | { kind: "word"; text: string };
 
-const FIGURE = /^(?<q>\P{Nd}*?)\s*(?<n>[+\-−]?\p{Nd}[\p{Nd}.,]*)\s*(?<u>%|\+|×|\p{L}[\p{L}.]{0,5})?$/u;
+/**
+ * A qualifier is whole words before the number, a space between them ("seit 2019"); a unit is "%",
+ * "+" or "×", a short unit written onto the number ("2.3M", "5km"), or a short word after a space
+ * ("12 Jahre"). A digit inside a word is no number: "SAP S/4HANA", "C1", "B2B" and "Win11" are words.
+ */
+const FIGURE = /^(?:(?<q>[^\p{Nd}]*[^\p{Nd}\s])\s+)?(?<n>[+\-−]?\p{Nd}[\p{Nd}.,]*)(?:\s*(?<s>%|\+|×)|(?<g>\p{L}[\p{L}.]{0,2})|\s+(?<w>\p{L}[\p{L}.]{0,5}))?$/u;
 const QUALIFIER_MAX = 12;
 
-/** "seit 2019" → seit · 2019; "99,6 %" → 99,6 · %; "12 Jahre" → 12 · Jahre; "SAP EWM" and "9 → 3" stay words. */
+/** "seit 2019" → seit · 2019; "99,6 %" → 99,6 · %; "12 Jahre" → 12 · Jahre; "SAP EWM", "9 → 3" and "C1" stay words. */
 export function splitFigure(value: string): FigureParts {
   const text = value.trim();
   const match = FIGURE.exec(text);
-  const qualifier = match?.groups?.q?.trim() ?? "";
-  const number = match?.groups?.n;
-  if (!match || number === undefined || qualifier.length > QUALIFIER_MAX) return { kind: "word", text };
-  return { kind: "number", qualifier, number, unit: match.groups?.u ?? "" };
+  const groups = match?.groups;
+  const qualifier = groups?.q?.trim() ?? "";
+  const number = groups?.n;
+  if (!groups || number === undefined || qualifier.length > QUALIFIER_MAX) return { kind: "word", text };
+  return { kind: "number", qualifier, number, unit: groups.s ?? groups.g ?? groups.w ?? "" };
 }
 
 /** What a page offers: a generated CV, a generated letter, or the owner's own CV file instead of the generated one. */
