@@ -282,4 +282,122 @@ modern and fitting. Template-level again (Sevag's clips aside); every other temp
   preview). The page below keeps its light ground (its root paints `bg-creator-bg`); the wide canvas
   and every other template keep the page colour.
 
+## Round 6: the dossier (the founder: "a very modern design, the best user experience, with a Lebenslauf and Bewerbung to download")
+
+The founder found round 5 too close to what was there and asked for the most modern design possible,
+"so that companies are amazed", with the CV and the cover letter to download. Three studies were
+scored (`audit/laufbahn-v6/SPEC.md`); "Satzspiegel" won (8.0, against 7.83 and 6.17) with grafts from
+the other two. This round is the page; the PDFs are their own ADR (the documents builder's).
+
+- **The head is type first, on ink, at every width.** It reverses the 72svh picture hero of rounds
+  1–3: a recruiter reads who, what and for which position before anything else. In this order: the
+  availability as a pill (a still green dot, decorative), the name (h1, Geist 700, each word may take
+  its own line on a phone, the whole name on one line in eight columns on the wide canvas), the role
+  (every " · " keeps its dot at the end of a line: a non-breaking space before it), the **target line**
+  ("Bewerbung als **Fachkraft für Lagerlogistik (m/w/d)**", the owner's own label and value, and the
+  employer beside it when the page names one), the place, the sentence, two actions, the figures, and
+  last the picture as a plate. The head and the closing Kontakt band are ink (`lb-ground`) from edge to
+  edge, never words over a picture; round 5's browser-top tint keeps its purpose (now ink at every
+  width, with or without a picture, `browser-top.ts`).
+- **The target line's facts leave "Über mich".** The position applied for and the employer are found
+  by their labels (an exact match: "Bewerbung als", "Stelle", "Applying for", "التقديم على" …, never
+  "Bewerbungsfrist"; `targetFacts`, shared with the letter's subject) and stand in the head only: facts
+  live in one place.
+- **The two actions.** First, filled in white with ink words (never the accent, which may be ink
+  itself, as on Sevag's page): the contact block's primary action, else "Anschreiben lesen", else
+  "Weiterlesen". Second, soft: the Lebenslauf as a PDF where the page offers one, else the owner's own
+  CV, else "Teilen". **Share leaves the hero when a CV is offered** (it reverses round 2): it stays in
+  the bar, in the Kontakt band's rows and on every page without PDFs.
+- **Figures** are split into qualifier, number and unit (`splitFigure`: "seit" over "2019", "99,6" with
+  a half-size "%"), one size for all three, as large as the widest allows in its column; a value in
+  words ("SAP") is set as words. The label comes first in the DOM (screen readers read "Pickgenauigkeit
+  2025: 99,6 %"); the visual order is a subgrid.
+- **The plate below the figures, no parallax.** Phones and tablets: 3 : 2 from edge to edge, last in
+  the band; the wide canvas: the last four of twelve columns beside the words, rounded. Without any
+  picture: no plate and no initials. Nothing in the head moves after its lines rise in once.
+- **The `grotesk` pairing** (Geist 700 / Geist 400, Arabic IBM Plex Sans Arabic 700/400) replaces
+  `classic` for Laufbahn: one modern grotesque for the name and the text, with true tabular figures.
+  Geist is already the only preloaded face, so Inter no longer loads on Laufbahn pages (checked by the
+  e2e: no Inter request). Every place that lists pairings has it: tokens, the design screen, the AI
+  catalogue (`core-v6`, `plan-v5`: one more pairing and Laufbahn's new description, nothing else), "9
+  Schriftpaare". `GLYPH_WIDTH.grotesk` is Geist's 0.52.
+- **The bar on ink** (`laufbahn-bar.tsx`), as the head and the browser's top: the initials, the name
+  over the section being read (it opens the contents), and fixed round buttons on phones (the CV to
+  download, the primary action in white), so an owner's long label never squeezes the title. On the
+  wide canvas: the documents as soft pills, the primary action as a white pill with its label, and
+  **exactly one Share** (the phone's Share-instead-of-download fallback never reaches the wide canvas;
+  unit test and e2e in de, en and ar).
+- **Hanging titles on the wide canvas.** The sticky index list beside the sections is gone: each section
+  is a row of twelve columns, its title in the first three and sticky while the section is read (a
+  running head under the bar), the content in the other nine. Tablets keep the chips; the contents
+  stay one tap away in the bar at every width.
+- **The career is a table, as on paper:** the years first ("2021 – heute", tabular figures, the tag
+  "aktuell" under a step still going on), then the role, where and a note beside one rail with a dot
+  for each step, filled for the current one. **The 32 px icon nodes go**: dots match the paper. The rail
+  still fills with the accent as the steps scroll by (the only scroll-linked motion), drawn in full with
+  reduced motion.
+- **A portrait only of the person.** "Über mich" shows round 5's portrait beside the facts only for a
+  picture of the person (`isPersonPicture`: not one of Linkyo's library stills, which are drawings or
+  stock scenes). Otherwise the facts stand alone on one soft sheet, two to a row (four on the wide
+  canvas), a long fact across the row. **On Sevag's page the drawn still leaves About until he sends a
+  real photo: the founder's OK is needed for that.**
+- **The letter is set as a letter:** white paper on a light page (the page's surface on a dark one), its
+  reading time and its own PDF as a small pill in the top line, the PDF's subject ("Bewerbung als …")
+  above the owner's paragraphs, which stay exactly as written. Phones keep the disclosure after two
+  paragraphs.
+- **Unterlagen** (a new automatic section, before the Kontakt band, in the contents): one card per
+  document (the whole card is one `<a download>`: a paper miniature from the PDF's own layout, the
+  title, "PDF · A4 · 1 Seite" with the real page count, a "Herunterladen" pill), both in one file under
+  the cards, and the date of the page's last save on public pages ("Stand: 20. November 2026"). No
+  spinner and no toast: the browser's own download, or iOS's PDF viewer, is the state. The contents
+  sheet lists the documents as a second group of direct downloads.
+- **The Kontakt band on ink** closes the page: the status, the closing line set large, the owner's
+  sentence, the primary action in white, then one list of ways to reach them (E-Mail and Telefon with
+  their addresses, the other links, the documents, "Seite teilen") and the page's footer in the band's
+  tone (`CreatorFooter tone="inverse"`; it stays the page's contentinfo, outside the band's section).
+- **Arabic pages offer no documents** (the documents' ADR says why): no section, no pills or round
+  download, no sheet group, no letter pill and no subject; the hero's second action is "مشاركة" and the
+  bar on the wide canvas has one Share. Everything mirrors by logical properties alone; "منذ" stands
+  over its number, figures are isolated left to right.
+- **Names that read as they look (WCAG 2.5.3).** A download's accessible name starts with its visible
+  words: "Lebenslauf herunterladen (PDF, 1 Seite)" for the hero's "Lebenslauf", "Lebenslauf · PDF
+  herunterladen" for a row, "Anschreiben als PDF herunterladen (1 Seite)" for the letter's "PDF" pill;
+  a card is named by its own words. (axe's label-in-name check ignores words in parentheses, so a
+  visible word may never stand only inside them.)
+- **On ink**, the focus ring is white (`focus-ring-inverse`; the accent is about 2.3 : 1 there), and the
+  soft fill and hairlines use `hover-inverse`, which `lb-ground` keeps light whatever the device's
+  colour scheme (in a dark scheme the token turns into ink at 8 %, invisible on ink).
+
+**Measured** on the demo build (fictional application example, reduced motion, chrome off; bottoms in
+CSS px from the top of the page):
+
+| Width | h1 | target line | actions | figures |
+|---|---|---|---|---|
+| 390 × 844 | 220 | 355 | 549 | 690 |
+| 360 × 780 | 220 | 355 | 605 (stacked) | 743 |
+| 768 × 1024 | 148 | 229 | 399 | 525 |
+| 1440 × 900 | 256 | 345 | 530 | 698 |
+
+At 360 px the two actions stack ("E-Mail schreiben" and "Lebenslauf" need about 350 px side by side);
+everything named, figures included, is still on the first screen. No horizontal scroll at 360, 390, 768
+or 1440 in de, en and ar.
+
+| Pair (measured in the browser) | Ratio |
+|---|---|
+| white on ink | 19.8 : 1 |
+| `lb-ink-muted` on ink | 7.2 : 1 |
+| white on `bg-hover-inverse` over ink | 14.9 : 1 |
+| ink on the white button | 19.8 : 1 |
+| accent text on `lb-soft` (the "aktuell" tag) | 5.6 : 1 light, 4.7 : 1 dark |
+| muted on `surface-2` (the cards' meta) | 5.6 : 1 light, 7.2 : 1 dark |
+
+The creator page code stays within its budget: `/[locale]/p/[slug]` 32.5 KB and `/u/[username]` 30.7 KB
+of 35 KB (Laufbahn's own parts load with its pages only). Every other template's captures in the s4m
+picture baseline are byte-equal (95 of 103; the 8 that differ are Laufbahn's own, by design).
+
+**For the founder:** today versus new, side by side, at 390 and 1440
+(`audit/laufbahn-v6/build-page/today-vs-new-*.png`), and three decisions to confirm: the ink,
+type-first head; Sevag's drawn portrait leaving "Über mich" until his own photo; "Teilen" moving out of
+the hero when a CV is offered.
+
 **Status.** Accepted.
