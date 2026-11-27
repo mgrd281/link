@@ -86,6 +86,13 @@ export const RESERVED_PROJECT_SLUGS = new Set([
   "p", "w", "work", "projects", "projekte", "about", "contact", "kontakt", "cv", "services", "leistungen", "links",
   "shop", "feed", "rss", "og", "opengraph-image", "edit", "new", "admin", "api", "media", "imprint", "impressum",
   "privacy", "datenschutz", "legal", "report", "melden",
+  // The application documents (DOCUMENT_SEGMENTS) and the words a visitor could take for them.
+  "letter", "application", "lebenslauf", "anschreiben", "bewerbung", "unterlagen",
 ]);
+/**
+ * The addresses of a Laufbahn page's PDFs, static siblings of the project segment: `/<username>/cv`,
+ * `/<username>/letter` and `/<username>/application` (the letter and the CV in one file).
+ */
+export const DOCUMENT_SEGMENTS = { cv: "cv", letter: "letter", application: "application" } as const;
 export const isProjectSlug = (value: string): boolean =>
   value.length >= PROJECT_SLUG_MIN && value.length <= PROJECT_SLUG_MAX && PROJECT_SLUG.test(value) && !RESERVED_PROJECT_SLUGS.has(value);

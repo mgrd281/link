@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_PROJECTS, PROJECT_SLUG_MAX, RESERVED_PROJECT_SLUGS, isProjectSlug } from "../src/rules";
+import { DOCUMENT_SEGMENTS, MAX_PROJECTS, PROJECT_SLUG_MAX, RESERVED_PROJECT_SLUGS, isProjectSlug } from "../src/rules";
 import { blockSchema, CODE_LANGS, pageSchema } from "../src/schema";
 
 const profile = { username: "mats", displayName: "Mats Brandt", bio: "", avatar: { src: "none:", alt: "" }, locale: "de" as const };
@@ -166,6 +166,14 @@ describe("page rules", () => {
     expect(pageOk([project({ was: ["harbour"] }), project({ id: "p2", slug: "harbour" })])).toBe(false);
     expect(pageOk([project({ was: ["old"] }), project({ id: "p2", slug: "harbour", was: ["old"] })])).toBe(false);
     expect(pageOk([project({ was: ["tidewatch"] })])).toBe(false);
+  });
+
+  it("keep the application documents' addresses and their look-alikes free of projects", () => {
+    expect(DOCUMENT_SEGMENTS).toEqual({ cv: "cv", letter: "letter", application: "application" });
+    for (const slug of ["cv", "letter", "application", "lebenslauf", "anschreiben", "bewerbung", "unterlagen"]) {
+      expect(RESERVED_PROJECT_SLUGS.has(slug), slug).toBe(true);
+      expect(isProjectSlug(slug), slug).toBe(false);
+    }
   });
 
   it("refuse a reserved address", () => {

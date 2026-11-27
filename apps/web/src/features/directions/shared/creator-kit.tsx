@@ -120,6 +120,8 @@ export interface CreatorFooterLinks {
 /**
  * Sticky-free footer: subtle "Made with Linkyo" (removable in Pro) + legal links (DSA "Report"). Pages
  * with embedded players also link to the privacy settings (there are no tracking cookies to manage).
+ * `tone="inverse"` (Laufbahn's closing Kontakt band, ADR 0069 round 6): on ink, the words in the
+ * secondary white, white under the pointer, and the white focus ring.
  */
 export function CreatorFooter({
   className,
@@ -127,6 +129,7 @@ export function CreatorFooter({
   privacy = false,
   trademarks = false,
   links,
+  tone = "default",
 }: {
   className?: string | undefined;
   credit?: boolean;
@@ -135,16 +138,21 @@ export function CreatorFooter({
   trademarks?: boolean;
   /** Public pages: real destinations. Without them (examples, previews) the links are in-page anchors. */
   links?: CreatorFooterLinks | undefined;
+  tone?: "default" | "inverse";
 }) {
   const t = useTranslations("creator");
+  const inverse = tone === "inverse";
   const targets = (["imprint", "privacy", "report"] as const).flatMap((key) => {
     const href = links ? links[key] : `#${key}`;
     return href ? [{ key, href }] : [];
   });
+  const link = inverse
+    ? "min-h-touch-target hover:text-white focus-visible:focus-ring-inverse inline-flex items-center rounded-xs px-2 transition-colors duration-micro motion-reduce:transition-none"
+    : "min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2";
   return (
     <footer
       className={cn(
-        "text-caption text-creator-fg-muted grid justify-items-center gap-4 pt-12 pb-10",
+        inverse ? "text-caption lb-ink-muted grid justify-items-center gap-4 pt-12 pb-10" : "text-caption text-creator-fg-muted grid justify-items-center gap-4 pt-12 pb-10",
         className,
       )}
     >
@@ -153,7 +161,11 @@ export function CreatorFooter({
         <a
           data-credit
           href={creatorOrigin()}
-          className="h-control-sm border-creator-line text-creator-fg duration-micro hover:border-creator-line-strong focus-visible:focus-ring inline-flex items-center gap-2 rounded-full border px-3 font-medium transition-colors"
+          className={
+            inverse
+              ? "h-control-sm border-hover-inverse duration-micro hover:bg-hover-inverse focus-visible:focus-ring-inverse inline-flex items-center gap-2 rounded-full border px-3 font-medium text-white transition-colors"
+              : "h-control-sm border-creator-line text-creator-fg duration-micro hover:border-creator-line-strong focus-visible:focus-ring inline-flex items-center gap-2 rounded-full border px-3 font-medium transition-colors"
+          }
         >
           <LogoSymbol tone="mono" className="size-icon-sm" />
           {t("madeWith")}
@@ -161,17 +173,11 @@ export function CreatorFooter({
       ) : null}
       <nav aria-label={t("menu")} className="flex flex-wrap justify-center gap-x-1">
         {targets.map(({ key, href }) => (
-          <a
-            key={key}
-            href={href}
-            className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2"
-          >
+          <a key={key} href={href} className={link}>
             {t(key)}
           </a>
         ))}
-        {privacy ? (
-          <PrivacySettingsLink className="min-h-touch-target hover:text-creator-fg focus-visible:focus-ring inline-flex items-center rounded-xs px-2" />
-        ) : null}
+        {privacy ? <PrivacySettingsLink className={link} /> : null}
       </nav>
       {trademarks ? <p className="max-w-prose text-center text-pretty">{t("trademarks")}</p> : null}
     </footer>

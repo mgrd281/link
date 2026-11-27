@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { useId, type CSSProperties, type ReactNode } from "react";
 
 import { themeStyle } from "@/features/creator/theme";
+import { targetFacts, type DocumentsView } from "@/features/documents/offer";
 
 import { CreatorFooter, MediaImage, mediaSizes, type CreatorFooterLinks } from "../shared/creator-kit";
 import { PrivacyNotice } from "../shared/privacy-notice";
@@ -35,7 +36,7 @@ import { JustifiedRows, ratioOf, WIDE_ROW } from "./justified";
 // client modules split them off (ADR 0008's page budget). Its bleed hero and its words are plain server code.
 import { LaufbahnAbout, LaufbahnSkills, LaufbahnText, LaufbahnTimeline } from "./signposted-blocks";
 import { isLetter } from "./laufbahn-content";
-import { BleedHero } from "./laufbahn-hero";
+import { DossierHero, type HeadFacts } from "./laufbahn-hero";
 import { SignpostedBody } from "./signposted-lazy";
 import { ReadmeHero, StripHero, TitleBlockHero } from "./portfolio-heroes";
 import { AboutSection, BrandNames, ContactBand, QuotesSection, TimelineSection, ToolsSection } from "./portfolio-sections";
@@ -105,6 +106,7 @@ export function PosterRenderer({
   projectSuffix = "",
   openProject,
   onOpenProject,
+  documents = null,
 }: {
   page: Page;
   theme: ResolvedCreatorTheme;
@@ -123,6 +125,8 @@ export function PosterRenderer({
   openProject?: { id: string; onBack: () => void } | undefined;
   /** Previews without a router: a tap on a card that has a project page. */
   onOpenProject?: ((id: string) => void) | undefined;
+  /** Signposted templates (Laufbahn): the CV and cover letter the page offers as PDFs (features/documents/view.ts). */
+  documents?: DocumentsView | null | undefined;
 }) {
   const { profile } = page;
   const now = new Date();
@@ -220,6 +224,8 @@ export function PosterRenderer({
   const signposted = layout.headings === "signpost";
   // Their cover letter: the bleed hero's first action may lead to it, and its text reads as a letter.
   const letter = signposted ? letterOf(sections, profile.locale) : undefined;
+  // The position applied for (and the employer): the head shows them, About no longer repeats them.
+  const head: HeadFacts = signposted ? targetFacts({ ...page, blocks }) : { target: null, employer: null };
   const projects = blocks.filter((block): block is BlockOf<"project"> => block.type === "project");
   const portfolio: PortfolioContext = {
     theme,
@@ -235,6 +241,7 @@ export function PosterRenderer({
     onOpen: onOpenProject,
     now,
     wide,
+    ...(signposted ? { documents, head, paper: theme.palette.mode === "light" ? ("light" as const) : ("dark" as const) } : {}),
   };
   // The hero's own props, the same for every treatment.
   const heroProps = { profile, socials, live, theme, preview, contact, primary, now };
@@ -245,7 +252,7 @@ export function PosterRenderer({
   const hero =
     layout.hero === "bleed" ? (
       signposted ? null : (
-        <BleedHero
+        <DossierHero
           profile={profile}
           socials={socials}
           live={live}
@@ -314,6 +321,18 @@ export function PosterRenderer({
       />
     );
   const itemProps = { linkStyle, surface, gallery: layout.gallery, featured, preview };
+  // With a Linkyo bar at the bottom, the footer drops its own Linkyo credit (one is enough). On a
+  // signposted page with a contact block it closes the ink Kontakt band, in the band's tone.
+  const footer = (
+    <CreatorFooter
+      className={cn("px-creator-gutter", dock ? "pb-24" : undefined)}
+      credit={!dock}
+      privacy={providers.length > 0}
+      trademarks={featured !== undefined}
+      links={footerLinks}
+      {...(signposted && contact ? { tone: "inverse" as const } : {})}
+    />
+  );
 
   return (
     <div
@@ -360,7 +379,7 @@ export function PosterRenderer({
       <div
         className={
           signposted
-            ? "relative mx-auto @work:box-content @work:max-w-work @work:px-creator-gutter"
+            ? "relative"
             : cn("relative mx-auto max-w-creator @prose:pt-10", wide && "@work:box-content @work:max-w-work @work:px-creator-gutter", full && "@work:box-content @work:max-w-wall @work:px-creator-gutter")
         }
       >
@@ -390,6 +409,9 @@ export function PosterRenderer({
               sections.map((section) => [section.id, { blockIds: preview && section.title !== null ? section.id : undefined, ai: isAiBlock(blocks.find((block) => block.id === section.id)) }]),
             )}
             letter={letter}
+            documents={documents}
+            head={head}
+            footer={footer}
             heroProps={heroProps}
             hero={hero}
             banner={banner}
@@ -397,7 +419,7 @@ export function PosterRenderer({
           />
         ) : (
           <>
-            <PosterBar profile={profile} primary={primary} primaryBlock={contact?.id} solid={false} sections={undefined} />
+            <PosterBar profile={profile} primary={primary} primaryBlock={contact?.id} />
             {hero}
             {/* Marks the end of the hero: the Linkyo bar slides in once this has scrolled up. */}
             <div data-poster-sentinel aria-hidden />
@@ -456,14 +478,8 @@ export function PosterRenderer({
             ))}
           </Main>
         )}
-        {/* With a Linkyo bar at the bottom, the footer drops its own Linkyo credit (one is enough). */}
-        <CreatorFooter
-          className={cn("px-creator-gutter", dock ? "pb-24" : undefined)}
-          credit={!dock}
-          privacy={providers.length > 0}
-          trademarks={featured !== undefined}
-          links={footerLinks}
-        />
+        {/* Laufbahn draws its footer itself (inside its closing Kontakt band, on ink). */}
+        {signposted ? null : footer}
         {dock}
         {/* Over everything, including the claim bar, until the visitor has decided. */}
         {providers.length > 0 ? <PrivacyNotice providers={providers} /> : null}
@@ -627,6 +643,10 @@ interface PortfolioContext {
   wide: boolean;
   /** Signposted templates: the section's title (a note's icon comes from it) and the page's cover letter block. */
   section?: { title: string | null; letter: string | undefined };
+  /** Signposted templates: the documents the page offers, the head's facts (About leaves them out) and the letter's paper. */
+  documents?: DocumentsView | null;
+  head?: HeadFacts;
+  paper?: "light" | "dark";
 }
 
 /** The page's cover letter (signposted templates): the first titled section whose text is a letter, and that text block. */
@@ -740,11 +760,23 @@ function PosterBlock({
   // Signposted templates (Laufbahn) read about, skills, experience and text in their own calm way.
   const signposted = portfolio.theme.layout.headings === "signpost";
   if (signposted) {
-    if (block.type === "about") return <LaufbahnAbout block={block} />;
+    if (block.type === "about") return <LaufbahnAbout block={block} omit={[portfolio.head?.target, portfolio.head?.employer].filter((fact) => fact !== null && fact !== undefined)} />;
     if (block.type === "tools") return <LaufbahnSkills block={block} locale={portfolio.locale} />;
     if (block.type === "timeline") return <LaufbahnTimeline block={block} locale={portfolio.locale} />;
     if (block.type === "text") {
-      return <LaufbahnText text={block.text} title={portfolio.section?.title ?? null} letter={portfolio.section?.letter === block.id} locale={portfolio.locale} />;
+      const letter = portfolio.section?.letter === block.id;
+      const pdf = letter ? portfolio.documents?.letter : null;
+      return (
+        <LaufbahnText
+          text={block.text}
+          title={portfolio.section?.title ?? null}
+          letter={letter}
+          locale={portfolio.locale}
+          pdf={pdf ? { href: pdf.href, filename: pdf.filename, pages: pdf.pages } : null}
+          subject={letter ? (portfolio.documents?.subject ?? null) : null}
+          paper={portfolio.paper ?? "light"}
+        />
+      );
     }
   }
   switch (block.type) {

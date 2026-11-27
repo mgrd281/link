@@ -3,257 +3,115 @@ import { contactStatus } from "@linkyo/blocks/project";
 import { creatorTokens, tokens } from "@linkyo/tokens";
 import { PAIRING_IDS, type ResolvedCreatorTheme } from "@linkyo/tokens/creator";
 import { cn, Icon } from "@linkyo/ui";
-import { ArrowDown, BadgeCheck, FileText, MailOpen } from "lucide-react";
+import { ArrowDown, BadgeCheck, Download, FileText, MailOpen, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 
-import { initials, MediaImage, mediaSizes } from "../shared/creator-kit";
+import type { DocumentsView, FigureParts } from "@/features/documents/offer";
+import { splitFigure } from "@/features/documents/offer";
+
+import { MediaImage } from "../shared/creator-kit";
 import { LinkIconGlyph } from "../shared/link-icons";
 import { HeroMotion } from "../shared/motion";
-import { aiText, GLYPH_WIDTH, isPdf, Socials, StatusLine } from "./hero";
+import { aiText, GLYPH_WIDTH, isPdf, Socials } from "./hero";
+import { keepSeparators, lineEms, widestWord } from "./laufbahn-content";
 import { HeroLive } from "./live";
 import { ShareAction } from "./share";
-import { displayStyle, pageSide, pressable } from "./styles";
+import { displayStyle, pageSide } from "./styles";
 
 type Profile = Page["profile"];
 type Contact = BlockOf<"contact">;
+type Fact = NonNullable<BlockOf<"about">["facts"]>[number];
 
-/** Letters of the right-to-left scripts: a figure with them runs right to left, every other figure left to right. */
-const RTL_LETTERS = /[\p{Script=Arabic}\p{Script=Hebrew}]/u;
+/** The facts the head shows (the position applied for, and the employer beside it), from `targetFacts`. */
+export interface HeadFacts {
+  target: Fact | null;
+  employer: Fact | null;
+}
 
-/** How much taller than wide the plate is on a phone (72svh of a 390 × 844 screen: 608 × 390). */
-const PHONE_PLATE_RATIO = 1.56;
-/** The plate on the wide canvas: half the canvas wide, 4 : 5 (aspect-portrait). */
-const WIDE_PLATE = { width: tokens.layout.work / 2, ratio: 5 / 4 };
+/** A space that never breaks, written by its code (no invisible character in the source). */
+const NBSP = String.fromCharCode(0xa0);
+
+/** The wide canvas, its twelve columns and their gap (gap-x-6). */
+const CANVAS = "min(100cqi - 2 * var(--spacing-creator-gutter), var(--container-work))";
+const columns = (count: number) => `(${CANVAS} - 11 * var(--spacing-6)) * ${String(count)} / 12 + ${String(count - 1)} * var(--spacing-6)`;
+/** On phones the words keep the gutters; from tablet widths they stand in the reading column. */
+const NARROW = "min(100cqi - 2 * var(--spacing-creator-gutter), var(--container-prose))";
+/** Below the canvas the head's words line up with the reading column (centred), never closer to the edge than the gutter. */
+const COLUMN_INSET = "px-creator-gutter @prose:px-[max(var(--spacing-creator-gutter),calc((100cqi-var(--container-prose))/2))] @work:px-0";
+
+/** The plate on the wide canvas: four of the twelve columns, about 5 : 3 tall beside the words. */
+const WIDE_PLATE = { width: Math.round(((tokens.layout.work - 11 * tokens.spacing["6"]) * 4) / 12 + 3 * tokens.spacing["6"]), ratio: 5 / 3 };
+/** The plate on phones and tablets: the screen's width, 3 : 2 (aspect-photo). */
+const PHONE_PLATE_RATIO = 2 / 3;
 
 /**
- * The picture's `sizes`. It covers its plate, so a picture wider than the plate's shape is drawn wider
- * than the plate (a 4 : 3 photo in the phone plate is about twice the screen wide): the browser fetches
- * the width it really draws. Without a stored size the picture counts as square. A portrait that rides
- * high on phones (`portrait`) is drawn in a square the screen's width.
+ * The picture's `sizes`: it covers its plate, so a picture wider than the plate's shape is drawn wider
+ * than the plate, and the browser fetches the width it really draws. Without a stored size the picture
+ * counts as square.
  */
-function plateSizes(picture: { w?: number | undefined; h?: number | undefined }, portrait: boolean): string {
+function plateSizes(picture: { w?: number | undefined; h?: number | undefined }): string {
   const aspect = picture.w && picture.h ? picture.w / picture.h : 1;
-  const phone = portrait ? Math.max(1, aspect) : Math.max(1, aspect * PHONE_PLATE_RATIO);
+  const phone = Math.max(1, aspect * PHONE_PLATE_RATIO);
   const wide = Math.max(1, aspect * WIDE_PLATE.ratio) * WIDE_PLATE.width;
   return `(max-width: ${String(tokens.layout.work - 1)}px) ${String(Math.round(phone * 100))}vw, ${String(Math.round(wide))}px`;
 }
 
-/** The wide canvas, and the five of its twelve columns the words take beside the plate. */
-const CANVAS = "min(100cqi - 2 * var(--spacing-creator-gutter), var(--container-work))";
-const WORDS = `(${CANVAS} - 11 * var(--spacing-6)) * 5 / 12 + 4 * var(--spacing-6)`;
-/** On phones the words keep the gutters; from tablet widths they stand in the reading column. */
-const NARROW = "min(100cqi - 2 * var(--spacing-creator-gutter), var(--container-prose))";
-/** Below the canvas the words line up with the reading column (centred), never closer to the edge than the gutter. */
-const COLUMN_INSET = "@prose:px-[max(var(--spacing-creator-gutter),calc((100cqi-var(--container-prose))/2))]";
-
-/**
- * How wide a line of the name is, in em of the display face. A single word set this large has no
- * spaces to average over, so letters count by their class (measured on Inter Bold at the pairing's
- * tracking: i, l, t, r and friends narrow; m and w wide; capitals wider than lowercase), scaled to the
- * pairing's average glyph width. Scripts without capitals (Arabic) count at that average.
- */
-const NARROW_GLYPHS = /[fijlrtI'’.,:;!|]/u;
-const WIDE_GLYPHS = /[mwMW]/u;
-const LATIN_GLYPH = /\p{Script=Latin}|\p{N}/u;
-function lineEms(line: string, pairing: string): number {
-  const average = GLYPH_WIDTH[pairing] ?? GLYPH_WIDTH.classic ?? 0.53;
-  const scale = average / (GLYPH_WIDTH.classic ?? 0.53);
-  return Array.from(line).reduce((sum, glyph) => {
-    if (/\s/u.test(glyph)) return sum + 0.28 * scale;
-    if (!LATIN_GLYPH.test(glyph)) return sum + average;
-    if (NARROW_GLYPHS.test(glyph)) return sum + 0.3 * scale;
-    if (WIDE_GLYPHS.test(glyph)) return sum + 0.92 * scale;
-    return sum + (glyph === glyph.toUpperCase() && glyph !== glyph.toLowerCase() ? 0.72 : 0.6) * scale;
-  }, 0);
+/** The pairing's id and its average glyph width (the name and the figures are fitted with it). */
+function averageOf(theme: ResolvedCreatorTheme): number {
+  const pairing = PAIRING_IDS.find((id) => creatorTokens.pairings[id] === theme.pairing) ?? "classic";
+  return GLYPH_WIDTH[pairing] ?? GLYPH_WIDTH.classic ?? 0.53;
 }
 
 /**
- * The name on one line, as large as that line allows: never smaller than a headline and never larger
- * than the largest display size; over the picture also never taller than an eighth of the screen
- * (lb-name). A name too long for one line at headline size wraps where it must (balanced). The width
- * is estimated a little generously, so a fitted name never breaks by a hair.
+ * The name, type first: on phones as large as its widest word allows (each word may take its own line,
+ * so "Jonas Brandt" stands on two lines at 72 px on a 390 px phone), never below a display size; on the
+ * wide canvas the whole name on one line in the words' eight columns. Arabic stops one step lower.
+ * The estimate errs a little wide (× 1.04), so a fitted line never breaks by a hair.
  */
-function BleedName({ profile, theme, isRtl }: { profile: Profile; theme: ResolvedCreatorTheme; isRtl: boolean }) {
+function DossierName({ profile, theme, isRtl, className, style }: { profile: Profile; theme: ResolvedCreatorTheme; isRtl: boolean; className?: string | undefined; style?: CSSProperties | undefined }) {
   const t = useTranslations("creator");
-  const pairing = PAIRING_IDS.find((id) => creatorTokens.pairings[id] === theme.pairing) ?? "classic";
-  const ems = (lineEms(profile.displayName.trim(), pairing) * 1.04).toFixed(2);
+  const average = averageOf(theme);
+  const name = profile.displayName.trim();
+  const word = (lineEms(widestWord(name, average), average) * 1.04).toFixed(2);
+  const line = (lineEms(name, average) * 1.04).toFixed(2);
   const badge = profile.verified ? " - var(--spacing-icon-lg) - var(--spacing-2)" : "";
-  const fit = { "--name-fit": `calc((${NARROW}${badge}) / ${ems})`, "--name-fit-work": `calc((${WORDS}${badge}) / ${ems})` } as CSSProperties;
-  const verified = profile.verified ? (
-    <span className="ms-2 inline-block align-middle">
-      <Icon icon={BadgeCheck} size="lg" label={t("verified")} />
-    </span>
-  ) : null;
+  const fit = { "--name-fit": `calc((${NARROW}${badge}) / ${word})`, "--name-fit-work": `calc((${columns(8)}${badge}) / ${line})` } as CSSProperties;
   return (
     <h1
       // The app bar appears once the name has passed under it, as an app's large title does (BarReveal).
       data-lb-name
       className={cn(
-        "font-creator-display text-balance break-words",
-        // Over the picture: fitted to the width and capped by the screen's height (lb-name); on the wide canvas: fitted to the words' columns.
-        "lb-name @work:text-[length:clamp(var(--text-h1),var(--name-fit-work),var(--text-display-2xl))]",
-        isRtl ? "leading-tight" : "leading-none",
+        "mt-5 font-creator-display text-balance break-words @work:mt-6",
+        "text-[length:clamp(var(--text-display-sm),var(--name-fit),var(--text-display-xl))]",
+        isRtl
+          ? "leading-tight @work:text-[length:clamp(var(--text-h1),var(--name-fit-work),var(--text-display-xl))]"
+          : "leading-none @work:text-[length:clamp(var(--text-h1),var(--name-fit-work),var(--text-display-2xl))]",
+        className,
       )}
-      style={{ ...displayStyle, ...fit }}
+      style={{ ...displayStyle, ...fit, ...style }}
       {...aiText(profile, "displayName")}
     >
       {/* The name runs in its own direction (a Latin name on an Arabic page, and the reverse). */}
       <bdi dir="auto">{profile.displayName}</bdi>
-      {verified}
+      {profile.verified ? (
+        <span className="ms-2 inline-block align-middle text-white">
+          <Icon icon={BadgeCheck} size="lg" label={t("verified")} />
+        </span>
+      ) : null}
     </h1>
   );
 }
 
-/**
- * The bleed hero (Laufbahn).
- *
- * Phones: the picture from edge to edge, about three quarters of the screen tall, the role line as a
- * quiet chip and the name in white, set very large, on a veil of ink tied to the words (lb-veil), so
- * they keep AA however short the picture is. When the picture is the portrait itself (no separate
- * hero picture), it rides high in a square and fades into an ink ground, so the words stand below the
- * face, never across it. Below it, on the page: the sentence, then two actions where the thumb is
- * (LaufbahnActions: the page's first action, filled, and "Share" in a soft fill, both pills), on a
- * phone's first screen, then the numbers side by side on one soft sheet (no rules). Without any picture the
- * picture's place is an accent field with the initials, never an empty box.
- *
- * The wide canvas: one composition on twelve columns. The words on the first five (the name on two
- * lines when it has two words), the picture as a tall rounded plate on the last six.
- *
- * One DOM for every width (the name and the actions exist once). The lines rise in once when the
- * page opens; as the page scrolls, the picture (or clip) drifts a little slower than the words over
- * it, as an app's header does (lb-parallax, phones and tablets); neither with reduced motion.
- */
-export function BleedHero({
-  profile,
-  socials,
-  live,
-  theme,
-  preview,
-  contact,
-  primary,
-  now,
-  lead,
-  banner = false,
-}: {
-  profile: Profile;
-  socials: BlockOf<"socials"> | undefined;
-  live?: BlockOf<"live"> | undefined;
-  theme: ResolvedCreatorTheme;
-  preview: boolean;
-  /** The page's contact block, and its primary action (`primaryAction`): both or neither. */
-  contact?: Contact | undefined;
-  primary?: Contact["primary"] | null | undefined;
-  now: Date;
-  /** Without a contact block: where the first action leads (the letter, the first section or the start of the content). */
-  lead?: Lead | undefined;
-  /** A badge lies over the top of the page (a prepared preview, an example): the wide canvas starts below it. */
-  banner?: boolean;
-}): ReactNode {
-  const isRtl = profile.locale === "ar";
-  const picture = hasImage(profile.hero) ? profile.hero : hasImage(profile.avatar) ? profile.avatar : null;
-  // Beside the role line: the portrait when the large picture shows something else (a place, a
-  // workshop). Nothing when there is no portrait, or when the picture is the portrait.
-  const face = hasImage(profile.hero) ? (hasImage(profile.avatar) ? profile.avatar : null) : undefined;
-  // The picture is the portrait: on phones it rides high so that the words below never cover the face.
-  const portrait = picture !== null && face === undefined;
-  const enter = theme.layout.motion === "reveal";
-  const rise = (index: number) => (enter ? { className: "poster-rise", style: { "--poster-i": index } as CSSProperties } : { className: undefined, style: undefined });
-  const action = contact && primary ? { contact, primary } : null;
-
+/** The owner's availability in their own words: a still dot (decorative) and the words, on a soft pill. */
+export function StatusPill({ text, className, style }: { text: string; className?: string | undefined; style?: CSSProperties | undefined }): ReactNode {
   return (
-    <header className={cn("poster-hero-timeline grid grid-cols-1 @work:grid-cols-12 @work:grid-rows-[minmax(0,1fr)_auto] @work:gap-x-6", banner ? "@work:pt-32" : "@work:pt-24")}>
-      {/* The picture: edge to edge on phones and tablets, a tall plate on the wide canvas. */}
-      <div
-        data-hero-plate
-        className={cn(
-          "lb-plate relative col-start-1 row-start-1 overflow-hidden",
-          "@work:col-span-6 @work:col-start-7 @work:row-span-2 @work:aspect-portrait @work:h-auto @work:rounded-xl",
-          picture ? (portrait ? "lb-ground @work:bg-creator-surface-2" : "bg-creator-surface-2") : "bg-creator-accent text-creator-accent-fg",
-        )}
-      >
-        {picture ? (
-          // A portrait: a square at the top on phones, fading into the ink ground; the whole plate on the wide canvas.
-          <div className={cn("lb-parallax absolute", portrait ? "inset-x-0 top-0 aspect-square mask-b-from-60% mask-b-to-100% @work:inset-0 @work:aspect-auto @work:mask-none" : "inset-0")}>
-            <MediaImage src={picture.src} focal={picture.focal} alt={picture.alt} sizes={plateSizes(picture, portrait)} priority={!preview} />
-            {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}
-          </div>
-        ) : (
-          // No picture yet: the initials, set like a signpost on the accent. Decorative: the name is the heading.
-          <span aria-hidden className="absolute inset-x-0 top-0 bottom-2/5 grid place-items-center font-creator-display text-display-2xl leading-none @work:bottom-0" style={displayStyle}>
-            {initials(profile.displayName)}
-          </span>
-        )}
-      </div>
-
-      {/* Over the foot of the picture on phones; at the foot of the words' first row on the wide canvas. */}
-      <div
-        className={cn(
-          "relative col-start-1 row-start-1 grid min-w-0 content-end justify-items-start gap-4 self-end px-creator-gutter pb-8",
-          COLUMN_INSET,
-          "@prose:pb-10 @work:col-span-5 @work:px-0 @work:pb-2",
-          // Over the picture: white on the veil (gone on the wide canvas, where the words stand on the page).
-          picture ? "lb-veil text-white @work:text-creator-fg @work:before:hidden" : "text-creator-accent-fg @work:text-creator-fg",
-        )}
-      >
-        {live ? <HeroLive block={live} /> : null}
-        {/* The name, then the role right under it as a quiet line: name and role read as one unit. */}
-        <div className={cn("w-full min-w-0", rise(0).className)} style={rise(0).style}>
-          <BleedName profile={profile} theme={theme} isRtl={isRtl} />
-        </div>
-        {profile.tagline || face ? (
-          <p className={cn("-mt-1 flex max-w-full min-w-0 items-center gap-3 text-body font-medium @work:text-body-lg @work:font-regular @work:text-creator-fg-muted", rise(1).className)} style={rise(1).style}>
-            {/* A portrait beside the role only when the large picture shows something else; never initials. */}
-            {face ? (
-              <span className="relative size-control-sm shrink-0 overflow-hidden rounded-full">
-                <MediaImage src={face.src} focal={face.focal} alt={face.alt} sizes={mediaSizes.thumb} />
-              </span>
-            ) : null}
-            {profile.tagline ? (
-              <span dir="auto" className={cn(pageSide, "min-w-0 text-pretty break-words")} {...aiText(profile, "tagline")}>
-                {profile.tagline}
-              </span>
-            ) : null}
-          </p>
-        ) : null}
-      </div>
-
-      {/* Under the picture: the sentence, the actions (within a phone's first screen) and the numbers; under the name on the wide canvas. */}
-      <div className="grid min-w-0 gap-6 px-creator-gutter pt-6 @prose:mx-auto @prose:w-full @prose:max-w-prose @prose:px-0 @prose:pt-8 @work:col-span-5 @work:col-start-1 @work:row-start-2 @work:mx-0 @work:max-w-none @work:pt-6">
-        {profile.bio ? (
-          <p dir="auto" className={cn(pageSide, "text-body-lg text-pretty break-words text-creator-fg", rise(2).className)} style={rise(2).style} {...aiText(profile, "bio")}>
-            {profile.bio}
-          </p>
-        ) : null}
-        <LaufbahnActions profile={profile} action={action} lead={lead} now={now} className={rise(3).className} style={rise(3).style} />
-        {profile.stats?.length ? (
-          <dl className={cn("grid auto-cols-fr grid-flow-col gap-x-3 rounded-creator-card bg-creator-surface p-3 @prose:gap-x-6 @prose:p-5", rise(4).className)} style={rise(4).style}>
-            {profile.stats.map((stat) => (
-              // The label first for screen readers, the value on top for the eye: one soft sheet for all of them,
-              // space between, no rules. Words wrap between words only (no hyphen put in), even at 320 px.
-              <div key={stat.label} className="flex min-w-0 flex-col-reverse justify-end gap-1">
-                <dt dir="auto" className={cn(pageSide, "text-caption text-balance hyphens-manual break-words text-creator-fg-muted")}>
-                  {stat.label}
-                </dt>
-                {/* "40+" stays "40+" on an Arabic page; a figure in Arabic words runs right to left. On the
-                    narrowest screens a value of two words may take two lines rather than leave its column. */}
-                <dd
-                  dir={RTL_LETTERS.test(stat.value) ? "rtl" : "ltr"}
-                  className={cn(pageSide, "text-title leading-none font-semibold tabular-nums rtl:tracking-normal @prose:text-h3 @prose:rtl:tracking-normal")}
-                >
-                  {stat.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-        {socials ? (
-          <div className={rise(5).className} style={rise(5).style}>
-            <Socials block={socials} plain={theme.layout.socials === "plain"} start />
-          </div>
-        ) : null}
-      </div>
-    </header>
+    <p className={cn("inline-flex min-h-control-sm max-w-full items-center gap-2 rounded-full bg-hover-inverse px-3 text-small font-semibold text-white", className)} style={style}>
+      <span aria-hidden className="size-dot shrink-0 rounded-full bg-success" />
+      <span dir="auto" className={cn(pageSide, "min-w-0 break-words")}>
+        {text}
+      </span>
+    </p>
   );
 }
 
@@ -267,74 +125,315 @@ export interface Lead {
 }
 
 /**
- * Both hero buttons: the same height, shape and press as every button on the page (48 px, the
- * template's pill, scale on press, the focus ring). On phones they share a row when both labels fit
- * (the first action takes the larger part) and stack at full width when they do not.
+ * A button on ink: 48 px, the template's pill, a press that shrinks it a little (not with reduced
+ * motion), the overlay in the text's own colour under the pointer, and the white focus ring.
  */
-const heroButton = cn(
-  "inline-flex min-h-control-lg max-w-full min-w-0 basis-auto items-center justify-center gap-2 rounded-creator-button px-3 text-center text-body leading-snug font-semibold @prose:flex-none @prose:px-6",
-  pressable,
+export const inkButton = cn(
+  "relative isolate inline-flex min-h-control-lg min-w-0 items-center justify-center gap-2 rounded-creator-button px-4 text-center text-body leading-snug font-semibold @work:px-6",
+  "transition-[scale] duration-micro ease-standard active:scale-pressed motion-reduce:transition-none motion-reduce:active:scale-none",
+  "after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-current after:opacity-0 after:transition-opacity after:duration-micro hover:after:opacity-hover active:after:opacity-pressed",
+  "focus-visible:focus-ring-inverse",
 );
 
+/** The filled action on ink: white with ink words (never the accent, which may be ink itself). */
+export const inkFilled = "bg-white text-ink";
+/** The soft action on ink: a light fill over the ink, white words. */
+export const inkSoft = "bg-hover-inverse text-white";
+
 /**
- * The hero's actions: the page's first action as the one filled button (the contact block's primary
- * action when there is one, else "Read the letter" on an application with a cover letter, else "Read
- * on" to the first section) and "Share" beside it in a soft grey fill (no outline): the native share
- * sheet, or the address copied and announced. With a contact block its availability line stands above
- * and its CV below.
+ * The hero's two actions where the thumb is. First, filled in white: the contact block's primary
+ * action, else "Read the letter", else "Read on". Second, soft: the Lebenslauf as a PDF when the page
+ * offers one, else the owner's own CV, else "Share". The two share a row while both labels fit; below
+ * that they stack at full width.
  */
-function LaufbahnActions({
+function DossierActions({
   profile,
   action,
   lead,
-  now,
+  documents,
+  ownCv,
   className,
   style,
 }: {
   profile: Profile;
   action: { contact: Contact; primary: Contact["primary"] } | null;
   lead: Lead | undefined;
-  now: Date;
+  documents: DocumentsView | null;
+  ownCv: { href: string; label: string | null } | null;
   className?: string | undefined;
   style?: CSSProperties | undefined;
 }): ReactNode {
   const t = useTranslations("creator");
-  const line = action ? contactStatus(action.contact, now) : null;
-  const cv = action?.contact.links?.find((link) => link.kind === "cv");
-  const filled = cn(heroButton, "grow-2 bg-creator-accent text-creator-accent-fg");
+  const first = cn(inkButton, inkFilled, "grow-3 @prose:flex-none");
+  const second = cn(inkButton, inkSoft, "grow-2 @prose:flex-none");
+  const cv = documents?.cv;
   return (
-    <div data-hero-actions className={cn("grid w-full min-w-0 gap-3", className)} style={style}>
-      {line ? <StatusLine text={line} /> : null}
-      <div className="flex min-w-0 flex-wrap gap-2 @prose:gap-3">
-        {action ? (
-          <a href={action.primary.url} className={filled}>
-            {action.primary.icon ? <LinkIconGlyph icon={action.primary.icon} size="md" className="shrink-0" /> : null}
-            <span dir="auto" className="min-w-0 break-words">
-              {action.primary.label}
-            </span>
-          </a>
-        ) : lead ? (
-          <a
-            href={lead.href}
-            // "Read on" says where it leads for screen readers; the visible words come first in the name.
-            aria-label={lead.kind === "section" && lead.title ? t("laufbahn.jumpTo", { title: lead.title }) : undefined}
-            className={filled}
-          >
-            <Icon icon={lead.kind === "letter" ? MailOpen : ArrowDown} size="md" className="shrink-0" />
-            <span>{t(lead.kind === "letter" ? "laufbahn.readLetter" : "laufbahn.jump")}</span>
-          </a>
-        ) : null}
-        <ShareAction title={profile.displayName} label={t("laufbahn.share")} className={cn(heroButton, "grow bg-creator-surface-2 text-creator-fg")} />
-      </div>
-      {cv ? (
+    <div data-hero-actions className={cn("mt-6 flex min-w-0 flex-wrap gap-2 @work:mt-8 @work:gap-3", className)} style={style}>
+      {action ? (
+        <a href={action.primary.url} className={first}>
+          {action.primary.icon ? <LinkIconGlyph icon={action.primary.icon} size="md" className="shrink-0" /> : null}
+          <span dir="auto" className="min-w-0 break-words">
+            {action.primary.label}
+          </span>
+        </a>
+      ) : lead ? (
         <a
-          href={cv.url}
-          className="inline-flex min-h-touch-target items-center gap-2 justify-self-start rounded-xs text-small font-semibold text-creator-accent-text transition-colors duration-micro hover:text-creator-fg focus-visible:focus-ring motion-reduce:transition-none"
+          href={lead.href}
+          // "Read on" says where it leads for screen readers; the visible words come first in the name.
+          aria-label={lead.kind === "section" && lead.title ? t("laufbahn.jumpTo", { title: lead.title }) : undefined}
+          className={first}
         >
-          <Icon icon={FileText} size="sm" className="shrink-0" />
-          <span dir="auto">{cv.label?.trim() ? cv.label : t(isPdf(cv.url) ? "portfolio.cvPdf" : "portfolio.cv")}</span>
+          <Icon icon={lead.kind === "letter" ? MailOpen : ArrowDown} size="md" className="shrink-0" />
+          <span>{t(lead.kind === "letter" ? "laufbahn.readLetter" : "laufbahn.jump")}</span>
         </a>
       ) : null}
+      {cv ? (
+        <a href={cv.href} download={cv.filename} aria-label={t("laufbahn.downloadName", { document: t("laufbahn.cv"), pages: cv.pages })} className={second}>
+          <Icon icon={Download} size="md" className="shrink-0" />
+          <span>{t("laufbahn.cv")}</span>
+        </a>
+      ) : ownCv ? (
+        <a href={ownCv.href} className={second}>
+          <Icon icon={FileText} size="md" className="shrink-0" />
+          <span dir="auto" className="min-w-0 break-words">
+            {ownCv.label ?? t(isPdf(ownCv.href) ? "portfolio.cvPdf" : "laufbahn.cv")}
+          </span>
+        </a>
+      ) : (
+        <ShareAction title={profile.displayName} label={t("laufbahn.share")} className={second} />
+      )}
     </div>
+  );
+}
+
+/** Letters of the right-to-left scripts: a figure in them runs right to left, every other figure left to right. */
+const RTL_LETTERS = /[\p{Script=Arabic}\p{Script=Hebrew}]/u;
+
+/**
+ * The figures (at most three) on one baseline: each one a label (read first), a qualifier ("seit")
+ * over its number, the number and its unit ("%", "Jahre") at half its size, or a value in words. The
+ * three numbers share one size, as large as the widest of them allows in its column, so the row is even.
+ */
+function DossierFigures({ stats, average, className, style }: { stats: NonNullable<Profile["stats"]>; average: number; className?: string | undefined; style?: CSSProperties | undefined }): ReactNode {
+  const figures = stats.slice(0, 3).map((stat) => ({ stat, parts: splitFigure(stat.value) }));
+  const numbers = figures.flatMap(({ parts }) => (parts.kind === "number" ? [parts] : []));
+  // The widest number with its unit (the unit at half size), in em of the display face.
+  const ems = Math.max(1, ...numbers.map((parts) => lineEms(parts.number, average) + lineEms(parts.unit, average) / 2 + (parts.unit ? 0.1 : 0)));
+  const count = figures.length;
+  const column = (room: string, gap: string) => `(${room} - ${String(count - 1)} * ${gap}) / ${String(count)}`;
+  const size = {
+    "--figure-fit": `calc(${column(NARROW, "var(--spacing-4)")} / ${(ems * 1.06).toFixed(2)})`,
+    "--figure-fit-work": `calc(${column(columns(7), "var(--spacing-6)")} / ${(ems * 1.06).toFixed(2)})`,
+  } as CSSProperties;
+  const qualified = numbers.some((parts) => parts.qualifier !== "");
+  return (
+    <dl
+      className={cn(
+        "mt-10 grid gap-x-4 [--figure-size:clamp(var(--text-h2),var(--figure-fit),var(--text-display-sm))] @work:mt-16 @work:gap-x-6 @work:[--figure-size:clamp(var(--text-h1),var(--figure-fit-work),var(--text-display))]",
+        count === 3 ? "grid-cols-3" : count === 2 ? "grid-cols-2" : "grid-cols-1",
+        className,
+      )}
+      style={{ ...size, ...style }}
+    >
+      {figures.map(({ stat, parts }) => (
+        // Rows: the qualifier (kept for all when any has one, so the numbers stand level), the value, the
+        // label. The label comes first for screen readers ("Pickgenauigkeit 2025: 99,6 %").
+        <div key={`${stat.label}-${stat.value}`} className="row-span-3 grid min-w-0 grid-rows-subgrid">
+          <dt dir="auto" className={cn(pageSide, "row-start-3 mt-2 text-caption text-balance hyphens-manual break-words lb-ink-muted @work:text-small")}>
+            {stat.label}
+          </dt>
+          <FigureValue parts={parts} qualified={qualified} />
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function FigureValue({ parts, qualified }: { parts: FigureParts; qualified: boolean }): ReactNode {
+  if (parts.kind === "word") {
+    return (
+      <dd dir={RTL_LETTERS.test(parts.text) ? "rtl" : "auto"} className={cn(pageSide, "row-start-2 self-end text-h3 leading-tight font-semibold text-balance text-white @work:text-h2")}>
+        {parts.text}
+      </dd>
+    );
+  }
+  return (
+    <>
+      {qualified ? (
+        <dd dir="auto" className={cn(pageSide, "row-start-1 self-end text-small font-medium lb-ink-muted")}>
+          {parts.qualifier}
+        </dd>
+      ) : null}
+      <dd className={cn(pageSide, "row-start-2 self-end text-white")}>
+        {/* "99,6 %" stays left to right on an Arabic page. */}
+        <bdi dir="ltr" className="inline-flex items-baseline whitespace-nowrap">
+          <span className="text-[length:var(--figure-size)] leading-none font-bold tracking-display tabular-nums">{parts.number}</span>
+          {parts.unit ? (
+            <span className={cn("text-[length:calc(var(--figure-size)/2)] leading-none font-bold", /\p{L}/u.test(parts.unit) ? "ms-1" : "ms-0_5")}>{parts.unit}</span>
+          ) : null}
+        </bdi>
+      </dd>
+    </>
+  );
+}
+
+/**
+ * Laufbahn's head (ADR 0069 round 6, "Dossier"): type first, on ink from edge to edge, so a recruiter
+ * reads who, what and for which position within seconds, and the two actions are where the thumb is.
+ *
+ * In this order: the availability pill, the name (h1), the role, the target line ("Bewerbung als …"
+ * with the owner's own label and value), the place, the sentence, the two actions, then the figures
+ * (qualifier, number and unit, label) and, last on phones, the picture or clip as a plate from edge to
+ * edge (3 : 2). On the wide canvas one composition on twelve columns: the words on eight, the figures
+ * under them on seven, the plate as a tall rounded picture on the last four. No picture: no plate and
+ * no initials. One DOM for every width. The lines rise in once when the page opens; nothing in the head
+ * moves after that (no parallax), and nothing at all with reduced motion.
+ */
+export function DossierHero({
+  profile,
+  socials,
+  live,
+  theme,
+  preview,
+  contact,
+  primary,
+  now,
+  lead,
+  banner = false,
+  documents = null,
+  head = { target: null, employer: null },
+}: {
+  profile: Profile;
+  socials: BlockOf<"socials"> | undefined;
+  live?: BlockOf<"live"> | undefined;
+  theme: ResolvedCreatorTheme;
+  preview: boolean;
+  /** The page's contact block, and its primary action (`primaryAction`): both or neither. */
+  contact?: Contact | undefined;
+  primary?: Contact["primary"] | null | undefined;
+  now: Date;
+  /** Without a contact block: where the first action leads (the letter, the first section or the start of the content). */
+  lead?: Lead | undefined;
+  /** A badge lies over the top of the page (a prepared preview, an example): the words start below it. */
+  banner?: boolean;
+  /** The CV and the cover letter as PDFs (features/documents), or null. */
+  documents?: DocumentsView | null | undefined;
+  /** The position applied for and the employer, shown in the head (and no longer among About's facts). */
+  head?: HeadFacts | undefined;
+}): ReactNode {
+  const isRtl = profile.locale === "ar";
+  const picture = hasImage(profile.hero) ? profile.hero : hasImage(profile.avatar) ? profile.avatar : null;
+  const enter = theme.layout.motion === "reveal";
+  const rise = (index: number) => (enter ? { className: "poster-rise", style: { "--poster-i": index } as CSSProperties } : { className: undefined, style: undefined });
+  const action = contact && primary ? { contact, primary } : null;
+  const status = contact ? contactStatus(contact, now) : null;
+  const ownCv = documents?.ownCv ?? (() => {
+    const link = contact?.links?.find((entry) => entry.kind === "cv");
+    return link ? { href: link.url, label: link.label?.trim() ? link.label : null } : null;
+  })();
+  const dark = theme.palette.mode !== "light";
+  const average = averageOf(theme);
+  const { target, employer } = head;
+
+  return (
+    <header
+      data-lb-head
+      className={cn(
+        "poster-hero-timeline lb-ground text-white",
+        // On a dark page the step from the page to ink is small: a hairline marks the head's foot.
+        dark && "border-b border-creator-line",
+        picture ? "pb-0 @work:pb-24" : "pb-10 @work:pb-24",
+      )}
+    >
+      <div
+        className={cn(
+          "grid grid-cols-1 @work:mx-auto @work:box-content @work:max-w-work @work:grid-cols-12 @work:grid-rows-[auto_1fr] @work:gap-x-6 @work:px-creator-gutter",
+          banner ? "pt-20 @work:pt-32" : "pt-6 @work:pt-24",
+        )}
+      >
+        {/* The words: eight columns on the wide canvas. */}
+        <div className={cn("grid min-w-0 justify-items-start @work:col-span-8 @work:col-start-1 @work:row-start-1", COLUMN_INSET)}>
+          {live ? <HeroLive block={live} /> : null}
+          {status ? <StatusPill text={status} className={rise(0).className} style={rise(0).style} /> : null}
+          <div className={cn("w-full min-w-0", rise(1).className)} style={rise(1).style}>
+            <DossierName profile={profile} theme={theme} isRtl={isRtl} className={status ? undefined : "mt-0"} />
+          </div>
+          {profile.tagline ? (
+            <p data-lb-role dir="auto" className={cn(pageSide, "mt-4 max-w-full text-h3 font-medium text-balance break-words @work:text-h2 rtl:leading-normal", rise(2).className)} style={rise(2).style} {...aiText(profile, "tagline")}>
+              {keepSeparators(profile.tagline)}
+            </p>
+          ) : null}
+          {target ? (
+            <p data-lb-target className={cn("mt-3 max-w-full text-body text-pretty break-words @work:text-body-lg", rise(3).className)} style={rise(3).style}>
+              <span dir="auto" className="lb-ink-muted">
+                {target.label.trim().replace(/\s*:$/u, "")}
+              </span>{" "}
+              <bdi dir="auto" className="font-semibold text-white">
+                {target.value}
+              </bdi>
+              {employer ? (
+                <>
+                  {`${NBSP}· `}
+                  <span dir="auto" className="lb-ink-muted">
+                    {employer.label.trim().replace(/\s*:$/u, "")}
+                  </span>{" "}
+                  <bdi dir="auto" className="font-semibold text-white">
+                    {employer.value}
+                  </bdi>
+                </>
+              ) : null}
+            </p>
+          ) : null}
+          {profile.location ? (
+            <p className="mt-3 inline-flex max-w-full items-center gap-1 text-small font-medium lb-ink-muted">
+              <Icon icon={MapPin} size="sm" className="shrink-0" />
+              <span dir="auto" className="min-w-0 break-words">
+                {profile.location}
+              </span>
+            </p>
+          ) : null}
+          {profile.bio ? (
+            <p dir="auto" className={cn(pageSide, "mt-4 max-w-prose text-body text-pretty break-words lb-ink-muted @work:text-body-lg")} {...aiText(profile, "bio")}>
+              {profile.bio}
+            </p>
+          ) : null}
+          <DossierActions
+            profile={profile}
+            action={action}
+            lead={lead}
+            documents={documents}
+            ownCv={ownCv}
+            className={cn("w-full", rise(4).className)}
+            style={rise(4).style}
+          />
+          {socials ? (
+            <div className={cn("mt-6", rise(4).className)} style={rise(4).style}>
+              <Socials block={socials} plain={theme.layout.socials === "plain"} start inverse />
+            </div>
+          ) : null}
+        </div>
+
+        {/* The figures: under the words, seven columns on the wide canvas. */}
+        {profile.stats?.length ? (
+          <DossierFigures
+            stats={profile.stats}
+            average={average}
+            className={cn(COLUMN_INSET, "@work:col-span-7 @work:col-start-1 @work:row-start-2 @work:self-end", rise(5).className)}
+            style={rise(5).style}
+          />
+        ) : null}
+
+        {/* The picture or clip: last on phones and tablets, from edge to edge; a tall plate on the wide canvas. */}
+        {picture ? (
+          <div
+            data-hero-plate
+            className="relative mt-10 aspect-photo overflow-hidden bg-hover-inverse @work:col-span-4 @work:col-start-9 @work:row-span-2 @work:row-start-1 @work:mt-0 @work:aspect-auto @work:min-h-full @work:self-stretch @work:rounded-xl"
+          >
+            <MediaImage src={picture.src} focal={picture.focal} alt={picture.alt} sizes={plateSizes(picture)} priority={!preview} />
+            {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}
+          </div>
+        ) : null}
+      </div>
+    </header>
   );
 }

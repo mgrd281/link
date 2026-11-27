@@ -1,7 +1,7 @@
 "use client";
 
 import { cn, Icon } from "@linkyo/ui";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, Download, FileText, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
@@ -118,18 +118,31 @@ export function BarReveal(): ReactNode {
 }
 
 /**
- * The app bar's title on a signposted page (Laufbahn), as in a native app: the owner's name and,
- * once a section is being read, that section under it with a chevron. Pressed, it opens the
- * contents as a sheet (a native modal dialog: focus moves in and stays, Escape and a tap outside
- * close it, focus returns to the title): every section a full-width row of 56 px, the one being
- * read marked with a check. Choosing one closes the sheet and goes to the section's address, so the
- * page glides there (unless the visitor prefers less motion), the back button returns, and a letter
- * reached this way opens whole (lb-more).
+ * The app bar's title on a signposted page (Laufbahn, on ink), as in a native app: the owner's name
+ * and, once a section is being read, that section under it in the secondary white, with a chevron.
+ * Pressed, it opens the contents as a sheet (a native modal dialog: focus moves in and stays, Escape
+ * and a tap outside close it, focus returns to the title): every section a full-width row of 56 px,
+ * the one being read marked with a check and in bold. Choosing one closes the sheet and goes to the
+ * section's address, so the page glides there (unless the visitor prefers less motion), the back
+ * button returns, and a letter reached this way opens whole (lb-more). A page that offers its
+ * documents lists them as a second group: each row downloads its PDF directly.
  */
-export function SectionSwitcher({ entries, name, ai }: { entries: readonly IndexEntry[]; name: string; ai?: Record<string, string> | undefined }): ReactNode {
+export function SectionSwitcher({
+  entries,
+  name,
+  ai,
+  documents = [],
+}: {
+  entries: readonly IndexEntry[];
+  name: string;
+  ai?: Record<string, string> | undefined;
+  /** The documents (the CV, the cover letter) as direct downloads: the sheet's second group. */
+  documents?: readonly { href: string; filename?: string | undefined; label: string; rowName: string; own?: boolean | undefined }[] | undefined;
+}): ReactNode {
   const t = useTranslations("creator");
   const sheet = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const groupId = useId();
   const current = useCurrentSection(entries, "none");
   const section = current === null ? undefined : entries[current];
 
@@ -149,6 +162,8 @@ export function SectionSwitcher({ entries, name, ai }: { entries: readonly Index
   // The sheet closes before the link does its own work (the page is no longer inert by then): the
   // address changes, so :target, the back button and a shared link all follow.
   const go = () => close();
+  const row =
+    "flex min-h-control-xl items-center justify-between gap-3 px-4 text-body text-creator-fg transition-colors duration-micro hover:bg-creator-bg focus-visible:focus-ring motion-reduce:transition-none";
 
   return (
     <>
@@ -156,23 +171,19 @@ export function SectionSwitcher({ entries, name, ai }: { entries: readonly Index
         type="button"
         onClick={open}
         aria-haspopup="dialog"
-        className="group flex min-h-touch-target min-w-0 flex-1 items-center gap-1 rounded-xs text-start focus-visible:focus-ring"
+        className="group flex min-h-touch-target min-w-0 flex-1 items-center gap-1 rounded-xs text-start focus-visible:focus-ring-inverse"
       >
         <span className="grid min-w-0">
-          <span
-            dir="auto"
-            className={cn(pageSide, "truncate transition-[font-size,color] duration-standard ease-standard motion-reduce:transition-none", section ? "text-caption text-creator-fg-muted" : "text-body font-semibold")}
-            {...ai}
-          >
+          <span dir="auto" className={cn(pageSide, "truncate text-small leading-snug font-semibold text-white")} {...ai}>
             {name}
           </span>
           {section ? (
-            <span dir="auto" className={cn(pageSide, "truncate text-body leading-snug font-semibold")}>
+            <span dir="auto" className={cn(pageSide, "truncate text-caption lb-ink-muted")}>
               {section.title}
             </span>
           ) : null}
         </span>
-        <Icon icon={ChevronDown} size="sm" className="shrink-0 text-creator-fg-muted transition-colors duration-micro group-hover:text-creator-fg" />
+        <Icon icon={ChevronDown} size="sm" className="shrink-0 lb-ink-muted transition-colors duration-micro group-hover:text-white motion-reduce:transition-none" />
         <span className="sr-only">{t("laufbahn.openSections")}</span>
       </button>
       <dialog ref={sheet} aria-labelledby={titleId} className="lb-sheet">
@@ -195,12 +206,7 @@ export function SectionSwitcher({ entries, name, ai }: { entries: readonly Index
           <ol className="grid overflow-hidden rounded-creator-card bg-creator-surface">
             {entries.map((entry, index) => (
               <li key={entry.anchor} className="min-w-0 not-first:border-t not-first:border-creator-line">
-                <a
-                  href={`#${entry.anchor}`}
-                  onClick={go}
-                  aria-current={index === current ? "true" : undefined}
-                  className="flex min-h-control-xl items-center justify-between gap-3 px-4 text-body font-semibold text-creator-fg transition-colors duration-micro hover:bg-creator-bg focus-visible:focus-ring motion-reduce:transition-none"
-                >
+                <a href={`#${entry.anchor}`} onClick={go} aria-current={index === current ? "true" : undefined} className={cn(row, "font-medium aria-[current=true]:font-bold")}>
                   <span dir="auto" className={cn(pageSide, "min-w-0 text-pretty")}>
                     {entry.title}
                   </span>
@@ -209,6 +215,25 @@ export function SectionSwitcher({ entries, name, ai }: { entries: readonly Index
               </li>
             ))}
           </ol>
+          {documents.length > 0 ? (
+            <>
+              <h3 id={groupId} className="mt-3 px-1 text-small font-semibold text-creator-fg-muted">
+                {t("laufbahn.documentsGroup")}
+              </h3>
+              <ul aria-labelledby={groupId} className="grid overflow-hidden rounded-creator-card bg-creator-surface">
+                {documents.map((document) => (
+                  <li key={document.href} className="min-w-0 not-first:border-t not-first:border-creator-line">
+                    <a href={document.href} download={document.filename} onClick={go} aria-label={document.own ? undefined : document.rowName} className={cn(row, "font-semibold")}>
+                      <span dir="auto" className={cn(pageSide, "min-w-0 text-pretty")}>
+                        {document.own ? document.label : t("laufbahn.pdfRow", { document: document.label })}
+                      </span>
+                      <Icon icon={document.own ? FileText : Download} size="md" className="shrink-0 text-creator-accent-text" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
         </div>
       </dialog>
     </>

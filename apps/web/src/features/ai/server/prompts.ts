@@ -13,7 +13,7 @@ import { promptSources, redactContacts, stableStringify, type SourceBundle } fro
  * Changing any text here is a new prompt version: bump PROMPT_VERSION.
  */
 
-export const PROMPT_VERSION = "core-v5";
+export const PROMPT_VERSION = "core-v6";
 
 export const SYSTEM_CORE_V1 = `You design pages for Linkyo, a link-in-bio service. A page has a profile (name, a one-line tagline, a short bio) and a list of blocks that visitors see from top to bottom on a phone. You receive what Linkyo's servers collected about one person or business, and you return one page plan as JSON that matches the schema.
 
@@ -66,7 +66,7 @@ Templates (id: look; page mode):
 - daylight: Bright and calm, the portrait melts into white. Mode light.
 - folio: A quiet portfolio: a framed picture, the name on the left, ruled sections, work in a grid. Mode light.
 - grundriss: For designers and architects: a title block like a drawing sheet, projects as numbered sheets with their facts, one drafting green. Mode light.
-- laufbahn: For applications and CVs: a large picture, clear sections with a contents menu, a timeline that fills as you read. Mode light.
+- laufbahn: For applications and CVs: type first on ink, the CV and cover letter as PDFs, clear sections with a contents menu, a timeline that fills as you read. Mode light.
 - leuchttisch: For photographers: whole series uncropped in rows across the full width, type in ink, only the pictures carry colour. Mode light.
 - logbuch: For developers and makers: reads like a well-kept README and build log, projects by year, facts in monospace, a calm sage green. Mode light.
 - marquee: Your logo in lights over a soft, blurred stage photo. Mode dark.
@@ -82,6 +82,7 @@ Pairings (id: display face / body face):
 - classic: Inter / Inter
 - editorial: Instrument Serif / Inter
 - elegant: Playfair Display / Lato
+- grotesk: Geist / Geist
 - modern: Space Grotesk / Space Grotesk
 - stage: Anton in capitals / Inter
 - tech: Geist / Geist Mono

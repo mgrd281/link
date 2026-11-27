@@ -25,7 +25,8 @@ const tuple = (values: readonly string[]): NonEmpty => {
 /**
  * Templates the AI's catalogue does not offer yet: a template added to the tokens before its renderer
  * is listed here until the change that draws it takes the next plan and prompt versions and lists it
- * in the catalogue. Empty: plan-v4 and core-v5 offer Stage 3's Leuchttisch, Grundriss and Logbuch.
+ * in the catalogue. Empty: plan-v4 and core-v5 offer Stage 3's Leuchttisch, Grundriss and Logbuch; plan-v5 and
+ * core-v6 add the grotesk pairing (Laufbahn round 6).
  */
 export const TEMPLATES_NOT_OFFERED: readonly string[] = [];
 
@@ -98,7 +99,7 @@ export const pagePlanSchema = z
   })
   .strict();
 export type PagePlan = z.infer<typeof pagePlanSchema>;
-export const PAGE_PLAN_VERSION = "plan-v4";
+export const PAGE_PLAN_VERSION = "plan-v5";
 
 type JsonObject = Record<string, unknown>;
 
