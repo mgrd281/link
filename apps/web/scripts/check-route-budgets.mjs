@@ -219,7 +219,7 @@ export function readTraces(appDir) {
     /** @type {{ files: string[] }} */
     const trace = JSON.parse(readFileSync(file, "utf8"));
     const traced = trace.files.map((name) => name.split("\\").join("/"));
-    return { route, missing: DOCUMENT_FONTS.filter((face) => !traced.some((name) => name.endsWith(`/geist/dist/fonts/geist-sans/${face}`))) };
+    return { route, missing: DOCUMENT_FONTS.filter((face) => !traced.some((name) => name.endsWith(`/src/features/documents/pdf/fonts/${face}`))) };
   });
 }
 
