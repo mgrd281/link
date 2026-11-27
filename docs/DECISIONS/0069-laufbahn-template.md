@@ -342,11 +342,13 @@ the other two. This round is the page; the PDFs are their own ADR, [0089](0089-l
   reduced motion.
 - **A portrait only of the person.** "Über mich" shows round 5's portrait beside the facts only for a
   picture of the person (`isPersonPicture`: not one of Linkyo's library stills, which are drawings or
-  stock scenes). Otherwise the facts stand alone on one soft sheet in even rows, the columns decided
-  for the whole set (`factColumns`): short facts two to a row, four on the wide canvas (three when
-  there are three); with any long fact (a value over 18 characters, a label over 14), one to a row on
-  phones and two from tablets on, every fact the same width. **On Sevag's page the drawn still leaves
-  About until he sends a real photo: the founder's OK is needed for that.**
+  stock scenes). Otherwise the facts stand alone on one soft sheet in full rows (`factRows`, review 2):
+  at each width as many to a row as the longest fact allows on one line (at most two on phones, three
+  on tablets, four on the wide canvas; a value up to 18, 23 or 22 characters for those), the rows as
+  even as they can be with the fuller ones first (five: three and two), each row filling the sheet's
+  twelve columns, and never a fact alone beside an empty half: then one fact a row. The sample's three
+  facts are one row of three on the wide canvas and one a row below it. **On Sevag's page the drawn
+  still leaves About until he sends a real photo: the founder's OK is needed for that.**
 - **The letter is set as a letter:** white paper on a light page (the page's surface on a dark one), its
   reading time and its own PDF as a small pill in the top line, the PDF's subject ("Bewerbung als …")
   above the owner's paragraphs, which stay exactly as written. The paper spans the content's columns
@@ -368,7 +370,11 @@ the other two. This round is the page; the PDFs are their own ADR, [0089](0089-l
   download, no sheet group, no letter pill and no subject; the hero's second action is "مشاركة" and the
   bar on the wide canvas has one Share. Everything mirrors by logical properties alone; "منذ" stands
   over its number, figures are isolated left to right and set in Geist (`rtl:font-display`): the
-  Arabic pairing's face has no Latin digits, which fell to a system face.
+  Arabic pairing's face has no Latin digits, which fell to a system face. The same holds for the
+  career's years, roles, places and notes and for the head's status, role, target line, place and
+  sentence (review 2): their Latin runs ("2021 –", "·", "SAP", "(B1)", "1 … 2027") are set in Geist
+  (`LatinRuns`, `latinRuns`), the Arabic words and the spaces between them stay in IBM Plex Sans
+  Arabic.
 - **Names that read as they look (WCAG 2.5.3).** A download's accessible name starts with its visible
   words: "Lebenslauf herunterladen (PDF, 1 Seite)" for the hero's "Lebenslauf", "Lebenslauf · PDF
   herunterladen" for a row, "Anschreiben als PDF herunterladen (1 Seite)" for the letter's "PDF" pill;
@@ -393,9 +399,9 @@ CSS px from the top of the page):
 | 768 × 1024 | 148 | 229 | 399 | 525 |
 | 1440 × 900 | 256 | 345 | 530 | 698 |
 
-At 360 px the two actions stack ("E-Mail schreiben" and "Lebenslauf" need about 350 px side by side);
-everything named, figures included, is still on the first screen. No horizontal scroll at 360, 390, 768
-or 1440 in de, en and ar.
+At 360 px the two actions stack ("E-Mail schreiben" and "Lebenslauf" need 325 px side by side, the
+row has 320); everything named, figures included, is still on the first screen. No horizontal scroll
+at 360, 390, 768 or 1440 in de, en and ar.
 
 | Pair (measured in the browser) | Ratio |
 |---|---|
@@ -414,5 +420,32 @@ picture baseline are byte-equal (95 of 103; the 8 that differ are Laufbahn's own
 (`audit/laufbahn-v6/build-page/today-vs-new-*.png`), and three decisions to confirm: the ink,
 type-first head; Sevag's drawn portrait leaving "Über mich" until his own photo; "Teilen" moving out of
 the hero when a CV is offered.
+
+### Round 6, review 2 (2026-11-27)
+
+- **The career's dots sit on the rail.** The class that centred them,
+  `-start-[calc(var(--spacing-dot)/2+var(--spacing-0_5)/2)]`, compiled to `var(--spacing-0 5)`:
+  Tailwind reads `_` in an arbitrary value as a space except in a `var()` it recognises, and a `var(`
+  straight after an operator is not one. The minifier dropped the rule and every dot hung 5 px beside
+  the rail. The offset is now a utility, `lb-node` (globals.css); dot centre minus rail centre measures
+  0 px in de and ar at 360, 390 and 1440 (was 5). A guard compiles every class in the app and the UI kit
+  that names an underscored token with Tailwind itself and fails when the name loses its underscore
+  (`design-system/arbitrary-values.test.ts`); the e2e measures the dots in de and ar.
+- **No fact alone beside an empty half** (`factRows`, see "A portrait only of the person" above): the
+  sample's facts were "Sprachen | Führerschein" over a lone "Arbeitszeit" at 768 and 1440. The test now
+  asserts full rows for one to eight facts of every length at every width.
+- **Arabic Latin runs in Geist** (see "Arabic pages" above): the career's years and the role's "·" were
+  drawn in a system face; a CDP check of the platform fonts now allows only Geist and IBM Plex Sans
+  Arabic for the career's years, the role and the status.
+- **The hero's two actions on phones: one row while both fit, else both at full width.** On phones the
+  two buttons keep `px-3` (`px-4` from tablets on, `px-6` on the wide canvas); both grow to fill their
+  row, so the narrower padding only shows at the point of wrapping. Measured (intrinsic widths):
+  "Anschreiben lesen" 193 px + "Lebenslauf" 137 px + 8 px = 338 px: one row at 390 (350 px of room),
+  stacked at 375 and 360; "E-Mail schreiben" 180 px + "Lebenslauf": 325 px, one row at 390 and 375,
+  stacked at 360. The spec's "one row at 390 and 360" holds only for short pairs; a page without a
+  contact block (Sevag's in CI) has the "Anschreiben lesen" pair. The private spec asserts exactly that
+  (one row at 390, stacked at full width at 360, any page count in the name), and the fictional
+  `?page=application-no-contact` (the sample without its contact block) checks the same layout where
+  reviews may run it.
 
 **Status.** Accepted.

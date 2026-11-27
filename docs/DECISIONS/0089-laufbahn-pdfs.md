@@ -59,14 +59,16 @@ installed and none may be added.
    - the owner's text exactly: no salutation and no closing are ever added. A closing the letter has
      gets 12.7 mm of signature space before the name; a closing with no name after it gets the
      sender's own name (form, not invention);
-   - the closing is a line that is a closing and nothing else ("Mit freundlichen Grüßen", "Kind
-     regards,"), searched from the end of the last paragraph and followed by at most a short signature
-     (three lines of up to 60 characters), or the last line of the paragraph before a name that stands
-     alone. A sentence that merely holds the words ("I am sincerely …", "beste Grüße an das Team") is
-     body text. Whatever the owner wrote before the closing in the same paragraph (a letter typed with
-     single line breaks is one paragraph) is set as body text: wrapped to the text column and split
-     across pages like any paragraph. Only the closing line, the signature space and the name are
-     kept together, and every one of their lines wraps too;
+   - the closing is a line that is a closing and nothing else ("Mit freundlichen Grüßen", "Mit
+     freundlichem Gruß", "Mit besten Grüßen", "Herzliche Grüße", "Liebe Grüße", each also with the Swiss
+     "ss"; "Kind regards,", "Best regards,", "Warm regards,", "Regards,", "Best wishes,", "Yours
+     sincerely,", "Yours truly," and the like), searched from the end of the last paragraph and followed
+     by at most a short signature (three lines of up to 60 characters), or the last line of the
+     paragraph before a name that stands alone. A sentence that merely holds the words ("I am sincerely
+     …", "beste Grüße an das Team") is body text. Whatever the owner wrote before the closing in the
+     same paragraph (a letter typed with single line breaks is one paragraph) is set as body text:
+     wrapped to the text column and split across pages like any paragraph. Only the closing line, the
+     signature space and the name are kept together, and every one of their lines wraps too;
    - "Anlage: Lebenslauf" only in the combined file, where the CV really follows.
 8. **Dates**: the letter's "Datum" is the request's day (Europe/Berlin); the CV's "Stand" is the
    page's last save (public pages only; prepared pages have none and print none).
@@ -107,9 +109,12 @@ installed and none may be added.
     (on the grid, labels and values each in their own column), as long as the block stays a gutter
     clear of the head's words level with it; a value too wide for that, or a photo in the corner,
     puts the rows under the accent rule (label and value on one line, in the twelve columns, or the
-    eight beside a photo). In the letter's information block (48 mm for a value) the contact values
-    step down together from 8.5 to at most `info-min` (7 pt) until the widest fits. Only a value
-    wider than its block at that size breaks, as a last resort. Every address is one link rectangle.
+    eight beside a photo). The figures start 8 mm under the rule, or 8 mm under the contact rows where
+    those reach past the rule into the figures' columns (a sparse head beside a block of four rows from
+    column 7 or 8), so a figure's "seit" never sits right under "Wohnort" and reads as one more row.
+    In the letter's information block (48 mm for a value) the contact values step down together
+    from 8.5 to at most `info-min` (7 pt) until the widest fits. Only a value wider than its block at
+    that size breaks, as a last resort. Every address is one link rectangle.
 12. **Reading order.** Each section's title comes before its first row in the content stream, so
     extraction, copying and screen readers read "Profil", then the profile.
 13. **Paper colours** come from the page's palette resolved in light mode (paper is white even when the
@@ -201,3 +206,11 @@ itself, fonts missing from the serverless traces, and no way to download in the 
 and 14 to 17 above say what holds now; `splitFigure` takes a number only after whole words and a
 space ("seit 2019", "Top 3"), so a digit inside a word ("SAP S/4HANA", "C1", "B2B", "Win11") stays a
 word, on paper and on the page. Each fix has a test that fails without it.
+
+The second review (same day) found two more: common closings that were not recognised ("Mit
+freundlichem Gruß", "Mit besten Grüßen", "Herzliche Grüße", the Swiss "Grüsse", "Best wishes",
+"Regards,", "Yours truly,"), so those letters got the name one line under the closing instead of
+12.7 mm of signature space, and figures 3.6 mm under a top-right contact block that reached past the
+rule. Point 7 and point 11 say what holds now; a table test sets each closing before "Jonas Brandt"
+(DIN.signature plus one leading every time) and keeps the same words inside a sentence as body text,
+and a layout test puts the first figure at least 8 mm under the block's last row.
