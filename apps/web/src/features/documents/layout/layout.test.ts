@@ -7,7 +7,7 @@ import { documentInput, type DocumentInput } from "../input";
 import { paperLabels } from "../labels";
 import { miniatureOf } from "../miniature-marks";
 import { loadFonts } from "../pdf/fonts";
-import { AREA_END, BASELINE, columnX, DIN, HEAD, MARGIN, mm, PHOTO, RULE, SPACE, TYPE } from "../print-tokens";
+import { AREA_END, BASELINE, columnX, DIN, HEAD, MARGIN, mm, PHOTO, RULE, SPACE, span, toMm, TYPE } from "../print-tokens";
 
 import { layoutCv } from "./cv";
 import { flow, paragraphUnit } from "./flow";
@@ -152,6 +152,52 @@ describe("layoutCv", () => {
       expect(units[index]?.y).toBe(number.y);
     });
     expect((units[0]?.width ?? 0) - measure("%", TYPE.figureUnit, metrics)).toBeCloseTo(measure(" ", TYPE.figureUnit, metrics), 6);
+  });
+
+  it("keeps every figure's number and unit inside its three columns: one smaller size for all, words as the last resort", () => {
+    const withStats = (values: string[]): Page => {
+      const base = jonasDe();
+      return { ...base, profile: { ...base.profile, stats: values.map((value, index) => ({ value, label: `Kennzahl ${String(index + 1)}` })) } };
+    };
+    const cellEnd = (index: number) => columnX(1 + index * 3) + span(1, 3);
+    const cases: [values: string[], scaled: boolean][] = [
+      [["1.250.000 km", "100.000.000", "seit 2019"], true],
+      [["99,6 %", "100.000.000", "1.250.000 km"], true],
+      [["99,6 %", "40+", "12 Jahre"], false],
+      // Outside the schema (more than 12 characters): too wide even at the size of a figure in words.
+      [["1.000.000.000.000.000", "99,6 %", "seit 2019"], true],
+    ];
+    for (const [values, scaled] of cases) {
+      const page = cv(withStats(values)).pages[0] ?? { boxes: [] };
+      const labels = texts(page).filter((run) => run.style === TYPE.figureLabel);
+      const labelTop = Math.min(...labels.map((run) => run.y - capHeight(run.style, metrics)));
+      // The head's runs of the figures: bold, between the accent rule and the labels, in columns 1 to 9.
+      const heads = texts(page).filter((run) => run.style.face === "bold" && run.y < labelTop && run.y > MARGIN.top + 20 && run.x < columnX(10) && run.style !== TYPE.name && run.style.size <= TYPE.figure.size);
+      expect(heads.length, values.join(" | ")).toBeGreaterThanOrEqual(3);
+      for (const run of heads) {
+        const index = [0, 1, 2].findLast((cell) => run.x >= columnX(1 + cell * 3) - 0.01) ?? 0;
+        expect(run.x + run.width, `${values.join(" | ")}: "${run.text}" ends ${String(toMm(run.x + run.width))} mm, its cell ${String(toMm(cellEnd(index)))} mm`).toBeLessThanOrEqual(cellEnd(index) + 0.01);
+      }
+      // No two runs on one baseline overlap (the review's "100.000.0002019").
+      for (const a of heads) {
+        for (const b of heads) {
+          if (a === b || Math.abs(a.y - b.y) > 0.01 || a.x >= b.x) continue;
+          expect(a.x + a.width, `"${a.text}" and "${b.text}"`).toBeLessThanOrEqual(b.x + 0.01);
+        }
+      }
+      // One size for every number, 20 pt when all fit, never under the size of a figure in words.
+      // (A number's line is the figure's 20 pt line at any size; a unit holds no digit; words have their own line.)
+      const numbers = heads.filter((run) => run.style.leading === TYPE.figure.leading && /\p{Nd}/u.test(run.text));
+      const sizes = [...new Set(numbers.map((run) => run.style.size.toFixed(4)))];
+      expect(sizes.length, `${values.join(" | ")}: ${sizes.join(", ")}`).toBe(1);
+      const size = Number(sizes[0]);
+      expect(size < TYPE.figure.size, values.join(" | ")).toBe(scaled);
+      expect(size).toBeGreaterThanOrEqual(TYPE.figureWord.size - 1e-6);
+    }
+    // The 21-digit value is set in words at the figure-word size, broken inside its cell.
+    const words = texts(cv(withStats(["1.000.000.000.000.000", "99,6 %", "seit 2019"])).pages[0] ?? { boxes: [] }).filter((run) => run.style === TYPE.figureWord);
+    expect(words.length).toBeGreaterThanOrEqual(2);
+    for (const run of words) expect(run.x + run.width).toBeLessThanOrEqual(cellEnd(0) + 0.01);
   });
 
   it("never breaks an e-mail address that fits on one line: one run, one link rectangle", () => {
@@ -451,6 +497,24 @@ describe("layoutLetter", () => {
       "Yours sincerely,",
       "Yours faithfully,",
       "Yours truly,",
+      // With the place written after it, and the forms that close a letter only on a line of their own.
+      "Mit freundlichen Grüßen aus Bremen",
+      "Freundliche Grüße aus Bremen",
+      "Viele Grüße aus Bremen",
+      "Schöne Grüße",
+      "Herzlichst",
+      "Gruß",
+      "Kind regards from Bremen,",
+      "Respectfully,",
+      "Respectfully yours,",
+      "Thank you,",
+      "Thank you for your consideration,",
+      "Many thanks,",
+      "Thanks and regards,",
+      "All the best,",
+      "Best,",
+      "Cordially,",
+      "Yours,",
     ];
     for (const closing of closings) {
       const doc = letter(withLetter(`Sehr geehrte Frau Albers,\n\n${BODY}\n\n${closing}\nJonas Brandt`));
@@ -467,8 +531,27 @@ describe("layoutLetter", () => {
       "Regards to the whole team, and thank you for reading.",
       "I send my best wishes to the team in hall 3.",
       "With regards to the night shifts, I am flexible.",
+      "Thank you for reading, and best of luck to the team in hall 3.",
+      "Best of luck with the new hall.",
+      "Yours is the team I want to join.",
+      "Viele Grüße aus Bremen an alle, die mich kennen, und an Halle 3.",
     ]) {
       expect(closingOf(["Sehr geehrte Frau Albers,", sentence], "Jonas Brandt"), sentence).toBeNull();
+    }
+  });
+
+  it("signs a letter that ends with a closing alone, 'Respectfully,' too: the name after the signature space", () => {
+    for (const closing of ["Respectfully,", "Viele Grüße aus Bremen", "Mit freundlichen Grüßen"]) {
+      // A letter long enough to read as one (isLetter), its last line the closing and nothing after it.
+      const text = `Sehr geehrte Frau Albers,\n\nseit 2017 arbeite ich in Lagern von Handel und Industrie: Ich nehme Ware an, lagere sie ein, kommissioniere und verlade, mit Scanner, SAP und Stapler. Ich lerne neue Abläufe schnell und arbeite gern im Team, auch im Schichtbetrieb und nachts.\n\nÜber eine Einladung zu einem Gespräch freue ich mich sehr.\n\n${closing}`;
+      const doc = letter(withLetter(text));
+      const body = texts(doc.pages[0] ?? { boxes: [] }).filter((run) => run.style === TYPE.letterBody);
+      const greeting = body.find((run) => run.text.replaceAll(NB, " ") === closing);
+      const name = body.find((run) => run.text === "Jonas Brandt");
+      expect(greeting, closing).toBeDefined();
+      expect(name, closing).toBeDefined();
+      expect(close((name?.y ?? 0) - (greeting?.y ?? 0), DIN.signature + TYPE.letterBody.leading), closing).toBe(true);
+      expect(toMm(DIN.signature + TYPE.letterBody.leading)).toBeGreaterThan(12.7);
     }
   });
 

@@ -561,11 +561,35 @@ const CLOSINGS = [...GERMAN_CLOSINGS.map((closing) => closing.replaceAll("ß", "
 /** A closing anywhere in a text, as whole words ("regards", never "disregards"). */
 export const CLOSING = new RegExp(`(?<![\\p{L}])(${CLOSINGS})(?![\\p{L}])`, "u");
 /**
- * A line that is a closing and nothing else ("Mit freundlichen Grüßen", "Kind regards,"), lower case:
- * the letter's PDF sets the signature space after it. A sentence that merely holds one of the words
- * ("I am sincerely …") is no closing.
+ * Closings that are one only as a line of their own: too common inside a sentence ("best", "thank
+ * you", "yours") to tell a letter by (CLOSING, isLetter), but on a line alone at the letter's end they
+ * close it, and the name goes after the signature space.
  */
-export const CLOSING_LINE = new RegExp(`^\\s*(?:${CLOSINGS})\\s*[,.!]?\\s*$`, "u");
+const LINE_CLOSINGS = [
+  "schöne grüße",
+  "schönen gruß",
+  "herzlichst",
+  "gruß",
+  "grüße",
+  "respectfully yours",
+  "respectfully",
+  "thank you for your consideration",
+  "thank you",
+  "thanks and regards",
+  "many thanks",
+  "all the best",
+  "cordially",
+  "best",
+  "yours",
+].map((closing) => closing.replaceAll("ß", "(?:ß|ss)"));
+/** Where the owner writes from, after a closing: "Viele Grüße aus Bremen", "Kind regards from Bremen". */
+const FROM_PLACE = "(?:\\s+(?:aus|from)\\s+[\\p{L}\\p{M}\\- ]{1,40})?";
+/**
+ * A line that is a closing and nothing else ("Mit freundlichen Grüßen", "Kind regards,", "Viele
+ * Grüße aus Bremen", "Respectfully,"), lower case: the letter's PDF sets the signature space after it.
+ * A sentence that merely holds one of the words ("I am sincerely …") is no closing.
+ */
+export const CLOSING_LINE = new RegExp(`^\\s*(?:${CLOSINGS}|${LINE_CLOSINGS.join("|")})${FROM_PLACE}\\s*[,.!]?\\s*$`, "u");
 
 /**
  * Whether a section's text is a letter: a long read under a title that names one, or a long read that
