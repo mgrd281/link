@@ -174,11 +174,58 @@ installed and none may be added.
 - **Full font embedding** (three faces). Subsetting (glyf/loca, composite glyphs) is v1.1, with solid
   tests.
 - Dashboard previews show no PDF UI.
-- A real project already at one of the six new reserved slugs would be shadowed by the document
-  route: check the live database once it is free and list any such project here.
-- The PDF answers still carry the `Link` header with `hreflang` alternates that next-intl adds to every
-  localized route (`/ar/p/<slug>/cv` among them, which is a 404). Harmless for a `noindex` attachment;
-  drop it for the document routes when the proxy is next touched.
+- A real project already at one of the six new reserved slugs: see "Pre-release check" below.
+
+## Pre-release check (live database)
+
+`RESERVED_PROJECT_SLUGS` gained six words with round 6: `letter`, `application`, `lebenslauf`,
+`anschreiben`, `bewerbung` and `unterlagen` (`cv` was reserved before). A real project that already
+lives at one of them is cut off: the proxy no longer sends `/<username>/<word>` to the project route
+(a reserved word is no project address, `creatorRewrite`), so at `letter` and `application` the
+document route answers instead (a PDF or a 404) and at the other four nothing does; a former address in `was` at one of them stops
+forwarding for the same reason; and the schema refuses each of the six as a `slug`, so the owner's
+next save of that page fails. Before this round goes live, the lead runs this read-only query against
+the live database (SQL editor or `psql`, never from the app) and lists every row here:
+
+```sql
+-- Projects whose address, or a former address that forwards to it, is one of the six new words.
+select p.username,
+       b.block ->> 'title' as title,
+       b.block ->> 'slug' as slug,
+       b.block -> 'was' as former
+from public.sites s
+join public.profiles p on p.id = s.profile_id
+cross join lateral jsonb_array_elements(
+  case when jsonb_typeof(s.page -> 'blocks') = 'array' then s.page -> 'blocks' else '[]'::jsonb end
+) as b (block)
+where b.block ->> 'type' = 'project'
+  and (
+    b.block ->> 'slug' in ('letter', 'application', 'lebenslauf', 'anschreiben', 'bewerbung', 'unterlagen')
+    or (
+      jsonb_typeof(b.block -> 'was') = 'array'
+      and b.block -> 'was' ?| array['letter', 'application', 'lebenslauf', 'anschreiben', 'bewerbung', 'unterlagen']
+    )
+  )
+order by p.username, slug;
+```
+
+Expected: few rows or none, but a title such as "Bewerbung" made exactly that address before round 6,
+so a row is possible. For each row: tell the owner, change the project's address in its form (the old
+one moves to `was`, but cannot forward: no reserved word reaches the project route), and note the
+account and the new address here. **Not run yet:** the database was off limits while
+round 6 was built (2026-11-27). Only `public.sites` holds the live pages; the version history
+(`public.site_versions`) is left out, as a restored version passes the schema again when it is saved.
+
+## Proxy: no hreflang alternates on the PDFs
+
+next-intl's middleware adds a `Link` header of `hreflang` alternates to every localized address. On a
+prepared page's PDFs it named `/ar/p/<slug>/cv`, a 404 (Arabic pages offer no documents), for an
+attachment that exists in one language. The proxy now drops that header for `/<locale>/p/<slug>/cv`,
+`/letter` and `/application` (`isPreparedDocument`, `lib/creator-path.ts`) and leaves every other
+address its alternates, the page itself included. `/u/<username>/…` never had one: next-intl stays
+out of creator pages. Checked by `src/proxy.test.ts` (fails without the line) and by
+`e2e/documents-app.spec.ts` (no `link` header on any of the five fictional PDFs; the example page
+keeps its alternates).
 
 ## Integration with the page (Laufbahn round 6)
 
