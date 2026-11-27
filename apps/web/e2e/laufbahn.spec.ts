@@ -15,7 +15,10 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
  * "Unterlagen" and list the documents as a second group; on the wide canvas the titles hang beside
  * their sections and the chip index is the tablet's. This file was brought to round 6 by reading the
  * code only: it opens a real person's page, which the review runs never open. The template itself is
- * checked on fictional pages in e2e/laufbahn-dossier-app.spec.ts.
+ * checked on fictional pages in e2e/laufbahn-dossier-app.spec.ts. Since review 4, "Über mich" keeps
+ * his drawn still beside the facts (the founder's choice), "Beides in einer Datei · 2 Seiten" keeps
+ * its no-break spaces and the career's rail is a column of its own; the assertions changed for that
+ * were run once on the fictional application without a contact block and on the portfolio sample.
  */
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -120,9 +123,17 @@ test.describe("Laufbahn", () => {
     const bar = await page.locator(".poster-bar").boundingBox();
     const box = await title.boundingBox();
     expect(box && bar && box.y >= bar.y + bar.height).toBe(true);
-    // The index marks the section being read.
-    await expect(index.getByRole("link", { name: "Werdegang" })).toHaveAttribute("aria-current", "true");
+    // The index marks the section being read: the last one whose top has passed the reading line, at
+    // 35 % of the screen. His career has two steps, so at 1180 px the section after it ("Neu für mich:
+    // das Tönen") may have passed the line as well; then that one is marked, never an earlier one.
+    const read = await page.evaluate(() => {
+      const line = window.innerHeight * 0.35;
+      const passed = [...document.querySelectorAll("#page-content > section.lb-section")].filter((section) => section.getBoundingClientRect().top <= line);
+      return passed.at(-1)?.querySelector(":scope > h2")?.textContent ?? "";
+    });
+    expect(["Werdegang", "Neu für mich: das Tönen"]).toContain(read);
     await expect(index.locator("[aria-current]")).toHaveCount(1);
+    await expect(index.locator("[aria-current='true']")).toHaveText(read);
     // His page has a cover letter and no contact block: the hero's first action leads to the letter.
     await page.goto(SEVAG);
     await expect(index.getByRole("link", { name: "Über mich" })).toHaveAttribute("aria-current", "true");
@@ -335,7 +346,8 @@ test.describe("Laufbahn", () => {
     await expect(links).toHaveText(["Über mich", "Was ich mitbringe", "Werdegang", "Neu für mich: das Tönen", "Anschreiben", "Unterlagen"]);
     await expect(sheet.locator("[aria-current='true']")).toHaveCount(1);
     const documents = sheet.getByRole("list", { name: "Unterlagen" }).getByRole("link");
-    await expect(documents).toHaveText(["Lebenslauf · PDF", "Anschreiben · PDF", /^Beides in einer Datei · \d Seiten$/]);
+    // The count keeps its word and the dot ends a line: no-break spaces there (keepCounts, review 4).
+    await expect(documents).toHaveText(["Lebenslauf · PDF", "Anschreiben · PDF", /^Beides in einer Datei\u00a0· \d\u00a0Seiten$/u]);
     for (const link of await documents.all()) await expect(link).toHaveAttribute("download", /\.pdf$/);
     // Tab never reaches the page behind the sheet (it is inert): focus stays in the sheet, or passes to
     // the browser's own controls after the last row, as a native modal dialog allows.
@@ -375,7 +387,7 @@ test.describe("Laufbahn", () => {
     await page.context().close();
   });
 
-  test("phones: skills are a list on one soft sheet: an icon and the whole label in each row, no lines, no hyphenation, nothing broken", async ({ browser }) => {
+  test("phones: skills are a list on one soft sheet: an icon and the whole label in each row, no lines, no hyphenation, nothing broken; the facts stand beside his portrait", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const skills = page.getByRole("region", { name: "Was ich mitbringe" });
@@ -408,15 +420,36 @@ test.describe("Laufbahn", () => {
     }
     // Twelve skills in under 600 px.
     expect(list?.height).toBeLessThan(600);
-    // The facts are on one soft sheet as well, every value whole on its row.
-    const facts = page.getByRole("region", { name: "Über mich" }).locator("dl");
+    // "Über mich" keeps a picture beside the facts until his own photo comes (the founder, round 6
+    // review 4: a drawn still for now): the portrait on two of five columns at the start, the facts on
+    // the other three, one a row under a hairline. The position and the employer stand in the head's
+    // target line only. A value may wrap between its words, never inside one, and nothing hyphenates.
+    const about = page.getByRole("region", { name: "Über mich" });
+    const portrait = about.locator("[data-about-portrait]");
+    await expect(portrait).toHaveCount(1);
+    await expect(portrait.locator("img").first()).toHaveAttribute("alt", /^Illustration: /);
+    const facts = portrait.locator("dl");
+    await expect(facts.locator("dt")).toHaveText(["Stapler", "Farbsehen"]);
+    await expect(about).not.toContainText("Bewerbung als");
+    const [picture, column] = [await portrait.locator(":scope > div").first().boundingBox(), await facts.boundingBox()];
+    expect(picture && column && picture.x + picture.width <= column.x && Math.abs(picture.y - column.y) <= 1, JSON.stringify([picture, column])).toBe(true);
+    for (const row of await facts.locator(":scope > div").all()) expect(await row.evaluate((element) => parseFloat(getComputedStyle(element).borderTopWidth))).toBeGreaterThan(0);
     for (const value of await facts.locator("dd").all()) {
-      const lines = await value.evaluate((element) => {
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+      const text = (await value.textContent()) ?? "";
+      expect(text).not.toContain("\u00AD");
+      expect(await value.evaluate((element) => getComputedStyle(element).hyphens)).toBe("manual");
+      // Every word on one line: a range over each word has one line box.
+      const broken = await value.evaluate((element) => {
+        const node = element.firstChild;
+        if (node?.nodeType !== Node.TEXT_NODE) return ["no text"];
+        return [...(node.textContent ?? "").matchAll(/\S+/gu)].flatMap((word) => {
+          const range = document.createRange();
+          range.setStart(node, word.index);
+          range.setEnd(node, word.index + word[0].length);
+          return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size > 1 ? [word[0]] : [];
+        });
       });
-      expect(lines, await value.textContent() ?? "").toBe(1);
+      expect(broken, text).toEqual([]);
     }
     await page.context().close();
   });
@@ -503,7 +536,7 @@ test.describe("Laufbahn", () => {
     await context.close();
   });
 
-  test("phones: the picture runs edge to edge under the figures, nothing runs off the side, and his own page has no Linkyo bar", async ({ browser }) => {
+  test("phones: the picture runs edge to edge under the figures, About shows another still, nothing runs off the side, and his own page has no Linkyo bar", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const plate = await page.locator("[data-hero-plate]").boundingBox();
@@ -515,6 +548,13 @@ test.describe("Laufbahn", () => {
     const figures = await page.locator("[data-lb-head] dl").boundingBox();
     expect(name && plate && name.y + name.height <= plate.y).toBe(true);
     expect(figures && plate && figures.y + figures.height <= plate.y).toBe(true);
+    // "Über mich" shows a drawn still of its own beside the facts, never the plate's (the rotation swaps
+    // the two when the header plays the portrait's clip): no visit shows one picture twice.
+    const still = async (selector: string) => /ex-motion-[a-z-]+/u.exec((await page.locator(selector).first().getAttribute("src")) ?? "")?.[0] ?? "";
+    const [plateStill, portraitStill] = [await still("[data-hero-plate] img"), await still("[data-about-portrait] img")];
+    expect(plateStill).toMatch(/^ex-motion-/);
+    expect(portraitStill).toMatch(/^ex-motion-/);
+    expect(portraitStill).not.toBe(plateStill);
     // The page never scrolls sideways.
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
     // Sevag's page is shown as his own (bare): no Linkyo bar comes in.
@@ -687,10 +727,16 @@ test.describe("Laufbahn", () => {
     const tile = page.getByRole("region", { name: "المهارات والأدوات" }).getByRole("listitem").first();
     const [tileBox, iconBox] = [await tile.boundingBox(), await tile.locator("svg").boundingBox()];
     expect(tileBox && iconBox && iconBox.x > tileBox.x + tileBox.width / 2).toBe(true);
-    // A timeline's nodes stand at the right edge of its steps.
-    const step = page.locator(".lb-step").first();
-    const [stepBox, nodeBox] = [await step.boundingBox(), await step.locator("span[aria-hidden]").first().boundingBox()];
-    expect(stepBox && nodeBox && nodeBox.x + nodeBox.width >= stepBox.x + stepBox.width - 1).toBe(true);
+    // A timeline's rail and dots stand at the right of its words: the rail is the step's first column
+    // (the rightmost in Arabic), the words to its left, each dot centred on the rail.
+    const step = page.locator("li:has(> .lb-step)").first();
+    const [item, rail, dot, words] = [await step.boundingBox(), await step.locator(".lb-step").boundingBox(), await step.locator(".lb-step > span").boundingBox(), await step.locator("[data-lb-entry]").boundingBox()];
+    const where = JSON.stringify({ item, rail, dot, words });
+    expect(item && rail && dot && words, where).toBeTruthy();
+    if (item && rail && dot && words) {
+      expect(rail.x + rail.width >= item.x + item.width - 1 && rail.x >= words.x + words.width - 1, where).toBe(true);
+      expect(Math.abs(dot.x + dot.width / 2 - (rail.x + rail.width / 2)), where).toBeLessThanOrEqual(0.5);
+    }
     await page.context().close();
   });
 });
