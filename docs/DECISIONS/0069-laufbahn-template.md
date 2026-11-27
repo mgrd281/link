@@ -313,8 +313,11 @@ the other two. This round is the page; the PDFs are their own ADR, [0089](0089-l
   words ("SAP") is set as words. The label comes first in the DOM (screen readers read "Pickgenauigkeit
   2025: 99,6 %"); the visual order is a subgrid.
 - **The plate below the figures, no parallax.** Phones and tablets: 3 : 2 from edge to edge, last in
-  the band; the wide canvas: the last four of twelve columns beside the words, rounded. Without any
-  picture: no plate and no initials. Nothing in the head moves after its lines rise in once.
+  the band; the wide canvas: the last four of twelve columns beside the words, rounded, in the
+  picture's own shape (`widePlateRatio`: no taller than 4 : 5, no flatter than 4 : 3; 4 : 5 without a
+  stored size) and level with the top of the words, so a drawn 4 : 5 clip stands whole and is never
+  cut at its sides. Without any picture: no plate and no initials. Nothing in the head moves after its
+  lines rise in once.
 - **The `grotesk` pairing** (Geist 700 / Geist 400, Arabic IBM Plex Sans Arabic 700/400) replaces
   `classic` for Laufbahn: one modern grotesque for the name and the text, with true tabular figures.
   Geist is already the only preloaded face, so Inter no longer loads on Laufbahn pages (checked by the
@@ -333,24 +336,30 @@ the other two. This round is the page; the PDFs are their own ADR, [0089](0089-l
   stay one tap away in the bar at every width.
 - **The career is a table, as on paper:** the years first ("2021 – heute", tabular figures, the tag
   "aktuell" under a step still going on), then the role, where and a note beside one rail with a dot
-  for each step, filled for the current one. **The 32 px icon nodes go**: dots match the paper. The rail
+  for each step, filled for the current one; the rail ends with the last step's words (no space under
+  the last step). **The 32 px icon nodes go**: dots match the paper. The rail
   still fills with the accent as the steps scroll by (the only scroll-linked motion), drawn in full with
   reduced motion.
 - **A portrait only of the person.** "Über mich" shows round 5's portrait beside the facts only for a
   picture of the person (`isPersonPicture`: not one of Linkyo's library stills, which are drawings or
-  stock scenes). Otherwise the facts stand alone on one soft sheet, two to a row (four on the wide
-  canvas), a long fact across the row. **On Sevag's page the drawn still leaves About until he sends a
-  real photo: the founder's OK is needed for that.**
+  stock scenes). Otherwise the facts stand alone on one soft sheet in even rows, the columns decided
+  for the whole set (`factColumns`): short facts two to a row, four on the wide canvas (three when
+  there are three); with any long fact (a value over 18 characters, a label over 14), one to a row on
+  phones and two from tablets on, every fact the same width. **On Sevag's page the drawn still leaves
+  About until he sends a real photo: the founder's OK is needed for that.**
 - **The letter is set as a letter:** white paper on a light page (the page's surface on a dark one), its
   reading time and its own PDF as a small pill in the top line, the PDF's subject ("Bewerbung als …")
-  above the owner's paragraphs, which stay exactly as written. Phones keep the disclosure after two
-  paragraphs.
+  above the owner's paragraphs, which stay exactly as written. The paper spans the content's columns
+  like every sheet of the section (one right edge); the words inside keep the reading measure. Phones
+  keep the disclosure after two paragraphs.
 - **Unterlagen** (a new automatic section, before the Kontakt band, in the contents): one card per
   document (the whole card is one `<a download>`: a paper miniature from the PDF's own layout, the
   title, "PDF · A4 · 1 Seite" with the real page count, a "Herunterladen" pill), both in one file under
   the cards, and the date of the page's last save on public pages ("Stand: 20. November 2026"). No
   spinner and no toast: the browser's own download, or iOS's PDF viewer, is the state. The contents
-  sheet lists the documents as a second group of direct downloads.
+  sheet lists the documents as a second group of direct downloads, both in one file as its third row
+  ("Beides in einer Datei · 2 Seiten"); the bar and the Kontakt band keep to the two documents.
+  Inside Linkyo's iPhone app every one of these links hands its PDF to the app ([0089](0089-laufbahn-pdfs.md)).
 - **The Kontakt band on ink** closes the page: the status, the closing line set large, the owner's
   sentence, the primary action in white, then one list of ways to reach them (E-Mail and Telefon with
   their addresses, the other links, the documents, "Seite teilen") and the page's footer in the band's
@@ -358,11 +367,17 @@ the other two. This round is the page; the PDFs are their own ADR, [0089](0089-l
 - **Arabic pages offer no documents** ([0089](0089-laufbahn-pdfs.md) says why): no section, no pills or round
   download, no sheet group, no letter pill and no subject; the hero's second action is "مشاركة" and the
   bar on the wide canvas has one Share. Everything mirrors by logical properties alone; "منذ" stands
-  over its number, figures are isolated left to right.
+  over its number, figures are isolated left to right and set in Geist (`rtl:font-display`): the
+  Arabic pairing's face has no Latin digits, which fell to a system face.
 - **Names that read as they look (WCAG 2.5.3).** A download's accessible name starts with its visible
   words: "Lebenslauf herunterladen (PDF, 1 Seite)" for the hero's "Lebenslauf", "Lebenslauf · PDF
   herunterladen" for a row, "Anschreiben als PDF herunterladen (1 Seite)" for the letter's "PDF" pill;
-  a card is named by its own words. (axe's label-in-name check ignores words in parentheses, so a
+  a card is named by its own words, in reading order and each part apart ("Lebenslauf PDF · A4 · 1
+  Seite Herunterladen", no longer "LebenslaufPDF …" run together). The spec's sentence name
+  ("Lebenslauf herunterladen (PDF, 1 Seite)") is not used on the cards: it leaves the card's visible
+  "PDF · A4 · 1 Seite" out of its name, which axe reports (`label-content-name-mismatch`). In English
+  the document's name is lower case inside a sentence ("Download cover letter (PDF)": `cvInSentence`,
+  `letterInSentence`). (axe's label-in-name check ignores words in parentheses, so a
   visible word may never stand only inside them.)
 - **On ink**, the focus ring is white (`focus-ring-inverse`; the accent is about 2.3 : 1 there), and the
   soft fill and hairlines use `hover-inverse`, which `lb-ground` keeps light whatever the device's
