@@ -6,8 +6,10 @@
   Linkyo original motion graphic, version 2: a reach-truck driver (Schubmaststapler) scans a pallet,
   lifts it, reaches it into a high rack, a check confirms it, the truck backs out and returns with the
   next pallet. Black, graphite and silver. Drawn from scratch in SVG; render(t) is a pure function of
-  time, so frames are exact and the 12 s loop is seamless (the last frame equals the first). No text.
-  The camera keeps the action inside the centre 75 % of the width, which phones show.
+  time, so frames are exact and the 18 s loop is seamless (the last frame equals the first). No text.
+  The camera keeps the action inside the centre 75 % of the width, which phones show. The scene runs
+  to every edge of the frame: no foreground upright parked at the left edge (it showed as a black
+  band down the whole picture once the header plate ran edge to edge).
 -->
 <style>
   html, body { margin: 0; background: #0a0a0b; }
@@ -49,7 +51,6 @@
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/><stop offset="1" stop-color="#ffffff" stop-opacity="0.55"/>
     </linearGradient>
     <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
-    <filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
     <filter id="beam" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="3"/></filter>
     <clipPath id="frame"><rect width="1080" height="1350"/></clipPath>
     <clipPath id="floorClip"><rect x="-300" y="1003" width="3200" height="700"/></clipPath>
@@ -262,7 +263,6 @@
       <path d="M-13 1 L-4 10 L14 -9" stroke="#111113" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     </g>
    </g>
-    <g id="fore"><rect x="-40" y="-100" width="70" height="1600" fill="#050505" filter="url(#softer)"/></g>
   </g>
 </svg>
 <script>
@@ -412,7 +412,6 @@ function render(t) {
   const { cx, cy, zoom } = camera(t);
   $("cam").setAttribute("transform", `translate(${540 - cx * zoom} ${600 - cy * zoom}) scale(${zoom})`);
   $("far").setAttribute("transform", `translate(${(cx - 545) * 0.35} ${(cy - 800) * 0.25})`);
-  $("fore").setAttribute("transform", `translate(${-(cx - 545) * 0.5} 0)`);
   const dust = $("dust").children;
   for (let i = 0; i < dust.length; i++) {
     const d = dust[i], ph = i * 2.399, a = (t / T) * Math.PI * 2;

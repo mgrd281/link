@@ -73,7 +73,10 @@ ourselves: `scripts/forklift-scene.html` (its black-and-grey variant `forklift-s
 last frame equals the first), no text. Render every frame with
 `node scripts/render-scene.cjs <frames_dir> 30 10 <scene.html>` (run from `apps/web` so Playwright
 resolves), then encode as below (`-crf 26` suits flat illustration, about 0.7 MB). Frame 0 is the
-hero picture. Never show a real person's face in an illustration of a real customer.
+hero picture. Never show a real person's face in an illustration of a real customer. Draw the scene
+to every edge of the frame: header plates run edge to edge, so a dark foreground upright parked at a
+side (the forklift scenes' `#fore`) shows as a black stripe; keep one only if it sweeps through the
+frame, never resting at an edge (the reach-truck scene dropped its own in round 6).
 
 ## The motion library: clips every creator can choose
 
@@ -101,6 +104,7 @@ other address (an own MP4 link shows in the editor's preview only). To add a cli
    `illustration`: the tile says which) and `alt` in de, en and ar.
 4. Add the tile name to `app.profile.motionClips.<key>` in `src/messages/{de,en,ar}.json`.
 5. `motion-library.test.ts` checks the file, the still, its size and the lookups;
+   `motion-stills.test.ts` that no still has a band of pure black in its outer 2 % on either side;
    `e2e/motion-picker-app.spec.ts` covers the picker.
 
 ## Original motion graphics from a photo
