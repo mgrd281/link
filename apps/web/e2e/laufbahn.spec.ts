@@ -140,26 +140,10 @@ test.describe("Laufbahn", () => {
     await page.locator("[data-hero-actions]").getByRole("link", { name: "Anschreiben lesen" }).press("Enter");
     await expect(page).toHaveURL(/#section-letter-title$/);
     await expect(page.getByRole("heading", { level: 2, name: "Anschreiben" })).toBeInViewport();
-    // Arrived at by its address, the whole letter: no disclosure button, all seven paragraphs on screen.
+    // Arrived at by its address, the whole letter: there is no disclosure at all (round 6, the founder's review).
     const letter = page.getByRole("region", { name: "Anschreiben" });
-    await expect(letter.locator("summary")).toBeHidden();
+    await expect(letter.locator("details, summary")).toHaveCount(0);
     await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeVisible();
-    // The button is hidden only where CSS can also show the closed disclosure's content: every rule that
-    // hides it sits inside @supports selector(::details-content), so an older browser keeps the button.
-    const guards = await page.evaluate(() => {
-      const found: string[] = [];
-      const walk = (rules: CSSRuleList, supports: string) => {
-        for (const rule of rules) {
-          if (rule instanceof CSSSupportsRule) walk(rule.cssRules, rule.conditionText);
-          else if (rule instanceof CSSGroupingRule) walk(rule.cssRules, supports);
-          else if (rule instanceof CSSStyleRule && /\.lb-more\s*>\s*summary/.test(rule.selectorText) && rule.style.display === "none") found.push(supports);
-        }
-      };
-      for (const sheet of document.styleSheets) walk(sheet.cssRules, "");
-      return found;
-    });
-    expect(guards.length).toBeGreaterThan(0);
-    for (const condition of guards) expect(condition).toContain("::details-content");
     // The index list has no mask (it would clip a chip's focus ring); the bar is solid.
     expect(await index.getByRole("list").evaluate((list) => getComputedStyle(list).maskImage)).toBe("none");
     expect(await page.locator(".poster-bar").evaluate((bar) => [getComputedStyle(bar).backdropFilter, getComputedStyle(bar).backgroundColor])).toEqual(["none", expect.not.stringMatching(/rgba?\(.*,\s*0(\.\d+)?\)$/)]);
@@ -454,43 +438,27 @@ test.describe("Laufbahn", () => {
     await page.context().close();
   });
 
-  test("phones: the letter opens with two paragraphs and a native disclosure that works by keyboard", async ({ browser }) => {
+  test("phones: the whole letter, with nothing to open, so the page never moves by itself", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const letter = page.getByRole("region", { name: "Anschreiben" });
-    await expect(letter.getByText("1 Min. Lesezeit")).toBeVisible();
+    await expect(letter.getByText("1 Min. Lesezeit")).toBeAttached();
+    await expect(letter.locator("details, summary")).toHaveCount(0);
+    await letter.getByText(/^Sehr geehrter Herr Vitt,$/).scrollIntoViewIfNeeded();
     await expect(letter.getByText(/^Sehr geehrter Herr Vitt,$/)).toBeVisible();
-    await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeHidden();
-    // Tab reaches the disclosure; its name says what it opens; Enter opens it, and its name changes.
-    await letter.getByText(/^ich bewerbe mich/).click();
-    const more = letter.locator("summary");
-    await page.keyboard.press("Tab");
-    await expect(more).toBeFocused();
-    await expect(more).toHaveAccessibleName("Ganzes Anschreiben lesen");
-    await expect(letter.locator("details")).not.toHaveAttribute("open");
-    const before = await more.boundingBox();
-    await page.keyboard.press("Enter");
-    await expect(letter.locator("details")).toHaveAttribute("open", "");
+    await letter.getByText(/^Mit freundlichen Grüßen/).scrollIntoViewIfNeeded();
     await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeVisible();
-    await expect(more).toHaveAccessibleName("Weniger anzeigen");
-    // The button stays where it was pressed, focus ring on screen; the rest unfolds below it.
-    const [signature, button] = [await letter.getByText(/^Mit freundlichen Grüßen/).boundingBox(), await more.boundingBox()];
-    expect(button && before && Math.abs(button.y - before.y) < 1 && signature && signature.y > button.y).toBe(true);
-    await expect(more).toBeInViewport({ ratio: 1 });
-    await page.keyboard.press("Space");
-    await expect(letter.locator("details")).not.toHaveAttribute("open");
     expect(await axe(page)).toEqual([]);
     await page.context().close();
   });
 
-  test("phones: 'Anschreiben lesen' opens the whole letter, without a second tap", async ({ browser }) => {
+  test("phones: 'Anschreiben lesen' leads to the whole letter", async ({ browser }) => {
     const page = await phone(browser, { reducedMotion: "reduce" });
     await page.goto(SEVAG);
     const letter = page.getByRole("region", { name: "Anschreiben" });
-    await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeHidden();
     await page.locator("[data-hero-actions]").getByRole("link", { name: "Anschreiben lesen" }).click();
     await expect(page).toHaveURL(/#section-letter-title$/);
-    await expect(letter.locator("summary")).toBeHidden();
+    await expect(letter.locator("details, summary")).toHaveCount(0);
     await expect(letter.getByText(/^Mit freundlichen Grüßen/)).toBeVisible();
     // The heading stops below the bar.
     const [title, bar] = [await page.getByRole("heading", { level: 2, name: "Anschreiben" }).boundingBox(), await page.locator(".poster-bar").boundingBox()];

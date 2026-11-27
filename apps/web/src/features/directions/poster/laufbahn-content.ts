@@ -493,8 +493,6 @@ export const CREDENTIAL_ICONS: readonly LucideIcon[] = [IdCard, Award];
 
 /** Under this many characters a text section is a short note (a callout card). */
 export const SHORT_TEXT = 320;
-/** Over this many characters a text section is a long read: on phones it opens with two paragraphs. */
-export const LONG_TEXT = 900;
 /** From this many paragraphs (or characters) on, a text is set as a reading tile with its reading time. */
 const READING_PARAGRAPHS = 3;
 const READING_CHARACTERS = 600;
@@ -510,9 +508,6 @@ export function textKind(text: string): TextKind {
   if (paragraphs(text).length >= READING_PARAGRAPHS || length >= READING_CHARACTERS) return "reading";
   return "plain";
 }
-
-/** Whether a reading tile opens with two paragraphs on phones and offers the rest behind a disclosure. */
-export const opensShort = (text: string): boolean => text.trim().length > LONG_TEXT && paragraphs(text).length > 2;
 
 /** Minutes to read a text, at least one. */
 export const readingMinutes = (text: string): number => Math.max(1, Math.round(text.split(/\s+/u).filter(Boolean).length / WORDS_A_MINUTE));

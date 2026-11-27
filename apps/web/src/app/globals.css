@@ -271,7 +271,6 @@
   }
 }
 
-
 @keyframes poster-bar-enter-still {
   from {
     opacity: 0;
@@ -596,14 +595,6 @@
   }
 }
 
-/* The rest of a long read, opened: it settles from just above its place. */
-@keyframes lb-unfold {
-  from {
-    opacity: 0;
-    translate: 0 calc(var(--spacing-2) * -1);
-  }
-}
-
 /* The contents sheet: up from the bottom edge on phones, settling in the middle on wider screens. */
 @keyframes lb-sheet-in {
   from {
@@ -785,41 +776,6 @@
 /* A soft square in the accent behind an icon (skills, notes): the accent at the pressed opacity over the surface. */
 @utility lb-soft {
   background-color: color-mix(in oklab, var(--creator-accent) calc(var(--opacity-pressed) * 100%), var(--creator-surface));
-}
-
-/* A long read's disclosure: closed on phones and tablets (the button under the first paragraphs; it
-   stays where it was pressed and the text unfolds below it). Shown whole, without its button, on the
-   wide canvas and whenever the visitor arrives at its section by the section's address (the hero's
-   "Read the letter", the index): a button that promises the letter opens it. Only where CSS can show a
-   closed disclosure's content (::details-content); elsewhere the button stays everywhere, so the text
-   is never hidden without a way to it. Opened, the new text unfolds from just above its place, so the
-   eye sees what was added (not with reduced motion). */
-@utility lb-more {
-  @media (prefers-reduced-motion: no-preference) {
-    &[open] > div {
-      animation: lb-unfold var(--duration-standard) var(--ease-standard);
-    }
-  }
-
-  @supports selector(::details-content) {
-    :where(.lb-section:target) &::details-content {
-      content-visibility: visible;
-    }
-
-    :where(.lb-section:target) & > summary {
-      display: none;
-    }
-
-    @variant @work {
-      &::details-content {
-        content-visibility: visible;
-      }
-
-      & > summary {
-        display: none;
-      }
-    }
-  }
 }
 
 /* The career's rail (round 6), one item of the grid per step: the line itself (its width, in the line

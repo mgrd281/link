@@ -44,7 +44,6 @@ import {
   keepSeparators,
   LEAD_MAX,
   lineEms,
-  opensShort,
   readingMinutes,
   splitLead,
   textKind,
@@ -296,12 +295,9 @@ describe("text sections", () => {
     expect(textKind("Eins.\n\nZwei.\n\nDrei. ".repeat(20))).toBe("reading");
   });
 
-  it("opens a long read with two paragraphs on phones (Sevag's letter: seven paragraphs, a minute's read)", () => {
-    expect(letterText.length).toBeGreaterThan(900);
-    expect(opensShort(letterText)).toBe(true);
+  it("reads Sevag's letter as seven paragraphs, a minute's read", () => {
     expect(paragraphs(letterText)).toHaveLength(7);
     expect(readingMinutes(letterText)).toBe(1);
-    expect(opensShort(toningText)).toBe(false);
   });
 
   it("knows a letter by its title or by its salutation and closing, in three languages", () => {

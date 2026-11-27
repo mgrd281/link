@@ -586,4 +586,11 @@ Measured on the demo build (fictional samples only, reduced motion, chrome off),
   is read from the app's files (`PREVIEW_PHOTOS` in `features/documents/photo.ts`), never fetched,
   while every other sample picture still never prints as an applicant.
 
+- **No disclosure in long texts.** The founder's recording showed Safari on iPhone scrolling the page by
+  itself, down and back, after "Ganzes Anschreiben lesen" opened the letter (Chromium holds still, so the
+  cause is how Safari handles the opening disclosure, not our script; there is none). The letter and any
+  long "Über mich" now show whole, on every width, as the wide canvas already did: nothing opens, so
+  nothing can move, and a recruiter reads the letter in one go. `lb-more`, its unfold animation,
+  `opensShort`/`LONG_TEXT` and the three button texts are gone.
+
 **Status.** Accepted.

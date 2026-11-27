@@ -185,7 +185,7 @@ export function BarReveal(): ReactNode {
  * and a tap outside close it, focus returns to the title): every section a full-width row of 56 px,
  * the one being read marked with a check and in bold. Choosing one closes the sheet and goes to the
  * section's address, so the page glides there (unless the visitor prefers less motion), the back
- * button returns, and a letter reached this way opens whole (lb-more). A page that offers its
+ * button returns. A page that offers its
  * documents lists them as a second group: each row downloads its PDF directly.
  */
 export function SectionSwitcher({

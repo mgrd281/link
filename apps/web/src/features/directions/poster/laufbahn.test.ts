@@ -343,9 +343,7 @@ describe("the letter", () => {
     expect(count(letter, /<p dir="auto" class="[^"]*max-w-prose/g)).toBeGreaterThanOrEqual(6);
   });
 
-  it("keeps its disclosure on phones after two paragraphs once the letter is a long read", () => {
-    // Jonas's letter (889 characters) stays whole; one more paragraph makes it a long read (LONG_TEXT).
-    expect(letter).not.toContain("<details");
+  it("shows a long letter whole, with no disclosure to open (Safari scrolled the page when one opened)", () => {
     const longer: Page = {
       ...jonas,
       blocks: jonas.blocks.map((block) =>
@@ -356,9 +354,10 @@ describe("the letter", () => {
     };
     const markup = render(longer, { template: "laufbahn" }, documentsOf(longer, "/de/p/jonas-brandt"));
     const long = /<section id="section-letter-title"[\s\S]*?<\/section>/.exec(markup)?.[0] ?? "";
-    const [before, details] = long.split("<details");
-    expect(count(before ?? "", /<p dir="auto"/g)).toBe(3);
-    expect(details).toMatch(/^ class="lb-more /);
+    expect(long).not.toContain("<details");
+    expect(long).not.toContain("<summary");
+    expect(long).toContain("Probetag");
+    expect(markup).not.toContain("<details class=\"lb-more");
   });
 
   it("is the page's surface on a dark page", () => {

@@ -1,11 +1,11 @@
 import { hasImage, type BlockOf, type Profile } from "@linkyo/blocks";
 import { cn, Icon } from "@linkyo/ui";
-import { ArrowUpRight, ChevronDown, CircleCheck, Clock, Download, Lightbulb } from "lucide-react";
+import { ArrowUpRight, CircleCheck, Clock, Download, Lightbulb } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, type ReactNode } from "react";
 
 import { MediaImage, mediaSizes } from "../shared/creator-kit";
-import { iconFor, opensShort, readingMinutes, splitLead, textKind } from "./laufbahn-content";
+import { iconFor, readingMinutes, splitLead, textKind } from "./laufbahn-content";
 import { IndexList } from "./laufbahn-index";
 import { textLink } from "./portfolio-sections";
 import { linkDestination, paragraphs } from "./sections";
@@ -458,8 +458,6 @@ export function LaufbahnText({
       </div>
     );
   }
-  const short = opensShort(text);
-  const [head, rest] = short ? [parts.slice(0, 2), parts.slice(2)] : [parts, []];
   const sheet = letter && paper === "light" ? "bg-white text-ink" : "bg-creator-surface text-creator-fg";
   return (
     <div
@@ -491,30 +489,13 @@ export function LaufbahnText({
           {subject}
         </p>
       ) : null}
-      {head.map((part) => (
+      {/* The whole text, always: a read-more disclosure here made Safari on iPhone scroll the page by
+          itself when it opened (the founder's recording), and an application is read in full anyway. */}
+      {parts.map((part) => (
         <p key={part} dir="auto" className={readingParagraph}>
           {part}
         </p>
       ))}
-      {rest.length > 0 ? (
-        // The button under the first two paragraphs; opened, it stays where it was pressed (now "Show
-        // less", focus and all) and the rest unfolds below it. The wide canvas, and arriving at the
-        // section by its address (the hero's button, the index), show everything and no button.
-        <details className="lb-more group/more flex min-w-0 flex-col gap-4 @prose:gap-6">
-          <summary className="flex min-h-control-lg w-full cursor-pointer list-none items-center justify-center gap-2 rounded-creator-button border border-creator-line-strong px-4 text-body font-semibold transition-[scale,background-color] duration-standard ease-standard select-none hover:bg-creator-bg focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none motion-reduce:active:scale-none @prose:w-auto @prose:justify-self-start [&::-webkit-details-marker]:hidden">
-            <span className="group-open/more:hidden">{t(letter ? "laufbahn.readLetterWhole" : "laufbahn.readMore")}</span>
-            <span className="hidden group-open/more:inline">{t("laufbahn.readLess")}</span>
-            <Icon icon={ChevronDown} size="md" className="shrink-0 transition-transform duration-standard ease-standard group-open/more:rotate-180 motion-reduce:transition-none" />
-          </summary>
-          <div className="grid min-w-0 gap-4 @prose:gap-6">
-            {rest.map((part) => (
-              <p key={part} dir="auto" className={readingParagraph}>
-                {part}
-              </p>
-            ))}
-          </div>
-        </details>
-      ) : null}
     </div>
   );
 }
