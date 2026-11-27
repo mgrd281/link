@@ -28,8 +28,8 @@ export function HeroMotionIsland({
   icons,
 }: {
   url: string;
-  /** The video's classes while it plays and while it stands. */
-  classes: { playing: string; paused: string };
+  /** The video's classes while it plays and while it stands, and the play/pause button's. */
+  classes: { playing: string; paused: string; button: string };
   icons: { pause: ReactNode; play: ReactNode };
 }) {
   const t = useTranslations("creator");
@@ -119,7 +119,7 @@ export function HeroMotionIsland({
         type="button"
         onClick={toggle}
         aria-label={playing ? t("motionPause") : t("motionPlay")}
-        className="absolute end-3 top-3 grid size-control-sm place-items-center rounded-full border border-creator-line bg-creator-glass text-creator-fg backdrop-blur-glass focus-visible:focus-ring"
+        className={classes.button}
       >
         <Fragment key={playing ? "pause" : "play"}>{playing ? icons.pause : icons.play}</Fragment>
       </button>
