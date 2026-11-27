@@ -310,6 +310,11 @@ describe("the letter", () => {
     expect(/<section id="section-letter-title"[\s\S]*?<\/section>/.exec(dark)?.[0]).toMatch(/data-lb-letter="" class="[^"]*bg-creator-surface text-creator-fg/);
     // The head adds a hairline at its foot on a dark page.
     expect(headOf(dark)).toMatch(/^<header data-lb-head="true" class="[^"]*border-b border-creator-line/);
+    // The documents' paper stays white, as printed, and so do its marks' tones (never near-white on white).
+    const papers = (markup: string) => [...(/<section id="unterlagen"[\s\S]*?<\/section>/.exec(markup)?.[0] ?? "").matchAll(/<span aria-hidden="true" class="([^"]*aspect-a4[^"]*)"/g)].map((match) => match[1] ?? "");
+    expect(papers(dark)).toHaveLength(2);
+    for (const paper of papers(dark)) expect(paper).toMatch(/bg-white .*\[--creator-fg:var\(--color-ink\)\]/);
+    for (const paper of papers(jonasMarkup)) expect(paper).not.toContain("--creator-fg:");
   });
 });
 

@@ -13,12 +13,22 @@ import { pageSide } from "./styles";
 /** The words of the documents' cards, from the page's language. */
 const DATE_LOCALES: Record<Profile["locale"], string> = { de: "de-DE", en: "en-GB", ar: "ar" };
 
+/**
+ * On a dark page the paper stays white, as printed, so its marks keep the printed tones too: the
+ * page's dark palette would draw near-white bars on white paper (ADR 0089: paper colours are the
+ * light palette). Ink for the text, greys for the rules, the accent itself for the accent.
+ */
+const PRINTED_TONES = "[--creator-fg:var(--color-ink)] [--creator-line-strong:var(--color-gray-400)] [--creator-line:var(--color-gray-200)] [--creator-accent-text:var(--creator-accent)]";
+
 /** The paper: white whatever the page's mode (as printed), A4, its first page's marks or blank. */
-function Paper({ marks }: { marks: DocumentCard["miniature"] }): ReactNode {
+function Paper({ marks, paper }: { marks: DocumentCard["miniature"]; paper: "light" | "dark" }): ReactNode {
   return (
     <span
       aria-hidden
-      className="relative grid aspect-a4 w-avatar-xl shrink-0 place-items-center overflow-hidden rounded-xs bg-white transition-transform duration-standard ease-emphasized group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 @work:w-[calc(var(--spacing-avatar-xl)+var(--spacing-12))]"
+      className={cn(
+        "relative grid aspect-a4 w-avatar-xl shrink-0 place-items-center overflow-hidden rounded-xs bg-white transition-transform duration-standard ease-emphasized group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 @work:w-[calc(var(--spacing-avatar-xl)+var(--spacing-12))]",
+        paper === "dark" && PRINTED_TONES,
+      )}
     >
       {marks ? <PaperMiniature marks={marks} className="absolute inset-0 size-full" /> : <Icon icon={FileText} size="lg" className="text-creator-line-strong" />}
     </span>
@@ -40,7 +50,7 @@ const card = cn(
  * generated one (a link to their file, a blank paper). Under the pointer the paper rises a little and
  * the pill's arrow nudges down; with reduced motion only the colour changes.
  */
-export function LaufbahnDocuments({ documents, locale }: { documents: DocumentsView; locale: Profile["locale"] }): ReactNode {
+export function LaufbahnDocuments({ documents, locale, paper = "light" }: { documents: DocumentsView; locale: Profile["locale"]; paper?: "light" | "dark" | undefined }): ReactNode {
   const t = useTranslations("creator");
   const cards: { key: string; title: string; href: string; filename?: string | undefined; pages: number | null; marks: DocumentCard["miniature"]; own: boolean }[] = [
     ...(documents.cv ? [{ key: "cv", title: t("laufbahn.cv"), href: documents.cv.href, filename: documents.cv.filename, pages: documents.cv.pages, marks: documents.cv.miniature, own: false }] : []),
@@ -67,7 +77,7 @@ export function LaufbahnDocuments({ documents, locale }: { documents: DocumentsV
               download={entry.own ? undefined : entry.filename}
               className={card}
             >
-              <Paper marks={entry.marks} />
+              <Paper marks={entry.marks} paper={paper} />
               <span className="grid min-w-0 justify-items-start gap-1">
                 <span dir="auto" className={cn(pageSide, "max-w-full text-title font-bold break-words")}>
                   {entry.title}

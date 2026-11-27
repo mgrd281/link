@@ -135,7 +135,7 @@ export default function SignpostedBody({
         ))}
         {documents && documentsSign ? (
           <SignpostSection entry={documentsSign} ai={false}>
-            <LaufbahnDocuments documents={documents} locale={profile.locale} />
+            <LaufbahnDocuments documents={documents} locale={profile.locale} paper={theme.palette.mode === "dark" ? "dark" : "light"} />
           </SignpostSection>
         ) : null}
         {/* The end of the content: once it is on screen, the index marks the last section. Out of the
