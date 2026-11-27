@@ -4,6 +4,7 @@ import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
 import type { DocumentKind, DocumentLocale } from "./offer";
+import { printable } from "./printable";
 
 /**
  * The template's own words on paper (messages `documents.paper.*`): section titles, "heute",
@@ -64,7 +65,8 @@ export function paperLabels(locale: DocumentLocale): PaperLabels {
     enclosureCv: t("enclosureCv"),
     subjectFor: (value) => t("subjectFor", { value }),
     subjectBare: t("subjectBare"),
-    longDate: (at) => day.format(at),
+    // ICU may separate the parts with narrow no-break spaces; paper prints them as WinAnsi can.
+    longDate: (at) => printable(day.format(at)),
   };
 }
 

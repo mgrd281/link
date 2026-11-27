@@ -59,6 +59,77 @@ export const longEmail = (): Page =>
     replace("contact", (block) => ({ ...block, primary: { ...block.primary, url: "mailto:jonas.brandt.bewerbungen.lagerlogistik@example.com" } })),
   );
 
+const SENTENCES = [
+  "Im Wareneingang prüfe ich Lieferungen gegen Lieferschein und Bestellung und melde Abweichungen sofort.",
+  "Ich lagere Paletten mit dem Schubmaststapler ein und halte die Gänge frei, damit niemand ausweichen muss.",
+  "Bei der Kommissionierung arbeite ich mit dem Handscanner und achte darauf, dass jede Position stimmt.",
+  "Neue Kolleginnen und Kollegen begleite ich in den ersten Wochen und zeige ihnen die Abläufe am Stapler.",
+  "In der Inventur zähle ich sorgfältig und gleiche die Bestände in SAP EWM mit dem Lager ab.",
+  "Ladungen sichere ich nach Vorschrift, auch wenn die Zeit an der Rampe knapp wird.",
+];
+
+/** Whole sentences up to `length` characters. */
+function prose(length: number, gap = " "): string {
+  let text = "";
+  for (let index = 0; ; index += 1) {
+    const next = `${text}${text ? gap : ""}${SENTENCES[index % SENTENCES.length] ?? ""}`;
+    if (next.length > length) return text;
+    text = next;
+  }
+}
+
+const career = (count: number, offset: number) =>
+  Array.from({ length: count }, (_, index) => ({
+    role: `Fachkraft für Lagerlogistik, Station ${String(index + 1 + offset)}`,
+    org: `Hafenlager Nord GmbH, Halle ${String(index + 1 + offset)}`,
+    years: { from: 2008 + index + offset, to: 2009 + index + offset },
+    note: "Wareneingang, Einlagerung mit dem Schubmaststapler und Kommissionierung im Dreischichtbetrieb.",
+  }));
+
+const skills = (count: number, prefix: string) => Array.from({ length: count }, (_, index) => `${prefix} ${String(index + 1)}`);
+
+/**
+ * As long as a page can be: two careers of six steps, two lists of twelve skills, four facts, an about
+ * text of 1,000 characters and a letter of 2,000. The CV runs onto later pages; the letter takes the
+ * fit step or a second page.
+ */
+export const long = (): Page => {
+  const page = jonasDe();
+  const blocks: Block[] = page.blocks.flatMap((block): Block[] => {
+    if (block.type === "about") return [{ ...block, text: `${prose(480)}\n\n${prose(500)}`.slice(0, 1000) }];
+    if (block.type === "timeline") return [{ ...block, items: career(6, 0) }, { ...block, id: "career-2", title: "Weiterbildung", items: career(6, 6) }];
+    if (block.type === "tools") return [{ ...block, items: skills(12, "Lagerkenntnis") }, { ...block, id: "skills-2", title: "Software", items: skills(12, "Programm") }];
+    if (block.type === "text" && block.id === "letter") {
+      const body = prose(1800, "\n\n");
+      return [{ ...block, text: `Sehr geehrte Frau Albers,\n\n${body}\n\nMit freundlichen Grüßen\nJonas Brandt`.slice(0, 2000) }];
+    }
+    return [block];
+  });
+  return { ...page, blocks };
+};
+
+/** A little over one page: the CV keeps to one page through the fit step. */
+export const slightlyOver = (): Page => {
+  const page = jonasDe();
+  const blocks: Block[] = page.blocks.flatMap((block): Block[] => {
+    if (block.type === "timeline") return [{ ...block, items: [...block.items, ...career(2, 0)] }];
+    if (block.type === "tools") return [block, { ...block, id: "software", title: "Software", items: ["SAP EWM", "Microsoft Excel", "Staplerleitsystem"] }];
+    return [block];
+  });
+  return { ...page, blocks };
+};
+
+/**
+ * The bytes of a JPEG's head only (SOI, an Adobe APP14 when asked, a frame header, EOI): enough for
+ * the layout and the PDF's structure, not a picture to look at.
+ */
+export function jpegHead({ width = 350, height = 450, components = 3, marker = 0xc0, adobe = false }: { width?: number; height?: number; components?: number; marker?: number; adobe?: boolean } = {}): Uint8Array {
+  const app14 = adobe ? [0xff, 0xee, 0x00, 0x0e, 0x41, 0x64, 0x6f, 0x62, 0x65, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x02] : [];
+  const frame = [0xff, marker, 0x00, 8 + components * 3, 0x08, height >> 8, height & 0xff, width >> 8, width & 0xff, components];
+  const parts = Array.from({ length: components }, (_, index) => [index + 1, 0x11, 0x00]).flat();
+  return Uint8Array.from([0xff, 0xd8, ...app14, ...frame, ...parts, 0xff, 0xd9]);
+}
+
 /** A letter with no salutation and no closing: nothing is added. */
 export const bareLetter = (): Page =>
   withBlocks(
