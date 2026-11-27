@@ -570,6 +570,8 @@
       "readLess": "Show less",
       "cv": "CV",
       "letter": "Cover letter",
+      "cvInSentence": "CV",
+      "letterInSentence": "cover letter",
       "documents": "Documents",
       "documentsLead": "CV and cover letter as PDFs, set from this page.",
       "download": "Download",

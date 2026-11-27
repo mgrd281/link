@@ -72,21 +72,20 @@ export function LaufbahnDocuments({ documents, locale, paper = "light" }: { docu
       <ul className={cn("grid min-w-0 grid-cols-1 gap-4 @work:gap-6", cards.length > 1 && "@work:grid-cols-2")}>
         {cards.map((entry) => (
           <li key={entry.key} className="min-w-0">
-            <a
-              href={entry.href}
-              download={entry.own ? undefined : entry.filename}
-              className={card}
-            >
+            {/* Named by its own words, in reading order and each part apart ("Lebenslauf PDF · A4 · 1 Seite
+                Herunterladen", never "LebenslaufPDF"): a label of other words would leave visible
+                words out of the name (WCAG 2.5.3). */}
+            <a href={entry.href} download={entry.own ? undefined : entry.filename} data-app-download={entry.own ? undefined : ""} className={card}>
               <Paper marks={entry.marks} paper={paper} />
               <span className="grid min-w-0 justify-items-start gap-1">
                 <span dir="auto" className={cn(pageSide, "max-w-full text-title font-bold break-words")}>
                   {entry.title}
-                </span>
+                </span>{" "}
                 {entry.pages !== null ? (
                   <span className="text-small text-creator-fg-muted">{t("laufbahn.pdfMeta", { pages: entry.pages })}</span>
                 ) : isPdf(entry.href) ? (
                   <span className="text-small text-creator-fg-muted">{t("laufbahn.pdf")}</span>
-                ) : null}
+                ) : null}{" "}
                 <span className="mt-3 inline-flex min-h-control-md items-center gap-2 rounded-full bg-creator-fg px-4 text-small font-semibold text-creator-bg">
                   <Icon
                     icon={entry.own ? FileText : Download}
@@ -104,6 +103,7 @@ export function LaufbahnDocuments({ documents, locale, paper = "light" }: { docu
         <a
           href={documents.application.href}
           download={documents.application.filename}
+          data-app-download=""
           aria-label={t("laufbahn.applicationName", { pages: documents.application.pages })}
           className="inline-flex min-h-control-lg max-w-full items-center gap-2 justify-self-start rounded-full border border-creator-line-strong px-5 text-body font-semibold transition-[background-color,scale] duration-micro hover:bg-creator-surface-2 focus-visible:focus-ring active:scale-pressed motion-reduce:transition-colors motion-reduce:active:scale-none"
         >

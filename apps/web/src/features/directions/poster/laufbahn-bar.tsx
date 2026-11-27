@@ -12,22 +12,25 @@ import { aiText } from "./hero";
 import type { IndexEntry } from "./laufbahn-index";
 import { ShareButtonIsland } from "./share-island";
 // Laufbahn's bar parts load with Laufbahn's pages only (a client module that splits them off, ADR 0008).
-import { BarReveal, SectionSwitcher } from "./signposted-bar";
+import { AppDownloads, BarReveal, SectionSwitcher } from "./signposted-bar";
 import { pageSide } from "./styles";
 
 type Profile = Page["profile"];
 type Primary = BlockOf<"contact">["primary"];
 
-/** A document the bar and the contents sheet offer: its address, file name, visible word and accessible name. */
+/** A document the bar and the contents sheet offer: its address, file name, visible words and accessible names. */
 export interface DocumentLink {
-  kind: "cv" | "letter";
+  /** "application": both in one file, offered in the contents sheet only (the bar and the Kontakt band keep to the two documents). */
+  kind: "cv" | "letter" | "application";
   href: string;
   /** The `download` file name; absent for the owner's own file (another site's address). */
   filename?: string | undefined;
   label: string;
+  /** A row's visible words ("Lebenslauf · PDF", "Beides in einer Datei · 2 Seiten"). */
+  row: string;
   /** The bar's name for it ("Lebenslauf herunterladen (PDF)"): its pill shows the document's word alone. */
   name: string;
-  /** A row's name ("Lebenslauf · PDF herunterladen"): it starts with the row's visible words (WCAG 2.5.3). */
+  /** A row's name ("Lebenslauf · PDF herunterladen"): it starts with the row's visible words (WCAG 2.5.3) and ends "(PDF)" for both in one file. */
   rowName: string;
   own?: boolean;
 }
@@ -42,12 +45,13 @@ export function useDocumentLinks(documents: DocumentsView | null, ownCv: { href:
       href: documents.cv.href,
       filename: documents.cv.filename,
       label: t("laufbahn.cv"),
-      name: t("laufbahn.downloadShort", { document: t("laufbahn.cv") }),
-      rowName: t("laufbahn.pdfRowName", { document: t("laufbahn.cv") }),
+      row: t("laufbahn.pdfRow", { document: t("laufbahn.cv") }),
+      name: t("laufbahn.downloadShort", { document: t("laufbahn.cvInSentence") }),
+      rowName: t("laufbahn.pdfRowName", { document: t("laufbahn.cvInSentence") }),
     });
   } else if (ownCv) {
     const label = ownCv.label ?? t("laufbahn.cv");
-    links.push({ kind: "cv", href: ownCv.href, label, name: label, rowName: label, own: true });
+    links.push({ kind: "cv", href: ownCv.href, label, row: label, name: label, rowName: label, own: true });
   }
   if (documents?.letter) {
     links.push({
@@ -55,12 +59,28 @@ export function useDocumentLinks(documents: DocumentsView | null, ownCv: { href:
       href: documents.letter.href,
       filename: documents.letter.filename,
       label: t("laufbahn.letter"),
-      name: t("laufbahn.downloadShort", { document: t("laufbahn.letter") }),
-      rowName: t("laufbahn.pdfRowName", { document: t("laufbahn.letter") }),
+      row: t("laufbahn.pdfRow", { document: t("laufbahn.letter") }),
+      name: t("laufbahn.downloadShort", { document: t("laufbahn.letterInSentence") }),
+      rowName: t("laufbahn.pdfRowName", { document: t("laufbahn.letterInSentence") }),
+    });
+  }
+  if (documents?.application) {
+    const pages = documents.application.pages;
+    links.push({
+      kind: "application",
+      href: documents.application.href,
+      filename: documents.application.filename,
+      label: t("laufbahn.application", { pages }),
+      row: t("laufbahn.application", { pages }),
+      name: t("laufbahn.applicationName", { pages }),
+      rowName: t("laufbahn.applicationName", { pages }),
     });
   }
   return links;
 }
+
+/** The two documents on their own (the bar's pills, the Kontakt band's rows): both in one file is the contents sheet's and the Unterlagen section's. */
+export const singleDocuments = (links: readonly DocumentLink[]): DocumentLink[] => links.filter((link) => link.kind !== "application");
 
 /** A round control on ink, 44 px. */
 const round = "grid size-touch-target shrink-0 place-items-center rounded-full transition-colors duration-micro focus-visible:focus-ring-inverse motion-reduce:transition-none";
@@ -101,7 +121,7 @@ export function DossierBar({
   documents: readonly DocumentLink[];
 }): ReactNode {
   const cv = documents.find((link) => link.kind === "cv");
-  const pdfs = documents;
+  const pdfs = singleDocuments(documents);
   return (
     <div className="pointer-events-none sticky top-0 layer-sticky h-0">
       <div className="poster-bar lb-bar lb-ground pointer-events-auto relative border-b border-hover-inverse text-white">
@@ -110,7 +130,7 @@ export function DossierBar({
             {initials(profile.displayName)}
           </span>
           {sections.length > 1 ? (
-            <SectionSwitcher entries={sections} name={profile.displayName} ai={aiText(profile, "displayName")} documents={pdfs} />
+            <SectionSwitcher entries={sections} name={profile.displayName} ai={aiText(profile, "displayName")} documents={documents} />
           ) : (
             <p dir="auto" className={cn(pageSide, "min-w-0 flex-1 truncate text-small font-semibold")} {...aiText(profile, "displayName")}>
               {profile.displayName}
@@ -119,7 +139,7 @@ export function DossierBar({
           <div className="flex shrink-0 items-center gap-2">
             {/* Phones: the CV as one round download. */}
             {cv ? (
-              <a href={cv.href} download={cv.filename} aria-label={cv.name} className={cn(round, soft, "@work:hidden")}>
+              <a href={cv.href} download={cv.filename} data-app-download={cv.own ? undefined : ""} aria-label={cv.name} className={cn(round, soft, "@work:hidden")}>
                 <Icon icon={cv.own ? FileText : Download} size="md" />
               </a>
             ) : null}
@@ -129,6 +149,7 @@ export function DossierBar({
                 key={link.href}
                 href={link.href}
                 download={link.filename}
+                data-app-download={link.own ? undefined : ""}
                 aria-label={link.own ? undefined : link.name}
                 className={cn(
                   "hidden min-h-control-md items-center gap-2 rounded-full px-4 text-small font-semibold transition-colors duration-micro focus-visible:focus-ring-inverse motion-reduce:transition-none @work:inline-flex",
@@ -161,6 +182,8 @@ export function DossierBar({
             />
           </div>
           <BarReveal />
+          {/* Inside the iPhone app a press on any of the page's PDFs hands it to the app. */}
+          {documents.some((link) => !link.own) ? <AppDownloads /> : null}
         </div>
       </div>
     </div>

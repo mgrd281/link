@@ -144,8 +144,18 @@ function AboutBody({ parts }: { parts: readonly string[] }): ReactNode {
 
 type Fact = NonNullable<BlockOf<"about">["facts"]>[number];
 
-/** A fact too long for half the sheet takes its whole width (a value over 18 characters, a label over 14). */
+/** A fact too long for a quarter of the wide sheet (a value over 18 characters, a label over 14). */
 const wideFact = (fact: Fact): boolean => fact.value.length > 18 || fact.label.length > 14;
+
+/**
+ * The facts sheet's columns, decided for the whole set so its rows stay on the grid: short facts two
+ * to a row on phones and four on the wide canvas (three when there are three); with any long fact,
+ * one to a row on phones and two from tablets on, every fact the same width.
+ */
+export function factColumns(facts: readonly Fact[]): string {
+  if (facts.some(wideFact)) return "grid-cols-1 @prose:grid-cols-2";
+  return facts.length === 3 ? "grid-cols-2 @work:grid-cols-3" : "grid-cols-2 @work:grid-cols-4";
+}
 
 /**
  * Who the owner is: the first paragraph as a lead (a long one leads with its first sentence, and the
@@ -154,8 +164,9 @@ const wideFact = (fact: Fact): boolean => fact.value.length > 18 || fact.label.l
  * - With a portrait of the person (as Werkbogen's "About"): under the lead the portrait on two of five
  *   columns at the start and the facts on the other three beside it; the facts a list with a hairline
  *   above each row. A drawn picture or a library clip's still is no portrait (`isPersonPicture`).
- * - Without one: the facts on one soft sheet, two to a row (four on the wide canvas), a long fact
- *   across the row. No facts left: no sheet.
+ * - Without one: the facts on one soft sheet in even rows (`factColumns`): two to a row and four on
+ *   the wide canvas, or, with any long fact, one to a row on phones and two from tablets on. No facts
+ *   left: no sheet.
  */
 export function LaufbahnAbout({ block, omit = [] }: { block: BlockOf<"about">; omit?: readonly Fact[] | undefined }): ReactNode {
   const [opening, ...others] = paragraphs(block.text);
@@ -205,9 +216,9 @@ export function LaufbahnAbout({ block, omit = [] }: { block: BlockOf<"about">; o
       ) : null}
       {shown.length > 0 ? (
         // One soft sheet (a step in the fill, no frame, no rules), the label quiet over its value.
-        <dl className="grid min-w-0 grid-cols-2 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-5 @work:grid-cols-4 @work:p-6">
+        <dl className={cn("grid min-w-0 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-5 @work:p-6", factColumns(shown))}>
           {shown.map((fact) => (
-            <div key={`${fact.label}-${fact.value}`} className={cn("grid min-w-0 grid-cols-1 content-start gap-1", wideFact(fact) && "col-span-2")}>
+            <div key={`${fact.label}-${fact.value}`} className="grid min-w-0 grid-cols-1 content-start gap-1">
               <dt dir="auto" className={cn(pageSide, "text-small text-creator-fg-muted")}>
                 {fact.label}
               </dt>
@@ -262,8 +273,10 @@ export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">
   const t = useTranslations("creator");
   return (
     <ol className="grid min-w-0 grid-cols-[minmax(var(--spacing-24),max-content)_minmax(0,1fr)] gap-x-4 @work:grid-cols-[minmax(var(--spacing-32),max-content)_minmax(0,var(--container-prose))] @work:gap-x-6">
-      {block.items.map((item) => {
+      {block.items.map((item, index) => {
         const ongoing = item.years.to === "now";
+        // The rail ends with the last step's words: no space under the last one (nothing runs on past it).
+        const last = index === block.items.length - 1;
         return (
           <li key={`${item.role}-${String(item.years.from)}-${item.org ?? ""}`} className="col-span-2 grid min-w-0 grid-cols-subgrid">
             <div className="grid content-start justify-items-start gap-2 pt-0_5">
@@ -273,7 +286,7 @@ export function LaufbahnTimeline({ block, locale }: { block: BlockOf<"timeline">
               </p>
               {ongoing ? <span className="rounded-full lb-soft px-2 text-caption font-semibold text-creator-accent-text">{t("laufbahn.current")}</span> : null}
             </div>
-            <div className="lb-step grid min-w-0 content-start justify-items-start gap-1 border-s-[length:var(--spacing-0_5)] border-creator-line ps-5 pb-8 @work:ps-8">
+            <div className={cn("lb-step grid min-w-0 content-start justify-items-start gap-1 border-s-[length:var(--spacing-0_5)] border-creator-line ps-5 @work:ps-8", !last && "pb-8")}>
               <span
                 aria-hidden
                 className={cn(
@@ -393,9 +406,11 @@ export function LaufbahnText({
   return (
     <div
       data-lb-letter={letter ? "" : undefined}
-      className={cn("grid min-w-0 max-w-[calc(var(--container-prose)+2*var(--spacing-16))] gap-4 rounded-creator-card p-5 @prose:gap-6 @prose:p-10 @work:px-16 @work:py-12", sheet)}
+      // The paper spans the content's columns like every sheet of the section (one right edge); the
+      // words inside keep the reading measure.
+      className={cn("grid min-w-0 gap-4 rounded-creator-card p-5 @prose:gap-6 @prose:p-10 @work:px-16 @work:py-12", sheet)}
     >
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className="flex min-w-0 max-w-prose flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="inline-flex items-center gap-2 text-small font-medium text-creator-fg-muted">
           <Icon icon={Clock} size="sm" className="shrink-0" />
           {t("laufbahn.readingTime", { minutes: readingMinutes(text) })}
@@ -404,7 +419,8 @@ export function LaufbahnText({
           <a
             href={pdf.href}
             download={pdf.filename}
-            aria-label={t("laufbahn.letterPdfName", { document: t("laufbahn.letter"), pages: pdf.pages })}
+            data-app-download=""
+            aria-label={t("laufbahn.letterPdfName", { document: t("laufbahn.letterInSentence"), pages: pdf.pages })}
             className="inline-flex min-h-touch-target items-center gap-2 rounded-full lb-soft px-3 text-small font-semibold text-creator-accent-text transition-[scale] duration-micro focus-visible:focus-ring active:scale-pressed motion-reduce:transition-none motion-reduce:active:scale-none"
           >
             <Icon icon={Download} size="sm" className="shrink-0" />

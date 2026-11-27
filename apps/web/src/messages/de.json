@@ -570,6 +570,8 @@
       "readLess": "Weniger anzeigen",
       "cv": "Lebenslauf",
       "letter": "Anschreiben",
+      "cvInSentence": "Lebenslauf",
+      "letterInSentence": "Anschreiben",
       "documents": "Unterlagen",
       "documentsLead": "Lebenslauf und Anschreiben als PDF, gesetzt aus dieser Seite.",
       "download": "Herunterladen",

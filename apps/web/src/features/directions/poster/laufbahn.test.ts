@@ -15,7 +15,8 @@ import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
-import { LaufbahnAbout, signposts } from "./laufbahn";
+import { factColumns, LaufbahnAbout, signposts } from "./laufbahn";
+import { widePlateRatio } from "./laufbahn-hero";
 import { splitLead } from "./laufbahn-content";
 import { PosterRenderer } from "./renderer";
 import { portfolioSample } from "./sample";
@@ -146,6 +147,8 @@ describe("the head (round 6): type first, on ink", () => {
     expect(figures).toMatch(/<bdi dir="ltr"[^>]*><span[^>]*>99,6<\/span><span class="[^"]*calc\(var\(--figure-size\)\/2\)[^"]*">%<\/span><\/bdi>/);
     // Sevag's "SAP" is a value in words, set at the words' size.
     expect(headOf(sevag)).toMatch(/<dd dir="auto" class="[^"]*text-h3[^"]*">SAP<\/dd>/);
+    // On an Arabic page the digits stand in the template's Latin face (the Arabic face has none).
+    expect(headOf(karimMarkup)).toMatch(/<bdi dir="ltr" class="[^"]*rtl:font-display[^"]*"><span[^>]*>99.6<\/span>/);
   });
 
   it("ends with the picture as a 3 : 2 plate from edge to edge on phones, no parallax and no veil", () => {
@@ -153,11 +156,36 @@ describe("the head (round 6): type first, on ink", () => {
     expect(jonasMarkup).not.toMatch(/(?<![\w-])lb-(?:parallax|veil|plate|name)\b/);
   });
 
+  it("stands the plate on the wide canvas in the picture's own shape, level with the words (the drawn 4 : 5 clip whole)", () => {
+    const plate = /<div data-hero-plate="true" class="([^"]*)" style="([^"]*)"/.exec(head);
+    expect(plate?.[1]).toContain("@work:aspect-[var(--plate-ratio)]");
+    expect(plate?.[1]).toContain("@work:self-start");
+    expect(plate?.[1]).not.toMatch(/@work:(?:self-stretch|min-h-full|aspect-auto)/);
+    expect(plate?.[2]).toBe("--plate-ratio:0.8");
+    expect(jonas.profile.hero).toMatchObject({ w: 1080, h: 1350 });
+    // Only a picture taller than 4 : 5 or flatter than 4 : 3 is cropped to that; no size: 4 : 5.
+    expect([widePlateRatio({ w: 1080, h: 1350 }), widePlateRatio({ w: 900, h: 1600 }), widePlateRatio({ w: 1600, h: 900 }), widePlateRatio({ w: 1200, h: 1000 }), widePlateRatio({})]).toEqual([0.8, 0.8, 4 / 3, 1.2, 0.8]);
+  });
+
   it("has no plate and no initials without a picture", () => {
     const bare = render({ ...jonas, profile: { ...jonas.profile, hero: undefined, motion: undefined } });
     expect(headOf(bare)).not.toContain("data-hero-plate");
     expect(headOf(bare)).not.toContain("<img");
     expect(headOf(bare)).toContain("pb-10");
+  });
+
+  it("keeps the name's space under a live pill when there is no status", () => {
+    const live: Block = { ...base, id: "live", type: "live", platform: "twitch", channel: "example", isLive: true, title: "Q&A", url: "https://www.twitch.tv/example" };
+    const noStatus: Page = {
+      ...jonas,
+      blocks: [live, ...jonas.blocks.map((block) => (block.type === "contact" ? { ...block, status: undefined } : block))],
+    };
+    const markup = headOf(render(noStatus));
+    expect(markup).not.toContain("bg-success");
+    expect(markup).toMatch(/<h1 data-lb-name="true" class="mt-5 /);
+    // Neither a status nor a live pill: the name starts at the top.
+    const quiet = headOf(render({ ...noStatus, blocks: noStatus.blocks.filter((block) => block.type !== "live") }));
+    expect(quiet).toMatch(/<h1 data-lb-name="true" class="[^"]*\bmt-0\b/);
   });
 
   it("drops each row the page does not fill (A.7)", () => {
@@ -178,7 +206,7 @@ describe("the head (round 6): type first, on ink", () => {
 
   it("offers the CV as the second action, then the owner's own CV, then Share", () => {
     const withCv = /<div data-hero-actions[\s\S]*?<\/a><\/div>/.exec(head)?.[0] ?? "";
-    expect(withCv).toMatch(/<a href="\/de\/p\/jonas-brandt\/cv" download="Lebenslauf_Jonas_Brandt.pdf" aria-label="Lebenslauf herunterladen \(PDF, 1 Seite\)"/);
+    expect(withCv).toMatch(/<a href="\/de\/p\/jonas-brandt\/cv" download="Lebenslauf_Jonas_Brandt.pdf" data-app-download="" aria-label="Lebenslauf herunterladen \(PDF, 1 Seite\)"/);
     expect(withCv).not.toContain("Teilen");
     const own: Page = {
       ...jonas,
@@ -204,7 +232,7 @@ describe("the bar on ink", () => {
     expect(bar).toMatch(/class="poster-bar lb-bar lb-ground/);
     expect(count(bar, /aria-label="Seite teilen"/g)).toBe(1);
     // The phone's round download hides on the wide canvas; the Share beside it shows only there.
-    expect(bar).toMatch(/<a href="\/de\/p\/jonas-brandt\/cv" download="Lebenslauf_Jonas_Brandt.pdf" aria-label="Lebenslauf herunterladen \(PDF\)" class="[^"]*@work:hidden/);
+    expect(bar).toMatch(/<a href="\/de\/p\/jonas-brandt\/cv" download="Lebenslauf_Jonas_Brandt.pdf" data-app-download="" aria-label="Lebenslauf herunterladen \(PDF\)" class="[^"]*@work:hidden/);
     expect(bar).toMatch(/aria-label="Seite teilen" class="[^"]*\bhidden @work:grid/);
     expect(count(bar, /class="hidden min-h-control-md[^"]*@work:inline-flex/g)).toBe(2);
     expect(text(/<a [^>]*data-bar-action[\s\S]*?<\/a>/.exec(bar)?.[0] ?? "")).toBe("E-Mail schreiben");
@@ -219,14 +247,30 @@ describe("the bar on ink", () => {
     }
   });
 
-  it("lists the documents as a second group of the contents sheet, each a direct download", () => {
+  it("lists the documents as a second group of the contents sheet, each a direct download, both in one file too", () => {
     const sheet = sheetOf(jonasMarkup);
     expect(sheet).toContain(">Unterlagen</h3>");
-    expect([...sheet.matchAll(/<a href="([^"]+)" download="([^"]+)"[^>]*aria-label="([^"]+)"/g)].map((match) => [match[1], match[2], match[3]])).toEqual([
-      ["/de/p/jonas-brandt/cv", "Lebenslauf_Jonas_Brandt.pdf", "Lebenslauf · PDF herunterladen"],
-      ["/de/p/jonas-brandt/letter", "Anschreiben_Jonas_Brandt.pdf", "Anschreiben · PDF herunterladen"],
+    expect([...sheet.matchAll(/<a href="([^"]+)" download="([^"]+)"[^>]*aria-label="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)].map((match) => [match[1], match[2], match[3], text(match[4] ?? "")])).toEqual([
+      ["/de/p/jonas-brandt/cv", "Lebenslauf_Jonas_Brandt.pdf", "Lebenslauf · PDF herunterladen", "Lebenslauf · PDF"],
+      ["/de/p/jonas-brandt/letter", "Anschreiben_Jonas_Brandt.pdf", "Anschreiben · PDF herunterladen", "Anschreiben · PDF"],
+      ["/de/p/jonas-brandt/application", "Bewerbung_Jonas_Brandt.pdf", "Beides in einer Datei · 2 Seiten: Anschreiben und Lebenslauf (PDF)", "Beides in einer Datei · 2 Seiten"],
     ]);
     expect(sheetOf(render(jonas))).not.toContain("Unterlagen</h3>");
+    // The bar's pills and the Kontakt band keep to the two documents.
+    expect(count(barOf(jonasMarkup).replace(sheet, ""), /\/application"/g)).toBe(0);
+    expect(count(/<div data-block="contact" data-lb-contact[\s\S]*?<\/footer><\/div>/.exec(jonasMarkup)?.[0] ?? "", /\/application"/g)).toBe(0);
+  });
+
+  it("names the documents in English as a sentence would (a lower-case 'cover letter')", () => {
+    const jonasEn = applicationSample("en");
+    const markup = render(jonasEn, { template: "laufbahn" }, documentsOf(jonasEn, "/en/p/jonas-brandt"));
+    expect(markup).toContain('aria-label="Download cover letter (PDF)"');
+    expect(markup).toContain('aria-label="Download cover letter · PDF"');
+    expect(markup).toContain('aria-label="Download cover letter as PDF (1 page)"');
+    expect(markup).toContain('aria-label="Download CV (PDF, 1 page)"');
+    expect(markup).not.toMatch(/aria-label="[^"]*Download Cover letter/);
+    // The visible words keep their capital where they start a label.
+    expect(text(sheetOf(markup))).toContain("Cover letter · PDF");
   });
 });
 
@@ -239,14 +283,15 @@ describe("Unterlagen", () => {
   });
 
   it("makes each card one download link with the real page count, then both in one file and no date on a preview", () => {
-    // Each card is named by its own words (title, "PDF · A4 · 1 Seite", "Herunterladen"): no aria-label that could differ from them.
-    const cards = [...section.matchAll(/<a href="([^"]+)" download="([^"]+)" class="group grid[^"]*">([\s\S]*?)<\/a>/g)].map((match) => [match[1], match[2], text(match[3] ?? "")]);
+    // Each card is named by its own words (no aria-label that would leave visible words out, WCAG
+    // 2.5.3), in reading order and each part apart: never "LebenslaufPDF · A4 · 1 SeiteHerunterladen".
+    const cards = [...section.matchAll(/<a href="([^"]+)" download="([^"]+)" data-app-download="" class="group grid[^"]*">([\s\S]*?)<\/a>/g)].map((match) => [match[1], match[2], text(match[3] ?? "")]);
     expect(cards).toEqual([
-      ["/de/p/jonas-brandt/cv", "Lebenslauf_Jonas_Brandt.pdf", "LebenslaufPDF · A4 · 1 SeiteHerunterladen"],
-      ["/de/p/jonas-brandt/letter", "Anschreiben_Jonas_Brandt.pdf", "AnschreibenPDF · A4 · 1 SeiteHerunterladen"],
+      ["/de/p/jonas-brandt/cv", "Lebenslauf_Jonas_Brandt.pdf", "Lebenslauf PDF · A4 · 1 Seite Herunterladen"],
+      ["/de/p/jonas-brandt/letter", "Anschreiben_Jonas_Brandt.pdf", "Anschreiben PDF · A4 · 1 Seite Herunterladen"],
     ]);
     expect(text(section)).toContain("PDF · A4 · 1 Seite");
-    expect(section).toMatch(/<a href="\/de\/p\/jonas-brandt\/application" download="Bewerbung_Jonas_Brandt.pdf" aria-label="Beides in einer Datei · 2 Seiten: Anschreiben und Lebenslauf \(PDF\)"/);
+    expect(section).toMatch(/<a href="\/de\/p\/jonas-brandt\/application" download="Bewerbung_Jonas_Brandt.pdf" data-app-download="" aria-label="Beides in einer Datei · 2 Seiten: Anschreiben und Lebenslauf \(PDF\)"/);
     expect(text(section)).not.toContain("Stand:");
     // A blank paper (no miniature yet) is decorative.
     expect(section).toMatch(/<span aria-hidden="true" class="relative grid aspect-a4/);
@@ -280,11 +325,18 @@ describe("the letter", () => {
 
   it("is set as a letter on white paper, with its PDF in the top line and the PDF's subject above the owner's words", () => {
     expect(letter).toMatch(/data-lb-letter="" class="[^"]*bg-white text-ink/);
-    expect(letter).toMatch(/<a href="\/de\/p\/jonas-brandt\/letter" download="Anschreiben_Jonas_Brandt.pdf" aria-label="Anschreiben als PDF herunterladen \(1 Seite\)"/);
+    expect(letter).toMatch(/<a href="\/de\/p\/jonas-brandt\/letter" download="Anschreiben_Jonas_Brandt.pdf" data-app-download="" aria-label="Anschreiben als PDF herunterladen \(1 Seite\)"/);
     const words = text(letter);
     expect(words.indexOf("Bewerbung als Fachkraft für Lagerlogistik (m/w/d)")).toBeLessThan(words.indexOf("Sehr geehrte Frau Albers,"));
     // The owner's text exactly: nothing added before the salutation or after the closing.
     expect(words).toMatch(/Mit freundlichen Grüßen\nJonas BrandtGanzes|Mit freundlichen Grüßen\nJonas Brandt$/);
+  });
+
+  it("spans the content's columns like the sheets around it, the words keeping the reading measure", () => {
+    const paper = /<div data-lb-letter="" class="([^"]*)"/.exec(letter)?.[1] ?? "";
+    expect(paper).not.toMatch(/max-w-/);
+    expect(letter).toMatch(/<div class="flex min-w-0 max-w-prose /);
+    expect(count(letter, /<p dir="auto" class="[^"]*max-w-prose/g)).toBeGreaterThanOrEqual(6);
   });
 
   it("keeps its disclosure on phones after two paragraphs once the letter is a long read", () => {
@@ -328,6 +380,13 @@ describe("the career as a table", () => {
     expect(count(career, />aktuell</g)).toBe(1);
   });
 
+  it("ends the rail with the last step's words: space under every step but the last", () => {
+    const steps = [...career.matchAll(/<div class="(lb-step [^"]*)"/g)].map((match) => match[1] ?? "");
+    expect(steps).toHaveLength(4);
+    expect(steps.slice(0, -1).every((step) => /\bpb-8\b/.test(step))).toBe(true);
+    expect(steps.at(-1)).not.toMatch(/\bpb-/);
+  });
+
   it("puts every step beside one rail with a dot (filled for the ongoing one), no icon nodes", () => {
     expect(count(career, /class="lb-step /g)).toBe(4);
     expect(count(career, /size-dot rounded-full[^"]*bg-creator-accent"/g)).toBe(1);
@@ -336,11 +395,21 @@ describe("the career as a table", () => {
 });
 
 describe("About", () => {
-  it("shows the facts on one soft sheet, two to a row, a long fact across the row", () => {
+  it("shows the facts on one soft sheet in even rows, the columns decided for the whole set", () => {
     const about = /<section id="section-about"[\s\S]*?<\/section>/.exec(jonasMarkup)?.[0] ?? "";
-    expect(about).toMatch(/<dl class="grid min-w-0 grid-cols-2 [^"]*rounded-creator-card bg-creator-surface [^"]*@work:grid-cols-4/);
-    expect(about).toMatch(/<div class="grid min-w-0 grid-cols-1 content-start gap-1 col-span-2"><dt[^>]*>Sprachen/);
-    expect(about).toMatch(/<div class="grid min-w-0 grid-cols-1 content-start gap-1"><dt[^>]*>Führerschein/);
+    // Three facts, two of them long ("Deutsch, Englisch (B1)", "Schichtbetrieb, auch nachts"): one to a
+    // row on phones, two from tablets on; every fact the same width, none across a row.
+    expect(about).toMatch(/<dl class="grid min-w-0 gap-x-6 gap-y-4 rounded-creator-card bg-creator-surface p-5 @work:p-6 grid-cols-1 @prose:grid-cols-2">/);
+    expect(about).not.toContain("col-span-2");
+    expect(count(about, /<div class="grid min-w-0 grid-cols-1 content-start gap-1"><dt/g)).toBe(3);
+  });
+
+  it("puts three facts with one long one on a clean grid, and short facts four (or three) to a row on the wide canvas", () => {
+    const fact = (label: string, value: string) => ({ label, value });
+    expect(factColumns([fact("Sprachen", "Deutsch, Englisch (B1)"), fact("Führerschein", "Klasse B"), fact("Ort", "Bremen")])).toBe("grid-cols-1 @prose:grid-cols-2");
+    expect(factColumns([fact("Führerschein", "Klasse B"), fact("Ort", "Bremen"), fact("Start", "März 2027")])).toBe("grid-cols-2 @work:grid-cols-3");
+    expect(factColumns([fact("Führerschein", "Klasse B"), fact("Ort", "Bremen"), fact("Start", "März 2027"), fact("Gehalt", "nach Tarif")])).toBe("grid-cols-2 @work:grid-cols-4");
+    expect(factColumns([fact("Ein sehr langes Etikett", "kurz")])).toBe("grid-cols-1 @prose:grid-cols-2");
   });
 
   it("never shows a drawn still as the person's portrait (Sevag's placeholder leaves About)", () => {

@@ -5,6 +5,8 @@ import { Check, ChevronDown, Download, FileText, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
+import { bridgeAvailable } from "@/features/app-mode/bridge";
+
 import { pageSide } from "./styles";
 
 /** A section as the index lists it. */
@@ -136,8 +138,8 @@ export function SectionSwitcher({
   entries: readonly IndexEntry[];
   name: string;
   ai?: Record<string, string> | undefined;
-  /** The documents (the CV, the cover letter) as direct downloads: the sheet's second group. */
-  documents?: readonly { href: string; filename?: string | undefined; label: string; rowName: string; own?: boolean | undefined }[] | undefined;
+  /** The documents (the CV, the cover letter, both in one file) as direct downloads: the sheet's second group. */
+  documents?: readonly { href: string; filename?: string | undefined; row: string; rowName: string; own?: boolean | undefined }[] | undefined;
 }): ReactNode {
   const t = useTranslations("creator");
   const sheet = useRef<HTMLDialogElement>(null);
@@ -223,9 +225,16 @@ export function SectionSwitcher({
               <ul aria-labelledby={groupId} className="grid overflow-hidden rounded-creator-card bg-creator-surface">
                 {documents.map((document) => (
                   <li key={document.href} className="min-w-0 not-first:border-t not-first:border-creator-line">
-                    <a href={document.href} download={document.filename} onClick={go} aria-label={document.own ? undefined : document.rowName} className={cn(row, "font-semibold")}>
+                    <a
+                      href={document.href}
+                      download={document.filename}
+                      data-app-download={document.own ? undefined : ""}
+                      onClick={go}
+                      aria-label={document.own ? undefined : document.rowName}
+                      className={cn(row, "font-semibold")}
+                    >
                       <span dir="auto" className={cn(pageSide, "min-w-0 text-pretty")}>
-                        {document.own ? document.label : t("laufbahn.pdfRow", { document: document.label })}
+                        {document.row}
                       </span>
                       <Icon icon={document.own ? FileText : Download} size="md" className="shrink-0 text-creator-accent-text" />
                     </a>
@@ -238,4 +247,42 @@ export function SectionSwitcher({
       </dialog>
     </>
   );
+}
+
+/** The page's document links (the CV, the letter, both in one file) carry this: `<a download data-app-download>`. */
+const APP_DOWNLOAD = "data-app-download";
+
+/**
+ * A press on one of the page's document links inside Linkyo's iPhone app (ADR 0087), where the web
+ * view performs no `<a download>`: the PDF (our own address) is fetched and handed to the app, which
+ * offers to save or share it; should that fail, the web view opens the PDF itself. True when the press
+ * was taken over. In a browser, or for any other press (a modifier key, another button, another
+ * link), false and nothing happens: the link downloads as always.
+ */
+export function appDocumentPress(event: Pick<MouseEvent, "target" | "defaultPrevented" | "button" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey" | "preventDefault">): boolean {
+  if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !bridgeAvailable()) return false;
+  const target = event.target;
+  const link = target instanceof Element ? target.closest(`a[${APP_DOWNLOAD}]`) : null;
+  if (!(link instanceof HTMLAnchorElement)) return false;
+  event.preventDefault();
+  const { href, download } = link;
+  void import("@/features/app-mode/bridge-files")
+    .then(({ appDownloadFrom }) => appDownloadFrom(href, download || "document.pdf"))
+    .then((sent) => {
+      if (!sent) window.location.assign(href);
+    });
+  return true;
+}
+
+/** Hands the page's document downloads to the app inside the app (`appDocumentPress`); renders nothing. */
+export function AppDownloads(): null {
+  useEffect(() => {
+    if (!bridgeAvailable()) return;
+    const press = (event: MouseEvent) => {
+      appDocumentPress(event);
+    };
+    document.addEventListener("click", press);
+    return () => document.removeEventListener("click", press);
+  }, []);
+  return null;
 }

@@ -202,6 +202,27 @@ describe("app mode: no purchase surface in the iPhone app", () => {
     // The Premium kit's story pictures (proposals/proposal-screen.tsx).
     expect(links).toBeGreaterThanOrEqual(1);
   });
+
+  it("hands the creator page's PDF links to the app: every <a download> there carries data-app-download, and the page renders the handler", () => {
+    const offences: string[] = [];
+    let links = 0;
+    for (const source of sources("features/directions/poster")) {
+      walk(source.ast, (node) => {
+        if (!ts.isJsxAttribute(node) || node.name.getText(source.ast) !== "download") return;
+        links += 1;
+        const element = node.parent.parent;
+        const names = element.attributes.properties.flatMap((property) => (ts.isJsxAttribute(property) ? [property.name.getText(source.ast)] : []));
+        if (!names.includes("data-app-download")) offences.push(`${source.file}:${String(lineOf(source, node))}  <a download> without data-app-download`);
+      });
+    }
+    expect(offences).toEqual([]);
+    // The hero's CV, the bar's round button and pills, the contents sheet's rows, the Kontakt band's
+    // rows, the Unterlagen cards and "Beides", the letter's pill.
+    expect(links).toBeGreaterThanOrEqual(8);
+    const bar = read("features/directions/poster/laufbahn-bar.tsx");
+    expect(bar.ast.getText()).toMatch(/<AppDownloads \/>/u);
+    expect(read("features/directions/poster/laufbahn-index.tsx").ast.getText()).toMatch(/appDownloadFrom\(/u);
+  });
 });
 
 describe("app mode: the chrome the app replaces", () => {

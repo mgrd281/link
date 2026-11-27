@@ -170,11 +170,11 @@ export function LaufbahnContact({
           ))}
           {documents.map((document) => (
             <li key={document.href}>
-              <a href={document.href} download={document.filename} aria-label={document.own ? undefined : document.rowName} className={rowClass}>
+              <a href={document.href} download={document.filename} data-app-download={document.own ? undefined : ""} aria-label={document.own ? undefined : document.rowName} className={rowClass}>
                 <Row
                   icon={<Icon icon={FileText} size="sm" />}
                   label={null}
-                  value={document.own ? document.label : t("laufbahn.pdfRow", { document: document.label })}
+                  value={document.row}
                   trail={document.own ? "arrow" : "download"}
                 />
               </a>

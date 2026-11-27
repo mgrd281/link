@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import type { DocumentsView } from "@/features/documents/offer";
 
 import { SignpostIndex, SignpostSection, signposts as signpostsOf, type Signpost } from "./laufbahn";
-import { DossierBar, useDocumentLinks } from "./laufbahn-bar";
+import { DossierBar, singleDocuments, useDocumentLinks } from "./laufbahn-bar";
 import { LaufbahnContact } from "./laufbahn-contact";
 import { LaufbahnDocuments } from "./laufbahn-documents";
 import { DossierHero, type HeadFacts, type Lead } from "./laufbahn-hero";
@@ -142,7 +142,7 @@ export default function SignpostedBody({
             grid's flow (absolute), so it adds no gap under the last section. */}
         <div data-lb-end aria-hidden className="absolute inset-x-0 bottom-0 h-px" />
       </Main>
-      {band ? <LaufbahnContact contact={band} now={heroProps.now} documents={links} shareTitle={profile.displayName} footer={footer} /> : footer}
+      {band ? <LaufbahnContact contact={band} now={heroProps.now} documents={singleDocuments(links)} shareTitle={profile.displayName} footer={footer} /> : footer}
     </>
   );
 }

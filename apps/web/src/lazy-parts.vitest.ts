@@ -13,8 +13,8 @@ vi.mock("@/features/directions/poster/signposted-lazy", async () => ({
 }));
 
 vi.mock("@/features/directions/poster/signposted-bar", async () => {
-  const { BarReveal, SectionSwitcher } = await import("@/features/directions/poster/laufbahn-index");
-  return { BarReveal, SectionSwitcher };
+  const { AppDownloads, BarReveal, SectionSwitcher } = await import("@/features/directions/poster/laufbahn-index");
+  return { AppDownloads, BarReveal, SectionSwitcher };
 });
 
 vi.mock("@/features/directions/poster/signposted-blocks", async () => {

@@ -109,6 +109,11 @@ test.describe("on a phone", () => {
     await expect(sheet.getByRole("heading", { name: "Unterlagen" })).toBeVisible();
     await expect(sheet.getByRole("link", { name: "Lebenslauf · PDF herunterladen" })).toHaveAttribute("download", "Lebenslauf_Jonas_Brandt.pdf");
     await expect(sheet.getByRole("link", { name: "Anschreiben · PDF herunterladen" })).toHaveAttribute("href", "/de/p/jonas-brandt/letter");
+    // Both in one file, as the third row of the group, its name ending "(PDF)".
+    const both = sheet.getByRole("link", { name: "Beides in einer Datei · 2 Seiten: Anschreiben und Lebenslauf (PDF)" });
+    await expect(both).toHaveAttribute("download", "Bewerbung_Jonas_Brandt.pdf");
+    await expect(both).toHaveText("Beides in einer Datei · 2 Seiten");
+    await expect(sheet.getByRole("list", { name: "Unterlagen" }).getByRole("link")).toHaveCount(3);
     await shot(page, "de-390-sheet");
     expect(await axe(page)).toEqual([]);
     await page.keyboard.press("Escape");
@@ -147,7 +152,9 @@ test.describe("on a laptop", () => {
       await expect(shares).toBeVisible();
       if (locale !== "ar") {
         await expect(bar.getByRole("link", { name: locale === "de" ? "Lebenslauf herunterladen (PDF)" : "Download CV (PDF)" })).toBeVisible();
-        await expect(bar.getByRole("link", { name: locale === "de" ? "Anschreiben herunterladen (PDF)" : "Download Cover letter (PDF)" })).toBeVisible();
+        await expect(bar.getByRole("link", { name: locale === "de" ? "Anschreiben herunterladen (PDF)" : "Download cover letter (PDF)", exact: true })).toBeVisible();
+        // The bar keeps to the two documents (both in one file is the sheet's and the Unterlagen section's).
+        await expect(bar.locator('a[href$="/application"]:visible')).toHaveCount(0);
       }
       await shot(page, `${locale}-1440-bar`);
     });
@@ -180,8 +187,8 @@ for (const locale of ["de", "en"] as const) {
     await open(page, application(locale));
     const links = page.locator("a[download]");
     const count = await links.count();
-    // The hero, the bar (phone round + two pills), the sheet (two rows), the letter, two cards, "both", the Kontakt band (two rows).
-    expect(count).toBeGreaterThanOrEqual(12);
+    // The hero, the bar (phone round + two pills), the sheet (three rows), the letter, two cards, "both", the Kontakt band (two rows).
+    expect(count).toBeGreaterThanOrEqual(13);
     for (let index = 0; index < count; index += 1) {
       const link = links.nth(index);
       const href = (await link.getAttribute("href")) ?? "";
@@ -189,10 +196,15 @@ for (const locale of ["de", "en"] as const) {
       expect(href.startsWith(`${BASES[locale] ?? ""}/`), href).toBe(true);
       expect(kind, href).not.toBe("");
       expect(await link.getAttribute("download")).toBe(FILES[locale]?.[kind]);
-      // Its name starts with its visible words (WCAG 2.5.3) and says it is a PDF: an aria-label, or the card's own words.
+      // Its name starts with its visible words (WCAG 2.5.3) and says it is a PDF: an aria-label, or the
+      // card's own words. The app hands every one of them over.
       const name = (await link.getAttribute("aria-label")) ?? (await link.innerText());
       expect(name, href).toContain("PDF");
+      expect(await link.getAttribute("data-app-download"), href).toBe("");
     }
+    // A card is named by its own words, in reading order, each part apart (never "LebenslaufPDF").
+    const card = page.locator('#unterlagen a[download][href$="/cv"]');
+    await expect(card).toHaveAccessibleName(locale === "de" ? "Lebenslauf PDF · A4 · 1 Seite Herunterladen" : "CV PDF · A4 · 1 page Download");
   });
 
   test(`${locale}: every address the page links to answers a real PDF, private and never indexed`, async ({ page, request }) => {
@@ -272,10 +284,23 @@ for (const path of ROUTES) {
 
 test("reduced motion: nothing animates, after load and after scrolling, and the career's rail is drawn in full", async ({ page }) => {
   await open(page, application("de"));
+  // The pointer rests outside the page: a card under it would run its colour change, which reduced
+  // motion keeps (a colour, no movement), and the count below is about motion.
+  await page.mouse.move(0, 0);
   expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
   await page.locator("#section-career").scrollIntoViewIfNeeded();
   await page.evaluate(() => window.scrollBy({ top: 400, behavior: "instant" }));
-  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  await page.mouse.move(0, 0);
+  // Nothing moves: no animation, and no transition but a fade or a colour's (reduced motion keeps
+  // those: the Linkyo dock fades in at the bottom once the head has scrolled away, a card's fill
+  // changes colour under the pointer).
+  const moving = await page.evaluate(() =>
+    document.getAnimations().flatMap((animation) => {
+      const property = animation instanceof CSSTransition ? animation.transitionProperty : null;
+      return property === "opacity" || property?.includes("color") ? [] : [property ?? (animation as CSSAnimation).animationName];
+    }),
+  );
+  expect(moving).toEqual([]);
   const rail = await page.locator("#section-career .lb-step").first().evaluate((element) => getComputedStyle(element, "::before").transform);
   expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(rail);
 });

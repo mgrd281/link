@@ -40,20 +40,37 @@ const NARROW = "min(100cqi - 2 * var(--spacing-creator-gutter), var(--container-
 /** Below the canvas the head's words line up with the reading column (centred), never closer to the edge than the gutter. */
 const COLUMN_INSET = "px-creator-gutter @prose:px-[max(var(--spacing-creator-gutter),calc((100cqi-var(--container-prose))/2))] @work:px-0";
 
-/** The plate on the wide canvas: four of the twelve columns, about 5 : 3 tall beside the words. */
-const WIDE_PLATE = { width: Math.round(((tokens.layout.work - 11 * tokens.spacing["6"]) * 4) / 12 + 3 * tokens.spacing["6"]), ratio: 5 / 3 };
-/** The plate on phones and tablets: the screen's width, 3 : 2 (aspect-photo). */
+/** The plate on the wide canvas: four of the twelve columns wide. */
+const WIDE_PLATE_WIDTH = Math.round(((tokens.layout.work - 11 * tokens.spacing["6"]) * 4) / 12 + 3 * tokens.spacing["6"]);
+/** The plate on phones and tablets: the screen's width, 3 : 2 (aspect-photo), as height over width. */
 const PHONE_PLATE_RATIO = 2 / 3;
+/** The wide plate's shape (width over height): the picture's own, no taller than 4 : 5 and no flatter than 4 : 3. */
+const WIDE_PLATE_RATIO = { tallest: 4 / 5, flattest: 4 / 3 };
+
+interface Picture {
+  w?: number | undefined;
+  h?: number | undefined;
+}
+
+/**
+ * The plate's shape on the wide canvas (width over height): the picture's own, so a drawn 4 : 5 clip
+ * stands whole beside the words and is never cut at its sides; only a picture taller than 4 : 5 or
+ * flatter than 4 : 3 is cropped to that. Without a stored size: 4 : 5.
+ */
+export function widePlateRatio(picture: Picture): number {
+  const aspect = picture.w && picture.h ? picture.w / picture.h : WIDE_PLATE_RATIO.tallest;
+  return Math.min(WIDE_PLATE_RATIO.flattest, Math.max(WIDE_PLATE_RATIO.tallest, aspect));
+}
 
 /**
  * The picture's `sizes`: it covers its plate, so a picture wider than the plate's shape is drawn wider
  * than the plate, and the browser fetches the width it really draws. Without a stored size the picture
- * counts as square.
+ * counts as square on phones.
  */
-function plateSizes(picture: { w?: number | undefined; h?: number | undefined }): string {
+function plateSizes(picture: Picture): string {
   const aspect = picture.w && picture.h ? picture.w / picture.h : 1;
   const phone = Math.max(1, aspect * PHONE_PLATE_RATIO);
-  const wide = Math.max(1, aspect * WIDE_PLATE.ratio) * WIDE_PLATE.width;
+  const wide = Math.max(1, aspect / widePlateRatio(picture)) * WIDE_PLATE_WIDTH;
   return `(max-width: ${String(tokens.layout.work - 1)}px) ${String(Math.round(phone * 100))}vw, ${String(Math.round(wide))}px`;
 }
 
@@ -188,7 +205,7 @@ function DossierActions({
         </a>
       ) : null}
       {cv ? (
-        <a href={cv.href} download={cv.filename} aria-label={t("laufbahn.downloadName", { document: t("laufbahn.cv"), pages: cv.pages })} className={second}>
+        <a href={cv.href} download={cv.filename} data-app-download="" aria-label={t("laufbahn.downloadName", { document: t("laufbahn.cvInSentence"), pages: cv.pages })} className={second}>
           <Icon icon={Download} size="md" className="shrink-0" />
           <span>{t("laufbahn.cv")}</span>
         </a>
@@ -265,8 +282,9 @@ function FigureValue({ parts, qualified }: { parts: FigureParts; qualified: bool
         </dd>
       ) : null}
       <dd className={cn(pageSide, "row-start-2 self-end text-white")}>
-        {/* "99,6 %" stays left to right on an Arabic page. */}
-        <bdi dir="ltr" className="inline-flex items-baseline whitespace-nowrap">
+        {/* "99,6 %" stays left to right on an Arabic page, and in the template's Latin face there: the
+            Arabic pairing's face has no digits, which would fall to a system face. */}
+        <bdi dir="ltr" className="inline-flex items-baseline whitespace-nowrap rtl:font-display">
           <span className="text-[length:var(--figure-size)] leading-none font-bold tracking-display tabular-nums">{parts.number}</span>
           {parts.unit ? (
             <span className={cn("text-[length:calc(var(--figure-size)/2)] leading-none font-bold", /\p{L}/u.test(parts.unit) ? "ms-1" : "ms-0_5")}>{parts.unit}</span>
@@ -285,7 +303,8 @@ function FigureValue({ parts, qualified }: { parts: FigureParts; qualified: bool
  * with the owner's own label and value), the place, the sentence, the two actions, then the figures
  * (qualifier, number and unit, label) and, last on phones, the picture or clip as a plate from edge to
  * edge (3 : 2). On the wide canvas one composition on twelve columns: the words on eight, the figures
- * under them on seven, the plate as a tall rounded picture on the last four. No picture: no plate and
+ * under them on seven, the plate as a rounded picture in its own shape on the last four, level with
+ * the top of the words. No picture: no plate and
  * no initials. One DOM for every width. The lines rise in once when the page opens; nothing in the head
  * moves after that (no parallax), and nothing at all with reduced motion.
  */
@@ -356,7 +375,8 @@ export function DossierHero({
           {live ? <HeroLive block={live} /> : null}
           {status ? <StatusPill text={status} className={rise(0).className} style={rise(0).style} /> : null}
           <div className={cn("w-full min-w-0", rise(1).className)} style={rise(1).style}>
-            <DossierName profile={profile} theme={theme} isRtl={isRtl} className={status ? undefined : "mt-0"} />
+            {/* The name keeps its space under the live pill or the status; first in the head, it starts at the top. */}
+            <DossierName profile={profile} theme={theme} isRtl={isRtl} className={status || live ? undefined : "mt-0"} />
           </div>
           {profile.tagline ? (
             <p data-lb-role dir="auto" className={cn(pageSide, "mt-4 max-w-full text-h3 font-medium text-balance break-words @work:text-h2 rtl:leading-normal", rise(2).className)} style={rise(2).style} {...aiText(profile, "tagline")}>
@@ -423,11 +443,13 @@ export function DossierHero({
           />
         ) : null}
 
-        {/* The picture or clip: last on phones and tablets, from edge to edge; a tall plate on the wide canvas. */}
+        {/* The picture or clip: last on phones and tablets, from edge to edge; on the wide canvas a plate
+            in the picture's own shape (widePlateRatio), level with the top of the words. */}
         {picture ? (
           <div
             data-hero-plate
-            className="relative mt-10 aspect-photo overflow-hidden bg-hover-inverse @work:col-span-4 @work:col-start-9 @work:row-span-2 @work:row-start-1 @work:mt-0 @work:aspect-auto @work:min-h-full @work:self-stretch @work:rounded-xl"
+            className="relative mt-10 aspect-photo overflow-hidden bg-hover-inverse @work:col-span-4 @work:col-start-9 @work:row-span-2 @work:row-start-1 @work:mt-0 @work:aspect-[var(--plate-ratio)] @work:self-start @work:rounded-xl"
+            style={{ "--plate-ratio": String(Number(widePlateRatio(picture).toFixed(4))) } as CSSProperties}
           >
             <MediaImage src={picture.src} focal={picture.focal} alt={picture.alt} sizes={plateSizes(picture)} priority={!preview} />
             {profile.motion ? <HeroMotion src={profile.motion.src} /> : null}

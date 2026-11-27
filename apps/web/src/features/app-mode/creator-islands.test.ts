@@ -1,6 +1,7 @@
 import type { BlockOf } from "@linkyo/blocks";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { appDocumentPress } from "@/features/directions/poster/laufbahn-index";
 import { remind } from "@/features/directions/poster/live-time";
 
 import { HANDLER } from "./bridge";
@@ -70,5 +71,55 @@ describe("the live reminder in the app", () => {
     remind(LIVE, "Live: Q&A");
     expect(posted).toEqual([]);
     expect(clicked).toEqual([{ download: "live.ics", href: "blob:calendar" }]);
+  });
+});
+
+describe("a Laufbahn page's PDF in the app", () => {
+  const HREF = "https://linkyo.app/de/p/jonas-brandt/cv";
+  const NAME = "Lebenslauf_Jonas_Brandt.pdf";
+
+  /** A press on a document link (`a[data-app-download]`), in the app or not; with the app's handler and a fetch of our own PDF. */
+  function press({ app, modifier = false }: { app: boolean; modifier?: boolean }) {
+    const { posted } = page({ app });
+    const assigned: string[] = [];
+    (window as unknown as Record<string, unknown>).location = { assign: (href: string) => assigned.push(href) };
+    class FakeElement {
+      closest(selector: string) {
+        return selector === "a[data-app-download]" ? link : null;
+      }
+    }
+    class FakeAnchor extends FakeElement {
+      href = HREF;
+      download = NAME;
+    }
+    const link = new FakeAnchor();
+    vi.stubGlobal("Element", FakeElement);
+    vi.stubGlobal("HTMLAnchorElement", FakeAnchor);
+    const fetched: string[] = [];
+    vi.stubGlobal("fetch", (url: string) => {
+      fetched.push(url);
+      return Promise.resolve(new Response(new Blob(["%PDF-1.7"], { type: "application/pdf" }), { status: 200 }));
+    });
+    let prevented = false;
+    const event = { target: link, defaultPrevented: false, button: 0, metaKey: modifier, ctrlKey: false, shiftKey: false, altKey: false, preventDefault: () => (prevented = true) };
+    return { taken: appDocumentPress(event as unknown as MouseEvent), prevented: () => prevented, posted, fetched, assigned };
+  }
+
+  it("hands the PDF to the app instead of a download the web view would not do", async () => {
+    const result = press({ app: true });
+    expect(result.taken).toBe(true);
+    expect(result.prevented()).toBe(true);
+    await vi.waitFor(() => expect(result.posted).toHaveLength(1));
+    expect(result.fetched).toEqual([HREF]);
+    expect(result.posted[0]).toMatchObject({ type: "download", name: NAME, mime: "application/pdf" });
+    expect(result.assigned).toEqual([]);
+  });
+
+  it("leaves the browser's own download alone, and any press with a modifier key", () => {
+    for (const result of [press({ app: false }), press({ app: true, modifier: true })]) {
+      expect(result.taken).toBe(false);
+      expect(result.prevented()).toBe(false);
+      expect(result.posted).toEqual([]);
+    }
   });
 });
