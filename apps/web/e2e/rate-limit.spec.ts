@@ -96,14 +96,14 @@ test.describe("rate limits", () => {
   test.describe("auth (real accounts, stub build)", () => {
     test.skip(!STUB, "Needs the stub build and the Supabase stand-in (E2E_STUB=1).");
 
-    test("/api/auth/code: 30 codes per address and 5 per e-mail address in 15 minutes", async ({ request }) => {
+    test("/api/auth/code: 30 codes per address and 10 per e-mail address in 15 minutes", async ({ request }) => {
       const stamp = Date.now().toString(36);
       await limitHolds(30, 900, (from, n) =>
         request.post("/api/auth/code", { headers: { "x-forwarded-for": from }, data: { email: `limit-${stamp}-${String(n)}@example.com`, locale: "de" } }),
       );
       const refused = { ok: false, error: "tooManyAttempts" };
       let last: APIResponse | null = null;
-      for (let n = 0; n < 6; n++) last = await request.post("/api/auth/code", { headers: { "x-forwarded-for": address() }, data: { email: `one-${stamp}@example.com`, locale: "de" } });
+      for (let n = 0; n < 11; n++) last = await request.post("/api/auth/code", { headers: { "x-forwarded-for": address() }, data: { email: `one-${stamp}@example.com`, locale: "de" } });
       expectRefused(last!, 900);
       expect(await last!.json()).toEqual(refused);
     });

@@ -28,7 +28,7 @@ const body = z
  * 30, room for a school, an office or a mobile network behind one shared address.
  */
 const ADDRESS_LIMIT = rateLimit({ name: "auth-code-address", max: 30, windowMs: 15 * MINUTE });
-const EMAIL_LIMIT = rateLimit({ name: "auth-code-email", max: 5, windowMs: 15 * MINUTE });
+const EMAIL_LIMIT = rateLimit({ name: "auth-code-email", max: 10, windowMs: 15 * MINUTE });
 
 /** The sign-in screens already say "too many attempts, wait a few minutes" for this error. */
 const tooMany = (verdict: Extract<Verdict, { ok: false }>) =>
