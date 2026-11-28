@@ -1,7 +1,7 @@
 import type { Block, Page } from "@linkyo/blocks";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { filterPublic, isOwnPicture, loadPublicPage, parseBlocks, parseLegal, parseTheme, toPublicPage, withoutThirdParties } from "./public-page";
+import { cardPage, filterPublic, indexable, isOwnPicture, loadPublicPage, parseBlocks, parseLegal, parseTheme, searchTexts, toPublicPage, withoutThirdParties } from "./public-page";
 
 const NOW = new Date("2026-11-22T12:00:00Z");
 const link = (id: string, extra: Partial<Block> = {}): Block => ({ id, type: "link", title: id, url: `https://example.com/${id}`, visible: true, highlight: false, ...extra }) as Block;
@@ -151,5 +151,100 @@ describe("nothing from another origin (GDPR)", () => {
     }
     expect(withoutThirdParties(withMotion("sample:motion-lina")).profile.motion).toEqual({ src: "sample:motion-lina" });
     expect(toPublicPage({ page: withMotion("https://cdn.example.com/loop.mp4") }, NOW)?.page.profile).not.toHaveProperty("motion");
+  });
+});
+
+/** D-09: Settings › Sichtbarkeit, as the public page reads it. */
+describe("a paused page", () => {
+  const answer = (visibility: Record<string, unknown> | undefined) => ({
+    page: {
+      profile: {
+        username: "mila",
+        displayName: "Mila Berg",
+        bio: "Songs and shows.",
+        tagline: "Singer · Köln",
+        location: "Köln",
+        stats: [{ value: "2M", label: "followers" }],
+        avatar: { src: "sample:avatar-1", alt: "Mila" },
+        hero: { src: "sample:hero-1", alt: "" },
+        verified: false,
+        locale: "ar",
+        ...(visibility ? { visibility } : {}),
+      },
+      blocks: [link("a"), link("b")],
+    },
+    theme: { template: "nocturne" },
+    legal: { name: "Mila Berg", address: "Straße 1", email: "mila@example.com", phone: "" },
+    updatedAt: "2026-11-22T10:00:00Z",
+  });
+
+  it("keeps only the name, the photo and the language: no block, no line, no numbers, no hero", () => {
+    const found = toPublicPage(answer({ paused: true }), NOW);
+    expect(found?.paused).toBe(true);
+    expect(found?.page.blocks).toEqual([]);
+    expect(found?.page.profile).toEqual({ username: "mila", displayName: "Mila Berg", bio: "", avatar: { src: "sample:avatar-1", alt: "Mila" }, verified: false, locale: "ar", visibility: { paused: true } });
+  });
+
+  it("is a normal page again once the pause is off (or was never set)", () => {
+    for (const visibility of [{ paused: false }, undefined, { paused: "garbage" }]) {
+      const found = toPublicPage(answer(visibility), NOW);
+      expect(found?.paused, JSON.stringify(visibility)).toBe(false);
+      expect(found?.page.blocks.map((block) => block.id)).toEqual(["a", "b"]);
+      expect(found?.page.profile.tagline).toBe("Singer · Köln");
+    }
+  });
+
+  it("is never indexed, whatever the search switch says", () => {
+    expect(indexable(toPublicPage(answer({ paused: true, search: true }), NOW)!)).toBe(false);
+  });
+});
+
+describe("search engines and link cards", () => {
+  const profile = (visibility?: Page["profile"]["visibility"], extra: Partial<Page["profile"]> = {}): Page["profile"] => ({
+    username: "mila",
+    displayName: "Mila Berg",
+    bio: "Songs and shows.",
+    avatar: { src: "none:", alt: "" },
+    verified: false,
+    locale: "de",
+    ...extra,
+    ...(visibility ? { visibility } : {}),
+  });
+
+  it("may index the page unless the owner switched search engines off", () => {
+    expect(indexable({ page: { profile: profile(), blocks: [] }, paused: false })).toBe(true);
+    expect(indexable({ page: { profile: profile({ search: true }), blocks: [] }, paused: false })).toBe(true);
+    expect(indexable({ page: { profile: profile({ search: false }), blocks: [] }, paused: false })).toBe(false);
+  });
+
+  it("uses the owner's title and description, else the name and the tagline or bio", () => {
+    expect(searchTexts(profile())).toEqual({ title: "Mila Berg", description: "Songs and shows." });
+    expect(searchTexts(profile(undefined, { tagline: "Singer · Köln" }))).toEqual({ title: "Mila Berg", description: "Singer · Köln" });
+    expect(searchTexts(profile({ title: "Mila Berg – Sängerin aus Köln", description: "Konzerte, Songs und Tickets." }))).toEqual({
+      title: "Mila Berg – Sängerin aus Köln",
+      description: "Konzerte, Songs und Tickets.",
+    });
+    // Empty or blank means today's default.
+    expect(searchTexts(profile({ title: "  ", description: "" }))).toEqual({ title: "Mila Berg", description: "Songs and shows." });
+  });
+
+  it("cuts a long line to 160 characters, never in the middle of a character", () => {
+    const { description } = searchTexts(profile(undefined, { bio: `${"a".repeat(158)}😀😀😀` }));
+    expect(Array.from(description)).toHaveLength(160);
+    expect(description.endsWith("😀…")).toBe(true);
+  });
+
+  it("names a paused page by its title only", () => {
+    expect(searchTexts(profile({ paused: true, description: "Konzerte" }), true)).toEqual({ title: "Mila Berg", description: "" });
+  });
+
+  it("puts the search title and description on the link card in place of the name and line", () => {
+    const own = { page: { profile: profile({ title: "Mila – Live", description: "Tickets und Songs" }, { tagline: "Singer" }), blocks: [] }, paused: false };
+    expect(cardPage(own).profile).toMatchObject({ displayName: "Mila – Live", tagline: "Tickets und Songs" });
+    const plain = { page: { profile: profile(), blocks: [] }, paused: false };
+    expect(cardPage(plain)).toBe(plain.page);
+    const paused = { page: { profile: profile({ paused: true, title: "Mila – Live", description: "Tickets" }), blocks: [] }, paused: true };
+    expect(cardPage(paused).profile).toMatchObject({ displayName: "Mila – Live" });
+    expect(cardPage(paused).profile.tagline).toBeUndefined();
   });
 });

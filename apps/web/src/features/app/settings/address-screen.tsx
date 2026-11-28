@@ -13,7 +13,8 @@ import { CREATOR_DOMAIN, pageAddress } from "@/lib/page-url";
 
 import { TextInput } from "../form";
 import { FieldGroup, FormActions } from "../list";
-import { Screen } from "../screen";
+import { HelpGroup } from "../help-link";
+import { ColumnGroups, Screen } from "../screen";
 import { useSite } from "../site-context";
 import { toSlug } from "./slug";
 
@@ -91,7 +92,9 @@ export function AddressScreen() {
   };
 
   return (
-    <Screen title={t("panes.address")} back={{ href: "/app/settings", label: tApp("nav.settings") }} preview>
+    <Screen title={t("panes.address")} back={{ href: "/app/settings", label: tApp("nav.settings") }} preview grow>
+      {/* Two columns where there is the room (leftover 1): the form, and beside it its help article. */}
+      <ColumnGroups>
       <FieldGroup>
         <form ref={form} noValidate onSubmit={submit} className="grid grid-cols-1 gap-5">
           <TextInput
@@ -131,6 +134,8 @@ export function AddressScreen() {
           ) : null}
         </form>
       </FieldGroup>
+      <HelpGroup slug="seitenadresse" />
+      </ColumnGroups>
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}

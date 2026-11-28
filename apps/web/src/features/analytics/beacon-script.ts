@@ -12,12 +12,15 @@
  * its address; a step inside the page (from the page or one of its project pages, the same host and
  * the page's own first path segment) is marked `s:"page"` and adds no source, and `?src=qr` marks a QR
  * code. It reads and writes nothing on the visitor's device (no cookie, no storage, no fingerprint),
- * and a browser that sends Global Privacy Control or Do Not Track sends nothing at all. beacon.test.ts
+ * and a browser that sends Global Privacy Control or Do Not Track sends nothing at all. Neither does a
+ * page its owner paused (the offline page carries `data-paused`, features/creator/paused-page.tsx): the
+ * layout writes the script into every page it finds, and a paused page counts nothing. beacon.test.ts
  * runs it against a fake browser and holds its text to these rules.
  */
 const SOURCE = `(function(page){
 var nav=navigator,doc=document;
 if(nav.globalPrivacyControl===true||nav.doNotTrack==="1")return;
+if(doc.querySelector&&doc.querySelector("[data-paused]"))return;
 function send(event){
 event.p=page;
 try{fetch("/api/collect",{method:"POST",body:JSON.stringify(event),keepalive:true,credentials:"omit"}).catch(function(){})}catch(e){}

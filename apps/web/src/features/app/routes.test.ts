@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { helpHref, isHelpSlug } from "@/features/help/articles";
+
 import ar from "@/messages/ar.json";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
@@ -8,6 +10,8 @@ import {
   DESIGN_TABS,
   designTabFrom,
   hasSectionPanel,
+  helpFor,
+  helpLink,
   INVITE_HREF,
   isGrownPath,
   isReturnPath,
@@ -17,6 +21,7 @@ import {
   routeInfo,
   SECTION_HREF,
   SETTINGS_HREF,
+  SETTINGS_PANES,
   TAB_HREF,
   TABS,
   WORK_HREF,
@@ -34,16 +39,25 @@ describe("dashboard routes", () => {
     expect(routeInfo("/app/settings/legal")).toEqual({ title: "settings.panes.legal", tab: null, parent: SETTINGS_HREF, section: "settings" });
   });
 
-  it("names the screens that take the content width on laptops (Screen `grow`), forms excluded", () => {
-    // Page, Arbeiten, Design and the Plan and Account panes start at Home's edge; the loading frame reads this list.
-    for (const path of ["/app/editor", "/app/work", "/app/design", "/app/settings/plan", "/app/settings/account"]) {
+  it("names the screens that take the content width on laptops (Screen `grow`)", () => {
+    // Page, Arbeiten, Design, Settings and its panes start at Home's edge; the loading frame reads this
+    // list. Settings and the form panes stand in two columns there (leftover 1: no dead band at 1920).
+    for (const path of ["/app/editor", "/app/work", "/app/design", "/app/settings", "/app/settings/plan", "/app/settings/account", "/app/settings/address", "/app/settings/legal", "/app/settings/visibility"]) {
       expect(isGrownPath(path), path).toBe(true);
       expect(isGrownPath(`${path}/`), `${path}/`).toBe(true);
       // A place of its own, not the fallback an unknown path gets (Start).
       expect(routeInfo(path).title, path).not.toBe("nav.home");
     }
-    // Home and Invite are `wide` already; the form panes keep the narrower column.
-    for (const path of ["/app", "/app/invite", "/app/analytics", "/app/settings", "/app/settings/address", "/app/settings/legal"]) expect(isGrownPath(path), path).toBe(false);
+    // Home, Invite and Stats are `wide` already.
+    for (const path of ["/app", "/app/invite", "/app/analytics"]) expect(isGrownPath(path), path).toBe(false);
+  });
+
+  it("pushes the Visibility pane over Settings, titled by its own message", () => {
+    expect(routeInfo("/app/settings/visibility")).toEqual({ title: "settings.panes.visibility", tab: null, parent: SETTINGS_HREF, section: "settings" });
+    expect(markedTab("/app/settings/visibility")).toBeNull();
+    expect(isReturnPath("/app/settings/visibility")).toBe(true);
+    expect(SETTINGS_PANES).toEqual(["plan", "account", "address", "legal", "visibility"]);
+    for (const locale of [de, en, ar]) for (const pane of SETTINGS_PANES) expect(locale.app.settings.panes[pane].length, pane).toBeGreaterThan(0);
   });
 
   it("pushes the Plan pane over Settings, titled by its own message", () => {
@@ -164,5 +178,28 @@ describe("panel anchors", () => {
       "invite-people",
       "invite-rules",
     ]);
+  });
+});
+
+describe("help for a screen (W-04)", () => {
+  it("names the article of the screens that have one", () => {
+    expect(helpFor("/app/analytics")).toBe("statistik");
+    expect(helpFor("/app/settings/address")).toBe("seitenadresse");
+    expect(helpFor("/app/settings/legal")).toBe("impressum");
+    expect(helpFor("/app/settings/account")).toBe("konto-loeschen");
+    expect(helpFor("/app")).toBe("teilen");
+    expect(helpFor("/app/analytics/")).toBe("statistik");
+    // No article of its own: the help page's start.
+    for (const path of ["/app/settings", "/app/settings/plan", "/app/settings/visibility", "/app/invite", "/app/nowhere"]) expect(helpFor(path), path).toBeUndefined();
+    for (const path of ["/app", "/app/editor", "/app/work", "/app/design", "/app/analytics", "/app/settings/address", "/app/settings/legal", "/app/settings/account"]) {
+      const slug = helpFor(path);
+      expect(slug && isHelpSlug(slug), path).toBe(true);
+    }
+  });
+
+  it("links to the help page in the same language, with the article as its anchor", () => {
+    expect(helpLink("de", "statistik")).toBe("/hilfe#statistik");
+    expect(helpLink("ar")).toBe("/hilfe");
+    for (const locale of ["de", "en", "ar"]) expect(`/${locale}${helpLink(locale, "impressum")}`).toBe(helpHref(locale, "impressum"));
   });
 });

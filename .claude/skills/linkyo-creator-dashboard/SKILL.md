@@ -54,10 +54,13 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
 
 ## Widths on laptops
 
-- Single column: `max-w-prose lg:max-w-column-wide` (840 px from `lg`): a form (Seitenadresse, Impressum, the
-  Settings list). Screens that have the room (`grow`: Page, Arbeiten, Design, and the Plan and Konto panes;
-  the list is `isGrownPath` in `routes.ts`, which the loading frame reads too) take `layout.content` from
-  `lg`, so they start at Home's edge and leave no dead gutters at 1920. Home and Invite: `wide`
+- Single column: `max-w-prose lg:max-w-column-wide` (840 px from `lg`) only for screens not listed below.
+  Screens that have the room (`grow`: Page, Arbeiten, Design, Settings and every Settings pane; the list is
+  `isGrownPath` in `routes.ts`, which the loading frame reads too) take `layout.content` from `lg`, so they
+  start at Home's edge and leave no dead gutters at 1920. Settings and the form panes (Seitenadresse,
+  Impressum, Sichtbarkeit) stand in two columns there (`ColumnGroups`): the form, and beside it its help
+  article or previews, so no field gets wider than a form should be. A `wide` screen beside the section panel
+  (Statistik, Einladen) may take `layout.content-wide` from 2xl (it reaches the window's end at 1920). Home and Invite: `wide`
   (`layout.content`) with two columns once the column is at least `column-wide`
   (`@container` + `@column-wide:columns-2`; `ColumnGroups` in `screen.tsx` does it for independent groups,
   as Plan and Konto use it). CSS columns keep the phone's order for reading and focus;
@@ -69,6 +72,23 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
   centred. `ShellChrome.panel` tells `Screen` which.
 - Check at 390, 1024, 1440 and 1920: at 1920 the main column is at least 760 px, or Home is two
   columns. The team area's `PlainScreen` does not change with these rules.
+
+## Visibility, help, the palette (Stage 4, WP4.5)
+
+- **Settings › Sichtbarkeit** (`settings/visibility-screen.tsx`): `profile.visibility` in the page document
+  (`paused`, `search`, `title` ≤ 60, `description` ≤ 160; only what differs from the default is stored). It is a
+  setting, not content: `siteReducer`'s `replace` keeps it, so a draft or import never unpauses a page. The public
+  side (`features/creator/visibility.ts`, `paused-page.tsx`): a paused page keeps only name and photo, renders a
+  calm offline page with `noindex` and no counter; search off is `noindex, nofollow`; the texts feed the metadata
+  and the OG card. After a saved change the pane drops the cached page (`/api/account/revalidate`).
+- **Help:** link to articles with `helpLink(locale, slug)` (`routes.ts`, from `helpHref`), same tab. `helpFor`
+  maps a screen to its article (the rail's "?"); `HelpLink` / `HelpGroup` (`help-link.tsx`) on the screens.
+- **⌘K palette** (`command-palette.tsx`, lazy, kit `CommandPalette`): screens, the Add entries (`openAdd({ pick })`
+  opens the sheet at a type's form) and the page's blocks. The shell owns the keys (`keys.ts`: ⌘ on Apple,
+  Ctrl elsewhere, by key position too) and the phone's top-bar search button; "?" opens `ShortcutsSheet`. A new
+  shortcut must be listed in `keys.ts` `SHORTCUTS` and `app.shortcuts.items`. None of it in app mode (ADR 0087).
+- **Add-sheet search:** `add-search.ts` (`addMenu`, `searchText` folds case, accents and Arabic spellings). A new
+  entry needs `app.add.keywords.<type>` in de, en and ar (`add-search.test.ts` fails without them).
 
 ## Template picker and previews
 
@@ -132,13 +152,13 @@ Invite and Settings. It is phone first and must feel like a modern desktop app o
 
 `blockIcon` (`features/directions/editor/ui.tsx`), `blockTitle` (`features/directions/editor/use-editor.ts`),
 `mapSources` (`features/account/media-migrate.ts`), the Add sheet's groups (`ADD_GROUPS` in
-`features/app/blocks.ts`) and its `desc.*` line, `dashboard.types.*` in three languages, the editor
+`features/app/blocks.ts`), its `desc.*` line and its search words (`app.add.keywords.*`), `dashboard.types.*` in three languages, the editor
 row's `Thumb` and `blockSummary`.
 
 ## Acceptance for a dashboard change
 
 - `console-guard.test.ts`, `routes.test.ts`, the screen's unit tests; Playwright on desktop and
   mobile for the specs that touch the screen (`dashboard-layout-app`, `nav-panel-app`,
-  `nav-fixes-app`, `app.spec`), axe in en and ar (light and dark).
+  `nav-fixes-app`, `app.spec`, `visibility-app`, `palette-app`, `app-mode-app`), axe in en and ar (light and dark).
 - Screenshots at 390, 1440 and 1920 in de and ar: Arabic mirrored, nothing cut off, no shadow, no
   underline, black and grey only.

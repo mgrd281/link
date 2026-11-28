@@ -136,7 +136,10 @@ function ShellScreen({ title, lead, actions, children, preview = false, wide = f
   }, [pushed]);
   // Phones and tablets keep the reading width; laptops get the wide column (layout.column-wide), or
   // the content width where the screen has the room for it (`grow`, `wide`): one start edge for all.
-  const column = wide ? "max-w-content" : cn("max-w-prose", grow ? "lg:max-w-content" : "lg:max-w-column-wide");
+  // A wide screen beside the section panel (Statistik, Einladen) is anchored at the panel's edge: from
+  // 2xl it may take `layout.content-wide`, so at 1920 it reaches the window's end instead of leaving a
+  // band of about 500 px free (leftover 1). Centred wide screens (Home) keep `content`.
+  const column = wide ? cn("max-w-content", chrome.panel && "2xl:max-w-content-wide") : cn("max-w-prose", grow ? "lg:max-w-content" : "lg:max-w-column-wide");
   // Beside the section panel the column hugs it (a detail pane); alone, it is centred.
   const align = chrome.panel ? "lg:mx-0" : null;
   return (

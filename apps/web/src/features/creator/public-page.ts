@@ -7,6 +7,11 @@ import { isProxiedImage } from "@/features/directions/shared/remote-images";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { anonServerSupabase } from "@/lib/supabase/server";
 
+import { pausedPage } from "./visibility";
+
+// The visibility helpers are pure (the dashboard's previews use them too); the routes read them here.
+export { cardPage, indexable, pausedPage, searchTexts } from "./visibility";
+
 /**
  * A creator's public page, read the way a visitor may see it: `public_page()` (active, confirmed and
  * onboarded accounts only; hidden and out-of-schedule blocks already left out in SQL), parsed block by
@@ -19,6 +24,13 @@ export interface PublicPage {
   theme: CreatorThemeConfig;
   legal: Legal;
   updatedAt: string;
+  /**
+   * The owner paused the page (Settings › Sichtbarkeit): `page` then holds only the name and photo and
+   * no block, so every route that reads it (the page, its project pages, the documents, the link
+   * preview) shows nothing of the content. The page itself shows the calm offline page. Absent (a page
+   * built elsewhere, as in tests) means not paused.
+   */
+  paused?: boolean | undefined;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -125,12 +137,14 @@ export function parseLegal(raw: unknown): Legal {
   return { name: text(legal.name), address: text(legal.address), email: text(legal.email), phone: text(legal.phone) };
 }
 
-/** The answer of `public_page()` as a page visitors may see, or null. */
+/** The answer of `public_page()` as a page visitors may see, or null. A paused page keeps only its name and photo (`pausedPage`). */
 export function toPublicPage(raw: unknown, now: Date = new Date()): PublicPage | null {
   if (!isRecord(raw)) return null;
   const page = parsePage(raw.page);
   if (!page) return null;
-  return { page: withoutThirdParties(filterPublic(page, now)), theme: parseTheme(raw.theme), legal: parseLegal(raw.legal), updatedAt: text(raw.updatedAt) };
+  const paused = page.profile.visibility?.paused === true;
+  const shown = paused ? pausedPage(page) : filterPublic(page, now);
+  return { page: withoutThirdParties(shown), theme: parseTheme(raw.theme), legal: parseLegal(raw.legal), updatedAt: text(raw.updatedAt), paused };
 }
 
 /**

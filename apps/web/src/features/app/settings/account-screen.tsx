@@ -13,6 +13,7 @@ import { normalizeEmail } from "@/features/account/username";
 import { Disclosure } from "../disclosure";
 import { TextInput } from "../form";
 import { FieldGroup, FormActions } from "../list";
+import { HelpGroup } from "../help-link";
 import { ColumnGroups, Screen } from "../screen";
 import { useExportData } from "../settings-screen";
 import { useSite } from "../site-context";
@@ -327,6 +328,7 @@ export function AccountScreen() {
         <EmailGroup />
         <SignInsGroup />
         <DeleteGroup />
+        <HelpGroup slug="konto-loeschen" />
       </ColumnGroups>
     </Screen>
   );

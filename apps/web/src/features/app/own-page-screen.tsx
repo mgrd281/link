@@ -3,7 +3,7 @@
 import { isBlockActive } from "@linkyo/blocks";
 import { resolveCreatorTheme } from "@linkyo/tokens/creator";
 import { Button, cn, Icon } from "@linkyo/ui";
-import { Pencil } from "lucide-react";
+import { ChevronRight, CirclePause, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
@@ -39,6 +39,7 @@ function readReturnPath(): string {
  */
 export function OwnPageScreen() {
   const t = useTranslations("app.ownPage");
+  const tVisibility = useTranslations("app.visibility");
   const app = useAppMode();
   const { previewPage, doc, account } = useSite();
   const theme = useMemo(() => resolveCreatorTheme(doc.theme, { rtlScript: previewPage.profile.locale === "ar" }), [doc.theme, previewPage.profile.locale]);
@@ -65,6 +66,19 @@ export function OwnPageScreen() {
 
   return (
     <>
+      {/* Paused (Settings › Sichtbarkeit): the owner still sees the page here, and is told visitors do not. */}
+      {doc.profile.visibility?.paused ? (
+        <div data-console="local" data-paused-note className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-line bg-surface px-4 py-2 text-small text-fg">
+          <span className="inline-flex items-center gap-2">
+            <Icon icon={CirclePause} size="sm" className="shrink-0" />
+            {tVisibility("ownPagePaused")}
+          </span>
+          <Link href="/app/settings/visibility" className="relative inline-flex items-center gap-1 rounded-sm font-semibold text-link transition-colors duration-micro before:absolute before:inset-x-0 before:-inset-y-3 hover:text-link-hover focus-visible:focus-ring pointer-fine:before:hidden">
+            {tVisibility("title")}
+            <Icon icon={ChevronRight} size="sm" className="shrink-0" />
+          </Link>
+        </div>
+      ) : null}
       <OwnerPreview bar={!app}>
         {/* The page's share button shares its public address, not this screen's (share-island.tsx). */}
         <div data-share-url={pageUrl(account.username)} className="contents">

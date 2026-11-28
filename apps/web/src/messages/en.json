@@ -1763,6 +1763,38 @@
         "label": "Link to your work",
         "placeholder": "GitHub, Behance, an article…",
         "submit": "Create project"
+      },
+      "searchLabel": "Search blocks",
+      "searchPlaceholder": "For example video, dates, shop",
+      "searchResults": "{count, plural, =0 {No results} one {# result} other {# results}}",
+      "searchEmpty": "No block matches “<bdi>{query}</bdi>”.",
+      "searchEmptyHint": "Try another word, or just paste a link above.",
+      "keywords": {
+        "link": "link url website site address",
+        "card": "card link card image teaser banner preview",
+        "header": "heading title section chapter header",
+        "text": "text paragraph description note",
+        "divider": "divider line separator space",
+        "socials": "social media instagram tiktok youtube profiles icons networks",
+        "image": "image photo picture",
+        "gallery": "gallery photos pictures album",
+        "video": "video youtube vimeo film clip",
+        "shorts": "shorts reels tiktok vertical clips",
+        "music": "music song album single spotify apple music release",
+        "events": "dates concerts tour tickets events shows",
+        "product": "product shop sell price merch",
+        "newsletter": "newsletter email sign-up subscribers",
+        "brands": "partners brands logos sponsors",
+        "live": "live stream livestream twitch kick",
+        "app": "app store google play ios android",
+        "repo": "github repository code skill install",
+        "project": "project work portfolio case study",
+        "about": "about me bio portrait introduction",
+        "tools": "tools skills software",
+        "timeline": "experience career cv resume roles years",
+        "quotes": "testimonials quotes reviews",
+        "contact": "contact enquiry inquiry email booking",
+        "clients": "clients customers names"
       }
     },
     "editor": {
@@ -2305,7 +2337,8 @@
         "page": "Your page",
         "app": "App",
         "data": "Data",
-        "contracts": "Contracts and legal"
+        "contracts": "Contracts and legal",
+        "help": "Help"
       },
       "rows": {
         "profile": "Profile",
@@ -2319,7 +2352,10 @@
         "cancel": "Cancel contracts here",
         "imprint": "Linkyo's imprint",
         "privacy": "Privacy",
-        "terms": "Terms"
+        "terms": "Terms",
+        "visibility": "Visibility",
+        "help": "Help",
+        "helpSubtitle": "Guides to your page, sharing and your account"
       },
       "footers": {
         "pageLanguage": "For visitors: buttons, dates and notices on your page appear in this language.",
@@ -2336,7 +2372,8 @@
         "account": "Account",
         "address": "Page address",
         "legal": "Legal notice",
-        "plan": "Plan"
+        "plan": "Plan",
+        "visibility": "Visibility"
       },
       "emailConfirmTitle": "Change your email?",
       "emailConfirmBody": "We'll send a confirmation link to {new}. Until you open it, you keep signing in with {old}.",
@@ -2417,6 +2454,20 @@
           "refunded": "Refunded"
         },
         "open": "What your plan includes"
+      },
+      "helpLinks": {
+        "statistik": "How Linkyo counts",
+        "seitenadresse": "Your page address",
+        "impressum": "A legal notice for your page",
+        "konto-loeschen": "Export your data and delete your account",
+        "teilen": "Share your page"
+      },
+      "helpLeads": {
+        "statistik": "What is counted, without cookies.",
+        "seitenadresse": "Which names are allowed and what happens when you change it.",
+        "impressum": "What goes into it and where your page shows it.",
+        "konto-loeschen": "What the file holds and what deleting removes.",
+        "teilen": "Link, QR code and a picture for stories and posts."
       }
     },
     "welcome": {
@@ -3324,6 +3375,81 @@
         "title": "Your page was changed somewhere else",
         "body": "We loaded the newest version. Your last change here was not saved."
       }
+    },
+    "palette": {
+      "open": "Search",
+      "label": "Search and jump",
+      "placeholder": "Find a screen, a block or a type …",
+      "empty": "Nothing found.",
+      "results": "{count, plural, =0 {No results} one {# result} other {# results}}",
+      "groups": {
+        "screens": "Go to",
+        "add": "Add",
+        "blocks": "On your page",
+        "help": "Help"
+      },
+      "help": "Open help",
+      "shortcuts": "Keyboard shortcuts",
+      "words": {
+        "page": "content blocks editor",
+        "design": "colours colors fonts buttons template look",
+        "analytics": "views clicks numbers",
+        "plan": "subscription pro price invoice billing",
+        "account": "email sign-in delete",
+        "address": "url link name username",
+        "legal": "imprint legal notice address",
+        "visibility": "pause search engines seo offline hide",
+        "help": "guide questions faq"
+      }
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "lead": "What you can do in the dashboard with the keyboard.",
+      "close": "Close",
+      "items": {
+        "palette": "Search and jump",
+        "shortcuts": "Show this list",
+        "undo": "Undo",
+        "redo": "Redo",
+        "moveUp": "Move a block up in your page's list",
+        "moveDown": "Move a block down in your page's list",
+        "close": "Close a window or panel"
+      }
+    },
+    "visibility": {
+      "title": "Visibility",
+      "lead": "Whether visitors and search engines see your page, and how it is named in search results and link cards.",
+      "groups": {
+        "page": "Your page",
+        "texts": "Search result and link card"
+      },
+      "pause": "Pause page",
+      "pauseHint": "Visitors see only your name, your photo and “This page is paused right now.”",
+      "search": "Show in search engines",
+      "searchHint": "Off: search engines are asked not to list your page or follow its links.",
+      "searchPaused": "While your page is paused, search engines are always asked not to list it.",
+      "pausedNote": "Paused: visitors now see only your name and photo. You still see your page in the preview.",
+      "liveNote": "Visitors usually see changes right away, within a minute at most. Search engines pick them up on their next visit.",
+      "demoNote": "Demo: there is no public page yet. These settings stay in this browser.",
+      "titleLabel": "Title",
+      "titleHint": "Empty: your name.",
+      "descriptionLabel": "Description",
+      "descriptionHint": "Empty: the line under your name, else your bio.",
+      "textsFooter": "At most 60 and 160 characters: what search engines usually show in full. They may still choose their own texts.",
+      "previewSearch": "How your search result may look",
+      "previewSearchOff": "Right now search engines are asked not to show your page.",
+      "previewNoDescription": "No description",
+      "previewCard": "How your link looks in messages",
+      "previewCardNote": "Simplified. The real card also shows your design, and WhatsApp, iMessage and LinkedIn draw it slightly differently.",
+      "state": {
+        "paused": "Paused",
+        "hidden": "Not in search engines"
+      },
+      "offline": {
+        "title": "This page is paused right now."
+      },
+      "homePaused": "Paused: visitors now see only your name and photo.",
+      "ownPagePaused": "Paused: visitors see only your name and photo."
     }
   },
   "preview": {

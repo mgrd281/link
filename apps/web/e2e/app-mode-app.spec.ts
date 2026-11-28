@@ -280,7 +280,7 @@ test.describe("in the app, on a phone", () => {
       await expect(page.locator("[data-install-hint]")).toHaveCount(0);
       await expectNoWorker(page);
 
-      const screens = ["/app", "/app/editor", "/app/design", "/app/analytics", "/app/settings", "/app/settings/plan", "/app/settings/account", "/app/settings/address", "/app/settings/legal", "/app/invite"];
+      const screens = ["/app", "/app/editor", "/app/design", "/app/analytics", "/app/settings", "/app/settings/plan", "/app/settings/account", "/app/settings/address", "/app/settings/legal", "/app/settings/visibility", "/app/invite"];
       for (const screen of screens) {
         await page.goto(`/${locale}${screen}`);
         await expect(heading(page)).toBeVisible();
@@ -372,7 +372,7 @@ test.describe("in the app, on a phone", () => {
       await seed(page, { more: true });
       // Home, Seite, Design, Arbeiten, Statistik, Einstellungen and its panes, Einladen, the AI builder,
       // "View my page", and a dashboard address that does not exist.
-      const screens = ["/app", "/app/editor", "/app/design", "/app/work", "/app/analytics", "/app/settings", "/app/settings/plan", "/app/settings/account", "/app/settings/address", "/app/settings/legal", "/app/invite", "/app/build", "/app/preview", "/app/nope"];
+      const screens = ["/app", "/app/editor", "/app/design", "/app/work", "/app/analytics", "/app/settings", "/app/settings/plan", "/app/settings/account", "/app/settings/address", "/app/settings/legal", "/app/settings/visibility", "/app/invite", "/app/build", "/app/preview", "/app/nope"];
       const starts = screens.map((screen) => `/${locale}${screen}`);
       const { problems, seen, checked } = await walk(page, origin, starts);
       expect(problems).toEqual([]);

@@ -42,6 +42,14 @@ const step = (state: EditorState<SiteDoc>, present: SiteDoc, selectedId = state.
   selectedId,
 });
 
+/** `doc` with the visibility settings `kept` (none when `kept` is undefined), whatever `doc` brought. */
+function withVisibility(doc: SiteDoc, kept: Profile["visibility"]): SiteDoc {
+  // The same document when it already carries them: callers compare it with `latest()` (an import's Undo).
+  if (doc.profile.visibility === kept) return doc;
+  const { visibility: _brought, ...profile } = doc.profile;
+  return { ...doc, profile: kept ? { ...profile, visibility: kept } : profile };
+}
+
 export function siteReducer(state: EditorState<SiteDoc>, action: SiteAction): EditorState<SiteDoc> {
   if (action.type === "reset") return initialEditorState(action.doc);
   if (action.type === "addMany") {
@@ -58,8 +66,11 @@ export function siteReducer(state: EditorState<SiteDoc>, action: SiteAction): Ed
     return step(state, { ...state.present, blocks }, state.selectedId !== null && ids.has(state.selectedId) ? null : state.selectedId);
   }
   if (action.type === "replace") {
-    // Importing a page is one step in the history, so it can be undone like any edit.
-    return { ...state, past: [...state.past, state.present].slice(-HISTORY_LIMIT), present: action.doc, future: [], selectedId: null };
+    // Importing a page is one step in the history, so it can be undone like any edit. Visibility
+    // (Settings › Sichtbarkeit) is a setting of this page, not content: an AI draft, a proposal or an
+    // imported file never pauses, unpauses, hides or retitles it (the AI never publishes).
+    const present = withVisibility(action.doc, state.present.profile.visibility);
+    return { ...state, past: [...state.past, state.present].slice(-HISTORY_LIMIT), present, future: [], selectedId: null };
   }
   if (action.type === "profile") {
     // Which texts came from an AI draft stays as it is: an edit keeps it listed (the text started as

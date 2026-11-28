@@ -3,6 +3,7 @@
 import { ConfirmDialog, Icon, icons, toast } from "@linkyo/ui";
 import {
   Check,
+  CircleHelp,
   CircleUserRound,
   Download,
   FileText,
@@ -16,6 +17,7 @@ import {
   Scale,
   ShieldCheck,
   SunMoon,
+  View,
   Undo2,
   Upload,
 } from "lucide-react";
@@ -42,9 +44,10 @@ import { InstallRow } from "./install/install-row";
 import { legalStatus } from "./legal";
 import { ListGroup, ListRow, PickerRow, SegmentedRow } from "./list";
 import { ProfileSheet } from "./profile-form";
-import { INVITE_HREF } from "./routes";
+import { helpLink, INVITE_HREF } from "./routes";
 import { Screen } from "./screen";
 import { PlanRow } from "./settings/plan-screen";
+import { VisibilityValue } from "./settings/visibility-screen";
 import { ProfileAvatar } from "./shell";
 import { useSite, type SiteDoc } from "./site-context";
 
@@ -136,7 +139,8 @@ function DataGroup() {
     const before = doc;
     const imported: SiteDoc = {
       ...doc,
-      profile: { ...incoming.page.profile, username: account.username },
+      // The page's own visibility settings stay (the reducer keeps them anyway; the same object lets Undo find it).
+      profile: { ...incoming.page.profile, username: account.username, visibility: doc.profile.visibility },
       blocks: incoming.page.blocks,
       theme: incoming.theme,
     };
@@ -277,9 +281,12 @@ export function SettingsScreen() {
   const legal = legalStatus(site.legal);
 
   return (
-    <Screen title={t("title")} preview>
-      {/* One grouped list: the group headers already set the groups apart, so they sit closer than the cards of other screens. */}
-      <div className="grid grid-cols-1 gap-4">
+    <Screen title={t("title")} preview grow>
+      {/* One grouped list: the group headers already set the groups apart, so they sit closer than the cards of other screens.
+          Once the column has the room (a container query, as ColumnGroups), the groups stand in two columns, in the
+          phone's reading order: no dead band beside one narrow list at 1920 (leftover 1). */}
+      <div className="@container">
+      <div className="-mb-4 *:mb-4 *:break-inside-avoid @column-wide:columns-2 @column-wide:gap-6">
         {/* The plan first (D-03): what the account has, AI drafts left, and payments where they exist. */}
         <ListGroup>
           <PlanRow icon={icons.billing} />
@@ -315,6 +322,7 @@ export function SettingsScreen() {
             }
             href="/app/settings/legal"
           />
+          <ListRow icon={View} title={t("rows.visibility")} value={<VisibilityValue />} href="/app/settings/visibility" />
           <PickerRow
             icon={Languages}
             label={t("rows.pageLanguage")}
@@ -363,6 +371,11 @@ export function SettingsScreen() {
 
         <DataGroup />
 
+        {/* Help (W-04): the website's help page in the same tab; also inside the iPhone app, where help is one of the pages it opens. */}
+        <ListGroup>
+          <ListRow icon={CircleHelp} title={t("rows.help")} subtitle={t("rows.helpSubtitle")} href={helpLink(locale)} />
+        </ListGroup>
+
         <ContractsGroup />
 
         {/* Logging out is safe (nothing is lost), so it is a plain row, not a red one. Last "Log out" on the screen.
@@ -380,6 +393,7 @@ export function SettingsScreen() {
             <ListRow icon={LogOut} title={t("logout")} accessory="none" onClick={() => accountStore.logOut()} />
           </ListGroup>
         )}
+      </div>
       </div>
 
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />

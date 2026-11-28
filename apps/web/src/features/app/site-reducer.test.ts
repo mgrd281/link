@@ -65,3 +65,37 @@ describe("siteReducer provenance", () => {
     expect(siteReducer(next, { type: "undo" }).present.profile.aiFields).toEqual(["tagline", "bio"]);
   });
 });
+
+// D-09: Settings › Sichtbarkeit lives on the profile, but it is a setting of the page, not content.
+describe("siteReducer and the page's visibility", () => {
+  const paused = { paused: true, search: false, title: "Lio Vance – DJ", description: "Sets und Termine." };
+  const withVisibility = (visibility?: Page["profile"]["visibility"]): SiteDoc => ({ ...doc([link("a")]), profile: { ...profile, ...(visibility ? { visibility } : {}) } });
+
+  it("is changed like any profile field, as one undoable step", () => {
+    const state = initialEditorState(withVisibility());
+    const next = siteReducer(state, { type: "profile", patch: { visibility: { paused: true } } });
+    expect(next.present.profile.visibility).toEqual({ paused: true });
+    expect(siteReducer(next, { type: "undo" }).present.profile.visibility).toBeUndefined();
+  });
+
+  it("is kept when a draft, a proposal or an imported page replaces the page: the AI never unpauses or publishes it", () => {
+    const state = initialEditorState(withVisibility(paused));
+    const draft: SiteDoc = { ...doc([link("ai-1", "ai")]), profile: { ...profile, displayName: "Neu" } };
+    const next = siteReducer(state, { type: "replace", doc: draft });
+    expect(next.present.profile.displayName).toBe("Neu");
+    expect(next.present.profile.visibility).toEqual(paused);
+    // An imported file that carries other settings does not bring them either.
+    const file = withVisibility({ paused: false, title: "Fremd" });
+    expect(siteReducer(state, { type: "replace", doc: file }).present.profile.visibility).toEqual(paused);
+    // A document that already carries the page's settings is taken as it is (an import's Undo compares it).
+    const same = withVisibility(paused);
+    expect(siteReducer(state, { type: "replace", doc: same }).present).toBe(same);
+    // A page without settings stays without them.
+    expect(siteReducer(initialEditorState(withVisibility()), { type: "replace", doc: file }).present.profile).not.toHaveProperty("visibility");
+  });
+
+  it("comes from the server as it is when the store replaced the page (reset)", () => {
+    const state = initialEditorState(withVisibility(paused));
+    expect(siteReducer(state, { type: "reset", doc: withVisibility() }).present.profile.visibility).toBeUndefined();
+  });
+});

@@ -6,7 +6,9 @@ import { useId } from "react";
 import { accountStore } from "@/features/account/store";
 import { CREATOR_DOMAIN } from "@/lib/page-url";
 
+import { useSite } from "../site-context";
 import { Disclosure } from "../disclosure";
+import { HelpLink } from "../help-link";
 import { NAV_ANCHORS } from "../routes";
 import { ShareImageButton } from "../share-image";
 import { CopyLinkButton, QrButton, ShareLinkButton } from "../share-tools";
@@ -23,6 +25,8 @@ const rowSeparator =
  */
 export function LinkCard({ username, ready }: { username: string; ready: boolean }) {
   const t = useTranslations("app.home");
+  const tVisibility = useTranslations("app.visibility");
+  const { doc } = useSite();
   const titleId = useId();
   return (
     // While the page is being built the eyebrow names the card; once it is ready, the title does.
@@ -51,7 +55,8 @@ export function LinkCard({ username, ready }: { username: string; ready: boolean
           <CopyLinkButton username={username} />
         </div>
         {/* The demo keeps everything in this browser; a real account's page is public at this address. */}
-        <p className="text-small font-regular text-fg-secondary">{accountStore.demo ? t("linkDemo") : t("link.live")}</p>
+        {/* A paused page is not public (Settings › Sichtbarkeit): the line never says it is. */}
+        <p className="text-small font-regular text-fg-secondary">{accountStore.demo ? t("linkDemo") : doc.profile.visibility?.paused ? tVisibility("homePaused") : t("link.live")}</p>
       </div>
       <ShareLinkButton username={username} variant={ready ? "primary" : "tinted"} />
       {ready ? (
@@ -69,6 +74,7 @@ export function LinkCard({ username, ready }: { username: string; ready: boolean
           <ShareImageButton appearance="row" />
         </li>
       </ul>
+      <HelpLink slug="teilen" />
     </section>
   );
 }

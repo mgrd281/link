@@ -19,8 +19,14 @@ describe("the day names under the week chart", () => {
   it("gives Arabic the names of the days, one each", () => {
     const names = WEEK.map((day) => weekdayName(day, "ar"));
     expect(new Set(names).size).toBe(7);
-    // `Intl` short names, never a lone letter.
+    // Never a lone letter.
     for (const name of names) expect(name.length, name).toBeGreaterThan(2);
+  });
+
+  it("writes the Arabic days without their article, as calendars do, so seven fit at 360 px (leftover 2)", () => {
+    expect(WEEK.map((day) => weekdayName(day, "ar"))).toEqual(["اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت", "أحد"]);
+    // The whole name stays for screen readers.
+    expect(weekdayLong(WEEK[0] ?? "", "ar")).toBe("الاثنين");
   });
 
   it("reads a day in UTC, whatever the machine's zone is", () => {

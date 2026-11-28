@@ -432,6 +432,30 @@ export type BlockOf<T extends BlockType> = Extract<Block, { type: T }>;
 export const AI_PROFILE_FIELDS = ["displayName", "tagline", "bio"] as const;
 export type AiProfileField = (typeof AI_PROFILE_FIELDS)[number];
 
+/** What a search engine shows in full of a page's title and description (Settings › Sichtbarkeit). */
+export const SEARCH_TITLE_MAX = 60;
+export const SEARCH_DESCRIPTION_MAX = 160;
+
+/**
+ * Who sees the page and how search engines and link cards name it (Settings › Sichtbarkeit, D-09).
+ * Every field is optional, and absent is today's default: the page is on, search engines may show it,
+ * and the name and the creator's own line are its title and description. These are settings, not
+ * content: the AI never writes them, and applying a draft, a proposal or an imported page keeps the
+ * page's own (`siteReducer`). A field that does not parse is dropped on its own, so a bad value never
+ * takes the whole page down.
+ */
+export const visibilitySchema = z.object({
+  /** The page is offline: visitors see a calm page with the name and photo only, and nothing is indexed. */
+  paused: z.boolean().optional().catch(undefined),
+  /** false: search engines are asked not to index the page or follow its links. Absent means shown. */
+  search: z.boolean().optional().catch(undefined),
+  /** The title in search results and on link cards; empty means the name. */
+  title: z.string().max(SEARCH_TITLE_MAX).optional().catch(undefined),
+  /** The description in search results and on link cards; empty means the tagline, else the bio. */
+  description: z.string().max(SEARCH_DESCRIPTION_MAX).optional().catch(undefined),
+});
+export type Visibility = z.infer<typeof visibilitySchema>;
+
 export const profileSchema = z.object({
   username: z.string().min(USERNAME_MIN).max(USERNAME_MAX).regex(USERNAME_PATTERN, "lowercase letters, numbers and dashes"),
   displayName: z.string().min(1).max(60),
@@ -456,6 +480,8 @@ export const profileSchema = z.object({
   verified: z.boolean().default(false),
   locale: z.enum(["de", "en", "ar"]),
   aiFields: z.array(z.enum(AI_PROFILE_FIELDS)).max(3).optional(),
+  /** Pause, search engines, search title and description (`visibilitySchema`). */
+  visibility: visibilitySchema.optional().catch(undefined),
 });
 export type Profile = z.infer<typeof profileSchema>;
 
