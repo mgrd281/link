@@ -188,7 +188,7 @@ async function expectAppScreen(page: Page, locale: Locale, where: string) {
  * router's links never ask the app's navigation policy, so a link to the website would carry the web
  * view on to the homepage and its prices.
  */
-const APP_PAGES = /^\/(?:de|en|ar)\/(?:app(?:\/.*)?|hilfe|kontakt|impressum|datenschutz|sicherheit|login|signup)$/;
+const APP_PAGES = /^\/(?:de|en|ar)\/(?:app(?:\/.*)?|hilfe|kontakt|melden|impressum|datenschutz|sicherheit|login|signup)$/;
 const PURCHASE_PATH = /^\/(?:de|en|ar)\/(?:checkout|service|kuendigen|widerruf|admin)(?:\/|$)|\/app\/orders\//;
 
 /**

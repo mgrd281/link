@@ -64,8 +64,9 @@ blobs and has no file sharing of its own: dead buttons are a 2.1 rejection). In 
    | Settings: "Abmelden" | `settings-screen.tsx` | Signing out is the app's own row (plan §1.1, §1.2 step 7): it ends the web view's session with the app's and wipes the device. A web-only sign-out would land on `/login`, which the app answers with a new hand-off, so the row would seem to do nothing (2.1) |
    | "Linkyo als App" in Settings and Home's install hint (the hint is not used up in the app) | `install/install-row.tsx`, `install/install-hint.tsx` | The app is the app (ADR 0086) |
 
-   Where a link may lead inside the app's web view: the dashboard (`/<l>/app/**`), help, contact, the legal
-   pages, Sicherheit, and the sign-in pages; `e2e/app-mode-app.spec.ts` walks every link a person can reach
+   Where a link may lead inside the app's web view: the dashboard (`/<l>/app/**`), help, contact, the report
+   form (`/<l>/melden`, ADR 0092: no cookie, nothing sold), the legal pages, Sicherheit, and the sign-in
+   pages; `e2e/app-mode-app.spec.ts` walks every link a person can reach
    from help, contact, the legal and the sign-in pages, and from every dashboard screen (Home, Seite, Design,
    Arbeiten, Statistik, Settings and its panes, Einladen, the AI builder, "View my page") and a dashboard 404,
    in German and Arabic, two levels deep, every `<details>` opened first, and fails on any other page, a "€",

@@ -92,7 +92,7 @@ const CASES: Case[] = [
   },
   {
     name: "/api/auth/code (per e-mail address)",
-    max: 5,
+    max: 10,
     window: 900,
     // A new client address each time, so only the e-mail limit is reached.
     send: (from, n) => authCode.POST(post("/api/auth/code", { email: "Mira@Example.com ", locale: "de" }, from === null ? null : `${from}-${String(n)}`)),
