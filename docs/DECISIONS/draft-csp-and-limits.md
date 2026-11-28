@@ -24,7 +24,7 @@ notwendige" too, and TikTok, Instagram and Vimeo cards said "Der Player lädt hi
    ```
    default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
    img-src 'self' data: blob: [S]; font-src 'self'; connect-src 'self' [S]; media-src 'self';
-   frame-src https://www.youtube-nocookie.com; worker-src 'self'; manifest-src 'self'; object-src 'none';
+   frame-src 'self' https://www.youtube-nocookie.com; worker-src 'self'; manifest-src 'self'; object-src 'none';
    base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri /api/csp-report; report-to csp
    ```
 
@@ -41,7 +41,9 @@ notwendige" too, and TikTok, Instagram and Vimeo cards said "Der Player lädt hi
      uploaded (blob URLs). Platform and Storage pictures go through our image optimizer, so no picture host is
      listed, except `[S]` where the team area shows a Storage file itself (signed addresses of order photos).
    - `connect-src [S]`: the dashboard and the team area talk to Supabase from the browser with real accounts.
-   - `frame-src https://www.youtube-nocookie.com`: the only player a creator page embeds, after a tap.
+   - `frame-src 'self' https://www.youtube-nocookie.com`: our own example pages in the templates gallery's phone
+     frame (`/<locale>/templates` and the team area's templates), and the only player a creator page embeds,
+     after a tap.
    - `frame-ancestors`: `'self'` on `/<locale>/p/…` only (the templates gallery shows example pages in a frame);
      `'none'` everywhere else (`X-Frame-Options: SAMEORIGIN` stays as the enforced rule meanwhile).
    - `Reporting-Endpoints: csp="/api/csp-report"` names the `report-to` group.
@@ -52,59 +54,81 @@ notwendige" too, and TikTok, Instagram and Vimeo cards said "Der Player lädt hi
    names Stripe (`e2e/security-headers-app.spec.ts`; the static guard's rule 4 allows the address only in
    `stripe-js.tsx`, the legal text and `src/lib/csp.ts`).
 
-   **Reports** go to `POST /api/csp-report`: no storage, no cookie, a body cap of 16 KB, 60 requests per address a
-   minute, one log line per violation (`csp-report <directive> blocked=<origin+path or keyword> page=<origin+path>`,
-   never a query string or the reporter's address), always 204 (429 past its limit).
+   **Reports** go to `POST /api/csp-report`: no storage, no cookie, a body cap of 64 KB, 60 requests per address a
+   minute, one log line per violation for at most the first 10 reports of a request (so one address writes at most
+   600 short lines a minute): `csp-report <directive> blocked=<origin+path or keyword> page=<origin+path>`. The
+   directive keeps only letters, digits and dashes (40 at most), an address only its origin and path: no query
+   string, no line break, never the reporter's address. Always 204 (429 past its limit).
 
 2. **In-route limits** (`src/lib/rate-limit.ts`): a fixed window per key, in memory per server instance. It is a
    **first layer**: every Vercel function instance counts alone and forgets on a cold start, so a client spread
    over instances gets more; the firewall rules below are the second layer. Keys are HMACs under a secret made at
    start and held only in memory (`addressKey`, `valueKey`): no address or e-mail is ever stored, and a key means
-   nothing outside its instance. The address is the one the routes already derive (`requestPlace`: the first
-   `x-forwarded-for` entry, which Vercel sets itself). No address, or the loopback address, is never counted
-   (local development and the e2e run, where every request comes from the machine; on Vercel a visitor is never
-   loopback). Past a limit: 429 with `Retry-After` (seconds, at least 1) and `Cache-Control: no-store`.
+   nothing outside its instance. Memory is bounded (10 000 keys per limit): when full, ended windows go first, then
+   the oldest windows still under their limit; a window that used up its limit is never dropped before it ends
+   (else many new keys would reset it), and with only such windows left a new key is refused (fails closed).
+
+   **Which address.** The one the routes already derive (`requestPlace`: the first `x-forwarded-for` entry). It is
+   trusted **only because Vercel overwrites `x-forwarded-for`** with the client's address, and Vercel is the only
+   deployment target (`apps/web/vercel.json`); behind any other proxy, or none, a client could choose its key. An
+   IPv6 address counts by its /64 (a connection usually holds a whole /64), an IPv4 address alone. No address, or
+   the loopback address, is never counted (local development and the e2e run, where every request comes from the
+   machine; on Vercel a visitor is never loopback). Past a limit: 429 with `Retry-After` (seconds, at least 1) and
+   `Cache-Control: no-store`.
+
+   The per-address numbers leave room for many people behind one shared address (a school, an office, a mobile
+   network's NAT); the per-e-mail and per-account numbers are the tight ones.
 
    | Route | Limit | Why this number | Body at 429 |
    |---|---|---|---|
    | `POST /api/import-links` | 10 per address / 10 min | the welcome flow fetches once per pasted address; a person corrects it a few times | `{ ok: false, error: "failed" }` (the import box's "can't read this page now") |
    | `GET /api/link-metadata` | 60 per address / min | one call per added block with a platform link; an imported list of links arrives at once; answers are cached 1 h in the browser and 1 day at the CDN | `{}` (the editor keeps its placeholder) |
-   | `POST /api/admin/verify` | 5 per address / 10 min, every try | a person types the team code once, maybe again after a typo | `{ ok: false, error: "tooManyAttempts" }` |
-   | `POST /api/auth/code` | 10 per address and 5 per e-mail address / 15 min | each answer sends an e-mail; a person asks again when the first is slow | `{ ok: false, error: "tooManyAttempts" }` (the sign-in screens' existing words) |
-   | `POST /api/auth/verify` | 15 per address and 10 per e-mail address / 15 min | one code, maybe two or three after a typo; on top of the 8 logged failures per account | same |
-   | `POST /api/auth/handoff` | 30 per address and 10 per account / 10 min | one hand-off per landing on the login page, two failures stop the app (ADR 0088) | `{ ok: false, error: "tooManyRequests" }` |
-   | `POST /api/app/page` | 60 per address and 30 per account / min | a native change is one deliberate act | same |
+   | `POST /api/admin/verify` | 5 per address / 10 min, every try | a person types the team code once, maybe again after a typo | `{ ok: false, error: "tooManyAttempts" }`; the team gate shows the sign-in's "too many attempts, wait a few minutes", never "wrong code" |
+   | `POST /api/auth/code` | 30 per address and 5 per e-mail address / 15 min | each answer sends an e-mail; a person asks again when the first is slow | `{ ok: false, error: "tooManyAttempts" }` (the sign-in screens' existing words) |
+   | `POST /api/auth/verify` | 40 per address and 10 per e-mail address / 15 min | one code, maybe two or three after a typo; on top of the 8 logged failures per account | same |
+   | `POST /api/auth/password` | 40 per address and 10 per e-mail address / 15 min | as the code check (the team signs in with a password) | same |
+   | `POST /api/auth/handoff` | 60 per address and 10 per account / 10 min | one hand-off per landing on the login page, two failures stop the app (ADR 0088) | `{ ok: false, error: "tooManyRequests" }` |
+   | `POST /api/app/page` | 120 per address and 30 per account / min | a native change is one deliberate act | same |
    | `POST /api/csp-report` | 60 per address / min | one report per violation | empty |
 
    The address limits are counted before anything else (also before Auth is asked on the app's routes). The
-   e-mail limits hold for every client, the machine itself included.
+   e-mail limits hold for every client, the machine itself included. The three sign-in routes answered
+   `tooManyAttempts` with 200 before (Supabase Auth's own limit, which they still do); their own limits answer 429
+   (ADR 0088 names both).
 
    **`/api/prepared`** answers 404 with real accounts to everyone but the team (the team token, or a signed-in
    account `admin_me()` names a team role, as `/api/admin/prepared`). The sign-up form reads any refusal as
    "none", so with real accounts it shows no preview of a prepared page; `/api/auth/code` still gives the page to
    the address it was prepared for, once the code proves the address. A demo build answers as before.
 
-   **The iPhone app's routes** (ADR 0088 names every answer): the limits above; the hand-off only for a session
-   opened on the same device (its `session_id` has a successful `sign_ins` row with the request's `deviceId`, else
-   403 `deviceMismatch`); a 4 KB body cap on the hand-off (413 `tooLarge`, refused before it is read whole,
-   `src/lib/server/read-body.ts`); the blocked-address check on the page route (403 `blocked`); 405 with `Allow:
-   POST` and `no-store` for `GET`, `PUT`, `PATCH`, `DELETE` on both. 401 stays only for Auth's own token codes,
-   503 for an outage.
+   **The iPhone app's routes** (ADR 0088 names every answer): the limits above; a 4 KB body cap on the hand-off
+   (413 `tooLarge`, refused before it is read whole, `src/lib/server/read-body.ts`); the blocked-address check on
+   the page route (403 `blocked`); 405 with `Allow: POST` and `no-store` for `GET`, `PUT`, `PATCH`, `DELETE` and
+   `OPTIONS` on both. 401 stays only for Auth's own token codes, 503 for an outage.
+
+   **No device binding.** A check of the hand-off against the sign-in log (the token's `session_id` with the
+   request's `deviceId`) was built and removed in review: the account's own token may read its `sign_ins` rows
+   (row-level security), so a leaked token can look the device id up, and the 30-day purge or one failed
+   `record_sign_in` would lock a real app session out. A proper binding, a per-device secret the app registers at
+   its native sign-in and the server keeps hashed, comes with the iPhone app's dashboard host (I4). Until then a
+   leaked access token (about an hour) can still be turned into a web session through the hand-off.
 
    **Vercel Firewall rules (ops; the lead decides, the plan may charge for rate-limit rules).** Custom rules,
    project `link-web`, production; each "Rate limit, fixed window, key: IP, action: Too Many Requests (429)":
 
    ```
-   1  Path equals /api/auth/code        AND Method equals POST  →  20 requests / 600 s / IP
-   2  Path equals /api/auth/verify      AND Method equals POST  →  30 requests / 600 s / IP
-   3  Path equals /api/admin/verify     AND Method equals POST  →  10 requests / 600 s / IP
-   4  Path equals /api/import-links     AND Method equals POST  →  20 requests / 600 s / IP
-   5  Path equals /api/link-metadata                            → 120 requests /  60 s / IP
-   6  Path starts with /api/auth/handoff OR Path equals /api/app/page → 120 requests / 60 s / IP
-   7  Path equals /api/csp-report                               → 120 requests /  60 s / IP
+   1  Path equals /api/auth/code        AND Method equals POST  →  60 requests / 900 s / IP
+   2  Path equals /api/auth/verify      AND Method equals POST  →  80 requests / 900 s / IP
+   3  Path equals /api/auth/password    AND Method equals POST  →  80 requests / 900 s / IP
+   4  Path equals /api/admin/verify     AND Method equals POST  →  10 requests / 600 s / IP
+   5  Path equals /api/import-links     AND Method equals POST  →  20 requests / 600 s / IP
+   6  Path equals /api/link-metadata                            → 120 requests /  60 s / IP
+   7  Path equals /api/auth/handoff                             → 120 requests / 600 s / IP
+   8  Path equals /api/app/page                                 → 240 requests /  60 s / IP
+   9  Path equals /api/csp-report                               → 120 requests /  60 s / IP
    ```
 
-   Each is about twice the in-route limit, so the in-route limit answers first with its own words and the firewall
+   Each is twice the in-route address limit, so the in-route limit answers first with its own words and the firewall
    only stops what spreads over instances.
 
 3. **Redirects (E-09).** `/<locale>/forgot` and `/<locale>/reset-password` answer 308 to `/<locale>/login` from
@@ -150,10 +174,12 @@ notwendige" too, and TikTok, Instagram and Vimeo cards said "Der Player lädt hi
 - The browser's Zod parses without compiling (`jitless`); the server is unchanged.
 - The in-route limits are per instance: honest as a first layer only. A self-hosted deployment without a proxy
   that sets `x-forwarded-for` lets a client pick its own key (no worse than no limit).
-- The hand-off's device binding relies on the 30-day sign-in log: an app session opened more than 30 days ago
-  gets 403 `deviceMismatch` and signs in again natively (ADR 0088 tells the app). Lead: keep this, or keep the
-  log's newest row per session longer (a migration, not here).
-- Tests: `src/lib/rate-limit.test.ts` (window, keys, reset, bounded memory, no raw value), `src/lib/csp.test.ts`,
-  `src/app/api/limits.test.ts` (429 and `Retry-After` on the five public routes), `src/app/api/prepared/route.test.ts`,
+- Follow-up (not in this package): `/api/auth/code` still answers a sign-up with `inviteMismatch` or
+  `reservedForCreator` before any code is sent, so whoever types an address and a page name can still learn that an
+  invite or a reserved page exists for it (the hint `/api/prepared` no longer gives). Answering both after the code
+  (in `/api/auth/verify`) closes it; it changes the sign-up flow (an auth flow), so it is the lead's to schedule.
+- The team gate shows "too many attempts" for a 429 (`features/admin/session.tsx`), not "wrong code".
+- Tests: `src/lib/rate-limit.test.ts` (window, keys, reset, bounded memory that never drops a used-up window, IPv6 by /64, no raw value), `src/lib/csp.test.ts`,
+  `src/app/api/limits.test.ts` (429 and `Retry-After` on the six public routes, password included), `src/app/api/prepared/route.test.ts`,
   `src/app/api/{auth/handoff,app/page}/route.test.ts`, `e2e/security-headers-app.spec.ts` (headers, zero
-  violations, redirects, 405), `e2e/rate-limit.spec.ts`, `e2e/creator-consent-app.spec.ts`.
+  violations including a gallery card in its frame, redirects, 405 also for OPTIONS), `e2e/rate-limit.spec.ts`, `e2e/creator-consent-app.spec.ts`.
