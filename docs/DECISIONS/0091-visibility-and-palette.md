@@ -1,7 +1,7 @@
-# draft — Visibility and search texts, help in the dashboard, the ⌘K palette
+# 0091 — Visibility and search texts, help in the dashboard, the ⌘K palette
 
-**Status.** Proposed (Stage 4, WP4.5: D-09, D-15 palette, shortcuts and Add search, W-04 in-app entry,
-LEFTOVERS 1–2). The lead numbers it.
+**Status.** Accepted (2026-11-28; Stage 4, WP4.5: D-09, D-15 palette, shortcuts and Add search, W-04 in-app entry,
+LEFTOVERS 1–2).
 
 **Context.** Creators could not pause their page, keep it out of search engines or say how search results and
 link cards name it (D-09). The dashboard had no help entry (W-04), no way to jump with the keyboard, no list of

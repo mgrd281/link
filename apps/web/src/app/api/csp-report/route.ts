@@ -19,7 +19,7 @@ const REPORT_LIMIT = rateLimit({ name: "csp-report", max: 60, windowMs: MINUTE }
 const done = () => new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
 
 /**
- * Collects Content-Security-Policy reports (ADR draft-csp-and-limits). Logs one short line per
+ * Collects Content-Security-Policy reports (ADR 0090-csp-and-limits). Logs one short line per
  * violation (the directive, what was blocked, on which page; never a query string, never the
  * reporter's address) and stores nothing. No cookie is read or set. Always 204, or 429 past its limit.
  */

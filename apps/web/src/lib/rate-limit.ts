@@ -3,7 +3,7 @@ import "server-only";
 import { createHmac, randomBytes } from "node:crypto";
 
 /**
- * A small in-route rate limiter (ADR draft-csp-and-limits): a fixed window per key, counted in this
+ * A small in-route rate limiter (ADR 0090-csp-and-limits): a fixed window per key, counted in this
  * server instance's memory.
  *
  * It is a FIRST layer only. Every instance (each Vercel function instance, each `next start`) counts

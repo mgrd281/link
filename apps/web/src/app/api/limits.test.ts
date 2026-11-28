@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type * as Auth from "@/features/account/server/auth";
 
 /**
- * The in-route limits (lib/rate-limit.ts, ADR draft-csp-and-limits): each public route that costs
+ * The in-route limits (lib/rate-limit.ts, ADR 0090-csp-and-limits): each public route that costs
  * something (a fetch to another host, a platform request, a code guess, an e-mail) answers 429 with
  * `Retry-After` once an address used its share, while another address and the machine itself (local
  * development, the e2e run) go on. The routes' own work is stubbed: only the limits are under test.

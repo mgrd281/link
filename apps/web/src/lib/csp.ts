@@ -1,5 +1,5 @@
 /**
- * Linkyo's Content-Security-Policy (E-05, ADR draft-csp-and-limits). Static: next.config.ts sends it as
+ * Linkyo's Content-Security-Policy (E-05, ADR 0090-csp-and-limits). Static: next.config.ts sends it as
  * a header, so creator pages stay cached (ISR). A nonce would need a fresh render per request.
  *
  * It ships as `Content-Security-Policy-Report-Only` first: browsers report what the policy would

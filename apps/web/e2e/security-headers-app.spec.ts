@@ -6,7 +6,7 @@ import { enterDemoCode } from "./auth";
 import { LOCALES, ROUTES } from "./routes";
 
 /**
- * The Content-Security-Policy (E-05, ADR draft-csp-and-limits), report-only for now: present on every
+ * The Content-Security-Policy (E-05, ADR 0090-csp-and-limits), report-only for now: present on every
  * kind of page, Stripe's hosts only on checkout pages, framing only for the example pages the gallery
  * frames, and not one violation on the site's routes, the example pages and the dashboard's and the
  * team area's journeys. Every violation the browser reports (`securitypolicyviolation`, which fires in
@@ -291,7 +291,7 @@ test.describe("real accounts (stub)", () => {
   // Next.js 16.4.6 sends a Location set by redirect() in a cached (ISR) render twice on the cache miss
   // that renders it (once from the render, once from the cache entry it then serves), and once on every
   // hit. The project route must stay ISR and src/proxy.ts is not ours to change, so this is expected to
-  // fail until Next.js sends it once (ADR draft-csp-and-limits, "One Location"). Both copies name the same
+  // fail until Next.js sends it once (ADR 0090-csp-and-limits, "One Location"). Both copies name the same
   // address, which browsers follow.
   test("a renamed project answers 307 with one Location, on the cache miss and on a hit", async ({ request }) => {
     test.fail(true, "Next.js repeats the Location of an ISR redirect on the cache miss (see above).");

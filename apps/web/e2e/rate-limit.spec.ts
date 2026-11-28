@@ -6,7 +6,7 @@ import en from "../src/messages/en.json" with { type: "json" };
 import { enterDemoCode } from "./auth";
 
 /**
- * The in-route limits on the running server (lib/rate-limit.ts, ADR draft-csp-and-limits): after its
+ * The in-route limits on the running server (lib/rate-limit.ts, ADR 0090-csp-and-limits): after its
  * share, an address gets 429 with `Retry-After` and `no-store`, while another address is still served.
  * Each test sends its own client address (`x-forwarded-for`, as Vercel sets it), from the documentation
  * range, so no other spec's requests count (they come from the machine itself, which is never counted).

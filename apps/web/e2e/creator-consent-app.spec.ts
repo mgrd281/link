@@ -8,7 +8,7 @@ import de from "../src/messages/de.json" with { type: "json" };
 
 /**
  * The external-content choice on creator pages gates what a tap does (leftover 16, ADR
- * draft-csp-and-limits). On /<locale>/p/nizar (real YouTube videos), in de and ar, on the phone and
+ * 0090-csp-and-limits). On /<locale>/p/nizar (real YouTube videos), in de and ar, on the phone and
  * the laptop:
  *
  * - before any choice, a YouTube card says where its video comes from and one tap, on a button whose

@@ -1,8 +1,8 @@
-# draft — A static Content-Security-Policy (report-only first), in-route rate limits, and consent that gates
+# 0090 — A static Content-Security-Policy (report-only first), in-route rate limits, and consent that gates
 
-**Status.** Proposed (Stage 4, WP4.4: E-05, E-06, E-09 and housekeeping; leftover 16). The lead numbers it.
-Extends [0088](0088-app-sync.md) (the iPhone app's two routes get limits, a device binding, a body cap and their own
-405) and [0008](0008-creator-page-performance.md) (creator pages stay ISR: no nonce).
+**Status.** Accepted (2026-11-28; Stage 4, WP4.4: E-05, E-06, E-09 and housekeeping; leftover 16).
+Extends [0088](0088-app-sync.md) (the iPhone app's two routes get limits, a body cap and their own 405; the device binding
+was dropped after review) and [0008](0008-creator-page-performance.md) (creator pages stay ISR: no nonce).
 
 **Context.** Pages that render user content had no Content-Security-Policy (E-05). The routes that cost something
 per request had no limit (E-06): `/api/import-links` fetches a page from another host, `/api/link-metadata` asks a

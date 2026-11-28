@@ -350,7 +350,7 @@ view cannot share one session.
 **Limits.** At most 20 operations and 64 KB per call; a link up to 2048 characters; the page's own limits (200 blocks,
 the project and contact rules, under 1 MB per row: 422 `pageTooLarge`).
 
-**For WP4.4 (security): built there (ADR draft-csp-and-limits), and named in both tables above:**
+**For WP4.4 (security): built there (ADR 0090-csp-and-limits), and named in both tables above:**
 
 - **Rate limits** (`lib/rate-limit.ts`, in memory per server instance, keys are HMACs, never an address; an IPv6
   address counts by its /64): the hand-off (`POST /api/auth/handoff`) 60 per address and 10 per account in 10
