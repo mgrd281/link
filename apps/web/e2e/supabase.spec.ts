@@ -295,6 +295,8 @@ test("the owner finds a customer, suspends them, writes a note and blocks an add
 
   await page.getByRole("button", { name: "Actions" }).click();
   await page.getByRole("menuitem", { name: "Suspend account" }).click();
+  // With its reasons (Art. 17 DSA; 20261128100000_reports.sql): the database refuses a suspension without them.
+  await page.getByRole("alertdialog").getByLabel("Reasons for the customer").fill("The customer asked us to pause the account.");
   await page.getByRole("alertdialog").getByRole("button", { name: "Suspend account" }).click();
   await expect(page.getByText("Account suspended").first()).toBeVisible();
   await expect.poll(async () => (await admin().from("profiles").select("status").eq("id", customerId).single()).data?.status).toBe("suspended");

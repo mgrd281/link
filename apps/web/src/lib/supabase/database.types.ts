@@ -574,6 +574,73 @@ export type Database = {
           },
         ];
       };
+      moderation_decisions: {
+        Row: {
+          action: string;
+          block_id: string | null;
+          block_label: string | null;
+          decided_at: string;
+          decided_by: string | null;
+          ground: string | null;
+          id: string;
+          lift_reason: string | null;
+          lifted_at: string | null;
+          lifted_by: string | null;
+          profile_id: string | null;
+          reason: string;
+          report_id: string | null;
+          username: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          action: string;
+          block_id?: string | null;
+          block_label?: string | null;
+          decided_at?: string;
+          decided_by?: string | null;
+          ground?: string | null;
+          id?: string;
+          lift_reason?: string | null;
+          lifted_at?: string | null;
+          lifted_by?: string | null;
+          profile_id?: string | null;
+          reason: string;
+          report_id?: string | null;
+          username?: string;
+        };
+        Update: {
+          action?: string;
+          block_id?: string | null;
+          block_label?: string | null;
+          decided_at?: string;
+          decided_by?: string | null;
+          ground?: string | null;
+          id?: string;
+          lift_reason?: string | null;
+          lifted_at?: string | null;
+          lifted_by?: string | null;
+          profile_id?: string | null;
+          reason?: string;
+          report_id?: string | null;
+          username?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "moderation_decisions_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "moderation_decisions_report_id_fkey";
+            columns: ["report_id"];
+            isOneToOne: false;
+            referencedRelation: "reports";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       order_events: {
         Row: {
           actor: string | null;
@@ -907,6 +974,66 @@ export type Database = {
           {
             foreignKeyName: "referrals_inviter_id_fkey";
             columns: ["inviter_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reports: {
+        Row: {
+          category: string;
+          decided_at: string | null;
+          explanation: string | null;
+          good_faith: boolean;
+          id: string;
+          locale: string;
+          page: string;
+          profile_id: string | null;
+          purged_at: string | null;
+          received_at: string;
+          reporter_email: string | null;
+          reporter_name: string | null;
+          status: string;
+          url: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          category: string;
+          decided_at?: string | null;
+          explanation?: string | null;
+          good_faith: boolean;
+          id?: string;
+          locale?: string;
+          page: string;
+          profile_id?: string | null;
+          purged_at?: string | null;
+          received_at?: string;
+          reporter_email?: string | null;
+          reporter_name?: string | null;
+          status?: string;
+          url?: string | null;
+        };
+        Update: {
+          category?: string;
+          decided_at?: string | null;
+          explanation?: string | null;
+          good_faith?: boolean;
+          id?: string;
+          locale?: string;
+          page?: string;
+          profile_id?: string | null;
+          purged_at?: string | null;
+          received_at?: string;
+          reporter_email?: string | null;
+          reporter_name?: string | null;
+          status?: string;
+          url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reports_profile_id_fkey";
+            columns: ["profile_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -1462,11 +1589,25 @@ export type Database = {
       admin_customers_exported: { Args: { row_count: number }; Returns: undefined };
       admin_delete_customer: { Args: { customer: string }; Returns: undefined };
       admin_deliver_proposal: { Args: { proposal: string }; Returns: Json };
+      admin_lift_moderation: { Args: { decision: string; why: string }; Returns: Json };
       admin_mark_contract_handled: {
         Args: { kind: string; note?: string; target: string };
         Returns: undefined;
       };
       admin_me: { Args: Record<PropertyKey, never>; Returns: Json };
+      admin_moderate: {
+        Args: {
+          customer: string;
+          decision: string;
+          for_report?: string;
+          legal_ground?: string;
+          target_block?: string;
+          why: string;
+        };
+        Returns: Json;
+      };
+      admin_moderation_counts: { Args: { year?: number }; Returns: Json };
+      admin_moderation_target: { Args: { customer: string }; Returns: Json };
       admin_order: { Args: { target: string }; Returns: Json };
       admin_order_refund_target: { Args: { target: string }; Returns: Json };
       admin_orders: { Args: { scope?: string }; Returns: Json };
@@ -1478,6 +1619,7 @@ export type Database = {
       admin_refund_invoice: { Args: { invoice: string }; Returns: undefined };
       admin_refund_order: { Args: { target: string }; Returns: Json };
       admin_remove_member: { Args: { member: string }; Returns: undefined };
+      admin_reports: { Args: { max_rows?: number; state?: string }; Returns: Json };
       admin_resolve_cancellation: { Args: { decision: string; note: string; target: string }; Returns: Json };
       admin_resolve_withdrawal: {
         Args: { decision: string; note?: string; refund_cents?: number; target: string };
@@ -1576,6 +1718,7 @@ export type Database = {
       berlin_month: { Args: Record<PropertyKey, never>; Returns: string };
       berlin_today: { Args: Record<PropertyKey, never>; Returns: string };
       block_is_public: { Args: { at: string; block: Json }; Returns: boolean };
+      block_label: { Args: { block: Json }; Returns: string };
       cancellation_step_allowed: { Args: { current: string; next: string }; Returns: boolean };
       change_username: { Args: { candidate: string }; Returns: string };
       confirm_cancellation: {
@@ -1605,7 +1748,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      moderation_digest: { Args: Record<PropertyKey, never>; Returns: Json };
+      moderation_purge: { Args: Record<PropertyKey, never>; Returns: number };
       my_ai_quota: { Args: Record<PropertyKey, never>; Returns: Json };
+      my_moderation: { Args: Record<PropertyKey, never>; Returns: Json };
       my_order: { Args: { target: string }; Returns: Json };
       my_orders: { Args: Record<PropertyKey, never>; Returns: Json };
       my_page_stats: { Args: { from_day: string; to_day: string }; Returns: Json };
@@ -1724,6 +1870,7 @@ export type Database = {
       referral_count: { Args: { inviter: string }; Returns: number };
       referral_inviter: { Args: { code: string }; Returns: Json };
       referral_rule: { Args: { name: string }; Returns: number };
+      reports_accepting: { Args: Record<PropertyKey, never>; Returns: boolean };
       request_verification: { Args: { links: string[]; note?: string }; Returns: string };
       require_permission: { Args: { wanted: string }; Returns: undefined };
       same_network: { Args: { a: unknown; b: unknown }; Returns: boolean };
@@ -1744,6 +1891,19 @@ export type Database = {
       settle_referral: { Args: { invitee: string; ref?: string }; Returns: string };
       settle_withdrawal: { Args: { target: string }; Returns: undefined };
       story_handed_to_me: { Args: { path: string }; Returns: boolean };
+      submit_report: {
+        Args: {
+          category: string;
+          explanation: string;
+          good_faith: boolean;
+          locale?: string;
+          page: string;
+          reporter_email?: string;
+          reporter_name?: string;
+          url?: string;
+        };
+        Returns: Json;
+      };
       team_may_upload_for: { Args: { folder: string }; Returns: boolean };
       update_pro_subscription: {
         Args: { next: Database["public"]["Enums"]["entitlement_status"]; subscription: string };

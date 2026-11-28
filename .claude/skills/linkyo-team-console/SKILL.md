@@ -23,6 +23,7 @@ the team area: **teal**, not the dashboard's black and grey. Never put `data-con
 | Customers (one shape for demo and real) | `features/admin/customers/{model,data,stats,sample,overrides,ui}.ts(x)` |
 | Money | `features/admin/billing.ts` (what may happen, the browser call, the server's orchestration) and `app/api/admin/customers/[id]/billing/{refund,cancel,resume}/route.ts` |
 | Orders, contracts, AI switch | `features/admin/orders/**`, `app/api/admin/orders/**`, `app/api/admin/contracts/**` |
+| Reports (DSA notice and action) | `features/moderation/**` (contract, form, the queue's data, server logic), `features/admin/reports-screen.tsx`, `app/api/admin/moderation/**`, `app/api/reports`, `/melden`; draft ADR notice-and-action |
 | Messages | `admin.*` in `src/messages/{de,en,ar}.json`; Arabic Latin names and numbers in `<bdi>` (`bidi.tsx`, `arabic-bdi.test.ts`) |
 | Tests | `features/admin/**/*.test.ts`, `supabase/tests/{access,admin_money,billing,referrals}.test.sql`, `e2e/admin.spec.ts` and `e2e/admin-phone-app.spec.ts` (demo; phone layout, axe on 15 routes in en and ar), `e2e/admin-orders-phone-app.spec.ts` (stub build, payments=test: the orders screens at 390 px), `e2e/admin-money-app.spec.ts`, `orders-app.spec.ts`, `team-fixes-app.spec.ts`, `contracts-app.spec.ts` (`@real`) |
 
@@ -39,7 +40,8 @@ the team area: **teal**, not the dashboard's black and grey. Never put `data-con
    guard in the screen itself (`can(...)` → a calm notice), because the address can be typed in. Example:
    `CustomersHidden` in `customers-list-screen.tsx`.
 
-Current permissions to keep in mind: `customers.view` (owner, admin, viewer: people and their e-mail addresses),
+Current permissions to keep in mind: `reports.manage` (owner, admin: reports with the reporters' names and
+addresses, and every moderation decision), `customers.view` (owner, admin, viewer: people and their e-mail addresses),
 `customers.export` (owner, admin), `orders.view` (every role: the page-service queue, one order, Referrals),
 `analytics.view` (every role: the numbers; for roles without `customers.view`, `admin_customers()` returns the rows
 without name, e-mail, city and notes).
@@ -93,6 +95,20 @@ without name, e-mail, city and notes).
   en and ar. An unknown action renders as its raw name (never a crash), but ship the sentence with it.
 - A money action is logged **after** Stripe did it and it is on record, never before: the log says what happened.
   (The orders refund logs `order.refund`, "hat eine Erstattung angewiesen": a decision, worded as one.)
+
+## Reports and decisions (DSA Art. 16 and 17)
+
+- Visitors report at `/<locale>/melden` (no cookie; `POST /api/reports`, 10 per address and 5 per e-mail an
+  hour); `submit_report` is the server's only (service role), so the limit cannot be gone around.
+- Every decision is `admin_moderate(customer, decision, why, legal_ground, target_block, for_report)` through
+  `/api/admin/moderation` (or the customer's status route for a suspension): a reason the creator reads and a
+  ground (`illegal` or `terms`) for every restriction, a reason for the reporter for a dismissal. The route
+  drops the cached page and sends the statement of reasons and the reporter's notice through `deliver()`;
+  say "E-Mails gehen noch nicht raus" when neither went out. The log gets the decision's id, never the reason.
+- A suspension always has its reasons: `admin_set_status(…, 'suspended')` is refused on a database with the
+  migration; it only lets accounts back in (and lifts the suspension in force).
+- `public_page()` leaves out hidden blocks and pages taken offline; lifting (`admin_lift_moderation`) brings
+  them back. The queue, its nav item and badge hide where the database has no reports (`unavailable`).
 
 ## Exports
 

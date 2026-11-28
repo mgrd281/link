@@ -149,7 +149,7 @@ test.describe("contact and security", () => {
     expect(await page.locator("main").textContent()).not.toContain(COMPANY.phone);
     if (legalLinksVisible) {
       await expect(page.locator("main").getByRole("link", { name: de.sitePages.common.imprint })).toHaveAttribute("href", "/de/impressum");
-      await expect(page.locator("main").getByRole("link", { name: de.sitePages.contact.report.action })).toHaveAttribute("href", "/de/impressum#melden");
+      await expect(page.locator("main").getByRole("link", { name: de.sitePages.contact.report.action })).toHaveAttribute("href", "/de/melden");
     }
     await expect(page.locator("main").getByRole("link", { name: de.sitePages.contact.help.action })).toHaveAttribute("href", "/de/hilfe");
   });

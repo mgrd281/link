@@ -23,7 +23,8 @@ function Card({ icon, title, children, className }: { icon: LucideIcon; title: s
 
 /**
  * /kontakt: the one contact there is, the e-mail address in COMPANY (the single place for it), as a
- * mailto link; the help pages first; and the Impressum for who runs Linkyo and how to report content.
+ * mailto link; the help pages first; the report form (/melden) for content; and the Impressum for who
+ * runs Linkyo.
  * No form (it would need the site's own e-mail sending, which is not set up), no phone number here,
  * no hours or answer times. The Impressum is linked only where the footer links it too (company
  * data complete, `legalLinksVisible`).
@@ -58,7 +59,7 @@ export async function ContactPage({ locale }: { locale: string }) {
         {legalLinksVisible ? (
           <Card icon={icons.warning} title={t("report.title")}>
             <p className="text-body text-pretty text-fg-secondary">{t("report.body")}</p>
-            <a href={`/${locale}/impressum#melden`} className={standaloneLink}>
+            <a href={`/${locale}/melden`} className={standaloneLink}>
               {t("report.action")}
               <Icon icon={icons.next} size="sm" />
             </a>

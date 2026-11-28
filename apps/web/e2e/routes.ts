@@ -12,6 +12,8 @@ export const ROUTES = [
   "/ueber-uns",
   "/changelog",
   "/sicherheit",
+  // The report form behind every creator page's "Melden" (Stage 4, WP4.1). Not in the sitemap: a form, noindex.
+  "/melden",
   "/design",
   "/directions",
   "/signup",

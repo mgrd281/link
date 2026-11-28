@@ -95,6 +95,8 @@ export const CLIENT_NAMESPACES = {
   // The help page (/hilfe): its search island reads `help.search` in the browser; the articles are
   // rendered on the server. A group of its own keeps those words off every other site page.
   help: [...SITE, "help.search"],
+  // The report form (/melden): its island reads the `report` words; the frame is the site's.
+  report: [...SITE, "report"],
   auth: [...SITE, "auth"],
   legal: [...SITE, "legal", "orders.package"],
   checkout: [...SITE, "checkout", "orders.package", "service"],

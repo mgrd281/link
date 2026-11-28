@@ -123,7 +123,7 @@ insert into public.team_members (user_id, role) values ('d0000000-0000-4000-8000
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"c0000000-0000-4000-8000-000000000003","role":"authenticated"}', true);
 select is(public.admin_me() ->> 'role', 'owner', 'the owner sees their role');
-select is(jsonb_array_length(public.admin_me() -> 'permissions'), 18, 'owners have every permission');
+select is(jsonb_array_length(public.admin_me() -> 'permissions'), 19, 'owners have every permission');
 select is((select count(*)::int from jsonb_array_elements(public.admin_customers()) c
   where c ->> 'email' in ('ana@example.com', 'ben@example.com', 'cara@example.com', 'dan@example.com')), 4,
   'the console lists every account');
@@ -131,7 +131,10 @@ select is((select c -> 'logins' -> 0 ->> 'ip' from jsonb_array_elements(public.a
   '198.51.100.7', 'with the sign-in log, IP included');
 select is((select (c -> 'usage' ->> 'blocks')::int from jsonb_array_elements(public.admin_customers()) c where c ->> 'username' = 'ana-v'),
   2, 'and how much of the page is built');
-select public.admin_set_status('a0000000-0000-4000-8000-000000000001', 'suspended');
+-- A suspension needs its reason (20261128100000_reports.sql): only admin_moderate() suspends.
+select throws_ok($$ select public.admin_set_status('a0000000-0000-4000-8000-000000000001', 'suspended') $$,
+  'P0001', 'linkyo:reasonRequired', 'suspending without a reason is refused');
+select public.admin_moderate('a0000000-0000-4000-8000-000000000001', 'suspend', 'Spam links on every block of the page.', 'terms');
 select is((select status::text from public.profiles where id = 'a0000000-0000-4000-8000-000000000001'), null,
   'the team does not read profiles directly');
 select is((select c ->> 'status' from jsonb_array_elements(public.admin_customers()) c where c ->> 'username' = 'ana-v'),
@@ -216,7 +219,7 @@ select is_empty($$ select 1 from public.sign_ins where profile_id = 'a0000000-00
 -- ── The role table matches the app ──────────────────────────────────────────────────────────
 select results_eq(
   $$ select role::text as name, count(*)::int from public.role_permissions group by role order by name $$,
-  $$ values ('admin', 16), ('editor', 5), ('owner', 18), ('viewer', 6) $$,
+  $$ values ('admin', 17), ('editor', 5), ('owner', 19), ('viewer', 6) $$,
   'roles have the same number of permissions as in the app'
 );
 

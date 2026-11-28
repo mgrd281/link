@@ -331,9 +331,12 @@ describe("roles", () => {
     const migrations = join(process.cwd(), "../../supabase/migrations");
     const team = readFileSync(join(migrations, "20261119100200_team.sql"), "utf8");
     const money = readFileSync(join(migrations, "20261124100100_admin_money.sql"), "utf8");
+    const reports = readFileSync(join(migrations, "20261128100000_reports.sql"), "utf8");
     // Every permission the app knows is granted somewhere in the database.
-    for (const permission of PERMISSIONS) expect(`${team}\n${money}`).toContain(`'${permission}'`);
+    for (const permission of PERMISSIONS) expect(`${team}\n${money}\n${reports}`).toContain(`'${permission}'`);
     expect(money).toContain("delete from public.role_permissions where role = 'editor' and permission = 'customers.view'");
-    expect(Object.fromEntries(ROLES.map((role) => [role, ROLE_PERMISSIONS[role].length]))).toEqual({ owner: 18, admin: 16, editor: 5, viewer: 6 });
+    expect(reports).toContain("('owner', 'reports.manage'), ('admin', 'reports.manage')");
+    expect(ROLES.filter((role) => can(role, "reports.manage"))).toEqual(["owner", "admin"]);
+    expect(Object.fromEntries(ROLES.map((role) => [role, ROLE_PERMISSIONS[role].length]))).toEqual({ owner: 19, admin: 17, editor: 5, viewer: 6 });
   });
 });

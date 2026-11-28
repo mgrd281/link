@@ -17,11 +17,13 @@ import { useAdmin } from "./session";
 import { ROLES, type Permission, type Role } from "./types";
 
 interface NavItem {
-  key: "overview" | "customers" | "orders" | "subscriptions" | "security" | "analytics" | "creators" | "templates" | "referrals" | "team" | "activity";
+  key: "overview" | "customers" | "orders" | "reports" | "subscriptions" | "security" | "analytics" | "creators" | "templates" | "referrals" | "team" | "activity";
   href: string;
   icon: LucideIcon;
   /** Shown only to roles with this permission. */
   permission?: Permission;
+  /** Shown only where this queue exists on the deployment's database (`off` hides it). */
+  requires?: "reports";
 }
 
 /**
@@ -38,6 +40,8 @@ const GROUPS: { key: "business" | "teamWork"; items: NavItem[] }[] = [
       { key: "customers", href: "/admin/customers", icon: icons.customers, permission: "customers.view" },
       // Page-service orders exist only where contracts can be made (NEXT_PUBLIC_PAYMENTS).
       ...(paymentsEnabled ? [{ key: "orders" as const, href: "/admin/orders", icon: icons.orders, permission: "orders.view" as const }] : []),
+      // Reports from the public form (DSA notice and action): hidden where the database has none.
+      { key: "reports", href: "/admin/reports", icon: icons.reports, permission: "reports.manage", requires: "reports" },
       { key: "subscriptions", href: "/admin/subscriptions", icon: icons.billing, permission: "billing.view" },
       { key: "security", href: "/admin/security", icon: icons.security, permission: "security.view" },
       { key: "analytics", href: "/admin/analytics", icon: icons.analytics, permission: "analytics.view" },
@@ -95,6 +99,10 @@ function useWaiting(): Partial<Record<NavItem["key"], Waiting>> {
     };
   }
   if (referrals > 0) waiting.referrals = { count: referrals, urgent: false, label: t("referrals", { count: referrals }) };
+  const reports = countOf(queues.reports, (data) => data.open) ?? 0;
+  const late = countOf(queues.reports, (data) => data.overdue) ?? 0;
+  // Past the team's target is set apart, and said in words.
+  if (reports > 0) waiting.reports = { count: reports, urgent: late > 0, label: late > 0 ? t("reportsOverdue", { count: reports, overdue: late }) : t("reports", { count: reports }) };
   return waiting;
 }
 
@@ -257,8 +265,10 @@ function Frame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { me, role, can } = useAdmin();
   const waiting = useWaiting();
+  const queues = useQueues();
   const ids = useId();
-  const groups = GROUPS.map((group) => ({ ...group, items: group.items.filter((item) => !item.permission || can(item.permission)) })).filter((group) => group.items.length > 0);
+  const shown = (item: NavItem) => (!item.permission || can(item.permission)) && (!item.requires || queues[item.requires].status !== "off");
+  const groups = GROUPS.map((group) => ({ ...group, items: group.items.filter(shown) })).filter((group) => group.items.length > 0);
   const all = groups.flatMap((group) => group.items);
   const tabs = all.filter((item) => PHONE_TABS.includes(item.key));
   const more = all.filter((item) => !PHONE_TABS.includes(item.key));

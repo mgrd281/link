@@ -2,8 +2,9 @@
  * The page editor (`app.editor`) is the owner's own screen: with nothing on the page yet it speaks
  * to them ("Deine Seite wartet", "… erscheint sofort auf deiner Seite", "Add your first link"). In
  * the team area the editor always shows a page that belongs to someone else: a page the team
- * prepares for a creator, a proposal for a customer. There the empty state reads about this page
- * (`admin.editor.*`: "Diese Seite hat noch keinen Link"), whoever looks at it.
+ * prepares for a creator, a proposal for a customer. There the empty state and a block's switch read
+ * about this page (`admin.editor.*`: "Diese Seite hat noch keinen Link", "… auf dieser Seite zeigen"),
+ * whoever looks at it.
  *
  * The team area's shell hands these words down to every screen inside it (`AdminShell`), so an
  * editor mounted there never needs to remember it; a screen may still say more (the proposal editor
@@ -12,7 +13,7 @@
  */
 
 /** The editor's words that speak to the page's owner, and the team area's words for them. */
-export const OTHERS_PAGE_WORDS = ["emptyTitle", "emptyBody", "addFirst"] as const;
+export const OTHERS_PAGE_WORDS = ["emptyTitle", "emptyBody", "addFirst", "visible"] as const;
 
 const record = (value: unknown): Record<string, unknown> => (value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {});
 

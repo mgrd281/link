@@ -27,14 +27,17 @@ export const PERMISSIONS = [
   "security.view",
   "security.manage",
   "analytics.view",
+  // Reports from the public form (DSA notice and action, 20261128100000_reports.sql): read and decide.
+  "reports.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
 /**
  * Owners can do everything; admins everything but the team itself and deleting customers. Editors
  * build pages and work on page-service orders without seeing customers (no e-mail addresses);
- * viewers read everything but export nothing. Mirrored in `public.role_permissions`
- * (supabase/migrations/…_team.sql and …_admin_money.sql; the pgTAP matrix compares the counts).
+ * viewers read everything but export nothing. Reports (names and e-mail addresses of the people who
+ * report, and the decisions) are for owners and admins only. Mirrored in `public.role_permissions`
+ * (supabase/migrations/…_team.sql, …_admin_money.sql and …_reports.sql; the pgTAP matrix compares the counts).
  */
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   owner: PERMISSIONS,
@@ -141,7 +144,13 @@ export interface ActivityEvent {
     | "cancellation.resumed"
     | "cancellation.handled"
     | "ai.enabled"
-    | "ai.disabled";
+    | "ai.disabled"
+    // Notice and action (20261128100000_reports.sql): written only by the database. A suspension with
+    // its reason stays `customer.suspend`; lifting one is `customer.unsuspend`.
+    | "moderation.hide"
+    | "moderation.unpublish"
+    | "moderation.lift"
+    | "report.dismiss";
   target: string;
 }
 

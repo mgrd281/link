@@ -5,7 +5,7 @@ import { supabaseEnabled } from "@/lib/supabase/config";
 import { browserSupabase } from "@/lib/supabase/browser";
 
 import { missingFunction, sendBilling, type BillingAnswer, type BillingDeps } from "./billing";
-import { sendCustomerStatus } from "./customer-status";
+import { sendCustomerStatus, type Statement, type StatusAnswer } from "./customer-status";
 import type { AccountStatus, Customer } from "./customers/model";
 import { overrides, type CustomerPatch } from "./customers/overrides";
 import { refreshLive } from "./live";
@@ -102,17 +102,21 @@ export function useConsoleActions() {
       return missingFunction(error);
     },
 
-    async status(customer: Customer, next: AccountStatus): Promise<boolean> {
+    /**
+     * Suspends (with the statement of reasons: what the customer reads, and the ground) or lets an
+     * account back in. Demo: in this browser, nothing is sent.
+     */
+    async status(customer: Customer, next: AccountStatus, statement: Statement | null = null): Promise<StatusAnswer> {
       if (!supabaseEnabled) {
         overrides.patch(customer.id, { status: next });
         record(next === "suspended" ? "customer.suspend" : "customer.unsuspend", customer.username);
-        return true;
+        return { ok: true, recorded: true, mailed: false };
       }
       // Through our server, which runs the team function as this member and then drops the cached
       // public page: a suspended page must not be served from the cache once more.
-      if (!(await sendCustomerStatus(customer.id, next))) return false;
-      await refreshLive();
-      return true;
+      const answer = await sendCustomerStatus(customer.id, next, statement);
+      if (answer.ok) await refreshLive();
+      return answer;
     },
 
     async verified(customer: Customer, value: boolean): Promise<boolean> {

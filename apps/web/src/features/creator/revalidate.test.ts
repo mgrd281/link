@@ -56,7 +56,9 @@ const fakeDb = (who: string) => ({
   },
   rpc: (name: string, args?: { next?: string }) => {
     state.log.push(`${who} rpc ${name}${args?.next ? ` ${args.next}` : ""}`);
-    return Promise.resolve({ data: null, error: state.fail[name] ?? null });
+    // A decision answers what the server needs for the e-mails (features/moderation/server/decide.ts).
+    const data = name === "admin_moderate" ? { decision: "d1", customer: "22222222-2222-4222-8222-222222222222", username: "mila", locale: "de", decidedAt: "2026-11-28T12:00:00Z", report: null } : null;
+    return Promise.resolve({ data: state.fail[name] ? null : data, error: state.fail[name] ?? null });
   },
 });
 
@@ -176,21 +178,39 @@ describe("the team deletes a customer", () => {
 });
 
 describe("the team suspends a customer or lets them back in", () => {
-  it("changes the status as the team member, then drops the cached page and project pages", async () => {
-    for (const next of ["suspended", "active"]) {
-      state.log = [];
-      const response = await setStatus(post({ next }), forCustomer);
-      expect(response.status).toBe(200);
-      expect(state.log).toEqual([`user rpc admin_set_status ${next}`, "service reads profiles", "service reads sites", ...under("mila")]);
-    }
+  const suspend = { next: "suspended", reason: "Repeated fake ticket sales after a warning.", ground: "terms" };
+
+  it("suspends with its reasons as the team member (admin_moderate), after reading the addresses, then drops the cache", async () => {
+    const response = await setStatus(post(suspend), forCustomer);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ ok: true, recorded: true, creatorMailed: false });
+    expect(state.log).toEqual(["service reads profiles", "service reads sites", "user rpc admin_moderate", ...under("mila")]);
   });
 
-  it("refuses other values, strangers and callers the database does not allow, and drops nothing", async () => {
+  it("lets an account back in as the team member, then drops the cached page and project pages", async () => {
+    const response = await setStatus(post({ next: "active" }), forCustomer);
+    expect(response.status).toBe(200);
+    expect(state.log).toEqual(["user rpc admin_set_status active", "service reads profiles", "service reads sites", ...under("mila")]);
+  });
+
+  it("suspends as before on a database without the reasons, and says they were not recorded", async () => {
+    state.fail.admin_moderate = { code: "PGRST202" };
+    const response = await setStatus(post(suspend), forCustomer);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ ok: true, recorded: false });
+    expect(state.log).toEqual(["service reads profiles", "service reads sites", "user rpc admin_moderate", "user rpc admin_set_status suspended", "service reads profiles", "service reads sites", ...under("mila")]);
+  });
+
+  it("refuses a suspension without reasons, other values, strangers and callers the database does not allow, and drops nothing", async () => {
+    expect((await setStatus(post({ next: "suspended" }), forCustomer)).status).toBe(400);
+    expect((await setStatus(post({ ...suspend, reason: "short" }), forCustomer)).status).toBe(400);
     expect((await setStatus(post({ next: "deleted" }), forCustomer)).status).toBe(400);
-    expect((await setStatus(post({ next: "suspended" }), { params: Promise.resolve({ id: "mila" }) })).status).toBe(400);
-    expect((await setStatus(post({ next: "suspended" }, "bad"), forCustomer)).status).toBe(401);
+    expect((await setStatus(post(suspend), { params: Promise.resolve({ id: "mila" }) })).status).toBe(400);
+    expect((await setStatus(post(suspend, "bad"), forCustomer)).status).toBe(401);
+    state.fail.admin_moderate = { code: "42501" };
+    expect((await setStatus(post(suspend), forCustomer)).status).toBe(403);
     state.fail.admin_set_status = { code: "42501" };
-    expect((await setStatus(post({ next: "suspended" }), forCustomer)).status).toBe(403);
+    expect((await setStatus(post({ next: "active" }), forCustomer)).status).toBe(403);
     expect(dropped()).toEqual([]);
   });
 });

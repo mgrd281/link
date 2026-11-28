@@ -92,7 +92,8 @@ export default async function CreatorProjectRoute({ params }: Props) {
           // The creator's imprint lives on their page.
           ...(hasCreatorLegal(found.legal) ? { imprint: `/${username}#imprint` } : {}),
           privacy: `${site}/${locale}/datenschutz#creator-pages`,
-          report: `${site}/${locale}/impressum#melden`,
+          // The report form names this project's page (DSA Art. 16: the exact address).
+          report: `${site}/${locale}/melden?url=${encodeURIComponent(projectUrl(username, lookup.project.slug))}`,
         }}
       />
     </>
