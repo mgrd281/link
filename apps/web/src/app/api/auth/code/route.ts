@@ -7,6 +7,7 @@ import { localUsernameStatus, normalizeEmail, normalizeUsername } from "@/featur
 import { findPrepared } from "@/features/previews/claim";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { anonServerSupabase, serviceSupabase } from "@/lib/supabase/server";
+import { addressKey, MINUTE, rateLimit, retryHeaders, valueKey, type Verdict } from "@/lib/rate-limit";
 import { requestPlace } from "@/lib/request-context";
 
 const body = z
@@ -22,6 +23,17 @@ const body = z
   .and(deviceBody);
 
 /**
+ * Each answer sends an e-mail. A person asks for a code, maybe a second one when the first is slow: 10
+ * per address and 5 per e-mail address in 15 minutes (Supabase Auth adds its own wait per address).
+ */
+const ADDRESS_LIMIT = rateLimit({ name: "auth-code-address", max: 10, windowMs: 15 * MINUTE });
+const EMAIL_LIMIT = rateLimit({ name: "auth-code-email", max: 5, windowMs: 15 * MINUTE });
+
+/** The sign-in screens already say "too many attempts, wait a few minutes" for this error. */
+const tooMany = (verdict: Extract<Verdict, { ok: false }>) =>
+  Response.json({ ok: false, error: "tooManyAttempts" }, { status: 429, headers: retryHeaders(verdict) });
+
+/**
  * Sends a 6-digit code and a one-click link (valid 10 minutes). Someone new is checked first (blocked
  * address, page address, a page the team prepared for this email) and the account is created with
  * that address; it counts once the code is entered. The answer is the same whether or not the email
@@ -29,13 +41,18 @@ const body = z
  */
 export async function POST(request: Request) {
   if (!supabaseEnabled) return fail("serverError", 404);
+  const place = requestPlace(request.headers);
+  const byAddress = ADDRESS_LIMIT.take(addressKey(place.ip));
+  if (!byAddress.ok) return tooMany(byAddress);
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail("serverError", 400);
   const input = parsed.data;
   const email = normalizeEmail(input.email);
   if (!z.email().safeParse(email).success) return fail("invalidEmail");
+  const byEmail = EMAIL_LIMIT.take(valueKey("email", email));
+  if (!byEmail.ok) return tooMany(byEmail);
   const service = serviceSupabase();
-  if (await isBlocked(service, requestPlace(request.headers))) return fail("blocked");
+  if (await isBlocked(service, place)) return fail("blocked");
   const origin = new URL(request.url).origin;
   const auth = anonServerSupabase().auth;
 
