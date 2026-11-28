@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import { cx } from "./cx";
 import { usePrivacyChoice } from "./privacy";
-import { PREVIEW_SECONDS, youtubeEnded, youtubeId, youtubeWatchUrl } from "./providers";
+import { loadsPlayer, PREVIEW_SECONDS, providerOf, youtubeEnded, youtubeId, youtubeWatchUrl } from "./providers";
 
 const YOUTUBE_EMBED_ORIGIN = "https://www.youtube-nocookie.com";
 
@@ -72,9 +72,21 @@ export interface ClickToLoadClasses {
   button: string;
 }
 
+/** A Latin name inside translated words keeps its own direction (in Arabic too). */
+const bdi = (chunks: ReactNode) => <bdi>{chunks}</bdi>;
+
 /**
- * Click-to-load embed (brand privacy promise): nothing from YouTube/TikTok/Instagram loads until the
- * visitor taps. Phase 0 shows the post-tap state as a placeholder; Phase 1 swaps in the nocookie player.
+ * Click-to-load embed (brand privacy promise; leftover 16). Nothing from another company loads before
+ * the visitor's own tap, and what a tap does depends on the visitor's choice in the privacy notice:
+ *
+ * - A YouTube card (the only player a page embeds, in privacy mode) says where the video comes from.
+ *   Before any choice, a tap on it loads the player: one action whose name says YouTube. After
+ *   "Allow external content" a tap plays at once. After "Essential only" the card first asks ("This
+ *   video comes from YouTube. Load it?") and loads only on "Load video".
+ * - A YouTube address that names no video (a channel; an example page's made-up address) loads no
+ *   player: the tap says so.
+ * - TikTok, Instagram, Vimeo and every other address: no player exists, so the card is a link that
+ *   opens the platform and says so; nothing loads on the page.
  */
 export function ClickToLoadIsland({
   provider,
@@ -84,6 +96,7 @@ export function ClickToLoadIsland({
   icons,
   children,
   compact = false,
+  marked = false,
   url,
   playback = "inline",
 }: {
@@ -96,14 +109,22 @@ export function ClickToLoadIsland({
   icons: ClickToLoadIcons;
   children?: ReactNode;
   compact?: boolean;
+  marked?: boolean;
 }) {
   const t = useTranslations("creator");
-  const [loaded, setLoaded] = useState(false);
+  const [step, setStep] = useState<"idle" | "ask" | "play">("idle");
   const [ended, setEnded] = useState(false);
+  const loadButton = useRef<HTMLButtonElement>(null);
+  const askId = useId();
+  const choice = usePrivacyChoice();
   // Once a visitor has allowed external content, the per-player notice is no longer needed.
-  const allowed = usePrivacyChoice() === "media";
-  const video = url ? youtubeId(url) : null;
+  const allowed = choice === "media";
+  const player = loadsPlayer(provider);
+  const video = player && url ? youtubeId(url) : null;
   const preview = playback === "preview" && video !== null;
+  useEffect(() => {
+    if (step === "ask") loadButton.current?.focus();
+  }, [step]);
   const playButton = (
     <span className="absolute inset-0 grid place-items-center" aria-hidden>
       <span
@@ -118,16 +139,19 @@ export function ClickToLoadIsland({
     </span>
   );
 
-  // Opens on the platform: a plain link, nothing loads on the page.
-  if (playback === "external" && url) {
+  // Opens on the platform: a plain link, nothing loads on the page. A video set to open there, and
+  // every card of a company whose player is never embedded.
+  if (url && (playback === "external" || !player)) {
+    // Named after the company only when the address is really theirs (an example's made-up address is not).
+    const theirs = providerOf(url) === provider;
     return (
       <a href={video ? youtubeWatchUrl(video) : url} target="_blank" rel="noopener" className={classes.link}>
-        <span className="sr-only">{t("watchOn", { title, provider })}</span>
+        <span className="sr-only">{theirs ? t("watchOn", { title, provider }) : t("openTitle", { title })}</span>
         {poster}
         {playButton}
         <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 text-caption" aria-hidden>
           <span className="inline-flex items-center gap-1 rounded-full bg-creator-glass px-2 py-1 text-creator-fg backdrop-blur-glass">
-            {t("opensOn", { provider })}
+            {theirs ? t.rich("opensOn", { provider, bdi }) : t("opensLink")}
             {icons.external}
           </span>
           {compact ? null : children}
@@ -161,18 +185,57 @@ export function ClickToLoadIsland({
     );
   }
 
-  if (loaded && video) return <YouTubePlayer video={video} title={title} preview={preview} className={classes.player} onEnded={() => setEnded(true)} />;
-  if (loaded) {
+  if (step === "play" && video) return <YouTubePlayer video={video} title={title} preview={preview} className={classes.player} onEnded={() => setEnded(true)} />;
+  if (step === "play") {
     return (
       <div className={classes.loaded} role="status">
         {icons.shield}
-        <p className="max-w-prose">{t("playerHere")}</p>
+        <p className="max-w-prose">{t.rich("noVideo", { provider, bdi })}</p>
       </div>
     );
   }
+
+  // "Essential only" was chosen: the card asks before it loads anything from the company.
+  if (step === "ask" && video) {
+    return (
+      <div className={classes.ended} data-video-ask="">
+        <span aria-hidden className="absolute inset-0 opacity-secondary">
+          {poster}
+        </span>
+        <span aria-hidden className="absolute inset-0 bg-creator-bg opacity-secondary" />
+        <div role="group" aria-labelledby={`${askId}-title`} className="relative grid place-content-center justify-items-center gap-2 p-4 text-center">
+          <p id={`${askId}-title`} className="text-small font-semibold text-creator-fg">
+            {t.rich("askTitle", { provider, bdi })}
+          </p>
+          {compact ? null : <p className="max-w-prose text-caption text-creator-fg-muted">{t.rich("askBody", { provider, bdi })}</p>}
+          <button
+            ref={loadButton}
+            type="button"
+            onClick={() => setStep("play")}
+            className="inline-flex h-control-md items-center gap-2 rounded-full bg-creator-accent px-4 text-small font-semibold text-creator-accent-fg focus-visible:focus-ring"
+          >
+            {t("askLoad")}
+          </button>
+          {compact ? null : (
+            <a
+              href={youtubeWatchUrl(video)}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex min-h-touch-target items-center gap-1 rounded-xs px-2 text-caption font-semibold text-creator-fg hover:text-creator-fg-muted focus-visible:focus-ring"
+            >
+              {t.rich("askOpen", { provider, bdi })}
+              {icons.external}
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const fromChip = <span className="rounded-full bg-creator-glass px-2 py-1 text-creator-fg backdrop-blur-glass">{t.rich("loadsFrom", { provider, bdi })}</span>;
   return (
-    <button type="button" onClick={() => setLoaded(true)} className={classes.button}>
-      <span className="sr-only">{t(preview ? "playPreview" : "playVideo", { title, seconds: PREVIEW_SECONDS })}</span>
+    <button type="button" onClick={() => setStep(choice === "essential" && video ? "ask" : "play")} className={classes.button}>
+      <span className="sr-only">{t(preview ? "playPreview" : "playVideo", { title, provider, seconds: PREVIEW_SECONDS })}</span>
       {poster}
       {playButton}
       {preview ? (
@@ -180,9 +243,21 @@ export function ClickToLoadIsland({
           {t("previewChip", { seconds: PREVIEW_SECONDS })}
         </span>
       ) : null}
+      {/* A small card has no room for the sentence below: its corner names the company. */}
+      {compact && !marked && !allowed ? (
+        <span
+          aria-hidden
+          className={cx(
+            "absolute top-2 rounded-full bg-creator-glass px-2 py-0.5 text-caption font-semibold text-creator-fg backdrop-blur-glass",
+            preview ? "end-2" : "start-2",
+          )}
+        >
+          {t.rich("fromProvider", { provider, bdi })}
+        </span>
+      ) : null}
       {!compact ? (
         <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 text-caption">
-          {allowed ? <span /> : <span className="rounded-full bg-creator-glass px-2 py-1 text-creator-fg backdrop-blur-glass">{t("loadsFrom", { provider })}</span>}
+          {allowed ? <span /> : fromChip}
           {children}
         </span>
       ) : (

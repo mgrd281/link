@@ -48,9 +48,11 @@ test("a preview video plays 30 seconds here, then offers to keep watching on You
     }),
   );
   await page.goto("/en/p/mrbeast");
-  const play = page.getByRole("button", { name: /^Play 30 seconds of / }).first();
+  const play = page.getByRole("button", { name: /^Play a 30-second preview from YouTube: / }).first();
   await play.scrollIntoViewIfNeeded();
   await play.click();
+  // "Essential only" was chosen: the card asks before it loads anything from YouTube (WP4.4).
+  await page.getByRole("button", { name: "Load video" }).click();
   const frame = page.locator('iframe[src*="youtube-nocookie.com/embed/"]').first();
   await expect(frame).toHaveAttribute("src", /end=30&enablejsapi=1/);
   const keepWatching = page.getByRole("link", { name: "Keep watching on YouTube" });
