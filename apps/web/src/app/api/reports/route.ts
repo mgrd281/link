@@ -15,7 +15,7 @@ const noStore = { "Cache-Control": "no-store" };
 /**
  * A person reports a page or a few things on it, maybe after a correction: 10 per address an hour
  * leaves room for many people behind one shared address; 5 per e-mail address an hour is the tight one
- * (ADR draft-notice-and-action, beside ADR 0090's table).
+ * (ADR 0092-notice-and-action, beside ADR 0090's table).
  */
 const ADDRESS_LIMIT = rateLimit({ name: "reports", max: 10, windowMs: 60 * MINUTE });
 const EMAIL_LIMIT = rateLimit({ name: "reports-email", max: 5, windowMs: 60 * MINUTE });

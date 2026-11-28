@@ -1,4 +1,4 @@
--- Notice and action (Stage 4, WP4.1: A-04, A-17; docs/DECISIONS/draft-notice-and-action.md). Visitors
+-- Notice and action (Stage 4, WP4.1: A-04, A-17; docs/DECISIONS/0092-notice-and-action.md). Visitors
 -- report a page or one of its blocks through the public form at /melden (DSA Art. 16); the team decides
 -- in the console (hide one block, take the page offline, suspend the account, or dismiss) with a written
 -- reason and a ground, which is the statement of reasons the creator gets (Art. 17). Additive: two new

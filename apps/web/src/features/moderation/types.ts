@@ -1,5 +1,5 @@
 /**
- * Notice and action (DSA Art. 16 and 17; docs/DECISIONS/draft-notice-and-action.md): the contract the
+ * Notice and action (DSA Art. 16 and 17; docs/DECISIONS/0092-notice-and-action.md): the contract the
  * public form at /melden, its route, the team console and the database share. The numbers mirror
  * supabase/migrations/20261128100000_reports.sql (types.test.ts reads it and compares):
  *

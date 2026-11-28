@@ -20,7 +20,7 @@ const sameSecret = (given: string, wanted: string) =>
 /**
  * The team digest (A-17): one e-mail to each member who handles reports, only when reports wait.
  * Called by a scheduled job with MAINTENANCE_SECRET as bearer token (404 for anything else; no job is
- * scheduled yet, ADR draft-notice-and-action). Answers how many waited and how many e-mails a
+ * scheduled yet, ADR 0092-notice-and-action). Answers how many waited and how many e-mails a
  * delivering transport took (`mailed`: 0 while production has no transport, F1).
  */
 export async function POST(request: Request) {

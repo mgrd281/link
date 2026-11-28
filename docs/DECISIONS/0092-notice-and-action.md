@@ -1,6 +1,6 @@
-# draft — Notice and action: reports, decisions with a statement of reasons, the team's queue
+# 0092 — Notice and action: reports, decisions with a statement of reasons, the team's queue
 
-**Status.** Proposed (2026-11-28; Stage 4, WP4.1: A-04, A-17 reports and digest, and the console leftovers
+**Status.** Accepted (2026-11-28; 2026-11-28; Stage 4, WP4.1: A-04, A-17 reports and digest, and the console leftovers
 3–9 as far as listed below). The lead numbers it after 0091.
 Builds on [0016](0016-team-area.md) and [0030](0030-real-accounts.md) (team functions, the activity log),
 [0073](0073-team-money-through-stripe.md) (`deliver()` and honest `mailed`), [0090](0090-csp-and-limits.md)
