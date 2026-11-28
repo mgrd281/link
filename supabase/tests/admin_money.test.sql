@@ -47,7 +47,8 @@ insert into public.order_events (order_id, actor, kind) values
 -- ── 1. The role table ───────────────────────────────────────────────────────────────────────
 select results_eq(
   $$ select role::text as name, count(*)::int from public.role_permissions group by role order by name $$,
-  $$ values ('admin', 16), ('editor', 5), ('owner', 18), ('viewer', 6) $$,
+  -- reports.manage (20261128100000_reports.sql) is the owners' and admins' 19th and 17th.
+  $$ values ('admin', 17), ('editor', 5), ('owner', 19), ('viewer', 6) $$,
   'roles have the same number of permissions as in the app (types.ts)'
 );
 select results_eq(
