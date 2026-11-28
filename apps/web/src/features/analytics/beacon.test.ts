@@ -32,7 +32,7 @@ interface Browser {
 }
 
 /** Runs the script for page "mila" in a fake browser and answers what it sent. */
-function run({ gpc = false, dnt = null as string | null, visibility = "visible", prerendering = false, referrer = "", search = "", host = "linkyo.app" } = {}): Browser {
+function run({ gpc = false, dnt = null as string | null, visibility = "visible", prerendering = false, referrer = "", search = "", host = "linkyo.app", paused = false } = {}): Browser {
   const listeners = new Map<string, ((event: object) => void)[]>();
   const sent: Record<string, string>[] = [];
   const browser: Browser = {
@@ -53,6 +53,8 @@ function run({ gpc = false, dnt = null as string | null, visibility = "visible",
   };
   const document = Object.assign(browser.document, {
     referrer,
+    // A paused page's offline page carries data-paused; nothing else in a page is asked for.
+    querySelector: (selector: string) => (paused && selector === "[data-paused]" ? {} : null),
     addEventListener: (type: string, listener: (event: object) => void) => listeners.set(type, [...(listeners.get(type) ?? []), listener]),
   });
   const fetch = (url: string, init: { body: string; keepalive: boolean; credentials: string }) => {
@@ -110,6 +112,14 @@ describe("the counter in the page", () => {
       browser.fire("click", { target: element({ control: true, block: "shop" }) });
       expect(browser.sent).toEqual([]);
     }
+  });
+
+  it("counts nothing on a page its owner paused", () => {
+    const browser = run({ paused: true, referrer: "https://l.instagram.com/" });
+    browser.fire("visibilitychange");
+    browser.fire("click", { target: element({ control: true, block: "shop" }) });
+    expect(browser.sent).toEqual([]);
+    expect(browser.fetched).toBe(0);
   });
 
   it("counts a tap on a link or button inside a block, once per double tap", () => {

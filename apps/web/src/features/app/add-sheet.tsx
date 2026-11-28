@@ -2,9 +2,9 @@
 
 import { detectLink, detectMany, normalizeUrl, slugWord, type Block, type BlockOf, type BlockType, type CreatorKind, type Detection, type Platform } from "@linkyo/blocks";
 import { Badge, Button, cn, ConfirmDialog, Icon, toast } from "@linkyo/ui";
-import { Building2, CircleAlert, ClipboardPaste, FolderKanban, ImagePlus, Images, Link2 } from "lucide-react";
+import { Building2, CircleAlert, ClipboardPaste, FolderKanban, ImagePlus, Images, Link2, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { accountStore } from "@/features/account/store";
 import { showsFromTickets } from "@/features/directions/editor/state";
@@ -14,7 +14,8 @@ import { linkOnlyPlatform } from "@/lib/link-metadata";
 import { supabaseEnabled } from "@/lib/supabase/config";
 
 import { BlockEditorFields, useBlockEditor } from "./block-editor";
-import { ADD_PRESETS, addGroups, blankBlock, blockFromLink, insertAt, newBlockId, presetBlock, type AddPreset } from "./blocks";
+import { addMenu, entryKey, filterMenu, type AddEntry } from "./add-search";
+import { blankBlock, blockFromLink, insertAt, newBlockId, presetBlock, type AddPreset } from "./blocks";
 import { useShowRules } from "./edit-sheet";
 import { readSharedOffer, subscribeSharedOffer, takeSharedOffer } from "./install/intents";
 import { ImageError, pickFiles, prepareAndStore, projectPictureLimit, storedImage, workImageKind } from "./images";
@@ -51,15 +52,7 @@ const CARD =
 /** The name on a card: whole words only. Hyphenation off (it broke "Kundenstimmen" mid-word); `break-words` only as the last resort for a word wider than the card. */
 const CARD_NAME = "text-small font-semibold break-words";
 
-/** One entry of a group in the sheet: a block type, or a preset (a block of a type, already set up). */
-type AddEntry = { type: BlockType; preset?: undefined } | { type?: undefined; preset: AddPreset };
-
-/** A group's entries in order: its presets ("Clients") right after its quotes, else at its end. */
-export function addEntries(types: readonly BlockType[], presets: readonly AddPreset[]): AddEntry[] {
-  const quotes = types.indexOf("quotes");
-  const cut = quotes < 0 ? types.length : quotes + 1;
-  return [...types.slice(0, cut).map((type) => ({ type })), ...presets.map((preset) => ({ preset })), ...types.slice(cut).map((type) => ({ type }))];
-}
+export { addEntries } from "./add-search";
 
 /** Platforms whose profile address belongs in the page's Social icons row. */
 const SOCIAL_PLATFORMS: ReadonlySet<string> = new Set<Platform>(["instagram", "tiktok", "x", "threads", "bluesky", "discord", "whatsapp", "telegram", "facebook", "linkedin", "github", "youtube", "twitch"]);
@@ -97,9 +90,10 @@ export const sameProfile = (a: string, b: string) => profileKey(a) === profileKe
 /**
  * The door the sheet was opened at. "all": everything (the rail, the tab bar, a row's "Add below").
  * "workLink": straight at a project from a link (Arbeiten's "From a link"): only the link field,
- * and what is pasted there becomes a project, never a plain block.
+ * and what is pasted there becomes a project, never a plain block. `{ pick }`: straight at one entry's
+ * form, as if it had been picked in the sheet (the ⌘K palette's "Hinzufügen").
  */
-export type AddDoor = "all" | "workLink";
+export type AddDoor = "all" | "workLink" | { pick: AddEntry };
 
 export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
   const t = useTranslations("app.add");
@@ -148,14 +142,13 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
   const labels = useMemo(() => ({ video: tTypes("video"), music: tTypes("music"), event: tTypes("events") }), [tTypes]);
   // Real accounts have no newsletter backend yet: the block is not offered (public pages drop it too).
   // A group's presets (Portfolio: "Clients") stand right after its quotes, else at its end.
-  const groups = useMemo(
-    () =>
-      addGroups(site.kind)
-        .map((group) => (accountStore.demo ? group : { ...group, types: group.types.filter((candidate) => candidate !== "newsletter") }))
-        .map((group) => ({ key: group.key, entries: addEntries(group.types, (Object.hasOwn(ADD_PRESETS, group.key) ? ADD_PRESETS[group.key as keyof typeof ADD_PRESETS] : []) as readonly AddPreset[]) }))
-        .filter((group) => group.entries.length > 0),
-    [site.kind],
-  );
+  const menu = useMemo(() => addMenu(site.kind, accountStore.demo), [site.kind]);
+  // The search over the entries (D-15): by name, by what the card says and by search words, in the
+  // language of the dashboard (Arabic folded as people type it, `searchText`).
+  const [query, setQuery] = useState("");
+  const entryName = (entry: AddEntry) => (entry.type ? tTypes(entry.type) : t(`presets.${entry.preset}`));
+  const groups = filterMenu(menu, query, (entry) => [entryName(entry), t(`desc.${entryKey(entry)}`), t(`keywords.${entryKey(entry)}`)]);
+  const found = groups.reduce((sum, group) => sum + group.entries.length, 0);
 
   // The second step: the block picked here, filled in right in this sheet.
   const current = editing?.mode === "create" && editing.inAddSheet ? editing : null;
@@ -172,6 +165,7 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
   const close = () => {
     // Also forgets the place chosen with "Add below".
     setAddOpen(false);
+    setQuery("");
     setValue("");
     setError(false);
     setPhotos(null);
@@ -292,6 +286,19 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
   };
 
   const pickPreset = (preset: AddPreset) => create(presetBlock(preset, { clients: tPortfolio(titleKeys(kind).clients) }));
+
+  // Opened at one entry (the palette): its form, once for each opening.
+  const door = useRef<{ pick: AddEntry } | null>(null);
+  const picking = useRef({ pick, pickPreset });
+  useEffect(() => {
+    picking.current = { pick, pickPreset };
+  });
+  useEffect(() => {
+    if (!addOpen || typeof entry !== "object" || door.current === entry) return;
+    door.current = entry;
+    if (entry.pick.type) picking.current.pick(entry.pick.type);
+    else picking.current.pickPreset(entry.pick.preset);
+  }, [addOpen, entry]);
 
   // A link as a project. Details arrive only where a platform gives them (GitHub's API for a
   // repository); any other address is kept as the project's link, and the title is the owner's.
@@ -528,6 +535,41 @@ export function AddSheet({ entry = "all" }: { entry?: AddDoor } = {}) {
                 <p className="text-caption text-fg-secondary">{t("photosHint")}</p>
               )}
             </div>
+            )}
+
+            {workLink ? null : (
+              // Filters the cards below as you type; the count is read out, and nothing found says so.
+              <div role="search" className="grid grid-cols-1 gap-2">
+                <label htmlFor={`${inputId}-search`} className="text-small font-semibold">
+                  {t("searchLabel")}
+                </label>
+                <div className="flex items-center gap-2 rounded-md border border-line-input bg-surface-elevated ps-4 pe-2 transition-[border-color] duration-micro hover:border-fg-tertiary has-[input:focus-visible]:border-focus has-[input:focus-visible]:focus-field">
+                  <Icon icon={Search} size="md" className="shrink-0 text-fg-tertiary" />
+                  <input
+                    id={`${inputId}-search`}
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    autoComplete="off"
+                    spellCheck={false}
+                    enterKeyHint="search"
+                    placeholder={t("searchPlaceholder")}
+                    aria-describedby={`${inputId}-found`}
+                    className="h-control-lg min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-fg-tertiary lg:pointer-fine:h-control-md"
+                  />
+                </div>
+                <p id={`${inputId}-found`} aria-live="polite" className="sr-only">
+                  {query.trim() ? t("searchResults", { count: found }) : ""}
+                </p>
+                {query.trim() && found === 0 ? (
+                  <div data-add-empty className="grid gap-1 rounded-lg border border-line bg-surface p-4 text-center">
+                    <p className="text-small font-semibold">
+                      {t.rich("searchEmpty", { query: query.trim(), bdi: (chunks) => <bdi>{chunks}</bdi> })}
+                    </p>
+                    <p className="text-small text-fg-secondary">{t("searchEmptyHint")}</p>
+                  </div>
+                ) : null}
+              </div>
             )}
 
             {(workLink ? [] : groups).map((group) => (

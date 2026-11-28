@@ -144,7 +144,7 @@ test.describe("the section panel", () => {
 
     await place(page, "Settings").click();
     await expect(heading(page)).toHaveText("Settings");
-    await walkPanel(page, ["Plan", "Account", "Page address", "Legal notice"]);
+    await walkPanel(page, ["Plan", "Account", "Page address", "Legal notice", "Visibility"]);
     // On a pane, the rail's Settings says "you are under here", the pane's item says "here".
     await expect(place(page, "Settings")).toHaveAttribute("aria-current", "true");
   });

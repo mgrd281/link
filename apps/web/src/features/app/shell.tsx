@@ -3,7 +3,8 @@
 import { hasImage } from "@linkyo/blocks/rules";
 import { tokens } from "@linkyo/tokens";
 import { Avatar, cn, Icon, icons, initialsOf, Spinner } from "@linkyo/ui";
-import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, Palette, Plus, type LucideIcon } from "lucide-react";
+import { ChartNoAxesColumn, Check, CircleAlert, CircleDot, Eye, House, Palette, Plus, Search, type LucideIcon } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
@@ -11,12 +12,15 @@ import { plainImageSrc } from "@/features/directions/shared/media";
 import { haptic } from "@/lib/haptics";
 import { useAccount } from "@/features/account/store";
 import { useOnTeam } from "@/features/admin/live";
+import { useAppMode } from "@/features/app-mode/use-app-mode";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 
 import type { AddDoor } from "./add-sheet";
+import type { AddEntry } from "./add-search";
 import { useHasUnsavedDraft } from "./drafts";
 // The Add and Edit sheets load the first time one opens (ADR 0008).
 import { AddSheet, EditSheet } from "./sheets-lazy";
+import { isPaletteKey, isShortcutsKey, isTyping, openDialog } from "./keys";
 import { modified, NavRail, SectionPanel, sectionPanelShown, useJumpToHash } from "./nav";
 import { LAST_APP_PATH_KEY, markedTab, ORIGIN_TAB_KEY, routeInfo, SETTINGS_HREF, TAB_HREF, TABS, type TabKey } from "./routes";
 import { BackLink, ShellBackContext, ShellChromeContext } from "./screen";
@@ -36,6 +40,48 @@ const NAV: readonly { key: TabKey; icon: LucideIcon }[] = [
  * from a link. `index` is where the new block goes. Set by the shell; null outside it (the team area).
  */
 export const OpenAddContext = createContext<((entry: AddDoor, index?: number) => void) | null>(null);
+
+/*
+ * The ⌘K palette and the "?" list (D-15) come in their own chunk, loaded the first time one opens: the
+ * dashboard's first load carries only the key listener (ADR 0008).
+ */
+const PaletteBody = dynamic(() => import("./command-palette").then((module) => module.DashboardPalette), { ssr: false });
+const ShortcutsBody = dynamic(() => import("./command-palette").then((module) => module.ShortcutsSheet), { ssr: false });
+
+/**
+ * ⌘K / Ctrl+K opens the palette on every dashboard screen (from a field too, as everywhere) and closes
+ * it again; over another open sheet or dialog it does nothing. "?" opens the shortcut list, but not
+ * while typing and not over a dialog. `enabled` is false in the iPhone app: no keyboard-only parts there.
+ */
+function usePaletteKeys(enabled: boolean, palette: boolean, setPalette: (open: boolean) => void, setShortcuts: (open: boolean) => void) {
+  const open = useRef(palette);
+  useEffect(() => {
+    open.current = palette;
+  }, [palette]);
+  useEffect(() => {
+    if (!enabled) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat) return;
+      if (isPaletteKey(event)) {
+        if (!open.current && openDialog()) return;
+        event.preventDefault();
+        setPalette(!open.current);
+      } else if (isShortcutsKey(event) && !isTyping(event.target) && !openDialog()) {
+        event.preventDefault();
+        setShortcuts(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [enabled, setPalette, setShortcuts]);
+}
+
+/** True from the first time `open` is true on, so a lazy part stays mounted once loaded. */
+function useOpenedOnce(open: boolean): boolean {
+  const [opened, setOpened] = useState(open);
+  if (open && !opened) setOpened(true);
+  return opened || open;
+}
 
 /** Where the legal notice is edited (its unsaved draft links there). */
 const LEGAL_HREF = "/app/settings/legal";
@@ -296,6 +342,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
   useEffect(() => remember(ORIGIN_TAB_KEY, origin), [origin]);
 
+  // The ⌘K palette and the "?" shortcut list. Not in the iPhone app: it draws its own navigation and
+  // search, and a phone has no keyboard for them (ADR 0087).
+  const app = useAppMode();
+  const [palette, setPalette] = useState(false);
+  const [shortcuts, setShortcuts] = useState(false);
+  usePaletteKeys(!app, palette, setPalette, setShortcuts);
+  const paletteLoaded = useOpenedOnce(palette);
+  const shortcutsLoaded = useOpenedOnce(shortcuts);
+  const addFromPalette = useCallback((entry: AddEntry) => openAdd({ pick: entry }), [openAdd]);
+  const showShortcuts = useCallback(() => setShortcuts(true), [setShortcuts]);
+
   // A route change closes the Add and edit sheets (Back, the edge swipe, any link): a sheet never
   // stays open over another screen. Sheets that belong to a screen leave with it.
   const shownPath = useRef(pathname);
@@ -434,7 +491,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               (nav-folded:), set before paint, so the frame never shifts. data-panel="none" marks a
               place without it (toasts then centre beside the rail alone). */}
           <div data-nav data-panel={panel ? undefined : "none"} data-app-hide className="sticky top-0 hidden h-dvh shrink-0 lg:flex">
-            <NavRail pathname={pathname} pending={pending} onNavigate={setPending} onTeam={onTeam} status={<SaveStatus layout="compact" />} panel={panel} />
+            <NavRail pathname={pathname} pending={pending} onNavigate={setPending} onTeam={onTeam} status={<SaveStatus layout="compact" />} panel={panel} onSearch={app ? undefined : () => setPalette(true)} />
             {panel ? <SectionPanel pathname={pathname} pending={pending} onNavigate={setPending} status={<SaveStatus layout="panel" />} /> : null}
           </div>
 
@@ -467,6 +524,18 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {t(info.title)}
               </p>
               <div className="flex items-center justify-self-end">
+                {/* Phones have no ⌘K: the palette opens from here. */}
+                {app ? null : (
+                  <button
+                    type="button"
+                    aria-label={t("palette.open")}
+                    aria-haspopup="dialog"
+                    onClick={() => setPalette(true)}
+                    className="grid size-touch-target place-items-center rounded-md transition-colors duration-micro hover:bg-hover active:bg-pressed focus-visible:focus-ring"
+                  >
+                    <Icon icon={Search} size="md" />
+                  </button>
+                )}
                 <SaveStatus layout="compact" />
                 <Link
                   href="/app/preview"
@@ -541,6 +610,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <AddSheet entry={addEntry} />
           <EditSheet />
+          {!app && paletteLoaded ? <PaletteBody open={palette} onOpenChange={setPalette} onAdd={addFromPalette} onShortcuts={showShortcuts} /> : null}
+          {!app && shortcutsLoaded ? <ShortcutsBody open={shortcuts} onOpenChange={setShortcuts} /> : null}
         </div>
         </OpenAddContext.Provider>
       </ShellBackContext.Provider>

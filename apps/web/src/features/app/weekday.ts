@@ -10,7 +10,11 @@ export function weekdayName(iso: string, locale: string): string {
   const day = new Date(iso);
   const name = (weekday: "short" | "long") => new Intl.DateTimeFormat(locale, { weekday, timeZone: "UTC" }).format(day);
   // The first two letters of the long name: `Intl`'s own German short name carries a dot in some engines ("Mo.").
-  return locale === "de" ? name("long").slice(0, 2) : name("short");
+  if (locale === "de") return name("long").slice(0, 2);
+  // Arabic has no short names (`Intl` gives the whole name): without its article, as calendars write
+  // them (أحد، اثنين … سبت), so seven fit under the bars on a 360 px phone (leftover 2).
+  if (locale === "ar") return name("long").replace(/^\u0627\u0644/, "");
+  return name("short");
 }
 
 /** The full name of the day, for what a screen reader says about one bar ("Dienstag: 123 Aufrufe"). */

@@ -12,7 +12,8 @@ import { useLegalDraft } from "../drafts";
 import { TextArea, TextInput } from "../form";
 import { legalErrors, legalStatus, missingLegalFields, type LegalField } from "../legal";
 import { FieldGroup, FormActions } from "../list";
-import { Screen } from "../screen";
+import { HelpGroup } from "../help-link";
+import { ColumnGroups, Screen } from "../screen";
 import { useSite } from "../site-context";
 
 const sameLegal = (a: Legal, b: Legal) =>
@@ -104,7 +105,10 @@ export function LegalScreen() {
       lead={t("legalHint")}
       back={{ href: "/app/settings", label: tApp("nav.settings") }}
       preview
+      grow
     >
+      {/* Two columns where there is the room (leftover 1): the form, and beside it its help article. */}
+      <ColumnGroups>
       <FieldGroup id="legal">
         <p role="status" className="text-small font-medium">
           {status === "complete" ? (
@@ -195,6 +199,8 @@ export function LegalScreen() {
           ) : null}
         </form>
       </FieldGroup>
+      <HelpGroup slug="impressum" />
+      </ColumnGroups>
     </Screen>
   );
 }

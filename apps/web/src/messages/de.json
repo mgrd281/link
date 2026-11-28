@@ -1756,6 +1756,38 @@
         "label": "Link zu deiner Arbeit",
         "placeholder": "GitHub, Behance, ein Artikel …",
         "submit": "Projekt anlegen"
+      },
+      "searchLabel": "Blöcke durchsuchen",
+      "searchPlaceholder": "Zum Beispiel Video, Termine, Shop",
+      "searchResults": "{count, plural, =0 {Keine Treffer} one {# Treffer} other {# Treffer}}",
+      "searchEmpty": "Kein Block passt zu „<bdi>{query}</bdi>“.",
+      "searchEmptyHint": "Probier ein anderes Wort, oder füg oben einfach einen Link ein.",
+      "keywords": {
+        "link": "Link URL Website Webseite Adresse verlinken",
+        "card": "Karte Linkkarte Bild Teaser Banner Vorschau",
+        "header": "Überschrift Titel Abschnitt Kapitel Header",
+        "text": "Text Absatz Beschreibung Notiz",
+        "divider": "Trennlinie Linie Trenner Abstand",
+        "socials": "Social Media Instagram TikTok YouTube Profile Icons Netzwerke",
+        "image": "Bild Foto",
+        "gallery": "Galerie Fotos Bilder Album",
+        "video": "Video YouTube Vimeo Film Clip",
+        "shorts": "Shorts Reels TikTok Hochformat Clips",
+        "music": "Musik Song Album Single Spotify Apple Music Release",
+        "events": "Termine Konzerte Tour Tickets Events Shows",
+        "product": "Produkt Shop Verkauf Preis Merch",
+        "newsletter": "Newsletter E-Mail Anmeldung Abonnenten",
+        "brands": "Partner Marken Logos Sponsoren",
+        "live": "Live Stream Livestream Twitch Kick",
+        "app": "App Store Google Play iOS Android Anwendung",
+        "repo": "GitHub Repository Code Skill Installation",
+        "project": "Projekt Arbeit Portfolio Fallstudie Referenz",
+        "about": "Über mich Bio Porträt Vorstellung",
+        "tools": "Werkzeuge Tools Fähigkeiten Skills Software",
+        "timeline": "Werdegang Lebenslauf Erfahrung Stationen Jahre",
+        "quotes": "Kundenstimmen Zitate Bewertungen Testimonials",
+        "contact": "Kontakt Anfrage E-Mail Buchung",
+        "clients": "Kunden Auftraggeber Namen Referenzen"
       }
     },
     "editor": {
@@ -2298,7 +2330,8 @@
         "page": "Deine Seite",
         "app": "App",
         "data": "Daten",
-        "contracts": "Verträge und Rechtliches"
+        "contracts": "Verträge und Rechtliches",
+        "help": "Hilfe"
       },
       "rows": {
         "profile": "Profil",
@@ -2312,7 +2345,10 @@
         "cancel": "Verträge hier kündigen",
         "imprint": "Impressum von Linkyo",
         "privacy": "Datenschutz",
-        "terms": "AGB"
+        "terms": "AGB",
+        "visibility": "Sichtbarkeit",
+        "help": "Hilfe",
+        "helpSubtitle": "Anleitungen zu deiner Seite, zum Teilen und zu deinem Konto"
       },
       "footers": {
         "pageLanguage": "Für Besucher: Knöpfe, Daten und Hinweise auf deiner Seite erscheinen in dieser Sprache.",
@@ -2329,7 +2365,8 @@
         "account": "Konto",
         "address": "Seitenadresse",
         "legal": "Impressum",
-        "plan": "Plan"
+        "plan": "Plan",
+        "visibility": "Sichtbarkeit"
       },
       "emailConfirmTitle": "E-Mail ändern?",
       "emailConfirmBody": "Wir schicken einen Bestätigungslink an {new}. Bis du ihn öffnest, meldest du dich weiter mit {old} an.",
@@ -2410,6 +2447,20 @@
           "refunded": "Erstattet"
         },
         "open": "Was dein Plan enthält"
+      },
+      "helpLinks": {
+        "statistik": "Wie Linkyo zählt",
+        "seitenadresse": "Deine Seitenadresse",
+        "impressum": "Impressum für deine Seite",
+        "konto-loeschen": "Daten exportieren und Konto löschen",
+        "teilen": "Deine Seite teilen"
+      },
+      "helpLeads": {
+        "statistik": "Was gezählt wird, ohne Cookies.",
+        "seitenadresse": "Welche Namen erlaubt sind und was beim Ändern passiert.",
+        "impressum": "Was hineingehört und wo deine Seite es zeigt.",
+        "konto-loeschen": "Was die Datei enthält und was beim Löschen verschwindet.",
+        "teilen": "Link, QR-Code und Bild für Story und Beitrag."
       }
     },
     "welcome": {
@@ -3317,6 +3368,81 @@
         "title": "Deine Seite wurde an anderer Stelle geändert",
         "body": "Wir haben die neueste Fassung geladen. Deine letzte Änderung hier wurde nicht gespeichert."
       }
+    },
+    "palette": {
+      "open": "Suchen",
+      "label": "Suchen und springen",
+      "placeholder": "Bildschirm, Block oder Typ suchen …",
+      "empty": "Nichts gefunden.",
+      "results": "{count, plural, =0 {Keine Treffer} one {# Treffer} other {# Treffer}}",
+      "groups": {
+        "screens": "Gehe zu",
+        "add": "Hinzufügen",
+        "blocks": "Auf deiner Seite",
+        "help": "Hilfe"
+      },
+      "help": "Hilfe öffnen",
+      "shortcuts": "Tastenkürzel",
+      "words": {
+        "page": "Inhalte Blöcke Editor",
+        "design": "Farben Schriften Buttons Vorlage Look",
+        "analytics": "Aufrufe Klicks Zahlen",
+        "plan": "Abo Pro Preis Rechnung",
+        "account": "E-Mail Anmeldung löschen",
+        "address": "URL Link Name",
+        "legal": "Impressum Anschrift",
+        "visibility": "pausieren Suchmaschinen SEO offline verstecken",
+        "help": "Anleitung Fragen FAQ"
+      }
+    },
+    "shortcuts": {
+      "title": "Tastenkürzel",
+      "lead": "Was du im Dashboard mit der Tastatur machen kannst.",
+      "close": "Schließen",
+      "items": {
+        "palette": "Suchen und springen",
+        "shortcuts": "Diese Liste zeigen",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "moveUp": "Block in der Liste deiner Seite nach oben",
+        "moveDown": "Block in der Liste deiner Seite nach unten",
+        "close": "Fenster oder Leiste schließen"
+      }
+    },
+    "visibility": {
+      "title": "Sichtbarkeit",
+      "lead": "Ob Besucher und Suchmaschinen deine Seite sehen, und wie sie in Suchergebnissen und als Link-Karte heißt.",
+      "groups": {
+        "page": "Deine Seite",
+        "texts": "Suchergebnis und Link-Karte"
+      },
+      "pause": "Seite pausieren",
+      "pauseHint": "Besucher sehen nur deinen Namen, dein Foto und „Diese Seite ist gerade pausiert.“",
+      "search": "Auf Suchmaschinen zeigen",
+      "searchHint": "Aus: Suchmaschinen werden gebeten, deine Seite nicht aufzunehmen und ihren Links nicht zu folgen.",
+      "searchPaused": "Solange deine Seite pausiert ist, bitten wir Suchmaschinen immer, sie nicht aufzunehmen.",
+      "pausedNote": "Pausiert: Besucher sehen gerade nur deinen Namen und dein Foto. Du siehst deine Seite weiter in der Vorschau.",
+      "liveNote": "Besucher sehen Änderungen meist sofort, spätestens nach einer Minute. Suchmaschinen übernehmen sie bei ihrem nächsten Besuch.",
+      "demoNote": "Demo: Es gibt noch keine öffentliche Seite. Diese Einstellungen bleiben in diesem Browser.",
+      "titleLabel": "Titel",
+      "titleHint": "Leer: dein Name.",
+      "descriptionLabel": "Beschreibung",
+      "descriptionHint": "Leer: deine Zeile unter dem Namen, sonst deine Bio.",
+      "textsFooter": "Höchstens 60 und 160 Zeichen: so viel zeigen Suchmaschinen meist ganz. Sie können trotzdem eigene Texte wählen.",
+      "previewSearch": "So kann dein Suchergebnis aussehen",
+      "previewSearchOff": "Gerade bitten wir Suchmaschinen, deine Seite nicht zu zeigen.",
+      "previewNoDescription": "Ohne Beschreibung",
+      "previewCard": "So sieht dein Link in Nachrichten aus",
+      "previewCardNote": "Vereinfacht. Die echte Karte zeigt dazu dein Design, und WhatsApp, iMessage und LinkedIn zeichnen sie etwas verschieden.",
+      "state": {
+        "paused": "Pausiert",
+        "hidden": "Ohne Suchmaschinen"
+      },
+      "offline": {
+        "title": "Diese Seite ist gerade pausiert."
+      },
+      "homePaused": "Pausiert: Besucher sehen gerade nur deinen Namen und dein Foto.",
+      "ownPagePaused": "Pausiert: Besucher sehen nur deinen Namen und dein Foto."
     }
   },
   "preview": {

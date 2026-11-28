@@ -2,7 +2,7 @@
 
 import { tokens } from "@linkyo/tokens";
 import { cn, Icon, icons, LogoSymbol, Tooltip } from "@linkyo/ui";
-import { ChartNoAxesColumn, Eye, Gift, House, Palette, PanelLeftClose, PanelLeftOpen, Plus, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
+import { ChartNoAxesColumn, CircleHelp, Eye, Gift, House, Palette, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, type MouseEvent, type ReactNode } from "react";
 
@@ -13,8 +13,9 @@ import { isRtl } from "@/i18n/routing";
 import { haptic } from "@/lib/haptics";
 
 import { jumpTo, rowAnchor } from "./jump";
+import { shortcutText, useApplePlatform } from "./keys";
 import { useNavPanel } from "./nav-state";
-import { hasSectionPanel, isReturnPath, NAV_ANCHORS, routeInfo, SECTION_HREF, SETTINGS_HREF, type SectionKey } from "./routes";
+import { hasSectionPanel, helpFor, helpLink, isReturnPath, NAV_ANCHORS, routeInfo, SECTION_HREF, SETTINGS_HREF, SETTINGS_PANES, type SectionKey } from "./routes";
 import { useSite } from "./site-context";
 import { statsSource } from "./stats";
 
@@ -134,9 +135,19 @@ function NavPanelToggle() {
  * toggle (only where there is a panel). Below about 560 px of height the places scroll; the symbol,
  * Add and the foot stay.
  */
-export function NavRail({ pathname, pending, onNavigate, onTeam, status, panel }: NavProps & { onTeam: boolean; status: ReactNode; panel: boolean }) {
+export function NavRail({
+  pathname,
+  pending,
+  onNavigate,
+  onTeam,
+  status,
+  panel,
+  onSearch,
+}: NavProps & { onTeam: boolean; status: ReactNode; panel: boolean; onSearch?: (() => void) | undefined }) {
   const t = useTranslations("app");
+  const locale = useLocale();
   const side = useTooltipSide();
+  const apple = useApplePlatform();
   const { setAddOpen, previewHref } = useSite();
   const { section } = routeInfo(pathname);
   const selected = railSelection(pathname, pending);
@@ -177,6 +188,14 @@ export function NavRail({ pathname, pending, onNavigate, onTeam, status, panel }
           <Icon icon={Plus} size="md" />
         </button>
       </Tooltip>
+      {/* The ⌘K palette (D-15), for the mouse too; not in the iPhone app (no `onSearch`). */}
+      {onSearch ? (
+        <Tooltip content={t("palette.open")} shortcut={shortcutText("palette", apple)} side={side} sideOffset={RAIL_TIP_OFFSET}>
+          <button type="button" aria-label={t("palette.open")} aria-haspopup="dialog" onClick={onSearch} className={cn(railControl, "mt-1 shrink-0")}>
+            <Icon icon={Search} size="md" />
+          </button>
+        </Tooltip>
+      ) : null}
       {/* py-1 keeps the focus ring inside the scroller. */}
       <nav aria-label={t("nav.label")} className="mt-3 flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto py-1">
         {/* Safari (VoiceOver) drops the list semantics of a <ul> without bullets unless the role is set. */}
@@ -196,6 +215,8 @@ export function NavRail({ pathname, pending, onNavigate, onTeam, status, panel }
       </nav>
       {/* Not places: outside the nav. */}
       <div className="grid gap-1 pt-1">
+        {/* Help (W-04): the screen's own article where it has one, else the help page; same tab. */}
+        <RailLink href={helpLink(locale, helpFor(pathname))} icon={CircleHelp} label={t("settings.rows.help")} selected={false} />
         <RailLink href={previewHref} icon={Eye} label={t("viewPage")} selected={false} />
         {/* `contents`, not a grid box: while "Saved" is only read out (sr-only), it takes no row and no gap, so the eye does not move when the panel folds.
             Where the place has no panel, the status lives here, and there is nothing to fold. */}
@@ -246,7 +267,7 @@ function usePanelItems(section: SectionKey): PanelItem[] {
         anchor(NAV_ANCHORS.inviteRules, t("invite.rules.title")),
       ];
     case "settings":
-      return (["plan", "account", "address", "legal"] as const).map((pane) => ({ kind: "route", key: pane, label: t(`settings.panes.${pane}`), href: `${SETTINGS_HREF}/${pane}` }));
+      return SETTINGS_PANES.map((pane) => ({ kind: "route", key: pane, label: t(`settings.panes.${pane}`), href: `${SETTINGS_HREF}/${pane}` }));
     case "home":
     case "page":
     case "design":

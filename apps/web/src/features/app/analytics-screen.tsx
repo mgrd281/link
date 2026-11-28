@@ -9,6 +9,7 @@ import { bridgeAvailable } from "@/features/app-mode/bridge";
 import { appDownload } from "@/features/app-mode/bridge-files";
 
 import { sampleStats, totals as sampleTotals } from "./sample-stats";
+import { HelpLink } from "./help-link";
 import { Panel, Screen } from "./screen";
 import { useSite } from "./site-context";
 import { reloadLiveStats, STATS_RANGES, statsCsv, statsSource, useLiveStats, type LiveStats, type StatsDay, type StatsRange } from "./stats";
@@ -234,6 +235,7 @@ function AnalyticsEmpty() {
   return (
     <Screen title={t("title")} wide lead={t("leadReal")}>
       <Notice icon={icons.analytics} title={t("empty.title")} body={t("empty.body")} />
+      <HelpLink slug="statistik" />
     </Screen>
   );
 }
@@ -304,6 +306,7 @@ function LiveAnalytics() {
           <Icon icon={icons.info} size="sm" className="mt-0.5 shrink-0" />
           {t("privacy")}
         </p>
+        <HelpLink slug="statistik" />
       </Screen>
     );
   return <StatsView data={data} range={range} onRange={setRange} busy={state.status === "loading"} />;
@@ -486,6 +489,7 @@ function StatsView({ data, range, onRange, busy }: { data: ScreenStats | null; r
           {t("privacy")}
         </p>
         {visitors && !data?.sample ? <p className="ps-6">{t("visitorsNote")}</p> : null}
+        <HelpLink slug="statistik" className="mt-2" />
       </div>
     </Screen>
   );

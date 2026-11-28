@@ -281,7 +281,10 @@ describe("app mode: the chrome the app replaces", () => {
   });
 
   it("hides the own page's floating bar, keeping its data-console (which hides the credit)", () => {
-    const [bar] = elements("features/app/own-page-screen.tsx", has("data-console"));
+    // The floating bar is the nav; the paused page's note above the page (WP4.5) stays in the app.
+    const consoles = elements("features/app/own-page-screen.tsx", has("data-console"));
+    const bar = consoles.find((attributes) => !attributes.includes("data-paused-note"));
+    expect(consoles).toHaveLength(2);
     expect(bar).toEqual(expect.arrayContaining(["data-console", "data-app-hide"]));
   });
 

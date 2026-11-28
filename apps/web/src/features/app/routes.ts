@@ -1,3 +1,5 @@
+import { helpHref, type HelpSlug } from "@/features/help/articles";
+
 /*
  * The dashboard's places, in one table: the name each screen shows in the bars, the tab it belongs
  * to, where "back" leads and the rail place (section) it lives under. Settings is pushed over the
@@ -41,6 +43,7 @@ export type RouteTitle =
   | "settings.panes.address"
   | "settings.panes.legal"
   | "settings.panes.plan"
+  | "settings.panes.visibility"
   | "invite.title";
 
 export interface RouteInfo {
@@ -66,6 +69,8 @@ const ROUTES: Record<string, RouteInfo> = {
   "/app/settings/legal": { title: "settings.panes.legal", tab: null, parent: SETTINGS_HREF, section: "settings" },
   // The plan and billing pane (Stage 3, WP3.5 builds its screen).
   "/app/settings/plan": { title: "settings.panes.plan", tab: null, parent: SETTINGS_HREF, section: "settings" },
+  // Pause, search engines, search title and description (Stage 4, WP4.5, D-09).
+  "/app/settings/visibility": { title: "settings.panes.visibility", tab: null, parent: SETTINGS_HREF, section: "settings" },
   // Phones reach Invite from a Settings row (always there), so back leads to Settings, like the
   // legal notice opened from Home. Wide screens reach it from the rail and show no back link.
   "/app/invite": { title: "invite.title", tab: null, parent: SETTINGS_HREF, section: "invite" },
@@ -119,9 +124,21 @@ export function hasSectionPanel(section: SectionKey, counted: boolean): boolean 
  * The screens that take the content width from the laptop width on (`Screen`'s `grow`): a list, a
  * grid or groups that have the room for it, so they start at Home's edge and no dead gutters are
  * left at 1920. The loading frame (`AppSplash`) draws the same column for them, so nothing moves
- * when the screen arrives. Forms (Page address, Legal notice) keep the narrower column.
+ * when the screen arrives. Settings and its form panes (Page address, Legal notice, Visibility) grow too,
+ * and stand in two columns (`ColumnGroups`) once there is the room: the form, and beside it what
+ * belongs to it (its help article, the previews), so no field gets wider than a form should be.
  */
-const GROWN_PATHS: ReadonlySet<string> = new Set(["/app/editor", "/app/work", "/app/design", "/app/settings/plan", "/app/settings/account"]);
+const GROWN_PATHS: ReadonlySet<string> = new Set([
+  "/app/editor",
+  "/app/work",
+  "/app/design",
+  "/app/settings",
+  "/app/settings/plan",
+  "/app/settings/account",
+  "/app/settings/address",
+  "/app/settings/legal",
+  "/app/settings/visibility",
+]);
 
 export const isGrownPath = (pathname: string): boolean => GROWN_PATHS.has(pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname);
 
@@ -155,3 +172,29 @@ export const NAV_ANCHORS = {
   invitePeople: "invite-people",
   inviteRules: "invite-rules",
 } as const;
+
+/** The Settings panes in the order the section panel and the palette list them. */
+export const SETTINGS_PANES = ["plan", "account", "address", "legal", "visibility"] as const;
+export type SettingsPane = (typeof SETTINGS_PANES)[number];
+
+/** The help article that belongs to a screen (the rail's "?" and the screen's own help link); none: the help page's start. */
+const HELP_FOR: Readonly<Record<string, HelpSlug>> = {
+  "/app": "teilen",
+  "/app/editor": "bloecke",
+  "/app/work": "projekte",
+  "/app/design": "design",
+  "/app/analytics": "statistik",
+  "/app/settings/address": "seitenadresse",
+  "/app/settings/legal": "impressum",
+  "/app/settings/account": "konto-loeschen",
+};
+
+export function helpFor(pathname: string): HelpSlug | undefined {
+  return HELP_FOR[pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname];
+}
+
+/**
+ * A help article (`helpHref`, `/de/hilfe#statistik`) as the dashboard's own links take it: without the
+ * language, which `Link` from i18n/navigation puts in front. Help opens in the same tab (W-04).
+ */
+export const helpLink = (locale: string, slug?: HelpSlug): string => helpHref(locale, slug).slice(locale.length + 1);

@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 
 import { CreatorLegal, hasCreatorLegal } from "@/features/creator/creator-legal";
-import { loadPublicPage } from "@/features/creator/public-page";
+import { PausedPage } from "@/features/creator/paused-page";
+import { indexable, loadPublicPage, searchTexts } from "@/features/creator/public-page";
 import { browserThemeColor, rootBackground } from "@/features/directions/poster/browser-top";
 import { PosterRenderer } from "@/features/directions/poster/renderer";
 import { documentsView } from "@/features/documents/view";
@@ -33,19 +34,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const found = await loadPublicPage(username);
   if (!found) return { robots: { index: false, follow: false } };
   const { profile } = found.page;
-  // Their own line (tagline, else bio), at most 160 characters.
-  const line = [profile.tagline, profile.bio].map((text) => text?.trim() ?? "").find(Boolean) ?? "";
-  const description = line.length > 160 ? `${line.slice(0, 159).trimEnd()}…` : line;
+  // The owner's search title and description (Settings › Sichtbarkeit), else the name and their own
+  // line (tagline, else bio), at most 160 characters. A paused page says only its name.
+  const { title, description } = searchTexts(profile, found.paused);
   const said = description ? { description } : {};
+  // Paused, or "Auf Suchmaschinen zeigen" off: search engines are asked to leave the page out.
+  const index = indexable(found);
   return {
     metadataBase: siteUrl(),
-    title: profile.displayName,
+    title,
     ...said,
     icons: { icon: "/favicon.svg" },
     alternates: { canonical: pageUrl(username) },
-    openGraph: { title: profile.displayName, ...said, type: "profile", siteName: "Linkyo", url: pageUrl(username), locale: OG_LOCALES[profile.locale] ?? "de_DE" },
-    twitter: { card: "summary_large_image", title: profile.displayName, ...said },
-    robots: { index: true, follow: true },
+    openGraph: { title, ...said, type: "profile", siteName: "Linkyo", url: pageUrl(username), locale: OG_LOCALES[profile.locale] ?? "de_DE" },
+    twitter: { card: "summary_large_image", title, ...said },
+    robots: { index, follow: index },
     formatDetection: { telephone: false, email: false, address: false },
     // Machine-readable marking of AI-written content (AI Act Art. 50(2)): an AI block, or a name,
     // tagline or bio an AI draft wrote. The blocks and texts themselves carry data-ai-generated.
@@ -76,6 +79,15 @@ export default async function CreatorRoute({ params }: Props) {
   setRequestLocale(locale);
   const theme = resolveCreatorTheme(found.theme, { rtlScript: locale === "ar" });
   const site = siteUrl().origin;
+  // Paused by its owner: the name, the photo and one calm sentence (no block, no counter, noindex above).
+  if (found.paused) {
+    return (
+      <>
+        <style>{rootBackground(page.profile, theme)}</style>
+        <PausedPage page={page} theme={theme} privacyHref={`${site}/${locale}/datenschutz#creator-pages`} />
+      </>
+    );
+  }
   // An application page (Laufbahn) offers its Lebenslauf and Anschreiben as PDFs at /<username>/cv and
   // /<username>/letter (features/documents): their addresses, page counts and miniatures.
   const { username: name } = page.profile;
