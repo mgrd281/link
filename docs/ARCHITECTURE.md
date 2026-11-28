@@ -52,7 +52,7 @@ US processors (Vercel CDN edge, Mux, Stripe, Apple) are covered by DPAs + SCCs/D
 link/                                   pnpm workspaces + Turborepo, TypeScript strict, conventional commits
 ├─ apps/
 │  ├─ web/                              Next.js 16 (App Router) — dashboard, marketing, public creator pages
-│  │  ├─ src/app/[locale]/              routes: / (marketing home), /signup, /login, /forgot, /app/* (dashboard), /design, /directions/*
+│  │  ├─ src/app/[locale]/              routes: / (marketing home), /signup, /login, /app/* (dashboard), /design, /directions/*
 │  │  ├─ src/features/
 │  │  │  ├─ design-system/              the living /design page (tokens, components, states, theme engine)
 │  │  │  ├─ creator/                    creator-page primitives shared by all renderers (theme vars, link buttons)

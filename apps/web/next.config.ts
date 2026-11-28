@@ -6,6 +6,7 @@ import { renamedExampleRedirects } from "./src/features/examples/renamed";
 import { legalReady } from "./src/features/legal/company";
 import { assertLiveReady } from "./src/features/legal/live-guard";
 import { routing } from "./src/i18n/routing";
+import { CSP_HEADER, CSP_REPORT_GROUP, CSP_REPORT_PATH, contentSecurityPolicy } from "./src/lib/csp";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -20,12 +21,32 @@ assertLiveReady({
   launch: process.env.LAUNCH,
 });
 
+// The Content-Security-Policy, report-only for now (src/lib/csp.ts says why each source is there).
+// The same key on a later, more specific rule wins: example pages may be framed by our own gallery,
+// and only checkout pages name Stripe's hosts.
+const cspOptions = { supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL };
+const languages = `:locale(${routing.locales.join("|")})`;
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: CSP_HEADER, value: contentSecurityPolicy(cspOptions) },
+  { key: "Reporting-Endpoints", value: `${CSP_REPORT_GROUP}="${CSP_REPORT_PATH}"` },
 ];
+
+const headers: Awaited<ReturnType<NonNullable<NextConfig["headers"]>>> = [
+  { source: "/:path*", headers: securityHeaders },
+  { source: `/${languages}/p/:path*`, headers: [{ key: CSP_HEADER, value: contentSecurityPolicy({ ...cspOptions, framable: true }) }] },
+  { source: `/${languages}/checkout/:path*`, headers: [{ key: CSP_HEADER, value: contentSecurityPolicy({ ...cspOptions, checkout: true }) }] },
+];
+
+/**
+ * Sign-in is a code by e-mail; there are no passwords any more. Old links to the password pages lead
+ * to sign-in for good (308), before any route renders.
+ */
+const passwordRedirects = ["forgot", "reset-password"].map((page) => ({ source: `/${languages}/${page}`, destination: "/:locale/login", permanent: true as const }));
 
 type RemotePattern = NonNullable<NonNullable<NextConfig["images"]>["remotePatterns"]>[number];
 
@@ -63,10 +84,10 @@ const config: NextConfig = {
     ],
     ...(storage?.local ? { dangerouslyAllowLocalIP: true } : {}),
   },
-  headers: () => Promise.resolve([{ source: "/:path*", headers: securityHeaders }]),
+  headers: () => Promise.resolve(headers),
   // The addresses of example people who gave way to others lead to the new pages (308), before any
-  // route renders (features/examples/renamed.ts).
-  redirects: () => Promise.resolve(renamedExampleRedirects(routing.locales)),
+  // route renders (features/examples/renamed.ts); so do the old password pages.
+  redirects: () => Promise.resolve([...renamedExampleRedirects(routing.locales), ...passwordRedirects]),
   experimental: {
     // app/global-not-found.tsx is Linkyo's page for an address no route matches at all (the app has
     // several root layouts, [locale] and u/[username], so there is no single not-found). Today no

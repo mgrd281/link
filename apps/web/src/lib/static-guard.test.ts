@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
  *     `e2e/` (`import type` is fine under `src/features/payments/server/`);
  *  3. a "use client" file imports a path with a `/server` segment;
  *  4. code under `src/` uses the Stripe.js address outside `src/features/payments/stripe-js.tsx`
- *     (prose in `src/features/legal/texts.ts` may name it);
+ *     (prose in `src/features/legal/texts.ts` may name it, and the checkout policy in `src/lib/csp.ts`);
  *  5. a NEXT_PUBLIC_ variable is named like a secret (SECRET, or KEY other than a publishable key and
  *     the existing NEXT_PUBLIC_SUPABASE_ANON_KEY fallback);
  *  6. a "use client" file reads a server secret.
@@ -110,7 +110,7 @@ function check(files: SourceFile[]): Violation[] {
       }
       if (client && /\/server(\/|$)/.test(specifier)) add(3, file, specifier);
     }
-    if (inSrc && /\.tsx?$/.test(file) && text.includes("https://js.stripe.com") && file !== "src/features/payments/stripe-js.tsx" && file !== "src/features/legal/texts.ts") {
+    if (inSrc && /\.tsx?$/.test(file) && text.includes("https://js.stripe.com") && file !== "src/features/payments/stripe-js.tsx" && file !== "src/features/legal/texts.ts" && file !== "src/lib/csp.ts" && file !== "src/lib/csp.test.ts") {
       add(4, file, "https://js.stripe.com");
     }
     if (!file.startsWith("../")) {
