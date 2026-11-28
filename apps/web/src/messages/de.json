@@ -3499,7 +3499,8 @@
       "customer": "Team · Kunde",
       "subscriptions": "Team · Abos",
       "security": "Team · Sicherheit",
-      "analytics": "Team · Analysen"
+      "analytics": "Team · Analysen",
+      "reports": "Team · Meldungen"
     },
     "gate": {
       "setupTitle": "Teambereich einrichten",
@@ -3558,8 +3559,11 @@
         "orders": "{count, plural, one {# offener Auftrag} other {# offene Aufträge}}",
         "ordersAndContracts": "{orders, plural, one {# offener Auftrag} other {# offene Aufträge}}, {contracts, plural, one {# Widerruf oder Kündigung wartet} other {# Widerrufe oder Kündigungen warten}}",
         "referrals": "{count, plural, one {# Anfrage zu prüfen} other {# Anfragen zu prüfen}}",
-        "more": "{count, plural, one {# wartet unter Mehr} other {# warten unter Mehr}}"
-      }
+        "more": "{count, plural, one {# wartet unter Mehr} other {# warten unter Mehr}}",
+        "reports": "{count, plural, one {# Meldung offen} other {# Meldungen offen}}",
+        "reportsOverdue": "{count, plural, one {# Meldung offen} other {# Meldungen offen}}, {overdue, plural, one {# über dem Ziel} other {# über dem Ziel}}"
+      },
+      "reports": "Meldungen"
     },
     "roles": {
       "owner": {
@@ -3597,7 +3601,8 @@
       "security_manage": "IP-Adressen sperren",
       "analytics_view": "Analysen sehen",
       "orders_view": "Aufträge des Seitenservice sehen",
-      "customers_export": "Kundenliste exportieren (CSV)"
+      "customers_export": "Kundenliste exportieren (CSV)",
+      "reports_manage": "Meldungen bearbeiten (ausblenden, offline nehmen, sperren)"
     },
     "status": {
       "draft": "Entwurf",
@@ -3676,7 +3681,8 @@
       "rest": "Alle anderen",
       "contractsWaiting": "Widerrufe und Kündigungen warten",
       "ordersDue": "Aufträge überfällig oder in {hours} Stunden fällig",
-      "verificationsWaiting": "Verifizierungen warten"
+      "verificationsWaiting": "Verifizierungen warten",
+      "reportsWaiting": "Offene Meldungen"
     },
     "creators": {
       "title": "Creator-Seiten",
@@ -3996,7 +4002,11 @@
         "ai_enabled": "{actor} hat die KI-Funktionen umgeschaltet",
         "ai_disabled": "Die KI-Funktionen wurden automatisch abgeschaltet",
         "order_refund": "{actor} hat für {target} eine Erstattung angewiesen",
-        "cancellation_scheduled": "{actor} hat die Kündigung zu {target} ausgeführt"
+        "cancellation_scheduled": "{actor} hat die Kündigung zu {target} ausgeführt",
+        "moderation_hide": "{actor} hat auf {target} einen Inhalt ausgeblendet",
+        "moderation_unpublish": "{actor} hat {target} offline genommen",
+        "moderation_lift": "{actor} hat eine Einschränkung von {target} aufgehoben",
+        "report_dismiss": "{actor} hat eine Meldung zu {target} abgewiesen"
       }
     },
     "preview": {
@@ -4100,7 +4110,8 @@
         "deleted": "Kunde gelöscht",
         "failed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
         "cancelScheduled": "Pro endet am {date}",
-        "notMailed": "Die E-Mail an den Kunden ging nicht raus."
+        "notMailed": "Die E-Mail an den Kunden ging nicht raus.",
+        "suspendNotRecorded": "Gesperrt. Die Begründung ist nicht gespeichert: Die Datenbank kennt sie noch nicht."
       },
       "actions": {
         "plan": "Plan ändern",
@@ -4144,7 +4155,10 @@
         "resumeStripeTitle": "Kündigung zurücknehmen?",
         "resumeStripeBody": "Pro läuft weiter und verlängert sich wie gewohnt über Stripe.",
         "refundStripeTitle": "Diese Rechnung über Stripe erstatten?",
-        "refundStripeBody": "{amount} gehen über Stripe an den Kunden zurück. Pro läuft weiter. Der Kunde bekommt eine E-Mail."
+        "refundStripeBody": "{amount} gehen über Stripe an den Kunden zurück. Pro läuft weiter. Der Kunde bekommt eine E-Mail.",
+        "suspendGround": "Grundlage",
+        "suspendReason": "Begründung für den Kunden",
+        "suspendReasonHint": "Was du festgestellt hast, und gegen welches Gesetz oder welche Regel der AGB es verstößt. Der Kunde bekommt diesen Text per E-Mail (Art. 17 DSA)."
       },
       "tabs": {
         "label": "Kundendetails",
@@ -4262,7 +4276,11 @@
         "reward_restore": "{actor} hat eine Belohnung gegeben",
         "verification_request": "Verifizierung angefragt",
         "verification_approve": "{actor} hat auf Anfrage verifiziert",
-        "verification_decline": "{actor} hat die Verifizierung abgelehnt"
+        "verification_decline": "{actor} hat die Verifizierung abgelehnt",
+        "moderation_hide": "{actor} hat einen Inhalt ausgeblendet",
+        "moderation_unpublish": "{actor} hat die Seite offline genommen",
+        "moderation_lift": "{actor} hat eine Einschränkung aufgehoben",
+        "report_dismiss": "{actor} hat eine Meldung abgewiesen"
       },
       "sources": {
         "stripe": "Stripe (bezahlt)",
@@ -4571,6 +4589,125 @@
       "deliveredNoMail": "Vorschlag übergeben, aber die E-Mail ging nicht raus. Bitte benachrichtige das Konto selbst.",
       "mailFailed": "Erledigt, aber die E-Mail ging nicht raus. Bitte benachrichtige das Konto selbst.",
       "changed": "Das wurde inzwischen schon entschieden. Die Liste ist jetzt aktuell."
+    },
+    "reports": {
+      "title": "Meldungen",
+      "lead": "Was Besucher melden, mit unserem Ziel für die Entscheidung. Jede Entscheidung braucht eine Begründung: Der Creator bekommt sie (Art. 17 DSA), die meldende Person unsere Entscheidung.",
+      "hidden": "Meldungen sehen Inhaber:innen und Admins.",
+      "notAvailable": "Meldungen gibt es hier noch nicht: Die Datenbank kennt sie noch nicht.",
+      "tabs": {
+        "open": "Offen",
+        "decided": "Entschieden"
+      },
+      "empty": {
+        "open": "Keine offene Meldung.",
+        "decided": "Noch nichts entschieden."
+      },
+      "loadFailed": "Die Meldungen konnten nicht geladen werden.",
+      "retry": "Noch einmal laden",
+      "received": "Eingang {when}",
+      "due": "Ziel: Entscheidung {when}",
+      "overdue": "Über dem Ziel seit {when}",
+      "overdueBadge": "Überfällig",
+      "noAccount": "Diese Seite gibt es nicht (mehr).",
+      "suspended": "Konto gesperrt",
+      "offline": "Seite offline",
+      "explanation": "Was die meldende Person schreibt",
+      "link": "Gemeldete Adresse",
+      "purged": "Name, Adresse und Text sind nach {days} Tagen gelöscht.",
+      "reporter": "Gemeldet von",
+      "anonymous": "Ohne Namen (Minderjährige)",
+      "openPage": "Seite ansehen",
+      "openCustomer": "Zum Kunden",
+      "categories": {
+        "hate": "Hass oder Hetze",
+        "violence": "Gewalt, Drohung oder Terror",
+        "minors": "Gefährdung oder Missbrauch von Minderjährigen",
+        "sexual": "Sexuelle Inhalte ohne Einwilligung",
+        "fraud": "Betrug oder Abzocke",
+        "rights": "Urheber- oder Markenrecht",
+        "privacy": "Persönliche Daten oder Privatsphäre",
+        "impersonation": "Jemand gibt sich als eine andere Person aus",
+        "other": "Etwas anderes"
+      },
+      "decide": "Entscheiden …",
+      "decisions": {
+        "hide_block": "Inhalt ausblenden",
+        "unpublish": "Seite offline nehmen",
+        "suspend": "Konto sperren",
+        "dismiss": "Abweisen"
+      },
+      "decisionHints": {
+        "hide_block": "Ein Block verschwindet für Besucher, der Rest der Seite bleibt.",
+        "unpublish": "Die ganze Seite ist für Besucher offline; das Konto bleibt.",
+        "suspend": "Das Konto ist gesperrt und abgemeldet, die Seite offline.",
+        "dismiss": "Nichts wird eingeschränkt."
+      },
+      "outcome": {
+        "hide_block": "Ausgeblendet: {block}",
+        "unpublish": "Seite offline genommen",
+        "suspend": "Konto gesperrt",
+        "dismiss": "Abgewiesen"
+      },
+      "grounds": {
+        "illegal": "Rechtswidrig",
+        "terms": "Verstößt gegen die AGB"
+      },
+      "decidedBy": "{who}, {when}",
+      "liftedAt": "Aufgehoben {when}",
+      "dialog": {
+        "title": "Entscheidung zu {page}",
+        "action": "Was geschieht?",
+        "block": "Welcher Inhalt?",
+        "blockNone": "Diese Seite hat keinen Inhalt, der sich ausblenden lässt.",
+        "blockHidden": "{label} (schon ausgeblendet)",
+        "blockOff": "{label} (vom Creator ausgeschaltet)",
+        "loading": "Die Seite wird geladen …",
+        "ground": "Grundlage",
+        "reason": "Begründung für den Creator",
+        "reasonHint": "Was du festgestellt hast, und gegen welches Gesetz oder welche Regel der AGB es verstößt. Der Creator liest diesen Text.",
+        "reasonDismiss": "Begründung für die meldende Person",
+        "reasonDismissHint": "Warum nichts eingeschränkt wird. Die meldende Person liest diesen Text.",
+        "statement": "Der Creator bekommt die Begründung an die Adresse seines Kontos, die meldende Person unsere Entscheidung an ihre.",
+        "confirm": "Entscheiden",
+        "cancel": "Abbrechen",
+        "close": "Schließen"
+      },
+      "toast": {
+        "done": "Entschieden",
+        "notMailed": "E-Mails gehen noch nicht raus: Niemand hat eine Nachricht bekommen.",
+        "failed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+        "alreadyDecided": "Diese Meldung ist schon entschieden.",
+        "alreadyDone": "Das ist schon so.",
+        "blockNotFound": "Diesen Inhalt gibt es auf der Seite nicht mehr.",
+        "mismatch": "Die Meldung betrifft eine andere Seite.",
+        "notYourself": "Das eigene Konto schränkst du nicht ein.",
+        "forbidden": "Das darf deine Rolle nicht.",
+        "unavailable": "Die Datenbank kennt Meldungen noch nicht.",
+        "lifted": "Aufgehoben"
+      },
+      "inForce": {
+        "title": "Eingeschränkt auf {page}",
+        "none": "Auf dieser Seite ist nichts eingeschränkt.",
+        "lift": "Aufheben …",
+        "liftTitle": "Aufheben: {what}",
+        "liftBody": "Danach ist es wieder für alle sichtbar. Der Grund steht im Verlauf der Entscheidung.",
+        "liftReason": "Warum?",
+        "liftConfirm": "Aufheben"
+      },
+      "year": {
+        "title": "Zahlen {year}",
+        "note": "Für den Transparenzbericht: alle Meldungen und Entscheidungen dieses Jahres.",
+        "received": "Meldungen",
+        "decided": "Entscheidungen",
+        "restricted": "Eingeschränkt",
+        "lifted": "Aufgehoben",
+        "median": "Mittlere Zeit bis zur Entscheidung",
+        "hours": "{hours} Std.",
+        "none": "–"
+      },
+      "sla": "Ziel {hours} Std.",
+      "demo": "Beispieldaten: Diese Meldungen sind erfunden. Entscheidungen bleiben in diesem Browser, und nichts wird verschickt."
     }
   },
   "examples": {
@@ -4813,7 +4950,8 @@
       "terms": "AGB",
       "cancellationPolicy": "Widerrufsbelehrung",
       "withdraw": "Vertrag widerrufen",
-      "cancel": "Verträge hier kündigen"
+      "cancel": "Verträge hier kündigen",
+      "report": "Inhalt melden"
     },
     "titles": {
       "imprint": "Impressum",
@@ -5069,6 +5207,47 @@
       "cancellationEnded": "Wir haben deine außerordentliche Kündigung angenommen. Linkyo Pro endet mit sofortiger Wirkung am {date}.",
       "cancellationRejected": "Wir können deine außerordentliche Kündigung nicht annehmen. Grund: {note} Ordentlich kündigen kannst du jederzeit unter „Verträge hier kündigen“; Pro endet dann am Ende des bezahlten Monats.",
       "resumed": "Wie von dir gewünscht, haben wir deine Kündigung zurückgenommen. Linkyo Pro läuft weiter; nächste Abbuchung am {date}."
+    },
+    "report": {
+      "receiptSubject": "Deine Meldung ist eingegangen ({reference})",
+      "received": "Wir haben deine Meldung zur Seite {page} am {date} um {time} Uhr erhalten. Ihre Nummer: {reference}.",
+      "next": "Ein Mensch aus unserem Team prüft sie sorgfältig und unvoreingenommen, ohne automatische Entscheidung, und schreibt dir dann, was wir entschieden haben.",
+      "decisionSubject": "Unsere Entscheidung zu deiner Meldung vom {date} ({reference})",
+      "decided": {
+        "hide_block": "Wir haben deine Meldung zur Seite {page} geprüft und den gemeldeten Inhalt für Besucher ausgeblendet.",
+        "unpublish": "Wir haben deine Meldung zur Seite {page} geprüft und die Seite offline genommen.",
+        "suspend": "Wir haben deine Meldung zur Seite {page} geprüft und das Konto gesperrt; die Seite ist offline.",
+        "dismiss": "Wir haben deine Meldung zur Seite {page} geprüft und nichts eingeschränkt. Unsere Begründung:"
+      },
+      "human": "Diese Entscheidung hat ein Mensch aus unserem Team getroffen, ohne automatisierte Mittel.",
+      "object": "Bist du mit der Entscheidung nicht einverstanden, schreib uns an {email}; wir prüfen sie dann erneut. Du kannst dich außerdem an eine zertifizierte außergerichtliche Streitbeilegungsstelle (Art. 21 DSA) oder an ein Gericht wenden."
+    },
+    "statement": {
+      "subject": {
+        "hide_block": "Ein Inhalt deiner Linkyo-Seite ist ausgeblendet",
+        "unpublish": "Deine Linkyo-Seite ist offline",
+        "suspend": "Dein Linkyo-Konto ist gesperrt"
+      },
+      "what": {
+        "hide_block": "Wir haben am {date} den Inhalt „{block}“ auf deiner Seite {page} für Besucher ausgeblendet, überall und bis wir die Entscheidung aufheben. Der Rest deiner Seite bleibt online.",
+        "unpublish": "Wir haben deine Seite {page} am {date} für Besucher offline genommen, überall und bis wir die Entscheidung aufheben. Dein Konto bleibt bestehen, und du kannst dich weiter anmelden.",
+        "suspend": "Wir haben dein Konto am {date} gesperrt. Deine Seite {page} ist offline, und du kannst dich nicht anmelden, bis wir die Sperre aufheben."
+      },
+      "whyTitle": "Warum",
+      "fromReport": "Anlass war eine Meldung, die am {date} bei uns einging. Wer gemeldet hat, nennen wir nicht. Das haben wir festgestellt:",
+      "ownFinding": "Anlass war eine eigene Prüfung unseres Teams. Das haben wir festgestellt:",
+      "groundIllegal": "Grundlage: Der Inhalt ist nach unserer Prüfung rechtswidrig. Welches Gesetz er verletzt und warum, steht oben.",
+      "groundTerms": "Grundlage: Der Inhalt verstößt gegen unsere Allgemeinen Geschäftsbedingungen ({terms}). Welche Regel und warum, steht oben.",
+      "human": "Diese Entscheidung hat ein Mensch aus unserem Team getroffen. Automatisierte Mittel haben wir dafür nicht eingesetzt.",
+      "objectTitle": "Wenn du nicht einverstanden bist",
+      "object": "Schreib uns innerhalb von sechs Monaten an {email} und erkläre, warum die Entscheidung aus deiner Sicht falsch ist; wir prüfen sie dann erneut und antworten dir. Du kannst dich außerdem an eine zertifizierte außergerichtliche Streitbeilegungsstelle (Art. 21 DSA) oder an ein Gericht wenden."
+    },
+    "digest": {
+      "subject": "Linkyo-Team: {count, plural, one {# Meldung wartet} other {# Meldungen warten}}",
+      "open": "{count, plural, one {Eine Meldung wartet} other {# Meldungen warten}} auf eine Entscheidung.",
+      "overdue": "{count, plural, one {Eine davon ist} other {# davon sind}} über unserem Ziel.",
+      "oldest": "Die älteste kam am {date}.",
+      "action": "Meldungen öffnen"
     }
   },
   "portfolioLanding": {
@@ -5274,7 +5453,7 @@
       },
       "report": {
         "title": "Einen Inhalt melden",
-        "body": "Du hältst einen Inhalt auf einer Creator-Seite für rechtswidrig? Wie du ihn meldest, steht im Impressum.",
+        "body": "Du hältst einen Inhalt auf einer Creator-Seite für rechtswidrig? Melde ihn über unser Formular, ohne Konto.",
         "action": "So meldest du einen Inhalt"
       },
       "imprint": {
@@ -5775,6 +5954,68 @@
       "enclosureCv": "Lebenslauf",
       "subjectFor": "Bewerbung als {value}",
       "subjectBare": "Bewerbung"
+    }
+  },
+  "report": {
+    "meta": {
+      "title": "Inhalt melden · Linkyo",
+      "description": "Melde einen Inhalt auf einer Creator-Seite, den du für rechtswidrig hältst oder der gegen unsere Regeln verstößt: ohne Konto, ohne Cookies."
+    },
+    "eyebrow": "Melden",
+    "title": "Einen Inhalt melden",
+    "lead": "Du hältst einen Inhalt auf einer Creator-Seite für rechtswidrig, oder er verstößt gegen unsere Regeln? Sag uns, wo er steht und warum.",
+    "unavailable": {
+      "title": "Über dieses Formular gehen Meldungen hier noch nicht.",
+      "body": "Schreib uns bis dahin eine E-Mail an <bdi>{email}</bdi>. Nenn die Adresse der Seite, den Inhalt, warum er aus deiner Sicht rechtswidrig ist, deinen Namen und deine E-Mail-Adresse.",
+      "action": "E-Mail schreiben"
+    },
+    "form": {
+      "page": "Adresse der Seite oder des Inhalts",
+      "pageHint": "Zum Beispiel <bdi>linkyo.app/name</bdi> oder nur der Name der Seite.",
+      "category": "Worum geht es?",
+      "categories": {
+        "hate": "Hass oder Hetze",
+        "violence": "Gewalt, Drohung oder Terror",
+        "minors": "Gefährdung oder Missbrauch von Minderjährigen",
+        "sexual": "Sexuelle Inhalte ohne Einwilligung",
+        "fraud": "Betrug oder Abzocke",
+        "rights": "Urheber- oder Markenrecht",
+        "privacy": "Persönliche Daten oder Privatsphäre",
+        "impersonation": "Jemand gibt sich als eine andere Person aus",
+        "other": "Etwas anderes"
+      },
+      "explanation": "Welcher Inhalt, und warum?",
+      "explanationHint": "Nenn den Inhalt so, dass wir ihn finden (zum Beispiel den Titel des Links), und erkläre, warum er aus deiner Sicht rechtswidrig ist oder gegen unsere Regeln verstößt. Mindestens {min} Zeichen.",
+      "name": "Dein Name",
+      "email": "Deine E-Mail-Adresse",
+      "emailHint": "Dorthin schicken wir die Eingangsbestätigung und unsere Entscheidung.",
+      "anonymous": "Bei einem Verdacht auf Missbrauch von Minderjährigen darfst du Name und E-Mail-Adresse weglassen. Dann können wir dir aber nicht antworten.",
+      "optional": "freiwillig",
+      "goodFaith": "Ich bin in gutem Glauben davon überzeugt, dass meine Angaben richtig und vollständig sind.",
+      "submit": "Meldung senden",
+      "privacy": "Wir nutzen deine Angaben nur, um die Meldung zu prüfen und dir zu antworten. Der Creator der Seite erfährt deinen Namen und deine E-Mail-Adresse nicht. Name, E-Mail-Adresse und deine Beschreibung löschen wir {days} Tage nach unserer Entscheidung. Dieses Formular setzt keine Cookies.",
+      "process": "Ein Mensch aus unserem Team prüft jede Meldung, ohne automatische Entscheidung. Wir teilen dir unsere Entscheidung mit, und dem Creator die Begründung, wenn wir etwas sperren."
+    },
+    "errors": {
+      "page": "Bitte gib die Adresse der Seite an, zum Beispiel <bdi>linkyo.app/name</bdi>.",
+      "category": "Bitte wähl aus, worum es geht.",
+      "explanation": "Bitte beschreib den Inhalt und den Grund in mindestens {min} Zeichen.",
+      "name": "Bitte gib deinen Namen an.",
+      "email": "Bitte gib eine gültige E-Mail-Adresse an.",
+      "goodFaith": "Bitte bestätige, dass deine Angaben richtig und vollständig sind.",
+      "summary": "{count, plural, one {Ein Feld braucht} other {# Felder brauchen}} noch deine Angaben.",
+      "server": "Das hat nicht geklappt. Versuch es bitte gleich noch einmal.",
+      "tooMany": "Von hier kamen gerade viele Meldungen. Versuch es bitte in einer Stunde noch einmal.",
+      "unavailable": "Meldungen gehen hier gerade nicht. Schreib uns bitte an <bdi>{email}</bdi>."
+    },
+    "done": {
+      "title": "Deine Meldung ist eingegangen.",
+      "body": "Am {date} um {time} Uhr, unter der Nummer <bdi>{reference}</bdi>. Wir prüfen sie und teilen dir unsere Entscheidung mit.",
+      "mailed": "Eine Bestätigung ging an <bdi>{email}</bdi>.",
+      "held": "Eine Bestätigung per E-Mail können wir gerade noch nicht schicken. Notier dir die Nummer, falls du nachfragen möchtest.",
+      "anonymous": "Du hast keine E-Mail-Adresse angegeben, darum bekommst du keine Antwort von uns.",
+      "duplicate": "Diese Meldung hattest du uns heute schon geschickt. Wir prüfen sie einmal.",
+      "another": "Noch etwas melden"
     }
   }
 }

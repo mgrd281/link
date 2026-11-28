@@ -1,5 +1,5 @@
 /**
- * Transactional e-mails (orders, Pro, withdrawals, cancellations, proposals, refunds). Templates are
+ * Transactional e-mails (orders, Pro, withdrawals, cancellations, proposals, refunds, reports). Templates are
  * pure `(data, t) => EmailMessage`; a sender delivers them. Server only: senders read secrets and
  * write files.
  */
@@ -13,7 +13,12 @@ export type EmailTag =
   | "contract-decision"
   | "proposal-delivered"
   | "revision-received"
-  | "refund-issued";
+  | "refund-issued"
+  // Notice and action (DSA Art. 16 and 17; features/moderation).
+  | "report-receipt"
+  | "report-decision"
+  | "statement-of-reasons"
+  | "report-digest";
 
 export interface EmailMessage {
   to: string;

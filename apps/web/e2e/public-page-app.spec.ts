@@ -431,7 +431,12 @@ test.describe("project pages @real", () => {
     // Visited twice: the second answers come from the cache.
     await visit(owner.username);
     expect(await visit(owner.username)).toEqual(shown);
-    const setStatus = (next: string) => page.request.post(`/api/admin/customers/${owner.id}/status`, { headers: { Authorization: `Bearer ${teamToken}` }, data: { next } });
+    // A suspension carries its reasons (the statement of reasons, 20261128100000_reports.sql).
+    const setStatus = (next: string) =>
+      page.request.post(`/api/admin/customers/${owner.id}/status`, {
+        headers: { Authorization: `Bearer ${teamToken}` },
+        data: next === "suspended" ? { next, ground: "terms", reason: "Test: the account is suspended for this check." } : { next },
+      });
     expect((await setStatus("suspended")).status()).toBe(200);
     expect(await visit(owner.username)).toEqual(gone);
     expect((await setStatus("active")).status()).toBe(200);

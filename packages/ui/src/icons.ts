@@ -49,6 +49,7 @@ import {
   FastForward,
   File as FileIcon,
   FileText,
+  Flag,
   FolderKanban,
   Forward,
   Gamepad2,
@@ -228,6 +229,8 @@ export const icons = {
   link: Link2,
   qrCode: QrCode,
   inbox: Inbox,
+  // What visitors report from a creator page (DSA notice and action): the queue in the team area.
+  reports: Flag,
   // Content
   music: Music,
   video: Video,
@@ -261,7 +264,7 @@ export const ICON_GROUPS = {
   actions: ["add", "edit", "delete", "copy", "share", "close", "search", "filter", "sort", "more", "undo", "redo", "upload", "download", "refresh", "reorder", "send", "preview", "hide", "settings", "confirm", "block", "install"],
   navigation: ["back", "forward", "next", "previous", "external", "expand", "home", "menu", "signIn", "signOut", "sidebarOpen", "sidebarClose", "switchArea"],
   states: ["success", "warning", "error", "info", "help", "verified", "locked", "notifications", "live", "increase", "decrease", "unchanged"],
-  areas: ["page", "analytics", "design", "templates", "features", "portfolio", "work", "invite", "team", "creators", "customers", "overview", "account", "billing", "plan", "orders", "security", "activity", "ai", "shop", "link", "qrCode", "inbox"],
+  areas: ["page", "analytics", "design", "templates", "features", "portfolio", "work", "invite", "team", "creators", "customers", "overview", "account", "billing", "plan", "orders", "security", "activity", "ai", "shop", "link", "qrCode", "inbox", "reports"],
   content: ["music", "video", "image", "event", "place", "email", "phone", "website", "photography", "gaming", "document", "section"],
   media: ["play", "pause", "stop", "skipForward", "skipBack"],
 } as const satisfies Record<string, readonly IconMeaning[]>;

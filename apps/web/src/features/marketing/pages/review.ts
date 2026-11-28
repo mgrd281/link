@@ -16,9 +16,16 @@ import { REVIEW } from "../../legal/texts";
  * provider gets (the policy's "KI-Funktionen", REVIEW.transfer and REVIEW.dpa); how long sign-ins are
  * kept; what an account deletion removes. Help, features, about and pricing describe the product and
  * carry no markers.
+ *
+ * Reporting content (/melden and its e-mails, features/moderation; DSA Art. 16 and 17): what the form
+ * keeps and for how long, and that the creator does not learn who reported (`form.privacy`); how a
+ * report is handled, by a person, with a decision sent to both sides (`form.process`); and the
+ * paragraphs of the e-mails that name the legal ground and the ways to object (`email.receipt`,
+ * `email.decision`, `email.statement`). The e-mails show the marker too while it is here.
  */
 export const LEGAL_PROMISES = {
   security: ["hosting.vercel", "hosting.noSale", "statistics.script", "statistics.how", "statistics.noBanner", "ai.photos", "account.signIns", "account.delete"],
+  report: ["form.privacy", "form.process", "email.receipt", "email.decision", "email.statement"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type InfoPage = keyof typeof LEGAL_PROMISES;

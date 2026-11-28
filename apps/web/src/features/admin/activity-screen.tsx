@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, Icon, Segmented } from "@linkyo/ui";
+import { cn, Icon, icons, Segmented } from "@linkyo/ui";
 import {
   Ban,
   BadgeCheck,
@@ -99,13 +99,17 @@ const ICONS: Record<ActivityEvent["action"], LucideIcon> = {
   "cancellation.handled": CircleCheck,
   "ai.enabled": Power,
   "ai.disabled": PowerOff,
+  "moderation.hide": icons.hide,
+  "moderation.unpublish": icons.reports,
+  "moderation.lift": icons.preview,
+  "report.dismiss": icons.reports,
 };
 
 /** Real accounts read actions straight from the database, which may know names this build does not. */
 const iconFor = (action: string): LucideIcon => (ICONS as Partial<Record<string, LucideIcon>>)[action] ?? History;
 
 /** About one customer (their account, money or invite program), not a page the team prepares. */
-export const isCustomerEvent = (action: ActivityEvent["action"]) => /^(customer|ip|referral|reward|verification|order|withdrawal|cancellation)\./.test(action);
+export const isCustomerEvent = (action: ActivityEvent["action"]) => /^(customer|ip|referral|reward|verification|order|withdrawal|cancellation|moderation|report)\./.test(action);
 
 type Filter = "all" | "customers" | "pages" | "team";
 const inFilter = (event: ActivityEvent, filter: Filter) => {

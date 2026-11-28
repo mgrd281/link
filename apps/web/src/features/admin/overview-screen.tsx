@@ -139,6 +139,8 @@ export function OverviewScreen() {
   const contracts = countOf(queues.contracts, (list) => list.filter(waitingContract).length);
   const due = countOf(queues.orders, (list) => dueOrders(list, new Date(now)).length);
   const verifications = countOf(queues.referrals, (data) => data.verifications);
+  const reportsOpen = countOf(queues.reports, (data) => data.open);
+  const reportsLate = countOf(queues.reports, (data) => data.overdue);
   const queueValue = (status: string, value: number | null) => (status === "failed" ? "–" : status === "loading" ? "…" : (value ?? 0));
 
   // Prepared pages and the team's latest work: needs no customer data, so it shows for every role.
@@ -284,6 +286,15 @@ export function OverviewScreen() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Panel title={t("attention")} id="attention-title" className="lg:col-span-1">
               <ul data-needs-look className="grid grid-cols-1 gap-1">
+                {queues.reports.status !== "off" ? (
+                  <Attention
+                    icon={icons.reports}
+                    label={t("reportsWaiting")}
+                    value={queueValue(queues.reports.status, reportsOpen)}
+                    href="/admin/reports"
+                    tone={reportsLate ? "danger" : reportsOpen ? "warning" : "neutral"}
+                  />
+                ) : null}
                 {queues.contracts.status !== "off" ? (
                   <Attention
                     icon={icons.undo}

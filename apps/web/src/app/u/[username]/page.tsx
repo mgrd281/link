@@ -110,7 +110,8 @@ export default async function CreatorRoute({ params }: Props) {
         footerLinks={{
           ...(hasCreatorLegal(legal) ? { imprint: "#imprint" } : {}),
           privacy: `${site}/${locale}/datenschutz#creator-pages`,
-          report: `${site}/${locale}/impressum#melden`,
+          // The report form, with this page's address filled in (DSA Art. 16).
+          report: `${site}/${locale}/melden?url=${encodeURIComponent(pageUrl(name))}`,
         }}
       />
       <CreatorLegal legal={legal} theme={theme} locale={locale} />

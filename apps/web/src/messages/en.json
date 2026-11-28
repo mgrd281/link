@@ -3499,7 +3499,8 @@
       "customer": "Team · Customer",
       "subscriptions": "Team · Subscriptions",
       "security": "Team · Security",
-      "analytics": "Team · Analytics"
+      "analytics": "Team · Analytics",
+      "reports": "Team · Reports"
     },
     "gate": {
       "setupTitle": "Set up the team area",
@@ -3558,8 +3559,11 @@
         "orders": "{count, plural, one {# open order} other {# open orders}}",
         "ordersAndContracts": "{orders, plural, one {# open order} other {# open orders}}, {contracts, plural, one {# withdrawal or cancellation waiting} other {# withdrawals or cancellations waiting}}",
         "referrals": "{count, plural, one {# request to check} other {# requests to check}}",
-        "more": "{count, plural, one {# waiting under More} other {# waiting under More}}"
-      }
+        "more": "{count, plural, one {# waiting under More} other {# waiting under More}}",
+        "reports": "{count, plural, one {# open report} other {# open reports}}",
+        "reportsOverdue": "{count, plural, one {# open report} other {# open reports}}, {overdue, plural, one {# past the target} other {# past the target}}"
+      },
+      "reports": "Reports"
     },
     "roles": {
       "owner": {
@@ -3597,7 +3601,8 @@
       "security_manage": "Block IP addresses",
       "analytics_view": "See analytics",
       "orders_view": "See page-service orders",
-      "customers_export": "Export the customer list (CSV)"
+      "customers_export": "Export the customer list (CSV)",
+      "reports_manage": "Handle reports (hide, take offline, suspend)"
     },
     "status": {
       "draft": "Draft",
@@ -3676,7 +3681,8 @@
       "rest": "All others",
       "contractsWaiting": "Withdrawals and cancellations waiting",
       "ordersDue": "Orders overdue or due within {hours} hours",
-      "verificationsWaiting": "Verification requests waiting"
+      "verificationsWaiting": "Verification requests waiting",
+      "reportsWaiting": "Open reports"
     },
     "creators": {
       "title": "Creator pages",
@@ -3996,7 +4002,11 @@
         "ai_enabled": "{actor} switched the AI features",
         "ai_disabled": "The AI features were switched off automatically",
         "order_refund": "{actor} ordered a refund for {target}",
-        "cancellation_scheduled": "{actor} carried out the cancellation for {target}"
+        "cancellation_scheduled": "{actor} carried out the cancellation for {target}",
+        "moderation_hide": "{actor} hid content on {target}",
+        "moderation_unpublish": "{actor} took {target} offline",
+        "moderation_lift": "{actor} lifted a restriction on {target}",
+        "report_dismiss": "{actor} dismissed a report about {target}"
       }
     },
     "preview": {
@@ -4100,7 +4110,8 @@
         "deleted": "Customer deleted",
         "failed": "That didn't work. Please try again.",
         "cancelScheduled": "Pro ends on {date}",
-        "notMailed": "The e-mail to the customer did not go out."
+        "notMailed": "The e-mail to the customer did not go out.",
+        "suspendNotRecorded": "Suspended. The reasons are not saved: the database doesn't know them yet."
       },
       "actions": {
         "plan": "Change plan",
@@ -4144,7 +4155,10 @@
         "resumeStripeTitle": "Undo the cancellation?",
         "resumeStripeBody": "Pro goes on and renews through Stripe as usual.",
         "refundStripeTitle": "Refund this invoice through Stripe?",
-        "refundStripeBody": "{amount} goes back to the customer through Stripe. Pro goes on. The customer gets an e-mail."
+        "refundStripeBody": "{amount} goes back to the customer through Stripe. Pro goes on. The customer gets an e-mail.",
+        "suspendGround": "Ground",
+        "suspendReason": "Reasons for the customer",
+        "suspendReasonHint": "What you found, and which law or rule of the terms it breaks. The customer gets this text by e-mail (Art. 17 DSA)."
       },
       "tabs": {
         "label": "Customer details",
@@ -4262,7 +4276,11 @@
         "reward_restore": "{actor} gave a reward",
         "verification_request": "Asked for verification",
         "verification_approve": "{actor} verified (request)",
-        "verification_decline": "{actor} declined the verification"
+        "verification_decline": "{actor} declined the verification",
+        "moderation_hide": "{actor} hid content",
+        "moderation_unpublish": "{actor} took the page offline",
+        "moderation_lift": "{actor} lifted a restriction",
+        "report_dismiss": "{actor} dismissed a report"
       },
       "sources": {
         "stripe": "Stripe (paid)",
@@ -4571,6 +4589,125 @@
       "deliveredNoMail": "Proposal delivered, but the email was not sent. Please tell the account yourself.",
       "mailFailed": "Done, but the email was not sent. Please tell the account yourself.",
       "changed": "This has been decided in the meantime. The list is up to date now."
+    },
+    "reports": {
+      "title": "Reports",
+      "lead": "What visitors report, with our target for a decision. Every decision needs its reasons: the creator gets them (Art. 17 DSA), the reporter our decision.",
+      "hidden": "Owners and admins see reports.",
+      "notAvailable": "Reports don't exist here yet: the database doesn't know them yet.",
+      "tabs": {
+        "open": "Open",
+        "decided": "Decided"
+      },
+      "empty": {
+        "open": "No open report.",
+        "decided": "Nothing decided yet."
+      },
+      "loadFailed": "The reports could not be loaded.",
+      "retry": "Load again",
+      "received": "Received {when}",
+      "due": "Target: decide {when}",
+      "overdue": "Past the target since {when}",
+      "overdueBadge": "Overdue",
+      "noAccount": "This page doesn't exist (any more).",
+      "suspended": "Account suspended",
+      "offline": "Page offline",
+      "explanation": "What the reporter writes",
+      "link": "Reported address",
+      "purged": "Name, address and text were deleted after {days} days.",
+      "reporter": "Reported by",
+      "anonymous": "Without a name (minors)",
+      "openPage": "View page",
+      "openCustomer": "To the customer",
+      "categories": {
+        "hate": "Hate or incitement",
+        "violence": "Violence, threats or terrorism",
+        "minors": "Endangering or abusing minors",
+        "sexual": "Sexual content without consent",
+        "fraud": "Fraud or scams",
+        "rights": "Copyright or trademark",
+        "privacy": "Personal data or privacy",
+        "impersonation": "Someone pretends to be another person",
+        "other": "Something else"
+      },
+      "decide": "Decide …",
+      "decisions": {
+        "hide_block": "Hide content",
+        "unpublish": "Take page offline",
+        "suspend": "Suspend account",
+        "dismiss": "Dismiss"
+      },
+      "decisionHints": {
+        "hide_block": "One block disappears for visitors; the rest of the page stays.",
+        "unpublish": "The whole page is offline for visitors; the account stays.",
+        "suspend": "The account is suspended and signed out, the page offline.",
+        "dismiss": "Nothing is restricted."
+      },
+      "outcome": {
+        "hide_block": "Hidden: {block}",
+        "unpublish": "Page taken offline",
+        "suspend": "Account suspended",
+        "dismiss": "Dismissed"
+      },
+      "grounds": {
+        "illegal": "Illegal",
+        "terms": "Breaks the terms"
+      },
+      "decidedBy": "{who}, {when}",
+      "liftedAt": "Lifted {when}",
+      "dialog": {
+        "title": "Decision on {page}",
+        "action": "What happens?",
+        "block": "Which content?",
+        "blockNone": "This page has no content that can be hidden.",
+        "blockHidden": "{label} (already hidden)",
+        "blockOff": "{label} (switched off by the creator)",
+        "loading": "Loading the page …",
+        "ground": "Ground",
+        "reason": "Reasons for the creator",
+        "reasonHint": "What you found, and which law or rule of the terms it breaks. The creator reads this text.",
+        "reasonDismiss": "Reasons for the reporter",
+        "reasonDismissHint": "Why nothing is restricted. The reporter reads this text.",
+        "statement": "The creator gets the reasons at their account's address, the reporter our decision at theirs.",
+        "confirm": "Decide",
+        "cancel": "Cancel",
+        "close": "Close"
+      },
+      "toast": {
+        "done": "Decided",
+        "notMailed": "E-mails don't go out yet: nobody got a message.",
+        "failed": "That didn't work. Please try again.",
+        "alreadyDecided": "This report is already decided.",
+        "alreadyDone": "That is already the case.",
+        "blockNotFound": "This content is no longer on the page.",
+        "mismatch": "The report is about another page.",
+        "notYourself": "You don't restrict your own account.",
+        "forbidden": "Your role can't do that.",
+        "unavailable": "The database doesn't know reports yet.",
+        "lifted": "Lifted"
+      },
+      "inForce": {
+        "title": "Restricted on {page}",
+        "none": "Nothing is restricted on this page.",
+        "lift": "Lift …",
+        "liftTitle": "Lift: {what}",
+        "liftBody": "Afterwards it is visible to everyone again. The reason is kept with the decision.",
+        "liftReason": "Why?",
+        "liftConfirm": "Lift"
+      },
+      "year": {
+        "title": "Figures {year}",
+        "note": "For the transparency report: every report and decision of this year.",
+        "received": "Reports",
+        "decided": "Decisions",
+        "restricted": "Restricted",
+        "lifted": "Lifted",
+        "median": "Median time to a decision",
+        "hours": "{hours} h",
+        "none": "–"
+      },
+      "sla": "Target {hours} h",
+      "demo": "Sample data: these reports are made up. Decisions stay in this browser, and nothing is sent."
     }
   },
   "examples": {
@@ -4813,7 +4950,8 @@
       "terms": "Terms",
       "cancellationPolicy": "Right of withdrawal",
       "withdraw": "Withdraw from contract",
-      "cancel": "Cancel contracts here"
+      "cancel": "Cancel contracts here",
+      "report": "Report content"
     },
     "titles": {
       "imprint": "Imprint",
@@ -5069,6 +5207,47 @@
       "cancellationEnded": "We accepted your extraordinary cancellation. Linkyo Pro ends with immediate effect on {date}.",
       "cancellationRejected": "We can't accept your extraordinary cancellation. Reason: {note} You can cancel ordinarily at any time under \"Cancel contracts here\"; Pro then ends at the end of the paid month.",
       "resumed": "As you asked, we undid your cancellation. Linkyo Pro continues; next charge on {date}."
+    },
+    "report": {
+      "receiptSubject": "Your report has arrived ({reference})",
+      "received": "We received your report about the page {page} on {date} at {time}. Its number: {reference}.",
+      "next": "A person on our team reviews it carefully and impartially, without an automated decision, and then writes to you with what we decided.",
+      "decisionSubject": "Our decision on your report of {date} ({reference})",
+      "decided": {
+        "hide_block": "We reviewed your report about the page {page} and hid the reported content from visitors.",
+        "unpublish": "We reviewed your report about the page {page} and took the page offline.",
+        "suspend": "We reviewed your report about the page {page} and suspended the account; the page is offline.",
+        "dismiss": "We reviewed your report about the page {page} and restricted nothing. Our reasons:"
+      },
+      "human": "A person on our team took this decision, without automated means.",
+      "object": "If you disagree with the decision, write to us at {email}; we will then review it again. You can also turn to a certified out-of-court dispute settlement body (Art. 21 DSA) or to a court."
+    },
+    "statement": {
+      "subject": {
+        "hide_block": "Content on your Linkyo page is hidden",
+        "unpublish": "Your Linkyo page is offline",
+        "suspend": "Your Linkyo account is suspended"
+      },
+      "what": {
+        "hide_block": "On {date} we hid the content “{block}” on your page {page} from visitors, everywhere and until we lift the decision. The rest of your page stays online.",
+        "unpublish": "On {date} we took your page {page} offline for visitors, everywhere and until we lift the decision. Your account stays, and you can still sign in.",
+        "suspend": "On {date} we suspended your account. Your page {page} is offline, and you can't sign in until we lift the suspension."
+      },
+      "whyTitle": "Why",
+      "fromReport": "It followed a report we received on {date}. We don't say who reported it. This is what we found:",
+      "ownFinding": "It followed our team's own review. This is what we found:",
+      "groundIllegal": "Ground: after our review, the content is illegal. Which law it breaks and why is written above.",
+      "groundTerms": "Ground: the content breaks our terms and conditions ({terms}). Which rule and why is written above.",
+      "human": "A person on our team took this decision. We used no automated means for it.",
+      "objectTitle": "If you disagree",
+      "object": "Write to us at {email} within six months and explain why you believe the decision is wrong; we will then review it again and answer you. You can also turn to a certified out-of-court dispute settlement body (Art. 21 DSA) or to a court."
+    },
+    "digest": {
+      "subject": "Linkyo team: {count, plural, one {# report waits} other {# reports wait}}",
+      "open": "{count, plural, one {One report waits} other {# reports wait}} for a decision.",
+      "overdue": "{count, plural, one {One of them is} other {# of them are}} past our target.",
+      "oldest": "The oldest arrived on {date}.",
+      "action": "Open reports"
     }
   },
   "portfolioLanding": {
@@ -5274,7 +5453,7 @@
       },
       "report": {
         "title": "Report content",
-        "body": "Do you think something on a creator page is illegal? How to report it is in the imprint.",
+        "body": "Do you believe content on a creator page is illegal? Report it through our form, without an account.",
         "action": "How to report content"
       },
       "imprint": {
@@ -5775,6 +5954,68 @@
       "enclosureCv": "CV",
       "subjectFor": "Application for {value}",
       "subjectBare": "Application"
+    }
+  },
+  "report": {
+    "meta": {
+      "title": "Report content · Linkyo",
+      "description": "Report content on a creator page that you believe is illegal or breaks our rules: no account, no cookies."
+    },
+    "eyebrow": "Report",
+    "title": "Report content",
+    "lead": "Do you believe something on a creator page is illegal, or that it breaks our rules? Tell us where it is and why.",
+    "unavailable": {
+      "title": "Reports can't be sent through this form here yet.",
+      "body": "Until then, e-mail us at <bdi>{email}</bdi>. Name the page's address, the content, why you believe it is illegal, your name and your e-mail address.",
+      "action": "Write an e-mail"
+    },
+    "form": {
+      "page": "Address of the page or the content",
+      "pageHint": "For example <bdi>linkyo.app/name</bdi>, or just the page's name.",
+      "category": "What is it about?",
+      "categories": {
+        "hate": "Hate or incitement",
+        "violence": "Violence, threats or terrorism",
+        "minors": "Endangering or abusing minors",
+        "sexual": "Sexual content without consent",
+        "fraud": "Fraud or scams",
+        "rights": "Copyright or trademark",
+        "privacy": "Personal data or privacy",
+        "impersonation": "Someone pretends to be another person",
+        "other": "Something else"
+      },
+      "explanation": "Which content, and why?",
+      "explanationHint": "Describe the content so we can find it (for example the link's title) and explain why you believe it is illegal or breaks our rules. At least {min} characters.",
+      "name": "Your name",
+      "email": "Your e-mail address",
+      "emailHint": "We send the confirmation of receipt and our decision there.",
+      "anonymous": "If you suspect the abuse of minors, you may leave out your name and e-mail address. We then can't answer you, though.",
+      "optional": "optional",
+      "goodFaith": "I believe in good faith that the information I give is accurate and complete.",
+      "submit": "Send report",
+      "privacy": "We use your details only to review the report and to answer you. The creator of the page does not learn your name or e-mail address. We delete your name, e-mail address and description {days} days after our decision. This form sets no cookies.",
+      "process": "A person on our team reviews every report; no decision is automated. We tell you our decision, and we give the creator the reasons when we restrict something."
+    },
+    "errors": {
+      "page": "Please enter the page's address, for example <bdi>linkyo.app/name</bdi>.",
+      "category": "Please choose what it is about.",
+      "explanation": "Please describe the content and the reason in at least {min} characters.",
+      "name": "Please enter your name.",
+      "email": "Please enter a valid e-mail address.",
+      "goodFaith": "Please confirm that your information is accurate and complete.",
+      "summary": "{count, plural, one {One field still needs} other {# fields still need}} your input.",
+      "server": "That didn't work. Please try again in a moment.",
+      "tooMany": "Many reports just came from here. Please try again in an hour.",
+      "unavailable": "Reports can't be taken here right now. Please e-mail us at <bdi>{email}</bdi>."
+    },
+    "done": {
+      "title": "Your report has arrived.",
+      "body": "On {date} at {time}, number <bdi>{reference}</bdi>. We will review it and tell you our decision.",
+      "mailed": "A confirmation went to <bdi>{email}</bdi>.",
+      "held": "We can't send a confirmation by e-mail yet. Note the number in case you want to ask about it.",
+      "anonymous": "You gave no e-mail address, so you won't get an answer from us.",
+      "duplicate": "You already sent us this report today. We review it once.",
+      "another": "Report something else"
     }
   }
 }

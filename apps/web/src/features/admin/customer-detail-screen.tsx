@@ -10,6 +10,7 @@ import {
   icons,
   Menu,
   Segmented,
+  Select,
   toast,
   type MenuItem,
 } from "@linkyo/ui";
@@ -35,6 +36,7 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 
 import { TextArea } from "@/features/app/form";
 import { Panel, Screen } from "@/features/app/screen";
+import { GROUNDS, LIMITS, type Ground } from "@/features/moderation/types";
 import { referralTeam, useCustomerReferrals } from "@/features/referrals/team";
 import type { CustomerReferrals, ReferralState, RewardKind } from "@/features/referrals/types";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -80,6 +82,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const t = useTranslations("admin.customer");
   const tc = useTranslations("admin.customers");
   const ts = useTranslations("admin.security");
+  const tReports = useTranslations("admin.reports");
   const tk = useTranslations("app.welcome.kinds");
   const locale = useLocale();
   const router = useRouter();
@@ -90,6 +93,9 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [pending, setPending] = useState<Pending>(null);
   const [confirmText, setConfirmText] = useState("");
+  // A suspension's statement of reasons (Art. 17 DSA): what the customer reads, and the ground.
+  const [suspendWhy, setSuspendWhy] = useState("");
+  const [suspendGround, setSuspendGround] = useState<Ground>("terms");
   const [note, setNote] = useState("");
   const noteId = useId();
   const blocked = useMemo(() => new Set(blockedIps.map((entry) => entry.ip)), [blockedIps]);
@@ -164,7 +170,18 @@ export function CustomerDetailScreen({ id }: { id: string }) {
     if (!pending) return;
     if (pending.kind === "suspend") {
       const next = customer.status === "suspended" ? "active" : "suspended";
-      void run(actions.status(customer, next), next === "suspended" ? t("toast.suspended") : t("toast.unsuspended"));
+      void actions.status(customer, next, next === "suspended" ? { reason: suspendWhy.trim(), ground: suspendGround } : null).then((answer) => {
+        if (!answer.ok) {
+          toast({ title: t("toast.failed"), tone: "danger" });
+          return;
+        }
+        toast({ title: next === "suspended" ? t("toast.suspended") : t("toast.unsuspended"), tone: "success" });
+        if (next !== "suspended") return;
+        // Said only where it is true: real accounts send the statement, the demo sends nothing.
+        if (!answer.recorded) toast({ title: t("toast.suspendNotRecorded"), tone: "neutral" });
+        else if (supabaseEnabled && !answer.mailed) toast({ title: t("toast.notMailed"), tone: "neutral" });
+      });
+      setSuspendWhy("");
     } else if (pending.kind === "cancel") {
       void run(
         actions.subscription(customer, "cancel", { subscriptionStatus: "canceled", canceledAt: new Date(now).toISOString() }),
@@ -250,7 +267,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
   const history = db.activity.filter(
     (event) =>
       event.target === customer.username &&
-      (/^(customer|referral|reward|verification)\./.test(event.action) || event.action === "ip.block"),
+      (/^(customer|referral|reward|verification|moderation|report)\./.test(event.action) || event.action === "ip.block"),
   );
   const dialog = pending
     ? {
@@ -701,6 +718,7 @@ export function CustomerDetailScreen({ id }: { id: string }) {
             if (!open) {
               setPending(null);
               setConfirmText("");
+              setSuspendWhy("");
             }
           }}
           title={dialog.title}
@@ -723,9 +741,34 @@ export function CustomerDetailScreen({ id }: { id: string }) {
           confirmLabel={dialog.label}
           cancelLabel={t("confirm.keep")}
           destructive={dialog.destructive}
-          confirmDisabled={pending?.kind === "delete" && confirmText.trim() !== customer.username}
+          confirmDisabled={
+            (pending?.kind === "delete" && confirmText.trim() !== customer.username) ||
+            (pending?.kind === "suspend" && customer.status !== "suspended" && suspendWhy.trim().length < LIMITS.reason.min)
+          }
+          {...(pending?.kind === "suspend" && customer.status !== "suspended" ? { initialFocus: "first-field" as const } : {})}
           onConfirm={confirm}
-        />
+        >
+          {pending?.kind === "suspend" && customer.status !== "suspended" ? (
+            <div className="grid grid-cols-1 gap-4">
+              <Select
+                label={t("confirm.suspendGround")}
+                size="auto"
+                value={suspendGround}
+                onValueChange={setSuspendGround}
+                options={GROUNDS.map((ground) => ({ value: ground, label: tReports(`grounds.${ground}`) }))}
+              />
+              <TextArea
+                label={t("confirm.suspendReason")}
+                hint={t.markup("confirm.suspendReasonHint", { bdi: isolate })}
+                value={suspendWhy}
+                onValue={setSuspendWhy}
+                max={LIMITS.reason.max}
+                rows={4}
+                required
+              />
+            </div>
+          ) : null}
+        </ConfirmDialog>
       ) : null}
     </Screen>
   );

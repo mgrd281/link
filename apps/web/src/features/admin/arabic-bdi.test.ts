@@ -53,6 +53,7 @@ const SCOPE = [
   "admin.locales",
   "admin.orders",
   "admin.preview",
+  "admin.reports",
 ];
 
 it("leaves out only the namespaces it names", () => {

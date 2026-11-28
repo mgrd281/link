@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { useNow } from "@/features/directions/poster/live";
+import { useReports } from "@/features/moderation/team";
+import { overdue } from "@/features/moderation/types";
 import { useReferralQueue } from "@/features/referrals/team";
 import { usePathname } from "@/i18n/navigation";
 import { paymentsEnabled } from "@/lib/flags";
@@ -13,7 +16,7 @@ import { useAdmin } from "./session";
 
 /**
  * What waits for the team (A-17): open page-service orders, withdrawals and cancellations without a
- * decision, and verification requests and held invites. Read once by the shell for its count badges
+ * decision, verification requests and held invites, and open reports (DSA notice and action). Read once by the shell for its count badges
  * and shared with the overview's "Needs a look" (one read, not one per screen). A queue that does not
  * exist on this deployment (no payments, no permission) is `off`; one that failed to load is `failed`
  * and shows no number at all, never a 0 that says nothing waits.
@@ -25,10 +28,12 @@ export interface Queues {
   orders: Queue<QueueOrder[]>;
   contracts: Queue<ContractRequest[]>;
   referrals: Queue<{ verifications: number; held: number }>;
+  /** Open reports and those past the team's target (REPORT_SLA_HOURS); `off` on a database without reports. */
+  reports: Queue<{ open: number; overdue: number }>;
 }
 
 const OFF = { status: "off" } as const;
-const QueuesContext = createContext<Queues>({ orders: OFF, contracts: OFF, referrals: OFF });
+const QueuesContext = createContext<Queues>({ orders: OFF, contracts: OFF, referrals: OFF, reports: OFF });
 
 /** A withdrawal or cancellation the team still has to decide, or an accepted withdrawal whose refund is not on record. */
 export const waitingContract = (item: ContractRequest) => item.decision === null || (item.kind === "withdrawal" && item.decision === "accepted" && !item.handledAt);
@@ -75,7 +80,18 @@ export function QueuesProvider({ children }: { children: ReactNode }) {
       data: { verifications: referral.queue.verifications.filter((request) => request.state === "requested").length, held: referral.queue.held.length },
     };
   }, [referralsAllowed, referral.status, referral.queue]);
-  const value = useMemo(() => ({ ...orderQueues, referrals }), [orderQueues, referrals]);
+  const reportsAllowed = can("reports.manage");
+  const openReports = useReports("open", reportsAllowed);
+  // The visitor's clock, per minute (null while rendering on the server: nothing counts as late yet).
+  const now = useNow();
+  const reports = useMemo<Queues["reports"]>(() => {
+    if (!reportsAllowed || openReports.status === "unavailable") return OFF;
+    if (openReports.status === "loading") return { status: "loading" };
+    if (openReports.status === "error") return { status: "failed" };
+    const late = now === null ? 0 : openReports.reports.filter((report) => overdue(report, now)).length;
+    return { status: "ready", data: { open: openReports.reports.length, overdue: late } };
+  }, [reportsAllowed, openReports.status, openReports.reports, now]);
+  const value = useMemo(() => ({ ...orderQueues, referrals, reports }), [orderQueues, referrals, reports]);
   return <QueuesContext.Provider value={value}>{children}</QueuesContext.Provider>;
 }
 

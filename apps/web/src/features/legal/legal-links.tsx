@@ -17,6 +17,9 @@ const PAGES = [
   { key: "terms", href: "/agb" },
 ] as const;
 
+/** The report form (DSA Art. 16): a link in every footer, also while the legal pages are drafts (it is no legal text). */
+const REPORT = { key: "report", href: "/melden" } as const;
+
 const CONTRACTS = [
   { key: "cancellationPolicy", href: "/widerrufsbelehrung" },
   { key: "withdraw", href: "/widerruf" },
@@ -26,7 +29,8 @@ const CONTRACTS = [
 /**
  * Linkyo's legal pages at the foot of the website and the sign-up screens. Impressum, Datenschutz
  * and AGB are links once the company data is real (or in a payments test build); until then they
- * stay plain names, so no placeholder draft is published from a footer. Where contracts can be made
+ * stay plain names, so no placeholder draft is published from a footer. "Inhalt melden" (/melden, the
+ * DSA report form) is always a link. Where contracts can be made
  * (payments on, which needs visible legal links: live builds fail without real company data), the
  * withdrawal policy, "Vertrag widerrufen" and "Verträge hier kündigen" are links too: the withdrawal
  * and cancellation functions must be reachable from every page.
@@ -39,18 +43,21 @@ export function LegalLinks({ className }: { className?: string }) {
   const locale = useLocale();
 
   if (!legalLinksVisible) {
-    // The names only, as before: the pages are drafts until the company data is in.
+    // The names only, as before: the pages are drafts until the company data is in. The report form is a link.
     return (
       <p className={cn("text-fg-tertiary flex flex-wrap gap-x-4 gap-y-1", className)}>
         <span className="sr-only">{t("label")}:</span>
         {PAGES.map(({ key }) => (
           <span key={key}>{t(`nav.${key}`)}</span>
         ))}
+        <a href={`/${locale}${REPORT.href}`} className={linkClass}>
+          {t(`nav.${REPORT.key}`)}
+        </a>
       </p>
     );
   }
 
-  const links = paymentsEnabled ? [...PAGES, ...CONTRACTS] : PAGES;
+  const links = paymentsEnabled ? [...PAGES, REPORT, ...CONTRACTS] : [...PAGES, REPORT];
   return (
     <nav aria-label={t("label")} className={className}>
       <ul className="flex flex-wrap gap-x-4 gap-y-1">

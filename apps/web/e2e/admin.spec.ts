@@ -240,6 +240,9 @@ test.describe("customer console", () => {
     await expect(page.getByText("Plan changed to Pro").first()).toBeVisible();
     await page.getByRole("button", { name: "Actions" }).click();
     await page.getByRole("menuitem", { name: "Suspend account" }).click();
+    // A suspension needs its reasons (the statement of reasons, Art. 17 DSA): Suspend waits for them.
+    await expect(page.getByRole("alertdialog").getByRole("button", { name: "Suspend account" })).toBeDisabled();
+    await page.getByRole("alertdialog").getByLabel("Reasons for the customer").fill("Spam links on every block of the page.");
     await page.getByRole("alertdialog").getByRole("button", { name: "Suspend account" }).click();
     await expect(page.getByText("Suspended", { exact: true }).first()).toBeVisible();
 
