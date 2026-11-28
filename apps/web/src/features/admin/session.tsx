@@ -142,9 +142,11 @@ function GateCard({ icon, title, lead, children }: { icon: LucideIcon; title: st
 /** First visit: the team code proves this person belongs to Linkyo; they become the owner. */
 function TeamSetup({ account }: { account: Account }) {
   const t = useTranslations("admin.gate");
+  // The sign-in's own words for too many tries ("wait a few minutes"), not a new sentence.
+  const tooMany = useTranslations("auth.errors");
   const [name, setName] = useState(account.username);
   const [code, setCode] = useState("");
-  const [error, setError] = useState<"code" | "name" | "network" | null>(null);
+  const [error, setError] = useState<"code" | "name" | "network" | "tooMany" | null>(null);
   const [busy, setBusy] = useState(false);
 
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
@@ -158,9 +160,15 @@ function TeamSetup({ account }: { account: Account }) {
     setError(null);
     try {
       const response = await fetch("/api/admin/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
-      const result = (await response.json()) as { ok: boolean; token?: string };
+      const result = (await response.json()) as { ok: boolean; token?: string; error?: string };
       if (result.ok && result.token) {
         adminStore.setupOwner({ email: account.email, name: name.trim() }, result.token);
+        return;
+      }
+      // Too many tries from this address (429): never "wrong code", the code may well be right.
+      if (response.status === 429 || result.error === "tooManyAttempts") {
+        setError("tooMany");
+        document.getElementById("team-code")?.focus();
         return;
       }
       setError("code");
@@ -197,7 +205,7 @@ function TeamSetup({ account }: { account: Account }) {
           autoComplete="off"
           spellCheck={false}
           hint={t.rich("codeHint", { bdi })}
-          error={error === "code" ? t("codeWrong") : error === "network" ? t("network") : undefined}
+          error={error === "code" ? t("codeWrong") : error === "tooMany" ? tooMany("tooManyAttempts") : error === "network" ? t("network") : undefined}
         />
         <Button type="submit" variant="primary" size="xl" block loading={busy} trailing={<Icon icon={ArrowRight} size="md" />}>
           {t("setupSubmit")}

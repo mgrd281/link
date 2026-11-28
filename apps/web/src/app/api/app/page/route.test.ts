@@ -26,6 +26,8 @@ const state = vi.hoisted(() => ({
   versionError: false,
   writes: [] as Record<string, unknown>[],
   revalidated: [] as string[],
+  /** The request's address is on the blocked list. */
+  blocked: false,
 }));
 
 const link = (id: string): Block => ({ id, type: "link", title: id, url: `https://example.com/${id}`, visible: true, highlight: false });
@@ -41,6 +43,9 @@ vi.mock("next-intl/server", () => ({
   getTranslations: () => Promise.resolve((key: string) => ({ video: "Video", music: "Musik", events: "Tickets" })[key] ?? key),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: (path: string) => state.revalidated.push(path) }));
+vi.mock("@/lib/supabase/server", () => ({
+  serviceSupabase: () => ({ rpc: (name: string) => Promise.resolve({ data: name === "is_ip_blocked" ? state.blocked : null, error: null }) }),
+}));
 
 function db() {
   return {
@@ -93,16 +98,23 @@ vi.mock("@/lib/server/user", () => ({
 
 const { POST } = await import("./route");
 
-const call = (body: unknown, { token = "app-session", raw }: { token?: string | null; raw?: string } = {}) =>
+const call = (body: unknown, { token = "app-session", raw, from }: { token?: string | null; raw?: string; from?: string } = {}) =>
   POST(
     new Request("http://localhost/api/app/page", {
       method: "POST",
-      headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      headers: { "content-type": "application/json", ...(from ? { "x-forwarded-for": from } : {}), ...(token ? { authorization: `Bearer ${token}` } : {}) },
       body: raw ?? JSON.stringify(body),
     }),
   );
 
+let run = 0;
 beforeEach(() => {
+  // The limits count per account in memory: each test starts after the last one's window.
+  run += 1;
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(Date.parse("2026-11-28T12:00:00Z") + run * 2 * 60_000);
+  process.env.SUPABASE_SECRET_KEY = "sb_secret_test";
+  state.blocked = false;
   state.enabled = true;
   state.status = "active";
   state.clock = 0;
@@ -118,6 +130,8 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
+  delete process.env.SUPABASE_SECRET_KEY;
 });
 
 const base = () => state.row?.updated_at ?? "";
@@ -227,5 +241,43 @@ describe("POST /api/app/page", () => {
     const music = state.row?.page.blocks.find((block) => block.id === added[0]);
     expect(music).toMatchObject({ type: "music", title: "Nachtfahrt", artist: "Mira Okafor", cover: { src: "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02" } });
     expect(asked).toEqual([`https://open.spotify.com/oembed?url=${encodeURIComponent("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC")}`]);
+  });
+
+  it("writes nothing from a blocked address (403 blocked, as at sign-in and in the hand-off), and 409 without the server's key", async () => {
+    state.blocked = true;
+    const blocked = await call({ baseUpdatedAt: base(), ops: [{ op: "remove", id: "a" }] }, { from: "203.0.113.9" });
+    expect(blocked.status).toBe(403);
+    expect(await blocked.json()).toEqual({ ok: false, error: "blocked" });
+    expect(state.writes).toEqual([]);
+    state.blocked = false;
+    delete process.env.SUPABASE_SECRET_KEY;
+    const keyless = await call({ baseUpdatedAt: base(), ops: [{ op: "remove", id: "a" }] });
+    expect(keyless.status).toBe(409);
+    expect(await keyless.json()).toEqual({ ok: false, error: "unavailable" });
+  });
+
+  it("answers 429 with Retry-After past 30 calls per account a minute, and past 120 per address", async () => {
+    const op = () => ({ baseUpdatedAt: base(), ops: [{ op: "show", id: "a", visible: true }] });
+    for (let i = 0; i < 30; i++) expect((await call(op(), { from: `10.7.0.${String(i + 1)}` })).status).toBe(200);
+    const refused = await call(op(), { from: "10.7.1.1" });
+    expect(refused.status).toBe(429);
+    expect(await refused.json()).toEqual({ ok: false, error: "tooManyRequests" });
+    expect(Number(refused.headers.get("retry-after"))).toBeGreaterThan(0);
+    expect(Number(refused.headers.get("retry-after"))).toBeLessThanOrEqual(60);
+    expect(refused.headers.get("cache-control")).toBe("no-store");
+    expect(state.writes).toHaveLength(30);
+    // The address limit counts before Auth is asked: also calls Auth turns down.
+    for (let i = 0; i < 120; i++) await call(op(), { token: "someone-else", from: "10.7.2.1" });
+    expect((await call(op(), { token: "someone-else", from: "10.7.2.1" })).status).toBe(429);
+  });
+
+  it("answers the methods it does not take with 405 and no-store (never Next's cacheable 405)", async () => {
+    const route = await import("./route");
+    for (const method of ["GET", "PUT", "PATCH", "DELETE", "OPTIONS"] as const) {
+      const response = route[method]();
+      expect(response.status, method).toBe(405);
+      expect(response.headers.get("cache-control"), method).toBe("no-store");
+      expect(response.headers.get("allow"), method).toBe("POST");
+    }
   });
 });

@@ -1,11 +1,16 @@
 import { getTranslations } from "next-intl/server";
 
+import { isBlocked } from "@/features/account/server/auth";
 import { newBlockId } from "@/features/app/blocks";
 import { projectSlugs, revalidateCreatorPages } from "@/features/creator/revalidate";
 import { lookupLinkMetadata } from "@/lib/link-metadata";
+import { addressKey, MINUTE, rateLimit, retryHeaders, valueKey, type Verdict } from "@/lib/rate-limit";
+import { requestPlace } from "@/lib/request-context";
+import { readBody } from "@/lib/server/read-body";
 import { requireUser } from "@/lib/server/user";
 import { SUPABASE_URL, supabaseEnabled } from "@/lib/supabase/config";
 import { toJson } from "@/lib/supabase/json";
+import { serviceSupabase } from "@/lib/supabase/server";
 
 import { applyOps, bodySchema, MAX_BODY, MAX_OPS } from "./ops";
 
@@ -15,31 +20,27 @@ export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "no-store" };
 const answer = (body: object, status = 200) => Response.json(body, { status, headers: noStore });
 
+/**
+ * Each call may ask a platform for details (an `add`) and drops the cached public page. A native
+ * change is one deliberate act (a link added, a block moved; the share extension sends one): 30 calls
+ * per account and 120 per client address (room for a shared address) a minute. The address limit
+ * comes first, before Auth is asked.
+ */
+const ACCOUNT_LIMIT = rateLimit({ name: "app-page-account", max: 30, windowMs: MINUTE });
+const ADDRESS_LIMIT = rateLimit({ name: "app-page-address", max: 120, windowMs: MINUTE });
+/** 429 `tooManyRequests`: the app waits `Retry-After` seconds, then tries once more (ADR 0088). */
+const tooMany = (verdict: Extract<Verdict, { ok: false }>) =>
+  Response.json({ ok: false, error: "tooManyRequests" }, { status: 429, headers: retryHeaders(verdict) });
+
+/** A method this route does not take, OPTIONS included (no browser preflight is served): 405 with `no-store`. */
+const notAllowed = () => new Response(null, { status: 405, headers: { ...noStore, Allow: "POST" } });
+export { notAllowed as GET, notAllowed as PUT, notAllowed as PATCH, notAllowed as DELETE, notAllowed as OPTIONS };
+
 const LOCALES = ["de", "en", "ar"] as const;
 type Locale = (typeof LOCALES)[number];
 const localeOf = (...candidates: unknown[]): Locale => candidates.find((value): value is Locale => (LOCALES as readonly unknown[]).includes(value)) ?? "de";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-
-/** The body as text, or null when it is larger than `max` bytes (read no further than that). */
-async function readBody(request: Request, max: number): Promise<string | null> {
-  if (Number(request.headers.get("content-length") ?? "0") > max) return null;
-  const reader = request.body?.getReader();
-  if (!reader) return "";
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    size += value.byteLength;
-    if (size > max) {
-      await reader.cancel();
-      return null;
-    }
-    chunks.push(value);
-  }
-  return Buffer.concat(chunks).toString("utf8");
-}
 
 /** The database refused the page for its size (`sites.site_size`). */
 const tooLarge = (error: { code?: string; message?: string }) => error.code === "23514" && (error.message ?? "").includes("site_size");
@@ -62,14 +63,23 @@ const tooLarge = (error: { code?: string; message?: string }) => error.code === 
  *   (milliseconds, where Postgres keeps microseconds) it never matches.
  * - 422 for more than 20 operations, a body the schema refuses, a link that is no address, a picture
  *   that is not the account's own upload, an unknown or doubled block id, a position past the end, or
- *   a page the blocks schema would refuse; 413 above 64 KB; 403 for a suspended account; 409 without
- *   real accounts (a demo build).
+ *   a page the blocks schema would refuse; 413 above 64 KB; 403 for a suspended account or a blocked
+ *   address; 409 without real accounts or the server's key (a demo build); 429 with `Retry-After` past
+ *   the limits above.
  * - A successful write drops the cached public page, so visitors see it at once.
  */
 export async function POST(request: Request) {
-  if (!supabaseEnabled) return answer({ ok: false, error: "unavailable" }, 409);
+  const serviceKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  if (!supabaseEnabled || !serviceKey) return answer({ ok: false, error: "unavailable" }, 409);
+  const place = requestPlace(request.headers);
+  const byAddress = ADDRESS_LIMIT.take(addressKey(place.ip));
+  if (!byAddress.ok) return tooMany(byAddress);
   const signedIn = await requireUser(request, { outage: "unavailable" });
   if (signedIn instanceof Response) return signedIn;
+  const byAccount = ACCOUNT_LIMIT.take(valueKey("account", signedIn.user.id));
+  if (!byAccount.ok) return tooMany(byAccount);
+  // As at sign-in and in the hand-off: nothing is written from a blocked address.
+  if (await isBlocked(serviceSupabase(), place)) return answer({ ok: false, error: "blocked" }, 403);
 
   const raw = await readBody(request, MAX_BODY);
   if (raw === null) return answer({ ok: false, error: "tooLarge", max: MAX_BODY }, 413);

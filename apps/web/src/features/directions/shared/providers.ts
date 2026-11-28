@@ -7,7 +7,6 @@ const PROVIDERS: [RegExp, string][] = [
   [/(^|\.)instagram\.com$/, "Instagram"],
   [/(^|\.)vimeo\.com$/, "Vimeo"],
 ];
-const NAMES: Record<string, string> = { youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", vimeo: "Vimeo" };
 
 /** The company behind a player link ("YouTube", "TikTok" …), or null. */
 export const providerOf = (url: string): string | null => {
@@ -19,16 +18,22 @@ export const providerOf = (url: string): string | null => {
   }
 };
 
-/** The companies whose players this page can load (in page order, each once). */
+/**
+ * The companies whose players this page can load (in page order, each once): only YouTube, the one
+ * player a creator page embeds (privacy mode, after a tap). A TikTok, Instagram or Vimeo card opens the
+ * platform instead and loads nothing on the page, and so does a video set to open on the platform.
+ */
 export function externalProviders(blocks: readonly Block[]): string[] {
   const names = blocks.flatMap((block) => {
-    // A video that opens on the platform loads nothing on the page.
-    if (block.type === "video") return block.provider === "upload" || block.playback === "external" ? [] : [NAMES[block.provider] ?? block.provider];
-    if (block.type === "shorts") return block.items.map((item) => providerOf(item.url)).filter((name): name is string => name !== null);
+    if (block.type === "video") return block.provider === "youtube" && block.playback !== "external" ? ["YouTube"] : [];
+    if (block.type === "shorts") return block.items.map((item) => providerOf(item.url)).filter((name) => name === "YouTube");
     return [];
   });
   return [...new Set(names)];
 }
+
+/** Whether a card for this company can play its video on the page (all others open the platform). */
+export const loadsPlayer = (provider: string): boolean => provider === "YouTube";
 
 /** The video ID of a YouTube link (watch, youtu.be, shorts or embed), or null. */
 export function youtubeId(url: string): string | null {

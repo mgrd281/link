@@ -22,6 +22,7 @@ export function ClickToLoad({
   className,
   children,
   compact = false,
+  marked = false,
   url,
   playback = "inline",
 }: {
@@ -36,6 +37,8 @@ export function ClickToLoad({
   /** Overlay content (e.g. duration). */
   children?: ReactNode;
   compact?: boolean;
+  /** The card already shows the company's mark (the Shorts icon): a small card then needs no "From YouTube" corner. */
+  marked?: boolean;
 }) {
   return (
     <ClickToLoadIsland
@@ -45,6 +48,7 @@ export function ClickToLoad({
       title={title}
       poster={poster}
       compact={compact}
+      marked={marked}
       classes={{
         link: cn("group/video relative isolate block w-full overflow-hidden focus-visible:focus-ring", className),
         ended: cn("relative isolate grid w-full overflow-hidden", className),

@@ -29,16 +29,16 @@ const WORDS = {
   de: {
     privacy: "Datenschutz",
     allow: "Externe Inhalte erlauben",
-    video: /^Video abspielen: |Sekunden von „/,
-    playerHere: "Der Player lädt hier – erst nach deinem Tippen. Vorher keine Cookies.",
+    video: /^Video von YouTube abspielen: |^Vorschau von YouTube abspielen, /,
+    noVideo: "Diese Adresse nennt kein Video von YouTube: Hier lädt kein Player.",
     on: "Weiterblättern",
     back: "Zurückblättern",
   },
   ar: {
     privacy: "الخصوصية",
     allow: "السماح بالمحتوى الخارجي",
-    video: /^شغّل الفيديو: |^تشغيل \d+ ثانية من «/,
-    playerHere: "يُحمَّل المشغّل هنا — فقط بعد نقرتك. لا ملفات تعريف ارتباط قبل ذلك.",
+    video: /^شغّل الفيديو من YouTube: |^تشغيل معاينة \d+ ثانية من YouTube: /,
+    noVideo: "هذا العنوان لا يشير إلى فيديو على YouTube: لن يُحمَّل أي مشغّل هنا.",
     on: "تمرير للأمام",
     back: "تمرير للخلف",
   },
@@ -110,8 +110,8 @@ async function fakePlayers(page: Page): Promise<string[]> {
 
 /**
  * The privacy notice is there before a choice; a video card loads its player only when pressed (a real
- * YouTube address gets the embed; an example's address, which has no real video, says where the player
- * would load); "allow" is kept.
+ * YouTube address gets the embed; an example's address, which names no real video, says that no player
+ * loads); "allow" is kept.
  */
 async function playerAndNotice(page: Page, locale: Locale, asked: string[], { embed }: { embed: boolean }): Promise<void> {
   const words = WORDS[locale];
@@ -126,7 +126,7 @@ async function playerAndNotice(page: Page, locale: Locale, asked: string[], { em
     await expect(page.locator('iframe[src^="https://www.youtube-nocookie.com/embed/"]')).toHaveCount(1);
     await expect.poll(() => asked.length).toBeGreaterThan(0);
   } else {
-    await expect(page.getByRole("status").filter({ hasText: words.playerHere })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: words.noVideo })).toBeVisible();
     await expect(page.locator("iframe")).toHaveCount(0);
     expect(asked).toEqual([]);
   }

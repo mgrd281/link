@@ -263,6 +263,7 @@ export function ShortsRail({ block }: { block: BlockOf<"shorts"> }) {
           <li key={item.url} className="grid w-2/5 shrink-0 snap-start content-start gap-2 @preview:w-1/3">
             <ClickToLoad
               compact
+              marked
               provider={providerOf(item.url) ?? "YouTube"}
               url={item.url}
               title={item.title}

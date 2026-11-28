@@ -32,7 +32,7 @@ const poster = { src: "none:", alt: "" };
 const base = { visible: true, highlight: false };
 
 describe("privacy notice", () => {
-  it("lists each company whose player a page can load, once, in page order", () => {
+  it("lists only YouTube, the one player a page can load; TikTok, Instagram and Vimeo cards open the platform", () => {
     const blocks: Block[] = [
       { ...base, id: "l", type: "link", title: "Shop", url: "https://example.com" },
       { ...base, id: "v", type: "video", title: "Clip", provider: "youtube", url: "https://youtube.com/watch?v=x", poster },
@@ -46,8 +46,11 @@ describe("privacy notice", () => {
         ],
       },
       { ...base, id: "u", type: "video", title: "Own", provider: "upload", url: "https://example.com/v.mp4", poster },
+      { ...base, id: "t", type: "video", title: "Clip", provider: "tiktok", url: "https://www.tiktok.com/@x/video/2", poster },
+      { ...base, id: "m", type: "video", title: "Clip", provider: "vimeo", url: "https://vimeo.com/1", poster },
     ];
-    expect(externalProviders(blocks)).toEqual(["YouTube", "TikTok"]);
+    expect(externalProviders(blocks)).toEqual(["YouTube"]);
+    expect(externalProviders(blocks.filter((block) => block.id !== "v" && block.id !== "s"))).toEqual([]);
   });
 
   it("is not needed on pages without players", () => {

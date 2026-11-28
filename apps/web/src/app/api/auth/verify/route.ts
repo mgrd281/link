@@ -6,6 +6,7 @@ import { cleanRef, settleReferral } from "@/features/account/server/referrals";
 import { normalizeEmail } from "@/features/account/username";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { anonServerSupabase, serviceSupabase } from "@/lib/supabase/server";
+import { addressKey, MINUTE, rateLimit, retryHeaders, valueKey, type Verdict } from "@/lib/rate-limit";
 import { requestPlace } from "@/lib/request-context";
 
 const body = z
@@ -21,19 +22,36 @@ const body = z
 const MAX_FAILURES = 8;
 
 /**
+ * A person types one code, maybe two or three after a typo or an older e-mail: 10 tries per e-mail
+ * address in 15 minutes, and 40 per client address (room for many people behind one shared address),
+ * every try counted. On top of MAX_FAILURES, which counts only logged failures (an address with an
+ * account), these also hold for addresses without one.
+ */
+const ADDRESS_LIMIT = rateLimit({ name: "auth-verify-address", max: 40, windowMs: 15 * MINUTE });
+const EMAIL_LIMIT = rateLimit({ name: "auth-verify-email", max: 10, windowMs: 15 * MINUTE });
+
+/** The code step already says "too many attempts, wait a few minutes" for this error. */
+const tooMany = (verdict: Extract<Verdict, { ok: false }>) =>
+  Response.json({ ok: false, error: "tooManyAttempts" }, { status: 429, headers: retryHeaders(verdict) });
+
+/**
  * Signs in with the emailed code, on the server so the security log records what really happened:
  * blocked addresses and suspended accounts are refused, wrong codes are logged and slow guessing
  * down. A new account gets its first page here.
  */
 export async function POST(request: Request) {
   if (!supabaseEnabled) return fail("serverError", 404);
+  const place = requestPlace(request.headers);
+  const byAddress = ADDRESS_LIMIT.take(addressKey(place.ip));
+  if (!byAddress.ok) return tooMany(byAddress);
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail("serverError", 400);
   const input = parsed.data;
   const email = normalizeEmail(input.email);
+  const byEmail = EMAIL_LIMIT.take(valueKey("email", email));
+  if (!byEmail.ok) return tooMany(byEmail);
   const code = input.code.replace(/\D/g, "");
   const service = serviceSupabase();
-  const place = requestPlace(request.headers);
   if (await isBlocked(service, place)) return fail("blocked");
   const { data: failures } = await service.rpc("recent_failures", { email });
   if (typeof failures === "number" && failures >= MAX_FAILURES) return fail("tooManyAttempts");

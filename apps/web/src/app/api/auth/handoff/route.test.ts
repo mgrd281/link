@@ -18,7 +18,11 @@ interface State {
   generated: { type: string; email: string }[];
 }
 
-const state = vi.hoisted((): State => ({ enabled: true, status: "active", locale: "de", blocked: false, linkError: false, profileError: false, generated: [] }));
+const DEVICE = "dev_0123456789ab";
+
+const state = vi.hoisted(
+  (): State => ({ enabled: true, status: "active", locale: "de", blocked: false, linkError: false, profileError: false, generated: [] }),
+);
 
 vi.mock("@/lib/supabase/config", () => ({
   get supabaseEnabled() {
@@ -60,7 +64,7 @@ vi.mock("@/lib/server/user", () => ({
   // failing itself (no answer, a 5xx, a rate limit), which is a 401 unless the route asks otherwise.
   requireUser: (request: Request, options: { outage?: string } = {}) => {
     const header = request.headers.get("authorization");
-    if (header === "Bearer app-session") return Promise.resolve({ user: { id: "u1", email: "mira@example.com" }, db: {} });
+    if (header?.startsWith("Bearer app.")) return Promise.resolve({ user: { id: "u1", email: "mira@example.com" }, db: {} });
     if (header === "Bearer auth-down" && options.outage === "unavailable") return Promise.resolve(Response.json({ ok: false, error: "unavailable" }, { status: 503 }));
     return Promise.resolve(Response.json({ ok: false, error: "unauthorized" }, { status: 401 }));
   },
@@ -68,24 +72,34 @@ vi.mock("@/lib/server/user", () => ({
 
 const { POST } = await import("./route");
 
-const DEVICE = "dev_0123456789ab";
-const call = (body: unknown, token: string | null = "app-session") =>
+/** The app's access token, as Auth accepts it (the stand-in above). */
+const APP_TOKEN = "app.session.token";
+/** Each test from its own address, so the per-address limit of one never reaches the next. */
+let address = 0;
+let ip = "10.1.0.1";
+const call = (body: unknown, token: string | null = APP_TOKEN, { raw, from = ip }: { raw?: string; from?: string } = {}) =>
   POST(
     new Request("http://localhost/api/auth/handoff", {
       method: "POST",
-      headers: { "content-type": "application/json", "x-forwarded-for": "10.1.2.3", ...(token ? { authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify(body),
+      headers: { "content-type": "application/json", "x-forwarded-for": from, ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      body: raw ?? JSON.stringify(body),
     }),
   );
 
 const logged: unknown[][] = [];
 beforeEach(() => {
   Object.assign(state, { enabled: true, status: "active", locale: "de", blocked: false, linkError: false, profileError: false, generated: [] });
+  address += 1;
+  ip = `10.1.${String(Math.floor(address / 250))}.${String(address % 250)}`;
+  // The limits count per account in memory: each test starts 11 minutes after the last one's window.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(Date.parse("2026-11-28T12:00:00Z") + address * 11 * 60_000);
   process.env.SUPABASE_SECRET_KEY = "sb_secret_test";
   logged.length = 0;
   for (const level of ["log", "info", "warn", "error", "debug"] as const) vi.spyOn(console, level).mockImplementation((...args: unknown[]) => void logged.push(args));
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   delete process.env.SUPABASE_SECRET_KEY;
 });
@@ -175,6 +189,54 @@ describe("POST /api/auth/handoff", () => {
     state.linkError = true;
     expect((await call({ deviceId: DEVICE })).status).toBe(502);
     const text = JSON.stringify(logged);
-    for (const secret of ["secret-token-hash", "mira@example.com", "app-session", "/api/auth/confirm"]) expect(text).not.toContain(secret);
+    for (const secret of ["secret-token-hash", "mira@example.com", APP_TOKEN, "/api/auth/confirm"]) expect(text).not.toContain(secret);
+  });
+
+  it("answers 413 for a body above 4 KB, also without a Content-Length, before parsing it", async () => {
+    const big = JSON.stringify({ deviceId: DEVICE, next: "x".repeat(5000) });
+    const response = await call(null, APP_TOKEN, { raw: big });
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ ok: false, error: "tooLarge", max: 4096 });
+    const streamed = await POST(
+      new Request("http://localhost/api/auth/handoff", {
+        method: "POST",
+        headers: { authorization: `Bearer ${APP_TOKEN}`, "x-forwarded-for": ip },
+        body: new ReadableStream({
+          start(controller) {
+            for (let i = 0; i < 10; i++) controller.enqueue(new TextEncoder().encode("x".repeat(1000)));
+            controller.close();
+          },
+        }),
+        duplex: "half",
+      } as RequestInit),
+    );
+    expect(streamed.status).toBe(413);
+    // A body that is not JSON stays the 422 the ADR names.
+    expect((await call(null, APP_TOKEN, { raw: "{not json" })).status).toBe(422);
+    expect(state.generated).toEqual([]);
+  });
+
+  it("answers 429 with Retry-After past 10 hand-offs per account in 10 minutes, and past 60 per address", async () => {
+    for (let i = 0; i < 10; i++) expect((await call({ deviceId: DEVICE }, APP_TOKEN, { from: `10.9.0.${String(i + 1)}` })).status).toBe(200);
+    const refused = await call({ deviceId: DEVICE }, APP_TOKEN, { from: "10.9.0.99" });
+    expect(refused.status).toBe(429);
+    expect(await refused.json()).toEqual({ ok: false, error: "tooManyRequests" });
+    expect(Number(refused.headers.get("retry-after"))).toBeGreaterThan(0);
+    expect(Number(refused.headers.get("retry-after"))).toBeLessThanOrEqual(600);
+    expect(refused.headers.get("cache-control")).toBe("no-store");
+    expect(state.generated).toHaveLength(10);
+    // The address limit counts before Auth is asked: also tokens Auth turns down.
+    for (let i = 0; i < 60; i++) await call({ deviceId: DEVICE }, "someone-else", { from: "10.8.0.1" });
+    expect((await call({ deviceId: DEVICE }, "someone-else", { from: "10.8.0.1" })).status).toBe(429);
+  });
+
+  it("answers the methods it does not take with 405 and no-store (never Next's cacheable 405)", async () => {
+    const route = await import("./route");
+    for (const method of ["GET", "PUT", "PATCH", "DELETE", "OPTIONS"] as const) {
+      const response = route[method]();
+      expect(response.status, method).toBe(405);
+      expect(response.headers.get("cache-control"), method).toBe("no-store");
+      expect(response.headers.get("allow"), method).toBe("POST");
+    }
   });
 });
