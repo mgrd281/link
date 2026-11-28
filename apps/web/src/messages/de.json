@@ -3830,7 +3830,8 @@
     "editor": {
       "emptyTitle": "Diese Seite hat noch keinen Link",
       "emptyBody": "Füg den ersten Link ein, zum Beispiel einen Song, ein Video oder einen Shop. Er erscheint sofort auf der Seite.",
-      "addFirst": "Ersten Link hinzufügen"
+      "addFirst": "Ersten Link hinzufügen",
+      "visible": "{title} auf dieser Seite zeigen"
     },
     "referrals": {
       "title": "Empfehlungen",

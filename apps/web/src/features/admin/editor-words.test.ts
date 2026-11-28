@@ -41,11 +41,17 @@ describe("the team area's editor of someone else's page (K5)", () => {
     const before = JSON.stringify(de);
     const team = othersPageMessages(de);
     expect(JSON.stringify(de)).toBe(before);
-    const { emptyTitle: _t, emptyBody: _b, addFirst: _a, ...rest } = team.app.editor;
-    const { emptyTitle: _ot, emptyBody: _ob, addFirst: _oa, ...original } = de.app.editor;
+    const { emptyTitle: _t, emptyBody: _b, addFirst: _a, visible: _v, ...rest } = team.app.editor;
+    const { emptyTitle: _ot, emptyBody: _ob, addFirst: _oa, visible: _ov, ...original } = de.app.editor;
     expect(rest).toEqual(original);
     expect(team.admin).toBe(de.admin);
     expect({ ...team, app: null }).toEqual({ ...de, app: null });
+  });
+
+  it("names a block's switch on someone else's page without speaking to its owner (leftover 8)", () => {
+    expect(othersPageMessages(de).app.editor.visible).toBe("{title} auf dieser Seite zeigen");
+    expect(othersPageMessages(en).app.editor.visible).toBe("Show {title} on this page");
+    expect(de.app.editor.visible).toBe("{title} auf deiner Seite zeigen");
   });
 
   it("keeps the owner's words where the team's are missing", () => {

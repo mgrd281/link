@@ -71,7 +71,9 @@ function PlaceLine({ code, city, unknown }: { code: string; city?: string | unde
       {city ? (
         <>
           <span className="shrink-0">·</span>
-          <bdi data-city className="min-w-0 flex-1 truncate text-left [[dir=rtl]_&]:text-right">
+          {/* Country and city shrink by their widths (leftover 7): a long country no longer squeezes the
+              city to nothing and leaves "Vereinigte Staat… ·" behind. */}
+          <bdi data-city className="min-w-0 truncate text-left [[dir=rtl]_&]:text-right">
             {city}
           </bdi>
         </>

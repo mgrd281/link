@@ -604,18 +604,21 @@ export function CustomerDetailScreen({ id }: { id: string }) {
           <Panel title={t.markup("signInLog", { bdi: isolate })} id="signins-title">
             <DataList
               label={t.markup("signInLog", { bdi: isolate })}
+              // Laptops: place, device and signature as wide as their values (leftover 4), nothing cut.
+              sizing="content"
               items={customer.logins.map((login) => ({
                 id: login.id,
-                title: dateTime(login.at, locale),
-                trailing: (
-                  <span className="flex items-center gap-1">
-                    <Badge size="sm" tone={login.result === "success" ? "success" : "danger"}>
-                      {ts(`result.${login.result}`)}
-                    </Badge>
-                    {/* The glyph with its name and a tooltip: the card's date keeps its time beside it. */}
-                    {can("security.manage") && login.ip && !blocked.has(login.ip) ? <BlockButton compact ip={login.ip} onBlock={(ip) => setPending({ kind: "block", ip })} /> : null}
-                  </span>
+                // The date and time stay whole on a phone (leftover 3): the result sits under it, so
+                // only the compact block button shares its line.
+                title: <span className="whitespace-nowrap">{dateTime(login.at, locale)}</span>,
+                subtitle: (
+                  <Badge size="sm" tone={login.result === "success" ? "success" : "danger"}>
+                    {ts(`result.${login.result}`)}
+                  </Badge>
                 ),
+                trailing:
+                  // The glyph with its name and a tooltip.
+                  can("security.manage") && login.ip && !blocked.has(login.ip) ? <BlockButton compact ip={login.ip} onBlock={(ip) => setPending({ kind: "block", ip })} /> : null,
                 fields: [
                   { label: ts.markup("columns.ip", { bdi: isolate }), value: <span dir="ltr" data-ip className="font-mono text-caption">{login.ip || "–"}</span> },
                   { label: ts("columns.place"), value: <Place code={login.country ?? ""} city={login.city} unknown={unknown} /> },

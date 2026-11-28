@@ -252,7 +252,9 @@ function CustomersList() {
           items={shown.map((customer) => ({
             id: customer.id,
             href: `/admin/customers/${customer.id}`,
-            title: <bdi>{customer.name}</bdi>,
+            // The name truncates itself in its own direction (leftover 5): a Latin name in an Arabic row
+            // keeps its start ("Mila Ber…"), aligned to the row's side.
+            title: <bdi className="block truncate text-left [[dir=rtl]_&]:text-right">{customer.name}</bdi>,
             // The address truncates itself, left to right: in Arabic the ellipsis then falls at its end
             // ("mila.k…"), not at the line's end, which would cut off its start ("…ample.com").
             subtitle: customer.email ? (
