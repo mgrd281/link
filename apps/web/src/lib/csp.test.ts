@@ -19,7 +19,7 @@ describe("contentSecurityPolicy", () => {
     expect(policy["img-src"]).toEqual(["'self'", "data:", "blob:"]);
     expect(policy["font-src"]).toEqual(["'self'"]);
     expect(policy["connect-src"]).toEqual(["'self'"]);
-    expect(policy["frame-src"]).toEqual(["https://www.youtube-nocookie.com"]);
+    expect(policy["frame-src"]).toEqual(["'self'", "https://www.youtube-nocookie.com"]);
     expect(policy["object-src"]).toEqual(["'none'"]);
     expect(policy["base-uri"]).toEqual(["'self'"]);
     expect(policy["form-action"]).toEqual(["'self'"]);
@@ -33,7 +33,7 @@ describe("contentSecurityPolicy", () => {
     expect(contentSecurityPolicy({ framable: true, supabaseUrl: "https://abc.supabase.co" })).not.toContain("stripe");
     const checkout = parse(contentSecurityPolicy({ checkout: true }));
     expect(checkout["script-src"]).toEqual(["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://*.js.stripe.com"]);
-    expect(checkout["frame-src"]).toEqual(["https://www.youtube-nocookie.com", "https://js.stripe.com", "https://*.js.stripe.com", "https://hooks.stripe.com"]);
+    expect(checkout["frame-src"]).toEqual(["'self'", "https://www.youtube-nocookie.com", "https://js.stripe.com", "https://*.js.stripe.com", "https://hooks.stripe.com"]);
     expect(checkout["connect-src"]).toEqual(["'self'", "https://api.stripe.com"]);
     expect(checkout["frame-ancestors"]).toEqual(["'none'"]);
   });
@@ -61,6 +61,11 @@ describe("reports", () => {
     ).toEqual({ directive: "style-src-attr", blocked: "inline", page: "https://linkyo.app/u/mira", source: "https://linkyo.app/_next/a.js" });
     expect(violation({ "csp-report": { "violated-directive": "img-src 'self'", "blocked-uri": "data" } })?.directive).toBe("img-src");
     for (const junk of [null, "x", [], { type: "deprecation", body: {} }]) expect(violation(junk)).toBeNull();
+    // A report is the sender's text: no line break or other character can reach the log line.
+    const forged = violation({ "csp-report": { "effective-directive": "script-src\ncsp-report forged blocked=https://evil.example page=x", "blocked-uri": "inline" } });
+    expect(forged?.directive).toBe("script-srccsp-reportforgedblockedhttpsev");
+    expect(forged?.directive).toMatch(/^[\w-]{1,40}$/);
+    expect(violation({ type: "csp-violation", body: { effectiveDirective: "img-src\r\nX: y" } })?.directive).toBe("img-srcXy");
   });
 
   it("never keeps a query, a fragment or anything but a keyword from what is not an address", () => {

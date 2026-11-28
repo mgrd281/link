@@ -21,8 +21,9 @@
  *   addresses of order photos in the team area).
  * - `connect-src`: our own routes, and this deployment's Supabase project (the dashboard and the team
  *   area talk to it from the browser with real accounts).
- * - `frame-src https://www.youtube-nocookie.com`: the only player that loads on a creator page, and
- *   only after the visitor's tap.
+ * - `frame-src 'self' https://www.youtube-nocookie.com`: our own pages in a frame (the templates
+ *   gallery shows an example page, `/<locale>/p/…`, in its phone frame), and the only player that
+ *   loads on a creator page, only after the visitor's tap.
  * - `frame-ancestors`: 'self' only for the example pages, which the templates gallery shows in a frame
  *   (`/<locale>/p/…`); nothing else may be framed.
  * - Checkout pages (`/<locale>/checkout/…`) only: Stripe.js and its frames (the payment form), its API,
@@ -76,7 +77,7 @@ export function contentSecurityPolicy({ supabaseUrl, checkout = false, framable 
     ["font-src", ["'self'"]],
     ["connect-src", ["'self'", ...own, ...(checkout ? STRIPE.connect : [])]],
     ["media-src", ["'self'"]],
-    ["frame-src", [YOUTUBE_FRAME, ...(checkout ? STRIPE.frame : [])]],
+    ["frame-src", ["'self'", YOUTUBE_FRAME, ...(checkout ? STRIPE.frame : [])]],
     ["worker-src", ["'self'"]],
     ["manifest-src", ["'self'"]],
     ["object-src", ["'none'"]],
@@ -109,6 +110,9 @@ export function reportedPlace(value: unknown): string {
   }
 }
 
+/** A directive's name as a log may hold it: letters, digits and dashes, at most 40 (a report is the sender's text). */
+const directiveName = (value: unknown): string => text(value).replace(/[^\w-]/g, "").slice(0, 40);
+
 /** The fields of one violation, from either format: `report-uri` (`csp-report`) or the Reporting API (`body`). */
 export function violation(report: unknown): { directive: string; blocked: string; page: string; source: string } | null {
   if (!isRecord(report)) return null;
@@ -116,14 +120,14 @@ export function violation(report: unknown): { directive: string; blocked: string
   const modern = report.type === "csp-violation" && isRecord(report.body) ? report.body : null;
   if (legacy) {
     return {
-      directive: text(legacy["effective-directive"]) || (text(legacy["violated-directive"]).split(" ")[0] ?? ""),
+      directive: directiveName(legacy["effective-directive"]) || directiveName(text(legacy["violated-directive"]).split(" ")[0]),
       blocked: reportedPlace(legacy["blocked-uri"]),
       page: reportedPlace(legacy["document-uri"]),
       source: reportedPlace(legacy["source-file"]),
     };
   }
   if (modern) {
-    return { directive: text(modern.effectiveDirective), blocked: reportedPlace(modern.blockedURL), page: reportedPlace(modern.documentURL), source: reportedPlace(modern.sourceFile) };
+    return { directive: directiveName(modern.effectiveDirective), blocked: reportedPlace(modern.blockedURL), page: reportedPlace(modern.documentURL), source: reportedPlace(modern.sourceFile) };
   }
   return null;
 }

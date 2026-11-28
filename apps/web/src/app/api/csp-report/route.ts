@@ -6,9 +6,12 @@ import { readBody } from "@/lib/server/read-body";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** A report is well under 2 KB; a batch of the Reporting API a few of them. */
-const MAX_BODY = 16 * 1024;
-/** At most this many lines from one request (a batch). */
+/**
+ * A report is well under 2 KB; a batch of the Reporting API holds several. Up to 64 KB is read, and
+ * at most the first MAX_LINES reports of it are logged: with the limit below, one address can write
+ * at most 600 short lines a minute.
+ */
+const MAX_BODY = 64 * 1024;
 const MAX_LINES = 10;
 /** A page with many violations sends one report each: 60 requests per address a minute. */
 const REPORT_LIMIT = rateLimit({ name: "csp-report", max: 60, windowMs: MINUTE });
@@ -34,7 +37,7 @@ export async function POST(request: Request) {
   const reports = (Array.isArray(parsed) ? parsed : [parsed]).slice(0, MAX_LINES);
   for (const report of reports) {
     const found = violation(report);
-    if (found) console.warn(`csp-report ${found.directive.slice(0, 40)} blocked=${found.blocked} page=${found.page}${found.source ? ` source=${found.source}` : ""}`);
+    if (found) console.warn(`csp-report ${found.directive} blocked=${found.blocked} page=${found.page}${found.source ? ` source=${found.source}` : ""}`);
   }
   return done();
 }

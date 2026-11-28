@@ -82,7 +82,7 @@ test.describe("the policy header", () => {
       expect(policy.includes("api.stripe.com"), path).toBe(checkout);
       // Only the example pages may be framed (by the templates gallery, on our own origin).
       expect(policy, path).toContain(path.startsWith("/de/p/") ? "frame-ancestors 'self'" : "frame-ancestors 'none'");
-      expect(policy, path).toContain("frame-src https://www.youtube-nocookie.com");
+      expect(policy, path).toContain("frame-src 'self' https://www.youtube-nocookie.com");
     }
   });
 
@@ -98,12 +98,14 @@ test.describe("the policy header", () => {
     }
   });
 
-  test("the iPhone app's routes answer GET with 405 and no-store, never a cacheable answer", async ({ request }) => {
+  test("the iPhone app's routes answer GET and OPTIONS with 405 and no-store, never a cacheable answer", async ({ request }) => {
     for (const path of ["/api/app/page", "/api/auth/handoff"]) {
-      const response = await request.get(path);
-      expect(response.status(), path).toBe(405);
-      expect(response.headers()["cache-control"], path).toBe("no-store");
-      expect(response.headers().allow, path).toBe("POST");
+      for (const method of ["GET", "OPTIONS"]) {
+        const response = await request.fetch(path, { method });
+        expect(response.status(), `${method} ${path}`).toBe(405);
+        expect(response.headers()["cache-control"], `${method} ${path}`).toBe("no-store");
+        expect(response.headers().allow, `${method} ${path}`).toBe("POST");
+      }
     }
   });
 
@@ -119,6 +121,11 @@ test.describe("the policy header", () => {
       data: JSON.stringify([{ type: "csp-violation", body: { documentURL: "http://localhost/de", blockedURL: "inline", effectiveDirective: "style-src-attr" } }]),
     });
     expect(modern.status()).toBe(204);
+    // A batch above 16 KB is still read (its first ten reports are logged, never more).
+    const batch = Array.from({ length: 12 }, (_, n) => ({ type: "csp-violation", body: { documentURL: `http://localhost/de/${"x".repeat(2000)}`, blockedURL: "inline", effectiveDirective: `img-src-${String(n)}` } }));
+    expect(JSON.stringify(batch).length).toBeGreaterThan(16 * 1024);
+    const big = await request.post("/api/csp-report", { headers: { "content-type": "application/reports+json" }, data: JSON.stringify(batch) });
+    expect(big.status()).toBe(204);
   });
 });
 
@@ -136,7 +143,7 @@ test.describe("no violation", () => {
     });
   }
 
-  test("on example pages, a prepared page with real videos and its player after a tap, and a project page", async ({ page }) => {
+  test("on example pages, a prepared page with real videos and its player after a tap, and a gallery card in its frame", async ({ page }) => {
     test.setTimeout(240_000);
     await collectViolations(page);
     // The player is answered here: no request reaches YouTube in a test.
@@ -147,7 +154,16 @@ test.describe("no violation", () => {
     await page.getByRole("button", { name: /^Video von YouTube abspielen: / }).first().click();
     await expect(page.locator('iframe[src^="https://www.youtube-nocookie.com/embed/"]')).toHaveCount(1);
     found.push(...(await page.evaluate(() => (window as unknown as { __csp?: Violation[] }).__csp ?? [])));
-    expectNone("example pages and a player", found);
+    // The templates gallery shows an example page in its phone frame (frame-src 'self', frame-ancestors 'self').
+    await page.goto("/en/templates");
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: /^Preview / }).first().click();
+    const frame = page.getByRole("dialog").locator('iframe[title^="Page preview"]');
+    await expect(frame).toHaveAttribute("src", /^\/(de|en|ar)\/p\//);
+    await expect.poll(() => frame.evaluate((element) => (element as HTMLIFrameElement).contentDocument?.readyState ?? "")).toBe("complete");
+    found.push(...(await page.evaluate(() => (window as unknown as { __csp?: Violation[] }).__csp ?? [])));
+    found.push(...(await frame.evaluate((element) => ((element as HTMLIFrameElement).contentWindow as unknown as { __csp?: Violation[] } | null)?.__csp ?? [])));
+    expectNone("example pages, a player and a gallery card", found);
   });
 });
 
