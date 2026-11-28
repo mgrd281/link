@@ -22,11 +22,12 @@ const body = z
 const MAX_FAILURES = 8;
 
 /**
- * A person types one code, maybe two or three after a typo or an older e-mail: 15 tries per address and
- * 10 per e-mail address in 15 minutes, every try counted. On top of MAX_FAILURES, which counts only
- * logged failures (an address with an account), these also hold for addresses without one.
+ * A person types one code, maybe two or three after a typo or an older e-mail: 10 tries per e-mail
+ * address in 15 minutes, and 40 per client address (room for many people behind one shared address),
+ * every try counted. On top of MAX_FAILURES, which counts only logged failures (an address with an
+ * account), these also hold for addresses without one.
  */
-const ADDRESS_LIMIT = rateLimit({ name: "auth-verify-address", max: 15, windowMs: 15 * MINUTE });
+const ADDRESS_LIMIT = rateLimit({ name: "auth-verify-address", max: 40, windowMs: 15 * MINUTE });
 const EMAIL_LIMIT = rateLimit({ name: "auth-verify-email", max: 10, windowMs: 15 * MINUTE });
 
 /** The code step already says "too many attempts, wait a few minutes" for this error. */

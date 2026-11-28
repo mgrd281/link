@@ -2,6 +2,9 @@ import { randomInt } from "node:crypto";
 
 import { expect, test, type APIResponse } from "@playwright/test";
 
+import en from "../src/messages/en.json" with { type: "json" };
+import { enterDemoCode } from "./auth";
+
 /**
  * The in-route limits on the running server (lib/rate-limit.ts, ADR draft-csp-and-limits): after its
  * share, an address gets 429 with `Retry-After` and `no-store`, while another address is still served.
@@ -60,6 +63,32 @@ test.describe("rate limits", () => {
     await limitHolds(60, 60, (from) => request.post("/api/csp-report", { headers: { "x-forwarded-for": from, "content-type": "application/csp-report" }, data: JSON.stringify(report) }));
   });
 
+  test("the team gate says \"too many attempts\" past the limit, not \"wrong code\", also for the right code", async ({ page }) => {
+    test.skip(STUB, "The demo's team code works only in a demo build.");
+    const name = `rl-${Date.now().toString(36)}`;
+    await page.goto(`/en/signup?name=${name}`);
+    await page.waitForLoadState("networkidle");
+    await page.locator("#signup-email").fill(`${name}@example.com`);
+    await page.locator("form button[type=submit]").click();
+    await enterDemoCode(page);
+    await page.waitForURL("**/en/app/welcome");
+    // The browser's requests come from this machine, which is never counted: give them a client address.
+    const from = address();
+    await page.route("**/api/admin/verify", (route) => route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": from } }));
+    await page.goto("/en/admin");
+    await page.locator("#team-name").fill("Mara");
+    const code = page.locator("#team-code");
+    for (let n = 0; n < 5; n++) {
+      await code.fill("not-the-code");
+      await page.locator("form button[type=submit]").click();
+      await expect(page.getByText(en.admin.gate.codeWrong)).toBeVisible();
+    }
+    await code.fill("linkyo-team-4827");
+    await page.locator("form button[type=submit]").click();
+    await expect(page.getByText(en.auth.errors.tooManyAttempts)).toBeVisible();
+    await expect(page.getByText(en.admin.gate.codeWrong)).toHaveCount(0);
+  });
+
   test("the machine itself (local development, the other specs) is never counted", async ({ request }) => {
     for (let n = 0; n < 7; n++) expect((await request.post("/api/admin/verify", { data: {} })).status()).toBe(400);
   });
@@ -67,9 +96,9 @@ test.describe("rate limits", () => {
   test.describe("auth (real accounts, stub build)", () => {
     test.skip(!STUB, "Needs the stub build and the Supabase stand-in (E2E_STUB=1).");
 
-    test("/api/auth/code: 10 codes per address and 5 per e-mail address in 15 minutes", async ({ request }) => {
+    test("/api/auth/code: 30 codes per address and 5 per e-mail address in 15 minutes", async ({ request }) => {
       const stamp = Date.now().toString(36);
-      await limitHolds(10, 900, (from, n) =>
+      await limitHolds(30, 900, (from, n) =>
         request.post("/api/auth/code", { headers: { "x-forwarded-for": from }, data: { email: `limit-${stamp}-${String(n)}@example.com`, locale: "de" } }),
       );
       const refused = { ok: false, error: "tooManyAttempts" };
@@ -79,11 +108,21 @@ test.describe("rate limits", () => {
       expect(await last!.json()).toEqual(refused);
     });
 
-    test("/api/auth/verify: 15 tries per address in 15 minutes", async ({ request }) => {
+    test("/api/auth/verify: 40 tries per address in 15 minutes", async ({ request }) => {
       const stamp = Date.now().toString(36);
-      await limitHolds(15, 900, (from, n) =>
+      await limitHolds(40, 900, (from, n) =>
         request.post("/api/auth/verify", { headers: { "x-forwarded-for": from }, data: { email: `verify-${stamp}-${String(n)}@example.com`, code: "000000" } }),
       );
+    });
+
+    test("/api/auth/password: 40 tries per address and 10 per e-mail address in 15 minutes", async ({ request }) => {
+      const stamp = Date.now().toString(36);
+      await limitHolds(40, 900, (from, n) =>
+        request.post("/api/auth/password", { headers: { "x-forwarded-for": from }, data: { email: `pw-${stamp}-${String(n)}@example.com`, password: "not-it" } }),
+      );
+      let last: APIResponse | null = null;
+      for (let n = 0; n < 11; n++) last = await request.post("/api/auth/password", { headers: { "x-forwarded-for": address() }, data: { email: `pw-one-${stamp}@example.com`, password: "not-it" } });
+      expectRefused(last!, 900);
     });
   });
 });

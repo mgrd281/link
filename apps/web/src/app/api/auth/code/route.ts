@@ -23,10 +23,11 @@ const body = z
   .and(deviceBody);
 
 /**
- * Each answer sends an e-mail. A person asks for a code, maybe a second one when the first is slow: 10
- * per address and 5 per e-mail address in 15 minutes (Supabase Auth adds its own wait per address).
+ * Each answer sends an e-mail. A person asks for a code, maybe a second one when the first is slow: 5
+ * per e-mail address in 15 minutes (Supabase Auth adds its own wait per address). Per client address
+ * 30, room for a school, an office or a mobile network behind one shared address.
  */
-const ADDRESS_LIMIT = rateLimit({ name: "auth-code-address", max: 10, windowMs: 15 * MINUTE });
+const ADDRESS_LIMIT = rateLimit({ name: "auth-code-address", max: 30, windowMs: 15 * MINUTE });
 const EMAIL_LIMIT = rateLimit({ name: "auth-code-email", max: 5, windowMs: 15 * MINUTE });
 
 /** The sign-in screens already say "too many attempts, wait a few minutes" for this error. */

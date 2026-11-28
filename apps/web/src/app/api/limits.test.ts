@@ -21,6 +21,7 @@ vi.mock("@/lib/supabase/server", () => ({
   anonServerSupabase: () => ({
     auth: {
       signInWithOtp: () => Promise.resolve({ error: null }),
+      signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: { status: 400, message: "Invalid login credentials" } }),
       verifyOtp: () => Promise.resolve({ data: { user: null, session: null }, error: { status: 400, message: "Token has expired or is invalid" } }),
     },
   }),
@@ -37,6 +38,7 @@ const linkMetadata = await import("./link-metadata/route");
 const adminVerify = await import("./admin/verify/route");
 const authCode = await import("./auth/code/route");
 const authVerify = await import("./auth/verify/route");
+const authPassword = await import("./auth/password/route");
 
 const post = (path: string, body: unknown, from: string | null) =>
   new Request(`http://localhost${path}`, {
@@ -82,7 +84,7 @@ const CASES: Case[] = [
   },
   {
     name: "/api/auth/code (per address)",
-    max: 10,
+    max: 30,
     window: 900,
     // A new e-mail address each time, so only the address limit is reached.
     send: (from, n) => authCode.POST(post("/api/auth/code", { email: `mira${String(n)}@example.com`, locale: "de" }, from)),
@@ -98,7 +100,7 @@ const CASES: Case[] = [
   },
   {
     name: "/api/auth/verify (per address)",
-    max: 15,
+    max: 40,
     window: 900,
     send: (from, n) => authVerify.POST(post("/api/auth/verify", { email: `mira${String(n)}@example.com`, code: "123456" }, from)),
     refusal: { ok: false, error: "tooManyAttempts" },
@@ -108,6 +110,20 @@ const CASES: Case[] = [
     max: 10,
     window: 900,
     send: (from, n) => authVerify.POST(post("/api/auth/verify", { email: "mira@example.com", code: "123456" }, from === null ? null : `${from}-${String(n)}`)),
+    refusal: { ok: false, error: "tooManyAttempts" },
+  },
+  {
+    name: "/api/auth/password (per address)",
+    max: 40,
+    window: 900,
+    send: (from, n) => authPassword.POST(post("/api/auth/password", { email: `mira${String(n)}@example.com`, password: "not-it" }, from)),
+    refusal: { ok: false, error: "tooManyAttempts" },
+  },
+  {
+    name: "/api/auth/password (per e-mail address)",
+    max: 10,
+    window: 900,
+    send: (from, n) => authPassword.POST(post("/api/auth/password", { email: "mira@example.com", password: "not-it" }, from === null ? null : `${from}-${String(n)}`)),
     refusal: { ok: false, error: "tooManyAttempts" },
   },
 ];

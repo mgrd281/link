@@ -31,7 +31,12 @@ export interface RateLimitOptions {
   max: number;
   /** The window's length in milliseconds; it starts with a key's first request. */
   windowMs: number;
-  /** Keys kept at most; past that, the oldest windows are dropped (memory stays bounded). Default 10 000. */
+  /**
+   * Keys kept at most (memory stays bounded). Default 10 000. When full, ended windows go first, then
+   * the oldest windows still under the limit. A window that has used up its limit is never dropped
+   * before it ends (else many new keys would reset it); with only such windows left, a new key is
+   * refused until the first of them ends (fails closed).
+   */
   maxKeys?: number;
 }
 
@@ -57,14 +62,18 @@ export function rateLimit({ name, max, windowMs, maxKeys = 10_000 }: RateLimitOp
   if (!(max >= 1) || !(windowMs >= 1)) throw new Error(`rate limit ${name}: max and windowMs must be positive`);
   const windows = new Map<string, Window>();
 
-  const sweep = (now: number) => {
+  /** Makes room for one more key; false when every window kept is live and used up. */
+  const makeRoom = (now: number): boolean => {
     for (const [key, window] of windows) if (window.endsAt <= now) windows.delete(key);
-    // Still full: drop the oldest windows (a Map keeps insertion order).
-    for (const key of windows.keys()) {
+    // Still full: drop the oldest windows under their limit (a Map keeps insertion order).
+    for (const [key, window] of windows) {
       if (windows.size < maxKeys) break;
-      windows.delete(key);
+      if (window.count < max) windows.delete(key);
     }
+    return windows.size < maxKeys;
   };
+  /** Seconds until the first kept window ends (when a full map refuses a new key). */
+  const firstEnd = (now: number): number => Math.min(...[...windows.values()].map((window) => window.endsAt)) - now;
 
   return {
     take(key, now = Date.now()) {
@@ -72,7 +81,7 @@ export function rateLimit({ name, max, windowMs, maxKeys = 10_000 }: RateLimitOp
       let window = windows.get(key);
       if (!window || window.endsAt <= now) {
         if (window) windows.delete(key);
-        if (windows.size >= maxKeys) sweep(now);
+        if (windows.size >= maxKeys && !makeRoom(now)) return { ok: false, retryAfter: Math.max(1, Math.ceil(firstEnd(now) / SECOND)) };
         window = { count: 0, endsAt: now + windowMs };
         windows.set(key, window);
       }
@@ -97,16 +106,39 @@ export function valueKey(kind: string, value: string): string {
 /** The machine itself: `next start` on a developer's machine or in the e2e run, never a visitor on Vercel. */
 const LOOPBACK = /^(?:127\.\d{1,3}\.\d{1,3}\.\d{1,3}|::1|localhost)$/i;
 
+/** The eight groups of an IPv6 address (`::` expanded), or null for anything else. */
+function ipv6Groups(address: string): string[] | null {
+  if (!address.includes(":") || !/^[0-9a-f:.]+$/i.test(address)) return null;
+  const halves = address.toLowerCase().split("::");
+  if (halves.length > 2) return null;
+  const part = (text: string | undefined) => (text ? text.split(":") : []);
+  const head = part(halves[0]);
+  const tail = part(halves[1]);
+  // An IPv4 tail (::ffff:1.2.3.4 and the like) counts as two groups.
+  const last = tail.length > 0 ? tail : head;
+  if (last.length > 0 && (last[last.length - 1] ?? "").includes(".")) last.splice(-1, 1, "0", "0");
+  const missing = 8 - head.length - tail.length;
+  if (halves.length === 1 ? missing !== 0 : missing < 1) return null;
+  const groups = [...head, ...Array<string>(halves.length === 2 ? missing : 0).fill("0"), ...tail];
+  return groups.every((group) => /^[0-9a-f]{1,4}$/.test(group)) ? groups.map((group) => group.replace(/^0+(?=.)/, "")) : null;
+}
+
 /**
  * The key for a client address as the route already derives it (`requestPlace(headers).ip`), or
  * null when there is none to key on: no address, or the loopback address (local development and the
- * e2e run, where every request comes from the machine itself). On Vercel every request carries the
- * client's address in `x-forwarded-for`, which the platform sets itself (a client cannot choose it).
+ * e2e run, where every request comes from the machine itself).
+ *
+ * An IPv6 address is keyed by its /64: one connection usually holds a whole /64, so keying single
+ * addresses would give a client 2^64 fresh keys. An IPv4 address is keyed as it is.
+ *
+ * The address is trusted only because Vercel overwrites `x-forwarded-for` with the client's address
+ * (vercel.json makes Vercel the only deployment target); behind anything else a client could choose it.
  */
 export function addressKey(ip: string): string | null {
-  const address = ip.trim().replace(/^::ffff:/i, "");
+  const address = ip.trim().replace(/^::ffff:(?=\d+\.)/i, "");
   if (address === "" || LOOPBACK.test(address)) return null;
-  return valueKey("address", address.toLowerCase());
+  const groups = ipv6Groups(address);
+  return valueKey("address", groups ? `${groups.slice(0, 4).join(":")}::/64` : address.toLowerCase());
 }
 
 /** The headers of a 429: when to try again (RFC 9110 `Retry-After`, seconds) and never from a cache. */

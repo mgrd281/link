@@ -47,15 +47,37 @@ describe("rateLimit: a fixed window per key", () => {
     expect(limit.take("k", T0).ok).toBe(true);
   });
 
-  it("keeps at most maxKeys windows: ended ones go first, then the oldest", () => {
-    const limit = rateLimit({ name: "t", max: 1, windowMs: MINUTE, maxKeys: 3 });
+  it("keeps at most maxKeys windows: ended ones go first, then the oldest still under their limit", () => {
+    const limit = rateLimit({ name: "t", max: 2, windowMs: MINUTE, maxKeys: 3 });
     for (const key of ["a", "b", "c"]) limit.take(key, T0);
     // A fourth key drops the oldest live window ("a"), which then counts from zero again.
     limit.take("d", T0 + 1);
-    expect(limit.take("a", T0 + 2).ok).toBe(true);
+    expect(limit.take("a", T0 + 2)).toEqual({ ok: true, remaining: 1 });
     // "b" was dropped to make room for "a"; "c" and "d" still hold their counts.
-    expect(limit.take("c", T0 + 3).ok).toBe(false);
-    expect(limit.take("d", T0 + 3).ok).toBe(false);
+    expect(limit.take("c", T0 + 3)).toEqual({ ok: true, remaining: 0 });
+    expect(limit.take("d", T0 + 3)).toEqual({ ok: true, remaining: 0 });
+    // Ended windows go before any live one.
+    const ended = rateLimit({ name: "t", max: 2, windowMs: MINUTE, maxKeys: 2 });
+    ended.take("old", T0);
+    ended.take("live", T0 + 30 * SECOND);
+    ended.take("new", T0 + MINUTE);
+    expect(ended.take("live", T0 + MINUTE)).toEqual({ ok: true, remaining: 0 });
+  });
+
+  it("never drops a used-up window to make room: many new keys cannot reset an exhausted key", () => {
+    const limit = rateLimit({ name: "t", max: 3, windowMs: 10 * MINUTE, maxKeys: 100 });
+    for (let i = 0; i < 3; i++) limit.take("attacker", T0);
+    expect(limit.take("attacker", T0).ok).toBe(false);
+    for (let i = 0; i < 10_000; i++) limit.take(`other-${String(i)}`, T0 + 1);
+    expect(limit.take("attacker", T0 + 2).ok).toBe(false);
+  });
+
+  it("fails closed for new keys while every kept window is used up, until the first one ends", () => {
+    const limit = rateLimit({ name: "t", max: 1, windowMs: MINUTE, maxKeys: 2 });
+    limit.take("a", T0);
+    limit.take("b", T0 + 10 * SECOND);
+    expect(limit.take("c", T0 + 20 * SECOND)).toEqual({ ok: false, retryAfter: 40 });
+    expect(limit.take("c", T0 + MINUTE)).toEqual({ ok: true, remaining: 0 });
   });
 
   it("refuses a limit that could never allow anything", () => {
@@ -74,6 +96,18 @@ describe("keys never hold the raw value", () => {
     expect(addressKey(" 203.0.113.7 ")).toBe(key);
     expect(addressKey("203.0.113.8")).not.toBe(key);
     expect(addressKey("2001:DB8::1")).toBe(addressKey("2001:db8::1"));
+  });
+
+  it("keys an IPv6 address by its /64 (one connection holds a whole /64), and an IPv4 address alone", () => {
+    const net = addressKey("2001:db8:1:2::1");
+    expect(addressKey("2001:db8:1:2:ffff:ffff:ffff:ffff")).toBe(net);
+    expect(addressKey("2001:0DB8:0001:0002:0:0:0:9")).toBe(net);
+    expect(addressKey("2001:db8:1:3::1")).not.toBe(net);
+    expect(addressKey("2001:db8::1")).toBe(addressKey("2001:db8:0:0:1::"));
+    expect(addressKey("::ffff:203.0.113.7")).toBe(addressKey("203.0.113.7"));
+    expect(addressKey("203.0.113.7")).not.toBe(addressKey("203.0.113.8"));
+    // Not an address: keyed as it is (never thrown away), so it still counts.
+    expect(addressKey("1:2:3")).toMatch(/^[\w-]{43}$/);
   });
 
   it("no address, or the machine itself (loopback), gives no key", () => {
