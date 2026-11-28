@@ -23,17 +23,18 @@ const answer = (body: object, status = 200) => Response.json(body, { status, hea
 /**
  * Each call may ask a platform for details (an `add`) and drops the cached public page. A native
  * change is one deliberate act (a link added, a block moved; the share extension sends one): 30 calls
- * per account and 60 per address a minute. The address limit comes first, before Auth is asked.
+ * per account and 120 per client address (room for a shared address) a minute. The address limit
+ * comes first, before Auth is asked.
  */
 const ACCOUNT_LIMIT = rateLimit({ name: "app-page-account", max: 30, windowMs: MINUTE });
-const ADDRESS_LIMIT = rateLimit({ name: "app-page-address", max: 60, windowMs: MINUTE });
+const ADDRESS_LIMIT = rateLimit({ name: "app-page-address", max: 120, windowMs: MINUTE });
 /** 429 `tooManyRequests`: the app waits `Retry-After` seconds, then tries once more (ADR 0088). */
 const tooMany = (verdict: Extract<Verdict, { ok: false }>) =>
   Response.json({ ok: false, error: "tooManyRequests" }, { status: 429, headers: retryHeaders(verdict) });
 
-/** A method this route does not take: 405 with `no-store` (Next's own 405 would be cacheable). */
+/** A method this route does not take, OPTIONS included (no browser preflight is served): 405 with `no-store`. */
 const notAllowed = () => new Response(null, { status: 405, headers: { ...noStore, Allow: "POST" } });
-export { notAllowed as GET, notAllowed as PUT, notAllowed as PATCH, notAllowed as DELETE };
+export { notAllowed as GET, notAllowed as PUT, notAllowed as PATCH, notAllowed as DELETE, notAllowed as OPTIONS };
 
 const LOCALES = ["de", "en", "ar"] as const;
 type Locale = (typeof LOCALES)[number];

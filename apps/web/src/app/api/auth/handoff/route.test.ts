@@ -15,19 +15,13 @@ interface State {
   linkError: boolean;
   /** The profiles read fails (the database cannot be reached). */
   profileError: boolean;
-  /** The successful sign-ins logged: the session each opened and the device id it was made with. */
-  signIns: { session_id: string; device_id: string; result: string; profile_id: string }[];
-  /** The sign_ins read fails. */
-  signInsError: boolean;
   generated: { type: string; email: string }[];
 }
 
-const SESSION = "7a0c3f1e-2b4d-4e6f-8a9b-0c1d2e3f4a5b";
 const DEVICE = "dev_0123456789ab";
-const opened = () => [{ session_id: SESSION, device_id: DEVICE, result: "success", profile_id: "u1" }];
 
 const state = vi.hoisted(
-  (): State => ({ enabled: true, status: "active", locale: "de", blocked: false, linkError: false, profileError: false, signIns: [], signInsError: false, generated: [] }),
+  (): State => ({ enabled: true, status: "active", locale: "de", blocked: false, linkError: false, profileError: false, generated: [] }),
 );
 
 vi.mock("@/lib/supabase/config", () => ({
@@ -39,25 +33,14 @@ vi.mock("@/lib/supabase/config", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   serviceSupabase: () => ({
     rpc: (name: string) => Promise.resolve({ data: name === "is_ip_blocked" ? state.blocked : null, error: null }),
-    from: (table: string) => {
-      const filters: Record<string, string> = {};
+    from: () => {
       const chain = {
         select: () => chain,
-        eq: (column: string, value: string) => {
-          filters[column] = value;
-          return chain;
-        },
-        limit: () => chain,
-        maybeSingle: () => {
-          if (table === "sign_ins") {
-            if (state.signInsError) return Promise.resolve({ data: null, error: { message: "TypeError: fetch failed" } });
-            const row = state.signIns.find((entry) => Object.entries(filters).every(([column, value]) => entry[column as keyof typeof entry] === value));
-            return Promise.resolve({ data: row ? { id: "s1" } : null, error: null });
-          }
-          return Promise.resolve(
+        eq: () => chain,
+        maybeSingle: () =>
+          Promise.resolve(
             state.profileError ? { data: null, error: { message: "TypeError: fetch failed" } } : { data: state.status ? { status: state.status, locale: state.locale } : null, error: null },
-          );
-        },
+          ),
       };
       return chain;
     },
@@ -77,10 +60,8 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/lib/server/user", () => ({
-  bearer: (request: Request) => /^Bearer\s+(\S+)$/i.exec(request.headers.get("authorization") ?? "")?.[1] ?? null,
   // As the real one answers (lib/server/user.test.ts): "Bearer auth-down" stands for Supabase Auth
   // failing itself (no answer, a 5xx, a rate limit), which is a 401 unless the route asks otherwise.
-  // A token whose payload names a session (as Auth's JWTs do) is the app's, checked by Auth.
   requireUser: (request: Request, options: { outage?: string } = {}) => {
     const header = request.headers.get("authorization");
     if (header?.startsWith("Bearer app.")) return Promise.resolve({ user: { id: "u1", email: "mira@example.com" }, db: {} });
@@ -91,9 +72,8 @@ vi.mock("@/lib/server/user", () => ({
 
 const { POST } = await import("./route");
 
-/** An access token as Auth makes them, for this session (the route reads `session_id`; Auth checked the rest). */
-const tokenFor = (session: unknown) => `app.${Buffer.from(JSON.stringify({ sub: "u1", session_id: session })).toString("base64url")}.signature`;
-const APP_TOKEN = tokenFor(SESSION);
+/** The app's access token, as Auth accepts it (the stand-in above). */
+const APP_TOKEN = "app.session.token";
 /** Each test from its own address, so the per-address limit of one never reaches the next. */
 let address = 0;
 let ip = "10.1.0.1";
@@ -108,7 +88,7 @@ const call = (body: unknown, token: string | null = APP_TOKEN, { raw, from = ip 
 
 const logged: unknown[][] = [];
 beforeEach(() => {
-  Object.assign(state, { enabled: true, status: "active", locale: "de", blocked: false, linkError: false, profileError: false, signIns: opened(), signInsError: false, generated: [] });
+  Object.assign(state, { enabled: true, status: "active", locale: "de", blocked: false, linkError: false, profileError: false, generated: [] });
   address += 1;
   ip = `10.1.${String(Math.floor(address / 250))}.${String(address % 250)}`;
   // The limits count per account in memory: each test starts 11 minutes after the last one's window.
@@ -212,28 +192,6 @@ describe("POST /api/auth/handoff", () => {
     for (const secret of ["secret-token-hash", "mira@example.com", APP_TOKEN, "/api/auth/confirm"]) expect(text).not.toContain(secret);
   });
 
-  it("hands off only a session opened on this device: its sign-in logged under this device id (403 deviceMismatch)", async () => {
-    // Another device's id with this token: a leaked token cannot open a session under a made-up device.
-    const other = await call({ deviceId: "dev_ffffffffffff" });
-    expect(other.status).toBe(403);
-    expect(await other.json()).toEqual({ ok: false, error: "deviceMismatch" });
-    // The session has no sign-in at all (another session's token, or its log is older than 30 days).
-    expect((await call({ deviceId: DEVICE }, tokenFor("0b1c2d3e-4f50-4617-8899-aabbccddeeff"))).status).toBe(403);
-    // A token without a session id, or with one that is no uuid.
-    expect((await call({ deviceId: DEVICE }, tokenFor(undefined))).status).toBe(403);
-    expect((await call({ deviceId: DEVICE }, tokenFor("not-a-uuid"))).status).toBe(403);
-    // Only a successful sign-in opens a session.
-    state.signIns = [{ ...opened()[0]!, result: "failed" }];
-    expect((await call({ deviceId: DEVICE })).status).toBe(403);
-    expect(state.generated).toEqual([]);
-    // The log cannot be read: try again later, never the final-sounding refusal.
-    state.signInsError = true;
-    const down = await call({ deviceId: DEVICE });
-    expect(down.status).toBe(502);
-    expect(await down.json()).toEqual({ ok: false, error: "serverError" });
-    expect(state.generated).toEqual([]);
-  });
-
   it("answers 413 for a body above 4 KB, also without a Content-Length, before parsing it", async () => {
     const big = JSON.stringify({ deviceId: DEVICE, next: "x".repeat(5000) });
     const response = await call(null, APP_TOKEN, { raw: big });
@@ -258,7 +216,7 @@ describe("POST /api/auth/handoff", () => {
     expect(state.generated).toEqual([]);
   });
 
-  it("answers 429 with Retry-After past 10 hand-offs per account in 10 minutes, and past 30 per address", async () => {
+  it("answers 429 with Retry-After past 10 hand-offs per account in 10 minutes, and past 60 per address", async () => {
     for (let i = 0; i < 10; i++) expect((await call({ deviceId: DEVICE }, APP_TOKEN, { from: `10.9.0.${String(i + 1)}` })).status).toBe(200);
     const refused = await call({ deviceId: DEVICE }, APP_TOKEN, { from: "10.9.0.99" });
     expect(refused.status).toBe(429);
@@ -268,13 +226,13 @@ describe("POST /api/auth/handoff", () => {
     expect(refused.headers.get("cache-control")).toBe("no-store");
     expect(state.generated).toHaveLength(10);
     // The address limit counts before Auth is asked: also tokens Auth turns down.
-    for (let i = 0; i < 30; i++) await call({ deviceId: DEVICE }, "someone-else", { from: "10.8.0.1" });
+    for (let i = 0; i < 60; i++) await call({ deviceId: DEVICE }, "someone-else", { from: "10.8.0.1" });
     expect((await call({ deviceId: DEVICE }, "someone-else", { from: "10.8.0.1" })).status).toBe(429);
   });
 
   it("answers the methods it does not take with 405 and no-store (never Next's cacheable 405)", async () => {
     const route = await import("./route");
-    for (const method of ["GET", "PUT", "PATCH", "DELETE"] as const) {
+    for (const method of ["GET", "PUT", "PATCH", "DELETE", "OPTIONS"] as const) {
       const response = route[method]();
       expect(response.status, method).toBe(405);
       expect(response.headers.get("cache-control"), method).toBe("no-store");

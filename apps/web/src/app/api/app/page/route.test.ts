@@ -256,7 +256,7 @@ describe("POST /api/app/page", () => {
     expect(await keyless.json()).toEqual({ ok: false, error: "unavailable" });
   });
 
-  it("answers 429 with Retry-After past 30 calls per account a minute, and past 60 per address", async () => {
+  it("answers 429 with Retry-After past 30 calls per account a minute, and past 120 per address", async () => {
     const op = () => ({ baseUpdatedAt: base(), ops: [{ op: "show", id: "a", visible: true }] });
     for (let i = 0; i < 30; i++) expect((await call(op(), { from: `10.7.0.${String(i + 1)}` })).status).toBe(200);
     const refused = await call(op(), { from: "10.7.1.1" });
@@ -267,13 +267,13 @@ describe("POST /api/app/page", () => {
     expect(refused.headers.get("cache-control")).toBe("no-store");
     expect(state.writes).toHaveLength(30);
     // The address limit counts before Auth is asked: also calls Auth turns down.
-    for (let i = 0; i < 60; i++) await call(op(), { token: "someone-else", from: "10.7.2.1" });
+    for (let i = 0; i < 120; i++) await call(op(), { token: "someone-else", from: "10.7.2.1" });
     expect((await call(op(), { token: "someone-else", from: "10.7.2.1" })).status).toBe(429);
   });
 
   it("answers the methods it does not take with 405 and no-store (never Next's cacheable 405)", async () => {
     const route = await import("./route");
-    for (const method of ["GET", "PUT", "PATCH", "DELETE"] as const) {
+    for (const method of ["GET", "PUT", "PATCH", "DELETE", "OPTIONS"] as const) {
       const response = route[method]();
       expect(response.status, method).toBe(405);
       expect(response.headers.get("cache-control"), method).toBe("no-store");

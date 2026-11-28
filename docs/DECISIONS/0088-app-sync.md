@@ -54,7 +54,7 @@ view cannot share one session.
      |---|---|---|---|
      | 200 | — | `{ ok: true, url }` | opens `url` in its web view (one hand-off in flight, below) |
      | 409 | `unavailable` | a demo build (no real accounts) or no server key | shows its native error view; no retry (a retry changes nothing) |
-     | 429 | `tooManyRequests` | more than 30 hand-offs from this address in 10 minutes (counted before Auth is asked); `Retry-After` says in how many seconds | waits the `Retry-After` seconds, then tries once more; never signs out on it |
+     | 429 | `tooManyRequests` | more than 60 hand-offs from this address in 10 minutes (counted before Auth is asked); `Retry-After` says in how many seconds | waits the `Retry-After` seconds, then tries once more; never signs out on it |
      | 401 | `unauthorized` | no `Authorization: Bearer`, or a token Supabase Auth turned down with its own error code: `bad_jwt` (not a valid token, a wrong signature, expired), `session_not_found` (its session ended; supabase-js reports it as `AuthSessionMissingError`), `user_not_found`, `no_authorization` | refreshes its session once and asks again; signs out and wipes the device only when that refresh is refused with a wipe code: `refresh_token_not_found`, `refresh_token_already_used`, `session_not_found`, `user_not_found`, `session_expired` or `user_banned` (below) |
      | 503 | `unavailable` | Supabase Auth could not check the token (no answer, a 5xx, a rate limit), or something other than Auth answered: any 4xx without Auth's own code (the API gateway's "Invalid API key", a firewall's page) says nothing about the token | tries again later with a growing pause; never signs out on it, keeps the Keychain and the App Group |
      | 429 | `tooManyRequests` | more than 10 hand-offs for this account in 10 minutes; `Retry-After` says in how many seconds | waits the `Retry-After` seconds, then tries once more; never signs out on it |
@@ -64,8 +64,7 @@ view cannot share one session.
      | 409 | `unavailable` | the account has no e-mail address | shows its native error view; no retry |
      | 403 | `blocked` | the request's address is blocked (as at sign-in) | shows its native error view (no sign-in from this connection); no retry loop: the next try is the person's |
      | 403 | `suspended` | the account is not active | shows its native "account suspended" screen and stops handing off |
-     | 403 | `deviceMismatch` | the token's session (`session_id` in its JWT) has no successful sign-in logged under this `deviceId`: another device's id, another session's token, or a sign-in older than the 30-day log | signs in natively again (its code screen), which logs a new sign-in for this device; no automatic retry |
-     | 502 | `serverError` | the account or the sign-in log could not be read, or Supabase could not make the link: try again later | tries again later with a growing pause, as for 503 |
+     | 502 | `serverError` | the account could not be read, or Supabase could not make the link: try again later | tries again later with a growing pause, as for 503 |
    - The link is single-use and lives as long as Supabase's OTP (10 minutes locally). Making it replaces an e-mailed
      code that is still open for this address and any earlier link (only the newest token works, ADR 0035). **The
      app keeps one hand-off in flight:** it opens a link before it asks for the next one, since a second request
@@ -155,7 +154,7 @@ view cannot share one session.
      |---|---|---|---|---|
      | 200 | — | `updatedAt`, `changed`, `added` | written | keeps `updatedAt` verbatim, then calls `reload()` (§4) |
      | 400 | `invalidJson` | | the body is not JSON | an app bug: reports it; no retry |
-     | 429 | `tooManyRequests` | | more than 60 calls from this address a minute (counted before Auth is asked), or more than 30 for this account; `Retry-After` says in how many seconds | waits the `Retry-After` seconds, then tries once more; never signs out on it |
+     | 429 | `tooManyRequests` | | more than 120 calls from this address a minute (counted before Auth is asked), or more than 30 for this account; `Retry-After` says in how many seconds | waits the `Retry-After` seconds, then tries once more; never signs out on it |
      | 401 | `unauthorized` | | no `Authorization: Bearer`, or a token Supabase Auth turned down with its own error code (`bad_jwt`, `session_not_found`, `user_not_found`, `no_authorization`; §1) | refreshes its session once and repeats the call; wipes only when that refresh is refused (§1) |
      | 503 | `unavailable` | | Supabase Auth could not check the token (no answer, a 5xx, a rate limit), or something other than Auth answered (any 4xx without Auth's own code: the API gateway's "Invalid API key", a firewall) | tries again later with a growing pause; never signs out on it |
      | 403 | `blocked` | | the request's address is blocked (as at sign-in and in the hand-off); nothing written | shows its native error view (no changes from this connection); no retry loop: the next try is the person's |
@@ -353,20 +352,34 @@ the project and contact rules, under 1 MB per row: 422 `pageTooLarge`).
 
 **For WP4.4 (security): built there (ADR draft-csp-and-limits), and named in both tables above:**
 
-- **Rate limits** (`lib/rate-limit.ts`, in memory per server instance, keys are HMACs, never an address): the
-  hand-off (`POST /api/auth/handoff`) 30 per address and 10 per account in 10 minutes, the page route
-  (`POST /api/app/page`) 60 per address and 30 per account a minute; the address limit is counted before Auth is asked. Past a limit: 429 `tooManyRequests` with
-  `Retry-After` (seconds) and `no-store`.
-- **The hand-off is bound to the device id:** it hands off only a token whose session (`session_id` in its JWT) has
-  a successful `sign_ins` row with the same `deviceId` (the app's native sign-in writes both); otherwise 403
-  `deviceMismatch`. A leaked access token can no longer become a long-lived session under a device id the caller
-  makes up. The sign-in log keeps 30 days: an app session opened longer ago gets `deviceMismatch` and signs in again.
+- **Rate limits** (`lib/rate-limit.ts`, in memory per server instance, keys are HMACs, never an address; an IPv6
+  address counts by its /64): the hand-off (`POST /api/auth/handoff`) 60 per address and 10 per account in 10
+  minutes, the page route (`POST /api/app/page`) 120 per address and 30 per account a minute; the address limit is
+  counted before Auth is asked. Past a limit: 429 `tooManyRequests` with `Retry-After` (seconds) and `no-store`.
+- **The native sign-in routes** answer their own limits with 429 now (before: Supabase Auth's limit only, answered
+  with 200 and the same error, which they still do). The app treats `tooManyAttempts` the same way at either
+  status: it says "too many attempts, wait a few minutes" and, at 429, may try again after `Retry-After`.
+
+  | Route | Status | `error` | When | App does |
+  |---|---|---|---|---|
+  | `POST /api/auth/code` | 429 | `tooManyAttempts` | more than 30 codes from this address or 5 for this e-mail address in 15 minutes; `Retry-After` | shows the code screen's "too many attempts" line; no automatic retry |
+  | `POST /api/auth/verify` | 429 | `tooManyAttempts` | more than 40 tries from this address or 10 for this e-mail address in 15 minutes; `Retry-After` | the same |
+  | `POST /api/auth/password` | 429 | `tooManyAttempts` | the same numbers as `/api/auth/verify` | the same |
+  | all three | 200 | `tooManyAttempts` | Supabase Auth's own limit, or 8 failed sign-ins of the account in 15 minutes (as before) | the same |
+
+- **No device binding yet.** The hand-off still turns any valid access token into a web session under the
+  `deviceId` it is sent with. A check against the sign-in log (`sign_ins.session_id` and `device_id`) was tried and
+  removed: the account's own token may read its sign-ins (row-level security "owners read their sign-ins"), so a
+  leaked token could look the device id up, and the 30-day purge or one failed `record_sign_in` would lock a real
+  app session out. A proper binding, a per-device secret the app registers at its native sign-in and the server
+  keeps hashed, comes with the iPhone app's dashboard host (I4).
 - **The page route refuses a blocked address** (403 `blocked`, as at sign-in and in the hand-off), and answers 409
   `unavailable` without the server's key, as the hand-off does.
 - **The hand-off's body is capped at 4 KB** (413 `tooLarge`, `max` 4096), refused before it is read whole
   (`lib/server/read-body.ts`, shared with the page route's 64 KB cap).
-- **The methods the two routes do not take** (`GET`, `PUT`, `PATCH`, `DELETE`) answer 405 with `Allow: POST` and
-  `Cache-Control: no-store` from the routes themselves, no longer Next.js's own cacheable 405.
+- **The methods the two routes do not take** (`GET`, `PUT`, `PATCH`, `DELETE`, and `OPTIONS`: no browser preflight
+  is served) answer 405 with `Allow: POST` and `Cache-Control: no-store` from the routes themselves, no longer
+  Next.js's own cacheable 405.
 
 **What a browser user notices.** Nothing, in one tab: rapid edits, slow networks, lost answers, a stretch offline, a
 reload, hiding and showing the tab, an address change or the team's badge never conflict and never lose a change (the
